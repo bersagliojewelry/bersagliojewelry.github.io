@@ -1,0 +1,149 @@
+/* ============================================
+   CORRECCIONES FASE 1 - SISTEMA MEJORADO
+   Scroll horizontal simple y efectivo
+   ============================================ */
+
+/* Featured Section */
+.featured-section {
+    padding: var(--spacing-xl) 0;
+    background: white;
+    overflow: visible; /* Permitir que las flechas sean visibles */
+    position: relative;
+}
+
+/* Vehicles Grid — scoped to featured section only to avoid catalog conflicts */
+.featured-section .vehicles-grid {
+    display: flex;
+    flex-direction: row;
+    gap: var(--spacing-md);
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    padding: var(--spacing-md) 0;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.featured-section .vehicles-grid::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+/* No-results must span full width */
+.featured-section .vehicles-grid > .no-results {
+    min-width: 100%;
+    max-width: none;
+    width: 100%;
+}
+
+/* Vehicle Card in featured section */
+.featured-section .vehicle-card {
+    scroll-snap-align: start;
+    flex: 0 0 320px;
+    min-width: 320px;
+    max-width: 320px;
+}
+
+/* Responsive Tablets */
+@media (max-width: 968px) {
+    .featured-section .vehicles-grid {
+        gap: var(--spacing-sm);
+    }
+
+    .featured-section .vehicle-card {
+        flex: 0 0 300px;
+        min-width: 300px;
+        max-width: 300px;
+    }
+}
+
+/* Responsive Móvil */
+@media (max-width: 640px) {
+    .featured-section .vehicles-grid {
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm) 0;
+        scroll-snap-type: none;
+    }
+
+    .featured-section .vehicle-card {
+        flex: 0 0 280px;
+        min-width: 280px;
+        max-width: 280px;
+    }
+
+    /* Asegurar que las imágenes se vean completas */
+    .vehicle-image {
+        height: 200px;
+        overflow: hidden;
+        border-radius: var(--radius-md) var(--radius-md) 0 0;
+    }
+
+    .vehicle-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* Ocultar flechas en móvil para evitar confusión */
+    .carousel-arrow {
+        display: none !important;
+    }
+
+    /* Mostrar texto informativo solo en móvil */
+    .carousel-hint {
+        display: block !important;
+        text-align: center;
+        color: var(--text-gray);
+        font-size: 0.85rem;
+        margin-top: -0.5rem;
+        padding: 0.25rem 0.5rem;
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+}
+
+/* Ocultar hint en desktop por defecto */
+.carousel-hint {
+    display: none;
+}
+
+/* Expand featured section container width y dar espacio a flechas */
+.featured-section .container {
+    max-width: 100%;
+    overflow: visible; /* Permitir que las flechas sean visibles fuera del container */
+    padding-left: 90px; /* Espacio para flecha izquierda (80px + 10px margen) */
+    padding-right: 90px; /* Espacio para flecha derecha (80px + 10px margen) */
+}
+
+/* En móvil, restaurar padding normal */
+@media (max-width: 640px) {
+    .featured-section .container {
+        padding-left: var(--spacing-md);
+        padding-right: var(--spacing-md);
+    }
+}
+
+/* Categories and Brands sections: match full-width like featured */
+.categories-section .container,
+.brands-section .container {
+    max-width: 100%;
+    padding-left: 90px;
+    padding-right: 90px;
+}
+
+@media (max-width: 640px) {
+    .categories-section .container,
+    .brands-section .container {
+        padding-left: var(--spacing-md);
+        padding-right: var(--spacing-md);
+    }
+}
+

@@ -1,0 +1,420 @@
+/* ============================================
+   ALTORRA CARS - CORRECCIÓN DEFINITIVA
+   Tarjetas de Vehículos + Badges + Layout
+   ============================================ */
+
+/* ===========================================
+   SECCIÓN 1: GRID DE VEHÍCULOS CORREGIDO
+   =========================================== */
+
+/* Grid principal - páginas de catálogo */
+.catalog-main .vehicles-grid,
+.catalog-section .vehicles-grid,
+.favorites-section .vehicles-grid,
+.search-results-section .vehicles-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+    grid-auto-flow: row !important;
+    gap: 1.5rem !important;
+    padding: 0 !important;
+    overflow: visible !important;
+}
+
+/* ── Section header always inline — "Ver todos" stays right of title on all screen sizes ── */
+.featured-section .section-header {
+    flex-direction: row !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+}
+
+.featured-section .section-header .section-title {
+    font-size: clamp(1.1rem, 4vw, 1.5rem) !important;
+    margin-bottom: 0 !important;
+}
+
+.featured-section .section-header .btn-view-more {
+    flex-shrink: 0;
+    font-size: 0.78rem !important;
+    padding: 0.4rem 0.9rem !important;
+    margin-top: 0 !important;
+    white-space: nowrap;
+}
+
+/* Grid en sección destacados (home) - modo carrusel CON SCROLL TÁCTIL */
+.featured-section .vehicles-grid {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 1.5rem !important;
+    overflow-x: auto !important; /* Permitir scroll horizontal en móvil */
+    overflow-y: hidden !important;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    padding: 1rem 0 1.5rem 0 !important;
+    -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
+    /* Ocultar scrollbar completamente en todos los navegadores */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+    /* Prevent text/image selection during mouse drag */
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Ocultar scrollbar en Chrome/Safari/Edge */
+.featured-section .vehicles-grid::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+/* ===========================================
+   FIX: .no-results full width in all contexts
+   =========================================== */
+
+/* In carousel flex containers: take full width, center content */
+.featured-section .vehicles-grid > .no-results,
+.carousel-wrapper .vehicles-grid > .no-results {
+    flex: 1 0 100% !important;
+    min-width: 100% !important;
+    width: 100% !important;
+}
+
+/* In catalog grid containers: span all columns */
+.catalog-main .vehicles-grid > .no-results,
+.catalog-section .vehicles-grid > .no-results,
+.favorites-section .vehicles-grid > .no-results,
+.search-results-section .vehicles-grid > .no-results,
+.vehicles-grid > .no-results {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    justify-self: center !important;
+}
+
+/* ===========================================
+   SECCIÓN 2: TARJETA DE VEHÍCULO MEJORADA
+   =========================================== */
+
+.vehicle-card {
+    position: relative;
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.08),
+        0 4px 16px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    /* Evitar colapso */
+    min-width: 0;
+    width: 100%;
+}
+
+/* En modo carrusel (destacados) */
+.featured-section .vehicle-card {
+    flex: 0 0 320px !important;
+    min-width: 320px !important;
+    max-width: 320px !important;
+    width: 320px !important;
+    scroll-snap-align: start;
+}
+
+.vehicle-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 
+        0 8px 24px rgba(0, 0, 0, 0.12),
+        0 16px 48px rgba(0, 0, 0, 0.08);
+}
+
+/* ===========================================
+   SECCIÓN 3: IMAGEN DEL VEHÍCULO
+   =========================================== */
+
+.vehicle-image {
+    position: relative;
+    width: 100%;
+    height: 220px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+}
+
+.vehicle-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.vehicle-card:hover .vehicle-image img {
+    transform: scale(1.08);
+}
+
+/* ===========================================
+   SECCIÓN 4: SISTEMA DE BADGES CORREGIDO
+   =========================================== */
+
+/* Contenedor de badges - HORIZONTAL para evitar superposición */
+.vehicle-badges {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    right: 60px; /* Espacio para botón favorito */
+    z-index: 10;
+    display: flex !important;
+    flex-direction: row !important; /* HORIZONTAL, no vertical */
+    flex-wrap: wrap;
+    gap: 6px;
+    max-width: calc(100% - 72px);
+}
+
+/* Badge individual */
+.badge {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(4px);
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+}
+
+/* Limitar a máximo 2 badges visibles para evitar superposición */
+.vehicle-badges .badge:nth-child(n+3) {
+    display: none !important;
+}
+
+/* Colores de badges */
+.badge-nuevo,
+.badge-new {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.badge-seminuevo {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+}
+
+.badge-usado,
+.badge-used {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+.badge-destacado {
+    background: linear-gradient(135deg, #b89658 0%, #916652 100%);
+    color: white;
+}
+
+.badge-garantia {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+}
+
+.badge-oferta {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+/* ===========================================
+   SECCIÓN 5: BOTONES DE ACCIÓN (FAVORITO + COMPARAR)
+   =========================================== */
+
+/* Contenedor de acciones */
+.vehicle-actions {
+    position: absolute !important;
+    top: 12px !important;
+    right: 12px !important;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 15 !important;
+}
+
+.favorite-btn {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    width: 38px;
+    height: 38px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    color: #b89658;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    touch-action: manipulation !important;
+    user-select: none !important;
+}
+
+/* Hover solo en dispositivos con mouse real (no touch) - FIX para móvil */
+@media (hover: hover) and (pointer: fine) {
+    .favorite-btn:hover {
+        background: #b89658;
+        color: white;
+        transform: scale(1.1);
+    }
+}
+
+.favorite-btn.active {
+    background: #b89658;
+    color: white;
+}
+
+/* Botón de comparar - ESTILOS MOVIDOS A comparador.css */
+/* Los estilos de .btn-compare ahora están centralizados en css/comparador.css */
+
+/* ===========================================
+   SECCIÓN 6: INFORMACIÓN DEL VEHÍCULO
+   =========================================== */
+
+.vehicle-info {
+    padding: 1.25rem;
+}
+
+.vehicle-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1d1b19;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+    /* Evitar desbordamiento de texto */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.vehicle-specs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    color: #9c9997;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}
+
+.vehicle-specs span {
+    display: inline-flex;
+    align-items: center;
+}
+
+.vehicle-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.75rem;
+    border-top: 1px solid #f0f0f0;
+}
+
+.vehicle-price {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #b89658;
+}
+
+.btn-view {
+    padding: 0.5rem 1.25rem;
+    background: #1d1b19;
+    color: white;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.btn-view:hover {
+    background: #b89658;
+}
+
+/* ===========================================
+   SECCIÓN 7: RESPONSIVE
+   =========================================== */
+
+/* Tablets */
+@media (max-width: 968px) {
+    .catalog-main .vehicles-grid,
+    .catalog-section .vehicles-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+        gap: 1.25rem !important;
+    }
+
+    .featured-section .vehicle-card {
+        flex: 0 0 300px !important;
+        min-width: 300px !important;
+        max-width: 300px !important;
+    }
+
+    .vehicle-image {
+        height: 200px;
+    }
+}
+
+/* Móvil */
+@media (max-width: 640px) {
+    .catalog-main .vehicles-grid,
+    .catalog-section .vehicles-grid,
+    .favorites-section .vehicles-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+
+    .featured-section .vehicles-grid {
+        gap: 1rem !important;
+        padding: 0.5rem 0 1rem 0 !important;
+    }
+
+    .featured-section .vehicle-card {
+        flex: 0 0 280px !important;
+        min-width: 280px !important;
+        max-width: 280px !important;
+    }
+
+    .vehicle-image {
+        height: 180px;
+    }
+
+    .vehicle-info {
+        padding: 1rem;
+    }
+
+    .vehicle-title {
+        font-size: 1rem;
+    }
+
+    .vehicle-price {
+        font-size: 1.1rem;
+    }
+
+    .badge {
+        font-size: 0.65rem;
+        padding: 3px 8px;
+    }
+
+    .favorite-btn {
+        width: 34px;
+        height: 34px;
+        font-size: 1.1rem;
+    }
+
+    /* .btn-compare responsive - estilos en comparador.css */
+
+    .vehicle-actions {
+        gap: 6px;
+    }
+}

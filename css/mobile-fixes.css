@@ -1,0 +1,895 @@
+/* ============================================
+   CORRECCIONES MÓVILES FINAL - ALTORRA CARS
+   Optimizado para iPhone y todos los móviles
+   ============================================ */
+
+/* .mob-actions se oculta por defecto en style.css
+   y se activa dentro del @media max-width: 968px de abajo */
+
+/* ===== PREVENCIÓN DE DESBORDAMIENTO ===== */
+html {
+    overflow-x: hidden;
+    max-width: 100vw;
+}
+
+body {
+    overflow-x: hidden;
+    max-width: 100vw;
+    position: relative;
+}
+
+/* ===== MÓVILES (hasta 640px) ===== */
+@media (max-width: 640px) {
+    
+    /* Container con padding seguro */
+    .container {
+        padding: 0 1rem;
+        max-width: 100%;
+    }
+    
+    /* ===== HEADER MEJORADO ===== */
+    #header {
+        padding: 0.5rem 0;
+    }
+    
+    .navbar {
+        padding: 0.5rem 0;
+    }
+    
+    .nav-wrapper {
+        padding: 0 0.75rem;
+        gap: 0.5rem;
+    }
+    
+    /* Logo compacto pero visible */
+    #logo-img {
+        height: 45px;
+        width: auto;
+    }
+    
+    .logo {
+        gap: 8px;
+        flex-shrink: 0;
+    }
+    
+    .logo-text {
+        font-size: 0.75rem;
+        line-height: 1;
+        letter-spacing: -0.3px;
+    }
+    
+    /* ===== BOTÓN FAVORITOS OPTIMIZADO ===== */
+    /* nav-actions y nav-item-mobile-only se controlan desde max-width: 968px */
+    
+    /* ===== HAMBURGER MEJORADO ===== */
+    .hamburger {
+        width: 28px;
+        height: 28px;
+        padding: 4px;
+        gap: 4px;
+        margin-right: 0.25rem;
+        flex-shrink: 0;
+    }
+    
+    .hamburger span {
+        width: 100%;
+        height: 2.5px;
+        background: var(--primary-dark);
+        border-radius: 2px;
+    }
+    
+    /* Hero → ver css/hero.css para responsive */
+
+    /* ===== GRIDS OPTIMIZADOS ===== */
+    .vehicles-grid,
+    .categories-grid,
+    .services-grid,
+    .features-grid,
+    .testimonials-grid,
+    .reasons-grid,
+    .contact-grid,
+    .footer-grid,
+    .catalog-layout,
+    .detail-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1rem;
+    }
+
+    /* Similar vehicles carousel - keep horizontal on mobile */
+    .similar-section .vehicles-grid {
+        display: flex !important;
+        flex-direction: row !important;
+        grid-template-columns: unset !important;
+        overflow-x: auto !important;
+    }
+    
+    /* Brands carousel — override grid on mobile */
+    .brands-grid.brands-carousel {
+        display: block !important;
+        grid-template-columns: none !important;
+    }
+
+    .brand-card {
+        padding: 1rem;
+    }
+
+    /* Brand carousel - no arrows on mobile, swipe only */
+    .brands-carousel-wrapper {
+        padding: 0;
+    }
+
+    .brands-arrow {
+        display: none !important;
+    }
+
+    /* Price block stacking on mobile */
+    .vehicle-price-block {
+        line-height: 1.1;
+    }
+    .vehicle-price-original {
+        font-size: 0.75rem !important;
+    }
+    .vehicle-price-offer {
+        font-size: 1.1rem !important;
+    }
+    
+    /* ===== SECTION HEADERS ===== */
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.4rem !important;
+        line-height: 1.2;
+    }
+    
+    .view-all {
+        font-size: 0.9rem;
+        padding: 0.4rem 0.9rem;
+    }
+    
+    /* ===== VEHICLE CARDS ===== */
+    .vehicle-card {
+        margin-bottom: 0.5rem;
+    }
+    
+    .vehicle-image {
+        height: 200px;
+    }
+    
+    .vehicle-info {
+        padding: 1rem;
+    }
+    
+    .vehicle-title {
+        font-size: 1rem;
+        line-height: 1.3;
+    }
+    
+    .vehicle-specs {
+        font-size: 0.85rem;
+    }
+    
+    .vehicle-price {
+        font-size: 1.2rem;
+    }
+    
+    .btn-view {
+        padding: 0.5rem 1.2rem;
+        font-size: 0.9rem;
+    }
+    
+    /* ===== FILTROS SIDEBAR ===== */
+    .filters-sidebar {
+        position: static !important;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+    }
+    
+    .filter-group {
+        margin-bottom: 1rem;
+    }
+    
+    .filter-label {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .filter-select,
+    .filter-input {
+        padding: 0.65rem;
+        font-size: 0.95rem;
+    }
+    
+    /* ===== RESULTS HEADER ===== */
+    .results-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+    
+    .results-info p {
+        font-size: 0.95rem;
+    }
+    
+    .sort-select {
+        width: 100%;
+        padding: 0.65rem;
+    }
+    
+    /* ===== SEARCH FORM ===== */
+    .search-form-grid,
+    .search-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.75rem;
+    }
+    
+    .search-input {
+        padding: 0.65rem 1rem;
+        font-size: 0.95rem;
+    }
+    
+    .btn-search {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.95rem;
+    }
+    
+    .search-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .btn-search-submit,
+    .btn-search-clear {
+        width: 100%;
+        padding: 0.75rem;
+    }
+    
+    /* ===== DETAIL PAGE ===== */
+    .detail-specs-grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .features-list {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .detail-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .btn-contact-whatsapp,
+    .btn-contact-form {
+        width: 100%;
+        padding: 0.85rem;
+    }
+    
+    /* ===== CTA SECTION ===== */
+    .cta-section {
+        padding: 2.5rem 0;
+    }
+    
+    .cta-content h2 {
+        font-size: 1.5rem !important;
+        margin-bottom: 0.75rem;
+    }
+    
+    .cta-content p {
+        font-size: 1rem !important;
+        margin-bottom: 1.5rem;
+    }
+    
+    .cta-buttons {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.75rem;
+    }
+    
+    .btn-cta-primary,
+    .btn-cta-whatsapp {
+        width: 100%;
+        padding: 0.9rem 1.5rem;
+        font-size: 0.95rem;
+    }
+    
+    /* ===== PAGINATION ===== */
+    .pagination {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.4rem;
+        padding: 1.5rem 0;
+    }
+    
+    .pagination-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+        min-width: 38px;
+    }
+
+    /* ===== PAGE HEADER ===== */
+    .page-header {
+        padding: 5.5rem 0 2rem;
+    }
+    
+    .page-title {
+        font-size: 1.75rem !important;
+        line-height: 1.2;
+    }
+    
+    .page-subtitle {
+        font-size: 1rem !important;
+    }
+    
+    /* ===== FOOTER ===== */
+    .footer {
+        padding: 2rem 0 1rem;
+    }
+    
+    .footer-col {
+        margin-bottom: 1.5rem;
+    }
+    
+    .footer-title {
+        font-size: 1.2rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .footer-subtitle {
+        font-size: 0.95rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .footer-text,
+    .footer-contact p {
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+    
+    .footer-links a {
+        font-size: 0.9rem;
+        padding: 0.4rem 0;
+    }
+    
+    .footer-bottom {
+        font-size: 0.85rem;
+        padding-top: 1rem;
+    }
+    
+    /* ===== CONTACT PAGE ===== */
+    .contact-form-container h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1.25rem;
+    }
+    
+    .form-group label {
+        font-size: 0.9rem;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 0.7rem 1rem;
+        font-size: 0.95rem;
+    }
+    
+    .btn-submit {
+        padding: 0.85rem 1.5rem;
+        font-size: 0.95rem;
+    }
+    
+    .info-card {
+        padding: 1.25rem;
+    }
+    
+    .info-icon {
+        font-size: 2rem;
+    }
+    
+    .info-card h3 {
+        font-size: 1.1rem;
+    }
+    
+    .btn-whatsapp {
+        padding: 0.65rem 1.2rem;
+        font-size: 0.9rem;
+    }
+    
+    /* ===== ABOUT PAGE ===== */
+    .about-content h2 {
+        font-size: 1.5rem;
+        margin: 1.5rem 0 1rem;
+    }
+    
+    .about-content p {
+        font-size: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .values-list li {
+        font-size: 0.95rem;
+        padding: 0.6rem 0 0.6rem 1rem;
+    }
+    
+    .reason-card {
+        padding: 1.25rem;
+    }
+    
+    .reason-card h3 {
+        font-size: 1.1rem;
+    }
+    
+    .contact-cta h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1.25rem;
+    }
+}
+
+/* ===== TABLETS (641px - 968px) ===== */
+@media (min-width: 641px) and (max-width: 968px) {
+    
+    /* Logo tablet */
+    #logo-img {
+        height: 55px;
+    }
+    
+    .logo-text {
+        font-size: 0.9rem;
+    }
+    
+    /* Favoritos tablet: se muestra en el menú desplegable, no en el header */
+    
+    /* Hero tablet */
+    .hero {
+        min-height: 550px;
+    }
+    
+    .hero-title {
+        font-size: 2rem !important;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.1rem !important;
+    }
+    
+    /* Grids de 2 columnas */
+    .vehicles-grid,
+    .categories-grid,
+    .services-grid,
+    .features-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    
+    /* Brands carousel — override grid on tablet */
+    .brands-grid.brands-carousel {
+        display: block !important;
+        grid-template-columns: none !important;
+    }
+    
+    /* Otros grids en 1 columna */
+    .contact-grid,
+    .catalog-layout,
+    .detail-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Similar vehicles carousel - keep horizontal on tablet */
+    .similar-section .vehicles-grid {
+        display: flex !important;
+        flex-direction: row !important;
+        grid-template-columns: unset !important;
+        overflow-x: auto !important;
+    }
+    
+    .filters-sidebar {
+        position: static !important;
+        margin-bottom: 1.5rem;
+    }
+}
+
+/* ===== MENÚ MÓVIL (hasta 968px) ===== */
+@media (max-width: 968px) {
+    
+    /* Hamburger visible */
+    .hamburger {
+        display: flex !important;
+        z-index: 1002;
+    }
+    
+    /* Menú oculto por defecto - AJUSTADO */
+    .nav-menu {
+        position: fixed;
+        top: 60px; /* Altura del header reducida */
+        left: -100%;
+        width: 100%;
+        height: calc(100vh - 60px);
+        background: white;
+        flex-direction: column;
+        padding: 0;
+        margin: 0;
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow-y: auto;
+        overflow-x: hidden;
+        z-index: 998;
+        box-shadow: 2px 0 15px rgba(0,0,0,0.15);
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Menú activo */
+    .nav-menu.active {
+        left: 0;
+    }
+    
+    /* Lista de navegación */
+    .nav-list {
+        flex-direction: column;
+        width: 100%;
+        gap: 0;
+        padding: 0;
+        margin: 0;
+    }
+    
+    /* Items de navegación */
+    .nav-item {
+        width: 100%;
+        border-bottom: 1px solid #f5f5f5;
+    }
+    
+    /* Links principales */
+    .nav-link {
+        display: block;
+        width: 100%;
+        padding: 1rem 1.5rem;
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--primary-dark);
+    }
+    
+    /* Dropdown en móvil */
+    .dropdown-menu {
+        position: static !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: none !important;
+        box-shadow: none !important;
+        background: rgba(184, 150, 88, 0.04);
+        padding: 0;
+        margin: 0;
+        border-radius: 0;
+        display: none;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-in-out;
+    }
+    
+    .dropdown.active .dropdown-menu {
+        display: block;
+        max-height: 500px;
+    }
+    
+    .dropdown-menu li {
+        border-bottom: 1px solid rgba(0,0,0,0.03);
+    }
+    
+    .dropdown-menu a {
+        padding: 0.85rem 2.5rem;
+        font-size: 0.95rem;
+        color: var(--text-gray);
+        display: block;
+    }
+    
+    .dropdown-menu a:hover {
+        background: rgba(184, 150, 88, 0.08);
+        color: var(--primary-gold);
+    }
+    
+    /* Indicador de dropdown */
+    .dropdown > .nav-link::after {
+        content: '▼';
+        float: right;
+        font-size: 0.7rem;
+        transition: transform 0.3s ease;
+        color: var(--primary-gold);
+    }
+    
+    .dropdown.active > .nav-link::after {
+        transform: rotate(180deg);
+    }
+    
+    /* Ocultar botones del header cuando el hamburger está activo */
+    .nav-actions {
+        display: none !important;
+    }
+
+    /* Mostrar sección de auth/favoritos dentro del menú deslizable */
+    .mob-actions {
+        display: block !important;
+    }
+    
+    /* Overlay oscuro cuando el menú está abierto */
+    body.menu-open::before {
+        content: '';
+        position: fixed;
+        top: 60px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 997;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+    
+    body.menu-open.nav-menu-active::before {
+        opacity: 1;
+        pointer-events: all;
+    }
+}
+
+/* ===== LANDSCAPE EN MÓVILES ===== */
+@media (max-width: 968px) and (orientation: landscape) {
+    
+    .nav-menu {
+        height: calc(100vh - 55px);
+        top: 55px;
+    }
+    
+    .hero {
+        min-height: 400px;
+    }
+    
+    .hero-title {
+        font-size: 1.4rem !important;
+    }
+    
+    .hero-subtitle {
+        font-size: 0.85rem !important;
+    }
+}
+
+/* ===== PREVENCIÓN DE SCROLL HORIZONTAL ===== */
+* {
+    max-width: 100%;
+}
+
+img,
+video,
+iframe,
+.vehicle-image,
+.category-image,
+.hero {
+    max-width: 100%;
+    width: 100%;
+}
+
+/* ===== ACCESIBILIDAD Y TOUCH ===== */
+@media (max-width: 968px) {
+    
+    /* Áreas táctiles mínimas de 44x44px */
+    .nav-link,
+    .btn,
+    .mob-btn,
+    .hamburger {
+        min-height: 44px;
+    }
+    
+    /* Scroll suave en iOS */
+    .nav-menu {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Prevenir zoom en inputs en iOS */
+    input,
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+}
+
+/* ===== ANDROID COMPATIBILITY ===== */
+@media (max-width: 968px) {
+    /* Safe area padding for notched Android & iOS devices */
+    body {
+        padding-left: env(safe-area-inset-left, 0);
+        padding-right: env(safe-area-inset-right, 0);
+    }
+
+    /* Dynamic viewport for Android Chrome address bar */
+    .hero {
+        min-height: 100dvh;
+        min-height: 100vh; /* fallback */
+    }
+
+    .nav-menu {
+        height: calc(100dvh - 60px);
+        height: calc(100vh - 60px); /* fallback */
+    }
+
+    /* Suppress tap highlight on Android */
+    a, button, .btn, .vehicle-card, .brand-card, .category-card {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Fix touch scrolling for carousels on Android */
+    .vehicles-grid {
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
+    }
+
+    .vehicle-card {
+        scroll-snap-align: start;
+    }
+
+    /* Brands carousel touch-friendly padding */
+    .brands-carousel {
+        padding: 0.5rem 0;
+    }
+}
+
+/* ===== MEJORAS ADAPTATIVAS GLOBALES ===== */
+
+/* Tablets y pantallas medianas */
+@media (max-width: 968px) {
+    .carousel-container {
+        padding: 0 1.5rem var(--spacing-lg, 2rem) 1.5rem !important;
+    }
+
+    .carousel-container-inner {
+        margin: 0 -1.5rem !important;
+        padding: 0 1.5rem !important;
+    }
+
+    .commercial-section {
+        padding: 3rem 0 !important;
+    }
+
+    .commercial-card {
+        padding: 2rem 1.5rem !important;
+    }
+
+    .guarantee-card {
+        padding: 2rem 1.5rem !important;
+    }
+
+    .process-grid {
+        gap: 1.5rem !important;
+    }
+}
+
+/* Móviles */
+@media (max-width: 640px) {
+    /* Carousel */
+    .carousel-container {
+        padding: 0 1rem var(--spacing-md, 1.5rem) 1rem !important;
+    }
+
+    .carousel-container-inner {
+        margin: 0 -1rem !important;
+        padding: 0 1rem !important;
+    }
+
+    /* Commercial section */
+    .commercial-section {
+        padding: 2rem 0 !important;
+    }
+
+    .commercial-card {
+        padding: 1.5rem 1rem !important;
+    }
+
+    .commercial-card-title {
+        font-size: 1.2rem !important;
+    }
+
+    .commercial-card-text {
+        font-size: 0.85rem !important;
+    }
+
+    .btn-commercial {
+        padding: 0.75rem 1.2rem !important;
+        font-size: 0.85rem !important;
+    }
+
+    /* Guarantee */
+    .guarantee-card {
+        padding: 1.5rem 1rem !important;
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+
+    /* Process steps */
+    .process-grid {
+        gap: 1rem !important;
+    }
+
+    .process-step {
+        padding: 1.5rem 1rem !important;
+    }
+
+    .step-number {
+        width: 55px !important;
+        height: 55px !important;
+        font-size: 1.4rem !important;
+    }
+
+    /* Brands carousel - no arrows on mobile */
+    .brands-carousel-wrapper {
+        padding: 0 !important;
+    }
+
+    /* Search container */
+    .search-container {
+        padding: 0.75rem !important;
+        margin: 0.75rem 0 !important;
+    }
+
+    /* Toggle filters button */
+    .toggle-filters-btn {
+        max-width: 100% !important;
+        width: calc(100% - 2rem) !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+    /* All section titles */
+    .section-header h2,
+    .section-header .section-title {
+        font-size: 1.3rem !important;
+    }
+
+    /* Prevent any horizontal overflow */
+    .container,
+    .section,
+    main,
+    .catalog-main,
+    .catalog-section {
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+    }
+}
+
+/* Pantallas extra pequeñas (< 380px) */
+@media (max-width: 380px) {
+    .container {
+        padding: 0 0.65rem !important;
+    }
+
+    .commercial-card {
+        padding: 1.25rem 0.75rem !important;
+    }
+
+    .process-step {
+        padding: 1.25rem 0.75rem !important;
+    }
+
+    .guarantee-card {
+        padding: 1.25rem 0.75rem !important;
+    }
+}
+
+/* ===== OPTIMIZACIONES DE RENDIMIENTO ===== */
+@media (max-width: 968px) {
+
+    /* Hardware acceleration */
+    .nav-menu,
+    .hamburger,
+    .dropdown-menu {
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+        will-change: transform;
+    }
+
+    /* Reducir motion para usuarios que lo prefieran */
+    @media (prefers-reduced-motion: reduce) {
+        * {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+}

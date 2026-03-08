@@ -1,0 +1,226 @@
+/* ============================================
+   FAVORITOS VACÍO - DISEÑO OPTIMIZADO
+   Sistema mejorado con mejor especificidad CSS
+   Sin uso excesivo de !important
+   ============================================ */
+
+/* Sección principal - Full viewport */
+body .favorites-section.favorites-section {
+    min-height: calc(100vh - 160px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 0;
+    background: #fafafa;
+    width: 100%;
+    margin: 0;
+}
+
+/* CRÍTICO: Sobrescribir .container global de style.css
+   que tiene max-width: 1200px y padding lateral */
+body .favorites-section > .container.container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Vehicles grid cuando está vacío */
+body .favorites-section .vehicles-grid.vehicles-grid {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* Contenedor de contenido vacío */
+body .no-favorites.no-favorites {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 20px;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+/* ============================================
+   FIX CRÍTICO: Grid Layout Issue
+
+   .no-favorites se inserta dentro de .vehicles-grid que es
+   display:grid con múltiples columnas. Sin este fix, solo
+   ocupa la primera columna y se pega a la izquierda.
+   ============================================ */
+body .favorites-section .vehicles-grid > .no-favorites {
+    grid-column: 1 / -1;   /* Ocupa TODAS las columnas del grid */
+    justify-self: center;  /* Centra el item dentro del grid */
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Icono corazón grande */
+.no-favorites .no-favorites-icon {
+    font-size: 120px;
+    color: #d4d4d4;
+    margin-bottom: 30px;
+    line-height: 1;
+    animation: heartPulse 2s ease-in-out infinite;
+}
+
+@keyframes heartPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* Título principal */
+.no-favorites h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1d1b19;
+    margin: 0 0 15px 0;
+    letter-spacing: -0.5px;
+}
+
+/* Texto descriptivo */
+.no-favorites p {
+    font-size: 1.1rem;
+    color: #666;
+    margin: 0 0 40px 0;
+    line-height: 1.6;
+    max-width: 600px;
+}
+
+/* ============================================
+   BOTONES - HORIZONTAL EN PC
+   ============================================ */
+
+/* Wrapper de botones - HORIZONTAL POR DEFECTO */
+body .no-favorites .no-favorites-actions {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 20px;
+    box-sizing: border-box;
+    flex-wrap: wrap;
+}
+
+/* Estilos individuales de botones */
+body .no-favorites .btn-catalog {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 32px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: none;
+    white-space: nowrap;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    flex: 0 1 auto;
+    min-width: 200px;
+    max-width: 280px;
+    box-sizing: border-box;
+}
+
+/* Botón principal (dorado) */
+body .no-favorites .btn-catalog-primary {
+    background: linear-gradient(135deg, #916652 0%, #b89658 100%);
+    color: white;
+}
+
+body .no-favorites .btn-catalog-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 25px rgba(145, 102, 82, 0.35);
+}
+
+/* Botones secundarios (outline) */
+body .no-favorites .btn-catalog-secondary {
+    background: white;
+    color: #916652;
+    border: 2px solid #b89658;
+}
+
+body .no-favorites .btn-catalog-secondary:hover {
+    background: #f9f6f1;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(145, 102, 82, 0.2);
+}
+
+body .no-favorites .btn-catalog:active {
+    transform: translateY(0);
+}
+
+/* ============================================
+   RESPONSIVE - MÓVIL ÚNICAMENTE
+   ============================================ */
+
+/* Tablets medianas y menores */
+@media (max-width: 768px) {
+    body .favorites-section {
+        min-height: calc(100vh - 200px);
+        padding: 40px 20px;
+    }
+
+    body .no-favorites {
+        padding: 30px 20px;
+    }
+
+    .no-favorites .no-favorites-icon {
+        font-size: 100px;
+        margin-bottom: 25px;
+    }
+
+    .no-favorites h2 {
+        font-size: 1.8rem;
+    }
+
+    .no-favorites p {
+        font-size: 1rem;
+        margin-bottom: 35px;
+    }
+
+    /* CAMBIAR A VERTICAL EN MÓVIL */
+    body .no-favorites .no-favorites-actions {
+        flex-direction: column;
+        max-width: 100%;
+        gap: 14px;
+        padding: 0;
+    }
+
+    body .no-favorites .btn-catalog {
+        width: 100%;
+        max-width: 100%;
+        min-width: auto;
+    }
+}
+
+/* Móvil pequeño */
+@media (max-width: 480px) {
+    .no-favorites .no-favorites-icon {
+        font-size: 90px;
+    }
+
+    .no-favorites h2 {
+        font-size: 1.6rem;
+    }
+
+    body .no-favorites .btn-catalog {
+        padding: 14px 24px;
+        font-size: 0.95rem;
+    }
+}

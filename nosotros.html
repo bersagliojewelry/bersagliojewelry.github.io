@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Nosotros | ALTORRA CARS</title>
+    <meta name="description" content="ALTORRA CARS - Division automotriz de ALTORRA Company SAS. Vehiculos nuevos y usados en Cartagena, Colombia.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://altorracars.github.io/nosotros.html">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://altorracars.github.io/nosotros.html">
+    <meta property="og:title" content="Sobre Nosotros | ALTORRA CARS - Cartagena">
+    <meta property="og:description" content="Conoce ALTORRA CARS, tu concesionario de confianza en Cartagena, Colombia.">
+    <meta property="og:image" content="https://altorracars.github.io/multimedia/heroindex.webp">
+    <meta property="og:site_name" content="ALTORRA CARS">
+    <meta property="og:locale" content="es_CO">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/mobile-fixes.css">
+    <link rel="stylesheet" href="css/vehicles-cards-fix.css">
+    <link rel="stylesheet" href="css/sidebar-filters-fix.css">
+    <link rel="stylesheet" href="css/footer-fixes.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/dark-theme.css">
+    <style>
+        /* Hero */
+        .about-hero {
+            background: linear-gradient(135deg, #1d1b19 0%, #2a2420 50%, #1d1b19 100%);
+            color: white;
+            padding: calc(70px + 5rem) 0 5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .about-hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(ellipse at 20% 80%, rgba(184,150,88,0.12) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 20%, rgba(145,102,82,0.08) 0%, transparent 50%);
+        }
+
+        .about-hero .container { position: relative; z-index: 1; }
+
+        .about-hero h1 {
+            font-size: 2.8rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            letter-spacing: -0.5px;
+        }
+
+        .about-hero h1 span {
+            background: linear-gradient(135deg, #d4af37, #b89658);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .about-hero p {
+            font-size: 1.15rem;
+            color: rgba(255,255,255,0.65);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
+
+        .about-hero .company-tag {
+            display: inline-block;
+            margin-top: 1.5rem;
+            padding: 0.5rem 1.25rem;
+            border: 1px solid rgba(184,150,88,0.4);
+            border-radius: 30px;
+            color: #b89658;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        /* Mission/Vision/Values */
+        .about-pillars {
+            padding: 5rem 0;
+            background: #f9fafb;
+        }
+
+        .pillars-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+
+        .pillar-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+            border: 1px solid rgba(0,0,0,0.06);
+            text-align: center;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pillar-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #b89658, #916652);
+        }
+
+        .pillar-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+        }
+
+        .pillar-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(184,150,88,0.12), rgba(184,150,88,0.04));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.25rem;
+            color: #b89658;
+        }
+
+        .pillar-card h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1d1b19;
+            margin-bottom: 0.75rem;
+        }
+
+        .pillar-card p {
+            font-size: 0.9rem;
+            color: #6b7280;
+            line-height: 1.7;
+        }
+
+        /* Values Section */
+        .about-values {
+            padding: 5rem 0;
+            background: white;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-header h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #1d1b19;
+            margin-bottom: 0.5rem;
+        }
+
+        .section-header p {
+            color: #6b7280;
+            font-size: 1rem;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .section-header .accent-line {
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(135deg, #b89658, #916652);
+            border-radius: 2px;
+            margin: 0.75rem auto 0;
+        }
+
+        .values-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+        }
+
+        .value-card {
+            padding: 1.75rem;
+            border-radius: 14px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .value-card:hover {
+            border-color: #b89658;
+            box-shadow: 0 4px 16px rgba(184,150,88,0.1);
+        }
+
+        .value-card .value-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.5rem;
+        }
+
+        .value-card:nth-child(1) .value-icon { background: rgba(184,150,88,0.1); }
+        .value-card:nth-child(2) .value-icon { background: rgba(56,162,142,0.1); }
+        .value-card:nth-child(3) .value-icon { background: rgba(59,130,246,0.1); }
+        .value-card:nth-child(4) .value-icon { background: rgba(139,92,246,0.1); }
+
+        .value-card h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1d1b19;
+            margin-bottom: 0.5rem;
+        }
+
+        .value-card p {
+            font-size: 0.85rem;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        /* Why Us */
+        .about-why {
+            padding: 5rem 0;
+            background: linear-gradient(135deg, #1d1b19 0%, #2a2420 100%);
+            color: white;
+        }
+
+        .about-why .section-header h2 { color: white; }
+        .about-why .section-header p { color: rgba(255,255,255,0.6); }
+
+        .why-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+
+        .why-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .why-card:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(184,150,88,0.4);
+            transform: translateY(-2px);
+        }
+
+        .why-card .why-number {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #b89658, #916652);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-weight: 800;
+            font-size: 1.1rem;
+        }
+
+        .why-card h4 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .why-card p {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.6);
+            line-height: 1.6;
+        }
+
+        /* CTA Section */
+        .about-cta {
+            padding: 5rem 0;
+            background: #f9fafb;
+            text-align: center;
+        }
+
+        .about-cta h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #1d1b19;
+            margin-bottom: 0.75rem;
+        }
+
+        .about-cta p {
+            color: #6b7280;
+            font-size: 1rem;
+            max-width: 500px;
+            margin: 0 auto 2rem;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .cta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 2rem;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+
+        .cta-btn.primary {
+            background: linear-gradient(135deg, #b89658, #916652);
+            color: white;
+        }
+
+        .cta-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(184,150,88,0.3);
+        }
+
+        .cta-btn.secondary {
+            background: white;
+            color: #1d1b19;
+            border: 2px solid #e5e7eb;
+        }
+
+        .cta-btn.secondary:hover {
+            border-color: #b89658;
+            color: #b89658;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .pillars-grid { grid-template-columns: 1fr; }
+            .values-grid { grid-template-columns: 1fr 1fr; }
+            .why-grid { grid-template-columns: 1fr; }
+            .about-hero h1 { font-size: 2rem; }
+        }
+
+        @media (max-width: 600px) {
+            .values-grid { grid-template-columns: 1fr; }
+            .about-hero { padding: calc(70px + 3rem) 0 3rem; }
+            .about-hero h1 { font-size: 1.7rem; }
+            .about-pillars, .about-values, .about-why, .about-cta { padding: 3rem 0; }
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <section class="about-hero">
+        <div class="container">
+            <h1>Somos <span>ALTORRA CARS</span></h1>
+            <p>Mas que un concesionario, somos tu aliado en la compra de vehiculos nuevos y usados. Ofrecemos transparencia, financiacion flexible y atencion personalizada en Cartagena.</p>
+            <span class="company-tag">ALTORRA Company SAS</span>
+        </div>
+    </section>
+
+    <section class="about-pillars">
+        <div class="container">
+            <div class="pillars-grid">
+                <div class="pillar-card">
+                    <div class="pillar-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                    </div>
+                    <h3>Nuestra Mision</h3>
+                    <p>Facilitar el acceso a vehiculos de calidad, brindando asesoria profesional, financiacion flexible y un proceso de compra transparente para cada uno de nuestros clientes en la region Caribe colombiana.</p>
+                </div>
+                <div class="pillar-card">
+                    <div class="pillar-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </div>
+                    <h3>Nuestra Vision</h3>
+                    <p>Ser la empresa lider en venta de vehiculos en Cartagena y la Costa Caribe, reconocida por la calidad de nuestros productos, la transparencia en nuestros procesos y la excelencia en servicio.</p>
+                </div>
+                <div class="pillar-card">
+                    <div class="pillar-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <h3>Nuestro Compromiso</h3>
+                    <p>Cada vehiculo pasa por inspeccion tecnica completa con peritaje certificado. Garantizamos que la informacion sea precisa y que el proceso de compra sea seguro y sin sorpresas.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="about-values">
+        <div class="container">
+            <div class="section-header">
+                <h2>Nuestros Valores</h2>
+                <p>Los pilares que guian cada decision y cada interaccion con nuestros clientes.</p>
+                <div class="accent-line"></div>
+            </div>
+            <div class="values-grid">
+                <div class="value-card">
+                    <div class="value-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#b89658" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+                    </div>
+                    <h4>Transparencia</h4>
+                    <p>Informacion clara y honesta en cada transaccion, sin letras pequenas.</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38a28e" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    </div>
+                    <h4>Calidad</h4>
+                    <p>Vehiculos certificados que cumplen los mas altos estandares de revision.</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </div>
+                    <h4>Servicio</h4>
+                    <p>Atencion personalizada y acompanamiento en cada etapa del proceso.</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+                    </div>
+                    <h4>Confianza</h4>
+                    <p>Relaciones duraderas basadas en el respeto y la honestidad.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="about-why">
+        <div class="container">
+            <div class="section-header">
+                <h2>Por que elegirnos</h2>
+                <p>Razones claras para confiar en ALTORRA CARS</p>
+                <div class="accent-line"></div>
+            </div>
+            <div class="why-grid">
+                <div class="why-card">
+                    <div class="why-number">1</div>
+                    <h4>Amplio Inventario</h4>
+                    <p>Vehiculos nuevos y usados de todas las marcas, con opciones para cada presupuesto y necesidad.</p>
+                </div>
+                <div class="why-card">
+                    <div class="why-number">2</div>
+                    <h4>Inspeccion Certificada</h4>
+                    <p>Cada vehiculo usado pasa por revision tecnico-mecanica completa y peritaje profesional antes de la venta.</p>
+                </div>
+                <div class="why-card">
+                    <div class="why-number">3</div>
+                    <h4>Financiacion Flexible</h4>
+                    <p>Planes de financiacion adaptados a tu capacidad de pago. Simula tu credito directamente en nuestra plataforma.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="about-cta">
+        <div class="container">
+            <h2>Listo para encontrar tu auto ideal?</h2>
+            <p>Explora nuestro catalogo o contactanos para recibir asesoria personalizada sin compromiso.</p>
+            <div class="cta-buttons">
+                <a href="vehiculos-usados.html" class="cta-btn primary">Ver Catalogo</a>
+                <a href="contacto.html" class="cta-btn secondary">Contactanos</a>
+            </div>
+        </div>
+    </section>
+
+    <div id="footer-placeholder"></div>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/cache-manager.js"></script>
+</body>
+</html>

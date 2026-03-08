@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Búsqueda Avanzada | ALTORRA CARS</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/mobile-fixes.css">
+    <link rel="stylesheet" href="css/vehicles-cards-fix.css">
+    <link rel="stylesheet" href="css/sidebar-filters-fix.css">
+    <link rel="stylesheet" href="css/footer-fixes.css">
+    <link rel="stylesheet" href="css/toast-notifications.css">
+    <link rel="stylesheet" href="css/comparador.css">
+    <link rel="stylesheet" href="css/filtros-avanzados.css">
+    <link rel="stylesheet" href="css/dark-theme.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .toggle-filters-btn {
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto 20px;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, #b89658 0%, #916652 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            box-shadow: 0 4px 15px rgba(184, 150, 88, 0.3);
+        }
+        .toggle-filters-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(184, 150, 88, 0.4);
+        }
+        .toggle-filters-btn .filter-icon {
+            font-size: 1.3rem;
+        }
+        .toggle-filters-btn .filter-arrow {
+            margin-left: auto;
+            transition: transform 0.3s ease;
+        }
+        .advanced-search-form.collapsed {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: max-height 0.4s ease, opacity 0.3s ease, transform 0.3s ease;
+        }
+        .advanced-search-form {
+            max-height: 2000px;
+            opacity: 1;
+            transform: translateY(0);
+            transition: max-height 0.4s ease, opacity 0.3s ease, transform 0.3s ease;
+        }
+        @media (max-width: 768px) {
+            .toggle-filters-btn {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <section class="brand-hero">
+        <div class="brand-hero-overlay"></div>
+        <img src="multimedia/categories/BUSQUEDA.webp" alt="Búsqueda Avanzada" class="brand-hero-bg">
+    </section>
+
+    <section class="search-advanced-section">
+        <div class="container">
+            <button type="button" id="toggleFilters" class="toggle-filters-btn">
+                <span class="filter-icon">🔍</span>
+                <span class="filter-text">Mostrar filtros</span>
+                <span class="filter-arrow">▼</span>
+            </button>
+            <form id="advancedSearchForm" class="advanced-search-form collapsed">
+                <div class="search-form-grid">
+                    <div class="form-group">
+                        <label>Tipo de Vehículo</label>
+                        <select name="tipo" id="tipoSelect">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Marca</label>
+                        <select name="marca" id="marcaSelect">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Categoría</label>
+                        <select name="categoria" id="categoriaSelect">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Transmisión</label>
+                        <select name="transmision" id="transmisionSelect">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    <!-- FASE 3: Filtro de Combustible -->
+                    <div class="form-group">
+                        <label>Combustible</label>
+                        <select name="combustible" id="combustibleSelect">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Precio Mínimo</label>
+                        <input type="number" name="precioMin" placeholder="Ej: 40000000">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio Máximo</label>
+                        <input type="number" name="precioMax" placeholder="Ej: 100000000">
+                    </div>
+                    <div class="form-group">
+                        <label>Año Desde</label>
+                        <input type="number" name="yearMin" min="2000" max="2026">
+                    </div>
+                    <div class="form-group">
+                        <label>Año Hasta</label>
+                        <input type="number" name="yearMax" min="2000" max="2026">
+                    </div>
+                    <!-- FASE 3: Filtro de Kilometraje -->
+                    <div class="form-group">
+                        <label>Kilometraje Máximo</label>
+                        <input type="number" name="kilometrajeMax" placeholder="Ej: 50000">
+                    </div>
+                    <!-- FASE 3: Opciones Especiales -->
+                    <div class="form-group">
+                        <label>Opciones</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="destacado" value="true">
+                                Solo Destacados
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="oferta" value="true">
+                                Solo Ofertas
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="search-actions">
+                    <button type="submit" class="btn-search-submit">Buscar Vehículos</button>
+                    <button type="button" id="clearSearch" class="btn-search-clear">Limpiar Búsqueda</button>
+                </div>
+            </form>
+        </div>
+    </section>
+    <section class="search-results-section">
+        <div class="container">
+            <div class="results-header">
+                <div class="results-info">
+                    <h2><span id="resultsCount">0</span> vehículos encontrados</h2>
+                </div>
+                <div class="results-sort">
+                    <label for="sortBy">Ordenar por:</label>
+                    <select id="sortBy" class="sort-select">
+                        <option value="precio-asc">Precio: Menor a Mayor</option>
+                        <option value="precio-desc">Precio: Mayor a Menor</option>
+                        <option value="year-desc">Año: Más Reciente</option>
+                        <option value="km-asc">Kilometraje: Menor</option>
+                    </select>
+                </div>
+            </div>
+            <div class="vehicles-grid" id="searchResults"></div>
+            <div id="pagination"></div>
+        </div>
+    </section>
+    <div id="footer-placeholder"></div>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/favorites-manager.js"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/dynamic-lists.js"></script>
+    <script src="js/render.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/comparador.js"></script>
+    <script src="js/filtros-avanzados.js"></script>
+    <script>
+        let currentPage = 1;
+        const itemsPerPage = 12;
+        let currentFilters = {};
+        let currentSort = 'precio-asc';
+        
+        async function performSearch() {
+            showLoading('searchResults');
+            await vehicleDB.load();
+            let vehicles = vehicleDB.filter(currentFilters);
+            vehicles = vehicleDB.sort(vehicles, currentSort);
+            document.getElementById('resultsCount').textContent = vehicles.length;
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            renderVehicles(vehicles.slice(start, end), 'searchResults');
+            renderPagination(vehicles.length, currentPage, itemsPerPage, 'pagination');
+        }
+        
+        window.goToPage = function(page) {
+            currentPage = page;
+            performSearch();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+        
+        // Cargar filtros dinámicos desde Firestore
+        async function loadDynamicFilters() {
+            await vehicleDB.load();
+            await DynamicLists.load();
+            DynamicLists.populatePageFilters();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Leer término de búsqueda desde URL (ej. ?buscar=Toyota desde el hero)
+            const buscarParam = new URLSearchParams(window.location.search).get('buscar');
+            if (buscarParam) {
+                currentFilters.search = buscarParam;
+            }
+
+            loadDynamicFilters();
+
+            // Toggle filters button
+            const toggleBtn = document.getElementById('toggleFilters');
+            const form = document.getElementById('advancedSearchForm');
+            if (toggleBtn && form) {
+                toggleBtn.addEventListener('click', () => {
+                    form.classList.toggle('collapsed');
+                    const isCollapsed = form.classList.contains('collapsed');
+                    toggleBtn.querySelector('.filter-text').textContent = isCollapsed ? 'Mostrar filtros' : 'Ocultar filtros';
+                    toggleBtn.querySelector('.filter-arrow').textContent = isCollapsed ? '▼' : '▲';
+                });
+            }
+
+            document.getElementById('advancedSearchForm')?.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                currentFilters = {};
+                formData.forEach((value, key) => {
+                    if (value) currentFilters[key] = value;
+                });
+                currentPage = 1;
+                performSearch();
+            });
+
+            document.getElementById('clearSearch')?.addEventListener('click', () => {
+                document.getElementById('advancedSearchForm').reset();
+                currentFilters = {};
+                currentPage = 1;
+                performSearch();
+            });
+
+            document.getElementById('sortBy')?.addEventListener('change', (e) => {
+                currentSort = e.target.value;
+                performSearch();
+            });
+
+            // Integrar con filtros avanzados (sliders)
+            document.addEventListener('advancedFiltersChanged', (e) => {
+                const sliderValues = e.detail;
+                Object.assign(currentFilters, sliderValues);
+                currentPage = 1;
+                performSearch();
+            });
+
+            performSearch();
+        });
+    </script>
+
+    <!-- Cache Manager -->
+    <script src="js/cache-manager.js"></script>
+</body>
+</html>

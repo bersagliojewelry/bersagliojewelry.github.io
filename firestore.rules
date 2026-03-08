@@ -1,0 +1,154 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: get the caller's role from usuarios collection
+    function getUserRole() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol;
+    }
+
+    // Helper: check if caller has a valid profile
+    function hasProfile() {
+      return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid));
+    }
+
+    function isSuperAdmin() {
+      return request.auth != null && hasProfile() && getUserRole() == 'super_admin';
+    }
+
+    function isEditorOrAbove() {
+      return request.auth != null && hasProfile() && getUserRole() in ['super_admin', 'editor'];
+    }
+
+    function isAuthenticated() {
+      return request.auth != null && hasProfile();
+    }
+
+    // ========== VEHICULOS ==========
+    match /vehiculos/{vehiculoId} {
+      // Public catalog — anyone can browse the inventory
+      allow read: if true;
+
+      // Editor or Super Admin can create (must include _version = 1)
+      allow create: if isEditorOrAbove()
+        && request.resource.data._version == 1;
+
+      // Editor or Super Admin can update (must increment _version)
+      // Super Admin can always update (bypass version check for edge cases)
+      // Also allows migration of pre-versioning docs (_version was null → set to 1)
+      allow update: if isSuperAdmin()
+        || (isEditorOrAbove()
+          && (
+            request.resource.data._version == resource.data._version + 1
+            || (resource.data._version == null && request.resource.data._version == 1)
+          ));
+
+      // Only Super Admin can delete
+      allow delete: if isSuperAdmin();
+    }
+
+    // ========== CONCESIONARIOS ==========
+    match /concesionarios/{concesionarioId} {
+      // INTERNAL — only authenticated admin users can read dealer info
+      allow read: if isAuthenticated();
+      allow create, update: if isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // ========== MARCAS ==========
+    match /marcas/{marcaId} {
+      // Any authenticated user can read (public site also needs this)
+      allow read: if true;
+
+      // Editor or Super Admin can create and update
+      allow create, update: if isEditorOrAbove();
+
+      // Only Super Admin can delete
+      allow delete: if isSuperAdmin();
+    }
+
+    // ========== USUARIOS ==========
+    match /usuarios/{userId} {
+      // Super Admin can read all user profiles
+      // Any authenticated user can read their own profile
+      allow read: if request.auth != null && (request.auth.uid == userId || isSuperAdmin());
+
+      // Only Super Admin can create/update/delete user profiles
+      // (Cloud Functions with Admin SDK bypass rules, but this protects direct client access)
+      allow create, update, delete: if isSuperAdmin();
+
+      // ========== USER DRAFTS (subcollection) ==========
+      match /drafts/{draftId} {
+        // Users can read/write their own drafts
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // ========== RESENAS ==========
+    match /resenas/{resenaId} {
+      // Public read — reviews displayed on frontend
+      allow read: if true;
+      // Editor or Super Admin can create/update reviews
+      allow create, update: if isEditorOrAbove();
+      // Only Super Admin can delete
+      allow delete: if isSuperAdmin();
+    }
+
+    // ========== BANNERS ==========
+    match /banners/{bannerId} {
+      // Public read — banners displayed on frontend
+      allow read: if true;
+      // Editor or Super Admin can create/update banners
+      allow create, update: if isEditorOrAbove();
+      // Only Super Admin can delete
+      allow delete: if isSuperAdmin();
+    }
+
+    // ========== LEADS (future) ==========
+    match /leads/{leadId} {
+      allow read: if isAuthenticated();
+      allow create: if true; // Public forms can create leads
+      allow update, delete: if isSuperAdmin();
+    }
+
+    // ========== CITAS (future) ==========
+    match /citas/{citaId} {
+      allow read: if isAuthenticated();
+      allow create: if true; // Public can request appointments
+      allow update, delete: if isEditorOrAbove();
+    }
+
+    // ========== AUDIT LOG ==========
+    match /auditLog/{logId} {
+      allow read: if isAuthenticated();
+      allow create: if isEditorOrAbove();
+      // Super Admin can delete entries for activity management
+      allow delete: if isSuperAdmin();
+    }
+
+    // ========== CONFIG ==========
+    match /config/{docId} {
+      allow read: if true;
+      // Editors need write access to 'counters' doc for vehicle code generation
+      allow write: if isSuperAdmin()
+        || (isEditorOrAbove() && docId in ['counters', 'bookedSlots'])
+        || docId == 'bookedSlots';
+    }
+
+    // ========== SYSTEM (cache invalidation) ==========
+    // system/meta — documento público que el cache-manager lee para detectar
+    // cambios del admin o deploys de GitHub. lastModified se actualiza desde
+    // el admin panel; deployVersion se actualiza desde GitHub Actions.
+    match /system/{docId} {
+      // Lectura pública: cualquier visitante valida su caché contra este doc
+      allow read: if true;
+      // Escritura solo para admins (firebase-config.js la crea en el primer load)
+      allow write: if isEditorOrAbove() || !exists(/databases/$(database)/documents/system/$(docId));
+    }
+
+    // Default: deny everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

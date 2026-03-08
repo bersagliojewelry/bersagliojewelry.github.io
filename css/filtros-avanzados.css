@@ -1,0 +1,273 @@
+/* ============================================
+   FILTROS AVANZADOS CON SLIDERS - ALTORRA CARS
+   Range sliders duales para precio, año, km
+   ============================================ */
+
+/* ===== CONTENEDOR PRINCIPAL ===== */
+.advanced-sliders-container {
+    margin: 20px 0;
+    padding: 0;
+}
+
+.slider-section {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.slider-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0 0 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e5e7eb;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.slider-section-title svg {
+    color: #b89658;
+}
+
+/* ===== GRUPO DE SLIDER ===== */
+.range-slider-group {
+    margin-bottom: 24px;
+}
+
+.range-slider-group:last-of-type {
+    margin-bottom: 16px;
+}
+
+.range-slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.range-slider-header label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.range-values {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #b89658;
+    background: #fef3c7;
+    padding: 4px 10px;
+    border-radius: 6px;
+}
+
+.range-separator {
+    color: #9ca3af;
+}
+
+/* ===== DUAL RANGE SLIDER ===== */
+.dual-range-slider {
+    position: relative;
+    height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+.range-track {
+    position: absolute;
+    width: 100%;
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+.range-fill {
+    position: absolute;
+    height: 100%;
+    background: linear-gradient(135deg, #b89658 0%, #916652 100%);
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+/* ===== RANGE INPUTS ===== */
+.range-input {
+    position: absolute;
+    width: 100%;
+    height: 8px;
+    background: transparent;
+    pointer-events: none;
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+    margin: 0;
+}
+
+.range-input::-webkit-slider-thumb {
+    pointer-events: auto;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    background: white;
+    border: 3px solid #b89658;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+}
+
+.range-input::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+    border-color: #916652;
+    box-shadow: 0 4px 12px rgba(184, 150, 88, 0.4);
+}
+
+.range-input::-webkit-slider-thumb:active {
+    transform: scale(1.1);
+    background: #b89658;
+    border-color: #b89658;
+}
+
+.range-input::-moz-range-thumb {
+    pointer-events: auto;
+    width: 22px;
+    height: 22px;
+    background: white;
+    border: 3px solid #b89658;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+}
+
+.range-input::-moz-range-thumb:hover {
+    transform: scale(1.15);
+    border-color: #916652;
+}
+
+/* ===== LABELS ===== */
+.range-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+/* ===== RESET BUTTON ===== */
+.btn-reset-sliders {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 16px;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    color: #6b7280;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-reset-sliders:hover {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 640px) {
+    .slider-section {
+        padding: 16px;
+    }
+
+    .range-slider-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .range-values {
+        align-self: flex-end;
+    }
+
+    .range-input::-webkit-slider-thumb {
+        width: 26px;
+        height: 26px;
+    }
+}
+
+/* ===== DARK THEME ===== */
+.dark-theme .slider-section {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+.dark-theme .slider-section-title {
+    color: #f9fafb;
+    border-color: #374151;
+}
+
+.dark-theme .range-slider-header label {
+    color: #e5e7eb;
+}
+
+.dark-theme .range-values {
+    background: #374151;
+    color: #fbbf24;
+}
+
+.dark-theme .range-track {
+    background: #4b5563;
+}
+
+.dark-theme .range-input::-webkit-slider-thumb {
+    background: #1f2937;
+    border-color: #fbbf24;
+}
+
+.dark-theme .range-input::-webkit-slider-thumb:active {
+    background: #fbbf24;
+}
+
+.dark-theme .range-labels {
+    color: #6b7280;
+}
+
+.dark-theme .btn-reset-sliders {
+    background: #374151;
+    border-color: #4b5563;
+    color: #9ca3af;
+}
+
+.dark-theme .btn-reset-sliders:hover {
+    background: #4b5563;
+    color: #e5e7eb;
+}
+
+/* ===== ANIMACIÓN DE ENTRADA ===== */
+.advanced-sliders-container {
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

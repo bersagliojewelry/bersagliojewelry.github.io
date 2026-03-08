@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Términos y Condiciones | ALTORRA CARS</title>
+    <meta name="description" content="Términos y condiciones de ALTORRA CARS - División automotriz de ALTORRA Company SAS. Información legal sobre compra de vehículos en Cartagena, Colombia.">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/mobile-fixes.css">
+    <link rel="stylesheet" href="css/vehicles-cards-fix.css">
+    <link rel="stylesheet" href="css/sidebar-filters-fix.css">
+    <link rel="stylesheet" href="css/footer-fixes.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/dark-theme.css">
+    <style>
+        /* Hero */
+        .terms-hero {
+            background: linear-gradient(135deg, #1d1b19 0%, #2a2420 50%, #1d1b19 100%);
+            color: white;
+            padding: calc(70px + 4rem) 0 4rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .terms-hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(ellipse at 20% 80%, rgba(184,150,88,0.12) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 20%, rgba(145,102,82,0.08) 0%, transparent 50%);
+        }
+
+        .terms-hero .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .terms-hero h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            letter-spacing: -0.5px;
+        }
+
+        .terms-hero h1 span {
+            background: linear-gradient(135deg, #d4af37, #b89658);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .terms-hero p {
+            font-size: 1.05rem;
+            color: rgba(255,255,255,0.65);
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
+
+        .terms-hero .update-date {
+            display: inline-block;
+            margin-top: 1.5rem;
+            padding: 0.5rem 1.25rem;
+            border: 1px solid rgba(184,150,88,0.4);
+            border-radius: 30px;
+            color: #b89658;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        /* Content Section */
+        .terms-content {
+            padding: 5rem 0;
+            background: #f9fafb;
+        }
+
+        .terms-content .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        /* Legal Card */
+        .legal-card {
+            grid-column: 1 / -1;
+            background: white;
+            border-radius: 16px;
+            padding: 3rem;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+            border: 1px solid rgba(0,0,0,0.06);
+            line-height: 1.8;
+        }
+
+        .legal-card h2 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #1d1b19;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 3px solid #b89658;
+        }
+
+        .legal-card h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1d1b19;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .legal-card h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2a2420;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .legal-card p {
+            font-size: 0.95rem;
+            color: #4b5563;
+            margin-bottom: 1rem;
+            text-align: justify;
+        }
+
+        .legal-card ul, .legal-card ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .legal-card li {
+            font-size: 0.95rem;
+            color: #4b5563;
+            margin-bottom: 0.5rem;
+        }
+
+        .legal-card strong {
+            color: #1d1b19;
+            font-weight: 700;
+        }
+
+        .legal-card .highlight-box {
+            background: rgba(184,150,88,0.08);
+            border-left: 4px solid #b89658;
+            padding: 1.25rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+        }
+
+        .legal-card .highlight-box p {
+            margin-bottom: 0.5rem;
+        }
+
+        .legal-card .highlight-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        .legal-card .contact-info {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .legal-card .contact-info h4 {
+            margin-top: 0;
+            color: #1d1b19;
+        }
+
+        .legal-card .contact-info p {
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .legal-card .contact-info a {
+            color: #b89658;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .legal-card .contact-info a:hover {
+            text-decoration: underline;
+        }
+
+        /* Table of Contents */
+        .toc {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .toc h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1d1b19;
+            margin-top: 0;
+            margin-bottom: 1rem;
+        }
+
+        .toc ol {
+            margin-left: 1.5rem;
+        }
+
+        .toc li {
+            margin-bottom: 0.5rem;
+        }
+
+        .toc a {
+            color: #4b5563;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .toc a:hover {
+            color: #b89658;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .terms-hero {
+                padding: calc(70px + 2.5rem) 0 2.5rem;
+            }
+
+            .terms-hero h1 {
+                font-size: 1.85rem;
+            }
+
+            .terms-hero p {
+                font-size: 0.95rem;
+            }
+
+            .terms-content {
+                padding: 3rem 0;
+            }
+
+            .legal-card {
+                padding: 2rem 1.5rem;
+            }
+
+            .legal-card h2 {
+                font-size: 1.5rem;
+            }
+
+            .legal-card h3 {
+                font-size: 1.15rem;
+            }
+
+            .legal-card h4 {
+                font-size: 1rem;
+            }
+
+            .legal-card p, .legal-card li {
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .terms-hero h1 {
+                font-size: 1.5rem;
+            }
+
+            .legal-card {
+                padding: 1.5rem 1rem;
+            }
+
+            .legal-card ul, .legal-card ol {
+                margin-left: 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <section class="terms-hero">
+        <div class="container">
+            <h1>Términos y <span>Condiciones</span></h1>
+            <p>Normas y políticas que rigen el uso de nuestra plataforma y la compra de vehículos en ALTORRA CARS</p>
+            <span class="update-date">Última actualización: Febrero 2025</span>
+        </div>
+    </section>
+
+    <section class="terms-content">
+        <div class="container">
+            <div class="legal-card">
+                <h2>Términos y Condiciones de Uso</h2>
+
+                <div class="toc">
+                    <h3>Contenido</h3>
+                    <ol>
+                        <li><a href="#objeto">Objeto y aceptación</a></li>
+                        <li><a href="#condiciones-uso">Condiciones de uso del sitio web</a></li>
+                        <li><a href="#informacion-vehiculos">Información de vehículos</a></li>
+                        <li><a href="#proceso-compra">Proceso de compra y reserva</a></li>
+                        <li><a href="#financiacion">Financiación</a></li>
+                        <li><a href="#garantias">Garantías</a></li>
+                        <li><a href="#retracto">Derecho de retracto</a></li>
+                        <li><a href="#limitacion">Limitación de responsabilidad</a></li>
+                        <li><a href="#propiedad">Propiedad intelectual</a></li>
+                        <li><a href="#proteccion-datos">Protección de datos</a></li>
+                        <li><a href="#ley-aplicable">Ley aplicable y jurisdicción</a></li>
+                        <li><a href="#modificaciones">Modificaciones</a></li>
+                        <li><a href="#contacto">Contacto</a></li>
+                    </ol>
+                </div>
+
+                <h3 id="objeto">1. Objeto y Aceptación</h3>
+                <p>Los presentes Términos y Condiciones regulan el uso del sitio web <strong>altorracars.github.io</strong> (en adelante, "el Sitio") y los servicios ofrecidos por <strong>ALTORRA CARS</strong>, división automotriz de <strong>ALTORRA Company SAS</strong>, empresa legalmente constituida en Colombia.</p>
+                <p>Al acceder y utilizar este Sitio, el usuario acepta de forma expresa e inequívoca todos los términos y condiciones aquí establecidos. Si no está de acuerdo con estos términos, le solicitamos abstenerse de utilizar nuestros servicios.</p>
+
+                <h3 id="condiciones-uso">2. Condiciones de Uso del Sitio Web</h3>
+                <p>El usuario se compromete a:</p>
+                <ul>
+                    <li>Utilizar el Sitio de manera lícita, sin infringir la legislación colombiana vigente ni los derechos de terceros.</li>
+                    <li>No realizar actividades fraudulentas, engañosas o que puedan dañar la imagen o reputación de ALTORRA CARS.</li>
+                    <li>Proporcionar información veraz, exacta y actualizada cuando así se requiera.</li>
+                    <li>No intentar acceder a áreas restringidas del sistema, realizar ingeniería inversa, o introducir virus o códigos maliciosos.</li>
+                </ul>
+                <p>ALTORRA CARS se reserva el derecho de suspender o cancelar el acceso al Sitio a cualquier usuario que incumpla estas condiciones.</p>
+
+                <h3 id="informacion-vehiculos">3. Información de Vehículos</h3>
+                <p>La información publicada en el Sitio sobre los vehículos (precios, características técnicas, fotografías, disponibilidad) es de carácter referencial y puede estar sujeta a cambios sin previo aviso.</p>
+                <div class="highlight-box">
+                    <p><strong>Importante:</strong></p>
+                    <p>• Los precios publicados son orientativos y pueden variar según promociones, disponibilidad de inventario, o condiciones de financiación.</p>
+                    <p>• Las fotografías pueden no corresponder exactamente a la unidad específica disponible y pueden incluir accesorios opcionales no incluidos en el precio base.</p>
+                    <p>• ALTORRA CARS se esfuerza por mantener la información actualizada, pero no garantiza la exactitud absoluta de todos los datos publicados.</p>
+                </div>
+                <p>Se recomienda al usuario verificar directamente con nuestros asesores toda la información antes de tomar una decisión de compra.</p>
+
+                <h3 id="proceso-compra">4. Proceso de Compra y Reserva</h3>
+                <h4>4.1. Consulta y Asesoría</h4>
+                <p>El usuario puede consultar el inventario disponible a través del Sitio y contactar a nuestros asesores comerciales para recibir información detallada, agendar citas de prueba de manejo y recibir cotizaciones personalizadas.</p>
+
+                <h4>4.2. Reserva de Vehículos</h4>
+                <p>En caso de que el usuario desee reservar un vehículo, deberá:</p>
+                <ul>
+                    <li>Contactar a ALTORRA CARS a través de los canales oficiales (WhatsApp, correo electrónico, teléfono).</li>
+                    <li>Proporcionar la información solicitada y, de ser requerido, realizar un depósito o abono inicial.</li>
+                    <li>Firmar el documento de reserva que especifica las condiciones particulares de la operación.</li>
+                </ul>
+                <p>La reserva no constituye una compra definitiva hasta la firma del contrato de compraventa y el cumplimiento de todas las condiciones pactadas.</p>
+
+                <h4>4.3. Formalización de la Compra</h4>
+                <p>La venta se perfecciona mediante la firma del contrato de compraventa correspondiente, el pago del precio acordado y la entrega del vehículo con toda la documentación legal requerida (tarjeta de propiedad, SOAT, revisión tecno-mecánica, traspaso ante tránsito, entre otros).</p>
+
+                <h3 id="financiacion">5. Financiación</h3>
+                <p><strong>ALTORRA CARS</strong> actúa como intermediario entre el cliente y entidades financieras especializadas en crédito vehicular. <strong>No somos una entidad financiera</strong> y no otorgamos créditos directamente.</p>
+                <p>El usuario que solicite financiación entiende y acepta que:</p>
+                <ul>
+                    <li>La aprobación del crédito está sujeta al análisis y decisión exclusiva de la entidad financiera correspondiente.</li>
+                    <li>Las condiciones de financiación (tasa de interés, plazo, cuota inicial, cuota mensual) son determinadas por la entidad financiera.</li>
+                    <li>ALTORRA CARS no garantiza la aprobación del crédito ni es responsable de rechazos por parte de las entidades financieras.</li>
+                    <li>El simulador de crédito disponible en el Sitio es una herramienta de referencia y los valores definitivos pueden variar.</li>
+                </ul>
+
+                <h3 id="garantias">6. Garantías</h3>
+                <p>ALTORRA CARS se acoge a las disposiciones establecidas en el <strong>Estatuto del Consumidor colombiano (Ley 1480 de 2011)</strong> y demás normativa aplicable en materia de garantías.</p>
+
+                <h4>6.1. Vehículos Nuevos</h4>
+                <p>Los vehículos nuevos cuentan con la garantía de fábrica otorgada por el fabricante o importador oficial. Los términos, condiciones, coberturas y exclusiones de esta garantía están establecidos en el manual del propietario y en la póliza de garantía entregada al momento de la compra.</p>
+
+                <h4>6.2. Vehículos Usados</h4>
+                <p>Los vehículos usados certificados por ALTORRA CARS han sido sometidos a inspección técnico-mecánica completa. La garantía de los vehículos usados se especifica de forma individual en el contrato de compraventa, pudiendo variar según el modelo, año, kilometraje y condición general del vehículo.</p>
+                <p>ALTORRA CARS no otorga garantías sobre vehículos vendidos "en el estado en que se encuentran" (venta de oportunidad), salvo pacto expreso en contrario.</p>
+
+                <h4>6.3. Garantía Legal</h4>
+                <p>Conforme a la Ley 1480 de 2011, todos los productos cuentan con una garantía legal mínima que cubre defectos de fabricación y calidad. El término y condiciones de la garantía legal se ajustan a la normativa vigente y se informan al consumidor al momento de la compra.</p>
+
+                <h3 id="retracto">7. Derecho de Retracto</h3>
+                <p>De conformidad con el artículo 47 de la Ley 1480 de 2011, el consumidor tiene derecho a retractarse de la compra en los siguientes términos:</p>
+                <ul>
+                    <li>El plazo para ejercer el derecho de retracto es de <strong>cinco (5) días hábiles</strong> contados a partir de la entrega del vehículo, en caso de ventas realizadas por medios no presenciales (internet, teléfono).</li>
+                    <li>Para ejercer este derecho, el consumidor debe notificar su decisión a ALTORRA CARS a través de los canales oficiales de contacto.</li>
+                    <li>El vehículo debe ser devuelto en las mismas condiciones en que fue entregado, sin uso excesivo ni deterioro.</li>
+                    <li>ALTORRA CARS reembolsará el dinero pagado dentro del término legal establecido, descontando los costos de transporte y los gastos en que haya incurrido el consumidor por el uso del vehículo (depreciación, kilometraje, etc.).</li>
+                </ul>
+
+                <h3 id="limitacion">8. Limitación de Responsabilidad</h3>
+                <p>ALTORRA CARS no será responsable por:</p>
+                <ul>
+                    <li>Daños o perjuicios derivados del mal uso del vehículo por parte del comprador o terceros.</li>
+                    <li>Pérdida de datos, interrupciones del servicio o errores técnicos en el Sitio que escapen al control razonable de la empresa.</li>
+                    <li>Daños indirectos, lucro cesante, o daños emergentes no previstos, salvo en los casos en que la ley expresamente lo establezca.</li>
+                    <li>Información proporcionada por terceros (fabricantes, entidades financieras, proveedores de seguros, etc.).</li>
+                </ul>
+                <p>La responsabilidad de ALTORRA CARS se limita al cumplimiento de las obligaciones contractuales asumidas y al respeto de los derechos del consumidor establecidos en la legislación colombiana.</p>
+
+                <h3 id="propiedad">9. Propiedad Intelectual</h3>
+                <p>Todos los contenidos del Sitio (textos, imágenes, logotipos, marcas, diseños, código fuente, bases de datos, etc.) son propiedad de ALTORRA CARS o de terceros que han autorizado su uso, y están protegidos por las leyes de propiedad intelectual y derechos de autor vigentes en Colombia y tratados internacionales.</p>
+                <p>Queda prohibida la reproducción, distribución, comunicación pública, transformación o cualquier otra forma de explotación de los contenidos del Sitio sin autorización expresa y por escrito de ALTORRA CARS.</p>
+
+                <h3 id="proteccion-datos">10. Protección de Datos Personales</h3>
+                <p>ALTORRA CARS se compromete a proteger la privacidad y los datos personales de sus usuarios, dando cumplimiento a la <strong>Ley 1581 de 2012 (Ley de Protección de Datos Personales)</strong> y sus decretos reglamentarios.</p>
+                <p>Los datos personales recopilados a través del Sitio serán tratados de conformidad con nuestra <strong>Política de Privacidad</strong>, disponible en el Sitio.</p>
+                <p>El usuario tiene derecho a conocer, actualizar, rectificar y suprimir sus datos personales, así como revocar la autorización otorgada para su tratamiento, en los términos establecidos por la ley.</p>
+
+                <h3 id="ley-aplicable">11. Ley Aplicable y Jurisdicción</h3>
+                <p>Los presentes Términos y Condiciones se rigen por las leyes de la <strong>República de Colombia</strong>.</p>
+                <p>Para cualquier controversia o conflicto derivado de la interpretación o ejecución de estos términos, las partes se someten a la jurisdicción de los jueces y tribunales competentes de la ciudad de <strong>Cartagena de Indias, Departamento de Bolívar, Colombia</strong>, renunciando expresamente a cualquier otro fuero que pudiera corresponderles.</p>
+
+                <h3 id="modificaciones">12. Modificaciones a los Términos y Condiciones</h3>
+                <p>ALTORRA CARS se reserva el derecho de modificar estos Términos y Condiciones en cualquier momento, sin previo aviso. Las modificaciones entrarán en vigor desde su publicación en el Sitio.</p>
+                <p>Se recomienda al usuario revisar periódicamente esta sección para mantenerse informado sobre cualquier cambio. El uso continuado del Sitio tras la publicación de modificaciones implica la aceptación de las nuevas condiciones.</p>
+
+                <h3 id="contacto">13. Contacto</h3>
+                <p>Para cualquier consulta, sugerencia, reclamo o solicitud relacionada con estos Términos y Condiciones, puede contactarnos a través de:</p>
+
+                <div class="contact-info">
+                    <h4>ALTORRA CARS</h4>
+                    <p><strong>División de:</strong> ALTORRA Company SAS</p>
+                    <p><strong>Ubicación:</strong> Cartagena, Bolívar, Colombia</p>
+                    <p><strong>Email:</strong> <a href="mailto:altorracarssale@gmail.com">altorracarssale@gmail.com</a></p>
+                    <p><strong>Teléfono/WhatsApp:</strong> <a href="https://wa.me/573235016747">+57 323 501 6747</a></p>
+                </div>
+
+                <div class="highlight-box">
+                    <p><strong>Última actualización:</strong> Febrero 2025</p>
+                    <p>Al utilizar nuestros servicios, usted confirma haber leído, comprendido y aceptado estos Términos y Condiciones en su totalidad.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div id="footer-placeholder"></div>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/cache-manager.js"></script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+{
+  "CX5_2021_G1_36m": {
+    "input": {
+      "yearModelo": 2021,
+      "precioVenta": 125000000,
+      "cuotaInicial": 37500000,
+      "plazoMeses": 36,
+      "riesgo": "G1",
+      "valorCuotaExtra": 500000,
+      "offsetMeses": 5,
+      "opcionCompraLeasing": 0.01
+    },
+    "expected": {
+      "trad": {
+        "SUFI": 3205486,
+        "OCCIDENTE": 3238308,
+        "FINANDINA": 3219446,
+        "FINANZAUTO": 3431922,
+        "MOBILIZE": 3535676
+      },
+      "extras": {
+        "SUFI": 3123871,
+        "OCCIDENTE": 3156767,
+        "FINANDINA": 3137843,
+        "FINANZAUTO": 3389212,
+        "MOBILIZE": "NO APLICA"
+      },
+      "leasing": {
+        "SUFI": 3178444,
+        "OCCIDENTE": 3211568,
+        "FINANDINA": 3192454,
+        "FINANZAUTO": "NO APLICA",
+        "MOBILIZE": "NO APLICA"
+      },
+      "topes": {
+        "SUFI": 7751216,
+        "OCCIDENTE": 5833333,
+        "FINANDINA": 2000000,
+        "FINANZAUTO": 10167635
+      }
+    }
+  },
+  "MARCH_2018_G3_60m": {
+    "input": {
+      "yearModelo": 2018,
+      "precioVenta": 69000000,
+      "cuotaInicial": 30000000,
+      "plazoMeses": 60,
+      "riesgo": "G3",
+      "valorCuotaExtra": 1000000,
+      "offsetMeses": 5,
+      "opcionCompraLeasing": 0.1
+    },
+    "expected": {
+      "trad": {
+        "SUFI": 1065361,
+        "OCCIDENTE": 1068610,
+        "FINANDINA": 1061523,
+        "FINANZAUTO": 1132277,
+        "MOBILIZE": 1144781
+      },
+      "extras": {
+        "SUFI": 902700,
+        "OCCIDENTE": 905974,
+        "FINANDINA": 898788,
+        "FINANZAUTO": 1046792,
+        "MOBILIZE": "NO APLICA"
+      },
+      "leasing": {
+        "SUFI": 996244,
+        "OCCIDENTE": 999726,
+        "FINANDINA": "OPC. COMPRA SOLO 1%",
+        "FINANZAUTO": "NO APLICA",
+        "MOBILIZE": "NO APLICA"
+      },
+      "topes": {
+        "SUFI": 2546402,
+        "OCCIDENTE": 1560000,
+        "FINANDINA": 2000000,
+        "FINANZAUTO": 3140376
+      }
+    }
+  },
+  "VERSA_2019_G4_72m_fin23m": {
+    "input": {
+      "yearModelo": 2019,
+      "precioVenta": 41000000,
+      "cuotaInicial": 18000000,
+      "plazoMeses": 72,
+      "riesgo": "G4",
+      "valorCuotaExtra": 1000000,
+      "offsetMeses": 5,
+      "opcionCompraLeasing": 0.01
+    },
+    "expected": {
+      "trad": {
+        "SUFI": 585470,
+        "OCCIDENTE": 587472,
+        "FINANDINA": 603984,
+        "FINANZAUTO": 618773,
+        "MOBILIZE": "Plazo 12 a 48"
+      },
+      "extras": {
+        "SUFI": 423056,
+        "OCCIDENTE": "Bajar cuota extra",
+        "FINANDINA": 441819,
+        "FINANZAUTO": 533234,
+        "MOBILIZE": "NO APLICA"
+      },
+      "leasing": {
+        "SUFI": "Crédito Minimo 30 Millones",
+        "OCCIDENTE": 584550,
+        "FINANDINA": 601172,
+        "FINANZAUTO": "NO APLICA",
+        "MOBILIZE": "NO APLICA"
+      },
+      "topes": {
+        "SUFI": 1394674,
+        "OCCIDENTE": 766667,
+        "FINANDINA": 2000000,
+        "FINANZAUTO": 1599702
+      }
+    }
+  },
+  "CX30_2022_G3_72m": {
+    "input": {
+      "yearModelo": 2022,
+      "precioVenta": 77900000,
+      "cuotaInicial": 10000000,
+      "plazoMeses": 72,
+      "riesgo": "G3",
+      "valorCuotaExtra": 1000000,
+      "offsetMeses": 5,
+      "opcionCompraLeasing": 0.01
+    },
+    "expected": {
+      "trad": {
+        "SUFI": 1667205,
+        "OCCIDENTE": 1691760,
+        "FINANDINA": 1673995,
+        "FINANZAUTO": 1802404,
+        "MOBILIZE": 1831738
+      },
+      "extras": {
+        "SUFI": 1504470,
+        "OCCIDENTE": 1529149,
+        "FINANDINA": 1511260,
+        "FINANZAUTO": 1716919,
+        "MOBILIZE": "NO APLICA"
+      },
+      "leasing": {
+        "SUFI": 1661320,
+        "OCCIDENTE": 1685997,
+        "FINANDINA": 1668110,
+        "FINANZAUTO": "NO APLICA",
+        "MOBILIZE": "NO APLICA"
+      },
+      "topes": {
+        "SUFI": 3964312,
+        "OCCIDENTE": 2263333,
+        "FINANDINA": 2000000,
+        "FINANZAUTO": 5150757
+      }
+    }
+  }
+}

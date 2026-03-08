@@ -1,0 +1,576 @@
+/* ============================================
+   SISTEMA DE RESEÑAS - ALTORRA CARS
+   Testimonios y calificaciones de clientes
+   ============================================ */
+
+/* ===== SECCIÓN DE TESTIMONIOS ===== */
+.testimonials-section {
+    padding: 70px 0;
+    background: #000000;
+}
+
+.testimonials-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 40px;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.testimonials-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 8px;
+}
+
+.testimonials-title .highlight {
+    color: #b89658;
+}
+
+.testimonials-subtitle {
+    font-size: 16px;
+    color: #9ca3af;
+    margin: 0;
+}
+
+.testimonials-summary {
+    text-align: right;
+}
+
+.summary-rating {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.rating-number {
+    font-size: 36px;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+.rating-stars {
+    display: flex;
+    gap: 2px;
+}
+
+.rating-count {
+    font-size: 14px;
+    color: #9ca3af;
+}
+
+/* ===== ESTRELLAS ===== */
+.star {
+    width: 16px;
+    height: 16px;
+    color: #d1d5db;
+}
+
+.star.filled {
+    color: #fbbf24;
+}
+
+.star-large {
+    width: 24px;
+    height: 24px;
+}
+
+.star-mini {
+    width: 12px;
+    height: 12px;
+}
+
+/* ===== GRID DE TESTIMONIOS ===== */
+.testimonials-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+/* ===== TARJETA DE TESTIMONIO ===== */
+.testimonial-card {
+    background: #252525;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    border: 1px solid #333333;
+    transition: all 0.3s ease;
+}
+
+.testimonial-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(184, 150, 88, 0.2);
+    border-color: #b89658;
+}
+
+.testimonial-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.testimonial-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.testimonial-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.testimonial-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.verified-badge {
+    color: #10b981;
+}
+
+.testimonial-location {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+.testimonial-rating {
+    display: flex;
+    gap: 2px;
+}
+
+.testimonial-vehicle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #1a1a1a;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #d1d5db;
+    margin-bottom: 16px;
+}
+
+.testimonial-vehicle svg {
+    color: #b89658;
+}
+
+.testimonial-content {
+    margin-bottom: 16px;
+}
+
+.testimonial-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 8px;
+    font-style: italic;
+}
+
+.testimonial-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #d1d5db;
+    margin: 0;
+}
+
+.testimonial-footer {
+    padding-top: 12px;
+    border-top: 1px solid #333333;
+}
+
+.testimonial-date {
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+/* ===== CTA VER TODAS ===== */
+.testimonials-cta {
+    text-align: center;
+}
+
+.btn-view-all-reviews {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    background: linear-gradient(135deg, #b89658 0%, #916652 100%);
+    color: white;
+    text-decoration: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-view-all-reviews:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(184, 150, 88, 0.35);
+}
+
+/* ===== PÁGINA DE RESEÑAS COMPLETA ===== */
+.reviews-page {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* Resumen de calificaciones */
+.reviews-summary-card {
+    display: flex;
+    gap: 40px;
+    background: #252525;
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 32px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    border: 1px solid #333333;
+}
+
+.summary-left {
+    text-align: center;
+    padding-right: 40px;
+    border-right: 1px solid #333333;
+}
+
+.summary-big-rating {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.big-number {
+    font-size: 56px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1;
+}
+
+.big-stars {
+    display: flex;
+    gap: 4px;
+}
+
+.summary-text {
+    font-size: 14px;
+    color: #9ca3af;
+    margin: 12px 0 0;
+}
+
+.summary-right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: center;
+}
+
+.rating-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.rating-label {
+    width: 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #d1d5db;
+    text-align: right;
+}
+
+.bar-track {
+    flex: 1;
+    height: 8px;
+    background: #333333;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #fbbf24, #f59e0b);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.rating-percent {
+    width: 36px;
+    font-size: 12px;
+    color: #9ca3af;
+    text-align: right;
+}
+
+/* Lista de reseñas */
+.reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.review-card-full {
+    background: #252525;
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+    border: 1px solid #333333;
+    transition: all 0.3s ease;
+}
+
+.review-card-full:hover {
+    border-color: #b89658;
+    box-shadow: 0 8px 25px rgba(184, 150, 88, 0.15);
+}
+
+.review-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.review-author {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+}
+
+.review-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 18px;
+}
+
+.review-author-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.review-author-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.verified-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.15);
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+.review-author-location {
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+.review-meta {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+.review-rating {
+    display: flex;
+    gap: 2px;
+}
+
+.review-date {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.review-vehicle-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: rgba(184, 150, 88, 0.12);
+    border: 1px solid rgba(184, 150, 88, 0.3);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #b89658;
+    margin-bottom: 20px;
+}
+
+.review-vehicle-tag svg {
+    color: #b89658;
+}
+
+.review-content {
+    margin-bottom: 0;
+}
+
+.review-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 12px;
+}
+
+.review-text {
+    font-size: 15px;
+    line-height: 1.7;
+    color: #d1d5db;
+    margin: 0;
+}
+
+/* ===== BADGE DE RATING FLOTANTE ===== */
+.rating-badge {
+    position: fixed;
+    bottom: 220px;
+    right: 20px;
+    z-index: 9979;
+}
+
+.rating-badge-link {
+    display: block;
+    text-decoration: none;
+}
+
+.badge-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 16px;
+    background: #252525;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    border: 1px solid #333333;
+    transition: all 0.3s ease;
+}
+
+.badge-content:hover {
+    transform: scale(1.05);
+    border-color: #b89658;
+}
+
+.badge-rating {
+    font-size: 24px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1;
+}
+
+.badge-stars {
+    display: flex;
+    gap: 1px;
+}
+
+.badge-stars .star {
+    width: 12px;
+    height: 12px;
+}
+
+.badge-count {
+    font-size: 10px;
+    color: #9ca3af;
+    white-space: nowrap;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .testimonials-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .testimonials-summary {
+        text-align: left;
+    }
+
+    .testimonials-title {
+        font-size: 24px;
+    }
+
+    .rating-number {
+        font-size: 28px;
+    }
+
+    .testimonials-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .reviews-summary-card {
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .summary-left {
+        padding-right: 0;
+        border-right: none;
+        padding-bottom: 24px;
+        border-bottom: 1px solid #333333;
+    }
+
+    .big-number {
+        font-size: 42px;
+    }
+
+    .review-card-header {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .review-meta {
+        align-items: flex-start;
+        flex-direction: row;
+        gap: 12px;
+    }
+
+    .rating-badge {
+        bottom: 190px;
+        right: 10px;
+    }
+
+    .badge-content {
+        padding: 10px 12px;
+    }
+
+    .badge-rating {
+        font-size: 20px;
+    }
+}
+

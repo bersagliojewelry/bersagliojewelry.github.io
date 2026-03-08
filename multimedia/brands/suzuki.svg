@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="80" viewBox="0 0 200 80">
+  <defs>
+    <linearGradient id="grad-suzuki" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#b89658;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#916652;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="40" cy="40" r="28" fill="url(#grad-suzuki)" opacity="0.1"/>
+
+  <!-- Car icon simple -->
+  <path d="M 25 35 L 30 30 L 50 30 L 55 35 L 55 45 L 25 45 Z" fill="url(#grad-suzuki)"/>
+  <circle cx="32" cy="46" r="4" fill="#1d1b19"/>
+  <circle cx="48" cy="46" r="4" fill="#1d1b19"/>
+
+  <!-- Brand name -->
+  <text x="70" y="45" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#1d1b19">SUZUKI</text>
+</svg>

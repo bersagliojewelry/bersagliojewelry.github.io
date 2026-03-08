@@ -1,0 +1,101 @@
+<!-- Header Component - ALTORRA CARS -->
+<header id="header">
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-wrapper">
+
+                <a href="index.html" class="logo">
+                    <img src="multimedia/logo-placeholder.png" alt="ALTORRA CARS" id="logo-img">
+                </a>
+
+                <!-- Nav menu: horizontal on desktop, slide-out panel on mobile -->
+                <div class="nav-menu" id="navMenu">
+                    <ul class="nav-list">
+                        <li class="nav-item dropdown">
+                            <a href="#" class="nav-link">Vehículos</a>
+                            <ul class="dropdown-menu">
+                                <li><a href="vehiculos-nuevos.html">Nuevos</a></li>
+                                <li><a href="vehiculos-usados.html">Usados</a></li>
+                                <li><a href="vehiculos-suv.html">SUV</a></li>
+                                <li><a href="vehiculos-pickup.html">Pickup</a></li>
+                                <li><a href="vehiculos-sedan.html">Sedán</a></li>
+                                <li><a href="vehiculos-hatchback.html">Hatchback</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a href="#" class="nav-link">Marcas</a>
+                            <ul class="dropdown-menu">
+                                <li><a href="marca.html?marca=chevrolet">Chevrolet</a></li>
+                                <li><a href="marca.html?marca=renault">Renault</a></li>
+                                <li><a href="marca.html?marca=nissan">Nissan</a></li>
+                                <li><a href="marca.html?marca=kia">Kia</a></li>
+                                <li><a href="marca.html?marca=mazda">Mazda</a></li>
+                                <li><a href="marca.html?marca=toyota">Toyota</a></li>
+                                <li><a href="marca.html?marca=hyundai">Hyundai</a></li>
+                                <li><a href="marca.html?marca=ford">Ford</a></li>
+                                <li><a href="busqueda.html">Ver todas</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a href="#" class="nav-link">Servicios</a>
+                            <ul class="dropdown-menu">
+                                <li><a href="#" data-modal="financiacion">Financiación</a></li>
+                                <li><a href="#" data-modal="vende-auto">Vende tu Auto</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item">
+                            <a href="nosotros.html" class="nav-link">Nosotros</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="contacto.html" class="nav-link">Contacto</a>
+                        </li>
+                    </ul>
+
+                    <!-- ► Sección exclusiva del menú móvil / tablet (≤968px)
+                         Oculta en desktop. No está en el nav-list para evitar duplicación. -->
+                    <div class="mob-actions">
+                        <a href="favoritos.html" class="mob-fav">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                            Favoritos
+                            <span class="mob-badge" id="favCountMobile">0</span>
+                        </a>
+                        <div class="mob-auth-row">
+                            <button class="mob-btn mob-btn-outline" onclick="window._authComingSoon&&window._authComingSoon()" aria-label="Ingresar">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                                Ingresar
+                            </button>
+                            <button class="mob-btn mob-btn-gold" onclick="window._authComingSoon&&window._authComingSoon()" aria-label="Registrarse">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                Registrarse
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ► Botones de acción desktop (>968px) -->
+                <div class="nav-actions" role="group" aria-label="Acciones de usuario">
+                    <a href="favoritos.html" class="hdr-btn hdr-btn-outline hdr-btn-fav" aria-label="Ver favoritos">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        Favoritos
+                        <span class="hdr-badge" id="favCount">0</span>
+                    </a>
+                    <button class="hdr-btn hdr-btn-outline" id="btnLogin" onclick="window._authComingSoon&&window._authComingSoon()" aria-label="Ingresar">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                        Ingresar
+                    </button>
+                    <button class="hdr-btn hdr-btn-gold" id="btnRegister" onclick="window._authComingSoon&&window._authComingSoon()" aria-label="Registrarse">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Registrarse
+                    </button>
+                </div>
+
+                <button class="hamburger" id="hamburger" aria-label="Abrir menú" aria-expanded="false">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+
+            </div>
+        </div>
+    </nav>
+</header>

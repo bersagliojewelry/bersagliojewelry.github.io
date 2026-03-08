@@ -1,0 +1,2259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="description" content="Simulador de Credito Vehicular ALTORRA CARS - Calcula tu financiamiento con diferentes tasas de interes">
+    <title>Simulador de Credito Vehicular | ALTORRA CARS</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="multimedia/logo/favicon.png">
+
+    <!-- CSS Global del sitio -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/mobile-fixes.css">
+    <link rel="stylesheet" href="css/footer-fixes.css">
+    <link rel="stylesheet" href="css/dark-theme.css">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Chart.js para graficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* ============================================
+           SIMULADOR DE CREDITO V5.0 - ALTORRA CARS
+           Con modal de contacto y autorizaciones
+        ============================================ */
+
+        :root {
+            --sim-primary: #c9a227;
+            --sim-primary-dark: #a88620;
+            --sim-bg: #0a0a0a;
+            --sim-card: #111111;
+            --sim-card-hover: #1a1a1a;
+            --sim-border: #2a2a2a;
+            --sim-text: #ffffff;
+            --sim-text-secondary: #a0a0a0;
+            --sim-text-muted: #666666;
+            --sim-success: #22c55e;
+            --sim-warning: #f59e0b;
+            --sim-info: #3b82f6;
+            --sim-gradient: linear-gradient(135deg, #c9a227 0%, #dbb93a 50%, #a88620 100%);
+        }
+
+        /* Page wrapper */
+        .simulator-page {
+            background: var(--sim-bg);
+            min-height: 100vh;
+            padding-top: 80px;
+        }
+
+        /* Titulo compacto estilo Vardi */
+        .sim-title-section {
+            text-align: center;
+            padding: 40px 20px 20px;
+        }
+
+        .sim-title-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 16px;
+            background: rgba(201, 162, 39, 0.15);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sim-title-icon svg {
+            width: 32px;
+            height: 32px;
+            color: var(--sim-primary);
+        }
+
+        .sim-title-text {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--sim-text);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sim-title-line {
+            width: 80px;
+            height: 4px;
+            background: var(--sim-gradient);
+            margin: 0 auto;
+            border-radius: 2px;
+        }
+
+        /* Main container */
+        .sim-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px 20px 40px;
+        }
+
+        /* Grid layout */
+        .sim-grid {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 32px;
+            align-items: start;
+        }
+
+        @media (max-width: 1024px) {
+            .sim-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Config panel */
+        .sim-config {
+            background: var(--sim-card);
+            border: 1px solid var(--sim-border);
+            border-radius: 20px;
+            padding: 32px;
+            position: sticky;
+            top: 100px;
+        }
+
+        @media (max-width: 1024px) {
+            .sim-config {
+                position: static;
+            }
+        }
+
+        .sim-config-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--sim-border);
+        }
+
+        .sim-config-header svg {
+            width: 28px;
+            height: 28px;
+            color: var(--sim-primary);
+        }
+
+        .sim-config-header h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--sim-text);
+            margin: 0;
+        }
+
+        /* Form groups */
+        .sim-group {
+            margin-bottom: 24px;
+        }
+
+        .sim-group label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--sim-text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .sim-group label .value {
+            color: var(--sim-primary);
+            font-weight: 700;
+        }
+
+        /* Inputs */
+        .sim-input-wrap {
+            position: relative;
+        }
+
+        .sim-input-wrap .prefix {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--sim-text-muted);
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .sim-input {
+            width: 100%;
+            padding: 16px 16px 16px 44px;
+            background: var(--sim-bg);
+            border: 2px solid var(--sim-border);
+            border-radius: 12px;
+            color: var(--sim-text);
+            font-size: 18px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .sim-input:focus {
+            outline: none;
+            border-color: var(--sim-primary);
+            box-shadow: 0 0 0 4px rgba(201, 162, 39, 0.15);
+        }
+
+        /* Slider */
+        .sim-slider {
+            width: 100%;
+            height: 8px;
+            background: var(--sim-border);
+            border-radius: 4px;
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+
+        .sim-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            background: var(--sim-gradient);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(201, 162, 39, 0.4);
+            transition: transform 0.2s;
+        }
+
+        .sim-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        .sim-slider-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--sim-text-muted);
+            margin-top: 8px;
+        }
+
+        /* Term buttons */
+        .sim-term-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .sim-term-btn {
+            padding: 14px 8px;
+            background: var(--sim-bg);
+            border: 2px solid var(--sim-border);
+            border-radius: 10px;
+            color: var(--sim-text-secondary);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sim-term-btn:hover {
+            border-color: var(--sim-primary);
+            color: var(--sim-text);
+        }
+
+        .sim-term-btn.active {
+            background: var(--sim-gradient);
+            border-color: var(--sim-primary);
+            color: #000;
+        }
+
+        /* Rate selection */
+        .sim-rate-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sim-rate-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: var(--sim-bg);
+            border: 2px solid var(--sim-border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sim-rate-btn:hover {
+            border-color: var(--sim-primary);
+        }
+
+        .sim-rate-btn.active {
+            border-color: var(--sim-primary);
+            background: rgba(201, 162, 39, 0.1);
+        }
+
+        .sim-rate-btn .rate-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sim-rate-btn .rate-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--sim-text);
+        }
+
+        .sim-rate-btn .rate-desc {
+            font-size: 12px;
+            color: var(--sim-text-muted);
+        }
+
+        .sim-rate-btn .rate-value {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--sim-primary);
+        }
+
+        /* Summary */
+        .sim-summary {
+            background: rgba(201, 162, 39, 0.1);
+            border: 1px solid rgba(201, 162, 39, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 24px;
+        }
+
+        .sim-summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+        }
+
+        .sim-summary-row:not(:last-child) {
+            border-bottom: 1px solid rgba(201, 162, 39, 0.2);
+        }
+
+        .sim-summary-row span {
+            color: var(--sim-text-secondary);
+            font-size: 14px;
+        }
+
+        .sim-summary-row strong {
+            color: var(--sim-primary);
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        /* Results panel */
+        .sim-results {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Main result card */
+        .sim-result-main {
+            background: var(--sim-card);
+            border: 1px solid var(--sim-border);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sim-result-main::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--sim-gradient);
+        }
+
+        .sim-result-label {
+            font-size: 16px;
+            color: var(--sim-text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .sim-result-value {
+            font-size: clamp(36px, 8vw, 56px);
+            font-weight: 800;
+            background: var(--sim-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.1;
+            margin-bottom: 16px;
+        }
+
+        .sim-result-rate {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            background: rgba(201, 162, 39, 0.15);
+            border-radius: 30px;
+            font-size: 14px;
+            color: var(--sim-primary);
+            font-weight: 600;
+        }
+
+        /* Stats grid */
+        .sim-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .sim-stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .sim-stat-card {
+            background: var(--sim-card);
+            border: 1px solid var(--sim-border);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .sim-stat-card svg {
+            width: 32px;
+            height: 32px;
+            color: var(--sim-primary);
+            margin-bottom: 12px;
+        }
+
+        .sim-stat-label {
+            font-size: 13px;
+            color: var(--sim-text-muted);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sim-stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--sim-text);
+        }
+
+        /* Chart section */
+        .sim-chart-section {
+            background: var(--sim-card);
+            border: 1px solid var(--sim-border);
+            border-radius: 20px;
+            padding: 32px;
+        }
+
+        .sim-chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .sim-chart-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--sim-text);
+        }
+
+        .sim-chart-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .sim-chart-tab {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid var(--sim-border);
+            border-radius: 8px;
+            color: var(--sim-text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sim-chart-tab.active {
+            background: var(--sim-primary);
+            border-color: var(--sim-primary);
+            color: #000;
+        }
+
+        .sim-chart-container {
+            height: 300px;
+            position: relative;
+        }
+
+        /* Comparison */
+        .sim-compare-section {
+            background: var(--sim-card);
+            border: 1px solid var(--sim-border);
+            border-radius: 20px;
+            padding: 32px;
+        }
+
+        .sim-compare-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--sim-text);
+            margin-bottom: 24px;
+        }
+
+        .sim-compare-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .sim-compare-card {
+            background: var(--sim-bg);
+            border: 2px solid var(--sim-border);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .sim-compare-card:hover {
+            border-color: var(--sim-primary);
+            transform: translateY(-4px);
+        }
+
+        .sim-compare-card.selected {
+            border-color: var(--sim-success);
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
+        }
+
+        .sim-compare-card .rate-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(201, 162, 39, 0.15);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--sim-primary);
+            margin-bottom: 12px;
+        }
+
+        .sim-compare-card .rate-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--sim-text);
+            margin-bottom: 4px;
+        }
+
+        .sim-compare-card .rate-desc {
+            font-size: 12px;
+            color: var(--sim-text-muted);
+            margin-bottom: 16px;
+        }
+
+        .sim-compare-card .monthly {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--sim-text);
+            margin-bottom: 4px;
+        }
+
+        .sim-compare-card .monthly-label {
+            font-size: 12px;
+            color: var(--sim-text-muted);
+        }
+
+        .sim-compare-card .total {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--sim-border);
+            font-size: 13px;
+            color: var(--sim-text-secondary);
+        }
+
+        .sim-compare-card .best-badge {
+            position: absolute;
+            top: -10px;
+            right: 16px;
+            padding: 4px 12px;
+            background: var(--sim-success);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #000;
+            text-transform: uppercase;
+        }
+
+        /* CTA Section */
+        .sim-cta {
+            background: linear-gradient(135deg, rgba(37, 211, 102, 0.15) 0%, rgba(37, 211, 102, 0.05) 100%);
+            border: 1px solid rgba(37, 211, 102, 0.3);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .sim-cta h3 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--sim-text);
+            margin-bottom: 8px;
+        }
+
+        .sim-cta p {
+            color: var(--sim-text-secondary);
+            margin-bottom: 24px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .sim-btn-whatsapp {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 18px 40px;
+            background: #25D366;
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sim-btn-whatsapp:hover {
+            background: #128C7E;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(37, 211, 102, 0.4);
+        }
+
+        .sim-btn-whatsapp svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Legal disclaimer */
+        .sim-legal {
+            background: var(--sim-card);
+            border: 1px solid var(--sim-border);
+            border-radius: 20px;
+            padding: 32px;
+        }
+
+        .sim-legal-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--sim-primary);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sim-legal p {
+            font-size: 13px;
+            color: var(--sim-text-muted);
+            line-height: 1.7;
+            margin-bottom: 12px;
+        }
+
+        .sim-legal p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* ============================================
+           MODAL DE CONTACTO
+        ============================================ */
+        .sim-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .sim-modal.active {
+            display: flex;
+        }
+
+        .sim-modal-content {
+            background: var(--sim-card);
+            border: 1px solid var(--sim-border);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .sim-modal-header {
+            padding: 24px 24px 0;
+            text-align: center;
+        }
+
+        .sim-modal-icon {
+            width: 64px;
+            height: 64px;
+            background: rgba(37, 211, 102, 0.15);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .sim-modal-icon svg {
+            width: 32px;
+            height: 32px;
+            color: #25D366;
+        }
+
+        .sim-modal-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--sim-text);
+            margin-bottom: 8px;
+        }
+
+        .sim-modal-subtitle {
+            font-size: 14px;
+            color: var(--sim-text-secondary);
+        }
+
+        .sim-modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 40px;
+            height: 40px;
+            background: var(--sim-bg);
+            border: 1px solid var(--sim-border);
+            border-radius: 50%;
+            color: var(--sim-text);
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .sim-modal-close:hover {
+            background: var(--sim-primary);
+            color: #000;
+        }
+
+        .sim-modal-body {
+            padding: 24px;
+        }
+
+        .sim-modal-summary {
+            background: rgba(201, 162, 39, 0.1);
+            border: 1px solid rgba(201, 162, 39, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .sim-modal-summary h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--sim-primary);
+            margin-bottom: 12px;
+        }
+
+        .sim-modal-summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .sim-modal-summary-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+
+        .sim-modal-summary-item span {
+            color: var(--sim-text-secondary);
+        }
+
+        .sim-modal-summary-item strong {
+            color: var(--sim-text);
+        }
+
+        /* Form fields */
+        .sim-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 500px) {
+            .sim-form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .sim-form-group {
+            margin-bottom: 0;
+        }
+
+        /* Row para campos lado a lado */
+        .sim-form-row {
+            display: flex;
+            gap: 12px;
+            grid-column: 1 / -1;
+        }
+
+        .sim-form-row .sim-form-group {
+            flex: 1;
+        }
+
+        .sim-form-row .sim-form-group-small {
+            flex: 0 0 140px;
+        }
+
+        @media (max-width: 500px) {
+            .sim-form-row {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .sim-form-row .sim-form-group-small {
+                flex: 1;
+            }
+        }
+
+        .sim-form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        .sim-form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--sim-text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .sim-form-input,
+        .sim-form-select {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--sim-bg);
+            border: 1px solid var(--sim-border);
+            border-radius: 10px;
+            color: var(--sim-text);
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .sim-form-input:focus,
+        .sim-form-select:focus {
+            outline: none;
+            border-color: var(--sim-primary);
+            box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.15);
+        }
+
+        .sim-form-input::placeholder {
+            color: var(--sim-text-muted);
+        }
+
+        /* Checkboxes de autorizacion */
+        .sim-auth-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--sim-border);
+        }
+
+        .sim-auth-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--sim-text);
+            margin-bottom: 16px;
+        }
+
+        .sim-auth-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 16px;
+            cursor: pointer;
+        }
+
+        .sim-auth-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--sim-primary);
+            flex-shrink: 0;
+            margin-top: 2px;
+            cursor: pointer;
+        }
+
+        .sim-auth-item span {
+            font-size: 12px;
+            color: var(--sim-text-muted);
+            line-height: 1.5;
+        }
+
+        .sim-auth-item a {
+            color: var(--sim-primary);
+            text-decoration: none;
+        }
+
+        .sim-auth-item a:hover {
+            text-decoration: underline;
+        }
+
+        /* Submit button */
+        .sim-modal-submit {
+            width: 100%;
+            padding: 16px;
+            background: #25D366;
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .sim-modal-submit:hover:not(:disabled) {
+            background: #128C7E;
+            transform: translateY(-2px);
+        }
+
+        .sim-modal-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .sim-modal-submit svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sim-config {
+                padding: 24px;
+            }
+
+            .sim-result-main {
+                padding: 32px 24px;
+            }
+
+            .sim-term-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .sim-chart-header {
+                flex-direction: column;
+                gap: 16px;
+                align-items: flex-start;
+            }
+
+            .sim-modal-summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .sim-animate {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        /* ============================================
+           TERMINOS Y CONDICIONES OVERLAY
+        ============================================ */
+        .terms-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--sim-bg);
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .terms-overlay.hidden {
+            display: none;
+        }
+
+        .terms-container {
+            background: var(--sim-card);
+            border: 1px solid var(--sim-border);
+            border-radius: 24px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .terms-header {
+            padding: 32px 32px 24px;
+            text-align: center;
+            border-bottom: 1px solid var(--sim-border);
+        }
+
+        .terms-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: rgba(201, 162, 39, 0.15);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .terms-icon svg {
+            width: 40px;
+            height: 40px;
+            color: var(--sim-primary);
+        }
+
+        .terms-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--sim-text);
+            margin-bottom: 8px;
+        }
+
+        .terms-subtitle {
+            font-size: 16px;
+            color: var(--sim-text-secondary);
+        }
+
+        .terms-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px;
+        }
+
+        .terms-section {
+            margin-bottom: 24px;
+        }
+
+        .terms-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .terms-section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--sim-primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .terms-section-title svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .terms-section p {
+            font-size: 14px;
+            color: var(--sim-text-secondary);
+            line-height: 1.8;
+            margin-bottom: 12px;
+        }
+
+        .terms-section ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .terms-section li {
+            font-size: 14px;
+            color: var(--sim-text-secondary);
+            line-height: 1.8;
+            margin-bottom: 8px;
+        }
+
+        .terms-highlight {
+            background: rgba(201, 162, 39, 0.1);
+            border-left: 4px solid var(--sim-primary);
+            padding: 16px 20px;
+            border-radius: 0 12px 12px 0;
+            margin: 20px 0;
+        }
+
+        .terms-highlight p {
+            margin: 0;
+            font-weight: 500;
+            color: var(--sim-text);
+        }
+
+        .terms-footer {
+            padding: 24px 32px;
+            border-top: 1px solid var(--sim-border);
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+        }
+
+        .terms-btn {
+            padding: 16px 40px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .terms-btn-decline {
+            background: transparent;
+            border: 2px solid var(--sim-border);
+            color: var(--sim-text-secondary);
+        }
+
+        .terms-btn-decline:hover {
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        .terms-btn-accept {
+            background: var(--sim-gradient);
+            color: #000;
+        }
+
+        .terms-btn-accept:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(201, 162, 39, 0.4);
+        }
+
+        @media (max-width: 600px) {
+            .terms-header {
+                padding: 24px 20px 20px;
+            }
+
+            .terms-title {
+                font-size: 22px;
+            }
+
+            .terms-body {
+                padding: 20px;
+            }
+
+            .terms-footer {
+                padding: 20px;
+                flex-direction: column;
+            }
+
+            .terms-btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+        /* Vehicle info banner */
+        .sim-vehicle-banner {
+            background: rgba(201, 162, 39, 0.1);
+            border: 1px solid rgba(201, 162, 39, 0.3);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .sim-vehicle-banner.hidden {
+            display: none;
+        }
+
+        .sim-vehicle-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sim-vehicle-info svg {
+            width: 24px;
+            height: 24px;
+            color: var(--sim-primary);
+        }
+
+        .sim-vehicle-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--sim-text);
+        }
+
+        .sim-vehicle-link {
+            font-size: 13px;
+            color: var(--sim-primary);
+            text-decoration: none;
+        }
+
+        .sim-vehicle-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Ocultar boton flotante de WhatsApp - ya hay botones de contacto en el simulador */
+        .wa-float {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- TERMINOS Y CONDICIONES OVERLAY -->
+    <div class="terms-overlay" id="terms-overlay">
+        <div class="terms-container">
+            <div class="terms-header">
+                <div class="terms-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                        <polyline points="10 9 9 9 8 9"/>
+                    </svg>
+                </div>
+                <h1 class="terms-title">Terminos y Condiciones</h1>
+                <p class="terms-subtitle">Lea atentamente antes de usar el simulador de credito</p>
+            </div>
+
+            <div class="terms-body">
+                <div class="terms-section">
+                    <h3 class="terms-section-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="16" x2="12" y2="12"/>
+                            <line x1="12" y1="8" x2="12.01" y2="8"/>
+                        </svg>
+                        Naturaleza de la simulacion
+                    </h3>
+                    <p><strong>Esta simulacion es unicamente de caracter informativo y referencial.</strong> El presente ejercicio de simulacion NO constituye una oferta comercial, propuesta formal, ni compromiso de aprobacion de credito por parte de ALTORRA COMPANY S.A.S.</p>
+                </div>
+
+                <div class="terms-section">
+                    <h3 class="terms-section-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                        Sobre las tasas de interes
+                    </h3>
+                    <p>Las tasas de interes mostradas en este simulador son referenciales y pueden variar en cualquier momento sin previo aviso, segun:</p>
+                    <ul>
+                        <li>Las politicas de las entidades financieras aliadas</li>
+                        <li>Las condiciones del mercado financiero</li>
+                        <li>El perfil crediticio del solicitante</li>
+                        <li>El resultado del estudio de credito</li>
+                    </ul>
+                    <p>Esta variacion no implica responsabilidad alguna por parte de ALTORRA COMPANY S.A.S.</p>
+                </div>
+
+                <div class="terms-section">
+                    <h3 class="terms-section-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                            <polyline points="22 4 12 14.01 9 11.01"/>
+                        </svg>
+                        Aprobacion del credito
+                    </h3>
+                    <p>El presente ejercicio de simulacion <strong>NO compromete a ALTORRA COMPANY S.A.S.</strong> con la aprobacion de la solicitud de credito. La respuesta final esta sujeta a:</p>
+                    <ul>
+                        <li>El estudio y analisis de los documentos de soporte</li>
+                        <li>La validacion de la informacion suministrada</li>
+                        <li>La aprobacion de la entidad financiera correspondiente</li>
+                        <li>El cumplimiento de las politicas de riesgo crediticio</li>
+                    </ul>
+                </div>
+
+                <div class="terms-section">
+                    <h3 class="terms-section-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                        Rol de ALTORRA COMPANY S.A.S.
+                    </h3>
+                    <p>ALTORRA COMPANY S.A.S. actuara como intermediario comercial, gestionando con las entidades financieras aliadas el estudio del cupo de credito. <strong>La entidad financiera sera la unica responsable de las condiciones finales del credito</strong>, incluyendo tasa de interes, plazo, cargos fijos y adicionales.</p>
+                </div>
+
+                <div class="terms-highlight">
+                    <p>Al hacer clic en "Acepto los terminos", usted declara haber leido, entendido y aceptado las condiciones aqui descritas, y reconoce que los resultados de esta simulacion son meramente orientativos.</p>
+                </div>
+            </div>
+
+            <div class="terms-footer">
+                <button class="terms-btn terms-btn-decline" id="terms-decline">No acepto</button>
+                <button class="terms-btn terms-btn-accept" id="terms-accept">Acepto los terminos</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header Global -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="simulator-page">
+        <!-- Titulo compacto -->
+        <div class="sim-title-section">
+            <div class="sim-title-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+            </div>
+            <h1 class="sim-title-text">Simula tu Credito</h1>
+            <div class="sim-title-line"></div>
+        </div>
+
+        <!-- Simulator -->
+        <div class="sim-container">
+            <!-- Vehicle banner (shown when coming from vehicle detail) -->
+            <div class="sim-vehicle-banner hidden" id="vehicle-banner">
+                <div class="sim-vehicle-info">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/>
+                        <path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/>
+                        <path d="M5 17h-2v-6l2 -5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0h-6m-6 -6h15m-6 0v-5"/>
+                    </svg>
+                    <span class="sim-vehicle-name" id="vehicle-name-display">--</span>
+                </div>
+                <a href="#" class="sim-vehicle-link" id="vehicle-link" target="_blank">Ver vehiculo</a>
+            </div>
+            <div class="sim-grid">
+                <!-- Config Panel -->
+                <aside class="sim-config">
+                    <div class="sim-config-header">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                        <h2>Configura tu credito</h2>
+                    </div>
+
+                    <!-- Vehicle Price -->
+                    <div class="sim-group">
+                        <label>
+                            Precio del vehiculo
+                            <span class="value" id="price-display">$65.000.000</span>
+                        </label>
+                        <div class="sim-input-wrap">
+                            <span class="prefix">$</span>
+                            <input type="text" class="sim-input" id="vehicle-price" value="65.000.000" inputmode="numeric">
+                        </div>
+                        <input type="range" class="sim-slider" id="price-slider" min="20000000" max="300000000" step="1000000" value="65000000">
+                        <div class="sim-slider-labels">
+                            <span>$20M</span>
+                            <span>$300M</span>
+                        </div>
+                    </div>
+
+                    <!-- Down Payment -->
+                    <div class="sim-group">
+                        <label>
+                            Cuota inicial
+                            <span class="value" id="dp-display">30% ($19.500.000)</span>
+                        </label>
+                        <input type="range" class="sim-slider" id="dp-slider" min="10" max="70" step="5" value="30">
+                        <div class="sim-slider-labels">
+                            <span>10%</span>
+                            <span>70%</span>
+                        </div>
+                    </div>
+
+                    <!-- Term -->
+                    <div class="sim-group">
+                        <label>Plazo de financiamiento</label>
+                        <div class="sim-term-grid" id="term-grid">
+                            <button class="sim-term-btn" data-term="24">24 meses</button>
+                            <button class="sim-term-btn" data-term="36">36 meses</button>
+                            <button class="sim-term-btn" data-term="48">48 meses</button>
+                            <button class="sim-term-btn active" data-term="60">60 meses</button>
+                            <button class="sim-term-btn" data-term="72">72 meses</button>
+                            <button class="sim-term-btn" data-term="84">84 meses</button>
+                        </div>
+                    </div>
+
+                    <!-- Interest Rate -->
+                    <div class="sim-group">
+                        <label>Tasa de interes mensual</label>
+                        <div class="sim-rate-options" id="rate-options">
+                            <label class="sim-rate-btn" data-rate="1.27">
+                                <div class="rate-info">
+                                    <span class="rate-name">Tasa Preferencial</span>
+                                    <span class="rate-desc">Excelente historial crediticio</span>
+                                </div>
+                                <span class="rate-value">1.27%</span>
+                            </label>
+                            <label class="sim-rate-btn active" data-rate="1.45">
+                                <div class="rate-info">
+                                    <span class="rate-name">Tasa Estandar</span>
+                                    <span class="rate-desc">Buen perfil crediticio</span>
+                                </div>
+                                <span class="rate-value">1.45%</span>
+                            </label>
+                            <label class="sim-rate-btn" data-rate="1.65">
+                                <div class="rate-info">
+                                    <span class="rate-name">Tasa Regular</span>
+                                    <span class="rate-desc">Perfil crediticio medio</span>
+                                </div>
+                                <span class="rate-value">1.65%</span>
+                            </label>
+                            <label class="sim-rate-btn" data-rate="1.88">
+                                <div class="rate-info">
+                                    <span class="rate-name">Tasa Alta</span>
+                                    <span class="rate-desc">Sin historial o reparado</span>
+                                </div>
+                                <span class="rate-value">1.88%</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Summary -->
+                    <div class="sim-summary">
+                        <div class="sim-summary-row">
+                            <span>Valor a financiar</span>
+                            <strong id="financed-display">$45.500.000</strong>
+                        </div>
+                        <div class="sim-summary-row">
+                            <span>Tasa efectiva anual</span>
+                            <strong id="ea-display">18.81% EA</strong>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Results Panel -->
+                <div class="sim-results">
+                    <!-- Main Result -->
+                    <div class="sim-result-main sim-animate">
+                        <p class="sim-result-label">Tu cuota mensual estimada</p>
+                        <p class="sim-result-value" id="monthly-payment">$1.185.432</p>
+                        <span class="sim-result-rate">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            </svg>
+                            Tasa: <span id="rate-display">1.45% MV</span>
+                        </span>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div class="sim-stats-grid">
+                        <div class="sim-stat-card">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                                <line x1="1" y1="10" x2="23" y2="10"/>
+                            </svg>
+                            <p class="sim-stat-label">Total a pagar</p>
+                            <p class="sim-stat-value" id="total-payment">$71.125.920</p>
+                        </div>
+                        <div class="sim-stat-card">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            </svg>
+                            <p class="sim-stat-label">Total intereses</p>
+                            <p class="sim-stat-value" id="total-interest">$25.625.920</p>
+                        </div>
+                        <div class="sim-stat-card">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12 6 12 12 16 14"/>
+                            </svg>
+                            <p class="sim-stat-label">Plazo</p>
+                            <p class="sim-stat-value" id="term-display">60 meses</p>
+                        </div>
+                    </div>
+
+                    <!-- Comparison -->
+                    <div class="sim-compare-section">
+                        <h3 class="sim-compare-title">Compara diferentes escenarios de tasa</h3>
+                        <div class="sim-compare-grid" id="compare-grid">
+                            <!-- Generated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Chart -->
+                    <div class="sim-chart-section">
+                        <div class="sim-chart-header">
+                            <h3 class="sim-chart-title">Distribucion del credito</h3>
+                            <div class="sim-chart-tabs">
+                                <button class="sim-chart-tab active" data-chart="pie">Composicion</button>
+                                <button class="sim-chart-tab" data-chart="bar">Amortizacion</button>
+                            </div>
+                        </div>
+                        <div class="sim-chart-container">
+                            <canvas id="sim-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- CTA -->
+                    <div class="sim-cta">
+                        <h3>Solicita tu estudio de credito</h3>
+                        <p>Nuestras entidades financieras aliadas pueden realizar tu estudio y ofrecerte tasas preferenciales segun tu perfil crediticio.</p>
+                        <button class="sim-btn-whatsapp" id="btn-open-modal">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                            </svg>
+                            Solicitar asesoria gratuita
+                        </button>
+                    </div>
+
+                    <!-- Legal disclaimer -->
+                    <div class="sim-legal">
+                        <h4 class="sim-legal-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="12" y1="16" x2="12" y2="12"/>
+                                <line x1="12" y1="8" x2="12.01" y2="8"/>
+                            </svg>
+                            Informacion legal importante
+                        </h4>
+                        <p><strong>ESTA SIMULACION NO ES UNA PROPUESTA FORMAL.</strong> El presente ejercicio de simulacion es unicamente de caracter informativo y referencial, y NO constituye una oferta comercial ni compromiso de aprobacion de credito.</p>
+                        <p><strong>El presente ejercicio de simulacion NO compromete a ALTORRA COMPANY S.A.S. con la aprobacion de la solicitud de credito.</strong> La respuesta final esta sujeta al estudio y analisis de los documentos de soporte, la validacion de la informacion suministrada, y la aprobacion de la entidad financiera correspondiente.</p>
+                        <p><strong>Las tasas de credito pueden variar en cualquier momento sin previo aviso</strong>, segun las politicas de las entidades financieras aliadas, las condiciones del mercado y el perfil crediticio del solicitante. Esta variacion no implica responsabilidad alguna por parte de ALTORRA COMPANY S.A.S.</p>
+                        <p><strong>ALTORRA COMPANY S.A.S.</strong> actuara como intermediario comercial, gestionando con las entidades financieras aliadas el estudio del cupo de credito. La entidad financiera sera la unica responsable de las condiciones finales del credito, incluyendo tasa de interes, plazo, cargos fijos y adicionales.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Global -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Modal de contacto -->
+    <div class="sim-modal" id="contact-modal">
+        <div class="sim-modal-content">
+            <button class="sim-modal-close" id="modal-close">&times;</button>
+
+            <div class="sim-modal-header">
+                <div class="sim-modal-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                    </svg>
+                </div>
+                <h2 class="sim-modal-title">Solicita tu estudio de credito</h2>
+                <p class="sim-modal-subtitle">Completa tus datos para recibir asesoria personalizada</p>
+            </div>
+
+            <div class="sim-modal-body">
+                <!-- Resumen de simulacion -->
+                <div class="sim-modal-summary">
+                    <h4>Resumen de tu simulacion</h4>
+                    <div class="sim-modal-summary-grid">
+                        <div class="sim-modal-summary-item">
+                            <span>Precio vehiculo:</span>
+                            <strong id="modal-price">$65.000.000</strong>
+                        </div>
+                        <div class="sim-modal-summary-item">
+                            <span>Cuota inicial:</span>
+                            <strong id="modal-dp">$19.500.000</strong>
+                        </div>
+                        <div class="sim-modal-summary-item">
+                            <span>A financiar:</span>
+                            <strong id="modal-financed">$45.500.000</strong>
+                        </div>
+                        <div class="sim-modal-summary-item">
+                            <span>Plazo:</span>
+                            <strong id="modal-term">60 meses</strong>
+                        </div>
+                        <div class="sim-modal-summary-item">
+                            <span>Tasa:</span>
+                            <strong id="modal-rate">1.45% MV</strong>
+                        </div>
+                        <div class="sim-modal-summary-item">
+                            <span>Cuota mensual:</span>
+                            <strong id="modal-monthly">$1.185.432</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulario -->
+                <form id="contact-form">
+                    <div class="sim-form-grid">
+                        <div class="sim-form-group">
+                            <label for="contact-name">Nombres completos *</label>
+                            <input type="text" class="sim-form-input" id="contact-name" placeholder="Ej: Juan Carlos Perez" required>
+                        </div>
+                        <div class="sim-form-row">
+                            <div class="sim-form-group sim-form-group-small">
+                                <label for="contact-doc-type">Tipo documento *</label>
+                                <select class="sim-form-select" id="contact-doc-type" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="CC">Cedula de Ciudadania</option>
+                                    <option value="CE">Cedula de Extranjeria</option>
+                                    <option value="NIT">NIT</option>
+                                    <option value="Pasaporte">Pasaporte</option>
+                                </select>
+                            </div>
+                            <div class="sim-form-group">
+                                <label for="contact-doc-number">Numero de documento *</label>
+                                <input type="text" class="sim-form-input" id="contact-doc-number" placeholder="Ej: 1234567890" required>
+                            </div>
+                        </div>
+                        <div class="sim-form-group">
+                            <label for="contact-phone">Celular *</label>
+                            <input type="tel" class="sim-form-input" id="contact-phone" placeholder="Ej: 3001234567" required>
+                        </div>
+                        <div class="sim-form-group">
+                            <label for="contact-email">Correo electronico *</label>
+                            <input type="email" class="sim-form-input" id="contact-email" placeholder="Ej: correo@ejemplo.com" required>
+                        </div>
+                        <div class="sim-form-group">
+                            <label for="contact-city">Ciudad *</label>
+                            <input type="text" class="sim-form-input" id="contact-city" placeholder="Ej: Cartagena" required>
+                        </div>
+                        <div class="sim-form-group">
+                            <label for="contact-occupation">Tipo de actividad *</label>
+                            <select class="sim-form-select" id="contact-occupation" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="Empleado">Empleado</option>
+                                <option value="Independiente">Independiente</option>
+                                <option value="Pensionado">Pensionado</option>
+                                <option value="Empresario">Empresario</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="sim-form-group">
+                            <label for="contact-income">Ingresos mensuales *</label>
+                            <select class="sim-form-select" id="contact-income" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="Menos de $2.000.000">Menos de $2.000.000</option>
+                                <option value="$2.000.000 - $4.000.000">$2.000.000 - $4.000.000</option>
+                                <option value="$4.000.000 - $7.000.000">$4.000.000 - $7.000.000</option>
+                                <option value="$7.000.000 - $10.000.000">$7.000.000 - $10.000.000</option>
+                                <option value="Mas de $10.000.000">Mas de $10.000.000</option>
+                            </select>
+                        </div>
+                        <div class="sim-form-group full">
+                            <label for="contact-pep">Es Persona Expuesta Politicamente (PEP)? *</label>
+                            <select class="sim-form-select" id="contact-pep" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="No">No</option>
+                                <option value="Si">Si</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Autorizaciones -->
+                    <div class="sim-auth-section">
+                        <p class="sim-auth-title">Autorizaciones requeridas</p>
+
+                        <label class="sim-auth-item">
+                            <input type="checkbox" id="auth-contact" required>
+                            <span>Autorizo y solicito expresamente que me contacten para recibir informacion sobre productos de financiacion vehicular por parte de <strong>ALTORRA COMPANY S.A.S.</strong> y sus entidades financieras aliadas.</span>
+                        </label>
+
+                        <label class="sim-auth-item">
+                            <input type="checkbox" id="auth-data" required>
+                            <span>He leido, entiendo y autorizo el tratamiento de mis datos personales de acuerdo con la <a href="privacidad.html" target="_blank">Politica de Tratamiento de Datos Personales</a> de ALTORRA COMPANY S.A.S.</span>
+                        </label>
+
+                        <label class="sim-auth-item">
+                            <input type="checkbox" id="auth-credit" required>
+                            <span>Autorizo a <strong>ALTORRA COMPANY S.A.S.</strong> y/o a sus aliados comerciales para que consulten mi informacion crediticia, financiera, comercial y de seguridad social en centrales de informacion financiera y operadores de informacion con el fin de verificar mi comportamiento crediticio para efectos de realizar estudio de solicitud de credito.</span>
+                        </label>
+
+                        <label class="sim-auth-item">
+                            <input type="checkbox" id="auth-terms" required>
+                            <span>Entiendo y acepto que esta simulacion NO es una propuesta formal ni compromete a ALTORRA COMPANY S.A.S. con la aprobacion del credito. Las tasas de interes y condiciones finales seran determinadas por la entidad financiera que apruebe mi solicitud y pueden variar sin previo aviso.</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="sim-modal-submit" id="btn-submit">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                        </svg>
+                        Enviar solicitud por WhatsApp
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/components.js"></script>
+    <script>
+    (function() {
+        'use strict';
+
+        // ============================================
+        // STATE
+        // ============================================
+        const state = {
+            price: 65000000,
+            downPaymentPercent: 30,
+            term: 60,
+            rate: 1.45,
+            vehicleName: '',
+            vehicleLink: '',
+            vehicleYear: ''
+        };
+
+        const RATES = [
+            { value: 1.27, name: 'Preferencial', desc: 'Excelente historial' },
+            { value: 1.45, name: 'Estandar', desc: 'Buen perfil' },
+            { value: 1.65, name: 'Regular', desc: 'Perfil medio' },
+            { value: 1.88, name: 'Alta', desc: 'Sin historial' }
+        ];
+
+        const WHATSAPP = '573235016747';
+        let chart = null;
+        let chartType = 'pie';
+
+        // ============================================
+        // DOM
+        // ============================================
+        const $priceInput = document.getElementById('vehicle-price');
+        const $priceSlider = document.getElementById('price-slider');
+        const $priceDisplay = document.getElementById('price-display');
+        const $dpSlider = document.getElementById('dp-slider');
+        const $dpDisplay = document.getElementById('dp-display');
+        const $termGrid = document.getElementById('term-grid');
+        const $rateOptions = document.getElementById('rate-options');
+        const $financedDisplay = document.getElementById('financed-display');
+        const $eaDisplay = document.getElementById('ea-display');
+        const $monthlyPayment = document.getElementById('monthly-payment');
+        const $rateDisplay = document.getElementById('rate-display');
+        const $totalPayment = document.getElementById('total-payment');
+        const $totalInterest = document.getElementById('total-interest');
+        const $termDisplay = document.getElementById('term-display');
+        const $compareGrid = document.getElementById('compare-grid');
+        const $chartCanvas = document.getElementById('sim-chart');
+        const $modal = document.getElementById('contact-modal');
+
+        // ============================================
+        // UTILS
+        // ============================================
+        function formatCOP(num) {
+            return new Intl.NumberFormat('es-CO', {
+                style: 'currency',
+                currency: 'COP',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(num);
+        }
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat('es-CO').format(num);
+        }
+
+        function parseCurrency(str) {
+            return parseInt(String(str).replace(/\D/g, '')) || 0;
+        }
+
+        // PMT function (Excel compatible)
+        function PMT(rate, nper, pv) {
+            if (rate === 0) return -pv / nper;
+            const r = rate / 100;
+            return (r * pv) / (1 - Math.pow(1 + r, -nper));
+        }
+
+        // Monthly to EA
+        function monthlyToEA(monthlyRate) {
+            return (Math.pow(1 + monthlyRate / 100, 12) - 1) * 100;
+        }
+
+        // ============================================
+        // CALCULATION
+        // ============================================
+        function calculate() {
+            const financed = state.price * (1 - state.downPaymentPercent / 100);
+            const downPayment = state.price * state.downPaymentPercent / 100;
+            const monthly = PMT(state.rate, state.term, financed);
+            const total = monthly * state.term;
+            const interest = total - financed;
+            const ea = monthlyToEA(state.rate);
+
+            return { financed, downPayment, monthly, total, interest, ea };
+        }
+
+        function updateUI() {
+            const calc = calculate();
+
+            // Update displays
+            $priceDisplay.textContent = formatCOP(state.price);
+            $dpDisplay.textContent = `${state.downPaymentPercent}% (${formatCOP(calc.downPayment)})`;
+            $financedDisplay.textContent = formatCOP(calc.financed);
+            $eaDisplay.textContent = `${calc.ea.toFixed(2)}% EA`;
+            $monthlyPayment.textContent = formatCOP(calc.monthly);
+            $rateDisplay.textContent = `${state.rate}% MV`;
+            $totalPayment.textContent = formatCOP(calc.total);
+            $totalInterest.textContent = formatCOP(calc.interest);
+            $termDisplay.textContent = `${state.term} meses`;
+
+            // Update comparison grid
+            updateComparison(calc.financed);
+
+            // Update chart
+            updateChart(calc);
+        }
+
+        function updateComparison(financed) {
+            let html = '';
+            let bestRate = Infinity;
+            let bestIndex = 0;
+
+            // Find best rate
+            RATES.forEach((rate, i) => {
+                const monthly = PMT(rate.value, state.term, financed);
+                if (monthly < bestRate) {
+                    bestRate = monthly;
+                    bestIndex = i;
+                }
+            });
+
+            RATES.forEach((rate, i) => {
+                const monthly = PMT(rate.value, state.term, financed);
+                const total = monthly * state.term;
+                const isSelected = rate.value === state.rate;
+                const isBest = i === bestIndex;
+
+                html += `
+                    <div class="sim-compare-card ${isSelected ? 'selected' : ''}" data-rate="${rate.value}" style="position: relative;">
+                        ${isBest ? '<span class="best-badge">Mejor opcion</span>' : ''}
+                        <span class="rate-badge">${rate.value}% MV</span>
+                        <p class="rate-name">${rate.name}</p>
+                        <p class="rate-desc">${rate.desc}</p>
+                        <p class="monthly">${formatCOP(monthly)}</p>
+                        <p class="monthly-label">Cuota mensual</p>
+                        <p class="total">Total: ${formatCOP(total)}</p>
+                    </div>
+                `;
+            });
+
+            $compareGrid.innerHTML = html;
+
+            // Add click handlers
+            $compareGrid.querySelectorAll('.sim-compare-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    state.rate = parseFloat(card.dataset.rate);
+                    updateRateButtons();
+                    updateUI();
+                });
+            });
+        }
+
+        function updateRateButtons() {
+            $rateOptions.querySelectorAll('.sim-rate-btn').forEach(btn => {
+                btn.classList.toggle('active', parseFloat(btn.dataset.rate) === state.rate);
+            });
+        }
+
+        function updateChart(calc) {
+            const ctx = $chartCanvas.getContext('2d');
+
+            if (chart) {
+                chart.destroy();
+            }
+
+            if (chartType === 'pie') {
+                chart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Capital', 'Intereses', 'Cuota inicial'],
+                        datasets: [{
+                            data: [calc.financed, calc.interest, calc.downPayment],
+                            backgroundColor: [
+                                '#c9a227',
+                                '#3b82f6',
+                                '#22c55e'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: '#a0a0a0',
+                                    padding: 20,
+                                    font: { size: 13 }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.label + ': ' + formatCOP(context.raw);
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '60%'
+                    }
+                });
+            } else {
+                // Bar chart - amortization over years
+                const years = Math.ceil(state.term / 12);
+                const labels = [];
+                const capitalData = [];
+                const interestData = [];
+
+                let balance = calc.financed;
+                const monthlyRate = state.rate / 100;
+
+                for (let year = 1; year <= years; year++) {
+                    labels.push('Ano ' + year);
+                    let yearCapital = 0;
+                    let yearInterest = 0;
+
+                    for (let month = 0; month < 12 && (year - 1) * 12 + month < state.term; month++) {
+                        const interestPayment = balance * monthlyRate;
+                        const capitalPayment = calc.monthly - interestPayment;
+                        yearCapital += capitalPayment;
+                        yearInterest += interestPayment;
+                        balance -= capitalPayment;
+                    }
+
+                    capitalData.push(yearCapital);
+                    interestData.push(yearInterest);
+                }
+
+                chart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Capital',
+                                data: capitalData,
+                                backgroundColor: '#c9a227'
+                            },
+                            {
+                                label: 'Intereses',
+                                data: interestData,
+                                backgroundColor: '#3b82f6'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                stacked: true,
+                                grid: { color: '#2a2a2a' },
+                                ticks: { color: '#a0a0a0' }
+                            },
+                            y: {
+                                stacked: true,
+                                grid: { color: '#2a2a2a' },
+                                ticks: {
+                                    color: '#a0a0a0',
+                                    callback: function(value) {
+                                        return '$' + (value / 1000000).toFixed(0) + 'M';
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: '#a0a0a0' }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.dataset.label + ': ' + formatCOP(context.raw);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+
+        // Price slider
+        $priceSlider.addEventListener('input', () => {
+            state.price = parseInt($priceSlider.value);
+            $priceInput.value = formatNumber(state.price);
+            updateUI();
+        });
+
+        // Price input
+        $priceInput.addEventListener('blur', () => {
+            state.price = parseCurrency($priceInput.value);
+            $priceSlider.value = Math.min(Math.max(state.price, 20000000), 300000000);
+            $priceInput.value = formatNumber(state.price);
+            updateUI();
+        });
+
+        $priceInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                $priceInput.blur();
+            }
+        });
+
+        // Down payment slider
+        $dpSlider.addEventListener('input', () => {
+            state.downPaymentPercent = parseInt($dpSlider.value);
+            updateUI();
+        });
+
+        // Term buttons
+        $termGrid.addEventListener('click', (e) => {
+            const btn = e.target.closest('.sim-term-btn');
+            if (!btn) return;
+
+            state.term = parseInt(btn.dataset.term);
+            $termGrid.querySelectorAll('.sim-term-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateUI();
+        });
+
+        // Rate buttons
+        $rateOptions.addEventListener('click', (e) => {
+            const btn = e.target.closest('.sim-rate-btn');
+            if (!btn) return;
+
+            state.rate = parseFloat(btn.dataset.rate);
+            updateRateButtons();
+            updateUI();
+        });
+
+        // Chart tabs
+        document.querySelectorAll('.sim-chart-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.sim-chart-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                chartType = tab.dataset.chart;
+                updateUI();
+            });
+        });
+
+        // ============================================
+        // MODAL
+        // ============================================
+
+        // Open modal
+        document.getElementById('btn-open-modal').addEventListener('click', () => {
+            const calc = calculate();
+
+            // Update modal summary
+            document.getElementById('modal-price').textContent = formatCOP(state.price);
+            document.getElementById('modal-dp').textContent = formatCOP(calc.downPayment);
+            document.getElementById('modal-financed').textContent = formatCOP(calc.financed);
+            document.getElementById('modal-term').textContent = state.term + ' meses';
+            document.getElementById('modal-rate').textContent = state.rate + '% MV';
+            document.getElementById('modal-monthly').textContent = formatCOP(calc.monthly);
+
+            $modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+
+        // Close modal
+        document.getElementById('modal-close').addEventListener('click', () => {
+            $modal.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+
+        $modal.addEventListener('click', (e) => {
+            if (e.target === $modal) {
+                $modal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+
+        // Form submit
+        document.getElementById('contact-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('contact-name').value;
+            const docType = document.getElementById('contact-doc-type').value;
+            const docNumber = document.getElementById('contact-doc-number').value;
+            const phone = document.getElementById('contact-phone').value;
+            const email = document.getElementById('contact-email').value;
+            const city = document.getElementById('contact-city').value;
+            const occupation = document.getElementById('contact-occupation').value;
+            const income = document.getElementById('contact-income').value;
+            const pep = document.getElementById('contact-pep').value;
+
+            // Build vehicle info section if available
+            let vehicleSection = '';
+            if (state.vehicleName) {
+                const vehicleFullName = state.vehicleYear
+                    ? `${state.vehicleName} ${state.vehicleYear}`
+                    : state.vehicleName;
+                vehicleSection = `VEHICULO DE INTERES:
+- ${vehicleFullName}`;
+                if (state.vehicleLink) {
+                    vehicleSection += `
+- Ver vehiculo: ${state.vehicleLink}`;
+                }
+                vehicleSection += `
+
+`;
+            }
+
+            const msg = `Hola ALTORRA CARS!
+
+Solicito estudio de credito vehicular.
+
+${vehicleSection}DATOS PERSONALES:
+- Nombre: ${name}
+- Documento: ${docType} ${docNumber}
+- Celular: ${phone}
+- Email: ${email}
+- Ciudad: ${city}
+- Actividad: ${occupation}
+- Ingresos mensuales: ${income}
+- Persona expuesta politicamente (PEP): ${pep}
+
+AUTORIZACIONES:
+He aceptado el tratamiento de mis datos personales y la consulta en centrales de riesgo.
+
+Quedo atento a su respuesta.`;
+
+            window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
+        });
+
+        // ============================================
+        // URL PARAMS
+        // ============================================
+        function loadFromURL() {
+            const params = new URLSearchParams(window.location.search);
+
+            if (params.has('precio')) {
+                state.price = parseInt(params.get('precio'));
+                $priceInput.value = formatNumber(state.price);
+                $priceSlider.value = state.price;
+            }
+
+            if (params.has('vehiculo')) {
+                state.vehicleName = params.get('vehiculo');
+            }
+
+            if (params.has('year')) {
+                state.vehicleYear = params.get('year');
+            }
+
+            if (params.has('enlace')) {
+                state.vehicleLink = params.get('enlace');
+            }
+
+            // Show vehicle banner if we have vehicle info
+            if (state.vehicleName) {
+                const banner = document.getElementById('vehicle-banner');
+                const nameDisplay = document.getElementById('vehicle-name-display');
+                const linkEl = document.getElementById('vehicle-link');
+
+                if (banner) {
+                    banner.classList.remove('hidden');
+                    const displayName = state.vehicleYear
+                        ? `${state.vehicleName} ${state.vehicleYear}`
+                        : state.vehicleName;
+                    nameDisplay.textContent = displayName;
+
+                    if (state.vehicleLink) {
+                        linkEl.href = state.vehicleLink;
+                        linkEl.style.display = 'inline';
+                    } else {
+                        linkEl.style.display = 'none';
+                    }
+                }
+            }
+        }
+
+        // ============================================
+        // TERMS OVERLAY
+        // ============================================
+        function initTermsOverlay() {
+            const overlay = document.getElementById('terms-overlay');
+            const acceptBtn = document.getElementById('terms-accept');
+            const declineBtn = document.getElementById('terms-decline');
+
+            if (!overlay) return;
+
+            // Terms must always be shown - no session storage bypass
+
+            // Accept terms
+            acceptBtn.addEventListener('click', () => {
+                overlay.classList.add('hidden');
+            });
+
+            // Decline terms - go back to previous page or vehicle detail
+            declineBtn.addEventListener('click', () => {
+                if (state.vehicleLink) {
+                    window.location.href = state.vehicleLink;
+                } else if (document.referrer && document.referrer.includes(window.location.hostname)) {
+                    window.history.back();
+                } else {
+                    window.location.href = 'catalogo.html';
+                }
+            });
+        }
+
+        // ============================================
+        // INIT
+        // ============================================
+        function init() {
+            loadFromURL();
+            initTermsOverlay();
+            $priceInput.value = formatNumber(state.price);
+            updateUI();
+        }
+
+        // Wait for components to load
+        setTimeout(init, 200);
+    })();
+    </script>
+
+    <!-- Cache Manager -->
+    <script src="js/cache-manager.js"></script>
+</body>
+</html>

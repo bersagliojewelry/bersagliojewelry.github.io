@@ -1,0 +1,247 @@
+/* ============================================
+   MARCAS — Carrusel oscuro, logos visibles
+   Hero → ver css/hero.css (fuente única de verdad)
+   ============================================ */
+
+/* ── Variante hero-flow (index.html) ──
+   Fondo oscuro que continúa visualmente desde el hero */
+.brands-section.brands-section--hero-flow {
+    background: #111111 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+/* Línea de separación sutil dorada en la parte superior */
+.brands-section.brands-section--hero-flow::before {
+    content: '' !important;
+    display: block !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 1px !important;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(212, 175, 55, 0.4) 30%,
+        rgba(212, 175, 55, 0.6) 50%,
+        rgba(212, 175, 55, 0.4) 70%,
+        transparent 100%
+    ) !important;
+    z-index: 1 !important;
+    width: 100% !important;
+    transform: none !important;
+    opacity: 1 !important;
+}
+
+/* Track animado */
+.brands-track {
+    display: flex;
+    gap: 0;
+    width: max-content;
+    will-change: transform;
+}
+
+/* ── Tarjeta de marca — sin bordes, solo separador vertical sutil ── */
+.brands-section.brands-section--hero-flow .brand-card {
+    flex: 0 0 150px;
+    background: transparent !important;
+    border: none !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.07) !important;
+    border-radius: 0 !important;
+    padding: 1.4rem 1rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem;
+    min-height: 100px !important;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.25s ease !important;
+    overflow: visible !important;
+    position: relative !important;
+}
+
+.brands-section.brands-section--hero-flow .brand-card:hover {
+    background: rgba(212, 175, 55, 0.08) !important;
+    border-color: transparent !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Quitar pseudo-elementos de dark-theme */
+.brands-section.brands-section--hero-flow .brand-card::before,
+.brands-section.brands-section--hero-flow .brand-card::after {
+    display: none !important;
+}
+
+/* ── Logo blanco visible sobre fondo oscuro ── */
+.brands-section.brands-section--hero-flow .brand-logo {
+    width: 100%;
+    max-width: 85px;
+    height: 44px;
+    object-fit: contain;
+    filter: brightness(1) !important;
+    opacity: 1;
+    transition: opacity 0.25s ease, transform 0.25s ease !important;
+}
+
+.brands-section.brands-section--hero-flow .brand-card:hover .brand-logo {
+    opacity: 1 !important;
+    transform: scale(1.08) !important;
+    filter: brightness(1.1) drop-shadow(0 0 8px rgba(212,175,55,0.45)) !important;
+}
+
+/* ── Nombre de marca ── */
+.brands-section.brands-section--hero-flow .brand-name {
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    color: rgba(255, 255, 255, 0.65) !important;
+    text-align: center;
+    white-space: nowrap;
+    text-shadow: none !important;
+    margin-top: 0 !important;
+    letter-spacing: 0.02em;
+    transition: color 0.25s ease;
+}
+
+.brands-section.brands-section--hero-flow .brand-card:hover .brand-name {
+    color: rgba(212, 175, 55, 0.9) !important;
+}
+
+/* ── Conteo ── */
+.brand-count {
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.35);
+    font-weight: 400;
+}
+
+.brands-section.brands-section--hero-flow .brand-count {
+    color: rgba(255, 255, 255, 0.35) !important;
+}
+
+.brand-count::after {
+    content: ' autos';
+}
+
+/* ================================================================
+   Wrapper — flechas sobre fondo oscuro, visibles solo en hover
+   ================================================================ */
+.brands-carousel-wrapper {
+    position: relative;
+    padding: 0;
+    width: 100%;
+}
+
+.brands-carousel {
+    overflow: hidden;
+    position: relative;
+}
+
+/* Desvanecer bordes laterales para efecto "infinito" */
+.brands-carousel-wrapper::before,
+.brands-carousel-wrapper::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 60px;
+    z-index: 2;
+    pointer-events: none;
+}
+.brands-carousel-wrapper::before {
+    left: 0;
+    background: linear-gradient(to right, #111111 0%, transparent 100%);
+}
+.brands-carousel-wrapper::after {
+    right: 0;
+    background: linear-gradient(to left, #111111 0%, transparent 100%);
+}
+
+/* Flechas — pequeñas, sobre fondo oscuro, ocultas hasta hover */
+.brands-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(212, 175, 55, 0.15);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    color: rgba(212, 175, 55, 0.8);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, background 0.2s ease;
+}
+
+.brands-carousel-wrapper:hover .brands-arrow {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.brands-arrow:hover {
+    background: rgba(212, 175, 55, 0.3);
+    border-color: rgba(212, 175, 55, 0.6);
+    color: #d4af37;
+}
+
+.brands-arrow:active {
+    transform: translateY(-50%) scale(0.9);
+}
+
+.brands-arrow.prev { left: 8px; }
+.brands-arrow.next { right: 8px; }
+
+/* ── Botón ver más marcas ── */
+.btn-view-more {
+    display: inline-block;
+    padding: 0.85rem 2.5rem;
+    background: linear-gradient(135deg, var(--primary-gold, #d4af37) 0%, var(--primary-brown, #916652) 100%);
+    color: white;
+    border-radius: var(--radius-md, 8px);
+    font-weight: 600;
+    font-size: 1rem;
+    transition: transform 0.3s, box-shadow 0.3s;
+    box-shadow: 0 4px 12px rgba(184, 150, 88, 0.3);
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-view-more:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(184, 150, 88, 0.4);
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .brands-arrow { display: none; }
+    .brands-carousel-wrapper::before,
+    .brands-carousel-wrapper::after { width: 30px; }
+}
+
+@media (max-width: 640px) {
+    .brands-section.brands-section--hero-flow .brand-card {
+        flex: 0 0 110px !important;
+        padding: 1.1rem 0.6rem !important;
+        min-height: 90px !important;
+    }
+    .brands-section.brands-section--hero-flow .brand-logo {
+        max-width: 70px;
+        height: 38px;
+    }
+    .brands-section.brands-section--hero-flow .brand-name {
+        font-size: 0.7rem !important;
+    }
+}

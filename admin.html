@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin | ALTORRA CARS</title>
+    <meta name="robots" content="noindex, nofollow">
+    <!-- Preconnect to Firebase CDN for faster SDK loading -->
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
+    <link rel="dns-prefetch" href="https://www.gstatic.com">
+    <link rel="dns-prefetch" href="https://firestore.googleapis.com">
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" class="login-container">
+    <div class="login-box">
+        <div class="login-logo">
+            <h1>ALTORRA CARS</h1>
+            <p>Panel de Administracion</p>
+        </div>
+        <form id="loginForm">
+            <div class="form-group">
+                <label class="form-label">Correo electronico</label>
+                <input type="email" id="loginEmail" class="form-input" required placeholder="admin@altorracars.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Contrasena</label>
+                <input type="password" id="loginPassword" class="form-input" required placeholder="Tu contrasena">
+            </div>
+            <div id="loginError" style="color: var(--admin-danger); font-size: 0.8rem; margin-bottom: 0.75rem; display: none;"></div>
+            <button type="submit" class="btn btn-primary btn-block" id="loginBtn">Iniciar Sesion</button>
+        </form>
+    </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="adminPanel" class="admin-layout" style="display: none;">
+
+    <!-- MOBILE TOP BAR -->
+    <div class="mobile-topbar">
+        <button class="hamburger-btn" id="hamburgerBtn" aria-label="Abrir menu">
+            <span></span><span></span><span></span>
+        </button>
+        <div class="mobile-topbar-logo">ALTORRA CARS <small>Admin</small></div>
+        <button class="btn btn-ghost btn-sm" id="mobileLogoutBtn" style="color:var(--admin-text-muted);font-size:0.75rem;">Salir</button>
+    </div>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar" id="adminSidebar">
+        <div class="sidebar-logo">
+            <h2>ALTORRA CARS</h2>
+            <small>Panel Admin</small>
+        </div>
+
+        <!-- Dashboard (standalone) -->
+        <button class="nav-item active" data-section="dashboard">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+            Dashboard
+        </button>
+
+        <!-- INVENTARIO -->
+        <div class="nav-category">Inventario</div>
+        <button class="nav-item" data-section="vehicles">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17m-2 0a2 2 0 1 0 4 0 2 2 0 1 0-4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0 2 2 0 1 0-4 0"/><path d="M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2"/><path d="M9 17h6"/><path d="M14 7l4 5"/></svg>
+            <span>Vehiculos</span>
+            <span class="nav-badge" id="navBadgeVehicles"></span>
+        </button>
+        <button class="nav-item" data-section="brands">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+            <span>Marcas</span>
+            <span class="nav-badge" id="navBadgeBrands"></span>
+        </button>
+        <button class="nav-item" data-section="banners">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            <span>Banners</span>
+            <span class="nav-badge" id="navBadgeBanners"></span>
+        </button>
+
+        <!-- COMERCIAL -->
+        <div class="nav-category">Comercial</div>
+        <button class="nav-item" data-section="appointments">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+            <span>Citas</span>
+            <span class="nav-badge" id="navBadgeAppointments"></span>
+        </button>
+        <button class="nav-item" data-section="dealers">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/><path d="M1 21h22"/><path d="M10 9h4"/><path d="M10 13h4"/><path d="M10 17h4"/><path d="M20 21V10l-4-3"/><path d="M4 21V10l4-3"/></svg>
+            <span>Aliados</span>
+        </button>
+        <button class="nav-item" data-section="reviews">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <span>Resenas</span>
+            <span class="nav-badge" id="navBadgeReviews"></span>
+        </button>
+        <button class="nav-item" data-section="lists">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 14l2 2 4-4"/></svg>
+            <span>Listas</span>
+        </button>
+
+        <!-- SISTEMA -->
+        <div class="nav-category">Sistema</div>
+        <button class="nav-item" data-section="users">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+            Usuarios
+        </button>
+        <button class="nav-item" data-section="settings">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+            Configuracion
+        </button>
+        <div class="nav-divider"></div>
+        <button class="nav-item nav-item-logout" id="logoutBtn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Cerrar Sesion
+        </button>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- DASHBOARD -->
+        <div id="sec-dashboard" class="section active">
+            <div class="page-header">
+                <div>
+                    <h1>Dashboard</h1>
+                    <p class="page-subtitle" id="adminEmail"></p>
+                </div>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon si-blue"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17m-2 0a2 2 0 1 0 4 0 2 2 0 1 0-4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0 2 2 0 1 0-4 0"/><path d="M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2"/><path d="M9 17h6"/></svg></div>
+                    <div class="stat-label">Total Vehiculos</div>
+                    <div class="stat-value" id="statTotal">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon si-green"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+                    <div class="stat-label">Nuevos</div>
+                    <div class="stat-value" id="statNuevos">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon si-purple"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+                    <div class="stat-label">Usados</div>
+                    <div class="stat-value" id="statUsados">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon si-gold"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></div>
+                    <div class="stat-label">En Oferta</div>
+                    <div class="stat-value" id="statOfertas">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon si-gold"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+                    <div class="stat-label">Destacados</div>
+                    <div class="stat-value" id="statDestacados">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon si-blue"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/></svg></div>
+                    <div class="stat-label">Marcas</div>
+                    <div class="stat-value" id="statMarcas">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon si-gold"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg></div>
+                    <div class="stat-label">Vendidos</div>
+                    <div class="stat-value" id="statVendidos">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon si-purple"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+                    <div class="stat-label">Citas Pendientes</div>
+                    <div class="stat-value" id="statCitas">-</div>
+                </div>
+            </div>
+
+            <!-- RECENT ACTIVITY -->
+            <div class="table-container" style="margin-bottom: 1.5rem;">
+                <div class="table-header">
+                    <h3>Actividad Reciente <span id="activityCount" style="font-size:0.75rem;color:var(--admin-text-muted);font-weight:400;"></span></h3>
+                    <div style="display:flex;gap:0.5rem;align-items:center;">
+                        <button class="btn btn-ghost btn-sm" id="btnSelectActivity" onclick="adminPanel.toggleActivitySelect()">Seleccionar</button>
+                        <button class="btn btn-danger btn-sm" onclick="adminPanel.clearAllActivity()" title="Limpiar todo">Limpiar todo</button>
+                    </div>
+                </div>
+                <div id="activitySelectActions" style="display:none;padding:0.5rem 1rem;gap:0.5rem;align-items:center;border-bottom:1px solid var(--admin-border);">
+                    <button class="btn btn-danger btn-sm" id="btnDeleteSelectedActivity" onclick="adminPanel.deleteSelectedActivity()" disabled>Eliminar seleccionados (0)</button>
+                </div>
+                <div class="activity-feed" id="activityFeed">
+                    <div class="activity-empty">Sin actividad reciente</div>
+                </div>
+            </div>
+
+            <!-- STORAGE ESTIMATOR -->
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>Consumo Storage (Free Tier)</h3>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        <label style="font-size:0.75rem;color:var(--admin-text-muted);">Visitas/mes:</label>
+                        <input type="number" id="estVisitas" class="search-input" value="500" min="0" max="100000" style="width:100px;">
+                    </div>
+                </div>
+                <div style="padding:1rem 1.25rem;" id="storageEstimator">
+                    <span style="color:var(--admin-text-muted);font-size:0.875rem;">Cargando datos...</span>
+                </div>
+            </div>
+
+            <!-- SEO TOOLS -->
+            <div class="table-container" style="margin-top: 1.5rem;">
+                <div class="table-header">
+                    <h3>SEO — Herramientas</h3>
+                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                        <button class="btn btn-sm" id="btnGenerateSitemap" style="font-size:0.75rem;padding:0.35rem 0.75rem;">Generar sitemap.xml</button>
+                        <button class="btn btn-sm" id="btnRegenerateSeo" style="font-size:0.75rem;padding:0.35rem 0.75rem;background:var(--admin-gold,#b89658);color:#fff;border-color:var(--admin-gold,#b89658);">Regenerar Paginas SEO</button>
+                    </div>
+                </div>
+                <div style="padding:0.75rem 1.25rem;" id="sitemapStatus">
+                    <span style="color:var(--admin-text-muted);font-size:0.8rem;">Genera el sitemap.xml del sitio. <strong>Regenerar SEO</strong> fuerza la actualizacion de miniaturas en redes sociales (WhatsApp, Facebook, Twitter) — se ejecuta automaticamente al crear o editar vehiculos.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- VEHICLES -->
+        <div id="sec-vehicles" class="section">
+            <div class="page-header">
+                <div><h1>Vehiculos</h1><p class="page-subtitle" id="vehiclesCount"></p></div>
+                <button class="btn btn-primary" id="btnAddVehicle">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Agregar Vehiculo
+                </button>
+            </div>
+            <!-- Fase 18: Active Drafts Panel -->
+            <div class="active-drafts-panel" id="activeDraftsPanel" style="display:none;">
+                <div class="active-drafts-header">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    <span>Borradores activos</span>
+                </div>
+                <div class="active-drafts-list" id="activeDraftsList"></div>
+            </div>
+
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>Inventario</h3>
+                    <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+                        <input type="text" class="search-input" id="vehicleSearch" placeholder="Buscar por marca, modelo, ano...">
+                        <button class="btn btn-ghost btn-sm" id="toggleReorderMode" title="Modo reordenar" style="white-space:nowrap;gap:6px;display:flex;align-items:center;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/><polyline points="7 3 3 6 7 9"/><polyline points="17 15 21 18 17 21"/></svg>
+                            <span>Reordenar</span>
+                        </button>
+                    </div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table id="vehiclesTable">
+                        <thead><tr>
+                            <th class="col-drag" style="display:none;width:32px;"></th>
+                            <th>Codigo</th><th>Imagen</th><th>Vehiculo</th><th>Tipo</th><th>Precio</th><th>Estado</th>
+                            <th class="col-pos" style="display:none;width:80px;">Pos.</th>
+                            <th>Origen</th><th>Acciones</th>
+                        </tr></thead>
+                        <tbody id="vehiclesTableBody">
+                            <tr><td colspan="10" style="text-align:center;padding:2rem;">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- BRANDS -->
+        <div id="sec-brands" class="section">
+            <div class="page-header">
+                <div><h1>Marcas</h1><p class="page-subtitle" id="brandsCount"></p></div>
+                <button class="btn btn-primary" id="btnAddBrand">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Agregar Marca
+                </button>
+            </div>
+            <div class="table-container">
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead><tr><th>Logo</th><th>ID</th><th>Nombre</th><th>Descripcion</th><th>Vehiculos</th><th>Acciones</th></tr></thead>
+                        <tbody id="brandsTableBody"><tr><td colspan="6" style="text-align:center;padding:2rem;">Cargando...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- USERS -->
+        <div id="sec-users" class="section">
+            <div class="page-header">
+                <div><h1>Usuarios</h1><p class="page-subtitle">Gestiona los accesos al panel de administracion</p></div>
+                <button class="btn btn-primary" id="btnAddUser">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Crear Usuario
+                </button>
+            </div>
+            <div class="roles-info">
+                <div class="role-card">
+                    <div class="role-icon ri-gold"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+                    <div><strong>Super Admin</strong><p>Acceso total: vehiculos, marcas, usuarios, configuracion</p></div>
+                </div>
+                <div class="role-card">
+                    <div class="role-icon ri-blue"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+                    <div><strong>Editor</strong><p>Puede crear y editar vehiculos y marcas</p></div>
+                </div>
+                <div class="role-card">
+                    <div class="role-icon ri-gray"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+                    <div><strong>Viewer</strong><p>Solo puede ver la informacion, sin editar</p></div>
+                </div>
+            </div>
+            <div class="table-container">
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead><tr><th>Usuario</th><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
+                        <tbody id="usersTableBody"><tr><td colspan="5" style="text-align:center;padding:2rem;">Cargando...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- SETTINGS -->
+        <!-- APPOINTMENTS / CITAS -->
+        <div id="sec-appointments" class="section">
+            <div class="page-header">
+                <div>
+                    <h1>Agenda de Citas</h1>
+                    <p class="page-subtitle">Gestiona la disponibilidad del calendario y las solicitudes de visita</p>
+                </div>
+                <button class="btn btn-primary" id="btnCreateInternalAppt">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Agendar Cita Interna
+                </button>
+            </div>
+
+            <!-- Availability Config Panel -->
+            <div class="stat-card" style="margin-bottom:1.5rem;">
+                <h3 style="margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--admin-gold)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Configuracion de Disponibilidad
+                </h3>
+                <p style="font-size:0.8rem;color:var(--admin-text-muted);margin-bottom:1rem;">Define los dias y horarios disponibles para agendar citas. Los usuarios veran en el calendario solo los dias y horas habilitados.</p>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;max-width:500px;">
+                    <div class="form-group">
+                        <label class="form-label">Hora inicio</label>
+                        <select id="availStartHour" class="form-select">
+                            <option value="7">7:00 AM</option>
+                            <option value="8" selected>8:00 AM</option>
+                            <option value="9">9:00 AM</option>
+                            <option value="10">10:00 AM</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Hora fin</label>
+                        <select id="availEndHour" class="form-select">
+                            <option value="16">4:00 PM</option>
+                            <option value="17">5:00 PM</option>
+                            <option value="18" selected>6:00 PM</option>
+                            <option value="19">7:00 PM</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-top:0.75rem;">
+                    <label class="form-label">Dias disponibles por defecto</label>
+                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem;" id="availDays">
+                        <label style="display:flex;align-items:center;gap:4px;font-size:0.85rem;color:var(--admin-text);"><input type="checkbox" value="1" checked> Lun</label>
+                        <label style="display:flex;align-items:center;gap:4px;font-size:0.85rem;color:var(--admin-text);"><input type="checkbox" value="2" checked> Mar</label>
+                        <label style="display:flex;align-items:center;gap:4px;font-size:0.85rem;color:var(--admin-text);"><input type="checkbox" value="3" checked> Mie</label>
+                        <label style="display:flex;align-items:center;gap:4px;font-size:0.85rem;color:var(--admin-text);"><input type="checkbox" value="4" checked> Jue</label>
+                        <label style="display:flex;align-items:center;gap:4px;font-size:0.85rem;color:var(--admin-text);"><input type="checkbox" value="5" checked> Vie</label>
+                        <label style="display:flex;align-items:center;gap:4px;font-size:0.85rem;color:var(--admin-text);"><input type="checkbox" value="6"> Sab</label>
+                        <label style="display:flex;align-items:center;gap:4px;font-size:0.85rem;color:var(--admin-text);"><input type="checkbox" value="0"> Dom</label>
+                    </div>
+                </div>
+                <div style="margin-top:1rem;">
+                    <label class="form-label">Intervalo de citas (minutos)</label>
+                    <select id="availInterval" class="form-select" style="max-width:200px;">
+                        <option value="30" selected>30 minutos</option>
+                        <option value="60">1 hora</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary btn-sm" id="btnSaveAvailability" style="margin-top:1rem;">Guardar Disponibilidad</button>
+                <div id="availabilityStatus" style="margin-top:0.5rem;font-size:0.8rem;"></div>
+            </div>
+
+            <!-- Calendar: Block Specific Dates -->
+            <div class="stat-card" style="margin-bottom:1.5rem;">
+                <h3 style="margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--admin-gold)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    Calendario de Disponibilidad
+                </h3>
+                <p style="font-size:0.8rem;color:var(--admin-text-muted);margin-bottom:1rem;">Haz clic en un dia para bloquear horas especificas o el dia completo. Los numeros indican citas agendadas.</p>
+                <div style="display:flex;gap:1rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap;">
+                    <button class="btn btn-ghost btn-sm" id="calPrevMonth">&larr; Mes anterior</button>
+                    <h4 id="calMonthLabel" style="margin:0;min-width:180px;text-align:center;"></h4>
+                    <button class="btn btn-ghost btn-sm" id="calNextMonth">Mes siguiente &rarr;</button>
+                </div>
+                <div id="adminCalendar" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;max-width:500px;"></div>
+                <div style="margin-top:0.75rem;display:flex;gap:1rem;font-size:0.8rem;color:var(--admin-text-muted);flex-wrap:wrap;">
+                    <span style="display:flex;align-items:center;gap:4px;"><span style="width:14px;height:14px;border-radius:4px;background:rgba(63,185,80,0.2);border:1px solid #3fb950;display:inline-block;"></span> Disponible</span>
+                    <span style="display:flex;align-items:center;gap:4px;"><span style="width:14px;height:14px;border-radius:4px;background:rgba(248,81,73,0.2);border:1px solid #f85149;display:inline-block;"></span> Bloqueado</span>
+                    <span style="display:flex;align-items:center;gap:4px;"><span style="width:14px;height:14px;border-radius:4px;background:rgba(217,153,34,0.2);border:1px solid #d29922;display:inline-block;"></span> Parcial / Con citas</span>
+                    <span style="display:flex;align-items:center;gap:4px;"><span style="width:14px;height:14px;border-radius:4px;background:var(--admin-border);display:inline-block;"></span> No disponible</span>
+                </div>
+            </div>
+
+            <!-- Appointment Requests Management -->
+            <div class="page-header" style="margin-top:1.5rem;">
+                <div>
+                    <h2 style="font-size:1.25rem;">Solicitudes de Citas</h2>
+                    <p class="page-subtitle">Todas las solicitudes de visita de clientes con datos de contacto</p>
+                </div>
+            </div>
+            <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1rem;">
+                <select id="appointmentFilter" class="form-select" style="min-width:150px;">
+                    <option value="all">Todas</option>
+                    <option value="pendiente" selected>Pendientes</option>
+                    <option value="confirmada">Confirmadas</option>
+                    <option value="reprogramada">Reprogramadas</option>
+                    <option value="completada">Completadas</option>
+                    <option value="cancelada">Canceladas</option>
+                </select>
+            </div>
+
+            <div class="stat-card" style="overflow-x:auto;">
+                <table class="admin-table" id="appointmentsTable">
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>WhatsApp / Email</th>
+                            <th>Vehiculo</th>
+                            <th>Fecha / Hora</th>
+                            <th>Estado</th>
+                            <th>Tipo</th>
+                            <th>Observaciones</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="appointmentsBody">
+                        <tr><td colspan="8" style="text-align:center;color:var(--admin-text-muted);padding:2rem;">Cargando citas...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ALIADOS Y OPERACIONES -->
+        <div id="sec-dealers" class="section">
+            <div class="page-header">
+                <div>
+                    <h1>Aliados y Operaciones</h1>
+                    <p class="page-subtitle">Gestiona aliados comerciales, consignatarios y controla tus operaciones de venta</p>
+                </div>
+                <button class="btn btn-primary" id="btnAddDealer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Agregar Aliado
+                </button>
+            </div>
+
+            <!-- Tabs de navegacion -->
+            <div style="display:flex;gap:4px;border-bottom:2px solid var(--admin-border,#30363d);margin-bottom:1.5rem;">
+                <button class="btn btn-ghost dealers-tab active" data-dealers-tab="aliados" style="border-radius:8px 8px 0 0;padding:0.6rem 1.25rem;font-weight:600;font-size:0.85rem;">Aliados</button>
+                <button class="btn btn-ghost dealers-tab" data-dealers-tab="propios" style="border-radius:8px 8px 0 0;padding:0.6rem 1.25rem;font-weight:600;font-size:0.85rem;">Vehiculos Propios</button>
+                <button class="btn btn-ghost dealers-tab" data-dealers-tab="operaciones" style="border-radius:8px 8px 0 0;padding:0.6rem 1.25rem;font-weight:600;font-size:0.85rem;">Operaciones</button>
+            </div>
+
+            <!-- TAB: Aliados -->
+            <div id="dealersTabAliados" class="dealers-tab-content active">
+                <div class="stat-card" style="margin-bottom:1rem;padding:1rem;">
+                    <p style="font-size:0.85rem;color:var(--admin-text-muted);margin:0;">
+                        Los aliados que agregues aqui aparecen en el formulario de vehiculos al seleccionar origen. Incluye concesionarios aliados (ej: Usados de la Costa) y personas que dejan vehiculos en consigna.
+                    </p>
+                </div>
+                <div id="dealersList" class="stat-card" style="margin-bottom:1.5rem;">
+                    <p style="text-align:center;color:var(--admin-text-muted);padding:1rem;">Cargando aliados...</p>
+                </div>
+
+                <!-- Vehicles by Origin -->
+                <div class="page-header" style="margin-top:2rem;">
+                    <div>
+                        <h2 style="font-size:1.25rem;">Inventario por Aliado</h2>
+                        <p class="page-subtitle">Vehiculos agrupados por aliado/consignatario</p>
+                    </div>
+                </div>
+                <div class="stat-card" style="overflow-x:auto;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Vehiculo</th>
+                                <th>Aliado</th>
+                                <th>Estado</th>
+                                <th>Precio</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vehiclesByOriginBody">
+                            <tr><td colspan="4" style="text-align:center;color:var(--admin-text-muted);padding:2rem;">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB: Vehiculos Propios -->
+            <div id="dealersTabPropios" class="dealers-tab-content" style="display:none;">
+                <div class="stat-card" style="margin-bottom:1rem;padding:1rem;">
+                    <p style="font-size:0.85rem;color:var(--admin-text-muted);margin:0;">
+                        Vehiculos que pertenecen a ALTORRA. Al venderlos por nuestro canal, el ingreso total entra a nuestras cuentas.
+                    </p>
+                </div>
+                <div id="propiosSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0.75rem;margin-bottom:1rem;"></div>
+                <div class="stat-card" style="overflow-x:auto;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Codigo</th>
+                                <th>Vehiculo</th>
+                                <th>Estado</th>
+                                <th>Canal</th>
+                                <th>Precio Publicado</th>
+                                <th>Precio Venta</th>
+                                <th>Utilidad</th>
+                            </tr>
+                        </thead>
+                        <tbody id="propiosTableBody">
+                            <tr><td colspan="7" style="text-align:center;color:var(--admin-text-muted);padding:2rem;">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB: Operaciones de Venta -->
+            <div id="dealersTabOperaciones" class="dealers-tab-content" style="display:none;">
+                <div id="salesSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0.75rem;margin-bottom:1rem;"></div>
+                <div class="stat-card" style="overflow-x:auto;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Codigo</th>
+                                <th>Vehiculo</th>
+                                <th>Origen</th>
+                                <th>Canal</th>
+                                <th>Precio Venta</th>
+                                <th>Ganancia ALTORRA</th>
+                                <th>Tipo</th>
+                                <th>Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salesTrackingBody">
+                            <tr><td colspan="8" style="text-align:center;color:var(--admin-text-muted);padding:2rem;">Sin operaciones registradas</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- LISTAS CONFIGURABLES -->
+        <!-- ========== RESENAS ========== -->
+        <div id="sec-reviews" class="section">
+            <div class="page-header">
+                <div>
+                    <h1>Reseñas de Clientes</h1>
+                    <p class="page-subtitle">Gestiona los testimonios que se muestran en el sitio web</p>
+                </div>
+                <button class="btn btn-primary" id="btnAddReview">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Nueva Reseña
+                </button>
+            </div>
+
+            <!-- Stats rápidas -->
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:1.5rem;">
+                <div class="stat-card" style="padding:1rem;text-align:center;">
+                    <div style="font-size:1.8rem;font-weight:800;color:var(--admin-gold);" id="reviewStatTotal">0</div>
+                    <div style="font-size:0.75rem;color:var(--admin-text-muted);">Total Reseñas</div>
+                </div>
+                <div class="stat-card" style="padding:1rem;text-align:center;">
+                    <div style="font-size:1.8rem;font-weight:800;color:#fbbf24;" id="reviewStatAvg">0.0</div>
+                    <div style="font-size:0.75rem;color:var(--admin-text-muted);">Promedio</div>
+                </div>
+                <div class="stat-card" style="padding:1rem;text-align:center;">
+                    <div style="font-size:1.8rem;font-weight:800;color:#10b981;" id="reviewStatFeatured">0</div>
+                    <div style="font-size:0.75rem;color:var(--admin-text-muted);">Destacadas</div>
+                </div>
+            </div>
+
+            <!-- Tabla de reseñas -->
+            <div class="admin-card" style="overflow-x:auto;">
+                <table class="data-table" style="width:100%;">
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Calificación</th>
+                            <th>Vehículo</th>
+                            <th>Fuente</th>
+                            <th>Destacada</th>
+                            <th style="text-align:right;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reviewsTableBody">
+                        <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--admin-text-muted);">Cargando reseñas...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Review Modal -->
+        <div class="modal-overlay" id="reviewModal">
+            <div class="modal" style="max-width:600px;">
+                <div class="modal-header">
+                    <h2 id="reviewModalTitle">Nueva Reseña</h2>
+                    <button class="btn-close" id="closeReviewModal">&times;</button>
+                </div>
+                <div class="modal-body" style="max-height:75vh;overflow-y:auto;">
+                    <form id="reviewForm" autocomplete="off">
+                        <input type="hidden" id="reviewId">
+
+                        <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                            <div class="form-group">
+                                <label>Nombre del cliente *</label>
+                                <input type="text" id="reviewName" class="form-control" placeholder="Ej: Carlos Mendoza" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Ciudad</label>
+                                <input type="text" id="reviewLocation" class="form-control" placeholder="Ej: Cartagena" value="Cartagena">
+                            </div>
+                        </div>
+
+                        <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                            <div class="form-group">
+                                <label>Calificación *</label>
+                                <select id="reviewRating" class="form-control" required>
+                                    <option value="5">5 Estrellas - Excelente</option>
+                                    <option value="4">4 Estrellas - Muy bueno</option>
+                                    <option value="3">3 Estrellas - Bueno</option>
+                                    <option value="2">2 Estrellas - Regular</option>
+                                    <option value="1">1 Estrella - Malo</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Vehículo comprado</label>
+                                <input type="text" id="reviewVehicle" class="form-control" placeholder="Ej: Toyota Hilux 2024">
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:1rem;">
+                            <label>Fuente de la reseña *</label>
+                            <select id="reviewSource" class="form-control" required>
+                                <option value="sitio_web">Sitio Web</option>
+                                <option value="google_maps">Google Maps</option>
+                                <option value="usuario_registrado">Usuario Registrado</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:1rem;">
+                            <label>Texto de la reseña *</label>
+                            <textarea id="reviewText" class="form-control" rows="4" placeholder="La experiencia completa del cliente..." required style="resize:vertical;"></textarea>
+                        </div>
+
+                        <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+                            <label class="form-checkbox">
+                                <input type="checkbox" id="reviewVerified" checked> Compra verificada
+                            </label>
+                            <label class="form-checkbox">
+                                <input type="checkbox" id="reviewFeatured"> Destacada (mostrar en inicio)
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" style="display:flex;gap:0.75rem;justify-content:flex-end;padding:1rem 1.5rem;border-top:1px solid var(--admin-border,#30363d);">
+                    <button class="btn btn-ghost" id="cancelReviewModal">Cancelar</button>
+                    <button class="btn btn-primary" id="saveReview">Guardar Reseña</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Review Delete Confirm -->
+        <div class="modal-overlay" id="reviewDeleteConfirm">
+            <div class="modal" style="max-width:420px;text-align:center;">
+                <div class="modal-body" style="padding:2rem;">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" style="margin-bottom:1rem;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                    <h3 style="margin-bottom:0.5rem;">Eliminar Reseña</h3>
+                    <p style="color:var(--admin-text-muted);font-size:0.9rem;">Esta acción no se puede deshacer. La reseña será eliminada permanentemente.</p>
+                </div>
+                <div class="modal-footer" style="display:flex;gap:0.75rem;justify-content:center;padding:1rem 1.5rem;border-top:1px solid var(--admin-border,#30363d);">
+                    <button class="btn btn-ghost" onclick="document.getElementById('reviewDeleteConfirm').classList.remove('active')">Cancelar</button>
+                    <button class="btn" id="confirmDeleteReview" style="background:#ef4444;color:white;">Eliminar</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="sec-lists" class="section">
+            <div class="page-header">
+                <div>
+                    <h1>Listas Configurables</h1>
+                    <p class="page-subtitle">Gestiona las opciones de todos los desplegables del sistema (tipos, categorias, transmision, combustible, etc.)</p>
+                </div>
+            </div>
+            <div class="stat-card" style="margin-bottom:1rem;padding:1rem;">
+                <p style="font-size:0.85rem;color:var(--admin-text-muted);margin:0;">
+                    Estos valores se sincronizan en toda la pagina: formularios de vehiculos, filtros publicos, busqueda avanzada y paginas de categoria.
+                    Los cambios se aplican inmediatamente en todo el sitio.
+                </p>
+            </div>
+            <div id="listsContainer" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:1.5rem;">
+                <p style="text-align:center;color:var(--admin-text-muted);padding:2rem;">Cargando listas...</p>
+            </div>
+        </div>
+
+        <!-- ========== BANNERS ========== -->
+        <div id="sec-banners" class="section">
+            <div class="page-header">
+                <div>
+                    <h1>Banners y Promociones</h1>
+                    <p class="page-subtitle">Gestiona los banners visuales del sitio web</p>
+                </div>
+                <button class="btn btn-primary" id="btnAddBanner">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Nuevo Banner
+                </button>
+            </div>
+
+            <!-- Tabs: Ubicaciones -->
+            <div style="display:flex;gap:4px;border-bottom:2px solid var(--admin-border,#30363d);margin-bottom:1.5rem;">
+                <button class="btn btn-ghost banners-tab active" data-banners-tab="hero" style="border-radius:8px 8px 0 0;padding:0.6rem 1.25rem;font-weight:600;font-size:0.85rem;">
+                    Hero Principal
+                </button>
+                <button class="btn btn-ghost banners-tab" data-banners-tab="promocional" style="border-radius:8px 8px 0 0;padding:0.6rem 1.25rem;font-weight:600;font-size:0.85rem;">
+                    Promocionales
+                </button>
+                <button class="btn btn-ghost banners-tab" data-banners-tab="categoria" style="border-radius:8px 8px 0 0;padding:0.6rem 1.25rem;font-weight:600;font-size:0.85rem;">
+                    Categorias
+                </button>
+            </div>
+
+            <!-- TAB: Hero -->
+            <div id="bannersTabHero" class="banners-tab-content active">
+                <div class="admin-card">
+                    <p style="color:var(--admin-text-muted);margin-bottom:1rem;font-size:0.85rem;">
+                        Banners para la seccion hero de la pagina principal. Se muestran en rotacion automatica.
+                    </p>
+                    <div id="heroBannersList" class="banners-grid">
+                        <p class="empty-state">Cargando banners...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Promocionales -->
+            <div id="bannersTabPromocional" class="banners-tab-content" style="display:none;">
+                <div class="admin-card">
+                    <p style="color:var(--admin-text-muted);margin-bottom:1rem;font-size:0.85rem;">
+                        Banners promocionales que se muestran entre secciones del sitio (ofertas, campanas, eventos).
+                    </p>
+                    <div id="promoBannersList" class="banners-grid">
+                        <p class="empty-state">Cargando banners...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Categorias -->
+            <div id="bannersTabCategoria" class="banners-tab-content" style="display:none;">
+                <div class="admin-card">
+                    <p style="color:var(--admin-text-muted);margin-bottom:1rem;font-size:0.85rem;">
+                        Banners para las paginas de categoria (Nuevos, Usados, Comerciales, etc).
+                    </p>
+                    <div id="catBannersList" class="banners-grid">
+                        <p class="empty-state">Cargando banners...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Banner Modal -->
+        <div class="modal-overlay" id="bannerModal">
+            <div class="modal" style="max-width:650px;">
+                <div class="modal-header">
+                    <h2 id="bannerModalTitle">Nuevo Banner</h2>
+                    <button class="btn-close" id="closeBannerModal">&times;</button>
+                </div>
+                <div class="modal-body" style="max-height:75vh;overflow-y:auto;">
+                    <form id="bannerForm" autocomplete="off">
+                        <input type="hidden" id="bannerId">
+
+                        <div class="form-group" style="margin-bottom:1rem;">
+                            <label>Titulo del Banner</label>
+                            <input type="text" id="bannerTitle" class="form-control" placeholder="Ej: Oferta de Temporada" required>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:1rem;">
+                            <label>Subtitulo (opcional)</label>
+                            <input type="text" id="bannerSubtitle" class="form-control" placeholder="Ej: Hasta 30% de descuento">
+                        </div>
+
+                        <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                            <div class="form-group">
+                                <label>Ubicacion</label>
+                                <select id="bannerPosition" class="form-control" required>
+                                    <option value="hero">Hero Principal</option>
+                                    <option value="promocional">Promocional</option>
+                                    <option value="categoria">Categoria</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Orden (prioridad)</label>
+                                <input type="number" id="bannerOrder" class="form-control" value="0" min="0" max="99">
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:1rem;" id="bannerCatGroup">
+                            <label>Categoria (solo para banners de categoria)</label>
+                            <select id="bannerCategory" class="form-control">
+                                <option value="">-- Seleccionar --</option>
+                                <option value="nuevos">Vehiculos Nuevos</option>
+                                <option value="usados">Vehiculos Usados</option>
+                                <option value="comerciales">Comerciales</option>
+                                <option value="motos">Motos</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:1rem;">
+                            <label>Enlace (URL destino al hacer click)</label>
+                            <input type="text" id="bannerLink" class="form-control" placeholder="Ej: catalogo.html?tipo=nuevo">
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:1rem;">
+                            <label>Texto del boton CTA (opcional)</label>
+                            <input type="text" id="bannerCta" class="form-control" placeholder="Ej: Ver Ofertas">
+                        </div>
+
+                        <!-- Image Upload -->
+                        <div class="form-group" style="margin-bottom:1rem;">
+                            <label>Imagen del Banner</label>
+                            <div class="upload-zone" id="bannerDropZone" style="border:2px dashed var(--admin-border,#30363d);border-radius:12px;padding:2rem;text-align:center;cursor:pointer;transition:border-color 0.3s;">
+                                <div id="bannerPreviewArea">
+                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:0.4;margin-bottom:0.5rem;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                    <p style="color:var(--admin-text-muted);font-size:0.85rem;">Arrastra una imagen o haz click para seleccionar</p>
+                                    <p style="color:var(--admin-text-muted);font-size:0.75rem;margin-top:0.25rem;">Recomendado: 1920x600px (hero), 1200x400px (promo). Se comprime a WebP automaticamente.</p>
+                                </div>
+                                <input type="file" id="bannerFileInput" accept="image/jpeg,image/png,image/webp" style="display:none;">
+                            </div>
+                            <div id="bannerUploadProgress" style="display:none;margin-top:0.5rem;">
+                                <div class="progress-bar" style="height:6px;background:var(--admin-border,#30363d);border-radius:3px;overflow:hidden;">
+                                    <div id="bannerProgressFill" style="height:100%;background:var(--admin-accent,#b89658);width:0%;transition:width 0.3s;"></div>
+                                </div>
+                                <small id="bannerUploadStatus" style="color:var(--admin-text-muted);">Subiendo...</small>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:1rem;">
+                            <label class="form-checkbox">
+                                <input type="checkbox" id="bannerActive" checked> Activo (visible en el sitio)
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" style="display:flex;gap:0.75rem;justify-content:flex-end;padding:1rem 1.5rem;border-top:1px solid var(--admin-border,#30363d);">
+                    <button class="btn btn-ghost" id="cancelBannerModal">Cancelar</button>
+                    <button class="btn btn-primary" id="saveBanner">Guardar Banner</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Banner Delete Confirm -->
+        <div class="modal-overlay" id="bannerDeleteConfirm">
+            <div class="modal" style="max-width:420px;text-align:center;">
+                <div class="modal-body" style="padding:2rem;">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" style="margin-bottom:1rem;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                    <h3 style="margin-bottom:0.5rem;">Eliminar Banner</h3>
+                    <p style="color:var(--admin-text-muted);font-size:0.9rem;">Esta accion no se puede deshacer. El banner sera eliminado del sitio permanentemente.</p>
+                </div>
+                <div class="modal-footer" style="display:flex;gap:0.75rem;justify-content:center;padding:1rem 1.5rem;border-top:1px solid var(--admin-border,#30363d);">
+                    <button class="btn btn-ghost" onclick="document.getElementById('bannerDeleteConfirm').classList.remove('active')">Cancelar</button>
+                    <button class="btn" id="confirmDeleteBanner" style="background:#ef4444;color:white;">Eliminar</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="sec-settings" class="section">
+            <div class="page-header">
+                <div><h1>Configuracion</h1><p class="page-subtitle">Ajustes de tu cuenta y respaldo de datos</p></div>
+            </div>
+            <div class="stat-card" style="max-width: 500px;">
+                <h3 style="margin-bottom: 1rem; display:flex; align-items:center; gap:0.5rem;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--admin-gold)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                    Cambiar Contrasena
+                </h3>
+                <form id="changePasswordForm">
+                    <div class="form-group">
+                        <label class="form-label">Nueva contrasena</label>
+                        <input type="password" id="newPassword" class="form-input" required minlength="6" placeholder="Minimo 6 caracteres">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Actualizar Contrasena</button>
+                </form>
+            </div>
+
+            <!-- BACKUP & RESTORE -->
+            <div class="stat-card" style="max-width: 500px; margin-top: 1.5rem;">
+                <h3 style="margin-bottom: 1rem; display:flex; align-items:center; gap:0.5rem;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--admin-gold)" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Respaldo de Datos
+                </h3>
+                <p style="font-size:0.8rem;color:var(--admin-text-muted);margin-bottom:1rem;">Exporta o importa todos los vehiculos y marcas como archivo JSON.</p>
+                <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+                    <button class="btn btn-primary btn-sm" id="btnExportJSON">Exportar JSON</button>
+                    <button class="btn btn-ghost btn-sm" id="btnImportJSON">Importar JSON</button>
+                    <input type="file" id="importJSONFile" accept=".json" style="display:none">
+                </div>
+                <div id="backupStatus" style="margin-top:0.75rem;font-size:0.8rem;"></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- VEHICLE MODAL -->
+<div class="modal-overlay" id="vehicleModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 id="modalTitle">Agregar Vehiculo</h2>
+            <span class="draft-save-indicator" id="draftSaveIndicator"></span>
+            <button class="modal-close" id="closeModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="vehicleForm">
+                <input type="hidden" id="vId">
+                <input type="hidden" id="vCodigoUnico">
+
+                <div id="codigoUnicoDisplay" style="display:none; margin-bottom:1rem; padding:0.5rem 1rem; background:var(--admin-bg-secondary,#161b22); border:1px solid var(--admin-border,#30363d); border-radius:6px;">
+                    <small style="color:var(--admin-text-muted,#8b949e);">Codigo unico</small>
+                    <div id="codigoUnicoValue" style="font-family:monospace; font-size:1.1rem; font-weight:600; color:var(--admin-accent,#58a6ff); letter-spacing:1px;"></div>
+                </div>
+
+                <!-- Seccion: Info Basica -->
+                <div class="form-section">
+                    <div class="form-section-title" data-toggle="sec-basica">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17m-2 0a2 2 0 1 0 4 0 2 2 0 1 0-4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0 2 2 0 1 0-4 0"/><path d="M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2"/><path d="M9 17h6"/></svg>
+                        Informacion Basica
+                        <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div class="form-section-body open" id="sec-basica">
+                        <div class="form-row"><div class="form-group"><label class="form-label">Marca *</label><select id="vMarca" class="form-select" required><option value="">Seleccionar...</option></select></div><div class="form-group"><label class="form-label">Modelo *</label><input type="text" id="vModelo" class="form-input" required placeholder="Ej: Onix"></div></div>
+                        <div class="form-row-3"><div class="form-group"><label class="form-label">Ano *</label><input type="number" id="vYear" class="form-input" required min="1990" max="2030" placeholder="2024"></div><div class="form-group"><label class="form-label">Tipo *</label><select id="vTipo" class="form-select" required><option value="">Seleccionar...</option></select></div><div class="form-group"><label class="form-label">Categoria *</label><select id="vCategoria" class="form-select" required><option value="">Seleccionar...</option></select></div></div>
+                        <div class="form-group" style="margin-top:0.75rem;"><label class="form-label">Descripcion</label><textarea id="vDescripcion" class="form-textarea" rows="3" placeholder="Descripcion detallada del vehiculo..."></textarea></div>
+                    </div>
+                </div>
+
+                <!-- Seccion: Precio -->
+                <div class="form-section">
+                    <div class="form-section-title" data-toggle="sec-precio">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                        Precio y Disponibilidad
+                        <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div class="form-section-body open" id="sec-precio">
+                        <div class="form-row-3"><div class="form-group"><label class="form-label">Precio *</label><input type="number" id="vPrecio" class="form-input" required min="0" placeholder="75000000"></div><div class="form-group"><label class="form-label">Precio Oferta</label><input type="number" id="vPrecioOferta" class="form-input" min="0" placeholder="Vacio si no aplica" oninput="var cb=document.getElementById('vOferta');if(cb)cb.checked=!!this.value;"><small style="display:block;color:var(--admin-text-muted,#8b949e);font-size:0.72rem;margin-top:3px;">Ingresa precio menor al normal para activar "En Oferta" automaticamente</small></div><div class="form-group"><label class="form-label">Kilometraje *</label><input type="number" id="vKm" class="form-input" required min="0" placeholder="0"></div></div>
+                        <div class="form-row"><div class="form-group"><label class="form-label">Estado del vehiculo</label><select id="vEstado" class="form-select"><option value="disponible">Disponible</option><option value="reservado">Reservado</option><option value="vendido">Vendido</option><option value="borrador">Borrador</option></select></div><div class="form-group"><label class="form-label">Ubicacion</label><input type="text" id="vUbicacion" class="form-input" placeholder="Barranquilla" value="Barranquilla"></div></div>
+                    </div>
+                </div>
+
+                <!-- Seccion: Especificaciones -->
+                <div class="form-section">
+                    <div class="form-section-title" data-toggle="sec-specs">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9"/></svg>
+                        Especificaciones Tecnicas
+                        <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div class="form-section-body open" id="sec-specs">
+                        <div class="form-row"><div class="form-group"><label class="form-label">Transmision *</label><select id="vTransmision" class="form-select" required><option value="">Seleccionar...</option></select></div><div class="form-group"><label class="form-label">Combustible *</label><select id="vCombustible" class="form-select" required><option value="">Seleccionar...</option></select></div></div>
+                        <div class="form-row-3"><div class="form-group"><label class="form-label">Motor</label><input type="text" id="vMotor" class="form-input" placeholder="1.0L Turbo"></div><div class="form-group"><label class="form-label">Potencia</label><input type="text" id="vPotencia" class="form-input" placeholder="116 HP"></div><div class="form-group"><label class="form-label">Cilindraje</label><input type="text" id="vCilindraje" class="form-input" placeholder="1000 cc"></div></div>
+                        <div class="form-row-3"><div class="form-group"><label class="form-label">Traccion</label><select id="vTraccion" class="form-select"><option value="">Seleccionar...</option></select></div><div class="form-group"><label class="form-label">Direccion</label><select id="vDireccion" class="form-select"><option value="Electrica">Electrica</option></select></div><div class="form-group"><label class="form-label">Color</label><input type="text" id="vColor" class="form-input" placeholder="Blanco"></div></div>
+                        <div class="form-row-3"><div class="form-group"><label class="form-label">Puertas</label><input type="number" id="vPuertas" class="form-input" min="2" max="5" placeholder="5"></div><div class="form-group"><label class="form-label">Pasajeros</label><input type="number" id="vPasajeros" class="form-input" min="2" max="9" placeholder="5"></div><div class="form-group"><label class="form-label">Placa</label><input type="text" id="vPlaca" class="form-input" placeholder="Disponible al contactar"></div></div>
+                        <div class="form-group"><label class="form-label">Codigo Fasecolda</label><input type="text" id="vFasecolda" class="form-input" placeholder="Consultar"></div>
+                    </div>
+                </div>
+
+                <!-- Seccion: Visibilidad y Publicacion -->
+                <div class="form-section">
+                    <div class="form-section-title" data-toggle="sec-estado">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        Visibilidad y Publicacion
+                        <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div class="form-section-body open" id="sec-estado">
+                        <!-- vDestacado y vFeaturedWeek sincronizados desde toggle unico -->
+                        <input type="checkbox" id="vDestacado" aria-hidden="true" style="display:none">
+                        <input type="checkbox" id="vFeaturedWeek" aria-hidden="true" style="display:none">
+
+                        <!-- Toggle unico: Normal / Destacado -->
+                        <div style="margin-bottom:1rem;">
+                            <label class="form-label" style="margin-bottom:0.5rem;">Visibilidad del vehiculo</label>
+                            <div id="destaqueToggleWrap" style="display:flex;gap:6px;">
+
+                                <label id="desq-lbl-normal" style="display:flex;align-items:center;gap:8px;padding:0.55rem 1rem;border-radius:6px;border:1px solid var(--admin-border,#30363d);cursor:pointer;flex:1;">
+                                    <input type="radio" name="vDestaqueNivel" value="normal" id="vDestaqueNormal" style="flex-shrink:0;">
+                                    <div>
+                                        <span style="font-size:0.82rem;font-weight:600;color:var(--admin-text,#e6edf3);">Normal</span>
+                                        <span style="display:block;font-size:0.72rem;color:var(--admin-text-muted,#8b949e);margin-top:1px;">Aparece solo en el catalogo</span>
+                                    </div>
+                                </label>
+
+                                <label id="desq-lbl-destacado" style="display:flex;align-items:center;gap:8px;padding:0.55rem 1rem;border-radius:6px;border:1px solid rgba(212,175,55,0.28);cursor:pointer;flex:1;background:rgba(212,175,55,0.03);">
+                                    <input type="radio" name="vDestaqueNivel" value="destacado" id="vDestaqueDestacado" style="flex-shrink:0;">
+                                    <div>
+                                        <span style="font-size:0.82rem;font-weight:600;color:#d4af37;">Destacado <small id="featuredCounter" style="font-size:11px;margin-left:3px;color:#8b949e;font-weight:400;"></small></span>
+                                        <span style="display:block;font-size:0.72rem;color:var(--admin-text-muted,#8b949e);margin-top:1px;">Estrella en catalogo + aparece en banner de inicio (max 6)</span>
+                                    </div>
+                                </label>
+
+                            </div>
+                        </div>
+
+                        <div class="checkbox-grid">
+                            <label class="form-checkbox"><input type="checkbox" id="vOferta"> En Oferta</label>
+                            <label class="form-checkbox"><input type="checkbox" id="vRevision" checked> Revision Tecnico-Mecanica</label>
+                            <label class="form-checkbox"><input type="checkbox" id="vPeritaje" checked> Peritaje Realizado</label>
+                        </div>
+                        <div class="form-row" style="margin-top:1rem;">
+                            <div class="form-group" style="max-width:200px;">
+                                <label class="form-label">Prioridad de visualizacion</label>
+                                <input type="number" id="vPrioridad" class="form-input" min="0" max="99" value="0" placeholder="0 = automatico">
+                                <small style="color:var(--admin-text-muted,#8b949e);font-size:0.75rem;">Mayor numero = aparece primero (0-99)</small>
+                            </div>
+                        </div>
+                        <div class="form-row" style="margin-top:1rem;">
+                            <div class="form-group">
+                                <label class="form-label">Origen del vehiculo</label>
+                                <select id="vConcesionario" class="form-select">
+                                    <option value="">Propio (ALTORRA)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seccion: Banner Destacados de la Semana -->
+                <div class="form-section">
+                    <div class="form-section-title" data-toggle="sec-banner">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        Banner Destacados de la Semana
+                        <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div class="form-section-body" id="sec-banner">
+                        <!-- Explicacion del comportamiento -->
+                        <div style="margin-bottom:1.1rem;padding:0.75rem 1rem;background:rgba(212,175,55,0.06);border-left:3px solid rgba(212,175,55,0.45);border-radius:0 6px 6px 0;">
+                            <p style="margin:0 0 5px;font-size:0.8rem;font-weight:600;color:#d4af37;">Configuracion del banner</p>
+                            <p style="margin:0;font-size:0.78rem;color:var(--admin-text-muted,#8b949e);line-height:1.55;">
+                                Los vehiculos marcados como <strong style="color:#d4af37;">Destacado</strong> aparecen automaticamente en el banner de inicio.<br>
+                                Si no hay destacados, el banner muestra los <strong style="color:rgba(255,255,255,0.75);">6 mas recientes</strong>. Maximo 6 destacados.
+                            </p>
+                        </div>
+
+                        <div style="margin-bottom:1rem;">
+                            <div class="form-group" style="max-width:180px;">
+                                <label class="form-label" style="font-size:0.75rem;">Posicion en banner (1-6)</label>
+                                <input type="number" id="vFeaturedOrder" class="form-input" min="1" max="6" placeholder="1-6">
+                                <small style="color:var(--admin-text-muted,#8b949e);font-size:0.72rem;">Opcional — define el orden de aparicion</small>
+                            </div>
+                        </div>
+                        <!-- Cutout PNG upload widget -->
+                        <div>
+                            <label class="form-label" style="font-size:0.75rem;">Imagen recortada — PNG sin fondo (opcional)</label>
+                            <small style="display:block;color:var(--admin-text-muted,#8b949e);font-size:0.72rem;margin-bottom:0.6rem;">PNG transparente del vehiculo. Activa modo composicion premium en el banner.</small>
+
+                            <!-- Preview area -->
+                            <div id="cutoutPreviewArea" style="display:none;margin-bottom:0.6rem;position:relative;width:100%;max-width:260px;background-image:repeating-conic-gradient(#2a2d35 0% 25%,#1c1f27 0% 50%);background-size:16px 16px;border-radius:6px;border:1px solid rgba(212,175,55,0.25);overflow:hidden;min-height:90px;display:flex;align-items:center;justify-content:center;">
+                                <img id="cutoutPreviewImg" src="" alt="Cutout preview" style="max-width:100%;max-height:120px;object-fit:contain;display:block;">
+                                <button type="button" id="btnCutoutClear" onclick="adminPanel.clearCutoutPng()" title="Quitar imagen recortada" style="position:absolute;top:5px;right:5px;width:22px;height:22px;border-radius:50%;background:rgba(248,81,73,0.85);border:none;color:#fff;font-size:14px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;">&times;</button>
+                            </div>
+
+                            <!-- Drop zone / click to upload -->
+                            <div id="cutoutUploadArea" style="border:1.5px dashed rgba(212,175,55,0.32);border-radius:6px;padding:0.75rem 1rem;text-align:center;cursor:pointer;background:rgba(212,175,55,0.03);transition:background 0.2s;" onclick="document.getElementById('cutoutFileInput').click()">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(212,175,55,0.6)" stroke-width="1.5" style="display:block;margin:0 auto 5px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                <span style="font-size:0.75rem;color:rgba(255,255,255,0.55);">Subir PNG transparente</span>
+                                <input type="file" id="cutoutFileInput" accept="image/png" style="display:none">
+                            </div>
+
+                            <!-- Progress + error -->
+                            <div id="cutoutUploadProgress" style="display:none;margin-top:0.4rem;"><div class="progress-bar"><div class="progress-fill" id="cutoutProgressFill"></div></div><small id="cutoutUploadStatus" style="color:var(--admin-text-muted);">Subiendo...</small></div>
+                            <div id="cutoutUploadError" style="display:none;margin-top:0.4rem;padding:0.5rem 0.75rem;background:rgba(248,81,73,0.1);border:1px solid var(--admin-danger);border-radius:6px;font-size:0.78rem;color:var(--admin-danger);"></div>
+
+                            <!-- Manual URL fallback -->
+                            <div style="margin-top:0.5rem;">
+                                <label class="form-label" style="font-size:0.7rem;color:var(--admin-text-muted,#8b949e);">O pega la URL directamente:</label>
+                                <input type="url" id="vFeaturedCutoutPng" class="form-input" placeholder="https://... / multimedia/vehicles/cutout.png" style="font-size:0.8rem;" oninput="adminPanel.renderCutoutPreview(this.value)">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seccion: Fotos -->
+                <div class="form-section">
+                    <div class="form-section-title" data-toggle="sec-fotos">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        Fotos del Vehiculo
+                        <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div class="form-section-body open" id="sec-fotos">
+                        <div class="upload-area" id="uploadArea">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--admin-text-muted)" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            <p><strong>Haz clic aqui</strong> o arrastra las fotos</p>
+                            <p class="upload-hint">JPG, PNG o WebP — Se comprimen automaticamente a ~150KB</p>
+                            <input type="file" id="fileInput" multiple accept="image/jpeg,image/png,image/webp" style="display:none">
+                        </div>
+                        <div id="uploadProgress" style="display:none;margin-top:0.5rem;"><div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div><small id="uploadStatus" style="color:var(--admin-text-muted);">Subiendo...</small></div>
+                        <div id="uploadError" style="display:none;margin-top:0.5rem;padding:0.75rem;background:rgba(248,81,73,0.1);border:1px solid var(--admin-danger);border-radius:6px;font-size:0.8rem;color:var(--admin-danger);"></div>
+                        <div style="margin-top:0.75rem;"><label class="form-label" style="font-size:0.8rem;color:var(--admin-text-muted);">O agrega URLs manualmente:</label><div style="display:flex;gap:0.5rem;"><input type="text" id="manualImageUrl" class="form-input" placeholder="https://ejemplo.com/imagen.jpg" style="flex:1;"><button type="button" class="btn btn-ghost btn-sm" id="btnAddImageUrl">Agregar</button></div></div>
+                        <div class="uploaded-images" id="uploadedImages"></div>
+                        <input type="hidden" id="vImagen"><input type="hidden" id="vImagenes">
+                    </div>
+                </div>
+
+                <!-- Seccion: Caracteristicas -->
+                <div class="form-section">
+                    <div class="form-section-title" data-toggle="sec-features">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                        Caracteristicas
+                        <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div class="form-section-body open" id="sec-features">
+                        <p style="font-size:0.8rem;color:var(--admin-text-muted);margin-bottom:0.75rem;">Selecciona las caracteristicas por categoria o agrega personalizadas abajo.</p>
+                        <div id="featCategoriesContainer" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1rem;margin-bottom:1rem;">
+                            <!-- Seguridad -->
+                            <div class="feat-category-card" style="background:var(--admin-surface);border:1px solid var(--admin-border);border-radius:10px;padding:0.75rem;">
+                                <h5 style="margin:0 0 0.5rem;font-size:0.85rem;color:var(--admin-gold);">Seguridad</h5>
+                                <div class="feat-checkboxes" data-category="seguridad">
+                                    <label class="feat-cb"><input type="checkbox" value="Sistema de frenos ABS"> ABS</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Airbags frontales"> Airbags frontales</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Airbags laterales"> Airbags laterales</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Alarma"> Alarma</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Bloqueo central"> Bloqueo central</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Control de estabilidad"> Control estabilidad</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Control de traccion"> Control traccion</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Sensor de reversa"> Sensor reversa</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Camara de reversa"> Camara reversa</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Camara 360"> Camara 360</label>
+                                </div>
+                            </div>
+                            <!-- Confort -->
+                            <div class="feat-category-card" style="background:var(--admin-surface);border:1px solid var(--admin-border);border-radius:10px;padding:0.75rem;">
+                                <h5 style="margin:0 0 0.5rem;font-size:0.85rem;color:var(--admin-gold);">Confort</h5>
+                                <div class="feat-checkboxes" data-category="confort">
+                                    <label class="feat-cb"><input type="checkbox" value="Aire acondicionado"> Aire acondicionado</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Climatizador automatico"> Climatizador auto</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Asientos en cuero"> Asientos en cuero</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Asientos calefactados"> Asientos calefactados</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Asiento electrico"> Asiento electrico</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Volante multifuncional"> Volante multifuncional</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Tapizado en cuero"> Tapizado en cuero</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Techo panoramico"> Techo panoramico</label>
+                                </div>
+                            </div>
+                            <!-- Tecnologia -->
+                            <div class="feat-category-card" style="background:var(--admin-surface);border:1px solid var(--admin-border);border-radius:10px;padding:0.75rem;">
+                                <h5 style="margin:0 0 0.5rem;font-size:0.85rem;color:var(--admin-gold);">Tecnologia</h5>
+                                <div class="feat-checkboxes" data-category="tecnologia">
+                                    <label class="feat-cb"><input type="checkbox" value="Pantalla tactil"> Pantalla tactil</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Bluetooth"> Bluetooth</label>
+                                    <label class="feat-cb"><input type="checkbox" value="USB / Auxiliar"> USB / Auxiliar</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Android Auto"> Android Auto</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Apple CarPlay"> Apple CarPlay</label>
+                                    <label class="feat-cb"><input type="checkbox" value="GPS / Navegacion"> GPS / Navegacion</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Radio AM/FM"> Radio AM/FM</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Computador de viaje"> Computador de viaje</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Keyless entry"> Keyless entry</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Boton de encendido"> Boton de encendido</label>
+                                </div>
+                            </div>
+                            <!-- Exterior e Interior -->
+                            <div class="feat-category-card" style="background:var(--admin-surface);border:1px solid var(--admin-border);border-radius:10px;padding:0.75rem;">
+                                <h5 style="margin:0 0 0.5rem;font-size:0.85rem;color:var(--admin-gold);">Exterior e Interior</h5>
+                                <div class="feat-checkboxes" data-category="exterior">
+                                    <label class="feat-cb"><input type="checkbox" value="Vidrios electricos"> Vidrios electricos</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Espejos electricos"> Espejos electricos</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Luces LED"> Luces LED</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Luces DRL"> Luces DRL</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Rines de aluminio"> Rines de aluminio</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Barras de techo"> Barras de techo</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Exploradoras"> Exploradoras</label>
+                                    <label class="feat-cb"><input type="checkbox" value="Cierre centralizado"> Cierre centralizado</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Caracteristicas adicionales (una por linea)</label>
+                            <textarea id="vCaracteristicas" class="form-textarea" rows="3" placeholder="Caracteristicas no listadas arriba..."></textarea>
+                            <div class="tags-container" id="featuresPreview"></div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" id="cancelModal">Cancelar</button>
+            <button class="btn btn-warning" id="saveDraftBtn" title="Guardar borrador para continuar despues">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v6m0 0l-3-3m3 3l3-3"/><rect x="3" y="10" width="18" height="12" rx="2"/></svg>
+                Guardar Borrador
+            </button>
+            <button class="btn btn-primary" id="saveVehicle">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Guardar Vehiculo
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- DELETE CONFIRM -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal" style="max-width:400px;"><div class="modal-header"><h2>Eliminar Vehiculo</h2><button class="modal-close" id="closeDeleteModal">&times;</button></div>
+        <div class="modal-body"><p>Estas seguro de eliminar <strong id="deleteVehicleName"></strong>?</p><p style="color:var(--admin-danger);margin-top:0.5rem;font-size:0.875rem;">Esta accion no se puede deshacer.</p></div>
+        <div class="modal-footer"><button class="btn btn-ghost" id="cancelDelete">Cancelar</button><button class="btn btn-danger" id="confirmDelete">Eliminar</button></div>
+    </div>
+</div>
+
+<!-- BRAND MODAL -->
+<div class="modal-overlay" id="brandModal">
+    <div class="modal" style="max-width:500px;"><div class="modal-header"><h2 id="brandModalTitle">Agregar Marca</h2><button class="modal-close" id="closeBrandModal">&times;</button></div>
+        <div class="modal-body"><form id="brandForm"><input type="hidden" id="bOriginalId"><input type="hidden" id="bId"><input type="hidden" id="bDescripcion"><div class="form-group"><label class="form-label">Nombre de la marca *</label><input type="text" id="bNombre" class="form-input" required placeholder="Ej: Toyota"></div><div class="form-group"><label class="form-label">Logo de la marca *</label><div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.5rem;"><button type="button" class="btn btn-ghost btn-sm" id="btnUploadBrandLogo" style="white-space:nowrap;">Subir archivo</button><span style="color:var(--admin-text-muted);font-size:0.8rem;">o pega una URL:</span></div><input type="file" id="brandLogoFile" accept="image/png,image/webp,image/jpeg,image/svg+xml" style="display:none"><input type="text" id="bLogo" class="form-input" required placeholder="multimedia/Logos/Toyota.webp"><div id="brandLogoUploadStatus" style="display:none;margin-top:0.5rem;font-size:0.8rem;color:var(--admin-text-muted);"></div><div id="brandLogoPreview" style="margin-top:0.5rem;"></div></div></form></div>
+        <div class="modal-footer"><button class="btn btn-ghost" id="cancelBrandModal">Cancelar</button><button class="btn btn-primary" id="saveBrand">Guardar Marca</button></div>
+    </div>
+</div>
+
+<!-- BRAND DELETE -->
+<div class="modal-overlay" id="deleteBrandModal">
+    <div class="modal" style="max-width:400px;"><div class="modal-header"><h2>Eliminar Marca</h2><button class="modal-close" id="closeDeleteBrandModal">&times;</button></div>
+        <div class="modal-body"><p>Estas seguro de eliminar la marca <strong id="deleteBrandName"></strong>?</p><p style="color:var(--admin-danger);margin-top:0.5rem;font-size:0.875rem;">Los vehiculos asociados quedaran sin marca valida.</p></div>
+        <div class="modal-footer"><button class="btn btn-ghost" id="cancelDeleteBrand">Cancelar</button><button class="btn btn-danger" id="confirmDeleteBrand">Eliminar</button></div>
+    </div>
+</div>
+
+<!-- USER MODAL -->
+<div class="modal-overlay" id="userModal">
+    <div class="modal" style="max-width:500px;"><div class="modal-header"><h2 id="userModalTitle">Crear Usuario</h2><button class="modal-close" id="closeUserModal">&times;</button></div>
+        <div class="modal-body"><form id="userForm"><input type="hidden" id="uOriginalUid"><div class="form-group"><label class="form-label">Nombre *</label><input type="text" id="uNombre" class="form-input" required placeholder="Juan Perez"></div><div class="form-group"><label class="form-label">Email *</label><input type="email" id="uEmail" class="form-input" required placeholder="usuario@altorracars.com"></div><div class="form-group" id="uPasswordGroup"><label class="form-label">Contrasena del nuevo usuario *</label><input type="password" id="uPassword" class="form-input" required minlength="6" placeholder="Minimo 6 caracteres"></div><div class="form-group"><label class="form-label">Rol *</label><select id="uRol" class="form-select" required><option value="editor">Editor</option><option value="viewer">Viewer</option><option value="super_admin">Super Admin</option></select></div></form></div>
+        <div class="modal-footer"><button class="btn btn-ghost" id="cancelUserModal">Cancelar</button><button class="btn btn-primary" id="saveUser">Crear Usuario</button></div>
+    </div>
+</div>
+
+<!-- DEALER MODAL -->
+<div class="modal-overlay" id="dealerModal">
+    <div class="modal" style="max-width:500px;">
+        <div class="modal-header"><h2 id="dealerModalTitle">Agregar Aliado</h2><button class="modal-close" id="closeDealerModal">&times;</button></div>
+        <div class="modal-body">
+            <form id="dealerForm">
+                <input type="hidden" id="dOriginalId">
+                <div class="form-group"><label class="form-label">Nombre *</label><input type="text" id="dNombre" class="form-input" required placeholder="Ej: Usados de la Costa, Juan Perez..."></div>
+                <div class="form-group"><label class="form-label">Direccion</label><input type="text" id="dDireccion" class="form-input" placeholder="Calle 30 #45-67"></div>
+                <div class="form-group"><label class="form-label">Telefono</label><input type="tel" id="dTelefono" class="form-input" placeholder="3001234567"></div>
+                <div class="form-group"><label class="form-label">Ciudad</label><input type="text" id="dCiudad" class="form-input" placeholder="Cartagena" value="Cartagena"></div>
+                <div class="form-group"><label class="form-label">Horario</label><input type="text" id="dHorario" class="form-input" placeholder="Lun-Vie 8am-6pm, Sab 9am-1pm"></div>
+                <div class="form-group"><label class="form-label">Responsable</label><input type="text" id="dResponsable" class="form-input" placeholder="Nombre del encargado"></div>
+            </form>
+        </div>
+        <div class="modal-footer"><button class="btn btn-ghost" id="cancelDealerModal">Cancelar</button><button class="btn btn-primary" id="saveDealer">Guardar Aliado</button></div>
+    </div>
+</div>
+
+<!-- APPOINTMENT MANAGEMENT MODAL -->
+<div class="modal-overlay" id="appointmentModal">
+    <div class="modal" style="max-width:550px;">
+        <div class="modal-header"><h2 id="appointmentModalTitle">Gestionar Cita</h2><button class="modal-close" id="closeAppointmentModal">&times;</button></div>
+        <div class="modal-body">
+            <form id="appointmentManageForm">
+                <input type="hidden" id="amDocId">
+                <div id="amClientInfo" style="padding:0.75rem;background:rgba(212,175,55,0.1);border:1px solid var(--admin-gold);border-radius:8px;margin-bottom:1rem;font-size:0.85rem;"></div>
+                <div class="form-group">
+                    <label class="form-label">Estado</label>
+                    <select id="amEstado" class="form-select">
+                        <option value="pendiente">Pendiente</option>
+                        <option value="confirmada">Confirmada</option>
+                        <option value="reprogramada">Reprogramada</option>
+                        <option value="completada">Completada</option>
+                        <option value="cancelada">Cancelada</option>
+                    </select>
+                </div>
+                <div id="amReprogramarGroup" style="display:none;">
+                    <div class="form-row">
+                        <div class="form-group"><label class="form-label">Nueva fecha</label><input type="date" id="amNuevaFecha" class="form-input"></div>
+                        <div class="form-group"><label class="form-label">Nueva hora</label><input type="time" id="amNuevaHora" class="form-input"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Observaciones</label>
+                    <textarea id="amObservaciones" class="form-textarea" rows="3" placeholder="Notas sobre la cita..."></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" id="cancelAppointmentModal">Cancelar</button>
+            <button class="btn btn-primary" id="saveAppointmentStatus">Guardar Cambios</button>
+        </div>
+    </div>
+</div>
+
+<!-- INTERNAL APPOINTMENT MODAL -->
+<div class="modal-overlay" id="internalApptModal">
+    <div class="modal" style="max-width:580px;">
+        <div class="modal-header"><h2>Agendar Cita Interna</h2><button class="modal-close" id="closeInternalApptModal">&times;</button></div>
+        <div class="modal-body">
+            <p style="font-size:0.8rem;color:var(--admin-text-muted);margin-bottom:1rem;">Crea una cita directamente como admin (consignacion, inspeccion, visita interna).</p>
+            <form id="internalApptForm">
+                <div class="form-group">
+                    <label class="form-label">Tipo de cita *</label>
+                    <select id="iaType" class="form-select" required>
+                        <option value="visita">Visita presencial</option>
+                        <option value="consignacion">Consignacion</option>
+                        <option value="inspeccion">Inspeccion vehicular</option>
+                        <option value="prueba">Prueba de manejo</option>
+                        <option value="entrega">Entrega de vehiculo</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label class="form-label">Nombre del cliente *</label><input type="text" id="iaNombre" class="form-input" required placeholder="Nombre completo"></div>
+                    <div class="form-group"><label class="form-label">WhatsApp *</label><input type="tel" id="iaWhatsapp" class="form-input" required placeholder="3001234567"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label class="form-label">Email</label><input type="email" id="iaEmail" class="form-input" placeholder="correo@ejemplo.com"></div>
+                    <div class="form-group"><label class="form-label">Vehiculo relacionado</label><input type="text" id="iaVehiculo" class="form-input" placeholder="Marca Modelo Año"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label class="form-label">Fecha *</label><input type="date" id="iaFecha" class="form-input" required></div>
+                    <div class="form-group"><label class="form-label">Hora *</label><input type="time" id="iaHora" class="form-input" required></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Estado inicial</label>
+                    <select id="iaEstado" class="form-select">
+                        <option value="confirmada">Confirmada</option>
+                        <option value="pendiente">Pendiente</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Observaciones</label>
+                    <textarea id="iaObservaciones" class="form-textarea" rows="2" placeholder="Notas internas sobre la cita..."></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" id="cancelInternalApptModal">Cancelar</button>
+            <button class="btn btn-primary" id="saveInternalAppt">Crear Cita</button>
+        </div>
+    </div>
+</div>
+
+<!-- BLOCKED HOURS MODAL -->
+<div class="modal-overlay" id="blockedHoursModal">
+    <div class="modal" style="max-width:480px;">
+        <div class="modal-header"><h2 id="bhModalTitle">Bloquear Horas</h2><button class="modal-close" id="closeBlockedHoursModal">&times;</button></div>
+        <div class="modal-body">
+            <p style="font-size:0.8rem;color:var(--admin-text-muted);margin-bottom:1rem;">Selecciona las horas a bloquear para este dia. Las horas bloqueadas no estaran disponibles para los clientes.</p>
+            <div id="bhDateLabel" style="font-size:0.95rem;font-weight:600;margin-bottom:1rem;color:var(--admin-gold);"></div>
+            <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
+                <button class="btn btn-ghost btn-sm" id="bhBlockAll">Bloquear todo el dia</button>
+                <button class="btn btn-ghost btn-sm" id="bhUnblockAll">Desbloquear todo</button>
+            </div>
+            <div id="bhSlotsGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" id="cancelBlockedHoursModal">Cancelar</button>
+            <button class="btn btn-primary" id="saveBlockedHours">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- SOLD VEHICLE MODAL -->
+<div class="modal-overlay" id="soldModal">
+    <div class="modal" style="max-width:600px;">
+        <div class="modal-header"><h2>Registrar Operacion de Venta</h2><button class="modal-close" id="closeSoldModal">&times;</button></div>
+        <div class="modal-body">
+            <form id="soldForm">
+                <input type="hidden" id="soldVehicleId">
+                <input type="hidden" id="soldOrigenTipo">
+                <div id="soldVehicleInfo" style="padding:0.75rem;background:rgba(212,175,55,0.1);border:1px solid var(--admin-gold);border-radius:8px;margin-bottom:1rem;font-size:0.85rem;"></div>
+                <div id="soldOrigenInfo" style="padding:0.5rem 0.75rem;border-radius:8px;margin-bottom:1rem;font-size:0.8rem;"></div>
+
+                <div class="form-group">
+                    <label class="form-label">Canal de venta *</label>
+                    <select id="soldCanal" class="form-select" required>
+                        <option value="">Seleccionar...</option>
+                        <option value="altorra">ALTORRA (nuestro cliente)</option>
+                        <option value="otros">Otros (vendido por terceros)</option>
+                    </select>
+                    <small id="soldCanalHint" style="display:none;font-size:0.75rem;margin-top:4px;"></small>
+                </div>
+
+                <!-- Campos para vehiculo PROPIO vendido por ALTORRA -->
+                <div id="soldPropioFields" style="display:none;">
+                    <div class="form-group"><label class="form-label">Responsable comercial *</label><input type="text" id="soldResponsable" class="form-input" placeholder="Nombre del asesor que cerro la venta"></div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="form-label">Precio de venta *</label><input type="number" id="soldPrecio" class="form-input" required placeholder="Precio final (ingresa a ALTORRA)"></div>
+                        <div class="form-group"><label class="form-label">Utilidad ALTORRA</label><input type="number" id="soldUtilidad" class="form-input" placeholder="Ganancia neta de la venta"></div>
+                    </div>
+                    <small style="display:block;color:var(--admin-text-muted,#8b949e);font-size:0.75rem;margin-top:-0.5rem;margin-bottom:1rem;">El precio de venta ingresa directamente a las cuentas de ALTORRA.</small>
+                </div>
+
+                <!-- Campos para vehiculo de ALIADO vendido por ALTORRA -->
+                <div id="soldAliadoFields" style="display:none;">
+                    <div class="form-group"><label class="form-label">Responsable comercial *</label><input type="text" id="soldResponsableAliado" class="form-input" placeholder="Nombre del asesor que cerro la venta"></div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="form-label">Precio de venta (referencia)</label><input type="number" id="soldPrecioAliado" class="form-input" placeholder="Precio total (va al aliado)"></div>
+                        <div class="form-group"><label class="form-label">Comision ALTORRA *</label><input type="number" id="soldComision" class="form-input" placeholder="Comision que nos paga el aliado"></div>
+                    </div>
+                    <small style="display:block;color:var(--admin-text-muted,#8b949e);font-size:0.75rem;margin-top:-0.5rem;margin-bottom:1rem;">El precio de venta va al aliado. Solo la comision ingresa a ALTORRA.</small>
+                </div>
+
+                <div class="form-group"><label class="form-label">Fecha de cierre</label><input type="date" id="soldFechaCierre" class="form-input"></div>
+                <div class="form-group"><label class="form-label">Observaciones</label><textarea id="soldObservaciones" class="form-textarea" rows="2" placeholder="Notas sobre la operacion..."></textarea></div>
+            </form>
+        </div>
+        <div class="modal-footer"><button class="btn btn-ghost" id="cancelSoldModal">Cancelar</button><button class="btn btn-primary" id="confirmSold">Registrar Venta</button></div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="admin-toast" id="adminToast"></div>
+
+<!-- SCRIPTS -->
+<script src="js/firebase-config.js"></script>
+<script src="js/dynamic-lists.js"></script>
+<!-- Modular Admin (replaces monolithic admin-panel.js) -->
+<script src="js/admin-state.js"></script>
+<script src="js/admin-auth.js"></script>
+<script src="js/admin-sync.js"></script>
+<script src="js/admin-activity.js"></script>
+<script src="js/admin-vehicles.js"></script>
+<script src="js/admin-brands.js"></script>
+<script src="js/admin-users.js"></script>
+<script src="js/admin-appointments.js"></script>
+<script src="js/admin-dealers.js"></script>
+<script src="js/admin-lists.js"></script>
+<script src="js/admin-banners.js"></script>
+<script src="js/admin-reviews.js"></script>
+<script src="js/admin-operations.js"></script>
+</body>
+</html>

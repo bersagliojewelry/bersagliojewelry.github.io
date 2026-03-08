@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Comparar Vehículos | ALTORRA CARS</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Compara hasta 3 vehículos lado a lado. Analiza especificaciones, precios y características para tomar la mejor decisión de compra.">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Comparar Vehículos - ALTORRA CARS">
+    <meta property="og:description" content="Herramienta de comparación de vehículos. Compara hasta 3 autos simultáneamente.">
+    <meta property="og:type" content="website">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/mobile-fixes.css">
+    <link rel="stylesheet" href="css/footer-fixes.css">
+    <link rel="stylesheet" href="css/toast-notifications.css">
+    <link rel="stylesheet" href="css/comparador.css">
+    <link rel="stylesheet" href="css/dark-theme.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <div class="comparar-page">
+        <div class="comparar-container">
+            <div class="comparar-header">
+                <h1>Comparar Vehículos</h1>
+                <p>Analiza las especificaciones de hasta 3 vehículos lado a lado</p>
+            </div>
+
+            <div id="comparison-content">
+                <!-- Se carga dinámicamente -->
+                <div class="loading-state" style="text-align: center; padding: 60px;">
+                    <div class="spinner"></div>
+                    <p style="margin-top: 16px; color: #6b7280;">Cargando comparación...</p>
+                </div>
+            </div>
+
+            <div class="comparison-actions" id="comparison-actions" style="display: none;">
+                <a href="#" id="btn-whatsapp-compare" class="btn-action primary" target="_blank">
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                    </svg>
+                    Consultar por WhatsApp
+                </a>
+                <button class="btn-action secondary" id="btn-share-compare">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="18" cy="5" r="3"/>
+                        <circle cx="6" cy="12" r="3"/>
+                        <circle cx="18" cy="19" r="3"/>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                    </svg>
+                    Compartir comparación
+                </button>
+                <button class="btn-action secondary" id="btn-clear-compare">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3,6 5,6 21,6"/>
+                        <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2v2"/>
+                    </svg>
+                    Limpiar comparador
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-placeholder"></div>
+
+    <!-- Scripts -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/favorites-manager.js"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/render.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/comparador.js"></script>
+
+    <script>
+        // Funciones de formateo
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('es-CO', {
+                style: 'currency',
+                currency: 'COP',
+                minimumFractionDigits: 0
+            }).format(amount);
+        }
+
+        function formatKilometers(km) {
+            if (km === 0) return '0 km';
+            return new Intl.NumberFormat('es-CO').format(km) + ' km';
+        }
+
+        function capitalizar(str) {
+            if (!str) return '';
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        function formatCategoria(cat) {
+            const categorias = {
+                'suv': 'SUV',
+                'sedan': 'Sedán',
+                'pickup': 'Pickup',
+                'hatchback': 'Hatchback'
+            };
+            return categorias[cat] || capitalizar(cat);
+        }
+
+        // Especificaciones a comparar
+        const specGroups = [
+            {
+                title: 'Información General',
+                specs: [
+                    { key: 'tipo', label: 'Tipo', format: capitalizar },
+                    { key: 'categoria', label: 'Categoría', format: formatCategoria },
+                    { key: 'year', label: 'Año' },
+                    { key: 'color', label: 'Color', default: 'No especificado' }
+                ]
+            },
+            {
+                title: 'Motor y Rendimiento',
+                specs: [
+                    { key: 'motor', label: 'Motor', default: 'No especificado' },
+                    { key: 'cilindraje', label: 'Cilindraje', default: 'No especificado' },
+                    { key: 'potencia', label: 'Potencia', default: 'No especificado' },
+                    { key: 'combustible', label: 'Combustible', format: capitalizar },
+                    { key: 'transmision', label: 'Transmisión', format: capitalizar },
+                    { key: 'traccion', label: 'Tracción', default: 'No especificado' }
+                ]
+            },
+            {
+                title: 'Dimensiones y Capacidad',
+                specs: [
+                    { key: 'puertas', label: 'Puertas', default: '-' },
+                    { key: 'pasajeros', label: 'Pasajeros', default: '-' },
+                    { key: 'direccion', label: 'Dirección', default: 'No especificado' }
+                ]
+            },
+            {
+                title: 'Estado y Documentación',
+                specs: [
+                    { key: 'kilometraje', label: 'Kilometraje', format: formatKilometers, compare: 'lower' },
+                    { key: 'revisionTecnica', label: 'Rev. Técnico-Mecánica', format: v => v ? 'Al día' : 'Consultar' },
+                    { key: 'peritaje', label: 'Peritaje', format: v => v ? 'Realizado' : 'Disponible' },
+                    { key: 'ubicacion', label: 'Ubicación', default: 'Cartagena' }
+                ]
+            }
+        ];
+
+        async function loadComparison() {
+            const contentEl = document.getElementById('comparison-content');
+            const actionsEl = document.getElementById('comparison-actions');
+
+            // Cargar datos
+            await vehicleDB.load();
+            const vehicleIds = vehicleComparator.getIds();
+
+            if (vehicleIds.length < 2) {
+                renderEmptyState(contentEl);
+                actionsEl.style.display = 'none';
+                return;
+            }
+
+            // Obtener vehículos
+            const vehicles = vehicleIds
+                .map(id => vehicleDB.getVehicleById(id))
+                .filter(v => v);
+
+            if (vehicles.length < 2) {
+                renderEmptyState(contentEl);
+                actionsEl.style.display = 'none';
+                return;
+            }
+
+            renderComparisonTable(vehicles, contentEl);
+            actionsEl.style.display = 'flex';
+            setupWhatsAppButton(vehicles);
+        }
+
+        function renderEmptyState(container) {
+            container.innerHTML = `
+                <div class="comparar-empty">
+                    <div class="comparar-empty-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7" rx="1"/>
+                            <rect x="14" y="3" width="7" height="7" rx="1"/>
+                            <rect x="3" y="14" width="7" height="7" rx="1"/>
+                            <rect x="14" y="14" width="7" height="7" rx="1"/>
+                        </svg>
+                    </div>
+                    <h2>No hay vehículos para comparar</h2>
+                    <p>Agrega al menos 2 vehículos al comparador para ver sus diferencias lado a lado.</p>
+                    <a href="busqueda.html" class="btn-explorar">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="m21 21-4.35-4.35"/>
+                        </svg>
+                        Explorar vehículos
+                    </a>
+                </div>
+            `;
+        }
+
+        function renderComparisonTable(vehicles, container) {
+            const numVehicles = vehicles.length;
+            const canAddMore = numVehicles < 3;
+
+            let html = `
+                <div class="comparison-table-wrapper">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                ${vehicles.map(v => `
+                                    <td class="vehicle-column-header">
+                                        <button class="btn-remove-vehicle" data-remove="${v.id}" title="Quitar del comparador">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                                <line x1="6" y1="6" x2="18" y2="18"/>
+                                            </svg>
+                                        </button>
+                                        <img src="${v.imagen}" alt="${v.marca} ${v.modelo}"
+                                             onerror="this.src='multimedia/vehicles/placeholder-car.jpg'">
+                                        <h3>${capitalizar(v.marca)} ${v.modelo}</h3>
+                                        <div class="vehicle-year">${v.year} · ${formatCategoria(v.categoria)}</div>
+                                        <div class="vehicle-price">${formatCurrency(v.precioOferta || v.precio)}</div>
+                                        <a href="${getVehicleDetailUrl(v)}" class="btn-ver-detalle">Ver detalle</a>
+                                    </td>
+                                `).join('')}
+                                ${canAddMore ? `
+                                    <td class="add-vehicle-column">
+                                        <a href="busqueda.html" class="btn-add-vehicle">
+                                            <div class="icon">
+                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <line x1="12" y1="5" x2="12" y2="19"/>
+                                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                                </svg>
+                                            </div>
+                                            <span>Agregar vehículo</span>
+                                        </a>
+                                    </td>
+                                ` : ''}
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            // Fila de precio para comparación rápida
+            const prices = vehicles.map(v => v.precioOferta || v.precio);
+            const minPrice = Math.min(...prices);
+            const maxPrice = Math.max(...prices);
+
+            html += `
+                <tr>
+                    <th>Precio</th>
+                    ${vehicles.map(v => {
+                        const price = v.precioOferta || v.precio;
+                        let className = '';
+                        if (prices.length > 1) {
+                            if (price === minPrice) className = 'highlight-best';
+                            else if (price === maxPrice) className = 'highlight-worst';
+                        }
+                        return `<td class="${className}">${formatCurrency(price)}</td>`;
+                    }).join('')}
+                    ${canAddMore ? '<td></td>' : ''}
+                </tr>
+            `;
+
+            // Grupos de especificaciones
+            specGroups.forEach(group => {
+                html += `
+                    <tr class="category-row">
+                        <th colspan="${numVehicles + 1 + (canAddMore ? 1 : 0)}">${group.title}</th>
+                    </tr>
+                `;
+
+                group.specs.forEach(spec => {
+                    const values = vehicles.map(v => {
+                        let val = v[spec.key];
+                        if (val === undefined || val === null || val === '') {
+                            val = spec.default || '-';
+                        } else if (spec.format) {
+                            val = spec.format(val);
+                        }
+                        return { raw: v[spec.key], formatted: val };
+                    });
+
+                    // Determinar mejores/peores valores si es comparable
+                    let bestIdx = -1, worstIdx = -1;
+                    if (spec.compare && values.length > 1) {
+                        const numericValues = values.map((v, i) => ({
+                            idx: i,
+                            val: typeof v.raw === 'number' ? v.raw : null
+                        })).filter(v => v.val !== null);
+
+                        if (numericValues.length > 1) {
+                            if (spec.compare === 'lower') {
+                                bestIdx = numericValues.reduce((a, b) => a.val < b.val ? a : b).idx;
+                                worstIdx = numericValues.reduce((a, b) => a.val > b.val ? a : b).idx;
+                            } else {
+                                bestIdx = numericValues.reduce((a, b) => a.val > b.val ? a : b).idx;
+                                worstIdx = numericValues.reduce((a, b) => a.val < b.val ? a : b).idx;
+                            }
+                        }
+                    }
+
+                    html += `
+                        <tr>
+                            <th>${spec.label}</th>
+                            ${values.map((v, i) => {
+                                let className = '';
+                                if (i === bestIdx) className = 'highlight-best';
+                                else if (i === worstIdx) className = 'highlight-worst';
+                                return `<td class="${className}">${v.formatted}</td>`;
+                            }).join('')}
+                            ${canAddMore ? '<td></td>' : ''}
+                        </tr>
+                    `;
+                });
+            });
+
+            // Características
+            html += `
+                <tr class="category-row">
+                    <th colspan="${numVehicles + 1 + (canAddMore ? 1 : 0)}">Características Destacadas</th>
+                </tr>
+                <tr>
+                    <th>Equipamiento</th>
+                    ${vehicles.map(v => {
+                        const features = v.caracteristicas || [];
+                        if (features.length === 0) {
+                            return '<td>-</td>';
+                        }
+                        return `<td>
+                            <ul style="margin: 0; padding-left: 16px; font-size: 13px;">
+                                ${features.slice(0, 6).map(f => `<li>${f}</li>`).join('')}
+                                ${features.length > 6 ? `<li style="color: #6b7280;">+${features.length - 6} más...</li>` : ''}
+                            </ul>
+                        </td>`;
+                    }).join('')}
+                    ${canAddMore ? '<td></td>' : ''}
+                </tr>
+            `;
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            container.innerHTML = html;
+
+            // Event listeners para remover vehículos
+            container.querySelectorAll('.btn-remove-vehicle').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.dataset.remove;
+                    vehicleComparator.remove(id);
+                    loadComparison();
+                });
+            });
+        }
+
+        function setupWhatsAppButton(vehicles) {
+            const btn = document.getElementById('btn-whatsapp-compare');
+            if (!btn || vehicles.length === 0) return;
+
+            const vehicleList = vehicles.map(v =>
+                `• ${capitalizar(v.marca)} ${v.modelo} ${v.year} - ${formatCurrency(v.precioOferta || v.precio)}`
+            ).join('\n');
+
+            const message = `Hola ALTORRA CARS, estoy comparando los siguientes vehiculos:
+
+${vehicleList}
+
+Me gustaria recibir mas informacion y asesoria para tomar una decision.
+
+Ver comparacion: ${window.location.href}`;
+
+            btn.href = `https://wa.me/573235016747?text=${encodeURIComponent(message)}`;
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            loadComparison();
+        });
+
+        document.getElementById('btn-share-compare')?.addEventListener('click', async () => {
+            const url = window.location.href;
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'Comparación de Vehículos - ALTORRA CARS',
+                        text: 'Mira esta comparación de vehículos',
+                        url: url
+                    });
+                } catch (e) {
+                    // Usuario canceló o error
+                }
+            } else {
+                // Fallback: copiar al portapapeles
+                try {
+                    await navigator.clipboard.writeText(url);
+                    if (typeof toast !== 'undefined') {
+                        toast.success('Enlace copiado al portapapeles');
+                    }
+                } catch (e) {
+                    if (typeof toast !== 'undefined') {
+                        toast.error('No se pudo copiar el enlace');
+                    }
+                }
+            }
+        });
+
+        document.getElementById('btn-clear-compare')?.addEventListener('click', () => {
+            vehicleComparator.clear();
+            loadComparison();
+            if (typeof toast !== 'undefined') {
+                toast.info('Comparador limpiado');
+            }
+        });
+    </script>
+
+    <!-- Cache Manager -->
+    <script src="js/cache-manager.js"></script>
+</body>
+</html>

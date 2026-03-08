@@ -1,0 +1,187 @@
+/* ============================================
+   TOAST NOTIFICATIONS - ALTORRA CARS
+   Sistema moderno de notificaciones
+   ============================================ */
+
+/* Container de notificaciones */
+.toast-container {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+}
+
+/* Toast notification */
+.toast {
+    background: white;
+    padding: 16px 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    min-width: 300px;
+    max-width: 400px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    opacity: 0;
+    transform: translateX(400px);
+    animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    pointer-events: auto;
+    border-left: 4px solid #b89658;
+}
+
+/* Toast success */
+.toast.success {
+    border-left-color: #38a28e;
+}
+
+.toast.success .toast-icon {
+    background: rgba(56, 162, 142, 0.1);
+    color: #38a28e;
+}
+
+/* Toast error */
+.toast.error {
+    border-left-color: #916652;
+}
+
+.toast.error .toast-icon {
+    background: rgba(145, 102, 82, 0.1);
+    color: #916652;
+}
+
+/* Toast info */
+.toast.info {
+    border-left-color: #b89658;
+}
+
+.toast.info .toast-icon {
+    background: rgba(184, 150, 88, 0.1);
+    color: #b89658;
+}
+
+/* Toast icon */
+.toast-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+/* Toast content */
+.toast-content {
+    flex: 1;
+}
+
+.toast-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #1d1b19;
+    margin: 0 0 4px 0;
+}
+
+.toast-message {
+    font-size: 0.85rem;
+    color: #666;
+    margin: 0;
+}
+
+/* Toast close button */
+.toast-close {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 1.25rem;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.toast-close:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #666;
+}
+
+/* Animación de entrada */
+@keyframes slideIn {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Animación de salida */
+@keyframes slideOut {
+    to {
+        opacity: 0;
+        transform: translateX(400px);
+    }
+}
+
+.toast.closing {
+    animation: slideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Responsive móvil */
+@media (max-width: 640px) {
+    .toast-container {
+        top: 80px;
+        right: 12px;
+        left: 12px;
+    }
+
+    .toast {
+        min-width: unset;
+        max-width: unset;
+        width: 100%;
+    }
+}
+
+/* Animación de progreso */
+.toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: rgba(184, 150, 88, 0.2);
+    border-radius: 0 0 12px 12px;
+    overflow: hidden;
+}
+
+.toast-progress-bar {
+    height: 100%;
+    background: #b89658;
+    width: 100%;
+    animation: progress 4s linear forwards;
+}
+
+.toast.success .toast-progress-bar {
+    background: #38a28e;
+}
+
+.toast.error .toast-progress-bar {
+    background: #916652;
+}
+
+@keyframes progress {
+    from {
+        width: 100%;
+    }
+    to {
+        width: 0%;
+    }
+}

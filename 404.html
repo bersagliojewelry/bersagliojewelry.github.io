@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Página no encontrada | ALTORRA CARS</title>
+
+    <meta name="robots" content="noindex, nofollow">
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/mobile-fixes.css">
+    <link rel="stylesheet" href="css/footer-fixes.css">
+    <link rel="stylesheet" href="css/vehicles-cards-fix.css">
+    <link rel="stylesheet" href="css/dark-theme.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        .error-page {
+            min-height: calc(100vh - 80px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #111111 100%);
+            margin-top: 80px;
+        }
+
+        .error-container {
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .error-illustration {
+            margin-bottom: 32px;
+        }
+
+        .error-car {
+            width: 200px;
+            height: auto;
+            animation: carBounce 2s ease-in-out infinite;
+        }
+
+        @keyframes carBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .error-code {
+            font-size: 120px;
+            font-weight: 900;
+            color: #b89658;
+            line-height: 1;
+            margin-bottom: 16px;
+            text-shadow: 4px 4px 0 #916652;
+        }
+
+        .error-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 16px;
+        }
+
+        .error-message {
+            font-size: 16px;
+            color: #9ca3af;
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        .error-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            justify-content: center;
+            margin-bottom: 48px;
+        }
+
+        .btn-error {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-error-primary {
+            background: linear-gradient(135deg, #b89658 0%, #916652 100%);
+            color: white;
+        }
+
+        .btn-error-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(184, 150, 88, 0.4);
+        }
+
+        .btn-error-secondary {
+            background: #252525;
+            color: #d1d5db;
+            border: 2px solid #333333;
+        }
+
+        .btn-error-secondary:hover {
+            border-color: #b89658;
+            color: #b89658;
+        }
+
+        .error-search {
+            margin-bottom: 48px;
+        }
+
+        .error-search-form {
+            display: flex;
+            max-width: 400px;
+            margin: 0 auto;
+            background: #252525;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .error-search-input {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            font-size: 15px;
+            outline: none;
+            background: #252525;
+            color: #ffffff;
+        }
+
+        .error-search-input::placeholder {
+            color: #6b7280;
+        }
+
+        .error-search-btn {
+            padding: 14px 20px;
+            background: #b89658;
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .error-search-btn:hover {
+            background: #916652;
+        }
+
+        .error-suggestions {
+            margin-top: 32px;
+        }
+
+        .error-suggestions h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 20px;
+        }
+
+        .suggestion-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .suggestion-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 16px;
+            background: #252525;
+            border-radius: 8px;
+            color: #d1d5db;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .suggestion-link:hover {
+            background: #b89658;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .error-code {
+                font-size: 80px;
+            }
+
+            .error-title {
+                font-size: 22px;
+            }
+
+            .error-actions {
+                flex-direction: column;
+            }
+
+            .btn-error {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <div class="error-page">
+        <div class="error-container">
+            <div class="error-illustration">
+                <svg class="error-car" viewBox="0 0 200 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Cuerpo del auto -->
+                    <path d="M30 60 L50 60 L60 40 L140 40 L150 60 L170 60 L170 75 L30 75 Z" fill="#b89658"/>
+                    <!-- Ventanas -->
+                    <path d="M65 45 L75 45 L70 55 L60 55 Z" fill="#1f2937"/>
+                    <path d="M80 45 L100 45 L100 55 L75 55 Z" fill="#1f2937"/>
+                    <path d="M105 45 L125 45 L130 55 L105 55 Z" fill="#1f2937"/>
+                    <!-- Ruedas -->
+                    <circle cx="55" cy="75" r="15" fill="#1f2937"/>
+                    <circle cx="55" cy="75" r="8" fill="#6b7280"/>
+                    <circle cx="145" cy="75" r="15" fill="#1f2937"/>
+                    <circle cx="145" cy="75" r="8" fill="#6b7280"/>
+                    <!-- Luces -->
+                    <rect x="165" y="55" width="8" height="8" rx="2" fill="#ef4444"/>
+                    <rect x="27" y="55" width="8" height="8" rx="2" fill="#fbbf24"/>
+                    <!-- Signo de interrogación -->
+                    <text x="100" y="35" font-size="24" font-weight="bold" fill="#ef4444" text-anchor="middle">?</text>
+                </svg>
+            </div>
+
+            <div class="error-code">404</div>
+
+            <h1 class="error-title">Parece que este vehículo se fue</h1>
+
+            <p class="error-message">
+                La página que buscas no existe o ha sido movida.
+                No te preocupes, tenemos muchos otros vehículos increíbles esperándote.
+            </p>
+
+            <div class="error-search">
+                <form class="error-search-form" action="busqueda.html" method="get">
+                    <input type="text" name="q" class="error-search-input"
+                           placeholder="Buscar vehículos...">
+                    <button type="submit" class="error-search-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="m21 21-4.35-4.35"/>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+
+            <div class="error-actions">
+                <a href="index.html" class="btn-error btn-error-primary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    Ir al inicio
+                </a>
+                <a href="busqueda.html" class="btn-error btn-error-secondary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="m21 21-4.35-4.35"/>
+                    </svg>
+                    Buscar vehículos
+                </a>
+            </div>
+
+            <div class="error-suggestions">
+                <h3>Explora nuestras categorías</h3>
+                <div class="suggestion-links">
+                    <a href="vehiculos-suv.html" class="suggestion-link">
+                        SUV
+                    </a>
+                    <a href="vehiculos-sedan.html" class="suggestion-link">
+                        Sedán
+                    </a>
+                    <a href="vehiculos-pickup.html" class="suggestion-link">
+                        Pickup
+                    </a>
+                    <a href="vehiculos-hatchback.html" class="suggestion-link">
+                        Hatchback
+                    </a>
+                    <a href="vehiculos-nuevos.html" class="suggestion-link">
+                        Nuevos
+                    </a>
+                    <a href="vehiculos-usados.html" class="suggestion-link">
+                        Usados
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-placeholder"></div>
+
+    <script>
+    // Smart redirect: if the user hit a /vehiculos/slug.html that doesn't exist yet
+    // (vehicle just created, static page not generated), redirect to the dynamic page.
+    (function() {
+        var path = window.location.pathname;
+        var match = path.match(/\/vehiculos\/(.+)\.html$/);
+        if (match) {
+            var slug = match[1];
+            // Extract numeric ID from the end of the slug
+            var parts = slug.split('-');
+            var id = parts[parts.length - 1];
+            if (id && /^\d+$/.test(id)) {
+                window.location.replace('/detalle-vehiculo.html?v=' + slug);
+                return;
+            }
+        }
+    })();
+    </script>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/components.js"></script>
+
+    <!-- Cache Manager -->
+    <script src="js/cache-manager.js"></script>
+</body>
+</html>

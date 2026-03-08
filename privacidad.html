@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Politica de Privacidad | ALTORRA CARS</title>
+    <meta name="description" content="Politica de Privacidad y Proteccion de Datos Personales de ALTORRA CARS conforme a la Ley 1581 de 2012 de Colombia.">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/mobile-fixes.css">
+    <link rel="stylesheet" href="css/vehicles-cards-fix.css">
+    <link rel="stylesheet" href="css/sidebar-filters-fix.css">
+    <link rel="stylesheet" href="css/footer-fixes.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/dark-theme.css">
+    <style>
+        /* Hero */
+        .privacy-hero {
+            background: linear-gradient(135deg, #1d1b19 0%, #2a2420 50%, #1d1b19 100%);
+            color: white;
+            padding: calc(70px + 4rem) 0 4rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .privacy-hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(ellipse at 30% 50%, rgba(184,150,88,0.15) 0%, transparent 60%),
+                        radial-gradient(ellipse at 70% 50%, rgba(145,102,82,0.1) 0%, transparent 60%);
+        }
+
+        .privacy-hero .container { position: relative; z-index: 1; }
+
+        .privacy-hero h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.5px;
+        }
+
+        .privacy-hero h1 span {
+            background: linear-gradient(135deg, #d4af37, #b89658);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .privacy-hero p {
+            font-size: 1.05rem;
+            color: rgba(255,255,255,0.7);
+            max-width: 650px;
+            margin: 0 auto 1rem;
+            line-height: 1.6;
+        }
+
+        .privacy-hero .update-date {
+            display: inline-block;
+            margin-top: 0.5rem;
+            padding: 0.4rem 1rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(184,150,88,0.3);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: #d4af37;
+            font-weight: 600;
+        }
+
+        /* Content */
+        .privacy-content {
+            padding: 4rem 0;
+            background: #f9fafb;
+        }
+
+        .legal-card {
+            background: white;
+            border-radius: 16px;
+            padding: 3rem 2.5rem;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+            border: 1px solid rgba(0,0,0,0.06);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .legal-card h2 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #1d1b19;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #f3f4f6;
+        }
+
+        .legal-card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1d1b19;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            position: relative;
+            padding-left: 1rem;
+        }
+
+        .legal-card h3::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(135deg, #b89658, #916652);
+            border-radius: 2px;
+        }
+
+        .legal-card p {
+            font-size: 0.95rem;
+            color: #4b5563;
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+
+        .legal-card ul, .legal-card ol {
+            margin: 1rem 0 1.5rem 1.5rem;
+            color: #4b5563;
+            line-height: 1.8;
+        }
+
+        .legal-card li {
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+            padding-left: 0.5rem;
+        }
+
+        .legal-card ul li::marker {
+            color: #b89658;
+        }
+
+        .legal-card strong {
+            color: #1d1b19;
+            font-weight: 600;
+        }
+
+        .legal-card a {
+            color: #b89658;
+            font-weight: 600;
+            text-decoration: underline;
+            transition: color 0.2s;
+        }
+
+        .legal-card a:hover {
+            color: #916652;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(184,150,88,0.08), rgba(184,150,88,0.03));
+            border-left: 4px solid #b89658;
+            border-radius: 8px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .highlight-box p {
+            margin-bottom: 0;
+        }
+
+        .contact-box {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border: 1px solid #e5e7eb;
+        }
+
+        .contact-box h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1d1b19;
+            margin-bottom: 0.75rem;
+        }
+
+        .contact-box p {
+            margin-bottom: 0.5rem;
+        }
+
+        .contact-box a {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #b89658;
+            font-weight: 600;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .privacy-hero {
+                padding: calc(70px + 3rem) 0 3rem;
+            }
+            .privacy-hero h1 {
+                font-size: 1.8rem;
+            }
+            .privacy-content {
+                padding: 3rem 0;
+            }
+            .legal-card {
+                padding: 2rem 1.5rem;
+            }
+            .legal-card h2 {
+                font-size: 1.5rem;
+            }
+            .legal-card h3 {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .privacy-hero h1 {
+                font-size: 1.5rem;
+            }
+            .legal-card {
+                padding: 1.5rem 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <section class="privacy-hero">
+        <div class="container">
+            <h1>Politica de <span>Privacidad</span></h1>
+            <p>ALTORRA CARS esta comprometido con la proteccion de tus datos personales conforme a la Ley 1581 de 2012 y sus decretos reglamentarios.</p>
+            <span class="update-date">Ultima actualizacion: Febrero 2025</span>
+        </div>
+    </section>
+
+    <section class="privacy-content">
+        <div class="container">
+            <div class="legal-card">
+                <h2>Politica de Privacidad y Proteccion de Datos Personales</h2>
+
+                <p>ALTORRA CARS, division de <strong>ALTORRA Company SAS</strong>, en cumplimiento de la Ley 1581 de 2012 sobre Proteccion de Datos Personales (Ley de Habeas Data) y sus decretos reglamentarios, establece la presente Politica de Privacidad para informar a los titulares de datos personales sobre la recoleccion, uso, tratamiento, almacenamiento y proteccion de su informacion.</p>
+
+                <h3>1. Responsable del Tratamiento</h3>
+                <p><strong>Razon Social:</strong> ALTORRA Company SAS<br>
+                <strong>Nombre Comercial:</strong> ALTORRA CARS<br>
+                <strong>Domicilio:</strong> Cartagena, Bolivar, Colombia<br>
+                <strong>Correo electronico:</strong> <a href="mailto:altorracarssale@gmail.com">altorracarssale@gmail.com</a><br>
+                <strong>Telefono:</strong> +57 323 501 6747</p>
+
+                <p>ALTORRA CARS es responsable del tratamiento de los datos personales que los usuarios proporcionen a traves de nuestro sitio web, formularios de contacto, simuladores de credito y otros canales de comunicacion.</p>
+
+                <h3>2. Datos que Recopilamos</h3>
+                <p>Recopilamos diferentes tipos de datos personales segun la interaccion del usuario con nuestros servicios:</p>
+
+                <ul>
+                    <li><strong>Datos de identificacion:</strong> Nombre completo, numero de documento de identidad (cuando sea necesario para transacciones comerciales).</li>
+                    <li><strong>Datos de contacto:</strong> Correo electronico, numero de telefono, numero de WhatsApp, direccion postal.</li>
+                    <li><strong>Datos financieros:</strong> Informacion proporcionada voluntariamente en el simulador de credito (ingresos mensuales, capacidad de pago, preferencias de financiacion). No recopilamos datos bancarios ni informacion de tarjetas de credito.</li>
+                    <li><strong>Datos de navegacion:</strong> Direccion IP, tipo de navegador, sistema operativo, paginas visitadas, tiempo de permanencia, vehiculos consultados, interacciones con el sitio web.</li>
+                    <li><strong>Datos de preferencias:</strong> Vehiculos marcados como favoritos, comparaciones realizadas, filtros de busqueda aplicados, configuraciones de usuario.</li>
+                    <li><strong>Cookies y tecnologias similares:</strong> Recopilamos informacion automaticamente mediante cookies, almacenamiento local del navegador y otras tecnologias de rastreo. Para mas detalles, consulta nuestra Politica de Cookies.</li>
+                </ul>
+
+                <h3>3. Finalidades del Tratamiento</h3>
+                <p>Los datos personales que recopilamos seran utilizados para las siguientes finalidades:</p>
+
+                <ol>
+                    <li><strong>Atencion de consultas y solicitudes:</strong> Responder a preguntas, brindar informacion sobre vehiculos, procesar solicitudes de cotizacion y contacto.</li>
+                    <li><strong>Gestion comercial:</strong> Facilitar la compra-venta de vehiculos, gestion de financiacion, agendamiento de citas, peritajes y evaluaciones tecnicas.</li>
+                    <li><strong>Simulacion de credito:</strong> Procesar la informacion financiera proporcionada para ofrecer opciones de financiacion personalizadas.</li>
+                    <li><strong>Mejora de la experiencia de usuario:</strong> Personalizar el contenido del sitio web, recordar preferencias, mostrar vehiculos relevantes segun el historial de navegacion.</li>
+                    <li><strong>Comunicaciones comerciales:</strong> Enviar informacion sobre nuevos vehiculos, promociones, ofertas especiales, novedades del concesionario (solo si el usuario ha autorizado el envio de comunicaciones).</li>
+                    <li><strong>Seguridad y prevencion de fraude:</strong> Proteger la integridad del sitio web, prevenir actividades fraudulentas y cumplir con obligaciones legales.</li>
+                    <li><strong>Estadisticas y analitica:</strong> Analizar el comportamiento de los usuarios para mejorar nuestros servicios, optimizar la navegacion y desarrollar nuevas funcionalidades.</li>
+                    <li><strong>Cumplimiento legal:</strong> Cumplir con obligaciones legales, fiscales y regulatorias aplicables en Colombia.</li>
+                </ol>
+
+                <h3>4. Derechos del Titular de los Datos</h3>
+                <p>Como titular de datos personales, de conformidad con la Ley 1581 de 2012, tienes los siguientes derechos:</p>
+
+                <ul>
+                    <li><strong>Conocer, actualizar y rectificar</strong> tus datos personales frente a ALTORRA CARS.</li>
+                    <li><strong>Solicitar prueba de la autorizacion</strong> otorgada para el tratamiento de tus datos.</li>
+                    <li><strong>Ser informado</strong> sobre el uso que se ha dado a tus datos personales.</li>
+                    <li><strong>Presentar quejas</strong> ante la Superintendencia de Industria y Comercio (SIC) por infracciones a la ley de proteccion de datos.</li>
+                    <li><strong>Revocar la autorizacion</strong> y/o solicitar la supresion de tus datos cuando no exista un deber legal o contractual que requiera su conservacion.</li>
+                    <li><strong>Acceder de forma gratuita</strong> a tus datos personales que hayan sido objeto de tratamiento.</li>
+                </ul>
+
+                <div class="highlight-box">
+                    <p><strong>Nota importante:</strong> La revocacion de la autorizacion o solicitud de supresion de datos podria impedir que ALTORRA CARS preste sus servicios, ya que ciertos datos son necesarios para la gestion comercial y el cumplimiento de obligaciones legales.</p>
+                </div>
+
+                <h3>5. Procedimiento para Ejercer tus Derechos</h3>
+                <p>Para ejercer cualquiera de los derechos mencionados anteriormente, puedes contactarnos a traves de los siguientes canales:</p>
+
+                <div class="contact-box">
+                    <h4>Canal de Atencion PQRS (Peticiones, Quejas, Reclamos y Solicitudes)</h4>
+                    <p><strong>Correo electronico:</strong> <a href="mailto:altorracarssale@gmail.com">altorracarssale@gmail.com</a></p>
+                    <p><strong>Telefono/WhatsApp:</strong> <a href="tel:+573235016747">+57 323 501 6747</a></p>
+                    <p><strong>Asunto:</strong> "Solicitud de Datos Personales - Ley 1581 de 2012"</p>
+                </div>
+
+                <p>Tu solicitud debera contener como minimo la siguiente informacion:</p>
+                <ul>
+                    <li>Nombre completo del titular</li>
+                    <li>Datos de contacto (correo electronico y telefono)</li>
+                    <li>Descripcion clara de la solicitud o derecho que deseas ejercer</li>
+                    <li>Documentos que soporten tu identidad (si aplica)</li>
+                </ul>
+
+                <p>ALTORRA CARS respondera tu solicitud en un plazo maximo de <strong>15 dias habiles</strong> contados a partir de la fecha de recepcion. Si la solicitud requiere mayor analisis, podremos extender el plazo hasta <strong>8 dias habiles adicionales</strong>, previa notificacion.</p>
+
+                <h3>6. Seguridad de la Informacion</h3>
+                <p>ALTORRA CARS implementa medidas tecnicas, administrativas y fisicas de seguridad para proteger tus datos personales contra perdida, uso no autorizado, acceso indebido, divulgacion, alteracion o destruccion.</p>
+
+                <p>Entre las medidas de seguridad adoptadas se encuentran:</p>
+                <ul>
+                    <li>Cifrado de datos sensibles mediante protocolo HTTPS</li>
+                    <li>Almacenamiento seguro en servidores de Firebase/Google Cloud Platform</li>
+                    <li>Politicas de acceso restringido a la informacion</li>
+                    <li>Capacitacion del personal en proteccion de datos personales</li>
+                    <li>Revision periodica de las medidas de seguridad implementadas</li>
+                </ul>
+
+                <p>Sin embargo, ningun sistema de transmision o almacenamiento de datos es completamente seguro. Si bien nos esforzamos por proteger tu informacion, no podemos garantizar la seguridad absoluta de los datos transmitidos a traves de Internet.</p>
+
+                <h3>7. Transferencia y Transmision de Datos</h3>
+                <p>ALTORRA CARS podria transferir o transmitir datos personales a terceros en los siguientes casos:</p>
+
+                <ul>
+                    <li><strong>Proveedores de servicios tecnologicos:</strong> Utilizamos Firebase/Google Cloud Platform para el alojamiento de la base de datos y almacenamiento de informacion. Google actua como procesador de datos bajo nuestras instrucciones y cumple con estandares internacionales de seguridad.</li>
+                    <li><strong>Entidades financieras:</strong> En caso de que solicites financiacion, podremos compartir tu informacion con bancos, cooperativas o entidades crediticias autorizadas para evaluar tu solicitud.</li>
+                    <li><strong>Autoridades competentes:</strong> Cuando sea requerido por ley, orden judicial o autoridad administrativa colombiana.</li>
+                </ul>
+
+                <div class="highlight-box">
+                    <p><strong>Importante:</strong> ALTORRA CARS <strong>NO vende, alquila ni comercializa</strong> tus datos personales a terceros con fines publicitarios o de marketing sin tu consentimiento expreso.</p>
+                </div>
+
+                <h3>8. Cookies y Tecnologias de Rastreo</h3>
+                <p>Nuestro sitio web utiliza cookies, almacenamiento local (localStorage) y otras tecnologias similares para mejorar la experiencia de navegacion, recordar preferencias del usuario, almacenar vehiculos favoritos y analizar el uso del sitio.</p>
+
+                <p>Las cookies que utilizamos incluyen:</p>
+                <ul>
+                    <li><strong>Cookies esenciales:</strong> Necesarias para el funcionamiento basico del sitio web.</li>
+                    <li><strong>Cookies de preferencias:</strong> Guardan configuraciones como tema oscuro, filtros aplicados, vehiculos en comparacion.</li>
+                    <li><strong>Cookies de analitica:</strong> Nos permiten entender como los usuarios interactuan con el sitio para mejorar nuestros servicios.</li>
+                </ul>
+
+                <p>Puedes configurar tu navegador para rechazar cookies o eliminarlas manualmente. Sin embargo, esto podria afectar algunas funcionalidades del sitio web. Para mas informacion detallada, consulta nuestra <strong>Politica de Cookies</strong>.</p>
+
+                <h3>9. Datos de Menores de Edad</h3>
+                <p>ALTORRA CARS no recopila intencionalmente datos personales de menores de 18 anos sin el consentimiento previo de sus padres o representantes legales. Nuestros servicios estan dirigidos a personas mayores de edad con capacidad legal para contratar.</p>
+
+                <p>Si descubrimos que hemos recopilado datos de un menor de edad sin autorizacion, procederemos a eliminar dicha informacion de nuestros sistemas de manera inmediata.</p>
+
+                <h3>10. Vigencia de la Politica</h3>
+                <p>La presente Politica de Privacidad entro en vigencia el <strong>1 de febrero de 2025</strong> y permanecera vigente hasta que sea modificada o actualizada.</p>
+
+                <p>Las bases de datos que contienen datos personales seran conservadas durante el tiempo necesario para cumplir con las finalidades descritas en esta politica y mientras subsistan obligaciones legales, contractuales o comerciales que requieran su conservacion.</p>
+
+                <h3>11. Autoridad de Control</h3>
+                <p>La entidad encargada de velar por el cumplimiento de la Ley 1581 de 2012 en Colombia es la <strong>Superintendencia de Industria y Comercio (SIC)</strong>.</p>
+
+                <p>Si consideras que tus derechos han sido vulnerados, puedes presentar una queja ante la SIC a traves de los siguientes canales:</p>
+
+                <ul>
+                    <li><strong>Sitio web:</strong> <a href="https://www.sic.gov.co" target="_blank" rel="noopener">www.sic.gov.co</a></li>
+                    <li><strong>Linea gratuita nacional:</strong> 018000 910165</li>
+                    <li><strong>Bogota:</strong> (601) 5870000</li>
+                    <li><strong>Direccion:</strong> Carrera 13 No. 27-00, Piso 10, Bogota D.C., Colombia</li>
+                </ul>
+
+                <h3>12. Modificaciones a la Politica</h3>
+                <p>ALTORRA CARS se reserva el derecho de modificar, actualizar o complementar esta Politica de Privacidad en cualquier momento para adaptarse a cambios normativos, mejoras en nuestros servicios o nuevas practicas de tratamiento de datos.</p>
+
+                <p>Cualquier modificacion sera comunicada a traves de nuestro sitio web y, cuando sea aplicable, mediante correo electronico a los usuarios registrados. Te recomendamos revisar periodicamente esta politica para mantenerte informado sobre como protegemos tu informacion.</p>
+
+                <p>El uso continuado de nuestros servicios despues de la publicacion de cambios constituira tu aceptacion de dichas modificaciones.</p>
+
+                <h3>13. Autorizacion del Titular</h3>
+                <p>Al proporcionar tus datos personales a ALTORRA CARS a traves de formularios de contacto, simulador de credito, suscripciones o cualquier otro medio, declaras que:</p>
+
+                <ul>
+                    <li>Has leido y comprendido la presente Politica de Privacidad</li>
+                    <li>Autorizas de manera libre, previa, expresa e informada el tratamiento de tus datos personales conforme a las finalidades descritas</li>
+                    <li>La informacion proporcionada es veraz, completa y actualizada</li>
+                    <li>Conoces tus derechos como titular de datos personales y los mecanismos para ejercerlos</li>
+                </ul>
+
+                <h3>14. Contacto</h3>
+                <p>Si tienes preguntas, inquietudes o solicitudes relacionadas con esta Politica de Privacidad o el tratamiento de tus datos personales, no dudes en contactarnos:</p>
+
+                <div class="contact-box">
+                    <h4>ALTORRA CARS - Division de ALTORRA Company SAS</h4>
+                    <p><strong>Correo:</strong> <a href="mailto:altorracarssale@gmail.com">altorracarssale@gmail.com</a></p>
+                    <p><strong>WhatsApp:</strong> <a href="https://wa.me/573235016747" target="_blank" rel="noopener">+57 323 501 6747</a></p>
+                    <p><strong>Ubicacion:</strong> Cartagena, Bolivar, Colombia</p>
+                </div>
+
+                <p style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb; font-size: 0.85rem; color: #9ca3af;">
+                    Esta Politica de Privacidad cumple con la Ley 1581 de 2012, el Decreto 1377 de 2013, el Decreto 1074 de 2015 y demas normativa colombiana aplicable en materia de proteccion de datos personales.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/cache-manager.js"></script>
+</body>
+</html>

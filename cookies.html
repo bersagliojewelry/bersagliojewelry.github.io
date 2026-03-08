@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Politica de Cookies | ALTORRA CARS</title>
+    <meta name="description" content="Politica de Cookies de ALTORRA CARS. Informacion sobre el uso de cookies y tecnologias similares en nuestra plataforma.">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/mobile-fixes.css">
+    <link rel="stylesheet" href="css/vehicles-cards-fix.css">
+    <link rel="stylesheet" href="css/sidebar-filters-fix.css">
+    <link rel="stylesheet" href="css/footer-fixes.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/dark-theme.css">
+    <style>
+        /* Hero Section */
+        .cookies-hero {
+            background: linear-gradient(135deg, #1d1b19 0%, #2a2420 50%, #1d1b19 100%);
+            color: white;
+            padding: calc(70px + 4rem) 0 4rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cookies-hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(ellipse at 20% 80%, rgba(184,150,88,0.12) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 20%, rgba(145,102,82,0.08) 0%, transparent 50%);
+        }
+
+        .cookies-hero .container { position: relative; z-index: 1; }
+
+        .cookies-hero h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.5px;
+        }
+
+        .cookies-hero h1 span {
+            background: linear-gradient(135deg, #d4af37, #b89658);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .cookies-hero p {
+            font-size: 1rem;
+            color: rgba(255,255,255,0.65);
+            max-width: 550px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .cookies-hero .last-updated {
+            display: inline-block;
+            margin-top: 1.5rem;
+            padding: 0.5rem 1.25rem;
+            border: 1px solid rgba(184,150,88,0.4);
+            border-radius: 30px;
+            color: #b89658;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        /* Content Section */
+        .cookies-content {
+            padding: 4rem 0;
+            background: #f9fafb;
+        }
+
+        .legal-card {
+            background: white;
+            border-radius: 16px;
+            padding: 3rem 3.5rem;
+            max-width: 900px;
+            margin: 0 auto;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+            border: 1px solid rgba(0,0,0,0.06);
+        }
+
+        .legal-card h2 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #1d1b19;
+            margin: 2.5rem 0 1rem;
+            position: relative;
+            padding-bottom: 0.75rem;
+        }
+
+        .legal-card h2:first-child { margin-top: 0; }
+
+        .legal-card h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(135deg, #b89658, #916652);
+            border-radius: 2px;
+        }
+
+        .legal-card h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1d1b19;
+            margin: 1.75rem 0 0.75rem;
+        }
+
+        .legal-card p {
+            font-size: 0.95rem;
+            color: #4b5563;
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+
+        .legal-card ul {
+            margin: 1rem 0 1.5rem 1.5rem;
+            color: #4b5563;
+        }
+
+        .legal-card ul li {
+            font-size: 0.95rem;
+            line-height: 1.8;
+            margin-bottom: 0.75rem;
+            position: relative;
+            padding-left: 0.5rem;
+        }
+
+        .legal-card ul li strong {
+            color: #1d1b19;
+            font-weight: 600;
+        }
+
+        .legal-card a {
+            color: #b89658;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .legal-card a:hover {
+            color: #916652;
+            text-decoration: underline;
+        }
+
+        /* Cookie Table */
+        .cookie-table-wrapper {
+            overflow-x: auto;
+            margin: 1.5rem 0 2rem;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .cookie-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            background: white;
+        }
+
+        .cookie-table thead {
+            background: linear-gradient(135deg, #1d1b19, #2a2420);
+            color: white;
+        }
+
+        .cookie-table thead th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .cookie-table tbody tr {
+            border-bottom: 1px solid #e5e7eb;
+            transition: background-color 0.2s;
+        }
+
+        .cookie-table tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .cookie-table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        .cookie-table td {
+            padding: 1rem;
+            color: #4b5563;
+            vertical-align: top;
+        }
+
+        .cookie-table td:first-child {
+            font-weight: 600;
+            color: #1d1b19;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: linear-gradient(135deg, rgba(184,150,88,0.08), rgba(184,150,88,0.04));
+            border-left: 4px solid #b89658;
+            border-radius: 8px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .info-box p {
+            margin: 0;
+            color: #4b5563;
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+
+        .info-box strong {
+            color: #1d1b19;
+        }
+
+        /* Contact Box */
+        .contact-box {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1.75rem;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .contact-box h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1d1b19;
+            margin: 0 0 0.75rem;
+        }
+
+        .contact-box p {
+            margin: 0 0 1rem;
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .contact-box a {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.75rem;
+            background: linear-gradient(135deg, #b89658, #916652);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .contact-box a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(184,150,88,0.3);
+        }
+
+        /* Browser Instructions */
+        .browser-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .browser-item {
+            padding: 1rem;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .browser-item strong {
+            display: block;
+            color: #1d1b19;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .browser-item p {
+            margin: 0;
+            color: #6b7280;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .cookies-hero {
+                padding: calc(70px + 3rem) 0 3rem;
+            }
+
+            .cookies-hero h1 {
+                font-size: 1.8rem;
+            }
+
+            .legal-card {
+                padding: 2rem 1.5rem;
+                border-radius: 12px;
+            }
+
+            .legal-card h2 {
+                font-size: 1.4rem;
+            }
+
+            .legal-card h3 {
+                font-size: 1.1rem;
+            }
+
+            .cookie-table {
+                font-size: 0.8rem;
+            }
+
+            .cookie-table thead th,
+            .cookie-table td {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .browser-list {
+                grid-template-columns: 1fr;
+            }
+
+            .cookies-content {
+                padding: 3rem 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .cookies-hero h1 {
+                font-size: 1.5rem;
+            }
+
+            .legal-card {
+                padding: 1.5rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <section class="cookies-hero">
+        <div class="container">
+            <h1>Politica de <span>Cookies</span></h1>
+            <p>Informacion sobre el uso de cookies y tecnologias similares en la plataforma de ALTORRA CARS.</p>
+            <span class="last-updated">Ultima actualizacion: Febrero 2025</span>
+        </div>
+    </section>
+
+    <section class="cookies-content">
+        <div class="container">
+            <div class="legal-card">
+                <h2>Que son las cookies</h2>
+                <p>Las cookies son pequenos archivos de texto que se almacenan en tu dispositivo (ordenador, tablet o movil) cuando visitas nuestro sitio web. Estas cookies nos permiten reconocer tu navegador y mejorar tu experiencia de navegacion, recordar tus preferencias y proporcionar funcionalidades esenciales de la plataforma.</p>
+                <p>En ALTORRA CARS utilizamos cookies y tecnologias similares (como localStorage y Service Workers) para garantizar el correcto funcionamiento de nuestra plataforma, ofrecer funcionalidades personalizadas y mejorar continuamente nuestros servicios.</p>
+
+                <h2>Tipos de cookies que usamos</h2>
+
+                <h3>1. Cookies Esenciales</h3>
+                <p>Estas cookies son necesarias para el funcionamiento basico de la plataforma y no pueden desactivarse. Incluyen:</p>
+                <ul>
+                    <li><strong>Autenticacion:</strong> Gestion de sesiones de usuario mediante Firebase Authentication. Permiten que puedas iniciar sesion y acceder a funcionalidades como favoritos y comparador de vehiculos.</li>
+                    <li><strong>Seguridad:</strong> Proteccion contra ataques CSRF y validacion de solicitudes autenticadas.</li>
+                </ul>
+
+                <h3>2. Cookies de Funcionalidad</h3>
+                <p>Estas cookies permiten recordar tus preferencias y mejorar tu experiencia:</p>
+                <ul>
+                    <li><strong>Tema oscuro:</strong> Almacenamiento de tu preferencia de tema (claro u oscuro) en localStorage.</li>
+                    <li><strong>Favoritos:</strong> Gestion de vehiculos marcados como favoritos, almacenados localmente para acceso rapido.</li>
+                    <li><strong>Comparador:</strong> Vehiculos seleccionados para comparar caracteristicas.</li>
+                    <li><strong>Filtros de busqueda:</strong> Recordar tus ultimas preferencias de busqueda.</li>
+                </ul>
+
+                <h3>3. Cookies de Analisis</h3>
+                <p>Utilizamos herramientas de analisis para comprender como interactuas con nuestra plataforma y mejorar la experiencia del usuario:</p>
+                <ul>
+                    <li><strong>Firebase Analytics:</strong> Medicion de eventos, paginas visitadas, tiempo de navegacion y comportamiento del usuario.</li>
+                    <li><strong>Google Analytics:</strong> Analisis de trafico, origen de visitantes, dispositivos utilizados y metricas de rendimiento.</li>
+                </ul>
+
+                <h3>4. Cookies de Rendimiento</h3>
+                <p>Estas cookies optimizan la velocidad y rendimiento de la plataforma:</p>
+                <ul>
+                    <li><strong>Service Worker:</strong> Cache de recursos estaticos (imagenes, CSS, JavaScript) para carga mas rapida en visitas posteriores.</li>
+                    <li><strong>Cache Manager:</strong> Gestion inteligente del cache para reducir tiempos de carga.</li>
+                </ul>
+
+                <h2>Detalle de cookies utilizadas</h2>
+                <div class="cookie-table-wrapper">
+                    <table class="cookie-table">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Proposito</th>
+                                <th>Duracion</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>firebase:authUser</td>
+                                <td>Gestion de sesion de usuario autenticado en Firebase</td>
+                                <td>Sesion</td>
+                            </tr>
+                            <tr>
+                                <td>firebase:host</td>
+                                <td>Configuracion de conexion con Firebase</td>
+                                <td>Permanente</td>
+                            </tr>
+                            <tr>
+                                <td>theme-preference</td>
+                                <td>Almacena la preferencia de tema (claro/oscuro)</td>
+                                <td>Permanente</td>
+                            </tr>
+                            <tr>
+                                <td>favoritos</td>
+                                <td>IDs de vehiculos marcados como favoritos</td>
+                                <td>Permanente</td>
+                            </tr>
+                            <tr>
+                                <td>comparador</td>
+                                <td>Vehiculos seleccionados para comparar</td>
+                                <td>Sesion</td>
+                            </tr>
+                            <tr>
+                                <td>_ga</td>
+                                <td>Cookie de Google Analytics para distinguir usuarios</td>
+                                <td>2 anos</td>
+                            </tr>
+                            <tr>
+                                <td>_ga_*</td>
+                                <td>Cookie de Google Analytics 4 para medicion de eventos</td>
+                                <td>2 anos</td>
+                            </tr>
+                            <tr>
+                                <td>workbox-precache</td>
+                                <td>Cache de Service Worker para recursos precargados</td>
+                                <td>Permanente</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="info-box">
+                    <p><strong>Nota:</strong> Las cookies de sesion se eliminan automaticamente cuando cierras tu navegador. Las cookies permanentes se mantienen hasta que las elimines manualmente o caduquen segun su duracion establecida.</p>
+                </div>
+
+                <h2>Cookies de terceros</h2>
+                <p>Utilizamos servicios de terceros que pueden establecer sus propias cookies:</p>
+                <ul>
+                    <li><strong>Firebase (Google):</strong> Autenticacion, base de datos en tiempo real, almacenamiento de imagenes y analisis.</li>
+                    <li><strong>Google Analytics:</strong> Medicion y analisis de trafico web.</li>
+                    <li><strong>Google Fonts:</strong> Tipografia Poppins cargada desde servidores de Google.</li>
+                </ul>
+                <p>Estas cookies estan sujetas a las politicas de privacidad de sus respectivos proveedores. Te recomendamos revisar las politicas de privacidad de Google y Firebase para mas informacion.</p>
+
+                <h2>Como gestionar las cookies</h2>
+                <p>Puedes controlar y eliminar las cookies a traves de la configuracion de tu navegador. A continuacion, te mostramos como hacerlo en los navegadores mas comunes:</p>
+
+                <div class="browser-list">
+                    <div class="browser-item">
+                        <strong>Google Chrome</strong>
+                        <p>Configuracion > Privacidad y seguridad > Cookies y otros datos de sitios > Ver todas las cookies y datos de sitios</p>
+                    </div>
+                    <div class="browser-item">
+                        <strong>Mozilla Firefox</strong>
+                        <p>Opciones > Privacidad y seguridad > Cookies y datos del sitio > Gestionar datos</p>
+                    </div>
+                    <div class="browser-item">
+                        <strong>Safari</strong>
+                        <p>Preferencias > Privacidad > Gestionar datos de sitios web</p>
+                    </div>
+                    <div class="browser-item">
+                        <strong>Microsoft Edge</strong>
+                        <p>Configuracion > Cookies y permisos del sitio > Cookies y datos almacenados > Ver todas las cookies y datos de sitios</p>
+                    </div>
+                </div>
+
+                <p>Ten en cuenta que la mayoria de navegadores aceptan cookies automaticamente. Puedes configurar tu navegador para rechazar cookies, pero esto puede afectar la funcionalidad de nuestro sitio web.</p>
+
+                <h2>Tecnologias similares a las cookies</h2>
+                <p>Ademas de las cookies tradicionales, utilizamos otras tecnologias de almacenamiento local:</p>
+
+                <h3>localStorage</h3>
+                <p>Almacenamiento persistente en el navegador utilizado para guardar preferencias de usuario, favoritos y datos de sesion que no expiran automaticamente.</p>
+
+                <h3>sessionStorage</h3>
+                <p>Almacenamiento temporal que se elimina cuando cierras la pestana del navegador. Utilizado para datos de sesion temporal como el estado del comparador de vehiculos.</p>
+
+                <h3>Service Workers</h3>
+                <p>Scripts que se ejecutan en segundo plano para proporcionar funcionalidades avanzadas como cache offline, notificaciones push y sincronizacion en segundo plano. Mejoran significativamente la velocidad de carga de la plataforma.</p>
+
+                <h2>Impacto de desactivar las cookies</h2>
+                <p>Si decides desactivar las cookies, es posible que experimentes limitaciones en la funcionalidad de nuestro sitio web:</p>
+                <ul>
+                    <li>No podras iniciar sesion ni acceder a funcionalidades personalizadas</li>
+                    <li>No se guardaran tus preferencias de tema oscuro</li>
+                    <li>Los favoritos y el comparador de vehiculos no funcionaran correctamente</li>
+                    <li>La experiencia de navegacion puede ser mas lenta debido a la falta de cache</li>
+                    <li>No podremos analizar tu comportamiento para mejorar el servicio</li>
+                </ul>
+
+                <div class="info-box">
+                    <p><strong>Recomendacion:</strong> Para disfrutar de la experiencia completa de ALTORRA CARS, te recomendamos mantener las cookies activadas, especialmente las cookies esenciales y de funcionalidad.</p>
+                </div>
+
+                <h2>Actualizaciones de esta politica</h2>
+                <p>ALTORRA CARS se reserva el derecho de modificar esta Politica de Cookies en cualquier momento. Cualquier cambio sera publicado en esta pagina con la fecha de actualizacion correspondiente. Te recomendamos revisar periodicamente esta politica para mantenerte informado sobre como utilizamos las cookies.</p>
+                <p>La version actual de esta politica es de <strong>Febrero 2025</strong>.</p>
+
+                <h2>Mas informacion sobre privacidad</h2>
+                <p>Para obtener mas informacion sobre como tratamos tus datos personales, te invitamos a revisar nuestra <a href="privacidad.html">Politica de Privacidad</a>, donde encontraras detalles sobre la recopilacion, uso y proteccion de tu informacion personal.</p>
+
+                <div class="contact-box">
+                    <h3>Tienes dudas sobre nuestra politica de cookies?</h3>
+                    <p>Estamos aqui para ayudarte. Contactanos y resolveremos todas tus preguntas.</p>
+                    <a href="mailto:altorracarssale@gmail.com">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                            <polyline points="22,6 12,13 2,6"/>
+                        </svg>
+                        altorracarssale@gmail.com
+                    </a>
+                </div>
+
+                <p style="margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 0.85rem; text-align: center;">
+                    <strong>ALTORRA CARS</strong> - Division de ALTORRA Company SAS<br>
+                    Cartagena, Bolivar, Colombia
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <div id="footer-placeholder"></div>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/cache-manager.js"></script>
+</body>
+</html>

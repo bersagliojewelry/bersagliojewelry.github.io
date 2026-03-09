@@ -246,8 +246,24 @@ class BersaglioDatabase {
      *   };
      */
     async load() {
-        this._data = _local;
+        // Aplica overrides del panel admin (localStorage) sobre los datos estáticos.
+        // Al conectar Firestore, reemplazar este bloque con getDocs() — nada más cambia.
+        const adminPieces      = this._adminOverride('bersaglio_admin_pieces');
+        const adminCollections = this._adminOverride('bersaglio_admin_collections');
+
+        this._data = {
+            ..._local,
+            pieces:      adminPieces      ?? _local.pieces,
+            collections: adminCollections ?? _local.collections,
+        };
         return this;
+    }
+
+    _adminOverride(key) {
+        try {
+            const v = localStorage.getItem(key);
+            return v ? JSON.parse(v) : null;
+        } catch { return null; }
     }
 
     // ─── Getters ───────────────────────────────────────────────────────────────

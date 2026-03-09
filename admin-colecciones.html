@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colecciones — Bersaglio Admin</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="stylesheet" href="css/admin.css">
+    <script type="module" src="js/admin/colecciones.js"></script>
+</head>
+<body>
+<div class="adm-layout">
+
+    <!-- Sidebar -->
+    <aside class="adm-sidebar">
+        <div class="adm-brand">
+            <span class="adm-brand-mark">B</span>
+            <div>
+                <div class="adm-brand-name">BERSAGLIO</div>
+                <div class="adm-brand-role">Panel Admin</div>
+            </div>
+        </div>
+        <nav class="adm-nav">
+            <a href="admin.html" class="adm-nav-link">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z"/></svg>
+                Dashboard
+            </a>
+            <a href="admin-piezas.html" class="adm-nav-link">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M10 2L3 7l7 5 7-5-7-5zM3 13l7 5 7-5-7-5-7 5z" clip-rule="evenodd"/></svg>
+                Piezas
+            </a>
+            <a href="admin-colecciones.html" class="adm-nav-link">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zm-2 4a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/></svg>
+                Colecciones
+            </a>
+            <a href="admin-consultas.html" class="adm-nav-link">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7z" clip-rule="evenodd"/></svg>
+                Consultas
+                <span class="adm-nav-badge" id="inq-badge" hidden></span>
+            </a>
+            <div class="adm-nav-divider"></div>
+            <a href="index.html" class="adm-nav-link" target="_blank" rel="noopener">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"/><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"/></svg>
+                Ver sitio
+            </a>
+        </nav>
+        <div class="adm-dev-notice">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+            Modo desarrollo · Sin autenticación
+        </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="adm-main">
+        <header class="adm-topbar">
+            <h1>Colecciones</h1>
+            <div class="adm-topbar-actions">
+                <button class="adm-btn adm-btn--primary" id="btn-new-col">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+                    Nueva colección
+                </button>
+            </div>
+        </header>
+
+        <div class="adm-content">
+
+            <!-- Nota sobre banners -->
+            <div style="background:var(--adm-accent-light);border:1px solid rgba(11,61,46,0.15);border-radius:var(--adm-radius);padding:12px 16px;margin-bottom:20px;font-size:12px;color:var(--adm-accent);display:flex;gap:8px;align-items:flex-start;">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" style="margin-top:1px;flex-shrink:0"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+                <span><strong>Banners:</strong> La URL de imagen de banner se almacenará en Firestore Storage al conectar el backend. Por ahora puedes gestionar el nombre, descripción y estado de las colecciones.</span>
+            </div>
+
+            <!-- Table -->
+            <div class="adm-table-wrap">
+                <table class="adm-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Slug</th>
+                            <th>Subtítulo</th>
+                            <th>Piezas</th>
+                            <th>Destacada</th>
+                            <th>Banner URL</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="col-tbody"></tbody>
+                </table>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- Modal: Colección -->
+<div class="adm-modal" id="col-modal" hidden>
+    <div class="adm-modal-box">
+        <div class="adm-modal-head">
+            <h2 id="col-modal-title">Nueva colección</h2>
+            <button class="adm-modal-close" id="col-modal-close" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="adm-modal-body">
+            <form id="col-form" novalidate>
+                <input type="hidden" name="id">
+                <div class="adm-form-section">
+                    <h3>Información</h3>
+                    <div class="adm-form-row">
+                        <div class="adm-field">
+                            <label for="cf-name">Nombre <span style="color:var(--adm-danger)">*</span></label>
+                            <input class="adm-input" id="cf-name" name="name" required placeholder="Esmeraldas Colombianas">
+                        </div>
+                        <div class="adm-field">
+                            <label for="cf-slug">Slug URL</label>
+                            <input class="adm-input" id="cf-slug" name="slug" placeholder="auto-generado desde el nombre">
+                        </div>
+                    </div>
+                    <div class="adm-form-row adm-col-1" style="margin-top:12px;">
+                        <div class="adm-field">
+                            <label for="cf-subtitle">Subtítulo</label>
+                            <input class="adm-input" id="cf-subtitle" name="subtitle" placeholder="El verde más puro del mundo">
+                        </div>
+                    </div>
+                    <div class="adm-form-row adm-col-1" style="margin-top:12px;">
+                        <div class="adm-field">
+                            <label for="cf-desc">Descripción</label>
+                            <textarea class="adm-input" id="cf-desc" name="description" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="adm-form-row" style="margin-top:12px;">
+                        <div class="adm-field">
+                            <label for="cf-pieces">Número de piezas</label>
+                            <input class="adm-input" id="cf-pieces" name="pieces" type="number" min="0" placeholder="0">
+                        </div>
+                        <div class="adm-field" style="justify-content:flex-end;">
+                            <label class="adm-checkbox-row" style="margin-top:auto;">
+                                <input type="checkbox" name="featured" id="cf-featured">
+                                <span>Destacar en la home</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="adm-form-section">
+                    <h3>Banner</h3>
+                    <div class="adm-form-row adm-col-1">
+                        <div class="adm-field">
+                            <label for="cf-banner">URL de imagen de banner <span class="adm-opt">(disponible con Firestore Storage)</span></label>
+                            <input class="adm-input" id="cf-banner" name="bannerUrl" placeholder="https://…" disabled>
+                        </div>
+                    </div>
+                    <div class="adm-photo-placeholder" style="margin-top:12px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" width="36" height="36"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <strong>Banner de colección</strong>
+                        <p>La imagen de banner estará disponible al conectar Firestore Storage</p>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="adm-modal-foot">
+            <button class="adm-btn adm-btn--ghost" id="col-modal-cancel">Cancelar</button>
+            <button class="adm-btn adm-btn--primary" id="col-modal-save">Guardar colección</button>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm delete -->
+<div class="adm-confirm" id="confirm-dialog" hidden>
+    <div class="adm-confirm-box">
+        <h3>¿Eliminar colección?</h3>
+        <p id="confirm-msg">Las piezas de esta colección no serán eliminadas.</p>
+        <div class="adm-confirm-actions">
+            <button class="adm-btn adm-btn--ghost" id="confirm-cancel">Cancelar</button>
+            <button class="adm-btn adm-btn--danger" id="confirm-ok">Eliminar</button>
+        </div>
+    </div>
+</div>
+
+<div class="adm-toast-wrap" id="toast-wrap"></div>
+</body>
+</html>

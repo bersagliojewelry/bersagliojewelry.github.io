@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piezas — Bersaglio Admin</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="stylesheet" href="css/admin.css">
+    <script type="module" src="js/admin/piezas.js"></script>
+</head>
+<body>
+<div class="adm-layout">
+
+    <!-- Sidebar -->
+    <aside class="adm-sidebar">
+        <div class="adm-brand">
+            <span class="adm-brand-mark">B</span>
+            <div>
+                <div class="adm-brand-name">BERSAGLIO</div>
+                <div class="adm-brand-role">Panel Admin</div>
+            </div>
+        </div>
+        <nav class="adm-nav">
+            <a href="admin.html" class="adm-nav-link">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z"/></svg>
+                Dashboard
+            </a>
+            <a href="admin-piezas.html" class="adm-nav-link">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M10 2L3 7l7 5 7-5-7-5zM3 13l7 5 7-5-7-5-7 5z" clip-rule="evenodd"/></svg>
+                Piezas
+            </a>
+            <a href="admin-colecciones.html" class="adm-nav-link">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zm-2 4a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/></svg>
+                Colecciones
+            </a>
+            <a href="admin-consultas.html" class="adm-nav-link">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7z" clip-rule="evenodd"/></svg>
+                Consultas
+                <span class="adm-nav-badge" id="inq-badge" hidden></span>
+            </a>
+            <div class="adm-nav-divider"></div>
+            <a href="index.html" class="adm-nav-link" target="_blank" rel="noopener">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"/><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"/></svg>
+                Ver sitio
+            </a>
+        </nav>
+        <div class="adm-dev-notice">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+            Modo desarrollo · Sin autenticación
+        </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="adm-main">
+        <header class="adm-topbar">
+            <h1>Piezas</h1>
+            <div class="adm-topbar-actions">
+                <button class="adm-btn adm-btn--ghost" id="btn-export-csv">↓ Exportar CSV</button>
+                <button class="adm-btn adm-btn--primary" id="btn-new-piece">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+                    Nueva pieza
+                </button>
+            </div>
+        </header>
+
+        <div class="adm-content">
+
+            <!-- Toolbar -->
+            <div class="adm-toolbar">
+                <div class="adm-search">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
+                    <input type="search" id="search-input" placeholder="Buscar por nombre o colección…">
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <select class="adm-input" id="filter-collection" style="width:auto;padding:6px 10px;">
+                        <option value="">Todas las colecciones</option>
+                    </select>
+                    <select class="adm-input" id="filter-featured" style="width:auto;padding:6px 10px;">
+                        <option value="">Todas</option>
+                        <option value="yes">Destacadas</option>
+                        <option value="no">No destacadas</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="adm-table-wrap">
+                <table class="adm-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Colección</th>
+                            <th>Badge</th>
+                            <th>Precio</th>
+                            <th>Destacada</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="pieces-tbody"></tbody>
+                </table>
+            </div>
+            <div id="pieces-empty" class="adm-empty" hidden>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="48" height="48"><polygon points="12,2 22,8.5 12,22 2,8.5"/><line x1="2" y1="8.5" x2="22" y2="8.5"/><polyline points="7,2 12,8.5 17,2"/></svg>
+                <p>No se encontraron piezas con ese criterio.</p>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- Modal: Agregar / Editar pieza -->
+<div class="adm-modal" id="piece-modal" hidden>
+    <div class="adm-modal-box">
+        <div class="adm-modal-head">
+            <h2 id="modal-title">Nueva pieza</h2>
+            <button class="adm-modal-close" id="modal-close" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="adm-modal-body">
+            <form id="piece-form" novalidate>
+                <input type="hidden" name="id">
+
+                <!-- Información básica -->
+                <div class="adm-form-section">
+                    <h3>Información básica</h3>
+                    <div class="adm-form-row">
+                        <div class="adm-field">
+                            <label for="f-name">Nombre <span style="color:var(--adm-danger)">*</span></label>
+                            <input class="adm-input" id="f-name" name="name" required placeholder="Ej. Anillo Muzo Imperial">
+                        </div>
+                        <div class="adm-field">
+                            <label for="f-slug">Slug URL <span style="color:var(--adm-danger)">*</span></label>
+                            <input class="adm-input" id="f-slug" name="slug" required placeholder="anillo-muzo-imperial">
+                        </div>
+                    </div>
+                    <div class="adm-form-row" style="margin-top:12px;">
+                        <div class="adm-field">
+                            <label for="f-collection">Colección <span style="color:var(--adm-danger)">*</span></label>
+                            <select class="adm-input" id="f-collection" name="collection" required>
+                                <option value="">— Seleccionar —</option>
+                            </select>
+                        </div>
+                        <div class="adm-field">
+                            <label for="f-badge">Badge <span class="adm-opt">(opcional)</span></label>
+                            <input class="adm-input" id="f-badge" name="badge" placeholder="Pieza Única">
+                        </div>
+                    </div>
+                    <div class="adm-form-row adm-col-1" style="margin-top:12px;">
+                        <div class="adm-field">
+                            <label for="f-desc">Descripción</label>
+                            <textarea class="adm-input" id="f-desc" name="description" rows="3" placeholder="Descripción detallada de la pieza…"></textarea>
+                        </div>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <label class="adm-checkbox-row">
+                            <input type="checkbox" name="featured" id="f-featured">
+                            <span>Pieza destacada (aparece en la home)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Precio -->
+                <div class="adm-form-section">
+                    <h3>Precio</h3>
+                    <div class="adm-form-row">
+                        <div class="adm-field">
+                            <label for="f-price-label">Etiqueta de precio</label>
+                            <input class="adm-input" id="f-price-label" name="priceLabel" placeholder="Consultar precio">
+                        </div>
+                        <div class="adm-field">
+                            <label for="f-price">Precio USD <span class="adm-opt">(numérico, opcional)</span></label>
+                            <input class="adm-input" id="f-price" name="price" type="number" min="0" placeholder="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Especificaciones -->
+                <div class="adm-form-section">
+                    <h3>Especificaciones de gema y metal</h3>
+                    <div class="adm-form-row">
+                        <div class="adm-field">
+                            <label for="f-stone">Piedra principal</label>
+                            <input class="adm-input" id="f-stone" name="specs.stone" placeholder="Esmeralda colombiana">
+                        </div>
+                        <div class="adm-field">
+                            <label for="f-carat">Quilates</label>
+                            <input class="adm-input" id="f-carat" name="specs.carat" placeholder="3.2 ct">
+                        </div>
+                    </div>
+                    <div class="adm-form-row" style="margin-top:12px;">
+                        <div class="adm-field">
+                            <label for="f-metal">Metal</label>
+                            <input class="adm-input" id="f-metal" name="specs.metal" placeholder="Oro amarillo 18k">
+                        </div>
+                        <div class="adm-field">
+                            <label for="f-accent">Acentos</label>
+                            <input class="adm-input" id="f-accent" name="specs.accent" placeholder="Diamantes 0.8 ct total">
+                        </div>
+                    </div>
+                    <div class="adm-form-row adm-col-3" style="margin-top:12px;">
+                        <div class="adm-field">
+                            <label for="f-cut">Talla</label>
+                            <input class="adm-input" id="f-cut" name="specs.cut" placeholder="Brillante redondo">
+                        </div>
+                        <div class="adm-field">
+                            <label for="f-color">Color</label>
+                            <input class="adm-input" id="f-color" name="specs.color" placeholder="D">
+                        </div>
+                        <div class="adm-field">
+                            <label for="f-clarity">Claridad</label>
+                            <input class="adm-input" id="f-clarity" name="specs.clarity" placeholder="VVS1">
+                        </div>
+                    </div>
+                    <div class="adm-form-row" style="margin-top:12px;">
+                        <div class="adm-field">
+                            <label for="f-certificate">Certificado</label>
+                            <input class="adm-input" id="f-certificate" name="specs.certificate" placeholder="GIA">
+                        </div>
+                        <div class="adm-field">
+                            <label for="f-weight">Peso</label>
+                            <input class="adm-input" id="f-weight" name="specs.weight" placeholder="48g">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fotos -->
+                <div class="adm-form-section">
+                    <h3>Fotografías</h3>
+                    <div class="adm-photo-placeholder">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" width="40" height="40"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <strong>Carga de fotos</strong>
+                        <p>Disponible al conectar Firestore Storage.<br>
+                        Las imágenes se almacenarán en <code>gs://bersaglio/piezas/{slug}/</code></p>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="adm-modal-foot">
+            <button class="adm-btn adm-btn--ghost" id="modal-cancel">Cancelar</button>
+            <button class="adm-btn adm-btn--primary" id="modal-save">Guardar pieza</button>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm delete -->
+<div class="adm-confirm" id="confirm-dialog" hidden>
+    <div class="adm-confirm-box">
+        <h3>¿Eliminar pieza?</h3>
+        <p id="confirm-msg">Esta acción no se puede deshacer.</p>
+        <div class="adm-confirm-actions">
+            <button class="adm-btn adm-btn--ghost" id="confirm-cancel">Cancelar</button>
+            <button class="adm-btn adm-btn--danger" id="confirm-ok">Eliminar</button>
+        </div>
+    </div>
+</div>
+
+<div class="adm-toast-wrap" id="toast-wrap"></div>
+</body>
+</html>

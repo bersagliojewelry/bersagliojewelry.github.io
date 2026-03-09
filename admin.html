@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — Bersaglio Admin</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="stylesheet" href="css/admin.css">
+    <script type="module" src="js/admin/dashboard.js"></script>
+</head>
+<body>
+<div class="adm-layout">
+
+    <!-- Sidebar -->
+    <aside class="adm-sidebar">
+        <div class="adm-brand">
+            <span class="adm-brand-mark">B</span>
+            <div>
+                <div class="adm-brand-name">BERSAGLIO</div>
+                <div class="adm-brand-role">Panel Admin</div>
+            </div>
+        </div>
+        <nav class="adm-nav">
+            <a href="admin.html" class="adm-nav-link">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z"/></svg>
+                Dashboard
+            </a>
+            <a href="admin-piezas.html" class="adm-nav-link">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M10 2L3 7l7 5 7-5-7-5zM3 13l7 5 7-5-7-5-7 5z" clip-rule="evenodd"/></svg>
+                Piezas
+            </a>
+            <a href="admin-colecciones.html" class="adm-nav-link">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zm-2 4a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/></svg>
+                Colecciones
+            </a>
+            <a href="admin-consultas.html" class="adm-nav-link">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7z" clip-rule="evenodd"/></svg>
+                Consultas
+                <span class="adm-nav-badge" id="inq-badge" hidden></span>
+            </a>
+            <div class="adm-nav-divider"></div>
+            <a href="index.html" class="adm-nav-link" target="_blank" rel="noopener">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"/><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"/></svg>
+                Ver sitio
+            </a>
+        </nav>
+        <div class="adm-dev-notice">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+            Modo desarrollo · Sin autenticación
+        </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="adm-main">
+        <header class="adm-topbar">
+            <h1>Dashboard</h1>
+            <div class="adm-topbar-actions">
+                <a href="admin-piezas.html?new=1" class="adm-btn adm-btn--primary">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+                    Nueva pieza
+                </a>
+            </div>
+        </header>
+
+        <div class="adm-content">
+
+            <!-- Stats -->
+            <div class="adm-stats" id="stats-grid">
+                <div class="adm-stat-card">
+                    <div class="adm-stat-icon adm-stat-icon--emerald">
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="20" height="20"><path fill-rule="evenodd" d="M10 2L3 7l7 5 7-5-7-5zM3 13l7 5 7-5-7-5-7 5z" clip-rule="evenodd"/></svg>
+                    </div>
+                    <div class="adm-stat-body">
+                        <div class="adm-stat-value" id="stat-total-piezas">—</div>
+                        <div class="adm-stat-label">Total piezas</div>
+                    </div>
+                </div>
+                <div class="adm-stat-card">
+                    <div class="adm-stat-icon adm-stat-icon--gold">
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="20" height="20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                    </div>
+                    <div class="adm-stat-body">
+                        <div class="adm-stat-value" id="stat-destacadas">—</div>
+                        <div class="adm-stat-label">Piezas destacadas</div>
+                    </div>
+                </div>
+                <div class="adm-stat-card">
+                    <div class="adm-stat-icon adm-stat-icon--green">
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="20" height="20"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zm-2 4a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/></svg>
+                    </div>
+                    <div class="adm-stat-body">
+                        <div class="adm-stat-value" id="stat-colecciones">—</div>
+                        <div class="adm-stat-label">Colecciones activas</div>
+                    </div>
+                </div>
+                <div class="adm-stat-card">
+                    <div class="adm-stat-icon adm-stat-icon--red">
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="20" height="20"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7z" clip-rule="evenodd"/></svg>
+                    </div>
+                    <div class="adm-stat-body">
+                        <div class="adm-stat-value" id="stat-consultas">—</div>
+                        <div class="adm-stat-label">Consultas sin leer</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent inquiries -->
+            <div class="adm-section">
+                <div class="adm-section-head">
+                    <h2>Consultas recientes</h2>
+                    <a href="admin-consultas.html" class="adm-btn adm-btn--ghost adm-btn--sm">Ver todas →</a>
+                </div>
+                <div id="recent-inquiries-wrap">
+                    <div class="adm-table-wrap">
+                        <table class="adm-table" id="recent-inquiries-table">
+                            <thead><tr>
+                                <th>Fecha</th>
+                                <th>Nombre</th>
+                                <th>Pieza</th>
+                                <th>Estado</th>
+                                <th></th>
+                            </tr></thead>
+                            <tbody id="recent-inquiries-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick actions -->
+            <div class="adm-section">
+                <div class="adm-section-head"><h2>Acciones rápidas</h2></div>
+                <div class="adm-section-body" style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <a href="admin-piezas.html?new=1" class="adm-btn adm-btn--ghost">+ Nueva pieza</a>
+                    <a href="admin-colecciones.html" class="adm-btn adm-btn--ghost">Gestionar colecciones</a>
+                    <a href="admin-consultas.html" class="adm-btn adm-btn--ghost">Ver consultas</a>
+                    <button id="btn-export-quick" class="adm-btn adm-btn--ghost">↓ Exportar piezas CSV</button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- Toast container -->
+<div class="adm-toast-wrap" id="toast-wrap"></div>
+</body>
+</html>

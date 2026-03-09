@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultas — Bersaglio Admin</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="stylesheet" href="css/admin.css">
+    <script type="module" src="js/admin/consultas.js"></script>
+</head>
+<body>
+<div class="adm-layout">
+
+    <!-- Sidebar -->
+    <aside class="adm-sidebar">
+        <div class="adm-brand">
+            <span class="adm-brand-mark">B</span>
+            <div>
+                <div class="adm-brand-name">BERSAGLIO</div>
+                <div class="adm-brand-role">Panel Admin</div>
+            </div>
+        </div>
+        <nav class="adm-nav">
+            <a href="admin.html" class="adm-nav-link">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z"/></svg>
+                Dashboard
+            </a>
+            <a href="admin-piezas.html" class="adm-nav-link">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M10 2L3 7l7 5 7-5-7-5zM3 13l7 5 7-5-7-5-7 5z" clip-rule="evenodd"/></svg>
+                Piezas
+            </a>
+            <a href="admin-colecciones.html" class="adm-nav-link">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zm-2 4a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/></svg>
+                Colecciones
+            </a>
+            <a href="admin-consultas.html" class="adm-nav-link">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7z" clip-rule="evenodd"/></svg>
+                Consultas
+                <span class="adm-nav-badge" id="inq-badge" hidden></span>
+            </a>
+            <div class="adm-nav-divider"></div>
+            <a href="index.html" class="adm-nav-link" target="_blank" rel="noopener">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"/><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"/></svg>
+                Ver sitio
+            </a>
+        </nav>
+        <div class="adm-dev-notice">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+            Modo desarrollo · Sin autenticación
+        </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="adm-main">
+        <header class="adm-topbar">
+            <h1>Consultas</h1>
+            <div class="adm-topbar-actions">
+                <button class="adm-btn adm-btn--ghost" id="btn-mark-all-read">Marcar todas leídas</button>
+                <button class="adm-btn adm-btn--primary" id="btn-export-csv">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                    Exportar CSV
+                </button>
+            </div>
+        </header>
+
+        <div class="adm-content">
+
+            <!-- Filters -->
+            <div class="adm-toolbar">
+                <div class="adm-filters" id="inq-filters">
+                    <button class="adm-filter-btn is-active" data-filter="all">Todas</button>
+                    <button class="adm-filter-btn" data-filter="unread">Sin leer</button>
+                    <button class="adm-filter-btn" data-filter="read">Leídas</button>
+                </div>
+                <div class="adm-search">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
+                    <input type="search" id="search-input" placeholder="Buscar por nombre o email…">
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="adm-table-wrap">
+                <table class="adm-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Nombre</th>
+                            <th>Email / Teléfono</th>
+                            <th>Pieza</th>
+                            <th>Estado</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="inq-tbody"></tbody>
+                </table>
+            </div>
+            <div id="inq-empty" class="adm-empty" hidden>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="48" height="48"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg>
+                <p>No hay consultas con ese filtro.</p>
+            </div>
+
+            <!-- Export section -->
+            <div class="adm-section" style="margin-top:24px;">
+                <div class="adm-section-head"><h2>Exportación de interesados</h2></div>
+                <div class="adm-section-body">
+                    <p style="font-size:13px;color:var(--adm-muted);margin-bottom:16px;line-height:1.7;">
+                        Descarga los datos de contacto de todos los clientes que han enviado consultas.<br>
+                        <strong style="color:var(--adm-text);">Nota:</strong> La exportación de listas de deseos entre dispositivos requiere Firestore (Fase 6).
+                    </p>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <button class="adm-btn adm-btn--ghost" id="btn-export-inquiries">↓ Consultas completas (CSV)</button>
+                        <button class="adm-btn adm-btn--ghost" id="btn-export-unread">↓ Solo sin leer (CSV)</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- Modal: ver consulta -->
+<div class="adm-modal" id="inq-modal" hidden>
+    <div class="adm-modal-box">
+        <div class="adm-modal-head">
+            <h2 id="inq-modal-title">Consulta</h2>
+            <button class="adm-modal-close" id="inq-modal-close" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="adm-modal-body">
+            <div style="display:grid;gap:12px;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div>
+                        <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--adm-muted);letter-spacing:0.5px;margin-bottom:4px;">Nombre</div>
+                        <div id="inq-detail-name" style="font-size:14px;font-weight:500;"></div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--adm-muted);letter-spacing:0.5px;margin-bottom:4px;">Fecha</div>
+                        <div id="inq-detail-date" style="font-size:14px;"></div>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div>
+                        <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--adm-muted);letter-spacing:0.5px;margin-bottom:4px;">Email</div>
+                        <div id="inq-detail-email" style="font-size:14px;"></div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--adm-muted);letter-spacing:0.5px;margin-bottom:4px;">Teléfono</div>
+                        <div id="inq-detail-phone" style="font-size:14px;"></div>
+                    </div>
+                </div>
+                <div id="inq-detail-piece-wrap">
+                    <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--adm-muted);letter-spacing:0.5px;margin-bottom:4px;">Pieza de interés</div>
+                    <div id="inq-detail-piece" style="font-size:14px;"></div>
+                </div>
+                <div>
+                    <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--adm-muted);letter-spacing:0.5px;margin-bottom:6px;">Mensaje</div>
+                    <div id="inq-detail-message" class="adm-inq-detail"></div>
+                </div>
+            </div>
+        </div>
+        <div class="adm-modal-foot">
+            <button class="adm-btn adm-btn--ghost adm-btn--danger" id="inq-modal-delete">Eliminar</button>
+            <button class="adm-btn adm-btn--ghost" id="inq-modal-toggle-read"></button>
+            <a class="adm-btn adm-btn--primary" id="inq-modal-wa" href="#" target="_blank" rel="noopener">
+                Responder por WhatsApp
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="adm-toast-wrap" id="toast-wrap"></div>
+</body>
+</html>

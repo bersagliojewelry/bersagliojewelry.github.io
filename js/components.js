@@ -1,0 +1,129 @@
+/**
+ * Bersaglio Jewelry — Component Loader
+ * Fetches and injects shared header/footer snippets,
+ * then initializes header behavior and wishlist badge.
+ */
+
+const SNIPPETS = 'snippets/';
+
+async function loadComponent(placeholderId, path) {
+    const el = document.getElementById(placeholderId);
+    if (!el) return;
+    try {
+        const res = await fetch(path);
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${path}`);
+        el.innerHTML = await res.text();
+    } catch (err) {
+        console.warn('[Bersaglio] Could not load component:', err.message);
+    }
+}
+
+function initializeHeader() {
+    const header = document.getElementById('header');
+    const hamburger = document.getElementById('hamburger');
+    const navMenu = document.getElementById('navMenu');
+
+    if (!header) return;
+
+    // Scroll: add shadow + hide/show on direction change
+    let lastScroll = 0;
+    window.addEventListener('scroll', () => {
+        const y = window.scrollY;
+        header.classList.toggle('scrolled', y > 60);
+        if (y > 400) {
+            header.classList.toggle('header-hidden', y > lastScroll);
+        } else {
+            header.classList.remove('header-hidden');
+        }
+        lastScroll = y;
+    }, { passive: true });
+
+    // Mobile hamburger
+    if (hamburger && navMenu) {
+        hamburger.addEventListener('click', () => {
+            const open = navMenu.classList.toggle('is-open');
+            hamburger.classList.toggle('is-active', open);
+            hamburger.setAttribute('aria-expanded', open);
+            document.body.classList.toggle('menu-open', open);
+        });
+
+        // Mobile: toggle dropdown on parent link click
+        navMenu.querySelectorAll('.nav-item.dropdown > .nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                if (window.innerWidth <= 968) {
+                    e.preventDefault();
+                    const item = link.closest('.nav-item');
+                    item.classList.toggle('is-open');
+                    link.setAttribute('aria-expanded', item.classList.contains('is-open'));
+                }
+            });
+        });
+
+        // Close menu when a non-dropdown nav link is clicked
+        navMenu.querySelectorAll('a:not(.dropdown-toggle)').forEach(link => {
+            link.addEventListener('click', () => {
+                navMenu.classList.remove('is-open');
+                hamburger.classList.remove('is-active');
+                hamburger.setAttribute('aria-expanded', 'false');
+                document.body.classList.remove('menu-open');
+            });
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && navMenu.classList.contains('is-open')) {
+                navMenu.classList.remove('is-open');
+                hamburger.classList.remove('is-active');
+                hamburger.setAttribute('aria-expanded', 'false');
+                document.body.classList.remove('menu-open');
+            }
+        });
+    }
+
+    // Smooth scroll for in-page anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', (e) => {
+            const target = document.querySelector(anchor.getAttribute('href'));
+            if (target) {
+                e.preventDefault();
+                const offset = header.offsetHeight + 20;
+                window.scrollTo({
+                    top: target.getBoundingClientRect().top + window.scrollY - offset,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+
+    // Current year
+    const yearEl = document.getElementById('current-year');
+    if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+    // Mark active link based on current page
+    const page = location.pathname.split('/').pop() || 'index.html';
+    header.querySelectorAll('.nav-link[href]').forEach(link => {
+        if (link.getAttribute('href') === page) {
+            link.classList.add('nav-link--active');
+        }
+    });
+}
+
+function initializeWishlist() {
+    const countEl = document.getElementById('wishlistCount');
+    if (!countEl) return;
+    const items = JSON.parse(localStorage.getItem('bersaglio-wishlist') || '[]');
+    const count = items.length;
+    if (count > 0) {
+        countEl.textContent = count;
+        countEl.classList.add('has-items');
+    }
+}
+
+export async function loadAllComponents() {
+    await Promise.all([
+        loadComponent('header-placeholder', `${SNIPPETS}header.html`),
+        loadComponent('footer-placeholder', `${SNIPPETS}footer.html`),
+    ]);
+    initializeHeader();
+    initializeWishlist();
+}

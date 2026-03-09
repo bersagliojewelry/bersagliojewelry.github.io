@@ -3,16 +3,16 @@
  * Entry point: initializes all components and interactions
  */
 
-import { initHeader } from './components/header.js';
+import { loadAllComponents } from './components.js';
 import { renderCollections } from './components/collections.js';
 import { renderFeaturedPieces } from './components/featured.js';
 import { renderServices } from './components/services.js';
 import Renderer from './utils/renderer.js';
 import BersaglioCatalog from './data/catalog.js';
 
-function initApp() {
-    // Initialize header behavior
-    initHeader();
+async function initApp() {
+    // Load shared header and footer, then initialize their behavior
+    await loadAllComponents();
 
     // Render dynamic sections from catalog data
     renderCollections();
@@ -27,10 +27,6 @@ function initApp() {
 
     // WhatsApp CTA
     initWhatsAppButton();
-
-    // Current year in footer
-    const yearEl = document.getElementById('current-year');
-    if (yearEl) yearEl.textContent = new Date().getFullYear();
 }
 
 function initWhatsAppButton() {

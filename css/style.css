@@ -1806,75 +1806,169 @@ input, select, textarea { font-family: var(--font-body); }
    PHASE 7 — Dev Banner, Cart, Content Pages
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ─── Dev Banner ─────────────────────────────────────────────────────────── */
-.dev-banner {
-    background: #3a2800;
-    border-bottom: 1px solid #6b4c00;
-    color: #f5d78a;
-    font-family: var(--font-body);
-    font-size: 12px;
-    font-weight: 400;
-    letter-spacing: 0.3px;
-    transition: opacity 0.4s ease, max-height 0.4s ease;
-    overflow: hidden;
-    max-height: 60px;
+/* ─── Dev Overlay (luxury — se muestra en cada visita) ──────────────────── */
+@keyframes devOverlayIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
 }
 
-.dev-banner--closing {
-    opacity: 0;
-    max-height: 0;
+@keyframes devCardIn {
+    from { opacity: 0; transform: translateY(24px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0)    scale(1);    }
 }
 
-.dev-banner-inner {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 0;
+@keyframes devOverlayOut {
+    from { opacity: 1; }
+    to   { opacity: 0; }
 }
 
-.dev-banner-icon {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    color: #e6b84a;
-}
-
-.dev-banner-text {
-    flex: 1;
-    line-height: 1.5;
-}
-
-.dev-banner-text strong {
-    font-weight: 600;
-    color: #f5d78a;
-}
-
-.dev-banner-text a {
-    color: #f5d78a;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-}
-
-.dev-banner-text a:hover { color: white; }
-
-.dev-banner-close {
-    flex-shrink: 0;
+.dev-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
-    background: transparent;
-    border: none;
-    color: #c9a84c;
-    cursor: pointer;
-    border-radius: 3px;
-    transition: color var(--transition), background var(--transition);
+    padding: 20px;
+    animation: devOverlayIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.dev-banner-close:hover {
-    color: white;
-    background: rgba(255,255,255,0.1);
+.dev-overlay--closing {
+    animation: devOverlayOut 0.4s cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.dev-overlay-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(5, 5, 5, 0.90);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+.dev-overlay-card {
+    position: relative;
+    z-index: 1;
+    max-width: 440px;
+    width: 100%;
+    background: #080e0c;
+    border: 1px solid rgba(201, 168, 76, 0.30);
+    border-radius: 2px;
+    padding: 52px 48px 44px;
+    text-align: center;
+    animation: devCardIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
+    box-shadow:
+        0 0 0 1px rgba(201, 168, 76, 0.08),
+        0 40px 80px rgba(0, 0, 0, 0.6),
+        0 0 60px rgba(11, 61, 46, 0.15);
+}
+
+.dev-overlay-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: rgba(201, 168, 76, 0.5);
+    cursor: pointer;
+    border-radius: 2px;
+    transition: color 0.2s ease, background 0.2s ease;
+}
+
+.dev-overlay-close:hover {
+    color: var(--gold);
+    background: rgba(201, 168, 76, 0.08);
+}
+
+.dev-overlay-gem {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 28px;
+    color: var(--gold);
+    opacity: 0.85;
+}
+
+.dev-overlay-eyebrow {
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 14px;
+    opacity: 0.8;
+}
+
+.dev-overlay-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 4vw, 2rem);
+    font-weight: 300;
+    color: var(--ivory);
+    letter-spacing: 1px;
+    line-height: 1.2;
+    margin-bottom: 20px;
+}
+
+.dev-overlay-text {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 300;
+    color: rgba(250, 247, 242, 0.55);
+    line-height: 1.8;
+    margin-bottom: 10px;
+}
+
+.dev-overlay-instagram {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin: 14px 0 32px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    color: var(--gold);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(201, 168, 76, 0.35);
+    padding-bottom: 2px;
+    transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.dev-overlay-instagram:hover {
+    color: #e8ca7a;
+    border-color: rgba(201, 168, 76, 0.7);
+}
+
+.dev-overlay-dismiss {
+    display: block;
+    width: 100%;
+    padding: 14px 32px;
+    background: transparent;
+    border: 1px solid rgba(201, 168, 76, 0.45);
+    border-radius: 1px;
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--gold);
+    cursor: pointer;
+    transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+.dev-overlay-dismiss:hover {
+    background: rgba(201, 168, 76, 0.10);
+    border-color: rgba(201, 168, 76, 0.7);
+    color: #e8ca7a;
+}
+
+@media (max-width: 480px) {
+    .dev-overlay-card { padding: 40px 28px 36px; }
 }
 
 /* ─── Cart button in nav ─────────────────────────────────────────────────── */

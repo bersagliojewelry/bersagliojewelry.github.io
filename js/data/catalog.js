@@ -209,8 +209,8 @@ const _local = {
 
     contact: {
         whatsapp:  "+573000000000",
-        email:     "info@bersagliojewelry.com",
-        instagram: "@bersagliojewelry",
+        email:     "info@bersaglio_jewelry.com",
+        instagram: "@bersaglio_jewelry",
         location:  "Colombia"
     }
 };

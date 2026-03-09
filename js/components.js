@@ -139,27 +139,81 @@ function initializeCart() {
     cart.onChange(updateBadge);
 }
 
-const DEV_BANNER_KEY = 'bersaglio_dev_banner_closed';
-
 function initializeDevBanner() {
-    const banner = document.getElementById('dev-banner');
-    if (!banner) return;
+    // Overlay se muestra en cada visita/recarga — sin localStorage
+    const overlay = document.createElement('div');
+    overlay.id = 'dev-overlay';
+    overlay.className = 'dev-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Aviso — sitio en desarrollo');
 
-    // Show unless user already dismissed it
-    if (!localStorage.getItem(DEV_BANNER_KEY)) {
-        banner.hidden = false;
+    overlay.innerHTML = `
+        <div class="dev-overlay-backdrop"></div>
+        <div class="dev-overlay-card">
+            <button class="dev-overlay-close" id="dev-overlay-close" aria-label="Cerrar aviso">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+            <div class="dev-overlay-gem" aria-hidden="true">
+                <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="0.9" width="56" height="56">
+                    <polygon points="24,4 44,17 44,31 24,44 4,31 4,17"/>
+                    <line x1="4" y1="17" x2="44" y2="17"/>
+                    <line x1="4" y1="31" x2="44" y2="31"/>
+                    <line x1="14" y1="4" x2="4" y2="17"/>
+                    <line x1="34" y1="4" x2="44" y2="17"/>
+                    <line x1="24" y1="4" x2="24" y2="44"/>
+                </svg>
+            </div>
+            <p class="dev-overlay-eyebrow">Aviso</p>
+            <h2 class="dev-overlay-title">Sitio en desarrollo</h2>
+            <p class="dev-overlay-text">
+                Esta es una versión preliminar de Bersaglio Jewelry. Estamos construyendo algo extraordinario y pronto estará listo.
+            </p>
+            <p class="dev-overlay-text">
+                Por ahora no es una página oficial. Síguenos para conocer el lanzamiento:
+            </p>
+            <a
+                href="https://instagram.com/bersaglio_jewelry"
+                class="dev-overlay-instagram"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14" aria-hidden="true">
+                    <rect x="2" y="2" width="20" height="20" rx="5"/>
+                    <circle cx="12" cy="12" r="5"/>
+                    <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/>
+                </svg>
+                @bersaglio_jewelry
+            </a>
+            <button class="dev-overlay-dismiss" id="dev-overlay-dismiss">
+                Continuar al sitio
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Prevent body scroll while overlay is open
+    document.body.style.overflow = 'hidden';
+
+    function closeOverlay() {
+        overlay.classList.add('dev-overlay--closing');
+        overlay.addEventListener('animationend', () => {
+            overlay.remove();
+            document.body.style.overflow = '';
+        }, { once: true });
     }
 
-    const closeBtn = document.getElementById('dev-banner-close');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-            banner.classList.add('dev-banner--closing');
-            banner.addEventListener('transitionend', () => {
-                banner.hidden = true;
-                localStorage.setItem(DEV_BANNER_KEY, '1');
-            }, { once: true });
-        });
-    }
+    overlay.querySelector('#dev-overlay-close').addEventListener('click', closeOverlay);
+    overlay.querySelector('#dev-overlay-dismiss').addEventListener('click', closeOverlay);
+    overlay.querySelector('.dev-overlay-backdrop').addEventListener('click', closeOverlay);
+
+    // Also close on Escape
+    document.addEventListener('keydown', function onEsc(e) {
+        if (e.key === 'Escape') { closeOverlay(); document.removeEventListener('keydown', onEsc); }
+    });
 }
 
 export async function loadAllComponents() {

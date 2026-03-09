@@ -250,15 +250,19 @@
                         <form class="contact-form" id="contactForm" onsubmit="return false;">
                             <h3 class="form-title">Solicita información</h3>
                             <div class="form-group">
+                                <label for="contactName" class="sr-only">Nombre completo</label>
                                 <input type="text" id="contactName" placeholder="Tu nombre completo" required autocomplete="name">
                             </div>
                             <div class="form-group">
+                                <label for="contactEmail" class="sr-only">Correo electrónico</label>
                                 <input type="email" id="contactEmail" placeholder="Tu correo electrónico" required autocomplete="email">
                             </div>
                             <div class="form-group">
+                                <label for="contactPhone" class="sr-only">Teléfono</label>
                                 <input type="tel" id="contactPhone" placeholder="Tu teléfono (opcional)" autocomplete="tel">
                             </div>
                             <div class="form-group">
+                                <label for="contactInterest" class="sr-only">Interés</label>
                                 <select id="contactInterest">
                                     <option value="" disabled selected>¿Qué te interesa?</option>
                                     <option value="esmeraldas">Esmeraldas Colombianas</option>
@@ -270,6 +274,7 @@
                                 </select>
                             </div>
                             <div class="form-group">
+                                <label for="contactMessage" class="sr-only">Mensaje</label>
                                 <textarea id="contactMessage" rows="4" placeholder="Cuéntanos más sobre lo que buscas..."></textarea>
                             </div>
                             <button type="submit" class="btn btn-primary btn-full">Enviar Consulta</button>

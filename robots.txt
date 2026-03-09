@@ -1,7 +1,0 @@
-# robots.txt for Bersaglio Jewelry
-# https://bersagliojewelry.github.io
-
-User-agent: *
-Allow: /
-
-Sitemap: https://bersagliojewelry.github.io/sitemap.xml

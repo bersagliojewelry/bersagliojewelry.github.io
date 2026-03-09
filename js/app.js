@@ -36,7 +36,7 @@ function initWhatsAppButton() {
     const msg   = encodeURIComponent('Hola Bersaglio Jewelry, me interesa conocer más sobre sus piezas de alta joyería.');
     const url   = `https://wa.me/${phone}?text=${msg}`;
 
-    document.querySelectorAll('.wa-float, #wa-nav').forEach(btn => {
+    document.querySelectorAll('.wa-float, #wa-nav, #wa-contact').forEach(btn => {
         btn.href = url;
     });
 }

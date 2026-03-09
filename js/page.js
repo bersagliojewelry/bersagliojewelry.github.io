@@ -10,6 +10,7 @@
 import { loadAllComponents } from './components.js';
 import Renderer from './utils/renderer.js';
 import db       from './data/catalog.js';
+import { initEffects } from './effects.js';
 
 async function initPage() {
     await loadAllComponents();
@@ -17,6 +18,7 @@ async function initPage() {
     initWhatsAppButton();
     Renderer.initScrollAnimations();
     Renderer.initLazyImages();
+    initEffects();
 }
 
 function initWhatsAppButton() {

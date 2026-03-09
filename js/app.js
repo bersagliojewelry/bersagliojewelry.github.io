@@ -10,26 +10,21 @@ import { renderServices }     from './components/services.js';
 import { renderJournal }      from './components/journal.js';
 import Renderer from './utils/renderer.js';
 import db from './data/catalog.js';
+import { initEffects } from './effects.js';
 
 async function initApp() {
-    // 1. Snippets del header y footer + inicializar su comportamiento
     await loadAllComponents();
-
-    // 2. Capa de datos — hoy: local; mañana: Firestore sin cambiar nada más
     await db.load();
 
-    // 3. Renderizar secciones dinámicas
     renderCollections();
     renderFeaturedPieces();
     renderServices();
     renderJournal();
 
-    // 4. Experiencia visual
     Renderer.initScrollAnimations();
     Renderer.initLazyImages();
-
-    // 5. Botones WhatsApp (float + nav)
     initWhatsAppButton();
+    initEffects();
 }
 
 function initWhatsAppButton() {

@@ -4,6 +4,8 @@
  * then initializes header behavior and wishlist badge.
  */
 
+import { wishlist } from './wishlist.js';
+
 const SNIPPETS = 'snippets/';
 
 async function loadComponent(placeholderId, path) {
@@ -111,12 +113,16 @@ function initializeHeader() {
 function initializeWishlist() {
     const countEl = document.getElementById('wishlistCount');
     if (!countEl) return;
-    const items = JSON.parse(localStorage.getItem('bersaglio-wishlist') || '[]');
-    const count = items.length;
-    if (count > 0) {
-        countEl.textContent = count;
-        countEl.classList.add('has-items');
-    }
+
+    const updateBadge = (items) => {
+        const n = items.length;
+        countEl.textContent = n > 0 ? (n > 9 ? '9+' : n) : '';
+        countEl.classList.toggle('has-items', n > 0);
+    };
+
+    // Set initial state, then keep in sync reactively
+    updateBadge(wishlist.getAll());
+    wishlist.onChange(updateBadge);
 }
 
 export async function loadAllComponents() {

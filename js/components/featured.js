@@ -4,6 +4,8 @@
 
 import db from '../data/catalog.js';
 import Renderer from '../utils/renderer.js';
+import { wishlist } from '../wishlist.js';
+import { toast } from '../toast.js';
 
 const specLabels = {
     stone: 'Piedra', carat: 'Quilates', metal: 'Metal', accent: 'Acentos',
@@ -18,6 +20,22 @@ function renderSpecs(specs) {
         .join('');
 }
 
+function wishlistBtn(piece) {
+    const saved = wishlist.has(piece.slug);
+    return `
+        <button
+            class="piece-wishlist-btn ${saved ? 'is-saved' : ''}"
+            data-wishlist-slug="${piece.slug}"
+            aria-label="${saved ? 'Quitar de lista de deseos' : 'Añadir a lista de deseos'}"
+            title="${saved ? 'Quitar de lista de deseos' : 'Añadir a lista de deseos'}"
+        >
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+        </button>
+    `;
+}
+
 export function renderFeaturedPieces() {
     const pieces    = db.getFeatured(6);
     const container = document.querySelector('#featured-grid');
@@ -30,6 +48,7 @@ export function renderFeaturedPieces() {
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><polygon points="12,2 22,8.5 12,22 2,8.5"/><line x1="2" y1="8.5" x2="22" y2="8.5"/><polyline points="7,2 12,8.5 17,2"/></svg>
                 </div>
                 ${piece.badge ? `<span class="piece-badge">${piece.badge}</span>` : ''}
+                ${wishlistBtn(piece)}
             </div>
             <div class="piece-info">
                 <h3 class="piece-name">${piece.name}</h3>
@@ -45,4 +64,12 @@ export function renderFeaturedPieces() {
             </div>
         </article>
     `);
+
+    // Event delegation: handle all ♡ buttons inside this grid
+    wishlist.initButtons(container, (_slug, added) => {
+        toast.show(
+            added ? 'Añadida a tu lista de deseos' : 'Eliminada de la lista',
+            added ? 'added' : 'removed'
+        );
+    });
 }

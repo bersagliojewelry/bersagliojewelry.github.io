@@ -2,7 +2,7 @@
  * Bersaglio Jewelry — Services Component
  */
 
-import BersaglioCatalog from '../data/catalog.js';
+import db from '../data/catalog.js';
 import Renderer from '../utils/renderer.js';
 
 const serviceIcons = {
@@ -13,7 +13,7 @@ const serviceIcons = {
 };
 
 export function renderServices() {
-    const services = BersaglioCatalog.services;
+    const services  = db.getServices();
     const container = document.querySelector('#services-grid');
     if (!container) return;
 

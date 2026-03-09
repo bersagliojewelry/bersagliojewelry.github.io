@@ -1,25 +1,25 @@
 /**
  * Bersaglio Jewelry — Featured Pieces Component
- * Renders featured jewelry pieces from catalog data
  */
 
-import BersaglioCatalog from '../data/catalog.js';
+import db from '../data/catalog.js';
 import Renderer from '../utils/renderer.js';
 
+const specLabels = {
+    stone: 'Piedra', carat: 'Quilates', metal: 'Metal', accent: 'Acentos',
+    cut: 'Talla', color: 'Color', clarity: 'Claridad', weight: 'Peso',
+    style: 'Estilo', finish: 'Acabado', length: 'Longitud'
+};
+
 function renderSpecs(specs) {
-    const keys = Object.entries(specs).filter(([k]) => k !== 'certificate');
-    const labels = {
-        stone: 'Piedra', carat: 'Quilates', metal: 'Metal', accent: 'Acentos',
-        cut: 'Talla', color: 'Color', clarity: 'Claridad', weight: 'Peso',
-        style: 'Estilo', finish: 'Acabado', length: 'Longitud'
-    };
-    return keys.map(([key, val]) =>
-        `<span class="spec-item"><strong>${labels[key] || key}:</strong> ${val}</span>`
-    ).join('');
+    return Object.entries(specs)
+        .filter(([k]) => k !== 'certificate')
+        .map(([k, v]) => `<span class="spec-item"><strong>${specLabels[k] || k}:</strong> ${v}</span>`)
+        .join('');
 }
 
 export function renderFeaturedPieces() {
-    const pieces = BersaglioCatalog.featuredPieces.filter(p => p.featured).slice(0, 6);
+    const pieces    = db.getFeatured(6);
     const container = document.querySelector('#featured-grid');
     if (!container) return;
 
@@ -37,8 +37,8 @@ export function renderFeaturedPieces() {
                 <div class="piece-specs">${renderSpecs(piece.specs)}</div>
                 <div class="piece-footer">
                     <span class="piece-price">${piece.priceLabel}</span>
-                    <a href="#contacto" class="piece-cta">
-                        Solicitar información
+                    <a href="pieza.html?p=${piece.slug}" class="piece-cta">
+                        Ver detalle
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                     </a>
                 </div>

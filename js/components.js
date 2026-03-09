@@ -5,6 +5,7 @@
  */
 
 import { wishlist } from './wishlist.js';
+import { cart }     from './cart.js';
 
 const SNIPPETS = 'snippets/';
 
@@ -120,9 +121,45 @@ function initializeWishlist() {
         countEl.classList.toggle('has-items', n > 0);
     };
 
-    // Set initial state, then keep in sync reactively
     updateBadge(wishlist.getAll());
     wishlist.onChange(updateBadge);
+}
+
+function initializeCart() {
+    const countEl = document.getElementById('cartCount');
+    if (!countEl) return;
+
+    const updateBadge = (items) => {
+        const n = items.length;
+        countEl.textContent = n > 0 ? (n > 9 ? '9+' : n) : '';
+        countEl.classList.toggle('has-items', n > 0);
+    };
+
+    updateBadge(cart.getAll());
+    cart.onChange(updateBadge);
+}
+
+const DEV_BANNER_KEY = 'bersaglio_dev_banner_closed';
+
+function initializeDevBanner() {
+    const banner = document.getElementById('dev-banner');
+    if (!banner) return;
+
+    // Show unless user already dismissed it
+    if (!localStorage.getItem(DEV_BANNER_KEY)) {
+        banner.hidden = false;
+    }
+
+    const closeBtn = document.getElementById('dev-banner-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            banner.classList.add('dev-banner--closing');
+            banner.addEventListener('transitionend', () => {
+                banner.hidden = true;
+                localStorage.setItem(DEV_BANNER_KEY, '1');
+            }, { once: true });
+        });
+    }
 }
 
 export async function loadAllComponents() {
@@ -132,4 +169,6 @@ export async function loadAllComponents() {
     ]);
     initializeHeader();
     initializeWishlist();
+    initializeCart();
+    initializeDevBanner();
 }

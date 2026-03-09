@@ -1,3 +1,19 @@
+<!-- Dev Banner — visible hasta que el sitio sea oficial -->
+<div id="dev-banner" class="dev-banner" role="alert" aria-live="polite" hidden>
+    <div class="dev-banner-inner container">
+        <span class="dev-banner-icon">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="1" fill="currentColor" stroke="none"/></svg>
+        </span>
+        <span class="dev-banner-text">
+            <strong>Sitio en desarrollo</strong> — Esta página no es oficial aún. Contáctanos directamente en
+            <a href="https://instagram.com/bersagliojewelry" target="_blank" rel="noopener noreferrer">@bersagliojewelry</a>
+        </span>
+        <button class="dev-banner-close" id="dev-banner-close" aria-label="Cerrar aviso">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+    </div>
+</div>
+
 <header id="header" class="header">
     <nav class="nav container">
 
@@ -151,6 +167,12 @@
             <a href="lista-deseos.html" class="wishlist-btn" aria-label="Lista de deseos">
                 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                 <span class="wishlist-count" id="wishlistCount" aria-live="polite"></span>
+            </a>
+
+            <!-- Carrito -->
+            <a href="carrito.html" class="cart-btn" aria-label="Carrito de compras">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                <span class="cart-count" id="cartCount" aria-live="polite"></span>
             </a>
 
         </div>

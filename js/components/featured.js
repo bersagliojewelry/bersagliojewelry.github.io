@@ -5,6 +5,7 @@
 import db from '../data/catalog.js';
 import Renderer from '../utils/renderer.js';
 import { wishlist } from '../wishlist.js';
+import { cart }     from '../cart.js';
 import { toast } from '../toast.js';
 
 const specLabels = {
@@ -36,6 +37,20 @@ function wishlistBtn(piece) {
     `;
 }
 
+function cartBtn(piece) {
+    const inCart = cart.has(piece.slug);
+    return `
+        <button
+            class="piece-cart-btn ${inCart ? 'is-in-cart' : ''}"
+            data-cart-slug="${piece.slug}"
+            aria-label="${inCart ? 'Quitar del carrito' : 'Añadir al carrito'}"
+            title="${inCart ? 'Quitar del carrito' : 'Añadir al carrito'}"
+        >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        </button>
+    `;
+}
+
 export function renderFeaturedPieces() {
     const pieces    = db.getFeatured(6);
     const container = document.querySelector('#featured-grid');
@@ -48,7 +63,10 @@ export function renderFeaturedPieces() {
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><polygon points="12,2 22,8.5 12,22 2,8.5"/><line x1="2" y1="8.5" x2="22" y2="8.5"/><polyline points="7,2 12,8.5 17,2"/></svg>
                 </div>
                 ${piece.badge ? `<span class="piece-badge">${piece.badge}</span>` : ''}
-                ${wishlistBtn(piece)}
+                <div class="piece-actions">
+                    ${wishlistBtn(piece)}
+                    ${cartBtn(piece)}
+                </div>
             </div>
             <div class="piece-info">
                 <h3 class="piece-name">${piece.name}</h3>
@@ -65,10 +83,18 @@ export function renderFeaturedPieces() {
         </article>
     `);
 
-    // Event delegation: handle all ♡ buttons inside this grid
+    // Event delegation: wishlist ♡ buttons
     wishlist.initButtons(container, (_slug, added) => {
         toast.show(
             added ? 'Añadida a tu lista de deseos' : 'Eliminada de la lista',
+            added ? 'added' : 'removed'
+        );
+    });
+
+    // Event delegation: cart buttons
+    cart.initButtons(container, (_slug, added) => {
+        toast.show(
+            added ? 'Añadida al carrito' : 'Eliminada del carrito',
             added ? 'added' : 'removed'
         );
     });

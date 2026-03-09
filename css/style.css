@@ -258,10 +258,11 @@ input, select, textarea { font-family: var(--font-body); }
 .dropdown-toggle {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
 }
 
 .dropdown-arrow {
+    flex-shrink: 0;
     transition: transform var(--transition);
 }
 
@@ -272,21 +273,30 @@ input, select, textarea { font-family: var(--font-body); }
 
 .dropdown-menu {
     position: absolute;
-    top: calc(100% + 16px);
+    top: calc(100% + 20px);
     left: 50%;
-    transform: translateX(-50%) translateY(-6px);
+    transform: translateX(-50%) translateY(-8px);
     background: white;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
-    min-width: 220px;
-    padding: 8px 0;
+    box-shadow: 0 12px 48px rgba(10,10,10,0.1), 0 2px 8px rgba(10,10,10,0.06);
+    min-width: 280px;
+    padding: 10px 0;
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
     transition: opacity var(--transition), transform var(--transition), visibility 0s var(--transition);
     z-index: 200;
-    white-space: nowrap;
+}
+
+/* Dropdown "caret" bridge — prevents gap from closing menu on hover */
+.dropdown-menu::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: 0;
+    right: 0;
+    height: 20px;
 }
 
 .nav-item.dropdown:hover .dropdown-menu,
@@ -298,39 +308,126 @@ input, select, textarea { font-family: var(--font-body); }
     transition-delay: 0s;
 }
 
+/* Dropdown items with icon + body */
 .dropdown-link {
-    display: block;
-    padding: 9px 20px;
-    font-size: 13px;
-    font-weight: 400;
-    color: var(--text-secondary);
-    transition: color var(--transition), background var(--transition), padding-left var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 18px;
+    transition: background var(--transition);
+    text-decoration: none;
 }
 
 .dropdown-link:hover {
-    color: var(--emerald-deep);
     background: var(--ivory);
-    padding-left: 26px;
+}
+
+.dropdown-link-icon {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ivory-warm);
+    border-radius: var(--radius-sm);
+    color: var(--emerald-deep);
+    transition: background var(--transition), color var(--transition);
+}
+
+.dropdown-link:hover .dropdown-link-icon {
+    background: rgba(11,61,46,0.08);
+    color: var(--emerald);
+}
+
+.dropdown-link-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+.dropdown-link-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dropdown-link-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.3;
+}
+
+.dropdown-link-desc {
+    font-size: 11px;
+    font-weight: 300;
+    color: var(--text-muted);
+    line-height: 1.4;
 }
 
 .dropdown-divider {
     height: 1px;
     background: var(--border);
-    margin: 6px 0;
+    margin: 8px 0;
 }
 
+/* "Ver todo" row */
 .dropdown-link--all {
-    color: var(--gold-dark);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 18px;
+    font-size: 12px;
     font-weight: 500;
+    letter-spacing: 0.5px;
+    color: var(--gold-dark);
 }
 
-/* ─── Nav Actions (wishlist) ─── */
+.dropdown-link--all:hover {
+    background: var(--ivory);
+    color: var(--emerald-deep);
+}
+
+.dropdown-link--all svg {
+    transition: transform var(--transition);
+}
+
+.dropdown-link--all:hover svg {
+    transform: translateX(3px);
+}
+
+/* ─── Nav Actions ─── */
 .nav-actions {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
+    gap: 4px;
 }
 
+/* WhatsApp nav button */
+.nav-wa-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    color: #25D366;
+    border: 1px solid rgba(37,211,102,0.25);
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+}
+
+.nav-wa-btn:hover {
+    background: rgba(37,211,102,0.08);
+    border-color: rgba(37,211,102,0.5);
+}
+
+.nav-wa-label {
+    font-family: var(--font-body);
+}
+
+/* Lista de deseos */
 .wishlist-btn {
     position: relative;
     display: flex;
@@ -377,6 +474,8 @@ input, select, textarea { font-family: var(--font-body); }
 .header:not(.scrolled) .hamburger span { background: var(--ivory); }
 .header:not(.scrolled) .wishlist-btn { color: var(--text-on-dark-muted); }
 .header:not(.scrolled) .wishlist-btn:hover { color: var(--ivory); }
+.header:not(.scrolled) .nav-wa-btn { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.15); }
+.header:not(.scrolled) .nav-wa-btn:hover { color: #25D366; border-color: rgba(37,211,102,0.4); background: rgba(37,211,102,0.06); }
 
 /* Hamburger */
 .hamburger {
@@ -1307,6 +1406,7 @@ input, select, textarea { font-family: var(--font-body); }
 @media (max-width: 968px) {
     .hamburger { display: flex; }
     .nav-actions { display: none; }
+    .nav-wa-label { display: none; }
 
     .nav-menu {
         position: fixed;

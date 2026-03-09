@@ -30,12 +30,14 @@ async function initApp() {
 }
 
 function initWhatsAppButton() {
-    const waBtn = document.querySelector('.wa-float');
-    if (waBtn) {
-        const phone = BersaglioCatalog.contact.whatsapp.replace('+', '');
-        const msg = encodeURIComponent('Hola Bersaglio Jewelry, me interesa conocer más sobre sus piezas de alta joyería.');
-        waBtn.href = `https://wa.me/${phone}?text=${msg}`;
-    }
+    const phone = BersaglioCatalog.contact.whatsapp.replace('+', '');
+    const msg = encodeURIComponent('Hola Bersaglio Jewelry, me interesa conocer más sobre sus piezas de alta joyería.');
+    const waUrl = `https://wa.me/${phone}?text=${msg}`;
+
+    // Float button (footer snippet) + nav button (header snippet)
+    document.querySelectorAll('.wa-float, #wa-nav').forEach(btn => {
+        btn.href = waUrl;
+    });
 }
 
 // Initialize when DOM is ready

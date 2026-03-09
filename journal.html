@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journal | Bersaglio Jewelry</title>
+    <meta name="description" content="Bersaglio Journal — historias de gemas, diseño, alta joyería y cultura colombiana. El blog editorial de Bersaglio Jewelry.">
+    <meta name="robots" content="index, follow">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="journal-page">
+
+    <div id="header-placeholder"></div>
+
+    <main>
+
+        <!-- Editorial hero -->
+        <section class="journal-hero">
+            <div class="container">
+                <div class="journal-hero-inner">
+                    <div class="journal-hero-label">
+                        <span class="journal-hero-vol">Bersaglio Jewelry</span>
+                        <span class="journal-hero-line" aria-hidden="true"></span>
+                    </div>
+                    <h1 class="journal-hero-title">Journal</h1>
+                    <p class="journal-hero-subtitle">Historias de gemas, diseño y el arte de la alta joyería</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Category filter -->
+        <section class="journal-filter-bar">
+            <div class="container">
+                <div class="journal-filters" role="tablist" aria-label="Filtrar por categoría">
+                    <button class="journal-filter-btn is-active" data-filter="all" role="tab" aria-selected="true">Todos</button>
+                    <button class="journal-filter-btn" data-filter="gemas"    role="tab" aria-selected="false">Gemas</button>
+                    <button class="journal-filter-btn" data-filter="diseno"   role="tab" aria-selected="false">Diseño</button>
+                    <button class="journal-filter-btn" data-filter="historia" role="tab" aria-selected="false">Historia</button>
+                    <button class="journal-filter-btn" data-filter="novedad"  role="tab" aria-selected="false">Novedades</button>
+                    <button class="journal-filter-btn" data-filter="guia"     role="tab" aria-selected="false">Guías</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Articles grid -->
+        <section class="section journal-grid-section">
+            <div class="container">
+
+                <!-- Hero article (first / featured) -->
+                <div id="journal-hero-article" class="journal-grid-hero"></div>
+
+                <!-- Rest of articles -->
+                <div id="journal-grid" class="journal-full-grid"></div>
+
+                <!-- Empty state (category filter) -->
+                <div id="journal-empty" class="journal-empty" hidden>
+                    <p>No hay entradas en esta categoría todavía.</p>
+                    <button class="journal-filter-btn" data-filter="all">Ver todas</button>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script type="module" src="js/journal.js"></script>
+
+</body>
+</html>

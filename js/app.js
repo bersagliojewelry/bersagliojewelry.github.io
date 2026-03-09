@@ -7,6 +7,7 @@ import { loadAllComponents } from './components.js';
 import { renderCollections }  from './components/collections.js';
 import { renderFeaturedPieces } from './components/featured.js';
 import { renderServices }     from './components/services.js';
+import { renderJournal }      from './components/journal.js';
 import Renderer from './utils/renderer.js';
 import db from './data/catalog.js';
 
@@ -21,6 +22,7 @@ async function initApp() {
     renderCollections();
     renderFeaturedPieces();
     renderServices();
+    renderJournal();
 
     // 4. Experiencia visual
     Renderer.initScrollAnimations();

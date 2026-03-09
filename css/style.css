@@ -2474,3 +2474,7 @@ input, select, textarea { font-family: var(--font-body); }
     text-align: center;
     margin-top: var(--space-xl);
 }
+
+/* ─── Stat overrides inside dark about-teaser ────────────────────────────── */
+.about-teaser .stat-number { color: var(--gold); }
+.about-teaser .stat-label  { color: var(--text-on-dark-muted); }

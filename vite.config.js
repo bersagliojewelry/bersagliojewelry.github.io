@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import { resolve }       from 'path';
-import { readdirSync }   from 'fs';
+import { readdirSync, cpSync, mkdirSync } from 'fs';
 import { fileURLToPath } from 'url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
@@ -25,10 +25,29 @@ function discoverHtmlEntries() {
     );
 }
 
+/**
+ * Plugin: copia snippets/ → dist/snippets/ después del build.
+ * En desarrollo Vite sirve los archivos raíz directamente,
+ * así que snippets/ funciona igual en dev y en producción.
+ */
+function copySnippetsPlugin() {
+    return {
+        name: 'copy-snippets',
+        closeBundle() {
+            const src  = resolve(__dirname, 'snippets');
+            const dest = resolve(__dirname, 'dist', 'snippets');
+            mkdirSync(dest, { recursive: true });
+            cpSync(src, dest, { recursive: true });
+        },
+    };
+}
+
 export default defineConfig({
 
     root:      '.',
-    publicDir: 'public',   // snippets/, robots.txt, sitemap.xml, manifest.json
+    publicDir: 'public',   // robots.txt, sitemap.xml, manifest.json
+
+    plugins: [copySnippetsPlugin()],
 
     build: {
         outDir:     'dist',

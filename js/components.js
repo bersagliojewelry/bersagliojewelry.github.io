@@ -4,9 +4,10 @@
  * then initializes header behavior and wishlist badge.
  */
 
-import { wishlist }      from './wishlist.js';
-import { cart }          from './cart.js';
-import { initPreloader } from './preloader.js';
+import { wishlist }            from './wishlist.js';
+import { cart }                from './cart.js';
+import { initPreloader }       from './preloader.js';
+import { initPageTransitions } from './page-transitions.js';
 
 const SNIPPETS = 'snippets/';
 
@@ -229,4 +230,5 @@ export async function loadAllComponents() {
     initializeWishlist();
     initializeCart();
     initializeDevBanner();
+    initPageTransitions();
 }

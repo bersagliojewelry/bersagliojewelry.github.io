@@ -5066,3 +5066,169 @@ html.lenis { height: auto; }
         width: auto;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   PHASE 4 — Page Transitions · Cursor Redesign · Parallax
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Page Transition Overlay ───────────────────────────────── */
+#page-transition {
+    position: fixed;
+    inset: 0;
+    z-index: 9800;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none; /* allows sub-elements to be interactive if needed */
+}
+
+.pt-panel {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        160deg,
+        var(--black-carbon) 0%,
+        var(--emerald-deep) 60%,
+        #05201A 100%
+    );
+    transform-origin: bottom center;
+}
+
+.pt-center {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.pt-gem {
+    filter: drop-shadow(0 0 18px rgba(201,169,110,0.25));
+    animation: pt-gem-rotate 6s linear infinite;
+}
+
+@keyframes pt-gem-rotate {
+    from { transform: rotate(0deg);   }
+    to   { transform: rotate(360deg); }
+}
+
+.pt-brand {
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: rgba(201,169,110,0.8);
+}
+
+/* ─── Cursor — Crosshair Corner Brackets ────────────────────── */
+/* Override Phase 1/2 cursor styles */
+.cursor {
+    width: 5px;
+    height: 5px;
+    background: var(--gold);
+    border-radius: 50%;
+    transition: width 0.18s, height 0.18s, background 0.18s;
+}
+
+.cursor.cursor--hover {
+    width: 8px;
+    height: 8px;
+    background: var(--gold-light);
+}
+
+/* Replace circle follower with corner-bracket viewfinder */
+.cursor-follower {
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 0;
+    /* 4 corner brackets via CSS multi-background gradients */
+    background:
+        linear-gradient(var(--gold-dark), var(--gold-dark)) top    left  / 10px 1.5px no-repeat,
+        linear-gradient(var(--gold-dark), var(--gold-dark)) top    left  / 1.5px 10px no-repeat,
+        linear-gradient(var(--gold-dark), var(--gold-dark)) top    right / 10px 1.5px no-repeat,
+        linear-gradient(var(--gold-dark), var(--gold-dark)) top    right / 1.5px 10px no-repeat,
+        linear-gradient(var(--gold-dark), var(--gold-dark)) bottom left  / 10px 1.5px no-repeat,
+        linear-gradient(var(--gold-dark), var(--gold-dark)) bottom left  / 1.5px 10px no-repeat,
+        linear-gradient(var(--gold-dark), var(--gold-dark)) bottom right / 10px 1.5px no-repeat,
+        linear-gradient(var(--gold-dark), var(--gold-dark)) bottom right / 1.5px 10px no-repeat;
+    opacity: 0.65;
+    transition: width 0.25s cubic-bezier(0.23,1,0.32,1),
+                height 0.25s cubic-bezier(0.23,1,0.32,1),
+                opacity 0.2s;
+}
+
+.cursor-follower.cursor-follower--hover {
+    width: 62px;
+    height: 62px;
+    opacity: 1;
+}
+
+/* ─── Cursor Label ───────────────────────────────────────────── */
+.cursor-label {
+    position: fixed;
+    top: 0;
+    left: 0;
+    font-family: var(--font-body);
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--gold);
+    pointer-events: none;
+    z-index: 99997;
+    opacity: 0;
+    white-space: nowrap;
+    transition: opacity 0.18s ease;
+    transform: translate(0, 0); /* will be set by JS */
+    will-change: transform;
+}
+
+.cursor-label.cursor-label--visible {
+    opacity: 1;
+}
+
+/* ─── Page hero parallax base styles ────────────────────────── */
+.page-hero-inner,
+.page-hero .container {
+    will-change: transform;
+}
+
+/* ─── Brand statement parallax base ─────────────────────────── */
+.brand-statement-inner {
+    will-change: transform;
+}
+
+/* ─── About teaser parallax ──────────────────────────────────── */
+.about-teaser-content,
+.about-teaser-stats {
+    will-change: transform;
+}
+
+/* ─── CTA parallax ───────────────────────────────────────────── */
+.cta-inner {
+    will-change: transform;
+}
+
+/* ─── Reduced motion: disable parallax & transitions ────────── */
+@media (prefers-reduced-motion: reduce) {
+    #page-transition,
+    .pt-panel,
+    .pt-center {
+        display: none !important;
+    }
+
+    .about-teaser-content,
+    .about-teaser-stats,
+    .brand-statement-inner,
+    .cta-inner,
+    .hero-canvas,
+    .hero-overlay {
+        will-change: auto;
+        transform: none !important;
+    }
+}

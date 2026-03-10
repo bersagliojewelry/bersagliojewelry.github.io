@@ -7,19 +7,40 @@
 function initCursor() {
     const cursor   = document.createElement('div');
     const follower = document.createElement('div');
-    cursor.className   = 'cursor';
-    follower.className = 'cursor-follower';
+    cursor.className   = 'cursor cursor--hidden';
+    follower.className = 'cursor-follower cursor--hidden';
     document.body.appendChild(cursor);
     document.body.appendChild(follower);
 
     let mx = 0, my = 0;
     let fx = 0, fy = 0;
+    let visible = false;
+
+    function show() {
+        if (!visible) {
+            cursor.classList.remove('cursor--hidden');
+            follower.classList.remove('cursor--hidden');
+            visible = true;
+        }
+    }
+
+    function hide() {
+        cursor.classList.add('cursor--hidden');
+        follower.classList.add('cursor--hidden');
+        visible = false;
+    }
 
     document.addEventListener('mousemove', (e) => {
         mx = e.clientX;
         my = e.clientY;
         cursor.style.transform = `translate(${mx - 3}px, ${my - 3}px)`;
+        show();
     });
+
+    document.addEventListener('mouseleave', hide);
+    document.addEventListener('mouseenter', show);
+
+    window.addEventListener('blur', hide);
 
     (function animateFollower() {
         fx += (mx - fx) * 0.1;
@@ -29,7 +50,10 @@ function initCursor() {
     })();
 
     const hoverEls = 'a, button, [role="button"], .piece-card, .collection-panel, label, input, select, textarea';
-    document.querySelectorAll(hoverEls).forEach(el => {
+
+    function bindHover(el) {
+        if (el.dataset.cursorBound) return;
+        el.dataset.cursorBound = '1';
         el.addEventListener('mouseenter', () => {
             cursor.classList.add('cursor--hover');
             follower.classList.add('cursor-follower--hover');
@@ -38,21 +62,13 @@ function initCursor() {
             cursor.classList.remove('cursor--hover');
             follower.classList.remove('cursor-follower--hover');
         });
-    });
+    }
 
-    // Also watch dynamically added pieces/collections cards
+    document.querySelectorAll(hoverEls).forEach(bindHover);
+
+    // Watch dynamically added elements
     const bodyObserver = new MutationObserver(() => {
-        document.querySelectorAll(`${hoverEls}:not([data-cursor-bound])`).forEach(el => {
-            el.setAttribute('data-cursor-bound', '1');
-            el.addEventListener('mouseenter', () => {
-                cursor.classList.add('cursor--hover');
-                follower.classList.add('cursor-follower--hover');
-            });
-            el.addEventListener('mouseleave', () => {
-                cursor.classList.remove('cursor--hover');
-                follower.classList.remove('cursor-follower--hover');
-            });
-        });
+        document.querySelectorAll(hoverEls).forEach(bindHover);
     });
     bodyObserver.observe(document.body, { childList: true, subtree: true });
 }

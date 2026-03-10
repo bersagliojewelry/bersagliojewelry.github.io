@@ -3259,6 +3259,11 @@ input, select, textarea { font-family: var(--font-body); }
     border-color: var(--gold);
 }
 
+.cursor--hidden {
+    opacity: 0 !important;
+    pointer-events: none;
+}
+
 /* ─── Stagger Animations ────────────────────────────────────── */
 .animate-on-scroll {
     opacity: 0;

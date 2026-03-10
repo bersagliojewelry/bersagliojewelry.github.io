@@ -4,6 +4,7 @@
  */
 
 import { loadAllComponents } from './components.js';
+import { initEffects } from './effects.js';
 import db    from './data/catalog.js';
 import { wishlist } from './wishlist.js';
 import { toast }    from './toast.js';
@@ -135,6 +136,7 @@ async function initPage() {
 
     // Re-render each time the wishlist changes (remove, clear)
     wishlist.onChange(() => renderWishlist());
+    initEffects();
 }
 
 initPage();

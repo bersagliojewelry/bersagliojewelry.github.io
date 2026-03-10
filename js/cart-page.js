@@ -4,6 +4,7 @@
  */
 
 import { loadAllComponents } from './components.js';
+import { initEffects } from './effects.js';
 import { cart }    from './cart.js';
 import { wishlist } from './wishlist.js';
 import { toast }   from './toast.js';
@@ -18,6 +19,7 @@ async function init() {
 
     initActions();
     initWhatsAppButton();
+    initEffects();
 }
 
 function initWhatsAppButton() {

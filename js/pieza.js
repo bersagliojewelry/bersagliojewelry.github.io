@@ -7,6 +7,7 @@ import { loadAllComponents } from './components.js';
 import { wishlist } from './wishlist.js';
 import { cart }     from './cart.js';
 import { toast }    from './toast.js';
+import { initEffects } from './effects.js';
 import Renderer     from './utils/renderer.js';
 import db           from './data/catalog.js';
 
@@ -32,6 +33,7 @@ async function init() {
     updatePageMeta(piece);
     initWhatsAppButton(piece);
     Renderer.initScrollAnimations();
+    initEffects();
 }
 
 function updatePageMeta(piece) {

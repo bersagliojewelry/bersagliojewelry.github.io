@@ -5,6 +5,7 @@
 
 import { loadAllComponents } from './components.js';
 import { journal, CATEGORIES } from './data/journal.js';
+import { initEffects } from './effects.js';
 import Renderer from './utils/renderer.js';
 import db       from './data/catalog.js';
 
@@ -21,6 +22,7 @@ async function init() {
     updateMeta(entry);
     initWhatsAppButton();
     Renderer.initScrollAnimations();
+    initEffects();
 }
 
 function updateMeta(entry) {

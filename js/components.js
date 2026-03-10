@@ -4,8 +4,9 @@
  * then initializes header behavior and wishlist badge.
  */
 
-import { wishlist } from './wishlist.js';
-import { cart }     from './cart.js';
+import { wishlist }      from './wishlist.js';
+import { cart }          from './cart.js';
+import { initPreloader } from './preloader.js';
 
 const SNIPPETS = 'snippets/';
 
@@ -217,6 +218,9 @@ function initializeDevBanner() {
 }
 
 export async function loadAllComponents() {
+    // Preloader runs first — sync, before any async operations
+    initPreloader();
+
     await Promise.all([
         loadComponent('header-placeholder', `${SNIPPETS}header.html`),
         loadComponent('footer-placeholder', `${SNIPPETS}footer.html`),

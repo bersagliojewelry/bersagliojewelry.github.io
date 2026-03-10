@@ -4099,3 +4099,565 @@ input, select, textarea { font-family: var(--font-body); }
         padding-bottom: 80px;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   FASE 1 — IDENTIDAD & FUNDAMENTOS
+   Logo real · Preloader · Grain · Variables extendidas · Secciones
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Extended Design Tokens ─────────────────────────────────── */
+:root {
+    --grain-opacity: 0.032;
+    --glass:         rgba(255,255,255,0.04);
+    --glass-border:  rgba(255,255,255,0.08);
+    --surface-dark:  #0D0D0D;
+    --gradient-emerald: linear-gradient(160deg, #0B3D2E 0%, #070f0a 100%);
+    --emerald-particle: rgba(61,155,106,0.35);
+    --gold-particle:    rgba(201,169,110,0.25);
+}
+
+/* ─── Film Grain Overlay ─────────────────────────────────────── */
+body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9995;
+    pointer-events: none;
+    opacity: var(--grain-opacity);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='250' height='250'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='250' height='250' filter='url(%23g)'/%3E%3C/svg%3E");
+    background-size: 200px 200px;
+    animation: grain-shift 0.45s steps(1) infinite;
+}
+
+@keyframes grain-shift {
+    0%   { background-position:   0    0;    }
+    25%  { background-position: -52px -71px; }
+    50%  { background-position:  22px -45px; }
+    75%  { background-position: -33px  28px; }
+    100% { background-position:   0    0;    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body::after { animation: none; }
+}
+
+/* ─── Logo Badge (header & footer) ──────────────────────────── */
+.logo-badge {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #fff;
+    flex-shrink: 0;
+    box-shadow:
+        0 0 0 1px rgba(201,169,110,0.45),
+        0 2px 10px rgba(0,0,0,0.22);
+    transition: box-shadow var(--transition);
+}
+
+.logo:hover .logo-badge {
+    box-shadow:
+        0 0 0 1.5px rgba(201,169,110,0.7),
+        0 4px 16px rgba(0,0,0,0.28);
+}
+
+.logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    display: block;
+    padding: 4px;
+}
+
+.logo-badge--footer {
+    width: 58px;
+    height: 58px;
+    box-shadow:
+        0 0 0 1px rgba(201,169,110,0.35),
+        0 4px 16px rgba(0,0,0,0.35);
+}
+
+/* Footer logo text colors on dark bg */
+.footer-logo .logo-text { color: var(--ivory); }
+.footer-logo .logo-sub  { color: var(--champagne-dark); }
+
+/* ─── Preloader ──────────────────────────────────────────────── */
+#preloader {
+    position: fixed;
+    inset: 0;
+    background: var(--black);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#preloader.preloader--exit {
+    opacity: 0;
+    pointer-events: none;
+}
+
+body.is-preloading { overflow: hidden; }
+
+.preloader-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+    user-select: none;
+}
+
+.preloader-logo-wrap {
+    width: 116px;
+    height: 116px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #fff;
+    box-shadow:
+        0 0 0 1px rgba(201,169,110,0.4),
+        0 0 40px rgba(201,169,110,0.1),
+        0 8px 32px rgba(0,0,0,0.5);
+    opacity: 0;
+    transform: scale(0.8);
+    animation: pl-logo-in 0.9s cubic-bezier(0.16,1,0.3,1) 0.15s forwards;
+}
+
+.preloader-logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 6px;
+    display: block;
+    pointer-events: none;
+}
+
+.preloader-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.preloader-brand {
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 10px;
+    color: var(--ivory);
+    opacity: 0;
+    transform: translateY(8px);
+    animation: pl-text-in 0.65s cubic-bezier(0.16,1,0.3,1) 0.8s forwards;
+}
+
+.preloader-sep {
+    display: block;
+    height: 1px;
+    background: var(--gold);
+    width: 0;
+    opacity: 0;
+    animation: pl-line-in 0.55s cubic-bezier(0.4,0,0.2,1) 1.2s forwards;
+}
+
+.preloader-sub {
+    font-family: var(--font-body);
+    font-size: 8px;
+    font-weight: 400;
+    letter-spacing: 7px;
+    color: var(--gold);
+    opacity: 0;
+    transform: translateY(6px);
+    animation: pl-text-in 0.55s cubic-bezier(0.16,1,0.3,1) 1.4s forwards;
+}
+
+@keyframes pl-logo-in {
+    to { opacity: 1; transform: scale(1); }
+}
+@keyframes pl-text-in {
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pl-line-in {
+    to { width: 48px; opacity: 1; }
+}
+
+/* ─── Hero Section — Phase 1 Enhancements ────────────────────── */
+/* Subtle dot-grid texture on hero */
+.hero {
+    background:
+        radial-gradient(circle at 20% 80%, rgba(61,155,106,0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(201,169,110,0.06) 0%, transparent 40%),
+        var(--black-carbon);
+}
+
+/* Animated crosshair watermark (referencing the logo) */
+.hero::after {
+    content: '';
+    position: absolute;
+    right: 8%;
+    top: 50%;
+    transform: translateY(-50%);
+    width: min(420px, 40vw);
+    height: min(420px, 40vw);
+    background: url('../img/logo-bj2.png') center/contain no-repeat;
+    opacity: 0.04;
+    pointer-events: none;
+    animation: hero-logo-pulse 6s ease-in-out infinite;
+}
+
+@keyframes hero-logo-pulse {
+    0%, 100% { opacity: 0.04; transform: translateY(-50%) scale(1);    }
+    50%       { opacity: 0.07; transform: translateY(-50%) scale(1.02); }
+}
+
+/* ─── Brand Statement — Phase 1 ──────────────────────────────── */
+/* Large decorative opening guillemet */
+.brand-statement-inner {
+    position: relative;
+}
+
+.brand-statement-inner::before {
+    content: '\00AB';
+    position: absolute;
+    top: -0.5em;
+    left: -0.2em;
+    font-family: var(--font-display);
+    font-size: clamp(5rem, 12vw, 10rem);
+    font-weight: 700;
+    color: var(--gold);
+    opacity: 0.12;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+}
+
+.brand-statement-inner::after {
+    content: '\00BB';
+    position: absolute;
+    bottom: 1em;
+    right: -0.2em;
+    font-family: var(--font-display);
+    font-size: clamp(5rem, 12vw, 10rem);
+    font-weight: 700;
+    color: var(--gold);
+    opacity: 0.12;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Animated gold line below origin text */
+.brand-origin {
+    display: inline-block;
+    position: relative;
+    padding-bottom: 12px;
+}
+
+.brand-origin::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px;
+    height: 1px;
+    background: var(--gold);
+    opacity: 0.5;
+}
+
+/* ─── Page Heroes — Phase 1 ──────────────────────────────────── */
+.page-hero {
+    position: relative;
+    overflow: hidden;
+    background:
+        linear-gradient(165deg, rgba(11,61,46,0.7) 0%, rgba(10,10,10,0.95) 70%),
+        var(--black-carbon);
+    padding: calc(var(--header-h, 72px) + 80px) 0 70px;
+    min-height: 38vh;
+    display: flex;
+    align-items: center;
+}
+
+/* Logo watermark on page heroes */
+.page-hero::after {
+    content: '';
+    position: absolute;
+    right: 6%;
+    top: 50%;
+    transform: translateY(-50%);
+    width: min(320px, 38vw);
+    height: min(320px, 38vw);
+    background: url('../img/logo-bj2.png') center/contain no-repeat;
+    opacity: 0.05;
+    pointer-events: none;
+}
+
+.page-hero .container {
+    position: relative;
+    z-index: 1;
+    text-align: left;
+}
+
+/* Diagonal accent line on page hero */
+.page-hero::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(201,169,110,0.4) 30%, rgba(201,169,110,0.4) 70%, transparent);
+}
+
+/* ─── About Teaser Stats — Phase 1 ──────────────────────────── */
+.about-teaser {
+    background:
+        linear-gradient(135deg, #0f1c16 0%, var(--charcoal) 100%) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Large decorative B mark behind stats */
+.about-teaser::after {
+    content: 'B';
+    position: absolute;
+    right: -2%;
+    bottom: -15%;
+    font-family: var(--font-display);
+    font-size: clamp(12rem, 28vw, 22rem);
+    font-weight: 700;
+    color: rgba(255,255,255,0.015);
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+}
+
+.about-teaser .stat-number {
+    font-size: clamp(3.2rem, 7vw, 5rem) !important;
+    font-weight: 300 !important;
+    letter-spacing: -2px !important;
+    color: var(--gold) !important;
+    line-height: 1 !important;
+    display: block;
+}
+
+.about-teaser .stat {
+    position: relative;
+    padding-bottom: 20px;
+    flex: 1;
+    text-align: center;
+}
+
+.about-teaser .stat::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 1px;
+    background: var(--gold);
+    opacity: 0.45;
+    transition: width 0.4s var(--ease);
+}
+
+.about-teaser .stat:hover::after {
+    width: 48px;
+    opacity: 0.7;
+}
+
+.about-teaser .stat-label {
+    font-size: 10px !important;
+    letter-spacing: 2px !important;
+    text-transform: uppercase;
+    color: var(--text-on-dark-muted) !important;
+    margin-top: 8px;
+    display: block;
+}
+
+/* ─── CTA Banner — Phase 1 ───────────────────────────────────── */
+.cta-banner {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Logo watermark */
+.cta-banner::after {
+    content: '';
+    position: absolute;
+    right: 8%;
+    top: 50%;
+    transform: translateY(-50%);
+    width: min(300px, 35vw);
+    height: min(300px, 35vw);
+    background: url('../img/logo-bj2.png') center/contain no-repeat;
+    opacity: 0.07;
+    pointer-events: none;
+}
+
+/* Animated shimmer border top */
+.cta-banner::before {
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(201,169,110,0.5) 25%,
+        rgba(201,169,110,0.8) 50%,
+        rgba(201,169,110,0.5) 75%,
+        transparent 100%
+    ) !important;
+    background-size: 200% 100% !important;
+    animation: shimmer-border 3s ease-in-out infinite !important;
+}
+
+@keyframes shimmer-border {
+    0%   { background-position:  100% 0; }
+    100% { background-position: -100% 0; }
+}
+
+/* ─── Section Dividers (animated gold lines) ─────────────────── */
+.section-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin: 0 auto;
+    padding: 20px 0;
+    width: 100%;
+}
+
+.section-divider::before,
+.section-divider::after {
+    content: '';
+    flex: 1;
+    max-width: 120px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(201,169,110,0.5));
+}
+
+.section-divider::after {
+    background: linear-gradient(90deg, rgba(201,169,110,0.5), transparent);
+}
+
+.section-divider-icon {
+    color: var(--gold);
+    opacity: 0.7;
+    flex-shrink: 0;
+}
+
+/* ─── Services — Phase 1 enhancements ───────────────────────── */
+.service-card {
+    position: relative;
+    overflow: hidden;
+    transition: transform var(--transition), box-shadow var(--transition) !important;
+}
+
+.service-card::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--emerald-light), var(--gold));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s var(--ease);
+}
+
+.service-card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: var(--shadow-gold) !important;
+}
+
+.service-card:hover::before {
+    transform: scaleX(1);
+}
+
+/* ─── Collection Panels — Phase 1 enhancements ───────────────── */
+.collection-panel::after {
+    background-image:
+        linear-gradient(
+            to top,
+            rgba(0,0,0,0.92) 0%,
+            rgba(0,0,0,0.5) 40%,
+            transparent 100%
+        ) !important;
+}
+
+/* ─── Footer — Phase 1 enhancements ─────────────────────────── */
+.footer {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Large watermark B in footer */
+.footer::before {
+    content: '';
+    position: absolute;
+    left: -5%;
+    bottom: -10%;
+    width: min(500px, 60vw);
+    height: min(500px, 60vw);
+    background: url('../img/logo-bj2.png') center/contain no-repeat;
+    opacity: 0.025;
+    pointer-events: none;
+}
+
+/* Footer links hover — gold underline draw effect */
+.footer-links a {
+    position: relative;
+    display: inline-block;
+    padding-bottom: 2px;
+}
+
+.footer-links a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: var(--gold);
+    transition: width 0.3s var(--ease);
+}
+
+.footer-links a:hover::after {
+    width: 100%;
+}
+
+/* ─── Animated scroll indicator ─────────────────────────────── */
+.hero-scroll-indicator {
+    animation: scroll-bounce 2s ease-in-out infinite;
+}
+
+@keyframes scroll-bounce {
+    0%, 100% { transform: translateY(0);    opacity: 0.6; }
+    50%       { transform: translateY(8px); opacity: 1;   }
+}
+
+/* ─── Header Logo on transparent state ──────────────────────── */
+/* The white badge looks great on both dark & light backgrounds  */
+.header:not(.scrolled) .logo-badge {
+    box-shadow:
+        0 0 0 1px rgba(201,169,110,0.5),
+        0 2px 12px rgba(0,0,0,0.4);
+}
+
+/* ─── CTA Inner — Phase 1 ────────────────────────────────────── */
+.cta-inner {
+    max-width: 640px !important;
+}
+
+.cta-content {
+    position: relative;
+    z-index: 1;
+}
+
+/* ─── Page Hero text alignment fix ──────────────────────────── */
+@media (max-width: 768px) {
+    .page-hero .container { text-align: center; }
+    .page-hero::after { display: none; }
+    .cta-banner::after { display: none; }
+    .hero::after { display: none; }
+}
+

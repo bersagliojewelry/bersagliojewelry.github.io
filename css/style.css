@@ -4908,3 +4908,161 @@ html.lenis { height: auto; }
     overscroll-behavior: contain;
 }
 
+
+/* ═══════════════════════════════════════════════════════════════
+   PHASE 3 — Interactions, Scroll Effects & Live Sections
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── 3D Tilt Shine overlay ─────────────────────────────────── */
+.tilt-shine {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    z-index: 2;
+    transition: background 0.08s ease;
+}
+
+.piece-card,
+.collection-panel {
+    position: relative;
+    transform-style: preserve-3d;
+    will-change: transform;
+}
+
+/* ─── Collections horizontal scroll (desktop) ──────────────── */
+.collections-track-outer {
+    width: 100%;
+    overflow: hidden;
+}
+
+/* Desktop: hscroll active state (class added by JS) */
+.collections-grid--hscroll {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    width: max-content;
+    gap: var(--space-md);
+    padding: 0 var(--space-xl);
+    will-change: transform;
+}
+
+.collection-panel--hscroll {
+    flex: 0 0 clamp(320px, 28vw, 420px);
+    width: clamp(320px, 28vw, 420px);
+    max-width: none;
+}
+
+/* ─── Collections progress bar (desktop hscroll) ────────────── */
+.collections-progress {
+    display: none;
+    height: 2px;
+    background: rgba(201,169,110,0.15);
+    margin: var(--space-md) auto 0;
+    width: min(560px, 80vw);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+@media (min-width: 960px) and (pointer: fine) {
+    .collections-progress { display: block; }
+}
+
+.collections-progress-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, var(--gold-dark), var(--gold));
+    transform: scaleX(0);
+    transform-origin: left center;
+    border-radius: 2px;
+    transition: transform 0.02s linear;
+}
+
+/* ─── GSAP animated elements — initial hidden state ─────────── */
+/* Section headers are controlled by GSAP fromTo, so no CSS override needed. */
+/* Piece cards and service rows hidden until GSAP triggers */
+#featured-grid .piece-card,
+#services-grid .service-row,
+#services-grid .service-card {
+    will-change: transform, opacity;
+}
+
+/* ─── Services vertical connector line ──────────────────────── */
+.services-vline {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom,
+        transparent,
+        var(--gold-dark) 20%,
+        var(--gold-dark) 80%,
+        transparent
+    );
+    transform-origin: top center;
+    pointer-events: none;
+    opacity: 0.35;
+}
+
+/* ─── Section dividers ───────────────────────────────────────── */
+.section-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-md) 0;
+    opacity: 0.4;
+}
+
+.section-divider-icon {
+    color: var(--gold);
+}
+
+/* ─── Collection panel — enhanced card style ────────────────── */
+.collection-panel {
+    border-radius: 4px;
+    overflow: hidden;
+    transition: box-shadow 0.4s ease;
+}
+
+.collection-panel:hover {
+    box-shadow: 0 20px 60px rgba(0,0,0,0.22), 0 0 0 1px rgba(201,169,110,0.08);
+}
+
+/* ─── Piece card enhanced hover ─────────────────────────────── */
+.piece-card {
+    border-radius: 4px;
+    overflow: hidden;
+    transition: box-shadow 0.35s ease;
+}
+
+.piece-card:hover {
+    box-shadow: 0 16px 48px rgba(0,0,0,0.18), 0 0 0 1px rgba(201,169,110,0.1);
+}
+
+/* ─── About teaser content entrance ─────────────────────────── */
+.about-teaser-inner {
+    will-change: transform, opacity;
+}
+
+/* ─── Journal cards ──────────────────────────────────────────── */
+.journal-card,
+#journal-featured > * {
+    will-change: transform, opacity;
+}
+
+/* ─── Mobile: collections track override ────────────────────── */
+@media (max-width: 959px) {
+    .collections-track-outer {
+        overflow: visible;
+    }
+    .collections-grid--hscroll {
+        display: grid !important;
+        flex-wrap: unset !important;
+        width: auto !important;
+        padding: 0 !important;
+    }
+    .collection-panel--hscroll {
+        flex: unset;
+        width: auto;
+    }
+}

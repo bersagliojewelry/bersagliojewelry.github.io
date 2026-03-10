@@ -10,8 +10,10 @@ import { renderServices }      from './components/services.js';
 import { renderJournal }       from './components/journal.js';
 import Renderer from './utils/renderer.js';
 import db       from './data/catalog.js';
-import { initEffects }         from './effects.js';
-import { initHero }            from './hero-animation.js';
+import { initEffects }              from './effects.js';
+import { initHero }                 from './hero-animation.js';
+import { initCollectionsHScroll }   from './effects/hscroll.js';
+import { initGSAPScrollAnimations } from './scroll-animations.js';
 
 async function initApp() {
     await loadAllComponents();
@@ -27,6 +29,8 @@ async function initApp() {
     initWhatsAppButton();
     initEffects();
     initHero();
+    initCollectionsHScroll();
+    initGSAPScrollAnimations();
 }
 
 function initWhatsAppButton() {

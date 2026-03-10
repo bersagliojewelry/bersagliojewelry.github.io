@@ -1,7 +1,9 @@
 /**
  * Bersaglio Jewelry — Interactive Effects Engine
- * Custom cursor · Magnetic hover · Stagger reveals · Counter animation
+ * Custom cursor · Magnetic hover · Stagger reveals · Counter animation · 3D Tilt
  */
+
+import { initTilt } from './effects/tilt.js';
 
 /* ─── Custom Cursor ─────────────────────────────────────────── */
 function initCursor() {
@@ -209,4 +211,9 @@ export function initEffects() {
         initStagger();
         forceRevealInView();
     }, 150);
+
+    // 3D tilt for cards and panels (desktop only)
+    if (!isTouch) {
+        initTilt();
+    }
 }

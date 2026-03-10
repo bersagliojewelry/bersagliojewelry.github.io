@@ -70,33 +70,54 @@
 
         <!-- ═══════════════════════════════════════════ HERO ═══════════════════════════════════════════ -->
         <section id="inicio" class="hero">
+            <!-- Canvas particles injected by JS -->
             <div class="hero-overlay"></div>
+
             <div class="hero-content container">
-                <span class="hero-eyebrow animate-on-scroll">Alta Joyería con Alma</span>
-                <h1 class="hero-title animate-on-scroll">
-                    Donde las gemas<br><em>cobran vida</em>
-                </h1>
-                <p class="hero-desc animate-on-scroll">
+
+                <!-- Overline -->
+                <span class="hero-eyebrow">Alta Joyería · Colombia</span>
+
+                <!-- Main title -->
+                <div class="hero-title-wrap">
+                    <h1 class="hero-title">
+                        Donde las gemas<br><em>cobran vida</em>
+                    </h1>
+                    <span class="hero-title-line" aria-hidden="true"></span>
+                </div>
+
+                <!-- Description -->
+                <p class="hero-desc">
                     Esmeraldas colombianas, diamantes de fuego y oro noble.<br>
                     Cada pieza Bersaglio es una obra de arte diseñada para trascender.
                 </p>
-                <div class="hero-actions animate-on-scroll">
+
+                <!-- CTAs -->
+                <div class="hero-actions">
                     <a href="colecciones.html" class="btn btn-primary">Explorar Colecciones</a>
-                    <a href="contacto.html" class="btn btn-outline">Agendar Asesoría</a>
+                    <a href="contacto.html"    class="btn btn-outline btn-ghost">Agendar Asesoría</a>
                 </div>
-                <div class="hero-meta animate-on-scroll" aria-hidden="true">
-                    <span class="hero-meta-item">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/></svg>
+
+                <!-- Trust badges -->
+                <div class="hero-meta" aria-label="Certificaciones">
+                    <span class="hero-badge">
+                        <svg width="8" height="8" viewBox="0 0 8 8" fill="var(--gold)" aria-hidden="true"><circle cx="4" cy="4" r="4"/></svg>
                         Gemas certificadas GIA
                     </span>
-                    <span class="hero-meta-sep">·</span>
-                    <span class="hero-meta-item">Oro 18K &amp; 24K</span>
-                    <span class="hero-meta-sep">·</span>
-                    <span class="hero-meta-item">Diseño exclusivo</span>
+                    <span class="hero-badge-sep" aria-hidden="true">·</span>
+                    <span class="hero-badge">Oro 18K &amp; 24K</span>
+                    <span class="hero-badge-sep" aria-hidden="true">·</span>
+                    <span class="hero-badge">Diseño exclusivo</span>
                 </div>
+
             </div>
+
+            <!-- Scroll cue -->
             <div class="hero-scroll-indicator" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                <span class="hero-scroll-label">Scroll</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M12 5v14M19 12l-7 7-7-7"/>
+                </svg>
             </div>
         </section>
 

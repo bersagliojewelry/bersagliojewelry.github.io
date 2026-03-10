@@ -3,14 +3,15 @@
  * Entry point: carga datos → inicializa componentes → renderiza secciones.
  */
 
-import { loadAllComponents } from './components.js';
-import { renderCollections }  from './components/collections.js';
+import { loadAllComponents }   from './components.js';
+import { renderCollections }   from './components/collections.js';
 import { renderFeaturedPieces } from './components/featured.js';
-import { renderServices }     from './components/services.js';
-import { renderJournal }      from './components/journal.js';
+import { renderServices }      from './components/services.js';
+import { renderJournal }       from './components/journal.js';
 import Renderer from './utils/renderer.js';
-import db from './data/catalog.js';
-import { initEffects } from './effects.js';
+import db       from './data/catalog.js';
+import { initEffects }         from './effects.js';
+import { initHero }            from './hero-animation.js';
 
 async function initApp() {
     await loadAllComponents();
@@ -25,6 +26,7 @@ async function initApp() {
     Renderer.initLazyImages();
     initWhatsAppButton();
     initEffects();
+    initHero();
 }
 
 function initWhatsAppButton() {

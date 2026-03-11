@@ -27,9 +27,15 @@ async function init() {
     const piece = slug ? db.getBySlug(slug) : null;
 
     if (!piece) {
+        const skeleton = document.getElementById('pieza-skeleton');
+        if (skeleton) skeleton.style.display = 'none';
         renderNotFound();
         return;
     }
+
+    // Ocultar skeleton antes de renderizar contenido real
+    const skeleton = document.getElementById('pieza-skeleton');
+    if (skeleton) skeleton.style.display = 'none';
 
     renderPiece(piece);
     renderRelatedPieces(piece);
@@ -49,7 +55,7 @@ function updatePageMeta(piece) {
     if (metaDesc) metaDesc.setAttribute('content', piece.description);
 
     // Open Graph dynamic update
-    const ogUrl = `https://bersagliojewelry.github.io/pieza.html?p=${piece.slug}`;
+    const ogUrl = `https://bersagliojewelry.co/pieza.html?p=${piece.slug}`;
     setMeta('property', 'og:title',       `${piece.name} | Bersaglio Jewelry`);
     setMeta('property', 'og:description', piece.description);
     setMeta('property', 'og:url',         ogUrl);
@@ -77,7 +83,7 @@ function setMeta(attrName, attrValue, content) {
 
 /* ─── Schema.org injection ───────────────────────────────────── */
 function injectStructuredData(piece) {
-    const base       = 'https://bersagliojewelry.github.io';
+    const base       = 'https://bersagliojewelry.co';
     const collection = db.getCollections().find(c => c.slug === piece.collection);
 
     // Product schema

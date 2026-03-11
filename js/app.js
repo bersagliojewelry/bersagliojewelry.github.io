@@ -18,23 +18,40 @@ import { initParallax }             from './parallax.js';
 import { initMicroAnimations }      from './effects/micro.js';
 
 async function initApp() {
-    await loadAllComponents();
-    await db.load();
+    try {
+        await loadAllComponents();
+        await db.load();
+    } catch (err) {
+        console.error('[Bersaglio] Bootstrap failed:', err);
+        return;
+    }
 
-    renderCollections();
-    renderFeaturedPieces();
-    renderServices();
-    renderJournal();
+    // Render sections — isolated so one failure doesn't block others
+    const safeRender = (fn, label) => {
+        try { fn(); } catch (err) { console.warn(`[Bersaglio] ${label} failed:`, err); }
+    };
+
+    safeRender(renderCollections,   'renderCollections');
+    safeRender(renderFeaturedPieces,'renderFeaturedPieces');
+    safeRender(renderServices,      'renderServices');
+    safeRender(renderJournal,       'renderJournal');
 
     Renderer.initScrollAnimations();
     Renderer.initLazyImages();
-    initWhatsAppButton();
-    initEffects();
-    initHero();
-    initCollectionsHScroll();
-    initGSAPScrollAnimations();
-    initParallax();
-    initMicroAnimations();
+
+    try { initWhatsAppButton(); } catch {}
+
+    // Effects — non-critical, isolated
+    const safeEffect = (fn, label) => {
+        try { fn(); } catch (err) { console.warn(`[Bersaglio] ${label} failed:`, err); }
+    };
+
+    safeEffect(initEffects,              'initEffects');
+    safeEffect(initHero,                 'initHero');
+    safeEffect(initCollectionsHScroll,   'initCollectionsHScroll');
+    safeEffect(initGSAPScrollAnimations, 'initGSAPScrollAnimations');
+    safeEffect(initParallax,             'initParallax');
+    safeEffect(initMicroAnimations,      'initMicroAnimations');
 }
 
 function initWhatsAppButton() {

@@ -237,10 +237,10 @@ function initHeroParallax() {
 
 /* ─── Reveal already-visible elements ───────────────────────── */
 function forceRevealInView() {
+    const ALL_SELECTORS = '.animate-on-scroll, .collection-panel, .service-row';
+
     if (!('IntersectionObserver' in window)) {
-        document.querySelectorAll('.animate-on-scroll').forEach(el => el.classList.add('is-visible'));
-        document.querySelectorAll('.collection-panel').forEach(el => el.classList.add('is-visible'));
-        document.querySelectorAll('.service-row').forEach(el => el.classList.add('is-visible'));
+        document.querySelectorAll(ALL_SELECTORS).forEach(el => el.classList.add('is-visible'));
         return;
     }
     const obs = new IntersectionObserver((entries) => {
@@ -250,9 +250,23 @@ function forceRevealInView() {
                 obs.unobserve(entry.target);
             }
         });
-    }, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+    }, { threshold: 0.06, rootMargin: '0px 0px -20px 0px' });
 
-    document.querySelectorAll('.collection-panel, .service-row').forEach(el => obs.observe(el));
+    document.querySelectorAll(ALL_SELECTORS).forEach(el => obs.observe(el));
+}
+
+/* ─── Nuclear fallback: force all content visible after 3.5s ── */
+// Safety net: if IntersectionObserver never fires (e.g. hidden iframe,
+// odd scroll container), reveal everything so the site is never blank.
+function scheduleNuclearReveal() {
+    setTimeout(() => {
+        const hidden = document.querySelectorAll(
+            '.animate-on-scroll:not(.is-visible), .collection-panel:not(.is-visible), .service-row:not(.is-visible)'
+        );
+        if (hidden.length) {
+            hidden.forEach(el => el.classList.add('is-visible'));
+        }
+    }, 3500);
 }
 
 /* ─── Main Init ─────────────────────────────────────────────── */
@@ -271,6 +285,7 @@ export function initEffects() {
     setTimeout(() => {
         initStagger();
         forceRevealInView();
+        scheduleNuclearReveal();
     }, 150);
 
     // 3D tilt for cards and panels (desktop only)

@@ -6632,27 +6632,27 @@ body.search-open { overflow: hidden; }
 .piece-card-skeleton + .piece-card-skeleton + .piece-card-skeleton { animation-delay: 0.4s; }
 
 /* ═══════════════════════════════════════════════════════════════
-   INDIVIDUAL COLLECTION PAGES — piece-card
+   INDIVIDUAL COLLECTION PAGES — piece-card (scoped to [data-collection])
    ═══════════════════════════════════════════════════════════════ */
 
-.piece-card {
-    background: var(--ivory);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
+[data-collection] .piece-card {
+    background: var(--ivory) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-md) !important;
     overflow: hidden;
     transition: transform var(--transition), box-shadow var(--transition);
     display: flex;
     flex-direction: column;
 }
 
-.piece-card:hover {
+[data-collection] .piece-card:hover {
+    background: var(--ivory) !important;
     transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-lg) !important;
 }
 
 .piece-card-img {
     position: relative;
-    display: block;
     overflow: hidden;
     background: linear-gradient(135deg, var(--champagne), var(--ivory-warm));
     aspect-ratio: 1/1;
@@ -6670,7 +6670,7 @@ body.search-open { overflow: hidden; }
     transition: transform var(--transition-slow);
 }
 
-.piece-card:hover .piece-card-visual {
+[data-collection] .piece-card:hover .piece-card-visual {
     transform: scale(1.08);
 }
 
@@ -6686,7 +6686,7 @@ body.search-open { overflow: hidden; }
     transition: opacity var(--transition), transform var(--transition);
 }
 
-.piece-card:hover .piece-card-actions {
+[data-collection] .piece-card:hover .piece-card-actions {
     opacity: 1;
     transform: translateX(0);
 }
@@ -6895,4 +6895,120 @@ a.piece-image-wrapper {
     letter-spacing: 3px;
     display: block;
     margin-bottom: var(--space-sm);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FASE 4 — ACCESIBILIDAD & HARDENING
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Focus-visible: anillo dorado para navegación por teclado ── */
+:focus { outline: none; }
+
+:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 3px;
+    border-radius: 2px;
+}
+
+/* Botones y enlaces en fondo oscuro */
+.featured :focus-visible,
+.collections :focus-visible,
+#featured-grid :focus-visible,
+.header :focus-visible,
+.footer :focus-visible {
+    outline-color: var(--gold-light);
+    outline-offset: 4px;
+}
+
+/* Anillo más visible en campos de formulario */
+.form-group input:focus-visible,
+.form-group select:focus-visible,
+.form-group textarea:focus-visible,
+.form-field input:focus-visible,
+.form-field textarea:focus-visible,
+.form-field select:focus-visible {
+    outline: 2px solid var(--emerald);
+    outline-offset: 0;
+    border-radius: var(--radius-sm);
+}
+
+/* ─── Skip-to-content (para lectores de pantalla) ──────────── */
+.skip-to-content {
+    position: fixed;
+    top: -100%;
+    left: var(--space-md);
+    z-index: 200000;
+    background: var(--gold);
+    color: var(--black);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 12px 24px;
+    border-radius: var(--radius-sm);
+    transition: top 0.2s;
+}
+
+.skip-to-content:focus {
+    top: var(--space-md);
+    outline: 2px solid var(--black);
+    outline-offset: 2px;
+}
+
+/* ─── Piece card en colección: acción hover accesible ─────── */
+[data-collection] .piece-card:focus-within .piece-card-actions {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* ─── Contraste: texto muted mínimo legible ─────────────────── */
+.piece-desc { color: rgba(250,247,242,0.65) !important; }
+.journal-featured-excerpt { opacity: 1; }
+
+/* ─── Trust strip responsive ────────────────────────────────── */
+@media (max-width: 640px) {
+    .trust-strip-inner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .trust-sep { display: none; }
+}
+
+/* ─── piece-action-btn en páginas de colección ──────────────── */
+.piece-card-actions .piece-action-btn {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(6px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    transition: border-color var(--transition), color var(--transition), background var(--transition);
+}
+
+.piece-card-actions .piece-action-btn:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: rgba(255,255,255,1);
+}
+
+.piece-card-actions .wishlist-action.is-saved {
+    color: #c0504d;
+    border-color: #c0504d;
+}
+
+.piece-card-actions .cart-action.is-in-cart {
+    color: var(--gold-dark);
+    border-color: var(--gold-dark);
+}
+
+/* SVG fill para corazón guardado en colección */
+.piece-card-actions .wishlist-action.is-saved svg path {
+    fill: #c0504d;
+    stroke: #c0504d;
 }

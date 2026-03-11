@@ -26,8 +26,21 @@ async function init() {
 }
 
 function updateMeta(entry) {
+    const base = 'https://bersagliojewelry.co';
+    const url  = `${base}/entrada.html?p=${entry.slug}`;
     document.title = `${entry.title} | Bersaglio Journal`;
     document.querySelector('meta[name="description"]')?.setAttribute('content', entry.excerpt);
+    // Open Graph
+    const setMeta = (sel, val) => document.querySelector(sel)?.setAttribute('content', val);
+    setMeta('meta[property="og:title"]',       `${entry.title} | Bersaglio Journal`);
+    setMeta('meta[property="og:description"]', entry.excerpt);
+    setMeta('meta[property="og:url"]',         url);
+    setMeta('meta[name="twitter:title"]',      `${entry.title} | Bersaglio Journal`);
+    setMeta('meta[name="twitter:description"]', entry.excerpt);
+    // Canonical
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.appendChild(canonical); }
+    canonical.href = url;
 }
 
 function initWhatsAppButton() {

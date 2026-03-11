@@ -5276,14 +5276,37 @@ html.lenis { height: auto; }
     pointer-events: none;
 }
 
-.pt-gem {
-    filter: drop-shadow(0 0 18px rgba(201,169,110,0.25));
-    animation: pt-gem-rotate 6s linear infinite;
+/* Logo giratorio — reemplaza diamante SVG */
+.pt-logo-wrap {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.95);
+    box-shadow:
+        0 0 0 1px rgba(201,169,110,0.45),
+        0 0 40px rgba(201,169,110,0.2),
+        0 8px 32px rgba(0,0,0,0.5);
+    overflow: hidden;
+    animation: pt-logo-spin 3.5s ease-in-out infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
-@keyframes pt-gem-rotate {
-    from { transform: rotate(0deg);   }
-    to   { transform: rotate(360deg); }
+.pt-logo-img {
+    width: 90%;
+    height: 90%;
+    object-fit: contain;
+    display: block;
+}
+
+@keyframes pt-logo-spin {
+    0%   { transform: rotate(0deg)   scale(1);    box-shadow: 0 0 0 1px rgba(201,169,110,0.45), 0 0 40px rgba(201,169,110,0.2), 0 8px 32px rgba(0,0,0,0.5); }
+    25%  { transform: rotate(90deg)  scale(1.05); box-shadow: 0 0 0 1.5px rgba(201,169,110,0.7), 0 0 60px rgba(201,169,110,0.35), 0 12px 40px rgba(0,0,0,0.6); }
+    50%  { transform: rotate(180deg) scale(1);    }
+    75%  { transform: rotate(270deg) scale(1.05); }
+    100% { transform: rotate(360deg) scale(1);    }
 }
 
 .pt-brand {
@@ -7011,4 +7034,231 @@ a.piece-image-wrapper {
 .piece-card-actions .wishlist-action.is-saved svg path {
     fill: #c0504d;
     stroke: #c0504d;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BANNER CINEMÁTICO — EXTRAVAGANTE
+   ═══════════════════════════════════════════════════════════════ */
+
+.banner-section {
+    position: relative !important;
+    width: 100% !important;
+    overflow: hidden !important;
+    height: clamp(480px, 70vh, 820px) !important;
+    line-height: 0 !important;
+}
+
+.banner-img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center 25% !important;
+    display: block !important;
+    transform: scale(1.06);
+    transition: transform 12s ease !important;
+    will-change: transform;
+}
+
+.banner-section.is-visible .banner-img {
+    transform: scale(1) !important;
+}
+
+/* Gradiente en varias capas — entradas oscuras + viñeta central */
+.banner-overlay {
+    position: absolute !important;
+    inset: 0 !important;
+    background:
+        linear-gradient(to right,  rgba(5,5,5,0.72) 0%, transparent 45%, rgba(5,5,5,0.4) 100%),
+        linear-gradient(to bottom, rgba(5,5,5,0.55) 0%, transparent 30%, transparent 55%, rgba(5,5,5,0.75) 100%)
+    !important;
+    pointer-events: none !important;
+}
+
+/* Contenido superpuesto — centrado izquierda */
+.banner-hero-content {
+    position: absolute;
+    top: 50%;
+    left: clamp(32px, 8vw, 120px);
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+    z-index: 2;
+    max-width: 560px;
+}
+
+/* Logo mark pequeño sobre el headline */
+.banner-logo-mark {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.92);
+    box-shadow:
+        0 0 0 1px rgba(201,169,110,0.5),
+        0 0 32px rgba(201,169,110,0.18),
+        0 8px 24px rgba(0,0,0,0.45);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.banner-logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 8px;
+    display: block;
+}
+
+/* Headline principal */
+.banner-headline {
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 4.5vw, 4rem);
+    font-weight: 300;
+    line-height: 1.1;
+    color: var(--ivory);
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+
+.banner-headline em {
+    font-style: italic;
+    color: var(--gold-light);
+    font-weight: 300;
+}
+
+/* Subtítulo */
+.banner-sub {
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: rgba(250,247,242,0.65);
+    line-height: 1;
+}
+
+/* CTA */
+.banner-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    border-bottom: 1px solid rgba(201,169,110,0.35);
+    padding-bottom: 4px;
+    transition: color 0.3s, border-color 0.3s;
+    margin-top: 4px;
+}
+
+.banner-cta::after {
+    content: '→';
+    font-size: 14px;
+    transition: transform 0.3s;
+}
+
+.banner-cta:hover {
+    color: var(--ivory);
+    border-color: rgba(250,247,242,0.5);
+}
+
+.banner-cta:hover::after {
+    transform: translateX(4px);
+}
+
+/* Línea dorada decorativa lateral derecha */
+.banner-section::before {
+    content: '';
+    position: absolute;
+    top: 20%;
+    right: 8%;
+    width: 1px;
+    height: 60%;
+    background: linear-gradient(to bottom, transparent, rgba(201,169,110,0.4), transparent);
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .banner-section {
+        height: clamp(360px, 75vw, 520px) !important;
+    }
+    .banner-hero-content {
+        left: 24px;
+        right: 24px;
+        max-width: none;
+    }
+    .banner-section::before { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ARMONÍA CROMÁTICA — RITMO DE SECCIONES
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Trust strip: franja champán entre hero (dark) y banner (imagen) */
+.trust-strip {
+    background: var(--champagne) !important;
+    border-top: 1px solid rgba(201,169,110,0.2) !important;
+    border-bottom: 1px solid rgba(201,169,110,0.2) !important;
+}
+
+.trust-strip .trust-label { color: var(--text-primary) !important; }
+.trust-strip .trust-icon  { stroke: var(--gold-dark) !important; color: var(--gold-dark) !important; }
+.trust-strip .trust-sep   { color: rgba(150,130,100,0.4) !important; }
+
+/* Brand statement: esmeralda profundo (respiro entre Featured y Collections) */
+.brand-statement {
+    background: var(--emerald-deep) !important;
+    padding: 80px 0 !important;
+}
+
+.brand-statement .brand-quote { color: var(--ivory) !important; }
+.brand-statement .brand-origin { color: rgba(201,169,110,0.8) !important; }
+.brand-statement .brand-divider svg { stroke: rgba(201,169,110,0.5) !important; }
+
+/* Section dividers: inherit del contexto */
+.section-divider {
+    background: transparent !important;
+    border-top: 1px solid rgba(201,169,110,0.12) !important;
+    padding: 20px 0 !important;
+}
+
+/* Servicios: marfil (contraste tras colecciones oscuras) */
+.services {
+    background: var(--ivory-warm) !important;
+}
+
+.services .section-eyebrow  { color: var(--emerald) !important; }
+.services .section-title    { color: var(--text-primary) !important; }
+.services .section-desc     { color: var(--text-secondary) !important; }
+
+/* Journal preview: oscuro editorial */
+.journal-preview {
+    background: var(--black-carbon) !important;
+}
+
+.journal-preview .section-eyebrow { color: var(--gold) !important; }
+.journal-preview .section-title   { color: var(--ivory) !important; }
+.journal-preview .section-desc    { color: var(--text-on-dark-muted) !important; }
+
+/* About teaser: marfil cálido (humano, personal) — ya estaba OK */
+
+/* CTA banner: esmeralda profundo (cierre impactante) */
+.cta-banner {
+    background: var(--emerald-deep) !important;
+}
+
+.cta-banner .cta-title   { color: var(--ivory) !important; }
+.cta-banner .cta-desc    { color: rgba(250,247,242,0.72) !important; }
+.cta-banner::before,
+.cta-banner::after       { display: none !important; }
+
+/* Transición suave entre featured (dark) y brand-statement (esmeralda) */
+.featured {
+    border-bottom: none !important;
 }

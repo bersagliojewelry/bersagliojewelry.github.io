@@ -52,6 +52,22 @@ async function initApp() {
     safeEffect(initGSAPScrollAnimations, 'initGSAPScrollAnimations');
     safeEffect(initParallax,             'initParallax');
     safeEffect(initMicroAnimations,      'initMicroAnimations');
+    safeEffect(initBannerKenBurns,       'initBannerKenBurns');
+}
+
+function initBannerKenBurns() {
+    const banner = document.querySelector('.banner-section');
+    if (!banner) return;
+    // Trigger Ken Burns scale-down when section is visible
+    const io = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                banner.classList.add('is-visible');
+                io.disconnect();
+            }
+        });
+    }, { threshold: 0.1 });
+    io.observe(banner);
 }
 
 function initWhatsAppButton() {

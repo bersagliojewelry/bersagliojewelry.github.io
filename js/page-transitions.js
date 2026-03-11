@@ -1,25 +1,10 @@
 /**
  * Bersaglio Jewelry — Page Transitions
- * GSAP-powered dark overlay that sweeps in before navigation
- * and sweeps out on page enter. Works with the multi-page architecture.
- *
- * Flow:
- *   link click → exit(sweep in) → window.location = href
- *   new page load → enter(sweep out) → content visible
+ * Dark overlay con el logo real girando (reemplaza diamante SVG).
+ * Fix bfcache: pageshow + persisted para detectar navegación "atrás".
  */
 
 import { gsap } from './gsap-core.js';
-
-const LOGO_MARK = `
-<svg class="pt-gem" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <polygon points="28,4 52,18 52,38 28,52 4,38 4,18"
-           stroke="rgba(201,169,110,0.9)" stroke-width="1" fill="none"/>
-  <polygon points="28,14 42,22 42,34 28,42 14,34 14,22"
-           stroke="rgba(201,169,110,0.45)" stroke-width="0.7" fill="none"/>
-  <line x1="4"  y1="18" x2="28" y2="28" stroke="rgba(201,169,110,0.25)" stroke-width="0.5"/>
-  <line x1="52" y1="18" x2="28" y2="28" stroke="rgba(201,169,110,0.25)" stroke-width="0.5"/>
-  <line x1="28" y1="4"  x2="28" y2="28" stroke="rgba(201,169,110,0.25)" stroke-width="0.5"/>
-</svg>`;
 
 function createOverlay() {
     const existing = document.getElementById('page-transition');
@@ -31,7 +16,9 @@ function createOverlay() {
     el.innerHTML = `
         <div class="pt-panel"></div>
         <div class="pt-center">
-            ${LOGO_MARK}
+            <div class="pt-logo-wrap">
+                <img src="img/logo-bj2.png" alt="" class="pt-logo-img" draggable="false">
+            </div>
             <span class="pt-brand">BERSAGLIO</span>
         </div>
     `;
@@ -47,8 +34,8 @@ function animateEnter(overlay) {
     const tl = gsap.timeline({
         onComplete() {
             gsap.set(overlay, { display: 'none' });
-            gsap.set(panel,  { yPercent: 0 });      // reset for next exit
-            gsap.set(center, { opacity: 0 });
+            gsap.set(panel,   { yPercent: 0 });
+            gsap.set(center,  { opacity: 0 });
         },
     });
 
@@ -68,8 +55,8 @@ function animateExit(overlay, href) {
     gsap.timeline({
         onComplete() { window.location.href = href; },
     })
-    .to(panel,  { yPercent: 0,  duration: 0.55, ease: 'power4.inOut' })
-    .to(center, { opacity: 1,   duration: 0.28, ease: 'power2.out' }, '-=0.15');
+    .to(panel,  { yPercent: 0, duration: 0.55, ease: 'power4.inOut' })
+    .to(center, { opacity: 1, duration: 0.28, ease: 'power2.out' }, '-=0.15');
 }
 
 function isInternal(href, target) {
@@ -85,22 +72,32 @@ function isInternal(href, target) {
 export function initPageTransitions() {
     const overlay = createOverlay();
 
+    // ── bfcache fix: cuando el usuario presiona "atrás", el navegador
+    //    restaura la página desde el caché con el overlay posiblemente
+    //    visible. Usamos pageshow + e.persisted para detectarlo.
+    window.addEventListener('pageshow', (e) => {
+        if (e.persisted) {
+            // Página restaurada desde bfcache — ocultar overlay inmediatamente
+            gsap.set(overlay, { display: 'none' });
+            sessionStorage.removeItem('bj-pt-nav');
+            document.body.classList.remove('is-preloading');
+        }
+    });
+
     // Determine whether we arrived via page-transition (vs direct URL / refresh)
     const fromTransition = sessionStorage.getItem('bj-pt-nav');
     sessionStorage.removeItem('bj-pt-nav');
 
     if (fromTransition) {
-        // Arrived here from a transition exit — play the enter animation
         const panel = overlay.querySelector('.pt-panel');
         gsap.set(overlay, { display: 'flex' });
         gsap.set(panel,   { yPercent: 0 });
         animateEnter(overlay);
     } else {
-        // Direct load / refresh — hide immediately (preloader handles first-load reveal)
         gsap.set(overlay, { display: 'none' });
     }
 
-    // Intercept internal link clicks (capture phase to run before other handlers)
+    // Intercept internal link clicks
     document.addEventListener('click', (e) => {
         const link = e.target.closest('a[href]');
         if (!link) return;
@@ -111,7 +108,6 @@ export function initPageTransitions() {
         if (!isInternal(href, target)) return;
 
         e.preventDefault();
-        // Mark that next page should run enter animation
         sessionStorage.setItem('bj-pt-nav', '1');
         animateExit(overlay, href);
     }, true);

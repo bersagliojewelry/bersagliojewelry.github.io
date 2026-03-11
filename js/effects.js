@@ -37,34 +37,42 @@ const LABEL_MAP = [
 ];
 
 function initCursor() {
-    // Crosshair cursor — solo el elemento central, sin anillo seguidor
-    const cursor = document.createElement('div');
-    cursor.className = 'cursor cursor--hidden';
+    // Solo en dispositivos con ratón
+    if (!window.matchMedia('(pointer: fine)').matches) return;
 
-    // Punto central del crosshair
-    const dot = document.createElement('span');
-    dot.className = 'cursor-dot';
-    cursor.appendChild(dot);
+    const IMG = {
+        normal:  'img/cursor-normal.png',  // CURSOR.png
+        hand:    'img/cursor-hand.png',    // MANO.png
+        loading: 'img/cursor-load.png',    // CARGANDO.png
+    };
 
-    document.body.appendChild(cursor);
+    // Pre-carga silenciosa para evitar parpadeo
+    Object.values(IMG).forEach(src => { const pre = new Image(); pre.src = src; });
 
-    let visible = false;
+    // Crear elemento cursor
+    const wrap = document.createElement('div');
+    wrap.id = 'bj-cursor';
+    const img = document.createElement('img');
+    img.src = IMG.normal;
+    img.alt = '';
+    img.draggable = false;
+    wrap.appendChild(img);
+    document.body.appendChild(wrap);
 
-    function show() {
-        if (!visible) {
-            cursor.classList.remove('cursor--hidden');
-            visible = true;
-        }
+    let currentState = 'normal';
+
+    function setState(state) {
+        if (currentState === state) return;
+        currentState = state;
+        img.src = IMG[state];
+        wrap.dataset.state = state;
     }
 
-    function hide() {
-        cursor.classList.add('cursor--hidden');
-        visible = false;
-    }
+    function show() { wrap.style.opacity = '1'; }
+    function hide() { wrap.style.opacity = '0'; }
 
     document.addEventListener('mousemove', (e) => {
-        // Posicionamiento directo — sin lag
-        cursor.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
+        wrap.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
         show();
     });
 
@@ -77,16 +85,30 @@ function initCursor() {
     function bindHover(el) {
         if (el.dataset.cursorBound) return;
         el.dataset.cursorBound = '1';
-        el.addEventListener('mouseenter', () => cursor.classList.add('cursor--hover'));
-        el.addEventListener('mouseleave', () => cursor.classList.remove('cursor--hover'));
+        el.addEventListener('mouseenter', () => {
+            if (currentState !== 'loading') setState('hand');
+        });
+        el.addEventListener('mouseleave', () => {
+            if (currentState !== 'loading') setState('normal');
+        });
     }
 
     document.querySelectorAll(hoverEls).forEach(bindHover);
 
-    // Observar elementos añadidos dinámicamente
     new MutationObserver(() => {
         document.querySelectorAll(hoverEls).forEach(bindHover);
     }).observe(document.body, { childList: true, subtree: true });
+
+    // Estado loading al navegar a otra página
+    document.addEventListener('click', (e) => {
+        const link = e.target.closest('a[href]');
+        if (!link) return;
+        const href = link.getAttribute('href') || '';
+        if (href && !href.startsWith('#') && !href.startsWith('tel:') &&
+            !href.startsWith('mailto:') && link.target !== '_blank') {
+            setState('loading');
+        }
+    });
 }
 
 /* ─── Magnetic Hover ────────────────────────────────────────── */

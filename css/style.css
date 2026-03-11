@@ -7563,7 +7563,7 @@ a.piece-image-wrapper {
     background-image:    url('../img/logo-bj2.png') !important;
     background-repeat:   no-repeat !important;
     background-position: center center !important;
-    background-size:     260% !important;
+    background-size:     contain !important;
     border-radius:       50% !important;
     overflow:            hidden !important;
     flex-shrink:         0 !important;
@@ -7676,4 +7676,72 @@ nav .logo-badge {
 /* Ocultar en dispositivos táctiles */
 @media (pointer: coarse) {
     .cursor { display: none !important; }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   MASTER OVERRIDE v7 — WATERMARK + PNG CURSOR
+   ════════════════════════════════════════════════════════════════ */
+
+/* 1. Eliminar marca de agua / watermark del hero */
+.hero::after,
+.hero::before,
+section.hero::after {
+    display:  none !important;
+    content:  none !important;
+    opacity:  0    !important;
+}
+
+/* 2. Cursor PNG — estilos del elemento JS (#bj-cursor) */
+
+/* Anular anillo dorado de v6 completamente */
+.cursor,
+.cursor::before,
+.cursor::after {
+    display: none !important;
+}
+.cursor-follower,
+.cursor-label,
+.cursor-dot {
+    display: none !important;
+}
+
+/* Cursor PNG principal */
+#bj-cursor {
+    position:       fixed;
+    top:            0;
+    left:           0;
+    width:          auto;
+    height:         auto;
+    pointer-events: none;
+    z-index:        99999;
+    opacity:        0;
+    transition:     opacity 0.15s ease;
+    /* Sin transform-origin aquí — se aplica en la imagen */
+}
+
+#bj-cursor img {
+    display:     block;
+    width:       38px;      /* CURSOR.png y MANO.png: 150×200 → ratio 3:4 */
+    height:      auto;
+    user-select: none;
+    -webkit-user-drag: none;
+    pointer-events: none;
+}
+
+/* Estado loading: spinner cuadrado + rotación */
+#bj-cursor[data-state="loading"] img {
+    width:            40px;
+    height:           40px;
+    animation:        bj-spin 0.75s linear infinite;
+    transform-origin: center center;
+}
+
+@keyframes bj-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* Ocultar en táctil */
+@media (pointer: coarse) {
+    #bj-cursor { display: none !important; }
 }

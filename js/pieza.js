@@ -3,13 +3,14 @@
  * URL: pieza.html?p=<slug>
  */
 
-import { loadAllComponents } from './components.js';
-import { wishlist } from './wishlist.js';
-import { cart }     from './cart.js';
-import { toast }    from './toast.js';
-import { initEffects } from './effects.js';
-import Renderer     from './utils/renderer.js';
-import db           from './data/catalog.js';
+import { loadAllComponents }   from './components.js';
+import { wishlist }            from './wishlist.js';
+import { cart }                from './cart.js';
+import { toast }               from './toast.js';
+import { initEffects }         from './effects.js';
+import { initMicroAnimations } from './effects/micro.js';
+import Renderer                from './utils/renderer.js';
+import db                      from './data/catalog.js';
 
 const specLabels = {
     stone: 'Piedra principal', carat: 'Quilates', metal: 'Metal', accent: 'Acentos',
@@ -30,10 +31,13 @@ async function init() {
     }
 
     renderPiece(piece);
+    renderRelatedPieces(piece);
     updatePageMeta(piece);
     initWhatsAppButton(piece);
     Renderer.initScrollAnimations();
     initEffects();
+    initMicroAnimations();
+    initPiezaGSAP();
 }
 
 function updatePageMeta(piece) {
@@ -188,6 +192,113 @@ function renderPiece(piece) {
             added ? 'added' : 'removed'
         );
     });
+}
+
+/* ─── Related pieces ────────────────────────────────────────── */
+function renderRelatedPieces(piece) {
+    const container = document.getElementById('pieza-content');
+    if (!container) return;
+
+    const related = db.getAll()
+        .filter(p => p.slug !== piece.slug && p.collection === piece.collection)
+        .slice(0, 3);
+
+    if (!related.length) return;
+
+    const specLabelsLocal = {
+        stone: 'Piedra', carat: 'Quilates', metal: 'Metal', cut: 'Talla',
+    };
+
+    const cards = related.map(p => {
+        const inCart     = cart.has(p.slug);
+        const inWishlist = wishlist.has(p.slug);
+        const mainSpec   = p.specs?.stone || p.specs?.metal || '';
+
+        return `
+            <article class="related-card animate-on-scroll">
+                <a href="pieza.html?p=${p.slug}" class="related-card-img" aria-label="${p.name}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.7" width="64" height="64" aria-hidden="true">
+                        <polygon points="12,2 22,8.5 12,22 2,8.5"/>
+                        <line x1="2" y1="8.5" x2="22" y2="8.5"/>
+                        <polyline points="7,2 12,8.5 17,2"/>
+                    </svg>
+                    ${p.badge ? `<span class="piece-badge related-badge">${p.badge}</span>` : ''}
+                </a>
+                <div class="related-card-body">
+                    ${mainSpec ? `<span class="related-card-spec">${mainSpec}</span>` : ''}
+                    <a href="pieza.html?p=${p.slug}" class="related-card-name">${p.name}</a>
+                    <span class="related-card-price">${p.priceLabel}</span>
+                </div>
+                <div class="related-card-actions">
+                    <button
+                        class="piece-action-btn wishlist-action ${inWishlist ? 'is-saved' : ''}"
+                        data-wishlist-slug="${p.slug}"
+                        aria-label="${inWishlist ? 'Quitar de lista de deseos' : 'Añadir a lista de deseos'}"
+                    >
+                        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    </button>
+                    <button
+                        class="piece-action-btn cart-action ${inCart ? 'is-in-cart' : ''}"
+                        data-cart-slug="${p.slug}"
+                        aria-label="${inCart ? 'En carrito' : 'Añadir al carrito'}"
+                    >
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    </button>
+                </div>
+            </article>
+        `;
+    }).join('');
+
+    const section = document.createElement('section');
+    section.className = 'related-section';
+    section.innerHTML = `
+        <div class="related-header animate-on-scroll">
+            <span class="section-eyebrow">De la misma colección</span>
+            <h2 class="related-title">También te puede interesar</h2>
+        </div>
+        <div class="related-grid">${cards}</div>
+    `;
+    container.appendChild(section);
+
+    // Init wishlist + cart on the related section
+    wishlist.initButtons(section, (_slug, added) => {
+        toast.show(added ? 'Añadida a lista de deseos' : 'Eliminada de la lista', added ? 'added' : 'removed');
+    });
+    cart.initButtons(section, (_slug, added) => {
+        toast.show(added ? 'Añadida al carrito' : 'Eliminada del carrito', added ? 'added' : 'removed');
+    });
+}
+
+/* ─── GSAP entrance for piece detail ────────────────────────── */
+function initPiezaGSAP() {
+    if (typeof gsap === 'undefined') return;
+
+    const gallery = document.querySelector('.pieza-gallery');
+    const info    = document.querySelector('.pieza-info');
+    const rows    = document.querySelectorAll('.pieza-specs-table tr');
+
+    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+
+    if (gallery) {
+        tl.fromTo(gallery,
+            { opacity: 0, x: -32 },
+            { opacity: 1, x: 0, duration: 0.75 }
+        );
+    }
+    if (info) {
+        tl.fromTo(info,
+            { opacity: 0, x: 24 },
+            { opacity: 1, x: 0, duration: 0.65 },
+            '-=0.5'
+        );
+    }
+    if (rows.length) {
+        tl.fromTo(rows,
+            { opacity: 0, y: 10 },
+            { opacity: 1, y: 0, duration: 0.35, stagger: 0.06 },
+            '-=0.3'
+        );
+    }
 }
 
 function renderNotFound() {

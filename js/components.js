@@ -8,6 +8,7 @@ import { wishlist }            from './wishlist.js';
 import { cart }                from './cart.js';
 import { initPreloader }       from './preloader.js';
 import { initPageTransitions } from './page-transitions.js';
+import { initSearch }          from './search.js';
 
 const SNIPPETS = 'snippets/';
 
@@ -231,4 +232,5 @@ export async function loadAllComponents() {
     initializeCart();
     initializeDevBanner();
     initPageTransitions();
+    initSearch();
 }

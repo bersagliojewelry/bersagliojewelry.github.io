@@ -71,24 +71,27 @@
 
                     <!-- Contact form -->
                     <div class="contact-form-wrapper animate-on-scroll">
-                        <form class="contact-form" id="contactForm" onsubmit="return false;">
+                        <form class="contact-form" id="contactForm" novalidate>
                             <h3 class="form-title">Solicita información</h3>
-                            <div class="form-group">
-                                <label for="contactName" class="sr-only">Nombre completo</label>
-                                <input type="text" id="contactName" placeholder="Tu nombre completo" required autocomplete="name">
+
+                            <div class="form-field">
+                                <input type="text" id="contactName" name="name" placeholder=" " required autocomplete="name">
+                                <label for="contactName">Nombre completo</label>
                             </div>
-                            <div class="form-group">
-                                <label for="contactEmail" class="sr-only">Correo electrónico</label>
-                                <input type="email" id="contactEmail" placeholder="Tu correo electrónico" required autocomplete="email">
+
+                            <div class="form-field">
+                                <input type="email" id="contactEmail" name="email" placeholder=" " required autocomplete="email">
+                                <label for="contactEmail">Correo electrónico</label>
                             </div>
-                            <div class="form-group">
-                                <label for="contactPhone" class="sr-only">Teléfono</label>
-                                <input type="tel" id="contactPhone" placeholder="Tu teléfono (opcional)" autocomplete="tel">
+
+                            <div class="form-field">
+                                <input type="tel" id="contactPhone" name="phone" placeholder=" " autocomplete="tel">
+                                <label for="contactPhone">Teléfono <span class="form-label-optional">(opcional)</span></label>
                             </div>
-                            <div class="form-group">
-                                <label for="contactInterest" class="sr-only">Interés</label>
-                                <select id="contactInterest">
-                                    <option value="" disabled selected>¿Qué te interesa?</option>
+
+                            <div class="form-field form-field--select">
+                                <select id="contactInterest" name="interest" required>
+                                    <option value="" disabled selected></option>
                                     <option value="esmeraldas">Esmeraldas Colombianas</option>
                                     <option value="diamantes">Diamantes</option>
                                     <option value="oro">Piezas en Oro</option>
@@ -96,11 +99,15 @@
                                     <option value="personalizado">Diseño Personalizado</option>
                                     <option value="otro">Otro</option>
                                 </select>
+                                <label for="contactInterest">¿Qué te interesa?</label>
+                                <svg class="form-select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13" aria-hidden="true"><polyline points="6,9 12,15 18,9"/></svg>
                             </div>
-                            <div class="form-group">
-                                <label for="contactMessage" class="sr-only">Mensaje</label>
-                                <textarea id="contactMessage" rows="4" placeholder="Cuéntanos más sobre lo que buscas..."></textarea>
+
+                            <div class="form-field form-field--textarea">
+                                <textarea id="contactMessage" name="message" rows="4" placeholder=" "></textarea>
+                                <label for="contactMessage">Cuéntanos sobre lo que buscas</label>
                             </div>
+
                             <button type="submit" class="btn btn-primary btn-full">Enviar Consulta</button>
                             <p class="form-note">Responderemos en menos de 24 horas</p>
                         </form>
@@ -126,6 +133,14 @@
     <div id="footer-placeholder"></div>
 
     <script type="module" src="js/page.js"></script>
+    <script type="module">
+        import { initFormExperience } from './js/effects/form.js';
+        // Wait for page.js to inject the header/footer, then init the form
+        document.addEventListener('DOMContentLoaded', () => {
+            // Small delay ensures components.js has finished
+            requestAnimationFrame(() => initFormExperience('#contactForm'));
+        });
+    </script>
 
 </body>
 </html>

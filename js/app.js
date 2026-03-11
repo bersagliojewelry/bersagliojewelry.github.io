@@ -15,6 +15,7 @@ import { initHero }                 from './hero-animation.js';
 import { initCollectionsHScroll }   from './effects/hscroll.js';
 import { initGSAPScrollAnimations } from './scroll-animations.js';
 import { initParallax }             from './parallax.js';
+import { initMicroAnimations }      from './effects/micro.js';
 
 async function initApp() {
     await loadAllComponents();
@@ -33,6 +34,7 @@ async function initApp() {
     initCollectionsHScroll();
     initGSAPScrollAnimations();
     initParallax();
+    initMicroAnimations();
 }
 
 function initWhatsAppButton() {

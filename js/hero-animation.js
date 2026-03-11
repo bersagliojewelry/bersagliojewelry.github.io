@@ -28,13 +28,15 @@ export function initHero() {
     if (titleEl) {
         // Wrap each word in a clip container, each char in a span
         const html = titleEl.innerHTML;
-        // Preserve <em> tags while splitting
+        // Preserve <em> tags and <br> while splitting
         const parts = [];
-        const regex = /(<em>[^<]*<\/em>|[^\s<]+|\s+)/g;
+        const regex = /(<em>[^<]*<\/em>|<br\s*\/?>|[^\s<]+|\s+)/g;
         let m;
         while ((m = regex.exec(html)) !== null) {
             const tok = m[0];
-            if (tok.startsWith('<em>')) {
+            if (/^<br\s*\/?>$/i.test(tok)) {
+                parts.push('<br>');
+            } else if (tok.startsWith('<em>')) {
                 // italic word — split chars inside em
                 const inner = tok.replace(/<\/?em>/g, '');
                 const charSpans = [...inner].map(c =>

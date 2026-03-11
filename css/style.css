@@ -5958,3 +5958,403 @@ body.search-open { overflow: hidden; }
     cursor: pointer;
     padding: 2px;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   REDESIGN V3 — Premium Visual Overhaul
+   Cursor · Whitespace · Servicios · Journal · Banner · Logo
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Cursor V3 — Minimalista Premium ───────────────────────── */
+/* Ocultar el label scramble — demasiado ruidoso */
+.cursor-label { display: none !important; }
+
+/* Dot principal: muy fino, blend mode elegante */
+.cursor {
+    width: 4px !important;
+    height: 4px !important;
+    background: rgba(250, 247, 242, 0.9) !important;
+    border-radius: 50% !important;
+    transition: none !important;
+    mix-blend-mode: difference;
+}
+
+/* Anillo seguidor: delgado, sutil */
+.cursor-follower {
+    width: 32px !important;
+    height: 32px !important;
+    border: 0.5px solid rgba(250, 247, 242, 0.40) !important;
+    background: transparent !important;
+    border-radius: 50% !important;
+    mix-blend-mode: difference;
+    transition: width 0.45s cubic-bezier(0.23,1,0.32,1),
+                height 0.45s cubic-bezier(0.23,1,0.32,1),
+                border-color 0.3s !important;
+}
+
+.cursor.cursor--hover {
+    width: 4px !important;
+    height: 4px !important;
+}
+
+.cursor-follower.cursor-follower--hover {
+    width: 52px !important;
+    height: 52px !important;
+    border-color: rgba(201, 169, 110, 0.5) !important;
+    background: rgba(201, 169, 110, 0.04) !important;
+}
+
+/* ─── Logo — Mostrar subtítulo JEWELRY ──────────────────────── */
+.logo-sub {
+    display: block !important;
+    font-size: 7.5px !important;
+    letter-spacing: 5px !important;
+    color: var(--text-muted) !important;
+    margin-top: 1px !important;
+    opacity: 0.75;
+}
+
+.header:not(.scrolled) .logo-sub {
+    color: rgba(250, 247, 242, 0.5) !important;
+}
+
+/* ─── Fix Línea Blanca — Section Dividers ───────────────────── */
+/* Los dividers entre secciones oscuras heredan el fondo ivory del body */
+.brand-statement + .section-divider {
+    background: var(--black-carbon) !important;
+    padding: 12px 0 !important;
+}
+
+.featured + .section-divider,
+.featured + * + .section-divider,
+.services + .section-divider {
+    background: linear-gradient(to bottom, var(--ivory) 0%, var(--black) 100%) !important;
+    padding: 0 !important;
+    height: 40px !important;
+    display: block !important;
+}
+
+.services + .section-divider::before,
+.services + .section-divider::after {
+    display: none !important;
+}
+
+.services + .section-divider .section-divider-icon {
+    display: none !important;
+}
+
+/* ─── Whitespace Reduction ───────────────────────────────────── */
+.section {
+    padding: var(--space-2xl) 0 !important;
+}
+
+.brand-statement {
+    padding: 72px 0 !important;
+}
+
+.section-footer {
+    margin-top: var(--space-lg) !important;
+    padding-top: var(--space-lg) !important;
+}
+
+.section-header {
+    margin-bottom: var(--space-xl) !important;
+}
+
+/* Evitar espacio extra en sección colecciones */
+.collections-track-outer {
+    min-height: unset !important;
+}
+
+/* ─── Banner Image Section ───────────────────────────────────── */
+.banner-section {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    line-height: 0;
+}
+
+.banner-img {
+    width: 100%;
+    height: clamp(260px, 42vw, 580px);
+    object-fit: cover;
+    object-position: center 30%;
+    display: block;
+    transition: transform 8s ease;
+}
+
+.banner-section:hover .banner-img {
+    transform: scale(1.015);
+}
+
+.banner-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to bottom,
+        rgba(0,0,0,0.35) 0%,
+        transparent 35%,
+        transparent 65%,
+        rgba(0,0,0,0.5) 100%
+    );
+    pointer-events: none;
+}
+
+.banner-caption {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    pointer-events: none;
+}
+
+.banner-caption-text {
+    font-family: var(--font-body);
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: rgba(250,247,242,0.6);
+}
+
+/* ─── Servicios V3 — Dark, Grid de Tarjetas ─────────────────── */
+.services {
+    background: #0e0e0e !important;
+}
+
+.services .section-eyebrow  { color: var(--gold) !important; }
+.services .section-title    { color: var(--ivory) !important; }
+.services .section-desc     { color: var(--text-on-dark-muted) !important; }
+
+.services-grid {
+    display: grid !important;
+    flex-direction: unset !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1px !important;
+    background: rgba(201,169,110,0.07) !important;
+    border: 1px solid rgba(201,169,110,0.07) !important;
+}
+
+.service-row {
+    background: #0e0e0e !important;
+    border: none !important;
+    border-top: none !important;
+    border-bottom: none !important;
+    padding: 44px 40px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+    align-items: flex-start !important;
+    grid-template-columns: unset !important;
+    transition: background 0.35s !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.service-row:hover {
+    background: #141414 !important;
+    padding-left: 40px !important;
+}
+
+/* Gold top bar on hover */
+.service-row::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 0; height: 2px;
+    background: linear-gradient(90deg, var(--gold-dark), var(--gold-light));
+    transition: width 0.45s var(--ease);
+}
+
+.service-row:hover::after { width: 100%; }
+
+/* Ocultar la barra vertical izquierda */
+.service-row::before { display: none !important; }
+
+.service-row-num {
+    font-family: var(--font-display) !important;
+    font-size: 2.8rem !important;
+    font-weight: 300 !important;
+    color: rgba(201,169,110,0.10) !important;
+    line-height: 1 !important;
+    transition: color 0.3s !important;
+    order: 0;
+}
+
+.service-row:hover .service-row-num {
+    color: rgba(201,169,110,0.22) !important;
+}
+
+.service-row-icon {
+    order: 1;
+}
+
+.service-row-icon svg {
+    width: 30px !important;
+    height: 30px !important;
+    color: var(--gold-dark) !important;
+    transition: color 0.3s, transform 0.4s !important;
+}
+
+.service-row:hover .service-row-icon svg {
+    color: var(--gold) !important;
+    transform: scale(1.05);
+}
+
+.service-row-body { order: 2; }
+
+.service-row-title {
+    font-family: var(--font-display) !important;
+    font-size: 1.45rem !important;
+    font-weight: 400 !important;
+    color: var(--ivory) !important;
+    margin-bottom: 8px !important;
+    letter-spacing: -0.2px !important;
+}
+
+.service-row-desc {
+    font-size: 13px !important;
+    line-height: 1.75 !important;
+    color: rgba(250,247,242,0.45) !important;
+    font-weight: 300 !important;
+}
+
+.service-row:first-child { border-top: none !important; }
+
+.services .section-footer {
+    border-top: 1px solid rgba(201,169,110,0.10) !important;
+}
+
+.services .btn-outline {
+    border-color: rgba(201,169,110,0.28) !important;
+    color: rgba(201,169,110,0.7) !important;
+}
+
+.services .btn-outline:hover {
+    border-color: var(--gold) !important;
+    color: var(--gold) !important;
+    background: rgba(201,169,110,0.05) !important;
+}
+
+/* ─── Journal V3 — Más respiro, mejor visual ─────────────────── */
+.journal-preview {
+    padding: var(--space-2xl) 0 !important;
+    border-top: none !important;
+    border-bottom: none !important;
+}
+
+.journal-featured-visual {
+    min-height: 220px;
+}
+
+.journal-visual-icon {
+    opacity: 0.6;
+    transition: opacity 0.5s, transform 0.5s !important;
+}
+
+.journal-featured-card:hover .journal-visual-icon {
+    opacity: 0.9;
+    transform: scale(1.04);
+}
+
+/* ─── About Teaser V3 — Con imagen collage ───────────────────── */
+.about-teaser {
+    background: var(--ivory) !important;
+    padding: var(--space-2xl) 0 !important;
+}
+
+.about-teaser-inner {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: var(--space-2xl) !important;
+    align-items: center !important;
+}
+
+.about-teaser-collage {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1px;
+    aspect-ratio: 4/5;
+    background: var(--champagne);
+}
+
+.about-teaser-collage img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.9s cubic-bezier(0.4,0,0.2,1);
+}
+
+.about-teaser-collage:hover img {
+    transform: scale(1.04);
+}
+
+.about-teaser-collage-frame {
+    position: absolute;
+    inset: 10px;
+    border: 1px solid rgba(201,169,110,0.2);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Placeholder cuando no hay imagen */
+.about-teaser-collage-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+    background: linear-gradient(135deg, #e8dfd0, #d4c9b8);
+}
+
+.about-teaser-collage-placeholder svg {
+    width: 48px;
+    height: 48px;
+    color: rgba(168,137,78,0.4);
+}
+
+/* ─── CTA Banner V3 ──────────────────────────────────────────── */
+.cta-banner {
+    padding: var(--space-2xl) 0 !important;
+}
+
+/* ─── Collections — Fix gap before "Ver catálogo" ────────────── */
+.collections .section-footer {
+    margin-top: var(--space-md) !important;
+}
+
+.collections-progress {
+    margin: var(--space-sm) auto 0 !important;
+    max-width: 120px !important;
+}
+
+/* ─── Featured — reducir padding top ────────────────────────── */
+.featured .section-header {
+    padding-bottom: var(--space-md) !important;
+}
+
+/* ─── Responsive V3 ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .services-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .service-row {
+        padding: 32px 24px !important;
+    }
+
+    .about-teaser-inner {
+        grid-template-columns: 1fr !important;
+    }
+
+    .about-teaser-collage {
+        aspect-ratio: 16/9 !important;
+    }
+
+    .banner-img {
+        height: 54vw !important;
+    }
+}

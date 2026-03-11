@@ -149,6 +149,29 @@
             </div>
         </section>
 
+        <!-- ═══════════════════════════════════════════ BANNER IMAGE ═══════════════════════════════════════════ -->
+        <div class="banner-section" aria-hidden="true">
+            <img src="Pic/banner.png" alt="Bersaglio Jewelry — Alta Joyería" class="banner-img" loading="eager" onerror="this.parentElement.style.display='none'">
+            <div class="banner-overlay"></div>
+            <div class="banner-caption">
+                <span class="banner-caption-text">Alta Joyería · Colombia</span>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════ FEATURED PIECES ═══════════════════════════════════════════ -->
+        <section id="piezas" class="section featured">
+            <div class="container">
+                <div class="section-header animate-on-scroll">
+                    <span class="section-eyebrow">Alta Joyería</span>
+                    <h2 class="section-title">Piezas que definen momentos</h2>
+                    <p class="section-desc">Selección curada de nuestras creaciones más extraordinarias. Cada una, una declaración de excelencia.</p>
+                </div>
+                <div id="featured-grid" class="featured-grid">
+                    <!-- Rendered by JS -->
+                </div>
+            </div>
+        </section>
+
         <!-- ═══════════════════════════════════════════ BRAND STATEMENT ═══════════════════════════════════════════ -->
         <section class="brand-statement">
             <div class="container">
@@ -198,20 +221,6 @@
             </div>
         </section>
 
-        <!-- ═══════════════════════════════════════════ FEATURED PIECES ═══════════════════════════════════════════ -->
-        <section id="piezas" class="section featured">
-            <div class="container">
-                <div class="section-header animate-on-scroll">
-                    <span class="section-eyebrow">Alta Joyería</span>
-                    <h2 class="section-title">Piezas que definen momentos</h2>
-                    <p class="section-desc">Selección curada de nuestras creaciones más extraordinarias. Cada una, una declaración de excelencia.</p>
-                </div>
-                <div id="featured-grid" class="featured-grid">
-                    <!-- Rendered by JS -->
-                </div>
-            </div>
-        </section>
-
         <!-- ═══════════════════════════════════════════ SERVICES ═══════════════════════════════════════════ -->
         <section id="servicios" class="section services">
             <div class="container">
@@ -256,26 +265,39 @@
         <section class="about-teaser">
             <div class="container">
                 <div class="about-teaser-inner animate-on-scroll">
+
+                    <!-- Imagen collage -->
+                    <div class="about-teaser-collage">
+                        <img src="Pic/collage.png" alt="Bersaglio Jewelry — Alta Joyería" loading="lazy"
+                             onerror="this.style.display='none'; this.parentElement.querySelector('.about-teaser-collage-placeholder').style.display='flex'">
+                        <div class="about-teaser-collage-placeholder" style="display:none">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><polygon points="12,2 22,8.5 12,22 2,8.5"/></svg>
+                        </div>
+                        <div class="about-teaser-collage-frame" aria-hidden="true"></div>
+                    </div>
+
+                    <!-- Contenido -->
                     <div class="about-teaser-content">
                         <span class="section-eyebrow">Nuestra Historia</span>
                         <h2 class="section-title">El arte de lo excepcional</h2>
                         <p>Bersaglio Jewelry nace de una obsesión por la perfección. Cada gema es seleccionada personalmente, cada diseño meditado hasta el último detalle, cada pieza creada para perdurar generaciones.</p>
+                        <div class="about-teaser-stats" style="margin: var(--space-lg) 0;">
+                            <div class="stat animate-on-scroll">
+                                <span class="stat-number" data-count="100" data-suffix="%">100%</span>
+                                <span class="stat-label">Gemas certificadas</span>
+                            </div>
+                            <div class="stat animate-on-scroll">
+                                <span class="stat-number">18K</span>
+                                <span class="stat-label">Oro y platino</span>
+                            </div>
+                            <div class="stat animate-on-scroll">
+                                <span class="stat-number">GIA</span>
+                                <span class="stat-label">Certificación internacional</span>
+                            </div>
+                        </div>
                         <a href="nosotros.html" class="btn btn-outline">Conocer nuestra historia</a>
                     </div>
-                    <div class="about-teaser-stats">
-                        <div class="stat animate-on-scroll">
-                            <span class="stat-number" data-count="100" data-suffix="%">100%</span>
-                            <span class="stat-label">Gemas certificadas</span>
-                        </div>
-                        <div class="stat animate-on-scroll">
-                            <span class="stat-number">18K</span>
-                            <span class="stat-label">Oro y platino</span>
-                        </div>
-                        <div class="stat animate-on-scroll">
-                            <span class="stat-number">GIA</span>
-                            <span class="stat-label">Certificación internacional</span>
-                        </div>
-                    </div>
+
                 </div>
             </div>
         </section>

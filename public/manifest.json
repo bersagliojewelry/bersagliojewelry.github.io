@@ -1,0 +1,44 @@
+{
+    "name": "Bersaglio Jewelry",
+    "short_name": "Bersaglio",
+    "description": "Alta joyería con esmeraldas colombianas, diamantes certificados y oro de 18k.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0a0a0a",
+    "theme_color": "#0a0a0a",
+    "orientation": "portrait-primary",
+    "lang": "es-CO",
+    "categories": ["shopping", "lifestyle"],
+    "icons": [
+        {
+            "src": "img/logo-bj2.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "img/logo-bj2.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "screenshots": [],
+    "shortcuts": [
+        {
+            "name": "Colecciones",
+            "url": "/colecciones.html",
+            "description": "Ver todas las colecciones"
+        },
+        {
+            "name": "Lista de deseos",
+            "url": "/lista-deseos.html",
+            "description": "Mis piezas guardadas"
+        },
+        {
+            "name": "Contacto",
+            "url": "/contacto.html",
+            "description": "Hablar con un asesor"
+        }
+    ]
+}

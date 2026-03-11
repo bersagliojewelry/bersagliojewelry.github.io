@@ -4,4 +4,11 @@
 User-agent: *
 Allow: /
 
+# Admin area — no indexing
+Disallow: /admin.html
+Disallow: /admin-colecciones.html
+Disallow: /admin-consultas.html
+Disallow: /admin-piezas.html
+Disallow: /dist/
+
 Sitemap: https://bersagliojewelry.github.io/sitemap.xml

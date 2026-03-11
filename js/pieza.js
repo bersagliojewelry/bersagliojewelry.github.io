@@ -9,6 +9,7 @@ import { cart }                from './cart.js';
 import { toast }               from './toast.js';
 import { initEffects }         from './effects.js';
 import { initMicroAnimations } from './effects/micro.js';
+import { trackPieceView }      from './analytics.js';
 import Renderer                from './utils/renderer.js';
 import db                      from './data/catalog.js';
 
@@ -33,17 +34,104 @@ async function init() {
     renderPiece(piece);
     renderRelatedPieces(piece);
     updatePageMeta(piece);
+    injectStructuredData(piece);
     initWhatsAppButton(piece);
     Renderer.initScrollAnimations();
     initEffects();
     initMicroAnimations();
     initPiezaGSAP();
+    trackPieceView(piece);
 }
 
 function updatePageMeta(piece) {
     document.title = `${piece.name} | Bersaglio Jewelry`;
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) metaDesc.setAttribute('content', piece.description);
+
+    // Open Graph dynamic update
+    const ogUrl = `https://bersagliojewelry.github.io/pieza.html?p=${piece.slug}`;
+    setMeta('property', 'og:title',       `${piece.name} | Bersaglio Jewelry`);
+    setMeta('property', 'og:description', piece.description);
+    setMeta('property', 'og:url',         ogUrl);
+    setMeta('name',     'twitter:title',  `${piece.name} | Bersaglio Jewelry`);
+
+    // Canonical
+    let canon = document.querySelector('link[rel="canonical"]');
+    if (!canon) {
+        canon = document.createElement('link');
+        canon.rel = 'canonical';
+        document.head.appendChild(canon);
+    }
+    canon.href = ogUrl;
+}
+
+function setMeta(attrName, attrValue, content) {
+    let el = document.querySelector(`meta[${attrName}="${attrValue}"]`);
+    if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attrName, attrValue);
+        document.head.appendChild(el);
+    }
+    el.setAttribute('content', content);
+}
+
+/* ─── Schema.org injection ───────────────────────────────────── */
+function injectStructuredData(piece) {
+    const base       = 'https://bersagliojewelry.github.io';
+    const collection = db.getCollections().find(c => c.slug === piece.collection);
+
+    // Product schema
+    const productSchema = {
+        '@context': 'https://schema.org',
+        '@type':    'Product',
+        name:        piece.name,
+        description: piece.description,
+        url:         `${base}/pieza.html?p=${piece.slug}`,
+        brand: { '@type': 'Brand', name: 'Bersaglio Jewelry' },
+        offers: {
+            '@type':        'Offer',
+            priceCurrency:  'COP',
+            price:          piece.price || 0,
+            availability:   'https://schema.org/InStock',
+            seller: { '@type': 'Organization', name: 'Bersaglio Jewelry' },
+        },
+    };
+    if (piece.specs?.certificate) {
+        productSchema.additionalProperty = [{
+            '@type': 'PropertyValue',
+            name:    'Certificación',
+            value:   piece.specs.certificate,
+        }];
+    }
+
+    // BreadcrumbList schema
+    const crumbs = [
+        { '@type': 'ListItem', position: 1, name: 'Inicio',      item: `${base}/` },
+        { '@type': 'ListItem', position: 2, name: 'Colecciones', item: `${base}/colecciones.html` },
+    ];
+    if (collection) {
+        crumbs.push({ '@type': 'ListItem', position: 3, name: collection.name, item: `${base}/${collection.slug}.html` });
+        crumbs.push({ '@type': 'ListItem', position: 4, name: piece.name,      item: `${base}/pieza.html?p=${piece.slug}` });
+    } else {
+        crumbs.push({ '@type': 'ListItem', position: 3, name: piece.name,      item: `${base}/pieza.html?p=${piece.slug}` });
+    }
+    const breadcrumbSchema = {
+        '@context':       'https://schema.org',
+        '@type':          'BreadcrumbList',
+        itemListElement:   crumbs,
+    };
+
+    _injectJsonLd('product-schema',    productSchema);
+    _injectJsonLd('breadcrumb-schema', breadcrumbSchema);
+}
+
+function _injectJsonLd(id, data) {
+    document.getElementById(id)?.remove();
+    const script    = document.createElement('script');
+    script.type     = 'application/ld+json';
+    script.id       = id;
+    script.textContent = JSON.stringify(data);
+    document.head.appendChild(script);
 }
 
 function initWhatsAppButton(piece) {

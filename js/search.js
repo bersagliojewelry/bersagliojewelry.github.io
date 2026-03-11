@@ -213,10 +213,17 @@ export function initSearch() {
         document.querySelectorAll('.search-result-item').forEach(el => el.remove());
     }
 
-    // Input
+    // Input — debounced for INP performance
+    let debounceTimer;
     input.addEventListener('input', e => {
         clearBtn.hidden = !e.target.value;
-        runSearch(e.target.value);
+        clearTimeout(debounceTimer);
+        // Show clear button immediately; debounce only the search run
+        if (!e.target.value.trim()) {
+            runSearch('');
+        } else {
+            debounceTimer = setTimeout(() => runSearch(e.target.value), 140);
+        }
     });
 
     // Keyboard

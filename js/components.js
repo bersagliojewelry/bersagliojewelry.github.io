@@ -9,6 +9,8 @@ import { cart }                from './cart.js';
 import { initPreloader }       from './preloader.js';
 import { initPageTransitions } from './page-transitions.js';
 import { initSearch }          from './search.js';
+import { initPWA }             from './pwa.js';
+import { initAnalytics }       from './analytics.js';
 
 const SNIPPETS = 'snippets/';
 
@@ -233,4 +235,6 @@ export async function loadAllComponents() {
     initializeDevBanner();
     initPageTransitions();
     initSearch();
+    initAnalytics();
+    initPWA();
 }

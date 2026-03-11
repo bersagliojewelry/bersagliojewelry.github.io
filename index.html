@@ -27,38 +27,66 @@
     <!-- Canonical -->
     <link rel="canonical" href="https://bersagliojewelry.co/">
 
-    <!-- Favicon -->
+    <!-- Favicon & PWA -->
     <link rel="icon" type="image/png" href="img/logo-bj2.png">
     <link rel="apple-touch-icon" href="img/logo-bj2.png">
+    <link rel="manifest" href="manifest.json">
 
-    <!-- Theme -->
-    <meta name="theme-color" content="#0B3D2E">
+    <!-- Theme & PWA -->
+    <meta name="theme-color" content="#0a0a0a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Bersaglio">
 
-    <!-- Fonts -->
+    <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://www.googletagmanager.com">
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
 
     <!-- Styles -->
     <link rel="stylesheet" href="css/style.css">
 
-    <!-- Structured Data -->
+    <!-- Structured Data — Organization + WebSite with SearchAction -->
     <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "JewelryStore",
-        "name": "Bersaglio Jewelry",
-        "url": "https://bersagliojewelry.co",
-        "description": "Alta joyería con esmeraldas colombianas, diamantes certificados y oro de 18k. Piezas únicas diseñadas con precisión artesanal.",
-        "priceRange": "$$$$",
-        "address": {
-            "@type": "PostalAddress",
-            "addressCountry": "CO"
+    [
+        {
+            "@context": "https://schema.org",
+            "@type": "JewelryStore",
+            "name": "Bersaglio Jewelry",
+            "url": "https://bersagliojewelry.github.io",
+            "logo": "https://bersagliojewelry.github.io/img/logo-bj2.png",
+            "description": "Alta joyería con esmeraldas colombianas, diamantes certificados y oro de 18k. Piezas únicas diseñadas con precisión artesanal.",
+            "priceRange": "$$$$",
+            "currenciesAccepted": "COP",
+            "address": {
+                "@type": "PostalAddress",
+                "addressCountry": "CO"
+            },
+            "sameAs": [
+                "https://instagram.com/bersaglio_jewelry"
+            ],
+            "contactPoint": {
+                "@type": "ContactPoint",
+                "contactType": "customer service",
+                "availableLanguage": "Spanish"
+            }
+        },
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "Bersaglio Jewelry",
+            "url": "https://bersagliojewelry.github.io",
+            "potentialAction": {
+                "@type": "SearchAction",
+                "target": {
+                    "@type": "EntryPoint",
+                    "urlTemplate": "https://bersagliojewelry.github.io/colecciones.html?q={search_term_string}"
+                },
+                "query-input": "required name=search_term_string"
+            }
         }
-    }
+    ]
     </script>
 </head>
 <body>

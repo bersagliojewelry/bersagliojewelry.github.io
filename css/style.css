@@ -132,7 +132,6 @@ input, select, textarea { font-family: var(--font-body); }
     right: 0;
     z-index: 1000;
     background: transparent;
-    transition: background var(--transition), box-shadow var(--transition);
 }
 
 .header.scrolled {
@@ -143,6 +142,7 @@ input, select, textarea { font-family: var(--font-body); }
 
 .header.header-hidden { transform: translateY(-100%); }
 .header { transition: background var(--transition), box-shadow var(--transition), transform var(--transition); }
+/* note: transition consolidated above (removed duplicate declaration) */
 
 .nav {
     display: flex;
@@ -6357,4 +6357,177 @@ body.search-open { overflow: hidden; }
     .banner-img {
         height: 54vw !important;
     }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SKELETON LOADERS
+   ═══════════════════════════════════════════════════════════════ */
+
+@keyframes skeleton-pulse {
+    0%, 100% { opacity: 0.5; }
+    50%       { opacity: 1; }
+}
+
+.piece-card-skeleton {
+    background: linear-gradient(135deg, var(--champagne), var(--ivory-warm));
+    border-radius: var(--radius-md);
+    aspect-ratio: 3/4;
+    animation: skeleton-pulse 1.6s ease-in-out infinite;
+    min-height: 320px;
+}
+
+.piece-card-skeleton + .piece-card-skeleton { animation-delay: 0.2s; }
+.piece-card-skeleton + .piece-card-skeleton + .piece-card-skeleton { animation-delay: 0.4s; }
+
+/* ═══════════════════════════════════════════════════════════════
+   INDIVIDUAL COLLECTION PAGES — piece-card
+   ═══════════════════════════════════════════════════════════════ */
+
+.piece-card {
+    background: var(--ivory);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: transform var(--transition), box-shadow var(--transition);
+    display: flex;
+    flex-direction: column;
+}
+
+.piece-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.piece-card-img {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--champagne), var(--ivory-warm));
+    aspect-ratio: 1/1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.piece-card-visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--champagne-dark);
+    transition: transform var(--transition-slow);
+}
+
+.piece-card:hover .piece-card-visual {
+    transform: scale(1.08);
+}
+
+.piece-card-actions {
+    position: absolute;
+    top: var(--space-sm);
+    right: var(--space-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    opacity: 0;
+    transform: translateX(8px);
+    transition: opacity var(--transition), transform var(--transition);
+}
+
+.piece-card:hover .piece-card-actions {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.piece-card-body {
+    padding: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.piece-card-spec {
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--gold);
+}
+
+.piece-card-name {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 400;
+    color: var(--text-primary);
+    line-height: 1.3;
+}
+
+.piece-card-name a {
+    color: inherit;
+    transition: color var(--transition);
+}
+
+.piece-card-name a:hover {
+    color: var(--gold);
+}
+
+.piece-card-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    flex: 1;
+}
+
+.piece-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    margin-top: auto;
+    padding-top: var(--space-sm);
+    border-top: 1px solid var(--border);
+}
+
+.piece-card-price {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+}
+
+/* Empty state for collection pages */
+.col-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: var(--space-3xl) var(--space-lg);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LEGAL PAGES
+   ═══════════════════════════════════════════════════════════════ */
+
+.legal-content h2 {
+    border-top: 1px solid var(--border);
+    padding-top: var(--space-lg);
+    margin-top: var(--space-xl);
+}
+
+.legal-content h2:first-child {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+}
+
+.legal-content p,
+.legal-content li {
+    line-height: 1.8;
+    color: var(--text-secondary);
 }

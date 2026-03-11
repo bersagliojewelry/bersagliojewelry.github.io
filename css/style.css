@@ -7262,3 +7262,207 @@ a.piece-image-wrapper {
 .featured {
     border-bottom: none !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   HERO UNIFICADO — BANNER FOTOGRÁFICO CINEMÁTICO
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Foto de fondo con Ken Burns */
+.hero-bg-img {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: right center !important;
+    z-index: 0 !important;
+    pointer-events: none !important;
+    animation: hero-kb-zoom 16s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
+    will-change: transform !important;
+}
+
+@keyframes hero-kb-zoom {
+    from { transform: scale(1.08); }
+    to   { transform: scale(1.0);  }
+}
+
+/* Overlay multi-capa: gradiente izquierda oscuro, viñeta superior/inferior */
+.hero-overlay {
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 1 !important;
+    pointer-events: none !important;
+    background:
+        /* Gradiente lateral — izquierda muy oscuro, derecha transparente */
+        linear-gradient(
+            108deg,
+            rgba(3, 3, 3, 0.93) 0%,
+            rgba(5, 5, 5, 0.82) 28%,
+            rgba(8, 8, 8, 0.52) 50%,
+            rgba(10, 10, 10, 0.18) 72%,
+            rgba(5, 5, 5, 0.08) 100%
+        ),
+        /* Viñeta superior */
+        linear-gradient(to bottom, rgba(0,0,0,0.52) 0%, transparent 22%),
+        /* Viñeta inferior */
+        linear-gradient(to top,    rgba(0,0,0,0.65) 0%, transparent 28%)
+    !important;
+}
+
+/* El canvas de partículas y el hero-content van encima del overlay */
+.hero > canvas { z-index: 2 !important; }
+
+.hero-content {
+    position: relative !important;
+    z-index: 3 !important;
+    text-align: left !important;
+    max-width: 680px !important;
+    margin-left: 0 !important;
+    margin-right: auto !important;
+    padding-top: 160px !important;
+    padding-bottom: 120px !important;
+}
+
+/* Badge de logo inline en el hero */
+.hero-brand-badge {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow:
+        0 0 0 1px rgba(201,169,110,0.55),
+        0 0 28px rgba(201,169,110,0.15),
+        0 4px 18px rgba(0,0,0,0.45);
+    overflow: hidden;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hero-brand-img {
+    width: 85%;
+    height: 85%;
+    object-fit: contain;
+    display: block;
+}
+
+/* Línea dorada lateral derecha (decorativa) */
+.hero-edge-line {
+    position: absolute;
+    top: 15%;
+    right: clamp(32px, 6vw, 80px);
+    width: 1px;
+    height: 70%;
+    background: linear-gradient(to bottom,
+        transparent 0%,
+        rgba(201,169,110,0.35) 20%,
+        rgba(201,169,110,0.5) 50%,
+        rgba(201,169,110,0.35) 80%,
+        transparent 100%);
+    z-index: 2;
+    pointer-events: none;
+}
+
+@media (max-width: 768px) {
+    .hero-edge-line { display: none; }
+    .hero-content {
+        padding-top: 120px !important;
+        padding-bottom: 80px !important;
+    }
+    .hero-brand-badge { width: 44px; height: 44px; }
+    .hero-overlay {
+        background:
+            linear-gradient(to bottom,
+                rgba(0,0,0,0.7) 0%,
+                rgba(0,0,0,0.55) 50%,
+                rgba(0,0,0,0.72) 100%) !important;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HEADER LOGO — MÁS GRANDE, MÁS CLARO
+   ═══════════════════════════════════════════════════════════════ */
+
+.logo-badge {
+    width: 52px !important;
+    height: 52px !important;
+    box-shadow:
+        0 0 0 1.5px rgba(201,169,110,0.55),
+        0 2px 12px rgba(0,0,0,0.28) !important;
+}
+
+.logo-img {
+    padding: 2px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CURSOR — CROSSHAIR DORADO, SIN ANILLO SEGUIDOR
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Ocultar anillo completamente */
+.cursor-follower { display: none !important; }
+.cursor-label    { display: none !important; }
+
+/* Cursor = cruz dorada fina */
+.cursor {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 20px !important;
+    height: 20px !important;
+    margin: -10px 0 0 -10px !important;
+    background: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    pointer-events: none !important;
+    z-index: 99999 !important;
+    mix-blend-mode: normal !important;
+    transition: opacity 0.2s !important;
+}
+
+/* Línea vertical */
+.cursor::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 1px;
+    height: 100%;
+    background: rgba(201,169,110,0.85);
+    transition: height 0.15s ease;
+}
+
+/* Línea horizontal */
+.cursor::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 0;
+    transform: translateY(-50%);
+    height: 1px;
+    width: 100%;
+    background: rgba(201,169,110,0.85);
+    transition: width 0.15s ease;
+}
+
+/* Punto central */
+.cursor-dot {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 2.5px;
+    height: 2.5px;
+    background: rgba(201,169,110,1);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+/* En hover sobre interactivos: la cruz se expande levemente */
+.cursor.cursor--hover::before { height: 130%; top: -15%; }
+.cursor.cursor--hover::after  { width: 130%; left: -15%; }
+
+/* Reducción de crosshair en fondos claros */
+@media (prefers-color-scheme: light) {
+    .cursor::before,
+    .cursor::after { background: rgba(30,80,50,0.8); }
+}

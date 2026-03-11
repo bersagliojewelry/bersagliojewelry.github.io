@@ -98,17 +98,36 @@
 
     <main>
 
-        <!-- ═══════════════════════════════════════════ HERO ═══════════════════════════════════════════ -->
+        <!-- ═══════════════ HERO ÚNICO CINEMÁTICO ═══════════════ -->
         <section id="inicio" class="hero">
-            <!-- Canvas particles injected by JS -->
-            <div class="hero-overlay"></div>
 
+            <!-- Fotografía de fondo — Banner.png con Ken Burns -->
+            <img src="img/banner.png"
+                 alt="Bersaglio Jewelry — Alta joyería con esmeraldas colombianas"
+                 class="hero-bg-img"
+                 loading="eager"
+                 fetchpriority="high">
+
+            <!-- Canvas particles injected by JS -->
+
+            <!-- Overlay de gradiente para legibilidad de texto -->
+            <div class="hero-overlay" aria-hidden="true"></div>
+
+            <!-- Línea dorada decorativa lateral (escritorio) -->
+            <div class="hero-edge-line" aria-hidden="true"></div>
+
+            <!-- Contenido principal — alineado izquierda -->
             <div class="hero-content container">
+
+                <!-- Logo badge inline sobre el titular -->
+                <div class="hero-brand-badge" aria-hidden="true">
+                    <img src="img/logo-bj2.png" alt="" class="hero-brand-img">
+                </div>
 
                 <!-- Overline -->
                 <span class="hero-eyebrow">Alta Joyería · Colombia</span>
 
-                <!-- Main title -->
+                <!-- Titular principal -->
                 <div class="hero-title-wrap">
                     <h1 class="hero-title">
                         Donde las gemas<br><em>cobran vida</em>
@@ -116,7 +135,7 @@
                     <span class="hero-title-line" aria-hidden="true"></span>
                 </div>
 
-                <!-- Description -->
+                <!-- Descripción -->
                 <p class="hero-desc">
                     Esmeraldas colombianas, diamantes de fuego y oro noble.<br>
                     Cada pieza Bersaglio es una obra de arte diseñada para trascender.
@@ -128,10 +147,10 @@
                     <a href="contacto.html"    class="btn btn-outline btn-ghost">Agendar Asesoría</a>
                 </div>
 
-                <!-- Trust badges -->
+                <!-- Trust micro-badges -->
                 <div class="hero-meta" aria-label="Certificaciones">
                     <span class="hero-badge">
-                        <svg width="8" height="8" viewBox="0 0 8 8" fill="var(--gold)" aria-hidden="true"><circle cx="4" cy="4" r="4"/></svg>
+                        <svg width="7" height="7" viewBox="0 0 8 8" fill="var(--gold)" aria-hidden="true"><circle cx="4" cy="4" r="4"/></svg>
                         Gemas certificadas GIA
                     </span>
                     <span class="hero-badge-sep" aria-hidden="true">·</span>
@@ -142,7 +161,7 @@
 
             </div>
 
-            <!-- Número decorativo de piezas -->
+            <!-- Contador decorativo de piezas -->
             <div class="hero-piece-count" aria-hidden="true">
                 <span class="hero-piece-count-number">36</span>
                 <span class="hero-piece-count-label">Piezas únicas</span>
@@ -155,6 +174,7 @@
                     <path d="M12 5v14M19 12l-7 7-7-7"/>
                 </svg>
             </div>
+
         </section>
 
         <!-- ═══════════════════════════════════════════ TRUST STRIP ════════════════════════════════════════════ -->
@@ -184,20 +204,6 @@
                     <svg class="trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
                     <span class="trust-label">Esmeraldas colombianas</span>
                 </div>
-            </div>
-        </div>
-
-        <!-- ═══════════════════════════════════════════ BANNER IMAGE ═══════════════════════════════════════════ -->
-        <div class="banner-section">
-            <img src="img/banner.png" alt="Bersaglio Jewelry — Alta Joyería con esmeraldas y diamantes" class="banner-img" loading="eager">
-            <div class="banner-overlay"></div>
-            <div class="banner-hero-content">
-                <div class="banner-logo-mark" aria-hidden="true">
-                    <img src="img/logo-bj2.png" alt="" class="banner-logo-img">
-                </div>
-                <h2 class="banner-headline">Piezas que<br><em>trascienden el tiempo</em></h2>
-                <p class="banner-sub">Esmeraldas colombianas · Diamantes certificados GIA · Oro 18K</p>
-                <a href="colecciones.html" class="banner-cta">Ver colecciones</a>
             </div>
         </div>
 

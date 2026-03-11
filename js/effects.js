@@ -37,42 +37,34 @@ const LABEL_MAP = [
 ];
 
 function initCursor() {
-    const cursor   = document.createElement('div');
-    const follower = document.createElement('div');
-    const label    = document.createElement('span');
+    // Crosshair cursor — solo el elemento central, sin anillo seguidor
+    const cursor = document.createElement('div');
+    cursor.className = 'cursor cursor--hidden';
 
-    cursor.className   = 'cursor cursor--hidden';
-    follower.className = 'cursor-follower cursor--hidden';
-    label.className    = 'cursor-label';
+    // Punto central del crosshair
+    const dot = document.createElement('span');
+    dot.className = 'cursor-dot';
+    cursor.appendChild(dot);
 
     document.body.appendChild(cursor);
-    document.body.appendChild(follower);
-    document.body.appendChild(label);
 
-    let mx = 0, my = 0;
-    let fx = 0, fy = 0;
     let visible = false;
 
     function show() {
         if (!visible) {
             cursor.classList.remove('cursor--hidden');
-            follower.classList.remove('cursor--hidden');
             visible = true;
         }
     }
 
     function hide() {
         cursor.classList.add('cursor--hidden');
-        follower.classList.add('cursor--hidden');
-        label.classList.remove('cursor-label--visible');
         visible = false;
     }
 
     document.addEventListener('mousemove', (e) => {
-        mx = e.clientX;
-        my = e.clientY;
-        cursor.style.transform   = `translate(${mx - 3}px, ${my - 3}px)`;
-        label.style.transform    = `translate(${mx + 26}px, ${my + 26}px)`;
+        // Posicionamiento directo — sin lag
+        cursor.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
         show();
     });
 
@@ -80,60 +72,21 @@ function initCursor() {
     document.addEventListener('mouseenter', show);
     window.addEventListener('blur', hide);
 
-    (function animateFollower() {
-        fx += (mx - fx) * 0.09;
-        fy += (my - fy) * 0.09;
-        follower.style.transform = `translate(${fx - 22}px, ${fy - 22}px)`;
-        requestAnimationFrame(animateFollower);
-    })();
-
     const hoverEls = 'a, button, [role="button"], .piece-card, .collection-panel, label, input, select, textarea';
 
     function bindHover(el) {
         if (el.dataset.cursorBound) return;
         el.dataset.cursorBound = '1';
-        el.addEventListener('mouseenter', () => {
-            cursor.classList.add('cursor--hover');
-            follower.classList.add('cursor-follower--hover');
-        });
-        el.addEventListener('mouseleave', () => {
-            cursor.classList.remove('cursor--hover');
-            follower.classList.remove('cursor-follower--hover');
-        });
-    }
-
-    function bindLabel(el) {
-        if (el.dataset.labelBound) return;
-        el.dataset.labelBound = '1';
-
-        const entry = LABEL_MAP.find(([sel]) => {
-            try { return el.matches(sel); } catch { return false; }
-        });
-        const text = el.dataset.cursor || (entry ? entry[1] : null);
-        if (!text) return;
-
-        el.addEventListener('mouseenter', () => {
-            scrambleText(label, text);
-            label.classList.add('cursor-label--visible');
-        });
-        el.addEventListener('mouseleave', () => {
-            label.classList.remove('cursor-label--visible');
-        });
+        el.addEventListener('mouseenter', () => cursor.classList.add('cursor--hover'));
+        el.addEventListener('mouseleave', () => cursor.classList.remove('cursor--hover'));
     }
 
     document.querySelectorAll(hoverEls).forEach(bindHover);
-    LABEL_MAP.forEach(([sel]) => {
-        try { document.querySelectorAll(sel).forEach(bindLabel); } catch {}
-    });
 
-    // Watch dynamically added elements
-    const bodyObserver = new MutationObserver(() => {
+    // Observar elementos añadidos dinámicamente
+    new MutationObserver(() => {
         document.querySelectorAll(hoverEls).forEach(bindHover);
-        LABEL_MAP.forEach(([sel]) => {
-            try { document.querySelectorAll(sel).forEach(bindLabel); } catch {}
-        });
-    });
-    bodyObserver.observe(document.body, { childList: true, subtree: true });
+    }).observe(document.body, { childList: true, subtree: true });
 }
 
 /* ─── Magnetic Hover ────────────────────────────────────────── */

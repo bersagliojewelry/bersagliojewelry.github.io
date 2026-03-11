@@ -246,7 +246,10 @@ function scheduleNuclearReveal() {
 
 /* ─── Main Init ─────────────────────────────────────────────── */
 export function initEffects() {
-    const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    // pointer:coarse = dispositivo táctil primario (móvil/tablet)
+    // pointer:fine = ratón/trackpad (desktop/laptop) — matchMedia es el único método fiable
+    // navigator.maxTouchPoints > 0 da falso positivo en macOS (trackpad = 5 puntos)
+    const isTouch = window.matchMedia('(pointer: coarse)').matches;
 
     if (!isTouch) {
         initCursor();

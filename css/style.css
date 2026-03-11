@@ -7745,3 +7745,47 @@ section.hero::after {
 @media (pointer: coarse) {
     #bj-cursor { display: none !important; }
 }
+
+/* ════════════════════════════════════════════════════════════════
+   MASTER OVERRIDE v8 — CURSOR NATIVO ELIMINADO (DEFINITIVO)
+   Nuke de todas las reglas cursor anteriores.
+   El cursor PNG (#bj-cursor) del JS lo reemplaza visualmente.
+   ════════════════════════════════════════════════════════════════ */
+
+/*
+  PROBLEMA RESUELTO:
+  - FIX v5 pone cursor:url(SVG) !important en *, *, a, button  —  muestra mano SVG nativa
+  - v6 pone cursor:none !important en * — debería ganar, pero conflictos de especificidad
+  - JS initCursor() nunca se llamaba porque isTouch = true en macOS (maxTouchPoints=5 trackpad)
+
+  SOLUCIÓN:
+  - isTouch usa matchMedia('pointer:coarse') — correctísimo en todos los dispositivos
+  - Esta regla aplica cursor:none con :is() que iguala la especificidad más alta posible
+    sin necesitar un selector por elemento, garantizando la victoria sobre v5/v6
+*/
+
+@media (pointer: fine) {
+    /* :is() toma la especificidad del selector más específico del grupo.
+       Incluyendo [data-cursor] (attr selector, 0,1,0) asegura ganar sobre
+       cualquier selector de tipo o clase de versiones anteriores.         */
+    :is(html, body, *, *::before, *::after, [data-cursor]) {
+        cursor: none !important;
+    }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   MASTER OVERRIDE v9 — CURSOR NONE FINAL (usa :root * para máxima
+   especificidad sin riesgo, gana sobre todo selector de tipo/clase/attr)
+   ════════════════════════════════════════════════════════════════ */
+
+@media (pointer: fine) {
+    /* :root tiene especificidad 0,1,0 (pseudo-clase).
+       :root * = 0,1,0 — gana sobre a (0,0,1), button (0,0,1), [role] (0,1,0) igual+after.
+       Gana sobre * (0,0,0). Cubre pseudo-elementos vía herencia + selector directo.  */
+    :root,
+    :root *,
+    :root *::before,
+    :root *::after {
+        cursor: none !important;
+    }
+}

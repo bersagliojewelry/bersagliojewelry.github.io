@@ -55,14 +55,23 @@ function cartBtn(piece) {
         </button>`;
 }
 
+const collectionNames = {
+    'esmeraldas-colombianas': 'Esmeraldas Colombianas',
+    'diamantes-eternos':      'Diamantes Eternos',
+    'oro-escultorico':        'Oro Escultórico',
+    'novias':                 'Colección Novias',
+};
+
 export function renderFeaturedPieces() {
     const pieces    = db.getFeatured(6);
     const container = document.querySelector('#featured-grid');
     if (!container) return;
 
-    Renderer.renderList('#featured-grid', pieces, (piece) => `
-        <article class="piece-card animate-on-scroll" data-piece="${piece.id}">
-            <div class="piece-image-wrapper">
+    Renderer.renderList('#featured-grid', pieces, (piece) => {
+        const colName = collectionNames[piece.collection] || '';
+        return `
+        <article class="piece-card animate-on-scroll" data-piece="${piece.id}" itemscope itemtype="https://schema.org/Product">
+            <a href="pieza.html?p=${piece.slug}" class="piece-image-wrapper" aria-label="Ver ${piece.name}">
                 <div class="piece-placeholder" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8" aria-hidden="true">
                         <polygon points="12,2 22,8.5 12,22 2,8.5"/>
@@ -75,9 +84,12 @@ export function renderFeaturedPieces() {
                     ${wishlistBtn(piece)}
                     ${cartBtn(piece)}
                 </div>
-            </div>
+            </a>
             <div class="piece-info">
-                <h3 class="piece-name">${piece.name}</h3>
+                ${colName ? `<a href="${piece.collection}.html" class="piece-collection-tag">${colName}</a>` : ''}
+                <h3 class="piece-name" itemprop="name">
+                    <a href="pieza.html?p=${piece.slug}">${piece.name}</a>
+                </h3>
                 <p class="piece-desc">${piece.description}</p>
                 <div class="piece-specs">${renderSpecs(piece.specs)}</div>
                 <div class="piece-footer">
@@ -89,7 +101,7 @@ export function renderFeaturedPieces() {
                 </div>
             </div>
         </article>
-    `);
+    `; });
 
     // Event delegation: wishlist ♡
     wishlist.initButtons(container, (_slug, added) => {

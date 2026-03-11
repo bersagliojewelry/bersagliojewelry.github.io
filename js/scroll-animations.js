@@ -134,7 +134,7 @@ function initBrandStatement() {
     );
 }
 
-/* ─── About teaser stats counter via GSAP ───────────────────── */
+/* ─── About teaser stats: entrada + contador animado ────────── */
 function initStatsBars() {
     const stats = document.querySelectorAll('.stat');
     if (!stats.length) return;
@@ -147,12 +147,39 @@ function initStatsBars() {
             stagger: 0.14,
             ease: 'back.out(1.2)',
             scrollTrigger: {
-                trigger: '.about-teaser-stats',
+                trigger: stats[0].closest('.about-teaser-stats, .about-stats') || stats[0],
                 start: 'top 78%',
                 toggleActions: 'play none none none',
+                onEnter: () => animateCounters(),
             },
         }
     );
+}
+
+/* ─── Counter animation — lee data-count y data-suffix ─────── */
+function animateCounters() {
+    document.querySelectorAll('.stat-number[data-count]').forEach(el => {
+        const target  = parseFloat(el.dataset.count);
+        const suffix  = el.dataset.suffix || '';
+        const prefix  = el.dataset.prefix || '';
+        if (isNaN(target)) return;
+
+        const duration = 1400;
+        const start    = performance.now();
+        const from     = 0;
+
+        function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+
+        function tick(now) {
+            const progress = Math.min((now - start) / duration, 1);
+            const value    = from + (target - from) * easeOut(progress);
+            const display  = Number.isInteger(target) ? Math.round(value) : value.toFixed(1);
+            el.textContent = `${prefix}${display}${suffix}`;
+            if (progress < 1) requestAnimationFrame(tick);
+        }
+
+        requestAnimationFrame(tick);
+    });
 }
 
 /* ─── Journal cards entrance ────────────────────────────────── */

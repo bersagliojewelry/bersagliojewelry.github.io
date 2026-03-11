@@ -1,14 +1,18 @@
-# robots.txt for Bersaglio Jewelry
-# https://bersagliojewelry.github.io
+# robots.txt — Bersaglio Jewelry
+# https://bersagliojewelry.co
 
 User-agent: *
 Allow: /
 
-# Admin area — no indexing
+# Admin — sin indexación
 Disallow: /admin.html
 Disallow: /admin-colecciones.html
 Disallow: /admin-consultas.html
 Disallow: /admin-piezas.html
 Disallow: /dist/
 
-Sitemap: https://bersagliojewelry.github.io/sitemap.xml
+# Páginas de usuario sin valor SEO
+Disallow: /carrito.html
+Disallow: /lista-deseos.html
+
+Sitemap: https://bersagliojewelry.co/sitemap.xml

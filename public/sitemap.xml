@@ -1,75 +1,76 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+    <!-- Homepage -->
     <url>
-        <loc>https://bersagliojewelry.github.io/</loc>
+        <loc>https://bersagliojewelry.co/</loc>
         <lastmod>2026-03-11</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
     </url>
+
+    <!-- Catálogo principal -->
     <url>
-        <loc>https://bersagliojewelry.github.io/colecciones.html</loc>
+        <loc>https://bersagliojewelry.co/colecciones.html</loc>
         <lastmod>2026-03-11</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
     </url>
+
+    <!-- Colecciones individuales -->
     <url>
-        <loc>https://bersagliojewelry.github.io/esmeraldas-colombianas.html</loc>
+        <loc>https://bersagliojewelry.co/esmeraldas-colombianas.html</loc>
+        <lastmod>2026-03-11</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.85</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/diamantes-eternos.html</loc>
+        <lastmod>2026-03-11</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.85</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/oro-escultorico.html</loc>
+        <lastmod>2026-03-11</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.85</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/novias.html</loc>
+        <lastmod>2026-03-11</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.85</priority>
+    </url>
+
+    <!-- Servicios y conversión -->
+    <url>
+        <loc>https://bersagliojewelry.co/servicios.html</loc>
+        <lastmod>2026-03-11</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.75</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/contacto.html</loc>
         <lastmod>2026-03-11</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
+
+    <!-- Marca -->
     <url>
-        <loc>https://bersagliojewelry.github.io/diamantes-eternos.html</loc>
+        <loc>https://bersagliojewelry.co/nosotros.html</loc>
         <lastmod>2026-03-11</lastmod>
         <changefreq>monthly</changefreq>
-        <priority>0.8</priority>
+        <priority>0.65</priority>
     </url>
+
+    <!-- Journal -->
     <url>
-        <loc>https://bersagliojewelry.github.io/oro-escultorico.html</loc>
-        <lastmod>2026-03-11</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.8</priority>
-    </url>
-    <url>
-        <loc>https://bersagliojewelry.github.io/novias.html</loc>
-        <lastmod>2026-03-11</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.8</priority>
-    </url>
-    <url>
-        <loc>https://bersagliojewelry.github.io/servicios.html</loc>
-        <lastmod>2026-03-11</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.7</priority>
-    </url>
-    <url>
-        <loc>https://bersagliojewelry.github.io/nosotros.html</loc>
-        <lastmod>2026-03-11</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.7</priority>
-    </url>
-    <url>
-        <loc>https://bersagliojewelry.github.io/contacto.html</loc>
-        <lastmod>2026-03-11</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.8</priority>
-    </url>
-    <url>
-        <loc>https://bersagliojewelry.github.io/journal.html</loc>
+        <loc>https://bersagliojewelry.co/journal.html</loc>
         <lastmod>2026-03-11</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.6</priority>
     </url>
-    <url>
-        <loc>https://bersagliojewelry.github.io/carrito.html</loc>
-        <lastmod>2026-03-11</lastmod>
-        <changefreq>never</changefreq>
-        <priority>0.3</priority>
-    </url>
-    <url>
-        <loc>https://bersagliojewelry.github.io/lista-deseos.html</loc>
-        <lastmod>2026-03-11</lastmod>
-        <changefreq>never</changefreq>
-        <priority>0.3</priority>
-    </url>
+
 </urlset>

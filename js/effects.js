@@ -5,51 +5,18 @@
 
 import { initTilt } from './effects/tilt.js';
 
-/* ─── Custom Cursor ─────────────────────────────────────────── */
-
-const SCRAMBLE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ·–';
-
-function scrambleText(el, text) {
-    let frame = 0;
-    const total = 11;
-    cancelAnimationFrame(el._scrambleRaf);
-    (function tick() {
-        el.textContent = [...text].map((ch, i) =>
-            frame / total > i / text.length
-                ? ch
-                : SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)]
-        ).join('');
-        frame++;
-        if (frame <= total) el._scrambleRaf = requestAnimationFrame(tick);
-        else el.textContent = text;
-    })();
-}
-
-// Label selectors: [selector, label text]
-const LABEL_MAP = [
-    ['.piece-card',          'VER'],
-    ['.collection-panel',    'VER'],
-    ['.journal-card',        'LEER'],
-    ['#journal-featured > *','LEER'],
-    ['.btn-primary',         'IR'],
-    ['.btn-outline',         'VER'],
-    ['a[href$=".html"]:not(.btn):not(.logo-link)', 'VER'],
-];
+/* ─── Custom Cursor (PNG) ────────────────────────────────────── */
 
 function initCursor() {
-    // Solo en dispositivos con ratón
-    if (!window.matchMedia('(pointer: fine)').matches) return;
-
     const IMG = {
-        normal:  'img/cursor-normal.png',  // CURSOR.png
-        hand:    'img/cursor-hand.png',    // MANO.png
-        loading: 'img/cursor-load.png',    // CARGANDO.png
+        normal:  'img/cursor-normal.png',
+        hand:    'img/cursor-hand.png',
+        loading: 'img/cursor-load.png',
     };
 
-    // Pre-carga silenciosa para evitar parpadeo
-    Object.values(IMG).forEach(src => { const pre = new Image(); pre.src = src; });
+    // Pre-cargar para evitar parpadeo al cambiar estado
+    Object.values(IMG).forEach(src => { new Image().src = src; });
 
-    // Crear elemento cursor
     const wrap = document.createElement('div');
     wrap.id = 'bj-cursor';
     const img = document.createElement('img');
@@ -59,53 +26,46 @@ function initCursor() {
     wrap.appendChild(img);
     document.body.appendChild(wrap);
 
-    let currentState = 'normal';
+    let state = 'normal';
 
-    function setState(state) {
-        if (currentState === state) return;
-        currentState = state;
-        img.src = IMG[state];
-        wrap.dataset.state = state;
+    function setState(s) {
+        if (state === s) return;
+        state = s;
+        img.src = IMG[s];
+        wrap.dataset.state = s;
     }
 
-    function show() { wrap.style.opacity = '1'; }
-    function hide() { wrap.style.opacity = '0'; }
-
+    // Posicionamiento directo via translate3d → GPU compositing
     document.addEventListener('mousemove', (e) => {
-        wrap.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
-        show();
-    });
+        wrap.style.transform = `translate3d(${e.clientX}px,${e.clientY}px,0)`;
+        wrap.style.opacity = '1';
+    }, { passive: true });
 
-    document.addEventListener('mouseleave', hide);
-    document.addEventListener('mouseenter', show);
-    window.addEventListener('blur', hide);
+    document.addEventListener('mouseleave',  () => { wrap.style.opacity = '0'; });
+    document.addEventListener('mouseenter',  () => { wrap.style.opacity = '1'; });
+    window.addEventListener('blur',          () => { wrap.style.opacity = '0'; });
 
-    const hoverEls = 'a, button, [role="button"], .piece-card, .collection-panel, label, input, select, textarea';
+    const HOVER = 'a, button, [role="button"], .piece-card, .collection-panel, label, input, select, textarea';
 
     function bindHover(el) {
-        if (el.dataset.cursorBound) return;
-        el.dataset.cursorBound = '1';
-        el.addEventListener('mouseenter', () => {
-            if (currentState !== 'loading') setState('hand');
-        });
-        el.addEventListener('mouseleave', () => {
-            if (currentState !== 'loading') setState('normal');
-        });
+        if (el.dataset.bjCursor) return;
+        el.dataset.bjCursor = '1';
+        el.addEventListener('mouseenter', () => { if (state !== 'loading') setState('hand');   });
+        el.addEventListener('mouseleave', () => { if (state !== 'loading') setState('normal'); });
     }
 
-    document.querySelectorAll(hoverEls).forEach(bindHover);
+    document.querySelectorAll(HOVER).forEach(bindHover);
 
-    new MutationObserver(() => {
-        document.querySelectorAll(hoverEls).forEach(bindHover);
-    }).observe(document.body, { childList: true, subtree: true });
+    // Re-bind elementos añadidos dinámicamente (header, piezas, etc.)
+    new MutationObserver(() => document.querySelectorAll(HOVER).forEach(bindHover))
+        .observe(document.body, { childList: true, subtree: true });
 
-    // Estado loading al navegar a otra página
+    // Modo loading al navegar (links que cambian de página)
     document.addEventListener('click', (e) => {
-        const link = e.target.closest('a[href]');
-        if (!link) return;
-        const href = link.getAttribute('href') || '';
-        if (href && !href.startsWith('#') && !href.startsWith('tel:') &&
-            !href.startsWith('mailto:') && link.target !== '_blank') {
+        const a = e.target.closest('a[href]');
+        if (!a) return;
+        const h = a.getAttribute('href') || '';
+        if (h && !h.startsWith('#') && !h.startsWith('tel:') && !h.startsWith('mailto:') && a.target !== '_blank') {
             setState('loading');
         }
     });

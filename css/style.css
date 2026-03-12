@@ -6156,14 +6156,7 @@ body.search-open { overflow: hidden; }
     color: rgba(250,247,242,0.6);
 }
 
-/* ─── Servicios V3 — Dark, Grid de Tarjetas ─────────────────── */
-.services {
-    background: #0e0e0e !important;
-}
-
-.services .section-eyebrow  { color: var(--gold) !important; }
-.services .section-title    { color: var(--ivory) !important; }
-.services .section-desc     { color: var(--text-on-dark-muted) !important; }
+/* .services background y colores → definidos más abajo (ivory-warm + emerald) */
 
 .services-grid {
     display: grid !important;

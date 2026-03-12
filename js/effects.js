@@ -53,11 +53,6 @@ function initStagger() {
     });
 }
 
-// Re-run stagger after dynamic content loads
-export function restaggerAfterRender() {
-    setTimeout(initStagger, 100);
-}
-
 /* ─── Counter Animation ─────────────────────────────────────── */
 function animateCounter(el) {
     const rawText  = el.textContent.trim();
@@ -91,18 +86,6 @@ function initCounters() {
     }, { threshold: 0.5 });
 
     document.querySelectorAll('.stat-number').forEach(el => obs.observe(el));
-}
-
-/* ─── Parallax on Hero ──────────────────────────────────────── */
-function initHeroParallax() {
-    const hero = document.querySelector('.hero');
-    if (!hero) return;
-    document.addEventListener('scroll', () => {
-        const y = window.scrollY;
-        if (y < window.innerHeight) {
-            hero.style.backgroundPositionY = `${y * 0.3}px`;
-        }
-    }, { passive: true });
 }
 
 /* ─── Reveal already-visible elements ───────────────────────── */
@@ -151,7 +134,6 @@ export function initEffects() {
         initMagnetic();
     }
 
-    initHeroParallax();
     initCounters();
 
     // Stagger after short delay so dynamic content has rendered

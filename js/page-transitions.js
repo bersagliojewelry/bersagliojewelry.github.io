@@ -16,10 +16,7 @@ function createOverlay() {
     el.innerHTML = `
         <div class="pt-panel"></div>
         <div class="pt-center">
-            <div class="pt-logo-wrap">
-                <img src="/img/logo-bj2.png" alt="" class="pt-logo-img" draggable="false">
-            </div>
-            <span class="pt-brand">BERSAGLIO</span>
+            <img src="/Pic/CARGANDO.png" class="preloader-spinner" alt="" draggable="false">
         </div>
     `;
     document.body.appendChild(el);

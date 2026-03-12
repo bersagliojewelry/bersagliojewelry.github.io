@@ -6,8 +6,6 @@
 
 import { wishlist }            from './wishlist.js';
 import { cart }                from './cart.js';
-import { initPreloader }       from './preloader.js';
-import { initPageTransitions } from './page-transitions.js';
 import { initSearch }          from './search.js';
 import { initPWA }             from './pwa.js';
 import { initAnalytics }       from './analytics.js';
@@ -222,9 +220,6 @@ function initializeDevBanner() {
 }
 
 export async function loadAllComponents() {
-    // Preloader runs first — sync, before any async operations
-    initPreloader();
-
     await Promise.all([
         loadComponent('header-placeholder', `${SNIPPETS}header.html`),
         loadComponent('footer-placeholder', `${SNIPPETS}footer.html`),
@@ -233,7 +228,6 @@ export async function loadAllComponents() {
     initializeWishlist();
     initializeCart();
     initializeDevBanner();
-    initPageTransitions();
     initSearch();
     initAnalytics();
     initPWA();

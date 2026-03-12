@@ -7085,7 +7085,8 @@ a.piece-image-wrapper {
     width: 100% !important;
     height: 100% !important;
     object-fit: cover !important;
-    object-position: right center !important;
+    /* modelo y cadena en 60-80% horizontal de la imagen → centrar ahí */
+    object-position: 65% center !important;
     z-index: 0 !important;
     pointer-events: none !important;
     animation: hero-kb-zoom 16s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
@@ -7127,7 +7128,8 @@ a.piece-image-wrapper {
     position: relative !important;
     z-index: 3 !important;
     text-align: left !important;
-    max-width: 680px !important;
+    /* Más estrecho en pantallas grandes: da más espacio visual a la modelo */
+    max-width: clamp(300px, 42%, 560px) !important;
     margin-left: 0 !important;
     margin-right: auto !important;
     padding-top: 160px !important;
@@ -7177,17 +7179,24 @@ a.piece-image-wrapper {
 
 @media (max-width: 768px) {
     .hero-edge-line { display: none; }
+    .hero-bg-img {
+        /* En móvil la franja visible es muy estrecha → alinear sobre la modelo */
+        object-position: 62% center !important;
+    }
     .hero-content {
+        max-width: 100% !important;
         padding-top: 120px !important;
         padding-bottom: 80px !important;
     }
     .hero-brand-badge { width: 44px; height: 44px; }
     .hero-overlay {
+        /* Diagonal: oscuro arriba-izquierda (texto), más claro abajo-derecha (modelo) */
         background:
-            linear-gradient(to bottom,
-                rgba(0,0,0,0.7) 0%,
-                rgba(0,0,0,0.55) 50%,
-                rgba(0,0,0,0.72) 100%) !important;
+            linear-gradient(135deg,
+                rgba(3,3,3,0.92) 0%,
+                rgba(3,3,3,0.80) 38%,
+                rgba(3,3,3,0.48) 65%,
+                rgba(3,3,3,0.22) 100%) !important;
     }
 }
 
@@ -7224,6 +7233,22 @@ a.piece-image-wrapper {
     padding-bottom: 0.08em !important;
 }
 .hero-title-wrap { overflow: visible !important; }
+
+/* ── HERO sub-elements — left-align consistente con el bloque ── */
+.hero-title-line {
+    /* Alinear línea dorada al margen izquierdo del título */
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    max-width: 320px !important;
+    transform-origin: left !important;
+}
+.hero-meta {
+    justify-content: flex-start !important;
+}
+.hero-desc {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
 
 /* ── WATERMARK del hero — eliminar ─────────────────────────── */
 .hero::after,

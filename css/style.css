@@ -4305,7 +4305,7 @@ body::after {
 .footer-logo .logo-text { color: var(--ivory); }
 .footer-logo .logo-sub  { color: var(--champagne-dark); }
 
-/* ─── Preloader ──────────────────────────────────────────────── */
+/* ─── Preloader & Page-Transition spinner ────────────────────── */
 #preloader {
     position: fixed;
     inset: 0;
@@ -4319,12 +4319,36 @@ body::after {
 
 body.is-preloading { overflow: hidden; }
 
-.preloader-spinner {
-    width: 96px;
-    height: 96px;
-    animation: preloader-spin 1.2s linear infinite;
+/*
+ * .loader-wrap — círculo blanco idéntico al logo-badge del header.
+ * Proporciona contraste para que CARGANDO.png (imagen verde oscuro)
+ * sea visible tanto en fondo negro (#preloader) como en fondo verde
+ * (.pt-panel del page-transition overlay).
+ */
+.loader-wrap {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow:
+        0 0 0 1px rgba(201, 169, 110, 0.5),
+        0 0 32px rgba(201, 169, 110, 0.18),
+        0 8px 28px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
     pointer-events: none;
     user-select: none;
+}
+
+.loader-img {
+    width: 80%;
+    height: 80%;
+    object-fit: contain;
+    display: block;
+    animation: preloader-spin 1.4s linear infinite;
 }
 
 @keyframes preloader-spin {
@@ -5155,7 +5179,7 @@ html.lenis { height: auto; }
     pointer-events: none;
 }
 
-/* .preloader-spinner (definido junto al #preloader) se reutiliza aquí */
+/* .loader-wrap / .loader-img (definidos junto al #preloader) se reutilizan aquí */
 
 /* ─── Page hero parallax base styles ────────────────────────── */
 .page-hero-inner,

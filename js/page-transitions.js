@@ -16,7 +16,9 @@ function createOverlay() {
     el.innerHTML = `
         <div class="pt-panel"></div>
         <div class="pt-center">
-            <img src="/Pic/CARGANDO.png" class="preloader-spinner" alt="" draggable="false">
+            <div class="loader-wrap">
+                <img src="/Pic/CARGANDO.png" class="loader-img" alt="" draggable="false">
+            </div>
         </div>
     `;
     document.body.appendChild(el);

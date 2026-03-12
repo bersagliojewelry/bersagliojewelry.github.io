@@ -11,7 +11,11 @@ export function initPreloader() {
     const el = document.createElement('div');
     el.id = 'preloader';
     el.setAttribute('aria-hidden', 'true');
-    el.innerHTML = `<img src="/Pic/CARGANDO.png" class="preloader-spinner" alt="" draggable="false">`;
+    el.innerHTML = `
+        <div class="loader-wrap">
+            <img src="/Pic/CARGANDO.png" class="loader-img" alt="" draggable="false">
+        </div>
+    `;
     document.body.prepend(el);
     document.body.classList.add('is-preloading');
 

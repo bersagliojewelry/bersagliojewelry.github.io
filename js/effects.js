@@ -7,7 +7,11 @@ import { initTilt } from './effects/tilt.js';
 
 /* ─── Custom Cursor (PNG) ────────────────────────────────────── */
 
+let _cursorReady = false;
+
 function initCursor() {
+    if (_cursorReady) return;
+    _cursorReady = true;
     const IMG = {
         normal:  'img/cursor-normal.png',
         hand:    'img/cursor-hand.png',
@@ -202,6 +206,20 @@ function scheduleNuclearReveal() {
             hidden.forEach(el => el.classList.add('is-visible'));
         }
     }, 3500);
+}
+
+/* ─── Early Cursor Boot (no espera a initApp) ───────────────── */
+// El cursor se arranca en DOMContentLoaded para que nunca haya
+// un período donde cursor:none esté activo pero el PNG aún no exista.
+{
+    const boot = () => {
+        if (!window.matchMedia('(pointer: coarse)').matches) initCursor();
+    };
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot, { once: true });
+    } else {
+        boot();
+    }
 }
 
 /* ─── Main Init ─────────────────────────────────────────────── */

@@ -7571,9 +7571,10 @@ nav .logo-badge {
 
 #bj-cursor {
     position:       fixed;
-    inset:          0 auto auto 0;   /* top:0 left:0 */
+    top:            0;
+    left:           0;
     pointer-events: none;
-    z-index:        2147483647;      /* z-index máximo posible */
+    z-index:        2147483647;
     opacity:        0;
     transition:     opacity 0.1s ease;
     will-change:    transform;

@@ -83,7 +83,7 @@ export function initPageTransitions() {
             // Página restaurada desde bfcache — ocultar overlay inmediatamente
             gsap.set(overlay, { display: 'none' });
             sessionStorage.removeItem('bj-pt-nav');
-            document.body.classList.remove('is-preloading');
+            document.body.classList.remove('is-preloading'); // seguridad bfcache
         }
     });
 

@@ -7306,45 +7306,34 @@ nav .logo-badge {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   CURSOR PNG  —  única implementación, limpia
+   CURSOR  —  archivos .cur nativos del navegador
    ═══════════════════════════════════════════════════════════════ */
 
-/* 1. Ocultar cursor nativo en dispositivos de puntero fino */
-@media (pointer: fine) {
-    * { cursor: none !important; }
-}
-
-/* 2. Ocultar todos los elementos del cursor antiguo (.cursor, etc.) */
-.cursor,
-.cursor::before,
-.cursor::after,
-.cursor-follower,
-.cursor-label,
-.cursor-dot {
+/* 1. Ocultar elementos de cursor antiguo (versiones previas) */
+.cursor, .cursor::before, .cursor::after,
+.cursor-follower, .cursor-label, .cursor-dot,
+#bj-cursor {
     display: none !important;
 }
 
-/* 3. Elemento PNG controlado por js/cursor.js */
-#bj-cursor {
-    position:       fixed;
-    top:            0;
-    left:           0;
-    pointer-events: none;
-    z-index:        2147483647;
-    visibility:     hidden;       /* JS lo hace visible en el primer mousemove */
-    will-change:    transform;
-}
+/* 2. Cursor nativo con .cur en dispositivos de puntero fino */
+@media (pointer: fine) {
+    /* Cursor normal para todo */
+    * {
+        cursor: url('../Pic/CURSOR.cur'), auto !important;
+    }
 
-#bj-cursor img {
-    display:           block;
-    width:             40px;
-    height:            auto;
-    user-select:       none;
-    -webkit-user-drag: none;
-    pointer-events:    none;
-}
-
-/* 4. Táctil: ocultar completamente */
-@media (pointer: coarse) {
-    #bj-cursor { display: none !important; }
+    /* Cursor de mano para elementos interactivos y sus hijos */
+    a, a *,
+    button, button *,
+    [role="button"], [role="button"] *,
+    label, label *,
+    select, select *,
+    input, input *,
+    textarea, textarea *,
+    summary, summary *,
+    .piece-card, .piece-card *,
+    .collection-panel, .collection-panel * {
+        cursor: url('../Pic/MANO.cur'), pointer !important;
+    }
 }

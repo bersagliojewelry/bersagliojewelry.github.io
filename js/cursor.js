@@ -1,62 +1,41 @@
 /**
- * Bersaglio Jewelry — Cursor PNG
- * Script autónomo, NO es un módulo ES.
- * Se carga con <script defer> y opera completamente
- * independiente del sistema de módulos de app.js.
+ * Bersaglio Jewelry — Cursor de carga
+ *
+ * El cursor normal (CURSOR.cur) y el de mano (MANO.cur) se aplican
+ * directamente en CSS con cursor: url() — no necesitan JavaScript.
+ *
+ * Este script solo maneja el estado "cargando" al navegar entre páginas.
  */
 (function () {
     'use strict';
 
-    // Solo en dispositivos con ratón (pointer fino)
     if (!window.matchMedia || window.matchMedia('(pointer: coarse)').matches) return;
 
-    /* ── Crear el elemento cursor ── */
-    var div = document.createElement('div');
-    div.id = 'bj-cursor';
+    var styleEl = null;
 
-    var img = document.createElement('img');
-    img.src = 'img/cursor-normal.png';
-    img.alt = '';
-    img.setAttribute('draggable', 'false');
-    img.setAttribute('aria-hidden', 'true');
-
-    div.appendChild(img);
-
-    /* ── Insertar en el DOM ── */
-    function mount() {
-        if (document.getElementById('bj-cursor')) return; // ya existe
-        document.body.appendChild(div);
+    function showLoadingCursor() {
+        if (!styleEl) {
+            styleEl = document.createElement('style');
+            document.head.appendChild(styleEl);
+        }
+        styleEl.textContent = '* { cursor: url("Pic/CARGANDO.cur"), wait !important; }';
     }
 
-    if (document.body) {
-        mount();
-    } else {
-        document.addEventListener('DOMContentLoaded', mount, { once: true });
+    function clearLoadingCursor() {
+        if (styleEl) styleEl.textContent = '';
     }
 
-    /* ── Pre-cargar imagen de mano ── */
-    var imgHand   = new Image(); imgHand.src   = 'img/cursor-hand.png';
-    var imgNormal = new Image(); imgNormal.src = 'img/cursor-normal.png';
-
-    /* ── Seguimiento del ratón ── */
-    document.addEventListener('mousemove', function (e) {
-        div.style.transform  = 'translate3d(' + e.clientX + 'px,' + e.clientY + 'px,0)';
-        div.style.visibility = 'visible';
-    }, { passive: true });
-
-    document.addEventListener('mouseleave', function () {
-        div.style.visibility = 'hidden';
+    // Cursor de carga al hacer clic en un enlace que cambia de página
+    document.addEventListener('click', function (e) {
+        var a = e.target.closest('a[href]');
+        if (!a) return;
+        var h = a.getAttribute('href') || '';
+        if (h && !h.startsWith('#') && !h.startsWith('tel:') && !h.startsWith('mailto:') && a.target !== '_blank') {
+            showLoadingCursor();
+        }
     });
 
-    document.addEventListener('mouseenter', function () {
-        div.style.visibility = 'visible';
-    });
-
-    /* ── Cambio de imagen: normal ↔ mano ── */
-    document.addEventListener('mouseover', function (e) {
-        if (!e.target) return;
-        var t = e.target.closest('a, button, [role="button"], label, select, input, textarea, .piece-card, .collection-panel');
-        img.src = t ? 'img/cursor-hand.png' : 'img/cursor-normal.png';
-    }, { passive: true });
+    // Limpiar al volver con el botón atrás del navegador
+    window.addEventListener('pageshow', clearLoadingCursor);
 
 }());

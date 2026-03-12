@@ -4305,55 +4305,7 @@ body::after {
 .footer-logo .logo-text { color: var(--ivory); }
 .footer-logo .logo-sub  { color: var(--champagne-dark); }
 
-/* ─── Preloader & Page-Transition spinner ────────────────────── */
-#preloader {
-    position: fixed;
-    inset: 0;
-    background: var(--black);
-    z-index: 10000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: opacity 0.6s ease;
-}
-
-body.is-preloading { overflow: hidden; }
-
-/*
- * .loader-wrap — círculo blanco idéntico al logo-badge del header.
- * Proporciona contraste para que CARGANDO.png (imagen verde oscuro)
- * sea visible tanto en fondo negro (#preloader) como en fondo verde
- * (.pt-panel del page-transition overlay).
- */
-.loader-wrap {
-    width: 88px;
-    height: 88px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.95);
-    box-shadow:
-        0 0 0 1px rgba(201, 169, 110, 0.5),
-        0 0 32px rgba(201, 169, 110, 0.18),
-        0 8px 28px rgba(0, 0, 0, 0.5);
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    pointer-events: none;
-    user-select: none;
-}
-
-.loader-img {
-    width: 80%;
-    height: 80%;
-    object-fit: contain;
-    display: block;
-    animation: preloader-spin 1.4s linear infinite;
-}
-
-@keyframes preloader-spin {
-    to { transform: rotate(360deg); }
-}
+/* Preloader & Page-Transition spinner — removed */
 
 /* ─── Hero Section — Phase 1 Enhancements ────────────────────── */
 /* Subtle dot-grid texture on hero */
@@ -5145,41 +5097,7 @@ html.lenis { height: auto; }
    PHASE 4 — Page Transitions · Cursor Redesign · Parallax
    ═══════════════════════════════════════════════════════════════ */
 
-/* ─── Page Transition Overlay ───────────────────────────────── */
-#page-transition {
-    position: fixed;
-    inset: 0;
-    z-index: 9800;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none; /* allows sub-elements to be interactive if needed */
-}
-
-.pt-panel {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-        160deg,
-        var(--black-carbon) 0%,
-        var(--emerald-deep) 60%,
-        #05201A 100%
-    );
-    transform-origin: bottom center;
-}
-
-.pt-center {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 14px;
-    opacity: 0;
-    pointer-events: none;
-}
-
-/* .loader-wrap / .loader-img (definidos junto al #preloader) se reutilizan aquí */
+/* Page Transition Overlay — removed */
 
 /* ─── Page hero parallax base styles ────────────────────────── */
 .page-hero-inner,
@@ -5205,12 +5123,6 @@ html.lenis { height: auto; }
 
 /* ─── Reduced motion: disable parallax & transitions ────────── */
 @media (prefers-reduced-motion: reduce) {
-    #page-transition,
-    .pt-panel,
-    .pt-center {
-        display: none !important;
-    }
-
     .about-teaser-content,
     .about-teaser-stats,
     .brand-statement-inner,

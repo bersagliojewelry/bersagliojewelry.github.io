@@ -14,7 +14,7 @@ export function initPreloader() {
     el.innerHTML = `
         <div class="preloader-inner">
             <div class="preloader-logo-wrap">
-                <img src="img/logo-bj2.png" alt="" class="preloader-logo-img" draggable="false">
+                <img src="/img/logo-bj2.png" alt="" class="preloader-logo-img" draggable="false">
             </div>
             <div class="preloader-label">
                 <span class="preloader-brand">BERSAGLIO</span>

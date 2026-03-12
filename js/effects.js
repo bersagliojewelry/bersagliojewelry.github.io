@@ -1,79 +1,10 @@
 /**
  * Bersaglio Jewelry — Interactive Effects Engine
- * Custom cursor · Magnetic hover · Stagger reveals · Counter animation · 3D Tilt
+ * Magnetic hover · Stagger reveals · Counter animation · 3D Tilt
  */
 
 import { initTilt } from './effects/tilt.js';
 
-/* ─── Custom Cursor (PNG) ────────────────────────────────────── */
-
-let _cursorReady = false;
-
-function initCursor() {
-    if (_cursorReady) return;
-    _cursorReady = true;
-    const IMG = {
-        normal:  'img/cursor-normal.png',
-        hand:    'img/cursor-hand.png',
-        loading: 'img/cursor-load.png',
-    };
-
-    // Pre-cargar para evitar parpadeo al cambiar estado
-    Object.values(IMG).forEach(src => { new Image().src = src; });
-
-    const wrap = document.createElement('div');
-    wrap.id = 'bj-cursor';
-    const img = document.createElement('img');
-    img.src = IMG.normal;
-    img.alt = '';
-    img.draggable = false;
-    wrap.appendChild(img);
-    document.body.appendChild(wrap);
-
-    let state = 'normal';
-
-    function setState(s) {
-        if (state === s) return;
-        state = s;
-        img.src = IMG[s];
-        wrap.dataset.state = s;
-    }
-
-    // Posicionamiento directo via translate3d → GPU compositing
-    document.addEventListener('mousemove', (e) => {
-        wrap.style.transform = `translate3d(${e.clientX}px,${e.clientY}px,0)`;
-        wrap.style.opacity = '1';
-    }, { passive: true });
-
-    document.addEventListener('mouseleave',  () => { wrap.style.opacity = '0'; });
-    document.addEventListener('mouseenter',  () => { wrap.style.opacity = '1'; });
-    window.addEventListener('blur',          () => { wrap.style.opacity = '0'; });
-
-    const HOVER = 'a, button, [role="button"], .piece-card, .collection-panel, label, input, select, textarea';
-
-    function bindHover(el) {
-        if (el.dataset.bjCursor) return;
-        el.dataset.bjCursor = '1';
-        el.addEventListener('mouseenter', () => { if (state !== 'loading') setState('hand');   });
-        el.addEventListener('mouseleave', () => { if (state !== 'loading') setState('normal'); });
-    }
-
-    document.querySelectorAll(HOVER).forEach(bindHover);
-
-    // Re-bind elementos añadidos dinámicamente (header, piezas, etc.)
-    new MutationObserver(() => document.querySelectorAll(HOVER).forEach(bindHover))
-        .observe(document.body, { childList: true, subtree: true });
-
-    // Modo loading al navegar (links que cambian de página)
-    document.addEventListener('click', (e) => {
-        const a = e.target.closest('a[href]');
-        if (!a) return;
-        const h = a.getAttribute('href') || '';
-        if (h && !h.startsWith('#') && !h.startsWith('tel:') && !h.startsWith('mailto:') && a.target !== '_blank') {
-            setState('loading');
-        }
-    });
-}
 
 /* ─── Magnetic Hover ────────────────────────────────────────── */
 function initMagnetic() {
@@ -208,19 +139,6 @@ function scheduleNuclearReveal() {
     }, 3500);
 }
 
-/* ─── Early Cursor Boot (no espera a initApp) ───────────────── */
-// El cursor se arranca en DOMContentLoaded para que nunca haya
-// un período donde cursor:none esté activo pero el PNG aún no exista.
-{
-    const boot = () => {
-        if (!window.matchMedia('(pointer: coarse)').matches) initCursor();
-    };
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', boot, { once: true });
-    } else {
-        boot();
-    }
-}
 
 /* ─── Main Init ─────────────────────────────────────────────── */
 export function initEffects() {
@@ -230,7 +148,6 @@ export function initEffects() {
     const isTouch = window.matchMedia('(pointer: coarse)').matches;
 
     if (!isTouch) {
-        initCursor();
         initMagnetic();
     }
 

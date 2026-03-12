@@ -31,6 +31,9 @@ function animateEnter(overlay) {
     const panel = overlay.querySelector('.pt-panel');
     const center = overlay.querySelector('.pt-center');
 
+    // Make logo visible before animating out
+    gsap.set(center, { opacity: 1 });
+
     const tl = gsap.timeline({
         onComplete() {
             gsap.set(overlay, { display: 'none' });
@@ -39,7 +42,7 @@ function animateEnter(overlay) {
         },
     });
 
-    tl.to(center, { opacity: 0,    duration: 0.22, ease: 'power2.in' })
+    tl.to(center, { opacity: 0,    duration: 0.22, ease: 'power2.in', delay: 0.3 })
       .to(panel,  { yPercent: -100, duration: 0.72, ease: 'power4.inOut' }, '-=0.1');
 }
 

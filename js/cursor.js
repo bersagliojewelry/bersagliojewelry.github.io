@@ -18,7 +18,7 @@
             styleEl = document.createElement('style');
             document.head.appendChild(styleEl);
         }
-        styleEl.textContent = '* { cursor: url("Pic/CARGANDO.cur"), wait !important; }';
+        styleEl.textContent = '* { cursor: url("/Pic/CARGANDO.cur"), wait !important; }';
     }
 
     function clearLoadingCursor() {

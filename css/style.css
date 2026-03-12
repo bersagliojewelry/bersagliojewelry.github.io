@@ -4305,7 +4305,109 @@ body::after {
 .footer-logo .logo-text { color: var(--ivory); }
 .footer-logo .logo-sub  { color: var(--champagne-dark); }
 
-/* Preloader & Page-Transition spinner — removed */
+/* ─── Preloader — CSS-only diamond spinner ────────────────────── */
+#preloader {
+    position: fixed;
+    inset: 0;
+    background: var(--black);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    transition: opacity 0.6s ease;
+}
+
+#preloader.preloader--hide {
+    opacity: 0;
+    pointer-events: none;
+}
+
+body.is-preloading { overflow: hidden; }
+
+.preloader-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    position: relative;
+}
+
+/* Diamond shape */
+.preloader-diamond {
+    width: 40px;
+    height: 40px;
+    transform: rotate(45deg);
+    position: relative;
+    z-index: 2;
+}
+
+.preloader-diamond-inner {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 50%, var(--gold-dark) 100%);
+    box-shadow:
+        0 0 20px rgba(201, 169, 110, 0.4),
+        inset 0 0 12px rgba(255, 255, 255, 0.15);
+    animation: diamond-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes diamond-pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 20px rgba(201, 169, 110, 0.4), inset 0 0 12px rgba(255, 255, 255, 0.15);
+    }
+    50% {
+        transform: scale(1.08);
+        box-shadow: 0 0 32px rgba(201, 169, 110, 0.6), inset 0 0 16px rgba(255, 255, 255, 0.25);
+    }
+}
+
+/* Orbiting ring */
+.preloader-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 80px;
+    height: 80px;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    animation: ring-rotate 2.4s linear infinite;
+}
+
+.preloader-ring svg {
+    width: 100%;
+    height: 100%;
+}
+
+.preloader-ring circle {
+    fill: none;
+    stroke: var(--gold);
+    stroke-width: 1.2;
+    stroke-dasharray: 180 264;
+    stroke-linecap: round;
+    opacity: 0.7;
+}
+
+@keyframes ring-rotate {
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Brand text */
+.preloader-text {
+    font-family: var(--font-display), serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.35em;
+    color: var(--gold);
+    opacity: 0.6;
+    margin-top: 12px;
+    animation: text-fade 2s ease-in-out infinite;
+}
+
+@keyframes text-fade {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+}
 
 /* ─── Hero Section — Phase 1 Enhancements ────────────────────── */
 /* Subtle dot-grid texture on hero */
@@ -5097,7 +5199,41 @@ html.lenis { height: auto; }
    PHASE 4 — Page Transitions · Cursor Redesign · Parallax
    ═══════════════════════════════════════════════════════════════ */
 
-/* Page Transition Overlay — removed */
+/* ─── Page Transition Overlay ───────────────────────────────── */
+#page-transition {
+    position: fixed;
+    inset: 0;
+    z-index: 9800;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.pt-panel {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        160deg,
+        var(--black-carbon) 0%,
+        var(--emerald-deep) 60%,
+        #05201A 100%
+    );
+    transform-origin: bottom center;
+}
+
+.pt-center {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Reuses .preloader-diamond and .preloader-ring defined above */
 
 /* ─── Page hero parallax base styles ────────────────────────── */
 .page-hero-inner,
@@ -5123,6 +5259,12 @@ html.lenis { height: auto; }
 
 /* ─── Reduced motion: disable parallax & transitions ────────── */
 @media (prefers-reduced-motion: reduce) {
+    #page-transition,
+    .pt-panel,
+    .pt-center {
+        display: none !important;
+    }
+
     .about-teaser-content,
     .about-teaser-stats,
     .brand-statement-inner,
@@ -7117,7 +7259,7 @@ nav .logo-badge {
 @media (pointer: fine) {
     /* Cursor normal para todo */
     * {
-        cursor: url('../Pic/CURSOR.cur'), auto !important;
+        cursor: url('../img/puntero.cur'), auto !important;
     }
 
     /* Cursor de mano para elementos interactivos y sus hijos */
@@ -7131,6 +7273,6 @@ nav .logo-badge {
     summary, summary *,
     .piece-card, .piece-card *,
     .collection-panel, .collection-panel * {
-        cursor: url('../Pic/MANO.cur'), pointer !important;
+        cursor: url('../img/manito.cur'), pointer !important;
     }
 }

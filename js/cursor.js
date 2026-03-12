@@ -1,7 +1,7 @@
 /**
  * Bersaglio Jewelry — Cursor de carga
  *
- * El cursor normal (CURSOR.cur) y el de mano (MANO.cur) se aplican
+ * El cursor normal (puntero.cur) y el de mano (manito.cur) se aplican
  * directamente en CSS con cursor: url() — no necesitan JavaScript.
  *
  * Este script solo maneja el estado "cargando" al navegar entre páginas.
@@ -18,7 +18,7 @@
             styleEl = document.createElement('style');
             document.head.appendChild(styleEl);
         }
-        styleEl.textContent = '* { cursor: url("/Pic/CARGANDO.cur"), wait !important; }';
+        styleEl.textContent = '* { cursor: wait !important; }';
     }
 
     function clearLoadingCursor() {

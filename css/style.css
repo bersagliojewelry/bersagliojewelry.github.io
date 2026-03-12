@@ -4308,18 +4308,12 @@ body::after {
 /* ─── Preloader ──────────────────────────────────────────────── */
 #preloader {
     position: fixed;
-    inset: 0;
+    top: 0; left: 0; right: 0; bottom: 0;
     background: var(--black);
     z-index: 10000;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-#preloader.preloader--exit {
-    opacity: 0;
-    pointer-events: none;
 }
 
 body.is-preloading { overflow: hidden; }
@@ -4342,9 +4336,6 @@ body.is-preloading { overflow: hidden; }
         0 0 0 1px rgba(201,169,110,0.4),
         0 0 40px rgba(201,169,110,0.1),
         0 8px 32px rgba(0,0,0,0.5);
-    opacity: 0;
-    transform: scale(0.8);
-    animation: pl-logo-in 0.9s cubic-bezier(0.16,1,0.3,1) 0.15s forwards;
 }
 
 .preloader-logo-img {
@@ -4369,18 +4360,13 @@ body.is-preloading { overflow: hidden; }
     font-weight: 500;
     letter-spacing: 10px;
     color: var(--ivory);
-    opacity: 0;
-    transform: translateY(8px);
-    animation: pl-text-in 0.65s cubic-bezier(0.16,1,0.3,1) 0.8s forwards;
 }
 
 .preloader-sep {
     display: block;
     height: 1px;
     background: var(--gold);
-    width: 0;
-    opacity: 0;
-    animation: pl-line-in 0.55s cubic-bezier(0.4,0,0.2,1) 1.2s forwards;
+    width: 48px;
 }
 
 .preloader-sub {
@@ -4389,19 +4375,6 @@ body.is-preloading { overflow: hidden; }
     font-weight: 400;
     letter-spacing: 7px;
     color: var(--gold);
-    opacity: 0;
-    transform: translateY(6px);
-    animation: pl-text-in 0.55s cubic-bezier(0.16,1,0.3,1) 1.4s forwards;
-}
-
-@keyframes pl-logo-in {
-    to { opacity: 1; transform: scale(1); }
-}
-@keyframes pl-text-in {
-    to { opacity: 1; transform: translateY(0); }
-}
-@keyframes pl-line-in {
-    to { width: 48px; opacity: 1; }
 }
 
 /* ─── Hero Section — Phase 1 Enhancements ────────────────────── */

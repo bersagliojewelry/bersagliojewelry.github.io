@@ -1,37 +1,309 @@
 /**
- * Bersaglio Jewelry — Preloader
- * CARGANDO.png embebido como base64 — sin dependencia de ruta.
- * Rotación CSS pura.
+ * Bersaglio Jewelry — Preloader v2
+ * Cutting-edge loading screen with:
+ *   • Canvas particle constellation that converges → explodes on exit
+ *   • SVG morphing diamond ring with glow pulse
+ *   • Real progress tracking with shimmer text
+ *   • GSAP-powered exit (zero flicker, GPU-accelerated)
+ *   • Aurora gradient background
  */
 
-const SPINNER_SRC = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEQAAABECAYAAAA4E5OyAAAAtGVYSWZJSSoACAAAAAYAEgEDAAEAAAABAAAAGgEFAAEAAABWAAAAGwEFAAEAAABeAAAAKAEDAAEAAAACAAAAEwIDAAEAAAABAAAAaYcEAAEAAABmAAAAAAAAAGAAAAABAAAAYAAAAAEAAAAGAACQBwAEAAAAMDIxMAGRBwAEAAAAAQIDAACgBwAEAAAAMDEwMAGgAwABAAAA//8AAAKgBAABAAAARAAAAAOgBAABAAAARAAAAAAAAAA2SSUNAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFYWlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI2LTAzLTEyPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkRhdGE+eyZxdW90O2RvYyZxdW90OzomcXVvdDtEQUhEc1VMbDFLMCZxdW90OywmcXVvdDt1c2VyJnF1b3Q7OiZxdW90O1VBRVhURkhQUGZjJnF1b3Q7LCZxdW90O2JyYW5kJnF1b3Q7OiZxdW90O01hcmlhIFJvbWVybyYjMzk7cyBDbGFzcyZxdW90O308L0F0dHJpYjpEYXRhPgogICAgIDxBdHRyaWI6RXh0SWQ+N2JkOTljYmMtODljNS00MDU5LTgzZTktNGNjOTc0ZDAzOGY1PC9BdHRyaWI6RXh0SWQ+CiAgICAgPEF0dHJpYjpGYklkPjUyNTI2NTkxNDE3OTU4MDwvQXR0cmliOkZiSWQ+CiAgICAgPEF0dHJpYjpUb3VjaFR5cGU+MjwvQXR0cmliOlRvdWNoVHlwZT4KICAgIDwvcmRmOmxpPgogICA8L3JkZjpTZXE+CiAgPC9BdHRyaWI6QWRzPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpkYz0naHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8nPgogIDxkYzp0aXRsZT4KICAgPHJkZjpBbHQ+CiAgICA8cmRmOmxpIHhtbDpsYW5nPSd4LWRlZmF1bHQnPkRpc2XDsW8gc2luIHTDrXR1bG8gLSAxPC9yZGY6bGk+CiAgIDwvcmRmOkFsdD4KICA8L2RjOnRpdGxlPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpwZGY9J2h0dHA6Ly9ucy5hZG9iZS5jb20vcGRmLzEuMy8nPgogIDxwZGY6QXV0aG9yPk1hcmlhIFJvbWVybzwvcGRmOkF1dGhvcj4KIDwvcmRmOkRlc2NyaXB0aW9uPgoKIDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PScnCiAgeG1sbnM6eG1wPSdodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvJz4KICA8eG1wOkNyZWF0b3JUb29sPkNhbnZhIGRvYz1EQUhEc1VMbDFLMCB1c2VyPVVBRVhURkhQUGZjIGJyYW5kPU1hcmlhIFJvbWVybyYjMzk7cyBDbGFzczwveG1wOkNyZWF0b3JUb29sPgogPC9yZGY6RGVzY3JpcHRpb24+CjwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9J3InPz75yFV4AAAYPUlEQVR4nN1ceVAbV5rnMObQfXEYG2yMsU2CY1sgcQufYHMf8pX4iLHBBp2IwySbYTLZP7JJZmpna1OpTM1MNtnZSq1rZyezs5WdnU3G43Hs2Bh8cAlJCHH6NvGRxIvUrbffa3XLDZaA+KJqv6pXfb33+vt+7ztfCwIC5pvk8pCw/JQcXv6LGXAVPN/szDvxC9d+wiuTI355KhIWrvvlfPPztCgwoC0giDrOhdRqShNE2+WF/Kp0JChTuPkVCsSrVCJOvjyP3eepv/s50HRGgmYdoVItwAd+cZpWoM5EwrJ0l6gsneBXZiFuofIwu88s9PBdCPhA8w8KxYBA9ZIwojBFLihMEbHv+yVaWGGpsk6wIxNhMISlmYSgKhsJihXV7D6zvZu/NVkcsWn1OnFBIn9O735m5FHTAF7h2hXcEnkXtywVcUrX20Tb5Cns5z6JAaREUS8CDRGXZhCi0ixCVJmNxIWKg+w+M71bUCRfzytLHeSVg6mVpHUI8l9aSveYXUufOtFMARj/zNuZhQSlGZO8nZkooiLtVMDDaOF7tbyApAIgWUgCgIjLsglJZQ4SFylfZffxQYGe1wcESSqyTot2qZCoPGdSsDsXcYvlv2Lz9ryJYoxbovgPAdi+sDwT/ECmS7ADzkvkOqqHP8fI1pAd2UhShgHJAkBUSLxtFkDoOaOKM7UytQpJKnJdYmjCKhXiFaV9xubt+RLNmKBUXo1tX1SaTUrKoKlzkKBKaeeqkqR+maOFlQAg4h05AEgmISvNpgARzAwINVdMkVwaXZk5KAVApOU5pLhcRQrhnLtdXs3m7XkTxZwazENUrPyrENs/XuXybEK0Kwdxy5Q/88scoyFFAIiaBgRMRlqZCxqS6h+QtjbKFCLLsv4hCkxFVpFD4CbZAWZTlvXn6bw9f6KFFRcotoLJYKbckopstxj8grBSeU+U/9ILVL/pNs1oSFFqvUSd7QUEhPMPCD1HbIFyTVRF9n1ZVS4GxC2tzHGLy7OQOD91M5un+SPG4xcqPxGrcxHWEKrtBNMpV/q2aS8ginpJVRYFSGRZDg2IX5Oh5oguT/9D5K48AAMDCBq5Mw8JizI+YvMy30QxIVKlvigqzfxWXAErDisnqcx2C0FTRIXK7VQv9soxgGzDGpIJINIagqNMvvIAuw97rKQ0vVhWlYOgnxuObqwloJV3xQVrk9m8zD/RDPNLMn8k2KmitERaAQ52JzBckXU+MTExlO7p0RRaWFFB2lEx1hAMSDn0B0CE2+T72H2YMXgOWWVmhwzml1XmktCIyF0bIG/JeIPNw7Mhynl5HBj9otmclCcEq+RSfmmGRQirCKAA0wDMrmwkLE7XTGGaAWS7olZclQF908HMMkkhaFfE1mmAMGG2PEMXBQBjIGRVeaR0Rx5EmKw+nKmyefAvUkAQQp78CI5B6InMC9cI6llKc299otgt2pGLIw4JpgOM54KDzR4XbU1d4mWc7isrSt0rhuJOXKacFJdlOAUVmYi/ee1uqhdrIWILUhZHVmaNRYJ2RFblkpFVKjISfIe0MGMXq69v1oF3dPxxtxVo1CRF8lWQXP0rv2z9F/xSuRbifoTnOWgNHfr8EBYgUFiW+aVQje0bnCs4PvGuXJye/9Q7B23rYhBUVJk+LgIHLITGK08bC1ckLqbn8r5rUVnWz6MAgEhsJmoVEblzI5KV5ZwIeKgVPrUDA3GcBuPOmXTx96cFjc7TYf/9v2cEn97rXLGa6jODplCTylTJXKE6/aJkNyRbO0AYSMcF5YrzohJFobcnXhFfE9Erxdku34BXGwCBpCmbFME5tzz9VnjhS7Hed9HjZUWZW4Ulyj8KShWfCwrXekInq5wXb3wpVgpjIbyCdqjAkYJ2QL4SVZiVx37nFCDAJBggUMeHId93L93nPC+woR4OcncFE8gWglwXZV3mz0p4dH8fgNIMRlZmrxHvynGKIBUHYVzYtiU4m1TjxCv9U3GJgvHogT79C72qwiLlLwVg54LSLKcA8gROmeJ2+MYVDwGZenxkYZhj+OZ1iyB63RJXUiHdKQVNkZRk/pLNMwsIyjwYAb+/KM+a7Ij+ApnDEboU7CbORRCu8xEuoj3QSVrCXd8NLJczAPrgg9EQFRdyiEuylzchaeUGl7Qil6BaZQ4pgwJKqs74TlKq/PGiTWkSLwBTV4maRwKCcIuVnREQRSLKlEREUWqTh+vpAHq1IdCH1nlK/G2K13jFGW5ROZhhYUbXopwXlrCf00IFM+o/0ZkR/3177AfEZTGJ+iIQ0R5BkucXkkRHKEl2hrmQPRw5u8Xm4VOe7QrfGsJCXFqWliSuzPpSunMDwt5cglNkKtQBKFXgKMEnSCsyHJGlaXvAQYZRY6eaEfUC0Wa5QLRVuTOS2RLwHwkCZ3hGEV+1LlW0WbE7AeZkz4U80YN6762zBfzvziYYnO2R36D+cER2hJFkRwRBdIS7yc5QAvWGu5GNi1yXROfuX05JocGYNdp4mZMUZ78CZbmNCnHYfispDw/pMoCzQ+WO3I3VOP20aHtqpg/Bpgv5JPXF9LGBtDD0EQV9+3X8dme7pAeZuYjsjHCT7SEABMdNYFAuh3mAuBw+cr87wXDiRNsC9vjZiR1NIMJIijPfAmDuUPZbqSKllXkebanIAmAAlMpMt6hM8RHkCpHTBPCE2Jkj09x58oTrKWB817lk0YMzUb9FXdhPBLnBNDAQJAXEhVAS2XgABP/+g8uy9765GC+kxoJWtT1GHhJIC0K9OGqLYpmwJPM4ODeXdMdGMBkABpqkIhcahNfdEDohGsXIYyK842ebn+4THx8ftnLJykX0/Vk3jBkwuv5zj+jBGX436gtB5PkwF3EefERHOAARRiBzKCJ7w4kHFwR/uNeVtIoZx3a6j0tTgJHkK/PEJdkdYjXWlg1uWTkAgkv+skwnvyIdCbasraJG+U+WppqSXB6yatEqydq4RBy9ggMCpvgh3/nFCU9i96BnRQ2y8BDxddAk2U45TQJ1hVLm8eCioPvbC7HbmDE4DD9Zdjqd2GYEdYWgOKNGVJJ9RazeAJqRQ+LQyitTOgVbU+Se/j5fzggYJBAIhIt4vKQ4QWRCStyKhNTFSWnLRaIlscLINXER0hiYJGTaGC8xOcY33bF5RDcPoc4QhC4Eu5E1GE1e4t6+fzHaiBweZ0+l6XNwnE9C3lXkbFkTyS9Kf49TqpzglqZ/F1GoeM2fEMy9gwcP8pKXrVAIw8LiRSIRFTHWRK3hrFu8PBGfy6AkigkTxSUvScpOT0/3W6d4fchFyZvOC5zJyYucu99eFHxw66wn032ylP2HUyDbJHDyFF6gWOx95qs/kFar5dfurd6ekbBmivONCojiLAnlL6fvMasZpqmuqThW35CELyCS+LX7O11xCROdS+OZ66fhJx6PsFlMNQ2/TBQUaEN3l+1WlZeXx+BrwXKpnKda8aYoZ+WRRWsSi6PWL2vlZ8Tv5m1aJWHGvP322wL94SPb1Fu3zqop9PnTMw9YgeATJ04s+KGNXjlvweaHAg+oD6RUVFSsYN0L5ZWuv8wrWnccMiRRfGJsOic7YVPolmU9EXlL85lO773+1hLtgaM4z/ELNp2cBVKAnAhY8IMbmmZaM6njXGiG8dT9OnUd99DLh3KKiooeVs1A4IT/nVOSStUlq2NjKbAWbE/6NGTr8lPe8SDo3772Rv7rjY3LZ3rXk5rIlPH4JVarVdXX03O4q6urtru7+2gvtO5L0C5frsOtF877+vrqcMPPzL3mIxaLZZ/D4Vjqj9E2WnDTUV2a9vDRh9ksbWb8cuUfuEWp/4TPExISKECCi1f/Iqgg6Tx7/E/+5icpbzS9sWE2Ye5+JVn54Jzo6INTUZoHJ2XQxJr7J6M0351cVA/X9U649twXah58GX702y9Fh++cktRePxmz9URb28Mty8GBwfeHh4fR0NCQGxoacjg8bciBhnGDZyO4jYx4G9xz46Pdbr8zOjRUSIPiM9Tqa/V5DYfqk7xC0oBwStI+C98upwDJjk6UReSvilm4ffXlkC2rpmz8qNVq7lvHXt/8rsnE8QEGNdfdc3FFk+2C+6g3FKFuqFm6wxDq4iDUI4AWge/BkQ9HuNe9ELJauL4A5xciSNQZju78hU/xETA+Pp49NjaGYLXd0FygAURfXy+0HsJs7oVmfqR5+lDNeeXqVTQ6OvpHf6vXtr8trHZfrWLPnj0PP4TTgEQUrf+MUyT/PeVDVsbnhauW/kt47rJ36H7eZLCmpiaireX1vH9sa+NOB5s5cfaK/owsYVDZLph0nV+ACzqC7ODiNB5aCH0dBo1HuM6HEC68FXA2jHCeDXNNnlvodl8IRfe+kuYEXB+/nn3lyhUEJoP6+/sJTzNTzWzuIwEAX40Cpre314XHDg8N/ddMgBzcdTC1sLDwISC0inO3rf+Et2nt27IYUXbkqpgtkJBwwrNiP+JvjP85W+C6ujpua0Prpg/b2iJ8vQMTaRP+Cdm5AMhCJ3me6yLahSA4gAHlPtkZ7qLK/s4QF3keqt92DuFqh5qnPZQgzgFQnRHIfXkh+v6MKIuaDMzhQ8oUaDMYZZkGcz3sMRPKdBjzGhwcRJb+/hsOm63Ao74+TSZAc+BIzsGXD66k+3hTctGGlD28vGQTn88Xx0XFLcP3OBuT1oRtX+EOzfFGmsBXXnmFY6o35bXVPAoIYzIPbPEFzh7hXWSFzNXMcyMzmIcZTKIfTKcfn4Pp4Ht92Hx4HtPBJnWZA+YVir7vjPhwysQjdrvCYrYcsJqtr8LqHzT3mF/FTpNqfX37QHP24tbX07cfnh3Az6FflaPHEc0SdBqznnt1+w690HBYy94iCAB0eJxta0+Gl6ZRX+wTZTIqisjS4qODi1ahBRsTfsTMU1ddl3j0wOE0f9rBONUHlsiEB90xh+53iPV3z0l197/m6e62C/UTX0v1E6ehnYL7p6N0E1/JtPdOR9fdOxVZe++MtPreGW7WFP6fYdilCFezNXsO5mpf1np+1ALOMjouOplXmPbnsMK0X+NbS4VCKtMUFKRs4hS/QHBVSdn4GvxHyNFXDmfuV6uj6emefdilhQp6jKQsGIOBW9ssex6HKve9cHDX3lR8LktO5soyXsjkliguc7av/7e4OGlMdMrSXElG0ir+xuSPBVuSjcw44z5j7N7Kvetmmhu/m+LhMROz40+r5sEgsv3GTJoCoTPYUKPdatKZXsTX4uzk5Nh8eWFs/kt50Vmrty3NWLNXqHxxDVfu/RlFwDvvvBP946Yf7VSr1Ex0mWlTmgJmtoV5JoQFP378uBfV647r0eBrYmcY4vnVT1vbQpPGVF2o2vIi+/6WqCiOUhrLpPWUQHFxcSKTwVT1/vvvP7KhPJ0MNTUx1dXVUcy1em5fG58OYSCYVYBQLRscGvyZfXDwJmSs94YGh9rw/Zk0BcYuWLfyxdQVUcsUMTFcqQr8iwpMaBlPmoTHrZRIeEv4/OUrFq9Q4ISMHua3qKuvr2/V6ervGvSaG3q97t2amgYp/Z4g9bP83ss2DzguGB0aPQzZ7Pi16zeQ3eFwO4Yhsx0eIiy9vUqmv5+pPB+gxGJ+dJgwfpFUmrQufsXqlNjE9FUR0piEMFEc3jwKeAiC35KgvqY+1Wg0OhsbTcjU2OA+dqwFGRsM40a9vhY7Y6bvUzUj2mkGMat+ZWQk1zE4eO4aZKgjI6Nui3WAsNoGCIvV4hwdG0cDAwMV9LiZVmeKkOmLk8XZiWuTpz3zu4XIrHyDXl/W1NSMDIYGZ0ODiWhoMJLNzY0AzDHUYDR2NjYaNjNzsWV4LKKBCGYmgWRsOZjF8fGxscmrV68gi9VKWq02kgHk5u1byD4w9DWYUSgzfg6vofrI5fIQDAp9by6r6dlwKigI1esbvmp97XXQjAYCt4aGBhK31tZjqKWlyQka9FutVuutlB/Lv9BhzGMeN2/yICv9KZjD3es3boAG2ElwoKTFZiUxKKPjY2Ayg/jeB9insMHARzo8P7HK0qrv/QzBHMGHSPRa7QdGowk1NrUgA2gJBsRkMpFgSuRrrx1DjSbjXZNR/y7esWPNNTeeWMIEj4+MaBxDjqEbN28g0A631WYDbbBSgAxBmk/XQJ+DmciZsWww2FryZOr6yAevR8xKX6dXGrT6PzW1NCNTU7PbaARQKG0xkk1NTW4MDJw7jDpNHcvZzswTs5L2kZEUh2P49I3rN9Hw6Aj4CSths9nARKzEgN3uvnbtGhqw2frgurKjoyOEGcsGAx/hOd8x4Ng1YB5InYWBmT5lMpqQodFo9u3X7xey77PMAHxL20K9RqM2GIx9LcdakcnU6AZtIbC2mEwNBJgQ5XgbDPq/NDXpqdrKr6Z4hThr5Y+OjXXfmphAVpvdBT6C7Ldgf2ElsUbg/Q8Ap7Wrq0vEAMHOSZh5Rnp6xCNDQ6dugJmByREOu93oi4G2h998Hsl2mbl0Gp0JC9bcjB2o4QL4hVj2cw8Yam860KbXC/VafWuDseEbysFiTTF6fAs0J/YvRiM1T7jfhWK0Y2JiIgUcp9NisWIwXP39ZnJ0bBRBZUv2m80fg3lQCVQbags6jo4Ho4CppsCAc3V0/N2JiTvIYhlwOoagah69cotJ3liC+M08mT6gGYsaG5tuQsNgTLa2tsIKG37hC1w8lg2Msa4u0aDVfWQyNRHNLcco/2Iw6F3gS1wAzCQAvNrPPA8ZAF8RNjo83D4xcRuBwyTGrozjzaPTUOluYvphof1Ut9TEUDmnDY+MOG0Dg6jfYiMH7AMIkrfrMLe3MmbG6+vr83Va3ec6rfZzfD79uU6ni2owma6C2mNASNxAXZBRq1Xh576Sr+nRpFFj2KzXG//a1NwCjreZaAGzAfM7xeQqfhbmIVL2PnsS+IjfWAesfxwYsNSyQmnQTBGDEWJoaPh3V8HPWKw2wtxvIa4AqDab9S1mDvYKNsHqY7WmVfsaMBnH8OLtpzf+3bEWrOZGAjdwksigN3zhjw+2PMwcWHiD1nBIpzX8TqfTfAiALGPz7JemRwfWvRnTYOb5+Ph46VVI2rDvMfdbyUHHMGiHYxB8ThQzFx0+A5pNpv2UCYD64oyzqbER6err9+BneIUZPnCd0tjQNNjY2IyMHi1xY3+i1+vV+Dnbh/ki9lwsmnvUYyPLTs5mAMMbVcbGRi6BU6ZMpbfPQo6MjiJwqAfZoDGANBgaDrUeowDBK4/DI9LU1R1g92FMwqjTVVOaAf1wawTwwFF2t9S0TPkBzQzk9S/MdsGcAfmh5NWO0fGWW7dvIzNEJdAOAm872mwDf2U5LabqpYQFUzjc6jEVgokimtraA+w+ASxBIbc42Qz9jR4ACWxmULe04mfPtJD7IcT4FHCYq0dGRu7a7Q5k7re5ARDUb4WM1m7Jwc/Zas0ICypf29LS4gUEawBElVfZfTAxwpr0plyoW0gABjtYnGPgsd/APDPnFM+TGECg9P/11Ws3ENYM7EhHRiE62Sy/YfdhiBHWoNMdwYAwzhKbQV1d3UF2H9YYag4o2j7BmgFmQwAoBB5v0Bl+xe4zb8SYChR+W/BuPCRw7l6zBVfAkNTZbnZ3dy/3xahXQ7Tao3MFhLF5zaFDy0ArbpigLx2G8Xhk0Bg24ufzZjqsND1oeGj45Nj4OOrvtxF95n4CO1W7zfYm/fwRBhlhtb4AOXLEJyCYvGW/wfBmC+VLPOPoDBb/AdFMCd+zJUbQa9fGD12/fgP1ma1kn9lC2h0OCLP2vrNnz/Lpfr42eB7REKz+jZB8zQRIAC0o/k4DmWs3JFlIbzSQOr2exCEb6hjqb37nRUu8NcvY8G/xxhCA4eozm11DI8O43qmm+/hkjBEWapS6Fs/q0oBgDfFtMgwxwoLf2E8DQoBThVTchEDjfk8zNy8a4nGmQ2Mf37p9B/X29U/i77wAxhf08xn3VfFRp9HUNbMAgRQdHT169JEo44OouUGz/ucY5DFanX6yCTRNo9X8mh77/J0r81KbbSTRZhtsHxiw45qnGwBhfgLllylGWAixR6hkiwVIbd0jeYjfd4NzTYI6qEdvMIJ26M6ApixlP583unrpEgfnIWazmfrrgtlUlhEW6onDGBAQhIAijgQniY4cObKf3WcGYn4ZINDW1ibjXwg8uSRPgR5nZ4zlQ6pxWa/X61wAiAuHTy8gc/tnCFPeO++awdD0nfnZyFufQAmPAdHpdQgAAdMxorqaGuqb7lyFYwExD786fAYEZfz7OLnCgGg12r+nb///EO4xKRCc63rIUNfONyOY/g+7Q1qryrIGcAAAAABJRU5ErkJggg==';
+import { gsap } from './gsap-core.js';
 
-export function initPreloader() {
-    if (sessionStorage.getItem('bj-loaded')) return;
-    sessionStorage.setItem('bj-loaded', '1');
+/* ── Brand colours ──────────────────────────────────────────── */
+const EMERALD = { r: 61,  g: 155, b: 106 };
+const GOLD    = { r: 201, g: 169, b: 110 };
+const IVORY   = { r: 245, g: 243, b: 237 };
 
+/* ── Particle system ────────────────────────────────────────── */
+class PreloaderParticle {
+    constructor(w, h, cx, cy) {
+        this.w = w; this.h = h;
+        this.cx = cx; this.cy = cy;
+        this.init();
+    }
+
+    init() {
+        const angle  = Math.random() * Math.PI * 2;
+        const radius = 60 + Math.random() * Math.min(this.w, this.h) * 0.35;
+        this.x  = this.cx + Math.cos(angle) * radius;
+        this.y  = this.cy + Math.sin(angle) * radius;
+        this.tx = this.cx + (Math.random() - 0.5) * 80;
+        this.ty = this.cy + (Math.random() - 0.5) * 80;
+        this.r  = Math.random() * 2 + 0.5;
+
+        const palette = Math.random();
+        if (palette < 0.45) {
+            this.color = EMERALD;
+        } else if (palette < 0.85) {
+            this.color = GOLD;
+        } else {
+            this.color = IVORY;
+        }
+
+        this.baseAlpha = Math.random() * 0.6 + 0.2;
+        this.alpha     = 0;
+        this.phase     = Math.random() * Math.PI * 2;
+        this.speed     = Math.random() * 0.02 + 0.008;
+        this.converge  = 0;
+    }
+
+    update(t, converge) {
+        this.converge = converge;
+        const lerp = this.converge;
+        const ox = Math.sin(t * this.speed + this.phase) * (12 * (1 - lerp));
+        const oy = Math.cos(t * this.speed * 0.7 + this.phase) * (8 * (1 - lerp));
+
+        this.x += (this.tx + ox - this.x) * 0.03;
+        this.y += (this.ty + oy - this.y) * 0.03;
+
+        const pulse = 0.5 + 0.5 * Math.sin(t * 0.003 + this.phase);
+        this.alpha = this.baseAlpha * (0.6 + 0.4 * pulse) * Math.min(converge * 3, 1);
+    }
+
+    draw(ctx) {
+        if (this.alpha < 0.01) return;
+        const { r, g, b } = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${r},${g},${b},${this.alpha})`;
+        ctx.fill();
+
+        if (this.r > 1.2 && this.alpha > 0.3) {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.r * 3, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(${r},${g},${b},${this.alpha * 0.15})`;
+            ctx.fill();
+        }
+    }
+
+    explode(cx, cy) {
+        const dx = this.x - cx;
+        const dy = this.y - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const power = 300 + Math.random() * 500;
+        this.tx = this.x + (dx / dist) * power;
+        this.ty = this.y + (dy / dist) * power;
+    }
+}
+
+/* ── Connection lines between nearby particles ──────────────── */
+function drawConnections(ctx, particles, maxDist) {
+    for (let i = 0; i < particles.length; i++) {
+        const a = particles[i];
+        if (a.alpha < 0.05) continue;
+        for (let j = i + 1; j < particles.length; j++) {
+            const b = particles[j];
+            if (b.alpha < 0.05) continue;
+            const dx = a.x - b.x;
+            const dy = a.y - b.y;
+            const d  = dx * dx + dy * dy;
+            if (d < maxDist * maxDist) {
+                const alpha = (1 - Math.sqrt(d) / maxDist) * 0.12 * Math.min(a.alpha, b.alpha);
+                ctx.beginPath();
+                ctx.moveTo(a.x, a.y);
+                ctx.lineTo(b.x, b.y);
+                ctx.strokeStyle = `rgba(201,169,110,${alpha})`;
+                ctx.lineWidth = 0.5;
+                ctx.stroke();
+            }
+        }
+    }
+}
+
+/* ── Build DOM ──────────────────────────────────────────────── */
+function createPreloaderDOM() {
     const el = document.createElement('div');
     el.id = 'preloader';
     el.setAttribute('aria-hidden', 'true');
     el.innerHTML = `
-        <div class="preloader-spinner">
-            <img src="${SPINNER_SRC}" class="preloader-img" alt="" draggable="false">
+        <canvas class="preloader-canvas"></canvas>
+        <div class="preloader-aurora"></div>
+        <div class="preloader-center">
+            <svg class="preloader-ring" viewBox="0 0 120 120" fill="none">
+                <defs>
+                    <linearGradient id="preloader-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%"   stop-color="#C9A96E"/>
+                        <stop offset="50%"  stop-color="#3D9B6A"/>
+                        <stop offset="100%" stop-color="#C9A96E"/>
+                    </linearGradient>
+                    <filter id="preloader-glow">
+                        <feGaussianBlur stdDeviation="3" result="blur"/>
+                        <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+                    </filter>
+                </defs>
+                <circle class="preloader-ring-track" cx="60" cy="60" r="48"
+                        stroke="rgba(201,169,110,0.08)" stroke-width="1" fill="none"/>
+                <circle class="preloader-ring-progress" cx="60" cy="60" r="48"
+                        stroke="url(#preloader-grad)" stroke-width="1.5" fill="none"
+                        stroke-linecap="round" filter="url(#preloader-glow)"
+                        stroke-dasharray="301.6" stroke-dashoffset="301.6"
+                        transform="rotate(-90 60 60)"/>
+                <polygon class="preloader-diamond" points="60,18 72,42 60,54 48,42"
+                         stroke="rgba(201,169,110,0.5)" stroke-width="0.8" fill="none"
+                         stroke-linejoin="round"/>
+                <line class="preloader-cross-h" x1="36" y1="60" x2="84" y2="60"
+                      stroke="rgba(201,169,110,0.12)" stroke-width="0.5"/>
+                <line class="preloader-cross-v" x1="60" y1="36" x2="60" y2="84"
+                      stroke="rgba(201,169,110,0.12)" stroke-width="0.5"/>
+            </svg>
+            <div class="preloader-text">
+                <span class="preloader-brand">BERSAGLIO</span>
+                <span class="preloader-sub">JEWELRY</span>
+            </div>
+            <div class="preloader-progress-line">
+                <div class="preloader-progress-fill"></div>
+            </div>
         </div>
     `;
+    return el;
+}
+
+/* ── Main init ──────────────────────────────────────────────── */
+export function initPreloader() {
+    if (sessionStorage.getItem('bj-loaded')) return;
+    sessionStorage.setItem('bj-loaded', '1');
+
+    const el = createPreloaderDOM();
     document.body.prepend(el);
     document.body.classList.add('is-preloading');
 
-    const minMs = 1400;
-    const start = Date.now();
+    const canvas = el.querySelector('.preloader-canvas');
+    const ctx    = canvas.getContext('2d');
+    const ring   = el.querySelector('.preloader-ring-progress');
+    const fill   = el.querySelector('.preloader-progress-fill');
+    const diamond = el.querySelector('.preloader-diamond');
 
+    const CIRCUMFERENCE = 301.6;
+    let w, h, cx, cy;
+    let particles = [];
+    let running = true;
+    let startTime = Date.now();
+    let progress = 0;
+    let converge = 0;
+
+    const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    const PARTICLE_COUNT = isTouch ? 35 : 70;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function resize() {
+        w = canvas.width  = el.offsetWidth;
+        h = canvas.height = el.offsetHeight;
+        cx = w / 2;
+        cy = h / 2;
+        particles.forEach(p => { p.w = w; p.h = h; p.cx = cx; p.cy = cy; });
+    }
+
+    function build() {
+        particles = Array.from({ length: PARTICLE_COUNT },
+            () => new PreloaderParticle(w, h, cx, cy));
+    }
+
+    function updateProgress(p) {
+        progress = Math.min(p, 1);
+        const offset = CIRCUMFERENCE * (1 - progress);
+        ring.style.strokeDashoffset = offset;
+        fill.style.transform = `scaleX(${progress})`;
+
+        converge = Math.min(progress * 1.5, 1);
+    }
+
+    let t = 0;
+    function loop() {
+        if (!running) return;
+        t += 16;
+        ctx.clearRect(0, 0, w, h);
+
+        if (!reducedMotion) {
+            particles.forEach(p => { p.update(t, converge); p.draw(ctx); });
+            drawConnections(ctx, particles, 100);
+        }
+
+        requestAnimationFrame(loop);
+    }
+
+    resize();
+    build();
+
+    if (!reducedMotion) {
+        loop();
+
+        gsap.to(diamond, {
+            rotation: 360,
+            duration: 8,
+            repeat: -1,
+            ease: 'none',
+            transformOrigin: '60px 36px'
+        });
+    }
+
+    const entranceTl = gsap.timeline();
+    entranceTl
+        .fromTo('.preloader-center', { opacity: 0, scale: 0.85 },
+            { opacity: 1, scale: 1, duration: 0.8, ease: 'power3.out' }, 0)
+        .fromTo('.preloader-brand', { opacity: 0, y: 12, letterSpacing: '0.6em' },
+            { opacity: 1, y: 0, letterSpacing: '0.35em', duration: 0.7, ease: 'power2.out' }, 0.3)
+        .fromTo('.preloader-sub', { opacity: 0, y: 8 },
+            { opacity: 0.6, y: 0, duration: 0.5, ease: 'power2.out' }, 0.5);
+
+    /* ── Simulated progress (tracks real resources when possible) ── */
+    const minMs = 1800;
+    const fakeInterval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const fakeProgress = 1 - Math.exp(-elapsed / 1200);
+        updateProgress(Math.min(fakeProgress, 0.85));
+    }, 30);
+
+    /* ── Resize handler ──────────────────────────────────────────── */
+    const ro = new ResizeObserver(resize);
+    ro.observe(el);
+
+    /* ── Hide sequence ───────────────────────────────────────────── */
     function hide() {
-        const wait = Math.max(0, minMs - (Date.now() - start));
+        const elapsed = Date.now() - startTime;
+        const wait = Math.max(0, minMs - elapsed);
+
         setTimeout(() => {
-            el.classList.add('preloader--hide');
-            el.addEventListener('transitionend', () => {
-                el.remove();
-                document.body.classList.remove('is-preloading');
-            }, { once: true });
+            clearInterval(fakeInterval);
+
+            /* Snap progress to 100% */
+            const completeTl = gsap.timeline();
+            completeTl.to({}, {
+                duration: 0.4,
+                onUpdate() {
+                    updateProgress(progress + (1 - progress) * this.progress());
+                }
+            });
+
+            completeTl.call(() => {
+                /* Explode particles outward */
+                particles.forEach(p => p.explode(cx, cy));
+            }, null, '+=0.15');
+
+            /* Exit animation — no CSS transitionend, pure GSAP = zero flicker */
+            const exitTl = gsap.timeline({
+                delay: 0.25,
+                onComplete() {
+                    running = false;
+                    ro.disconnect();
+                    el.remove();
+                    document.body.classList.remove('is-preloading');
+                }
+            });
+
+            exitTl
+                .to('.preloader-progress-line', { opacity: 0, scaleX: 1.5, duration: 0.3, ease: 'power2.in' }, 0)
+                .to('.preloader-ring', { scale: 1.8, opacity: 0, duration: 0.7, ease: 'power3.in' }, 0.05)
+                .to('.preloader-brand', { y: -20, opacity: 0, duration: 0.4, ease: 'power2.in' }, 0.05)
+                .to('.preloader-sub', { y: -14, opacity: 0, duration: 0.35, ease: 'power2.in' }, 0.1)
+                .to('.preloader-aurora', { opacity: 0, duration: 0.5, ease: 'power2.inOut' }, 0.2)
+                .to(canvas, { opacity: 0, duration: 0.6, ease: 'power2.in' }, 0.1)
+                .to(el, {
+                    opacity: 0,
+                    duration: 0.5,
+                    ease: 'power2.inOut',
+                }, 0.35);
+
         }, wait);
     }
 

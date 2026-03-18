@@ -4305,47 +4305,131 @@ body::after {
 .footer-logo .logo-text { color: var(--ivory); }
 .footer-logo .logo-sub  { color: var(--champagne-dark); }
 
-/* ─── Preloader & Page-Transition spinner ────────────────────── */
+/* ─── Preloader v2 — Cutting-edge loading experience ────────── */
 #preloader {
     position: fixed;
     inset: 0;
-    background: var(--black);
+    background: var(--black-carbon, #0a0a0a);
     z-index: 10000;
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 1;
-    transition: opacity 0.6s ease;
-}
-
-#preloader.preloader--hide {
-    opacity: 0;
-    pointer-events: none;
+    will-change: opacity;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
 }
 
 body.is-preloading { overflow: hidden; }
 
-.preloader-spinner {
-    width: 120px;
-    height: 120px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    pointer-events: none;
-    user-select: none;
-}
-
-.preloader-img {
+.preloader-canvas {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
-    object-fit: contain;
-    display: block;
-    animation: preloader-spin 1.4s linear infinite;
+    pointer-events: none;
+    z-index: 1;
 }
 
-@keyframes preloader-spin {
-    to { transform: rotate(360deg); }
+.preloader-aurora {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 80% 60% at 20% 80%, rgba(61,155,106,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 80% 20%, rgba(201,169,110,0.06) 0%, transparent 50%),
+        radial-gradient(ellipse 100% 100% at 50% 50%, rgba(61,155,106,0.03) 0%, transparent 70%);
+    animation: preloader-aurora 6s ease-in-out infinite alternate;
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes preloader-aurora {
+    0%   { opacity: 0.6; transform: scale(1) rotate(0deg); }
+    100% { opacity: 1;   transform: scale(1.05) rotate(1deg); }
+}
+
+.preloader-center {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    will-change: transform, opacity;
+}
+
+.preloader-ring {
+    width: 100px;
+    height: 100px;
+    will-change: transform, opacity;
+}
+
+.preloader-ring-progress {
+    transition: stroke-dashoffset 0.1s ease-out;
+}
+
+.preloader-diamond {
+    transform-origin: 60px 36px;
+}
+
+.preloader-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.preloader-brand {
+    font-family: var(--font-display, 'Playfair Display', serif);
+    font-size: clamp(1rem, 2.5vw, 1.35rem);
+    font-weight: 500;
+    letter-spacing: 0.35em;
+    color: var(--gold, #C9A96E);
+    will-change: transform, opacity;
+    background: linear-gradient(
+        110deg,
+        rgba(201,169,110,0.6) 0%,
+        rgba(201,169,110,1) 40%,
+        rgba(245,243,237,1) 50%,
+        rgba(201,169,110,1) 60%,
+        rgba(201,169,110,0.6) 100%
+    );
+    background-size: 250% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: preloader-shimmer 2.5s ease-in-out infinite;
+}
+
+@keyframes preloader-shimmer {
+    0%   { background-position: 150% center; }
+    100% { background-position: -50% center; }
+}
+
+.preloader-sub {
+    font-family: var(--font-body, 'Inter', sans-serif);
+    font-size: 0.65rem;
+    letter-spacing: 0.5em;
+    color: rgba(201,169,110,0.5);
+    text-transform: uppercase;
+    will-change: transform, opacity;
+}
+
+.preloader-progress-line {
+    width: 120px;
+    height: 1px;
+    background: rgba(201,169,110,0.1);
+    border-radius: 1px;
+    overflow: hidden;
+    will-change: transform, opacity;
+}
+
+.preloader-progress-fill {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(201,169,110,0.3), rgba(201,169,110,0.8), rgba(61,155,106,0.6));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.1s ease-out;
 }
 
 /* ─── Hero Section — Phase 1 Enhancements ────────────────────── */
@@ -5138,7 +5222,7 @@ html.lenis { height: auto; }
    PHASE 4 — Page Transitions · Cursor Redesign · Parallax
    ═══════════════════════════════════════════════════════════════ */
 
-/* ─── Page Transition Overlay ───────────────────────────────── */
+/* ─── Page Transition Overlay v2 — clip-path reveal ─────────── */
 #page-transition {
     position: fixed;
     inset: 0;
@@ -5147,6 +5231,7 @@ html.lenis { height: auto; }
     align-items: center;
     justify-content: center;
     pointer-events: none;
+    will-change: contents;
 }
 
 .pt-panel {
@@ -5154,25 +5239,50 @@ html.lenis { height: auto; }
     inset: 0;
     background: linear-gradient(
         160deg,
-        var(--black-carbon) 0%,
-        var(--emerald-deep) 60%,
+        var(--black-carbon, #0a0a0a) 0%,
+        var(--emerald-deep, #0C3B2E) 60%,
         #05201A 100%
     );
-    transform-origin: bottom center;
+    clip-path: inset(100% 0% 0% 0%);
+    will-change: clip-path;
+}
+
+.pt-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2;
 }
 
 .pt-center {
     position: relative;
-    z-index: 1;
+    z-index: 3;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
     opacity: 0;
     pointer-events: none;
+    will-change: transform, opacity;
 }
 
-/* Reuses .preloader-diamond and .preloader-ring defined above */
+.pt-ring {
+    width: 60px;
+    height: 60px;
+}
+
+.pt-ring-arc {
+    will-change: transform;
+}
+
+.pt-label {
+    font-family: var(--font-display, 'Playfair Display', serif);
+    font-size: 0.7rem;
+    letter-spacing: 0.4em;
+    color: rgba(201,169,110,0.6);
+}
 
 /* ─── Page hero parallax base styles ────────────────────────── */
 .page-hero-inner,
@@ -5202,6 +5312,21 @@ html.lenis { height: auto; }
     .pt-panel,
     .pt-center {
         display: none !important;
+    }
+
+    #preloader {
+        transition: opacity 0.3s ease;
+    }
+
+    .preloader-aurora,
+    .preloader-canvas,
+    .pt-canvas {
+        display: none !important;
+    }
+
+    .preloader-brand {
+        animation: none;
+        -webkit-text-fill-color: var(--gold, #C9A96E);
     }
 
     .about-teaser-content,

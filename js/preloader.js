@@ -1,118 +1,182 @@
 /**
- * Bersaglio Jewelry — Preloader v2
- * Cutting-edge loading screen with:
- *   • Canvas particle constellation that converges → explodes on exit
- *   • SVG morphing diamond ring with glow pulse
- *   • Real progress tracking with shimmer text
- *   • GSAP-powered exit (zero flicker, GPU-accelerated)
- *   • Aurora gradient background
+ * Bersaglio Jewelry — Preloader v3
+ * Premium loading experience inspired by the brand's concentric-ring + crosshair logo.
+ *   • Orbital particles in symmetrical concentric rings
+ *   • SVG concentric circles that draw themselves + crosshair
+ *   • Progress arc with golden gradient
+ *   • GSAP-powered entrance/exit — zero flicker
  */
 
 import { gsap } from './gsap-core.js';
 
-/* ── Brand colours ──────────────────────────────────────────── */
-const EMERALD = { r: 61,  g: 155, b: 106 };
-const GOLD    = { r: 201, g: 169, b: 110 };
-const IVORY   = { r: 245, g: 243, b: 237 };
+/* ── Orbital particle ───────────────────────────────────────── */
+class OrbitalParticle {
+    constructor(cx, cy, orbit, index, total) {
+        this.cx = cx;
+        this.cy = cy;
+        this.orbit = orbit;
+        this.angle = (index / total) * Math.PI * 2;
+        this.baseAngle = this.angle;
+        this.speed = (0.0004 + Math.random() * 0.0003) * (Math.random() > 0.5 ? 1 : -1);
+        this.r = Math.random() * 1.8 + 0.6;
 
-/* ── Particle system ────────────────────────────────────────── */
-class PreloaderParticle {
-    constructor(w, h, cx, cy) {
-        this.w = w; this.h = h;
-        this.cx = cx; this.cy = cy;
-        this.init();
-    }
-
-    init() {
-        const angle  = Math.random() * Math.PI * 2;
-        const radius = 60 + Math.random() * Math.min(this.w, this.h) * 0.35;
-        this.x  = this.cx + Math.cos(angle) * radius;
-        this.y  = this.cy + Math.sin(angle) * radius;
-        this.tx = this.cx + (Math.random() - 0.5) * 80;
-        this.ty = this.cy + (Math.random() - 0.5) * 80;
-        this.r  = Math.random() * 2 + 0.5;
-
-        const palette = Math.random();
-        if (palette < 0.45) {
-            this.color = EMERALD;
-        } else if (palette < 0.85) {
-            this.color = GOLD;
+        const p = Math.random();
+        if (p < 0.5) {
+            this.cr = 201; this.cg = 169; this.cb = 110; // gold
+        } else if (p < 0.85) {
+            this.cr = 61; this.cg = 155; this.cb = 106;  // emerald
         } else {
-            this.color = IVORY;
+            this.cr = 245; this.cg = 243; this.cb = 237; // ivory
         }
 
-        this.baseAlpha = Math.random() * 0.6 + 0.2;
-        this.alpha     = 0;
-        this.phase     = Math.random() * Math.PI * 2;
-        this.speed     = Math.random() * 0.02 + 0.008;
-        this.converge  = 0;
+        this.baseAlpha = 0.25 + Math.random() * 0.5;
+        this.alpha = 0;
+        this.phase = Math.random() * Math.PI * 2;
+        this.wobble = Math.random() * 4;
     }
 
-    update(t, converge) {
-        this.converge = converge;
-        const lerp = this.converge;
-        const ox = Math.sin(t * this.speed + this.phase) * (12 * (1 - lerp));
-        const oy = Math.cos(t * this.speed * 0.7 + this.phase) * (8 * (1 - lerp));
+    update(t) {
+        this.angle = this.baseAngle + t * this.speed;
+        const wobbleR = this.orbit + Math.sin(t * 0.001 + this.phase) * this.wobble;
+        this.x = this.cx + Math.cos(this.angle) * wobbleR;
+        this.y = this.cy + Math.sin(this.angle) * wobbleR;
 
-        this.x += (this.tx + ox - this.x) * 0.03;
-        this.y += (this.ty + oy - this.y) * 0.03;
-
-        const pulse = 0.5 + 0.5 * Math.sin(t * 0.003 + this.phase);
-        this.alpha = this.baseAlpha * (0.6 + 0.4 * pulse) * Math.min(converge * 3, 1);
+        const pulse = 0.7 + 0.3 * Math.sin(t * 0.002 + this.phase);
+        this.alpha = this.baseAlpha * pulse;
     }
 
     draw(ctx) {
-        if (this.alpha < 0.01) return;
-        const { r, g, b } = this.color;
+        if (this.alpha < 0.02) return;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${r},${g},${b},${this.alpha})`;
+        ctx.fillStyle = `rgba(${this.cr},${this.cg},${this.cb},${this.alpha})`;
         ctx.fill();
 
-        if (this.r > 1.2 && this.alpha > 0.3) {
+        // Soft glow for larger particles
+        if (this.r > 1.4) {
             ctx.beginPath();
-            ctx.arc(this.x, this.y, this.r * 3, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(${r},${g},${b},${this.alpha * 0.15})`;
+            ctx.arc(this.x, this.y, this.r * 3.5, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(${this.cr},${this.cg},${this.cb},${this.alpha * 0.08})`;
             ctx.fill();
         }
     }
-
-    explode(cx, cy) {
-        const dx = this.x - cx;
-        const dy = this.y - cy;
-        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-        const power = 300 + Math.random() * 500;
-        this.tx = this.x + (dx / dist) * power;
-        this.ty = this.y + (dy / dist) * power;
-    }
 }
 
-/* ── Connection lines between nearby particles ──────────────── */
-function drawConnections(ctx, particles, maxDist) {
+/* ── Build symmetrical orbital particles ────────────────────── */
+function buildParticles(cx, cy, baseRadius, isTouch) {
+    const particles = [];
+    const orbits = isTouch
+        ? [
+            { r: baseRadius * 0.6,  count: 6  },
+            { r: baseRadius * 0.85, count: 10 },
+            { r: baseRadius * 1.1,  count: 8  },
+        ]
+        : [
+            { r: baseRadius * 0.45, count: 6  },
+            { r: baseRadius * 0.65, count: 10 },
+            { r: baseRadius * 0.85, count: 14 },
+            { r: baseRadius * 1.05, count: 12 },
+            { r: baseRadius * 1.3,  count: 10 },
+            { r: baseRadius * 1.6,  count: 8  },
+        ];
+
+    orbits.forEach(({ r, count }) => {
+        for (let i = 0; i < count; i++) {
+            particles.push(new OrbitalParticle(cx, cy, r, i, count));
+        }
+    });
+    return particles;
+}
+
+/* ── Subtle connection lines ────────────────────────────────── */
+function drawConnections(ctx, particles) {
+    const maxDist = 60;
+    const maxDistSq = maxDist * maxDist;
     for (let i = 0; i < particles.length; i++) {
         const a = particles[i];
-        if (a.alpha < 0.05) continue;
+        if (a.alpha < 0.1) continue;
         for (let j = i + 1; j < particles.length; j++) {
             const b = particles[j];
-            if (b.alpha < 0.05) continue;
+            if (b.alpha < 0.1) continue;
             const dx = a.x - b.x;
             const dy = a.y - b.y;
-            const d  = dx * dx + dy * dy;
-            if (d < maxDist * maxDist) {
-                const alpha = (1 - Math.sqrt(d) / maxDist) * 0.12 * Math.min(a.alpha, b.alpha);
+            const dSq = dx * dx + dy * dy;
+            if (dSq < maxDistSq) {
+                const alpha = (1 - Math.sqrt(dSq) / maxDist) * 0.06;
                 ctx.beginPath();
                 ctx.moveTo(a.x, a.y);
                 ctx.lineTo(b.x, b.y);
                 ctx.strokeStyle = `rgba(201,169,110,${alpha})`;
-                ctx.lineWidth = 0.5;
+                ctx.lineWidth = 0.4;
                 ctx.stroke();
             }
         }
     }
 }
 
-/* ── Build DOM ──────────────────────────────────────────────── */
-function createPreloaderDOM() {
+/* ── SVG: brand-accurate concentric rings + crosshair ───────── */
+function svgMarkup() {
+    return `
+        <svg class="preloader-svg" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="pl-grad-gold" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%"   stop-color="#C9A96E"/>
+                    <stop offset="50%"  stop-color="#E8D5A8"/>
+                    <stop offset="100%" stop-color="#C9A96E"/>
+                </linearGradient>
+                <linearGradient id="pl-grad-emerald" x1="0" y1="200" x2="200" y2="0" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%"   stop-color="#3D9B6A"/>
+                    <stop offset="50%"  stop-color="#5BC08C"/>
+                    <stop offset="100%" stop-color="#3D9B6A"/>
+                </linearGradient>
+                <filter id="pl-glow-gold" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="2" result="blur"/>
+                    <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+                </filter>
+            </defs>
+
+            <!-- Outer ring (draws itself) -->
+            <circle class="pl-ring pl-ring-outer" cx="100" cy="100" r="80"
+                    stroke="url(#pl-grad-gold)" stroke-width="0.8"
+                    stroke-dasharray="502.65" stroke-dashoffset="502.65"
+                    opacity="0.6"/>
+
+            <!-- Inner ring (draws itself, opposite direction) -->
+            <circle class="pl-ring pl-ring-inner" cx="100" cy="100" r="72"
+                    stroke="url(#pl-grad-gold)" stroke-width="0.5"
+                    stroke-dasharray="452.39" stroke-dashoffset="-452.39"
+                    opacity="0.35"/>
+
+            <!-- Progress arc -->
+            <circle class="pl-progress" cx="100" cy="100" r="76"
+                    stroke="url(#pl-grad-emerald)" stroke-width="1.5"
+                    stroke-linecap="round" filter="url(#pl-glow-gold)"
+                    stroke-dasharray="477.52" stroke-dashoffset="477.52"
+                    transform="rotate(-90 100 100)"
+                    opacity="0.9"/>
+
+            <!-- Crosshair vertical -->
+            <line class="pl-cross pl-cross-v" x1="100" y1="12" x2="100" y2="188"
+                  stroke="url(#pl-grad-gold)" stroke-width="0.4" opacity="0"/>
+
+            <!-- Crosshair horizontal -->
+            <line class="pl-cross pl-cross-h" x1="12" y1="100" x2="188" y2="100"
+                  stroke="url(#pl-grad-gold)" stroke-width="0.4" opacity="0"/>
+
+            <!-- Center dot -->
+            <circle class="pl-dot" cx="100" cy="100" r="2"
+                    fill="#C9A96E" opacity="0"/>
+
+            <!-- 4 cardinal ticks -->
+            <line class="pl-tick" x1="100" y1="16" x2="100" y2="24" stroke="#C9A96E" stroke-width="0.6" opacity="0"/>
+            <line class="pl-tick" x1="100" y1="176" x2="100" y2="184" stroke="#C9A96E" stroke-width="0.6" opacity="0"/>
+            <line class="pl-tick" x1="16" y1="100" x2="24" y2="100" stroke="#C9A96E" stroke-width="0.6" opacity="0"/>
+            <line class="pl-tick" x1="176" y1="100" x2="184" y2="100" stroke="#C9A96E" stroke-width="0.6" opacity="0"/>
+        </svg>`;
+}
+
+/* ── Build full DOM ─────────────────────────────────────────── */
+function createDOM() {
     const el = document.createElement('div');
     el.id = 'preloader';
     el.setAttribute('aria-hidden', 'true');
@@ -120,33 +184,7 @@ function createPreloaderDOM() {
         <canvas class="preloader-canvas"></canvas>
         <div class="preloader-aurora"></div>
         <div class="preloader-center">
-            <svg class="preloader-ring" viewBox="0 0 120 120" fill="none">
-                <defs>
-                    <linearGradient id="preloader-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%"   stop-color="#C9A96E"/>
-                        <stop offset="50%"  stop-color="#3D9B6A"/>
-                        <stop offset="100%" stop-color="#C9A96E"/>
-                    </linearGradient>
-                    <filter id="preloader-glow">
-                        <feGaussianBlur stdDeviation="3" result="blur"/>
-                        <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-                    </filter>
-                </defs>
-                <circle class="preloader-ring-track" cx="60" cy="60" r="48"
-                        stroke="rgba(201,169,110,0.08)" stroke-width="1" fill="none"/>
-                <circle class="preloader-ring-progress" cx="60" cy="60" r="48"
-                        stroke="url(#preloader-grad)" stroke-width="1.5" fill="none"
-                        stroke-linecap="round" filter="url(#preloader-glow)"
-                        stroke-dasharray="301.6" stroke-dashoffset="301.6"
-                        transform="rotate(-90 60 60)"/>
-                <polygon class="preloader-diamond" points="60,18 72,42 60,54 48,42"
-                         stroke="rgba(201,169,110,0.5)" stroke-width="0.8" fill="none"
-                         stroke-linejoin="round"/>
-                <line class="preloader-cross-h" x1="36" y1="60" x2="84" y2="60"
-                      stroke="rgba(201,169,110,0.12)" stroke-width="0.5"/>
-                <line class="preloader-cross-v" x1="60" y1="36" x2="60" y2="84"
-                      stroke="rgba(201,169,110,0.12)" stroke-width="0.5"/>
-            </svg>
+            ${svgMarkup()}
             <div class="preloader-text">
                 <span class="preloader-brand">BERSAGLIO</span>
                 <span class="preloader-sub">JEWELRY</span>
@@ -159,130 +197,151 @@ function createPreloaderDOM() {
     return el;
 }
 
-/* ── Main init ──────────────────────────────────────────────── */
+/* ── Main ───────────────────────────────────────────────────── */
 export function initPreloader() {
     if (sessionStorage.getItem('bj-loaded')) return;
     sessionStorage.setItem('bj-loaded', '1');
 
-    const el = createPreloaderDOM();
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+    const el = createDOM();
     document.body.prepend(el);
     document.body.classList.add('is-preloading');
 
+    /* Canvas setup */
     const canvas = el.querySelector('.preloader-canvas');
-    const ctx    = canvas.getContext('2d');
-    const ring   = el.querySelector('.preloader-ring-progress');
-    const fill   = el.querySelector('.preloader-progress-fill');
-    const diamond = el.querySelector('.preloader-diamond');
-
-    const CIRCUMFERENCE = 301.6;
-    let w, h, cx, cy;
-    let particles = [];
+    const ctx = canvas.getContext('2d');
+    let w, h, cx, cy, particles = [];
     let running = true;
-    let startTime = Date.now();
-    let progress = 0;
-    let converge = 0;
+    let t = 0;
 
-    const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-    const PARTICLE_COUNT = isTouch ? 35 : 70;
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    /* SVG refs */
+    const progressArc = el.querySelector('.pl-progress');
+    const fillBar = el.querySelector('.preloader-progress-fill');
+    const PROGRESS_CIRC = 477.52;
+    let progress = 0;
 
     function resize() {
-        w = canvas.width  = el.offsetWidth;
+        w = canvas.width = el.offsetWidth;
         h = canvas.height = el.offsetHeight;
         cx = w / 2;
         cy = h / 2;
-        particles.forEach(p => { p.w = w; p.h = h; p.cx = cx; p.cy = cy; });
-    }
-
-    function build() {
-        particles = Array.from({ length: PARTICLE_COUNT },
-            () => new PreloaderParticle(w, h, cx, cy));
+        const baseR = Math.min(w, h) * 0.12;
+        particles = buildParticles(cx, cy, baseR, isTouch);
     }
 
     function updateProgress(p) {
         progress = Math.min(p, 1);
-        const offset = CIRCUMFERENCE * (1 - progress);
-        ring.style.strokeDashoffset = offset;
-        fill.style.transform = `scaleX(${progress})`;
-
-        converge = Math.min(progress * 1.5, 1);
+        progressArc.style.strokeDashoffset = PROGRESS_CIRC * (1 - progress);
+        fillBar.style.transform = `scaleX(${progress})`;
     }
 
-    let t = 0;
     function loop() {
         if (!running) return;
         t += 16;
         ctx.clearRect(0, 0, w, h);
-
-        if (!reducedMotion) {
-            particles.forEach(p => { p.update(t, converge); p.draw(ctx); });
-            drawConnections(ctx, particles, 100);
-        }
-
+        particles.forEach(p => { p.update(t); p.draw(ctx); });
+        drawConnections(ctx, particles);
         requestAnimationFrame(loop);
     }
 
     resize();
-    build();
-
-    if (!reducedMotion) {
-        loop();
-
-        gsap.to(diamond, {
-            rotation: 360,
-            duration: 8,
-            repeat: -1,
-            ease: 'none',
-            transformOrigin: '60px 36px'
-        });
-    }
-
-    const entranceTl = gsap.timeline();
-    entranceTl
-        .fromTo('.preloader-center', { opacity: 0, scale: 0.85 },
-            { opacity: 1, scale: 1, duration: 0.8, ease: 'power3.out' }, 0)
-        .fromTo('.preloader-brand', { opacity: 0, y: 12, letterSpacing: '0.6em' },
-            { opacity: 1, y: 0, letterSpacing: '0.35em', duration: 0.7, ease: 'power2.out' }, 0.3)
-        .fromTo('.preloader-sub', { opacity: 0, y: 8 },
-            { opacity: 0.6, y: 0, duration: 0.5, ease: 'power2.out' }, 0.5);
-
-    /* ── Simulated progress (tracks real resources when possible) ── */
-    const minMs = 1800;
-    const fakeInterval = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        const fakeProgress = 1 - Math.exp(-elapsed / 1200);
-        updateProgress(Math.min(fakeProgress, 0.85));
-    }, 30);
-
-    /* ── Resize handler ──────────────────────────────────────────── */
     const ro = new ResizeObserver(resize);
     ro.observe(el);
 
-    /* ── Hide sequence ───────────────────────────────────────────── */
+    if (!reducedMotion) {
+        loop();
+    }
+
+    /* ── SVG entrance animation ────────────────────────────────── */
+    const entranceTl = gsap.timeline();
+
+    // Rings draw in
+    entranceTl.to('.pl-ring-outer', {
+        strokeDashoffset: 0, duration: 1.4, ease: 'power2.inOut'
+    }, 0);
+    entranceTl.to('.pl-ring-inner', {
+        strokeDashoffset: 0, duration: 1.2, ease: 'power2.inOut'
+    }, 0.15);
+
+    // Crosshairs fade in and extend
+    entranceTl.to('.pl-cross-v', {
+        opacity: 0.15, duration: 0.6, ease: 'power2.out'
+    }, 0.5);
+    entranceTl.to('.pl-cross-h', {
+        opacity: 0.15, duration: 0.6, ease: 'power2.out'
+    }, 0.6);
+
+    // Center dot
+    entranceTl.to('.pl-dot', {
+        opacity: 0.8, duration: 0.4, ease: 'power2.out'
+    }, 0.7);
+
+    // Cardinal ticks
+    entranceTl.to('.pl-tick', {
+        opacity: 0.4, duration: 0.4, ease: 'power2.out', stagger: 0.06
+    }, 0.65);
+
+    // Text entrance
+    entranceTl.fromTo('.preloader-brand',
+        { opacity: 0, y: 10, letterSpacing: '0.6em' },
+        { opacity: 1, y: 0, letterSpacing: '0.35em', duration: 0.7, ease: 'power2.out' },
+        0.6
+    );
+    entranceTl.fromTo('.preloader-sub',
+        { opacity: 0, y: 6 },
+        { opacity: 0.5, y: 0, duration: 0.5, ease: 'power2.out' },
+        0.8
+    );
+
+    // Progress line
+    entranceTl.fromTo('.preloader-progress-line',
+        { opacity: 0, scaleX: 0.3 },
+        { opacity: 1, scaleX: 1, duration: 0.5, ease: 'power2.out' },
+        0.9
+    );
+
+    // Slow rotation of outer ring
+    if (!reducedMotion) {
+        gsap.to('.pl-ring-outer', {
+            rotation: 360, duration: 30, repeat: -1, ease: 'none',
+            transformOrigin: '100px 100px'
+        });
+        gsap.to('.pl-ring-inner', {
+            rotation: -360, duration: 40, repeat: -1, ease: 'none',
+            transformOrigin: '100px 100px'
+        });
+    }
+
+    /* ── Progress tracking ─────────────────────────────────────── */
+    const startTime = Date.now();
+    const minMs = 1800;
+
+    const progressInterval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const fake = 1 - Math.exp(-elapsed / 1200);
+        updateProgress(Math.min(fake, 0.88));
+    }, 30);
+
+    /* ── Hide ──────────────────────────────────────────────────── */
     function hide() {
         const elapsed = Date.now() - startTime;
         const wait = Math.max(0, minMs - elapsed);
 
         setTimeout(() => {
-            clearInterval(fakeInterval);
+            clearInterval(progressInterval);
 
-            /* Snap progress to 100% */
+            // Complete progress to 100%
             const completeTl = gsap.timeline();
             completeTl.to({}, {
-                duration: 0.4,
-                onUpdate() {
-                    updateProgress(progress + (1 - progress) * this.progress());
-                }
+                duration: 0.35,
+                onUpdate() { updateProgress(progress + (1 - progress) * this.progress()); }
             });
 
-            completeTl.call(() => {
-                /* Explode particles outward */
-                particles.forEach(p => p.explode(cx, cy));
-            }, null, '+=0.15');
-
-            /* Exit animation — no CSS transitionend, pure GSAP = zero flicker */
+            // Exit animation
             const exitTl = gsap.timeline({
-                delay: 0.25,
+                delay: 0.3,
                 onComplete() {
                     running = false;
                     ro.disconnect();
@@ -292,18 +351,18 @@ export function initPreloader() {
             });
 
             exitTl
-                .to('.preloader-progress-line', { opacity: 0, scaleX: 1.5, duration: 0.3, ease: 'power2.in' }, 0)
-                .to('.preloader-ring', { scale: 1.8, opacity: 0, duration: 0.7, ease: 'power3.in' }, 0.05)
-                .to('.preloader-brand', { y: -20, opacity: 0, duration: 0.4, ease: 'power2.in' }, 0.05)
-                .to('.preloader-sub', { y: -14, opacity: 0, duration: 0.35, ease: 'power2.in' }, 0.1)
-                .to('.preloader-aurora', { opacity: 0, duration: 0.5, ease: 'power2.inOut' }, 0.2)
-                .to(canvas, { opacity: 0, duration: 0.6, ease: 'power2.in' }, 0.1)
-                .to(el, {
-                    opacity: 0,
-                    duration: 0.5,
-                    ease: 'power2.inOut',
-                }, 0.35);
-
+                .to('.preloader-progress-line', { opacity: 0, duration: 0.25, ease: 'power2.in' }, 0)
+                .to('.preloader-sub', { opacity: 0, y: -8, duration: 0.3, ease: 'power2.in' }, 0)
+                .to('.preloader-brand', { opacity: 0, y: -12, duration: 0.35, ease: 'power2.in' }, 0.05)
+                .to('.pl-cross', { opacity: 0, duration: 0.3, ease: 'power2.in' }, 0.05)
+                .to('.pl-tick', { opacity: 0, duration: 0.2, ease: 'power2.in' }, 0.05)
+                .to('.pl-dot', { opacity: 0, scale: 3, duration: 0.4, ease: 'power2.in', transformOrigin: '100px 100px' }, 0.1)
+                .to('.pl-ring-outer', { opacity: 0, scale: 1.3, duration: 0.5, ease: 'power3.in', transformOrigin: '100px 100px' }, 0.1)
+                .to('.pl-ring-inner', { opacity: 0, scale: 1.3, duration: 0.5, ease: 'power3.in', transformOrigin: '100px 100px' }, 0.12)
+                .to('.pl-progress', { opacity: 0, scale: 1.3, duration: 0.5, ease: 'power3.in', transformOrigin: '100px 100px' }, 0.1)
+                .to(canvas, { opacity: 0, duration: 0.5, ease: 'power2.in' }, 0.15)
+                .to('.preloader-aurora', { opacity: 0, duration: 0.4 }, 0.2)
+                .to(el, { opacity: 0, duration: 0.4, ease: 'power2.inOut' }, 0.4);
         }, wait);
     }
 

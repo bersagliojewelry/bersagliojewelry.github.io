@@ -4326,8 +4326,8 @@ body::after {
 body.is-preloading { overflow: hidden; }
 
 .preloader-spinner {
-    width: 68px;
-    height: 68px;
+    width: 120px;
+    height: 120px;
     display: flex;
     align-items: center;
     justify-content: center;

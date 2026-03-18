@@ -4305,7 +4305,7 @@ body::after {
 .footer-logo .logo-text { color: var(--ivory); }
 .footer-logo .logo-sub  { color: var(--champagne-dark); }
 
-/* ─── Preloader — CSS-only diamond spinner ────────────────────── */
+/* ─── Preloader & Page-Transition spinner ────────────────────── */
 #preloader {
     position: fixed;
     inset: 0;
@@ -4325,88 +4325,27 @@ body::after {
 
 body.is-preloading { overflow: hidden; }
 
-.preloader-content {
+.preloader-spinner {
+    width: 68px;
+    height: 68px;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 18px;
-    position: relative;
+    justify-content: center;
+    flex-shrink: 0;
+    pointer-events: none;
+    user-select: none;
 }
 
-/* Diamond shape */
-.preloader-diamond {
-    width: 40px;
-    height: 40px;
-    transform: rotate(45deg);
-    position: relative;
-    z-index: 2;
-}
-
-.preloader-diamond-inner {
+.preloader-img {
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 50%, var(--gold-dark) 100%);
-    box-shadow:
-        0 0 20px rgba(201, 169, 110, 0.4),
-        inset 0 0 12px rgba(255, 255, 255, 0.15);
-    animation: diamond-pulse 1.8s ease-in-out infinite;
+    object-fit: contain;
+    display: block;
+    animation: preloader-spin 1.4s linear infinite;
 }
 
-@keyframes diamond-pulse {
-    0%, 100% {
-        transform: scale(1);
-        box-shadow: 0 0 20px rgba(201, 169, 110, 0.4), inset 0 0 12px rgba(255, 255, 255, 0.15);
-    }
-    50% {
-        transform: scale(1.08);
-        box-shadow: 0 0 32px rgba(201, 169, 110, 0.6), inset 0 0 16px rgba(255, 255, 255, 0.25);
-    }
-}
-
-/* Orbiting ring */
-.preloader-ring {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 80px;
-    height: 80px;
-    transform: translate(-50%, -50%);
-    z-index: 1;
-    animation: ring-rotate 2.4s linear infinite;
-}
-
-.preloader-ring svg {
-    width: 100%;
-    height: 100%;
-}
-
-.preloader-ring circle {
-    fill: none;
-    stroke: var(--gold);
-    stroke-width: 1.2;
-    stroke-dasharray: 180 264;
-    stroke-linecap: round;
-    opacity: 0.7;
-}
-
-@keyframes ring-rotate {
-    to { transform: translate(-50%, -50%) rotate(360deg); }
-}
-
-/* Brand text */
-.preloader-text {
-    font-family: var(--font-display), serif;
-    font-size: 0.7rem;
-    letter-spacing: 0.35em;
-    color: var(--gold);
-    opacity: 0.6;
-    margin-top: 12px;
-    animation: text-fade 2s ease-in-out infinite;
-}
-
-@keyframes text-fade {
-    0%, 100% { opacity: 0.4; }
-    50% { opacity: 0.8; }
+@keyframes preloader-spin {
+    to { transform: rotate(360deg); }
 }
 
 /* ─── Hero Section — Phase 1 Enhancements ────────────────────── */

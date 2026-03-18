@@ -1,7 +1,7 @@
 /**
  * Bersaglio Jewelry — Page Transitions
- * CSS-only dark overlay with diamond spinner.
- * No external images — pure CSS animation.
+ * Dark overlay con CARGANDO.png girando.
+ * Fix bfcache: pageshow + persisted para detectar navegación "atrás".
  */
 
 import { gsap } from './gsap-core.js';
@@ -16,13 +16,8 @@ function createOverlay() {
     el.innerHTML = `
         <div class="pt-panel"></div>
         <div class="pt-center">
-            <div class="preloader-diamond">
-                <div class="preloader-diamond-inner"></div>
-            </div>
-            <div class="preloader-ring">
-                <svg viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="42" />
-                </svg>
+            <div class="preloader-spinner">
+                <img src="Pic/CARGANDO.png" class="preloader-img" alt="" draggable="false">
             </div>
         </div>
     `;

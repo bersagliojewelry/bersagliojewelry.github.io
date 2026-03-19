@@ -7245,10 +7245,6 @@ nav .logo-badge {
 .bj-cursor-ready,
 .bj-cursor-ready * { cursor: none !important; }
 
-.cursor, .cursor::before, .cursor::after,
-.cursor-follower, .cursor-label, .cursor-dot {
-    display: none !important;
-}
 
 /* ── Wrapper del punto (posición exacta del ratón) ── */
 #bj-dot-wrap {

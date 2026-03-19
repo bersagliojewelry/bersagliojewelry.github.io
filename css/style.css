@@ -7237,7 +7237,9 @@ nav .logo-badge {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   CURSOR  —  SVG inline con hotspot explícito (22×22 px)
+   CURSOR  —  Diseño de precisión Bersaglio
+   · Puntero : flecha tallada con faceta de gema (24×24, tip 2,1)
+   · Hover   : retícula de gemólogo — anillos + mira dorada (28×28, center 14,14)
    ═══════════════════════════════════════════════════════════════ */
 
 /* 1. Ocultar elementos de cursor antiguo (versiones previas) */
@@ -7249,12 +7251,12 @@ nav .logo-badge {
 
 /* 2. Cursor SVG en dispositivos de puntero fino */
 @media (pointer: fine) {
-    /* Puntero normal — flecha NW dorada, tip en (2,1) */
+    /* ── Puntero: flecha geométrica con faceta (efecto gema tallada) ── */
     * {
-        cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Cpath d='M2 1L2 17L6.5 12.5L10 19L12.5 17.5L9 11L15 11Z' fill='%23C9A96E' stroke='%231a1a1a' stroke-width='1' stroke-linejoin='round'/%3E%3C/svg%3E") 2 1, auto !important;
+        cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M2 1L2 18L7 13L11 20L14 18L10 11L16 11Z' fill='%23C9A96E' stroke='%230d0d0d' stroke-width='0.8' stroke-linejoin='round'/%3E%3Cpath d='M2 1L2 11L9 11Z' fill='%23F0DC9A' opacity='0.45'/%3E%3C/svg%3E") 2 1, auto !important;
     }
 
-    /* Manito — dedo índice apuntando arriba, tip en (7,0) */
+    /* ── Hover: retícula de precisión — lupa de gemólogo ── */
     a, a *,
     button, button *,
     [role="button"], [role="button"] *,
@@ -7265,6 +7267,6 @@ nav .logo-badge {
     summary, summary *,
     .piece-card, .piece-card *,
     .collection-panel, .collection-panel * {
-        cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Cpath d='M7 0Q6 0 6 1.5L6 10Q4 10 4 12L4 16Q4 20 8 20L16 20Q19 20 19 17L19 11Q19 9 17 9L17 5Q17 3 15 3L15 4Q15 2.5 13 2.5L13 4Q13 2 11 2L11 3.5Q11 0.5 9 0.5Q8 0 7 0Z' fill='%23C9A96E' stroke='%231a1a1a' stroke-width='0.8' stroke-linejoin='round'/%3E%3C/svg%3E") 7 0, pointer !important;
+        cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='12.5' fill='none' stroke='%23C9A96E' stroke-width='0.7' opacity='0.5'/%3E%3Ccircle cx='14' cy='14' r='7' fill='none' stroke='%23C9A96E' stroke-width='0.9'/%3E%3Ccircle cx='14' cy='14' r='1.8' fill='%23C9A96E'/%3E%3Cline x1='14' y1='0.5' x2='14' y2='6' stroke='%23C9A96E' stroke-width='0.8'/%3E%3Cline x1='14' y1='22' x2='14' y2='27.5' stroke='%23C9A96E' stroke-width='0.8'/%3E%3Cline x1='0.5' y1='14' x2='6' y2='14' stroke='%23C9A96E' stroke-width='0.8'/%3E%3Cline x1='22' y1='14' x2='27.5' y2='14' stroke='%23C9A96E' stroke-width='0.8'/%3E%3Ccircle cx='14' cy='14' r='4.5' fill='none' stroke='%23C9A96E' stroke-width='0.4' opacity='0.4' stroke-dasharray='1.5 2'/%3E%3C/svg%3E") 14 14, pointer !important;
     }
 }

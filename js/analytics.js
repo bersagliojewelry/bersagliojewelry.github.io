@@ -10,7 +10,7 @@
  * ──────────────────────────────────────────────────
  */
 
-const GA4_ID    = 'G-XXXXXXXXXX'; // ← reemplazar con ID real
+const GA4_ID    = 'G-HS26X60DK3';
 const HOTJAR_ID = 0;              // ← reemplazar con Site ID real (0 = deshabilitado)
 
 let gaReady = false;

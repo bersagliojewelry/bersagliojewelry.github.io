@@ -7,13 +7,16 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-const CACHE_NAME    = 'bersaglio-v1';
+const CACHE_NAME    = 'bersaglio-v2';
 const OFFLINE_URL   = '/offline.html';
 
 const SHELL_ASSETS = [
     OFFLINE_URL,
     '/css/style.css',
     '/img/logo-bj2.png',
+    '/img/banner-1200.webp',
+    '/img/banner-800.webp',
+    '/img/collage.webp',
 ];
 
 /* ─── Install ────────────────────────────────────────────────── */

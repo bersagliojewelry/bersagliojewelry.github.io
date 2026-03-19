@@ -13,6 +13,13 @@ import { initAnalytics }       from './analytics.js';
 
 const SNIPPETS = 'snippets/';
 
+// Cursor premium — se carga al evaluar el módulo (antes de cualquier async)
+if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) {
+    const _cs = document.createElement('script');
+    _cs.src = 'js/cursor.js';
+    document.head.appendChild(_cs);
+}
+
 async function loadComponent(placeholderId, path) {
     const el = document.getElementById(placeholderId);
     if (!el) return;
@@ -234,11 +241,4 @@ export async function loadAllComponents() {
     initSearch();
     initAnalytics();
     initPWA();
-
-    // Cargar cursor premium en todas las páginas (solo puntero fino / desktop)
-    if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) {
-        var s = document.createElement('script');
-        s.src = 'js/cursor.js';
-        document.head.appendChild(s);
-    }
 }

@@ -213,7 +213,7 @@ const _local = {
         instagram: "@bersaglio_jewelry",
         facebook:  "https://www.facebook.com/share/1J96BT58cr/",
         address:   "Calle 36 # 6-32, Calle San Agustín Chiquita, Centro Histórico, Cartagena de Indias",
-        mapUrl:    "https://maps.google.com/?q=Calle+36+%236-32,+Centro+Histórico,+Cartagena+de+Indias,+Colombia",
+        mapUrl:    "https://maps.app.goo.gl/9p5cjFQpqMjLeXti8",
         location:  "Cartagena de Indias, Colombia"
     }
 };

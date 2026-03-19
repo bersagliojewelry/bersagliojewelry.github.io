@@ -30,6 +30,9 @@
 
     var ring = mkEl('div', 'bj-ring');
 
+    // Confirmar al CSS que el cursor custom está listo
+    document.documentElement.classList.add('bj-cursor-ready');
+
     /* ── Estado ───────────────────────────────────────────────── */
     var mx = -300, my = -300;   // posición exacta del ratón
     var rx = -300, ry = -300;   // posición del anillo (con lag)

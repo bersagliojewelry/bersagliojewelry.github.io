@@ -234,4 +234,11 @@ export async function loadAllComponents() {
     initSearch();
     initAnalytics();
     initPWA();
+
+    // Cargar cursor premium en todas las páginas (solo puntero fino / desktop)
+    if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) {
+        var s = document.createElement('script');
+        s.src = 'js/cursor.js';
+        document.head.appendChild(s);
+    }
 }

@@ -7241,9 +7241,10 @@ nav .logo-badge {
    Sistema completo JS: dot + anillo magnético + partículas + burst
    ═══════════════════════════════════════════════════════════════ */
 
-/* Ocultar cursor del sistema y elementos legacy */
+/* Ocultar cursor nativo SOLO cuando JS confirma que el custom existe */
 @media (pointer: fine) {
-    * { cursor: none !important; }
+    .bj-cursor-ready,
+    .bj-cursor-ready * { cursor: none !important; }
 }
 
 .cursor, .cursor::before, .cursor::after,

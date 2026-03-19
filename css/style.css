@@ -91,6 +91,14 @@ ul { list-style: none; }
 button { cursor: pointer; border: none; background: none; font-family: inherit; transition: var(--transition); }
 input, select, textarea { font-family: var(--font-body); }
 
+/* ── Cursor nativo oculto en dispositivos con mouse ──────────
+   Se aplica al parsear el CSS (antes de cualquier JS).
+   @media (hover:hover) and (pointer:fine) = ratón de precisión.
+   Touch-only queda sin afectar (no hay cursor en táctil).     */
+@media (hover: hover) and (pointer: fine) {
+    *, *::before, *::after { cursor: none !important; }
+}
+
 /* Screen reader only */
 .sr-only {
     position: absolute;
@@ -7236,20 +7244,16 @@ nav .logo-badge {
     height:  0    !important;
 }
 
+
 /* ═══════════════════════════════════════════════════════════════
-   CURSOR PREMIUM BERSAGLIO v3 — "El Engaste"
-   Diseño desde cero. Dos capas:
-     #bj-dot   → punta de precisión exacta al mouse
-       .bj-gem → diamante rotado 45° + brazos de cruceta (::before / ::after)
-     #bj-ring  → anillo magnético con lag (easing via JS RAF)
-       ::before → arco giratorio (animation CSS aislada del transform JS)
-       ::after  → órbita exterior estática
-   Cursor nativo ocultado sincrónicamente por <style id="bj-hide"> (JS)
+   CURSOR PREMIUM BERSAGLIO — "El Engaste"
+   Ocultado: @media (hover:hover) and (pointer:fine) en resets (línea ~92)
+   #bj-dot   → punta de precisión (JS: translate3d exacto, sin lag)
+   #bj-ring  → anillo magnético (JS: translate3d con EASE=0.10)
+   ::before/::after en ambos → visuales aislados del transform JS
    ═══════════════════════════════════════════════════════════════ */
 
-/* ─────────────────────────────────────────────────────────────
-   #bj-dot — Posicionador exacto (JS le aplica translate3d)
-   ───────────────────────────────────────────────────────────── */
+/* ── Punta de precisión ─────────────────────────────────────── */
 #bj-dot {
     position: fixed;
     top: 0; left: 0;
@@ -7259,7 +7263,7 @@ nav .logo-badge {
     transition: opacity 0.22s ease;
 }
 
-/* ── Gema: el diamante central ── */
+/* Gema: diamante dorado con cruceta emanando */
 .bj-gem {
     position: absolute;
     top: -5px; left: -5px;
@@ -7270,47 +7274,43 @@ nav .logo-badge {
         0 0  6px 1px rgba(201,169,110,0.55),
         0 0 12px 2px rgba(201,169,110,0.20);
     transition:
-        transform   0.22s cubic-bezier(.4,0,.2,1),
-        background  0.22s,
-        box-shadow  0.22s,
-        width       0.22s,
-        height      0.22s,
-        top         0.22s,
-        left        0.22s;
+        transform  0.22s cubic-bezier(.4,0,.2,1),
+        background 0.22s,
+        box-shadow 0.22s,
+        width      0.22s,
+        height     0.22s,
+        top        0.22s,
+        left       0.22s;
 }
 
-/* Brazo horizontal de la cruceta */
+/* Brazo horizontal de cruceta */
 .bj-gem::before {
     content: '';
     position: absolute;
     top: calc(50% - 0.5px);
     left: calc(50% - 14px);
     width: 28px; height: 1px;
-    background: linear-gradient(
-        to right,
+    background: linear-gradient(to right,
         transparent 0%,
         rgba(201,169,110,0.70) 22%,
         rgba(201,169,110,0.70) 78%,
-        transparent 100%
-    );
-    transform: rotate(-45deg);   /* contrarrota la del padre */
+        transparent 100%);
+    transform: rotate(-45deg); /* contrarrota la del padre */
     transition: opacity 0.22s;
 }
 
-/* Brazo vertical de la cruceta */
+/* Brazo vertical de cruceta */
 .bj-gem::after {
     content: '';
     position: absolute;
     top: calc(50% - 14px);
     left: calc(50% - 0.5px);
     width: 1px; height: 28px;
-    background: linear-gradient(
-        to bottom,
+    background: linear-gradient(to bottom,
         transparent 0%,
         rgba(201,169,110,0.70) 22%,
         rgba(201,169,110,0.70) 78%,
-        transparent 100%
-    );
+        transparent 100%);
     transform: rotate(-45deg);
     transition: opacity 0.22s;
 }
@@ -7341,11 +7341,7 @@ nav .logo-badge {
 #bj-dot.bj-press .bj-gem::after { opacity: 0.08; }
 
 
-/* ─────────────────────────────────────────────────────────────
-   #bj-ring — Posicionador del anillo (JS le aplica translate3d)
-   Visualmente nulo: el visivo está en ::before y ::after
-   (esto evita que transform JS y animation CSS colisionen)
-   ───────────────────────────────────────────────────────────── */
+/* ── Anillo magnético ────────────────────────────────────────── */
 #bj-ring {
     position: fixed;
     top: 0; left: 0;
@@ -7355,29 +7351,26 @@ nav .logo-badge {
     transition: opacity 0.3s ease;
 }
 
-/* Arco giratorio principal */
+/* Arco giratorio — aislado del transform JS gracias al ::before */
 #bj-ring::before {
     content: '';
     position: absolute;
     top: -24px; left: -24px;
     width: 48px; height: 48px;
     border-radius: 50%;
-    /* Tres sectores del arco con opacidades distintas → aspecto de arco de 270° */
     border-top:    1.2px solid rgba(201,169,110,0.90);
     border-right:  1.2px solid rgba(201,169,110,0.40);
     border-bottom: 1.2px solid rgba(201,169,110,0.08);
     border-left:   1.2px solid rgba(201,169,110,0.60);
-    box-shadow:
-        0 0 8px  rgba(201,169,110,0.08),
-        0 0 2px  rgba(201,169,110,0.12) inset;
+    box-shadow: 0 0 8px rgba(201,169,110,0.08);
     animation: bj-spin 2.8s linear infinite;
     transition:
-        top         0.38s cubic-bezier(.4,0,.2,1),
-        left        0.38s cubic-bezier(.4,0,.2,1),
-        width       0.38s cubic-bezier(.4,0,.2,1),
-        height      0.38s cubic-bezier(.4,0,.2,1),
+        top          0.38s cubic-bezier(.4,0,.2,1),
+        left         0.38s cubic-bezier(.4,0,.2,1),
+        width        0.38s cubic-bezier(.4,0,.2,1),
+        height       0.38s cubic-bezier(.4,0,.2,1),
         border-color 0.30s,
-        box-shadow  0.30s;
+        box-shadow   0.30s;
 }
 
 /* Órbita exterior estática */
@@ -7389,25 +7382,23 @@ nav .logo-badge {
     border-radius: 50%;
     border: 0.5px solid rgba(201,169,110,0.10);
     transition:
-        top    0.50s cubic-bezier(.4,0,.2,1),
-        left   0.50s cubic-bezier(.4,0,.2,1),
-        width  0.50s cubic-bezier(.4,0,.2,1),
-        height 0.50s cubic-bezier(.4,0,.2,1),
+        top          0.50s cubic-bezier(.4,0,.2,1),
+        left         0.50s cubic-bezier(.4,0,.2,1),
+        width        0.50s cubic-bezier(.4,0,.2,1),
+        height       0.50s cubic-bezier(.4,0,.2,1),
         border-color 0.30s,
         opacity      0.30s;
 }
 
-/* Hover ring: se expande, arco se ilumina, gira más rápido */
+/* Hover: expande, ilumina, gira más rápido */
 #bj-ring.bj-hover::before {
     top: -31px; left: -31px;
     width: 62px; height: 62px;
-    border-top:   1.5px solid rgba(201,169,110,1.00);
-    border-right: 1.5px solid rgba(201,169,110,0.60);
-    border-bottom:1.5px solid rgba(201,169,110,0.15);
-    border-left:  1.5px solid rgba(201,169,110,0.80);
-    box-shadow:
-        0 0 14px rgba(201,169,110,0.20),
-        0 0  4px rgba(201,169,110,0.15) inset;
+    border-top:    1.5px solid rgba(201,169,110,1.00);
+    border-right:  1.5px solid rgba(201,169,110,0.60);
+    border-bottom: 1.5px solid rgba(201,169,110,0.15);
+    border-left:   1.5px solid rgba(201,169,110,0.80);
+    box-shadow: 0 0 14px rgba(201,169,110,0.20);
     animation-duration: 1.6s;
 }
 #bj-ring.bj-hover::after {
@@ -7416,7 +7407,7 @@ nav .logo-badge {
     border-color: rgba(201,169,110,0.18);
 }
 
-/* Press ring: se comprime, destella blanco */
+/* Press: comprime, destella blanco */
 #bj-ring.bj-press::before {
     top: -16px; left: -16px;
     width: 32px; height: 32px;
@@ -7427,9 +7418,7 @@ nav .logo-badge {
     box-shadow: 0 0 10px rgba(255,255,255,0.18);
     animation-duration: 0.6s;
 }
-#bj-ring.bj-press::after {
-    opacity: 0;
-}
+#bj-ring.bj-press::after { opacity: 0; }
 
 @keyframes bj-spin {
     from { transform: rotate(0deg); }
@@ -7437,9 +7426,7 @@ nav .logo-badge {
 }
 
 
-/* ─────────────────────────────────────────────────────────────
-   Partículas de oro (trail de movimiento)
-   ───────────────────────────────────────────────────────────── */
+/* ── Trail de partículas de oro ─────────────────────────────── */
 .bj-spark {
     position: fixed;
     border-radius: 50%;
@@ -7451,21 +7438,19 @@ nav .logo-badge {
 }
 
 @keyframes bj-spark-out {
-    0% {
+    0%   {
         opacity: 0.90;
-        transform: translate(-50%, -50%) rotate(var(--a)) translateY(0) scale(1);
+        transform: translate(-50%,-50%) rotate(var(--a)) translateY(0) scale(1);
     }
-    65% { opacity: 0.45; }
+    65%  { opacity: 0.45; }
     100% {
         opacity: 0;
-        transform: translate(-50%, -50%) rotate(var(--a)) translateY(calc(var(--d) * -1)) scale(0.08);
+        transform: translate(-50%,-50%) rotate(var(--a)) translateY(calc(var(--d) * -1)) scale(0.08);
     }
 }
 
 
-/* ─────────────────────────────────────────────────────────────
-   Burst de clic — onda expansiva dorada
-   ───────────────────────────────────────────────────────────── */
+/* ── Onda de clic ────────────────────────────────────────────── */
 .bj-burst {
     position: fixed;
     width: 10px; height: 10px;

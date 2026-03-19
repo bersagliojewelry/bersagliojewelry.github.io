@@ -2691,24 +2691,25 @@ input, select, textarea { font-family: var(--font-body); }
     .btn-cart-wa, .btn-clear-cart { flex: 1; justify-content: center; }
 }
 
-/* ─── Cart "coming soon" note ────────────────────────────────────────────── */
-.cart-coming-soon {
+/* ─── Cart inquiry note ─────────────────────────────────────────────────── */
+.cart-inquiry-note {
     display: flex;
     align-items: flex-start;
     gap: 10px;
     margin-top: var(--space-2xl);
     padding: var(--space-md) var(--space-lg);
-    background: var(--ivory-warm);
+    background: linear-gradient(135deg, rgba(201,169,110,0.06), rgba(201,169,110,0.02));
     border-left: 3px solid var(--gold);
     border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
     font-family: var(--font-body);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 400;
     color: var(--text-secondary);
     line-height: 1.7;
 }
-
-.cart-coming-soon svg { flex-shrink: 0; color: var(--gold); margin-top: 1px; }
+.cart-inquiry-note svg { flex-shrink: 0; margin-top: 2px; }
+.cart-inquiry-note a { color: var(--gold-dark); text-decoration: underline; }
+.cart-inquiry-note strong { color: var(--text-primary); font-weight: 500; }
 
 /* ─── Breadcrumb ─────────────────────────────────────────────────────────── */
 .breadcrumb {
@@ -7299,4 +7300,136 @@ nav .logo-badge {
         padding: var(--space-md);
     }
 }
+
+/* ─── Email Capture Modal ───────────────────────────────────── */
+.email-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s var(--ease);
+}
+.email-modal.is-visible { opacity: 1; }
+.email-modal[hidden] { display: none; }
+
+.email-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 10, 10, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+.email-modal-content {
+    position: relative;
+    background: var(--ivory);
+    max-width: 420px;
+    width: 90%;
+    padding: var(--space-xl) var(--space-lg);
+    border-radius: var(--radius-lg);
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    transform: translateY(20px);
+    transition: transform 0.3s var(--ease);
+}
+.email-modal.is-visible .email-modal-content { transform: translateY(0); }
+
+.email-modal-close {
+    position: absolute;
+    top: var(--space-sm);
+    right: var(--space-sm);
+    color: var(--text-muted);
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 4px;
+    transition: color 0.2s;
+}
+.email-modal-close:hover { color: var(--text-primary); }
+
+.email-modal-icon {
+    color: var(--gold);
+    margin-bottom: var(--space-md);
+}
+.email-modal-title {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 400;
+    color: var(--text-primary);
+    margin-bottom: var(--space-xs);
+}
+.email-modal-desc {
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-md);
+}
+.email-modal-form {
+    display: flex;
+    gap: 8px;
+    margin-bottom: var(--space-sm);
+}
+.email-modal-input {
+    flex: 1;
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-family: var(--font-body);
+    background: #fff;
+    transition: border-color 0.2s;
+}
+.email-modal-input:focus {
+    outline: none;
+    border-color: var(--gold);
+}
+.email-modal-submit {
+    padding: 0.6rem 1.2rem;
+    background: var(--gold);
+    color: var(--black);
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s;
+}
+.email-modal-submit:hover { background: var(--gold-light); }
+.email-modal-privacy {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: var(--font-body);
+}
+
+@media (max-width: 480px) {
+    .email-modal-form { flex-direction: column; }
+    .email-modal-content { padding: var(--space-lg) var(--space-md); }
+}
+
+/* ─── Collection Panel Hover Enhancements ───────────────────── */
+.collection-panel {
+    transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1),
+                box-shadow 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.collection-panel:hover {
+    box-shadow:
+        0 20px 50px rgba(0,0,0,0.4),
+        0 0 0 1px rgba(201,169,110,0.15);
+}
+.collection-panel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(201,169,110,0.08), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.4s var(--ease);
+    pointer-events: none;
+    border-radius: inherit;
+}
+.collection-panel:hover::after { opacity: 1; }
 

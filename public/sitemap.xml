@@ -4,7 +4,7 @@
     <!-- Homepage -->
     <url>
         <loc>https://bersagliojewelry.co/</loc>
-        <lastmod>2026-03-11</lastmod>
+        <lastmod>2026-03-19</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
     </url>
@@ -12,7 +12,7 @@
     <!-- Catálogo principal -->
     <url>
         <loc>https://bersagliojewelry.co/colecciones.html</loc>
-        <lastmod>2026-03-11</lastmod>
+        <lastmod>2026-03-19</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
     </url>
@@ -20,39 +20,77 @@
     <!-- Colecciones individuales -->
     <url>
         <loc>https://bersagliojewelry.co/esmeraldas-colombianas.html</loc>
-        <lastmod>2026-03-11</lastmod>
+        <lastmod>2026-03-19</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.85</priority>
     </url>
     <url>
         <loc>https://bersagliojewelry.co/diamantes-eternos.html</loc>
-        <lastmod>2026-03-11</lastmod>
+        <lastmod>2026-03-19</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.85</priority>
     </url>
     <url>
         <loc>https://bersagliojewelry.co/oro-escultorico.html</loc>
-        <lastmod>2026-03-11</lastmod>
+        <lastmod>2026-03-19</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.85</priority>
     </url>
     <url>
         <loc>https://bersagliojewelry.co/novias.html</loc>
-        <lastmod>2026-03-11</lastmod>
+        <lastmod>2026-03-19</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.85</priority>
+    </url>
+
+    <!-- Piezas individuales (productos) -->
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=anillo-muzo-imperial</loc>
+        <lastmod>2026-03-19</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=collar-eterno-brillante</loc>
+        <lastmod>2026-03-19</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=brazalete-serpentina-oro</loc>
+        <lastmod>2026-03-19</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=pendientes-gota-esmeralda</loc>
+        <lastmod>2026-03-19</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=anillo-solitario-promesa</loc>
+        <lastmod>2026-03-19</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=collar-cascada-de-oro</loc>
+        <lastmod>2026-03-19</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
     </url>
 
     <!-- Servicios y conversión -->
     <url>
         <loc>https://bersagliojewelry.co/servicios.html</loc>
-        <lastmod>2026-03-11</lastmod>
+        <lastmod>2026-03-19</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.75</priority>
     </url>
     <url>
         <loc>https://bersagliojewelry.co/contacto.html</loc>
-        <lastmod>2026-03-11</lastmod>
+        <lastmod>2026-03-19</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
@@ -60,7 +98,7 @@
     <!-- Marca -->
     <url>
         <loc>https://bersagliojewelry.co/nosotros.html</loc>
-        <lastmod>2026-03-11</lastmod>
+        <lastmod>2026-03-19</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.65</priority>
     </url>
@@ -68,9 +106,23 @@
     <!-- Journal -->
     <url>
         <loc>https://bersagliojewelry.co/journal.html</loc>
-        <lastmod>2026-03-11</lastmod>
+        <lastmod>2026-03-19</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.6</priority>
+    </url>
+
+    <!-- Legales -->
+    <url>
+        <loc>https://bersagliojewelry.co/privacidad.html</loc>
+        <lastmod>2026-03-19</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.3</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/terminos.html</loc>
+        <lastmod>2026-03-19</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.3</priority>
     </url>
 
 </urlset>

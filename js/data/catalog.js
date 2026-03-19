@@ -25,10 +25,10 @@ const _local = {
     brand: {
         name:        "Bersaglio Jewelry",
         tagline:     "Alta Joyería con Alma",
-        description: "Creamos piezas únicas que trascienden el tiempo. Cada joya Bersaglio es una obra de arte que celebra la belleza de las gemas más extraordinarias del mundo.",
+        description: "Somos una joyería nacida con una visión clara: acercar piezas únicas a quienes saben apreciar la elegancia y el valor de una joya auténtica. Más que vender joyas, nos apasiona asesorar.",
         founded:     "2024",
         origin:      "Colombia",
-        philosophy:  "Precisión artesanal, gemas excepcionales y diseño atemporal convergen en cada pieza Bersaglio. Nuestra pasión es transformar las piedras más nobles de la tierra en joyas que cuentan historias."
+        philosophy:  "Antes que vender, nos dedicamos a asesorar. Queremos que cada cliente encuentre una pieza con la que realmente se identifique — una joya que refleje su estilo, su historia y su esencia."
     },
 
     collections: [
@@ -211,7 +211,10 @@ const _local = {
         whatsapp:  "+573013752592",
         email:     "info@bersagliojewelry.co",
         instagram: "@bersaglio_jewelry",
-        location:  "Colombia"
+        facebook:  "https://www.facebook.com/share/1J96BT58cr/",
+        address:   "Calle 36 # 6-32, Calle San Agustín Chiquita, Centro Histórico, Cartagena de Indias",
+        mapUrl:    "https://maps.google.com/?q=Calle+36+%236-32,+Centro+Histórico,+Cartagena+de+Indias,+Colombia",
+        location:  "Cartagena de Indias, Colombia"
     }
 };
 

@@ -7237,7 +7237,7 @@ nav .logo-badge {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   CURSOR  —  archivos .cur nativos del navegador
+   CURSOR  —  SVG inline con hotspot explícito (22×22 px)
    ═══════════════════════════════════════════════════════════════ */
 
 /* 1. Ocultar elementos de cursor antiguo (versiones previas) */
@@ -7247,14 +7247,14 @@ nav .logo-badge {
     display: none !important;
 }
 
-/* 2. Cursor nativo con .cur en dispositivos de puntero fino */
+/* 2. Cursor SVG en dispositivos de puntero fino */
 @media (pointer: fine) {
-    /* Cursor normal para todo */
+    /* Puntero normal — flecha NW dorada, tip en (2,1) */
     * {
-        cursor: url('../img/puntero.cur'), auto !important;
+        cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Cpath d='M2 1L2 17L6.5 12.5L10 19L12.5 17.5L9 11L15 11Z' fill='%23C9A96E' stroke='%231a1a1a' stroke-width='1' stroke-linejoin='round'/%3E%3C/svg%3E") 2 1, auto !important;
     }
 
-    /* Cursor de mano para elementos interactivos y sus hijos */
+    /* Manito — dedo índice apuntando arriba, tip en (7,0) */
     a, a *,
     button, button *,
     [role="button"], [role="button"] *,
@@ -7265,6 +7265,6 @@ nav .logo-badge {
     summary, summary *,
     .piece-card, .piece-card *,
     .collection-panel, .collection-panel * {
-        cursor: url('../img/manito.cur'), pointer !important;
+        cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Cpath d='M7 0Q6 0 6 1.5L6 10Q4 10 4 12L4 16Q4 20 8 20L16 20Q19 20 19 17L19 11Q19 9 17 9L17 5Q17 3 15 3L15 4Q15 2.5 13 2.5L13 4Q13 2 11 2L11 3.5Q11 0.5 9 0.5Q8 0 7 0Z' fill='%23C9A96E' stroke='%231a1a1a' stroke-width='0.8' stroke-linejoin='round'/%3E%3C/svg%3E") 7 0, pointer !important;
     }
 }

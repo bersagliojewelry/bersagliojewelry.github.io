@@ -457,16 +457,20 @@ SEMANA 2   ✅ Cookie consent propio                      → GDPR compliant
 SEMANA 2   ✅ Lazy loading universal                     → FID mejora
 SEMANA 3   ✅ Vite minificación CSS+JS activa            → bundle -40%
 
-SEMANA 4   ⬜ Firebase Functions + Stripe Checkout       → conversión 0% → ∞
-SEMANA 5   ⬜ Sitemap dinámico con productos
-SEMANA 6   ⬜ Tilt 3D cards + micro-interacciones        → engagement +35%
-SEMANA 7   ⬜ Email capture + marketing                  → retención
-SEMANA 8   ⬜ Sistema de recomendaciones IA local
+SEMANA 4   ⬜ Firebase Functions + Stripe Checkout       → conversión 0% → ∞ (requiere cuenta Stripe)
+SEMANA 5   ✅ Sitemap dinámico con productos             → DONE
+SEMANA 6   ✅ Tilt 3D cards + micro-interacciones        → DONE (ya existía + hovers mejorados)
+SEMANA 7   ✅ Email capture + marketing                  → DONE (modal con exit intent)
+SEMANA 8   ✅ Sistema de recomendaciones IA local        → DONE (js/recommendations.js)
+SEMANA 8   ✅ OG Image meta tags + preload banner        → DONE
+SEMANA 8   ✅ Collection panel hover enhancements        → DONE
+SEMANA 8   ✅ Cart page UX improvement                   → DONE
+SEMANA 8   ✅ PWA: Service Worker v2 + WebP cache        → DONE
 
-SEMANA 10  ⬜ Migrar a Firebase Hosting + CDN imágenes
-SEMANA 12  ⬜ Visualizador 3D / AR primeras 3 piezas     → diferenciador #1
-SEMANA 16  ⬜ Sistema de reseñas + AggregateRating        → estrellas en Google
-SEMANA 20  ⬜ PWA avanzada + Web Push con FCM
+SEMANA 10  ⬜ Migrar a Firebase Hosting + CDN imágenes   (requiere crear proyecto Firebase)
+SEMANA 12  ⬜ Visualizador 3D / AR primeras 3 piezas     (requiere modelos .glb)
+SEMANA 16  ⬜ Sistema de reseñas + AggregateRating       (requiere backend)
+SEMANA 20  ⬜ PWA avanzada + Web Push con FCM            (requiere Firebase)
 ```
 
 ---

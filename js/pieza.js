@@ -12,6 +12,7 @@ import { initMicroAnimations } from './effects/micro.js';
 import { trackPieceView }      from './analytics.js';
 import Renderer                from './utils/renderer.js';
 import db                      from './data/catalog.js';
+import { getRecommendations, trackView } from './recommendations.js';
 
 const specLabels = {
     stone: 'Piedra principal', carat: 'Quilates', metal: 'Metal', accent: 'Acentos',
@@ -47,6 +48,7 @@ async function init() {
     initMicroAnimations();
     initPiezaGSAP();
     trackPieceView(piece);
+    trackView(piece.slug);
 }
 
 function updatePageMeta(piece) {
@@ -288,14 +290,12 @@ function renderPiece(piece) {
     });
 }
 
-/* ─── Related pieces ────────────────────────────────────────── */
+/* ─── Related pieces (smart recommendations) ──────────────── */
 function renderRelatedPieces(piece) {
     const container = document.getElementById('pieza-content');
     if (!container) return;
 
-    const related = db.getAll()
-        .filter(p => p.slug !== piece.slug && p.collection === piece.collection)
-        .slice(0, 3);
+    const related = getRecommendations(piece, db.getAll(), 3);
 
     if (!related.length) return;
 
@@ -345,9 +345,10 @@ function renderRelatedPieces(piece) {
 
     const section = document.createElement('section');
     section.className = 'related-section';
+    const hasCollectionMatch = related.some(p => p.collection === piece.collection);
     section.innerHTML = `
         <div class="related-header animate-on-scroll">
-            <span class="section-eyebrow">De la misma colección</span>
+            <span class="section-eyebrow">${hasCollectionMatch ? 'De la misma colección' : 'Piezas seleccionadas'}</span>
             <h2 class="related-title">También te puede interesar</h2>
         </div>
         <div class="related-grid">${cards}</div>

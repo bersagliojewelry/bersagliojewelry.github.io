@@ -17,6 +17,7 @@ import { initGSAPScrollAnimations } from './scroll-animations.js';
 import { initParallax }             from './parallax.js';
 import { initMicroAnimations }      from './effects/micro.js';
 import { initCookieConsent }        from './cookie-consent.js';
+import { initEmailCapture }         from './email-capture.js';
 
 async function initApp() {
     try {
@@ -55,6 +56,7 @@ async function initApp() {
     safeEffect(initMicroAnimations,      'initMicroAnimations');
     safeEffect(initBannerKenBurns,       'initBannerKenBurns');
     safeEffect(initCookieConsent,         'initCookieConsent');
+    safeEffect(initEmailCapture,          'initEmailCapture');
 }
 
 function initBannerKenBurns() {

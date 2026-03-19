@@ -1,202 +1,213 @@
 /**
- * Bersaglio Jewelry — Cursor de Precisión Premium v2
+ * Bersaglio Jewelry — Cursor Premium v3
+ * Diseñado desde cero. Máxima robustez y sofisticación visual.
  *
- * CORRECCIONES vs v1:
- *  · Usa Pointer Events API (pointermove + pointerType:'mouse') en vez de
- *    mousemove + sourceCapabilities (que en Windows con touchscreen era true
- *    incluso con ratón físico → bloqueaba toda activación)
- *  · Inyecta cursor:none INMEDIATAMENTE via <style> (no espera mousemove)
- *  · matchMedia (pointer:fine)|(any-pointer:fine) — sale en touch-only
- *  · Elementos iniciados en translate(-9999px) — sin flash en esquina 0,0
- *  · translate3d para aceleración GPU en el loop de animación
- *  · Limpieza automática si el primer evento real es touchstart
+ *  Arquitectura:
+ *  · Inyecta cursor:none SINCRÓNICAMENTE (antes de cualquier evento)
+ *  · Crea #bj-dot  (punta de precisión — sin lag, posición exacta)
+ *    └─ .bj-gem    (diamante 10px rotado 45° + brazos de cruceta)
+ *  · Crea #bj-ring (anillo magnético — sigue con easing)
+ *    └─ ::before   (arco giratorio animado, aislado del transform JS)
+ *    └─ ::after    (órbita exterior estática)
+ *  · Partículas de oro en el trail de movimiento
+ *  · Burst radial al hacer clic
+ *  · Limpieza automática en touch-only
  */
 (function () {
     'use strict';
 
-    /* ── Guard: doble ejecución ──────────────────────────────── */
-    if (document.getElementById('bj-dot-wrap')) return;
+    /* ── 0. Guard ──────────────────────────────────────────────── */
+    if (document.getElementById('bj-dot')) return;
 
-    /* ── Guard: solo dispositivos con mouse fino ─────────────── */
-    var mq = window.matchMedia;
-    if (!mq) return;                                    // browser muy antiguo
-    if (!mq('(pointer: fine)').matches && !mq('(any-pointer: fine)').matches) return;
+    /* ── 1. cursor:none INMEDIATO (síncrono, antes de DOM ready) ─ */
+    var hideStyle = document.createElement('style');
+    hideStyle.id = 'bj-hide';
+    hideStyle.textContent = '*, *::before, *::after { cursor: none !important; }';
+    (document.head || document.documentElement).appendChild(hideStyle);
 
-    /* ── Boot (puede llamarse ahora o en DOMContentLoaded) ───── */
+    /* ── 2. Si el primer evento real es touch → limpiar todo ───── */
+    var touchClean = function () {
+        document.removeEventListener('touchstart', touchClean);
+        hideStyle.parentNode && hideStyle.parentNode.removeChild(hideStyle);
+        var d = document.getElementById('bj-dot');
+        var r = document.getElementById('bj-ring');
+        d && d.parentNode && d.parentNode.removeChild(d);
+        r && r.parentNode && r.parentNode.removeChild(r);
+    };
+    document.addEventListener('touchstart', touchClean, { passive: true });
+
+    /* ── 3. Crear y cablear el cursor ──────────────────────────── */
     function boot() {
 
-        /* ── 1. Inyectar cursor:none inmediatamente ─────────── */
-        var hideStyle = document.createElement('style');
-        hideStyle.id  = 'bj-cursor-hide';
-        hideStyle.textContent = '*, *::before, *::after { cursor: none !important; }';
-        document.head.appendChild(hideStyle);
+        /* ── Elementos ── */
+        var dotEl = document.createElement('div');
+        dotEl.id = 'bj-dot';
+        dotEl.setAttribute('aria-hidden', 'true');
 
-        /* ── 2. Crear elementos del cursor ───────────────────── */
-        var dotWrap = document.createElement('div');
-        dotWrap.id  = 'bj-dot-wrap';
-        dotWrap.setAttribute('aria-hidden', 'true');
-        dotWrap.style.cssText = 'opacity:0;transform:translate3d(-9999px,-9999px,0)';
-        document.body.appendChild(dotWrap);
+        /* gem: el diamante central + brazos de cruceta */
+        var gem = document.createElement('div');
+        gem.className = 'bj-gem';
+        dotEl.appendChild(gem);
 
-        var dot = document.createElement('div');
-        dot.className = 'bj-dot';
-        dotWrap.appendChild(dot);
+        var ringEl = document.createElement('div');
+        ringEl.id = 'bj-ring';
+        ringEl.setAttribute('aria-hidden', 'true');
 
-        var ring = document.createElement('div');
-        ring.id  = 'bj-ring';
-        ring.setAttribute('aria-hidden', 'true');
-        ring.style.transform = 'translate3d(-9999px,-9999px,0)';
-        document.body.appendChild(ring);
+        document.body.appendChild(dotEl);
+        document.body.appendChild(ringEl);
 
-        /* ── 3. Estado ───────────────────────────────────────── */
-        var mx = -9999, my = -9999;
-        var rx = -9999, ry = -9999;
-        var active    = false;
-        var lastPx    = 0, lastPy = 0, lastT = 0;
+        /* ── Estado ── */
+        var mx = -9999, my = -9999;   /* posición del mouse */
+        var rx = -9999, ry = -9999;   /* posición interpolada del ring */
+        var live = false;             /* true tras primer mousemove */
+        var lastT = 0, lastX = 0, lastY = 0;
 
-        /* ── 4. Función de activación (primera vez) ──────────── */
+        /* ── Posición inicial fuera de pantalla ── */
+        dotEl.style.cssText  = 'transform:translate(-9999px,-9999px);opacity:0';
+        ringEl.style.cssText = 'transform:translate(-9999px,-9999px);opacity:0';
+
+        /* ── Activación en el primer movimiento ── */
         function activate(x, y) {
-            if (active) return;
-            active = true;
+            if (live) return;
+            live = true;
             mx = rx = x;
             my = ry = y;
-            dotWrap.style.opacity = '1';
-            document.documentElement.classList.add('bj-cursor-ready');
+            dotEl.style.opacity  = '1';
+            ringEl.style.opacity = '1';
+            document.removeEventListener('touchstart', touchClean); /* ya es mouse */
         }
 
-        /* ── 5. Pointer Events (API moderna, confiable) ──────── */
-        document.addEventListener('pointermove', function (e) {
-            if (e.pointerType !== 'mouse') return;   // ignorar stylus/touch
-            if (!active) activate(e.clientX, e.clientY);
+        /* ── mousemove (evento primario, universal) ── */
+        document.addEventListener('mousemove', function (e) {
+            if (!live) activate(e.clientX, e.clientY);
             mx = e.clientX;
             my = e.clientY;
-            sparkle(mx, my);
+            spawnSpark(mx, my);
         }, { passive: true });
 
-        /* ── 6. Fallback: mousemove para IE/Edge Legacy ──────── */
-        if (!window.PointerEvent) {
-            document.addEventListener('mousemove', function (e) {
-                if (!active) activate(e.clientX, e.clientY);
+        /* ── pointermove (backup, distingue tipo de puntero) ── */
+        if (window.PointerEvent) {
+            document.addEventListener('pointermove', function (e) {
+                if (e.pointerType !== 'mouse') return;
+                if (!live) activate(e.clientX, e.clientY);
                 mx = e.clientX;
                 my = e.clientY;
-                sparkle(mx, my);
             }, { passive: true });
         }
 
-        /* ── 7. Si el primer evento real es touch → limpiar ──── */
-        document.addEventListener('touchstart', function () {
-            if (active) return;                      // ya confirmado como mouse
-            hideStyle.parentNode  && hideStyle.parentNode.removeChild(hideStyle);
-            dotWrap.parentNode    && dotWrap.parentNode.removeChild(dotWrap);
-            ring.parentNode       && ring.parentNode.removeChild(ring);
-        }, { once: true, passive: true });
-
-        /* ── 8. Visibilidad al salir/entrar del documento ────── */
+        /* ── Visibilidad al salir/entrar del viewport ── */
         document.addEventListener('mouseleave', function () {
-            if (!active) return;
-            dotWrap.style.opacity = '0';
-            ring.style.opacity    = '0';
+            if (!live) return;
+            dotEl.style.opacity  = '0';
+            ringEl.style.opacity = '0';
         });
         document.addEventListener('mouseenter', function () {
-            if (!active) return;
-            dotWrap.style.opacity = '1';
-            ring.style.opacity    = '';
+            if (!live) return;
+            dotEl.style.opacity  = '1';
+            ringEl.style.opacity = '1';
         });
 
-        /* ── 9. Hover sobre elementos interactivos ───────────── */
-        var SEL = 'a,button,[role="button"],input,select,textarea,label,summary,.piece-card,.collection-panel,[tabindex]';
+        /* ── Hover: detectar interactivos ── */
+        var SEL = 'a,button,[role="button"],input,select,textarea,' +
+                  'label,summary,[tabindex],.piece-card,.collection-panel';
         document.addEventListener('mouseover', function (e) {
-            if (!active) return;
+            if (!live) return;
             var on = !!e.target.closest(SEL);
-            dot.classList.toggle('is-hover', on);
-            ring.classList.toggle('is-hover', on);
+            dotEl.classList.toggle('bj-hover',  on);
+            ringEl.classList.toggle('bj-hover', on);
         });
 
-        /* ── 10. Press ───────────────────────────────────────── */
+        /* ── Press ── */
         document.addEventListener('mousedown', function () {
-            if (!active) return;
-            dot.classList.add('is-down');
-            ring.classList.add('is-down');
+            if (!live) return;
+            dotEl.classList.add('bj-press');
+            ringEl.classList.add('bj-press');
         });
         document.addEventListener('mouseup', function () {
-            dot.classList.remove('is-down');
-            ring.classList.remove('is-down');
+            dotEl.classList.remove('bj-press');
+            ringEl.classList.remove('bj-press');
         });
 
-        /* ── 11. Click burst ─────────────────────────────────── */
+        /* ── Click burst ── */
         document.addEventListener('click', function (e) {
-            if (!active) return;
+            if (!live) return;
             var b = document.createElement('div');
             b.className = 'bj-burst';
             b.style.left = e.clientX + 'px';
             b.style.top  = e.clientY + 'px';
             document.body.appendChild(b);
-            setTimeout(function () { if (b.parentNode) b.parentNode.removeChild(b); }, 700);
+            setTimeout(function () {
+                b.parentNode && b.parentNode.removeChild(b);
+            }, 750);
         });
 
-        /* ── 12. Loop de animación con GPU (translate3d) ─────── */
-        var EASE = 0.095;
-        (function tick() {
-            if (active) {
-                rx += (mx - rx) * EASE;
-                ry += (my - ry) * EASE;
-                dotWrap.style.transform = 'translate3d(' + mx + 'px,' + my + 'px,0)';
-                ring.style.transform    = 'translate3d(' + rx + 'px,' + ry + 'px,0)';
-            }
-            requestAnimationFrame(tick);
-        })();
+        /* ── RAF: loop de animación (translate3d para GPU) ── */
+        var EASE = 0.10;
+        (function loop() {
+            requestAnimationFrame(loop);
+            if (!live) return;
+            rx += (mx - rx) * EASE;
+            ry += (my - ry) * EASE;
+            dotEl.style.transform  = 'translate3d(' + mx + 'px,' + my + 'px,0)';
+            ringEl.style.transform = 'translate3d(' + rx + 'px,' + ry + 'px,0)';
+        }());
 
-        /* ── 13. Partículas de oro ───────────────────────────── */
-        function sparkle(x, y) {
+        /* ── Partículas de oro ── */
+        function spawnSpark(x, y) {
             var now = Date.now();
-            if (now - lastT < 40) return;
-            var dx = x - lastPx, dy = y - lastPy;
-            if (dx * dx + dy * dy < 100) return;
-            lastT = now; lastPx = x; lastPy = y;
+            if (now - lastT < 48) return;
+            var dx = x - lastX, dy = y - lastY;
+            if (dx * dx + dy * dy < 81) return; /* mínimo desplazamiento */
+            lastT = now; lastX = x; lastY = y;
 
-            for (var i = 0; i < 2; i++) {
+            for (var i = 0; i < 3; i++) {
                 var s   = document.createElement('div');
-                s.className = 'bj-sparkle';
-                var sz  = (2 + Math.random() * 2.5).toFixed(1);
+                s.className = 'bj-spark';
+                var sz  = (1.5 + Math.random() * 3).toFixed(1);
                 var ang = Math.floor(Math.random() * 360);
-                var dst = (5 + Math.random() * 12).toFixed(1);
-                var dur = Math.floor(380 + Math.random() * 320);
-                s.style.cssText = 'left:' + x + 'px;top:' + y + 'px;width:' + sz +
-                    'px;height:' + sz + 'px;--a:' + ang + 'deg;--d:' + dst +
-                    'px;animation-duration:' + dur + 'ms';
+                var dst = (8 + Math.random() * 14).toFixed(1);
+                var dur = Math.floor(320 + Math.random() * 380);
+                s.style.cssText =
+                    'left:'   + x   + 'px;' +
+                    'top:'    + y   + 'px;' +
+                    'width:'  + sz  + 'px;' +
+                    'height:' + sz  + 'px;' +
+                    '--a:'    + ang + 'deg;' +
+                    '--d:'    + dst + 'px;' +
+                    'animation-duration:' + dur + 'ms';
                 document.body.appendChild(s);
                 setTimeout(function (el) {
-                    if (el.parentNode) el.parentNode.removeChild(el);
-                }, dur + 60, s);
+                    el.parentNode && el.parentNode.removeChild(el);
+                }, dur + 80, s);
             }
         }
 
-        /* ── 14. Cursor de espera en navegación interna ──────── */
-        var loadStyle = null;
+        /* ── Cursor de espera en navegación interna ── */
+        var navStyle = null;
         document.addEventListener('click', function (e) {
-            if (!active) return;
+            if (!live) return;
             var a = e.target.closest('a[href]');
             if (!a) return;
             var h = a.getAttribute('href') || '';
             if (h && !h.startsWith('#') && !h.startsWith('tel:') &&
                 !h.startsWith('mailto:') && a.target !== '_blank') {
-                if (!loadStyle) {
-                    loadStyle = document.createElement('style');
-                    document.head.appendChild(loadStyle);
+                if (!navStyle) {
+                    navStyle = document.createElement('style');
+                    document.head.appendChild(navStyle);
                 }
-                loadStyle.textContent = '#bj-dot-wrap, #bj-ring { opacity:0 !important; }';
+                navStyle.textContent = '#bj-dot,#bj-ring{opacity:0!important}';
             }
         });
         window.addEventListener('pageshow', function () {
-            if (loadStyle) loadStyle.textContent = '';
+            if (navStyle) navStyle.textContent = '';
         });
     }
 
-    /* ── Punto de entrada ────────────────────────────────────── */
-    if (document.body) {
-        boot();
-    } else {
+    /* ── 4. Punto de entrada ── */
+    if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', boot);
+    } else {
+        boot();
     }
 
 }());

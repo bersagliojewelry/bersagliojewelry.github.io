@@ -9,6 +9,8 @@
     "preview": "vite preview --host"
   },
   "devDependencies": {
+    "sharp-cli": "^5.2.0",
+    "terser": "^5.46.1",
     "vite": "^6.2.0"
   },
   "dependencies": {

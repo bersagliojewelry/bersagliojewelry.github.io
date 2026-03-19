@@ -16,6 +16,7 @@ import { initCollectionsHScroll }   from './effects/hscroll.js';
 import { initGSAPScrollAnimations } from './scroll-animations.js';
 import { initParallax }             from './parallax.js';
 import { initMicroAnimations }      from './effects/micro.js';
+import { initCookieConsent }        from './cookie-consent.js';
 
 async function initApp() {
     try {
@@ -53,6 +54,7 @@ async function initApp() {
     safeEffect(initParallax,             'initParallax');
     safeEffect(initMicroAnimations,      'initMicroAnimations');
     safeEffect(initBannerKenBurns,       'initBannerKenBurns');
+    safeEffect(initCookieConsent,         'initCookieConsent');
 }
 
 function initBannerKenBurns() {

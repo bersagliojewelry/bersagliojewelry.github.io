@@ -5218,69 +5218,6 @@ html.lenis { height: auto; }
    PHASE 4 — Page Transitions · Cursor Redesign · Parallax
    ═══════════════════════════════════════════════════════════════ */
 
-/* ─── Page Transition Overlay v3 — brand-consistent ─────────── */
-#page-transition {
-    position: fixed;
-    inset: 0;
-    z-index: 9800;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-    will-change: contents;
-}
-
-.pt-panel {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-        160deg,
-        var(--black-carbon, #0a0a0a) 0%,
-        var(--emerald-deep, #0C3B2E) 55%,
-        #05201A 100%
-    );
-    clip-path: inset(100% 0% 0% 0%);
-    will-change: clip-path;
-}
-
-.pt-canvas {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 2;
-}
-
-.pt-center {
-    position: relative;
-    z-index: 3;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-    opacity: 0;
-    pointer-events: none;
-    will-change: transform, opacity;
-}
-
-.pt-svg {
-    width: clamp(90px, 16vw, 130px);
-    height: clamp(90px, 16vw, 130px);
-    will-change: transform;
-}
-
-.pt-arc {
-    will-change: transform;
-}
-
-.pt-label {
-    font-family: var(--font-display, 'Playfair Display', serif);
-    font-size: clamp(0.65rem, 1.2vw, 0.8rem);
-    letter-spacing: 0.4em;
-    color: rgba(201,169,110,0.6);
-    will-change: opacity;
-}
 
 /* ─── Page hero parallax base styles ────────────────────────── */
 .page-hero-inner,
@@ -5306,19 +5243,12 @@ html.lenis { height: auto; }
 
 /* ─── Reduced motion: disable parallax & transitions ────────── */
 @media (prefers-reduced-motion: reduce) {
-    #page-transition,
-    .pt-panel,
-    .pt-center {
-        display: none !important;
-    }
-
     #preloader {
         transition: opacity 0.3s ease;
     }
 
     .preloader-aurora,
-    .preloader-canvas,
-    .pt-canvas {
+    .preloader-canvas {
         display: none !important;
     }
 

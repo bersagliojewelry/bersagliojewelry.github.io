@@ -91,6 +91,23 @@ ul { list-style: none; }
 button { cursor: pointer; border: none; background: none; font-family: inherit; transition: var(--transition); }
 input, select, textarea { font-family: var(--font-body); }
 
+/* Skip link — accessibility */
+.skip-link {
+    position: absolute;
+    top: -100%;
+    left: 1rem;
+    background: var(--gold);
+    color: var(--black);
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    z-index: 9999;
+    border-radius: 0 0 4px 4px;
+    transition: top 0.2s;
+    font-family: var(--font-body);
+    font-size: 14px;
+}
+.skip-link:focus { top: 0; }
+
 /* Screen reader only */
 .sr-only {
     position: absolute;
@@ -616,8 +633,8 @@ input, select, textarea { font-family: var(--font-body); }
 }
 
 @keyframes scroll-bounce {
-    0%, 100% { transform: translateX(-50%) translateY(0); }
-    50% { transform: translateX(-50%) translateY(8px); }
+    0%, 100% { transform: translateY(0); opacity: 0.6; }
+    50%      { transform: translateY(8px); opacity: 1; }
 }
 
 /* ─── Buttons ─── */
@@ -4777,10 +4794,7 @@ body.is-preloading { overflow: hidden; }
     animation: scroll-bounce 2s ease-in-out infinite;
 }
 
-@keyframes scroll-bounce {
-    0%, 100% { transform: translateY(0);    opacity: 0.6; }
-    50%       { transform: translateY(8px); opacity: 1;   }
-}
+/* scroll-bounce keyframes defined once above — removed duplicate */
 
 /* ─── Header Logo on transparent state ──────────────────────── */
 /* The white badge looks great on both dark & light backgrounds  */
@@ -5026,10 +5040,7 @@ body.is-preloading { overflow: hidden; }
     opacity: 0.6;
 }
 
-@keyframes scroll-bounce {
-    0%, 100% { transform: translateX(-50%) translateY(0);   }
-    50%       { transform: translateX(-50%) translateY(9px); }
-}
+/* scroll-bounce keyframes defined once above — removed duplicate */
 
 /* ─── Hero responsive ────────────────────────────────────────── */
 @media (max-width: 768px) {
@@ -7234,5 +7245,58 @@ nav .logo-badge {
     display: none !important;
     width:   0    !important;
     height:  0    !important;
+}
+
+/* ─── Cookie Consent Banner ─────────────────────────────────── */
+.cookie-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--black-carbon);
+    color: var(--text-on-dark);
+    padding: var(--space-md) var(--space-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    z-index: 10000;
+    font-size: 13px;
+    font-family: var(--font-body);
+    border-top: 1px solid var(--charcoal);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+}
+.cookie-banner[hidden] { display: none; }
+.cookie-banner p { margin: 0; }
+.cookie-banner a { color: var(--gold); text-decoration: underline; }
+.cookie-actions { display: flex; gap: var(--space-xs); flex-shrink: 0; }
+.btn-cookie {
+    padding: 0.4rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    font-family: var(--font-body);
+    transition: var(--transition);
+}
+.btn-cookie--accept {
+    background: var(--gold);
+    color: var(--black);
+}
+.btn-cookie--accept:hover { background: var(--gold-light); }
+.btn-cookie--decline {
+    background: transparent;
+    color: var(--text-on-dark-muted);
+    border: 1px solid var(--charcoal);
+}
+.btn-cookie--decline:hover { border-color: var(--text-on-dark-muted); }
+
+@media (max-width: 640px) {
+    .cookie-banner {
+        flex-direction: column;
+        text-align: center;
+        padding: var(--space-md);
+    }
 }
 

@@ -7237,11 +7237,14 @@ nav .logo-badge {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   CURSOR DE PRECISIÓN BERSAGLIO
+   CURSOR DE PRECISIÓN BERSAGLIO v2
    Sistema completo JS: dot + anillo magnético + partículas + burst
+   Activación: Pointer Events API (pointermove + pointerType:'mouse')
+   Ocultado:   <style id="bj-cursor-hide"> inyectado por JS (primario)
+               + .bj-cursor-ready (backup / fallback CSS)
    ═══════════════════════════════════════════════════════════════ */
 
-/* Ocultar cursor nativo SOLO cuando JS confirma que el mouse está activo */
+/* Backup CSS — el JS inyecta #bj-cursor-hide que actúa antes */
 .bj-cursor-ready,
 .bj-cursor-ready * { cursor: none !important; }
 

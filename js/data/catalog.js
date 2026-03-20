@@ -77,8 +77,8 @@ const _local = {
             name:        "Anillo Muzo Imperial",
             collection:  "esmeraldas-colombianas",
             description: "Esmeralda colombiana de 3.2 quilates en talla esmeralda, engastada en oro amarillo de 18k con halo de diamantes.",
-            price:       null,
-            priceLabel:  "Consultar precio",
+            price:       12500000,
+            priceLabel:  "$12.500.000",
             specs: {
                 stone:       "Esmeralda colombiana",
                 carat:       "3.2 ct",
@@ -113,8 +113,8 @@ const _local = {
             name:        "Brazalete Serpentina Oro",
             collection:  "oro-escultorico",
             description: "Brazalete articulado en oro rosa de 18k con textura orgánica. Diseño escultórico que abraza la muñeca con fluidez.",
-            price:       null,
-            priceLabel:  "Consultar precio",
+            price:       8900000,
+            priceLabel:  "$8.900.000",
             specs: {
                 metal:  "Oro rosa 18k",
                 weight: "48g",
@@ -130,8 +130,8 @@ const _local = {
             name:        "Pendientes Gota Esmeralda",
             collection:  "esmeraldas-colombianas",
             description: "Par de pendientes con esmeraldas en talla gota de 2.1 ct cada una, suspendidas en cadena de oro blanco con diamantes.",
-            price:       null,
-            priceLabel:  "Consultar precio",
+            price:       9800000,
+            priceLabel:  "$9.800.000",
             specs: {
                 stone:       "Esmeraldas colombianas",
                 carat:       "4.2 ct total",
@@ -148,8 +148,8 @@ const _local = {
             name:        "Anillo Solitario Promesa",
             collection:  "novias",
             description: "Diamante de talla brillante de 1.5 quilates, color D, claridad VVS1, montado en platino con banda de micro-pavé.",
-            price:       null,
-            priceLabel:  "Consultar precio",
+            price:       15200000,
+            priceLabel:  "$15.200.000",
             specs: {
                 stone:       "Diamante natural",
                 carat:       "1.5 ct",

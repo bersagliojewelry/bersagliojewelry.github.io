@@ -8,6 +8,7 @@ import Renderer from '../utils/renderer.js';
 import { wishlist } from '../wishlist.js';
 import { cart }     from '../cart.js';
 import { toast }    from '../toast.js';
+import { buildProductListSchema, injectJsonLd } from '../utils/schema.js';
 
 const specLabels = {
     stone: 'Piedra', carat: 'Quilates', metal: 'Metal', accent: 'Acentos',
@@ -70,7 +71,7 @@ export function renderFeaturedPieces() {
     Renderer.renderList('#featured-grid', pieces, (piece) => {
         const colName = collectionNames[piece.collection] || '';
         return `
-        <article class="piece-card animate-on-scroll" data-piece="${piece.id}" itemscope itemtype="https://schema.org/Product">
+        <article class="piece-card animate-on-scroll" data-piece="${piece.id}">
             <a href="pieza.html?p=${piece.slug}" class="piece-image-wrapper" aria-label="Ver ${piece.name}">
                 <div class="piece-placeholder" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8" aria-hidden="true">
@@ -87,7 +88,7 @@ export function renderFeaturedPieces() {
             </a>
             <div class="piece-info">
                 ${colName ? `<a href="${piece.collection}.html" class="piece-collection-tag">${colName}</a>` : ''}
-                <h3 class="piece-name" itemprop="name">
+                <h3 class="piece-name">
                     <a href="pieza.html?p=${piece.slug}">${piece.name}</a>
                 </h3>
                 <p class="piece-desc">${piece.description}</p>
@@ -102,6 +103,9 @@ export function renderFeaturedPieces() {
             </div>
         </article>
     `; });
+
+    // Inject valid Product structured data (JSON-LD) for Google
+    injectJsonLd('featured-products-schema', buildProductListSchema(pieces));
 
     // Event delegation: wishlist ♡
     wishlist.initButtons(container, (_slug, added) => {

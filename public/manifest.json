@@ -23,7 +23,22 @@
             "purpose": "any maskable"
         }
     ],
-    "screenshots": [],
+    "screenshots": [
+        {
+            "src": "img/banner-800.webp",
+            "sizes": "800x450",
+            "type": "image/webp",
+            "form_factor": "wide",
+            "label": "Bersaglio Jewelry — Alta joyería con esmeraldas colombianas"
+        },
+        {
+            "src": "img/collage-800.webp",
+            "sizes": "800x800",
+            "type": "image/webp",
+            "form_factor": "narrow",
+            "label": "Colecciones de alta joyería Bersaglio"
+        }
+    ],
     "shortcuts": [
         {
             "name": "Colecciones",

@@ -7,6 +7,7 @@ import { journal, CATEGORIES } from './data/journal.js';
 import { initEffects } from './effects.js';
 import Renderer from './utils/renderer.js';
 import db       from './data/catalog.js';
+import { injectJsonLd } from './utils/schema.js';
 
 const CATEGORY_ICONS = {
     gem:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8" width="40" height="40"><polygon points="12,2 22,8.5 12,22 2,8.5"/><line x1="2" y1="8.5" x2="22" y2="8.5"/><polyline points="7,2 12,8.5 17,2"/></svg>`,
@@ -22,9 +23,41 @@ async function init() {
     await loadAllComponents();
     await db.load();
     render('all');
+    injectJournalSchema();
     initFilters();
     initWhatsAppButton();
     initEffects();
+}
+
+function injectJournalSchema() {
+    const base    = 'https://bersagliojewelry.co';
+    const entries = journal.getAll();
+
+    injectJsonLd('blog-schema', {
+        '@context':    'https://schema.org',
+        '@type':       'Blog',
+        name:          'Bersaglio Journal',
+        description:   'Historias de gemas, diseño, alta joyería y cultura colombiana.',
+        url:           `${base}/journal.html`,
+        publisher:     { '@type': 'Organization', name: 'Bersaglio Jewelry', url: base },
+        inLanguage:    'es',
+        blogPost:      entries.slice(0, 10).map(e => ({
+            '@type':        'BlogPosting',
+            headline:       e.title,
+            description:    e.excerpt,
+            datePublished:  e.date,
+            url:            `${base}/entrada.html?p=${e.slug}`,
+        })),
+    });
+
+    injectJsonLd('breadcrumb-schema', {
+        '@context': 'https://schema.org',
+        '@type':    'BreadcrumbList',
+        itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Inicio',  item: `${base}/` },
+            { '@type': 'ListItem', position: 2, name: 'Journal', item: `${base}/journal.html` },
+        ],
+    });
 }
 
 function initWhatsAppButton() {

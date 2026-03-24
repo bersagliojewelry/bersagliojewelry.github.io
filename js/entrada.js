@@ -8,6 +8,7 @@ import { journal, CATEGORIES } from './data/journal.js';
 import { initEffects } from './effects.js';
 import Renderer from './utils/renderer.js';
 import db       from './data/catalog.js';
+import { injectJsonLd } from './utils/schema.js';
 
 async function init() {
     await loadAllComponents();
@@ -20,6 +21,7 @@ async function init() {
 
     renderEntry(entry);
     updateMeta(entry);
+    injectEntrySchema(entry);
     initWhatsAppButton();
     Renderer.initScrollAnimations();
     initEffects();
@@ -41,6 +43,36 @@ function updateMeta(entry) {
     let canonical = document.querySelector('link[rel="canonical"]');
     if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.appendChild(canonical); }
     canonical.href = url;
+}
+
+function injectEntrySchema(entry) {
+    const base = 'https://bersagliojewelry.co';
+    const url  = `${base}/entrada.html?p=${entry.slug}`;
+
+    injectJsonLd('article-schema', {
+        '@context':      'https://schema.org',
+        '@type':         'BlogPosting',
+        headline:        entry.title,
+        description:     entry.excerpt,
+        articleBody:     (entry.content || []).join('\n\n'),
+        url,
+        datePublished:   entry.date,
+        dateModified:    entry.date,
+        author:          { '@type': 'Organization', name: 'Bersaglio Jewelry', url: base },
+        publisher:       { '@type': 'Organization', name: 'Bersaglio Jewelry', logo: { '@type': 'ImageObject', url: `${base}/img/logo-bj2.png` } },
+        mainEntityOfPage: url,
+        inLanguage:      'es',
+    });
+
+    injectJsonLd('breadcrumb-schema', {
+        '@context': 'https://schema.org',
+        '@type':    'BreadcrumbList',
+        itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Inicio',   item: `${base}/` },
+            { '@type': 'ListItem', position: 2, name: 'Journal',  item: `${base}/journal.html` },
+            { '@type': 'ListItem', position: 3, name: entry.title, item: url },
+        ],
+    });
 }
 
 function initWhatsAppButton() {

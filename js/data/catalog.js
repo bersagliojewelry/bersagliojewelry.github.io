@@ -356,24 +356,61 @@ class BersaglioDatabase {
      *   };
      */
     async load() {
-        // Aplica overrides del panel admin (localStorage) sobre los datos estáticos.
-        // Al conectar Firestore, reemplazar este bloque con getDocs() — nada más cambia.
-        const adminPieces      = this._adminOverride('bersaglio_admin_pieces');
-        const adminCollections = this._adminOverride('bersaglio_admin_collections');
+        // El catálogo estático (_local) es siempre la fuente de verdad.
+        // Las piezas creadas/editadas desde el panel admin (localStorage) se
+        // fusionan encima: piezas del admin con updatedAt sobreescriben las del
+        // catálogo; piezas que solo existen en admin se añaden; piezas del
+        // catálogo que no fueron editadas mantienen sus datos frescos.
+        // Al conectar Firestore, reemplazar este bloque con getDocs().
 
         this._data = {
             ..._local,
-            pieces:      adminPieces      ?? _local.pieces,
-            collections: adminCollections ?? _local.collections,
+            pieces:      this._mergeAdminData('bersaglio_admin_pieces',      _local.pieces),
+            collections: this._mergeAdminData('bersaglio_admin_collections', _local.collections),
         };
         return this;
     }
 
-    _adminOverride(key) {
+    /**
+     * Fusiona datos de admin (localStorage) con datos estáticos del catálogo.
+     * - Items editados manualmente (con updatedAt) usan versión admin.
+     * - Items no editados usan versión fresca del catálogo.
+     * - Items que solo existen en admin se conservan (creados desde el panel).
+     */
+    _mergeAdminData(key, catalogItems) {
+        let adminItems;
         try {
             const v = localStorage.getItem(key);
-            return v ? JSON.parse(v) : null;
-        } catch { return null; }
+            adminItems = v ? JSON.parse(v) : null;
+        } catch { adminItems = null; }
+
+        if (!adminItems) return catalogItems;
+
+        const catalogMap = new Map(catalogItems.map(item => [item.id, item]));
+        const merged     = [];
+        const seen       = new Set();
+
+        // Recorrer items del catálogo como base
+        for (const catItem of catalogItems) {
+            const adminItem = adminItems.find(a => a.id === catItem.id);
+            if (adminItem?.updatedAt) {
+                // Fue editado manualmente → usar versión admin
+                merged.push(adminItem);
+            } else {
+                // No fue editado → usar datos frescos del catálogo
+                merged.push(catItem);
+            }
+            seen.add(catItem.id);
+        }
+
+        // Items que solo existen en admin (creados desde el panel)
+        for (const adminItem of adminItems) {
+            if (!seen.has(adminItem.id)) {
+                merged.push(adminItem);
+            }
+        }
+
+        return merged;
     }
 
     // ─── Getters ───────────────────────────────────────────────────────────────

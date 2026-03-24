@@ -49,23 +49,34 @@ class AdminDatabase {
     }
 
     /**
-     * Agrega piezas del catálogo estático que no existan en el admin localStorage.
-     * No sobreescribe piezas ya editadas desde el panel.
+     * Sincroniza piezas del catálogo estático con el admin localStorage.
+     * - Agrega piezas nuevas que no existan en admin.
+     * - Actualiza piezas existentes que no hayan sido editadas manualmente
+     *   (sin updatedAt) con los datos frescos del catálogo (ej: precios nuevos).
      */
     _mergeCatalogPieces() {
         const adminPieces   = this._get(KEYS.pieces) || [];
         const catalogPieces = db.getAll();
-        const adminIds      = new Set(adminPieces.map(p => p.id));
-        let merged = false;
+        const adminMap      = new Map(adminPieces.map(p => [p.id, p]));
+        let changed = false;
 
         for (const cp of catalogPieces) {
-            if (!adminIds.has(cp.id)) {
+            const existing = adminMap.get(cp.id);
+            if (!existing) {
+                // Pieza nueva → agregar
                 adminPieces.push(cp);
-                merged = true;
+                changed = true;
+            } else if (!existing.updatedAt) {
+                // Pieza no editada manualmente → actualizar con datos frescos del catálogo
+                const idx = adminPieces.findIndex(p => p.id === cp.id);
+                if (idx >= 0) {
+                    adminPieces[idx] = { ...cp };
+                    changed = true;
+                }
             }
         }
 
-        if (merged) this._set(KEYS.pieces, adminPieces);
+        if (changed) this._set(KEYS.pieces, adminPieces);
     }
 
     /**

@@ -489,18 +489,64 @@ SEMANA 20  ⬜ Web Push con FCM                           (requiere Firebase Bla
 
 ---
 
-## STACK TÉCNICO OBJETIVO
+## CHECKLIST: CUANDO SE ACTIVE FIREBASE BLAZE
 
-| Componente | Actual | Objetivo |
+> Guardar esta sección como referencia. Una vez activado el plan Blaze, ejecutar en orden:
+
+### Paso 1 — Deploy Firebase Hosting (reemplaza GitHub Pages)
+```bash
+npm run build                     # Generar dist/
+firebase deploy --only hosting    # Desplegar a CDN global
+```
+- Configurar dominio personalizado `bersagliojewelry.co` en Firebase Console > Hosting
+- Verificar headers de cache (ya configurados en firebase.json)
+- Apuntar DNS del dominio a Firebase (CNAME o A records que te dará la consola)
+
+### Paso 2 — Firestore: Sistema de Reseñas
+```bash
+firebase init firestore
+```
+- Crear colección `reviews` en Firestore con reglas de seguridad
+- Implementar formulario de reseña en `pieza.html` (post-compra)
+- Calcular AggregateRating dinámico y añadirlo al Product Schema
+- **Impacto SEO:** estrellas doradas en Google → CTR +15–30%
+
+### Paso 3 — Cloud Functions
+```bash
+firebase init functions
+firebase deploy --only functions
+```
+- Migrar lógica de checkout a Cloud Function si se necesita backend para Wompi webhooks
+- Función para enviar emails transaccionales (confirmación de compra, reseñas)
+- Función para generar sitemap dinámico automáticamente
+
+### Paso 4 — Firebase Cloud Messaging (Web Push)
+- Registrar vapidKey en Firebase Console > Cloud Messaging
+- Implementar suscripción a push en `js/pwa.js`
+- Añadir handler `push` en Service Worker
+- Flujos de notificación: nuevas piezas, ofertas, recordatorio wishlist
+
+### Paso 5 — Firebase Analytics (reemplaza GA4)
+- Migrar de Google Analytics a Firebase Analytics
+- Configurar eventos personalizados: view_item, add_to_cart, begin_checkout
+- Dashboard en Firebase Console con métricas de conversión
+
+---
+
+## STACK TÉCNICO
+
+| Componente | Actual | Objetivo (con Blaze) |
 |---|---|---|
-| Hosting | GitHub Pages | Firebase Hosting (CDN global gratis) |
-| Functions | Ninguno | Firebase Cloud Functions (checkout, webhooks) |
-| Imágenes | PNG raw | WebP/AVIF + Firebase CDN cache |
-| Analytics | GA4 (pendiente consent) | Firebase Analytics / Plausible.io |
-| Pagos | Ninguno | Stripe Checkout (hosted) |
+| Hosting | GitHub Pages | Firebase Hosting (CDN global) |
+| Functions | Ninguno | Firebase Cloud Functions |
+| Database | localStorage | Firestore (reseñas, pedidos) |
+| Imágenes | WebP optimizado | WebP/AVIF + Firebase CDN cache |
+| Analytics | GA4 (con consent) | Firebase Analytics |
+| Pagos | Wompi (checkout hosted) | Wompi + Cloud Function webhooks |
 | Push | Ninguno | Firebase Cloud Messaging |
-| Build | Vite 6 | Vite 6 + Terser + LightningCSS |
+| Build | Vite 6 + Terser | Vite 6 + Terser + LightningCSS |
 | 3D | Ninguno | Model Viewer (Google) |
+| Email | localStorage capture | Klaviyo/Mailchimp API |
 
 ---
 

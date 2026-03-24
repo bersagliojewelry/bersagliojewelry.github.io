@@ -13,6 +13,7 @@ import { trackPieceView }      from './analytics.js';
 import Renderer                from './utils/renderer.js';
 import db                      from './data/catalog.js';
 import { getRecommendations, trackView } from './recommendations.js';
+import { buildProductSchema, injectJsonLd } from './utils/schema.js';
 
 const specLabels = {
     stone: 'Piedra principal', carat: 'Quilates', metal: 'Metal', accent: 'Acentos',
@@ -88,29 +89,9 @@ function injectStructuredData(piece) {
     const base       = 'https://bersagliojewelry.co';
     const collection = db.getCollections().find(c => c.slug === piece.collection);
 
-    // Product schema
-    const productSchema = {
-        '@context': 'https://schema.org',
-        '@type':    'Product',
-        name:        piece.name,
-        description: piece.description,
-        url:         `${base}/pieza.html?p=${piece.slug}`,
-        brand: { '@type': 'Brand', name: 'Bersaglio Jewelry' },
-        offers: {
-            '@type':        'Offer',
-            priceCurrency:  'COP',
-            price:          piece.price || 0,
-            availability:   'https://schema.org/InStock',
-            seller: { '@type': 'Organization', name: 'Bersaglio Jewelry' },
-        },
-    };
-    if (piece.specs?.certificate) {
-        productSchema.additionalProperty = [{
-            '@type': 'PropertyValue',
-            name:    'Certificación',
-            value:   piece.specs.certificate,
-        }];
-    }
+    // Product schema — uses centralized builder for Google compliance
+    const productSchema = buildProductSchema(piece);
+    injectJsonLd('product-schema', productSchema);
 
     // BreadcrumbList schema
     const crumbs = [
@@ -123,23 +104,11 @@ function injectStructuredData(piece) {
     } else {
         crumbs.push({ '@type': 'ListItem', position: 3, name: piece.name,      item: `${base}/pieza.html?p=${piece.slug}` });
     }
-    const breadcrumbSchema = {
+    injectJsonLd('breadcrumb-schema', {
         '@context':       'https://schema.org',
         '@type':          'BreadcrumbList',
         itemListElement:   crumbs,
-    };
-
-    _injectJsonLd('product-schema',    productSchema);
-    _injectJsonLd('breadcrumb-schema', breadcrumbSchema);
-}
-
-function _injectJsonLd(id, data) {
-    document.getElementById(id)?.remove();
-    const script    = document.createElement('script');
-    script.type     = 'application/ld+json';
-    script.id       = id;
-    script.textContent = JSON.stringify(data);
-    document.head.appendChild(script);
+    });
 }
 
 function initWhatsAppButton(piece) {

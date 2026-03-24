@@ -10,6 +10,7 @@ import { toast }             from './toast.js';
 import { initEffects }       from './effects.js';
 import Renderer              from './utils/renderer.js';
 import db                    from './data/catalog.js';
+import { buildProductListSchema, injectJsonLd } from './utils/schema.js';
 
 const collectionIcons = {
     'esmeraldas-colombianas': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="64" height="64"><polygon points="12,2 22,8.5 12,22 2,8.5"/></svg>`,
@@ -147,12 +148,11 @@ function renderPieces(grid) {
         const mainSpec   = p.specs?.stone || p.specs?.metal || '';
 
         return `
-            <article class="piece-card animate-on-scroll" itemscope itemtype="https://schema.org/Product">
+            <article class="piece-card animate-on-scroll">
                 <div class="piece-image-wrapper">
                     <div class="piece-placeholder">
                         ${collectionIcons[p.collection] || collectionIcons['esmeraldas-colombianas']}
                     </div>
-                    ${p.badge ? `<span class="piece-badge" itemprop="name" style="display:none">${p.name}</span>` : ''}
                     ${p.badge ? `<span class="piece-badge">${p.badge}</span>` : ''}
                     <div class="piece-actions">
                         <button
@@ -182,7 +182,7 @@ function renderPieces(grid) {
                 <div class="piece-info">
                     ${mainSpec ? `<span class="piece-spec-tag">${mainSpec}</span>` : ''}
                     <h3 class="piece-name">
-                        <a href="pieza.html?p=${p.slug}" itemprop="url">${p.name}</a>
+                        <a href="pieza.html?p=${p.slug}">${p.name}</a>
                     </h3>
                     <p class="piece-desc">${p.description}</p>
                     <div class="piece-footer">
@@ -192,6 +192,9 @@ function renderPieces(grid) {
                 </div>
             </article>`;
     }).join('');
+
+    // Inject valid Product structured data (JSON-LD) for Google
+    injectJsonLd('catalog-products-schema', buildProductListSchema(allPieces));
 
     // Re-init wishlist + cart buttons
     wishlist.initButtons(grid, (_slug, added) => {

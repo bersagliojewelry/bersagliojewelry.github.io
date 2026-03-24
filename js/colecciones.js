@@ -35,10 +35,31 @@ async function init() {
 
     renderCatalogCollections();
     renderFiltersAndPieces();
+    injectCatalogSchema();
     initWhatsAppButton();
     Renderer.initScrollAnimations();
     Renderer.initLazyImages();
     initEffects();
+}
+
+function injectCatalogSchema() {
+    const base = 'https://bersagliojewelry.co';
+    injectJsonLd('breadcrumb-schema', {
+        '@context': 'https://schema.org',
+        '@type':    'BreadcrumbList',
+        itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Inicio',      item: `${base}/` },
+            { '@type': 'ListItem', position: 2, name: 'Colecciones', item: `${base}/colecciones.html` },
+        ]
+    });
+    injectJsonLd('catalog-page-schema', {
+        '@context':    'https://schema.org',
+        '@type':       'CollectionPage',
+        name:          'Colecciones — Bersaglio Jewelry',
+        description:   'Explora las colecciones de Bersaglio Jewelry: Esmeraldas Colombianas, Diamantes Eternos, Oro Escultórico y Novias.',
+        url:           `${base}/colecciones.html`,
+        isPartOf:      { '@type': 'WebSite', name: 'Bersaglio Jewelry', url: base },
+    });
 }
 
 function initWhatsAppButton() {

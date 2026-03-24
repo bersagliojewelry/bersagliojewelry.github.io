@@ -13,9 +13,11 @@
     --emerald-glow: #3D9B6A;
 
     --black: #0A0A0A;
+    --black-deep: #050908;
     --black-carbon: #141414;
     --black-soft: #1E1E1E;
     --charcoal: #2C2C2C;
+    --white: #ffffff;
 
     --ivory: #FAF7F2;
     --ivory-warm: #F5F0E8;
@@ -24,6 +26,8 @@
 
     --gold: #C9A96E;
     --gold-light: #D4B87A;
+    --gold-bright: #e8ca7a;
+    --gold-hover: #d9b95c;
     --gold-dark: #A8894E;
 
     /* Semantic */
@@ -42,6 +46,7 @@
     --status-error: #e05252;
     --status-error-light: #e87c7c;
     --status-error-dark: #d94f4f;
+    --status-error-muted: #c0504d;
     --status-warning: #e0a050;
 
     /* Spacing */
@@ -1875,7 +1880,7 @@ input, select, textarea { font-family: var(--font-body); }
     z-index: 1;
     max-width: 440px;
     width: 100%;
-    background: #080e0c;
+    background: var(--black-deep);
     border: 1px solid rgba(201, 168, 76, 0.30);
     border-radius: 2px;
     padding: 52px 48px 44px;
@@ -1965,7 +1970,7 @@ input, select, textarea { font-family: var(--font-body); }
 }
 
 .dev-overlay-instagram:hover {
-    color: #e8ca7a;
+    color: var(--gold-bright);
     border-color: rgba(201, 168, 76, 0.7);
 }
 
@@ -1989,7 +1994,7 @@ input, select, textarea { font-family: var(--font-body); }
 .dev-overlay-dismiss:hover {
     background: rgba(201, 168, 76, 0.10);
     border-color: rgba(201, 168, 76, 0.7);
-    color: #e8ca7a;
+    color: var(--gold-bright);
 }
 
 @media (max-width: 480px) {
@@ -3016,7 +3021,7 @@ input, select, textarea { font-family: var(--font-body); }
 
 /* ─── INDEX: Journal Preview Section ─────────────────────────────────────── */
 .journal-preview {
-    background: #050908;
+    background: var(--black-deep);
     padding: var(--space-2xl) 0;
     border-top: 1px solid rgba(201,169,110,0.08);
     border-bottom: 1px solid rgba(201,169,110,0.08);
@@ -3180,7 +3185,7 @@ input, select, textarea { font-family: var(--font-body); }
 
 /* Editorial hero */
 .journal-hero {
-    background: #050908;
+    background: var(--black-deep);
     padding: var(--space-2xl) 0 var(--space-xl);
     border-bottom: 1px solid rgba(201,169,110,0.10);
 }
@@ -3232,7 +3237,7 @@ input, select, textarea { font-family: var(--font-body); }
 
 /* Category filter bar */
 .journal-filter-bar {
-    background: #050908;
+    background: var(--black-deep);
     border-bottom: 1px solid rgba(255,255,255,0.05);
     position: sticky;
     top: 70px;
@@ -3274,7 +3279,7 @@ input, select, textarea { font-family: var(--font-body); }
 }
 
 /* Journal grid page */
-.journal-grid-section { background: #060b08; }
+.journal-grid-section { background: var(--black-deep); }
 
 /* Hero article (large) */
 .journal-hero-card {
@@ -3420,7 +3425,7 @@ input, select, textarea { font-family: var(--font-body); }
 
 /* ─── ARTICLE DETAIL (entrada.html) ─────────────────────────────────────── */
 .entrada-hero {
-    background: var(--entry-bg, #050908);
+    background: var(--entry-bg, var(--black-deep));
     padding: var(--space-xl) 0 var(--space-2xl);
     border-bottom: 1px solid rgba(255,255,255,0.06);
 }
@@ -4000,11 +4005,11 @@ input, select, textarea { font-family: var(--font-body); }
     grid-template-columns: repeat(3, 1fr) !important;
     gap: 1px !important;
     background: var(--black-carbon) !important;
-    border: 1px solid #111;
+    border: 1px solid var(--black-carbon);
 }
 
 .piece-card {
-    background: #0d0d0d !important;
+    background: var(--black) !important;
     border: none !important;
     border-radius: 0 !important;
     transition: background 0.3s !important;
@@ -4332,7 +4337,7 @@ input, select, textarea { font-family: var(--font-body); }
 
 /* ─── Journal Preview V2 ────────────────────────────────────── */
 .journal-preview {
-    background: #050908 !important;
+    background: var(--black-deep) !important;
 }
 
 /* ─── Hero Meta Strip ───────────────────────────────────────── */
@@ -4377,13 +4382,13 @@ input, select, textarea { font-family: var(--font-body); }
 
 /* Piece card border on dark BG — subtle grid lines */
 .featured-grid {
-    border-top: 1px solid #111 !important;
-    border-left: 1px solid #111 !important;
+    border-top: 1px solid var(--black-carbon) !important;
+    border-left: 1px solid var(--black-carbon) !important;
 }
 
 .piece-card {
-    border-right: 1px solid #111 !important;
-    border-bottom: 1px solid #111 !important;
+    border-right: 1px solid var(--black-carbon) !important;
+    border-bottom: 1px solid var(--black-carbon) !important;
 }
 
 /* ─── Collections section: section header left-aligned ──────── */
@@ -4451,7 +4456,7 @@ input, select, textarea { font-family: var(--font-body); }
     --glass:         rgba(255,255,255,0.04);
     --glass-border:  rgba(255,255,255,0.08);
     --surface-dark:  #0D0D0D;
-    --gradient-emerald: linear-gradient(160deg, #0B3D2E 0%, #070f0a 100%);
+    --gradient-emerald: linear-gradient(160deg, var(--emerald-deep) 0%, var(--black-deep) 100%);
     --emerald-particle: rgba(61,155,106,0.35);
     --gold-particle:    rgba(201,169,110,0.25);
 }
@@ -4487,7 +4492,7 @@ body::after {
     height: 44px;
     border-radius: 50%;
     overflow: hidden;
-    background: #fff;
+    background: var(--white);
     flex-shrink: 0;
     box-shadow:
         0 0 0 1px rgba(201,169,110,0.45),
@@ -6142,7 +6147,7 @@ body.search-open { overflow: hidden; }
     white-space: nowrap;
     transition: background 0.2s;
 }
-.pwa-install-btn:hover { background: #d9b95c; }
+.pwa-install-btn:hover { background: var(--gold-hover); }
 .pwa-install-close {
     background: transparent;
     border: none;
@@ -6336,7 +6341,7 @@ body.search-open { overflow: hidden; }
 }
 
 .service-row {
-    background: #0e0e0e !important;
+    background: var(--black) !important;
     border: none !important;
     border-top: none !important;
     border-bottom: none !important;
@@ -6507,7 +6512,7 @@ body.search-open { overflow: hidden; }
     justify-content: center;
     flex-direction: column;
     gap: 12px;
-    background: linear-gradient(135deg, #e8dfd0, #d4c9b8);
+    background: linear-gradient(135deg, var(--champagne), var(--champagne-dark));
 }
 
 .about-teaser-collage-placeholder svg {
@@ -6994,8 +6999,8 @@ a.piece-image-wrapper {
 }
 
 .piece-card-actions .wishlist-action.is-saved {
-    color: #c0504d;
-    border-color: #c0504d;
+    color: var(--status-error-muted);
+    border-color: var(--status-error-muted);
 }
 
 .piece-card-actions .cart-action.is-in-cart {
@@ -7005,8 +7010,8 @@ a.piece-image-wrapper {
 
 /* SVG fill para corazón guardado en colección */
 .piece-card-actions .wishlist-action.is-saved svg path {
-    fill: #c0504d;
-    stroke: #c0504d;
+    fill: var(--status-error-muted);
+    stroke: var(--status-error-muted);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -7409,7 +7414,7 @@ section.hero::after {
 .header .logo-badge,
 .footer .logo-badge,
 .footer-logo .logo-badge {
-    background-color:    #ffffff !important;
+    background-color:    var(--white) !important;
     background-image:    url('../img/logo-bj2.png') !important;
     background-repeat:   no-repeat !important;
     background-position: center center !important;
@@ -7578,7 +7583,7 @@ nav .logo-badge {
     border-radius: var(--radius-md);
     font-size: 14px;
     font-family: var(--font-body);
-    background: #fff;
+    background: var(--white);
     transition: border-color 0.2s;
 }
 .email-modal-input:focus {
@@ -7631,4 +7636,78 @@ nav .logo-badge {
     border-radius: inherit;
 }
 .collection-panel:hover::after { opacity: 1; }
+
+/* ─── Print Stylesheet ─── */
+@media print {
+    /* Hide non-essential elements */
+    .header,
+    .footer,
+    .wa-float,
+    .cookie-banner,
+    .skip-link,
+    .btn-ar,
+    .piece-card-actions,
+    .search-overlay,
+    .preloader,
+    .email-capture-modal,
+    .cta-banner,
+    .dev-banner,
+    #cookie-banner,
+    canvas { display: none !important; }
+
+    /* Reset dark backgrounds for ink savings */
+    body {
+        background: white !important;
+        color: #1a1a1a !important;
+        font-size: 12pt;
+    }
+
+    main { padding: 0 !important; }
+
+    /* Ensure images print */
+    img {
+        max-width: 100% !important;
+        break-inside: avoid;
+    }
+
+    /* Product detail — clean layout for printing */
+    .pieza-hero,
+    .pieza-gallery { background: white !important; }
+
+    .pieza-title,
+    .piece-card-name a {
+        color: #1a1a1a !important;
+        text-decoration: none;
+    }
+
+    .pieza-price,
+    .piece-card-price {
+        color: #333 !important;
+        font-weight: 600;
+    }
+
+    /* Show URLs after links */
+    a[href^="http"]::after {
+        content: " (" attr(href) ")";
+        font-size: 9pt;
+        color: #666;
+        word-break: break-all;
+    }
+
+    /* Page breaks */
+    .piece-card, article { break-inside: avoid; }
+    h1, h2, h3 { break-after: avoid; }
+
+    /* Brand footer for prints */
+    body::after {
+        content: "bersagliojewelry.co · Alta Joyería";
+        display: block;
+        text-align: center;
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid #ccc;
+        font-size: 10pt;
+        color: #999;
+    }
+}
 

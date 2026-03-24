@@ -144,7 +144,9 @@ function initializeCart() {
 }
 
 function initializeDevBanner() {
-    // Overlay se muestra en cada visita/recarga — sin localStorage
+    // Solo mostrar una vez por sesión del navegador
+    if (sessionStorage.getItem('bersaglio_dev_dismissed')) return;
+
     const overlay = document.createElement('div');
     overlay.id = 'dev-overlay';
     overlay.className = 'dev-overlay';
@@ -203,6 +205,7 @@ function initializeDevBanner() {
     document.body.style.overflow = 'hidden';
 
     function closeOverlay() {
+        sessionStorage.setItem('bersaglio_dev_dismissed', '1');
         overlay.classList.add('dev-overlay--closing');
         overlay.addEventListener('animationend', () => {
             overlay.remove();

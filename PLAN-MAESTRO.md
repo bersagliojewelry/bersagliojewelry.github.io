@@ -487,6 +487,8 @@ SEMANA 8   ✅ CSS hardcodes: +12 reemplazos adicionales    → ~30 de 83 tokeni
 SEMANA 8   ✅ Resource hints (prefetch colecciones/contacto)
 SEMANA 8   ✅ PWA manifest screenshots                     → app install prompt mejorado
 SEMANA 8   ✅ WCAG contrast fix (WhatsApp btn opacity)
+SEMANA 8   ✅ CSS hardcodes: +28 reemplazos (total 48/83)   → 5 nuevas variables (--black-deep, --white, --gold-bright, etc.)
+SEMANA 8   ✅ Print stylesheet completo                      → clientes pueden imprimir fichas de piezas
 
 ═══════════════════════════════════════════════════════════════
   FASE 3 — LIDERAZGO GLOBAL (Semanas 9-20)            ███░░░░░░░ 30%
@@ -567,7 +569,7 @@ firebase deploy --only functions
 
 1. **Product Schema** centralizado en `js/utils/schema.js` — genera JSON-LD válido con `offers` para todas las páginas (homepage, catálogo, detalle). Corregido en mar-2026 tras alerta de Google Search Console.
 2. **BreadcrumbList Schema** implementado en `js/pieza.js`.
-3. **Design Tokens CSS** ya existen en `:root` — ~30 de 83 hardcodes refactorizados. Quedan ~50 aproximados que requieren revisión visual caso por caso.
+3. **Design Tokens CSS** ya existen en `:root` — 48 de 83 hardcodes refactorizados. Los 18 restantes son gradientes temáticos de colección y fallbacks en `var()`, deliberados.
 4. **Firebase** configurado (firebase.json + .firebaserc). Actualmente en plan Spark; migrar a Blaze para Functions y FCM.
 5. **Checkout** implementado con Wompi (procesador colombiano) en lugar de Stripe — más adaptado al mercado local.
 6. Cada fase se implementa y se testea antes de pasar a la siguiente.
@@ -590,3 +592,5 @@ firebase deploy --only functions
 | 2026-03-24 | FASE 2 completada al 100% — FASE 3 bloqueada por Firebase Blaze |
 | 2026-03-24 | 404.html personalizado, AVIF images, BlogPosting schema, más CSS tokens |
 | 2026-03-24 | Resource hints, manifest screenshots, WCAG contrast fix |
+| 2026-03-24 | CSS design tokens finalizado (48/83) + print stylesheet completo |
+| 2026-03-24 | **TODO LO ACCIONABLE POR CÓDIGO COMPLETADO** — solo queda Firebase Blaze + recursos externos |

@@ -58,11 +58,16 @@ function updatePageMeta(piece) {
     if (metaDesc) metaDesc.setAttribute('content', piece.description);
 
     // Open Graph dynamic update
-    const ogUrl = `https://bersagliojewelry.co/pieza.html?p=${piece.slug}`;
+    const base  = 'https://bersagliojewelry.co';
+    const ogUrl = `${base}/pieza.html?p=${piece.slug}`;
+    const ogImg = piece.image ? `${base}/${piece.image}` : `${base}/img/banner-1200.webp`;
     setMeta('property', 'og:title',       `${piece.name} | Bersaglio Jewelry`);
     setMeta('property', 'og:description', piece.description);
     setMeta('property', 'og:url',         ogUrl);
+    setMeta('property', 'og:image',       ogImg);
+    setMeta('property', 'og:image:alt',   `${piece.name} — Bersaglio Jewelry`);
     setMeta('name',     'twitter:title',  `${piece.name} | Bersaglio Jewelry`);
+    setMeta('name',     'twitter:image',  ogImg);
 
     // Canonical
     let canon = document.querySelector('link[rel="canonical"]');

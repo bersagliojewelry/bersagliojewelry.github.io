@@ -33,14 +33,65 @@ class AdminDatabase {
 
         if (!this._get(KEYS.pieces)) {
             this._set(KEYS.pieces, db.getAll());
+        } else {
+            // Sincronizar: agregar piezas del catálogo que no existan aún en admin
+            this._mergeCatalogPieces();
         }
         if (!this._get(KEYS.collections)) {
             this._set(KEYS.collections, db.getCollections());
+        } else {
+            this._mergeCatalogCollections();
         }
         if (!this._get(KEYS.inquiries)) {
             this._seedInquiries();
         }
         return this;
+    }
+
+    /**
+     * Agrega piezas del catálogo estático que no existan en el admin localStorage.
+     * No sobreescribe piezas ya editadas desde el panel.
+     */
+    _mergeCatalogPieces() {
+        const adminPieces   = this._get(KEYS.pieces) || [];
+        const catalogPieces = db.getAll();
+        const adminIds      = new Set(adminPieces.map(p => p.id));
+        let merged = false;
+
+        for (const cp of catalogPieces) {
+            if (!adminIds.has(cp.id)) {
+                adminPieces.push(cp);
+                merged = true;
+            }
+        }
+
+        if (merged) this._set(KEYS.pieces, adminPieces);
+    }
+
+    /**
+     * Actualiza colecciones del catálogo que no existan en admin localStorage.
+     */
+    _mergeCatalogCollections() {
+        const adminCols   = this._get(KEYS.collections) || [];
+        const catalogCols = db.getCollections();
+        const adminIds    = new Set(adminCols.map(c => c.id));
+        let merged = false;
+
+        for (const cc of catalogCols) {
+            if (!adminIds.has(cc.id)) {
+                adminCols.push(cc);
+                merged = true;
+            } else {
+                // Actualizar conteo de piezas
+                const idx = adminCols.findIndex(c => c.id === cc.id);
+                if (idx >= 0 && adminCols[idx].pieces !== cc.pieces) {
+                    adminCols[idx].pieces = cc.pieces;
+                    merged = true;
+                }
+            }
+        }
+
+        if (merged) this._set(KEYS.collections, adminCols);
     }
 
     // ─── Piezas ────────────────────────────────────────────────────────────────

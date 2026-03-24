@@ -480,6 +480,13 @@ SEMANA 8   ✅ Security meta headers (X-Frame, CSP, Referrer)
 SEMANA 8   ✅ CSS design tokens: 6 nuevas variables semánticas + refactoring hardcodes
 SEMANA 8   ✅ LightningCSS + vendor chunk splitting       → build optimizado (gsap/lenis separados)
 SEMANA 8   ✅ Font preload cleanup                        → eliminar preload redundante
+SEMANA 8   ✅ 404.html personalizado                      → matching brand design
+SEMANA 8   ✅ AVIF images (banner + collage)               → 10-20% más pequeñas que WebP
+SEMANA 8   ✅ BlogPosting schema (journal + entrada)       → rich snippets artículos
+SEMANA 8   ✅ CSS hardcodes: +12 reemplazos adicionales    → ~30 de 83 tokenizados
+SEMANA 8   ✅ Resource hints (prefetch colecciones/contacto)
+SEMANA 8   ✅ PWA manifest screenshots                     → app install prompt mejorado
+SEMANA 8   ✅ WCAG contrast fix (WhatsApp btn opacity)
 
 ═══════════════════════════════════════════════════════════════
   FASE 3 — LIDERAZGO GLOBAL (Semanas 9-20)            ███░░░░░░░ 30%
@@ -560,7 +567,7 @@ firebase deploy --only functions
 
 1. **Product Schema** centralizado en `js/utils/schema.js` — genera JSON-LD válido con `offers` para todas las páginas (homepage, catálogo, detalle). Corregido en mar-2026 tras alerta de Google Search Console.
 2. **BreadcrumbList Schema** implementado en `js/pieza.js`.
-3. **Design Tokens CSS** ya existen en `:root` — se usarán como base, solo falta refactorizar hardcodes.
+3. **Design Tokens CSS** ya existen en `:root` — ~30 de 83 hardcodes refactorizados. Quedan ~50 aproximados que requieren revisión visual caso por caso.
 4. **Firebase** configurado (firebase.json + .firebaserc). Actualmente en plan Spark; migrar a Blaze para Functions y FCM.
 5. **Checkout** implementado con Wompi (procesador colombiano) en lugar de Stripe — más adaptado al mercado local.
 6. Cada fase se implementa y se testea antes de pasar a la siguiente.
@@ -581,3 +588,5 @@ firebase deploy --only functions
 | 2026-03-24 | Security headers inyectados via JS (X-Frame-Options, X-Content-Type-Options, Referrer-Policy) |
 | 2026-03-24 | Build: LightningCSS + vendor splitting (gsap/lenis) + font preload cleanup |
 | 2026-03-24 | FASE 2 completada al 100% — FASE 3 bloqueada por Firebase Blaze |
+| 2026-03-24 | 404.html personalizado, AVIF images, BlogPosting schema, más CSS tokens |
+| 2026-03-24 | Resource hints, manifest screenshots, WCAG contrast fix |

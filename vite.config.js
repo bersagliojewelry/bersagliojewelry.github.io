@@ -49,10 +49,17 @@ export default defineConfig({
 
     plugins: [copySnippetsPlugin()],
 
+    css: {
+        transformer: 'lightningcss',
+        lightningcss: {
+            drafts: { customMedia: true },
+        },
+    },
+
     build: {
         outDir:     'dist',
         emptyOutDir: true,
-        cssMinify:   true,
+        cssMinify:   'lightningcss',
         minify:      'terser',
         terserOptions: {
             compress: { drop_console: true, drop_debugger: true },
@@ -62,14 +69,18 @@ export default defineConfig({
             input: discoverHtmlEntries(),
 
             output: {
-                // Nombres de chunk legibles en producción
                 entryFileNames:  'js/[name]-[hash].js',
                 chunkFileNames:  'js/chunks/[name]-[hash].js',
                 assetFileNames:  'assets/[name]-[hash][extname]',
+
+                // Vendor splitting — CDN scripts cached separately
+                manualChunks(id) {
+                    if (id.includes('node_modules/gsap'))   return 'vendor-gsap';
+                    if (id.includes('node_modules/@studio-freight/lenis')) return 'vendor-lenis';
+                },
             },
         },
 
-        // Umbral para mostrar warnings de tamaño (kB)
         chunkSizeWarningLimit: 400,
     },
 

@@ -224,6 +224,7 @@ function initializeDevBanner() {
 }
 
 export async function loadAllComponents() {
+    injectSecurityMeta();
     initPreloader();
 
     await Promise.all([
@@ -237,4 +238,19 @@ export async function loadAllComponents() {
     initSearch();
     initAnalytics();
     initPWA();
+}
+
+/** Inject security-related meta tags (GitHub Pages doesn't support HTTP headers) */
+function injectSecurityMeta() {
+    const metas = [
+        { 'http-equiv': 'X-Content-Type-Options', content: 'nosniff' },
+        { 'http-equiv': 'X-Frame-Options',        content: 'DENY' },
+        { name: 'referrer',                        content: 'strict-origin-when-cross-origin' },
+    ];
+    const head = document.head;
+    for (const attrs of metas) {
+        const meta = document.createElement('meta');
+        for (const [k, v] of Object.entries(attrs)) meta.setAttribute(k, v);
+        head.appendChild(meta);
+    }
 }

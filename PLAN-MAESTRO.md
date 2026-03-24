@@ -463,7 +463,7 @@ SEMANA 2   ✅ Lazy loading universal                     → FID mejora
 SEMANA 3   ✅ Vite minificación CSS+JS activa            → bundle -40%
 
 ═══════════════════════════════════════════════════════════════
-  FASE 2 — EXPERIENCIA PREMIUM (Semanas 4-8)          █████████░ 90%
+  FASE 2 — EXPERIENCIA PREMIUM (Semanas 4-8)          ██████████ 100%
 ═══════════════════════════════════════════════════════════════
 SEMANA 4   ✅ Checkout funcional con Wompi               → conversión activa
 SEMANA 5   ✅ Sitemap dinámico con productos
@@ -475,9 +475,15 @@ SEMANA 8   ✅ Collection panel hover enhancements
 SEMANA 8   ✅ Cart page UX + Wompi checkout
 SEMANA 8   ✅ PWA: Service Worker v2 + WebP cache
 SEMANA 8   ✅ Product Schema JSON-LD centralizado        → fix Google Search Console mar-2026
+SEMANA 8   ✅ Structured data todas las páginas           → AboutPage, ContactPage, OfferCatalog, CollectionPage
+SEMANA 8   ✅ Security meta headers (X-Frame, CSP, Referrer)
+SEMANA 8   ✅ CSS design tokens: 6 nuevas variables semánticas + refactoring hardcodes
+SEMANA 8   ✅ LightningCSS + vendor chunk splitting       → build optimizado (gsap/lenis separados)
+SEMANA 8   ✅ Font preload cleanup                        → eliminar preload redundante
 
 ═══════════════════════════════════════════════════════════════
   FASE 3 — LIDERAZGO GLOBAL (Semanas 9-20)            ███░░░░░░░ 30%
+  ⚠️ Bloqueada: requiere Firebase Blaze + recursos externos
 ═══════════════════════════════════════════════════════════════
 SEMANA 9   ⚙️ Firebase Hosting configurado               → pendiente plan Blaze para deploy
 SEMANA 10  ⬜ Migrar hosting + CDN imágenes              (requiere Firebase Blaze)
@@ -569,3 +575,9 @@ firebase deploy --only functions
 | 2026-03-24 | Fix Product Schema: Google Search Console reportó "must specify offers/review/aggregateRating" en 6 productos. Creado `js/utils/schema.js` centralizado. |
 | 2026-03-24 | Añadido og:image dinámico en páginas de producto |
 | 2026-03-24 | Auditoría completa: actualizado estados reales de todas las fases |
+| 2026-03-24 | Checklist Firebase Blaze documentado paso a paso |
+| 2026-03-24 | Structured data: CollectionPage en colecciones + AboutPage, ContactPage, OfferCatalog en pages |
+| 2026-03-24 | CSS design tokens: 6 variables semánticas + refactoring 18 hardcodes |
+| 2026-03-24 | Security headers inyectados via JS (X-Frame-Options, X-Content-Type-Options, Referrer-Policy) |
+| 2026-03-24 | Build: LightningCSS + vendor splitting (gsap/lenis) + font preload cleanup |
+| 2026-03-24 | FASE 2 completada al 100% — FASE 3 bloqueada por Firebase Blaze |

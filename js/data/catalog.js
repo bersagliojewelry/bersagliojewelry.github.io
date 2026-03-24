@@ -177,6 +177,113 @@ const _local = {
             },
             badge:    "Edición Limitada",
             featured: true
+        },
+        {
+            id:          "p007",
+            slug:        "anillo-chivor-royale",
+            name:        "Anillo Chivor Royale",
+            collection:  "esmeraldas-colombianas",
+            description: "Esmeralda de la mina de Chivor de 2.8 quilates, talla cojín, montada en oro blanco de 18k con doble halo de diamantes y zafiros.",
+            price:       14800000,
+            priceLabel:  "$14.800.000",
+            specs: {
+                stone:       "Esmeralda colombiana (Chivor)",
+                carat:       "2.8 ct",
+                metal:       "Oro blanco 18k",
+                accent:      "Diamantes 0.6 ct + Zafiros 0.4 ct",
+                certificate: "GIA"
+            },
+            badge:    "Pieza Única",
+            featured: false
+        },
+        {
+            id:          "p008",
+            slug:        "pulsera-tennis-diamantes",
+            name:        "Pulsera Tennis Diamantes",
+            collection:  "diamantes-eternos",
+            description: "Pulsera tennis clásica con 38 diamantes de corte brillante engastados en platino 950. Brillo ininterrumpido alrededor de la muñeca.",
+            price:       18500000,
+            priceLabel:  "$18.500.000",
+            specs: {
+                stone:       "Diamantes naturales",
+                carat:       "5.2 ct total",
+                metal:       "Platino 950",
+                cut:         "Brillante redondo",
+                certificate: "GIA"
+            },
+            badge:    "Alta Joyería",
+            featured: false
+        },
+        {
+            id:          "p009",
+            slug:        "aretes-cluster-esmeralda",
+            name:        "Aretes Clúster Esmeralda",
+            collection:  "esmeraldas-colombianas",
+            description: "Aretes tipo clúster con esmeralda central rodeada de diamantes en forma de flor. Elegancia que enmarca el rostro.",
+            price:       7200000,
+            priceLabel:  "$7.200.000",
+            specs: {
+                stone:       "Esmeraldas colombianas",
+                carat:       "1.6 ct total",
+                metal:       "Oro amarillo 18k",
+                accent:      "Diamantes 0.8 ct",
+                certificate: "GIA"
+            },
+            badge:    "Nueva Pieza",
+            featured: false
+        },
+        {
+            id:          "p010",
+            slug:        "anillo-eternity-diamante",
+            name:        "Anillo Eternity Diamante",
+            collection:  "novias",
+            description: "Anillo de eternidad completo con diamantes de corte princesa engastados en canal sobre oro blanco de 18k.",
+            price:       6500000,
+            priceLabel:  "$6.500.000",
+            specs: {
+                stone:       "Diamantes naturales",
+                carat:       "2.4 ct total",
+                cut:         "Princesa",
+                metal:       "Oro blanco 18k",
+                certificate: "GIA"
+            },
+            badge:    "Compromiso",
+            featured: false
+        },
+        {
+            id:          "p011",
+            slug:        "dije-corazon-esmeralda",
+            name:        "Dije Corazón Esmeralda",
+            collection:  "esmeraldas-colombianas",
+            description: "Dije en forma de corazón con esmeralda colombiana talla corazón de 1.8 ct, suspendido en cadena de oro rosa de 18k.",
+            price:       5400000,
+            priceLabel:  "$5.400.000",
+            specs: {
+                stone:       "Esmeralda colombiana",
+                carat:       "1.8 ct",
+                metal:       "Oro rosa 18k",
+                accent:      "Diamantes 0.3 ct",
+                certificate: "GIA"
+            },
+            badge:    "Nueva Pieza",
+            featured: false
+        },
+        {
+            id:          "p012",
+            slug:        "argolla-matrimonio-oro-rosa",
+            name:        "Argolla Matrimonio Oro Rosa",
+            collection:  "novias",
+            description: "Par de argollas de matrimonio en oro rosa de 18k con acabado cepillado y borde pulido. Diseño contemporáneo y atemporal.",
+            price:       3800000,
+            priceLabel:  "$3.800.000",
+            specs: {
+                metal:  "Oro rosa 18k",
+                weight: "12g (par)",
+                width:  "4mm",
+                finish: "Cepillado y pulido"
+            },
+            badge:    "Matrimonio",
+            featured: false
         }
     ],
 

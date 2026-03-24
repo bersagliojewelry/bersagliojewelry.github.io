@@ -37,12 +37,14 @@
 ### SEO — Estado actual
 - ✅ `pieza.js` ya inyecta **Product Schema** dinámicamente
 - ✅ `pieza.js` ya inyecta **BreadcrumbList Schema** dinámicamente
-- ❌ URLs de productos individuales **no están en `sitemap.xml`**
-- ❌ Animación `scroll-bounce` definida **3 veces** en el CSS (bloat)
+- ✅ URLs de productos individuales **están en `sitemap.xml`** (RESUELTO)
+- ✅ Animación `scroll-bounce` unificada a **1 sola definición** (RESUELTO)
+- ✅ Product Schema ahora incluye `offers` completo — fix Google Search Console mar-2026
+- ✅ `js/utils/schema.js` genera JSON-LD centralizado para todas las páginas
 
-### Comercial — El elefante en la habitación
-- `carrito.html` muestra: *"La tienda en línea está en desarrollo"* — **sin pasarela de pago, la conversión es 0%**
-- Sin chatbot / live chat
+### Comercial — Estado actual
+- ✅ `carrito.html` funcional con checkout Wompi (procesador colombiano)
+- ✅ Integración WhatsApp para consultas de piezas
 - Sin programa de recomendación ni email marketing visible
 
 ### Código — Design Tokens
@@ -54,7 +56,7 @@
 ## FASE 1 — CORTO PLAZO (Semanas 1–3): Fundación de Rendimiento y SEO
 
 ### 1.1 Optimización crítica de imágenes
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completado
 
 **Acción:** Convertir banner.png y collage.png a WebP con versiones responsive.
 
@@ -101,7 +103,7 @@ En `index.html` reemplazar el `<img>` del hero por `<picture>`:
 **Eliminar duplicados:** `Pic/` directorio completo (7.9 MB liberados).
 
 ### 1.2 CSS — Limpiar bloat de scroll-bounce
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completado
 
 Eliminar las 3 definiciones duplicadas de `@keyframes scroll-bounce` (líneas ~618, ~4780, ~5029) y mantener solo una definición unificada:
 
@@ -114,7 +116,7 @@ Eliminar las 3 definiciones duplicadas de `@keyframes scroll-bounce` (líneas ~6
 ```
 
 ### 1.3 Accesibilidad — Skip link
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completado
 
 Añadir como primera línea del `<body>` en `snippets/header.html`:
 
@@ -139,7 +141,7 @@ Añadir como primera línea del `<body>` en `snippets/header.html`:
 ```
 
 ### 1.4 Accesibilidad — Alt text en logos
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completado
 
 Cambiar `alt=""` por `alt="Bersaglio Jewelry"` en header y footer:
 
@@ -148,7 +150,7 @@ Cambiar `alt=""` por `alt="Bersaglio Jewelry"` en header y footer:
 ```
 
 ### 1.5 Cookie Consent (GDPR)
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completado
 
 Banner ligero sin dependencias externas en `snippets/footer.html`:
 
@@ -188,7 +190,7 @@ export function initCookieConsent() {
 ```
 
 ### 1.6 Vite — Minificación CSS/JS
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completado
 
 En `vite.config.js` añadir opciones de build:
 
@@ -206,8 +208,8 @@ build: {
 
 ## FASE 2 — MEDIANO PLAZO (Semanas 4–8): Experiencia Premium y Conversión
 
-### 2.1 Sistema de Checkout Funcional (Firebase + Stripe)
-**Estado:** ⬜ Pendiente
+### 2.1 Sistema de Checkout Funcional
+**Estado:** ✅ Completado (Wompi — procesador colombiano, alternativa a Stripe)
 
 **Arquitectura:** Firebase Functions como backend serverless + Stripe Checkout hosted.
 
@@ -257,7 +259,7 @@ export async function iniciarCheckout(items) {
 ```
 
 ### 2.2 Sitemap dinámico con productos
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completado
 
 Actualizar `public/sitemap.xml` para incluir cada pieza. Generar en build con Vite plugin:
 
@@ -273,7 +275,7 @@ Actualizar `public/sitemap.xml` para incluir cada pieza. Generar en build con Vi
 ```
 
 ### 2.3 Micro-interacciones y animaciones premium
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completado (tilt.js + micro.js con flyToCart/flyToWishlist)
 
 Efecto tilt 3D en tarjetas de colección:
 
@@ -294,12 +296,12 @@ export function initTilt(selector = '.collection-card') {
 ```
 
 ### 2.4 Lazy loading universal en catálogo
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completado (IntersectionObserver en renderer.js)
 
 Asegurar que toda imagen del catálogo tenga `loading="lazy"` y `decoding="async"`.
 
 ### 2.5 Email Capture + Marketing
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completado (modal exit intent + timer 45s, localStorage)
 
 Popup de captura de email con exit intent y timer (45s).
 
@@ -308,7 +310,7 @@ Popup de captura de email con exit intent y timer (45s).
 ## FASE 3 — LARGO PLAZO (Semanas 9–20): Liderazgo Global
 
 ### 3.1 Migración a Firebase Hosting + CDN de Imágenes
-**Estado:** ⬜ Pendiente
+**Estado:** ⚙️ Configurado (firebase.json + .firebaserc listos, pendiente deploy con plan Blaze)
 
 **Por qué Firebase:** Es gratis (plan Spark), tiene CDN global incluido, y soporta Functions para el checkout.
 
@@ -379,7 +381,7 @@ firebase init functions
 ```
 
 ### 3.3 Recomendaciones Personalizadas (IA local)
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completado (js/recommendations.js con scoring colaborativo)
 
 Algoritmo collaborative-filtering ligero basado en localStorage.
 
@@ -428,7 +430,7 @@ Flujos automatizados:
 → Genera estrellas doradas en Google — CTR +15–30%
 
 ### 3.6 PWA Avanzada + Web Push Notifications
-**Estado:** ⬜ Pendiente
+**Estado:** ⚙️ Parcial (PWA + Service Worker v2 completados, Web Push/FCM pendiente plan Blaze)
 
 Usar Firebase Cloud Messaging (FCM) para notificaciones push.
 
@@ -450,6 +452,9 @@ Usar Firebase Cloud Messaging (FCM) para notificaciones push.
 ## RESUMEN: ORDEN DE IMPLEMENTACIÓN
 
 ```
+═══════════════════════════════════════════════════════════════
+  FASE 1 — FUNDACIÓN (Semanas 1-3)                    ██████████ 100%
+═══════════════════════════════════════════════════════════════
 SEMANA 1   ✅ Imágenes WebP + eliminar duplicados       → LCP -70%
 SEMANA 1   ✅ CSS: limpiar scroll-bounce duplicados
 SEMANA 1   ✅ Skip link + alt logos                      → accesibilidad
@@ -457,20 +462,29 @@ SEMANA 2   ✅ Cookie consent propio                      → GDPR compliant
 SEMANA 2   ✅ Lazy loading universal                     → FID mejora
 SEMANA 3   ✅ Vite minificación CSS+JS activa            → bundle -40%
 
-SEMANA 4   ⬜ Firebase Functions + Stripe Checkout       → conversión 0% → ∞ (requiere cuenta Stripe)
-SEMANA 5   ✅ Sitemap dinámico con productos             → DONE
-SEMANA 6   ✅ Tilt 3D cards + micro-interacciones        → DONE (ya existía + hovers mejorados)
-SEMANA 7   ✅ Email capture + marketing                  → DONE (modal con exit intent)
-SEMANA 8   ✅ Sistema de recomendaciones IA local        → DONE (js/recommendations.js)
-SEMANA 8   ✅ OG Image meta tags + preload banner        → DONE
-SEMANA 8   ✅ Collection panel hover enhancements        → DONE
-SEMANA 8   ✅ Cart page UX improvement                   → DONE
-SEMANA 8   ✅ PWA: Service Worker v2 + WebP cache        → DONE
+═══════════════════════════════════════════════════════════════
+  FASE 2 — EXPERIENCIA PREMIUM (Semanas 4-8)          █████████░ 90%
+═══════════════════════════════════════════════════════════════
+SEMANA 4   ✅ Checkout funcional con Wompi               → conversión activa
+SEMANA 5   ✅ Sitemap dinámico con productos
+SEMANA 6   ✅ Tilt 3D cards + micro-interacciones
+SEMANA 7   ✅ Email capture + marketing (exit intent)
+SEMANA 8   ✅ Sistema de recomendaciones IA local        → js/recommendations.js
+SEMANA 8   ✅ OG Image meta tags dinámicos               → homepage + páginas de producto
+SEMANA 8   ✅ Collection panel hover enhancements
+SEMANA 8   ✅ Cart page UX + Wompi checkout
+SEMANA 8   ✅ PWA: Service Worker v2 + WebP cache
+SEMANA 8   ✅ Product Schema JSON-LD centralizado        → fix Google Search Console mar-2026
 
-SEMANA 10  ⬜ Migrar a Firebase Hosting + CDN imágenes   (requiere crear proyecto Firebase)
+═══════════════════════════════════════════════════════════════
+  FASE 3 — LIDERAZGO GLOBAL (Semanas 9-20)            ███░░░░░░░ 30%
+═══════════════════════════════════════════════════════════════
+SEMANA 9   ⚙️ Firebase Hosting configurado               → pendiente plan Blaze para deploy
+SEMANA 10  ⬜ Migrar hosting + CDN imágenes              (requiere Firebase Blaze)
 SEMANA 12  ⬜ Visualizador 3D / AR primeras 3 piezas     (requiere modelos .glb)
-SEMANA 16  ⬜ Sistema de reseñas + AggregateRating       (requiere backend)
-SEMANA 20  ⬜ PWA avanzada + Web Push con FCM            (requiere Firebase)
+SEMANA 14  ⬜ Klaviyo/Mailchimp integración email        (requiere cuenta proveedor)
+SEMANA 16  ⬜ Sistema de reseñas + AggregateRating       (requiere backend Firestore)
+SEMANA 20  ⬜ Web Push con FCM                           (requiere Firebase Blaze)
 ```
 
 ---
@@ -492,7 +506,20 @@ SEMANA 20  ⬜ PWA avanzada + Web Push con FCM            (requiere Firebase)
 
 ## NOTAS IMPORTANTES
 
-1. **Product Schema y BreadcrumbList** ya están implementados en `js/pieza.js` — no requieren trabajo adicional.
-2. **Design Tokens CSS** ya existen en `:root` — se usarán como base, solo falta refactorizar hardcodes.
-3. **Firebase** se usa como infraestructura principal por ser gratuito en plan Spark.
-4. Cada fase se implementa y se testea antes de pasar a la siguiente.
+1. **Product Schema** centralizado en `js/utils/schema.js` — genera JSON-LD válido con `offers` para todas las páginas (homepage, catálogo, detalle). Corregido en mar-2026 tras alerta de Google Search Console.
+2. **BreadcrumbList Schema** implementado en `js/pieza.js`.
+3. **Design Tokens CSS** ya existen en `:root` — se usarán como base, solo falta refactorizar hardcodes.
+4. **Firebase** configurado (firebase.json + .firebaserc). Actualmente en plan Spark; migrar a Blaze para Functions y FCM.
+5. **Checkout** implementado con Wompi (procesador colombiano) en lugar de Stripe — más adaptado al mercado local.
+6. Cada fase se implementa y se testea antes de pasar a la siguiente.
+
+---
+
+## HISTORIAL DE CAMBIOS
+
+| Fecha | Cambio |
+|---|---|
+| 2026-03-19 | Plan maestro creado |
+| 2026-03-24 | Fix Product Schema: Google Search Console reportó "must specify offers/review/aggregateRating" en 6 productos. Creado `js/utils/schema.js` centralizado. |
+| 2026-03-24 | Añadido og:image dinámico en páginas de producto |
+| 2026-03-24 | Auditoría completa: actualizado estados reales de todas las fases |

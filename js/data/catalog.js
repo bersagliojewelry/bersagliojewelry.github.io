@@ -39,7 +39,7 @@ const _local = {
             subtitle:    "El verde más puro del mundo",
             description: "Esmeraldas de origen colombiano, seleccionadas por su color, claridad y fuego interior. Cada piedra es certificada y engastada con maestría artesanal.",
             featured:    true,
-            pieces:      12
+            pieces:      5
         },
         {
             id:          "diamantes-eternos",
@@ -48,7 +48,7 @@ const _local = {
             subtitle:    "Brillo que desafía el tiempo",
             description: "Diamantes de corte excepcional montados en oro de 18k y platino. Piezas diseñadas para momentos que merecen ser inmortales.",
             featured:    true,
-            pieces:      8
+            pieces:      2
         },
         {
             id:          "oro-escultorico",
@@ -57,7 +57,7 @@ const _local = {
             subtitle:    "El arte de moldear lo precioso",
             description: "Piezas en oro de 18k y 24k donde el metal se convierte en escultura. Diseños audaces que redefinen la joyería contemporánea.",
             featured:    true,
-            pieces:      10
+            pieces:      2
         },
         {
             id:          "novias",
@@ -66,7 +66,7 @@ const _local = {
             subtitle:    "Para el día más importante",
             description: "Anillos de compromiso y alianzas que sellan promesas eternas. Diamantes y esmeraldas en diseños que simbolizan amor sin fin.",
             featured:    false,
-            pieces:      6
+            pieces:      3
         }
     ],
 

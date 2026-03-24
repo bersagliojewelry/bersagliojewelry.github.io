@@ -125,7 +125,7 @@ function renderFiltersAndPieces() {
 
 function renderPieces(grid) {
     const allPieces = activeFilter === 'all'
-        ? db.getFeatured()
+        ? db.getAll()
         : db.getByCollection(activeFilter);
 
     if (!allPieces.length) {

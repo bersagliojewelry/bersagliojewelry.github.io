@@ -11,6 +11,7 @@ import { cart }                from './cart.js';
 import { toast }               from './toast.js';
 import Renderer                from './utils/renderer.js';
 import db                      from './data/catalog.js';
+import { buildProductListSchema, injectJsonLd } from './utils/schema.js';
 
 const collectionIcons = {
     'esmeraldas-colombianas': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8" width="80" height="80" aria-hidden="true"><polygon points="12,2 22,8.5 12,22 2,8.5"/><line x1="2" y1="8.5" x2="22" y2="8.5"/><polyline points="7,2 12,8.5 17,2"/></svg>`,
@@ -55,7 +56,7 @@ function updatePageMeta(col) {
     canon.href = `https://bersagliojewelry.co/${col.slug}.html`;
 
     // BreadcrumbList schema
-    const crumbSchema = {
+    injectJsonLd('breadcrumb-schema', {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
         itemListElement: [
@@ -63,11 +64,18 @@ function updatePageMeta(col) {
             { '@type': 'ListItem', position: 2, name: 'Colecciones', item: 'https://bersagliojewelry.co/colecciones.html' },
             { '@type': 'ListItem', position: 3, name: col.name,      item: `https://bersagliojewelry.co/${col.slug}.html` },
         ]
-    };
-    const script = document.createElement('script');
-    script.type = 'application/ld+json';
-    script.textContent = JSON.stringify(crumbSchema);
-    document.head.appendChild(script);
+    });
+
+    // CollectionPage schema
+    injectJsonLd('collection-schema', {
+        '@context':    'https://schema.org',
+        '@type':       'CollectionPage',
+        name:          col.name,
+        description:   col.description,
+        url:           `https://bersagliojewelry.co/${col.slug}.html`,
+        isPartOf:      { '@type': 'WebSite', name: 'Bersaglio Jewelry', url: 'https://bersagliojewelry.co' },
+        breadcrumb:    { '@id': '#breadcrumb-schema' },
+    });
 }
 
 function renderHero(col) {
@@ -154,6 +162,9 @@ function renderPieces(col, slug) {
                 </div>
             </article>`;
     }).join('');
+
+    // Inject Product structured data (JSON-LD) for Google
+    injectJsonLd('collection-products-schema', buildProductListSchema(pieces));
 
     // Init wishlist + cart
     wishlist.initButtons(grid, (_slug, added) => {

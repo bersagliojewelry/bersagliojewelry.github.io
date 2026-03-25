@@ -59,11 +59,13 @@ onAuthStateChanged(auth, async (user) => {
         try {
             const snap = await getDoc(doc(firestoreDb, 'users', user.uid));
             _userProfile = snap.exists() ? snap.data() : null;
+            if (_userProfile) sessionStorage.setItem('bj_auth', '1');
         } catch {
             _userProfile = null;
         }
     } else {
         _userProfile = null;
+        sessionStorage.removeItem('bj_auth');
     }
 
     _listeners.forEach(cb => cb({ user: _currentUser, profile: _userProfile }));
@@ -109,6 +111,7 @@ export async function signIn(email, password) {
  * Sign out the current user.
  */
 export async function signOut() {
+    sessionStorage.removeItem('bj_auth');
     await firebaseSignOut(auth);
     _currentUser = null;
     _userProfile = null;
@@ -172,8 +175,8 @@ export async function requireAuth(minRole = 'editor') {
     await waitForAuth();
 
     if (!_currentUser) {
+        sessionStorage.removeItem('bj_auth');
         window.location.replace('admin-login.html');
-        // Throw to stop further execution in the calling function
         throw new Error('Not authenticated');
     }
 
@@ -188,9 +191,13 @@ export async function requireAuth(minRole = 'editor') {
     }
 
     if (!_userProfile || !hasMinRole(_userProfile.role, minRole)) {
+        sessionStorage.removeItem('bj_auth');
         window.location.replace('admin-login.html?error=forbidden');
         throw new Error('Insufficient role');
     }
+
+    // Auth passed — show the page
+    document.body.style.display = '';
 
     return { user: _currentUser, profile: _userProfile };
 }

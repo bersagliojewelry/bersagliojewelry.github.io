@@ -57,10 +57,10 @@ function cartBtn(piece) {
 }
 
 const collectionNames = {
-    'esmeraldas-colombianas': 'Esmeraldas Colombianas',
-    'diamantes-eternos':      'Diamantes Eternos',
-    'oro-escultorico':        'Oro Escultórico',
-    'novias':                 'Colección Novias',
+    'anillos':          'Anillos',
+    'topos-aretes':     'Topos & Aretes',
+    'dijes-colgantes':  'Dijes & Colgantes',
+    'argollas':         'Argollas',
 };
 
 export function renderFeaturedPieces() {

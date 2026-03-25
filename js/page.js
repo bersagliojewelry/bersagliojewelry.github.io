@@ -84,7 +84,7 @@ function injectPageSchema() {
                 itemListElement: [
                     { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Asesoría Personalizada', description: 'Consultoría experta para elegir la pieza perfecta' } },
                     { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Diseño a Medida',       description: 'Creación de piezas exclusivas según tu visión' } },
-                    { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Certificación GIA',     description: 'Gemas certificadas por el Gemological Institute of America' } },
+                    { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Certificación La Verde / Jewelers of America', description: 'Piezas certificadas por Master Jeweler — La Verde / Jewelers of America' } },
                     { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Envío Asegurado',       description: 'Entrega puerta a puerta con seguro completo' } },
                 ],
             },

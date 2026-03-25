@@ -1,6 +1,6 @@
 /**
  * Bersaglio Jewelry — Individual Collection Page
- * URL: esmeraldas-colombianas.html | diamantes-eternos.html | etc.
+ * URL: anillos.html | topos-aretes.html | dijes-colgantes.html | argollas.html
  * Reads [data-collection] from <html> tag to know which collection to render.
  */
 
@@ -14,10 +14,10 @@ import db                      from './data/catalog.js';
 import { buildProductListSchema, injectJsonLd } from './utils/schema.js';
 
 const collectionIcons = {
-    'esmeraldas-colombianas': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8" width="80" height="80" aria-hidden="true"><polygon points="12,2 22,8.5 12,22 2,8.5"/><line x1="2" y1="8.5" x2="22" y2="8.5"/><polyline points="7,2 12,8.5 17,2"/></svg>`,
-    'diamantes-eternos':      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8" width="80" height="80" aria-hidden="true"><polygon points="12,2 19,7 22,14 12,22 2,14 5,7"/><line x1="5" y1="7" x2="19" y2="7"/></svg>`,
-    'oro-escultorico':        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8" width="80" height="80" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="4"/></svg>`,
-    'novias':                 `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8" width="80" height="80" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
+    'anillos':          `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8" width="80" height="80" aria-hidden="true"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="3" ry="9"/></svg>`,
+    'topos-aretes':     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8" width="80" height="80" aria-hidden="true"><polygon points="12,2 22,8.5 12,22 2,8.5"/><line x1="2" y1="8.5" x2="22" y2="8.5"/><polyline points="7,2 12,8.5 17,2"/></svg>`,
+    'dijes-colgantes':  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8" width="80" height="80" aria-hidden="true"><path d="M12 2v14M8 12l4 4 4-4"/><circle cx="12" cy="20" r="2"/></svg>`,
+    'argollas':         `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8" width="80" height="80" aria-hidden="true"><circle cx="9" cy="12" r="7"/><circle cx="15" cy="12" r="7"/></svg>`,
 };
 
 async function init() {
@@ -100,7 +100,7 @@ function renderPieces(col, slug) {
         grid.innerHTML = `
             <div class="col-empty animate-on-scroll">
                 <div style="color: var(--border); margin-bottom: var(--space-lg);">
-                    ${collectionIcons[slug] || collectionIcons['esmeraldas-colombianas']}
+                    ${collectionIcons[slug] || collectionIcons['anillos']}
                 </div>
                 <p style="font-family: var(--font-display); font-size: 1.4rem; font-weight: 300; color: var(--text-muted);">
                     Próximamente en esta colección
@@ -121,7 +121,7 @@ function renderPieces(col, slug) {
             <article class="piece-card animate-on-scroll">
                 <a href="pieza.html?p=${p.slug}" class="piece-card-img" aria-label="Ver ${p.name}">
                     <div class="piece-card-visual">
-                        ${collectionIcons[p.collection] || collectionIcons['esmeraldas-colombianas']}
+                        ${collectionIcons[p.collection] || collectionIcons['anillos']}
                     </div>
                     ${p.badge ? `<span class="piece-badge">${p.badge}</span>` : ''}
                     <div class="piece-card-actions">

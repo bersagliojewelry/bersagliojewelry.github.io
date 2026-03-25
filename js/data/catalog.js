@@ -33,256 +33,543 @@ const _local = {
 
     collections: [
         {
-            id:          "esmeraldas-colombianas",
-            slug:        "esmeraldas-colombianas",
-            name:        "Esmeraldas Colombianas",
-            subtitle:    "El verde más puro del mundo",
-            description: "Esmeraldas de origen colombiano, seleccionadas por su color, claridad y fuego interior. Cada piedra es certificada y engastada con maestría artesanal.",
+            id:          "anillos",
+            slug:        "anillos",
+            name:        "Anillos",
+            subtitle:    "Esmeraldas, diamantes, rubíes y amatistas",
+            description: "Anillos solitarios y de diseño en oro de 18 quilates con esmeraldas colombianas, diamantes naturales, rubíes, amatistas y moissanita. Cada pieza certificada por La Verde / Jewelers of America.",
             featured:    true,
-            pieces:      5
+            pieces:      11
         },
         {
-            id:          "diamantes-eternos",
-            slug:        "diamantes-eternos",
-            name:        "Diamantes Eternos",
-            subtitle:    "Brillo que desafía el tiempo",
-            description: "Diamantes de corte excepcional montados en oro de 18k y platino. Piezas diseñadas para momentos que merecen ser inmortales.",
+            id:          "topos-aretes",
+            slug:        "topos-aretes",
+            name:        "Topos & Aretes",
+            subtitle:    "Brillo que enmarca el rostro",
+            description: "Topos y aretes de alta joyería en oro de 18 quilates con diamantes naturales, esmeraldas colombianas, amatistas y topacios. Diseños exclusivos con cortes baguette, gota y flor.",
+            featured:    true,
+            pieces:      9
+        },
+        {
+            id:          "dijes-colgantes",
+            slug:        "dijes-colgantes",
+            name:        "Dijes & Colgantes",
+            subtitle:    "Elegancia que acompaña cada paso",
+            description: "Dijes de alta joyería en oro amarillo de 18 quilates con diamantes naturales, esmeraldas colombianas y topacios. Piezas delicadas con diseño artesanal.",
+            featured:    true,
+            pieces:      4
+        },
+        {
+            id:          "argollas",
+            slug:        "argollas",
+            name:        "Argollas",
+            subtitle:    "Zafiros naturales en cada arco",
+            description: "Argollas de alta joyería en oro amarillo de 18 quilates con zafiros naturales azules y rosados. Piezas certificadas con gemas de color intenso y homogéneo.",
             featured:    true,
             pieces:      2
-        },
-        {
-            id:          "oro-escultorico",
-            slug:        "oro-escultorico",
-            name:        "Oro Escultórico",
-            subtitle:    "El arte de moldear lo precioso",
-            description: "Piezas en oro de 18k y 24k donde el metal se convierte en escultura. Diseños audaces que redefinen la joyería contemporánea.",
-            featured:    true,
-            pieces:      2
-        },
-        {
-            id:          "novias",
-            slug:        "novias",
-            name:        "Colección Novias",
-            subtitle:    "Para el día más importante",
-            description: "Anillos de compromiso y alianzas que sellan promesas eternas. Diamantes y esmeraldas en diseños que simbolizan amor sin fin.",
-            featured:    false,
-            pieces:      3
         }
     ],
 
     pieces: [
+        // ─── ANILLOS (11 piezas) ────────────────────────────────────────────
         {
-            id:          "p001",
-            slug:        "anillo-muzo-imperial",
-            name:        "Anillo Muzo Imperial",
-            collection:  "esmeraldas-colombianas",
-            description: "Esmeralda colombiana de 3.2 quilates en talla esmeralda, engastada en oro amarillo de 18k con halo de diamantes.",
-            price:       12500000,
-            priceLabel:  "$12.500.000",
+            id:          "ref001",
+            slug:        "anillos-solitarios-trio",
+            name:        "Anillos Solitarios Trío",
+            ref:         "REF.001-002-003",
+            collection:  "anillos",
+            description: "Tres anillos solitarios con piedras centrales: diamante, zafiro azul y esmeralda natural. Oro amarillo 18K (Ley 750). Calidad AA.",
+            price:       null,
+            priceLabel:  "Consultar",
             specs: {
-                stone:       "Esmeralda colombiana",
-                carat:       "3.2 ct",
-                metal:       "Oro amarillo 18k",
-                accent:      "Diamantes 0.8 ct total",
-                certificate: "GIA"
+                stone:       "Esmeralda, Diamante, Zafiro Azul",
+                carat:       "0.15 ct c/u",
+                metal:       "Oro amarillo 18K (Ley 750)",
+                weight:      "3.04 g",
+                certificate: "La Verde / Jewelers of America"
+            },
+            badge:    "Trío Exclusivo",
+            featured: true
+        },
+        {
+            id:          "ref016",
+            slug:        "anillo-solitario-amatista-amarillo",
+            name:        "Anillo Solitario Amatista",
+            ref:         "REF.016",
+            collection:  "anillos",
+            description: "Anillo solitario con amatista natural central en oro amarillo 18K (Ley 750). Calidad AA. Gema de color violeta intenso.",
+            price:       null,
+            priceLabel:  "Consultar",
+            specs: {
+                stone:       "Amatista natural",
+                carat:       "0.10 ct",
+                metal:       "Oro amarillo 18K (Ley 750)",
+                weight:      "2.571 g",
+                certificate: "La Verde / Jewelers of America"
+            },
+            badge:    null,
+            featured: false
+        },
+        {
+            id:          "ref017",
+            slug:        "anillo-solitario-amatista-blanco",
+            name:        "Anillo Solitario Amatista Oro Blanco",
+            ref:         "REF.017",
+            collection:  "anillos",
+            description: "Anillo solitario con amatista natural central en oro blanco 18K (Ley 750). Calidad AA. Elegancia clásica en tonos fríos.",
+            price:       null,
+            priceLabel:  "Consultar",
+            specs: {
+                stone:       "Amatista natural",
+                carat:       "0.10 ct",
+                metal:       "Oro blanco 18K (Ley 750)",
+                weight:      "2.456 g",
+                certificate: "La Verde / Jewelers of America"
+            },
+            badge:    null,
+            featured: false
+        },
+        {
+            id:          "ref020",
+            slug:        "anillo-esmeralda-certificada-baguettes",
+            name:        "Anillo Esmeralda Certificada & Baguettes",
+            ref:         "REF.020",
+            collection:  "anillos",
+            description: "Anillo especial con esmeralda rectangular certificada de 1.152 ct y 2 diamantes baguettes de 0.50 ct. Oro blanco 18K. Claridad IF — alta pureza.",
+            price:       null,
+            priceLabel:  "Consultar",
+            specs: {
+                stone:       "Esmeralda natural + Diamantes baguettes",
+                carat:       "1.652 ct total",
+                metal:       "Oro blanco 18K (Ley 750)",
+                weight:      "4.3 g",
+                certificate: "La Verde / Jewelers of America"
+            },
+            badge:    "Alta Pureza",
+            featured: true
+        },
+        {
+            id:          "ref022",
+            slug:        "anillo-moissanita-azul-diamantes",
+            name:        "Anillo Moissanita Azul & Diamantes",
+            ref:         "REF.022",
+            collection:  "anillos",
+            description: "Anillo con moissanita azul central de 0.92 ct rodeada de 28 diamantes naturales. Oro amarillo 18K. Azul intenso con excelente brillo.",
+            price:       null,
+            priceLabel:  "Consultar",
+            specs: {
+                stone:       "Moissanita azul + Diamantes naturales",
+                carat:       "0.92 ct (central) + 0.20 ct (diamantes)",
+                metal:       "Oro amarillo 18K (Ley 750)",
+                weight:      "4.392 g",
+                certificate: "La Verde / Jewelers of America"
+            },
+            badge:    "Diseño Exclusivo",
+            featured: true
+        },
+        {
+            id:          "ref024",
+            slug:        "anillo-amatista-gota-diamantes",
+            name:        "Anillo Amatista Gota & Diamantes",
+            ref:         "REF.024",
+            collection:  "anillos",
+            description: "Anillo con amatista natural en corte de gota de 1.12 ct y 34 diamantes naturales. Oro amarillo 18K. Violeta intenso homogéneo, calidad superior.",
+            price:       null,
+            priceLabel:  "Consultar",
+            specs: {
+                stone:       "Amatista natural (gota) + Diamantes",
+                carat:       "1.12 ct (amatista) + 0.17 ct (diamantes)",
+                metal:       "Oro amarillo 18K (Ley 750)",
+                weight:      "4.363 g",
+                certificate: "La Verde / Jewelers of America"
+            },
+            badge:    "Pieza Única",
+            featured: false
+        },
+        {
+            id:          "ref025",
+            slug:        "anillo-amatista-ovalada-diamantes",
+            name:        "Anillo Amatista Ovalada & Diamantes",
+            ref:         "REF.025",
+            collection:  "anillos",
+            description: "Anillo con amatista natural ovalada de 0.77 ct y 6 diamantes de 2mm. Oro blanco 18K. Violeta intenso homogéneo, calidad superior AA.",
+            price:       null,
+            priceLabel:  "Consultar",
+            specs: {
+                stone:       "Amatista natural (ovalada) + Diamantes",
+                carat:       "0.77 ct (amatista) + 0.18 ct (diamantes)",
+                metal:       "Oro blanco 18K (Ley 750)",
+                weight:      "3.903 g",
+                certificate: "La Verde / Jewelers of America"
+            },
+            badge:    null,
+            featured: false
+        },
+        {
+            id:          "ref035",
+            slug:        "anillo-rubies-rosa-diamantes",
+            name:        "Anillo Rubíes Rosa & Diamantes",
+            ref:         "REF.035",
+            collection:  "anillos",
+            description: "Anillo con 4 rubíes ovalados de 2.65 ct en rosa vibrante y 4 diamantes. Oro amarillo 18K. Tonalidades homogéneas, calidad AA.",
+            price:       null,
+            priceLabel:  "Consultar",
+            specs: {
+                stone:       "Rubíes naturales + Diamantes",
+                carat:       "2.65 ct (rubíes) + 0.06 ct (diamantes)",
+                metal:       "Oro amarillo 18K (Ley 750)",
+                weight:      "5.262 g",
+                certificate: "La Verde / Jewelers of America"
             },
             badge:    "Pieza Única",
             featured: true
         },
         {
-            id:          "p002",
-            slug:        "collar-eterno-brillante",
-            name:        "Collar Eterno Brillante",
-            collection:  "diamantes-eternos",
-            description: "Collar rivière con 42 diamantes de corte brillante, montados en platino 950. Brillo total: 12.6 quilates.",
+            id:          "ref039",
+            slug:        "anillo-flor-diamantes-esmeraldas",
+            name:        "Anillo Flor Diamantes & Esmeraldas",
+            ref:         "REF.039",
+            collection:  "anillos",
+            description: "Anillo diseño flor con 28 diamantes y 4 esmeraldas colombianas centrales. Oro amarillo 18K. Verde esmeralda intenso, origen colombiano. Calidad AA.",
             price:       null,
-            priceLabel:  "Consultar precio",
+            priceLabel:  "Consultar",
             specs: {
-                stone:       "Diamantes naturales",
-                carat:       "12.6 ct total",
-                metal:       "Platino 950",
-                cut:         "Brillante redondo",
-                certificate: "GIA"
+                stone:       "Esmeraldas colombianas + Diamantes",
+                carat:       "0.240 ct (esmeraldas) + 0.140 ct (diamantes)",
+                metal:       "Oro amarillo 18K (Ley 750)",
+                weight:      "3.801 g",
+                certificate: "La Verde / Jewelers of America"
+            },
+            badge:    null,
+            featured: false
+        },
+        {
+            id:          "ref046",
+            slug:        "anillo-esmeralda-cabuchon-diamantes",
+            name:        "Anillo Esmeralda Cabuchón & Diamantes",
+            ref:         "REF.046",
+            collection:  "anillos",
+            description: "Anillo con esmeralda colombiana cabuchón de 4.73 ct y 14 diamantes. Oro amarillo 18K. Verde esmeralda intenso y homogéneo, calidad AA.",
+            price:       null,
+            priceLabel:  "Consultar",
+            specs: {
+                stone:       "Esmeralda colombiana (cabuchón) + Diamantes",
+                carat:       "4.73 ct (esmeralda) + 0.08 ct (diamantes)",
+                metal:       "Oro amarillo 18K (Ley 750)",
+                weight:      "4.126 g",
+                certificate: "La Verde / Jewelers of America"
             },
             badge:    "Alta Joyería",
             featured: true
         },
         {
-            id:          "p003",
-            slug:        "brazalete-serpentina-oro",
-            name:        "Brazalete Serpentina Oro",
-            collection:  "oro-escultorico",
-            description: "Brazalete articulado en oro rosa de 18k con textura orgánica. Diseño escultórico que abraza la muñeca con fluidez.",
-            price:       8900000,
-            priceLabel:  "$8.900.000",
-            specs: {
-                metal:  "Oro rosa 18k",
-                weight: "48g",
-                style:  "Articulado escultórico",
-                finish: "Satinado y pulido"
-            },
-            badge:    "Edición Limitada",
-            featured: true
-        },
-        {
-            id:          "p004",
-            slug:        "pendientes-gota-esmeralda",
-            name:        "Pendientes Gota Esmeralda",
-            collection:  "esmeraldas-colombianas",
-            description: "Par de pendientes con esmeraldas en talla gota de 2.1 ct cada una, suspendidas en cadena de oro blanco con diamantes.",
-            price:       9800000,
-            priceLabel:  "$9.800.000",
-            specs: {
-                stone:       "Esmeraldas colombianas",
-                carat:       "4.2 ct total",
-                metal:       "Oro blanco 18k",
-                accent:      "Diamantes 1.2 ct",
-                certificate: "GIA"
-            },
-            badge:    "Pieza Única",
-            featured: true
-        },
-        {
-            id:          "p005",
-            slug:        "anillo-solitario-promesa",
-            name:        "Anillo Solitario Promesa",
-            collection:  "novias",
-            description: "Diamante de talla brillante de 1.5 quilates, color D, claridad VVS1, montado en platino con banda de micro-pavé.",
-            price:       15200000,
-            priceLabel:  "$15.200.000",
-            specs: {
-                stone:       "Diamante natural",
-                carat:       "1.5 ct",
-                color:       "D",
-                clarity:     "VVS1",
-                metal:       "Platino 950",
-                certificate: "GIA"
-            },
-            badge:    "Compromiso",
-            featured: true
-        },
-        {
-            id:          "p006",
-            slug:        "collar-cascada-de-oro",
-            name:        "Collar Cascada de Oro",
-            collection:  "oro-escultorico",
-            description: "Collar statement en oro amarillo de 18k con eslabones esculpidos a mano. Una pieza de arte portátil que define presencia.",
+            id:          "ref-trebol",
+            slug:        "anillo-trebol-esmeralda-diamantes",
+            name:        "Anillo Trébol Esmeralda & Diamantes",
+            ref:         "S/REF",
+            collection:  "anillos",
+            description: "Anillo diseño trébol con 7 esmeraldas de 1.50mm, 1 esmeralda de 1.75mm y 28 diamantes. Oro amarillo 18K. Esmeraldas colombianas, calidad AA.",
             price:       null,
-            priceLabel:  "Consultar precio",
+            priceLabel:  "Consultar",
             specs: {
-                metal:  "Oro amarillo 18k",
-                weight: "62g",
-                length: "42cm ajustable",
-                finish: "Pulido espejo"
+                stone:       "Esmeraldas colombianas + Diamantes",
+                carat:       "0.34 ct (esmeraldas) + 0.14 ct (diamantes)",
+                metal:       "Oro amarillo 18K (Ley 750)",
+                weight:      "3.284 g",
+                certificate: "La Verde / Jewelers of America"
             },
-            badge:    "Edición Limitada",
-            featured: true
-        },
-        {
-            id:          "p007",
-            slug:        "anillo-chivor-royale",
-            name:        "Anillo Chivor Royale",
-            collection:  "esmeraldas-colombianas",
-            description: "Esmeralda de la mina de Chivor de 2.8 quilates, talla cojín, montada en oro blanco de 18k con doble halo de diamantes y zafiros.",
-            price:       14800000,
-            priceLabel:  "$14.800.000",
-            specs: {
-                stone:       "Esmeralda colombiana (Chivor)",
-                carat:       "2.8 ct",
-                metal:       "Oro blanco 18k",
-                accent:      "Diamantes 0.6 ct + Zafiros 0.4 ct",
-                certificate: "GIA"
-            },
-            badge:    "Pieza Única",
+            badge:    null,
             featured: false
         },
+
+        // ─── TOPOS & ARETES (9 piezas) ─────────────────────────────────────
         {
-            id:          "p008",
-            slug:        "pulsera-tennis-diamantes",
-            name:        "Pulsera Tennis Diamantes",
-            collection:  "diamantes-eternos",
-            description: "Pulsera tennis clásica con 38 diamantes de corte brillante engastados en platino 950. Brillo ininterrumpido alrededor de la muñeca.",
-            price:       18500000,
-            priceLabel:  "$18.500.000",
+            id:          "ref-topos-diamante-esmeralda",
+            slug:        "topos-diamante-punto-esmeralda",
+            name:        "Topos Diamante Punto Esmeralda",
+            ref:         "S/REF",
+            collection:  "topos-aretes",
+            description: "Topos con 28 diamantes naturales y 2 esmeraldas colombianas centrales. Oro blanco 18K. Color G, claridad VS1.",
+            price:       null,
+            priceLabel:  "Consultar",
             specs: {
-                stone:       "Diamantes naturales",
-                carat:       "5.2 ct total",
-                metal:       "Platino 950",
-                cut:         "Brillante redondo",
-                certificate: "GIA"
+                stone:       "Diamantes naturales + Esmeraldas colombianas",
+                carat:       "0.46 ct total",
+                metal:       "Oro blanco 18K (Ley 750)",
+                weight:      "2.792 g",
+                certificate: "La Verde / Jewelers of America"
+            },
+            badge:    "Alta Joyería",
+            featured: true
+        },
+        {
+            id:          "ref-topos-amatista-gota",
+            slug:        "topos-amatista-gota-diamantes",
+            name:        "Topos Amatista Gota & Diamantes",
+            ref:         "S/REF",
+            collection:  "topos-aretes",
+            description: "Topos de alta joyería con 2 amatistas en corte de gota de 0.80 ct y 40 diamantes. Oro amarillo 18K. Violeta profundo con matices púrpura. VVS2.",
+            price:       null,
+            priceLabel:  "Consultar",
+            specs: {
+                stone:       "Amatista natural (gota) + Diamantes",
+                carat:       "0.80 ct (amatistas) + 0.20 ct (diamantes)",
+                metal:       "Oro amarillo 18K (Ley 750)",
+                weight:      "4.572 g",
+                certificate: "La Verde / Jewelers of America"
             },
             badge:    "Alta Joyería",
             featured: false
         },
         {
-            id:          "p009",
-            slug:        "aretes-cluster-esmeralda",
-            name:        "Aretes Clúster Esmeralda",
-            collection:  "esmeraldas-colombianas",
-            description: "Aretes tipo clúster con esmeralda central rodeada de diamantes en forma de flor. Elegancia que enmarca el rostro.",
-            price:       7200000,
-            priceLabel:  "$7.200.000",
+            id:          "ref-topos-topacio-diamantes",
+            slug:        "topos-topacio-amarillo-diamantes",
+            name:        "Topos Topacio Amarillo & Diamantes",
+            ref:         "S/REF",
+            collection:  "topos-aretes",
+            description: "Topos de alta joyería con 2 topacios naturales de 2.20 ct y 40 diamantes. Oro amarillo 18K. Amarillo intenso homogéneo, alta claridad.",
+            price:       null,
+            priceLabel:  "Consultar",
             specs: {
-                stone:       "Esmeraldas colombianas",
-                carat:       "1.6 ct total",
-                metal:       "Oro amarillo 18k",
-                accent:      "Diamantes 0.8 ct",
-                certificate: "GIA"
+                stone:       "Topacio natural + Diamantes",
+                carat:       "2.20 ct (topacios) + diamantes",
+                metal:       "Oro amarillo 18K (Ley 750)",
+                weight:      "5.703 g",
+                certificate: "La Verde / Jewelers of America"
             },
-            badge:    "Nueva Pieza",
+            badge:    null,
             featured: false
         },
         {
-            id:          "p010",
-            slug:        "anillo-eternity-diamante",
-            name:        "Anillo Eternity Diamante",
-            collection:  "novias",
-            description: "Anillo de eternidad completo con diamantes de corte princesa engastados en canal sobre oro blanco de 18k.",
-            price:       6500000,
-            priceLabel:  "$6.500.000",
+            id:          "ref077",
+            slug:        "topos-flor-diamante",
+            name:        "Topos Flor Diamante",
+            ref:         "REF.077",
+            collection:  "topos-aretes",
+            description: "Topos de alta joyería diseño flor con 8 diamantes naturales de 0.22 ct. Oro amarillo 18K. Color H, claridad VS1.",
+            price:       null,
+            priceLabel:  "Consultar",
             specs: {
                 stone:       "Diamantes naturales",
-                carat:       "2.4 ct total",
-                cut:         "Princesa",
-                metal:       "Oro blanco 18k",
-                certificate: "GIA"
+                carat:       "0.22 ct total",
+                metal:       "Oro amarillo 18K (Ley 750)",
+                weight:      "2.282 g",
+                certificate: "La Verde / Jewelers of America"
             },
-            badge:    "Compromiso",
+            badge:    null,
             featured: false
         },
         {
-            id:          "p011",
-            slug:        "dije-corazon-esmeralda",
-            name:        "Dije Corazón Esmeralda",
-            collection:  "esmeraldas-colombianas",
-            description: "Dije en forma de corazón con esmeralda colombiana talla corazón de 1.8 ct, suspendido en cadena de oro rosa de 18k.",
-            price:       5400000,
-            priceLabel:  "$5.400.000",
+            id:          "ref083",
+            slug:        "topos-rectangulares-baguettes-esmeraldas",
+            name:        "Topos Rectangulares Baguettes & Esmeraldas",
+            ref:         "REF.083",
+            collection:  "topos-aretes",
+            description: "Topos rectangulares con 2 diamantes baguettes, 42 diamantes redondos y 4 esmeraldas. Oro amarillo 18K. Color G, claridad VS1.",
+            price:       null,
+            priceLabel:  "Consultar",
             specs: {
-                stone:       "Esmeralda colombiana",
-                carat:       "1.8 ct",
-                metal:       "Oro rosa 18k",
-                accent:      "Diamantes 0.3 ct",
-                certificate: "GIA"
+                stone:       "Diamantes baguettes + Esmeraldas",
+                carat:       "0.51 ct total",
+                metal:       "Oro amarillo 18K (Ley 750)",
+                weight:      "3.089 g",
+                certificate: "La Verde / Jewelers of America"
             },
-            badge:    "Nueva Pieza",
+            badge:    "Diseño Exclusivo",
             featured: false
         },
         {
-            id:          "p012",
-            slug:        "argolla-matrimonio-oro-rosa",
-            name:        "Argolla Matrimonio Oro Rosa",
-            collection:  "novias",
-            description: "Par de argollas de matrimonio en oro rosa de 18k con acabado cepillado y borde pulido. Diseño contemporáneo y atemporal.",
-            price:       3800000,
-            priceLabel:  "$3.800.000",
+            id:          "ref080",
+            slug:        "topos-rectangulares-baguettes-diamantes",
+            name:        "Topos Rectangulares Baguettes Diamante",
+            ref:         "REF.080",
+            collection:  "topos-aretes",
+            description: "Topos rectangulares con 2 diamantes baguettes de 0.20 ct y 24 diamantes redondos. Oro amarillo 18K. Color G, claridad VS1.",
+            price:       null,
+            priceLabel:  "Consultar",
             specs: {
-                metal:  "Oro rosa 18k",
-                weight: "12g (par)",
-                width:  "4mm",
-                finish: "Cepillado y pulido"
+                stone:       "Diamantes naturales baguettes + redondos",
+                carat:       "0.44 ct total",
+                metal:       "Oro amarillo 18K (Ley 750)",
+                weight:      "3.931 g",
+                certificate: "La Verde / Jewelers of America"
             },
-            badge:    "Matrimonio",
+            badge:    null,
+            featured: false
+        },
+        {
+            id:          "ref086",
+            slug:        "topos-reina-esmeralda-baguettes",
+            name:        "Topos Reina Esmeralda & Baguettes",
+            ref:         "REF.086",
+            collection:  "topos-aretes",
+            description: "Topos de alta joyería con 20 esmeraldas colombianas y 2 diamantes baguettes. Oro amarillo 18K. Color G, claridad VS1.",
+            price:       null,
+            priceLabel:  "Consultar",
+            specs: {
+                stone:       "Esmeraldas colombianas + Diamantes baguettes",
+                carat:       "0.28 ct (esmeraldas) + 0.18 ct (baguettes)",
+                metal:       "Oro amarillo 18K (Ley 750)",
+                weight:      "4.507 g",
+                certificate: "La Verde / Jewelers of America"
+            },
+            badge:    "Alta Joyería",
+            featured: false
+        },
+        {
+            id:          "ref091",
+            slug:        "topos-circulos-flor-esmeralda",
+            name:        "Topos Círculos Flor Esmeralda",
+            ref:         "REF.091",
+            collection:  "topos-aretes",
+            description: "Topos diseño flor circular con 56 diamantes y 16 esmeraldas colombianas. Oro amarillo 18K. Verde esmeralda homogéneo, calidad AA.",
+            price:       null,
+            priceLabel:  "Consultar",
+            specs: {
+                stone:       "Esmeraldas colombianas + Diamantes",
+                carat:       "0.23 ct (esmeraldas) + 0.28 ct (diamantes)",
+                metal:       "Oro amarillo 18K (Ley 750)",
+                weight:      "3.33 g",
+                certificate: "La Verde / Jewelers of America"
+            },
+            badge:    null,
+            featured: false
+        },
+        {
+            id:          "ref094",
+            slug:        "topos-circulo-diamante-baguettes",
+            name:        "Topos Círculo Diamante & Baguettes",
+            ref:         "REF.094",
+            collection:  "topos-aretes",
+            description: "Topos circulares con 2 diamantes baguettes, 4 diamantes redondos de 2mm y 52 diamantes de 1mm. Oro amarillo 18K. Color G, VS1.",
+            price:       null,
+            priceLabel:  "Consultar",
+            specs: {
+                stone:       "Diamantes naturales baguettes + redondos",
+                carat:       "0.63 ct total",
+                metal:       "Oro amarillo 18K (Ley 750)",
+                weight:      "4.061 g",
+                certificate: "La Verde / Jewelers of America"
+            },
+            badge:    null,
+            featured: false
+        },
+
+        // ─── DIJES & COLGANTES (4 piezas) ──────────────────────────────────
+        {
+            id:          "ref098",
+            slug:        "dije-topacio-amarillo-diamantes",
+            name:        "Dije Topacio Amarillo & Diamantes",
+            ref:         "REF.098",
+            collection:  "dijes-colgantes",
+            description: "Dije de alta joyería con topacio amarillo central de 0.45 ct y 14 diamantes. Oro amarillo 18K. Amarillo dorado, calidad AA.",
+            price:       null,
+            priceLabel:  "Consultar",
+            specs: {
+                stone:       "Topacio natural + Diamantes",
+                carat:       "0.59 ct total",
+                metal:       "Oro amarillo 18K (Ley 750)",
+                weight:      "1.161 g",
+                certificate: "La Verde / Jewelers of America"
+            },
+            badge:    null,
+            featured: false
+        },
+        {
+            id:          "ref109",
+            slug:        "dije-flor-esmeralda-diamantes",
+            name:        "Dije Flor Esmeralda & Diamantes",
+            ref:         "REF.109",
+            collection:  "dijes-colgantes",
+            description: "Dije diseño flor con 7 esmeraldas, 1 esmeralda central de 1.75mm y 28 diamantes. Oro amarillo 18K. Color G-H, calidad AA.",
+            price:       null,
+            priceLabel:  "Consultar",
+            specs: {
+                stone:       "Esmeraldas naturales + Diamantes",
+                carat:       "0.16 ct total",
+                metal:       "Oro amarillo 18K (Ley 750)",
+                weight:      "1.004 g",
+                certificate: "La Verde / Jewelers of America"
+            },
+            badge:    null,
+            featured: false
+        },
+        {
+            id:          "ref111",
+            slug:        "dije-redondo-diamantes-baguette",
+            name:        "Dije Redondo Diamantes & Baguette",
+            ref:         "REF.111",
+            collection:  "dijes-colgantes",
+            description: "Dije redondo con 1 diamante baguette, 2 diamantes de 2mm y 30 diamantes de 1mm. Oro amarillo 18K. Color G-H, claridad VS1.",
+            price:       null,
+            priceLabel:  "Consultar",
+            specs: {
+                stone:       "Diamantes naturales + Baguette",
+                carat:       "0.11 ct (baguette) + diamantes",
+                metal:       "Oro amarillo 18K (Ley 750)",
+                weight:      "1.405 g",
+                certificate: "La Verde / Jewelers of America"
+            },
+            badge:    null,
+            featured: false
+        },
+        {
+            id:          "ref112",
+            slug:        "dije-esmeralda-colgante-diamantes",
+            name:        "Dije Esmeralda Colgante & Diamantes",
+            ref:         "REF.112",
+            collection:  "dijes-colgantes",
+            description: "Dije con esmeralda colombiana colgante, 6 diamantes redondos y 11 diamantes de 1.25mm. Oro amarillo 18K. Color F, claridad VS.",
+            price:       null,
+            priceLabel:  "Consultar",
+            specs: {
+                stone:       "Esmeralda colombiana + Diamantes",
+                carat:       "0.25 ct (diamantes) + esmeralda",
+                metal:       "Oro amarillo 18K (Ley 750)",
+                weight:      "1.659 g",
+                certificate: "La Verde / Jewelers of America"
+            },
+            badge:    null,
+            featured: false
+        },
+
+        // ─── ARGOLLAS (2 piezas) ────────────────────────────────────────────
+        {
+            id:          "ref060-azul",
+            slug:        "argollas-zafiros-azules",
+            name:        "Argollas Zafiros Azules",
+            ref:         "REF.060",
+            collection:  "argollas",
+            description: "Argollas de alta joyería con 11 zafiros naturales azules de 1.75mm. Oro amarillo 18K. Azul intenso, calidad AA.",
+            price:       null,
+            priceLabel:  "Consultar",
+            specs: {
+                stone:       "Zafiros naturales azules",
+                carat:       "0.11 ct total",
+                metal:       "Oro amarillo 18K (Ley 750)",
+                weight:      "3.04 g",
+                certificate: "La Verde / Jewelers of America"
+            },
+            badge:    "Alta Joyería",
+            featured: false
+        },
+        {
+            id:          "ref060-rosa",
+            slug:        "argollas-zafiros-rosados",
+            name:        "Argollas Zafiros Rosados",
+            ref:         "REF.060",
+            collection:  "argollas",
+            description: "Argollas de alta joyería con 11 zafiros naturales rosados de 1.75mm. Oro amarillo 18K. Rosa con matices homogéneos, calidad AA.",
+            price:       null,
+            priceLabel:  "Consultar",
+            specs: {
+                stone:       "Zafiros naturales rosados",
+                carat:       "0.11 ct total",
+                metal:       "Oro amarillo 18K (Ley 750)",
+                weight:      "3.04 g",
+                certificate: "La Verde / Jewelers of America"
+            },
+            badge:    "Alta Joyería",
             featured: false
         }
     ],
@@ -303,8 +590,8 @@ const _local = {
         {
             id:          "certificacion",
             icon:        "certificate",
-            title:       "Certificación GIA",
-            description: "Todas nuestras piedras preciosas incluyen certificación del Gemological Institute of America, garantía de autenticidad y calidad."
+            title:       "Certificación La Verde / Jewelers of America",
+            description: "Todas nuestras piezas son certificadas por La Verde / Jewelers of America — Fabio Enrique Peñuela Montañez, Master Jeweler. Garantía de autenticidad y calidad en cada gema."
         },
         {
             id:          "envio",

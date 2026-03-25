@@ -13,10 +13,10 @@ import db                    from './data/catalog.js';
 import { buildProductListSchema, injectJsonLd } from './utils/schema.js';
 
 const collectionIcons = {
-    'esmeraldas-colombianas': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="64" height="64"><polygon points="12,2 22,8.5 12,22 2,8.5"/></svg>`,
-    'diamantes-eternos':      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="64" height="64"><polygon points="12,2 19,7 22,14 12,22 2,14 5,7"/></svg>`,
-    'oro-escultorico':        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="64" height="64"><circle cx="12" cy="12" r="10"/><path d="M12 2v20M2 12h20"/></svg>`,
-    'novias':                 `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="64" height="64"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
+    'anillos':          `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="64" height="64"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="3" ry="9"/></svg>`,
+    'topos-aretes':     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="64" height="64"><polygon points="12,2 22,8.5 12,22 2,8.5"/><line x1="2" y1="8.5" x2="22" y2="8.5"/><polyline points="7,2 12,8.5 17,2"/></svg>`,
+    'dijes-colgantes':  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="64" height="64"><path d="M12 2v14M8 12l4 4 4-4"/><circle cx="12" cy="20" r="2"/></svg>`,
+    'argollas':         `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="64" height="64"><circle cx="9" cy="12" r="7"/><circle cx="15" cy="12" r="7"/></svg>`,
 };
 
 // Filtro activo actual
@@ -56,7 +56,7 @@ function injectCatalogSchema() {
         '@context':    'https://schema.org',
         '@type':       'CollectionPage',
         name:          'Colecciones — Bersaglio Jewelry',
-        description:   'Explora las colecciones de Bersaglio Jewelry: Esmeraldas Colombianas, Diamantes Eternos, Oro Escultórico y Novias.',
+        description:   'Explora las colecciones de Bersaglio Jewelry: Anillos, Topos & Aretes, Dijes & Colgantes y Argollas. Alta joyería certificada.',
         url:           `${base}/colecciones.html`,
         isPartOf:      { '@type': 'WebSite', name: 'Bersaglio Jewelry', url: base },
     });
@@ -80,7 +80,7 @@ function renderCatalogCollections() {
         <article class="catalog-collection-card animate-on-scroll">
             <a href="${col.slug}.html" class="catalog-collection-link" aria-label="Explorar ${col.name}">
                 <div class="catalog-collection-visual">
-                    ${collectionIcons[col.slug] || collectionIcons['esmeraldas-colombianas']}
+                    ${collectionIcons[col.slug] || collectionIcons['anillos']}
                 </div>
                 <div class="catalog-collection-body">
                     <div class="catalog-collection-count">${col.pieces} piezas</div>
@@ -172,7 +172,7 @@ function renderPieces(grid) {
             <article class="piece-card animate-on-scroll">
                 <div class="piece-image-wrapper">
                     <div class="piece-placeholder">
-                        ${collectionIcons[p.collection] || collectionIcons['esmeraldas-colombianas']}
+                        ${collectionIcons[p.collection] || collectionIcons['anillos']}
                     </div>
                     ${p.badge ? `<span class="piece-badge">${p.badge}</span>` : ''}
                     <div class="piece-actions">

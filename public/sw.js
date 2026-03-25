@@ -91,6 +91,33 @@ self.addEventListener('fetch', event => {
     // Hashed JS chunks from Vite change per build — don't cache them.
 });
 
+/* ─── Push Notifications (FCM) ──────────────────────────────── */
+self.addEventListener('push', event => {
+    const data = event.data?.json() ?? {};
+    const title = data.notification?.title || data.title || 'Bersaglio Jewelry';
+    const options = {
+        body:  data.notification?.body || data.body || '',
+        icon:  '/img/logo-bj2.png',
+        badge: '/img/logo-bj2.png',
+        data:  { url: data.data?.url || data.url || '/' },
+        tag:   data.tag || 'bersaglio-notification',
+    };
+    event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', event => {
+    event.notification.close();
+    const url = event.notification.data?.url || '/';
+    event.waitUntil(
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+            .then(clients => {
+                const existing = clients.find(c => c.url.includes(url));
+                if (existing) return existing.focus();
+                return self.clients.openWindow(url);
+            })
+    );
+});
+
 /* ─── Helpers ────────────────────────────────────────────────── */
 async function putInCache(request, response) {
     if (!response.ok) return;

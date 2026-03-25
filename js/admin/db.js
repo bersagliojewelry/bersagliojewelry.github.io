@@ -105,6 +105,20 @@ class AdminDatabase {
         if (merged) this._set(KEYS.collections, adminCols);
     }
 
+    // ─── Firestore sync helper ────────────────────────────────────────────────
+
+    /**
+     * Fire-and-forget Firestore sync. Never blocks the UI.
+     * Falls back silently if Firestore is unavailable.
+     */
+    _syncToFirestore(action, ...args) {
+        import('../firestore-service.js')
+            .then(fs => {
+                if (typeof fs[action] === 'function') return fs[action](...args);
+            })
+            .catch(() => {/* Firestore unavailable — localStorage is primary */});
+    }
+
     // ─── Piezas ────────────────────────────────────────────────────────────────
 
     getAllPieces() {
@@ -117,15 +131,13 @@ class AdminDatabase {
 
     /**
      * Crea o actualiza una pieza.
-     * Crea → genera id y slug automáticamente.
-     * Actualiza → reemplaza el registro existente.
+     * Dual-write: localStorage (immediate) + Firestore (async).
      */
     savePiece(data) {
         const pieces = this.getAllPieces();
         let piece = { ...data };
 
         if (!piece.id) {
-            // Nueva pieza
             piece.id        = `p${Date.now()}`;
             piece.slug      = piece.slug || AdminDatabase.slugify(piece.name);
             piece.createdAt = new Date().toISOString();
@@ -140,11 +152,13 @@ class AdminDatabase {
         }
 
         this._set(KEYS.pieces, pieces);
+        this._syncToFirestore('savePiece', piece.id, piece);
         return piece;
     }
 
     deletePiece(id) {
         this._set(KEYS.pieces, this.getAllPieces().filter(p => p.id !== id));
+        this._syncToFirestore('deletePiece', id);
     }
 
     // ─── Colecciones ───────────────────────────────────────────────────────────
@@ -170,6 +184,7 @@ class AdminDatabase {
         }
 
         this._set(KEYS.collections, collections);
+        this._syncToFirestore('saveCollection', col.id, col);
         return col;
     }
 
@@ -194,6 +209,7 @@ class AdminDatabase {
         };
         inquiries.unshift(inq);
         this._set(KEYS.inquiries, inquiries);
+        this._syncToFirestore('saveInquiry', inq);
         return inq;
     }
 

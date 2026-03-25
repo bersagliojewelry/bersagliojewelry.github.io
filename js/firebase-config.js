@@ -18,7 +18,7 @@ import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
 
 const firebaseConfig = {
-    apiKey:            import.meta.env.VITE_FIREBASE_API_KEY            || 'AIzaSyCFjwXPAYCisuhEutAmeAEiYyoEqPL5xUQ',
+    apiKey:            import.meta.env.VITE_FIREBASE_API_KEY            || 'AIzaSyDcAvuRKN8_h_uSXzXkCzC0foLxTOkd5WM',
     authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN        || 'bersaglio-jewelry.firebaseapp.com',
     projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID         || 'bersaglio-jewelry',
     storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET     || 'bersaglio-jewelry.firebasestorage.app',

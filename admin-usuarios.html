@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="css/admin.css">
     <script type="module" src="js/admin/usuarios.js"></script>
 </head>
-<body>
+<body style="display:none">
+<script>try{if(!sessionStorage.getItem('bj_auth'))throw 0}catch(e){location.replace('admin-login.html');document.body.style.display='none'}</script>
 <div class="adm-layout">
 
     <!-- Sidebar -->

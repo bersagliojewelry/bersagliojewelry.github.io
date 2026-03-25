@@ -7,6 +7,7 @@
     <meta name="robots" content="noindex, nofollow">
     <link rel="icon" type="image/png" href="img/logo-bj2.png">
     <link rel="stylesheet" href="css/admin.css">
+    <script>if(location.search)history.replaceState(null,'',location.pathname);</script>
     <script type="module" src="js/admin/login.js"></script>
 </head>
 <body class="adm-login-body">
@@ -23,20 +24,20 @@
             </div>
 
             <!-- Login form -->
-            <form id="login-form" class="adm-login-form" novalidate>
+            <form id="login-form" class="adm-login-form" method="POST" action="javascript:void(0)" novalidate>
                 <h1 class="adm-login-title">Iniciar sesión</h1>
 
                 <div id="login-error" class="adm-login-error" hidden></div>
 
                 <div class="adm-field">
                     <label for="login-email">Correo electrónico</label>
-                    <input type="email" id="login-email" name="email" class="adm-input"
+                    <input type="email" id="login-email" class="adm-input"
                            placeholder="tu@email.com" required autocomplete="email" autofocus>
                 </div>
 
                 <div class="adm-field">
                     <label for="login-password">Contraseña</label>
-                    <input type="password" id="login-password" name="password" class="adm-input"
+                    <input type="password" id="login-password" class="adm-input"
                            placeholder="••••••••" required autocomplete="current-password" minlength="6">
                 </div>
 
@@ -59,7 +60,7 @@
 
                 <div class="adm-field">
                     <label for="reset-email">Correo electrónico</label>
-                    <input type="email" id="reset-email" name="email" class="adm-input"
+                    <input type="email" id="reset-email" class="adm-input"
                            placeholder="tu@email.com" required autocomplete="email">
                 </div>
 

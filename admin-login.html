@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar sesión — Bersaglio Admin</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" type="image/png" href="img/logo-bj2.png">
+    <link rel="stylesheet" href="css/admin.css">
+    <script type="module" src="js/admin/login.js"></script>
+</head>
+<body class="adm-login-body">
+    <div class="adm-login-wrapper">
+        <div class="adm-login-card">
+
+            <!-- Brand -->
+            <div class="adm-login-brand">
+                <span class="adm-brand-mark">B</span>
+                <div>
+                    <div class="adm-brand-name" style="color: var(--adm-text);">BERSAGLIO</div>
+                    <div class="adm-brand-role" style="color: var(--adm-muted);">Panel de Administración</div>
+                </div>
+            </div>
+
+            <!-- Login form -->
+            <form id="login-form" class="adm-login-form" novalidate>
+                <h1 class="adm-login-title">Iniciar sesión</h1>
+
+                <div id="login-error" class="adm-login-error" hidden></div>
+
+                <div class="adm-field">
+                    <label for="login-email">Correo electrónico</label>
+                    <input type="email" id="login-email" name="email" class="adm-input"
+                           placeholder="tu@email.com" required autocomplete="email" autofocus>
+                </div>
+
+                <div class="adm-field">
+                    <label for="login-password">Contraseña</label>
+                    <input type="password" id="login-password" name="password" class="adm-input"
+                           placeholder="••••••••" required autocomplete="current-password" minlength="6">
+                </div>
+
+                <button type="submit" class="adm-btn adm-btn--primary adm-login-submit" id="login-submit">
+                    Iniciar sesión
+                </button>
+
+                <button type="button" class="adm-login-forgot" id="forgot-password-btn">
+                    ¿Olvidaste tu contraseña?
+                </button>
+            </form>
+
+            <!-- Reset password form (hidden by default) -->
+            <form id="reset-form" class="adm-login-form" hidden novalidate>
+                <h1 class="adm-login-title">Restablecer contraseña</h1>
+                <p class="adm-login-subtitle">Te enviaremos un enlace para crear una nueva contraseña.</p>
+
+                <div id="reset-message" class="adm-login-success" hidden></div>
+                <div id="reset-error" class="adm-login-error" hidden></div>
+
+                <div class="adm-field">
+                    <label for="reset-email">Correo electrónico</label>
+                    <input type="email" id="reset-email" name="email" class="adm-input"
+                           placeholder="tu@email.com" required autocomplete="email">
+                </div>
+
+                <button type="submit" class="adm-btn adm-btn--primary adm-login-submit" id="reset-submit">
+                    Enviar enlace
+                </button>
+
+                <button type="button" class="adm-login-forgot" id="back-to-login-btn">
+                    ← Volver al inicio de sesión
+                </button>
+            </form>
+
+        </div>
+
+        <p class="adm-login-footer">Bersaglio Jewelry &copy; 2024 — Panel privado</p>
+    </div>
+</body>
+</html>

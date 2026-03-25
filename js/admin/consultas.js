@@ -3,7 +3,7 @@
  */
 
 import adminDb from './db.js';
-import { admToast, initSidebar, esc, fmtDate, fmtDateTime } from './shared.js';
+import { admToast, initSidebar, esc, fmtDate, fmtDateTime, requireAuth } from './shared.js';
 import db from '../data/catalog.js';
 
 let _all    = [];
@@ -12,6 +12,7 @@ let _query  = '';
 let _activeInqId = null;
 
 async function init() {
+    await requireAuth('editor');
     await adminDb.init();
     await db.load();
     initSidebar();

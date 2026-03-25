@@ -3,11 +3,12 @@
  */
 
 import adminDb from './db.js';
-import { admToast, admConfirm, initSidebar, esc } from './shared.js';
+import { admToast, admConfirm, initSidebar, esc, requireAuth } from './shared.js';
 
 let _collections = [];
 
 async function init() {
+    await requireAuth('editor');
     await adminDb.init();
     initSidebar();
     _collections = adminDb.getAllCollections();

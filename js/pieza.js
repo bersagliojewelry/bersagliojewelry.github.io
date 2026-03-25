@@ -40,6 +40,7 @@ async function init() {
     if (skeleton) skeleton.style.display = 'none';
 
     renderPiece(piece);
+    renderReviews(piece);
     renderRelatedPieces(piece);
     updatePageMeta(piece);
     injectStructuredData(piece);
@@ -262,6 +263,140 @@ function renderPiece(piece) {
             added ? 'added' : 'removed'
         );
     });
+}
+
+/* ─── Reviews section ──────────────────────────────────────── */
+
+function renderStars(rating, size = 16) {
+    return Array.from({ length: 5 }, (_, i) => {
+        const fill = i < Math.round(rating) ? 'currentColor' : 'none';
+        return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="${fill}" stroke="currentColor" stroke-width="1.5"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>`;
+    }).join('');
+}
+
+async function renderReviews(piece) {
+    const container = document.getElementById('pieza-content');
+    if (!container) return;
+
+    const section = document.createElement('section');
+    section.className = 'reviews-section animate-on-scroll';
+
+    // Try loading reviews from Firestore
+    let reviews = [];
+    let aggregate = null;
+    try {
+        const { fetchReviews, getAggregateRating } = await import('./firestore-service.js');
+        [reviews, aggregate] = await Promise.all([
+            fetchReviews(piece.slug),
+            getAggregateRating(piece.slug)
+        ]);
+    } catch {
+        // Firestore unavailable — show empty state with form
+    }
+
+    const aggregateHtml = aggregate
+        ? `<div class="reviews-aggregate">
+               <span class="reviews-stars">${renderStars(parseFloat(aggregate.ratingValue))}</span>
+               <span>${aggregate.ratingValue} (${aggregate.ratingCount} reseña${aggregate.ratingCount !== 1 ? 's' : ''})</span>
+           </div>`
+        : '';
+
+    const reviewsHtml = reviews.length
+        ? reviews.map(r => `
+            <div class="review-card">
+                <div class="review-card-header">
+                    <div>
+                        <span class="review-author">${escapeHtml(r.author)}</span>
+                        <span class="reviews-stars" style="margin-left:8px;">${renderStars(r.rating, 13)}</span>
+                    </div>
+                    <span class="review-date">${r.createdAt?.toDate ? r.createdAt.toDate().toLocaleDateString('es-CO') : ''}</span>
+                </div>
+                <p class="review-comment">${escapeHtml(r.comment)}</p>
+            </div>
+        `).join('')
+        : '<p class="review-empty">Sé el primero en dejar una reseña de esta pieza.</p>';
+
+    section.innerHTML = `
+        <div class="reviews-header">
+            <h2 class="reviews-title">Reseñas</h2>
+            ${aggregateHtml}
+        </div>
+        <div class="reviews-list">${reviewsHtml}</div>
+        <form class="review-form" id="review-form">
+            <h3>Deja tu reseña</h3>
+            <div class="review-star-input" id="review-star-input">
+                ${[1,2,3,4,5].map(n => `<button type="button" data-rating="${n}" aria-label="${n} estrella${n>1?'s':''}">${renderStars(0, 22).split('</svg>')[0]}<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></button>`).join('')}
+            </div>
+            <div class="review-form-row">
+                <input type="text" name="author" placeholder="Tu nombre" required>
+                <input type="email" name="email" placeholder="tu@email.com" required>
+            </div>
+            <div class="review-form-row">
+                <textarea name="comment" placeholder="Comparte tu experiencia con esta pieza..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-outline">Enviar reseña</button>
+        </form>
+    `;
+
+    container.appendChild(section);
+    initReviewForm(piece, section);
+}
+
+function initReviewForm(piece, section) {
+    let selectedRating = 0;
+    const starBtns = section.querySelectorAll('#review-star-input button');
+
+    starBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            selectedRating = parseInt(btn.dataset.rating);
+            starBtns.forEach((b, i) => {
+                b.classList.toggle('active', i < selectedRating);
+                const svg = b.querySelector('svg');
+                if (svg) svg.setAttribute('fill', i < selectedRating ? 'currentColor' : 'none');
+            });
+        });
+    });
+
+    section.querySelector('#review-form').addEventListener('submit', async e => {
+        e.preventDefault();
+        if (!selectedRating) {
+            toast.show('Selecciona una calificación', 'removed');
+            return;
+        }
+
+        const form = e.target;
+        const author  = form.querySelector('[name="author"]').value.trim();
+        const email   = form.querySelector('[name="email"]').value.trim();
+        const comment = form.querySelector('[name="comment"]').value.trim();
+
+        try {
+            const { submitReview } = await import('./firestore-service.js');
+            await submitReview({
+                pieceSlug: piece.slug,
+                pieceName: piece.name,
+                author,
+                email,
+                rating: selectedRating,
+                comment
+            });
+            toast.show('Reseña enviada. Será visible tras aprobación.');
+            form.reset();
+            selectedRating = 0;
+            starBtns.forEach(b => {
+                b.classList.remove('active');
+                const svg = b.querySelector('svg');
+                if (svg) svg.setAttribute('fill', 'none');
+            });
+        } catch {
+            toast.show('No se pudo enviar la reseña. Intenta más tarde.', 'removed');
+        }
+    });
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
 }
 
 /* ─── Related pieces (smart recommendations) ──────────────── */

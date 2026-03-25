@@ -617,87 +617,70 @@ const _local = {
 class BersaglioDatabase {
 
     constructor() {
-        this._data      = null;
-        this._listeners = [];
+        this._data        = null;
+        this._listeners   = [];
+        this._unsubPieces = null;
+        this._unsubCols   = null;
+        this._firestoreOk = false;
     }
 
     // ─── Carga ─────────────────────────────────────────────────────────────────
 
     /**
      * Inicializa la capa de datos.
-     * HOY   → resuelve desde _local (síncrono, envuelto en Promise)
-     * MAÑANA → reemplazar el cuerpo con:
-     *
-     *   const app = initializeApp(firebaseConfig);
-     *   const fs  = getFirestore(app);
-     *   const [piecesSnap, collectionsSnap] = await Promise.all([
-     *       getDocs(collection(fs, 'pieces')),
-     *       getDocs(collection(fs, 'collections')),
-     *   ]);
-     *   this._data = {
-     *       brand:       _local.brand,        // brand / contact / services pueden
-     *       contact:     _local.contact,       // venir de un doc 'config' en Firestore
-     *       services:    _local.services,
-     *       collections: collectionsSnap.docs.map(d => ({ id: d.id, ...d.data() })),
-     *       pieces:      piecesSnap.docs.map(d => ({ id: d.id, ...d.data() })),
-     *   };
+     * Estrategia: intenta Firestore → si falla, usa datos estáticos locales.
+     * Siempre resuelve rápido para no bloquear el render.
      */
     async load() {
-        // El catálogo estático (_local) es siempre la fuente de verdad.
-        // Las piezas creadas/editadas desde el panel admin (localStorage) se
-        // fusionan encima: piezas del admin con updatedAt sobreescriben las del
-        // catálogo; piezas que solo existen en admin se añaden; piezas del
-        // catálogo que no fueron editadas mantienen sus datos frescos.
-        // Al conectar Firestore, reemplazar este bloque con getDocs().
-
+        // 1) Cargar datos estáticos como base inmediata
         this._data = {
             ..._local,
-            pieces:      this._mergeAdminData('bersaglio_admin_pieces',      _local.pieces),
-            collections: this._mergeAdminData('bersaglio_admin_collections', _local.collections),
+            pieces:      [..._local.pieces],
+            collections: [..._local.collections],
         };
+
+        // 2) Intentar Firestore en paralelo (no bloquea el render)
+        this._tryFirestore();
+
         return this;
     }
 
     /**
-     * Fusiona datos de admin (localStorage) con datos estáticos del catálogo.
-     * - Items editados manualmente (con updatedAt) usan versión admin.
-     * - Items no editados usan versión fresca del catálogo.
-     * - Items que solo existen en admin se conservan (creados desde el panel).
+     * Intenta cargar datos desde Firestore.
+     * Si Firestore responde, reemplaza los datos estáticos y notifica.
+     * Si falla, los datos estáticos se mantienen — la app sigue funcionando.
      */
-    _mergeAdminData(key, catalogItems) {
-        let adminItems;
+    async _tryFirestore() {
         try {
-            const v = localStorage.getItem(key);
-            adminItems = v ? JSON.parse(v) : null;
-        } catch { adminItems = null; }
+            const { fetchPieces, fetchCollections, isFirestoreAvailable } = await import('../firestore-service.js');
 
-        if (!adminItems) return catalogItems;
-
-        const catalogMap = new Map(catalogItems.map(item => [item.id, item]));
-        const merged     = [];
-        const seen       = new Set();
-
-        // Recorrer items del catálogo como base
-        for (const catItem of catalogItems) {
-            const adminItem = adminItems.find(a => a.id === catItem.id);
-            if (adminItem?.updatedAt) {
-                // Fue editado manualmente → usar versión admin
-                merged.push(adminItem);
-            } else {
-                // No fue editado → usar datos frescos del catálogo
-                merged.push(catItem);
+            const available = await isFirestoreAvailable();
+            if (!available) {
+                console.info('[BersaglioDatabase] Firestore no disponible → usando datos estáticos');
+                return;
             }
-            seen.add(catItem.id);
-        }
 
-        // Items que solo existen en admin (creados desde el panel)
-        for (const adminItem of adminItems) {
-            if (!seen.has(adminItem.id)) {
-                merged.push(adminItem);
+            const [fsPieces, fsCols] = await Promise.all([
+                fetchPieces(),
+                fetchCollections()
+            ]);
+
+            // Solo reemplazar si Firestore devolvió datos
+            if (fsPieces.length > 0) {
+                this._data.pieces = fsPieces;
+                this._firestoreOk = true;
+                console.info(`[BersaglioDatabase] Firestore: ${fsPieces.length} piezas cargadas`);
             }
-        }
+            if (fsCols.length > 0) {
+                this._data.collections = fsCols;
+                console.info(`[BersaglioDatabase] Firestore: ${fsCols.length} colecciones cargadas`);
+            }
 
-        return merged;
+            this._notify();
+
+        } catch (err) {
+            console.info('[BersaglioDatabase] Firestore no disponible → datos estáticos activos');
+        }
     }
 
     // ─── Getters ───────────────────────────────────────────────────────────────
@@ -705,6 +688,9 @@ class BersaglioDatabase {
     getBrand()    { return this._data.brand; }
     getContact()  { return this._data.contact; }
     getServices() { return this._data.services; }
+
+    /** @returns {boolean} true if data is coming from Firestore */
+    isFirestoreConnected() { return this._firestoreOk; }
 
     /**
      * @param {boolean} [onlyFeatured=false]
@@ -760,19 +746,42 @@ class BersaglioDatabase {
     }
 
     /**
-     * Activa la escucha en tiempo real (hoy es un placeholder).
-     * MAÑANA → reemplazar con:
-     *
-     *   import { onSnapshot, collection } from 'firebase/firestore';
-     *
-     *   const unsub = onSnapshot(collection(firestoreDb, 'pieces'), snapshot => {
-     *       this._data.pieces = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-     *       this._notify();
-     *   });
-     *   return unsub;  // llamar para detener la escucha
+     * Activa la escucha en tiempo real de Firestore.
+     * Cuando Firestore actualiza datos, la UI se re-renderiza automáticamente.
+     * @returns {Function} unsubscribe — llamar para detener la escucha
      */
-    startRealtime() {
-        console.info('[BersaglioDatabase] startRealtime() → modo local. Conecta Firestore para activar sincronización en tiempo real.');
+    async startRealtime() {
+        try {
+            const { onPiecesChange, onCollectionsChange } = await import('../firestore-service.js');
+
+            this._unsubPieces = onPiecesChange(pieces => {
+                if (pieces.length > 0) {
+                    this._data.pieces = pieces;
+                    this._firestoreOk = true;
+                    this._notify();
+                    console.info(`[BersaglioDatabase] Realtime: ${pieces.length} piezas actualizadas`);
+                }
+            });
+
+            this._unsubCols = onCollectionsChange(cols => {
+                if (cols.length > 0) {
+                    this._data.collections = cols;
+                    this._notify();
+                    console.info(`[BersaglioDatabase] Realtime: ${cols.length} colecciones actualizadas`);
+                }
+            });
+
+            console.info('[BersaglioDatabase] Escucha en tiempo real activada');
+
+            return () => {
+                this._unsubPieces?.();
+                this._unsubCols?.();
+                console.info('[BersaglioDatabase] Escucha en tiempo real detenida');
+            };
+        } catch (err) {
+            console.info('[BersaglioDatabase] Realtime no disponible:', err.message);
+            return () => {};
+        }
     }
 
     // ─── Interno ───────────────────────────────────────────────────────────────

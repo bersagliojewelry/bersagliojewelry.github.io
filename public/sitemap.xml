@@ -4,7 +4,7 @@
     <!-- Homepage -->
     <url>
         <loc>https://bersagliojewelry.co/</loc>
-        <lastmod>2026-03-19</lastmod>
+        <lastmod>2026-03-25</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
     </url>
@@ -12,71 +12,198 @@
     <!-- Catálogo principal -->
     <url>
         <loc>https://bersagliojewelry.co/colecciones.html</loc>
-        <lastmod>2026-03-19</lastmod>
+        <lastmod>2026-03-25</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
     </url>
 
     <!-- Colecciones individuales -->
     <url>
-        <loc>https://bersagliojewelry.co/esmeraldas-colombianas.html</loc>
-        <lastmod>2026-03-19</lastmod>
+        <loc>https://bersagliojewelry.co/anillos.html</loc>
+        <lastmod>2026-03-25</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.85</priority>
     </url>
     <url>
-        <loc>https://bersagliojewelry.co/diamantes-eternos.html</loc>
-        <lastmod>2026-03-19</lastmod>
+        <loc>https://bersagliojewelry.co/topos-aretes.html</loc>
+        <lastmod>2026-03-25</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.85</priority>
     </url>
     <url>
-        <loc>https://bersagliojewelry.co/oro-escultorico.html</loc>
-        <lastmod>2026-03-19</lastmod>
+        <loc>https://bersagliojewelry.co/dijes-colgantes.html</loc>
+        <lastmod>2026-03-25</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.85</priority>
     </url>
     <url>
-        <loc>https://bersagliojewelry.co/novias.html</loc>
-        <lastmod>2026-03-19</lastmod>
+        <loc>https://bersagliojewelry.co/argollas.html</loc>
+        <lastmod>2026-03-25</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.85</priority>
     </url>
 
-    <!-- Piezas individuales (productos) -->
+    <!-- Piezas individuales (26 piezas reales) -->
+    <!-- ANILLOS (11) -->
     <url>
-        <loc>https://bersagliojewelry.co/pieza.html?p=anillo-muzo-imperial</loc>
-        <lastmod>2026-03-19</lastmod>
+        <loc>https://bersagliojewelry.co/pieza.html?p=anillos-solitarios-trio</loc>
+        <lastmod>2026-03-25</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://bersagliojewelry.co/pieza.html?p=collar-eterno-brillante</loc>
-        <lastmod>2026-03-19</lastmod>
+        <loc>https://bersagliojewelry.co/pieza.html?p=anillo-solitario-amatista-amarillo</loc>
+        <lastmod>2026-03-25</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://bersagliojewelry.co/pieza.html?p=brazalete-serpentina-oro</loc>
-        <lastmod>2026-03-19</lastmod>
+        <loc>https://bersagliojewelry.co/pieza.html?p=anillo-solitario-amatista-blanco</loc>
+        <lastmod>2026-03-25</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://bersagliojewelry.co/pieza.html?p=pendientes-gota-esmeralda</loc>
-        <lastmod>2026-03-19</lastmod>
+        <loc>https://bersagliojewelry.co/pieza.html?p=anillo-esmeralda-certificada-baguettes</loc>
+        <lastmod>2026-03-25</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://bersagliojewelry.co/pieza.html?p=anillo-solitario-promesa</loc>
-        <lastmod>2026-03-19</lastmod>
+        <loc>https://bersagliojewelry.co/pieza.html?p=anillo-moissanita-azul-diamantes</loc>
+        <lastmod>2026-03-25</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://bersagliojewelry.co/pieza.html?p=collar-cascada-de-oro</loc>
-        <lastmod>2026-03-19</lastmod>
+        <loc>https://bersagliojewelry.co/pieza.html?p=anillo-amatista-gota-diamantes</loc>
+        <lastmod>2026-03-25</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=anillo-amatista-ovalada-diamantes</loc>
+        <lastmod>2026-03-25</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=anillo-rubies-rosa-diamantes</loc>
+        <lastmod>2026-03-25</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=anillo-flor-diamantes-esmeraldas</loc>
+        <lastmod>2026-03-25</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=anillo-esmeralda-cabuchon-diamantes</loc>
+        <lastmod>2026-03-25</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=anillo-trebol-esmeralda-diamantes</loc>
+        <lastmod>2026-03-25</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <!-- TOPOS & ARETES (9) -->
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=topos-diamante-punto-esmeralda</loc>
+        <lastmod>2026-03-25</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=topos-amatista-gota-diamantes</loc>
+        <lastmod>2026-03-25</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=topos-topacio-amarillo-diamantes</loc>
+        <lastmod>2026-03-25</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=topos-flor-diamante</loc>
+        <lastmod>2026-03-25</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=topos-rectangulares-baguettes-esmeraldas</loc>
+        <lastmod>2026-03-25</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=topos-rectangulares-baguettes-diamantes</loc>
+        <lastmod>2026-03-25</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=topos-reina-esmeralda-baguettes</loc>
+        <lastmod>2026-03-25</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=topos-circulos-flor-esmeralda</loc>
+        <lastmod>2026-03-25</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=topos-circulo-diamante-baguettes</loc>
+        <lastmod>2026-03-25</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <!-- DIJES & COLGANTES (4) -->
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=dije-topacio-amarillo-diamantes</loc>
+        <lastmod>2026-03-25</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=dije-flor-esmeralda-diamantes</loc>
+        <lastmod>2026-03-25</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=dije-redondo-diamantes-baguette</loc>
+        <lastmod>2026-03-25</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=dije-esmeralda-colgante-diamantes</loc>
+        <lastmod>2026-03-25</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <!-- ARGOLLAS (2) -->
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=argollas-zafiros-azules</loc>
+        <lastmod>2026-03-25</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://bersagliojewelry.co/pieza.html?p=argollas-zafiros-rosados</loc>
+        <lastmod>2026-03-25</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
@@ -84,13 +211,13 @@
     <!-- Servicios y conversión -->
     <url>
         <loc>https://bersagliojewelry.co/servicios.html</loc>
-        <lastmod>2026-03-19</lastmod>
+        <lastmod>2026-03-25</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.75</priority>
     </url>
     <url>
         <loc>https://bersagliojewelry.co/contacto.html</loc>
-        <lastmod>2026-03-19</lastmod>
+        <lastmod>2026-03-25</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
@@ -106,7 +233,7 @@
     <!-- Journal -->
     <url>
         <loc>https://bersagliojewelry.co/journal.html</loc>
-        <lastmod>2026-03-19</lastmod>
+        <lastmod>2026-03-25</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.6</priority>
     </url>
@@ -120,7 +247,7 @@
     </url>
     <url>
         <loc>https://bersagliojewelry.co/terminos.html</loc>
-        <lastmod>2026-03-19</lastmod>
+        <lastmod>2026-03-25</lastmod>
         <changefreq>yearly</changefreq>
         <priority>0.3</priority>
     </url>

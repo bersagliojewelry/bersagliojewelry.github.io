@@ -83,13 +83,19 @@ function injectModal() {
         localStorage.setItem(STORAGE_KEY, 'dismissed');
     });
 
-    div.querySelector('#email-capture-form').addEventListener('submit', e => {
+    div.querySelector('#email-capture-form').addEventListener('submit', async e => {
         e.preventDefault();
         const email = e.target.querySelector('input[type="email"]').value;
-        // For now, store locally. When Klaviyo/Mailchimp is integrated,
-        // this will POST to the API instead.
         localStorage.setItem(STORAGE_KEY, email);
         clearTimeout(window._emailCaptureTimer);
+
+        // Persist to Firestore (non-blocking, falls back silently)
+        try {
+            const { addSubscription } = await import('./firestore-service.js');
+            await addSubscription(email);
+        } catch {
+            // Firestore unavailable — localStorage backup is enough
+        }
 
         // Show success state
         const content = div.querySelector('.email-modal-content');

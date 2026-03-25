@@ -108,6 +108,54 @@ function hideInstallBanner() {
     setTimeout(() => { installBanner?.remove(); installBanner = null; }, 400);
 }
 
+/* ─── Push Notification Subscription (FCM) ─────────────────── */
+
+/**
+ * Request push notification permission and register with FCM.
+ * Call after user interaction (e.g., a button click or after opt-in).
+ * Requires Firebase Blaze plan to function.
+ */
+export async function subscribeToPush() {
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) return null;
+
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') return null;
+
+    try {
+        const { getMessagingInstance } = await import('./firebase-config.js');
+        const messaging = await getMessagingInstance();
+        if (!messaging) return null;
+
+        const { getToken } = await import('firebase/messaging');
+        const registration = await navigator.serviceWorker.ready;
+        const token = await getToken(messaging, {
+            serviceWorkerRegistration: registration,
+            // Replace with actual VAPID key from Firebase Console
+            vapidKey: 'REPLACE_WITH_VAPID_KEY'
+        });
+
+        if (token) {
+            console.info('[PWA] FCM token obtained');
+            // Persist token to Firestore for server-side targeting
+            try {
+                const { firestoreDb } = await import('./firebase-config.js');
+                const { doc, setDoc, serverTimestamp } = await import('firebase/firestore');
+                await setDoc(doc(firestoreDb, 'push_tokens', token), {
+                    token,
+                    userAgent: navigator.userAgent,
+                    createdAt: serverTimestamp()
+                });
+            } catch {
+                // Firestore unavailable — token stored only client-side
+            }
+        }
+        return token;
+    } catch (err) {
+        console.warn('[PWA] Push subscription failed:', err.message);
+        return null;
+    }
+}
+
 /* ─── Main init ─────────────────────────────────────────────── */
 export function initPWA() {
     registerSW();

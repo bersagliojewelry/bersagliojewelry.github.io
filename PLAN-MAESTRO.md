@@ -594,3 +594,4 @@ firebase deploy --only functions
 | 2026-03-24 | Resource hints, manifest screenshots, WCAG contrast fix |
 | 2026-03-24 | CSS design tokens finalizado (48/83) + print stylesheet completo |
 | 2026-03-24 | **TODO LO ACCIONABLE POR CÓDIGO COMPLETADO** — solo queda Firebase Blaze + recursos externos |
+| 2026-03-25 | **MIGRACIÓN INVENTARIO REAL COMPLETADA**: 12 piezas falsas → 26 reales, 4 colecciones falsas → 4 reales (Anillos, Topos & Aretes, Dijes & Colgantes, Argollas), GIA → La Verde / Jewelers of America, sitemap actualizado con 26 URLs de productos |

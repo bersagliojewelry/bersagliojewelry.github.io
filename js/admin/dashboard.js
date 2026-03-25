@@ -3,9 +3,10 @@
  */
 
 import adminDb from './db.js';
-import { admToast, initSidebar } from './shared.js';
+import { admToast, initSidebar, requireAuth } from './shared.js';
 
 async function init() {
+    await requireAuth('editor');
     await adminDb.init();
     initSidebar();
 

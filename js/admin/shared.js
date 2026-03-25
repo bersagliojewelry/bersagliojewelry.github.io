@@ -1,11 +1,21 @@
 /**
  * Bersaglio Admin — Shared utilities
- * Sidebar init, toast, escaping, date formatting.
+ * Auth guard, sidebar init, toast, escaping, date formatting.
  */
 
 import adminDb from './db.js';
+import { requireAuth, currentUser, currentRole, hasRole, signOut } from '../auth.js';
 
-// ─── Sidebar: marca el link activo y muestra el badge de consultas ────────────
+// ─── Auth guard ────────────────────────────────────────────────────────────────
+
+/**
+ * Call at the top of every admin page's init().
+ * Redirects to login if not authenticated.
+ * @param {'owner'|'admin'|'editor'} [minRole='editor']
+ */
+export { requireAuth, currentUser, currentRole, hasRole, signOut };
+
+// ─── Sidebar: marca el link activo, muestra badge e info de usuario ───────────
 
 export function initSidebar() {
     const page = location.pathname.split('/').pop() || 'admin.html';
@@ -19,6 +29,49 @@ export function initSidebar() {
     if (badge) {
         badge.textContent = unread > 9 ? '9+' : unread;
         badge.hidden = unread === 0;
+    }
+
+    // Show user info + role in sidebar
+    renderUserInfo();
+}
+
+function renderUserInfo() {
+    const user = currentUser();
+    if (!user) return;
+
+    const devNotice = document.querySelector('.adm-dev-notice');
+    if (devNotice) devNotice.remove();
+
+    // Don't duplicate
+    if (document.querySelector('.adm-user-info')) return;
+
+    const sidebar = document.querySelector('.adm-sidebar');
+    if (!sidebar) return;
+
+    const name    = user.profile?.displayName || user.user?.email?.split('@')[0] || 'Usuario';
+    const role    = user.profile?.role || 'editor';
+    const initial = name.charAt(0).toUpperCase();
+
+    const div = document.createElement('div');
+    div.className = 'adm-user-info';
+    div.innerHTML = `
+        <span class="adm-user-avatar">${esc(initial)}</span>
+        <div style="flex:1;min-width:0;">
+            <div class="adm-user-name">${esc(name)}</div>
+            <div class="adm-user-role">${esc(role)}</div>
+        </div>
+        <button class="adm-btn-logout" id="btn-logout" title="Cerrar sesión">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd"/></svg>
+        </button>
+    `;
+    sidebar.appendChild(div);
+
+    document.getElementById('btn-logout')?.addEventListener('click', () => signOut());
+
+    // Hide nav items based on role
+    const usersLink = document.querySelector('a[href="admin-usuarios.html"]');
+    if (usersLink && !hasRole('owner')) {
+        usersLink.style.display = 'none';
     }
 }
 

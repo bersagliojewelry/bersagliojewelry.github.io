@@ -3,7 +3,7 @@
  */
 
 import adminDb from './db.js';
-import { admToast, admConfirm, initSidebar, esc } from './shared.js';
+import { admToast, admConfirm, initSidebar, esc, requireAuth, hasRole } from './shared.js';
 
 let _allPieces = [];
 let _query     = '';
@@ -13,6 +13,7 @@ let _filterFeatured = '';
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 async function init() {
+    await requireAuth('editor');
     await adminDb.init();
     initSidebar();
 
@@ -125,6 +126,8 @@ function populateCollectionFilters() {
 
 // ─── Modal CRUD ───────────────────────────────────────────────────────────────
 
+let _uploadedImages = [];  // URLs from Firebase Storage for current piece
+
 function initModal() {
     document.getElementById('modal-close').addEventListener('click', closeModal);
     document.getElementById('modal-cancel').addEventListener('click', closeModal);
@@ -140,11 +143,100 @@ function initModal() {
     document.getElementById('f-slug').addEventListener('input', e => {
         e.target.dataset.manual = e.target.value ? '1' : '';
     });
+
+    // Image upload
+    initImageUpload();
+}
+
+function initImageUpload() {
+    const zone     = document.getElementById('upload-zone');
+    const fileInput = document.getElementById('f-images');
+    if (!zone || !fileInput) return;
+
+    // Drag and drop
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('is-dragover'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('is-dragover'));
+    zone.addEventListener('drop', e => {
+        e.preventDefault();
+        zone.classList.remove('is-dragover');
+        handleFiles(e.dataTransfer.files);
+    });
+
+    fileInput.addEventListener('change', e => handleFiles(e.target.files));
+}
+
+async function handleFiles(files) {
+    if (!files.length) return;
+
+    const form    = document.getElementById('piece-form');
+    const pieceId = form.querySelector('[name="id"]').value || `p${Date.now()}`;
+
+    // Set the hidden id field so save uses the same id
+    if (!form.querySelector('[name="id"]').value) {
+        form.querySelector('[name="id"]').value = pieceId;
+    }
+
+    const progressWrap = document.getElementById('upload-progress');
+    const progressBar  = document.getElementById('upload-progress-bar');
+    progressWrap.hidden = false;
+
+    try {
+        const { uploadPieceImage } = await import('../storage-service.js');
+
+        for (const file of files) {
+            if (file.size > 10 * 1024 * 1024) {
+                admToast(`${file.name} supera los 10 MB`, 'danger');
+                continue;
+            }
+            if (!file.type.startsWith('image/')) {
+                admToast(`${file.name} no es una imagen`, 'danger');
+                continue;
+            }
+
+            const url = await uploadPieceImage(pieceId, file, pct => {
+                progressBar.style.width = `${pct}%`;
+            });
+
+            _uploadedImages.push(url);
+            renderImagePreviews();
+            admToast(`${file.name} subida`);
+        }
+    } catch (err) {
+        admToast('Error al subir imagen. Verifica tu conexión.', 'danger');
+    } finally {
+        progressWrap.hidden = true;
+        progressBar.style.width = '0%';
+    }
+}
+
+function renderImagePreviews() {
+    const container = document.getElementById('image-preview');
+    if (!container) return;
+
+    container.innerHTML = _uploadedImages.map((url, i) => `
+        <div class="adm-image-thumb">
+            <img src="${esc(url)}" alt="Foto ${i + 1}" loading="lazy">
+            <button class="adm-image-thumb-delete" data-idx="${i}" title="Eliminar">&times;</button>
+        </div>
+    `).join('');
+
+    container.querySelectorAll('.adm-image-thumb-delete').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const idx = parseInt(btn.dataset.idx);
+            try {
+                const { deletePieceImage } = await import('../storage-service.js');
+                await deletePieceImage(_uploadedImages[idx]);
+            } catch { /* ignore — might already be deleted */ }
+            _uploadedImages.splice(idx, 1);
+            renderImagePreviews();
+            admToast('Imagen eliminada');
+        });
+    });
 }
 
 const AdminDb = { slugify: (s) => adminDb.constructor.slugify ? adminDb.constructor.slugify(s) : s };
 
-function openModal(id = null) {
+async function openModal(id = null) {
     const modal    = document.getElementById('piece-modal');
     const titleEl  = document.getElementById('modal-title');
     const form     = document.getElementById('piece-form');
@@ -152,6 +244,7 @@ function openModal(id = null) {
 
     form.reset();
     delete slugEl.dataset.manual;
+    _uploadedImages = [];
 
     if (id) {
         const piece = _allPieces.find(p => p.id === id);
@@ -159,17 +252,30 @@ function openModal(id = null) {
         titleEl.textContent = 'Editar pieza';
         populateForm(form, piece);
         slugEl.dataset.manual = '1';
+
+        // Load existing images from piece data + Storage
+        if (piece.images?.length) {
+            _uploadedImages = [...piece.images];
+        } else {
+            try {
+                const { getPieceImages } = await import('../storage-service.js');
+                _uploadedImages = await getPieceImages(piece.id);
+            } catch { /* Storage unavailable */ }
+        }
     } else {
         titleEl.textContent = 'Nueva pieza';
         form.querySelector('[name="priceLabel"]').value = 'Consultar precio';
     }
 
+    renderImagePreviews();
     modal.hidden = false;
     form.querySelector('input:not([type=hidden])').focus();
 }
 
 function closeModal() {
     document.getElementById('piece-modal').hidden = true;
+    _uploadedImages = [];
+    renderImagePreviews();
 }
 
 function populateForm(form, piece) {
@@ -212,7 +318,7 @@ function handleSave() {
     const piece = {
         id:          get('id') || null,
         name,
-        slug:        get('slug') || import.meta.url, // fallback handled in db.js
+        slug:        get('slug'),
         collection:  get('collection'),
         description: get('description'),
         badge:       get('badge') || null,
@@ -220,6 +326,8 @@ function handleSave() {
         priceLabel:  get('priceLabel') || 'Consultar precio',
         price:       parseFloat(get('price')) || null,
         specs,
+        images:      _uploadedImages.length ? [..._uploadedImages] : undefined,
+        image:       _uploadedImages[0] || undefined,
     };
 
     // Remove null id for new pieces

@@ -50,10 +50,14 @@
             </a>
         </nav>
     </aside>
+    <div class="adm-sidebar-backdrop" id="sidebar-backdrop"></div>
 
     <!-- Main -->
     <main class="adm-main">
         <header class="adm-topbar">
+            <button class="adm-hamburger" id="hamburger-btn" aria-label="Menú">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="22" height="22"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
             <h1>Piezas</h1>
             <div class="adm-topbar-actions">
                 <button class="adm-btn adm-btn--ghost" id="btn-export-csv">↓ Exportar CSV</button>
@@ -259,5 +263,8 @@
 </div>
 
 <div class="adm-toast-wrap" id="toast-wrap"></div>
+<script>
+(function(){var b=document.getElementById('hamburger-btn'),s=document.querySelector('.adm-sidebar'),o=document.getElementById('sidebar-backdrop');if(!b||!s)return;function toggle(){s.classList.toggle('is-open');o.classList.toggle('is-visible')}b.addEventListener('click',toggle);o.addEventListener('click',toggle);s.querySelectorAll('.adm-nav-link').forEach(function(l){l.addEventListener('click',function(){s.classList.remove('is-open');o.classList.remove('is-visible')})})})();
+</script>
 </body>
 </html>

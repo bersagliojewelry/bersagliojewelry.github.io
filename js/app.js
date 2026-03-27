@@ -41,6 +41,13 @@ async function initApp() {
     Renderer.initScrollAnimations();
     Renderer.initLazyImages();
 
+    // Enable real-time Firestore sync — re-render when admin changes data
+    db.startRealtime().catch(() => {});
+    db.onChange(() => {
+        safeRender(renderCollections,    'renderCollections (realtime)');
+        safeRender(renderFeaturedPieces, 'renderFeaturedPieces (realtime)');
+    });
+
     try { initWhatsAppButton(); } catch {}
 
     // Effects — non-critical, isolated

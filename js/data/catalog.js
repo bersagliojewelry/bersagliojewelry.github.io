@@ -665,15 +665,44 @@ class BersaglioDatabase {
                 fetchCollections()
             ]);
 
-            // Solo reemplazar si Firestore devolvió datos
-            if (fsPieces.length > 0) {
+            // Replace with Firestore data only if it has at least as much data
+            // as static catalog (prevents showing partial data before seed completes)
+            if (fsPieces.length >= this._data.pieces.length) {
                 this._data.pieces = fsPieces;
                 this._firestoreOk = true;
                 console.info(`[BersaglioDatabase] Firestore: ${fsPieces.length} piezas cargadas`);
+            } else if (fsPieces.length > 0) {
+                // Merge: keep static pieces and add/update with Firestore pieces
+                const merged = [...this._data.pieces];
+                const existingIds = new Set(merged.map(p => p.id));
+                for (const fp of fsPieces) {
+                    if (existingIds.has(fp.id)) {
+                        const idx = merged.findIndex(p => p.id === fp.id);
+                        if (idx >= 0) merged[idx] = fp;
+                    } else {
+                        merged.push(fp);
+                    }
+                }
+                this._data.pieces = merged;
+                this._firestoreOk = true;
+                console.info(`[BersaglioDatabase] Firestore: merged ${fsPieces.length} piezas con ${this._data.pieces.length} estáticas`);
             }
-            if (fsCols.length > 0) {
+            if (fsCols.length >= this._data.collections.length) {
                 this._data.collections = fsCols;
                 console.info(`[BersaglioDatabase] Firestore: ${fsCols.length} colecciones cargadas`);
+            } else if (fsCols.length > 0) {
+                const merged = [...this._data.collections];
+                const existingIds = new Set(merged.map(c => c.id));
+                for (const fc of fsCols) {
+                    if (existingIds.has(fc.id)) {
+                        const idx = merged.findIndex(c => c.id === fc.id);
+                        if (idx >= 0) merged[idx] = fc;
+                    } else {
+                        merged.push(fc);
+                    }
+                }
+                this._data.collections = merged;
+                console.info(`[BersaglioDatabase] Firestore: merged ${fsCols.length} colecciones`);
             }
 
             this._notify();

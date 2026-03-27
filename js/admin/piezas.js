@@ -246,12 +246,14 @@ function renderImagePreviews() {
     `).join('');
 
     container.querySelectorAll('.adm-image-thumb-delete').forEach(btn => {
-        btn.addEventListener('click', async () => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            e.preventDefault();
             const idx = parseInt(btn.dataset.idx);
             try {
                 const { deletePieceImage } = await import('../storage-service.js');
                 await deletePieceImage(_uploadedImages[idx]);
-            } catch { /* ignore */ }
+            } catch { /* Storage delete failed — remove from list anyway */ }
             _uploadedImages.splice(idx, 1);
             renderImagePreviews();
             admToast('Imagen eliminada');

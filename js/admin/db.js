@@ -16,6 +16,7 @@ import {
     onInquiriesChange,
     deleteCollection as fsDeleteCollection,
 } from '../firestore-service.js';
+import staticDb from '../data/catalog.js';
 
 const CACHE = {
     pieces:      'bj_cache_pieces',
@@ -49,12 +50,24 @@ class AdminDatabase {
                 fetchCollections(),
                 fetchInquiries(),
             ]);
-            this._pieces      = pieces;
-            this._collections = collections;
-            this._inquiries   = inquiries;
-            this._cacheSet(CACHE.pieces, pieces);
-            this._cacheSet(CACHE.collections, collections);
-            this._cacheSet(CACHE.inquiries, inquiries);
+
+            // Seed static catalog to Firestore if it's mostly empty
+            await this._seedIfNeeded(pieces, collections);
+
+            // Re-fetch after potential seed
+            if (pieces.length < 5 || collections.length < 2) {
+                const [p2, c2] = await Promise.all([fetchPieces(), fetchCollections()]);
+                this._pieces      = p2;
+                this._collections = c2;
+            } else {
+                this._pieces      = pieces;
+                this._collections = collections;
+            }
+            this._inquiries = inquiries;
+
+            this._cacheSet(CACHE.pieces, this._pieces);
+            this._cacheSet(CACHE.collections, this._collections);
+            this._cacheSet(CACHE.inquiries, this._inquiries);
         } catch (err) {
             console.warn('[AdminDB] Firestore fetch failed, using cache:', err);
         }
@@ -63,6 +76,36 @@ class AdminDatabase {
         this._startListeners();
         this._ready = true;
         return this;
+    }
+
+    async _seedIfNeeded(fsPieces, fsCollections) {
+        await staticDb.load();
+        const catalogPieces = staticDb.getAll();
+        const catalogCols   = staticDb.getCollections();
+
+        // If Firestore already has most data, skip
+        if (fsPieces.length >= catalogPieces.length && fsCollections.length >= catalogCols.length) {
+            return;
+        }
+
+        console.info('[AdminDB] Seeding static catalog to Firestore...');
+        const existingPieceIds = new Set(fsPieces.map(p => p.id));
+        const existingColIds   = new Set(fsCollections.map(c => c.id));
+
+        const piecePromises = catalogPieces
+            .filter(p => !existingPieceIds.has(p.id))
+            .map(p => fsSavePiece(p.id, { ...p, _seeded: true }).catch(e =>
+                console.warn(`[AdminDB] Failed to seed piece ${p.id}:`, e)
+            ));
+
+        const colPromises = catalogCols
+            .filter(c => !existingColIds.has(c.id))
+            .map(c => fsSaveCollection(c.id, { ...c, _seeded: true }).catch(e =>
+                console.warn(`[AdminDB] Failed to seed collection ${c.id}:`, e)
+            ));
+
+        await Promise.all([...piecePromises, ...colPromises]);
+        console.info(`[AdminDB] Seeded ${piecePromises.length} pieces, ${colPromises.length} collections`);
     }
 
     _startListeners() {

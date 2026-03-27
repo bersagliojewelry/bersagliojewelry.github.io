@@ -24,15 +24,24 @@ export function initSidebar() {
         link.classList.toggle('is-active', href === page);
     });
 
+    updateBadge();
+
+    // Real-time badge: subscribe once
+    if (!initSidebar._subscribed) {
+        initSidebar._subscribed = true;
+        adminDb.on('inquiries', () => updateBadge());
+    }
+
+    renderUserInfo();
+}
+
+function updateBadge() {
     const unread = adminDb.getInquiries().filter(i => !i.read).length;
     const badge  = document.getElementById('inq-badge');
     if (badge) {
         badge.textContent = unread > 9 ? '9+' : unread;
         badge.hidden = unread === 0;
     }
-
-    // Show user info + role in sidebar
-    renderUserInfo();
 }
 
 function renderUserInfo() {
@@ -130,14 +139,18 @@ export function esc(str) {
     return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-export function fmtDate(iso) {
-    return new Date(iso).toLocaleDateString('es-CO', {
+export function fmtDate(val) {
+    if (!val) return '\u2014';
+    const d = val.toDate ? val.toDate() : new Date(val);
+    return d.toLocaleDateString('es-CO', {
         day: '2-digit', month: 'short', year: 'numeric'
     });
 }
 
-export function fmtDateTime(iso) {
-    return new Date(iso).toLocaleString('es-CO', {
+export function fmtDateTime(val) {
+    if (!val) return '\u2014';
+    const d = val.toDate ? val.toDate() : new Date(val);
+    return d.toLocaleString('es-CO', {
         day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
     });
 }

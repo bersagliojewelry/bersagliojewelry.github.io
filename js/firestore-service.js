@@ -139,6 +139,13 @@ export async function saveCollection(colId, data) {
     await setDoc(ref, { ...data, updatedAt: serverTimestamp() }, { merge: true });
 }
 
+/**
+ * Delete a collection (admin)
+ */
+export async function deleteCollection(colId) {
+    await deleteDoc(doc(firestoreDb, COLLECTIONS.collections, colId));
+}
+
 // ─── Reviews ─────────────────────────────────────────────────────────────────
 
 /**
@@ -280,6 +287,38 @@ export async function fetchInquiries() {
     );
     const snap = await getDocs(q);
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+/**
+ * Subscribe to real-time inquiries updates
+ */
+export function onInquiriesChange(callback) {
+    const q = query(
+        collection(firestoreDb, COLLECTIONS.inquiries),
+        orderBy('createdAt', 'desc')
+    );
+    return onSnapshot(q,
+        snap => {
+            const inquiries = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            callback(inquiries);
+        },
+        err => console.warn('[Firestore] inquiries listener error:', err)
+    );
+}
+
+/**
+ * Update an inquiry (partial update)
+ */
+export async function updateInquiry(inquiryId, data) {
+    const ref = doc(firestoreDb, COLLECTIONS.inquiries, inquiryId);
+    await updateDoc(ref, { ...data, updatedAt: serverTimestamp() });
+}
+
+/**
+ * Delete an inquiry (admin)
+ */
+export async function deleteInquiry(inquiryId) {
+    await deleteDoc(doc(firestoreDb, COLLECTIONS.inquiries, inquiryId));
 }
 
 // ─── Firestore Health Check ──────────────────────────────────────────────────

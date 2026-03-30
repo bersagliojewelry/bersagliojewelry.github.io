@@ -40,6 +40,13 @@ async function init() {
     Renderer.initScrollAnimations();
     Renderer.initLazyImages();
     initEffects();
+
+    // Real-time: re-render when admin changes data
+    db.startRealtime().catch(() => {});
+    db.onChange(() => {
+        renderCatalogCollections();
+        renderPieces(document.getElementById('featured-grid'));
+    });
 }
 
 function injectCatalogSchema() {

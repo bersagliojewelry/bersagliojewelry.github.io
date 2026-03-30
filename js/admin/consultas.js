@@ -1,24 +1,29 @@
 /**
- * Bersaglio Admin — Consultas + Exportación
+ * Bersaglio Admin — Consultas + Exportacion (real-time)
  */
 
 import adminDb from './db.js';
 import { admToast, initSidebar, esc, fmtDate, fmtDateTime, requireAuth } from './shared.js';
-import db from '../data/catalog.js';
 
 let _all    = [];
-let _filter = 'all';   // 'all' | 'unread' | 'read'
+let _filter = 'all';
 let _query  = '';
 let _activeInqId = null;
 
 async function init() {
     await requireAuth('editor');
     await adminDb.init();
-    await db.load();
     initSidebar();
 
     _all = adminDb.getInquiries();
     renderTable();
+
+    // Real-time: re-render when inquiries change
+    adminDb.on('inquiries', inquiries => {
+        _all = inquiries;
+        renderTable();
+        updateSidebarBadge();
+    });
 
     // Filters
     document.getElementById('inq-filters').addEventListener('click', e => {
@@ -41,15 +46,24 @@ async function init() {
     document.getElementById('btn-mark-all-read').addEventListener('click', markAllRead);
     document.getElementById('btn-export-csv').addEventListener('click', () => {
         adminDb.exportInquiriesCSV();
-        admToast('Descargando consultas.csv…');
+        admToast('Descargando consultas.csv\u2026');
     });
     document.getElementById('btn-export-inquiries').addEventListener('click', () => {
         adminDb.exportInquiriesCSV();
-        admToast('Descargando consultas.csv…');
+        admToast('Descargando consultas.csv\u2026');
     });
     document.getElementById('btn-export-unread').addEventListener('click', exportUnread);
 
     initModal();
+}
+
+function updateSidebarBadge() {
+    const unread = _all.filter(i => !i.read).length;
+    const badge  = document.getElementById('inq-badge');
+    if (badge) {
+        badge.textContent = unread > 9 ? '9+' : unread;
+        badge.hidden = unread === 0;
+    }
 }
 
 // ─── Table ────────────────────────────────────────────────────────────────────
@@ -76,7 +90,7 @@ function renderTable() {
     if (!rows.length) { tbody.innerHTML = ''; return; }
 
     tbody.innerHTML = rows.map(i => {
-        const piece = i.piece ? db.getBySlug(i.piece) : null;
+        const pieceName = i.piece || i.pieceSlug || '\u2014';
         return `
         <tr class="${i.read ? '' : 'inq-unread'}" style="${i.read ? '' : 'background:rgba(11,61,46,0.025);'}">
             <td class="adm-td-muted">${fmtDate(i.createdAt)}</td>
@@ -85,10 +99,10 @@ function renderTable() {
                 ${i.email ? `<div>${esc(i.email)}</div>` : ''}
                 ${i.phone ? `<div>${esc(i.phone)}</div>` : ''}
             </td>
-            <td class="adm-td-muted">${esc(piece?.name || i.piece || '—')}</td>
+            <td class="adm-td-muted">${esc(pieceName)}</td>
             <td>
                 <span class="adm-pill ${i.read ? 'adm-pill--gray' : 'adm-pill--red'}">
-                    ${i.read ? 'Leída' : 'Nueva'}
+                    ${i.read ? 'Le\u00edda' : 'Nueva'}
                 </span>
             </td>
             <td>
@@ -107,26 +121,28 @@ function renderTable() {
 function initModal() {
     document.getElementById('inq-modal-close').addEventListener('click', closeModal);
 
-    document.getElementById('inq-modal-toggle-read').addEventListener('click', () => {
+    document.getElementById('inq-modal-toggle-read').addEventListener('click', async () => {
         if (!_activeInqId) return;
         const inq = _all.find(i => i.id === _activeInqId);
         if (!inq) return;
-        adminDb.markRead(_activeInqId, !inq.read);
-        _all = adminDb.getInquiries();
-        closeModal();
-        renderTable();
-        admToast(inq.read ? 'Marcada como nueva' : 'Marcada como leída');
-        initSidebar();
+        try {
+            await adminDb.markRead(_activeInqId, !inq.read);
+            closeModal();
+            admToast(inq.read ? 'Marcada como nueva' : 'Marcada como le\u00edda');
+        } catch (err) {
+            admToast('Error al actualizar', 'danger');
+        }
     });
 
-    document.getElementById('inq-modal-delete').addEventListener('click', () => {
+    document.getElementById('inq-modal-delete').addEventListener('click', async () => {
         if (!_activeInqId) return;
-        adminDb.deleteInquiry(_activeInqId);
-        _all = adminDb.getInquiries();
-        closeModal();
-        renderTable();
-        admToast('Consulta eliminada', 'danger');
-        initSidebar();
+        try {
+            await adminDb.deleteInquiry(_activeInqId);
+            closeModal();
+            admToast('Consulta eliminada', 'danger');
+        } catch (err) {
+            admToast('Error al eliminar', 'danger');
+        }
     });
 }
 
@@ -136,16 +152,15 @@ function openModal(id) {
     _activeInqId = id;
 
     document.getElementById('inq-modal-title').textContent    = `Consulta de ${inq.name}`;
-    document.getElementById('inq-detail-name').textContent    = inq.name || '—';
+    document.getElementById('inq-detail-name').textContent    = inq.name || '\u2014';
     document.getElementById('inq-detail-date').textContent    = fmtDateTime(inq.createdAt);
-    document.getElementById('inq-detail-email').textContent   = inq.email || '—';
-    document.getElementById('inq-detail-phone').textContent   = inq.phone || '—';
-    document.getElementById('inq-detail-message').textContent = inq.message || '—';
+    document.getElementById('inq-detail-email').textContent   = inq.email || '\u2014';
+    document.getElementById('inq-detail-phone').textContent   = inq.phone || '\u2014';
+    document.getElementById('inq-detail-message').textContent = inq.message || '\u2014';
 
     const pieceWrap = document.getElementById('inq-detail-piece-wrap');
-    if (inq.piece) {
-        const piece = db.getBySlug(inq.piece);
-        document.getElementById('inq-detail-piece').textContent = piece?.name || inq.piece;
+    if (inq.piece || inq.pieceSlug) {
+        document.getElementById('inq-detail-piece').textContent = inq.piece || inq.pieceSlug;
         pieceWrap.hidden = false;
     } else {
         pieceWrap.hidden = true;
@@ -164,13 +179,11 @@ function openModal(id) {
 
     // Toggle read button label
     document.getElementById('inq-modal-toggle-read').textContent =
-        inq.read ? 'Marcar como nueva' : 'Marcar como leída';
+        inq.read ? 'Marcar como nueva' : 'Marcar como le\u00edda';
 
     // Auto-mark as read when opened
     if (!inq.read) {
         adminDb.markRead(id, true);
-        _all = adminDb.getInquiries();
-        initSidebar();
     }
 
     document.getElementById('inq-modal').hidden = false;
@@ -179,37 +192,36 @@ function openModal(id) {
 function closeModal() {
     document.getElementById('inq-modal').hidden = true;
     _activeInqId = null;
-    renderTable();
 }
 
 // ─── Acciones ─────────────────────────────────────────────────────────────────
 
-function markAllRead() {
-    _all.filter(i => !i.read).forEach(i => adminDb.markRead(i.id, true));
-    _all = adminDb.getInquiries();
-    renderTable();
-    initSidebar();
-    admToast('Todas marcadas como leídas');
+async function markAllRead() {
+    const unread = _all.filter(i => !i.read);
+    try {
+        await Promise.all(unread.map(i => adminDb.markRead(i.id, true)));
+        admToast('Todas marcadas como le\u00eddas');
+    } catch (err) {
+        admToast('Error al marcar', 'danger');
+    }
 }
 
 function exportUnread() {
-    const unread = adminDb.getInquiries().filter(i => !i.read);
+    const unread = _all.filter(i => !i.read);
     if (!unread.length) { admToast('No hay consultas sin leer', 'danger'); return; }
 
     const rows = unread.map(i => ({
         Fecha:    fmtDate(i.createdAt),
         Nombre:   i.name || '',
         Email:    i.email || '',
-        Teléfono: i.phone || '',
-        Pieza:    i.piece || '',
+        'Telefono': i.phone || '',
+        Pieza:    i.piece || i.pieceSlug || '',
         Mensaje:  (i.message || '').replace(/\n/g, ' '),
     }));
-    adminDb.constructor.downloadCSV
-        ? adminDb.constructor.downloadCSV(rows, 'consultas-nuevas.csv')
-        : import('./db.js').then(m => m.AdminDatabase?.downloadCSV?.(rows, 'consultas-nuevas.csv'));
-
-    // Fallback: use adminDb's export with filter
-    admToast('Exportando consultas sin leer…');
+    AdminDatabase.downloadCSV(rows, 'consultas-nuevas.csv');
+    admToast('Exportando consultas sin leer\u2026');
 }
+
+const AdminDatabase = { downloadCSV: (rows, fn) => adminDb.constructor.downloadCSV(rows, fn) };
 
 init();

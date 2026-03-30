@@ -1,5 +1,5 @@
 /**
- * Bersaglio Admin — Piezas CRUD
+ * Bersaglio Admin — Piezas CRUD (real-time)
  */
 
 import adminDb from './db.js';
@@ -19,11 +19,19 @@ async function init() {
 
     _allPieces = adminDb.getAllPieces();
 
-    // Populate collection filter
     populateCollectionFilters();
-
-    // Render
     renderTable();
+
+    // Real-time: re-render when pieces change
+    adminDb.on('pieces', pieces => {
+        _allPieces = pieces;
+        renderTable();
+    });
+
+    // Real-time: update collection filters when collections change
+    adminDb.on('collections', () => {
+        populateCollectionFilters();
+    });
 
     // Filters
     document.getElementById('search-input').addEventListener('input', e => {
@@ -43,7 +51,7 @@ async function init() {
     document.getElementById('btn-new-piece').addEventListener('click', () => openModal());
     document.getElementById('btn-export-csv').addEventListener('click', () => {
         adminDb.exportPiecesCSV();
-        admToast('Descargando piezas.csv…');
+        admToast('Descargando piezas.csv\u2026');
     });
 
     // Open modal directly if ?new=1
@@ -60,7 +68,7 @@ async function init() {
 function getFiltered() {
     return _allPieces.filter(p => {
         const matchQ = !_query ||
-            p.name.toLowerCase().includes(_query) ||
+            (p.name || '').toLowerCase().includes(_query) ||
             (p.collection || '').toLowerCase().includes(_query);
         const matchC = !_filterCol || p.collection === _filterCol;
         const matchF = !_filterFeatured ||
@@ -78,17 +86,19 @@ function renderTable() {
 
     if (!pieces.length) { tbody.innerHTML = ''; return; }
 
+    const collections = adminDb.getAllCollections();
+
     tbody.innerHTML = pieces.map(p => {
-        const col = adminDb.getAllCollections().find(c => c.id === p.collection);
+        const col = collections.find(c => c.id === p.collection);
         return `
         <tr>
             <td style="font-weight:500;">${esc(p.name)}</td>
-            <td class="adm-td-muted">${esc(col?.name || p.collection || '—')}</td>
-            <td>${p.badge ? `<span class="adm-pill adm-pill--gold">${esc(p.badge)}</span>` : '<span class="adm-td-muted">—</span>'}</td>
-            <td class="adm-td-muted">${esc(p.priceLabel || '—')}</td>
+            <td class="adm-td-muted">${esc(col?.name || p.collection || '\u2014')}</td>
+            <td>${p.badge ? `<span class="adm-pill adm-pill--gold">${esc(p.badge)}</span>` : '<span class="adm-td-muted">\u2014</span>'}</td>
+            <td class="adm-td-muted">${esc(p.priceLabel || '\u2014')}</td>
             <td>
                 <span class="adm-pill ${p.featured ? 'adm-pill--green' : 'adm-pill--gray'}">
-                    ${p.featured ? '✓ Sí' : 'No'}
+                    ${p.featured ? '\u2713 S\u00ed' : 'No'}
                 </span>
             </td>
             <td>
@@ -102,7 +112,6 @@ function renderTable() {
         </tr>`;
     }).join('');
 
-    // Row action delegation
     tbody.querySelectorAll('[data-action]').forEach(btn => {
         btn.addEventListener('click', () => {
             const { action, id } = btn.dataset;
@@ -117,23 +126,42 @@ function populateCollectionFilters() {
     const selectFilter = document.getElementById('filter-collection');
     const selectForm   = document.getElementById('f-collection');
 
+    // Preserve current selection
+    const currentFilter = selectFilter?.value || '';
+    const currentForm   = selectForm?.value || '';
+
+    if (selectFilter) {
+        const firstOpt = selectFilter.querySelector('option[value=""]');
+        selectFilter.innerHTML = '';
+        if (firstOpt) selectFilter.appendChild(firstOpt);
+        else selectFilter.innerHTML = '<option value="">Todas</option>';
+    }
+    if (selectForm) {
+        const firstOpt = selectForm.querySelector('option[value=""]');
+        selectForm.innerHTML = '';
+        if (firstOpt) selectForm.appendChild(firstOpt);
+        else selectForm.innerHTML = '<option value="">Sin colecci\u00f3n</option>';
+    }
+
     cols.forEach(c => {
         const opt = `<option value="${c.id}">${esc(c.name)}</option>`;
         if (selectFilter) selectFilter.insertAdjacentHTML('beforeend', opt);
         if (selectForm)   selectForm.insertAdjacentHTML('beforeend', opt);
     });
+
+    if (selectFilter) selectFilter.value = currentFilter;
+    if (selectForm)   selectForm.value = currentForm;
 }
 
 // ─── Modal CRUD ───────────────────────────────────────────────────────────────
 
-let _uploadedImages = [];  // URLs from Firebase Storage for current piece
+let _uploadedImages = [];
 
 function initModal() {
     document.getElementById('modal-close').addEventListener('click', closeModal);
     document.getElementById('modal-cancel').addEventListener('click', closeModal);
     document.getElementById('modal-save').addEventListener('click', handleSave);
 
-    // Auto-generate slug from name
     document.getElementById('f-name').addEventListener('input', e => {
         const slugField = document.getElementById('f-slug');
         if (!slugField.dataset.manual) {
@@ -144,7 +172,6 @@ function initModal() {
         e.target.dataset.manual = e.target.value ? '1' : '';
     });
 
-    // Image upload
     initImageUpload();
 }
 
@@ -153,7 +180,6 @@ function initImageUpload() {
     const fileInput = document.getElementById('f-images');
     if (!zone || !fileInput) return;
 
-    // Drag and drop
     zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('is-dragover'); });
     zone.addEventListener('dragleave', () => zone.classList.remove('is-dragover'));
     zone.addEventListener('drop', e => {
@@ -171,7 +197,6 @@ async function handleFiles(files) {
     const form    = document.getElementById('piece-form');
     const pieceId = form.querySelector('[name="id"]').value || `p${Date.now()}`;
 
-    // Set the hidden id field so save uses the same id
     if (!form.querySelector('[name="id"]').value) {
         form.querySelector('[name="id"]').value = pieceId;
     }
@@ -202,7 +227,7 @@ async function handleFiles(files) {
             admToast(`${file.name} subida`);
         }
     } catch (err) {
-        admToast('Error al subir imagen. Verifica tu conexión.', 'danger');
+        admToast('Error al subir imagen. Verifica tu conexi\u00f3n.', 'danger');
     } finally {
         progressWrap.hidden = true;
         progressBar.style.width = '0%';
@@ -221,12 +246,14 @@ function renderImagePreviews() {
     `).join('');
 
     container.querySelectorAll('.adm-image-thumb-delete').forEach(btn => {
-        btn.addEventListener('click', async () => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            e.preventDefault();
             const idx = parseInt(btn.dataset.idx);
             try {
                 const { deletePieceImage } = await import('../storage-service.js');
                 await deletePieceImage(_uploadedImages[idx]);
-            } catch { /* ignore — might already be deleted */ }
+            } catch { /* Storage delete failed — remove from list anyway */ }
             _uploadedImages.splice(idx, 1);
             renderImagePreviews();
             admToast('Imagen eliminada');
@@ -253,7 +280,6 @@ async function openModal(id = null) {
         populateForm(form, piece);
         slugEl.dataset.manual = '1';
 
-        // Load existing images from piece data + Storage
         if (piece.images?.length) {
             _uploadedImages = [...piece.images];
         } else {
@@ -301,14 +327,13 @@ function populateForm(form, piece) {
     form.querySelector('[name="specs.weight"]').value      = specs.weight || '';
 }
 
-function handleSave() {
+async function handleSave() {
     const form = document.getElementById('piece-form');
     const get  = name => form.querySelector(`[name="${name}"]`)?.value.trim() || '';
 
     const name = get('name');
     if (!name) { admToast('El nombre es obligatorio', 'danger'); return; }
 
-    // Build specs (only non-empty)
     const specs = {};
     ['stone','carat','metal','accent','certificate','cut','color','clarity','weight'].forEach(k => {
         const v = get(`specs.${k}`);
@@ -330,25 +355,28 @@ function handleSave() {
         image:       _uploadedImages[0] || undefined,
     };
 
-    // Remove null id for new pieces
     if (!piece.id) delete piece.id;
 
-    const saved = adminDb.savePiece(piece);
-    _allPieces = adminDb.getAllPieces();
-    closeModal();
-    renderTable();
-    admToast(`"${saved.name}" guardada correctamente`);
+    try {
+        const saved = await adminDb.savePiece(piece);
+        closeModal();
+        admToast(`"${saved.name}" guardada correctamente`);
+    } catch (err) {
+        admToast('Error al guardar pieza', 'danger');
+    }
 }
 
 function handleDelete(id) {
     const piece = _allPieces.find(p => p.id === id);
     admConfirm(
-        `¿Eliminar "${piece?.name || 'esta pieza'}"? Esta acción no se puede deshacer.`,
-        () => {
-            adminDb.deletePiece(id);
-            _allPieces = adminDb.getAllPieces();
-            renderTable();
-            admToast('Pieza eliminada', 'danger');
+        `\u00bfEliminar "${piece?.name || 'esta pieza'}"? Esta acci\u00f3n no se puede deshacer.`,
+        async () => {
+            try {
+                await adminDb.deletePiece(id);
+                admToast('Pieza eliminada', 'danger');
+            } catch (err) {
+                admToast('Error al eliminar', 'danger');
+            }
         }
     );
 }

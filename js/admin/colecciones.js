@@ -1,5 +1,5 @@
 /**
- * Bersaglio Admin — Colecciones CRUD
+ * Bersaglio Admin — Colecciones CRUD (real-time)
  */
 
 import adminDb from './db.js';
@@ -14,6 +14,13 @@ async function init() {
     _collections = adminDb.getAllCollections();
     renderTable();
 
+    // Real-time: re-render when collections or pieces change
+    adminDb.on('collections', collections => {
+        _collections = collections;
+        renderTable();
+    });
+    adminDb.on('pieces', () => renderTable());
+
     document.getElementById('btn-new-col').addEventListener('click', () => openModal());
     initModal();
 }
@@ -21,7 +28,7 @@ async function init() {
 // ─── Table ────────────────────────────────────────────────────────────────────
 
 function renderTable() {
-    const tbody = document.getElementById('col-tbody');
+    const tbody  = document.getElementById('col-tbody');
     const pieces = adminDb.getAllPieces();
 
     tbody.innerHTML = _collections.map(c => {
@@ -30,11 +37,11 @@ function renderTable() {
         <tr>
             <td style="font-weight:500;">${esc(c.name)}</td>
             <td class="adm-td-muted"><code style="font-size:11px;">${esc(c.slug || c.id)}</code></td>
-            <td class="adm-td-muted">${esc(c.subtitle || '—')}</td>
+            <td class="adm-td-muted">${esc(c.subtitle || '\u2014')}</td>
             <td style="text-align:center;">${pCount}</td>
             <td>
                 <span class="adm-pill ${c.featured ? 'adm-pill--green' : 'adm-pill--gray'}">
-                    ${c.featured ? '✓ Destacada' : 'No'}
+                    ${c.featured ? '\u2713 Destacada' : 'No'}
                 </span>
             </td>
             <td class="adm-td-muted" style="font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;">
@@ -69,7 +76,7 @@ function initModal() {
     document.getElementById('cf-name').addEventListener('input', e => {
         const slugEl = document.getElementById('cf-slug');
         if (!slugEl.value || slugEl.dataset.auto !== 'no') {
-            slugEl.value = AdminDatabase.slugify(e.target.value);
+            slugEl.value = slugify(e.target.value);
         }
     });
     document.getElementById('cf-slug').addEventListener('input', e => {
@@ -77,7 +84,9 @@ function initModal() {
     });
 }
 
-const AdminDatabase = { slugify: (s) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9\s-]/g,'').trim().replace(/\s+/g,'-') };
+function slugify(s) {
+    return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9\s-]/g,'').trim().replace(/\s+/g,'-');
+}
 
 function openModal(id = null) {
     const modal   = document.getElementById('col-modal');
@@ -89,7 +98,7 @@ function openModal(id = null) {
     if (id) {
         const col = _collections.find(c => c.id === id);
         if (!col) return;
-        titleEl.textContent = 'Editar colección';
+        titleEl.textContent = 'Editar colecci\u00f3n';
         form.querySelector('[name="id"]').value          = col.id;
         form.querySelector('[name="name"]').value        = col.name || '';
         form.querySelector('[name="slug"]').value        = col.slug || col.id;
@@ -99,7 +108,7 @@ function openModal(id = null) {
         form.querySelector('[name="featured"]').checked  = !!col.featured;
         document.getElementById('cf-slug').dataset.auto = 'no';
     } else {
-        titleEl.textContent = 'Nueva colección';
+        titleEl.textContent = 'Nueva colecci\u00f3n';
         document.getElementById('cf-slug').dataset.auto = '';
     }
 
@@ -111,7 +120,7 @@ function closeModal() {
     document.getElementById('col-modal').hidden = true;
 }
 
-function handleSave() {
+async function handleSave() {
     const form = document.getElementById('col-form');
     const get  = name => form.querySelector(`[name="${name}"]`)?.value.trim() || '';
 
@@ -119,31 +128,35 @@ function handleSave() {
     if (!name) { admToast('El nombre es obligatorio', 'danger'); return; }
 
     const col = {
-        id:          get('id') || AdminDatabase.slugify(name),
+        id:          get('id') || slugify(name),
         name,
-        slug:        get('slug') || AdminDatabase.slugify(name),
+        slug:        get('slug') || slugify(name),
         subtitle:    get('subtitle'),
         description: get('description'),
         pieces:      parseInt(get('pieces')) || 0,
         featured:    form.querySelector('[name="featured"]').checked,
     };
 
-    adminDb.saveCollection(col);
-    _collections = adminDb.getAllCollections();
-    closeModal();
-    renderTable();
-    admToast(`"${col.name}" guardada`);
+    try {
+        await adminDb.saveCollection(col);
+        closeModal();
+        admToast(`"${col.name}" guardada`);
+    } catch (err) {
+        admToast('Error al guardar colecci\u00f3n', 'danger');
+    }
 }
 
 function handleDelete(id) {
     const col = _collections.find(c => c.id === id);
     admConfirm(
-        `¿Eliminar la colección "${col?.name}"? Las piezas asociadas no serán eliminadas.`,
-        () => {
-            adminDb.deleteCollection(id);
-            _collections = adminDb.getAllCollections();
-            renderTable();
-            admToast('Colección eliminada', 'danger');
+        `\u00bfEliminar la colecci\u00f3n "${col?.name}"? Las piezas asociadas no ser\u00e1n eliminadas.`,
+        async () => {
+            try {
+                await adminDb.deleteCollection(id);
+                admToast('Colecci\u00f3n eliminada', 'danger');
+            } catch (err) {
+                admToast('Error al eliminar', 'danger');
+            }
         }
     );
 }

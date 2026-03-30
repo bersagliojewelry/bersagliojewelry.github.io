@@ -39,6 +39,17 @@ async function init() {
     Renderer.initScrollAnimations();
     Renderer.initLazyImages();
     initEffects();
+
+    // Real-time: re-render when admin changes data
+    db.startRealtime().catch(() => {});
+    db.onChange(() => {
+        const col = db.getCollections().find(c => c.slug === slug);
+        if (col) {
+            renderHero(col);
+            renderPieces(col, slug);
+            Renderer.initScrollAnimations();
+        }
+    });
 }
 
 function updatePageMeta(col) {

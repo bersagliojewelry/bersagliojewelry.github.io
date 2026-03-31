@@ -45,6 +45,7 @@ async function init() {
     updatePageMeta(piece);
     injectStructuredData(piece);
     initWhatsAppButton(piece);
+    initGalleryThumbs();
     Renderer.initScrollAnimations();
     initEffects();
     initMicroAnimations();
@@ -117,6 +118,20 @@ function injectStructuredData(piece) {
     });
 }
 
+function initGalleryThumbs() {
+    const thumbs = document.querySelectorAll('.pieza-thumb');
+    const mainImg = document.querySelector('.pieza-main-image img');
+    if (!thumbs.length || !mainImg) return;
+
+    thumbs.forEach(btn => {
+        btn.addEventListener('click', () => {
+            mainImg.src = btn.dataset.img;
+            thumbs.forEach(t => t.classList.remove('is-active'));
+            btn.classList.add('is-active');
+        });
+    });
+}
+
 function initWhatsAppButton(piece) {
     const { whatsapp } = db.getContact();
     const phone  = whatsapp.replace('+', '');
@@ -165,12 +180,22 @@ function renderPiece(piece) {
             <!-- Gallery -->
             <div class="pieza-gallery">
                 <div class="pieza-main-image animate-on-scroll">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.7" width="120" height="120">
-                        <polygon points="12,2 22,8.5 12,22 2,8.5"/>
-                        <line x1="2" y1="8.5" x2="22" y2="8.5"/>
-                        <polyline points="7,2 12,8.5 17,2"/>
-                    </svg>
+                    ${piece.image
+                        ? `<img src="${piece.image}" alt="${piece.name}" class="pieza-img">`
+                        : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.7" width="120" height="120">
+                            <polygon points="12,2 22,8.5 12,22 2,8.5"/>
+                            <line x1="2" y1="8.5" x2="22" y2="8.5"/>
+                            <polyline points="7,2 12,8.5 17,2"/>
+                        </svg>`}
                 </div>
+                ${piece.images?.length > 1 ? `
+                <div class="pieza-thumbs">
+                    ${piece.images.map((img, i) => `
+                        <button class="pieza-thumb ${i === 0 ? 'is-active' : ''}" data-img="${img}">
+                            <img src="${img}" alt="${piece.name} foto ${i + 1}" loading="lazy">
+                        </button>
+                    `).join('')}
+                </div>` : ''}
             </div>
 
             <!-- Info -->

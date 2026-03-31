@@ -73,13 +73,15 @@ export function renderFeaturedPieces() {
         return `
         <article class="piece-card animate-on-scroll" data-piece="${piece.id}">
             <a href="pieza.html?p=${piece.slug}" class="piece-image-wrapper" aria-label="Ver ${piece.name}">
-                <div class="piece-placeholder" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8" aria-hidden="true">
-                        <polygon points="12,2 22,8.5 12,22 2,8.5"/>
-                        <line x1="2" y1="8.5" x2="22" y2="8.5"/>
-                        <polyline points="7,2 12,8.5 17,2"/>
-                    </svg>
-                </div>
+                ${piece.image
+                    ? `<img src="${piece.image}" alt="${piece.name}" class="piece-img" loading="lazy">`
+                    : `<div class="piece-placeholder" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8" aria-hidden="true">
+                            <polygon points="12,2 22,8.5 12,22 2,8.5"/>
+                            <line x1="2" y1="8.5" x2="22" y2="8.5"/>
+                            <polyline points="7,2 12,8.5 17,2"/>
+                        </svg>
+                    </div>`}
                 ${piece.badge ? `<span class="piece-badge">${piece.badge}</span>` : ''}
                 <div class="piece-actions">
                     ${wishlistBtn(piece)}

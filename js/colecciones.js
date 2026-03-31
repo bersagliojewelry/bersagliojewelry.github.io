@@ -178,9 +178,9 @@ function renderPieces(grid) {
         return `
             <article class="piece-card animate-on-scroll">
                 <div class="piece-image-wrapper">
-                    <div class="piece-placeholder">
-                        ${collectionIcons[p.collection] || collectionIcons['anillos']}
-                    </div>
+                    ${p.image
+                        ? `<img src="${p.image}" alt="${p.name}" class="piece-img" loading="lazy">`
+                        : `<div class="piece-placeholder">${collectionIcons[p.collection] || collectionIcons['anillos']}</div>`}
                     ${p.badge ? `<span class="piece-badge">${p.badge}</span>` : ''}
                     <div class="piece-actions">
                         <button

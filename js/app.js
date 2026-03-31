@@ -8,6 +8,7 @@ import { renderCollections }   from './components/collections.js';
 import { renderFeaturedPieces } from './components/featured.js';
 import { renderServices }      from './components/services.js';
 import { renderJournal }       from './components/journal.js';
+import { renderLookbook }      from './components/lookbook.js';
 import Renderer from './utils/renderer.js';
 import db       from './data/catalog.js';
 import { initEffects }              from './effects.js';
@@ -33,6 +34,7 @@ async function initApp() {
         try { fn(); } catch (err) { console.warn(`[Bersaglio] ${label} failed:`, err); }
     };
 
+    safeRender(renderLookbook,      'renderLookbook');
     safeRender(renderCollections,   'renderCollections');
     safeRender(renderFeaturedPieces,'renderFeaturedPieces');
     safeRender(renderServices,      'renderServices');
@@ -44,6 +46,7 @@ async function initApp() {
     // Enable real-time Firestore sync — re-render when admin changes data
     db.startRealtime().catch(() => {});
     db.onChange(() => {
+        safeRender(renderLookbook,       'renderLookbook (realtime)');
         safeRender(renderCollections,    'renderCollections (realtime)');
         safeRender(renderFeaturedPieces, 'renderFeaturedPieces (realtime)');
     });

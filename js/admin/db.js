@@ -130,6 +130,11 @@ class AdminDatabase {
         }
         piece.updatedAt = new Date().toISOString();
 
+        // Firestore cannot serialize undefined — strip those fields
+        Object.keys(piece).forEach(k => {
+            if (piece[k] === undefined) delete piece[k];
+        });
+
         await fsSavePiece(piece.id, piece);
         return piece;
     }

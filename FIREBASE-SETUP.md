@@ -1,7 +1,7 @@
 # Bersaglio Jewelry — Documentacion Firebase & Admin Panel
 
 > Documento de referencia para continuidad entre sesiones de desarrollo.
-> Ultima actualizacion: 30 de marzo de 2026
+> Ultima actualizacion: 31 de marzo de 2026
 
 ---
 
@@ -351,23 +351,92 @@ En Google Cloud Console > IAM, la cuenta de servicio `111509809378@cloudbuild.gs
 | 11 | Boton eliminar imagen cerraba modal | Evento click propagaba al padre | `stopPropagation()` + `preventDefault()` en handler | 30/mar |
 | 12 | Web no sincronizaba con cambios del admin | Web usaba datos estaticos sin listeners | Activar `startRealtime()` + `onChange()` en paginas publicas | 30/mar |
 | 13 | 700+ lineas de datos estaticos duplicados | Piezas/colecciones hardcodeadas en catalog.js | Eliminar datos estaticos, Firestore es fuente unica | 30/mar |
+| 14 | "Error al guardar pieza" al eliminar imagen | `undefined` pasado a `setDoc()` | Strip `undefined` en `db.js savePiece()`; usar `[]`/`null` | 31/mar |
+| 15 | Imagenes del admin no visibles en web | Paginas publicas solo mostraban SVG placeholder | Condicional `<img>` con fallback SVG en 4 archivos | 31/mar |
 
 ---
 
-## 13. Pendientes / Proximos Pasos
+## 13. Portafolio Digital / Lookbook (NUEVO - 31/mar)
+
+Seccion interactiva tipo libro en homepage (antes de "Piezas que definen momentos"):
+- **Componente**: `js/components/lookbook.js`
+- **Contenedor HTML**: `<section id="portafolio">` → `<div id="lookbook">` en `index.html`
+- **Datos**: Todas las piezas organizadas por coleccion desde Firestore
+- **UX**: Tabs por coleccion + viewport con pagina izquierda (intro coleccion) y derecha (grid de piezas)
+- **Navegacion**: Tabs, botones prev/next, flechas teclado, swipe tactil
+- **Real-time**: Se re-renderiza automaticamente via `db.onChange()`
+- **CSS**: Seccion completa al final de `css/style.css`
+
+### Componentes de imagenes en web publica
+| Archivo | Seccion | Imagen class |
+|---|---|---|
+| `js/components/lookbook.js` | Homepage "Portafolio Digital" | `.lookbook-piece-img img` |
+| `js/components/featured.js` | Homepage "Piezas que definen momentos" | `.piece-img` |
+| `js/components/collections.js` | Homepage colecciones horizontal | N/A (iconos SVG) |
+| `js/colecciones.js` | Pagina `/colecciones.html` grid | `.piece-img` |
+| `js/coleccion.js` | Pagina individual de coleccion | `.piece-card-img-real` |
+| `js/pieza.js` | Detalle de pieza + galeria thumbnails | `.pieza-img`, `.pieza-thumb` |
+
+---
+
+## 14. Arquitectura Firestore-Only (sin datos estaticos)
+
+### Principio
+**El panel admin es la unica fuente de verdad.** No hay datos hardcoded en el codigo.
+
+### Flujo de datos
+```
+Admin Panel → Firestore → onSnapshot → Pagina publica (real-time)
+```
+
+### Archivos clave
+| Archivo | Rol |
+|---|---|
+| `js/firestore-service.js` | CRUD + listeners `onSnapshot` para Firestore |
+| `js/admin/db.js` | Base de datos admin: Firestore-first, eventos real-time |
+| `js/data/catalog.js` | Capa de datos publica: `load()` desde Firestore, `startRealtime()` para sync |
+| `js/admin/piezas.js` | CRUD piezas (async), subida imagenes via `storage-service.js` |
+| `js/admin/colecciones.js` | CRUD colecciones (async) |
+| `js/admin/consultas.js` | CRUD consultas (async) |
+
+### API de catalog.js (pagina publica)
+```javascript
+db.load()                     // Carga inicial desde Firestore
+db.startRealtime()            // Activa onSnapshot listeners
+db.onChange(callback)          // Suscribir a cambios
+db.getAll()                   // Todas las piezas
+db.getCollections(featured?)  // Colecciones (opcionalmente solo featured)
+db.getFeatured(limit?)        // Piezas destacadas
+db.getByCollection(slug)      // Piezas de una coleccion
+db.getBySlug(slug)            // Pieza por slug
+```
+
+### API de adminDb (panel admin)
+```javascript
+adminDb.loadAll()             // Carga piezas + colecciones + consultas
+adminDb.savePiece(data)       // Crear/actualizar pieza (strip undefined)
+adminDb.deletePiece(id)       // Eliminar pieza
+adminDb.saveCollection(data)  // Crear/actualizar coleccion
+adminDb.deleteCollection(id)  // Eliminar coleccion
+adminDb.on(event, callback)   // Suscribir: 'pieces', 'collections', 'inquiries', 'stats'
+```
+
+---
+
+## 15. Pendientes / Proximos Pasos
 
 - [ ] Favicon.ico — El navegador muestra 404. Agregar `favicon.ico` en `public/`
-- [ ] Probar subida de imagenes desde admin (drag & drop)
-- [ ] Probar CRUD completo de piezas y colecciones (crear, editar, eliminar)
-- [ ] Verificar que imagenes de piezas aparecen en la web publica (actualmente se muestran iconos SVG placeholder)
 - [ ] Configurar GitHub Secrets para el build de CI (actualmente usa fallbacks hardcoded)
 - [ ] Considerar mover brand, contact y services a Firestore (gestionables desde admin)
 - [ ] Considerar upgrade de Node.js 20 a 22 antes de oct 2026 (deprecation)
 - [ ] Vincular Firebase Hosting con dominio custom (opcional, actualmente usa GitHub Pages)
+- [ ] Convertir "Piezas que definen momentos" a mostrar solo piezas marcadas como "destacadas" desde admin
+- [x] ~~Probar subida de imagenes desde admin (drag & drop)~~ — Funcional
+- [x] ~~Verificar imagenes en web publica~~ — Resuelto (PR #53)
 
 ---
 
-## 14. Datos de Contacto y Cuentas
+## 16. Datos de Contacto y Cuentas
 
 | Servicio | Cuenta |
 |---|---|

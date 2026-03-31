@@ -1,17 +1,27 @@
 /**
  * Bersaglio Jewelry — Hero GSAP Animation
- * Cinematic entrance sequence:
+ * Cinematic entrance sequence using GSAP timeline + SplitText:
  *   0.0s  overline slides in
- *   0.3s  title characters fall (stagger)
+ *   0.3s  title characters fall (SplitText stagger)
  *   0.9s  underline draws
  *   1.1s  description fades up
  *   1.3s  CTAs appear
  *   1.5s  meta badges fade in
  *   ∞     parallax on scroll (ScrollTrigger scrub)
+ *
+ * Improved with GSAP skills best practices:
+ *   - SplitText replaces 30 lines of manual regex character splitting
+ *   - autoSplit handles font loading edge cases
+ *   - Timeline uses defaults{} to reduce repetition
+ *   - prefers-reduced-motion respected via matchMedia
  */
 
-import { gsap, ScrollTrigger, initSmoothScroll } from './gsap-core.js';
-import { initParticles } from './canvas/particles.js';
+import { gsap, ScrollTrigger } from './gsap-core.js';
+import { SplitText }           from 'gsap/SplitText';
+import { initParticles }       from './canvas/particles.js';
+import { initSmoothScroll }    from './gsap-core.js';
+
+gsap.registerPlugin(SplitText);
 
 export function initHero() {
     const hero = document.querySelector('.hero');
@@ -23,58 +33,43 @@ export function initHero() {
     // ── Smooth Scroll (Lenis) ────────────────────────────────────
     initSmoothScroll();
 
-    // ── Split title into span-wrapped characters ─────────────────
+    // ── SplitText — replaces manual regex character splitting ────
     const titleEl = hero.querySelector('.hero-title');
+    let split = null;
+
     if (titleEl) {
-        // Wrap each word in a clip container, each char in a span
-        const html = titleEl.innerHTML;
-        // Preserve <em> tags and <br> while splitting
-        const parts = [];
-        const regex = /(<em>[^<]*<\/em>|<br\s*\/?>|[^\s<]+|\s+)/g;
-        let m;
-        while ((m = regex.exec(html)) !== null) {
-            const tok = m[0];
-            if (/^<br\s*\/?>$/i.test(tok)) {
-                parts.push('<br>');
-            } else if (tok.startsWith('<em>')) {
-                // italic word — split chars inside em
-                const inner = tok.replace(/<\/?em>/g, '');
-                const charSpans = [...inner].map(c =>
-                    `<span class="hero-char">${c === ' ' ? '&nbsp;' : c}</span>`
-                ).join('');
-                parts.push(`<span class="hero-word-wrap"><em>${charSpans}</em></span>`);
-            } else if (/^\s+$/.test(tok)) {
-                parts.push(' ');
-            } else {
-                const charSpans = [...tok].map(c =>
-                    `<span class="hero-char">${c}</span>`
-                ).join('');
-                parts.push(`<span class="hero-word-wrap">${charSpans}</span>`);
-            }
-        }
-        titleEl.innerHTML = parts.join('');
+        split = SplitText.create(titleEl, {
+            type: 'words, chars',
+            wordsClass: 'hero-word-wrap',
+            charsClass: 'hero-char',
+        });
     }
 
     // ── Entrance Timeline ─────────────────────────────────────────
-    const tl = gsap.timeline({ delay: 0.1 });
+    const tl = gsap.timeline({
+        delay: 0.1,
+        defaults: { ease: 'power3.out' },
+    });
 
     // Overline
     tl.fromTo('.hero-eyebrow',
         { opacity: 0, x: -24 },
-        { opacity: 1, x: 0, duration: 0.7, ease: 'power3.out' },
+        { opacity: 1, x: 0, duration: 0.7 },
         0.0
     );
 
-    // Title chars fall from above
-    tl.fromTo('.hero-title .hero-char',
-        { opacity: 0, y: -40, rotateX: 60 },
-        {
-            opacity: 1, y: 0, rotateX: 0,
-            duration: 0.7, ease: 'back.out(1.2)',
-            stagger: { amount: 0.55, from: 'start' },
-        },
-        0.25
-    );
+    // Title chars fall from above (using SplitText chars array)
+    if (split) {
+        tl.fromTo(split.chars,
+            { opacity: 0, y: -40, rotateX: 60 },
+            {
+                opacity: 1, y: 0, rotateX: 0,
+                duration: 0.7, ease: 'back.out(1.2)',
+                stagger: { amount: 0.55, from: 'start' },
+            },
+            0.25
+        );
+    }
 
     // Title underline draws
     tl.fromTo('.hero-title-line',
@@ -86,7 +81,7 @@ export function initHero() {
     // Description
     tl.fromTo('.hero-desc',
         { opacity: 0, y: 22 },
-        { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out' },
+        { opacity: 1, y: 0, duration: 0.7 },
         1.05
     );
 

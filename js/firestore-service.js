@@ -97,7 +97,7 @@ export function onPiecesChange(callback) {
  */
 export async function savePiece(pieceId, data) {
     const ref = doc(firestoreDb, COLLECTIONS.pieces, pieceId);
-    await setDoc(ref, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+    await setDoc(ref, { ...data, updatedAt: serverTimestamp() });
 }
 
 /**
@@ -136,7 +136,7 @@ export function onCollectionsChange(callback) {
  */
 export async function saveCollection(colId, data) {
     const ref = doc(firestoreDb, COLLECTIONS.collections, colId);
-    await setDoc(ref, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+    await setDoc(ref, { ...data, updatedAt: serverTimestamp() });
 }
 
 /**

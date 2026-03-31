@@ -19,11 +19,36 @@ Sitio e-commerce de joyeria con esmeraldas colombianas.
 | **Plan Firebase** | Blaze (pago por uso) |
 | **Repositorio** | `bersagliojewelry/bersagliojewelry.github.io` |
 | **Branch principal** | `main` |
-| **Branch desarrollo** | `claude/remove-fake-inventory-rmALp` |
 
 ---
 
-## 2. Arquitectura de Despliegue
+## 2. Arquitectura de Datos (Firestore-only)
+
+### Fuente unica de verdad: Firestore
+
+```
+Panel Admin (CRUD) → Firestore → onSnapshot → Web publica (re-render automatico)
+                                             → Otros tabs/dispositivos (re-render)
+```
+
+**NO hay datos estaticos de piezas ni colecciones.** Todo el inventario vive exclusivamente en Firestore y se gestiona desde el panel admin. El archivo `js/data/catalog.js` solo contiene datos estaticos de marca, contacto y servicios (no gestionados en admin aun).
+
+### Real-time sync
+- **Admin panel**: Usa `onSnapshot` listeners para `pieces`, `collections`, `inquiries`. Cualquier cambio se refleja instantaneamente en todos los dispositivos/tabs conectados.
+- **Web publica**: Llama `db.startRealtime()` al cargar. Cuando el admin modifica datos, la web se re-renderiza sin recargar pagina.
+- **Cache offline**: localStorage guarda copia para primer pintado rapido; Firestore siempre sobrescribe al conectar.
+
+### Flujo de datos por archivo
+
+| Archivo | Rol |
+|---|---|
+| `js/data/catalog.js` | Data layer publico. `load()` hace `await` a Firestore. Getters para piezas, colecciones, marca, contacto, servicios. `startRealtime()` activa `onSnapshot`. |
+| `js/admin/db.js` | Data layer admin. Lee/escribe Firestore directo. Listeners `onSnapshot` + sistema de eventos `on('pieces', cb)`. Cache localStorage. |
+| `js/firestore-service.js` | Capa de acceso a Firestore. CRUD completo + listeners `onSnapshot` para pieces, collections, inquiries. |
+
+---
+
+## 3. Arquitectura de Despliegue
 
 ### Dual Deployment
 - **GitHub Pages** (`bersagliojewelry.co`): Despliega automaticamente desde `main` via `.github/workflows/deploy.yml`. Ejecuta `npm run build` (Vite) y sube `dist/`.
@@ -38,26 +63,26 @@ Sitio e-commerce de joyeria con esmeraldas colombianas.
 
 ---
 
-## 3. Firebase Services Configurados
+## 4. Firebase Services Configurados
 
-### 3.1 Authentication
+### 4.1 Authentication
 - **Metodo**: Email/Password
 - **Dominios autorizados**: `bersagliojewelry.co`, `bersaglio-jewelry.web.app`, `bersaglio-jewelry.firebaseapp.com`, `localhost`
 - **Usuario owner**: `bersagliojewelry@gmail.com` (UID: `Ly5SQw8yqoNsema59ijB0kkKo1D2`)
 - **Roles**: owner (3), admin (2), editor (1) — definidos en `js/auth.js`
 
-### 3.2 Firestore Database
+### 4.2 Firestore Database
 - **Colecciones activas**: `pieces`, `collections`, `inquiries`, `users`, `config`, `reviews`, `subscriptions`, `push_tokens`
 - **Rules**: `firestore.rules` — desplegadas exitosamente
 - **Indexes**: `firestore.indexes.json` — 2 composite indexes (inquiries, reviews)
 - **Documento de usuario owner**: `users/Ly5SQw8yqoNsema59ijB0kkKo1D2` con `role: "owner"`
 
-### 3.3 Cloud Storage
+### 4.3 Cloud Storage
 - **Bucket**: `bersaglio-jewelry.firebasestorage.app`
 - **Rules**: `storage.rules` — desplegadas exitosamente
 - **Paths**: `pieces/`, `collections/`, `assets/` — publicos para lectura, autenticados para escritura, max 10-15MB imagenes
 
-### 3.4 Cloud Functions (5 funciones desplegadas)
+### 4.4 Cloud Functions (5 funciones desplegadas)
 - **createUser** (onCall) — Solo owner, crea usuarios en Auth + Firestore
 - **updateUserRole** (onCall) — Solo owner, cambia roles
 - **deactivateUser** (onCall) — Solo owner, desactiva usuarios
@@ -66,12 +91,12 @@ Sitio e-commerce de joyeria con esmeraldas colombianas.
 - **Runtime**: Node.js 20, Region: us-central1
 - **Codigo**: `functions/index.js`
 
-### 3.5 Analytics
+### 4.5 Analytics
 - **Measurement ID**: `G-F0CEWY7SP1`
 
 ---
 
-## 4. API Key & Seguridad
+## 5. API Key & Seguridad
 
 ### API Key Actual
 ```
@@ -104,7 +129,7 @@ AIzaSyDcAvuRKN8_h_uSXzXkCzC0foLxTOkd5WM
 
 ---
 
-## 5. Estructura de Archivos Clave
+## 6. Estructura de Archivos Clave
 
 ```
 /
@@ -126,17 +151,19 @@ AIzaSyDcAvuRKN8_h_uSXzXkCzC0foLxTOkd5WM
 ├── js/
 │   ├── firebase-config.js        # Inicializacion Firebase + config
 │   ├── auth.js                   # Autenticacion + roles + guards
-│   ├── firestore-service.js      # CRUD Firestore (piezas, colecciones, etc.)
+│   ├── firestore-service.js      # CRUD Firestore + onSnapshot listeners
 │   ├── storage-service.js        # Upload/delete imagenes
+│   ├── data/
+│   │   └── catalog.js            # Data layer publico (Firestore-only para inventario)
 │   └── admin/
 │       ├── login.js              # Logica del login
-│       ├── dashboard.js          # Dashboard stats
-│       ├── piezas.js             # CRUD UI piezas
-│       ├── colecciones.js        # CRUD UI colecciones
-│       ├── consultas.js          # UI consultas
-│       ├── usuarios.js           # UI usuarios
-│       ├── db.js                 # Operaciones DB compartidas
-│       └── shared.js             # Utilidades compartidas
+│       ├── dashboard.js          # Dashboard stats (real-time)
+│       ├── piezas.js             # CRUD UI piezas (real-time)
+│       ├── colecciones.js        # CRUD UI colecciones (real-time)
+│       ├── consultas.js          # UI consultas (real-time)
+│       ├── usuarios.js           # UI usuarios (Firestore directo)
+│       ├── db.js                 # Admin DB: Firestore-first + onSnapshot + eventos
+│       └── shared.js             # Utilidades: sidebar, toast, badge real-time
 ├── functions/
 │   ├── index.js                  # 5 Cloud Functions
 │   └── package.json              # Dependencies (firebase-admin, firebase-functions)
@@ -147,7 +174,7 @@ AIzaSyDcAvuRKN8_h_uSXzXkCzC0foLxTOkd5WM
 
 ---
 
-## 6. Seguridad del Panel Admin
+## 7. Seguridad del Panel Admin
 
 ### Proteccion de paginas admin
 Cada pagina admin tiene **doble guardia de autenticacion**:
@@ -178,7 +205,7 @@ catch(e){location.replace('admin-login.html');document.body.style.display='none'
 
 ---
 
-## 7. Responsive Design (Admin Panel)
+## 8. Responsive Design (Admin Panel)
 
 ### Breakpoints
 - **> 900px**: Layout completo con sidebar de 240px
@@ -202,7 +229,82 @@ catch(e){location.replace('admin-login.html');document.body.style.display='none'
 
 ---
 
-## 8. Firebase CLI — Notas Importantes
+## 9. Firestore Service — Funciones Disponibles
+
+### Piezas (`js/firestore-service.js`)
+| Funcion | Tipo | Descripcion |
+|---|---|---|
+| `fetchPieces()` | async | Obtiene todas las piezas |
+| `fetchPiecesByCollection(slug)` | async | Piezas por coleccion |
+| `fetchPieceBySlug(slug)` | async | Pieza individual |
+| `savePiece(id, data)` | async | Crear/actualizar pieza (merge: true) |
+| `deletePiece(id)` | async | Eliminar pieza |
+| `onPiecesChange(callback)` | listener | Real-time: recibe array en cada cambio |
+
+### Colecciones
+| Funcion | Tipo | Descripcion |
+|---|---|---|
+| `fetchCollections()` | async | Obtiene todas las colecciones |
+| `saveCollection(id, data)` | async | Crear/actualizar (merge: true) |
+| `deleteCollection(id)` | async | Eliminar coleccion |
+| `onCollectionsChange(callback)` | listener | Real-time |
+
+### Consultas (Inquiries)
+| Funcion | Tipo | Descripcion |
+|---|---|---|
+| `fetchInquiries()` | async | Todas las consultas (desc por fecha) |
+| `saveInquiry(data)` | async | Guardar nueva consulta |
+| `updateInquiry(id, data)` | async | Actualizar (ej: marcar leida) |
+| `deleteInquiry(id)` | async | Eliminar consulta |
+| `onInquiriesChange(callback)` | listener | Real-time |
+
+### Reviews
+| Funcion | Tipo | Descripcion |
+|---|---|---|
+| `fetchReviews(pieceSlug)` | async | Reviews aprobadas de una pieza |
+| `fetchAllReviews()` | async | Todas (admin) |
+| `submitReview(data)` | async | Enviar review (approved: false) |
+| `approveReview(id)` | async | Aprobar review |
+| `deleteReview(id)` | async | Eliminar review |
+| `onReviewsChange(slug, callback)` | listener | Real-time por pieza |
+
+### Otros
+| Funcion | Tipo | Descripcion |
+|---|---|---|
+| `addSubscription(email)` | async | Suscribir email a newsletter |
+| `isFirestoreAvailable()` | async | Health check |
+
+---
+
+## 10. Admin DB — Sistema de Eventos (`js/admin/db.js`)
+
+El admin database expone un sistema de eventos para que las paginas reaccionen a cambios en tiempo real:
+
+```javascript
+// Suscribirse a cambios
+adminDb.on('pieces', (pieces) => { /* re-render tabla */ });
+adminDb.on('collections', (collections) => { /* re-render */ });
+adminDb.on('inquiries', (inquiries) => { /* re-render */ });
+adminDb.on('stats', (stats) => { /* actualizar contadores */ });
+
+// Operaciones CRUD (todas async)
+await adminDb.savePiece(data);
+await adminDb.deletePiece(id);
+await adminDb.saveCollection(data);
+await adminDb.deleteCollection(id);
+await adminDb.markRead(id, true);
+await adminDb.deleteInquiry(id);
+
+// Getters (sincrono, datos en memoria actualizados por listeners)
+adminDb.getAllPieces();
+adminDb.getAllCollections();
+adminDb.getInquiries();
+adminDb.getStats();
+```
+
+---
+
+## 11. Firebase CLI — Notas Importantes
 
 ### Multiples cuentas
 El PC del usuario tiene 2 cuentas Firebase CLI:
@@ -232,26 +334,52 @@ En Google Cloud Console > IAM, la cuenta de servicio `111509809378@cloudbuild.gs
 
 ---
 
-## 9. Problemas Resueltos
+## 12. Problemas Resueltos
 
-| Problema | Causa | Solucion |
-|---|---|---|
-| "API key not valid" en login | Key original invalida/corrupta en Google | Rotar key en GCP Console > Credentials |
-| Credenciales visibles en URL del login | Inputs con `name` attrs + form GET | Eliminar `name`, agregar `method="POST"` |
-| Admin pages accesibles sin login | Guards JS tardaban en cargar | Guardia inline con sessionStorage + `display:none` |
-| Build sin API key en GitHub Actions | No habia `.env` en CI | Hardcodear config como fallback en `firebase-config.js` |
-| Deploy falla con "permission denied" | Firebase CLI usaba cuenta equivocada | `firebase login:use bersagliojewelry@gmail.com` |
-| Cloud Functions "missing permission" | Faltaba rol en cuenta de servicio | Agregar rol "Cloud Build Service Agent" en IAM |
-| Sin navegacion en movil | Sidebar `display:none` sin alternativa | Menu hamburguesa con sidebar overlay |
-| Admin solo mostraba 1 pieza | Firestore casi vacio tras eliminar datos estaticos | Se poblo Firestore desde admin; eliminado auto-seed |
-| "Error al guardar pieza" al eliminar imagen | `undefined` pasado a Firestore `setDoc()` (no soporta undefined) | Strip `undefined` en `db.js savePiece()`; usar `[]`/`null` en `piezas.js` |
-| Boton eliminar imagen cerraba modal | Evento propagado al overlay del modal | `e.stopPropagation()` + `e.preventDefault()` en handler |
-| Imagenes del admin no visibles en web publica | Paginas publicas solo renderizan SVG placeholder | Condicional `<img>` con fallback SVG en `featured.js`, `colecciones.js`, `coleccion.js`, `pieza.js` |
-| Web publica no sincronizaba cambios del admin | Sin listeners real-time en paginas publicas | `db.startRealtime()` + `db.onChange()` en `app.js`, `colecciones.js`, `coleccion.js` |
+| # | Problema | Causa | Solucion | Fecha |
+|---|---|---|---|---|
+| 1 | "API key not valid" en login | Key original invalida/corrupta | Rotar key en GCP Console > Credentials | 25/mar |
+| 2 | Credenciales visibles en URL del login | Inputs con `name` attrs + form GET | Eliminar `name`, agregar `method="POST"` | 25/mar |
+| 3 | Admin pages accesibles sin login | Guards JS tardaban en cargar | Guardia inline con sessionStorage + `display:none` | 25/mar |
+| 4 | Build sin API key en GitHub Actions | No habia `.env` en CI | Hardcodear config como fallback en `firebase-config.js` | 25/mar |
+| 5 | Deploy falla con "permission denied" | Firebase CLI usaba cuenta equivocada | `firebase login:use bersagliojewelry@gmail.com` | 25/mar |
+| 6 | Cloud Functions "missing permission" | Faltaba rol en cuenta de servicio | Agregar rol "Cloud Build Service Agent" en IAM | 25/mar |
+| 7 | Sin navegacion en movil | Sidebar `display:none` sin alternativa | Menu hamburguesa con sidebar overlay | 26/mar |
+| 8 | Consultas eliminadas reaparecen en movil | localStorage aislado por dispositivo | Reescribir db.js para usar Firestore como fuente unica | 30/mar |
+| 9 | Datos demo (Maria, Carlos, Sofia) | `_seedInquiries()` creaba datos al vaciar localStorage | Eliminar seed de datos demo, Firestore-only | 30/mar |
+| 10 | Admin solo mostraba 1 pieza | Datos estaban en catalogo estatico, no en Firestore | Migracion automatica de catalogo a Firestore | 30/mar |
+| 11 | Boton eliminar imagen cerraba modal | Evento click propagaba al padre | `stopPropagation()` + `preventDefault()` en handler | 30/mar |
+| 12 | Web no sincronizaba con cambios del admin | Web usaba datos estaticos sin listeners | Activar `startRealtime()` + `onChange()` en paginas publicas | 30/mar |
+| 13 | 700+ lineas de datos estaticos duplicados | Piezas/colecciones hardcodeadas en catalog.js | Eliminar datos estaticos, Firestore es fuente unica | 30/mar |
+| 14 | "Error al guardar pieza" al eliminar imagen | `undefined` pasado a `setDoc()` | Strip `undefined` en `db.js savePiece()`; usar `[]`/`null` | 31/mar |
+| 15 | Imagenes del admin no visibles en web | Paginas publicas solo mostraban SVG placeholder | Condicional `<img>` con fallback SVG en 4 archivos | 31/mar |
 
 ---
 
-## 10. Arquitectura Firestore-Only (sin datos estaticos)
+## 13. Portafolio Digital / Lookbook (NUEVO - 31/mar)
+
+Seccion interactiva tipo libro en homepage (antes de "Piezas que definen momentos"):
+- **Componente**: `js/components/lookbook.js`
+- **Contenedor HTML**: `<section id="portafolio">` → `<div id="lookbook">` en `index.html`
+- **Datos**: Todas las piezas organizadas por coleccion desde Firestore
+- **UX**: Tabs por coleccion + viewport con pagina izquierda (intro coleccion) y derecha (grid de piezas)
+- **Navegacion**: Tabs, botones prev/next, flechas teclado, swipe tactil
+- **Real-time**: Se re-renderiza automaticamente via `db.onChange()`
+- **CSS**: Seccion completa al final de `css/style.css`
+
+### Componentes de imagenes en web publica
+| Archivo | Seccion | Imagen class |
+|---|---|---|
+| `js/components/lookbook.js` | Homepage "Portafolio Digital" | `.lookbook-piece-img img` |
+| `js/components/featured.js` | Homepage "Piezas que definen momentos" | `.piece-img` |
+| `js/components/collections.js` | Homepage colecciones horizontal | N/A (iconos SVG) |
+| `js/colecciones.js` | Pagina `/colecciones.html` grid | `.piece-img` |
+| `js/coleccion.js` | Pagina individual de coleccion | `.piece-card-img-real` |
+| `js/pieza.js` | Detalle de pieza + galeria thumbnails | `.pieza-img`, `.pieza-thumb` |
+
+---
+
+## 14. Arquitectura Firestore-Only (sin datos estaticos)
 
 ### Principio
 **El panel admin es la unica fuente de verdad.** No hay datos hardcoded en el codigo.
@@ -295,48 +423,20 @@ adminDb.on(event, callback)   // Suscribir: 'pieces', 'collections', 'inquiries'
 
 ---
 
-## 11. Componentes de la Pagina Publica
+## 15. Pendientes / Proximos Pasos
 
-### Imagenes en piezas
-Las imagenes se renderizan condicionalmente en todas las paginas:
-```javascript
-${piece.image
-    ? `<img src="${piece.image}" alt="${piece.name}" class="piece-img" loading="lazy">`
-    : `<div class="piece-placeholder">...</div>`}
-```
-
-### Archivos de renderizado
-| Archivo | Seccion | Imagen class |
-|---|---|---|
-| `js/components/featured.js` | Homepage "Piezas que definen momentos" | `.piece-img` |
-| `js/components/lookbook.js` | Homepage "Portafolio Digital" (lookbook interactivo) | `.lookbook-piece-img img` |
-| `js/components/collections.js` | Homepage colecciones horizontal | N/A (iconos SVG) |
-| `js/colecciones.js` | Pagina `/colecciones.html` grid | `.piece-img` |
-| `js/coleccion.js` | Pagina individual de coleccion | `.piece-card-img-real` |
-| `js/pieza.js` | Detalle de pieza + galeria thumbnails | `.pieza-img`, `.pieza-thumb` |
-
-### Portafolio Digital / Lookbook (NUEVO)
-Seccion interactiva tipo libro en homepage (antes de "Piezas que definen momentos"):
-- **Componente**: `js/components/lookbook.js`
-- **Contenedor HTML**: `<div id="lookbook">` en `index.html`
-- **Datos**: Todas las piezas organizadas por coleccion desde Firestore
-- **UX**: Tabs por coleccion + viewport con pagina izquierda (intro coleccion) y derecha (grid de piezas)
-- **Navegacion**: Tabs, botones prev/next, flechas teclado, swipe tactil
-- **Real-time**: Se re-renderiza automaticamente via `db.onChange()`
-
----
-
-## 12. Pendientes / Proximos Pasos
-
-- [ ] Favicon.ico — El navegador muestra 404 para `/favicon.ico`. Agregar un `favicon.ico` en `public/`
+- [ ] Favicon.ico — El navegador muestra 404. Agregar `favicon.ico` en `public/`
 - [ ] Configurar GitHub Secrets para el build de CI (actualmente usa fallbacks hardcoded)
+- [ ] Considerar mover brand, contact y services a Firestore (gestionables desde admin)
 - [ ] Considerar upgrade de Node.js 20 a 22 antes de oct 2026 (deprecation)
-- [ ] Vincular Firebase Hosting con el dominio custom `bersagliojewelry.co` (opcional, actualmente usa GitHub Pages)
+- [ ] Vincular Firebase Hosting con dominio custom (opcional, actualmente usa GitHub Pages)
 - [ ] Convertir "Piezas que definen momentos" a mostrar solo piezas marcadas como "destacadas" desde admin
+- [x] ~~Probar subida de imagenes desde admin (drag & drop)~~ — Funcional
+- [x] ~~Verificar imagenes en web publica~~ — Resuelto (PR #53)
 
 ---
 
-## 13. Datos de Contacto y Cuentas
+## 16. Datos de Contacto y Cuentas
 
 | Servicio | Cuenta |
 |---|---|

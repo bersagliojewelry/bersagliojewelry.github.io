@@ -175,8 +175,8 @@ export async function requireAuth(minRole = 'editor') {
     await waitForAuth();
 
     if (!_currentUser) {
+        sessionStorage.removeItem('bj_auth');
         window.location.replace('admin-login.html');
-        // Throw to stop further execution in the calling function
         throw new Error('Not authenticated');
     }
 

@@ -7905,8 +7905,8 @@ nav .logo-badge {
 
 
 /* ═══════════════════════════════════════════════════════════════
-   DIGITAL PORTFOLIO / LOOKBOOK V3
-   Realistic page-flip using StPageFlip — premium book experience
+   DIGITAL PORTFOLIO / LOOKBOOK V4
+   StPageFlip — premium book with side arrows, viewport-fit, legible text
    ═══════════════════════════════════════════════════════════════ */
 
 .lookbook-section {
@@ -7925,23 +7925,128 @@ nav .logo-badge {
     pointer-events: none;
 }
 
-/* ── Wrapper ───────────────────────────────────── */
+/* Fix #1: Section header text — high contrast on dark bg */
+.lookbook-section .section-title {
+    color: #fff !important;
+}
+
+.lookbook-section .section-desc {
+    color: rgba(255,255,255,0.7) !important;
+}
+
+/* ── Layout: arrows on sides, book in center ───── */
 .pf-wrapper {
-    margin-top: var(--space-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: var(--space-lg);
+    position: relative;
+}
+
+/* Fix #2: Side arrow buttons */
+.pf-side-btn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 1px solid rgba(201,169,110,0.2);
+    background: rgba(201,169,110,0.06);
+    color: var(--gold);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 5;
+}
+
+.pf-side-btn:hover {
+    background: rgba(201,169,110,0.15);
+    border-color: var(--gold);
+    transform: scale(1.1);
+}
+
+.pf-side-btn:active {
+    transform: scale(0.95);
+}
+
+/* ── Book area — constrained to viewport ───────── */
+.pf-book-area {
+    flex: 1;
+    max-width: 1100px;
+    /* Fix #5: book height fits within viewport */
+    max-height: 62vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pf-book {
+    width: 100%;
+}
+
+/* ── Page pagination below book ────────────────── */
+.pf-pagination {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--space-lg);
+    gap: 8px;
+    margin-top: var(--space-md);
 }
 
-/* ── Book container (PageFlip mounts here) ─────── */
-.pf-book {
-    width: 100%;
-    max-width: 1100px;
-    /* Aspect ratio 3:4 per page = book is wider in landscape (2 pages) */
+/* Fix #2: Dot navigation for quick page access */
+.pf-dots {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 400px;
 }
 
-/* ── Every page ────────────────────────────────── */
+.pf-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid rgba(201,169,110,0.25);
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.3s ease;
+}
+
+.pf-dot:hover {
+    border-color: var(--gold);
+    background: rgba(201,169,110,0.2);
+}
+
+.pf-dot.is-active {
+    background: var(--gold);
+    border-color: var(--gold);
+    transform: scale(1.2);
+}
+
+.pf-indicator {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 1px;
+}
+
+.pf-cur {
+    color: var(--gold);
+    font-weight: 500;
+}
+
+.pf-hint {
+    font-size: 0.68rem;
+    color: rgba(201,169,110,0.35);
+    letter-spacing: 1px;
+    text-align: center;
+    margin: 8px 0 0;
+}
+
+/* ═══ PAGE STYLES ══════════════════════════════════ */
+
 .pf-page {
     background: #faf8f4;
     overflow: hidden;
@@ -7955,7 +8060,7 @@ nav .logo-badge {
     box-sizing: border-box;
 }
 
-/* Subtle paper texture */
+/* Subtle paper texture lines */
 .pf-page::before {
     content: '';
     position: absolute;
@@ -7964,30 +8069,30 @@ nav .logo-badge {
         repeating-linear-gradient(
             0deg,
             transparent,
-            transparent 28px,
-            rgba(0,0,0,0.012) 28px,
-            rgba(0,0,0,0.012) 29px
+            transparent 30px,
+            rgba(0,0,0,0.01) 30px,
+            rgba(0,0,0,0.01) 31px
         );
     pointer-events: none;
     z-index: 1;
 }
 
-/* Page frame — subtle border inside the page */
+/* Page inner frame */
 .pf-page-frame {
     flex: 1;
     display: flex;
     flex-direction: column;
-    margin: 20px;
-    border: 1px solid rgba(180,160,120,0.15);
-    padding: 20px;
+    margin: 16px;
+    border: 1px solid rgba(180,160,120,0.12);
+    padding: 16px;
     position: relative;
 }
 
-/* Page number */
+/* Page number — Fix #1: legible dark color on cream bg */
 .pf-page-num {
     font-family: var(--font-display);
-    font-size: 0.7rem;
-    color: rgba(140,120,90,0.4);
+    font-size: 0.65rem;
+    color: #a09080;
     letter-spacing: 3px;
     text-align: center;
     display: block;
@@ -7995,10 +8100,10 @@ nav .logo-badge {
 
 .pf-page-num-bottom {
     margin-top: auto;
-    padding-top: 12px;
+    padding-top: 8px;
 }
 
-/* ── COVER PAGE ────────────────────────────────── */
+/* ═══ COVER (front & back) — dark with gold ═══════ */
 .pf-cover,
 .pf-back {
     background: linear-gradient(160deg, #1a1814 0%, #0e0d0b 100%);
@@ -8006,7 +8111,7 @@ nav .logo-badge {
 
 .pf-cover::before,
 .pf-back::before {
-    display: none; /* no paper texture on covers */
+    display: none;
 }
 
 .pf-cover-content,
@@ -8015,14 +8120,14 @@ nav .logo-badge {
     align-items: center;
     justify-content: center;
     height: 100%;
-    padding: 24px;
+    padding: 20px;
 }
 
 .pf-cover-border {
-    border: 1px solid rgba(201,169,110,0.2);
-    padding: 32px 24px;
+    border: 1px solid rgba(201,169,110,0.25);
+    padding: 24px 20px;
     width: 100%;
-    height: calc(100% - 48px);
+    height: calc(100% - 40px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -8033,28 +8138,29 @@ nav .logo-badge {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
 .pf-cover-line {
-    width: 60px;
+    width: 50px;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(201,169,110,0.4), transparent);
+    background: linear-gradient(90deg, transparent, rgba(201,169,110,0.5), transparent);
 }
 
+/* Fix #1: Cover text — bright white and gold, clearly readable */
 .pf-cover-eyebrow {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     text-transform: uppercase;
     letter-spacing: 4px;
-    color: rgba(201,169,110,0.6);
+    color: #c9a96e;
     font-weight: 500;
 }
 
 .pf-cover-title {
     font-family: var(--font-display);
-    font-size: clamp(1.4rem, 4vw, 2.2rem);
+    font-size: clamp(1.3rem, 3.5vw, 2rem);
     font-weight: 300;
-    color: var(--ivory);
+    color: #ffffff;
     letter-spacing: 3px;
     line-height: 1.3;
     text-transform: uppercase;
@@ -8062,59 +8168,95 @@ nav .logo-badge {
 
 .pf-cover-year {
     font-family: var(--font-display);
-    font-size: 0.9rem;
-    color: var(--gold);
+    font-size: 0.85rem;
+    color: #c9a96e;
     letter-spacing: 6px;
     font-weight: 300;
 }
 
 .pf-cover-tagline {
-    font-size: 0.7rem;
-    color: rgba(201,169,110,0.5);
+    font-size: 0.65rem;
+    color: #c9a96e;
     letter-spacing: 2px;
     text-transform: uppercase;
+    opacity: 0.7;
 }
 
-/* ── BACK COVER ────────────────────────────────── */
+/* ═══ BACK COVER ═══════════════════════════════════ */
 .pf-back-brand {
     font-family: var(--font-display);
-    font-size: 1.2rem;
-    color: var(--ivory);
+    font-size: 1.1rem;
+    color: #ffffff;
     letter-spacing: 3px;
     text-transform: uppercase;
 }
 
 .pf-back-text {
-    font-size: 0.78rem;
-    color: rgba(201,169,110,0.5);
+    font-size: 0.75rem;
+    color: #c9a96e;
     letter-spacing: 2px;
 }
 
 .pf-back-cta {
     display: inline-block;
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     font-weight: 500;
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: var(--gold);
+    color: #c9a96e;
     text-decoration: none;
-    padding: 8px 20px;
-    border: 1px solid rgba(201,169,110,0.3);
+    padding: 8px 18px;
+    border: 1px solid rgba(201,169,110,0.35);
     border-radius: 30px;
     transition: all 0.3s ease;
 }
 
 .pf-back-cta:hover {
-    background: rgba(201,169,110,0.1);
-    border-color: var(--gold);
+    background: rgba(201,169,110,0.12);
+    border-color: #c9a96e;
 }
 
-/* ── BLANK PAGE ────────────────────────────────── */
-.pf-blank {
-    background: #faf8f4;
+/* ═══ FIN PAGE (no more blank) — Fix #4 ═══════════ */
+.pf-fin .pf-page-frame {
+    align-items: center;
+    justify-content: center;
 }
 
-/* ── COLLECTION INTRO PAGE ─────────────────────── */
+.pf-fin-body {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.pf-fin-text {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    color: #5a5040;
+    line-height: 1.6;
+    font-weight: 300;
+}
+
+.pf-fin-cta {
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #8a7040;
+    text-decoration: none;
+    padding: 8px 20px;
+    border: 1px solid rgba(160,130,70,0.3);
+    border-radius: 30px;
+    transition: all 0.3s ease;
+}
+
+.pf-fin-cta:hover {
+    background: rgba(160,130,70,0.08);
+    border-color: #8a7040;
+}
+
+/* ═══ COLLECTION INTRO — Fix #1: dark legible text on cream ═══ */
 .pf-intro .pf-page-frame {
     align-items: center;
     justify-content: center;
@@ -8125,114 +8267,98 @@ nav .logo-badge {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
-    max-width: 320px;
+    gap: 8px;
+    max-width: 300px;
 }
 
 .pf-intro-ornament {
-    font-size: 0.8rem;
-    color: rgba(180,160,120,0.3);
+    font-size: 0.7rem;
+    color: #b09060;
     letter-spacing: 6px;
 }
 
 .pf-intro-title {
     font-family: var(--font-display);
-    font-size: clamp(1.3rem, 3.5vw, 2rem);
-    font-weight: 300;
-    color: #2a2520;
+    font-size: clamp(1.2rem, 3vw, 1.8rem);
+    font-weight: 400;
+    color: #2a2218;
     letter-spacing: 2px;
     text-transform: uppercase;
     line-height: 1.2;
 }
 
 .pf-intro-sub {
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     text-transform: uppercase;
     letter-spacing: 3px;
-    color: rgba(160,130,70,0.8);
+    color: #8a7040;
     font-weight: 500;
 }
 
 .pf-intro-desc {
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     line-height: 1.7;
-    color: #6b6055;
-    margin: 4px 0;
+    color: #5a5040;
 }
 
 .pf-intro-count {
-    font-size: 0.68rem;
+    font-size: 0.62rem;
     text-transform: uppercase;
     letter-spacing: 3px;
-    color: rgba(140,120,90,0.5);
+    color: #a09070;
 }
 
-/* ── GALLERY PAGE ──────────────────────────────── */
+/* ═══ GALLERY PAGE ═════════════════════════════════ */
 .pf-gallery-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 10px;
-    border-bottom: 1px solid rgba(180,160,120,0.12);
-    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(180,160,120,0.1);
+    margin-bottom: 10px;
 }
 
 .pf-gallery-colname {
     font-family: var(--font-display);
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     font-weight: 400;
-    color: #8a7e6e;
+    color: #6b6050;
     letter-spacing: 2px;
     text-transform: uppercase;
 }
 
 .pf-gallery-pag {
-    font-size: 0.65rem;
-    color: rgba(140,120,90,0.4);
+    font-size: 0.6rem;
+    color: #a09080;
     letter-spacing: 2px;
 }
 
-/* Grid: adapts to 1-4 pieces without scrollbar */
 .pf-gallery-grid {
     flex: 1;
     display: grid;
-    gap: 10px;
+    gap: 8px;
     align-content: start;
-    padding: 4px 0;
 }
 
-.pf-grid-1 {
-    grid-template-columns: 1fr;
-    max-width: 220px;
-    margin: 0 auto;
-}
+.pf-grid-1 { grid-template-columns: 1fr; max-width: 200px; margin: 0 auto; }
+.pf-grid-2 { grid-template-columns: repeat(2, 1fr); }
+.pf-grid-3 { grid-template-columns: repeat(2, 1fr); }
+.pf-grid-4 { grid-template-columns: repeat(2, 1fr); }
 
-.pf-grid-2 {
-    grid-template-columns: repeat(2, 1fr);
-}
-
-.pf-grid-3 {
-    grid-template-columns: repeat(2, 1fr);
-}
-
-.pf-grid-4 {
-    grid-template-columns: repeat(2, 1fr);
-}
-
-/* ── Piece card (inside portfolio pages) ───────── */
+/* ═══ PIECE CARD ═══════════════════════════════════ */
 .pf-piece {
     display: block;
     text-decoration: none;
-    border-radius: 6px;
+    border-radius: 4px;
     overflow: hidden;
     background: #f0ece4;
-    border: 1px solid rgba(180,160,120,0.12);
+    border: 1px solid rgba(180,160,120,0.1);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .pf-piece:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .pf-piece-img {
@@ -8249,11 +8375,6 @@ nav .logo-badge {
     height: 100%;
     object-fit: cover;
     display: block;
-    transition: transform 0.5s ease;
-}
-
-.pf-piece:hover .pf-piece-img img {
-    transform: scale(1.05);
 }
 
 .pf-piece-empty {
@@ -8265,21 +8386,22 @@ nav .logo-badge {
 }
 
 .pf-piece-empty svg {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     color: rgba(180,160,120,0.2);
 }
 
+/* Fix #1: Piece text — dark color on cream background */
 .pf-piece-info {
-    padding: 8px 10px;
+    padding: 6px 8px;
 }
 
 .pf-piece-name {
     display: block;
     font-family: var(--font-display);
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     font-weight: 400;
-    color: #3a3530;
+    color: #2a2218;
     line-height: 1.3;
     white-space: nowrap;
     overflow: hidden;
@@ -8288,146 +8410,104 @@ nav .logo-badge {
 
 .pf-piece-price {
     display: block;
-    font-size: 0.62rem;
-    color: rgba(160,130,70,0.8);
-    margin-top: 2px;
+    font-size: 0.58rem;
+    color: #8a7040;
+    margin-top: 1px;
     letter-spacing: 0.5px;
 }
 
-/* ── Navigation controls ───────────────────────── */
-.pf-controls {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 24px;
+/* ═══ PageFlip library overrides ═══════════════════ */
+.stf__parent {
+    margin: 0 auto;
+    /* Fix #5: constrain to viewport */
+    max-height: 62vh;
 }
 
-.pf-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    border: 1px solid rgba(201,169,110,0.2);
-    background: rgba(201,169,110,0.05);
-    color: var(--gold);
-    cursor: pointer;
-    transition: all 0.3s ease;
+/* Drop shadow on the Canvas rendered book */
+.stf__parent canvas {
+    filter: drop-shadow(0 6px 24px rgba(0,0,0,0.35));
 }
 
-.pf-btn:hover {
-    background: rgba(201,169,110,0.12);
-    border-color: var(--gold);
-    transform: scale(1.08);
+/* ═══ RESPONSIVE ═══════════════════════════════════ */
+@media (max-width: 1024px) {
+    .pf-side-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .pf-wrapper {
+        gap: 8px;
+    }
 }
 
-.pf-btn:active {
-    transform: scale(0.95);
-}
-
-.pf-indicator {
-    font-size: 0.78rem;
-    color: var(--text-on-dark-muted);
-    letter-spacing: 1px;
-}
-
-.pf-cur {
-    color: var(--gold);
-    font-weight: 500;
-}
-
-.pf-hint {
-    font-size: 0.7rem;
-    color: rgba(201,169,110,0.3);
-    letter-spacing: 1px;
-    text-align: center;
-    margin: 0;
-}
-
-/* ── Responsive ────────────────────────────────── */
 @media (max-width: 768px) {
-    .pf-book {
-        max-width: 100%;
+    .pf-side-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    .pf-side-btn svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .pf-wrapper {
+        gap: 4px;
+    }
+
+    .pf-book-area {
+        max-height: 55vh;
+    }
+
+    .stf__parent {
+        max-height: 55vh;
     }
 
     .pf-page-frame {
-        margin: 12px;
-        padding: 14px;
+        margin: 10px;
+        padding: 12px;
     }
 
     .pf-cover-border {
-        padding: 20px 16px;
+        padding: 16px 12px;
     }
 
-    .pf-cover-title {
-        font-size: 1.3rem;
+    .pf-dots {
+        max-width: 280px;
     }
 
-    .pf-intro-title {
-        font-size: 1.2rem;
-    }
-
-    .pf-gallery-grid {
-        gap: 8px;
-    }
-
-    .pf-piece-info {
-        padding: 6px 8px;
-    }
-
-    .pf-piece-name {
-        font-size: 0.65rem;
-    }
-
-    .pf-controls {
-        gap: 16px;
-    }
-
-    .pf-btn {
-        width: 42px;
-        height: 42px;
+    .pf-dot {
+        width: 8px;
+        height: 8px;
     }
 }
 
 @media (max-width: 480px) {
+    .pf-side-btn {
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: rgba(201,169,110,0.08);
+    }
+
     .pf-page-frame {
-        margin: 8px;
-        padding: 10px;
+        margin: 6px;
+        padding: 8px;
     }
 
     .pf-gallery-grid {
-        gap: 6px;
-    }
-
-    .pf-grid-3,
-    .pf-grid-4 {
-        grid-template-columns: repeat(2, 1fr);
+        gap: 5px;
     }
 
     .pf-piece-info {
-        padding: 5px 6px;
+        padding: 4px 5px;
     }
 
     .pf-piece-name {
-        font-size: 0.6rem;
+        font-size: 0.58rem;
     }
 
-    .pf-piece-price {
-        font-size: 0.55rem;
+    .pf-intro-title {
+        font-size: 1rem;
     }
-
-    .pf-hint {
-        font-size: 0.6rem;
-    }
-}
-
-/* ── PageFlip library overrides ────────────────── */
-.stf__parent {
-    margin: 0 auto;
-}
-
-/* Ensure the book shadow looks premium */
-.stf__parent canvas {
-    filter: drop-shadow(0 8px 32px rgba(0,0,0,0.4));
 }

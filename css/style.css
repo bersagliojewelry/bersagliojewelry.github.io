@@ -7905,8 +7905,8 @@ nav .logo-badge {
 
 
 /* ═══════════════════════════════════════════════════════════════
-   DIGITAL PORTFOLIO / LOOKBOOK V2
-   Premium page-turning experience with 3D flip animations
+   DIGITAL PORTFOLIO / LOOKBOOK V3
+   Realistic page-flip using StPageFlip — premium book experience
    ═══════════════════════════════════════════════════════════════ */
 
 .lookbook-section {
@@ -7925,117 +7925,110 @@ nav .logo-badge {
     pointer-events: none;
 }
 
-/* ── Book container ────────────────────────────── */
-.lb-book {
-    position: relative;
+/* ── Wrapper ───────────────────────────────────── */
+.pf-wrapper {
     margin-top: var(--space-xl);
-    outline: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-lg);
 }
 
-/* ── 3D Scene ──────────────────────────────────── */
-.lb-scene {
-    perspective: 1800px;
-    position: relative;
-    overflow: hidden;
-    border-radius: 16px;
-    background: linear-gradient(160deg, #111 0%, #0a0a08 100%);
-    border: 1px solid rgba(201,169,110,0.08);
-    box-shadow:
-        0 20px 60px rgba(0,0,0,0.5),
-        0 0 0 1px rgba(201,169,110,0.05),
-        inset 0 1px 0 rgba(255,255,255,0.02);
-    min-height: 480px;
-}
-
-.lb-pages-track {
-    position: relative;
+/* ── Book container (PageFlip mounts here) ─────── */
+.pf-book {
     width: 100%;
-    min-height: 480px;
+    max-width: 1100px;
+    /* Aspect ratio 3:4 per page = book is wider in landscape (2 pages) */
 }
 
-/* ── Individual page ───────────────────────────── */
-.lb-page {
+/* ── Every page ────────────────────────────────── */
+.pf-page {
+    background: #faf8f4;
+    overflow: hidden;
+}
+
+.pf-page-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+/* Subtle paper texture */
+.pf-page::before {
+    content: '';
     position: absolute;
     inset: 0;
+    background:
+        repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 28px,
+            rgba(0,0,0,0.012) 28px,
+            rgba(0,0,0,0.012) 29px
+        );
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Page frame — subtle border inside the page */
+.pf-page-frame {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin: 20px;
+    border: 1px solid rgba(180,160,120,0.15);
+    padding: 20px;
+    position: relative;
+}
+
+/* Page number */
+.pf-page-num {
+    font-family: var(--font-display);
+    font-size: 0.7rem;
+    color: rgba(140,120,90,0.4);
+    letter-spacing: 3px;
+    text-align: center;
+    display: block;
+}
+
+.pf-page-num-bottom {
+    margin-top: auto;
+    padding-top: 12px;
+}
+
+/* ── COVER PAGE ────────────────────────────────── */
+.pf-cover,
+.pf-back {
+    background: linear-gradient(160deg, #1a1814 0%, #0e0d0b 100%);
+}
+
+.pf-cover::before,
+.pf-back::before {
+    display: none; /* no paper texture on covers */
+}
+
+.pf-cover-content,
+.pf-back-content {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: clamp(24px, 5vw, 60px);
-    opacity: 0;
-    pointer-events: none;
-    transform-origin: center center;
-    will-change: transform, opacity;
-    backface-visibility: hidden;
+    height: 100%;
+    padding: 24px;
 }
 
-.lb-page.is-active {
-    opacity: 1;
-    pointer-events: auto;
-    transform: none;
-    z-index: 2;
-}
-
-/* ── Page-turn animations ──────────────────────── */
-
-/* Leaving to the left (next) — page flips away */
-.lb-page.is-leaving-left {
-    animation: pageTurnOut 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    z-index: 3;
-}
-
-/* Leaving to the right (prev) — page flips back */
-.lb-page.is-leaving-right {
-    animation: pageTurnOutReverse 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    z-index: 3;
-}
-
-/* Entering from the right (next) — new page slides in */
-.lb-page.is-entering-right {
-    animation: pageTurnIn 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    z-index: 1;
-    pointer-events: none;
-}
-
-/* Entering from the left (prev) — page comes back */
-.lb-page.is-entering-left {
-    animation: pageTurnInReverse 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    z-index: 1;
-    pointer-events: none;
-}
-
-@keyframes pageTurnOut {
-    0%   { opacity: 1; transform: rotateY(0deg)   scale(1);    }
-    40%  { opacity: 1; transform: rotateY(-25deg)  scale(0.96); }
-    100% { opacity: 0; transform: rotateY(-90deg)  scale(0.88); }
-}
-
-@keyframes pageTurnOutReverse {
-    0%   { opacity: 1; transform: rotateY(0deg)   scale(1);    }
-    40%  { opacity: 1; transform: rotateY(25deg)   scale(0.96); }
-    100% { opacity: 0; transform: rotateY(90deg)   scale(0.88); }
-}
-
-@keyframes pageTurnIn {
-    0%   { opacity: 0; transform: rotateY(60deg)   scale(0.9);  }
-    50%  { opacity: 0.6; transform: rotateY(15deg) scale(0.97); }
-    100% { opacity: 1; transform: rotateY(0deg)    scale(1);    }
-}
-
-@keyframes pageTurnInReverse {
-    0%   { opacity: 0; transform: rotateY(-60deg)  scale(0.9);  }
-    50%  { opacity: 0.6; transform: rotateY(-15deg) scale(0.97); }
-    100% { opacity: 1; transform: rotateY(0deg)    scale(1);    }
-}
-
-/* ── Page inner ────────────────────────────────── */
-.lb-page-inner {
+.pf-cover-border {
+    border: 1px solid rgba(201,169,110,0.2);
+    padding: 32px 24px;
     width: 100%;
-    max-width: 720px;
-    margin: 0 auto;
+    height: calc(100% - 48px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* ── COVER PAGE (collection intro) ─────────────── */
-.lb-cover .lb-page-inner {
+.pf-cover-inner {
     text-align: center;
     display: flex;
     flex-direction: column;
@@ -8043,187 +8036,227 @@ nav .logo-badge {
     gap: 12px;
 }
 
-.lb-cover-ornament {
-    width: 120px;
-    color: rgba(201,169,110,0.25);
-    margin: 8px 0;
+.pf-cover-line {
+    width: 60px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(201,169,110,0.4), transparent);
 }
 
-.lb-cover-ornament svg {
-    width: 100%;
-    display: block;
-}
-
-.lb-page-number {
-    font-family: var(--font-display);
-    font-size: clamp(2rem, 5vw, 4rem);
-    font-weight: 200;
-    color: rgba(201,169,110,0.1);
-    line-height: 1;
+.pf-cover-eyebrow {
+    font-size: 0.65rem;
+    text-transform: uppercase;
     letter-spacing: 4px;
+    color: rgba(201,169,110,0.6);
+    font-weight: 500;
 }
 
-.lb-cover-title {
+.pf-cover-title {
     font-family: var(--font-display);
-    font-size: clamp(1.6rem, 4vw, 2.6rem);
+    font-size: clamp(1.4rem, 4vw, 2.2rem);
     font-weight: 300;
     color: var(--ivory);
     letter-spacing: 3px;
+    line-height: 1.3;
     text-transform: uppercase;
 }
 
-.lb-cover-subtitle {
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    color: var(--gold);
-    font-weight: 500;
-}
-
-.lb-cover-desc {
-    font-size: 0.92rem;
-    line-height: 1.8;
-    color: var(--text-on-dark-muted);
-    max-width: 420px;
-}
-
-.lb-cover-meta {
-    margin-top: 4px;
-}
-
-.lb-cover-count {
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    color: rgba(201,169,110,0.4);
-}
-
-.lb-cover-cta {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.78rem;
-    font-weight: 500;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--gold);
-    text-decoration: none;
-    padding: 10px 24px;
-    border: 1px solid rgba(201,169,110,0.25);
-    border-radius: 40px;
-    margin-top: 8px;
-    transition: all 0.4s ease;
-}
-
-.lb-cover-cta:hover {
-    background: rgba(201,169,110,0.1);
-    border-color: var(--gold);
-    gap: 12px;
-}
-
-/* ── GALLERY PAGE (pieces grid) ────────────────── */
-.lb-gallery .lb-page-inner {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    height: 100%;
-}
-
-.lb-gallery-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 12px;
-    border-bottom: 1px solid rgba(201,169,110,0.08);
-}
-
-.lb-gallery-col-name {
+.pf-cover-year {
     font-family: var(--font-display);
     font-size: 0.9rem;
-    font-weight: 400;
-    color: var(--ivory);
+    color: var(--gold);
+    letter-spacing: 6px;
+    font-weight: 300;
+}
+
+.pf-cover-tagline {
+    font-size: 0.7rem;
+    color: rgba(201,169,110,0.5);
     letter-spacing: 2px;
     text-transform: uppercase;
 }
 
-.lb-gallery-pagination {
-    font-size: 0.72rem;
+/* ── BACK COVER ────────────────────────────────── */
+.pf-back-brand {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    color: var(--ivory);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+.pf-back-text {
+    font-size: 0.78rem;
     color: rgba(201,169,110,0.5);
     letter-spacing: 2px;
 }
 
-/* Adaptive grid: 1-4 pieces, always fills the space nicely */
-.lb-gallery-grid {
-    display: grid;
-    gap: 16px;
-    flex: 1;
-    align-content: center;
+.pf-back-cta {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    text-decoration: none;
+    padding: 8px 20px;
+    border: 1px solid rgba(201,169,110,0.3);
+    border-radius: 30px;
+    transition: all 0.3s ease;
 }
 
-.lb-grid-1 { grid-template-columns: 1fr; max-width: 360px; margin: 0 auto; }
-.lb-grid-2 { grid-template-columns: repeat(2, 1fr); }
-.lb-grid-3 { grid-template-columns: repeat(3, 1fr); }
-.lb-grid-4 { grid-template-columns: repeat(2, 1fr); }
+.pf-back-cta:hover {
+    background: rgba(201,169,110,0.1);
+    border-color: var(--gold);
+}
 
-/* ── Piece card (inside lookbook) ──────────────── */
-.lb-piece {
+/* ── BLANK PAGE ────────────────────────────────── */
+.pf-blank {
+    background: #faf8f4;
+}
+
+/* ── COLLECTION INTRO PAGE ─────────────────────── */
+.pf-intro .pf-page-frame {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.pf-intro-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    max-width: 320px;
+}
+
+.pf-intro-ornament {
+    font-size: 0.8rem;
+    color: rgba(180,160,120,0.3);
+    letter-spacing: 6px;
+}
+
+.pf-intro-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.3rem, 3.5vw, 2rem);
+    font-weight: 300;
+    color: #2a2520;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+
+.pf-intro-sub {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: rgba(160,130,70,0.8);
+    font-weight: 500;
+}
+
+.pf-intro-desc {
+    font-size: 0.82rem;
+    line-height: 1.7;
+    color: #6b6055;
+    margin: 4px 0;
+}
+
+.pf-intro-count {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: rgba(140,120,90,0.5);
+}
+
+/* ── GALLERY PAGE ──────────────────────────────── */
+.pf-gallery-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(180,160,120,0.12);
+    margin-bottom: 12px;
+}
+
+.pf-gallery-colname {
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    font-weight: 400;
+    color: #8a7e6e;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.pf-gallery-pag {
+    font-size: 0.65rem;
+    color: rgba(140,120,90,0.4);
+    letter-spacing: 2px;
+}
+
+/* Grid: adapts to 1-4 pieces without scrollbar */
+.pf-gallery-grid {
+    flex: 1;
+    display: grid;
+    gap: 10px;
+    align-content: start;
+    padding: 4px 0;
+}
+
+.pf-grid-1 {
+    grid-template-columns: 1fr;
+    max-width: 220px;
+    margin: 0 auto;
+}
+
+.pf-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.pf-grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.pf-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+/* ── Piece card (inside portfolio pages) ───────── */
+.pf-piece {
     display: block;
     text-decoration: none;
-    border-radius: 12px;
+    border-radius: 6px;
     overflow: hidden;
-    background: rgba(255,255,255,0.015);
-    border: 1px solid rgba(255,255,255,0.04);
-    transition: transform 0.5s cubic-bezier(0.34, 1.2, 0.64, 1),
-                border-color 0.4s ease,
-                box-shadow 0.4s ease;
+    background: #f0ece4;
+    border: 1px solid rgba(180,160,120,0.12);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.lb-piece:hover {
-    transform: translateY(-6px) scale(1.02);
-    border-color: rgba(201,169,110,0.3);
-    box-shadow: 0 12px 36px rgba(0,0,0,0.5), 0 0 20px rgba(201,169,110,0.06);
+.pf-piece:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
 }
 
-.lb-piece-visual {
+.pf-piece-img {
     aspect-ratio: 1;
     overflow: hidden;
-    position: relative;
-    background: linear-gradient(145deg, #0d0d0d, #141210);
+    background: #e8e2d8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.lb-piece-visual img {
+.pf-piece-img img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.6s cubic-bezier(0.34, 1.2, 0.64, 1);
+    display: block;
+    transition: transform 0.5s ease;
 }
 
-.lb-piece:hover .lb-piece-visual img {
-    transform: scale(1.08);
+.pf-piece:hover .pf-piece-img img {
+    transform: scale(1.05);
 }
 
-/* Shine / glare overlay on hover */
-.lb-piece-shine {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-        115deg,
-        transparent 30%,
-        rgba(255,255,255,0.04) 45%,
-        rgba(255,255,255,0.08) 50%,
-        rgba(255,255,255,0.04) 55%,
-        transparent 70%
-    );
-    transform: translateX(-100%);
-    transition: transform 0.8s ease;
-    pointer-events: none;
-}
-
-.lb-piece:hover .lb-piece-shine {
-    transform: translateX(100%);
-}
-
-.lb-piece-placeholder {
+.pf-piece-empty {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -8231,176 +8264,170 @@ nav .logo-badge {
     height: 100%;
 }
 
-.lb-piece-placeholder svg {
-    width: 40px;
-    height: 40px;
-    color: rgba(201,169,110,0.12);
+.pf-piece-empty svg {
+    width: 32px;
+    height: 32px;
+    color: rgba(180,160,120,0.2);
 }
 
-.lb-piece-caption {
-    padding: 14px 16px;
+.pf-piece-info {
+    padding: 8px 10px;
 }
 
-.lb-piece-name {
+.pf-piece-name {
     display: block;
     font-family: var(--font-display);
-    font-size: 0.85rem;
+    font-size: 0.72rem;
     font-weight: 400;
-    color: var(--ivory);
+    color: #3a3530;
     line-height: 1.3;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.lb-piece-price {
+.pf-piece-price {
     display: block;
-    font-size: 0.72rem;
-    color: var(--gold);
-    margin-top: 3px;
+    font-size: 0.62rem;
+    color: rgba(160,130,70,0.8);
+    margin-top: 2px;
     letter-spacing: 0.5px;
 }
 
-/* ── Navigation ────────────────────────────────── */
-.lb-nav {
+/* ── Navigation controls ───────────────────────── */
+.pf-controls {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 24px;
-    margin-top: var(--space-lg);
-    padding: 0 var(--space-md);
 }
 
-.lb-nav-btn {
+.pf-btn {
     display: flex;
     align-items: center;
     justify-content: center;
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    border: 1px solid rgba(201,169,110,0.15);
-    background: rgba(201,169,110,0.04);
+    border: 1px solid rgba(201,169,110,0.2);
+    background: rgba(201,169,110,0.05);
     color: var(--gold);
     cursor: pointer;
-    transition: all 0.35s ease;
-    flex-shrink: 0;
+    transition: all 0.3s ease;
 }
 
-.lb-nav-btn:hover:not(:disabled) {
+.pf-btn:hover {
     background: rgba(201,169,110,0.12);
     border-color: var(--gold);
     transform: scale(1.08);
 }
 
-.lb-nav-btn:active:not(:disabled) {
+.pf-btn:active {
     transform: scale(0.95);
 }
 
-.lb-nav-btn:disabled {
-    opacity: 0.2;
-    cursor: default;
-}
-
-.lb-nav-center {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    min-width: 160px;
-}
-
-/* Progress bar */
-.lb-progress {
-    width: 100%;
-    height: 2px;
-    background: rgba(201,169,110,0.1);
-    border-radius: 2px;
-    overflow: hidden;
-}
-
-.lb-progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--gold), rgba(201,169,110,0.6));
-    border-radius: 2px;
-    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.lb-indicator {
-    font-size: 0.75rem;
+.pf-indicator {
+    font-size: 0.78rem;
     color: var(--text-on-dark-muted);
-    letter-spacing: 2px;
+    letter-spacing: 1px;
 }
 
-.lb-indicator-current {
+.pf-cur {
     color: var(--gold);
     font-weight: 500;
 }
 
+.pf-hint {
+    font-size: 0.7rem;
+    color: rgba(201,169,110,0.3);
+    letter-spacing: 1px;
+    text-align: center;
+    margin: 0;
+}
+
 /* ── Responsive ────────────────────────────────── */
 @media (max-width: 768px) {
-    .lb-scene {
-        min-height: 400px;
-        border-radius: 12px;
+    .pf-book {
+        max-width: 100%;
     }
 
-    .lb-pages-track {
-        min-height: 400px;
+    .pf-page-frame {
+        margin: 12px;
+        padding: 14px;
     }
 
-    .lb-page {
-        padding: 24px 16px;
+    .pf-cover-border {
+        padding: 20px 16px;
     }
 
-    .lb-cover-title {
-        font-size: 1.4rem;
-        letter-spacing: 2px;
+    .pf-cover-title {
+        font-size: 1.3rem;
     }
 
-    .lb-cover-desc {
-        font-size: 0.82rem;
+    .pf-intro-title {
+        font-size: 1.2rem;
     }
 
-    .lb-gallery-grid {
-        gap: 10px;
+    .pf-gallery-grid {
+        gap: 8px;
     }
 
-    .lb-grid-3 { grid-template-columns: repeat(2, 1fr); }
-    .lb-grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .pf-piece-info {
+        padding: 6px 8px;
+    }
 
-    .lb-nav {
+    .pf-piece-name {
+        font-size: 0.65rem;
+    }
+
+    .pf-controls {
         gap: 16px;
     }
 
-    .lb-nav-btn {
+    .pf-btn {
         width: 42px;
         height: 42px;
-    }
-
-    .lb-nav-center {
-        min-width: 120px;
     }
 }
 
 @media (max-width: 480px) {
-    .lb-scene {
-        min-height: 360px;
+    .pf-page-frame {
+        margin: 8px;
+        padding: 10px;
     }
 
-    .lb-pages-track {
-        min-height: 360px;
+    .pf-gallery-grid {
+        gap: 6px;
     }
 
-    .lb-grid-2,
-    .lb-grid-3,
-    .lb-grid-4 {
+    .pf-grid-3,
+    .pf-grid-4 {
         grid-template-columns: repeat(2, 1fr);
     }
 
-    .lb-piece-caption {
-        padding: 10px 12px;
+    .pf-piece-info {
+        padding: 5px 6px;
     }
 
-    .lb-piece-name {
-        font-size: 0.75rem;
+    .pf-piece-name {
+        font-size: 0.6rem;
     }
+
+    .pf-piece-price {
+        font-size: 0.55rem;
+    }
+
+    .pf-hint {
+        font-size: 0.6rem;
+    }
+}
+
+/* ── PageFlip library overrides ────────────────── */
+.stf__parent {
+    margin: 0 auto;
+}
+
+/* Ensure the book shadow looks premium */
+.stf__parent canvas {
+    filter: drop-shadow(0 8px 32px rgba(0,0,0,0.4));
 }

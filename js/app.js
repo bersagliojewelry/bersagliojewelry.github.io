@@ -17,6 +17,8 @@ import { initCollectionsHScroll }   from './effects/hscroll.js';
 import { initGSAPScrollAnimations } from './scroll-animations.js';
 import { initParallax }             from './parallax.js';
 import { initMicroAnimations }      from './effects/micro.js';
+import { initSkeletonShimmer }      from './skeleton.js';
+import { initPrefetch }             from './prefetch.js';
 import { initCookieConsent }        from './cookie-consent.js';
 import { initEmailCapture }         from './email-capture.js';
 
@@ -58,6 +60,8 @@ async function initApp() {
         try { fn(); } catch (err) { console.warn(`[Bersaglio] ${label} failed:`, err); }
     };
 
+    safeEffect(initSkeletonShimmer,      'initSkeletonShimmer');
+    safeEffect(initPrefetch,             'initPrefetch');
     safeEffect(initEffects,              'initEffects');
     safeEffect(initHero,                 'initHero');
     safeEffect(initCollectionsHScroll,   'initCollectionsHScroll');

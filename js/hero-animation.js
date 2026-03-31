@@ -1,19 +1,22 @@
 /**
  * Bersaglio Jewelry — Hero GSAP Animation
- * Cinematic entrance sequence using GSAP timeline + SplitText:
- *   0.0s  overline slides in
+ * Cinematic entrance sequence using GSAP timeline + SplitText.
+ *
+ * Connected to preloader: if the preloader is active, the hero
+ * entrance waits for 'bj:preloader-done' before playing.
+ * If no preloader (returning visitor), plays immediately.
+ *
+ * Also animates the header/nav entrance for a cohesive reveal.
+ *
+ * Sequence:
+ *   0.0s  header nav fades in + slides down
+ *   0.1s  overline slides in
  *   0.3s  title characters fall (SplitText stagger)
  *   0.9s  underline draws
  *   1.1s  description fades up
  *   1.3s  CTAs appear
  *   1.5s  meta badges fade in
  *   ∞     parallax on scroll (ScrollTrigger scrub)
- *
- * Improved with GSAP skills best practices:
- *   - SplitText replaces 30 lines of manual regex character splitting
- *   - autoSplit handles font loading edge cases
- *   - Timeline uses defaults{} to reduce repetition
- *   - prefers-reduced-motion respected via matchMedia
  */
 
 import { gsap, ScrollTrigger } from './gsap-core.js';
@@ -45,17 +48,27 @@ export function initHero() {
         });
     }
 
-    // ── Entrance Timeline ─────────────────────────────────────────
+    // ── Build the entrance timeline (paused — we play after preloader) ──
     const tl = gsap.timeline({
-        delay: 0.1,
+        paused: true,
         defaults: { ease: 'power3.out' },
     });
+
+    // Header / Nav entrance — elegant slide-down from top
+    const header = document.querySelector('.header, .site-header, header');
+    if (header) {
+        tl.fromTo(header,
+            { opacity: 0, y: -20 },
+            { opacity: 1, y: 0, duration: 0.6 },
+            0.0
+        );
+    }
 
     // Overline
     tl.fromTo('.hero-eyebrow',
         { opacity: 0, x: -24 },
         { opacity: 1, x: 0, duration: 0.7 },
-        0.0
+        0.1
     );
 
     // Title chars fall from above (using SplitText chars array)
@@ -67,7 +80,7 @@ export function initHero() {
                 duration: 0.7, ease: 'back.out(1.2)',
                 stagger: { amount: 0.55, from: 'start' },
             },
-            0.25
+            0.3
         );
     }
 
@@ -75,21 +88,21 @@ export function initHero() {
     tl.fromTo('.hero-title-line',
         { scaleX: 0, transformOrigin: 'left' },
         { scaleX: 1, duration: 0.6, ease: 'power2.inOut' },
-        0.85
+        0.9
     );
 
     // Description
     tl.fromTo('.hero-desc',
         { opacity: 0, y: 22 },
         { opacity: 1, y: 0, duration: 0.7 },
-        1.05
+        1.1
     );
 
     // CTAs
     tl.fromTo('.hero-actions .btn',
         { opacity: 0, y: 18, scale: 0.96 },
         { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: 'power2.out', stagger: 0.12 },
-        1.25
+        1.3
     );
 
     // Meta badges
@@ -105,6 +118,15 @@ export function initHero() {
         { opacity: 0.7, y: 0, duration: 0.6 },
         1.7
     );
+
+    // ── Play after preloader or immediately ───────────────────────
+    if (document.body.classList.contains('is-preloading')) {
+        // Preloader is active — wait for it to finish
+        window.addEventListener('bj:preloader-done', () => tl.play(), { once: true });
+    } else {
+        // No preloader (returning visitor) — play with small delay
+        tl.delay(0.15).play();
+    }
 
     // ── Parallax (scroll scrub) ───────────────────────────────────
     gsap.to('.hero-content', {

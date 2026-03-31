@@ -8511,3 +8511,74 @@ nav .logo-badge {
         font-size: 1rem;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   SKELETON SHIMMER — loading placeholder for piece images
+   ═══════════════════════════════════════════════════════════════ */
+@keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0;  }
+}
+
+.skeleton-shimmer {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(
+        90deg,
+        var(--black-carbon) 25%,
+        rgba(201,169,110,0.06) 37%,
+        var(--black-carbon) 63%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.8s ease-in-out infinite;
+    pointer-events: none;
+}
+
+.skeleton-shimmer svg {
+    width: 36px;
+    height: 36px;
+    opacity: 0.12;
+    stroke: var(--gold);
+}
+
+/* Coleccion page — lighter background */
+[data-collection] .skeleton-shimmer {
+    background: linear-gradient(
+        90deg,
+        var(--champagne) 25%,
+        rgba(201,169,110,0.12) 37%,
+        var(--champagne) 63%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.8s ease-in-out infinite;
+}
+
+[data-collection] .skeleton-shimmer svg {
+    stroke: var(--champagne-dark);
+}
+
+/* Hide shimmer once image loads → fade-in reveal */
+.piece-img,
+.piece-card-img-real,
+.pf-piece-img img,
+.pieza-img {
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.piece-img.is-loaded,
+.piece-card-img-real.is-loaded,
+.pf-piece-img img.is-loaded,
+.pieza-img.is-loaded {
+    opacity: 1;
+}
+
+.skeleton-shimmer.is-hidden {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}

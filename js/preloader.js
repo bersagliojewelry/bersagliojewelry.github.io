@@ -347,6 +347,8 @@ export function initPreloader() {
                     ro.disconnect();
                     el.remove();
                     document.body.classList.remove('is-preloading');
+                    // Signal to hero animation and other systems that preloader is done
+                    window.dispatchEvent(new CustomEvent('bj:preloader-done'));
                 }
             });
 

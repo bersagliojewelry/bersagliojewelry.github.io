@@ -1,7 +1,7 @@
 # Bersaglio Jewelry — Documentacion Firebase & Admin Panel
 
 > Documento de referencia para continuidad entre sesiones de desarrollo.
-> Ultima actualizacion: 26 de marzo de 2026
+> Ultima actualizacion: 31 de marzo de 2026
 
 ---
 
@@ -243,21 +243,100 @@ En Google Cloud Console > IAM, la cuenta de servicio `111509809378@cloudbuild.gs
 | Deploy falla con "permission denied" | Firebase CLI usaba cuenta equivocada | `firebase login:use bersagliojewelry@gmail.com` |
 | Cloud Functions "missing permission" | Faltaba rol en cuenta de servicio | Agregar rol "Cloud Build Service Agent" en IAM |
 | Sin navegacion en movil | Sidebar `display:none` sin alternativa | Menu hamburguesa con sidebar overlay |
+| Admin solo mostraba 1 pieza | Firestore casi vacio tras eliminar datos estaticos | Se poblo Firestore desde admin; eliminado auto-seed |
+| "Error al guardar pieza" al eliminar imagen | `undefined` pasado a Firestore `setDoc()` (no soporta undefined) | Strip `undefined` en `db.js savePiece()`; usar `[]`/`null` en `piezas.js` |
+| Boton eliminar imagen cerraba modal | Evento propagado al overlay del modal | `e.stopPropagation()` + `e.preventDefault()` en handler |
+| Imagenes del admin no visibles en web publica | Paginas publicas solo renderizan SVG placeholder | Condicional `<img>` con fallback SVG en `featured.js`, `colecciones.js`, `coleccion.js`, `pieza.js` |
+| Web publica no sincronizaba cambios del admin | Sin listeners real-time en paginas publicas | `db.startRealtime()` + `db.onChange()` en `app.js`, `colecciones.js`, `coleccion.js` |
 
 ---
 
-## 10. Pendientes / Proximos Pasos
+## 10. Arquitectura Firestore-Only (sin datos estaticos)
+
+### Principio
+**El panel admin es la unica fuente de verdad.** No hay datos hardcoded en el codigo.
+
+### Flujo de datos
+```
+Admin Panel → Firestore → onSnapshot → Pagina publica (real-time)
+```
+
+### Archivos clave
+| Archivo | Rol |
+|---|---|
+| `js/firestore-service.js` | CRUD + listeners `onSnapshot` para Firestore |
+| `js/admin/db.js` | Base de datos admin: Firestore-first, eventos real-time |
+| `js/data/catalog.js` | Capa de datos publica: `load()` desde Firestore, `startRealtime()` para sync |
+| `js/admin/piezas.js` | CRUD piezas (async), subida imagenes via `storage-service.js` |
+| `js/admin/colecciones.js` | CRUD colecciones (async) |
+| `js/admin/consultas.js` | CRUD consultas (async) |
+
+### API de catalog.js (pagina publica)
+```javascript
+db.load()                     // Carga inicial desde Firestore
+db.startRealtime()            // Activa onSnapshot listeners
+db.onChange(callback)          // Suscribir a cambios
+db.getAll()                   // Todas las piezas
+db.getCollections(featured?)  // Colecciones (opcionalmente solo featured)
+db.getFeatured(limit?)        // Piezas destacadas
+db.getByCollection(slug)      // Piezas de una coleccion
+db.getBySlug(slug)            // Pieza por slug
+```
+
+### API de adminDb (panel admin)
+```javascript
+adminDb.loadAll()             // Carga piezas + colecciones + consultas
+adminDb.savePiece(data)       // Crear/actualizar pieza (strip undefined)
+adminDb.deletePiece(id)       // Eliminar pieza
+adminDb.saveCollection(data)  // Crear/actualizar coleccion
+adminDb.deleteCollection(id)  // Eliminar coleccion
+adminDb.on(event, callback)   // Suscribir: 'pieces', 'collections', 'inquiries', 'stats'
+```
+
+---
+
+## 11. Componentes de la Pagina Publica
+
+### Imagenes en piezas
+Las imagenes se renderizan condicionalmente en todas las paginas:
+```javascript
+${piece.image
+    ? `<img src="${piece.image}" alt="${piece.name}" class="piece-img" loading="lazy">`
+    : `<div class="piece-placeholder">...</div>`}
+```
+
+### Archivos de renderizado
+| Archivo | Seccion | Imagen class |
+|---|---|---|
+| `js/components/featured.js` | Homepage "Piezas que definen momentos" | `.piece-img` |
+| `js/components/lookbook.js` | Homepage "Portafolio Digital" (lookbook interactivo) | `.lookbook-piece-img img` |
+| `js/components/collections.js` | Homepage colecciones horizontal | N/A (iconos SVG) |
+| `js/colecciones.js` | Pagina `/colecciones.html` grid | `.piece-img` |
+| `js/coleccion.js` | Pagina individual de coleccion | `.piece-card-img-real` |
+| `js/pieza.js` | Detalle de pieza + galeria thumbnails | `.pieza-img`, `.pieza-thumb` |
+
+### Portafolio Digital / Lookbook (NUEVO)
+Seccion interactiva tipo libro en homepage (antes de "Piezas que definen momentos"):
+- **Componente**: `js/components/lookbook.js`
+- **Contenedor HTML**: `<div id="lookbook">` en `index.html`
+- **Datos**: Todas las piezas organizadas por coleccion desde Firestore
+- **UX**: Tabs por coleccion + viewport con pagina izquierda (intro coleccion) y derecha (grid de piezas)
+- **Navegacion**: Tabs, botones prev/next, flechas teclado, swipe tactil
+- **Real-time**: Se re-renderiza automaticamente via `db.onChange()`
+
+---
+
+## 12. Pendientes / Proximos Pasos
 
 - [ ] Favicon.ico — El navegador muestra 404 para `/favicon.ico`. Agregar un `favicon.ico` en `public/`
-- [ ] Probar subida de imagenes desde admin panel (drag & drop en piezas)
-- [ ] Probar CRUD completo de piezas y colecciones desde el panel
 - [ ] Configurar GitHub Secrets para el build de CI (actualmente usa fallbacks hardcoded)
 - [ ] Considerar upgrade de Node.js 20 a 22 antes de oct 2026 (deprecation)
 - [ ] Vincular Firebase Hosting con el dominio custom `bersagliojewelry.co` (opcional, actualmente usa GitHub Pages)
+- [ ] Convertir "Piezas que definen momentos" a mostrar solo piezas marcadas como "destacadas" desde admin
 
 ---
 
-## 11. Datos de Contacto y Cuentas
+## 13. Datos de Contacto y Cuentas
 
 | Servicio | Cuenta |
 |---|---|

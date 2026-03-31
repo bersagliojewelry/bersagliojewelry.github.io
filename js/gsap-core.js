@@ -13,7 +13,8 @@ gsap.registerPlugin(ScrollTrigger);
 let lenis = null;
 
 export function initSmoothScroll() {
-    const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    // pointer:coarse is the only reliable check — avoids macOS trackpad false positives
+    const isTouch = window.matchMedia('(pointer: coarse)').matches;
     if (isTouch) return; // native scroll on mobile
 
     lenis = new Lenis({

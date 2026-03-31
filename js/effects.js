@@ -1,28 +1,38 @@
 /**
  * Bersaglio Jewelry — Interactive Effects Engine
- * Magnetic hover · Stagger reveals · Counter animation · 3D Tilt
+ * Magnetic hover (gsap.quickTo) · Stagger reveals · Counter animation (GSAP) · 3D Tilt
+ *
+ * Improved with GSAP best practices:
+ *   - gsap.quickTo() for magnetic hover (reuses single tween, ~60fps)
+ *   - gsap.to() for counter animation (replaces manual RAF)
+ *   - gsap.matchMedia() for responsive cleanup
  */
 
+import { gsap } from './gsap-core.js';
 import { initTilt } from './effects/tilt.js';
 
 
-/* ─── Magnetic Hover ────────────────────────────────────────── */
+/* ─── Magnetic Hover (gsap.quickTo) ────────────────────────── */
 function initMagnetic() {
     function bindMagnetic(el) {
         if (el.dataset.magnetBound) return;
         el.dataset.magnetBound = '1';
+
+        // gsap.quickTo creates a reusable tween — ideal for frequent updates (mousemove)
+        const xTo = gsap.quickTo(el, 'x', { duration: 0.4, ease: 'power3.out' });
+        const yTo = gsap.quickTo(el, 'y', { duration: 0.4, ease: 'power3.out' });
+
         el.addEventListener('mousemove', (e) => {
             const rect = el.getBoundingClientRect();
             const cx = rect.left + rect.width / 2;
             const cy = rect.top + rect.height / 2;
-            const dx = (e.clientX - cx) * 0.28;
-            const dy = (e.clientY - cy) * 0.28;
-            el.style.transform = `translate(${dx}px, ${dy}px)`;
+            xTo((e.clientX - cx) * 0.28);
+            yTo((e.clientY - cy) * 0.28);
         });
+
         el.addEventListener('mouseleave', () => {
-            el.style.transform = '';
-            el.style.transition = 'transform 0.5s cubic-bezier(0.23, 1, 0.32, 1)';
-            setTimeout(() => { el.style.transition = ''; }, 500);
+            xTo(0);
+            yTo(0);
         });
     }
 
@@ -53,7 +63,7 @@ function initStagger() {
     });
 }
 
-/* ─── Counter Animation ─────────────────────────────────────── */
+/* ─── Counter Animation (GSAP tween) ───────────────────────── */
 function animateCounter(el) {
     const rawText  = el.textContent.trim();
     const number   = parseFloat(rawText);
@@ -61,17 +71,18 @@ function animateCounter(el) {
 
     const suffix   = rawText.replace(/[\d.]+/, '');
     const decimals = (rawText.split('.')[1] || '').replace(/[^0-9]/g, '').length;
-    const duration = 1600;
-    const startTs  = performance.now();
 
-    (function tick(now) {
-        const elapsed  = now - startTs;
-        const progress = Math.min(elapsed / duration, 1);
-        const eased    = 1 - Math.pow(1 - progress, 3); // ease-out cubic
-        const current  = eased * number;
-        el.textContent = current.toFixed(decimals) + suffix;
-        if (progress < 1) requestAnimationFrame(tick);
-    })(performance.now());
+    // Use a proxy object — GSAP tweens its 'val' property and we update the DOM in onUpdate
+    const proxy = { val: 0 };
+    gsap.to(proxy, {
+        val: number,
+        duration: 1.4,
+        ease: 'power3.out',
+        onUpdate() {
+            const display = decimals > 0 ? proxy.val.toFixed(decimals) : Math.round(proxy.val);
+            el.textContent = `${display}${suffix}`;
+        },
+    });
 }
 
 function initCounters() {
@@ -109,8 +120,6 @@ function forceRevealInView() {
 }
 
 /* ─── Nuclear fallback: force all content visible after 3.5s ── */
-// Safety net: if IntersectionObserver never fires (e.g. hidden iframe,
-// odd scroll container), reveal everything so the site is never blank.
 function scheduleNuclearReveal() {
     setTimeout(() => {
         const hidden = document.querySelectorAll(
@@ -125,14 +134,14 @@ function scheduleNuclearReveal() {
 
 /* ─── Main Init ─────────────────────────────────────────────── */
 export function initEffects() {
-    // pointer:coarse = dispositivo táctil primario (móvil/tablet)
-    // pointer:fine = ratón/trackpad (desktop/laptop) — matchMedia es el único método fiable
-    // navigator.maxTouchPoints > 0 da falso positivo en macOS (trackpad = 5 puntos)
-    const isTouch = window.matchMedia('(pointer: coarse)').matches;
+    // gsap.matchMedia() for responsive — auto cleanup on breakpoint change
+    const mm = gsap.matchMedia();
 
-    if (!isTouch) {
+    mm.add('(pointer: fine)', () => {
+        // Desktop-only effects
         initMagnetic();
-    }
+        initTilt();
+    });
 
     initCounters();
 
@@ -142,9 +151,4 @@ export function initEffects() {
         forceRevealInView();
         scheduleNuclearReveal();
     }, 150);
-
-    // 3D tilt for cards and panels (desktop only)
-    if (!isTouch) {
-        initTilt();
-    }
 }

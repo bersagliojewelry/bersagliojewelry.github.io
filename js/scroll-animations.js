@@ -1,7 +1,8 @@
 /**
  * Bersaglio Jewelry — GSAP Scroll Animations
- * Phase 3: Stagger reveals for piece cards, collection panels,
- * service rows, and section headers using ScrollTrigger.
+ * Uses ScrollTrigger.batch() for efficient grouped reveals,
+ * gsap.matchMedia() for responsive cleanup, and proper
+ * ScrollTrigger best practices from the official GSAP skills.
  */
 
 import { gsap, ScrollTrigger } from './gsap-core.js';
@@ -33,32 +34,35 @@ function initSectionHeaders() {
     });
 }
 
-/* ─── Piece cards stagger grid ──────────────────────────────── */
+/* ─── Piece cards — ScrollTrigger.batch() for grouped reveals ─ */
 function initPieceCards() {
     const grid = document.getElementById('featured-grid');
     if (!grid) return;
 
-    // Watch for dynamic render
     function bindCards() {
         const cards = grid.querySelectorAll('.piece-card:not([data-gsap-bound])');
         if (!cards.length) return;
 
         cards.forEach(c => c.setAttribute('data-gsap-bound', '1'));
 
-        gsap.fromTo(cards,
-            { y: 40, opacity: 0, scale: 0.97 },
-            {
-                y: 0, opacity: 1, scale: 1,
-                duration: 0.65,
-                stagger: 0.1,
-                ease: 'power2.out',
-                scrollTrigger: {
-                    trigger: grid,
-                    start: 'top 78%',
-                    toggleActions: 'play none none none',
-                },
-            }
-        );
+        // Set initial state
+        gsap.set(cards, { y: 40, opacity: 0, scale: 0.97 });
+
+        // batch() — groups elements entering viewport in the same frame,
+        // fires one callback with all of them → natural stagger effect
+        ScrollTrigger.batch(cards, {
+            start: 'top 85%',
+            onEnter: (batch) => {
+                gsap.to(batch, {
+                    y: 0, opacity: 1, scale: 1,
+                    duration: 0.65,
+                    stagger: 0.08,
+                    ease: 'power2.out',
+                    overwrite: true,
+                });
+            },
+            once: true,
+        });
     }
 
     bindCards();
@@ -85,20 +89,21 @@ function initServicesSection() {
 
         rows.forEach(r => r.setAttribute('data-gsap-bound', '1'));
 
-        gsap.fromTo(rows,
-            { x: -30, opacity: 0 },
-            {
-                x: 0, opacity: 1,
-                duration: 0.7,
-                stagger: 0.13,
-                ease: 'power3.out',
-                scrollTrigger: {
-                    trigger: grid,
-                    start: 'top 80%',
-                    toggleActions: 'play none none none',
-                },
-            }
-        );
+        gsap.set(rows, { x: -30, opacity: 0 });
+
+        ScrollTrigger.batch(rows, {
+            start: 'top 85%',
+            onEnter: (batch) => {
+                gsap.to(batch, {
+                    x: 0, opacity: 1,
+                    duration: 0.7,
+                    stagger: 0.1,
+                    ease: 'power3.out',
+                    overwrite: true,
+                });
+            },
+            once: true,
+        });
     }
 
     bindServices();
@@ -134,7 +139,7 @@ function initBrandStatement() {
     );
 }
 
-/* ─── About teaser stats: entrada + contador animado ────────── */
+/* ─── About teaser stats: entrance + counter animation ────────── */
 function initStatsBars() {
     const stats = document.querySelectorAll('.stat');
     if (!stats.length) return;
@@ -156,7 +161,7 @@ function initStatsBars() {
     );
 }
 
-/* ─── Counter animation — lee data-count y data-suffix ─────── */
+/* ─── Counter animation — GSAP tween with proxy object ─────── */
 function animateCounters() {
     document.querySelectorAll('.stat-number[data-count]').forEach(el => {
         const target  = parseFloat(el.dataset.count);
@@ -164,25 +169,22 @@ function animateCounters() {
         const prefix  = el.dataset.prefix || '';
         if (isNaN(target)) return;
 
-        const duration = 1400;
-        const start    = performance.now();
-        const from     = 0;
+        const isInt = Number.isInteger(target);
+        const proxy = { val: 0 };
 
-        function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
-
-        function tick(now) {
-            const progress = Math.min((now - start) / duration, 1);
-            const value    = from + (target - from) * easeOut(progress);
-            const display  = Number.isInteger(target) ? Math.round(value) : value.toFixed(1);
-            el.textContent = `${prefix}${display}${suffix}`;
-            if (progress < 1) requestAnimationFrame(tick);
-        }
-
-        requestAnimationFrame(tick);
+        gsap.to(proxy, {
+            val: target,
+            duration: 1.4,
+            ease: 'power3.out',
+            onUpdate() {
+                const display = isInt ? Math.round(proxy.val) : proxy.val.toFixed(1);
+                el.textContent = `${prefix}${display}${suffix}`;
+            },
+        });
     });
 }
 
-/* ─── Journal cards entrance ────────────────────────────────── */
+/* ─── Journal cards — ScrollTrigger.batch() ────────────────── */
 function initJournalCards() {
     const preview = document.querySelector('.journal-preview-grid');
     if (!preview) return;
@@ -192,20 +194,21 @@ function initJournalCards() {
         if (!cards.length) return;
         cards.forEach(c => c.setAttribute('data-gsap-bound', '1'));
 
-        gsap.fromTo(cards,
-            { y: 35, opacity: 0 },
-            {
-                y: 0, opacity: 1,
-                duration: 0.7,
-                stagger: 0.12,
-                ease: 'power2.out',
-                scrollTrigger: {
-                    trigger: preview,
-                    start: 'top 80%',
-                    toggleActions: 'play none none none',
-                },
-            }
-        );
+        gsap.set(cards, { y: 35, opacity: 0 });
+
+        ScrollTrigger.batch(cards, {
+            start: 'top 85%',
+            onEnter: (batch) => {
+                gsap.to(batch, {
+                    y: 0, opacity: 1,
+                    duration: 0.7,
+                    stagger: 0.1,
+                    ease: 'power2.out',
+                    overwrite: true,
+                });
+            },
+            once: true,
+        });
     }
 
     bindJournal();
@@ -236,7 +239,7 @@ function initCtaBanner() {
     );
 }
 
-/* ─── Horizontal services connector line ────────────────────── */
+/* ─── Services connector line ──────────────────────────────── */
 function initServicesLine() {
     const line = document.querySelector('.services-vline');
     if (!line) return;

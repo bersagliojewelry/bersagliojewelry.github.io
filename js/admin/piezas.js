@@ -351,8 +351,8 @@ async function handleSave() {
         priceLabel:  get('priceLabel') || 'Consultar precio',
         price:       parseFloat(get('price')) || null,
         specs,
-        images:      _uploadedImages.length ? [..._uploadedImages] : undefined,
-        image:       _uploadedImages[0] || undefined,
+        images:      _uploadedImages.length ? [..._uploadedImages] : [],
+        image:       _uploadedImages[0] || null,
     };
 
     if (!piece.id) delete piece.id;

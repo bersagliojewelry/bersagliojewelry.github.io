@@ -132,7 +132,9 @@ function renderPieces(col, slug) {
             <article class="piece-card animate-on-scroll">
                 <a href="pieza.html?p=${p.slug}" class="piece-card-img" aria-label="Ver ${p.name}">
                     <div class="piece-card-visual">
-                        ${collectionIcons[p.collection] || collectionIcons['anillos']}
+                        ${p.image
+                            ? `<img src="${p.image}" alt="${p.name}" class="piece-card-img-real" loading="lazy">`
+                            : (collectionIcons[p.collection] || collectionIcons['anillos'])}
                     </div>
                     ${p.badge ? `<span class="piece-badge">${p.badge}</span>` : ''}
                     <div class="piece-card-actions">

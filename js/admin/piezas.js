@@ -207,6 +207,7 @@ async function handleFiles(files) {
 
     try {
         const { uploadPieceImage } = await import('../storage-service.js');
+        const { optimizeImage }    = await import('../image-optimizer.js');
 
         for (const file of files) {
             if (file.size > 10 * 1024 * 1024) {
@@ -218,13 +219,21 @@ async function handleFiles(files) {
                 continue;
             }
 
-            const url = await uploadPieceImage(pieceId, file, pct => {
+            // Optimize: resize + convert to WebP before uploading
+            admToast(`Optimizando ${file.name}\u2026`);
+            const optimized = await optimizeImage(file);
+
+            const url = await uploadPieceImage(pieceId, optimized, pct => {
                 progressBar.style.width = `${pct}%`;
             });
 
             _uploadedImages.push(url);
             renderImagePreviews();
-            admToast(`${file.name} subida`);
+
+            const saved = optimized.size < file.size
+                ? `(${Math.round((1 - optimized.size / file.size) * 100)}% m\u00e1s liviana)`
+                : '';
+            admToast(`${file.name} \u2192 WebP subida ${saved}`);
         }
     } catch (err) {
         admToast('Error al subir imagen. Verifica tu conexi\u00f3n.', 'danger');

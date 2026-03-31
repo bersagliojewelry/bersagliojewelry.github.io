@@ -14,6 +14,8 @@ import Renderer                from './utils/renderer.js';
 import db                      from './data/catalog.js';
 import { getRecommendations, trackView } from './recommendations.js';
 import { buildProductSchema, injectJsonLd } from './utils/schema.js';
+import { initSkeletonShimmer } from './skeleton.js';
+import { initPrefetch }        from './prefetch.js';
 
 const specLabels = {
     stone: 'Piedra principal', carat: 'Quilates', metal: 'Metal', accent: 'Acentos',
@@ -47,6 +49,8 @@ async function init() {
     initWhatsAppButton(piece);
     initGalleryThumbs();
     Renderer.initScrollAnimations();
+    initSkeletonShimmer();
+    initPrefetch();
     initEffects();
     initMicroAnimations();
     initPiezaGSAP();

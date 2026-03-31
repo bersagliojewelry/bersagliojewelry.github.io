@@ -12,6 +12,8 @@ import { toast }               from './toast.js';
 import Renderer                from './utils/renderer.js';
 import db                      from './data/catalog.js';
 import { buildProductListSchema, injectJsonLd } from './utils/schema.js';
+import { initSkeletonShimmer } from './skeleton.js';
+import { initPrefetch }        from './prefetch.js';
 
 const collectionIcons = {
     'anillos':          `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8" width="80" height="80" aria-hidden="true"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="3" ry="9"/></svg>`,
@@ -38,6 +40,8 @@ async function init() {
     initWhatsAppButton(collection);
     Renderer.initScrollAnimations();
     Renderer.initLazyImages();
+    initSkeletonShimmer();
+    initPrefetch();
     initEffects();
 
     // Real-time: re-render when admin changes data

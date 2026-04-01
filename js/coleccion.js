@@ -98,11 +98,17 @@ function renderHero(col) {
     const title   = document.getElementById('col-title');
     const sub     = document.getElementById('col-sub');
     const badge   = document.getElementById('col-badge');
+    const hero    = document.querySelector('.page-hero');
 
     if (eyebrow) eyebrow.textContent = col.subtitle || 'Alta Joyería';
     if (title)   title.textContent   = col.name;
     if (sub)     sub.textContent     = col.description;
     if (badge)   badge.textContent   = `${col.pieces} piezas`;
+
+    // Show banner as hero background image
+    if (hero && col.bannerUrl) {
+        hero.style.background = `linear-gradient(165deg, rgba(11,61,46,0.75) 0%, rgba(10,10,10,0.88) 70%), url('${col.bannerUrl}') center/cover no-repeat`;
+    }
 }
 
 function renderPieces(col, slug) {

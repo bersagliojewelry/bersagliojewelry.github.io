@@ -91,7 +91,9 @@ function renderCatalogCollections() {
         <article class="catalog-collection-card animate-on-scroll">
             <a href="${col.slug}.html" class="catalog-collection-link" aria-label="Explorar ${col.name}">
                 <div class="catalog-collection-visual">
-                    ${collectionIcons[col.slug] || collectionIcons['anillos']}
+                    ${col.bannerUrl
+                        ? `<img src="${col.bannerUrl}" alt="${col.name}" loading="lazy" style="width:100%;height:100%;object-fit:cover;">`
+                        : (collectionIcons[col.slug] || collectionIcons['anillos'])}
                 </div>
                 <div class="catalog-collection-body">
                     <div class="catalog-collection-count">${col.pieces} piezas</div>

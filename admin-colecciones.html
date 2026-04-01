@@ -69,12 +69,6 @@
 
         <div class="adm-content">
 
-            <!-- Banner upload info -->
-            <div style="background:var(--adm-accent-light);border:1px solid rgba(11,61,46,0.15);border-radius:var(--adm-radius);padding:12px 16px;margin-bottom:20px;font-size:12px;color:var(--adm-accent);display:flex;gap:8px;align-items:flex-start;">
-                <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" style="margin-top:1px;flex-shrink:0"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
-                <span><strong>Banners:</strong> Ahora puedes subir imágenes de banner directamente desde el modal de edición. Las imágenes se convierten automáticamente a formato WebP para un rendimiento óptimo.</span>
-            </div>
-
             <!-- Table -->
             <div class="adm-table-wrap">
                 <table class="adm-table">
@@ -134,7 +128,8 @@
                     <div class="adm-form-row" style="margin-top:12px;">
                         <div class="adm-field">
                             <label for="cf-pieces">Número de piezas</label>
-                            <input class="adm-input" id="cf-pieces" name="pieces" type="number" min="0" placeholder="0">
+                            <input class="adm-input" id="cf-pieces" name="pieces" type="number" min="0" placeholder="0" readonly disabled style="opacity:0.7;cursor:not-allowed;">
+                            <small style="color:var(--adm-muted);font-size:11px;margin-top:2px;">Se calcula automáticamente</small>
                         </div>
                         <div class="adm-field" style="justify-content:flex-end;">
                             <label class="adm-checkbox-row" style="margin-top:auto;">

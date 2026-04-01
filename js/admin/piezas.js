@@ -259,13 +259,39 @@ function renderImagePreviews() {
             e.stopPropagation();
             e.preventDefault();
             const idx = parseInt(btn.dataset.idx);
+            const urlToDelete = _uploadedImages[idx];
+
+            // 1. Delete from Firebase Storage
             try {
                 const { deletePieceImage } = await import('../storage-service.js');
-                await deletePieceImage(_uploadedImages[idx]);
-            } catch { /* Storage delete failed — remove from list anyway */ }
+                await deletePieceImage(urlToDelete);
+            } catch (err) {
+                console.warn('[Admin] Storage delete failed:', err);
+                admToast('No se pudo eliminar del storage, se quitará de la pieza', 'danger');
+            }
+
+            // 2. Remove from local array
             _uploadedImages.splice(idx, 1);
             renderImagePreviews();
-            admToast('Imagen eliminada');
+
+            // 3. Persist the updated images array to Firestore immediately
+            const form = document.getElementById('piece-form');
+            const pieceId = form.querySelector('[name="id"]')?.value;
+            if (pieceId) {
+                try {
+                    await adminDb.savePiece({
+                        id: pieceId,
+                        images: [..._uploadedImages],
+                        image: _uploadedImages[0] || null,
+                    });
+                    admToast('Imagen eliminada y pieza actualizada');
+                } catch (err) {
+                    console.error('[Admin] Firestore update failed:', err);
+                    admToast('Imagen quitada localmente, error al guardar en BD', 'danger');
+                }
+            } else {
+                admToast('Imagen eliminada');
+            }
         });
     });
 }

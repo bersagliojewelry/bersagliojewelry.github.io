@@ -407,8 +407,16 @@ function handleDelete(id) {
         `\u00bfEliminar "${piece?.name || 'esta pieza'}"? Esta acci\u00f3n no se puede deshacer.`,
         async () => {
             try {
+                // Delete images from Storage first
+                try {
+                    const { deleteAllPieceImages } = await import('../storage-service.js');
+                    await deleteAllPieceImages(id);
+                } catch (err) {
+                    console.warn('[Admin] Could not delete images from Storage:', err);
+                }
+                // Then delete the Firestore document
                 await adminDb.deletePiece(id);
-                admToast('Pieza eliminada', 'danger');
+                admToast('Pieza e im\u00e1genes eliminadas', 'danger');
             } catch (err) {
                 admToast('Error al eliminar', 'danger');
             }

@@ -191,6 +191,10 @@ function renderBannerPreview(url) {
     });
 }
 
+function getPieceCount(colId) {
+    return adminDb.getAllPieces().filter(p => p.collection === colId).length;
+}
+
 // ─── Modal Open/Close ────────────────────────────────────────────────────────
 
 function openModal(id = null) {
@@ -210,7 +214,7 @@ function openModal(id = null) {
         form.querySelector('[name="slug"]').value        = col.slug || col.id;
         form.querySelector('[name="subtitle"]').value    = col.subtitle || '';
         form.querySelector('[name="description"]').value = col.description || '';
-        form.querySelector('[name="pieces"]').value      = col.pieces || '';
+        form.querySelector('[name="pieces"]').value      = getPieceCount(col.id);
         form.querySelector('[name="featured"]').checked  = !!col.featured;
         document.getElementById('cf-slug').dataset.auto = 'no';
 
@@ -247,7 +251,7 @@ async function handleSave() {
         slug:        get('slug') || slugify(name),
         subtitle:    get('subtitle'),
         description: get('description'),
-        pieces:      parseInt(get('pieces')) || 0,
+        pieces:      getPieceCount(get('id') || slugify(name)),
         featured:    form.querySelector('[name="featured"]').checked,
         bannerUrl:   _bannerUrl || get('bannerUrl') || null,
     };

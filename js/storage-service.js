@@ -64,11 +64,39 @@ export async function getPieceImages(pieceId) {
 }
 
 /**
- * Delete a specific piece image by its full Storage URL.
+ * Delete a specific piece image by its full download URL or storage path.
+ *
+ * Firebase download URLs look like:
+ *   https://firebasestorage.googleapis.com/v0/b/BUCKET/o/ENCODED_PATH?alt=media&token=...
+ *
+ * ref(storage, fullUrl) does NOT work reliably — we must extract the
+ * storage path from the URL and create a ref from that path.
  */
 export async function deletePieceImage(imageUrl) {
-    const imageRef = ref(storage, imageUrl);
+    const storagePath = extractStoragePath(imageUrl);
+    const imageRef = ref(storage, storagePath);
     await deleteObject(imageRef);
+}
+
+/**
+ * Extract the storage path from a Firebase download URL.
+ * If the input is already a path (no "http"), returns it as-is.
+ */
+function extractStoragePath(url) {
+    if (!url.startsWith('http')) return url;
+
+    try {
+        const urlObj = new URL(url);
+        // Firebase Storage URLs encode the path in the /o/ segment
+        // e.g. /v0/b/bucket/o/pieces%2Fp123%2F1234.webp
+        const match = urlObj.pathname.match(/\/o\/(.+)/);
+        if (match) {
+            return decodeURIComponent(match[1]);
+        }
+    } catch { /* fallback below */ }
+
+    // Fallback: try using ref directly (works in some SDK versions)
+    return url;
 }
 
 /**

@@ -105,9 +105,18 @@ function renderHero(col) {
     if (sub)     sub.textContent     = col.description;
     if (badge)   badge.textContent   = `${col.pieces} piezas`;
 
-    // Show banner as hero background image
+    // Show banner as hero background with full-coverage image
     if (hero && col.bannerUrl) {
-        hero.style.background = `linear-gradient(165deg, rgba(11,61,46,0.75) 0%, rgba(10,10,10,0.88) 70%), url('${col.bannerUrl}') center/cover no-repeat`;
+        let bannerImg = hero.querySelector('.page-hero-banner');
+        if (!bannerImg) {
+            bannerImg = document.createElement('img');
+            bannerImg.className = 'page-hero-banner';
+            bannerImg.setAttribute('aria-hidden', 'true');
+            bannerImg.alt = '';
+            hero.insertBefore(bannerImg, hero.firstChild);
+            hero.classList.add('has-banner');
+        }
+        bannerImg.src = col.bannerUrl;
     }
 }
 

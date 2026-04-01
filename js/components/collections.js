@@ -20,13 +20,18 @@ export function renderCollections() {
     if (!container) return;
 
     container.innerHTML = collections.map((col, i) => `
-        <article class="collection-panel" data-col="${col.slug}" role="article">
+        <article class="collection-panel ${col.bannerUrl ? 'has-banner' : ''}" data-col="${col.slug}" role="article">
             <a href="${col.slug}.html" class="collection-panel-link" aria-label="Explorar ${col.name}">
 
-                <!-- Background icon -->
-                <div class="collection-panel-bg-icon" aria-hidden="true">
-                    ${collectionIcons[col.slug] || ''}
-                </div>
+                <!-- Background: banner image or icon fallback -->
+                ${col.bannerUrl
+                    ? `<div class="collection-panel-bg-img" aria-hidden="true">
+                           <img src="${col.bannerUrl}" alt="" loading="lazy">
+                       </div>`
+                    : `<div class="collection-panel-bg-icon" aria-hidden="true">
+                           ${collectionIcons[col.slug] || ''}
+                       </div>`
+                }
 
                 <!-- Number -->
                 <span class="collection-panel-num" aria-hidden="true">0${i + 1}</span>

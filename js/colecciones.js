@@ -92,7 +92,7 @@ function renderCatalogCollections() {
             <a href="${col.slug}.html" class="catalog-collection-link" aria-label="Explorar ${col.name}">
                 <div class="catalog-collection-visual">
                     ${col.bannerUrl
-                        ? `<img src="${col.bannerUrl}" alt="${col.name}" loading="lazy" style="width:100%;height:100%;object-fit:cover;">`
+                        ? `<img src="${col.bannerUrl}" alt="${col.name}" loading="lazy">`
                         : (collectionIcons[col.slug] || collectionIcons['anillos'])}
                 </div>
                 <div class="catalog-collection-body">

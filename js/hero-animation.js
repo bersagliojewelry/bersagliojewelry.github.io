@@ -128,26 +128,27 @@ export function initHero() {
         tl.delay(0.15).play();
     }
 
-    // ── Parallax (scroll scrub) ───────────────────────────────────
+    // ── Parallax (scroll scrub) — smooth fade instead of pocket clip ───
     gsap.to('.hero-content', {
-        yPercent: 28,
+        yPercent: 15,
+        opacity: 0,
         ease: 'none',
         scrollTrigger: {
             trigger: hero,
             start: 'top top',
-            end: 'bottom top',
+            end: '80% top',
             scrub: true,
         },
     });
 
     // Subtle overlay darkens as you scroll into hero
     gsap.to('.hero-overlay', {
-        opacity: 0.7,
+        opacity: 0.85,
         ease: 'none',
         scrollTrigger: {
             trigger: hero,
             start: 'top top',
-            end: '50% top',
+            end: '60% top',
             scrub: true,
         },
     });

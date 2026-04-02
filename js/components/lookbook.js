@@ -220,10 +220,11 @@ function initPageFlip(container, totalPages) {
     const curLabel = container.querySelector('.pf-cur');
     const dots     = container.querySelectorAll('.pf-dot');
 
-    // Calculate responsive dimensions based on viewport
+    // Calculate responsive dimensions — wider book for premium look
     const vh = window.innerHeight;
-    const maxH = Math.min(Math.round(vh * 0.62), 700);
-    const maxW = Math.round(maxH * 0.75); // 3:4 aspect ratio
+    const vw = window.innerWidth;
+    const maxH = Math.min(Math.round(vh * 0.68), 750);
+    const maxW = Math.min(Math.round(maxH * 0.78), Math.round(vw * 0.42)); // wider ratio
 
     _flipInstance = new PageFlip(bookEl, {
         width:       maxW,
@@ -235,8 +236,8 @@ function initPageFlip(container, totalPages) {
         maxHeight:   maxH,
         showCover:   true,
         maxShadowOpacity: 0.5,
-        mobileScrollSupport: true,  // Fix #6: allow normal scroll on mobile
-        flippingTime: 700,
+        mobileScrollSupport: false, // Disable to prevent scroll hijack on touch
+        flippingTime: 600,
         usePortrait: true,
         startZIndex: 0,
         autoSize:    true,

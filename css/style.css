@@ -8567,242 +8567,254 @@ nav .logo-badge {
     pointer-events: none;
 }
 
+
 /* ═══════════════════════════════════════════════════════════════
-   INDEX REDESIGN — Premium Color Flow & Section Polish
+   INDEX REDESIGN V2 — Complete Premium Overhaul
    ═══════════════════════════════════════════════════════════════ */
 
-/* ─── Remove all section-divider artifacts ──────────────────── */
-.section-divider {
-    display: none !important;
+/* ─── KILL all section-dividers ─────────────────────────────── */
+.section-divider { display: none !important; }
+
+/* ─── HERO: remove pocket/clip effect ───────────────────────── */
+.hero {
+    overflow: visible !important;
+    clip-path: none !important;
+    -webkit-clip-path: none !important;
 }
 
-/* ─── Global section transitions via gradient edges ─────────── */
+/* ─── UNIFIED DARK PALETTE — No harsh color jumps ───────────── */
 
-/* Lookbook → Featured: continuous dark flow */
+/* Trust strip: seamless dark continuation from hero */
+.trust-strip {
+    background: rgba(10,10,10,0.95) !important;
+    border-top: 1px solid rgba(201,169,110,0.08) !important;
+    border-bottom: 1px solid rgba(201,169,110,0.06) !important;
+    backdrop-filter: blur(8px);
+}
+
+.trust-strip .trust-label { color: var(--champagne-dark) !important; }
+.trust-strip .trust-icon  { stroke: var(--gold) !important; color: var(--gold) !important; }
+.trust-strip .trust-sep   { color: rgba(201,169,110,0.25) !important; }
+
+/* Lookbook: dark, no jump */
 .lookbook-section {
-    padding-bottom: 0 !important;
+    background: var(--black) !important;
+    padding-bottom: var(--space-xl) !important;
 }
 
+/* Featured: dark, seamless from lookbook */
 .featured {
     background: var(--black) !important;
     position: relative;
+    border: none !important;
 }
 
-/* Featured → Brand Statement: dark to emerald gradient */
-.featured::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 120px;
-    background: linear-gradient(to bottom, transparent, var(--emerald-deep));
-    pointer-events: none;
-    z-index: 1;
-}
-
-/* Brand Statement: emerald deep, seamless */
+/* Brand Statement: dark emerald — smooth gradient transition */
 .brand-statement {
-    background: var(--emerald-deep) !important;
-    padding: 80px 0 !important;
+    background: linear-gradient(180deg, var(--black) 0%, var(--emerald-deep) 15%, var(--emerald-deep) 85%, #0a1a14 100%) !important;
+    padding: 100px 0 !important;
     position: relative;
 }
 
-/* Brand → Collections: emerald to dark carbon transition */
-.brand-statement::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 80px;
-    background: linear-gradient(to bottom, transparent, var(--black-carbon));
-    pointer-events: none;
-    z-index: 1;
-}
-
-/* Collections: dark carbon background */
+/* Collections: dark carbon, merging from emerald */
 .collections {
-    background: var(--black-carbon) !important;
+    background: linear-gradient(180deg, #0a1a14 0%, var(--black-carbon) 8%, var(--black-carbon) 92%, #0f0f0f 100%) !important;
     position: relative;
 }
 
-/* Collections → Services: dark to warm ivory */
-.collections::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 100px;
-    background: linear-gradient(to bottom, transparent, var(--ivory-warm));
-    pointer-events: none;
-    z-index: 2;
-}
-
-/* Services: warm ivory */
+/* Services: warm ivory — with gradient entrance from dark */
 .services {
-    background: var(--ivory-warm) !important;
+    background: linear-gradient(180deg, #0f0f0f 0%, var(--ivory-warm) 6%, var(--ivory-warm) 94%, #0f0f0f 100%) !important;
     position: relative;
+    padding: var(--space-2xl) 0 !important;
 }
 
 .services .section-eyebrow  { color: var(--emerald) !important; }
 .services .section-title    { color: var(--text-primary) !important; }
 .services .section-desc     { color: var(--text-secondary) !important; }
 
-/* Services → Journal: ivory to dark editorial */
-.services::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 100px;
-    background: linear-gradient(to bottom, transparent, var(--black-carbon));
-    pointer-events: none;
-    z-index: 1;
-}
-
 /* Journal: dark editorial */
 .journal-preview {
-    background: var(--black-carbon) !important;
+    background: linear-gradient(180deg, #0f0f0f 0%, var(--black-carbon) 6%, var(--black-carbon) 100%) !important;
     position: relative;
 }
 
-/* Journal → About: dark carbon to charcoal */
-.journal-preview::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 80px;
-    background: linear-gradient(to bottom, transparent, var(--charcoal));
-    pointer-events: none;
-    z-index: 1;
-}
+.journal-preview .section-eyebrow { color: var(--gold) !important; }
+.journal-preview .section-title   { color: var(--ivory) !important; }
+.journal-preview .section-desc    { color: var(--text-on-dark-muted) !important; }
 
-/* About teaser: charcoal */
+/* About teaser: dark, merging from journal */
 .about-teaser {
-    background: var(--charcoal) !important;
+    background: linear-gradient(180deg, var(--black-carbon) 0%, #1a1e1c 15%, #1a1e1c 85%, var(--emerald-deep) 100%) !important;
     position: relative;
+    overflow: hidden !important;
 }
 
-/* About → CTA: charcoal to emerald */
-.about-teaser::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 80px;
-    background: linear-gradient(to bottom, transparent, var(--emerald-deep));
-    pointer-events: none;
-    z-index: 1;
-}
-
-/* CTA Banner: emerald deep, seamless */
+/* CTA Banner: emerald deep, merging from about */
 .cta-banner {
-    background: var(--emerald-deep) !important;
+    background: linear-gradient(180deg, var(--emerald-deep) 0%, var(--emerald-deep) 85%, var(--black) 100%) !important;
     position: relative;
 }
 
-/* CTA → Footer: emerald to black */
-.cta-banner::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 60px;
-    background: linear-gradient(to bottom, transparent, var(--black));
-    pointer-events: none;
-    z-index: 1;
+/* Remove ALL old ::after gradient transitions */
+.featured::after,
+.collections::after,
+.services::after,
+.journal-preview::after,
+.about-teaser::after,
+.cta-banner::after,
+.brand-statement::after {
+    content: none !important;
+    display: none !important;
 }
 
-/* ─── Trust strip polish ────────────────────────────────────── */
-.trust-strip {
-    background: var(--black) !important;
-    border-top: 1px solid rgba(201,169,110,0.1) !important;
-    border-bottom: 1px solid rgba(201,169,110,0.08) !important;
-}
+/* Hide old CTA decorations */
+.cta-banner::before { display: none !important; }
 
-.trust-strip .trust-label { color: var(--champagne-dark) !important; }
-.trust-strip .trust-icon  { stroke: var(--gold) !important; color: var(--gold) !important; }
-.trust-strip .trust-sep   { color: rgba(201,169,110,0.3) !important; }
-
-/* ─── Featured section: hide when empty ─────────────────────── */
+/* ─── FEATURED: hide when empty, adapt to count ─────────────── */
 .featured:has(#featured-grid:empty),
 .featured.is-empty {
     display: none !important;
 }
 
-/* Featured: single piece — centered, no black void */
 .featured-grid:has(> :only-child) {
     grid-template-columns: 1fr !important;
     max-width: 480px;
     margin: 0 auto;
 }
 
-/* Featured: 2 pieces — two column centered */
 .featured-grid:has(> :nth-child(2):last-child) {
     grid-template-columns: repeat(2, 1fr) !important;
     max-width: 780px;
     margin: 0 auto;
 }
 
-/* ─── Collections Section: Premium Redesign ─────────────────── */
+/* Piece cards: cleaner */
+.piece-card {
+    background: rgba(255,255,255,0.03) !important;
+    border: 1px solid rgba(201,169,110,0.08) !important;
+    border-radius: 8px !important;
+}
 
-/* Grid: 2×2 with subtle gaps */
+.piece-card:hover {
+    border-color: rgba(201,169,110,0.2) !important;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.4) !important;
+}
+
+/* ─── BRAND STATEMENT: polished, responsive watermark ────────── */
+.brand-statement::before {
+    content: 'BERSAGLIO' !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    font-family: var(--font-display) !important;
+    font-size: clamp(4rem, 14vw, 14rem) !important;
+    font-weight: 700 !important;
+    letter-spacing: clamp(8px, 2vw, 20px) !important;
+    color: rgba(255,255,255,0.02) !important;
+    white-space: nowrap !important;
+    pointer-events: none !important;
+    user-select: none !important;
+    display: block !important;
+}
+
+.brand-statement .brand-quote {
+    color: var(--ivory) !important;
+    font-size: clamp(1.2rem, 2.8vw, 1.9rem) !important;
+    line-height: 1.7 !important;
+    font-weight: 300 !important;
+}
+
+.brand-statement .brand-origin {
+    color: rgba(201,169,110,0.65) !important;
+    font-size: 10px !important;
+    letter-spacing: 4px !important;
+}
+
+.brand-statement .brand-divider svg {
+    stroke: rgba(201,169,110,0.35) !important;
+    width: 20px !important;
+    height: 20px !important;
+}
+
+/* Quotation marks: responsive */
+.brand-statement-inner::before,
+.brand-statement-inner::after {
+    font-size: clamp(3rem, 8vw, 8rem) !important;
+    opacity: 0.08 !important;
+}
+
+/* ─── COLLECTIONS: Premium Smart Layout ─────────────────────── */
+.collections .section-eyebrow { color: var(--gold) !important; }
+.collections .section-title { color: var(--ivory) !important; }
+.collections .section-desc { color: var(--text-on-dark-muted) !important; }
+
 .collections-grid {
     display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 12px !important;
+    gap: 16px !important;
 }
 
-/* Panels: refined proportions */
+/* Smart grid: adapts to number of collections */
+.collections-grid:has(> :only-child) {
+    grid-template-columns: 1fr !important;
+}
+
+.collections-grid:has(> :nth-child(2):last-child) {
+    grid-template-columns: repeat(2, 1fr) !important;
+}
+
+.collections-grid:has(> :nth-child(3):last-child) {
+    grid-template-columns: repeat(3, 1fr) !important;
+}
+
+.collections-grid:has(> :nth-child(4)) {
+    grid-template-columns: repeat(2, 1fr) !important;
+}
+
+/* Panel styling */
 .collection-panel {
-    aspect-ratio: 16 / 10 !important;
-    border-radius: 6px !important;
+    aspect-ratio: 3 / 2 !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
 }
 
-/* Panel link: better padding and layout */
 .collection-panel-link {
-    padding: 32px 36px !important;
+    padding: 36px 40px !important;
     justify-content: flex-end !important;
+    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.15) 50%, transparent 100%) !important;
 }
 
-/* Panel number: smaller, refined */
+.collection-panel.has-banner .collection-panel-link {
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 45%, rgba(0,0,0,0.1) 100%) !important;
+}
+
 .collection-panel-num {
     font-size: 9px !important;
     letter-spacing: 3px !important;
-    opacity: 0.4 !important;
-    top: 24px !important;
+    opacity: 0.35 !important;
+    top: 28px !important;
     left: 36px !important;
 }
 
-/* Subtitle: more refined */
 .collection-panel-sub {
     font-size: 8px !important;
     letter-spacing: 4px !important;
-    opacity: 0.65 !important;
+    opacity: 0.6 !important;
     margin-bottom: 8px !important;
 }
 
-/* Name: cleaner typography */
 .collection-panel-name {
-    font-size: clamp(1.4rem, 2.2vw, 2.2rem) !important;
+    font-size: clamp(1.5rem, 2.5vw, 2.4rem) !important;
     font-weight: 300 !important;
     letter-spacing: 0 !important;
     line-height: 1.15 !important;
-    margin-bottom: 0 !important;
 }
 
 .collection-panel:hover .collection-panel-name {
     transform: translateY(-4px) !important;
 }
 
-/* Description: cleaner reveal */
 .collection-panel-desc {
     font-size: 12px !important;
     line-height: 1.6 !important;
@@ -8813,26 +8825,24 @@ nav .logo-badge {
 
 .collection-panel:hover .collection-panel-desc {
     max-height: 60px !important;
-    opacity: 0.8 !important;
+    opacity: 0.75 !important;
     margin-top: 10px !important;
 }
 
-/* Footer: cleaner layout */
 .collection-panel-footer {
     margin-top: 16px !important;
-    opacity: 0 !important;
-    transform: translateY(6px) !important;
+    opacity: 0.6 !important;
+    transform: translateY(0) !important;
 }
 
 .collection-panel:hover .collection-panel-footer {
     opacity: 1 !important;
-    transform: translateY(0) !important;
 }
 
 .collection-panel-count {
     font-size: 8px !important;
     letter-spacing: 2.5px !important;
-    color: rgba(255,255,255,0.3) !important;
+    color: rgba(255,255,255,0.4) !important;
 }
 
 .collection-panel-cta {
@@ -8842,9 +8852,8 @@ nav .logo-badge {
     color: var(--gold) !important;
 }
 
-/* Background icon: subtler */
 .collection-panel-bg-icon {
-    opacity: 0.035 !important;
+    opacity: 0.03 !important;
 }
 
 .collection-panel-bg-icon svg {
@@ -8853,34 +8862,20 @@ nav .logo-badge {
 }
 
 .collection-panel:hover .collection-panel-bg-icon {
-    opacity: 0.08 !important;
+    opacity: 0.07 !important;
 }
 
-/* Bottom gold bar: thinner, more subtle */
 .collection-panel::after {
     height: 1px !important;
-    background: linear-gradient(90deg, var(--gold), rgba(212,184,122,0.4)) !important;
+    background: linear-gradient(90deg, var(--gold), rgba(212,184,122,0.3)) !important;
 }
 
-/* Progress bar: refined */
-.collections-progress {
-    margin-top: 16px !important;
-    height: 1px !important;
-    background: rgba(255,255,255,0.06) !important;
-}
-
-.collections-progress-fill {
-    background: var(--gold) !important;
-    opacity: 0.5 !important;
-}
-
-/* "Ver catálogo" button: match dark context */
 .collections .section-footer {
     padding-top: var(--space-lg) !important;
 }
 
 .collections .btn-outline {
-    border-color: rgba(201,169,110,0.25) !important;
+    border-color: rgba(201,169,110,0.2) !important;
     color: var(--gold-light) !important;
     font-size: 11px !important;
     letter-spacing: 2px !important;
@@ -8888,10 +8883,259 @@ nav .logo-badge {
 
 .collections .btn-outline:hover {
     border-color: var(--gold) !important;
-    background: rgba(201,169,110,0.08) !important;
+    background: rgba(201,169,110,0.06) !important;
 }
 
-/* ─── Section eyebrows: consistent gold across dark sections ── */
+.collections-progress {
+    margin-top: 16px !important;
+    height: 1px !important;
+    background: rgba(255,255,255,0.04) !important;
+}
+
+.collections-progress-fill {
+    background: var(--gold) !important;
+    opacity: 0.4 !important;
+}
+
+/* ─── SERVICES: Elegant minimal rows ────────────────────────── */
+.services .services-grid {
+    max-width: 800px !important;
+    margin: 0 auto !important;
+}
+
+.service-row {
+    border-bottom-color: rgba(0,0,0,0.08) !important;
+    padding: 32px 0 !important;
+}
+
+.service-row-num {
+    color: var(--emerald) !important;
+    font-weight: 300 !important;
+}
+
+.service-row-icon svg {
+    color: var(--emerald-deep) !important;
+    width: 28px !important;
+    height: 28px !important;
+}
+
+.service-row-title {
+    color: var(--text-primary) !important;
+    font-size: 1.15rem !important;
+}
+
+.service-row-desc {
+    color: var(--text-secondary) !important;
+    font-size: 13px !important;
+    line-height: 1.7 !important;
+}
+
+.service-row::before {
+    background: linear-gradient(90deg, var(--emerald), var(--gold)) !important;
+}
+
+.services .btn-outline {
+    border-color: rgba(11,61,46,0.2) !important;
+    color: var(--emerald-deep) !important;
+}
+
+.services .btn-outline:hover {
+    border-color: var(--emerald) !important;
+    background: rgba(11,61,46,0.04) !important;
+}
+
+/* ─── JOURNAL: Clean editorial ──────────────────────────────── */
+.journal-preview-grid {
+    gap: 20px !important;
+}
+
+.journal-featured-card {
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    background: rgba(255,255,255,0.02) !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+}
+
+.journal-featured-card:hover {
+    border-color: rgba(201,169,110,0.15) !important;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.3) !important;
+}
+
+.journal-featured-visual {
+    min-height: 280px !important;
+}
+
+.journal-featured-title {
+    font-size: clamp(1.2rem, 2.2vw, 1.7rem) !important;
+    color: var(--ivory) !important;
+}
+
+.journal-featured-card:hover .journal-featured-title {
+    color: var(--gold-light) !important;
+}
+
+.journal-featured-excerpt {
+    color: rgba(250,247,242,0.45) !important;
+    font-size: 13px !important;
+    line-height: 1.8 !important;
+}
+
+.journal-side-card {
+    border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+    padding: 20px 0 !important;
+}
+
+.journal-side-card:last-child {
+    border-bottom: none !important;
+}
+
+.journal-side-card:hover {
+    padding-left: 12px !important;
+}
+
+.journal-side-num {
+    font-size: 2.5rem !important;
+    color: rgba(201,169,110,0.06) !important;
+}
+
+.journal-side-card:hover .journal-side-num {
+    color: rgba(201,169,110,0.15) !important;
+}
+
+.journal-side-title {
+    font-size: 1rem !important;
+    color: var(--ivory) !important;
+}
+
+.journal-side-card:hover .journal-side-title {
+    color: var(--gold-light) !important;
+}
+
+.journal-meta {
+    color: rgba(255,255,255,0.3) !important;
+    font-size: 10px !important;
+}
+
+.journal-chip {
+    font-size: 8px !important;
+    letter-spacing: 2px !important;
+}
+
+.journal-preview .btn-outline {
+    border-color: rgba(201,169,110,0.15) !important;
+    color: var(--gold-light) !important;
+}
+
+.journal-preview .btn-outline:hover {
+    border-color: var(--gold) !important;
+    background: rgba(201,169,110,0.06) !important;
+}
+
+/* ─── ABOUT TEASER: Premium storytelling ────────────────────── */
+.about-teaser .section-eyebrow {
+    color: var(--gold-light) !important;
+}
+
+.about-teaser .section-title {
+    color: var(--ivory) !important;
+    font-size: clamp(1.8rem, 3.5vw, 2.8rem) !important;
+}
+
+.about-teaser p {
+    color: var(--text-on-dark-muted) !important;
+    font-size: 14px !important;
+    line-height: 1.9 !important;
+}
+
+.about-teaser-collage {
+    border-radius: 8px !important;
+    overflow: hidden !important;
+}
+
+.about-teaser-collage-frame {
+    border-color: rgba(201,169,110,0.12) !important;
+    border-radius: 8px !important;
+}
+
+.about-teaser .stat-number {
+    font-size: clamp(2.5rem, 5vw, 3.8rem) !important;
+    font-weight: 300 !important;
+    color: var(--gold) !important;
+}
+
+.about-teaser .stat-label {
+    font-size: 9px !important;
+    letter-spacing: 2.5px !important;
+    color: var(--text-on-dark-muted) !important;
+}
+
+.about-teaser .stat::after {
+    background: var(--gold) !important;
+    opacity: 0.3 !important;
+}
+
+.about-teaser .btn-outline {
+    border-color: rgba(201,169,110,0.2) !important;
+    color: var(--gold-light) !important;
+}
+
+.about-teaser .btn-outline:hover {
+    border-color: var(--gold) !important;
+    background: rgba(201,169,110,0.06) !important;
+}
+
+/* ─── CTA BANNER: polished ──────────────────────────────────── */
+.cta-banner .section-eyebrow {
+    color: rgba(201,169,110,0.6) !important;
+}
+
+.cta-banner .cta-title {
+    color: var(--ivory) !important;
+    font-weight: 300 !important;
+}
+
+.cta-banner .cta-desc {
+    color: rgba(250,247,242,0.6) !important;
+}
+
+.cta-banner .btn-primary {
+    background: var(--gold) !important;
+    color: var(--black) !important;
+    border: none !important;
+}
+
+.cta-banner .btn-primary:hover {
+    background: var(--gold-light) !important;
+}
+
+/* ─── LOOKBOOK: Centered, wider ─────────────────────────────── */
+.pf-wrapper {
+    justify-content: center !important;
+    max-width: 100% !important;
+}
+
+.pf-book-area {
+    max-width: min(1200px, 90vw) !important;
+    max-height: 68vh !important;
+    margin: 0 auto !important;
+}
+
+.pf-side-btn {
+    background: rgba(201,169,110,0.08) !important;
+    border: 1px solid rgba(201,169,110,0.2) !important;
+    color: var(--gold) !important;
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 50% !important;
+    transition: all 0.3s ease !important;
+}
+
+.pf-side-btn:hover {
+    background: rgba(201,169,110,0.15) !important;
+    border-color: var(--gold) !important;
+}
+
+/* ─── Section text colors: consistent across dark sections ──── */
 .lookbook-section .section-eyebrow,
 .featured .section-eyebrow {
     color: var(--gold) !important;
@@ -8907,76 +9151,11 @@ nav .logo-badge {
     color: var(--text-on-dark-muted) !important;
 }
 
-/* ─── Brand Statement: emerald polish ───────────────────────── */
-.brand-statement .brand-quote {
-    color: var(--ivory) !important;
-    font-size: clamp(1.3rem, 3vw, 2rem) !important;
-    line-height: 1.6 !important;
-    font-weight: 300 !important;
-}
-
-.brand-statement .brand-origin {
-    color: rgba(201,169,110,0.7) !important;
-    font-size: 11px !important;
-    letter-spacing: 3px !important;
-}
-
-.brand-statement .brand-divider svg {
-    stroke: rgba(201,169,110,0.4) !important;
-    width: 22px !important;
-    height: 22px !important;
-}
-
-/* Giant BERSAGLIO watermark: subtler */
-.brand-statement::before {
-    color: rgba(255,255,255,0.015) !important;
-}
-
-/* ─── Services section: polish on ivory ─────────────────────── */
-.services .btn-outline {
-    border-color: rgba(11,61,46,0.25) !important;
-    color: var(--emerald-deep) !important;
-}
-
-.services .btn-outline:hover {
-    border-color: var(--emerald) !important;
-    background: rgba(11,61,46,0.05) !important;
-}
-
-/* ─── CTA Banner: refined ───────────────────────────────────── */
-.cta-banner .section-eyebrow {
-    color: rgba(201,169,110,0.7) !important;
-}
-
-.cta-banner .cta-title {
-    color: var(--ivory) !important;
-    font-weight: 300 !important;
-}
-
-.cta-banner .cta-desc {
-    color: rgba(250,247,242,0.65) !important;
-}
-
-.cta-banner .btn-primary {
-    background: var(--gold) !important;
-    color: var(--black) !important;
-    border: none !important;
-}
-
-.cta-banner .btn-primary:hover {
-    background: var(--gold-light) !important;
-}
-
-/* Hide old decorative pseudo-elements on CTA */
-.cta-banner::before {
-    display: none !important;
-}
-
-/* ─── Mobile: collections 1-column ──────────────────────────── */
+/* ─── RESPONSIVE ────────────────────────────────────────────── */
 @media (max-width: 768px) {
     .collections-grid {
         grid-template-columns: 1fr !important;
-        gap: 8px !important;
+        gap: 12px !important;
     }
 
     .collection-panel {
@@ -8991,15 +9170,49 @@ nav .logo-badge {
         font-size: 1.3rem !important;
     }
 
-    /* Show footer + desc always on mobile (no hover) */
     .collection-panel-footer {
         opacity: 1 !important;
-        transform: translateY(0) !important;
     }
 
     .collection-panel-desc {
         max-height: 60px !important;
         opacity: 0.7 !important;
         margin-top: 8px !important;
+    }
+
+    /* Brand statement watermark */
+    .brand-statement::before {
+        font-size: clamp(2.5rem, 18vw, 5rem) !important;
+        letter-spacing: 4px !important;
+    }
+
+    .brand-statement-inner::before,
+    .brand-statement-inner::after {
+        font-size: clamp(2rem, 10vw, 4rem) !important;
+    }
+
+    /* About teaser: full width */
+    .about-teaser-inner {
+        grid-template-columns: 1fr !important;
+        gap: var(--space-xl) !important;
+    }
+
+    .about-teaser-stats {
+        gap: var(--space-sm) !important;
+    }
+
+    /* Journal: single column */
+    .journal-preview-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Services: stack nicely */
+    .service-row {
+        grid-template-columns: 48px 1fr !important;
+        gap: 16px !important;
+    }
+
+    .service-row-num {
+        display: none !important;
     }
 }

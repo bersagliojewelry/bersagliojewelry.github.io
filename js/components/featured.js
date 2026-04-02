@@ -66,7 +66,17 @@ const collectionNames = {
 export function renderFeaturedPieces() {
     const pieces    = db.getFeatured(6);
     const container = document.querySelector('#featured-grid');
+    const section   = document.querySelector('#piezas');
     if (!container) return;
+
+    // Hide entire section when no featured pieces exist
+    if (!pieces.length) {
+        if (section) section.classList.add('is-empty');
+        container.innerHTML = '';
+        return;
+    }
+
+    if (section) section.classList.remove('is-empty');
 
     Renderer.renderList('#featured-grid', pieces, (piece) => {
         const colName = collectionNames[piece.collection] || '';

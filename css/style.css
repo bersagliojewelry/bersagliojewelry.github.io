@@ -6491,30 +6491,7 @@ body.search-open { overflow: hidden; }
     color: rgba(250, 247, 242, 0.5) !important;
 }
 
-/* ─── Fix Línea Blanca — Section Dividers ───────────────────── */
-/* Los dividers entre secciones oscuras heredan el fondo ivory del body */
-.brand-statement + .section-divider {
-    background: var(--black-carbon) !important;
-    padding: 12px 0 !important;
-}
-
-.featured + .section-divider,
-.featured + * + .section-divider,
-.services + .section-divider {
-    background: linear-gradient(to bottom, var(--ivory) 0%, var(--black) 100%) !important;
-    padding: 0 !important;
-    height: 40px !important;
-    display: block !important;
-}
-
-.services + .section-divider::before,
-.services + .section-divider::after {
-    display: none !important;
-}
-
-.services + .section-divider .section-divider-icon {
-    display: none !important;
-}
+/* Section dividers removed from HTML — rules cleaned up */
 
 /* ─── Whitespace Reduction ───────────────────────────────────── */
 .section {
@@ -7438,72 +7415,7 @@ a.piece-image-wrapper {
     .banner-section::before { display: none; }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   ARMONÍA CROMÁTICA — RITMO DE SECCIONES
-   ═══════════════════════════════════════════════════════════════ */
-
-/* Trust strip: franja champán entre hero (dark) y banner (imagen) */
-.trust-strip {
-    background: var(--champagne) !important;
-    border-top: 1px solid rgba(201,169,110,0.2) !important;
-    border-bottom: 1px solid rgba(201,169,110,0.2) !important;
-}
-
-.trust-strip .trust-label { color: var(--text-primary) !important; }
-.trust-strip .trust-icon  { stroke: var(--gold-dark) !important; color: var(--gold-dark) !important; }
-.trust-strip .trust-sep   { color: rgba(150,130,100,0.4) !important; }
-
-/* Brand statement: esmeralda profundo (respiro entre Featured y Collections) */
-.brand-statement {
-    background: var(--emerald-deep) !important;
-    padding: 80px 0 !important;
-}
-
-.brand-statement .brand-quote { color: var(--ivory) !important; }
-.brand-statement .brand-origin { color: rgba(201,169,110,0.8) !important; }
-.brand-statement .brand-divider svg { stroke: rgba(201,169,110,0.5) !important; }
-
-/* Section dividers: inherit del contexto */
-.section-divider {
-    background: transparent !important;
-    border-top: 1px solid rgba(201,169,110,0.12) !important;
-    padding: 20px 0 !important;
-}
-
-/* Servicios: marfil (contraste tras colecciones oscuras) */
-.services {
-    background: var(--ivory-warm) !important;
-}
-
-.services .section-eyebrow  { color: var(--emerald) !important; }
-.services .section-title    { color: var(--text-primary) !important; }
-.services .section-desc     { color: var(--text-secondary) !important; }
-
-/* Journal preview: oscuro editorial */
-.journal-preview {
-    background: var(--black-carbon) !important;
-}
-
-.journal-preview .section-eyebrow { color: var(--gold) !important; }
-.journal-preview .section-title   { color: var(--ivory) !important; }
-.journal-preview .section-desc    { color: var(--text-on-dark-muted) !important; }
-
-/* About teaser: marfil cálido (humano, personal) — ya estaba OK */
-
-/* CTA banner: esmeralda profundo (cierre impactante) */
-.cta-banner {
-    background: var(--emerald-deep) !important;
-}
-
-.cta-banner .cta-title   { color: var(--ivory) !important; }
-.cta-banner .cta-desc    { color: rgba(250,247,242,0.72) !important; }
-.cta-banner::before,
-.cta-banner::after       { display: none !important; }
-
-/* Transición suave entre featured (dark) y brand-statement (esmeralda) */
-.featured {
-    border-bottom: none !important;
-}
+/* Armonía Cromática — migrated to Index Redesign block at end of file */
 
 /* ═══════════════════════════════════════════════════════════════
    HERO UNIFICADO — BANNER FOTOGRÁFICO CINEMÁTICO
@@ -8653,4 +8565,441 @@ nav .logo-badge {
     opacity: 0;
     transition: opacity 0.3s ease;
     pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INDEX REDESIGN — Premium Color Flow & Section Polish
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Remove all section-divider artifacts ──────────────────── */
+.section-divider {
+    display: none !important;
+}
+
+/* ─── Global section transitions via gradient edges ─────────── */
+
+/* Lookbook → Featured: continuous dark flow */
+.lookbook-section {
+    padding-bottom: 0 !important;
+}
+
+.featured {
+    background: var(--black) !important;
+    position: relative;
+}
+
+/* Featured → Brand Statement: dark to emerald gradient */
+.featured::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 120px;
+    background: linear-gradient(to bottom, transparent, var(--emerald-deep));
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Brand Statement: emerald deep, seamless */
+.brand-statement {
+    background: var(--emerald-deep) !important;
+    padding: 80px 0 !important;
+    position: relative;
+}
+
+/* Brand → Collections: emerald to dark carbon transition */
+.brand-statement::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    background: linear-gradient(to bottom, transparent, var(--black-carbon));
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Collections: dark carbon background */
+.collections {
+    background: var(--black-carbon) !important;
+    position: relative;
+}
+
+/* Collections → Services: dark to warm ivory */
+.collections::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: linear-gradient(to bottom, transparent, var(--ivory-warm));
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* Services: warm ivory */
+.services {
+    background: var(--ivory-warm) !important;
+    position: relative;
+}
+
+.services .section-eyebrow  { color: var(--emerald) !important; }
+.services .section-title    { color: var(--text-primary) !important; }
+.services .section-desc     { color: var(--text-secondary) !important; }
+
+/* Services → Journal: ivory to dark editorial */
+.services::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: linear-gradient(to bottom, transparent, var(--black-carbon));
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Journal: dark editorial */
+.journal-preview {
+    background: var(--black-carbon) !important;
+    position: relative;
+}
+
+/* Journal → About: dark carbon to charcoal */
+.journal-preview::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    background: linear-gradient(to bottom, transparent, var(--charcoal));
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* About teaser: charcoal */
+.about-teaser {
+    background: var(--charcoal) !important;
+    position: relative;
+}
+
+/* About → CTA: charcoal to emerald */
+.about-teaser::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    background: linear-gradient(to bottom, transparent, var(--emerald-deep));
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* CTA Banner: emerald deep, seamless */
+.cta-banner {
+    background: var(--emerald-deep) !important;
+    position: relative;
+}
+
+/* CTA → Footer: emerald to black */
+.cta-banner::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: linear-gradient(to bottom, transparent, var(--black));
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* ─── Trust strip polish ────────────────────────────────────── */
+.trust-strip {
+    background: var(--black) !important;
+    border-top: 1px solid rgba(201,169,110,0.1) !important;
+    border-bottom: 1px solid rgba(201,169,110,0.08) !important;
+}
+
+.trust-strip .trust-label { color: var(--champagne-dark) !important; }
+.trust-strip .trust-icon  { stroke: var(--gold) !important; color: var(--gold) !important; }
+.trust-strip .trust-sep   { color: rgba(201,169,110,0.3) !important; }
+
+/* ─── Featured section: hide when empty ─────────────────────── */
+.featured:has(#featured-grid:empty),
+.featured.is-empty {
+    display: none !important;
+}
+
+/* Featured: single piece — centered, no black void */
+.featured-grid:has(> :only-child) {
+    grid-template-columns: 1fr !important;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+/* Featured: 2 pieces — two column centered */
+.featured-grid:has(> :nth-child(2):last-child) {
+    grid-template-columns: repeat(2, 1fr) !important;
+    max-width: 780px;
+    margin: 0 auto;
+}
+
+/* ─── Collections Section: Premium Redesign ─────────────────── */
+
+/* Grid: 2×2 with subtle gaps */
+.collections-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+}
+
+/* Panels: refined proportions */
+.collection-panel {
+    aspect-ratio: 16 / 10 !important;
+    border-radius: 6px !important;
+}
+
+/* Panel link: better padding and layout */
+.collection-panel-link {
+    padding: 32px 36px !important;
+    justify-content: flex-end !important;
+}
+
+/* Panel number: smaller, refined */
+.collection-panel-num {
+    font-size: 9px !important;
+    letter-spacing: 3px !important;
+    opacity: 0.4 !important;
+    top: 24px !important;
+    left: 36px !important;
+}
+
+/* Subtitle: more refined */
+.collection-panel-sub {
+    font-size: 8px !important;
+    letter-spacing: 4px !important;
+    opacity: 0.65 !important;
+    margin-bottom: 8px !important;
+}
+
+/* Name: cleaner typography */
+.collection-panel-name {
+    font-size: clamp(1.4rem, 2.2vw, 2.2rem) !important;
+    font-weight: 300 !important;
+    letter-spacing: 0 !important;
+    line-height: 1.15 !important;
+    margin-bottom: 0 !important;
+}
+
+.collection-panel:hover .collection-panel-name {
+    transform: translateY(-4px) !important;
+}
+
+/* Description: cleaner reveal */
+.collection-panel-desc {
+    font-size: 12px !important;
+    line-height: 1.6 !important;
+    max-height: 0 !important;
+    opacity: 0 !important;
+    margin-top: 0 !important;
+}
+
+.collection-panel:hover .collection-panel-desc {
+    max-height: 60px !important;
+    opacity: 0.8 !important;
+    margin-top: 10px !important;
+}
+
+/* Footer: cleaner layout */
+.collection-panel-footer {
+    margin-top: 16px !important;
+    opacity: 0 !important;
+    transform: translateY(6px) !important;
+}
+
+.collection-panel:hover .collection-panel-footer {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+}
+
+.collection-panel-count {
+    font-size: 8px !important;
+    letter-spacing: 2.5px !important;
+    color: rgba(255,255,255,0.3) !important;
+}
+
+.collection-panel-cta {
+    font-size: 8px !important;
+    letter-spacing: 2.5px !important;
+    text-transform: uppercase !important;
+    color: var(--gold) !important;
+}
+
+/* Background icon: subtler */
+.collection-panel-bg-icon {
+    opacity: 0.035 !important;
+}
+
+.collection-panel-bg-icon svg {
+    width: 140px !important;
+    height: 140px !important;
+}
+
+.collection-panel:hover .collection-panel-bg-icon {
+    opacity: 0.08 !important;
+}
+
+/* Bottom gold bar: thinner, more subtle */
+.collection-panel::after {
+    height: 1px !important;
+    background: linear-gradient(90deg, var(--gold), rgba(212,184,122,0.4)) !important;
+}
+
+/* Progress bar: refined */
+.collections-progress {
+    margin-top: 16px !important;
+    height: 1px !important;
+    background: rgba(255,255,255,0.06) !important;
+}
+
+.collections-progress-fill {
+    background: var(--gold) !important;
+    opacity: 0.5 !important;
+}
+
+/* "Ver catálogo" button: match dark context */
+.collections .section-footer {
+    padding-top: var(--space-lg) !important;
+}
+
+.collections .btn-outline {
+    border-color: rgba(201,169,110,0.25) !important;
+    color: var(--gold-light) !important;
+    font-size: 11px !important;
+    letter-spacing: 2px !important;
+}
+
+.collections .btn-outline:hover {
+    border-color: var(--gold) !important;
+    background: rgba(201,169,110,0.08) !important;
+}
+
+/* ─── Section eyebrows: consistent gold across dark sections ── */
+.lookbook-section .section-eyebrow,
+.featured .section-eyebrow {
+    color: var(--gold) !important;
+}
+
+.lookbook-section .section-title,
+.featured .section-title {
+    color: var(--ivory) !important;
+}
+
+.lookbook-section .section-desc,
+.featured .section-desc {
+    color: var(--text-on-dark-muted) !important;
+}
+
+/* ─── Brand Statement: emerald polish ───────────────────────── */
+.brand-statement .brand-quote {
+    color: var(--ivory) !important;
+    font-size: clamp(1.3rem, 3vw, 2rem) !important;
+    line-height: 1.6 !important;
+    font-weight: 300 !important;
+}
+
+.brand-statement .brand-origin {
+    color: rgba(201,169,110,0.7) !important;
+    font-size: 11px !important;
+    letter-spacing: 3px !important;
+}
+
+.brand-statement .brand-divider svg {
+    stroke: rgba(201,169,110,0.4) !important;
+    width: 22px !important;
+    height: 22px !important;
+}
+
+/* Giant BERSAGLIO watermark: subtler */
+.brand-statement::before {
+    color: rgba(255,255,255,0.015) !important;
+}
+
+/* ─── Services section: polish on ivory ─────────────────────── */
+.services .btn-outline {
+    border-color: rgba(11,61,46,0.25) !important;
+    color: var(--emerald-deep) !important;
+}
+
+.services .btn-outline:hover {
+    border-color: var(--emerald) !important;
+    background: rgba(11,61,46,0.05) !important;
+}
+
+/* ─── CTA Banner: refined ───────────────────────────────────── */
+.cta-banner .section-eyebrow {
+    color: rgba(201,169,110,0.7) !important;
+}
+
+.cta-banner .cta-title {
+    color: var(--ivory) !important;
+    font-weight: 300 !important;
+}
+
+.cta-banner .cta-desc {
+    color: rgba(250,247,242,0.65) !important;
+}
+
+.cta-banner .btn-primary {
+    background: var(--gold) !important;
+    color: var(--black) !important;
+    border: none !important;
+}
+
+.cta-banner .btn-primary:hover {
+    background: var(--gold-light) !important;
+}
+
+/* Hide old decorative pseudo-elements on CTA */
+.cta-banner::before {
+    display: none !important;
+}
+
+/* ─── Mobile: collections 1-column ──────────────────────────── */
+@media (max-width: 768px) {
+    .collections-grid {
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+    }
+
+    .collection-panel {
+        aspect-ratio: 16 / 9 !important;
+    }
+
+    .collection-panel-link {
+        padding: 24px 28px !important;
+    }
+
+    .collection-panel-name {
+        font-size: 1.3rem !important;
+    }
+
+    /* Show footer + desc always on mobile (no hover) */
+    .collection-panel-footer {
+        opacity: 1 !important;
+        transform: translateY(0) !important;
+    }
+
+    .collection-panel-desc {
+        max-height: 60px !important;
+        opacity: 0.7 !important;
+        margin-top: 8px !important;
+    }
 }

@@ -10335,29 +10335,65 @@ nav .logo-sub {
 .showcase-num[data-n="03"] { left: -17px; top: 62%; }
 .showcase-num[data-n="04"] { right: -17px; top: 62%; }
 
-/* ─── GEMA CENTRAL ──────────────────────────────────────────── */
+/* ─── ICONOS PHOSPHOR: tamaño y color ───────────────────────── */
+.showcase-item-icon svg {
+    width: 44px !important;
+    height: 44px !important;
+    color: var(--gold) !important;
+    opacity: 0.9 !important;
+    /* Brillo sutil dorado */
+    filter: drop-shadow(0 0 8px rgba(200,169,110,0.30)) !important;
+    transition: filter 0.4s ease, opacity 0.4s ease !important;
+}
+.showcase-item:hover .showcase-item-icon svg {
+    opacity: 1 !important;
+    filter: drop-shadow(0 0 14px rgba(200,169,110,0.55)) !important;
+}
+
+/* ─── GEMA CENTRAL: imagen PNG ──────────────────────────────── */
+/*
+ * OPTIMIZACIÓN RECOMENDADA para gema.png antes de subir al repo:
+ *   • Dimensiones: máximo 480×480 px (se muestra a 220×220 en pantalla)
+ *   • Formato: PNG-24 con transparencia ó convertir a WebP (60-70 kB ideal)
+ *   • Herramienta: squoosh.app o tinypng.com → reducir a < 80 kB
+ */
 .showcase-gem-icon {
-    width: 140px !important;
-    height: 160px !important;
+    width: 220px !important;
+    height: 220px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     position: relative !important;
     z-index: 1 !important;
+    border-radius: 50% !important;
+    overflow: hidden !important;
 }
 
-.showcase-gem-svg {
+.showcase-gem-img {
     width: 100% !important;
     height: 100% !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    display: block !important;
+    /* Halo dorado + esmeralda animado */
     filter:
-        drop-shadow(0 0 18px rgba(200,169,110,0.35))
-        drop-shadow(0 0 40px rgba(26,77,46,0.30)) !important;
-    animation: gem-pulse 4s ease-in-out infinite !important;
+        drop-shadow(0 0 22px rgba(200,169,110,0.40))
+        drop-shadow(0 0 50px rgba(26,77,46,0.35)) !important;
+    animation: gem-glow 4s ease-in-out infinite !important;
+    will-change: filter !important;
 }
 
-@keyframes gem-pulse {
-    0%, 100% { filter: drop-shadow(0 0 18px rgba(200,169,110,0.35)) drop-shadow(0 0 40px rgba(26,77,46,0.30)); }
-    50%       { filter: drop-shadow(0 0 28px rgba(200,169,110,0.55)) drop-shadow(0 0 60px rgba(26,100,60,0.45)); }
+@keyframes gem-glow {
+    0%, 100% {
+        filter:
+            drop-shadow(0 0 22px rgba(200,169,110,0.40))
+            drop-shadow(0 0 50px rgba(26,77,46,0.35));
+    }
+    50% {
+        filter:
+            drop-shadow(0 0 36px rgba(200,169,110,0.65))
+            drop-shadow(0 0 80px rgba(26,100,60,0.55));
+    }
 }
 
 /* ─── BOTÓN "Conocer todos los servicios" ───────────────────── */
@@ -10410,8 +10446,8 @@ nav .logo-sub {
         height: 220px !important;
     }
     .showcase-gem-icon {
-        width: 110px !important;
-        height: 130px !important;
+        width: 170px !important;
+        height: 170px !important;
     }
     .showcase-num[data-n="01"] { left: -14px; top: 26%; }
     .showcase-num[data-n="02"] { right: -14px; top: 26%; }
@@ -10426,8 +10462,8 @@ nav .logo-sub {
         height: 180px !important;
     }
     .showcase-gem-icon {
-        width: 90px !important;
-        height: 108px !important;
+        width: 140px !important;
+        height: 140px !important;
     }
     .showcase-item-title { font-size: 1rem !important; }
     .showcase-item-desc { font-size: 12px !important; }

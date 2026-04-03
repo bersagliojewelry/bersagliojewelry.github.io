@@ -90,31 +90,49 @@ body {
     font-size: 15px;
     line-height: 1.7;
     color: var(--text-on-dark);
-    background: var(--black-deep);
+    background: #030806;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* ─── Dark Emerald / Gold Wave Background ─── */
+/* ─── Emerald Marble Background — full page fixed layer ─── */
 body::before {
     content: '';
     position: fixed;
     inset: 0;
     z-index: -1;
     background:
-        /* Gold veins */
-        radial-gradient(ellipse at 15% 80%, rgba(201,169,110,0.08) 0%, transparent 50%),
-        radial-gradient(ellipse at 85% 15%, rgba(201,169,110,0.06) 0%, transparent 40%),
-        radial-gradient(ellipse at 50% 50%, rgba(168,137,78,0.04) 0%, transparent 30%),
-        /* Emerald flowing waves */
-        radial-gradient(ellipse at 75% 60%, rgba(11,61,46,0.7) 0%, transparent 50%),
-        radial-gradient(ellipse at 15% 25%, rgba(26,92,58,0.5) 0%, transparent 45%),
-        radial-gradient(ellipse at 90% 85%, rgba(11,61,46,0.6) 0%, transparent 40%),
-        radial-gradient(ellipse at 35% 75%, rgba(42,122,80,0.25) 0%, transparent 35%),
-        radial-gradient(ellipse at 60% 10%, rgba(11,61,46,0.4) 0%, transparent 35%),
-        /* Dark base with subtle emerald tones */
-        linear-gradient(160deg, #050908 0%, #0A0A0A 25%, #0B1F17 45%, #071510 55%, #0A0A0A 75%, #050908 100%);
+        /* Ultra-fine gold mineral veins — marble texture */
+        repeating-linear-gradient(
+            -48deg,
+            transparent 0px, transparent 58px,
+            rgba(200,169,110,0.022) 58px, rgba(200,169,110,0.022) 59px,
+            transparent 59px, transparent 108px
+        ),
+        repeating-linear-gradient(
+            37deg,
+            transparent 0px, transparent 85px,
+            rgba(200,169,110,0.016) 85px, rgba(200,169,110,0.016) 86px,
+            transparent 86px, transparent 155px
+        ),
+        repeating-linear-gradient(
+            72deg,
+            transparent 0px, transparent 130px,
+            rgba(200,169,110,0.012) 130px, rgba(200,169,110,0.012) 131px,
+            transparent 131px, transparent 210px
+        ),
+        /* Emerald marble pools — organic depth */
+        radial-gradient(ellipse 85% 65% at 10% 90%, rgba(26,77,46,0.55) 0%, transparent 100%),
+        radial-gradient(ellipse 70% 55% at 90% 10%, rgba(13,40,24,0.65) 0%, transparent 100%),
+        radial-gradient(ellipse 60% 50% at 68% 58%, rgba(10,26,15,0.42) 0%, transparent 100%),
+        radial-gradient(ellipse 50% 45% at 5%  38%, rgba(20,55,32,0.38) 0%, transparent 100%),
+        radial-gradient(ellipse 55% 42% at 94% 72%, rgba(13,40,24,0.50) 0%, transparent 100%),
+        radial-gradient(ellipse 45% 35% at 48% 16%, rgba(15,35,22,0.32) 0%, transparent 100%),
+        radial-gradient(ellipse 38% 30% at 72% 90%, rgba(26,60,38,0.30) 0%, transparent 100%),
+        radial-gradient(ellipse 30% 25% at 30% 50%, rgba(10,26,15,0.22) 0%, transparent 100%),
+        /* Base: deep emerald-black marble */
+        linear-gradient(155deg, #030806 0%, #060d09 18%, #0a1a0f 38%, #07100a 55%, #050a07 72%, #030806 100%);
     pointer-events: none;
 }
 
@@ -9451,4 +9469,150 @@ nav .logo-badge {
         width: 36px !important;
         height: 36px !important;
     }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INDEX REDESIGN V4 — EMERALD MARBLE BACKGROUND SYSTEM
+   Referencia: bersaglio_jewelry_luxury_portfolio_home.png
+   Mármol esmeralda oscuro / dorado / negro — todo el index
+   Elimina: foto hero, fondos de sección, gradientes de transición
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── HERO: Eliminar fotografía de banner ───────────────────── */
+.hero > picture,
+.hero-bg-img {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+.hero {
+    background: transparent !important;
+    overflow: hidden !important;
+}
+
+/* Hero content: centrado sin foto lateral */
+.hero-content {
+    text-align: center !important;
+    max-width: min(800px, 90vw) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+.hero-eyebrow {
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+.hero-title-wrap {
+    align-items: center !important;
+}
+.hero-actions {
+    justify-content: center !important;
+}
+.hero-meta {
+    justify-content: center !important;
+}
+
+/* Overlay: solo viñeta de bordes, sin degradado lateral de foto */
+.hero-overlay {
+    background:
+        radial-gradient(ellipse 100% 35% at 50% 0%,    rgba(3,8,6,0.72) 0%, transparent 100%),
+        radial-gradient(ellipse 100% 28% at 50% 100%,  rgba(3,8,6,0.78) 0%, transparent 100%),
+        radial-gradient(ellipse 22%  100% at 0%   50%, rgba(3,8,6,0.48) 0%, transparent 100%),
+        radial-gradient(ellipse 22%  100% at 100% 50%, rgba(3,8,6,0.48) 0%, transparent 100%),
+        radial-gradient(ellipse 75%  65% at 48% 42%,   rgba(26,77,46,0.09) 0%, transparent 70%)
+    !important;
+}
+
+@media (max-width: 768px) {
+    .hero-overlay {
+        background:
+            radial-gradient(ellipse 100% 30% at 50% 0%,   rgba(3,8,6,0.75) 0%, transparent 100%),
+            radial-gradient(ellipse 100% 25% at 50% 100%, rgba(3,8,6,0.82) 0%, transparent 100%),
+            radial-gradient(ellipse 22%  100% at 0%  50%, rgba(3,8,6,0.52) 0%, transparent 100%)
+        !important;
+    }
+    /* Hero content: centrado en móvil sin foto lateral */
+    .hero-content {
+        max-width: 100% !important;
+        text-align: center !important;
+    }
+    .hero-eyebrow::before,
+    .hero-eyebrow::after { display: none !important; }
+}
+
+/* ─── ELIMINAR TODOS LOS GRADIENTES DE TRANSICIÓN ENTRE SECCIONES */
+.featured::after,
+.brand-statement::after,
+.collections::after,
+.services::after,
+.journal-preview::after,
+.about-teaser::after,
+.cta-banner::after {
+    display: none !important;
+    content: none !important;
+    background: none !important;
+    height: 0 !important;
+}
+
+/* ─── TRUST STRIP ────────────────────────────────────────────── */
+.trust-strip {
+    background: rgba(4,9,6,0.75) !important;
+    border-top: 1px solid rgba(200,169,110,0.06) !important;
+    border-bottom: 1px solid rgba(200,169,110,0.06) !important;
+}
+.trust-strip .trust-label { color: rgba(230,215,190,0.65) !important; }
+.trust-strip .trust-icon  { stroke: var(--gold) !important; opacity: 0.55 !important; }
+.trust-strip .trust-sep   { color: rgba(200,169,110,0.18) !important; }
+
+/* ─── LOOKBOOK / PORTAFOLIO ──────────────────────────────────── */
+.lookbook-section {
+    background: transparent !important;
+}
+
+/* ─── FEATURED PIECES ────────────────────────────────────────── */
+.featured {
+    background: transparent !important;
+}
+
+/* ─── BRAND STATEMENT ────────────────────────────────────────── */
+.brand-statement {
+    background: rgba(13,40,24,0.42) !important;
+}
+
+/* ─── COLLECTIONS ────────────────────────────────────────────── */
+.collections {
+    background: rgba(5,10,7,0.55) !important;
+}
+
+/* ─── SERVICES: oscuro (antes era ivory) ────────────────────── */
+.services {
+    background: rgba(8,15,11,0.68) !important;
+}
+.services .section-eyebrow  { color: var(--gold)               !important; }
+.services .section-title    { color: var(--ivory)              !important; }
+.services .section-desc     { color: var(--text-on-dark-muted) !important; }
+.service-row                { border-bottom-color: rgba(200,169,110,0.07) !important; }
+.service-row-num            { color: var(--gold) !important; opacity: 0.45 !important; }
+.service-row-icon svg       { color: var(--gold) !important; opacity: 0.55 !important; }
+.service-row-title          { color: var(--ivory) !important; font-size: 1.1rem !important; }
+.service-row-desc           { color: var(--text-on-dark-muted) !important; font-size: 13px !important; line-height: 1.7 !important; }
+.service-row::before        { background: linear-gradient(90deg, var(--gold), var(--emerald-glow)) !important; }
+.services .btn-outline      { border-color: rgba(200,169,110,0.15) !important; color: var(--gold-light) !important; font-size: 11px !important; letter-spacing: 2px !important; }
+.services .btn-outline:hover{ border-color: rgba(200,169,110,0.45) !important; background: rgba(200,169,110,0.05) !important; }
+
+/* ─── JOURNAL ────────────────────────────────────────────────── */
+.journal-preview {
+    background: rgba(5,10,7,0.72) !important;
+}
+
+/* ─── ABOUT TEASER ───────────────────────────────────────────── */
+.about-teaser {
+    background: rgba(12,24,16,0.60) !important;
+}
+
+/* ─── CTA BANNER: Esmeralda rica con venas doradas ──────────── */
+.cta-banner {
+    background:
+        radial-gradient(ellipse 60% 60% at 50% 50%, rgba(26,77,46,0.55) 0%, transparent 100%),
+        linear-gradient(135deg, #0a1e12 0%, #1a4d2e 50%, #0a1e12 100%)
+    !important;
 }

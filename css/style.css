@@ -9616,3 +9616,233 @@ nav .logo-badge {
         linear-gradient(135deg, #0a1e12 0%, #1a4d2e 50%, #0a1e12 100%)
     !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   INDEX REDESIGN V5 — HERO + HEADER EDITORIAL
+   Referencia: Image #1 + DESIGN.md "Digital Atelier"
+   Split layout: texto izquierda / foto derecha
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── 1. RESTAURAR FOTO DEL HERO (anula V4 display:none) ───── */
+.hero > picture,
+.hero-bg-img {
+    display: block !important;
+    visibility: visible !important;
+}
+.hero-bg-img {
+    animation: hero-kb-zoom 16s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
+    object-position: 65% center !important;
+    z-index: 0 !important;
+}
+
+/* ─── 2. HERO OVERLAY: oscuro-izquierda → transparente-derecha */
+.hero-overlay {
+    background:
+        linear-gradient(
+            105deg,
+            rgba(5,10,7,0.97) 0%,
+            rgba(5,10,7,0.92) 18%,
+            rgba(5,10,7,0.78) 34%,
+            rgba(5,10,7,0.42) 50%,
+            rgba(5,10,7,0.14) 66%,
+            rgba(5,10,7,0.04) 80%,
+            transparent 92%
+        ),
+        /* Viñeta superior */
+        linear-gradient(to bottom, rgba(5,10,7,0.55) 0%, transparent 20%),
+        /* Viñeta inferior (sobre meta badges) */
+        linear-gradient(to top, rgba(5,10,7,0.65) 0%, transparent 15%)
+    !important;
+    z-index: 1 !important;
+}
+
+@media (max-width: 768px) {
+    .hero-overlay {
+        background:
+            linear-gradient(
+                to bottom,
+                rgba(5,10,7,0.96) 0%,
+                rgba(5,10,7,0.88) 45%,
+                rgba(5,10,7,0.70) 70%,
+                rgba(5,10,7,0.50) 100%
+            ) !important;
+    }
+    .hero-bg-img {
+        object-position: 62% center !important;
+    }
+}
+
+/* ─── 3. HERO CONTENT: izquierda, columna, editorial ─────────── */
+.hero-content {
+    text-align: left !important;
+    max-width: clamp(340px, 50%, 600px) !important;
+    margin-left: 0 !important;
+    margin-right: auto !important;
+    padding-top: 160px !important;
+    padding-bottom: 80px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    z-index: 3 !important;
+}
+.hero-eyebrow {
+    margin-left: 0 !important;
+    margin-right: auto !important;
+    padding: 0 !important;
+}
+/* Restaurar las líneas decorativas del eyebrow */
+.hero-eyebrow::before,
+.hero-eyebrow::after {
+    display: block !important;
+}
+.hero-actions {
+    justify-content: flex-start !important;
+}
+.hero-desc {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    text-align: left !important;
+}
+
+/* ─── 4. HERO TITLE: grande, editorial ───────────────────────── */
+.hero-title {
+    font-size: clamp(3rem, 6.5vw, 6rem) !important;
+    font-weight: 300 !important;
+    line-height: 1.08 !important;
+    letter-spacing: -1.5px !important;
+    color: var(--ivory) !important;
+}
+.hero-title em {
+    display: block !important;
+    font-style: italic !important;
+    color: var(--gold-light) !important;
+    font-weight: 300 !important;
+    letter-spacing: -0.5px !important;
+}
+.hero-title-line {
+    margin-left: 0 !important;
+    max-width: 340px !important;
+    margin-top: 22px !important;
+    transform-origin: left !important;
+}
+
+/* ─── 5. HERO META: anclado al pie del hero ──────────────────── */
+/* (movido fuera de .hero-content en HTML) */
+.hero > .hero-meta {
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    padding: 14px var(--space-md) !important;
+    border-top: 1px solid rgba(200,169,110,0.15) !important;
+    justify-content: flex-start !important;
+    gap: 24px !important;
+    z-index: 4 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+    background: rgba(5,10,7,0.35) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+}
+.hero > .hero-meta .hero-badge {
+    font-size: 9px !important;
+    letter-spacing: 2.5px !important;
+    color: rgba(220,200,165,0.6) !important;
+    text-transform: uppercase !important;
+}
+.hero > .hero-meta .hero-badge-sep {
+    color: rgba(200,169,110,0.3) !important;
+}
+
+/* ─── 6. SCROLL INDICATOR: por encima del meta ───────────────── */
+.hero-scroll-indicator {
+    bottom: 72px !important;
+    left: auto !important;
+    right: var(--space-lg) !important;
+    transform: none !important;
+}
+
+/* ─── 7. HEADER: barra siempre visible (sutil) ───────────────── */
+.header:not(.scrolled) {
+    background: rgba(3,8,6,0.28) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border-bottom: 1px solid rgba(200,169,110,0.05) !important;
+}
+.header.scrolled {
+    background: rgba(5,9,7,0.96) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border-bottom: 1px solid rgba(200,169,110,0.10) !important;
+    box-shadow: 0 1px 24px rgba(0,0,0,0.25) !important;
+}
+
+/* ─── 8. LOGO: serif editorial ───────────────────────────────── */
+.header .logo-text,
+nav .logo-text {
+    font-family: var(--font-display) !important;
+    font-size: 22px !important;
+    font-weight: 500 !important;
+    letter-spacing: 1px !important;
+    color: var(--gold-light) !important;
+}
+.header .logo-sub,
+nav .logo-sub {
+    display: block !important;
+    font-size: 8.5px !important;
+    letter-spacing: 5px !important;
+    color: rgba(200,169,110,0.55) !important;
+    text-transform: uppercase !important;
+    margin-top: -1px !important;
+}
+
+/* ─── 9. CONTACTO — botón outlined ──────────────────────────── */
+.nav-contact-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    border: 1px solid rgba(250,247,242,0.45) !important;
+    color: var(--ivory) !important;
+    padding: 9px 22px !important;
+    font-family: var(--font-body) !important;
+    font-size: 10.5px !important;
+    font-weight: 500 !important;
+    letter-spacing: 2.5px !important;
+    text-transform: uppercase !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    transition: border-color 0.3s ease, background 0.3s ease, color 0.3s ease !important;
+}
+.nav-contact-btn::after { display: none !important; }
+.nav-contact-btn:hover {
+    border-color: var(--gold) !important;
+    background: rgba(200,169,110,0.06) !important;
+    color: var(--gold-light) !important;
+}
+.header.scrolled .nav-contact-btn {
+    border-color: rgba(200,169,110,0.38) !important;
+}
+.header.scrolled .nav-contact-btn:hover {
+    border-color: var(--gold) !important;
+    background: rgba(200,169,110,0.08) !important;
+}
+
+/* ─── 10. RESPONSIVE MÓVIL ───────────────────────────────────── */
+@media (max-width: 768px) {
+    .hero-content {
+        text-align: left !important;
+        max-width: 85% !important;
+        padding-top: 120px !important;
+        padding-bottom: 60px !important;
+    }
+    .hero-title {
+        font-size: clamp(2.4rem, 10vw, 3.5rem) !important;
+    }
+    .hero > .hero-meta {
+        padding: 10px var(--space-md) !important;
+        gap: 16px !important;
+    }
+    .hero-scroll-indicator {
+        display: none !important;
+    }
+}

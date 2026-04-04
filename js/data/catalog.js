@@ -34,28 +34,28 @@ const _static = {
 
     services: [
         {
+            id:          "diseno",
+            icon:        "pencil",
+            title:       "Diseño y Fabricación a Medida",
+            description: "Somos fabricantes y diseñadores. Creamos la joya de tus sueños desde cero, seleccionando los mejores metales, esmeraldas y diamantes."
+        },
+        {
             id:          "asesoria",
             icon:        "gem",
             title:       "Asesoría Personalizada",
-            description: "Nuestros gemólogos certificados te guían para encontrar la pieza perfecta según tu ocasión, estilo y presupuesto."
-        },
-        {
-            id:          "diseno-custom",
-            icon:        "pencil",
-            title:       "Diseño a Medida",
-            description: "Creamos piezas exclusivas desde cero. Tú eliges la gema, el metal y el diseño. Nosotros lo hacemos realidad."
+            description: "Nacimos visitando a nuestros clientes puerta a puerta. Hoy, esa cercanía es nuestro sello. Te guiamos para encontrar la pieza que refleje tu esencia."
         },
         {
             id:          "certificacion",
             icon:        "certificate",
-            title:       "Certificación La Verde / Jewelers of America",
-            description: "Todas nuestras piezas son certificadas por La Verde / Jewelers of America — Fabio Enrique Peñuela Montañez, Master Jeweler. Garantía de autenticidad y calidad en cada gema."
+            title:       "Certificación y Garantía",
+            description: "Seguridad absoluta. Todas nuestras piezas están garantizadas y nuestra diamantería cuenta con certificación internacional."
         },
         {
-            id:          "envio",
-            icon:        "shield",
-            title:       "Envío Seguro y Asegurado",
-            description: "Entrega puerta a puerta con seguro completo. Empaque premium que protege y honra cada pieza."
+            id:          "taller",
+            icon:        "tools",
+            title:       "Taller y Mantenimiento",
+            description: "Protegemos tu inversión. Ofrecemos limpieza, mantenimiento y restauración para que tus joyas brillen como el primer día."
         }
     ],
 

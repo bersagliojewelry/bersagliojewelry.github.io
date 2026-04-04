@@ -293,5 +293,17 @@ Cada seccion del index tiene su clase V7 que activa los estilos premium:
 - Nuevo bloque: `.trust-strip.trust-strip-v7 { display: none !important; }`
 
 **Notas:**
-- Los estilos CSS del trust strip V7 (lineas ~11025-11228) quedan como legacy inactivo, candidatos a limpieza futura.
 - Solo index.html usaba el trust strip, no afecta otras paginas.
+
+### 2026-04-04 — Limpieza de codigo muerto (hero-meta, trust-strip V7)
+**Archivos modificados:** `index.html`, `css/style.css`, `CLAUDE.md`
+
+**Cambios realizados:**
+1. **Eliminado comentario HTML del trust strip** — Se removio el bloque comentado `<!-- <div class="trust-strip trust-strip-v7">...</div> -->` del index.html.
+2. **Eliminado CSS completo de Trust Strip V7** — ~200 lineas de CSS eliminadas (base + responsive + accesibilidad) ya que el HTML fue removido.
+3. **Eliminado CSS de hero-meta V7** — ~65 lineas de CSS eliminadas (`.hero-v7 > .hero-meta`, `.hero-meta-inner`, `.hero-badge`, `.hero-badge-sep` + responsive) ya que hero-meta no existe en el HTML.
+4. **Eliminadas referencias hero-meta en responsive** — Se limpiaron las reglas `.hero-v7 .hero-meta-inner` en los breakpoints de 1024px, 1280px, 1600px y 479px.
+5. **Eliminada regla safe-area hero-meta** — Se removio `padding-bottom: env(safe-area-inset-bottom)` para `.hero-v7 > .hero-meta`.
+6. **Eliminada regla display:none del trust-strip** — Era redundante ya que el HTML fue removido.
+
+**Resultado:** ~270 lineas de CSS muerto eliminadas. El archivo style.css queda mas limpio sin afectar ningun estilo visible.

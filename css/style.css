@@ -13545,11 +13545,6 @@ html {
     flex-shrink: 0 !important;
 }
 
-/* Pause on hover for readability */
-.hero-v7 > .hero-ticker:hover .hero-ticker-track {
-    animation-play-state: paused !important;
-}
-
 /* Responsive ticker */
 @media (max-width: 479px) {
     .hero-v7 .hero-ticker-item {

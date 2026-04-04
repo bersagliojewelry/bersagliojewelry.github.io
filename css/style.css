@@ -1550,78 +1550,9 @@ input, select, textarea { font-family: var(--font-body); }
 /* ═══════════════════════════════════════════════════════════════
    RESPONSIVE
    ═══════════════════════════════════════════════════════════════ */
+/* Legacy mobile nav — sobrescrito por Header Redesign V2 al final del archivo */
 @media (max-width: 968px) {
     .hamburger { display: flex; }
-    .nav-actions { display: none; }
-    .nav-wa-label { display: none; }
-
-    .nav-menu {
-        position: fixed;
-        top: 0;
-        right: -100%;
-        width: 100%;
-        height: 100vh;
-        background: var(--ivory);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: right var(--transition-slow);
-        z-index: 1000;
-        overflow-y: auto;
-    }
-
-    .nav-menu.is-open { right: 0; }
-
-    .nav-list {
-        flex-direction: column;
-        gap: var(--space-md);
-        text-align: center;
-        padding: var(--space-xl) 0;
-    }
-
-    .nav-link {
-        font-size: 14px;
-        color: var(--text-primary) !important;
-    }
-
-    .nav-link--cta {
-        color: var(--ivory) !important;
-    }
-
-    /* Mobile dropdowns */
-    .dropdown-menu {
-        position: static;
-        transform: none;
-        opacity: 1;
-        visibility: visible;
-        pointer-events: auto;
-        box-shadow: none;
-        border: none;
-        background: transparent;
-        padding: var(--space-xs) 0 0;
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height var(--transition-slow);
-    }
-
-    .nav-item.dropdown.is-open .dropdown-menu {
-        max-height: 400px;
-    }
-
-    .dropdown-link {
-        color: var(--text-muted);
-        font-size: 13px;
-        padding: 6px 0;
-        letter-spacing: 0.5px;
-    }
-
-    .dropdown-link:hover {
-        padding-left: 0;
-        color: var(--emerald-deep);
-        background: transparent;
-    }
-
-    .dropdown-divider { display: none; }
 
     .about-grid,
     .contact-grid {
@@ -9797,35 +9728,7 @@ nav .logo-sub {
     margin-top: -1px !important;
 }
 
-/* ─── 9. CONTACTO — botón outlined ──────────────────────────── */
-.nav-contact-btn {
-    display: inline-flex !important;
-    align-items: center !important;
-    border: 1px solid rgba(250,247,242,0.45) !important;
-    color: var(--ivory) !important;
-    padding: 9px 22px !important;
-    font-family: var(--font-body) !important;
-    font-size: 10.5px !important;
-    font-weight: 500 !important;
-    letter-spacing: 2.5px !important;
-    text-transform: uppercase !important;
-    background: transparent !important;
-    border-radius: 0 !important;
-    transition: border-color 0.3s ease, background 0.3s ease, color 0.3s ease !important;
-}
-.nav-contact-btn::after { display: none !important; }
-.nav-contact-btn:hover {
-    border-color: var(--gold) !important;
-    background: rgba(200,169,110,0.06) !important;
-    color: var(--gold-light) !important;
-}
-.header.scrolled .nav-contact-btn {
-    border-color: rgba(200,169,110,0.38) !important;
-}
-.header.scrolled .nav-contact-btn:hover {
-    border-color: var(--gold) !important;
-    background: rgba(200,169,110,0.08) !important;
-}
+/* ─── 9. CONTACTO — LEGACY (sobrescrito por header redesign final) ── */
 
 /* ─── 10. RESPONSIVE MÓVIL ───────────────────────────────────── */
 @media (max-width: 768px) {
@@ -13595,7 +13498,9 @@ html {
 /* (hero-meta legacy y trust-strip V7 eliminados — info consolidada en hero-ticker) */
 
 /* ═══════════════════════════════════════════════════════════════════
-   HEADER REDESIGN — Menús profesionales, simetría, mobile overhaul
+   HEADER REDESIGN V2 — Premium nivel Cartier/Bulgari
+   Desktop: botones simétricos, iconos limpios, spacing premium
+   Mobile: panel oscuro completo, footer visible, close refinado
    ═══════════════════════════════════════════════════════════════════ */
 
 /* ─── Dropdown: ocultar iconos SVG de items ─────────────────────── */
@@ -13603,7 +13508,7 @@ html {
     display: none !important;
 }
 
-/* ─── Dropdown items sin icono: ajustar padding ─────────────────── */
+/* ─── Dropdown items sin icono: refinamiento ────────────────────── */
 .dropdown-link {
     padding: 10px 22px !important;
 }
@@ -13620,30 +13525,42 @@ html {
     color: rgba(200,190,170,0.5) !important;
 }
 
-/* ─── Nav Actions: layout simétrico ─────────────────────────────── */
+/* ─── Nav Actions: layout con separador visual ──────────────────── */
 .nav-actions {
-    gap: 6px !important;
+    gap: 4px !important;
     align-items: center !important;
 }
 
-/* ─── Botones de texto (Contacto y WhatsApp): tamaño idéntico ──── */
+/* ─── Separador visual entre botones texto e iconos ─────────────── */
+.nav-actions .nav-account-btn::before {
+    content: '' !important;
+    display: block !important;
+    width: 1px !important;
+    height: 20px !important;
+    background: rgba(201,169,110,0.12) !important;
+    margin-right: 4px !important;
+}
+
+/* ─── Botones de texto (Contacto y WhatsApp): IDÉNTICOS ────────── */
 .nav-action-btn {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
     gap: 6px !important;
-    padding: 7px 16px !important;
+    height: 34px !important;
+    padding: 0 18px !important;
     font-family: var(--font-body) !important;
-    font-size: 10px !important;
+    font-size: 9.5px !important;
     font-weight: 500 !important;
     letter-spacing: 2px !important;
     text-transform: uppercase !important;
-    border: 1px solid rgba(250,247,242,0.3) !important;
+    border: 1px solid rgba(250,247,242,0.25) !important;
     border-radius: 0 !important;
     transition: border-color 0.3s ease, background 0.3s ease, color 0.3s ease !important;
     white-space: nowrap !important;
     text-decoration: none !important;
     line-height: 1 !important;
+    box-sizing: border-box !important;
 }
 
 .nav-action-btn.nav-contact-btn {
@@ -13661,7 +13578,7 @@ html {
 
 .nav-action-btn.nav-wa-btn {
     color: var(--whatsapp) !important;
-    border-color: rgba(37,211,102,0.25) !important;
+    border-color: rgba(37,211,102,0.2) !important;
 }
 .nav-action-btn.nav-wa-btn:hover {
     background: rgba(37,211,102,0.08) !important;
@@ -13669,7 +13586,7 @@ html {
 }
 
 .header.scrolled .nav-action-btn.nav-contact-btn {
-    border-color: rgba(200,169,110,0.35) !important;
+    border-color: rgba(200,169,110,0.3) !important;
 }
 .header.scrolled .nav-action-btn.nav-contact-btn:hover {
     border-color: var(--gold) !important;
@@ -13677,8 +13594,8 @@ html {
 }
 
 .header:not(.scrolled) .nav-action-btn.nav-wa-btn {
-    color: rgba(255,255,255,0.85) !important;
-    border-color: rgba(255,255,255,0.2) !important;
+    color: rgba(255,255,255,0.8) !important;
+    border-color: rgba(255,255,255,0.15) !important;
 }
 .header:not(.scrolled) .nav-action-btn.nav-wa-btn:hover {
     color: var(--whatsapp) !important;
@@ -13686,63 +13603,60 @@ html {
     background: rgba(37,211,102,0.06) !important;
 }
 
-/* ─── Botones icono (búsqueda, cuenta, wishlist, carrito) ──────── */
+/* ─── Botones icono: unificados 34x34 ──────────────────────────── */
 .nav-icon-btn {
     position: relative !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    width: 36px !important;
-    height: 36px !important;
+    width: 34px !important;
+    height: 34px !important;
     border-radius: 0 !important;
     color: var(--text-on-dark-muted) !important;
-    transition: color 0.2s ease, background 0.2s ease !important;
+    transition: color 0.2s ease !important;
+    text-decoration: none !important;
 }
 .nav-icon-btn:hover {
     color: var(--gold) !important;
-    background: rgba(200,169,110,0.08) !important;
 }
 
 .header:not(.scrolled) .nav-icon-btn {
-    color: var(--text-on-dark-muted) !important;
+    color: rgba(245,240,232,0.5) !important;
 }
 .header:not(.scrolled) .nav-icon-btn:hover {
     color: var(--ivory) !important;
 }
 
-/* ─── Search trigger: visible, no transparent ──────────────────── */
+/* ─── Search trigger ───────────────────────────────────────────── */
 .search-trigger {
-    color: var(--text-on-dark-muted) !important;
+    color: rgba(245,240,232,0.5) !important;
     border-radius: 0 !important;
+    background: transparent !important;
 }
 .search-trigger:hover {
     color: var(--gold) !important;
-    background: rgba(200,169,110,0.08) !important;
+    background: transparent !important;
 }
-.header:not(.scrolled) .search-trigger {
+.header.scrolled .search-trigger {
     color: var(--text-on-dark-muted) !important;
 }
-.header:not(.scrolled) .search-trigger:hover {
-    color: var(--ivory) !important;
-}
 
-/* ─── Cuenta btn placeholder ───────────────────────────────────── */
+/* ─── Cuenta btn ───────────────────────────────────────────────── */
 .nav-account-btn {
     text-decoration: none !important;
 }
 
-/* ─── Mobile menu header y close: ocultos en desktop ───────────── */
+/* ─── Desktop: ocultar header/footer del mobile menu ───────────── */
 .nav-menu-header,
 .nav-menu-footer {
     display: none;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   HEADER REDESIGN — MOBILE & TABLET (≤968px)
+   HEADER — MOBILE & TABLET (≤968px) — Panel premium oscuro
    ═══════════════════════════════════════════════════════════════════ */
 @media (max-width: 968px) {
 
-    /* ─── Hamburger ────────────────────────────────────────────── */
     .hamburger {
         display: flex !important;
         z-index: 1002 !important;
@@ -13752,12 +13666,7 @@ html {
         display: none !important;
     }
 
-    /* ─── Contacto btn dentro del nav-list: ocultar en mobile ── */
-    .nav-list .nav-contact-btn {
-        display: none !important;
-    }
-
-    /* ─── Full-screen mobile menu ──────────────────────────────── */
+    /* ─── Panel fullscreen ─────────────────────────────────────── */
     .nav-menu {
         position: fixed !important;
         top: 0 !important;
@@ -13765,8 +13674,7 @@ html {
         right: 0 !important;
         bottom: 0 !important;
         width: 100% !important;
-        height: 100dvh !important;
-        height: 100vh !important;
+        height: 100% !important;
         background: linear-gradient(170deg, #060d09 0%, #0a1a0f 40%, #07100a 100%) !important;
         display: flex !important;
         flex-direction: column !important;
@@ -13776,6 +13684,7 @@ html {
         z-index: 1001 !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
         transform: translateX(100%) !important;
         opacity: 0 !important;
         visibility: hidden !important;
@@ -13791,69 +13700,78 @@ html {
         transition-delay: 0s !important;
     }
 
-    /* ─── Mobile menu header ───────────────────────────────────── */
+    /* ─── Header del panel: marca + cerrar ─────────────────────── */
     .nav-menu-header {
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
-        padding: 20px 28px !important;
-        border-bottom: 1px solid rgba(201,169,110,0.1) !important;
+        padding: 18px 24px !important;
+        border-bottom: 1px solid rgba(201,169,110,0.08) !important;
         flex-shrink: 0 !important;
+        min-height: 60px !important;
     }
 
     .nav-menu-brand {
         font-family: var(--font-heading, 'Cormorant Garamond', serif) !important;
-        font-size: 18px !important;
+        font-size: 16px !important;
         font-weight: 400 !important;
-        letter-spacing: 4px !important;
-        color: var(--gold, #c8a96e) !important;
+        letter-spacing: 5px !important;
+        color: rgba(201,169,110,0.7) !important;
     }
 
+    /* Close button: solo texto "CERRAR", sin X SVG prominente */
     .nav-menu-close {
         display: inline-flex !important;
         align-items: center !important;
-        gap: 8px !important;
+        gap: 6px !important;
         background: none !important;
-        border: 1px solid rgba(201,169,110,0.2) !important;
-        color: rgba(220,200,165,0.6) !important;
-        padding: 8px 16px !important;
+        border: none !important;
+        color: rgba(220,200,165,0.45) !important;
+        padding: 8px 0 !important;
         font-family: var(--font-body, 'Montserrat', sans-serif) !important;
-        font-size: 10px !important;
+        font-size: 9px !important;
         font-weight: 500 !important;
-        letter-spacing: 2px !important;
+        letter-spacing: 2.5px !important;
         text-transform: uppercase !important;
         cursor: pointer !important;
-        transition: color 0.2s, border-color 0.2s !important;
+        transition: color 0.2s !important;
+    }
+    .nav-menu-close svg {
+        width: 14px !important;
+        height: 14px !important;
+        opacity: 0.6 !important;
+        stroke: currentColor !important;
     }
     .nav-menu-close:hover {
         color: var(--gold) !important;
-        border-color: rgba(201,169,110,0.4) !important;
+    }
+    .nav-menu-close:hover svg {
+        opacity: 1 !important;
     }
 
-    /* ─── Nav list ─────────────────────────────────────────────── */
+    /* ─── Nav list: distribuido verticalmente ───────────────────── */
     .nav-list {
         flex-direction: column !important;
         gap: 0 !important;
         text-align: left !important;
-        padding: 24px 0 !important;
-        flex: 1 !important;
+        padding: 16px 0 !important;
+        flex: 1 0 auto !important;
     }
 
     .nav-item {
-        border-bottom: 1px solid rgba(201,169,110,0.06) !important;
+        border-bottom: 1px solid rgba(201,169,110,0.05) !important;
     }
 
-    /* ─── Nav links — mobile ───────────────────────────────────── */
     .nav-link {
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
-        font-size: 13px !important;
+        font-size: 12px !important;
         font-weight: 500 !important;
-        letter-spacing: 2px !important;
+        letter-spacing: 3px !important;
         text-transform: uppercase !important;
         color: var(--ivory, #f5f0e8) !important;
-        padding: 18px 28px !important;
+        padding: 16px 24px !important;
         transition: color 0.2s !important;
     }
 
@@ -13868,12 +13786,12 @@ html {
     .nav-link--cta {
         background: transparent !important;
         border-radius: 0 !important;
-        padding: 18px 28px !important;
+        padding: 16px 24px !important;
     }
 
-    /* ─── Dropdown arrow rotation ──────────────────────────────── */
+    /* ─── Dropdown arrow ───────────────────────────────────────── */
     .dropdown-arrow {
-        color: rgba(201,169,110,0.4) !important;
+        color: rgba(201,169,110,0.3) !important;
         transition: transform 0.3s ease !important;
     }
 
@@ -13881,7 +13799,7 @@ html {
         transform: rotate(180deg) !important;
     }
 
-    /* ─── Mobile dropdown menus ────────────────────────────────── */
+    /* ─── Mobile dropdowns: accordion limpio ────────────────────── */
     .dropdown-menu {
         position: static !important;
         transform: none !important;
@@ -13891,7 +13809,7 @@ html {
         box-shadow: none !important;
         border: none !important;
         border-radius: 0 !important;
-        background: rgba(0,0,0,0.15) !important;
+        background: rgba(0,0,0,0.2) !important;
         padding: 0 !important;
         min-width: 0 !important;
         max-height: 0 !important;
@@ -13909,21 +13827,21 @@ html {
 
     /* ─── Mobile dropdown links ────────────────────────────────── */
     .dropdown-link {
-        padding: 14px 28px 14px 44px !important;
+        padding: 12px 24px 12px 40px !important;
         gap: 0 !important;
-        border-bottom: 1px solid rgba(201,169,110,0.04) !important;
+        border-bottom: 1px solid rgba(201,169,110,0.03) !important;
         background: transparent !important;
     }
 
     .dropdown-link:hover,
     .dropdown-link:active {
-        background: rgba(201,169,110,0.06) !important;
+        background: rgba(201,169,110,0.05) !important;
     }
 
     .dropdown-link-name {
-        color: rgba(220,200,165,0.7) !important;
-        font-size: 12px !important;
-        letter-spacing: 1px !important;
+        color: rgba(220,200,165,0.6) !important;
+        font-size: 11px !important;
+        letter-spacing: 1.5px !important;
     }
 
     .dropdown-link:hover .dropdown-link-name {
@@ -13931,8 +13849,8 @@ html {
     }
 
     .dropdown-link-desc {
-        color: rgba(200,190,170,0.3) !important;
-        font-size: 10px !important;
+        color: rgba(200,190,170,0.25) !important;
+        font-size: 9.5px !important;
     }
 
     .dropdown-divider {
@@ -13940,22 +13858,24 @@ html {
     }
 
     .dropdown-link--all {
-        padding: 14px 28px 14px 44px !important;
-        color: rgba(201,169,110,0.5) !important;
-        font-size: 11px !important;
+        padding: 12px 24px 12px 40px !important;
+        color: rgba(201,169,110,0.4) !important;
+        font-size: 10px !important;
     }
     .dropdown-link--all:hover {
         color: var(--gold) !important;
-        background: rgba(201,169,110,0.06) !important;
+        background: rgba(201,169,110,0.05) !important;
     }
 
-    /* ─── Mobile menu footer ───────────────────────────────────── */
+    /* ─── Footer: siempre visible, DENTRO del scroll ───────────── */
     .nav-menu-footer {
         display: flex !important;
-        gap: 12px !important;
-        padding: 20px 28px 28px !important;
-        border-top: 1px solid rgba(201,169,110,0.1) !important;
+        gap: 10px !important;
+        padding: 16px 24px !important;
+        padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+        border-top: 1px solid rgba(201,169,110,0.08) !important;
         flex-shrink: 0 !important;
+        margin-top: auto !important;
     }
 
     .nav-menu-footer-btn {
@@ -13963,15 +13883,16 @@ html {
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
-        gap: 8px !important;
-        padding: 14px 16px !important;
+        gap: 6px !important;
+        height: 44px !important;
+        padding: 0 12px !important;
         font-family: var(--font-body) !important;
-        font-size: 10px !important;
+        font-size: 9px !important;
         font-weight: 500 !important;
         letter-spacing: 2px !important;
         text-transform: uppercase !important;
         text-decoration: none !important;
-        border: 1px solid rgba(201,169,110,0.25) !important;
+        border: 1px solid rgba(201,169,110,0.2) !important;
         color: var(--ivory) !important;
         background: transparent !important;
         transition: border-color 0.2s, background 0.2s, color 0.2s !important;
@@ -13984,58 +13905,69 @@ html {
 
     .nav-menu-footer-wa {
         color: var(--whatsapp, #25d366) !important;
-        border-color: rgba(37,211,102,0.25) !important;
+        border-color: rgba(37,211,102,0.2) !important;
     }
     .nav-menu-footer-wa:hover {
-        border-color: rgba(37,211,102,0.5) !important;
-        background: rgba(37,211,102,0.08) !important;
+        border-color: rgba(37,211,102,0.4) !important;
+        background: rgba(37,211,102,0.06) !important;
     }
 
-    /* ─── Prevent body scroll when menu open ───────────────────── */
+    .nav-menu-footer-wa svg {
+        width: 14px !important;
+        height: 14px !important;
+        flex-shrink: 0 !important;
+    }
+
     body.menu-open {
         overflow: hidden !important;
     }
 }
 
-/* ─── Small mobile: tighter spacing ────────────────────────────── */
+/* ─── Small mobile (≤479px) ────────────────────────────────────── */
 @media (max-width: 479px) {
     .nav-menu-header {
-        padding: 16px 20px !important;
-    }
-    .nav-link {
-        padding: 16px 20px !important;
-        font-size: 12px !important;
-    }
-    .dropdown-link {
-        padding: 12px 20px 12px 36px !important;
-    }
-    .dropdown-link--all {
-        padding: 12px 20px 12px 36px !important;
-    }
-    .nav-menu-footer {
-        padding: 16px 20px 24px !important;
-        flex-direction: column !important;
+        padding: 14px 18px !important;
+        min-height: 52px !important;
     }
     .nav-menu-brand {
-        font-size: 15px !important;
+        font-size: 14px !important;
+        letter-spacing: 4px !important;
+    }
+    .nav-link {
+        padding: 14px 18px !important;
+        font-size: 11px !important;
+        letter-spacing: 2.5px !important;
+    }
+    .dropdown-link {
+        padding: 11px 18px 11px 32px !important;
+    }
+    .dropdown-link--all {
+        padding: 11px 18px 11px 32px !important;
+    }
+    .nav-menu-footer {
+        padding: 12px 18px !important;
+        padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+    .nav-menu-footer-btn {
+        height: 40px !important;
+        font-size: 8.5px !important;
     }
 }
 
-/* ─── Tablet landscape: two-column footer buttons ──────────────── */
+/* ─── Tablet (600-968px): centrar contenido del panel ──────────── */
 @media (min-width: 600px) and (max-width: 968px) {
     .nav-list {
-        max-width: 500px !important;
+        max-width: 420px !important;
         margin: 0 auto !important;
         width: 100% !important;
     }
     .nav-menu-header {
-        max-width: 500px !important;
+        max-width: 420px !important;
         margin: 0 auto !important;
         width: 100% !important;
-        padding: 24px 28px !important;
     }
     .nav-menu-footer {
-        max-width: 500px !important;
+        max-width: 420px !important;
         margin: 0 auto !important;
         width: 100% !important;
     }

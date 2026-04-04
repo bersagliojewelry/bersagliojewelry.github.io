@@ -351,3 +351,40 @@ Cada seccion del index tiene su clase V7 que activa los estilos premium:
 - El mobile menu usa fondo oscuro, NO ivory
 - Los dropdown items NO tienen `.dropdown-link-icon` visible
 - El boton `.nav-account-btn` es placeholder para futuro sistema de auth
+
+### 2026-04-04 — Rediseno completo seccion Servicios (index + pagina)
+**Archivos modificados:** `js/data/catalog.js`, `js/components/services.js`, `index.html`, `servicios.html`, `css/style.css`, `CLAUDE.md`
+
+**Cambios en datos (catalog.js):**
+- 4 pilares actualizados: Diseno y Fabricacion a Medida, Asesoria Personalizada, Certificacion y Garantia, Taller y Mantenimiento
+- Textos reescritos con info real de la marca (fabricantes, puerta a puerta, etc.)
+- Nuevo icono "tools" (wrench) para Taller y Mantenimiento
+
+**Cambios en services.js:**
+- Agregado icono Phosphor "tools" (wrench light) para el nuevo servicio de Taller
+- Componente actualizado a V5, misma estructura showcase layout
+
+**Cambios en index.html:**
+- Subtitulo actualizado: "...cuidamos cada detalle para que tu inversion perdure en el tiempo"
+- CTA actualizado: "Conoce todos nuestros servicios"
+
+**Cambios en servicios.html (reescritura completa):**
+- Hero: "Mas que joyas, creamos un legado" + eyebrow "Fabricantes de Alta Joyeria"
+- Seccion intro narrativa (`.svc-intro`): Historia de marca puerta a puerta, fabricantes directos
+- 5 tarjetas de servicio numeradas (`.svc-card`): Asesoria, Diseno/Fabricacion, Taller, Garantia/Certificacion, Envios
+- Cada tarjeta con numero grande lateral, titulo, descripcion, CTA individual
+- Seccion proceso 3 pasos (`.svc-process`): Consulta, Propuesta, Creacion/entrega
+- CTA final mantenido
+- Eliminados: brand-statement quote anterior, `services-detail-grid` con 6 cards, inline styles en proceso
+
+**Cambios en CSS (nuevas clases):**
+- `.svc-intro`, `.svc-intro-inner`, `.svc-intro-text`, `.svc-intro-line` — Intro narrativa con tipografia serif italic
+- `.svc-card`, `.svc-card-number`, `.svc-card-content`, `.svc-card-title`, `.svc-card-desc`, `.svc-card-cta` — Tarjetas numeradas estilo editorial
+- `.svc-process-section`, `.svc-process-grid`, `.svc-process-step`, `.svc-process-num`, `.svc-process-title`, `.svc-process-desc` — Pasos del proceso
+- Responsive: 768px (mobile cards + proceso vertical), 479px (compact)
+- Accesibilidad: prefers-reduced-motion
+
+**Notas:**
+- Las clases legacy `.service-detail-card`, `.services-detail-grid` en CSS quedan huerfanas (ya no hay HTML que las use), candidatas a limpieza
+- El showcase layout del index (gema central con 4 servicios) se mantiene intacto
+- Colores de texto en servicios page ahora son claros sobre fondo oscuro (corregido contraste)

@@ -14040,3 +14040,291 @@ html {
         width: 100% !important;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   SERVICIOS PAGE — Rediseño completo
+   Intro narrativa, tarjetas numeradas, proceso, colores claros
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Intro / Historia de marca ────────────────────────────────── */
+.svc-intro {
+    padding: clamp(3rem, 6vw, 5rem) 0 !important;
+}
+
+.svc-intro-inner {
+    max-width: 780px;
+    margin: 0 auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.svc-intro-line {
+    width: 50px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(201,169,110,0.4), transparent);
+}
+
+.svc-intro-text {
+    font-family: var(--font-display, 'Cormorant Garamond', serif);
+    font-size: clamp(1.1rem, 2vw, 1.35rem);
+    font-weight: 300;
+    font-style: italic;
+    line-height: 1.9;
+    color: rgba(220,200,165, 0.7);
+    letter-spacing: 0.3px;
+}
+
+/* ─── Tarjetas de servicios detallados ─────────────────────────── */
+.svc-detail-section {
+    padding: clamp(4rem, 8vw, 7rem) 0 !important;
+}
+
+.svc-detail-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: var(--space-xl);
+    max-width: 860px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.svc-card {
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    gap: 0 clamp(20px, 3vw, 40px);
+    padding: clamp(28px, 4vw, 44px) 0;
+    border-bottom: 1px solid rgba(201,169,110, 0.08);
+    position: relative;
+}
+
+.svc-card:first-child {
+    border-top: 1px solid rgba(201,169,110, 0.08);
+}
+
+/* ─── Número grande lateral ────────────────────────────────────── */
+.svc-card-number {
+    font-family: var(--font-display, 'Cormorant Garamond', serif);
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 300;
+    color: rgba(201,169,110, 0.15);
+    line-height: 1;
+    padding-top: 4px;
+    transition: color 0.4s ease;
+    user-select: none;
+}
+
+.svc-card:hover .svc-card-number {
+    color: rgba(201,169,110, 0.35);
+}
+
+/* ─── Contenido de la tarjeta ──────────────────────────────────── */
+.svc-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.svc-card-title {
+    font-family: var(--font-display, 'Cormorant Garamond', serif);
+    font-size: clamp(1.25rem, 2.2vw, 1.6rem);
+    font-weight: 400;
+    color: var(--ivory, #f5f0e8);
+    line-height: 1.3;
+    letter-spacing: 0.5px;
+}
+
+.svc-card-desc {
+    font-family: var(--font-body, 'Montserrat', sans-serif);
+    font-size: clamp(13px, 1.2vw, 14.5px);
+    font-weight: 300;
+    line-height: 1.85;
+    color: rgba(200,190,175, 0.6);
+    max-width: 620px;
+}
+
+.svc-card:hover .svc-card-desc {
+    color: rgba(200,190,175, 0.78);
+}
+
+/* ─── CTA de cada tarjeta ──────────────────────────────────────── */
+.svc-card-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-body, 'Montserrat', sans-serif);
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold, #c8a96e);
+    text-decoration: none;
+    padding: 10px 0;
+    position: relative;
+    transition: color 0.3s ease;
+    margin-top: 4px;
+}
+
+.svc-card-cta::after {
+    content: '';
+    position: absolute;
+    bottom: 6px;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: var(--gold, #c8a96e);
+    transition: width 0.4s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+
+.svc-card-cta:hover::after {
+    width: 100%;
+}
+
+.svc-card-cta:hover {
+    color: var(--gold-light, #d4c49a);
+}
+
+/* ─── Proceso — 3 pasos ───────────────────────────────────────── */
+.svc-process-section {
+    padding: clamp(4rem, 8vw, 7rem) 0 !important;
+    background: linear-gradient(170deg,
+        rgba(10,26,15, 0.4) 0%,
+        rgba(5,10,7, 0.6) 50%,
+        rgba(10,26,15, 0.3) 100%
+    );
+}
+
+.svc-process-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(24px, 3vw, 48px);
+    margin-top: var(--space-xl);
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.svc-process-step {
+    text-align: center;
+    padding: clamp(24px, 3vw, 40px) clamp(16px, 2vw, 28px);
+    position: relative;
+}
+
+/* Línea conectora entre pasos (solo desktop) */
+.svc-process-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -12px;
+    width: 24px;
+    height: 1px;
+    background: rgba(201,169,110, 0.15);
+}
+
+.svc-process-num {
+    display: block;
+    font-family: var(--font-display, 'Cormorant Garamond', serif);
+    font-size: clamp(2rem, 3.5vw, 2.8rem);
+    font-weight: 300;
+    color: rgba(201,169,110, 0.25);
+    line-height: 1;
+    margin-bottom: clamp(12px, 2vw, 20px);
+}
+
+.svc-process-title {
+    font-family: var(--font-display, 'Cormorant Garamond', serif);
+    font-size: clamp(1.1rem, 1.6vw, 1.3rem);
+    font-weight: 400;
+    color: var(--ivory, #f5f0e8);
+    margin-bottom: 10px;
+}
+
+.svc-process-desc {
+    font-family: var(--font-body, 'Montserrat', sans-serif);
+    font-size: 12.5px;
+    font-weight: 300;
+    line-height: 1.8;
+    color: rgba(200,190,175, 0.55);
+}
+
+/* ─── Responsive: Servicios page ───────────────────────────────── */
+@media (max-width: 768px) {
+    .svc-card {
+        grid-template-columns: 48px 1fr;
+    }
+
+    .svc-card-number {
+        font-size: 1.8rem;
+    }
+
+    .svc-process-grid {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .svc-process-step:not(:last-child)::after {
+        display: none;
+    }
+
+    .svc-process-step {
+        text-align: left;
+        padding: 20px 0;
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        grid-template-rows: auto auto;
+        gap: 0 16px;
+    }
+
+    .svc-process-num {
+        grid-row: 1 / 3;
+        align-self: center;
+        margin-bottom: 0;
+        font-size: 1.8rem;
+    }
+
+    .svc-process-title {
+        margin-bottom: 4px;
+    }
+
+    .svc-process-step + .svc-process-step {
+        border-top: 1px solid rgba(201,169,110, 0.06);
+    }
+}
+
+@media (max-width: 479px) {
+    .svc-card {
+        grid-template-columns: 36px 1fr;
+        gap: 0 12px;
+    }
+
+    .svc-card-number {
+        font-size: 1.4rem;
+    }
+
+    .svc-intro-text {
+        font-size: 1rem;
+        line-height: 1.8;
+    }
+
+    .svc-process-step {
+        grid-template-columns: 36px 1fr;
+    }
+
+    .svc-process-num {
+        font-size: 1.4rem;
+    }
+}
+
+/* ─── Accesibilidad ────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .svc-card-cta::after {
+        transition: none;
+    }
+    .svc-card-number,
+    .svc-card-desc {
+        transition: none;
+    }
+}

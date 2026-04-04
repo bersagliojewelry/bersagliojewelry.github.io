@@ -58,15 +58,18 @@ export function renderServices() {
                     <span class="showcase-num" data-n="03">03</span>
                     <span class="showcase-num" data-n="04">04</span>
                     <div class="showcase-gem-icon">
-                        <img
-                            src="img/gema.png"
-                            alt="Gema esmeralda Bersaglio"
-                            class="showcase-gem-img"
-                            loading="eager"
-                            decoding="async"
-                            width="220"
-                            height="220"
-                        >
+                        <picture>
+                            <source type="image/webp" srcset="img/gema.webp">
+                            <img
+                                src="img/gema.png"
+                                alt="Gema esmeralda Bersaglio"
+                                class="showcase-gem-img"
+                                loading="eager"
+                                decoding="async"
+                                width="480"
+                                height="445"
+                            >
+                        </picture>
                     </div>
                 </div>
             </div>

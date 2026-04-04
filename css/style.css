@@ -13815,7 +13815,7 @@ html {
     align-items: center !important;
     gap: 0 !important;
     white-space: nowrap !important;
-    animation: ticker-scroll 25s linear infinite !important;
+    animation: ticker-scroll 45s linear infinite !important;
     width: max-content !important;
 }
 
@@ -13864,7 +13864,7 @@ html {
         padding: 0 16px !important;
     }
     .hero-v7 .hero-ticker-track {
-        animation-duration: 18s !important;
+        animation-duration: 30s !important;
     }
 }
 
@@ -13872,6 +13872,11 @@ html {
     .hero-v7 .hero-ticker-track {
         animation: none !important;
     }
+}
+
+/* Trust Strip V7 — OCULTO: info consolidada en hero-ticker único */
+.trust-strip.trust-strip-v7 {
+    display: none !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════

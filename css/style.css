@@ -13516,3 +13516,272 @@ nav .logo-sub {
         transition: none !important;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   PHASE 10 — CTA BANNER V7 + SECTION TRANSITIONS + FINAL POLISH
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── CTA Banner V7 ─────────────────────────────────────────────── */
+.cta-banner.cta-v7 {
+    position: relative !important;
+    background: linear-gradient(135deg, #050a07 0%, #0a1a0f 40%, #0d2818 70%, #0a1a0f 100%) !important;
+    padding: clamp(60px, 10vh, 120px) 0 !important;
+    overflow: hidden !important;
+    border-radius: 0px !important;
+    border-top: 1px solid rgba(200, 169, 110, 0.12) !important;
+    border-bottom: 1px solid rgba(200, 169, 110, 0.12) !important;
+}
+
+/* Subtle emerald glow overlay */
+.cta-banner.cta-v7::before {
+    content: '' !important;
+    position: absolute !important;
+    inset: 0 !important;
+    background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(26, 77, 46, 0.15), transparent 70%) !important;
+    pointer-events: none !important;
+    z-index: 0 !important;
+}
+
+/* Subtle noise texture */
+.cta-banner.cta-v7::after {
+    content: '' !important;
+    position: absolute !important;
+    inset: 0 !important;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E") !important;
+    opacity: 0.4 !important;
+    pointer-events: none !important;
+    z-index: 0 !important;
+}
+
+.cta-banner.cta-v7 .container {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.cta-banner.cta-v7 .cta-inner {
+    background: rgba(10, 26, 15, 0.4) !important;
+    border: 1px solid rgba(200, 169, 110, 0.15) !important;
+    border-radius: 0px !important;
+    padding: clamp(40px, 6vw, 80px) clamp(24px, 5vw, 60px) !important;
+    text-align: center !important;
+    position: relative !important;
+    overflow: hidden !important;
+    transition: border-color 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+}
+
+@supports (backdrop-filter: blur(10px)) {
+    .cta-banner.cta-v7 .cta-inner {
+        backdrop-filter: blur(16px) saturate(1.2) !important;
+        -webkit-backdrop-filter: blur(16px) saturate(1.2) !important;
+    }
+}
+
+.cta-banner.cta-v7 .cta-inner:hover {
+    border-color: rgba(200, 169, 110, 0.35) !important;
+}
+
+/* Accent lines — horizontal gold dividers */
+.cta-banner.cta-v7 .cta-accent-line {
+    width: 60px !important;
+    height: 1px !important;
+    background: linear-gradient(90deg, transparent, var(--gold, #c8a96e), transparent) !important;
+    margin: 0 auto !important;
+    opacity: 0.6 !important;
+}
+
+.cta-banner.cta-v7 .cta-content {
+    padding: clamp(20px, 3vw, 36px) 0 !important;
+}
+
+.cta-banner.cta-v7 .section-eyebrow {
+    display: block !important;
+    color: var(--gold, #c8a96e) !important;
+    opacity: 0.8 !important;
+    font-family: 'Montserrat', sans-serif !important;
+    font-size: clamp(10px, 1.2vw, 12px) !important;
+    font-weight: 500 !important;
+    letter-spacing: 3px !important;
+    text-transform: uppercase !important;
+    margin-bottom: 16px !important;
+}
+
+.cta-banner.cta-v7 .cta-title {
+    font-family: 'Cormorant Garamond', serif !important;
+    font-size: clamp(1.6rem, 4vw, 3rem) !important;
+    font-weight: 300 !important;
+    color: #f5f0e8 !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0.5px !important;
+    margin-bottom: 16px !important;
+}
+
+.cta-banner.cta-v7 .cta-desc {
+    font-family: 'Montserrat', sans-serif !important;
+    font-size: clamp(0.85rem, 1.4vw, 1rem) !important;
+    font-weight: 300 !important;
+    color: rgba(245, 240, 232, 0.7) !important;
+    line-height: 1.7 !important;
+    max-width: 520px !important;
+    margin: 0 auto 32px !important;
+}
+
+/* CTA Button — editorial gold outline style */
+.cta-banner.cta-v7 .cta-v7-btn {
+    display: inline-block !important;
+    font-family: 'Montserrat', sans-serif !important;
+    font-size: clamp(10px, 1.2vw, 12px) !important;
+    font-weight: 500 !important;
+    letter-spacing: 2.5px !important;
+    text-transform: uppercase !important;
+    color: var(--gold, #c8a96e) !important;
+    background: transparent !important;
+    border: 1px solid rgba(200, 169, 110, 0.4) !important;
+    border-radius: 0px !important;
+    padding: 16px 40px !important;
+    text-decoration: none !important;
+    position: relative !important;
+    overflow: hidden !important;
+    transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    z-index: 1 !important;
+}
+
+.cta-banner.cta-v7 .cta-v7-btn::before {
+    content: '' !important;
+    position: absolute !important;
+    inset: 0 !important;
+    background: var(--gold, #c8a96e) !important;
+    transform: scaleX(0) !important;
+    transform-origin: left !important;
+    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    z-index: -1 !important;
+}
+
+.cta-banner.cta-v7 .cta-v7-btn:hover {
+    color: #050a07 !important;
+    border-color: var(--gold, #c8a96e) !important;
+}
+
+.cta-banner.cta-v7 .cta-v7-btn:hover::before {
+    transform: scaleX(1) !important;
+}
+
+/* Touch devices — no hover pseudo-element */
+@media (hover: none) {
+    .cta-banner.cta-v7 .cta-v7-btn::before {
+        display: none !important;
+    }
+
+    .cta-banner.cta-v7 .cta-v7-btn:active {
+        background: rgba(200, 169, 110, 0.15) !important;
+        border-color: var(--gold, #c8a96e) !important;
+    }
+}
+
+/* ─── CTA V7 Responsive ─────────────────────────────────────────── */
+@media (max-width: 479px) {
+    .cta-banner.cta-v7 {
+        padding: 48px 0 !important;
+    }
+
+    .cta-banner.cta-v7 .cta-inner {
+        padding: 32px 20px !important;
+        margin: 0 8px !important;
+    }
+
+    .cta-banner.cta-v7 .cta-v7-btn {
+        padding: 14px 28px !important;
+        font-size: 10px !important;
+        letter-spacing: 2px !important;
+        width: 100% !important;
+    }
+}
+
+@media (min-width: 480px) and (max-width: 767px) {
+    .cta-banner.cta-v7 .cta-inner {
+        padding: 36px 28px !important;
+    }
+}
+
+@media (min-width: 1280px) {
+    .cta-banner.cta-v7 .cta-inner {
+        max-width: 800px !important;
+        margin: 0 auto !important;
+    }
+}
+
+/* ─── CTA V7 Accesibilidad ──────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .cta-banner.cta-v7 .cta-inner,
+    .cta-banner.cta-v7 .cta-v7-btn,
+    .cta-banner.cta-v7 .cta-v7-btn::before {
+        transition: none !important;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION TRANSITIONS — Sutil separación visual entre secciones
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Gold hairline dividers between major V7 sections */
+.hero-v7 + .trust-strip-v7 {
+    border-top: none !important;
+}
+
+.lookbook-v7,
+.featured-v7,
+.brand-statement-v7,
+.collections-v7,
+.services-v7,
+.journal-v7,
+.about-v7 {
+    border-top: 1px solid rgba(200, 169, 110, 0.08) !important;
+}
+
+/* Soft gradient fade between sections */
+.featured-v7::before,
+.collections-v7::before,
+.services-v7::before,
+.journal-v7::before,
+.about-v7::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 10% !important;
+    right: 10% !important;
+    height: 1px !important;
+    background: linear-gradient(90deg, transparent, rgba(200, 169, 110, 0.12) 50%, transparent) !important;
+    pointer-events: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FINAL POLISH — Global refinements
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Smooth scroll for the entire page */
+html {
+    scroll-behavior: smooth !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto !important;
+    }
+}
+
+/* iOS safe area for CTA on notch devices */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .cta-banner.cta-v7 {
+        padding-bottom: calc(clamp(60px, 10vh, 120px) + env(safe-area-inset-bottom)) !important;
+    }
+}
+
+/* Selection color — branded */
+::selection {
+    background: rgba(200, 169, 110, 0.25) !important;
+    color: #f5f0e8 !important;
+}
+
+::-moz-selection {
+    background: rgba(200, 169, 110, 0.25) !important;
+    color: #f5f0e8 !important;
+}

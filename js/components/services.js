@@ -59,7 +59,7 @@ export function renderServices() {
                     <span class="showcase-num" data-n="04">04</span>
                     <div class="showcase-gem-icon">
                         <img
-                            src="images/gema.png"
+                            src="img/gema.png"
                             alt="Gema esmeralda Bersaglio"
                             class="showcase-gem-img"
                             loading="eager"

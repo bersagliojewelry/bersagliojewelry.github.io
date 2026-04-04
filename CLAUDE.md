@@ -315,3 +315,39 @@ Cada seccion del index tiene su clase V7 que activa los estilos premium:
 1. **SVG Oro 18K** — Cambiado de rombo generico a icono de lingote (rectangulo con divisiones).
 2. **SVG Esmeraldas colombianas** — Cambiado de rombo generico a icono de gema facetada (octogono con facetas internas).
 3. **Eliminado pause on hover** — Se removio la regla `.hero-v7 > .hero-ticker:hover .hero-ticker-track { animation-play-state: paused }` para que el ticker nunca se detenga ni con mouse ni con touch.
+
+### 2026-04-04 — Rediseno completo del header (desktop + mobile)
+**Archivos modificados:** `snippets/header.html`, `css/style.css`, `js/components.js`, `CLAUDE.md`
+
+**Cambios en el HTML (header.html):**
+1. **SVGs eliminados de dropdown items** — Los menus de Colecciones y Servicios ya no muestran iconos SVG. Solo texto (nombre + descripcion).
+2. **Contacto movido fuera del nav-list** — Ahora es un boton `.nav-action-btn.nav-contact-btn` dentro de `.nav-actions`, simetrico con WhatsApp.
+3. **WhatsApp rediseñado** — Usa clase `.nav-action-btn.nav-wa-btn` con tamaño identico al de Contacto.
+4. **Boton de cuenta agregado** — `.nav-account-btn` con icono de usuario, preparado para futuro login/registro.
+5. **Botones icono unificados** — Busqueda, cuenta, wishlist y carrito usan clase `.nav-icon-btn` para coherencia.
+6. **Mobile menu header** — Nuevo `.nav-menu-header` con marca "BERSAGLIO" y boton "Cerrar" con X.
+7. **Mobile menu footer** — Nuevo `.nav-menu-footer` con botones Contacto y WhatsApp en mobile.
+
+**Cambios en CSS (style.css, final del archivo):**
+1. **Dropdown icons ocultos** — `.dropdown-link-icon { display: none }` limpia los menus.
+2. **Botones simetricos** — `.nav-action-btn` da padding/font-size identico a Contacto y WhatsApp.
+3. **Botones icono** — `.nav-icon-btn` unifica busqueda, cuenta, wishlist, carrito con 36x36px.
+4. **Search trigger visible** — Color explicito, no transparente.
+5. **Mobile menu completo** — Fondo oscuro esmeralda (no ivory), slide desde derecha, flexbox vertical.
+6. **Mobile header con Cerrar** — Boton con X + "Cerrar" visible, borde dorado sutil.
+7. **Mobile dropdowns corregidos** — `position: static`, sin `translateX(-50%)`, padding-left para indent, max-height accordion.
+8. **Mobile footer** — Botones Contacto y WhatsApp al pie del menu.
+9. **body.menu-open** — Bloquea scroll del body.
+10. **3 breakpoints responsive** — 968px (mobile), 479px (small mobile), 600-968px (tablet).
+
+**Cambios en JS (components.js):**
+1. **closeMenu() refactorizado** — Funcion unica reutilizada.
+2. **Boton Cerrar** — `#navMenuClose` cierra el menu.
+3. **Accordion exclusivo** — Al abrir un dropdown se cierran los demas.
+4. **WhatsApp mobile sync** — El link mobile sincroniza href con el desktop via MutationObserver.
+
+**IMPORTANTE — Reglas para el header:**
+- La clase `.nav-contact-btn` ya NO esta en el nav-list, esta en `.nav-actions`
+- El mobile menu usa fondo oscuro, NO ivory
+- Los dropdown items NO tienen `.dropdown-link-icon` visible
+- El boton `.nav-account-btn` es placeholder para futuro sistema de auth

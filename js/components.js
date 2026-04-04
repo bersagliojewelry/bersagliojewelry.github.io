@@ -47,6 +47,13 @@ function initializeHeader() {
 
     // Mobile hamburger
     if (hamburger && navMenu) {
+        const closeMenu = () => {
+            navMenu.classList.remove('is-open');
+            hamburger.classList.remove('is-active');
+            hamburger.setAttribute('aria-expanded', 'false');
+            document.body.classList.remove('menu-open');
+        };
+
         hamburger.addEventListener('click', () => {
             const open = navMenu.classList.toggle('is-open');
             hamburger.classList.toggle('is-active', open);
@@ -54,12 +61,23 @@ function initializeHeader() {
             document.body.classList.toggle('menu-open', open);
         });
 
+        // Close button inside mobile menu
+        const closeBtn = document.getElementById('navMenuClose');
+        if (closeBtn) closeBtn.addEventListener('click', closeMenu);
+
         // Mobile: toggle dropdown on parent link click
         navMenu.querySelectorAll('.nav-item.dropdown > .nav-link').forEach(link => {
             link.addEventListener('click', (e) => {
                 if (window.innerWidth <= 968) {
                     e.preventDefault();
                     const item = link.closest('.nav-item');
+                    // Close other open dropdowns
+                    navMenu.querySelectorAll('.nav-item.dropdown.is-open').forEach(other => {
+                        if (other !== item) {
+                            other.classList.remove('is-open');
+                            other.querySelector('.nav-link').setAttribute('aria-expanded', 'false');
+                        }
+                    });
                     item.classList.toggle('is-open');
                     link.setAttribute('aria-expanded', item.classList.contains('is-open'));
                 }
@@ -68,23 +86,22 @@ function initializeHeader() {
 
         // Close menu when a non-dropdown nav link is clicked
         navMenu.querySelectorAll('a:not(.dropdown-toggle)').forEach(link => {
-            link.addEventListener('click', () => {
-                navMenu.classList.remove('is-open');
-                hamburger.classList.remove('is-active');
-                hamburger.setAttribute('aria-expanded', 'false');
-                document.body.classList.remove('menu-open');
-            });
+            link.addEventListener('click', closeMenu);
         });
 
         // Close on Escape key
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && navMenu.classList.contains('is-open')) {
-                navMenu.classList.remove('is-open');
-                hamburger.classList.remove('is-active');
-                hamburger.setAttribute('aria-expanded', 'false');
-                document.body.classList.remove('menu-open');
-            }
+            if (e.key === 'Escape' && navMenu.classList.contains('is-open')) closeMenu();
         });
+
+        // Sync mobile WhatsApp link with desktop one
+        const waNav = document.getElementById('wa-nav');
+        const waMobile = document.getElementById('wa-nav-mobile');
+        if (waNav && waMobile) {
+            const syncWaHref = () => { waMobile.href = waNav.href; };
+            syncWaHref();
+            new MutationObserver(syncWaHref).observe(waNav, { attributes: true, attributeFilter: ['href'] });
+        }
     }
 
     // Smooth scroll for in-page anchor links

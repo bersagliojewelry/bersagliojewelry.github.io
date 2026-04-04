@@ -13676,7 +13676,7 @@ html {
         height: 100vh !important;
         height: 100dvh !important;
         min-height: 100vh !important;
-        background: linear-gradient(170deg, #060d09 0%, #0a1a0f 40%, #07100a 100%) !important;
+        background: linear-gradient(170deg, #0e1f15 0%, #132b1e 40%, #0e1f15 100%) !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: stretch !important;
@@ -13710,7 +13710,7 @@ html {
         align-items: center !important;
         justify-content: space-between !important;
         padding: 18px 24px !important;
-        border-bottom: 1px solid rgba(201,169,110,0.08) !important;
+        border-bottom: 1px solid rgba(201,169,110,0.15) !important;
         flex-shrink: 0 !important;
         min-height: 60px !important;
     }
@@ -13720,7 +13720,7 @@ html {
         font-size: 16px !important;
         font-weight: 400 !important;
         letter-spacing: 5px !important;
-        color: rgba(201,169,110,0.7) !important;
+        color: rgba(201,169,110,0.9) !important;
     }
 
     /* Close button: solo texto "CERRAR", sin X SVG prominente */
@@ -13730,10 +13730,10 @@ html {
         gap: 6px !important;
         background: none !important;
         border: none !important;
-        color: rgba(220,200,165,0.45) !important;
+        color: rgba(235,220,195,0.8) !important;
         padding: 8px 0 !important;
         font-family: var(--font-body, 'Montserrat', sans-serif) !important;
-        font-size: 9px !important;
+        font-size: 10px !important;
         font-weight: 500 !important;
         letter-spacing: 2.5px !important;
         text-transform: uppercase !important;
@@ -13743,7 +13743,7 @@ html {
     .nav-menu-close svg {
         width: 14px !important;
         height: 14px !important;
-        opacity: 0.6 !important;
+        opacity: 0.85 !important;
         stroke: currentColor !important;
     }
     .nav-menu-close:hover {
@@ -13759,23 +13759,23 @@ html {
         gap: 0 !important;
         text-align: left !important;
         padding: 16px 0 !important;
-        flex: 1 0 auto !important;
+        flex: 0 0 auto !important;
     }
 
     .nav-item {
-        border-bottom: 1px solid rgba(201,169,110,0.05) !important;
+        border-bottom: 1px solid rgba(201,169,110,0.1) !important;
     }
 
     .nav-link {
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
-        font-size: 12px !important;
+        font-size: 13px !important;
         font-weight: 500 !important;
-        letter-spacing: 3px !important;
+        letter-spacing: 2.5px !important;
         text-transform: uppercase !important;
-        color: var(--ivory, #f5f0e8) !important;
-        padding: 16px 24px !important;
+        color: #f5f0e8 !important;
+        padding: 18px 24px !important;
         transition: color 0.2s !important;
     }
 
@@ -13795,7 +13795,7 @@ html {
 
     /* ─── Dropdown arrow ───────────────────────────────────────── */
     .dropdown-arrow {
-        color: rgba(201,169,110,0.3) !important;
+        color: rgba(201,169,110,0.6) !important;
         transition: transform 0.3s ease !important;
     }
 
@@ -13813,7 +13813,7 @@ html {
         box-shadow: none !important;
         border: none !important;
         border-radius: 0 !important;
-        background: rgba(0,0,0,0.2) !important;
+        background: rgba(0,0,0,0.15) !important;
         padding: 0 !important;
         min-width: 0 !important;
         max-height: 0 !important;
@@ -13843,8 +13843,8 @@ html {
     }
 
     .dropdown-link-name {
-        color: rgba(220,200,165,0.6) !important;
-        font-size: 11px !important;
+        color: rgba(235,220,195,0.85) !important;
+        font-size: 12px !important;
         letter-spacing: 1.5px !important;
     }
 
@@ -13853,8 +13853,8 @@ html {
     }
 
     .dropdown-link-desc {
-        color: rgba(200,190,170,0.25) !important;
-        font-size: 9.5px !important;
+        color: rgba(215,205,185,0.6) !important;
+        font-size: 11px !important;
     }
 
     .dropdown-divider {
@@ -13863,23 +13863,23 @@ html {
 
     .dropdown-link--all {
         padding: 12px 24px 12px 40px !important;
-        color: rgba(201,169,110,0.4) !important;
-        font-size: 10px !important;
+        color: rgba(201,169,110,0.7) !important;
+        font-size: 11px !important;
     }
     .dropdown-link--all:hover {
         color: var(--gold) !important;
         background: rgba(201,169,110,0.05) !important;
     }
 
-    /* ─── Footer: siempre visible, DENTRO del scroll ───────────── */
+    /* ─── Footer: visible right after nav items ──────────────────── */
     .nav-menu-footer {
         display: flex !important;
         gap: 10px !important;
-        padding: 16px 24px !important;
-        padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
-        border-top: 1px solid rgba(201,169,110,0.08) !important;
+        padding: 20px 24px !important;
+        padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+        border-top: 1px solid rgba(201,169,110,0.15) !important;
         flex-shrink: 0 !important;
-        margin-top: auto !important;
+        margin-top: 8px !important;
     }
 
     .nav-menu-footer-btn {
@@ -13888,12 +13888,12 @@ html {
         align-items: center !important;
         justify-content: center !important;
         gap: 6px !important;
-        height: 44px !important;
-        padding: 0 12px !important;
+        height: 46px !important;
+        padding: 0 14px !important;
         font-family: var(--font-body) !important;
-        font-size: 9px !important;
+        font-size: 10.5px !important;
         font-weight: 500 !important;
-        letter-spacing: 2px !important;
+        letter-spacing: 1.8px !important;
         text-transform: uppercase !important;
         text-decoration: none !important;
         border: 1px solid rgba(201,169,110,0.2) !important;
@@ -13938,23 +13938,23 @@ html {
         letter-spacing: 4px !important;
     }
     .nav-link {
-        padding: 14px 18px !important;
-        font-size: 11px !important;
-        letter-spacing: 2.5px !important;
+        padding: 16px 18px !important;
+        font-size: 12px !important;
+        letter-spacing: 2px !important;
     }
     .dropdown-link {
-        padding: 11px 18px 11px 32px !important;
+        padding: 12px 18px 12px 32px !important;
     }
     .dropdown-link--all {
-        padding: 11px 18px 11px 32px !important;
+        padding: 12px 18px 12px 32px !important;
     }
     .nav-menu-footer {
-        padding: 12px 18px !important;
-        padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+        padding: 16px 18px !important;
+        padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
     }
     .nav-menu-footer-btn {
-        height: 40px !important;
-        font-size: 8.5px !important;
+        height: 44px !important;
+        font-size: 9.5px !important;
     }
 }
 

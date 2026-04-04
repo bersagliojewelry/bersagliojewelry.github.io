@@ -10477,3 +10477,546 @@ nav .logo-sub {
     .showcase-item-title { font-size: 1rem !important; }
     .showcase-item-desc { font-size: 12px !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   HERO V7 — EDITORIAL CINEMÁTICO PREMIUM
+   Sobreescribe V4/V5 con specificidad .hero-v7
+   Mobile-first · Compatible universal · Accessible
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── 1. ESTRUCTURA BASE (Mobile-First) ──────────────────────── */
+.hero.hero-v7 {
+    position: relative !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    background: var(--black) !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+}
+
+/* Eliminar pseudo-elementos previos (watermark, pulse circle) */
+.hero.hero-v7::before,
+.hero.hero-v7::after {
+    display: none !important;
+    content: none !important;
+}
+
+/* ─── 2. IMAGEN DE FONDO ─────────────────────────────────────── */
+.hero-v7 > picture {
+    display: block !important;
+    visibility: visible !important;
+}
+
+.hero-v7 .hero-bg-img {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: 60% center !important;
+    z-index: 0 !important;
+    display: block !important;
+    visibility: visible !important;
+    pointer-events: none !important;
+    animation: hero-v7-kb 20s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
+    will-change: transform !important;
+}
+
+@keyframes hero-v7-kb {
+    0%   { transform: scale(1.06); }
+    100% { transform: scale(1.0); }
+}
+
+/* ─── 3. OVERLAY CINEMÁTICO MULTICAPA ─────────────────────────── */
+.hero-v7 .hero-overlay {
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 1 !important;
+    pointer-events: none !important;
+    background:
+        /* Capa 1: Gradiente lateral — oscuro izquierda, revelando foto derecha */
+        linear-gradient(
+            108deg,
+            rgba(3,6,4, 0.97)  0%,
+            rgba(3,6,4, 0.94)  12%,
+            rgba(4,8,5, 0.86)  24%,
+            rgba(5,10,7, 0.72) 36%,
+            rgba(5,10,7, 0.48) 50%,
+            rgba(5,10,7, 0.22) 64%,
+            rgba(5,10,7, 0.08) 78%,
+            transparent         92%
+        ),
+        /* Capa 2: Brillo esmeralda sutil — centro izquierda */
+        radial-gradient(
+            ellipse 60% 70% at 25% 50%,
+            rgba(11,61,46, 0.12) 0%,
+            transparent 70%
+        ),
+        /* Capa 3: Destello dorado atmosférico — arriba derecha */
+        radial-gradient(
+            ellipse 40% 50% at 80% 20%,
+            rgba(201,169,110, 0.04) 0%,
+            transparent 60%
+        ),
+        /* Capa 4: Viñeta superior */
+        linear-gradient(to bottom, rgba(3,6,4, 0.55) 0%, transparent 18%),
+        /* Capa 5: Viñeta inferior (sobre meta) */
+        linear-gradient(to top, rgba(3,6,4, 0.70) 0%, transparent 20%)
+    !important;
+}
+
+/* ─── 4. ACENTO VERTICAL DORADO ───────────────────────────────── */
+.hero-v7 .hero-accent-line {
+    position: absolute;
+    left: clamp(1rem, 4vw, 3.5rem);
+    top: 20%;
+    bottom: 25%;
+    width: 1px;
+    background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(201,169,110, 0.4) 20%,
+        rgba(201,169,110, 0.15) 80%,
+        transparent 100%
+    );
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* ─── 5. CONTENIDO PRINCIPAL ──────────────────────────────────── */
+.hero-v7 .hero-content {
+    position: relative !important;
+    z-index: 3 !important;
+    text-align: left !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    max-width: clamp(300px, 85%, 560px) !important;
+    margin-left: 0 !important;
+    margin-right: auto !important;
+    padding: 120px var(--space-md) 100px !important;
+    padding-left: clamp(1.5rem, 6vw, 5rem) !important;
+}
+
+/* ─── 6. EYEBROW ──────────────────────────────────────────────── */
+.hero-v7 .hero-eyebrow {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    font-family: var(--font-body) !important;
+    font-size: 10px !important;
+    font-weight: 500 !important;
+    letter-spacing: 4px !important;
+    text-transform: uppercase !important;
+    color: var(--gold) !important;
+    margin-bottom: var(--space-lg) !important;
+    padding: 0 !important;
+    margin-left: 0 !important;
+    margin-right: auto !important;
+}
+
+.hero-v7 .hero-eyebrow::before,
+.hero-v7 .hero-eyebrow::after {
+    content: '' !important;
+    display: block !important;
+    width: 28px !important;
+    height: 1px !important;
+    background: rgba(201,169,110, 0.45) !important;
+    position: static !important;
+    transform: none !important;
+    flex-shrink: 0 !important;
+}
+
+/* ─── 7. TÍTULO ───────────────────────────────────────────────── */
+.hero-v7 .hero-title-wrap {
+    overflow: visible !important;
+    margin-bottom: var(--space-md) !important;
+}
+
+.hero-v7 .hero-title {
+    font-family: var(--font-display) !important;
+    font-size: clamp(2.6rem, 8vw, 5.5rem) !important;
+    font-weight: 300 !important;
+    line-height: 1.08 !important;
+    letter-spacing: -1px !important;
+    color: var(--ivory) !important;
+    margin-bottom: 0 !important;
+    overflow: visible !important;
+    padding-bottom: 0.08em !important;
+}
+
+.hero-v7 .hero-title em {
+    display: block !important;
+    font-style: italic !important;
+    color: var(--gold-light) !important;
+    font-weight: 300 !important;
+    letter-spacing: 0px !important;
+}
+
+.hero-v7 .hero-title-line {
+    display: block !important;
+    height: 1px !important;
+    max-width: 200px !important;
+    margin: 18px 0 0 !important;
+    background: linear-gradient(90deg, var(--gold) 0%, transparent 100%) !important;
+    transform-origin: left !important;
+}
+
+/* ─── 8. DESCRIPCIÓN ──────────────────────────────────────────── */
+.hero-v7 .hero-desc {
+    font-family: var(--font-body) !important;
+    font-size: 14px !important;
+    font-weight: 300 !important;
+    line-height: 1.85 !important;
+    color: var(--text-on-dark-muted) !important;
+    max-width: 480px !important;
+    margin: 0 0 var(--space-lg) !important;
+    text-align: left !important;
+}
+
+/* ─── 9. CTAs ─────────────────────────────────────────────────── */
+.hero-v7 .hero-actions {
+    display: flex !important;
+    gap: var(--space-sm) !important;
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+    margin-bottom: 0 !important;
+}
+
+.hero-v7 .hero-actions .btn {
+    border-radius: 0 !important;
+    font-size: 11px !important;
+    letter-spacing: 2.5px !important;
+    padding: 15px 34px !important;
+}
+
+.hero-v7 .hero-actions .btn-primary {
+    background: var(--gold) !important;
+    color: var(--black) !important;
+    border: 1px solid var(--gold) !important;
+}
+
+.hero-v7 .hero-actions .btn-primary:hover {
+    background: var(--gold-light) !important;
+    box-shadow: 0 4px 24px rgba(201,169,110, 0.25) !important;
+}
+
+.hero-v7 .hero-actions .btn-ghost {
+    background: transparent !important;
+    color: var(--ivory-warm) !important;
+    border: 1px solid rgba(245,240,232, 0.25) !important;
+}
+
+.hero-v7 .hero-actions .btn-ghost:hover {
+    border-color: rgba(245,240,232, 0.55) !important;
+    background: rgba(245,240,232, 0.04) !important;
+    color: var(--ivory) !important;
+    box-shadow: none !important;
+}
+
+/* ─── 10. TRUST BADGES — Barra inferior glassmorphism ─────────── */
+.hero-v7 > .hero-meta {
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 4 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    background: rgba(5,10,7, 0.45) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border-top: 1px solid rgba(201,169,110, 0.08) !important;
+}
+
+/* Fallback si no soporta backdrop-filter */
+@supports not (backdrop-filter: blur(12px)) {
+    .hero-v7 > .hero-meta {
+        background: rgba(5,10,7, 0.85) !important;
+    }
+}
+
+.hero-v7 .hero-meta-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    flex-wrap: wrap;
+    padding: 14px var(--space-md);
+    max-width: var(--container);
+    width: 100%;
+}
+
+.hero-v7 .hero-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    font-family: var(--font-body) !important;
+    font-size: 9px !important;
+    font-weight: 500 !important;
+    letter-spacing: 2.5px !important;
+    text-transform: uppercase !important;
+    color: rgba(220,200,165, 0.55) !important;
+    padding: 0 20px !important;
+    white-space: nowrap !important;
+}
+
+.hero-v7 .hero-badge svg {
+    color: var(--gold) !important;
+    opacity: 0.4 !important;
+    flex-shrink: 0 !important;
+}
+
+.hero-v7 .hero-badge-sep {
+    width: 1px !important;
+    height: 14px !important;
+    background: rgba(201,169,110, 0.15) !important;
+    flex-shrink: 0 !important;
+    font-size: 0 !important;
+    color: transparent !important;
+}
+
+/* ─── 11. SCROLL INDICATOR ────────────────────────────────────── */
+.hero-v7 .hero-scroll-indicator {
+    position: absolute !important;
+    bottom: 70px !important;
+    left: auto !important;
+    right: clamp(1rem, 3vw, 2.5rem) !important;
+    transform: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 8px !important;
+    z-index: 5 !important;
+    color: rgba(220,200,165, 0.4) !important;
+    animation: hero-v7-scroll 2.4s ease-in-out infinite !important;
+    animation-play-state: running !important;
+}
+
+.hero-v7 .hero-scroll-label {
+    font-family: var(--font-body) !important;
+    font-size: 8px !important;
+    font-weight: 500 !important;
+    letter-spacing: 3px !important;
+    text-transform: uppercase !important;
+    opacity: 0.6 !important;
+    writing-mode: vertical-lr !important;
+    text-orientation: mixed !important;
+}
+
+@keyframes hero-v7-scroll {
+    0%, 100% { transform: translateY(0); opacity: 0.4; }
+    50%      { transform: translateY(6px); opacity: 0.8; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HERO V7 — RESPONSIVE BREAKPOINTS
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── 480px+ : Móviles grandes ────────────────────────────────── */
+@media (min-width: 480px) {
+    .hero-v7 .hero-content {
+        padding: 140px var(--space-md) 110px !important;
+        padding-left: clamp(2rem, 6vw, 5rem) !important;
+    }
+
+    .hero-v7 .hero-desc {
+        font-size: 15px !important;
+    }
+
+    .hero-v7 .hero-title-line {
+        max-width: 260px !important;
+    }
+}
+
+/* ─── 768px+ : Tablets ────────────────────────────────────────── */
+@media (min-width: 768px) {
+    .hero-v7 .hero-content {
+        max-width: clamp(380px, 50%, 560px) !important;
+        padding: 160px var(--space-md) 120px !important;
+        padding-left: clamp(3rem, 7vw, 6rem) !important;
+    }
+
+    .hero-v7 .hero-eyebrow {
+        font-size: 11px !important;
+    }
+
+    .hero-v7 .hero-desc {
+        font-size: 16px !important;
+    }
+
+    .hero-v7 .hero-title-line {
+        max-width: 320px !important;
+    }
+
+    .hero-v7 .hero-accent-line {
+        left: clamp(2.5rem, 5vw, 4rem);
+    }
+}
+
+/* ─── 1024px+ : Laptops ───────────────────────────────────────── */
+@media (min-width: 1024px) {
+    .hero-v7 .hero-content {
+        max-width: 520px !important;
+        padding: 180px 0 140px !important;
+        padding-left: clamp(4rem, 8vw, 7rem) !important;
+    }
+
+    .hero-v7 .hero-bg-img {
+        object-position: 62% center !important;
+    }
+
+    .hero-v7 .hero-actions .btn {
+        padding: 16px 38px !important;
+        font-size: 11.5px !important;
+    }
+
+    .hero-v7 .hero-meta-inner {
+        justify-content: flex-start;
+        padding-left: clamp(4rem, 8vw, 7rem);
+    }
+}
+
+/* ─── 1280px+ : Desktop ───────────────────────────────────────── */
+@media (min-width: 1280px) {
+    .hero-v7 .hero-content {
+        max-width: 580px !important;
+        padding-left: 8rem !important;
+    }
+
+    .hero-v7 .hero-title {
+        font-size: clamp(4rem, 5.5vw, 5.5rem) !important;
+    }
+
+    .hero-v7 .hero-accent-line {
+        left: 5rem;
+    }
+
+    .hero-v7 .hero-meta-inner {
+        padding-left: 8rem;
+    }
+}
+
+/* ─── 1600px+ : Pantallas grandes ─────────────────────────────── */
+@media (min-width: 1600px) {
+    .hero-v7 .hero-content {
+        max-width: 640px !important;
+        padding-left: 10rem !important;
+    }
+
+    .hero-v7 .hero-title {
+        font-size: 5.5rem !important;
+    }
+
+    .hero-v7 .hero-accent-line {
+        left: 6.5rem;
+    }
+
+    .hero-v7 .hero-meta-inner {
+        padding-left: 10rem;
+    }
+}
+
+/* ─── Móvil pequeño: ajustes finos ────────────────────────────── */
+@media (max-width: 479px) {
+    .hero-v7 .hero-content {
+        max-width: 100% !important;
+        padding: 110px var(--space-md) 90px !important;
+    }
+
+    .hero-v7 .hero-title {
+        font-size: clamp(2.2rem, 10vw, 3rem) !important;
+        letter-spacing: -0.5px !important;
+    }
+
+    .hero-v7 .hero-eyebrow::before,
+    .hero-v7 .hero-eyebrow::after {
+        width: 18px !important;
+    }
+
+    .hero-v7 .hero-actions {
+        flex-direction: column !important;
+        width: 100% !important;
+    }
+
+    .hero-v7 .hero-actions .btn {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: 14px 24px !important;
+    }
+
+    .hero-v7 .hero-accent-line {
+        display: none;
+    }
+
+    .hero-v7 .hero-scroll-indicator {
+        display: none !important;
+    }
+
+    .hero-v7 .hero-badge {
+        font-size: 7.5px !important;
+        letter-spacing: 1.5px !important;
+        padding: 0 10px !important;
+    }
+
+    .hero-v7 .hero-badge svg {
+        width: 10px !important;
+        height: 10px !important;
+    }
+
+    .hero-v7 .hero-badge-sep {
+        height: 10px !important;
+    }
+
+    .hero-v7 .hero-meta-inner {
+        padding: 10px var(--space-sm);
+        justify-content: center;
+    }
+
+    /* Overlay móvil — más oscuro arriba para texto legible */
+    .hero-v7 .hero-overlay {
+        background:
+            linear-gradient(
+                to bottom,
+                rgba(3,6,4, 0.96) 0%,
+                rgba(3,6,4, 0.88) 35%,
+                rgba(3,6,4, 0.65) 65%,
+                rgba(3,6,4, 0.45) 100%
+            ),
+            radial-gradient(
+                ellipse 80% 60% at 50% 30%,
+                rgba(11,61,46, 0.08) 0%,
+                transparent 70%
+            ),
+            linear-gradient(to top, rgba(3,6,4, 0.75) 0%, transparent 15%)
+        !important;
+    }
+}
+
+/* ─── Accesibilidad: reducir movimiento ───────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .hero-v7 .hero-bg-img {
+        animation: none !important;
+    }
+    .hero-v7 .hero-scroll-indicator {
+        animation: none !important;
+        opacity: 0.5 !important;
+    }
+}
+
+/* ─── Safe area para iOS notch ────────────────────────────────── */
+@supports (padding-top: env(safe-area-inset-top)) {
+    .hero-v7 .hero-content {
+        padding-top: calc(120px + env(safe-area-inset-top)) !important;
+    }
+    .hero-v7 > .hero-meta {
+        padding-bottom: env(safe-area-inset-bottom) !important;
+    }
+}

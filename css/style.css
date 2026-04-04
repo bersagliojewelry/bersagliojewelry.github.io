@@ -10358,15 +10358,15 @@ nav .logo-sub {
  *   • Herramienta: squoosh.app o tinypng.com → reducir a < 80 kB
  */
 .showcase-gem-icon {
-    width: 220px !important;
-    height: 220px !important;
+    width: 250px !important;
+    height: 250px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     position: relative !important;
     z-index: 1 !important;
-    border-radius: 50% !important;
-    overflow: hidden !important;
+    /* Sin overflow:hidden → el drop-shadow animado no se recorta */
+    overflow: visible !important;
 }
 
 .showcase-gem-icon picture {
@@ -10379,7 +10379,8 @@ nav .logo-sub {
 
 .showcase-gem-img {
     width: 100% !important;
-    height: 100% !important;
+    height: auto !important;
+    max-height: 100% !important;
     object-fit: contain !important;
     object-position: center !important;
     display: block !important;
@@ -10454,8 +10455,8 @@ nav .logo-sub {
         height: 220px !important;
     }
     .showcase-gem-icon {
-        width: 170px !important;
-        height: 170px !important;
+        width: 190px !important;
+        height: 190px !important;
     }
     .showcase-num[data-n="01"] { left: -14px; top: 26%; }
     .showcase-num[data-n="02"] { right: -14px; top: 26%; }
@@ -10470,8 +10471,8 @@ nav .logo-sub {
         height: 180px !important;
     }
     .showcase-gem-icon {
-        width: 140px !important;
-        height: 140px !important;
+        width: 160px !important;
+        height: 160px !important;
     }
     .showcase-item-title { font-size: 1rem !important; }
     .showcase-item-desc { font-size: 12px !important; }

@@ -278,3 +278,20 @@ Cada seccion del index tiene su clase V7 que activa los estilos premium:
 **Notas para limpieza futura:**
 - Las clases `.hero-meta`, `.hero-meta-inner`, `.hero-badge`, `.hero-badge-sep` en CSS legacy ya no tienen correspondencia en el HTML del index. Son candidatas a eliminacion.
 - La doble definicion de `.animate-on-scroll` (linea 184 y 3865) es redundante — la del final de style.css las sobrescribe ambas.
+
+### 2026-04-04 — Consolidacion ticker + trust strip en un unico marquee
+**Archivos modificados:** `index.html`, `css/style.css`, `CLAUDE.md`
+
+**Cambios realizados:**
+1. **Hero ticker unificado** — Se fusionaron las dos barras debajo del hero (ticker animado + trust strip estatico) en un unico ticker marquee animado. El ticker ahora incluye los 6 items: Certificado La Verde / Jewelers of America, Oro 18K · Ley 750, Envio asegurado, Asesoria personalizada, Esmeraldas colombianas, Visitanos en Cartagena Colombia. Contenido duplicado en el HTML para loop infinito via CSS `translateX(-50%)`.
+2. **Trust strip removido** — Se comento el HTML del `.trust-strip.trust-strip-v7` en index.html y se agrego `display: none !important` en CSS como respaldo.
+3. **Velocidad del ticker ajustada** — Animation duration aumentada de 25s a 45s (desktop) y de 18s a 30s (mobile <480px) para compensar el mayor contenido.
+
+**CSS modificado:**
+- `.hero-v7 .hero-ticker-track` animation-duration: 25s → 45s
+- Mobile ticker animation-duration: 18s → 30s
+- Nuevo bloque: `.trust-strip.trust-strip-v7 { display: none !important; }`
+
+**Notas:**
+- Los estilos CSS del trust strip V7 (lineas ~11025-11228) quedan como legacy inactivo, candidatos a limpieza futura.
+- Solo index.html usaba el trust strip, no afecta otras paginas.

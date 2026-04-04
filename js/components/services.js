@@ -64,8 +64,8 @@ export function renderServices() {
                             class="showcase-gem-img"
                             loading="eager"
                             decoding="async"
-                            width="240"
-                            height="240"
+                            width="220"
+                            height="220"
                         >
                     </div>
                 </div>

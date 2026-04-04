@@ -564,9 +564,8 @@ input, select, textarea { font-family: var(--font-body); }
     transition: var(--transition);
 }
 
-.hamburger.is-active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-.hamburger.is-active span:nth-child(2) { opacity: 0; }
-.hamburger.is-active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+/* Hamburger: hide when menu is open (panel has its own close btn) */
+.hamburger.is-active { display: none !important; }
 
 /* ═══════════════════════════════════════════════════════════════
    HERO
@@ -13673,14 +13672,17 @@ html {
         left: 0 !important;
         right: 0 !important;
         bottom: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        min-height: 100vh !important;
         background: linear-gradient(170deg, #060d09 0%, #0a1a0f 40%, #07100a 100%) !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: stretch !important;
         justify-content: flex-start !important;
         padding: 0 !important;
+        margin: 0 !important;
         z-index: 1001 !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
@@ -13697,7 +13699,9 @@ html {
         transform: translateX(0) !important;
         opacity: 1 !important;
         visibility: visible !important;
-        transition-delay: 0s !important;
+        transition: transform 0.4s cubic-bezier(0.25,0.46,0.45,0.94),
+                    opacity 0.3s ease,
+                    visibility 0s 0s !important;
     }
 
     /* ─── Header del panel: marca + cerrar ─────────────────────── */

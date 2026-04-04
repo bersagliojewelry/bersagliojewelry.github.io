@@ -37,6 +37,8 @@ function initializeHeader() {
     window.addEventListener('scroll', () => {
         const y = window.scrollY;
         header.classList.toggle('scrolled', y > 60);
+        // Don't hide header while mobile menu is open
+        if (document.body.classList.contains('menu-open')) return;
         if (y > 400) {
             header.classList.toggle('header-hidden', y > lastScroll);
         } else {
@@ -59,6 +61,8 @@ function initializeHeader() {
             hamburger.classList.toggle('is-active', open);
             hamburger.setAttribute('aria-expanded', open);
             document.body.classList.toggle('menu-open', open);
+            // Remove header-hidden so fixed menu isn't clipped by transform
+            if (open) header.classList.remove('header-hidden');
         });
 
         // Close button inside mobile menu

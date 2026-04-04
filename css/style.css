@@ -12479,3 +12479,456 @@ nav .logo-sub {
         background: rgba(8,14,10, 0.88) !important;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   SERVICES V7 — SHOWCASE EDITORIAL REFINADO
+   Refina el showcase existente · Consistencia V7
+   Sharp corners · Glow mejorado · Micro-interacciones
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── 1. SECCIÓN ──────────────────────────────────────────────── */
+.services.services-v7 {
+    background: transparent !important;
+    position: relative !important;
+    overflow: hidden !important;
+    padding: clamp(4rem, 8vw, 7rem) 0 !important;
+}
+
+/* Decoraciones orgánicas — refinar opacidad */
+.services-v7::before {
+    content: '' !important;
+    position: absolute !important;
+    bottom: -80px !important;
+    left: -80px !important;
+    width: 420px !important;
+    height: 420px !important;
+    background: radial-gradient(ellipse at center,
+        rgba(116,90,39, 0.10) 0%,
+        rgba(80,55,18, 0.05) 40%,
+        transparent 70%) !important;
+    border-radius: 38% 62% 55% 45% / 42% 35% 65% 58% !important;
+    pointer-events: none !important;
+    z-index: 0 !important;
+}
+
+.services-v7::after {
+    content: '' !important;
+    display: block !important;
+    position: absolute !important;
+    top: -60px !important;
+    right: -80px !important;
+    width: 360px !important;
+    height: 360px !important;
+    background: radial-gradient(ellipse at center,
+        rgba(116,90,39, 0.07) 0%,
+        rgba(80,55,18, 0.04) 40%,
+        transparent 70%) !important;
+    border-radius: 62% 38% 45% 55% / 55% 65% 35% 45% !important;
+    pointer-events: none !important;
+    z-index: 0 !important;
+}
+
+/* ─── 2. HEADER ───────────────────────────────────────────────── */
+.services-v7 .section-header {
+    text-align: center !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.services-v7 .section-eyebrow {
+    color: var(--gold) !important;
+    display: inline-block !important;
+    text-align: center !important;
+}
+
+.services-v7 .section-title {
+    color: var(--ivory) !important;
+    text-align: center !important;
+    font-style: italic !important;
+    font-weight: 300 !important;
+}
+
+.services-v7 .section-desc {
+    display: block !important;
+    color: var(--text-on-dark-muted) !important;
+    text-align: center !important;
+}
+
+/* ─── 3. GRID — permite showcase layout ───���───────────────────── */
+.services-v7 .services-grid,
+.services-v7 #services-grid {
+    max-width: none !important;
+    margin: 0 !important;
+    display: block !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* Ocultar service-row legacy */
+.services-v7 .service-row { display: none !important; }
+
+/* ─── 4. SHOWCASE LAYOUT ──────────────────────────────────────── */
+.services-v7 .showcase-layout {
+    display: grid !important;
+    grid-template-columns: 1fr 280px 1fr !important;
+    gap: 0 var(--space-xl) !important;
+    align-items: center !important;
+    max-width: 1080px !important;
+    margin: 0 auto !important;
+    padding: var(--space-xl) var(--space-md) !important;
+}
+
+/* ─── 5. COLUMNAS LATERALES ───────────────────────────────────── */
+.services-v7 .showcase-col {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: var(--space-2xl) !important;
+}
+
+.services-v7 .showcase-col--left {
+    text-align: right !important;
+    align-items: flex-end !important;
+}
+
+.services-v7 .showcase-col--right {
+    text-align: left !important;
+    align-items: flex-start !important;
+}
+
+/* ─── 6. ITEM DE SERVICIO ─────────────────────────────────────── */
+.services-v7 .showcase-item {
+    max-width: 300px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    position: relative !important;
+    padding: 20px 0 !important;
+}
+
+.services-v7 .showcase-col--left .showcase-item {
+    align-items: flex-end !important;
+}
+
+.services-v7 .showcase-col--right .showcase-item {
+    align-items: flex-start !important;
+}
+
+/* Línea decorativa bajo cada item */
+.services-v7 .showcase-item::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    width: 40px;
+    height: 1px;
+    background: rgba(201,169,110, 0.12);
+}
+
+.services-v7 .showcase-col--left .showcase-item::after {
+    right: 0;
+    background: linear-gradient(90deg, transparent, rgba(201,169,110, 0.15));
+}
+
+.services-v7 .showcase-col--right .showcase-item::after {
+    left: 0;
+    background: linear-gradient(90deg, rgba(201,169,110, 0.15), transparent);
+}
+
+/* Icono */
+.services-v7 .showcase-item-icon {
+    width: 40px !important;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: var(--gold) !important;
+    opacity: 0.8 !important;
+    flex-shrink: 0 !important;
+    transition: opacity 0.3s ease !important;
+}
+
+.services-v7 .showcase-item-icon svg {
+    width: 40px !important;
+    height: 40px !important;
+    color: var(--gold) !important;
+    opacity: 0.85 !important;
+    filter: drop-shadow(0 0 6px rgba(201,169,110, 0.2)) !important;
+    transition: filter 0.4s ease, opacity 0.4s ease !important;
+}
+
+.services-v7 .showcase-item:hover .showcase-item-icon svg {
+    opacity: 1 !important;
+    filter: drop-shadow(0 0 12px rgba(201,169,110, 0.45)) !important;
+}
+
+/* Título */
+.services-v7 .showcase-item-title {
+    font-family: var(--font-display) !important;
+    font-size: clamp(1rem, 1.4vw, 1.2rem) !important;
+    font-weight: 400 !important;
+    font-style: italic !important;
+    color: var(--ivory) !important;
+    line-height: 1.3 !important;
+    margin: 0 !important;
+    transition: color 0.3s ease !important;
+}
+
+.services-v7 .showcase-item:hover .showcase-item-title {
+    color: var(--gold-light) !important;
+}
+
+/* Descripción */
+.services-v7 .showcase-item-desc {
+    font-family: var(--font-body) !important;
+    font-size: 12.5px !important;
+    font-weight: 300 !important;
+    line-height: 1.75 !important;
+    color: rgba(184,176,164, 0.65) !important;
+    margin: 0 !important;
+    max-width: 280px !important;
+}
+
+/* ─── 7. GEMA CENTRAL — anillo refinado ───────────────────────── */
+.services-v7 .showcase-center {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.services-v7 .showcase-gem-ring {
+    position: relative !important;
+    width: 260px !important;
+    height: 260px !important;
+    border-radius: 50% !important;
+    border: 1px solid rgba(201,169,110, 0.15) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+}
+
+/* Halo exterior */
+.services-v7 .showcase-gem-ring::before {
+    content: '' !important;
+    position: absolute !important;
+    inset: -35px !important;
+    border-radius: 50% !important;
+    background: radial-gradient(circle,
+        rgba(201,169,110, 0.05) 0%,
+        rgba(201,169,110, 0.02) 45%,
+        transparent 70%) !important;
+    pointer-events: none !important;
+}
+
+/* Anillo interior */
+.services-v7 .showcase-gem-ring::after {
+    content: '' !important;
+    position: absolute !important;
+    inset: 22px !important;
+    border-radius: 50% !important;
+    border: 1px solid rgba(201,169,110, 0.06) !important;
+    pointer-events: none !important;
+    display: block !important;
+    background: none !important;
+    height: auto !important;
+}
+
+/* Números en el anillo — sharp */
+.services-v7 .showcase-num {
+    position: absolute !important;
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 0 !important;
+    border: 1px solid rgba(201,169,110, 0.25) !important;
+    background: rgba(5,10,7, 0.9) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-family: var(--font-body) !important;
+    font-size: 9px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.5px !important;
+    color: var(--gold) !important;
+    z-index: 2 !important;
+    pointer-events: none !important;
+}
+
+/* Gema central — glow refinado */
+.services-v7 .showcase-gem-icon {
+    width: 230px !important;
+    height: 230px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    z-index: 1 !important;
+    overflow: visible !important;
+}
+
+.services-v7 .showcase-gem-img {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+    display: block !important;
+    filter:
+        drop-shadow(0 0 18px rgba(201,169,110, 0.35))
+        drop-shadow(0 0 45px rgba(26,77,46, 0.30)) !important;
+    animation: services-v7-gem-glow 5s ease-in-out infinite !important;
+    will-change: filter !important;
+}
+
+@keyframes services-v7-gem-glow {
+    0%, 100% {
+        filter:
+            drop-shadow(0 0 18px rgba(201,169,110, 0.35))
+            drop-shadow(0 0 45px rgba(26,77,46, 0.30));
+    }
+    50% {
+        filter:
+            drop-shadow(0 0 30px rgba(201,169,110, 0.55))
+            drop-shadow(0 0 70px rgba(26,100,60, 0.45));
+    }
+}
+
+/* ─── 8. BOTÓN CTA ────────────────────────────────────────────── */
+.services-v7 .section-footer {
+    text-align: center !important;
+    padding-top: var(--space-lg) !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.services-v7 .btn-outline {
+    border: 1px solid rgba(201,169,110, 0.2) !important;
+    color: var(--gold-light) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+}
+
+.services-v7 .btn-outline:hover {
+    border-color: rgba(201,169,110, 0.5) !important;
+    background: rgba(201,169,110, 0.04) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SERVICES V7 — RESPONSIVE
+   ═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 899px) {
+    .services-v7 .showcase-layout {
+        grid-template-columns: 1fr !important;
+        gap: var(--space-xl) 0 !important;
+        max-width: 480px !important;
+    }
+
+    .services-v7 .showcase-col--left,
+    .services-v7 .showcase-col--right {
+        text-align: center !important;
+        align-items: center !important;
+    }
+
+    .services-v7 .showcase-item {
+        align-items: center !important;
+        text-align: center !important;
+        max-width: 100% !important;
+    }
+
+    .services-v7 .showcase-item::after {
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%);
+        background: linear-gradient(90deg, transparent, rgba(201,169,110, 0.15), transparent) !important;
+    }
+
+    .services-v7 .showcase-item-desc {
+        max-width: 400px !important;
+    }
+
+    .services-v7 .showcase-center {
+        order: -1 !important;
+    }
+
+    .services-v7 .showcase-gem-ring {
+        width: 200px !important;
+        height: 200px !important;
+    }
+
+    .services-v7 .showcase-gem-icon {
+        width: 175px !important;
+        height: 175px !important;
+    }
+
+    .services-v7 .showcase-num[data-n="01"] { left: -14px; top: 26%; }
+    .services-v7 .showcase-num[data-n="02"] { right: -14px; top: 26%; }
+    .services-v7 .showcase-num[data-n="03"] { left: -14px; top: 64%; }
+    .services-v7 .showcase-num[data-n="04"] { right: -14px; top: 64%; }
+}
+
+@media (max-width: 599px) {
+    .services-v7 .showcase-col {
+        gap: var(--space-lg) !important;
+    }
+
+    .services-v7 .showcase-gem-ring {
+        width: 170px !important;
+        height: 170px !important;
+    }
+
+    .services-v7 .showcase-gem-icon {
+        width: 150px !important;
+        height: 150px !important;
+    }
+
+    .services-v7 .showcase-item-title {
+        font-size: 1rem !important;
+    }
+
+    .services-v7 .showcase-item-desc {
+        font-size: 12px !important;
+    }
+
+    .services-v7 .showcase-num {
+        width: 26px !important;
+        height: 26px !important;
+        font-size: 8px !important;
+    }
+}
+
+@media (min-width: 1280px) {
+    .services-v7 .showcase-layout {
+        grid-template-columns: 1fr 300px 1fr !important;
+        gap: 0 var(--space-2xl) !important;
+        max-width: 1140px !important;
+    }
+
+    .services-v7 .showcase-gem-ring {
+        width: 280px !important;
+        height: 280px !important;
+    }
+
+    .services-v7 .showcase-gem-icon {
+        width: 250px !important;
+        height: 250px !important;
+    }
+
+    .services-v7 .showcase-item-title {
+        font-size: 1.25rem !important;
+    }
+
+    .services-v7 .showcase-item-desc {
+        font-size: 13px !important;
+        max-width: 300px !important;
+    }
+}
+
+/* ─── Accesibilidad ───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .services-v7 .showcase-gem-img {
+        animation: none !important;
+    }
+
+    .services-v7 .showcase-item-icon svg,
+    .services-v7 .showcase-item-title {
+        transition: none !important;
+    }
+}

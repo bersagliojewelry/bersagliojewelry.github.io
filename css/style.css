@@ -13235,3 +13235,284 @@ nav .logo-sub {
         transition: none !important;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   ABOUT TEASER V7 — NUESTRA HISTORIA EDITORIAL
+   Layout overlap · Frame decorativo · Stats refinados
+   Sharp corners · Glassmorphism stats
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── 1. SECCIÓN ──────────────────────────────────────────────── */
+.about-teaser.about-v7 {
+    background: linear-gradient(155deg, #0a1610 0%, #142018 50%, #0e1a14 100%) !important;
+    padding: clamp(4rem, 8vw, 7rem) 0 !important;
+    position: relative !important;
+    overflow: hidden !important;
+    color: var(--ivory) !important;
+}
+
+/* Eliminar pseudo-elementos previos */
+.about-v7::before,
+.about-v7::after {
+    content: none !important;
+    display: none !important;
+}
+
+/* Glow esmeralda decorativo — esquina inferior derecha */
+.about-v7 .about-teaser-inner::before {
+    content: '';
+    position: absolute;
+    bottom: -100px;
+    right: -100px;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(ellipse at center,
+        rgba(11,61,46, 0.12) 0%,
+        transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* ─── 2. INNER GRID ───────────────────────────────────────────── */
+.about-v7 .about-teaser-inner {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: var(--space-xl) !important;
+    align-items: center !important;
+    position: relative !important;
+}
+
+/* ─── 3. COLLAGE / IMAGEN ─────────────────────────────────────── */
+.about-v7 .about-teaser-collage {
+    position: relative !important;
+    overflow: hidden !important;
+    border-radius: 0 !important;
+    aspect-ratio: 16 / 10 !important;
+    background: rgba(5,10,7, 0.6) !important;
+}
+
+.about-v7 .about-teaser-collage img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    display: block !important;
+    transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+}
+
+.about-v7 .about-teaser-collage:hover img {
+    transform: scale(1.03) !important;
+}
+
+/* Frame decorativo — offset dorado */
+.about-v7 .about-teaser-collage-frame {
+    position: absolute !important;
+    inset: 12px !important;
+    border: 1px solid rgba(201,169,110, 0.12) !important;
+    border-radius: 0 !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+    transition: border-color 0.4s ease !important;
+}
+
+.about-v7 .about-teaser-collage:hover .about-teaser-collage-frame {
+    border-color: rgba(201,169,110, 0.25) !important;
+}
+
+/* Placeholder */
+.about-v7 .about-teaser-collage-placeholder {
+    position: absolute !important;
+    inset: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(135deg, rgba(10,26,15, 0.8), rgba(15,30,20, 0.8)) !important;
+}
+
+.about-v7 .about-teaser-collage-placeholder svg {
+    width: 48px !important;
+    height: 48px !important;
+    color: rgba(201,169,110, 0.15) !important;
+}
+
+/* ─── 4. CONTENIDO ────────────────────────────────────────────── */
+.about-v7 .about-teaser-content .section-eyebrow {
+    color: var(--gold) !important;
+}
+
+.about-v7 .about-teaser-content .section-title {
+    color: var(--ivory) !important;
+    font-size: clamp(1.6rem, 3.5vw, 2.5rem) !important;
+    font-weight: 300 !important;
+    letter-spacing: -0.5px !important;
+}
+
+.about-v7 .about-teaser-content p {
+    color: rgba(184,176,164, 0.75) !important;
+    font-size: 14px !important;
+    font-weight: 300 !important;
+    line-height: 1.85 !important;
+    margin-bottom: var(--space-lg) !important;
+}
+
+/* ─── 5. STATS ────────────────────────────────────────────────── */
+.about-v7 .about-teaser-stats {
+    display: flex !important;
+    gap: 0 !important;
+    flex-wrap: wrap !important;
+    margin: var(--space-lg) 0 !important;
+}
+
+.about-v7 .stat {
+    flex: 1 !important;
+    min-width: 100px !important;
+    text-align: center !important;
+    padding: 20px 16px !important;
+    position: relative !important;
+    border: 1px solid rgba(201,169,110, 0.06) !important;
+    background: rgba(5,10,7, 0.3) !important;
+}
+
+/* Línea dorada superior en cada stat */
+.about-v7 .stat::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 20px !important;
+    height: 1px !important;
+    background: var(--gold) !important;
+    opacity: 0.3 !important;
+    transition: width 0.3s ease, opacity 0.3s ease !important;
+}
+
+.about-v7 .stat:hover::before {
+    width: 40px !important;
+    opacity: 0.6 !important;
+}
+
+/* Eliminar ::after de versiones previas */
+.about-v7 .stat::after {
+    display: none !important;
+    content: none !important;
+}
+
+.about-v7 .stat-number {
+    display: block !important;
+    font-family: var(--font-display) !important;
+    font-size: clamp(2rem, 4vw, 3rem) !important;
+    font-weight: 300 !important;
+    letter-spacing: -1px !important;
+    color: var(--gold) !important;
+    line-height: 1 !important;
+    margin-bottom: 8px !important;
+}
+
+.about-v7 .stat-label {
+    display: block !important;
+    font-family: var(--font-body) !important;
+    font-size: 9px !important;
+    font-weight: 500 !important;
+    letter-spacing: 2px !important;
+    text-transform: uppercase !important;
+    color: rgba(184,176,164, 0.55) !important;
+    margin-top: 0 !important;
+}
+
+/* ─── 6. CTA BOTÓN ────────────────────────────────────────────── */
+.about-v7 .btn-outline {
+    border-color: rgba(201,169,110, 0.15) !important;
+    color: var(--gold-light) !important;
+    border-radius: 0 !important;
+}
+
+.about-v7 .btn-outline:hover {
+    border-color: rgba(201,169,110, 0.4) !important;
+    background: rgba(201,169,110, 0.04) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ABOUT V7 — RESPONSIVE
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── 768px+ : Layout en 2 columnas ──────────────────────────── */
+@media (min-width: 768px) {
+    .about-v7 .about-teaser-inner {
+        grid-template-columns: 1fr 1fr !important;
+        gap: var(--space-2xl) !important;
+    }
+
+    .about-v7 .about-teaser-collage {
+        aspect-ratio: 4 / 5 !important;
+    }
+}
+
+/* ─── 1024px+ ─────────────────────────────────────────────────── */
+@media (min-width: 1024px) {
+    .about-v7 .about-teaser-inner {
+        gap: var(--space-3xl) !important;
+    }
+
+    .about-v7 .about-teaser-content .section-title {
+        font-size: clamp(2rem, 3vw, 2.5rem) !important;
+    }
+
+    .about-v7 .about-teaser-content p {
+        font-size: 15px !important;
+    }
+}
+
+/* ─── 1280px+ ─────────────────────────────────────────────────── */
+@media (min-width: 1280px) {
+    .about-v7 .stat {
+        padding: 24px 20px !important;
+    }
+
+    .about-v7 .stat-number {
+        font-size: 3rem !important;
+    }
+}
+
+/* ─── Móvil ───────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+    .about-v7 .about-teaser-collage {
+        aspect-ratio: 16 / 10 !important;
+    }
+
+    .about-v7 .about-teaser-stats {
+        gap: 0 !important;
+    }
+
+    .about-v7 .stat {
+        min-width: 0 !important;
+        padding: 16px 10px !important;
+    }
+
+    .about-v7 .stat-number {
+        font-size: 1.8rem !important;
+    }
+
+    .about-v7 .stat-label {
+        font-size: 8px !important;
+        letter-spacing: 1.5px !important;
+    }
+}
+
+@media (max-width: 479px) {
+    .about-v7 .about-teaser-collage-frame {
+        inset: 8px !important;
+    }
+
+    .about-v7 .about-teaser-content .section-title {
+        font-size: 1.5rem !important;
+    }
+}
+
+/* ─── Accesibilidad ───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .about-v7 .about-teaser-collage img,
+    .about-v7 .about-teaser-collage-frame,
+    .about-v7 .stat::before {
+        transition: none !important;
+    }
+}

@@ -12932,3 +12932,306 @@ nav .logo-sub {
         transition: none !important;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   JOURNAL V7 — PREVIEW EDITORIAL PREMIUM
+   Featured card grande + side cards con acento dorado
+   Sharp corners · Ghost borders · Glassmorphism
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── 1. SECCIÓN ──────────────────────────────────────────────── */
+.journal-preview.journal-v7 {
+    background: rgba(5,10,7, 0.5) !important;
+    border-top: 1px solid rgba(201,169,110, 0.04) !important;
+    border-bottom: 1px solid rgba(201,169,110, 0.04) !important;
+    padding: clamp(4rem, 8vw, 7rem) 0 !important;
+    position: relative !important;
+}
+
+.journal-v7 .section-eyebrow { color: var(--gold) !important; }
+.journal-v7 .section-title   { color: var(--ivory) !important; }
+.journal-v7 .section-desc    { color: var(--text-on-dark-muted) !important; }
+
+/* ─── 2. GRID — Featured + Side Cards ─────────────────────────── */
+.journal-v7 .journal-preview-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: var(--space-lg) !important;
+    margin-top: var(--space-xl) !important;
+}
+
+/* ─── 3. FEATURED CARD ────────────────────────────────────────── */
+.journal-v7 .journal-featured-card {
+    display: flex !important;
+    flex-direction: column !important;
+    border: 1px solid rgba(201,169,110, 0.06) !important;
+    border-radius: 0 !important;
+    overflow: hidden !important;
+    text-decoration: none !important;
+    background: rgba(10,16,12, 0.4) !important;
+    transition: border-color 0.4s ease, box-shadow 0.4s ease !important;
+}
+
+.journal-v7 .journal-featured-card:hover {
+    border-color: rgba(201,169,110, 0.18) !important;
+    box-shadow: 0 8px 40px rgba(0,0,0, 0.2) !important;
+}
+
+/* Visual / imagen */
+.journal-v7 .journal-featured-visual {
+    position: relative !important;
+    aspect-ratio: 16 / 9 !important;
+    min-height: 220px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    flex-shrink: 0 !important;
+}
+
+.journal-v7 .journal-featured-visual img {
+    transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+}
+
+.journal-v7 .journal-featured-card:hover .journal-featured-visual img {
+    transform: scale(1.04) !important;
+}
+
+.journal-v7 .journal-featured-card:hover .journal-visual-icon {
+    opacity: 1 !important;
+    transform: scale(1.05) !important;
+}
+
+/* Body */
+.journal-v7 .journal-featured-body {
+    padding: 28px 32px 32px !important;
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+}
+
+/* Título */
+.journal-v7 .journal-featured-title {
+    font-family: var(--font-display) !important;
+    font-size: clamp(1.15rem, 2.2vw, 1.5rem) !important;
+    font-weight: 400 !important;
+    font-style: italic !important;
+    color: var(--ivory) !important;
+    line-height: 1.35 !important;
+    transition: color 0.3s ease !important;
+}
+
+.journal-v7 .journal-featured-card:hover .journal-featured-title {
+    color: var(--gold-light) !important;
+}
+
+/* Excerpt */
+.journal-v7 .journal-featured-excerpt {
+    font-family: var(--font-body) !important;
+    font-size: 13px !important;
+    font-weight: 300 !important;
+    color: rgba(245,240,232, 0.4) !important;
+    line-height: 1.8 !important;
+    opacity: 1 !important;
+}
+
+/* Chips/meta */
+.journal-v7 .journal-meta {
+    color: rgba(220,200,165, 0.3) !important;
+    font-size: 10px !important;
+    letter-spacing: 1px !important;
+}
+
+.journal-v7 .journal-chip {
+    font-size: 8px !important;
+    letter-spacing: 2px !important;
+    text-transform: uppercase !important;
+    border-radius: 0 !important;
+    border-color: rgba(201,169,110, 0.12) !important;
+    color: var(--gold) !important;
+    opacity: 0.6 !important;
+}
+
+/* ─── 4. SIDE CARDS ───────────────────────────────────────────── */
+.journal-v7 .journal-side-cards {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.journal-v7 .journal-side-card {
+    position: relative !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 16px !important;
+    padding: 20px 0 !important;
+    border-bottom: 1px solid rgba(201,169,110, 0.04) !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+    transition: padding-left 0.35s ease !important;
+}
+
+.journal-v7 .journal-side-card:last-child {
+    border-bottom: none !important;
+}
+
+.journal-v7 .journal-side-card:first-child {
+    padding-top: 0 !important;
+}
+
+/* Línea dorada lateral en hover */
+.journal-v7 .journal-side-card::before {
+    content: '' !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    width: 1px !important;
+    background: linear-gradient(180deg, var(--gold), transparent) !important;
+    transform: scaleY(0) !important;
+    transform-origin: top !important;
+    transition: transform 0.35s ease !important;
+}
+
+.journal-v7 .journal-side-card:hover::before {
+    transform: scaleY(1) !important;
+}
+
+.journal-v7 .journal-side-card:hover {
+    padding-left: 14px !important;
+}
+
+/* Número */
+.journal-v7 .journal-side-num {
+    flex-shrink: 0 !important;
+    font-family: var(--font-display) !important;
+    font-size: 2rem !important;
+    font-weight: 300 !important;
+    color: rgba(201,169,110, 0.06) !important;
+    line-height: 1 !important;
+    min-width: 40px !important;
+    transition: color 0.3s ease !important;
+}
+
+.journal-v7 .journal-side-card:hover .journal-side-num {
+    color: rgba(201,169,110, 0.18) !important;
+}
+
+/* Body */
+.journal-v7 .journal-side-body {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+}
+
+/* Título side */
+.journal-v7 .journal-side-title {
+    font-family: var(--font-display) !important;
+    font-size: 0.95rem !important;
+    font-weight: 400 !important;
+    color: var(--ivory) !important;
+    line-height: 1.4 !important;
+    transition: color 0.3s ease !important;
+}
+
+.journal-v7 .journal-side-card:hover .journal-side-title {
+    color: var(--gold-light) !important;
+}
+
+/* ─── 5. FOOTER / CTA ────────────────────────────────────────── */
+.journal-v7 .section-footer {
+    margin-top: var(--space-xl) !important;
+    padding-top: var(--space-lg) !important;
+}
+
+.journal-v7 .btn-outline {
+    border-color: rgba(201,169,110, 0.12) !important;
+    color: var(--gold-light) !important;
+    border-radius: 0 !important;
+}
+
+.journal-v7 .btn-outline:hover {
+    border-color: rgba(201,169,110, 0.4) !important;
+    background: rgba(201,169,110, 0.04) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   JOURNAL V7 — RESPONSIVE
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── 768px+ : Layout en 2 columnas ──────────────────────────── */
+@media (min-width: 768px) {
+    .journal-v7 .journal-preview-grid {
+        grid-template-columns: 1.2fr 1fr !important;
+        gap: var(--space-xl) !important;
+    }
+
+    .journal-v7 .journal-featured-visual {
+        min-height: 260px !important;
+    }
+}
+
+/* ─── 1024px+ ─────────────────────────────────────────────────── */
+@media (min-width: 1024px) {
+    .journal-v7 .journal-featured-body {
+        padding: 32px 36px 36px !important;
+    }
+
+    .journal-v7 .journal-featured-title {
+        font-size: clamp(1.2rem, 2vw, 1.6rem) !important;
+    }
+}
+
+/* ─── 1280px+ ─────────────────────────────────────────────────── */
+@media (min-width: 1280px) {
+    .journal-v7 .journal-preview-grid {
+        gap: var(--space-2xl) !important;
+    }
+
+    .journal-v7 .journal-featured-visual {
+        min-height: 300px !important;
+    }
+
+    .journal-v7 .journal-side-title {
+        font-size: 1.05rem !important;
+    }
+}
+
+/* ─── Móvil ───────────────────────────────────────────────────── */
+@media (max-width: 479px) {
+    .journal-v7 .journal-featured-body {
+        padding: 20px 20px 24px !important;
+    }
+
+    .journal-v7 .journal-featured-title {
+        font-size: 1.1rem !important;
+    }
+
+    .journal-v7 .journal-side-card {
+        gap: 12px !important;
+        padding: 16px 0 !important;
+    }
+
+    .journal-v7 .journal-side-num {
+        font-size: 1.6rem !important;
+        min-width: 32px !important;
+    }
+
+    .journal-v7 .journal-side-title {
+        font-size: 0.88rem !important;
+    }
+}
+
+/* ─── Accesibilidad ───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .journal-v7 .journal-featured-card,
+    .journal-v7 .journal-featured-visual img,
+    .journal-v7 .journal-side-card,
+    .journal-v7 .journal-side-card::before,
+    .journal-v7 .journal-side-num,
+    .journal-v7 .journal-side-title,
+    .journal-v7 .journal-featured-title {
+        transition: none !important;
+    }
+}

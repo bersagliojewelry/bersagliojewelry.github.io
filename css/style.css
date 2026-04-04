@@ -11507,3 +11507,296 @@ nav .logo-sub {
         width: 120px;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   LOOKBOOK V7 — PORTAFOLIO DIGITAL PREMIUM
+   Contenedor editorial · Navegación refinada · Glassmorphism
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── 1. SECCIÓN CONTAINER ────────────────────────────────────── */
+.lookbook-section.lookbook-v7 {
+    background: transparent !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+/* Eliminar pseudo-elementos previos (gradientes dorados) */
+.lookbook-v7::before {
+    display: none !important;
+    content: none !important;
+}
+
+/* Glow esmeralda ambiental detrás del libro */
+.lookbook-v7::after {
+    content: '' !important;
+    display: block !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 70% !important;
+    height: 60% !important;
+    background: radial-gradient(
+        ellipse at center,
+        rgba(11,61,46, 0.08) 0%,
+        rgba(11,61,46, 0.03) 40%,
+        transparent 70%
+    ) !important;
+    pointer-events: none !important;
+    z-index: 0 !important;
+    opacity: 1 !important;
+}
+
+/* Header text overrides — high contrast on dark */
+.lookbook-v7 .section-title {
+    color: var(--ivory) !important;
+}
+
+.lookbook-v7 .section-desc {
+    color: var(--text-on-dark-muted) !important;
+}
+
+/* ─── 2. WRAPPER DEL LIBRO ────────────────────────────────────── */
+.lookbook-v7 .pf-wrapper {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 16px !important;
+    margin-top: var(--space-lg) !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* ─── 3. BOTONES LATERALES — Editorial, sharp ─────────────────── */
+.lookbook-v7 .pf-side-btn {
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 50px !important;
+    height: 50px !important;
+    border-radius: 0 !important;
+    border: 1px solid rgba(201,169,110, 0.15) !important;
+    background: rgba(201,169,110, 0.03) !important;
+    color: var(--gold) !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    z-index: 5 !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+}
+
+.lookbook-v7 .pf-side-btn:hover {
+    background: rgba(201,169,110, 0.1) !important;
+    border-color: rgba(201,169,110, 0.4) !important;
+    box-shadow: 0 0 20px rgba(201,169,110, 0.08) !important;
+    transform: none !important;
+}
+
+.lookbook-v7 .pf-side-btn:active {
+    transform: scale(0.96) !important;
+    background: rgba(201,169,110, 0.15) !important;
+}
+
+/* ─── 4. ÁREA DEL LIBRO ───────────────────────────────────────── */
+.lookbook-v7 .pf-book-area {
+    flex: 1 !important;
+    max-width: 1100px !important;
+    max-height: 65vh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Sombra más dramática en el canvas del libro */
+.lookbook-v7 .stf__parent canvas {
+    filter: drop-shadow(0 8px 32px rgba(0,0,0, 0.45)) drop-shadow(0 2px 8px rgba(0,0,0, 0.2)) !important;
+}
+
+.lookbook-v7 .stf__parent {
+    max-height: 65vh !important;
+}
+
+/* ─── 5. PAGINACIÓN — Dots + indicator refinados ──────────────── */
+.lookbook-v7 .pf-pagination {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 10px !important;
+    margin-top: var(--space-lg) !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.lookbook-v7 .pf-dots {
+    display: flex !important;
+    gap: 6px !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    max-width: 420px !important;
+}
+
+.lookbook-v7 .pf-dot {
+    width: 8px !important;
+    height: 8px !important;
+    border-radius: 0 !important;
+    border: 1px solid rgba(201,169,110, 0.2) !important;
+    background: transparent !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    transition: all 0.3s ease !important;
+}
+
+.lookbook-v7 .pf-dot:hover {
+    border-color: var(--gold) !important;
+    background: rgba(201,169,110, 0.15) !important;
+}
+
+.lookbook-v7 .pf-dot.is-active {
+    background: var(--gold) !important;
+    border-color: var(--gold) !important;
+    transform: none !important;
+    box-shadow: 0 0 8px rgba(201,169,110, 0.3) !important;
+}
+
+.lookbook-v7 .pf-indicator {
+    font-family: var(--font-body) !important;
+    font-size: 9px !important;
+    font-weight: 500 !important;
+    letter-spacing: 2px !important;
+    text-transform: uppercase !important;
+    color: rgba(220,200,165, 0.4) !important;
+}
+
+.lookbook-v7 .pf-cur {
+    color: var(--gold) !important;
+    font-weight: 600 !important;
+}
+
+.lookbook-v7 .pf-hint {
+    font-family: var(--font-body) !important;
+    font-size: 9px !important;
+    font-weight: 400 !important;
+    letter-spacing: 1.5px !important;
+    color: rgba(201,169,110, 0.25) !important;
+    text-align: center !important;
+    margin: 6px 0 0 !important;
+}
+
+/* ─── 6. PÁGINAS DEL LIBRO — Más premium ──────────────────────── */
+.lookbook-v7 .pf-page {
+    background: #faf8f3 !important;
+}
+
+.lookbook-v7 .pf-page-frame {
+    border-color: rgba(180,160,120, 0.08) !important;
+}
+
+/* Cover — fondo más profundo */
+.lookbook-v7 .pf-cover,
+.lookbook-v7 .pf-back {
+    background: linear-gradient(160deg, #161410 0%, #0c0b09 100%) !important;
+}
+
+.lookbook-v7 .pf-cover-border {
+    border-color: rgba(201,169,110, 0.2) !important;
+}
+
+/* Piece cards dentro del libro */
+.lookbook-v7 .pf-piece {
+    border-radius: 0 !important;
+    border-color: rgba(180,160,120, 0.06) !important;
+    transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+.lookbook-v7 .pf-piece:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 16px rgba(0,0,0, 0.1) !important;
+}
+
+/* Back cover CTA — sharp */
+.lookbook-v7 .pf-back-cta,
+.lookbook-v7 .pf-fin-cta {
+    border-radius: 0 !important;
+    letter-spacing: 2.5px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LOOKBOOK V7 — RESPONSIVE
+   ═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 767px) {
+    .lookbook-v7 .pf-side-btn {
+        width: 36px !important;
+        height: 36px !important;
+        border: none !important;
+        background: rgba(201,169,110, 0.06) !important;
+    }
+
+    .lookbook-v7 .pf-wrapper {
+        gap: 6px !important;
+    }
+
+    .lookbook-v7 .pf-book-area,
+    .lookbook-v7 .stf__parent {
+        max-height: 55vh !important;
+    }
+
+    .lookbook-v7 .pf-dots {
+        max-width: 260px !important;
+    }
+
+    .lookbook-v7 .pf-dot {
+        width: 7px !important;
+        height: 7px !important;
+    }
+
+    .lookbook-v7 .pf-pagination {
+        margin-top: var(--space-md) !important;
+    }
+}
+
+@media (max-width: 479px) {
+    .lookbook-v7 .pf-side-btn {
+        width: 30px !important;
+        height: 30px !important;
+    }
+
+    .lookbook-v7 .pf-side-btn svg {
+        width: 16px !important;
+        height: 16px !important;
+    }
+
+    .lookbook-v7 .pf-page-frame {
+        margin: 6px !important;
+        padding: 8px !important;
+    }
+
+    .lookbook-v7 .pf-hint {
+        font-size: 8px !important;
+    }
+}
+
+@media (min-width: 1280px) {
+    .lookbook-v7 .pf-side-btn {
+        width: 56px !important;
+        height: 56px !important;
+    }
+
+    .lookbook-v7 .pf-wrapper {
+        gap: 24px !important;
+    }
+
+    .lookbook-v7 .pf-book-area,
+    .lookbook-v7 .stf__parent {
+        max-height: 70vh !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lookbook-v7 .pf-side-btn,
+    .lookbook-v7 .pf-dot,
+    .lookbook-v7 .pf-piece {
+        transition: none !important;
+    }
+}

@@ -261,3 +261,20 @@ Cada seccion del index tiene su clase V7 que activa los estilos premium:
 8. **Journal Preview** — Cards editoriales con imagen, overlay, ghost borders, responsive grid
 9. **About Teaser** — Collage con frame decorativo, stats con underline dorado, contenido tipografico refinado
 10. **CTA Banner + Final Polish** — Glassmorphism panel, accent lines, boton editorial con fill animation, section transitions, smooth scroll, branded selection color
+
+### 2026-04-04 — Correcciones post-rediseno (hero ticker, fondos, animaciones)
+**Archivos modificados:** `index.html`, `css/style.css`, `js/effects.js`
+
+**Cambios realizados:**
+1. **Hero meta → Ticker marquee** — Se reemplazo la barra estatica de 3 badges (Certificado, Oro 18K, Envio Asegurado) por un ticker animado horizontal con "Certificado La Verde / Jewelers of America" y "Visitanos en Cartagena, Colombia". El contenido se duplica en el HTML para crear loop infinito via CSS `@keyframes ticker-scroll`. Clase `.hero-ticker` reemplaza `.hero-meta`. Se oculto `.hero-meta` legacy con `display: none`.
+2. **Fondos consistentes** — Journal V7 cambiado de `rgba(5,10,7,0.5)` semi-transparente a gradiente solido opaco `linear-gradient(155deg, #060d09, #0a1a0f, #07100a, #050a07)` para igualar el fondo emerald marble del resto del sitio.
+3. **Velocidad de animaciones** — `animate-on-scroll` reducido de 0.8-0.9s a 0.45s, `translateY` de 30-40px a 18px. IntersectionObserver rootMargin cambiado de `-20px` a `+80px` (detecta 80px ANTES de entrar al viewport). Nuclear fallback reducido de 3.5s a 2s. Stagger delays reducidos.
+
+**CSS agregado al final de style.css (linea ~13789+):**
+- Hero Ticker: `.hero-v7 > .hero-ticker`, `.hero-ticker-track`, `.hero-ticker-item`, `.hero-ticker-sep`, `@keyframes ticker-scroll`
+- Animation Speed Fix: Override global de `.animate-on-scroll` duration/transform
+- Background Consistency: `.hero-v7 > .hero-meta { display: none }`
+
+**Notas para limpieza futura:**
+- Las clases `.hero-meta`, `.hero-meta-inner`, `.hero-badge`, `.hero-badge-sep` en CSS legacy ya no tienen correspondencia en el HTML del index. Son candidatas a eliminacion.
+- La doble definicion de `.animate-on-scroll` (linea 184 y 3865) es redundante — la del final de style.css las sobrescribe ambas.

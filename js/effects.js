@@ -114,7 +114,7 @@ function forceRevealInView() {
                 obs.unobserve(entry.target);
             }
         });
-    }, { threshold: 0.06, rootMargin: '0px 0px -20px 0px' });
+    }, { threshold: 0.01, rootMargin: '0px 0px 80px 0px' });
 
     document.querySelectorAll(ALL_SELECTORS).forEach(el => obs.observe(el));
 }
@@ -128,7 +128,7 @@ function scheduleNuclearReveal() {
         if (hidden.length) {
             hidden.forEach(el => el.classList.add('is-visible'));
         }
-    }, 3500);
+    }, 2000);
 }
 
 

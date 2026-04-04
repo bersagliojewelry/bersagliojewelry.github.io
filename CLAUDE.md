@@ -388,3 +388,13 @@ Cada seccion del index tiene su clase V7 que activa los estilos premium:
 - Las clases legacy `.service-detail-card`, `.services-detail-grid` en CSS quedan huerfanas (ya no hay HTML que las use), candidatas a limpieza
 - El showcase layout del index (gema central con 4 servicios) se mantiene intacto
 - Colores de texto en servicios page ahora son claros sobre fondo oscuro (corregido contraste)
+
+### 2026-04-04 — Header V2: simetria desktop + mobile panel premium
+**Archivos modificados:** `css/style.css`, `CLAUDE.md`
+
+**Problemas corregidos:**
+1. **Desktop simetria** — El CSS legacy `.nav-contact-btn` (linea ~9801) tenia padding 9px 22px / font-size 10.5px que hacia Contacto mas grande que WhatsApp. Se neutralizo, ahora ambos botones usan height:34px fijo identico.
+2. **Mobile menu legacy conflicto** — El CSS legacy (linea ~1553) tenia `background: var(--ivory)` (blanco), `right: -100%` y `color: var(--text-primary)` que conflictuaba con el panel oscuro nuevo. Se neutralizo dejando solo `.hamburger { display: flex }` y las reglas de about-grid/contact-grid.
+3. **Mobile close button** — La X SVG grande fue refinada: ahora 14px con opacity, junto al texto "CERRAR" sin borde prominente. Sin la X blanca grande del diseño anterior.
+4. **Mobile footer cortado** — Agregado `margin-top: auto` + `padding-bottom: calc(16px + env(safe-area-inset-bottom))` para que Contacto/WhatsApp siempre sean visibles, incluso con la barra del navegador iOS.
+5. **Separador visual desktop** — Linea vertical sutil entre botones texto y botones icono via `.nav-account-btn::before`

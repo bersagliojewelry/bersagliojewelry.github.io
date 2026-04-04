@@ -13593,3 +13593,450 @@ html {
    ═══════════════════════════════════════════════════════════════════ */
 
 /* (hero-meta legacy y trust-strip V7 eliminados — info consolidada en hero-ticker) */
+
+/* ═══════════════════════════════════════════════════════════════════
+   HEADER REDESIGN — Menús profesionales, simetría, mobile overhaul
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Dropdown: ocultar iconos SVG de items ─────────────────────── */
+.dropdown-link-icon {
+    display: none !important;
+}
+
+/* ─── Dropdown items sin icono: ajustar padding ─────────────────── */
+.dropdown-link {
+    padding: 10px 22px !important;
+}
+
+.dropdown-link-name {
+    font-size: 12.5px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.5px !important;
+}
+
+.dropdown-link-desc {
+    font-size: 10.5px !important;
+    font-weight: 300 !important;
+    color: rgba(200,190,170,0.5) !important;
+}
+
+/* ─── Nav Actions: layout simétrico ─────────────────────────────── */
+.nav-actions {
+    gap: 6px !important;
+    align-items: center !important;
+}
+
+/* ─── Botones de texto (Contacto y WhatsApp): tamaño idéntico ──── */
+.nav-action-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    padding: 7px 16px !important;
+    font-family: var(--font-body) !important;
+    font-size: 10px !important;
+    font-weight: 500 !important;
+    letter-spacing: 2px !important;
+    text-transform: uppercase !important;
+    border: 1px solid rgba(250,247,242,0.3) !important;
+    border-radius: 0 !important;
+    transition: border-color 0.3s ease, background 0.3s ease, color 0.3s ease !important;
+    white-space: nowrap !important;
+    text-decoration: none !important;
+    line-height: 1 !important;
+}
+
+.nav-action-btn.nav-contact-btn {
+    color: var(--ivory) !important;
+    background: transparent !important;
+}
+.nav-action-btn.nav-contact-btn::after {
+    display: none !important;
+}
+.nav-action-btn.nav-contact-btn:hover {
+    border-color: var(--gold) !important;
+    background: rgba(200,169,110,0.06) !important;
+    color: var(--gold-light) !important;
+}
+
+.nav-action-btn.nav-wa-btn {
+    color: var(--whatsapp) !important;
+    border-color: rgba(37,211,102,0.25) !important;
+}
+.nav-action-btn.nav-wa-btn:hover {
+    background: rgba(37,211,102,0.08) !important;
+    border-color: rgba(37,211,102,0.5) !important;
+}
+
+.header.scrolled .nav-action-btn.nav-contact-btn {
+    border-color: rgba(200,169,110,0.35) !important;
+}
+.header.scrolled .nav-action-btn.nav-contact-btn:hover {
+    border-color: var(--gold) !important;
+    background: rgba(200,169,110,0.08) !important;
+}
+
+.header:not(.scrolled) .nav-action-btn.nav-wa-btn {
+    color: rgba(255,255,255,0.85) !important;
+    border-color: rgba(255,255,255,0.2) !important;
+}
+.header:not(.scrolled) .nav-action-btn.nav-wa-btn:hover {
+    color: var(--whatsapp) !important;
+    border-color: rgba(37,211,102,0.4) !important;
+    background: rgba(37,211,102,0.06) !important;
+}
+
+/* ─── Botones icono (búsqueda, cuenta, wishlist, carrito) ──────── */
+.nav-icon-btn {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 0 !important;
+    color: var(--text-on-dark-muted) !important;
+    transition: color 0.2s ease, background 0.2s ease !important;
+}
+.nav-icon-btn:hover {
+    color: var(--gold) !important;
+    background: rgba(200,169,110,0.08) !important;
+}
+
+.header:not(.scrolled) .nav-icon-btn {
+    color: var(--text-on-dark-muted) !important;
+}
+.header:not(.scrolled) .nav-icon-btn:hover {
+    color: var(--ivory) !important;
+}
+
+/* ─── Search trigger: visible, no transparent ──────────────────── */
+.search-trigger {
+    color: var(--text-on-dark-muted) !important;
+    border-radius: 0 !important;
+}
+.search-trigger:hover {
+    color: var(--gold) !important;
+    background: rgba(200,169,110,0.08) !important;
+}
+.header:not(.scrolled) .search-trigger {
+    color: var(--text-on-dark-muted) !important;
+}
+.header:not(.scrolled) .search-trigger:hover {
+    color: var(--ivory) !important;
+}
+
+/* ─── Cuenta btn placeholder ───────────────────────────────────── */
+.nav-account-btn {
+    text-decoration: none !important;
+}
+
+/* ─── Mobile menu header y close: ocultos en desktop ───────────── */
+.nav-menu-header,
+.nav-menu-footer {
+    display: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   HEADER REDESIGN — MOBILE & TABLET (≤968px)
+   ═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 968px) {
+
+    /* ─── Hamburger ────────────────────────────────────────────── */
+    .hamburger {
+        display: flex !important;
+        z-index: 1002 !important;
+    }
+
+    .nav-actions {
+        display: none !important;
+    }
+
+    /* ─── Contacto btn dentro del nav-list: ocultar en mobile ── */
+    .nav-list .nav-contact-btn {
+        display: none !important;
+    }
+
+    /* ─── Full-screen mobile menu ──────────────────────────────── */
+    .nav-menu {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        height: 100dvh !important;
+        height: 100vh !important;
+        background: linear-gradient(170deg, #060d09 0%, #0a1a0f 40%, #07100a 100%) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        justify-content: flex-start !important;
+        padding: 0 !important;
+        z-index: 1001 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        transform: translateX(100%) !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        transition: transform 0.4s cubic-bezier(0.25,0.46,0.45,0.94),
+                    opacity 0.3s ease,
+                    visibility 0s 0.4s !important;
+    }
+
+    .nav-menu.is-open {
+        transform: translateX(0) !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        transition-delay: 0s !important;
+    }
+
+    /* ─── Mobile menu header ───────────────────────────────────── */
+    .nav-menu-header {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        padding: 20px 28px !important;
+        border-bottom: 1px solid rgba(201,169,110,0.1) !important;
+        flex-shrink: 0 !important;
+    }
+
+    .nav-menu-brand {
+        font-family: var(--font-heading, 'Cormorant Garamond', serif) !important;
+        font-size: 18px !important;
+        font-weight: 400 !important;
+        letter-spacing: 4px !important;
+        color: var(--gold, #c8a96e) !important;
+    }
+
+    .nav-menu-close {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        background: none !important;
+        border: 1px solid rgba(201,169,110,0.2) !important;
+        color: rgba(220,200,165,0.6) !important;
+        padding: 8px 16px !important;
+        font-family: var(--font-body, 'Montserrat', sans-serif) !important;
+        font-size: 10px !important;
+        font-weight: 500 !important;
+        letter-spacing: 2px !important;
+        text-transform: uppercase !important;
+        cursor: pointer !important;
+        transition: color 0.2s, border-color 0.2s !important;
+    }
+    .nav-menu-close:hover {
+        color: var(--gold) !important;
+        border-color: rgba(201,169,110,0.4) !important;
+    }
+
+    /* ─── Nav list ─────────────────────────────────────────────── */
+    .nav-list {
+        flex-direction: column !important;
+        gap: 0 !important;
+        text-align: left !important;
+        padding: 24px 0 !important;
+        flex: 1 !important;
+    }
+
+    .nav-item {
+        border-bottom: 1px solid rgba(201,169,110,0.06) !important;
+    }
+
+    /* ─── Nav links — mobile ───────────────────────────────────── */
+    .nav-link {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        letter-spacing: 2px !important;
+        text-transform: uppercase !important;
+        color: var(--ivory, #f5f0e8) !important;
+        padding: 18px 28px !important;
+        transition: color 0.2s !important;
+    }
+
+    .nav-link:hover {
+        color: var(--gold) !important;
+    }
+
+    .nav-link::after {
+        display: none !important;
+    }
+
+    .nav-link--cta {
+        background: transparent !important;
+        border-radius: 0 !important;
+        padding: 18px 28px !important;
+    }
+
+    /* ─── Dropdown arrow rotation ──────────────────────────────── */
+    .dropdown-arrow {
+        color: rgba(201,169,110,0.4) !important;
+        transition: transform 0.3s ease !important;
+    }
+
+    .nav-item.dropdown.is-open > .nav-link .dropdown-arrow {
+        transform: rotate(180deg) !important;
+    }
+
+    /* ─── Mobile dropdown menus ────────────────────────────────── */
+    .dropdown-menu {
+        position: static !important;
+        transform: none !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        box-shadow: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+        background: rgba(0,0,0,0.15) !important;
+        padding: 0 !important;
+        min-width: 0 !important;
+        max-height: 0 !important;
+        overflow: hidden !important;
+        transition: max-height 0.35s cubic-bezier(0.25,0.46,0.45,0.94) !important;
+    }
+
+    .dropdown-menu::before {
+        display: none !important;
+    }
+
+    .nav-item.dropdown.is-open .dropdown-menu {
+        max-height: 500px !important;
+    }
+
+    /* ─── Mobile dropdown links ────────────────────────────────── */
+    .dropdown-link {
+        padding: 14px 28px 14px 44px !important;
+        gap: 0 !important;
+        border-bottom: 1px solid rgba(201,169,110,0.04) !important;
+        background: transparent !important;
+    }
+
+    .dropdown-link:hover,
+    .dropdown-link:active {
+        background: rgba(201,169,110,0.06) !important;
+    }
+
+    .dropdown-link-name {
+        color: rgba(220,200,165,0.7) !important;
+        font-size: 12px !important;
+        letter-spacing: 1px !important;
+    }
+
+    .dropdown-link:hover .dropdown-link-name {
+        color: var(--gold) !important;
+    }
+
+    .dropdown-link-desc {
+        color: rgba(200,190,170,0.3) !important;
+        font-size: 10px !important;
+    }
+
+    .dropdown-divider {
+        display: none !important;
+    }
+
+    .dropdown-link--all {
+        padding: 14px 28px 14px 44px !important;
+        color: rgba(201,169,110,0.5) !important;
+        font-size: 11px !important;
+    }
+    .dropdown-link--all:hover {
+        color: var(--gold) !important;
+        background: rgba(201,169,110,0.06) !important;
+    }
+
+    /* ─── Mobile menu footer ───────────────────────────────────── */
+    .nav-menu-footer {
+        display: flex !important;
+        gap: 12px !important;
+        padding: 20px 28px 28px !important;
+        border-top: 1px solid rgba(201,169,110,0.1) !important;
+        flex-shrink: 0 !important;
+    }
+
+    .nav-menu-footer-btn {
+        flex: 1 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        padding: 14px 16px !important;
+        font-family: var(--font-body) !important;
+        font-size: 10px !important;
+        font-weight: 500 !important;
+        letter-spacing: 2px !important;
+        text-transform: uppercase !important;
+        text-decoration: none !important;
+        border: 1px solid rgba(201,169,110,0.25) !important;
+        color: var(--ivory) !important;
+        background: transparent !important;
+        transition: border-color 0.2s, background 0.2s, color 0.2s !important;
+    }
+    .nav-menu-footer-btn:hover {
+        border-color: var(--gold) !important;
+        background: rgba(200,169,110,0.06) !important;
+        color: var(--gold) !important;
+    }
+
+    .nav-menu-footer-wa {
+        color: var(--whatsapp, #25d366) !important;
+        border-color: rgba(37,211,102,0.25) !important;
+    }
+    .nav-menu-footer-wa:hover {
+        border-color: rgba(37,211,102,0.5) !important;
+        background: rgba(37,211,102,0.08) !important;
+    }
+
+    /* ─── Prevent body scroll when menu open ───────────────────── */
+    body.menu-open {
+        overflow: hidden !important;
+    }
+}
+
+/* ─── Small mobile: tighter spacing ────────────────────────────── */
+@media (max-width: 479px) {
+    .nav-menu-header {
+        padding: 16px 20px !important;
+    }
+    .nav-link {
+        padding: 16px 20px !important;
+        font-size: 12px !important;
+    }
+    .dropdown-link {
+        padding: 12px 20px 12px 36px !important;
+    }
+    .dropdown-link--all {
+        padding: 12px 20px 12px 36px !important;
+    }
+    .nav-menu-footer {
+        padding: 16px 20px 24px !important;
+        flex-direction: column !important;
+    }
+    .nav-menu-brand {
+        font-size: 15px !important;
+    }
+}
+
+/* ─── Tablet landscape: two-column footer buttons ──────────────── */
+@media (min-width: 600px) and (max-width: 968px) {
+    .nav-list {
+        max-width: 500px !important;
+        margin: 0 auto !important;
+        width: 100% !important;
+    }
+    .nav-menu-header {
+        max-width: 500px !important;
+        margin: 0 auto !important;
+        width: 100% !important;
+        padding: 24px 28px !important;
+    }
+    .nav-menu-footer {
+        max-width: 500px !important;
+        margin: 0 auto !important;
+        width: 100% !important;
+    }
+}

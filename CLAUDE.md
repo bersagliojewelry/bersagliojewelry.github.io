@@ -307,3 +307,11 @@ Cada seccion del index tiene su clase V7 que activa los estilos premium:
 6. **Eliminada regla display:none del trust-strip** — Era redundante ya que el HTML fue removido.
 
 **Resultado:** ~270 lineas de CSS muerto eliminadas. El archivo style.css queda mas limpio sin afectar ningun estilo visible.
+
+### 2026-04-04 — Iconos diferenciados en ticker + eliminar pause on hover
+**Archivos modificados:** `index.html`, `css/style.css`, `CLAUDE.md`
+
+**Cambios realizados:**
+1. **SVG Oro 18K** — Cambiado de rombo generico a icono de lingote (rectangulo con divisiones).
+2. **SVG Esmeraldas colombianas** — Cambiado de rombo generico a icono de gema facetada (octogono con facetas internas).
+3. **Eliminado pause on hover** — Se removio la regla `.hero-v7 > .hero-ticker:hover .hero-ticker-track { animation-play-state: paused }` para que el ticker nunca se detenga ni con mouse ni con touch.

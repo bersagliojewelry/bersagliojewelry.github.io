@@ -10369,6 +10369,14 @@ nav .logo-sub {
     overflow: hidden !important;
 }
 
+.showcase-gem-icon picture {
+    display: flex !important;
+    width: 100% !important;
+    height: 100% !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
 .showcase-gem-img {
     width: 100% !important;
     height: 100% !important;

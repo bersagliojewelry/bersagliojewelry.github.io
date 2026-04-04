@@ -11224,3 +11224,286 @@ nav .logo-sub {
         transition: none !important;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION HEADERS V7 — SISTEMA TIPOGRÁFICO EDITORIAL
+   Jerarquía visual elevada · Eyebrow con acento dorado
+   Títulos con mayor contraste · Ritmo vertical mejorado
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Secciones: ritmo vertical progresivo ────────────────────── */
+.section {
+    padding: clamp(4rem, 8vw, 7rem) 0 !important;
+}
+
+/* ─── Header de sección ───────────────────────────────────────── */
+.section-header {
+    text-align: center !important;
+    max-width: 640px !important;
+    margin: 0 auto clamp(2.5rem, 5vw, 4rem) !important;
+}
+
+/* ─── Eyebrow — más prominente, con línea inferior ────────────── */
+.section-eyebrow {
+    display: inline-block !important;
+    font-family: var(--font-body) !important;
+    font-size: 10px !important;
+    font-weight: 500 !important;
+    letter-spacing: 4px !important;
+    text-transform: uppercase !important;
+    color: var(--gold) !important;
+    margin-bottom: var(--space-md) !important;
+    position: relative !important;
+    padding-bottom: 14px !important;
+}
+
+/* Línea dorada bajo el eyebrow */
+.section-eyebrow::after {
+    content: '' !important;
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 24px !important;
+    height: 1px !important;
+    background: rgba(201,169,110, 0.4) !important;
+}
+
+/* ─── Título de sección — escala mayor, weight más ligero ─────── */
+.section-title {
+    font-family: var(--font-display) !important;
+    font-size: clamp(1.9rem, 4vw, 2.8rem) !important;
+    font-weight: 300 !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.5px !important;
+    color: var(--ivory) !important;
+    margin-bottom: var(--space-sm) !important;
+}
+
+/* ─── Descripción — mejor legibilidad ─────────────────────────── */
+.section-desc {
+    font-family: var(--font-body) !important;
+    font-size: 14px !important;
+    font-weight: 300 !important;
+    line-height: 1.8 !important;
+    color: var(--text-on-dark-muted) !important;
+    max-width: 520px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+/* ─── Footer de sección (botón CTA) ──────────────────────────── */
+.section-footer {
+    text-align: center !important;
+    margin-top: clamp(2rem, 4vw, 3rem) !important;
+}
+
+.section-footer .btn-outline {
+    border-radius: 0 !important;
+    font-size: 10.5px !important;
+    letter-spacing: 2.5px !important;
+    padding: 14px 32px !important;
+    border-color: rgba(201,169,110, 0.2) !important;
+    color: var(--gold-light) !important;
+}
+
+.section-footer .btn-outline:hover {
+    border-color: rgba(201,169,110, 0.5) !important;
+    background: rgba(201,169,110, 0.04) !important;
+}
+
+/* ─── Responsive: headers ─────────────────────────────────────── */
+@media (max-width: 479px) {
+    .section-eyebrow {
+        font-size: 9px !important;
+        letter-spacing: 3px !important;
+    }
+
+    .section-title {
+        font-size: clamp(1.6rem, 7vw, 2rem) !important;
+    }
+
+    .section-desc {
+        font-size: 13px !important;
+    }
+}
+
+@media (min-width: 1280px) {
+    .section-header {
+        max-width: 700px !important;
+    }
+
+    .section-title {
+        font-size: 2.8rem !important;
+    }
+
+    .section-desc {
+        font-size: 15px !important;
+    }
+
+    .section-eyebrow {
+        font-size: 11px !important;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   BRAND STATEMENT V7 — CITA EDITORIAL PREMIUM
+   Glassmorphism sutil · Guillemets decorativos · Líneas laterales
+   ═══════════════════════════════════════════════════════════════ */
+
+.brand-statement.brand-statement-v7 {
+    background: rgba(10,26,15, 0.35) !important;
+    padding: clamp(4rem, 8vw, 7rem) 0 !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+/* Eliminar pseudo-elementos previos (watermark BERSAGLIO) */
+.brand-statement-v7::before,
+.brand-statement-v7::after {
+    display: none !important;
+    content: none !important;
+}
+
+.brand-statement-v7 .brand-statement-inner {
+    text-align: center !important;
+    max-width: 750px !important;
+    margin: 0 auto !important;
+    position: relative !important;
+    z-index: 1 !important;
+    padding: 0 var(--space-md) !important;
+}
+
+/* Eliminar guillemets previos */
+.brand-statement-v7 .brand-statement-inner::before,
+.brand-statement-v7 .brand-statement-inner::after {
+    display: none !important;
+    content: none !important;
+}
+
+/* ─── Líneas laterales con gema central ───────────────────────── */
+.brand-statement-v7 .brand-lines {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: var(--space-xl);
+}
+
+.brand-statement-v7 .brand-line {
+    display: block;
+    height: 1px;
+    width: clamp(40px, 10vw, 100px);
+    flex-shrink: 0;
+}
+
+.brand-statement-v7 .brand-line--left {
+    background: linear-gradient(90deg, transparent, rgba(201,169,110, 0.35));
+}
+
+.brand-statement-v7 .brand-line--right {
+    background: linear-gradient(90deg, rgba(201,169,110, 0.35), transparent);
+}
+
+.brand-statement-v7 .brand-gem {
+    width: 22px;
+    height: 22px;
+    color: var(--gold);
+    opacity: 0.5;
+    flex-shrink: 0;
+}
+
+/* ─── Cita (blockquote) ───────────────────────────────────────── */
+.brand-statement-v7 .brand-quote {
+    font-family: var(--font-display) !important;
+    font-size: clamp(1.3rem, 3vw, 2rem) !important;
+    font-weight: 300 !important;
+    font-style: italic !important;
+    line-height: 1.65 !important;
+    letter-spacing: -0.2px !important;
+    color: var(--ivory) !important;
+    margin: 0 0 var(--space-lg) !important;
+    padding: 0 !important;
+    border: none !important;
+    position: relative !important;
+}
+
+/* Guillemet decorativo abierto */
+.brand-statement-v7 .brand-quote::before {
+    content: '\201C' !important;
+    display: block !important;
+    font-family: var(--font-display) !important;
+    font-size: clamp(3rem, 6vw, 5rem) !important;
+    font-weight: 300 !important;
+    font-style: normal !important;
+    color: var(--gold) !important;
+    opacity: 0.18 !important;
+    line-height: 0.6 !important;
+    margin-bottom: 8px !important;
+    pointer-events: none !important;
+    user-select: none !important;
+    position: static !important;
+    transform: none !important;
+    width: auto !important;
+    height: auto !important;
+    background: none !important;
+    left: auto !important;
+    top: auto !important;
+}
+
+/* ─── Origen ──────────────────────────────────────────────────── */
+.brand-statement-v7 .brand-origin {
+    display: inline-block !important;
+    font-family: var(--font-body) !important;
+    font-size: 10px !important;
+    font-weight: 500 !important;
+    letter-spacing: 4px !important;
+    text-transform: uppercase !important;
+    color: rgba(200,180,145, 0.45) !important;
+    position: relative !important;
+    padding-bottom: 0 !important;
+}
+
+/* Eliminar línea inferior previa */
+.brand-statement-v7 .brand-origin::after {
+    display: none !important;
+    content: none !important;
+}
+
+/* ─── Responsive: Brand Statement ─────────────────────────────── */
+@media (max-width: 479px) {
+    .brand-statement-v7 .brand-quote {
+        font-size: 1.2rem !important;
+        line-height: 1.7 !important;
+    }
+
+    .brand-statement-v7 .brand-lines {
+        gap: 10px;
+        margin-bottom: var(--space-lg);
+    }
+
+    .brand-statement-v7 .brand-gem {
+        width: 18px;
+        height: 18px;
+    }
+
+    .brand-statement-v7 .brand-origin {
+        font-size: 9px !important;
+        letter-spacing: 3px !important;
+    }
+}
+
+@media (min-width: 1280px) {
+    .brand-statement-v7 .brand-statement-inner {
+        max-width: 800px !important;
+    }
+
+    .brand-statement-v7 .brand-quote {
+        font-size: 2.1rem !important;
+    }
+
+    .brand-statement-v7 .brand-line {
+        width: 120px;
+    }
+}

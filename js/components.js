@@ -47,22 +47,39 @@ function initializeHeader() {
         lastScroll = y;
     }, { passive: true });
 
-    // Mobile hamburger
+    // Mobile hamburger — uses body position:fixed technique for iOS scroll lock
     if (hamburger && navMenu) {
+        let savedScrollY = 0;
+
+        const lockScroll = () => {
+            savedScrollY = window.scrollY;
+            document.body.style.top = `-${savedScrollY}px`;
+            document.body.classList.add('menu-open');
+        };
+
+        const unlockScroll = () => {
+            document.body.classList.remove('menu-open');
+            document.body.style.top = '';
+            window.scrollTo(0, savedScrollY);
+        };
+
         const closeMenu = () => {
             navMenu.classList.remove('is-open');
             hamburger.classList.remove('is-active');
             hamburger.setAttribute('aria-expanded', 'false');
-            document.body.classList.remove('menu-open');
+            unlockScroll();
         };
 
         hamburger.addEventListener('click', () => {
             const open = navMenu.classList.toggle('is-open');
             hamburger.classList.toggle('is-active', open);
             hamburger.setAttribute('aria-expanded', open);
-            document.body.classList.toggle('menu-open', open);
-            // Remove header-hidden so fixed menu isn't clipped by transform
-            if (open) header.classList.remove('header-hidden');
+            if (open) {
+                lockScroll();
+                header.classList.remove('header-hidden');
+            } else {
+                unlockScroll();
+            }
         });
 
         // Close button inside mobile menu
@@ -264,6 +281,17 @@ export async function loadAllComponents() {
     initSearch();
     initAnalytics();
     initPWA();
+
+    // Safety net: guarantee body scroll is never permanently locked.
+    // Cleans up is-preloading, search-open classes, inline overflow and position:fixed
+    // if any animation/transition fails to remove them.
+    setTimeout(() => {
+        document.body.classList.remove('is-preloading');
+        document.body.classList.remove('search-open');
+        document.body.style.overflow = '';
+        document.body.style.top = '';
+        document.body.style.position = '';
+    }, 8000);
 }
 
 /** Inject security-related meta tags (GitHub Pages doesn't support HTTP headers) */

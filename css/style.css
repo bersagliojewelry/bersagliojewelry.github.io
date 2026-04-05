@@ -82,7 +82,10 @@
 
 /* ─── Reset ─── */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; overflow-x: hidden; }
+html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+}
 
 body {
     font-family: var(--font-body);
@@ -93,6 +96,11 @@ body {
     background: #030806;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Prevent horizontal overflow without blocking touch scroll.
+       overflow-x:clip does NOT create a scroll container (unlike hidden).
+       Fallback for older browsers: hidden is set but overridden by clip. */
+    overflow-x: hidden;
+    overflow-x: clip;
 }
 
 /* ─── Emerald Marble Background — full page fixed layer ─── */
@@ -135,7 +143,12 @@ body::before {
     pointer-events: none;
 }
 
-body.menu-open { overflow: hidden; }
+body.menu-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    /* top is set dynamically via JS to preserve scroll position */
+}
 
 img { max-width: 100%; height: auto; display: block; }
 a { text-decoration: none; color: inherit; transition: var(--transition); }
@@ -582,6 +595,7 @@ input, select, textarea { font-family: var(--font-body); }
 .hero-overlay {
     position: absolute;
     inset: 0;
+    pointer-events: none;
     background:
         radial-gradient(ellipse at 30% 50%, rgba(11,61,46,0.4) 0%, transparent 60%),
         radial-gradient(ellipse at 70% 30%, rgba(201,169,110,0.08) 0%, transparent 50%),
@@ -4674,12 +4688,19 @@ body::after {
     content: '';
     position: fixed;
     inset: 0;
-    z-index: 9995;
+    z-index: 2;
     pointer-events: none;
     opacity: var(--grain-opacity);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='250' height='250'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='250' height='250' filter='url(%23g)'/%3E%3C/svg%3E");
     background-size: 200px 200px;
     animation: grain-shift 0.45s steps(1) infinite;
+}
+
+/* Disable grain on touch devices — saves GPU and avoids touch interference */
+@media (pointer: coarse) {
+    body::after {
+        display: none;
+    }
 }
 
 @keyframes grain-shift {
@@ -5277,6 +5298,7 @@ body.is-preloading { overflow: hidden; }
     width: 100%;
     height: 100%;
     z-index: 0;
+    pointer-events: none;
     pointer-events: none;
     opacity: 0.9;
 }
@@ -13352,16 +13374,8 @@ nav .logo-sub {
    FINAL POLISH — Global refinements
    ═══════════════════════════════════════════════════════════════════ */
 
-/* Smooth scroll for the entire page */
-html {
-    scroll-behavior: smooth !important;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    html {
-        scroll-behavior: auto !important;
-    }
-}
+/* scroll-behavior: smooth is already set in html (line 85) */
+/* prefers-reduced-motion handled by Lenis and GSAP automatically */
 
 /* iOS safe area for CTA on notch devices */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
@@ -13923,6 +13937,8 @@ html {
 
     body.menu-open {
         overflow: hidden !important;
+        position: fixed !important;
+        width: 100% !important;
     }
 }
 

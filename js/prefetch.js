@@ -37,6 +37,7 @@ function getPageUrl(anchor) {
 }
 
 function onPointerEnter(e) {
+    if (!e.target || typeof e.target.closest !== 'function') return;
     const anchor = e.target.closest('a[href]');
     if (!anchor) return;
 

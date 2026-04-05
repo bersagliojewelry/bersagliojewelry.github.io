@@ -298,7 +298,7 @@ export async function loadAllComponents() {
 function injectSecurityMeta() {
     const metas = [
         { 'http-equiv': 'X-Content-Type-Options', content: 'nosniff' },
-        { 'http-equiv': 'X-Frame-Options',        content: 'DENY' },
+        // X-Frame-Options cannot be set via <meta> — only HTTP headers (removed to fix console error)
         { name: 'referrer',                        content: 'strict-origin-when-cross-origin' },
     ];
     const head = document.head;

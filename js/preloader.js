@@ -373,4 +373,9 @@ export function initPreloader() {
     } else {
         window.addEventListener('load', hide, { once: true });
     }
+
+    // Safety fallback: ensure body scroll is never permanently locked
+    setTimeout(() => {
+        document.body.classList.remove('is-preloading');
+    }, 6000);
 }

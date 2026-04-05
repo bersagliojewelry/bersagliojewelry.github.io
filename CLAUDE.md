@@ -444,3 +444,41 @@ Cada seccion del index tiene su clase V7 que activa los estilos premium:
 - Ningun `preventDefault()` en touchmove/wheel fue encontrado — el problema era puramente CSS.
 - Lenis smooth scroll ya se desactiva correctamente en touch devices (`pointer: coarse` check).
 - `touch-action` no estaba definido en ninguna parte, no era causa del problema.
+
+### 2026-04-05 — Fix V2: auditoria profunda touch scroll + limpieza codigo muerto
+**Archivos modificados:** `css/style.css`, `js/components.js`, `js/preloader.js`, `js/components/header.js` (eliminado), `CLAUDE.md`
+
+**Root causes identificados y corregidos (auditoria completa):**
+
+1. **`overflow-x: hidden` en html/body bloquea touch en iOS/WebKit** — Reemplazado por `overflow-x: clip` (con fallback `hidden`) en `body`. `overflow-x: clip` NO crea un scroll container, permitiendo scroll vertical touch nativo. Removido de `html` completamente.
+
+2. **Film grain `body::after` con z-index 9995** — Aunque tenia `pointer-events: none`, en dispositivos tactiles un pseudo-elemento position:fixed de alto z-index sobre toda la pantalla puede interferir con la cadena de eventos touch. Solucion: `display: none` en `@media (pointer: coarse)` — desactiva grain en touch devices (tambien ahorra GPU).
+
+3. **`body.menu-open { overflow: hidden }` insuficiente en iOS** — `overflow: hidden` en body NO bloquea scroll en iOS Safari. Cambiado a tecnica `position: fixed; width: 100%` + guardar/restaurar scroll position via JS (`lockScroll`/`unlockScroll`).
+
+4. **`.hero-canvas` sin `pointer-events: none`** — El canvas de particulas cubria todo el hero section (100vh) y podia interceptar touch events. Agregado `pointer-events: none`.
+
+5. **`.hero-overlay` sin `pointer-events: none`** — El overlay del hero (position:absolute inset:0) podia interceptar touch. Agregado `pointer-events: none` en la definicion base (linea ~588). La segunda definicion (linea ~5310) ya lo tenia.
+
+6. **Duplicacion `scroll-behavior: smooth`** — Definido en `html` (linea 85) y repetido con `!important` al final del archivo. Eliminada la duplicacion.
+
+7. **`js/components/header.js` — Codigo muerto eliminado** — Contenia `initHeader()` exportado pero nunca importado en ningun modulo. Tenia su propio handler de scroll duplicado y hamburger handler que cerraba menu en TODOS los clicks de anchor (incluyendo dropdowns). Eliminado el archivo completo.
+
+8. **Safety net global mejorado** — Timeout de 8s que limpia `is-preloading`, `search-open`, `overflow` inline, `top` inline y `position` inline del body. No incluye `menu-open` para evitar conflicto con el lockScroll/unlockScroll.
+
+**Tecnica lockScroll/unlockScroll (JS):**
+```js
+lockScroll()  → guarda window.scrollY, aplica body.style.top = -scrollY, agrega .menu-open
+unlockScroll() → remueve .menu-open y body.style.top, restaura window.scrollTo(0, saved)
+```
+Esta tecnica es la recomendacion de WebKit para bloquear scroll detras de modales en iOS Safari.
+
+**CSS body.menu-open actualizado:**
+```css
+body.menu-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    /* top is set dynamically via JS */
+}
+```

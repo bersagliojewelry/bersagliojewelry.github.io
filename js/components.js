@@ -232,6 +232,11 @@ function initializeDevBanner() {
             overlay.remove();
             document.body.style.overflow = '';
         }, { once: true });
+        // Safety: ensure scroll is restored even if animation fails
+        setTimeout(() => {
+            document.body.style.overflow = '';
+            if (overlay.parentNode) overlay.remove();
+        }, 800);
     }
 
     overlay.querySelector('#dev-overlay-close').addEventListener('click', closeOverlay);

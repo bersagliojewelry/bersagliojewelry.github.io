@@ -426,3 +426,21 @@ Cada seccion del index tiene su clase V7 que activa los estilos premium:
 12. **Small mobile (479px)** — Nav-link font-size de 11px a 12px, footer btn height de 40px a 44px, font-size de 8.5px a 9.5px.
 
 **Objetivo:** Mejorar legibilidad para todos los usuarios incluyendo adultos mayores, con contraste WCAG adecuado sobre fondo oscuro.
+
+### 2026-04-05 — Fix: touch scroll bloqueado en movil/tablet
+**Archivos modificados:** `css/style.css`, `js/preloader.js`, `js/components.js`, `CLAUDE.md`
+
+**Root cause:**
+- `overflow-x: hidden` en `body` (linea 94 de style.css) causa un bug conocido de WebKit/iOS Safari donde el scroll vertical con touch queda bloqueado. La solucion es mover `overflow-x: hidden` al elemento `html` en vez de `body`.
+- El preloader (`body.is-preloading { overflow: hidden }`) depende de una animacion GSAP para remover la clase. Si GSAP falla o se demora, el scroll queda permanentemente bloqueado.
+- El dev overlay aplica `document.body.style.overflow = 'hidden'` inline y solo lo remueve dentro de un listener `animationend`. Si la animacion CSS falla, el scroll queda bloqueado.
+
+**Cambios realizados:**
+1. **CSS** — Movido `overflow-x: hidden` de `body` a `html`. Esto previene overflow horizontal sin interferir con el scroll vertical touch en iOS/WebKit.
+2. **Preloader safety timeout** — Agregado `setTimeout` de 6s que remueve `is-preloading` del body como fallback, garantizando que el scroll se restaure aunque GSAP falle.
+3. **Dev overlay safety timeout** — Agregado `setTimeout` de 800ms que remueve `overflow: hidden` y elimina el overlay si `animationend` nunca se dispara.
+
+**Notas:**
+- Ningun `preventDefault()` en touchmove/wheel fue encontrado — el problema era puramente CSS.
+- Lenis smooth scroll ya se desactiva correctamente en touch devices (`pointer: coarse` check).
+- `touch-action` no estaba definido en ninguna parte, no era causa del problema.

@@ -289,10 +289,16 @@ function renderImagePreviews() {
             const isPersisted = pieceId && _allPieces.some(p => p.id === pieceId);
             if (isPersisted) {
                 try {
-                    await adminDb.patchPiece(pieceId, {
+                    const newVersion = await adminDb.patchPiece(pieceId, {
                         images: [..._uploadedImages],
                         image:  _uploadedImages[0] || null,
                     });
+                    // Advance the optimistic-lock baseline to include our own
+                    // patch — otherwise the next form Save would falsely
+                    // detect a version-conflict against ourselves.
+                    if (typeof newVersion === 'number') {
+                        _editingVersion = newVersion;
+                    }
                     admToast('Imagen eliminada y pieza actualizada');
                 } catch (err) {
                     console.error('[Admin] Firestore update failed:', err);

@@ -272,6 +272,7 @@ export async function updatePiece(pieceId, data, opts = {}) {
         changes: diffShallow(beforeData, { ...beforeData, ...data }),
     });
     signalCacheInvalidation();
+    return { version: nextVersion };
 }
 
 /**
@@ -406,6 +407,7 @@ export async function updateCollection(colId, data, opts = {}) {
         changes: diffShallow(beforeData, { ...beforeData, ...data }),
     });
     signalCacheInvalidation();
+    return { version: nextVersion };
 }
 
 /**

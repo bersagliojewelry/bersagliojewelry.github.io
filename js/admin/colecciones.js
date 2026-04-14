@@ -8,6 +8,9 @@ import { admToast, admConfirm, initSidebar, esc, requireAuth } from './shared.js
 
 let _collections = [];
 let _bannerUrl = '';
+// _version of the collection currently loaded in the modal. Used as the
+// optimistic-lock baseline on save.
+let _editingVersion = null;
 
 async function init() {
     await requireAuth('editor');
@@ -207,11 +210,13 @@ function openModal(id = null) {
     // from a previously-edited collection when creating a new one.
     form.querySelector('[name="id"]').value = '';
     _bannerUrl = '';
+    _editingVersion = null;
 
     if (id) {
         const col = _collections.find(c => c.id === id);
         if (!col) return;
         titleEl.textContent = 'Editar colecci\u00f3n';
+        _editingVersion = typeof col._version === 'number' ? col._version : null;
         form.querySelector('[name="id"]').value          = col.id;
         form.querySelector('[name="name"]').value        = col.name || '';
         form.querySelector('[name="slug"]').value        = col.slug || col.id;
@@ -264,11 +269,25 @@ async function handleSave() {
     };
 
     try {
-        const saved = await adminDb.saveCollection(col);
+        const saved = await adminDb.saveCollection(col, {
+            expectedVersion: existingId ? _editingVersion : undefined,
+        });
         closeModal();
         admToast(`"${saved.name}" guardada`);
     } catch (err) {
         console.error('[Admin] saveCollection failed:', err);
+        if (err?.code === 'version-conflict') {
+            admToast(
+                'Otra persona modificó esta colección mientras la editabas. Recarga para ver los cambios.',
+                'danger',
+                5000
+            );
+            return;
+        }
+        if (err?.code === 'not-found') {
+            admToast('La colección fue eliminada por otra persona.', 'danger', 5000);
+            return;
+        }
         admToast(err?.message || 'Error al guardar colecci\u00f3n', 'danger');
     }
 }

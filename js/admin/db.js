@@ -126,28 +126,28 @@ class AdminDatabase {
     }
 
     /**
-     * Create or update a piece.
-     * - If data.id is falsy → create a new document with a guaranteed-unique id.
-     * - If data.id is truthy → update the existing document with merge, preserving
-     *   untouched fields like createdAt.
-     * Retries up to 5 times on id-collision before giving up.
+     * Create or update a piece with optimistic locking.
+     *
+     * @param {object} data
+     * @param {object} [opts]
+     * @param {number} [opts.expectedVersion] — when updating, the _version
+     *        the form was loaded with. Lets the transaction abort with
+     *        'version-conflict' if another admin saved meanwhile.
      */
-    async savePiece(data) {
+    async savePiece(data, opts = {}) {
         const piece = { ...data };
         const isNew = !piece.id;
 
         if (isNew) {
             piece.slug = piece.slug || AdminDatabase.slugify(piece.name || '');
 
-            // Firestore cannot serialize undefined — strip those fields
             Object.keys(piece).forEach(k => {
                 if (piece[k] === undefined) delete piece[k];
             });
-            // Let Firestore assign createdAt/updatedAt server-side
             delete piece.createdAt;
             delete piece.updatedAt;
+            delete piece._version;
 
-            // Try to create with a fresh id; retry on collision up to 5 times.
             let attempt = 0;
             while (attempt < 5) {
                 const candidateId = AdminDatabase.generatePieceId();
@@ -167,21 +167,23 @@ class AdminDatabase {
             throw new Error('No se pudo generar un ID único para la pieza');
         }
 
-        // Update path — merge so untouched fields (createdAt, etc.) are preserved.
         Object.keys(piece).forEach(k => {
             if (piece[k] === undefined) delete piece[k];
         });
         delete piece.createdAt;
         delete piece.updatedAt;
+        // _version is managed by the service layer.
+        delete piece._version;
 
-        await fsUpdatePiece(piece.id, piece);
+        await fsUpdatePiece(piece.id, piece, { expectedVersion: opts.expectedVersion });
         return piece;
     }
 
     /**
-     * Partial update of an existing piece (e.g. just its images).
-     * Always uses merge so untouched fields stay intact. Throws if the piece
-     * does not exist — use savePiece for creations.
+     * Partial update of an existing piece (e.g. just its images). Uses
+     * merge semantics and intentionally skips the optimistic-lock check
+     * so concurrent image edits don't fail (only structural fields use
+     * the version check).
      */
     async patchPiece(id, patch) {
         if (!id) throw new Error('patchPiece requires an id');
@@ -191,6 +193,7 @@ class AdminDatabase {
         });
         delete clean.createdAt;
         delete clean.updatedAt;
+        delete clean._version;
         await fsUpdatePiece(id, clean);
     }
 
@@ -211,8 +214,12 @@ class AdminDatabase {
      *   suffix (-2, -3 …) until a free slot is found.
      * - Update path uses updateCollection with merge:true so partial updates
      *   preserve untouched fields.
+     *
+     * @param {object} data
+     * @param {object} [opts]
+     * @param {number} [opts.expectedVersion] — optimistic lock on updates.
      */
-    async saveCollection(data) {
+    async saveCollection(data, opts = {}) {
         const col = { ...data };
         const isNew = !col.id;
 
@@ -221,6 +228,8 @@ class AdminDatabase {
         });
         delete col.createdAt;
         delete col.updatedAt;
+        // _version is managed by the service layer.
+        delete col._version;
 
         if (isNew) {
             const baseId = AdminDatabase.slugify(col.name || col.id || '');
@@ -247,7 +256,7 @@ class AdminDatabase {
             throw new Error('No se pudo generar un ID único para la colección');
         }
 
-        await fsUpdateCollection(col.id, col);
+        await fsUpdateCollection(col.id, col, { expectedVersion: opts.expectedVersion });
         return col;
     }
 

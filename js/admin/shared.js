@@ -5,6 +5,7 @@
 
 import adminDb from './db.js';
 import { requireAuth, currentUser, currentRole, hasRole, signOut } from '../auth.js';
+import { setAuthContext } from '../firestore-service.js';
 
 // ─── Auth guard ────────────────────────────────────────────────────────────────
 
@@ -30,6 +31,17 @@ export function initSidebar() {
     if (!initSidebar._subscribed) {
         initSidebar._subscribed = true;
         adminDb.on('inquiries', () => updateBadge());
+    }
+
+    // Propagate auth context to the Firestore service so every write gets
+    // stamped with actorUid / actorEmail for the audit log.
+    const user = currentUser();
+    if (user) {
+        setAuthContext({
+            uid:         user.user?.uid || null,
+            email:       user.user?.email || null,
+            displayName: user.profile?.displayName || user.user?.email?.split('@')[0] || null,
+        });
     }
 
     renderUserInfo();

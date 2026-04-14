@@ -482,3 +482,65 @@ body.menu-open {
     /* top is set dynamically via JS */
 }
 ```
+
+### 2026-04-14 — Fix bugs admin overwrite + real-time sync (Fases 1, 2, 3)
+
+**Bugs reportados:**
+1. Admin: al crear una pieza/colección se sobrescribía/eliminaba la anterior.
+2. Web pública: cambios en piezas/colecciones no se reflejaban en tiempo real — requerían refresh manual.
+
+**Referencia:** Patrón de `altorracars/altorracars.github.io` para optimistic locking, audit log y sync en vivo.
+
+**Branch:** `claude/fix-admin-overwrite-bug-R4gwU`
+
+#### Fase 1 — Fix overwrite (commit `c775dc5`)
+**Archivos:** `js/firestore-service.js`, `js/admin/db.js`, `js/admin/piezas.js`, `js/admin/colecciones.js`
+
+- **Root cause:** `setDoc` sin `{merge: true}` borraba todos los campos no presentes en el payload. Además `saveCollection` usaba el slug como id, colisionando con documentos existentes.
+- Split de `savePiece` / `saveCollection` en `createX` (fail si existe) + `updateX` (merge).
+- `createPiece`: id generado con `p${Date.now()}${random6}` para evitar colisiones.
+- `createCollection`: retry con sufijo `-2`, `-3`… si el id base está ocupado.
+- `patchPiece()` para updates parciales (ej. solo imágenes) con merge.
+- `openModal()` en piezas y colecciones hace hard-clear del hidden id field para evitar reuso de ids stale.
+- `handleFiles()` usa bucket temporal `tmp${Date.now()}` para piezas nuevas.
+
+#### Fase 2 — Real-time sync + campo código (commit `13b7df4`)
+**Archivos:** `js/data/catalog.js`, `js/pieza.js`, `js/app.js`, `js/cart-page.js`, `js/wishlist-page.js`, `js/admin/piezas.js`, `admin-piezas.html`
+
+- **catalog.js:** `load()` ahora usa `onSnapshot` como fuente primaria (no double-fetch). Promise memoizada, idempotente. `_notify` coalesce via `requestAnimationFrame`.
+- **pieza.js:** dedupe por signature JSON + re-render completo en cada update. Maneja borrado (renderiza not-found) y revival.
+- **app.js:** helper `renderAllSections` llamado en paint inicial y en `db.onChange` (incluye journal y services).
+- **cart-page.js / wishlist-page.js:** agregado `db.onChange(() => render())` para sincronizar cambios de piezas en vivo.
+- **Plus — campo código manual:**
+  - Nuevo input `code` obligatorio en formulario de pieza con validación de unicidad case-insensitive.
+  - Columna "Código" como primera columna en tabla admin con estilo pill dorado.
+  - Helper text: "Identificador único de la pieza (manual)".
+
+#### Fase 3 — Hardening (commit `d072f7a`)
+**Archivos:** `js/firestore-service.js`, `js/admin/db.js`, `js/admin/shared.js`, `js/admin/piezas.js`, `js/admin/colecciones.js`
+
+- **Optimistic locking via `_version`:**
+  - `createPiece` / `createCollection` corren en `runTransaction`, stampean `_version: 1`.
+  - `updatePiece` / `updateCollection` en transacción — si el caller pasa `opts.expectedVersion` y la versión en Firestore cambió, aborta con `code: 'version-conflict'`.
+  - `patchPiece` (updates solo de imágenes) intencionalmente salta el version check.
+- **Audit log:** `writeAuditLog()` escribe en subcolección `<collection>/<docId>/auditLog` con `{action, version, actorUid, actorEmail, actorDisplayName, timestamp, changes/snapshot}`. Best-effort — falla del audit nunca bloquea el save principal.
+- **Retry con backoff exponencial:** `withRetry()` wrappea todas las operaciones. Reintenta solo errores transientes (`unavailable`, `deadline-exceeded`, `aborted`, `cancelled`, `internal`, `resource-exhausted`). 4 intentos con backoff 250ms → 500ms → 1s → 2s + jitter.
+- **Cache invalidation:** `signalCacheInvalidation()` actualiza `system/meta.lastDataUpdate` como señal para cachés del frontend público.
+- **Auth context:** `setAuthContext()` inyecta el usuario actual desde `admin/shared.js:initSidebar()` para que todo write quede atribuido en el audit log.
+- **Admin UI:**
+  - `openModal()` captura `_version` del doc cargado como `_editingVersion`.
+  - `handleSave()` pasa `expectedVersion` y maneja `version-conflict` / `not-found` con toasts en español de 5s ("Otra persona modificó esta pieza mientras la editabas. Recarga para ver los cambios.").
+
+**Nuevos campos en docs Firestore (piezas + colecciones):**
+- `_version` (number) — monotónico, empieza en 1
+- `createdBy` / `updatedBy` (string) — uid del admin
+- `createdAt` / `updatedAt` (timestamp) — serverTimestamp
+
+**Nueva colección Firestore:** `system/meta` con `lastDataUpdate`.
+**Nueva subcolección:** `<pieces|collections>/<docId>/auditLog`.
+
+**NO TOCAR:**
+- El campo `_version` se maneja exclusivamente en el service layer — `db.js` lo borra de los payloads antes de enviarlos.
+- `patchPiece` NO debe agregar version check — es para partials concurrentes de imágenes.
+- El id de pieza se genera con `p${Date.now()}${random6}` — no cambiar al slug.
+- `saveCollection` en creación genera id con retry `-2`/`-3`… — no volver al slug directo.

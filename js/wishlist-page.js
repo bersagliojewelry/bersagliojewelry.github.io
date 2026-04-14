@@ -136,6 +136,8 @@ async function initPage() {
 
     // Re-render each time the wishlist changes (remove, clear)
     wishlist.onChange(() => renderWishlist());
+    // Re-render when admin updates piece data in real-time.
+    db.onChange(() => renderWishlist());
     initEffects();
 }
 

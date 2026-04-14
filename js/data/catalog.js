@@ -80,37 +80,78 @@ class BersaglioDatabase {
             pieces:      [],
             collections: [],
         };
-        this._listeners   = [];
-        this._unsubPieces = null;
-        this._unsubCols   = null;
-        this._firestoreOk = false;
+        this._listeners      = [];
+        this._unsubPieces    = null;
+        this._unsubCols      = null;
+        this._firestoreOk    = false;
+        this._loaded         = false;
+        this._loadPromise    = null;
+        this._notifyScheduled = false;
+        this._initialPieces  = false;
+        this._initialCols    = false;
     }
 
     // ─── Load ───────────────────────────────────────────────────────────────
 
     /**
-     * Fetch pieces and collections from Firestore.
-     * Awaits the result so pages render with real data.
+     * Load pieces and collections from Firestore.
+     *
+     * Strategy: subscribe to onSnapshot once and resolve as soon as both
+     * the pieces and collections collections have delivered their first
+     * snapshot. The same listeners stay live for the rest of the page,
+     * so any change in the admin panel propagates immediately without
+     * a separate one-shot fetch.
+     *
+     * Calling load() multiple times is idempotent — the same promise is
+     * returned and listeners are only attached once.
      */
     async load() {
-        try {
-            const { fetchPieces, fetchCollections } = await import('../firestore-service.js');
+        if (this._loadPromise) return this._loadPromise;
 
-            const [pieces, collections] = await Promise.all([
-                fetchPieces(),
-                fetchCollections()
-            ]);
+        this._loadPromise = (async () => {
+            try {
+                const { onPiecesChange, onCollectionsChange } =
+                    await import('../firestore-service.js');
 
-            this._data.pieces      = pieces;
-            this._data.collections = collections;
-            this._firestoreOk      = true;
+                let resolveFirst;
+                const firstSnapshot = new Promise(r => { resolveFirst = r; });
 
-            console.info(`[DB] Firestore: ${pieces.length} piezas, ${collections.length} colecciones`);
-        } catch (err) {
-            console.warn('[DB] Firestore load failed:', err);
-        }
+                const maybeResolve = () => {
+                    if (this._initialPieces && this._initialCols) resolveFirst();
+                };
 
-        return this;
+                this._unsubPieces = onPiecesChange(pieces => {
+                    this._data.pieces = pieces;
+                    this._firestoreOk = true;
+                    this._initialPieces = true;
+                    this._notify();
+                    maybeResolve();
+                });
+
+                this._unsubCols = onCollectionsChange(cols => {
+                    this._data.collections = cols;
+                    this._firestoreOk = true;
+                    this._initialCols = true;
+                    this._notify();
+                    maybeResolve();
+                });
+
+                // Safety: if Firestore is unreachable we still resolve after
+                // 4 s so pages render with whatever's available (empty or cached).
+                await Promise.race([
+                    firstSnapshot,
+                    new Promise(r => setTimeout(r, 4000)),
+                ]);
+
+                this._loaded = true;
+                console.info(`[DB] Firestore live: ${this._data.pieces.length} piezas, ${this._data.collections.length} colecciones`);
+            } catch (err) {
+                console.warn('[DB] Firestore load failed:', err);
+            }
+            return this;
+        })();
+
+        return this._loadPromise;
     }
 
     // ─── Getters ────────────────────────────────────────────────────────────
@@ -151,33 +192,40 @@ class BersaglioDatabase {
         };
     }
 
+    /**
+     * Backwards-compatible no-op: load() now wires the realtime listeners
+     * itself. Pages that call startRealtime() after load() get a noop and
+     * a unsubscribe function that tears down the live listeners.
+     */
     async startRealtime() {
-        try {
-            const { onPiecesChange, onCollectionsChange } = await import('../firestore-service.js');
-
-            this._unsubPieces = onPiecesChange(pieces => {
-                this._data.pieces = pieces;
-                this._firestoreOk = true;
-                this._notify();
-            });
-
-            this._unsubCols = onCollectionsChange(cols => {
-                this._data.collections = cols;
-                this._notify();
-            });
-
-            return () => {
-                this._unsubPieces?.();
-                this._unsubCols?.();
-            };
-        } catch (err) {
-            console.warn('[DB] Realtime not available:', err.message);
-            return () => {};
-        }
+        if (!this._loadPromise) await this.load();
+        return () => {
+            this._unsubPieces?.();
+            this._unsubCols?.();
+            this._unsubPieces = null;
+            this._unsubCols   = null;
+        };
     }
 
+    /**
+     * Coalesce listener callbacks within the same animation frame so a
+     * burst of snapshot updates triggers exactly one render cycle.
+     */
     _notify() {
-        this._listeners.forEach(cb => cb(this._data));
+        if (this._notifyScheduled) return;
+        this._notifyScheduled = true;
+        const flush = () => {
+            this._notifyScheduled = false;
+            this._listeners.forEach(cb => {
+                try { cb(this._data); }
+                catch (e) { console.error('[DB] listener error:', e); }
+            });
+        };
+        if (typeof requestAnimationFrame === 'function') {
+            requestAnimationFrame(flush);
+        } else {
+            setTimeout(flush, 0);
+        }
     }
 }
 

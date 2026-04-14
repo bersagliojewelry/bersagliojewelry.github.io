@@ -36,21 +36,26 @@ async function initApp() {
         try { fn(); } catch (err) { console.warn(`[Bersaglio] ${label} failed:`, err); }
     };
 
-    safeRender(renderLookbook,      'renderLookbook');
-    safeRender(renderCollections,   'renderCollections');
-    safeRender(renderFeaturedPieces,'renderFeaturedPieces');
-    safeRender(renderServices,      'renderServices');
-    safeRender(renderJournal,       'renderJournal');
+    const renderAllSections = (label = '') => {
+        safeRender(renderLookbook,       `renderLookbook${label}`);
+        safeRender(renderCollections,    `renderCollections${label}`);
+        safeRender(renderFeaturedPieces, `renderFeaturedPieces${label}`);
+        safeRender(renderJournal,        `renderJournal${label}`);
+        safeRender(renderServices,       `renderServices${label}`);
+    };
+
+    renderAllSections();
 
     Renderer.initScrollAnimations();
     Renderer.initLazyImages();
 
-    // Enable real-time Firestore sync — re-render when admin changes data
-    db.startRealtime().catch(() => {});
+    // Real-time Firestore sync — re-render every section when admin changes
+    // data. db.load() already wired the live listeners so this is a no-op
+    // beyond returning an unsubscribe function.
     db.onChange(() => {
-        safeRender(renderLookbook,       'renderLookbook (realtime)');
-        safeRender(renderCollections,    'renderCollections (realtime)');
-        safeRender(renderFeaturedPieces, 'renderFeaturedPieces (realtime)');
+        renderAllSections(' (realtime)');
+        Renderer.initScrollAnimations();
+        Renderer.initLazyImages();
     });
 
     try { initWhatsAppButton(); } catch {}

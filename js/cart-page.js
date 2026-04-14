@@ -18,6 +18,8 @@ async function init() {
 
     renderCart();
     cart.onChange(() => renderCart());
+    // Re-render when admin updates piece data in real-time.
+    db.onChange(() => renderCart());
 
     initActions();
     initWhatsAppButton();

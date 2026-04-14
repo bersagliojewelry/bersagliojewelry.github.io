@@ -175,7 +175,8 @@ class AdminDatabase {
         // _version is managed by the service layer.
         delete piece._version;
 
-        await fsUpdatePiece(piece.id, piece, { expectedVersion: opts.expectedVersion });
+        const res = await fsUpdatePiece(piece.id, piece, { expectedVersion: opts.expectedVersion });
+        if (res?.version) piece._version = res.version;
         return piece;
     }
 
@@ -184,6 +185,11 @@ class AdminDatabase {
      * merge semantics and intentionally skips the optimistic-lock check
      * so concurrent image edits don't fail (only structural fields use
      * the version check).
+     *
+     * Returns the new _version so callers who are also holding an open
+     * edit modal can advance their optimistic-lock baseline — otherwise
+     * the subsequent Save would trigger a false 'version-conflict'
+     * because the user's own patch already bumped the version.
      */
     async patchPiece(id, patch) {
         if (!id) throw new Error('patchPiece requires an id');
@@ -194,7 +200,8 @@ class AdminDatabase {
         delete clean.createdAt;
         delete clean.updatedAt;
         delete clean._version;
-        await fsUpdatePiece(id, clean);
+        const res = await fsUpdatePiece(id, clean);
+        return res?.version ?? null;
     }
 
     async deletePiece(id) {
@@ -256,7 +263,8 @@ class AdminDatabase {
             throw new Error('No se pudo generar un ID único para la colección');
         }
 
-        await fsUpdateCollection(col.id, col, { expectedVersion: opts.expectedVersion });
+        const res = await fsUpdateCollection(col.id, col, { expectedVersion: opts.expectedVersion });
+        if (res?.version) col._version = res.version;
         return col;
     }
 

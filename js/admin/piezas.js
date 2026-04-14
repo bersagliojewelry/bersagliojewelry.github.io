@@ -194,12 +194,12 @@ function initImageUpload() {
 async function handleFiles(files) {
     if (!files.length) return;
 
-    const form    = document.getElementById('piece-form');
-    const pieceId = form.querySelector('[name="id"]').value || `p${Date.now()}`;
-
-    if (!form.querySelector('[name="id"]').value) {
-        form.querySelector('[name="id"]').value = pieceId;
-    }
+    const form      = document.getElementById('piece-form');
+    const existingId = form.querySelector('[name="id"]').value;
+    // For new pieces we store the images under a temporary upload bucket so we
+    // don't lock in a piece id until the form is actually saved. This avoids
+    // any chance of a stale id being reused.
+    const pieceId = existingId || `tmp${Date.now()}${Math.random().toString(36).slice(2, 8)}`;
 
     const progressWrap = document.getElementById('upload-progress');
     const progressBar  = document.getElementById('upload-progress-bar');
@@ -274,15 +274,19 @@ function renderImagePreviews() {
             _uploadedImages.splice(idx, 1);
             renderImagePreviews();
 
-            // 3. Persist the updated images array to Firestore immediately
-            const form = document.getElementById('piece-form');
+            // 3. If we're editing an existing piece, persist the updated images
+            //    array as a partial update so the rest of the document is
+            //    preserved. For NEW pieces (no persisted id yet) we just keep
+            //    the change in-memory; it will be saved when the user clicks
+            //    Guardar.
+            const form    = document.getElementById('piece-form');
             const pieceId = form.querySelector('[name="id"]')?.value;
-            if (pieceId) {
+            const isPersisted = pieceId && _allPieces.some(p => p.id === pieceId);
+            if (isPersisted) {
                 try {
-                    await adminDb.savePiece({
-                        id: pieceId,
+                    await adminDb.patchPiece(pieceId, {
                         images: [..._uploadedImages],
-                        image: _uploadedImages[0] || null,
+                        image:  _uploadedImages[0] || null,
                     });
                     admToast('Imagen eliminada y pieza actualizada');
                 } catch (err) {
@@ -305,6 +309,9 @@ async function openModal(id = null) {
     const slugEl   = document.getElementById('f-slug');
 
     form.reset();
+    // Hard-clear the hidden id field — form.reset() only restores
+    // defaultValue which can be bypassed by stale state in some edge cases.
+    form.querySelector('[name="id"]').value = '';
     delete slugEl.dataset.manual;
     _uploadedImages = [];
 

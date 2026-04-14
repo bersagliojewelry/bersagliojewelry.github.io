@@ -93,11 +93,58 @@ export function onPiecesChange(callback) {
 }
 
 /**
- * Save or update a piece (admin)
+ * Create a new piece (admin).
+ * FAILS if a document with the same ID already exists, preventing accidental
+ * overwrites of existing pieces. The caller is responsible for generating a
+ * unique ID and retrying on collision.
+ */
+export async function createPiece(pieceId, data) {
+    const ref  = doc(firestoreDb, COLLECTIONS.pieces, pieceId);
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+        const err = new Error(`Piece id "${pieceId}" already exists`);
+        err.code  = 'id-collision';
+        throw err;
+    }
+    await setDoc(ref, {
+        ...data,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+    });
+}
+
+/**
+ * Update an existing piece (admin).
+ * Uses {merge: true} so partial updates (e.g. only images) preserve the
+ * rest of the document. Refuses to create a new doc if the id does not
+ * exist — callers must use createPiece for new records.
+ */
+export async function updatePiece(pieceId, data) {
+    const ref  = doc(firestoreDb, COLLECTIONS.pieces, pieceId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+        const err = new Error(`Piece id "${pieceId}" does not exist`);
+        err.code  = 'not-found';
+        throw err;
+    }
+    await setDoc(
+        ref,
+        { ...data, updatedAt: serverTimestamp() },
+        { merge: true }
+    );
+}
+
+/**
+ * Save or update a piece (admin). DEPRECATED: use createPiece / updatePiece.
+ * Kept for backwards compatibility — now uses merge:true to avoid data loss.
  */
 export async function savePiece(pieceId, data) {
     const ref = doc(firestoreDb, COLLECTIONS.pieces, pieceId);
-    await setDoc(ref, { ...data, updatedAt: serverTimestamp() });
+    await setDoc(
+        ref,
+        { ...data, updatedAt: serverTimestamp() },
+        { merge: true }
+    );
 }
 
 /**
@@ -132,11 +179,56 @@ export function onCollectionsChange(callback) {
 }
 
 /**
- * Save or update a collection (admin)
+ * Create a new collection (admin).
+ * FAILS if a document with the same id already exists. Prevents the
+ * accidental overwrite that was happening when two collections had slugs
+ * that collapsed to the same slug.
+ */
+export async function createCollection(colId, data) {
+    const ref  = doc(firestoreDb, COLLECTIONS.collections, colId);
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+        const err = new Error(`Collection id "${colId}" already exists`);
+        err.code  = 'id-collision';
+        throw err;
+    }
+    await setDoc(ref, {
+        ...data,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+    });
+}
+
+/**
+ * Update an existing collection (admin).
+ * Uses {merge:true} so partial updates preserve untouched fields.
+ */
+export async function updateCollection(colId, data) {
+    const ref  = doc(firestoreDb, COLLECTIONS.collections, colId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+        const err = new Error(`Collection id "${colId}" does not exist`);
+        err.code  = 'not-found';
+        throw err;
+    }
+    await setDoc(
+        ref,
+        { ...data, updatedAt: serverTimestamp() },
+        { merge: true }
+    );
+}
+
+/**
+ * Save or update a collection (admin). DEPRECATED: use
+ * createCollection / updateCollection. Kept for backwards compatibility.
  */
 export async function saveCollection(colId, data) {
     const ref = doc(firestoreDb, COLLECTIONS.collections, colId);
-    await setDoc(ref, { ...data, updatedAt: serverTimestamp() });
+    await setDoc(
+        ref,
+        { ...data, updatedAt: serverTimestamp() },
+        { merge: true }
+    );
 }
 
 /**

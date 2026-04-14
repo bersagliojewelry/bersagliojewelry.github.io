@@ -203,6 +203,9 @@ function openModal(id = null) {
     const form    = document.getElementById('col-form');
 
     form.reset();
+    // Hard-clear the hidden id field to guarantee we never reuse a stale id
+    // from a previously-edited collection when creating a new one.
+    form.querySelector('[name="id"]').value = '';
     _bannerUrl = '';
 
     if (id) {
@@ -245,23 +248,28 @@ async function handleSave() {
     const name = get('name');
     if (!name) { admToast('El nombre es obligatorio', 'danger'); return; }
 
+    const existingId = get('id');
     const col = {
-        id:          get('id') || slugify(name),
+        // Only set id when editing an existing collection. For creations,
+        // adminDb.saveCollection will allocate a unique id with collision
+        // handling so we never overwrite an existing collection silently.
+        ...(existingId ? { id: existingId } : {}),
         name,
         slug:        get('slug') || slugify(name),
         subtitle:    get('subtitle'),
         description: get('description'),
-        pieces:      getPieceCount(get('id') || slugify(name)),
+        pieces:      getPieceCount(existingId || slugify(name)),
         featured:    form.querySelector('[name="featured"]').checked,
         bannerUrl:   _bannerUrl || get('bannerUrl') || null,
     };
 
     try {
-        await adminDb.saveCollection(col);
+        const saved = await adminDb.saveCollection(col);
         closeModal();
-        admToast(`"${col.name}" guardada`);
+        admToast(`"${saved.name}" guardada`);
     } catch (err) {
-        admToast('Error al guardar colecci\u00f3n', 'danger');
+        console.error('[Admin] saveCollection failed:', err);
+        admToast(err?.message || 'Error al guardar colecci\u00f3n', 'danger');
     }
 }
 

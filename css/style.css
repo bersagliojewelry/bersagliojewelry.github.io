@@ -12558,7 +12558,7 @@ nav .logo-sub {
 
 /* ─── 1. SECCIÓN ──────────────────────────────────────────────── */
 .journal-preview.journal-v7 {
-    background: linear-gradient(155deg, #060d09 0%, #0a1a0f 40%, #07100a 70%, #050a07 100%) !important;
+    background: transparent !important;
     border-top: 1px solid rgba(201,169,110, 0.04) !important;
     border-bottom: 1px solid rgba(201,169,110, 0.04) !important;
     padding: clamp(4rem, 8vw, 7rem) 0 !important;
@@ -12861,7 +12861,7 @@ nav .logo-sub {
 
 /* ─── 1. SECCIÓN ──────────────────────────────────────────────── */
 .about-teaser.about-v7 {
-    background: linear-gradient(155deg, #0a1610 0%, #142018 50%, #0e1a14 100%) !important;
+    background: transparent !important;
     padding: clamp(4rem, 8vw, 7rem) 0 !important;
     position: relative !important;
     overflow: hidden !important;
@@ -13141,7 +13141,7 @@ nav .logo-sub {
 /* ─── CTA Banner V7 ─────────────────────────────────────────────── */
 .cta-banner.cta-v7 {
     position: relative !important;
-    background: linear-gradient(135deg, #050a07 0%, #0a1a0f 40%, #0d2818 70%, #0a1a0f 100%) !important;
+    background: transparent !important;
     padding: clamp(60px, 10vh, 120px) 0 !important;
     overflow: hidden !important;
     border-radius: 0px !important;

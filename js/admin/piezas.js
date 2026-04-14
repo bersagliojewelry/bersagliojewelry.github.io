@@ -9,6 +9,9 @@ let _allPieces = [];
 let _query     = '';
 let _filterCol = '';
 let _filterFeatured = '';
+// _version of the piece currently loaded in the modal. Null for new pieces.
+// Used as the optimistic-lock baseline on save.
+let _editingVersion = null;
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
@@ -316,6 +319,7 @@ async function openModal(id = null) {
     form.querySelector('[name="id"]').value = '';
     delete slugEl.dataset.manual;
     _uploadedImages = [];
+    _editingVersion = null;
 
     if (id) {
         const piece = _allPieces.find(p => p.id === id);
@@ -323,6 +327,10 @@ async function openModal(id = null) {
         titleEl.textContent = 'Editar pieza';
         populateForm(form, piece);
         slugEl.dataset.manual = '1';
+        // Capture the version that was loaded into the form. handleSave will
+        // send this back as opts.expectedVersion so the transaction can abort
+        // if another admin wrote to the same piece in the meantime.
+        _editingVersion = typeof piece._version === 'number' ? piece._version : null;
 
         if (piece.images?.length) {
             _uploadedImages = [...piece.images];
@@ -423,11 +431,25 @@ async function handleSave() {
     if (!piece.id) delete piece.id;
 
     try {
-        const saved = await adminDb.savePiece(piece);
+        const saved = await adminDb.savePiece(piece, {
+            expectedVersion: piece.id ? _editingVersion : undefined,
+        });
         closeModal();
         admToast(`"${saved.name}" guardada correctamente`);
     } catch (err) {
         console.error('[Admin] savePiece failed:', err);
+        if (err?.code === 'version-conflict') {
+            admToast(
+                'Otra persona modificó esta pieza mientras la editabas. Recarga para ver los cambios.',
+                'danger',
+                5000
+            );
+            return;
+        }
+        if (err?.code === 'not-found') {
+            admToast('La pieza fue eliminada por otra persona.', 'danger', 5000);
+            return;
+        }
         admToast(err?.message || 'Error al guardar pieza', 'danger');
     }
 }

@@ -13,7 +13,7 @@ import { toast }    from './toast.js';
 
 const specLabels = {
     stone: 'Piedra', carat: 'Quilates', metal: 'Metal', accent: 'Acentos',
-    cut: 'Talla', color: 'Color', clarity: 'Claridad', weight: 'Peso',
+    cut: 'Talla', color: 'Color', clarity: 'Calidad', weight: 'Peso',
     style: 'Estilo', finish: 'Acabado', length: 'Longitud'
 };
 

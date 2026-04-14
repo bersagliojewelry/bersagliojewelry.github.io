@@ -19,7 +19,7 @@ import { initPrefetch }        from './prefetch.js';
 
 const specLabels = {
     stone: 'Piedra principal', carat: 'Quilates', metal: 'Metal', accent: 'Acentos',
-    cut: 'Talla', color: 'Color', clarity: 'Claridad', weight: 'Peso',
+    cut: 'Talla', color: 'Color', clarity: 'Calidad', weight: 'Peso',
     style: 'Estilo', finish: 'Acabado', length: 'Longitud', certificate: 'Certificación',
 };
 

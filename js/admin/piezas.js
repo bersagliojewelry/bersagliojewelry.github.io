@@ -69,6 +69,7 @@ function getFiltered() {
     return _allPieces.filter(p => {
         const matchQ = !_query ||
             (p.name || '').toLowerCase().includes(_query) ||
+            (p.code || '').toLowerCase().includes(_query) ||
             (p.collection || '').toLowerCase().includes(_query);
         const matchC = !_filterCol || p.collection === _filterCol;
         const matchF = !_filterFeatured ||
@@ -92,6 +93,7 @@ function renderTable() {
         const col = collections.find(c => c.id === p.collection);
         return `
         <tr>
+            <td><code style="font-size:11px;background:rgba(201,169,110,0.1);padding:2px 6px;border-radius:3px;color:var(--adm-accent);">${esc(p.code || '\u2014')}</code></td>
             <td style="font-weight:500;">${esc(p.name)}</td>
             <td class="adm-td-muted">${esc(col?.name || p.collection || '\u2014')}</td>
             <td>${p.badge ? `<span class="adm-pill adm-pill--gold">${esc(p.badge)}</span>` : '<span class="adm-td-muted">\u2014</span>'}</td>
@@ -348,6 +350,7 @@ function closeModal() {
 
 function populateForm(form, piece) {
     form.querySelector('[name="id"]').value          = piece.id || '';
+    form.querySelector('[name="code"]').value        = piece.code || '';
     form.querySelector('[name="name"]').value        = piece.name || '';
     form.querySelector('[name="slug"]').value        = piece.slug || '';
     form.querySelector('[name="collection"]').value  = piece.collection || '';
@@ -376,6 +379,25 @@ async function handleSave() {
     const name = get('name');
     if (!name) { admToast('El nombre es obligatorio', 'danger'); return; }
 
+    const code    = get('code');
+    const editing = get('id');
+    if (!code) {
+        admToast('El código de la pieza es obligatorio', 'danger');
+        form.querySelector('[name="code"]').focus();
+        return;
+    }
+    // Uniqueness check — codes must be unique across all pieces, except when
+    // editing the same piece.
+    const codeNorm = code.toLowerCase();
+    const dup = _allPieces.find(p =>
+        (p.code || '').toLowerCase() === codeNorm && p.id !== editing
+    );
+    if (dup) {
+        admToast(`El código "${code}" ya está en uso por "${dup.name}"`, 'danger');
+        form.querySelector('[name="code"]').focus();
+        return;
+    }
+
     const specs = {};
     ['stone','carat','metal','accent','certificate','cut','color','clarity','weight'].forEach(k => {
         const v = get(`specs.${k}`);
@@ -384,6 +406,7 @@ async function handleSave() {
 
     const piece = {
         id:          get('id') || null,
+        code,
         name,
         slug:        get('slug'),
         collection:  get('collection'),
@@ -404,7 +427,8 @@ async function handleSave() {
         closeModal();
         admToast(`"${saved.name}" guardada correctamente`);
     } catch (err) {
-        admToast('Error al guardar pieza', 'danger');
+        console.error('[Admin] savePiece failed:', err);
+        admToast(err?.message || 'Error al guardar pieza', 'danger');
     }
 }
 

@@ -23,23 +23,65 @@ const specLabels = {
     style: 'Estilo', finish: 'Acabado', length: 'Longitud', certificate: 'Certificación',
 };
 
+let _currentSlug = null;
+let _renderedSig = null;
+
 async function init() {
     await loadAllComponents();
     await db.load();
 
-    const slug  = new URLSearchParams(window.location.search).get('p');
-    const piece = slug ? db.getBySlug(slug) : null;
+    _currentSlug = new URLSearchParams(window.location.search).get('p');
+    const piece  = _currentSlug ? db.getBySlug(_currentSlug) : null;
 
     if (!piece) {
         const skeleton = document.getElementById('pieza-skeleton');
         if (skeleton) skeleton.style.display = 'none';
         renderNotFound();
+        // Even on not-found we listen for realtime: the piece may appear
+        // moments later if the admin just created it.
+        db.onChange(handleRealtimeUpdate);
         return;
     }
 
-    // Ocultar skeleton antes de renderizar contenido real
+    renderEverything(piece, /*firstPaint*/ true);
+
+    // Real-time: re-render when the underlying piece document changes.
+    db.onChange(handleRealtimeUpdate);
+}
+
+/**
+ * Idempotent re-render: only repaints if the piece data actually changed.
+ * Uses a JSON signature so we skip unnecessary DOM work on unrelated
+ * snapshot updates (e.g. another piece edited).
+ */
+function handleRealtimeUpdate() {
+    if (!_currentSlug) return;
+    const piece = db.getBySlug(_currentSlug);
+    if (!piece) {
+        // Piece was deleted from admin while user was viewing it.
+        if (_renderedSig !== '__notfound__') {
+            _renderedSig = '__notfound__';
+            renderNotFound();
+        }
+        return;
+    }
+    const sig = JSON.stringify(piece);
+    if (sig === _renderedSig) return;
+    _renderedSig = sig;
+    renderEverything(piece, /*firstPaint*/ false);
+}
+
+function renderEverything(piece, firstPaint) {
+    _renderedSig = JSON.stringify(piece);
+
+    // Hide skeleton on first real paint.
     const skeleton = document.getElementById('pieza-skeleton');
     if (skeleton) skeleton.style.display = 'none';
+
+    // Wipe existing content so reviews/related sections aren't duplicated
+    // on subsequent realtime re-renders.
+    const container = document.getElementById('pieza-content');
+    if (container) container.innerHTML = '';
 
     renderPiece(piece);
     renderReviews(piece);
@@ -49,13 +91,16 @@ async function init() {
     initWhatsAppButton(piece);
     initGalleryThumbs();
     Renderer.initScrollAnimations();
-    initSkeletonShimmer();
-    initPrefetch();
-    initEffects();
-    initMicroAnimations();
-    initPiezaGSAP();
-    trackPieceView(piece);
-    trackView(piece.slug);
+
+    if (firstPaint) {
+        initSkeletonShimmer();
+        initPrefetch();
+        initEffects();
+        initMicroAnimations();
+        initPiezaGSAP();
+        trackPieceView(piece);
+        trackView(piece.slug);
+    }
 }
 
 function updatePageMeta(piece) {

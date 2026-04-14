@@ -93,6 +93,7 @@
                 <table class="adm-table">
                     <thead>
                         <tr>
+                            <th>Código</th>
                             <th>Nombre</th>
                             <th>Colección</th>
                             <th>Badge</th>
@@ -129,9 +130,16 @@
                     <h3>Información básica</h3>
                     <div class="adm-form-row">
                         <div class="adm-field">
+                            <label for="f-code">Código <span style="color:var(--adm-danger)">*</span></label>
+                            <input class="adm-input" id="f-code" name="code" required placeholder="Ej. BJ-A-001" autocomplete="off" spellcheck="false">
+                            <small style="color:var(--adm-muted);font-size:11px;margin-top:2px;">Identificador único de la pieza (manual)</small>
+                        </div>
+                        <div class="adm-field">
                             <label for="f-name">Nombre <span style="color:var(--adm-danger)">*</span></label>
                             <input class="adm-input" id="f-name" name="name" required placeholder="Ej. Anillo Muzo Imperial">
                         </div>
+                    </div>
+                    <div class="adm-form-row" style="margin-top:12px;">
                         <div class="adm-field">
                             <label for="f-slug">Slug URL <span style="color:var(--adm-danger)">*</span></label>
                             <input class="adm-input" id="f-slug" name="slug" required placeholder="anillo-muzo-imperial">

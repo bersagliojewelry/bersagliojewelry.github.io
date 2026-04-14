@@ -86,7 +86,7 @@ function cartCard(piece) {
     const inWishlist = wishlist.has(piece.slug);
     const specLabels = {
         stone: 'Piedra', carat: 'Quilates', metal: 'Metal',
-        cut: 'Talla', color: 'Color', clarity: 'Claridad',
+        cut: 'Talla', color: 'Color', clarity: 'Calidad',
     };
     const specs = Object.entries(piece.specs || {})
         .filter(([k]) => ['stone', 'carat', 'metal'].includes(k))

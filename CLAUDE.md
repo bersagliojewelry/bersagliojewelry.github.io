@@ -544,3 +544,78 @@ body.menu-open {
 - `patchPiece` NO debe agregar version check — es para partials concurrentes de imágenes.
 - El id de pieza se genera con `p${Date.now()}${random6}` — no cambiar al slug.
 - `saveCollection` en creación genera id con retry `-2`/`-3`… — no volver al slug directo.
+
+### 2026-04-15 — Documentación fases 1-3 (commit `034b428`)
+**Archivo:** `CLAUDE.md`
+Bloque de fases 1-3 documentado con root causes, archivos tocados y reglas "NO TOCAR".
+
+### 2026-04-15 — Rename label "Claridad" → "Calidad" (commit `bb8dee6`)
+**Archivos:** `admin-piezas.html`, `js/pieza.js`, `js/cart-page.js`, `js/wishlist-page.js`, `js/components/featured.js`
+
+- Cambio puramente de display label en admin (formulario de pieza) y en todas las vistas públicas que renderizan specs.
+- **El data key Firestore sigue siendo `clarity`** — solo cambia el texto visible. No hay migración de datos.
+
+### 2026-04-15 — Unificación de fondo Journal / About / CTA (commit `c514dfe`)
+**Archivo:** `css/style.css`
+
+- `.journal-preview.journal-v7`, `.about-teaser.about-v7` y `.cta-banner.cta-v7` cambiados a `background: transparent !important` para dejar pasar el `Emerald Marble Background` global del body.
+- Antes cada sección tenía su propio gradiente (`linear-gradient(155deg, …)`) y rompía la continuidad visual con el resto del index.
+
+### 2026-04-15 — Fix false `version-conflict` al borrar imagen (commit `bd907e3`)
+**Archivos:** `js/firestore-service.js`, `js/admin/db.js`, `js/admin/piezas.js`, `js/admin/colecciones.js`
+
+- **Síntoma:** Editar pieza → borrar una imagen → Guardar → toast "Otra persona modificó esta pieza mientras la editabas" aunque no haya otros usuarios.
+- **Root cause:** `patchPiece()` (delete imagen) bumpea `_version` en Firestore pero el `_editingVersion` local del modal queda stale. Al guardar el resto del form, `expectedVersion` no coincide → conflict falso.
+- **Fix:**
+  - `updatePiece` / `updateCollection` ahora retornan `{version: nextVersion}`.
+  - `patchPiece` propaga la nueva version al caller.
+  - En `piezas.js` / `colecciones.js`, los handlers de delete imagen actualizan `_editingVersion = newVersion` tras el patch.
+
+### 2026-04-15 — Lookbook V7: mejoras móvil + lazy load (commit `b91e3de`)
+**Archivos:** `js/components/lookbook.js`, `css/style.css`
+
+Tres bugs reportados:
+1. **Libro descentrado en tapa/contratapa** — empezó este hilo de fixes
+2. **Móvil: libro alargado y angosto, tipografía ilegible** — porque la fórmula desktop (`vw * 0.42`) daba ~158px en un viewport de 375px
+3. **Carga ultralenta del lookbook en móvil** — PageFlip se inicializaba en cada burst de snapshot
+
+**Cambios:**
+- **Dimensiones por dispositivo:** branch `isMobile = vw < 768`. Móvil usa `min(vw - 80, 380)` (en pantallas <380px reserva 56px) con altura 1.4× el ancho. Desktop usa `min(maxH * 0.78, vw * 0.42)` cap a 750px.
+- **Dedupe por content signature:** se calcula JSON de la estructura de páginas; si la signature no cambió, se salta el rebuild + reinit de PageFlip. Evita teardown/reinit en cada snapshot burst de Firestore.
+- **Lazy init con IntersectionObserver:** PageFlip no se construye hasta que el lookbook está a 300px del viewport. Mejora dramáticamente el first paint en móvil.
+- **Tipografía mobile <767px:** override de `pf-cover-eyebrow`, `pf-cover-title`, `pf-cover-year`, `pf-cover-tagline`, `pf-intro-*`, `pf-piece-*` etc. con `clamp()` para que el texto respire en celulares.
+- **State classes** `is-cover-state` / `is-back-state` agregadas al wrapper en `updateUI()` para futuro centrado CSS.
+
+### 2026-04-15 — Lookbook V7: anti-flash + intento de centrado (commit `1f5ac20`)
+**Archivos:** `js/components/lookbook.js`, `css/style.css`
+
+- **PageFlip config:** `size: 'stretch'` → `size: 'fixed'`, `autoSize: true` → `false`. Da dimensiones exactas y predecibles.
+- **Anti-flash en Ctrl+Shift+R:** tras `loadFromHTML`, JS añade clase `is-ready` al `.pf-book` y `.pf-wrapper`. CSS oculta los `.pf-page` crudos del markup hasta que `.pf-book.is-ready` exista, evitando el "flash" del libro agrandado antes de que PageFlip construya su canvas.
+- **Intento fallido de centrado** con `width: auto` + flex en `.pf-book` — descentraba la paginación inferior y no atacaba el root cause (ver siguiente fix).
+
+### 2026-04-15 — Lookbook V7: centrado tapa/contratapa con shift dinámico (commit `850e730`)
+**Archivos:** `js/components/lookbook.js`, `css/style.css`
+
+- **Root cause real (ROOT CAUSE):** En modo landscape (PC) PageFlip dibuja un **SPREAD doble** de `2 × maxW`. La tapa cerrada vive en la mitad derecha del canvas y la contratapa en la mitad izquierda. El `.stf__parent` ya está centrado en `.pf-book-area`, pero visualmente solo se ve la mitad ocupada → tapa offset right por `maxW/2`.
+- **Fix:**
+  - JS calcula tras `initPageFlip` si la orientación es `landscape`. Si sí, expone `--pf-cover-shift = maxW/2 px` en `.pf-wrapper`. En portrait (móvil) el canvas muestra una sola página → shift = 0.
+  - CSS aplica `translateX(-shift)` a `.pf-book` cuando el wrapper tiene `.is-cover-state`, y `translateX(+shift)` cuando tiene `.is-back-state`. Páginas internas (spread completo) sin transform.
+  - Listener `changeOrientation` para recalcular el shift si cambia la orientación.
+- **Eliminado** el hack previo `width: auto` en `.pf-book` que descentraba la paginación.
+
+### 2026-04-15 — Lookbook V7: sincronización del shift con animación (commit `66edc6a`)
+**Archivos:** `js/components/lookbook.js`, `css/style.css`
+
+- **Síntoma:** al abrir tapa o cerrar contratapa, durante el flip se veía un espacio entre las dos mitades del libro y al final pegaba un salto.
+- **Root cause:** el evento `flip` de PageFlip solo dispara cuando la animación **termina**, así que el `translateX(-shift)` se mantenía durante todo el flip y luego cambiaba de golpe. Rotación de página y deslizamiento del libro estaban desincronizados.
+- **Fix:**
+  - Listener `changeState` que detecta el **inicio** del flip (`'flipping'` / `'user_fold'` / `'fold_corner'`) y quita `is-cover-state` / `is-back-state` enseguida. El `.pf-book` empieza a deslizarse al centro **en paralelo** con la rotación de la página.
+  - Transición CSS de `transform` aumentada de `0.45s` a `0.6s` (igualada al `flippingTime: 600` de PageFlip) con easing `cubic-bezier(0.65, 0, 0.35, 1)` para que ambos movimientos terminen juntos y se vean cinematográficos.
+
+**REGLAS LOOKBOOK V7 (NO TOCAR):**
+- PageFlip se inicializa con `size: 'fixed'` + `autoSize: false` — no volver a `'stretch'`.
+- El `--pf-cover-shift` se calcula en JS según orientación, NO hardcodear en CSS.
+- El listener `changeState` es lo que hace que el centrado se vea fluido — no removerlo.
+- La transición de `transform` en `.pf-book` debe ser **`0.6s`** para coincidir con `flippingTime`. Si se cambia uno, cambiar el otro.
+- Móvil (`vw < 768`) y desktop tienen fórmulas de dimensión distintas — no unificar.
+- Lazy init con IntersectionObserver es crítico para móvil — no quitar.

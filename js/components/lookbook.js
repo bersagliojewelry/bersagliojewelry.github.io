@@ -279,7 +279,10 @@ function initPageFlip(container, totalPages) {
     _flipInstance = new PageFlip(bookEl, {
         width:       maxW,
         height:      maxH,
-        size:        'stretch',
+        // 'fixed' uses width/height exactly — avoids the stretch flash on
+        // load and gives the book a predictable footprint that the parent
+        // flex container can center naturally.
+        size:        'fixed',
         minWidth:    isMobile ? 220 : 240,
         maxWidth:    maxW,
         minHeight:   isMobile ? 300 : 320,
@@ -290,12 +293,16 @@ function initPageFlip(container, totalPages) {
         flippingTime: 600,
         usePortrait: true,
         startZIndex: 0,
-        autoSize:    true,
+        autoSize:    false,
         drawShadow:  true,
         showPageCorners: true,
     });
 
     _flipInstance.loadFromHTML(bookEl.querySelectorAll('.pf-page'));
+    // Mark book as ready so the CSS guard that hides raw .pf-page elements
+    // can release them — by now PageFlip has built its canvas.
+    bookEl.classList.add('is-ready');
+    if (wrapper) wrapper.classList.add('is-ready');
 
     function updateUI(pageIndex) {
         curLabel.textContent = pageIndex + 1;

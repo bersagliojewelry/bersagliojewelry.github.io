@@ -160,6 +160,8 @@ function renderPage(page, index) {
 }
 
 let _flipInstance = null;
+let _lastSignature = '';
+let _pendingObserver = null;
 
 export function renderLookbook() {
     const container = document.querySelector('#lookbook');
@@ -170,25 +172,44 @@ export function renderLookbook() {
 
     if (!allPieces.length) {
         container.innerHTML = '';
+        _lastSignature = '';
+        if (_flipInstance) { try { _flipInstance.destroy(); } catch {} _flipInstance = null; }
+        if (_pendingObserver) { _pendingObserver.disconnect(); _pendingObserver = null; }
         return;
     }
 
     const pages = buildPages(collections, allPieces);
     if (pages.length < 2) {
         container.innerHTML = '';
+        _lastSignature = '';
         return;
     }
+
+    // Dedupe: skip the expensive rebuild if neither pieces nor collections
+    // produced a structurally different page list. Avoids wasted PageFlip
+    // teardown + reinit on every realtime snapshot burst.
+    const signature = JSON.stringify(pages.map(p => {
+        if (p.type === 'gallery') return [p.type, p.collection?.id, p.pieces.map(x => `${x.id}|${x.image || ''}|${x.name}|${x.priceLabel || ''}`)];
+        if (p.type === 'col-intro') return [p.type, p.collection?.id, p.totalPieces];
+        return p.type;
+    }));
+    if (signature === _lastSignature && _flipInstance) return;
+    _lastSignature = signature;
 
     if (_flipInstance) {
         try { _flipInstance.destroy(); } catch {}
         _flipInstance = null;
+    }
+    if (_pendingObserver) {
+        _pendingObserver.disconnect();
+        _pendingObserver = null;
     }
 
     // Build page dots for quick navigation
     const dots = pages.map((_, i) => `<button class="pf-dot ${i === 0 ? 'is-active' : ''}" data-page="${i}" aria-label="Ir a página ${i + 1}"></button>`).join('');
 
     container.innerHTML = `
-        <div class="pf-wrapper">
+        <div class="pf-wrapper is-cover-state">
             <button class="pf-side-btn pf-side-prev" aria-label="Página anterior">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="15,18 9,12 15,6"/></svg>
             </button>
@@ -210,29 +231,58 @@ export function renderLookbook() {
         </div>
         <p class="pf-hint">Arrastra la esquina de la página para pasar la hoja</p>`;
 
-    initPageFlip(container, pages.length);
+    // Defer the heavy PageFlip init until the section is near the viewport.
+    // Dramatically improves first-paint on mobile because the canvas / event
+    // wiring isn't created until the user actually scrolls down.
+    const startInit = () => initPageFlip(container, pages.length);
+    if ('IntersectionObserver' in window) {
+        _pendingObserver = new IntersectionObserver((entries, observer) => {
+            if (entries.some(e => e.isIntersecting)) {
+                observer.disconnect();
+                _pendingObserver = null;
+                startInit();
+            }
+        }, { rootMargin: '300px 0px' });
+        _pendingObserver.observe(container);
+    } else {
+        startInit();
+    }
 }
 
 function initPageFlip(container, totalPages) {
     const bookEl  = container.querySelector('#pf-book');
+    const wrapper = container.querySelector('.pf-wrapper');
     const prevBtn = container.querySelector('.pf-side-prev');
     const nextBtn = container.querySelector('.pf-side-next');
     const curLabel = container.querySelector('.pf-cur');
     const dots     = container.querySelectorAll('.pf-dot');
 
-    // Calculate responsive dimensions — wider book for premium look
+    // Calculate responsive dimensions — wider book for premium look.
+    // Mobile gets a much wider slice of the viewport so the cover is not
+    // squeezed into a 150-px-wide vertical strip.
     const vh = window.innerHeight;
     const vw = window.innerWidth;
-    const maxH = Math.min(Math.round(vh * 0.68), 750);
-    const maxW = Math.min(Math.round(maxH * 0.78), Math.round(vw * 0.42)); // wider ratio
+    const isMobile = vw < 768;
+
+    let maxW, maxH;
+    if (isMobile) {
+        // Reserve ~64-80px total for the side arrow buttons + gaps.
+        const reservedX = vw < 380 ? 56 : 80;
+        maxW = Math.min(vw - reservedX, 380);
+        // Portrait book aspect ratio ~ 1:1.4
+        maxH = Math.min(Math.round(maxW * 1.4), Math.round(vh * 0.72));
+    } else {
+        maxH = Math.min(Math.round(vh * 0.68), 750);
+        maxW = Math.min(Math.round(maxH * 0.78), Math.round(vw * 0.42));
+    }
 
     _flipInstance = new PageFlip(bookEl, {
         width:       maxW,
         height:      maxH,
         size:        'stretch',
-        minWidth:    240,
+        minWidth:    isMobile ? 220 : 240,
         maxWidth:    maxW,
-        minHeight:   320,
+        minHeight:   isMobile ? 300 : 320,
         maxHeight:   maxH,
         showCover:   true,
         maxShadowOpacity: 0.5,
@@ -250,9 +300,17 @@ function initPageFlip(container, totalPages) {
     function updateUI(pageIndex) {
         curLabel.textContent = pageIndex + 1;
         dots.forEach((d, i) => d.classList.toggle('is-active', i === pageIndex));
+        // Toggle cover/back state on the wrapper so CSS can visually
+        // re-center the book when only one face is visible (avoids the
+        // "offset right" / "offset left" gap in portrait mode).
+        if (wrapper) {
+            wrapper.classList.toggle('is-cover-state', pageIndex === 0);
+            wrapper.classList.toggle('is-back-state',  pageIndex === totalPages - 1);
+        }
     }
 
     _flipInstance.on('flip', (e) => updateUI(e.data));
+    updateUI(0);
 
     prevBtn.addEventListener('click', () => _flipInstance.flipPrev());
     nextBtn.addEventListener('click', () => _flipInstance.flipNext());

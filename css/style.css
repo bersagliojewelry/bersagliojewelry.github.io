@@ -11419,6 +11419,122 @@ nav .logo-sub {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   LOOKBOOK V7 — CENTRADO EN ESTADO TAPA / CONTRATAPA
+   En modo portrait, PageFlip dibuja la tapa como "página derecha"
+   de un spread vacío y la contratapa como "página izquierda",
+   dejando un hueco visible. Estos transforms recentran el libro
+   cuando sólo una de las caras está visible.
+   ═══════════════════════════════════════════════════════════════ */
+.lookbook-v7 .pf-book-area {
+    transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+}
+
+.lookbook-v7 .pf-wrapper.is-cover-state .pf-book-area {
+    transform: translateX(0) !important;
+}
+
+.lookbook-v7 .pf-wrapper.is-cover-state .stf__parent,
+.lookbook-v7 .pf-wrapper.is-back-state  .stf__parent {
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LOOKBOOK V7 — TIPOGRAFÍA INTERNA REFINADA EN MOBILE
+   Cuando el libro se renderiza pequeño en celular, las fuentes
+   por defecto del cover quedan ilegibles (aplastadas). Estas
+   reglas escalan tipografía y padding para que el texto respire.
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+    .lookbook-v7 .pf-cover-content,
+    .lookbook-v7 .pf-back-content {
+        padding: 12px !important;
+    }
+
+    .lookbook-v7 .pf-cover-border {
+        padding: 16px 12px !important;
+        height: calc(100% - 24px) !important;
+    }
+
+    .lookbook-v7 .pf-cover-inner {
+        gap: 8px !important;
+    }
+
+    .lookbook-v7 .pf-cover-eyebrow {
+        font-size: 8.5px !important;
+        letter-spacing: 2px !important;
+    }
+
+    .lookbook-v7 .pf-cover-title {
+        font-size: clamp(1.4rem, 7vw, 2rem) !important;
+        line-height: 1.05 !important;
+        letter-spacing: 1px !important;
+    }
+
+    .lookbook-v7 .pf-cover-year {
+        font-size: 9px !important;
+        letter-spacing: 4px !important;
+    }
+
+    .lookbook-v7 .pf-cover-tagline {
+        font-size: 8px !important;
+        letter-spacing: 1.5px !important;
+        line-height: 1.5 !important;
+        max-width: 90% !important;
+    }
+
+    .lookbook-v7 .pf-cover-line {
+        width: 36px !important;
+    }
+
+    .lookbook-v7 .pf-intro-title {
+        font-size: clamp(1.1rem, 5.5vw, 1.6rem) !important;
+        line-height: 1.1 !important;
+    }
+
+    .lookbook-v7 .pf-intro-sub,
+    .lookbook-v7 .pf-intro-desc {
+        font-size: 10px !important;
+        line-height: 1.45 !important;
+    }
+
+    .lookbook-v7 .pf-intro-count {
+        font-size: 8.5px !important;
+        letter-spacing: 1.5px !important;
+    }
+
+    .lookbook-v7 .pf-gallery-colname {
+        font-size: 9px !important;
+        letter-spacing: 1.5px !important;
+    }
+
+    .lookbook-v7 .pf-piece-name {
+        font-size: 10px !important;
+        line-height: 1.2 !important;
+    }
+
+    .lookbook-v7 .pf-piece-price {
+        font-size: 8.5px !important;
+    }
+
+    .lookbook-v7 .pf-back-brand {
+        font-size: 11px !important;
+        letter-spacing: 2px !important;
+    }
+
+    .lookbook-v7 .pf-back-text {
+        font-size: 9px !important;
+    }
+
+    .lookbook-v7 .pf-back-cta,
+    .lookbook-v7 .pf-fin-cta {
+        font-size: 9px !important;
+        padding: 9px 14px !important;
+        letter-spacing: 1.8px !important;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
    FEATURED PIECES V7 — GRID EDITORIAL PREMIUM
    Cards con reveal overlay · Hover cinematográfico
    Grid asimétrico · Bordes ghost · Mobile-first

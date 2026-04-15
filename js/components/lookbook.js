@@ -304,6 +304,26 @@ function initPageFlip(container, totalPages) {
     bookEl.classList.add('is-ready');
     if (wrapper) wrapper.classList.add('is-ready');
 
+    // PageFlip dibuja un spread doble en landscape: la tapa queda en la
+    // mitad derecha del canvas y la contratapa en la izquierda. Para
+    // recentrar visualmente cuando solo una cara es visible, exponemos
+    // un CSS var con la mitad del ancho de página y dejamos que CSS
+    // aplique el translateX correspondiente. En portrait (móvil) el
+    // canvas ya muestra una sola página, así que el shift es 0.
+    function syncCoverShift() {
+        if (!wrapper) return;
+        let isLandscape = false;
+        try {
+            const ori = _flipInstance?.getOrientation?.();
+            isLandscape = ori === 'landscape';
+        } catch {}
+        wrapper.style.setProperty('--pf-cover-shift', isLandscape ? `${Math.round(maxW / 2)}px` : '0px');
+    }
+    syncCoverShift();
+    try {
+        _flipInstance.on('changeOrientation', syncCoverShift);
+    } catch {}
+
     function updateUI(pageIndex) {
         curLabel.textContent = pageIndex + 1;
         dots.forEach((d, i) => d.classList.toggle('is-active', i === pageIndex));

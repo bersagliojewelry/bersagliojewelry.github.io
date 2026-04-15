@@ -11420,24 +11420,31 @@ nav .logo-sub {
 
 /* ═══════════════════════════════════════════════════════════════
    LOOKBOOK V7 — CENTRADO REAL DEL LIBRO (FIX RAÍZ)
-   PageFlip se inicializa con size:'fixed', por lo que .stf__parent
-   tiene dimensiones exactas (maxW × maxH). Para centrarlo de verdad
-   en el área del libro, .pf-book debe ser shrink-to-fit en vez de
-   estirarse al 100% del .pf-book-area. Así el flexbox del wrapper
-   centra el bloque resultante de forma natural, tanto cuando solo
-   se ve la tapa/contratapa como cuando se ve el spread completo.
+   En modo landscape PageFlip dibuja un SPREAD doble (2×width):
+   la tapa va en la mitad derecha y la contratapa en la izquierda.
+   El canvas .stf__parent ya está centrado en .pf-book-area, pero
+   visualmente la tapa cerrada queda offset right por width/2.
+   Solución: cuando el wrapper está en is-cover-state / is-back-state
+   trasladamos el libro horizontalmente con translateX usando una
+   CSS variable --pf-cover-shift que el JS calcula tras init
+   (= maxW/2 en landscape, 0 en portrait). En portrait/móvil el
+   canvas muestra una sola página y no hace falta corrección.
    ═══════════════════════════════════════════════════════════════ */
-.lookbook-v7 .pf-book {
-    width: auto !important;
-    max-width: 100% !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    margin: 0 auto !important;
+.lookbook-v7 .pf-wrapper {
+    --pf-cover-shift: 0px;
 }
 
-.lookbook-v7 .pf-book .stf__parent {
-    margin: 0 auto !important;
+.lookbook-v7 .pf-book {
+    transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    will-change: transform;
+}
+
+.lookbook-v7 .pf-wrapper.is-cover-state .pf-book {
+    transform: translateX(calc(-1 * var(--pf-cover-shift))) !important;
+}
+
+.lookbook-v7 .pf-wrapper.is-back-state .pf-book {
+    transform: translateX(var(--pf-cover-shift)) !important;
 }
 
 /* ─── Anti-flash en refresh (Ctrl+Shift+R) ───────────────────────
@@ -11448,10 +11455,6 @@ nav .logo-sub {
    su canvas y los .pf-page originales ya no son necesarios. */
 .lookbook-v7 .pf-book:not(.is-ready) .pf-page {
     display: none !important;
-}
-
-.lookbook-v7 .pf-wrapper:not(.is-ready) .pf-book-area {
-    min-height: 60vh !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════

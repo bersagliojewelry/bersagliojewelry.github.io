@@ -337,6 +337,23 @@ function initPageFlip(container, totalPages) {
     }
 
     _flipInstance.on('flip', (e) => updateUI(e.data));
+
+    // Sincroniza el shift de centrado con la animación interna del libro.
+    // El evento 'flip' solo dispara al finalizar el flip; si esperamos a
+    // ese momento para soltar el translateX, el .pf-book pega un salto
+    // al final. Con changeState detectamos el INICIO del flip y quitamos
+    // las clases cover/back enseguida — así el translateX y la rotación
+    // de la página corren en paralelo y todo se ve fluido.
+    try {
+        _flipInstance.on('changeState', (e) => {
+            const state = e.data;
+            if (state && state !== 'read' && wrapper) {
+                wrapper.classList.remove('is-cover-state');
+                wrapper.classList.remove('is-back-state');
+            }
+        });
+    } catch {}
+
     updateUI(0);
 
     prevBtn.addEventListener('click', () => _flipInstance.flipPrev());

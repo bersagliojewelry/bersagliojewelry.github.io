@@ -11435,7 +11435,10 @@ nav .logo-sub {
 }
 
 .lookbook-v7 .pf-book {
-    transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    /* Duración igualada al flippingTime de PageFlip (600ms) para que
+       el deslizamiento del libro y la rotación de la página corran
+       juntos. Easing cinematográfico ease-in-out. */
+    transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1) !important;
     will-change: transform;
 }
 

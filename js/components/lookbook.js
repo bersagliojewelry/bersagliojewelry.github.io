@@ -295,7 +295,17 @@ function initPageFlip(container, totalPages) {
         startZIndex: 0,
         autoSize:    false,
         drawShadow:  true,
-        showPageCorners: true,
+        // Desactivado: el hover en las esquinas disparaba changeState y
+        // provocaba que el libro cerrado se desplazara a la derecha sin
+        // que el usuario hiciera click. Sin preview de esquina el libro
+        // queda siempre firme en su posición cuando está cerrado.
+        showPageCorners: false,
+        // Desactivamos la interacción por mouse (drag/arrastrar) para que
+        // el único driver del estado del libro sean los botones, dots y
+        // teclado. Así podemos snap-ear el translateX exactamente en el
+        // click (antes del flip) sin que un drag intermedio descoordine
+        // la posición con la coordenada cacheada por PageFlip.
+        useMouseEvents: false,
     });
 
     _flipInstance.loadFromHTML(bookEl.querySelectorAll('.pf-page'));
@@ -337,70 +347,59 @@ function initPageFlip(container, totalPages) {
         }
     }
 
-    // Tracked separately from updateUI because click handlers need to know
-    // the CURRENT page to decide whether to pre-apply the target cover/back
-    // state before triggering the flip animation (see below).
+    // Current page is tracked locally so click handlers know where they
+    // came from / where they're going.
     let _currentPage = 0;
-    // Set to true while a programmatic flip (button/dot/keyboard) is in
-    // progress so the changeState listener doesn't clobber the preset
-    // target state that the click handler applied pre-emptively.
-    let _buttonFlipInProgress = false;
 
     /**
-     * Pre-apply the cover/back state that corresponds to `targetPage`
-     * BEFORE calling PageFlip's flip methods. This makes the translateX
-     * of .pf-book animate in parallel with PageFlip's page rotation
-     * (instead of after it finishes, which caused a visible "jump" and
-     * a gap between the cover and the first spread page).
+     * Snap the wrapper state for `targetPage` BEFORE calling PageFlip's
+     * flip. Critical detail: the transform change must be applied
+     * SYNCHRONOUSLY (no CSS transition) so that when PageFlip starts its
+     * flip animation, it caches a stable rotation-axis position. If we
+     * let the transform transition during the flip, PageFlip's cached
+     * coordinate doesn't match the element's actual on-screen position
+     * — producing the visible gap/"cover detaching from the book" the
+     * user reported.
+     *
+     * Trade-off: the transform snap is visible as a tiny instant jump
+     * at click time. But it happens before the flip, at the moment of
+     * click, where the user perceives it as the click's "response" —
+     * not as mid-flip jank.
      */
-    function preflipStateFor(targetPage) {
-        if (!wrapper) return;
-        wrapper.classList.toggle('is-cover-state', targetPage === 0);
-        wrapper.classList.toggle('is-back-state',  targetPage === totalPages - 1);
-        _buttonFlipInProgress = true;
+    function flipTo(targetPage) {
+        if (!_flipInstance) return;
+        targetPage = Math.max(0, Math.min(totalPages - 1, targetPage));
+        if (targetPage === _currentPage) return;
+
+        if (wrapper) {
+            // Disable transition for this single class change so the
+            // transform snaps instantly instead of animating.
+            const prevTransition = bookEl.style.transition;
+            bookEl.style.transition = 'none';
+            wrapper.classList.toggle('is-cover-state', targetPage === 0);
+            wrapper.classList.toggle('is-back-state',  targetPage === totalPages - 1);
+            // Force the browser to commit the transform before PageFlip
+            // reads any layout metrics.
+            void bookEl.offsetHeight;
+            // Restore the original transition declaration (empty string
+            // means "fall back to the stylesheet value").
+            bookEl.style.transition = prevTransition;
+        }
+
+        _flipInstance.flip(targetPage);
     }
 
-    _flipInstance.on('flip', (e) => {
-        _buttonFlipInProgress = false;
-        updateUI(e.data);
-    });
-
-    // During a DRAG flip (user folds a corner) we don't get a preflip
-    // call, so rely on changeState to keep the book at its natural center
-    // while the user is dragging. On the 'read' state the flip event will
-    // have fired and updateUI will have applied the correct final class.
-    try {
-        _flipInstance.on('changeState', (e) => {
-            const state = e.data;
-            if (state === 'read') {
-                _buttonFlipInProgress = false;
-                return;
-            }
-            if (_buttonFlipInProgress) return;
-            if (state && wrapper) {
-                wrapper.classList.remove('is-cover-state');
-                wrapper.classList.remove('is-back-state');
-            }
-        });
-    } catch {}
+    _flipInstance.on('flip', (e) => updateUI(e.data));
 
     updateUI(0);
 
-    prevBtn.addEventListener('click', () => {
-        preflipStateFor(Math.max(0, _currentPage - 1));
-        _flipInstance.flipPrev();
-    });
-    nextBtn.addEventListener('click', () => {
-        preflipStateFor(Math.min(totalPages - 1, _currentPage + 1));
-        _flipInstance.flipNext();
-    });
+    prevBtn.addEventListener('click', () => flipTo(_currentPage - 1));
+    nextBtn.addEventListener('click', () => flipTo(_currentPage + 1));
 
     // Dot navigation — quick jump to any page
     dots.forEach(dot => {
         dot.addEventListener('click', () => {
-            const target = parseInt(dot.dataset.page, 10);
-            preflipStateFor(target);
-            _flipInstance.flip(target);
+            flipTo(parseInt(dot.dataset.page, 10));
         });
     });
 
@@ -410,13 +409,7 @@ function initPageFlip(container, totalPages) {
         const rect = bookEl.getBoundingClientRect();
         const inView = rect.top < window.innerHeight && rect.bottom > 0;
         if (!inView) return;
-        if (e.key === 'ArrowRight') {
-            preflipStateFor(Math.min(totalPages - 1, _currentPage + 1));
-            _flipInstance.flipNext();
-        }
-        if (e.key === 'ArrowLeft') {
-            preflipStateFor(Math.max(0, _currentPage - 1));
-            _flipInstance.flipPrev();
-        }
+        if (e.key === 'ArrowRight') flipTo(_currentPage + 1);
+        if (e.key === 'ArrowLeft')  flipTo(_currentPage - 1);
     });
 }

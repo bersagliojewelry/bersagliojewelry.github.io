@@ -11435,10 +11435,14 @@ nav .logo-sub {
 }
 
 .lookbook-v7 .pf-book {
-    /* Duración igualada al flippingTime de PageFlip (600ms) para que
-       el deslizamiento del libro y la rotación de la página corran
-       juntos. Easing cinematográfico ease-in-out. */
-    transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1) !important;
+    /* NO transition on transform: PageFlip caches the rotation axis
+       coordinate when the flip animation starts, so any mid-flip
+       translate of .pf-book desynchronizes the rendered rotating page
+       from the static pages (producing a visible gap that looks like
+       the cover detaching from the book). Instead the JS layer snaps
+       the transform synchronously at click time (see flipTo() in
+       lookbook.js). The tiny instant shift at click is imperceptible
+       compared to mid-flip jank. */
     will-change: transform;
 }
 

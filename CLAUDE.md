@@ -612,10 +612,44 @@ Tres bugs reportados:
   - Listener `changeState` que detecta el **inicio** del flip (`'flipping'` / `'user_fold'` / `'fold_corner'`) y quita `is-cover-state` / `is-back-state` enseguida. El `.pf-book` empieza a deslizarse al centro **en paralelo** con la rotación de la página.
   - Transición CSS de `transform` aumentada de `0.45s` a `0.6s` (igualada al `flippingTime: 600` de PageFlip) con easing `cubic-bezier(0.65, 0, 0.35, 1)` para que ambos movimientos terminen juntos y se vean cinematográficos.
 
+### 2026-04-15 — Lookbook V7: fix "stuck at page 2" + gap real (audit completo)
+**Archivos:** `js/components/lookbook.js`, `css/style.css`
+
+**Dos bugs reportados tras `f804504`:**
+1. **Libro atascado en página 2** — ni los botones ni drag avanzaban más allá del primer spread tras abrir la tapa.
+2. **Gap al abrir/cerrar** — seguía visible el salto "la tapa se despega del libro".
+
+**Audit + root causes:**
+
+1. **Stuck bug.** `flipTo()` llamaba `_flipInstance.flip(_currentPage + 1)`. En landscape+showCover el evento `flip` dispara con el índice de la página derecha del nuevo spread: tras la primera apertura, `_currentPage = 2`. Entonces `flipTo(3)` llama `flip(3)`, pero la página 3 es la izquierda del siguiente spread y PageFlip no normaliza correctamente un target mid-spread → el libro queda congelado. La API nativa `flipNext()` / `flipPrev()` sí respeta los límites de spread.
+
+2. **Gap real.** El intento anterior (`f804504`) snapeaba el transform sin transición al momento del click, confiando en que PageFlip cacheaba el eje de rotación. En realidad lo que el usuario percibía como "gap" era el **salto instantáneo** del libro de `translateX(-maxW/2)` a `0` al momento del click — visible medio frame antes de que la rotación empezara. El único fix robusto es animar el shift **en paralelo con la rotación**, con mismo duration y easing, y aplicar la clase ANTES de llamar a `flipNext()`.
+
+**Cambios:**
+
+**`lookbook.js`:**
+- Eliminado `flipTo()` con el hack `transition: none` + reflow forzado.
+- Nuevas funciones `goNext()` / `goPrev()` / `goTo()`:
+  - `goNext` / `goPrev` usan `_flipInstance.flipNext()` / `flipPrev()` nativos (fix del stuck bug).
+  - `predictNextState()` / `predictPrevState()` calculan si el destino del flip será `is-cover-state` / `is-back-state` basándose en `_currentPage` y las reglas de spread (cover ↔ primer spread usa páginas 1-2, back ↔ último spread usa páginas `totalPages-3` y `-2`).
+  - `applyState()` togglea ambas clases en el wrapper ANTES de disparar el flip → el CSS transition del transform arranca al mismo tiempo que la rotación.
+- `goTo()` (dots) usa `flip(target)` directo pero sólo con target explícito (dots nunca clickean mid-spread).
+- Listener `changeState` (`'flipping'` / `'user_fold'`) como safety net para drags: al iniciar un flip desde cover/back quita la clase para que el shift también anime.
+- `updateUI()` reduced a reconciliación final (desde el evento `flip`) — cualquier desincronización por predicción fallida se arregla al terminar la animación.
+- `useMouseEvents` vuelto a `true` — ahora que el listener `changeState` cubre el caso drag, se puede dejar que el usuario arrastre las páginas.
+
+**`style.css`:**
+- `.lookbook-v7 .pf-book` recupera `transition: transform 0.6s cubic-bezier(0.645, 0.045, 0.355, 1)` (ease-in-out-cubic, aproxima la curva interna de StPageFlip). El slide y la rotación arrancan y terminan juntos → sin salto, sin gap.
+
+**Validación antes de commit:** `node --check js/components/lookbook.js` + `npx vite build` corriendo limpios.
+
 **REGLAS LOOKBOOK V7 (NO TOCAR):**
 - PageFlip se inicializa con `size: 'fixed'` + `autoSize: false` — no volver a `'stretch'`.
 - El `--pf-cover-shift` se calcula en JS según orientación, NO hardcodear en CSS.
-- El listener `changeState` es lo que hace que el centrado se vea fluido — no removerlo.
-- La transición de `transform` en `.pf-book` debe ser **`0.6s`** para coincidir con `flippingTime`. Si se cambia uno, cambiar el otro.
+- **Nunca** usar `_flipInstance.flip(_currentPage + 1)` para next/prev — usar **`flipNext()` / `flipPrev()` nativos**. `flip(target)` solo se usa con targets explícitos (dots).
+- La predicción de `is-cover-state` / `is-back-state` debe aplicarse ANTES del call a flipNext/flipPrev para que el CSS transition y la rotación arranquen sincronizadas.
+- El listener `changeState` cubre drags — si se remueve, los flips iniciados por arrastre muestran otra vez el salto post-animación.
+- La transición CSS de `transform` en `.pf-book` debe ser **`0.6s`** para coincidir con `flippingTime: 600`. Si se cambia uno, cambiar el otro.
 - Móvil (`vw < 768`) y desktop tienen fórmulas de dimensión distintas — no unificar.
 - Lazy init con IntersectionObserver es crítico para móvil — no quitar.
+- `useMouseEvents: true` + `showPageCorners: false` es la combinación correcta: drag sí, hover-peek no (el hover-peek era la causa del "libro se mueve solo con el mouse").

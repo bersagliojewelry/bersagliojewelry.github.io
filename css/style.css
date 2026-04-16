@@ -11435,14 +11435,16 @@ nav .logo-sub {
 }
 
 .lookbook-v7 .pf-book {
-    /* NO transition on transform: PageFlip caches the rotation axis
-       coordinate when the flip animation starts, so any mid-flip
-       translate of .pf-book desynchronizes the rendered rotating page
-       from the static pages (producing a visible gap that looks like
-       the cover detaching from the book). Instead the JS layer snaps
-       the transform synchronously at click time (see flipTo() in
-       lookbook.js). The tiny instant shift at click is imperceptible
-       compared to mid-flip jank. */
+    /* Animamos el translateX EN PARALELO con la rotación de PageFlip
+       (flippingTime: 600ms). El JS aplica/quita is-cover-state y
+       is-back-state AL INICIO del flip (click handlers + changeState
+       listener para drag), de modo que la transición del transform
+       y la rotación de la hoja empiezan y terminan juntas. El easing
+       cubic-bezier(0.645, 0.045, 0.355, 1) = "ease-in-out-cubic"
+       aproxima muy de cerca la curva interna de StPageFlip, evitando
+       cualquier desincronización perceptible entre el libro que
+       desliza al centro y la portada que rota. */
+    transition: transform 0.6s cubic-bezier(0.645, 0.045, 0.355, 1);
     will-change: transform;
 }
 

@@ -209,7 +209,7 @@ export function renderLookbook() {
     const dots = pages.map((_, i) => `<button class="pf-dot ${i === 0 ? 'is-active' : ''}" data-page="${i}" aria-label="Ir a página ${i + 1}"></button>`).join('');
 
     container.innerHTML = `
-        <div class="pf-wrapper is-cover-state">
+        <div class="pf-wrapper">
             <button class="pf-side-btn pf-side-prev" aria-label="Página anterior">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="15,18 9,12 15,6"/></svg>
             </button>
@@ -308,102 +308,24 @@ function initPageFlip(container, totalPages) {
     });
 
     _flipInstance.loadFromHTML(bookEl.querySelectorAll('.pf-page'));
-    // Mark book as ready so the CSS guard that hides raw .pf-page elements
-    // can release them — by now PageFlip has built its canvas.
     bookEl.classList.add('is-ready');
     if (wrapper) wrapper.classList.add('is-ready');
 
-    // PageFlip dibuja un spread doble en landscape: la tapa queda en la
-    // mitad derecha del canvas y la contratapa en la izquierda. Para
-    // recentrar visualmente cuando solo una cara es visible, exponemos
-    // un CSS var con la mitad del ancho de página y dejamos que CSS
-    // aplique el translateX correspondiente. En portrait (móvil) el
-    // canvas ya muestra una sola página, así que el shift es 0.
-    function syncCoverShift() {
-        if (!wrapper) return;
-        let isLandscape = false;
-        try {
-            const ori = _flipInstance?.getOrientation?.();
-            isLandscape = ori === 'landscape';
-        } catch {}
-        wrapper.style.setProperty('--pf-cover-shift', isLandscape ? `${Math.round(maxW / 2)}px` : '0px');
-    }
-    syncCoverShift();
-    try {
-        _flipInstance.on('changeOrientation', syncCoverShift);
-    } catch {}
-
-    // Current page is tracked locally so handlers can predict destination
-    // classes and drive flipNext/flipPrev correctly.
     let _currentPage = 0;
 
-    /**
-     * Sync the wrapper state classes from a given page index. This is the
-     * authoritative reconciliation — called from the `flip` event at the
-     * end of every animation, so even drag-initiated flips end up with
-     * the right classes.
-     */
     function updateUI(pageIndex) {
         _currentPage = pageIndex;
         curLabel.textContent = pageIndex + 1;
         dots.forEach((d, i) => d.classList.toggle('is-active', i === pageIndex));
-        if (wrapper) {
-            wrapper.classList.toggle('is-cover-state', pageIndex === 0);
-            wrapper.classList.toggle('is-back-state',  pageIndex === totalPages - 1);
-        }
-    }
-
-    /**
-     * Apply the predicted cover/back state BEFORE starting a flip. This is
-     * what makes the horizontal re-center animate IN PARALLEL with the
-     * page rotation: we toggle the class at click time and CSS transitions
-     * the transform over `flippingTime` (600ms) with a matching easing.
-     *
-     * The gap previously reported ("cover detaching from book") was caused
-     * by either (a) the class changing AFTER the flip completed — producing
-     * a 2-phase rotate-then-slide — or (b) an instant snap at click time
-     * producing a visible jump. Animating in parallel is the only way the
-     * slide and the rotation look like a single cohesive motion.
-     */
-    function predictNextState() {
-        // Leaving cover? Always.
-        if (_currentPage === 0) return { cover: false, back: false };
-        // One spread before the back cover → flipNext lands on back.
-        // In landscape+showCover spreads are pairs; the right page of
-        // the last non-cover spread is totalPages-2, left page is -3.
-        if (_currentPage === totalPages - 2 || _currentPage === totalPages - 3) {
-            return { cover: false, back: true };
-        }
-        return { cover: false, back: false };
-    }
-
-    function predictPrevState() {
-        if (_currentPage === totalPages - 1) return { cover: false, back: false };
-        // First spread after cover is pages [1,2]. flipPrev from either
-        // lands on cover (page 0).
-        if (_currentPage === 1 || _currentPage === 2) {
-            return { cover: true, back: false };
-        }
-        return { cover: false, back: false };
-    }
-
-    function applyState(state) {
-        if (!wrapper) return;
-        wrapper.classList.toggle('is-cover-state', state.cover);
-        wrapper.classList.toggle('is-back-state',  state.back);
     }
 
     function goNext() {
-        if (!_flipInstance) return;
-        if (_currentPage >= totalPages - 1) return;
-        applyState(predictNextState());
+        if (!_flipInstance || _currentPage >= totalPages - 1) return;
         _flipInstance.flipNext();
     }
 
     function goPrev() {
-        if (!_flipInstance) return;
-        if (_currentPage <= 0) return;
-        applyState(predictPrevState());
+        if (!_flipInstance || _currentPage <= 0) return;
         _flipInstance.flipPrev();
     }
 
@@ -411,30 +333,10 @@ function initPageFlip(container, totalPages) {
         if (!_flipInstance) return;
         target = Math.max(0, Math.min(totalPages - 1, target));
         if (target === _currentPage) return;
-        applyState({
-            cover: target === 0,
-            back:  target === totalPages - 1,
-        });
         _flipInstance.flip(target);
     }
 
     _flipInstance.on('flip', (e) => updateUI(e.data));
-
-    // changeState fires at the START of a flip — critical for drag
-    // interactions which bypass our button handlers. If the user grabs
-    // the cover and starts flipping, this peels the is-cover-state class
-    // off so the shift starts animating in parallel with the rotation.
-    _flipInstance.on('changeState', (e) => {
-        const st = e.data;
-        if (st !== 'flipping' && st !== 'user_fold') return;
-        if (!wrapper) return;
-        if (_currentPage === 0 && wrapper.classList.contains('is-cover-state')) {
-            wrapper.classList.remove('is-cover-state');
-        }
-        if (_currentPage === totalPages - 1 && wrapper.classList.contains('is-back-state')) {
-            wrapper.classList.remove('is-back-state');
-        }
-    });
 
     updateUI(0);
 

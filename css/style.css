@@ -11419,40 +11419,14 @@ nav .logo-sub {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   LOOKBOOK V7 — CENTRADO REAL DEL LIBRO (FIX RAÍZ)
-   En modo landscape PageFlip dibuja un SPREAD doble (2×width):
-   la tapa va en la mitad derecha y la contratapa en la izquierda.
-   El canvas .stf__parent ya está centrado en .pf-book-area, pero
-   visualmente la tapa cerrada queda offset right por width/2.
-   Solución: cuando el wrapper está en is-cover-state / is-back-state
-   trasladamos el libro horizontalmente con translateX usando una
-   CSS variable --pf-cover-shift que el JS calcula tras init
-   (= maxW/2 en landscape, 0 en portrait). En portrait/móvil el
-   canvas muestra una sola página y no hace falta corrección.
+   LOOKBOOK V7 — LIBRO ESTABLE (SIN SHIFT)
+   El cover y back se quedan en su posición natural dentro del
+   spread de PageFlip. No se aplica ningún translateX al contenedor
+   .pf-book — esto elimina el gap que se producía al abrir/cerrar
+   la portada cuando el shift se desincronizaba con la rotación.
    ═══════════════════════════════════════════════════════════════ */
-.lookbook-v7 .pf-wrapper {
-    --pf-cover-shift: 0px;
-}
-
 .lookbook-v7 .pf-book {
-    /* Animamos el translateX EN PARALELO con la rotación de PageFlip
-       (flippingTime: 600ms). StPageFlip internamente anima con
-       interpolación lineal a través de su frame array (cada frame
-       avanza el mismo delta de posición). Para que el slide del libro
-       y la rotación de la página estén sincronizados en CADA frame,
-       el easing CSS también debe ser lineal. Cualquier curva (ease,
-       ease-in-out) produce desincronización visible a mitad del
-       flip — el famoso "gap de medio centímetro". */
-    transition: transform 0.6s linear;
     will-change: transform;
-}
-
-.lookbook-v7 .pf-wrapper.is-cover-state .pf-book {
-    transform: translateX(calc(-1 * var(--pf-cover-shift))) !important;
-}
-
-.lookbook-v7 .pf-wrapper.is-back-state .pf-book {
-    transform: translateX(var(--pf-cover-shift)) !important;
 }
 
 /* ─── Spine strip — elimina gap visible entre páginas del spread ──
@@ -11479,10 +11453,8 @@ nav .logo-sub {
     pointer-events: none;
 }
 
-.lookbook-v7 .pf-wrapper.is-cover-state .stf__block::after,
-.lookbook-v7 .pf-wrapper.is-back-state .stf__block::after {
-    display: none;
-}
+/* Spine strip visible en todos los estados — sin shift ya no hay
+   cover/back state que necesite ocultarlo */
 
 /* ─── Anti-flash en refresh (Ctrl+Shift+R) ───────────────────────
    Antes de que PageFlip procese loadFromHTML, los .pf-page del

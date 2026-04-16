@@ -661,3 +661,11 @@ Tres bugs reportados:
 - **Root cause:** StPageFlip internamente anima con interpolación **lineal** (avanza cada frame el mismo delta de posición vía un array pre-computado de puntos). El CSS usaba `cubic-bezier(0.645, 0.045, 0.355, 1)` (ease-in-out-cubic) que tiene una curva S — a mitad del flip la rotación iba al ~50% pero el slide iba al ~35%, produciendo un desfase visible de medio centímetro.
 - **Fix:** Cambiado el easing CSS de `cubic-bezier(0.645, 0.045, 0.355, 1)` a `linear`. Ahora el slide horizontal y la rotación de la página avanzan al mismo ritmo en cada frame → gap eliminado.
 - **Nota:** El easing `linear` se siente natural porque el movimiento dominante es la rotación de la página (llamativo y suave). El slide horizontal es secundario (~150-200px) y pasa desapercibido como "lineal".
+
+### 2026-04-16 — Lookbook V7: spine strip para gap entre páginas del spread
+**Archivos:** `css/style.css`
+
+- **Síntoma:** gap visible (franja del fondo verde oscuro) entre la página izquierda y derecha de cada spread en reposo. Presente en TODOS los spreads, no solo al abrir/cerrar la portada. El problema era completamente distinto al gap de la animación del shift.
+- **Root cause:** StPageFlip en HTML mode posiciona las páginas con `left: Npx` y `width: Npx` calculados desde `boundsRect`. Deberían estar flush (sin espacio), pero en la práctica queda un gap visible causado por: (1) subpixel rendering cuando `getBlockWidth()` es impar (centerX tiene decimales), (2) `perspective: 2000px` en `.stf__block` que afecta el rasterizado 3D de los `.stf__item` con `transform-style: preserve-3d`, (3) diferencias de redondeo entre navegadores.
+- **Fix:** Pseudo-elemento `::after` en `.stf__block` que funciona como "spine strip" — una franja vertical de 12px del color de las páginas (`#faf8f3`) centrada exactamente en el lomo del libro (`left: 50%; transform: translateX(-50%)`). Z-index 0 (detrás de las páginas que usan z-index 1+). Se oculta automáticamente en `is-cover-state` / `is-back-state` (cuando solo hay una página visible y no existe lomo).
+- **Nota:** Este es un fix visual (cosmético), no estructural. La causa raíz está dentro del renderizado interno de StPageFlip que no podemos modificar. El spine strip es la misma técnica usada en editores de PDF y eReaders para ocultar artefactos de renderizado en el lomo del libro.

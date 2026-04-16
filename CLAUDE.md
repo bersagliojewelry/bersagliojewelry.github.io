@@ -653,3 +653,11 @@ Tres bugs reportados:
 - Móvil (`vw < 768`) y desktop tienen fórmulas de dimensión distintas — no unificar.
 - Lazy init con IntersectionObserver es crítico para móvil — no quitar.
 - `useMouseEvents: true` + `showPageCorners: false` es la combinación correcta: drag sí, hover-peek no (el hover-peek era la causa del "libro se mueve solo con el mouse").
+
+### 2026-04-16 — Lookbook V7: eliminar gap residual (easing mismatch)
+**Archivos:** `css/style.css`
+
+- **Síntoma:** tras el fix anterior, quedaba un gap pequeño (~0.5cm) durante la apertura/cierre del libro.
+- **Root cause:** StPageFlip internamente anima con interpolación **lineal** (avanza cada frame el mismo delta de posición vía un array pre-computado de puntos). El CSS usaba `cubic-bezier(0.645, 0.045, 0.355, 1)` (ease-in-out-cubic) que tiene una curva S — a mitad del flip la rotación iba al ~50% pero el slide iba al ~35%, produciendo un desfase visible de medio centímetro.
+- **Fix:** Cambiado el easing CSS de `cubic-bezier(0.645, 0.045, 0.355, 1)` a `linear`. Ahora el slide horizontal y la rotación de la página avanzan al mismo ritmo en cada frame → gap eliminado.
+- **Nota:** El easing `linear` se siente natural porque el movimiento dominante es la rotación de la página (llamativo y suave). El slide horizontal es secundario (~150-200px) y pasa desapercibido como "lineal".

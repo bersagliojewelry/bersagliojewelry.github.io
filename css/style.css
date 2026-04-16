@@ -11436,15 +11436,14 @@ nav .logo-sub {
 
 .lookbook-v7 .pf-book {
     /* Animamos el translateX EN PARALELO con la rotación de PageFlip
-       (flippingTime: 600ms). El JS aplica/quita is-cover-state y
-       is-back-state AL INICIO del flip (click handlers + changeState
-       listener para drag), de modo que la transición del transform
-       y la rotación de la hoja empiezan y terminan juntas. El easing
-       cubic-bezier(0.645, 0.045, 0.355, 1) = "ease-in-out-cubic"
-       aproxima muy de cerca la curva interna de StPageFlip, evitando
-       cualquier desincronización perceptible entre el libro que
-       desliza al centro y la portada que rota. */
-    transition: transform 0.6s cubic-bezier(0.645, 0.045, 0.355, 1);
+       (flippingTime: 600ms). StPageFlip internamente anima con
+       interpolación lineal a través de su frame array (cada frame
+       avanza el mismo delta de posición). Para que el slide del libro
+       y la rotación de la página estén sincronizados en CADA frame,
+       el easing CSS también debe ser lineal. Cualquier curva (ease,
+       ease-in-out) produce desincronización visible a mitad del
+       flip — el famoso "gap de medio centímetro". */
+    transition: transform 0.6s linear;
     will-change: transform;
 }
 

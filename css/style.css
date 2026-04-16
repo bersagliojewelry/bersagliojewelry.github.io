@@ -11455,6 +11455,35 @@ nav .logo-sub {
     transform: translateX(var(--pf-cover-shift)) !important;
 }
 
+/* ─── Spine strip — elimina gap visible entre páginas del spread ──
+   StPageFlip posiciona las páginas izq/der con `left: Npx` y
+   deberían estar flush, pero en la práctica queda una franja
+   delgada del fondo oscuro visible en el lomo (centro del spread)
+   debido a subpixel rendering, perspective:2000px en .stf__block,
+   y diferencias de redondeo entre navegadores.
+
+   Fix: pseudo-elemento del color de las páginas (#faf8f3) en el
+   centro exacto de .stf__block, detrás de las páginas (z-index:0,
+   páginas en z-index:1+). Cubre cualquier gap de hasta 12px.
+   Se oculta en cover/back state (solo 1 página visible). */
+.lookbook-v7 .stf__block::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 12px;
+    transform: translateX(-50%);
+    background: #faf8f3;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.lookbook-v7 .pf-wrapper.is-cover-state .stf__block::after,
+.lookbook-v7 .pf-wrapper.is-back-state .stf__block::after {
+    display: none;
+}
+
 /* ─── Anti-flash en refresh (Ctrl+Shift+R) ───────────────────────
    Antes de que PageFlip procese loadFromHTML, los .pf-page del
    markup quedan visibles a tamaño completo y producen un "flash"

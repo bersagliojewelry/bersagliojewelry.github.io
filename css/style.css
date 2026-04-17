@@ -10564,29 +10564,33 @@ nav .logo-sub {
 
 
 /* ═══════════════════════════════════════════════════════════════
-   PORTFOLIO V5 — CSS SLIDER (reemplaza StPageFlip)
-   Slider puro CSS con translateX. Sin dependencias externas.
-   Centrado, ocupa máximo ancho horizontal, responsive.
+   PORTFOLIO V6 — DARK LUXURY SHOWCASE
+   Dark bg + object-fit:contain = each piece fully visible.
+   2 pieces per slide, premium gold accents, editorial typography.
    ═══════════════════════════════════════════════════════════════ */
 
 /* ─── Viewport ────────────────────────────────────────────────── */
 .lb-viewport {
     position: relative;
     width: 100%;
-    max-width: min(1100px, 92vw);
+    max-width: min(1200px, 94vw);
     margin: 0 auto;
-    aspect-ratio: 4 / 3;
-    max-height: 70vh;
+    aspect-ratio: 16 / 9;
+    max-height: 75vh;
     overflow: hidden;
-    border-radius: 2px;
-    border: 1px solid rgba(201,169,110, 0.12);
-    background: #faf8f3;
+    background: linear-gradient(160deg, #0c1610 0%, #070d09 50%, #0a1510 100%);
+    border: 1px solid rgba(201,169,110, 0.1);
 }
 
 @media (min-width: 1024px) {
     .lb-viewport {
-        aspect-ratio: 16 / 10;
-        max-height: 72vh;
+        max-height: 78vh;
+    }
+}
+
+@media (min-width: 1600px) {
+    .lb-viewport {
+        max-width: 1400px;
     }
 }
 
@@ -10594,7 +10598,7 @@ nav .logo-sub {
 .lb-track {
     display: flex;
     height: 100%;
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
     will-change: transform;
 }
 
@@ -10612,84 +10616,94 @@ nav .logo-sub {
 /* ─── Cover & Back ────────────────────────────────────────────── */
 .lb-slide--cover,
 .lb-slide--back {
-    background: linear-gradient(160deg, #1a1814 0%, #0e0d0b 100%);
+    background: linear-gradient(160deg, #0e1a14 0%, #060d09 40%, #0a1510 100%);
 }
 
 .lb-slide__inner {
     text-align: center;
-    padding: 40px 24px;
+    padding: 48px 32px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
 }
 
-.lb-accent {
-    width: 40px;
+.lb-cover-diamond {
+    width: 48px;
+    height: 48px;
+    color: rgba(201,169,110, 0.4);
+    margin-bottom: 8px;
+}
+
+.lb-cover-diamond svg {
+    width: 100%;
+    height: 100%;
+}
+
+.lb-cover-line {
+    width: 60px;
     height: 1px;
-    background: var(--gold, #c8a96e);
-    opacity: 0.5;
+    background: linear-gradient(90deg, transparent, rgba(201,169,110, 0.5), transparent);
 }
 
 .lb-eyebrow {
     font-family: var(--font-body, 'Montserrat', sans-serif);
     font-size: 10px;
     font-weight: 500;
-    letter-spacing: 4px;
+    letter-spacing: 5px;
     text-transform: uppercase;
     color: var(--gold, #c8a96e);
-    opacity: 0.7;
+    opacity: 0.6;
 }
 
 .lb-cover-title {
     font-family: var(--font-display, 'Cormorant Garamond', serif);
-    font-size: clamp(28px, 5vw, 52px);
+    font-size: clamp(32px, 5.5vw, 60px);
     font-weight: 300;
     color: #f5f0e8;
-    line-height: 1.15;
-    letter-spacing: 2px;
-    margin: 8px 0;
+    line-height: 1.1;
+    letter-spacing: 3px;
+    margin: 0;
+}
+
+.lb-cover-sub {
+    font-family: var(--font-body, 'Montserrat', sans-serif);
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: rgba(245,240,232, 0.3);
 }
 
 .lb-year {
     font-family: var(--font-body, 'Montserrat', sans-serif);
     font-size: 11px;
-    font-weight: 400;
-    letter-spacing: 6px;
-    color: rgba(201,169,110, 0.5);
-}
-
-.lb-tagline {
-    font-family: var(--font-body, 'Montserrat', sans-serif);
-    font-size: 9px;
-    font-weight: 400;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: rgba(245,240,232, 0.35);
-    margin: 0;
+    font-weight: 300;
+    letter-spacing: 8px;
+    color: rgba(201,169,110, 0.35);
 }
 
 .lb-back-brand {
     font-family: var(--font-display, 'Cormorant Garamond', serif);
-    font-size: clamp(20px, 3.5vw, 32px);
+    font-size: clamp(22px, 3.5vw, 36px);
     font-weight: 300;
     color: #f5f0e8;
-    letter-spacing: 3px;
+    letter-spacing: 4px;
 }
 
 .lb-back-url {
     font-family: var(--font-body, 'Montserrat', sans-serif);
     font-size: 11px;
-    color: rgba(201,169,110, 0.6);
-    letter-spacing: 2px;
+    color: rgba(201,169,110, 0.5);
+    letter-spacing: 3px;
     margin: 0;
 }
 
 .lb-back-cta {
     display: inline-block;
-    margin-top: 8px;
-    padding: 12px 32px;
-    border: 1px solid rgba(201,169,110, 0.35);
+    margin-top: 12px;
+    padding: 14px 40px;
+    border: 1px solid rgba(201,169,110, 0.3);
     color: var(--gold, #c8a96e);
     font-family: var(--font-body, 'Montserrat', sans-serif);
     font-size: 10px;
@@ -10697,76 +10711,18 @@ nav .logo-sub {
     letter-spacing: 3px;
     text-transform: uppercase;
     text-decoration: none;
-    transition: all 0.3s ease;
+    transition: all 0.4s ease;
 }
 
 .lb-back-cta:hover {
-    background: rgba(201,169,110, 0.1);
+    background: rgba(201,169,110, 0.08);
     border-color: var(--gold, #c8a96e);
-}
-
-/* ─── Collection Intro ────────────────────────────────────────── */
-.lb-slide--intro {
-    background: #faf8f3;
-}
-
-.lb-intro__inner {
-    text-align: center;
-    padding: 40px 32px;
-    max-width: 520px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-}
-
-.lb-intro-ornament {
-    font-size: 14px;
-    color: var(--gold, #c8a96e);
-    opacity: 0.6;
-}
-
-.lb-intro-title {
-    font-family: var(--font-display, 'Cormorant Garamond', serif);
-    font-size: clamp(24px, 4vw, 42px);
-    font-weight: 400;
-    color: #1a1814;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    margin: 0;
-}
-
-.lb-intro-sub {
-    font-family: var(--font-display, 'Cormorant Garamond', serif);
-    font-size: clamp(14px, 2vw, 18px);
-    font-style: italic;
-    color: #8a7a5a;
-    font-weight: 400;
-}
-
-.lb-intro-desc {
-    font-family: var(--font-body, 'Montserrat', sans-serif);
-    font-size: 12px;
-    line-height: 1.8;
-    color: #6a6050;
-    max-width: 400px;
-    margin: 0;
-}
-
-.lb-intro-count {
-    font-family: var(--font-body, 'Montserrat', sans-serif);
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--gold, #c8a96e);
-    opacity: 0.7;
-    margin-top: 8px;
+    box-shadow: 0 0 30px rgba(201,169,110, 0.08);
 }
 
 /* ─── Gallery ─────────────────────────────────────────────────── */
 .lb-slide--gallery {
-    background: #faf8f3;
+    background: linear-gradient(160deg, #0c1610 0%, #070d09 50%, #0a1510 100%);
 }
 
 .lb-gallery__inner {
@@ -10774,16 +10730,16 @@ nav .logo-sub {
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 20px 24px;
+    padding: 20px 28px 16px;
     box-sizing: border-box;
 }
 
 .lb-gallery-header {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
-    padding-bottom: 12px;
-    border-bottom: 1px solid rgba(160,140,100, 0.1);
+    align-items: center;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(201,169,110, 0.08);
     margin-bottom: 16px;
     flex-shrink: 0;
 }
@@ -10792,44 +10748,48 @@ nav .logo-sub {
     font-family: var(--font-body, 'Montserrat', sans-serif);
     font-size: 10px;
     font-weight: 600;
-    letter-spacing: 3px;
+    letter-spacing: 4px;
     text-transform: uppercase;
-    color: #4a4030;
+    color: rgba(201,169,110, 0.7);
 }
 
 .lb-gallery-pag {
     font-family: var(--font-body, 'Montserrat', sans-serif);
     font-size: 10px;
-    color: #a09080;
-    letter-spacing: 1px;
+    color: rgba(245,240,232, 0.25);
+    letter-spacing: 2px;
 }
 
 .lb-gallery-grid {
     flex: 1;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(2, 1fr);
-    gap: 12px;
+    gap: 16px;
     min-height: 0;
 }
 
-.lb-grid-1 { grid-template-columns: 1fr; grid-template-rows: 1fr; }
-.lb-grid-2 { grid-template-columns: repeat(2, 1fr); grid-template-rows: 1fr; }
-.lb-grid-3 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); }
+.lb-grid-1 {
+    grid-template-columns: 1fr;
+    max-width: 55%;
+    margin: 0 auto;
+    width: 100%;
+}
 
 /* ─── Piece card ──────────────────────────────────────────────── */
 .lb-piece {
     display: flex;
     flex-direction: column;
-    border: 1px solid rgba(160,140,100, 0.1);
+    border: 1px solid rgba(201,169,110, 0.06);
     text-decoration: none;
     overflow: hidden;
-    transition: border-color 0.3s ease;
+    transition: border-color 0.4s ease, box-shadow 0.4s ease;
     min-height: 0;
+    background: rgba(10,20,14, 0.5);
 }
 
 .lb-piece:hover {
-    border-color: rgba(201,169,110, 0.35);
+    border-color: rgba(201,169,110, 0.25);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.3), 0 0 20px rgba(201,169,110, 0.04);
 }
 
 .lb-piece-img {
@@ -10839,29 +10799,38 @@ nav .logo-sub {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f0ece4;
+    background: linear-gradient(180deg, #111a15 0%, #0d140f 100%);
+    padding: 16px;
 }
 
 .lb-piece-img img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    transition: transform 0.5s ease;
+    object-fit: contain;
+    transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    filter: drop-shadow(0 4px 20px rgba(0,0,0,0.4));
 }
 
 .lb-piece:hover .lb-piece-img img {
-    transform: scale(1.04);
+    transform: scale(1.06);
 }
 
 .lb-piece-empty {
-    width: 40px;
-    height: 40px;
-    color: rgba(160,140,100, 0.25);
+    width: 48px;
+    height: 48px;
+    color: rgba(201,169,110, 0.15);
+}
+
+.lb-piece-empty svg {
+    width: 100%;
+    height: 100%;
 }
 
 .lb-piece-info {
-    padding: 8px 10px;
+    padding: 12px 16px;
     flex-shrink: 0;
+    border-top: 1px solid rgba(201,169,110, 0.06);
+    background: rgba(8,14,10, 0.6);
 }
 
 .lb-piece-name {
@@ -10869,10 +10838,11 @@ nav .logo-sub {
     font-family: var(--font-body, 'Montserrat', sans-serif);
     font-size: 11px;
     font-weight: 500;
-    color: #3a3020;
+    color: rgba(245,240,232, 0.85);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    letter-spacing: 0.5px;
 }
 
 .lb-piece-price {
@@ -10880,7 +10850,8 @@ nav .logo-sub {
     font-family: var(--font-body, 'Montserrat', sans-serif);
     font-size: 10px;
     color: var(--gold, #c8a96e);
-    margin-top: 2px;
+    margin-top: 3px;
+    letter-spacing: 0.5px;
 }
 
 /* ─── Navigation arrows ───────────────────────────────────────── */
@@ -10889,28 +10860,29 @@ nav .logo-sub {
     top: 50%;
     transform: translateY(-50%);
     z-index: 5;
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(10,15,10, 0.6);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(201,169,110, 0.2);
+    background: rgba(8,14,10, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(201,169,110, 0.12);
     color: var(--gold, #c8a96e);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.35s ease;
     padding: 0;
 }
 
 .lb-arrow:hover {
-    background: rgba(10,15,10, 0.85);
-    border-color: rgba(201,169,110, 0.5);
+    background: rgba(8,14,10, 0.9);
+    border-color: rgba(201,169,110, 0.4);
+    box-shadow: 0 0 20px rgba(201,169,110, 0.06);
 }
 
-.lb-arrow--prev { left: 12px; }
-.lb-arrow--next { right: 12px; }
+.lb-arrow--prev { left: 14px; }
+.lb-arrow--next { right: 14px; }
 
 /* ─── Controls (dots + counter) ───────────────────────────────── */
 .lb-controls {
@@ -10918,7 +10890,7 @@ nav .logo-sub {
     flex-direction: column;
     align-items: center;
     gap: 8px;
-    margin-top: 20px;
+    margin-top: 24px;
 }
 
 .lb-dots {
@@ -10932,7 +10904,7 @@ nav .logo-sub {
 .lb-dot {
     width: 8px;
     height: 8px;
-    border: 1px solid rgba(201,169,110, 0.2);
+    border: 1px solid rgba(201,169,110, 0.15);
     background: transparent;
     cursor: pointer;
     padding: 0;
@@ -10941,7 +10913,7 @@ nav .logo-sub {
 
 .lb-dot:hover {
     border-color: var(--gold, #c8a96e);
-    background: rgba(201,169,110, 0.15);
+    background: rgba(201,169,110, 0.12);
 }
 
 .lb-dot.is-active {
@@ -10955,7 +10927,7 @@ nav .logo-sub {
     font-weight: 500;
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: rgba(220,200,165, 0.4);
+    color: rgba(220,200,165, 0.3);
 }
 
 .lb-cur {
@@ -10967,32 +10939,46 @@ nav .logo-sub {
 @media (max-width: 767px) {
     .lb-viewport {
         aspect-ratio: 3 / 4;
-        max-height: 65vh;
-        max-width: 95vw;
+        max-height: 70vh;
+        max-width: 96vw;
+    }
+
+    .lb-gallery-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .lb-grid-1 {
+        max-width: 100%;
     }
 
     .lb-arrow {
-        width: 36px;
-        height: 36px;
+        width: 38px;
+        height: 38px;
     }
 
     .lb-arrow--prev { left: 6px; }
     .lb-arrow--next { right: 6px; }
 
     .lb-gallery__inner {
-        padding: 14px 16px;
+        padding: 14px 16px 12px;
     }
 
-    .lb-gallery-grid {
-        gap: 8px;
+    .lb-piece-img {
+        padding: 12px;
     }
 
     .lb-piece-info {
-        padding: 6px 8px;
+        padding: 10px 12px;
     }
 
-    .lb-piece-name { font-size: 10px; }
-    .lb-piece-price { font-size: 9px; }
+    .lb-piece-name { font-size: 11px; }
+    .lb-piece-price { font-size: 10px; }
+
+    .lb-cover-diamond {
+        width: 36px;
+        height: 36px;
+    }
 }
 
 @media (max-width: 479px) {
@@ -11000,17 +10986,18 @@ nav .logo-sub {
         max-width: 100vw;
         border-left: none;
         border-right: none;
-        border-radius: 0;
     }
 
     .lb-cover-title { letter-spacing: 1px; }
 
-    .lb-gallery-grid { gap: 6px; }
+    .lb-piece-img {
+        padding: 8px;
+    }
 }
 
 @media (min-width: 1280px) {
     .lb-viewport {
-        max-width: 1200px;
+        max-width: 1300px;
     }
 
     .lb-arrow {
@@ -11020,6 +11007,24 @@ nav .logo-sub {
 
     .lb-arrow--prev { left: 20px; }
     .lb-arrow--next { right: 20px; }
+
+    .lb-gallery__inner {
+        padding: 24px 36px 20px;
+    }
+
+    .lb-gallery-grid {
+        gap: 20px;
+    }
+
+    .lb-piece-img {
+        padding: 24px;
+    }
+
+    .lb-piece-info {
+        padding: 14px 20px;
+    }
+
+    .lb-piece-name { font-size: 12px; }
 }
 
 /* ─── Reduced motion ──────────────────────────────────────────── */

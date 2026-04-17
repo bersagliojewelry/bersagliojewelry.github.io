@@ -1,12 +1,13 @@
 /**
- * Bersaglio Jewelry — Digital Portfolio V5
- * Pure CSS slider — no external libraries.
+ * Bersaglio Jewelry — Digital Portfolio V6
+ * Premium dark showcase slider — pure CSS, no external libraries.
+ * Each piece displayed large with object-fit:contain on dark bg.
  * Data from Firestore via catalog.js (real-time sync).
  */
 
 import db from '../data/catalog.js';
 
-const PIECES_PER_PAGE = 4;
+const PIECES_PER_PAGE = 2;
 
 /* ── Data → Pages ────────────────────────────────────────────── */
 
@@ -18,8 +19,6 @@ function buildPages(collections, allPieces) {
         const pieces = allPieces.filter(p => p.collection === col.slug);
         if (!pieces.length) continue;
 
-        pages.push({ type: 'intro', collection: col, total: pieces.length });
-
         const totalColPages = Math.ceil(pieces.length / PIECES_PER_PAGE);
         for (let i = 0; i < pieces.length; i += PIECES_PER_PAGE) {
             pages.push({
@@ -28,6 +27,7 @@ function buildPages(collections, allPieces) {
                 pieces: pieces.slice(i, i + PIECES_PER_PAGE),
                 pageNum: Math.floor(i / PIECES_PER_PAGE) + 1,
                 totalColPages,
+                total: pieces.length,
             });
         }
     }
@@ -44,12 +44,21 @@ function renderSlide(page, idx) {
     if (page.type === 'cover') {
         return `<div class="${cls}" data-idx="${idx}">
             <div class="lb-slide__inner">
-                <div class="lb-accent"></div>
+                <div class="lb-cover-diamond">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.5">
+                        <polygon points="12,2 22,8.5 12,22 2,8.5"/>
+                        <line x1="2" y1="8.5" x2="22" y2="8.5"/>
+                        <line x1="12" y1="2" x2="8" y2="8.5"/>
+                        <line x1="12" y1="2" x2="16" y2="8.5"/>
+                        <line x1="8" y1="8.5" x2="12" y2="22"/>
+                        <line x1="16" y1="8.5" x2="12" y2="22"/>
+                    </svg>
+                </div>
                 <span class="lb-eyebrow">Bersaglio Jewelry</span>
                 <h3 class="lb-cover-title">Portafolio<br>Digital</h3>
+                <div class="lb-cover-line"></div>
+                <span class="lb-cover-sub">Alta Joyería · Esmeraldas Colombianas</span>
                 <span class="lb-year">${new Date().getFullYear()}</span>
-                <div class="lb-accent"></div>
-                <p class="lb-tagline">Alta Joyería · Esmeraldas Colombianas</p>
             </div>
         </div>`;
     }
@@ -57,43 +66,39 @@ function renderSlide(page, idx) {
     if (page.type === 'back') {
         return `<div class="${cls}" data-idx="${idx}">
             <div class="lb-slide__inner">
-                <div class="lb-accent"></div>
+                <div class="lb-cover-diamond">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.5">
+                        <polygon points="12,2 22,8.5 12,22 2,8.5"/>
+                    </svg>
+                </div>
                 <span class="lb-back-brand">Bersaglio Jewelry</span>
+                <div class="lb-cover-line"></div>
                 <p class="lb-back-url">bersagliojewelry.co</p>
                 <a href="contacto.html" class="lb-back-cta">Agendar Asesoría</a>
-                <div class="lb-accent"></div>
-            </div>
-        </div>`;
-    }
-
-    if (page.type === 'intro') {
-        const c = page.collection;
-        return `<div class="${cls}" data-idx="${idx}">
-            <div class="lb-intro__inner">
-                <div class="lb-intro-ornament">◆</div>
-                <h3 class="lb-intro-title">${c.name || c.slug}</h3>
-                ${c.subtitle ? `<span class="lb-intro-sub">${c.subtitle}</span>` : ''}
-                <p class="lb-intro-desc">${c.description || ''}</p>
-                <span class="lb-intro-count">${page.total} pieza${page.total !== 1 ? 's' : ''} en esta colección</span>
             </div>
         </div>`;
     }
 
     if (page.type === 'gallery') {
         const c = page.collection;
+        const count = page.pieces.length;
         return `<div class="${cls}" data-idx="${idx}">
             <div class="lb-gallery__inner">
                 <div class="lb-gallery-header">
                     <span class="lb-gallery-col">${c.name || c.slug}</span>
-                    <span class="lb-gallery-pag">${page.pageNum}/${page.totalColPages}</span>
+                    <span class="lb-gallery-pag">${page.pageNum} / ${page.totalColPages}</span>
                 </div>
-                <div class="lb-gallery-grid lb-grid-${page.pieces.length}">
+                <div class="lb-gallery-grid lb-grid-${count}">
                     ${page.pieces.map(p => `
                         <a href="pieza.html?p=${p.slug}" class="lb-piece">
                             <div class="lb-piece-img">
                                 ${p.image
                                     ? `<img src="${p.image}" alt="${p.name}" loading="lazy">`
-                                    : `<div class="lb-piece-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.6"><polygon points="12,2 22,8.5 12,22 2,8.5"/></svg></div>`}
+                                    : `<div class="lb-piece-empty">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.5">
+                                            <polygon points="12,2 22,8.5 12,22 2,8.5"/>
+                                        </svg>
+                                    </div>`}
                             </div>
                             <div class="lb-piece-info">
                                 <span class="lb-piece-name">${p.name}</span>
@@ -136,7 +141,6 @@ export function renderLookbook() {
 
     const sig = JSON.stringify(pages.map(p => {
         if (p.type === 'gallery') return [p.type, p.collection?.id, p.pieces.map(x => `${x.id}|${x.image || ''}|${x.name}|${x.priceLabel || ''}`)];
-        if (p.type === 'intro') return [p.type, p.collection?.id, p.total];
         return p.type;
     }));
     if (sig === _lastSignature) return;
@@ -155,10 +159,10 @@ export function renderLookbook() {
                 ${pages.map((p, i) => renderSlide(p, i)).join('')}
             </div>
             <button class="lb-arrow lb-arrow--prev" aria-label="Anterior">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="15,18 9,12 15,6"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="15,18 9,12 15,6"/></svg>
             </button>
             <button class="lb-arrow lb-arrow--next" aria-label="Siguiente">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="9,6 15,12 9,18"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="9,6 15,12 9,18"/></svg>
             </button>
         </div>
         <div class="lb-controls">

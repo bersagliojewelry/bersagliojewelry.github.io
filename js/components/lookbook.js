@@ -1,127 +1,164 @@
 /**
- * Bersaglio Jewelry — Digital Portfolio V6
- * Premium dark showcase slider — pure CSS, no external libraries.
- * Each piece displayed large with object-fit:contain on dark bg.
- * Data from Firestore via catalog.js (real-time sync).
+ * Bersaglio Jewelry — Portfolio V7
+ * Premium showcase: Swiper.js + GSAP cinematics.
+ * Full-bleed piece presentation, fade + creative transitions,
+ * GSAP-powered text reveals on each slide change.
  */
 
+import Swiper from 'swiper';
+import { Navigation, Pagination, Keyboard, EffectCreative, A11y } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/effect-creative';
+import { gsap } from '../gsap-core.js';
 import db from '../data/catalog.js';
 
-const PIECES_PER_PAGE = 2;
+let _swiper = null;
+let _lastSignature = '';
 
-/* ── Data → Pages ────────────────────────────────────────────── */
+/* ── Build flat list of slides ──────────────────────────────── */
 
-function buildPages(collections, allPieces) {
-    const pages = [];
-    pages.push({ type: 'cover' });
+function buildSlides(collections, allPieces) {
+    const slides = [];
+
+    slides.push({ type: 'cover' });
 
     for (const col of collections) {
         const pieces = allPieces.filter(p => p.collection === col.slug);
         if (!pieces.length) continue;
 
-        const totalColPages = Math.ceil(pieces.length / PIECES_PER_PAGE);
-        for (let i = 0; i < pieces.length; i += PIECES_PER_PAGE) {
-            pages.push({
-                type: 'gallery',
+        for (const piece of pieces) {
+            slides.push({
+                type: 'piece',
+                piece,
                 collection: col,
-                pieces: pieces.slice(i, i + PIECES_PER_PAGE),
-                pageNum: Math.floor(i / PIECES_PER_PAGE) + 1,
-                totalColPages,
-                total: pieces.length,
             });
         }
     }
 
-    pages.push({ type: 'back' });
-    return pages;
+    slides.push({ type: 'back' });
+    return slides;
 }
 
-/* ── Render individual slide ─────────────────────────────────── */
+/* ── Render slide HTML ──────────────────────────────────────── */
 
-function renderSlide(page, idx) {
-    const cls = `lb-slide lb-slide--${page.type}`;
-
-    if (page.type === 'cover') {
-        return `<div class="${cls}" data-idx="${idx}">
-            <div class="lb-slide__inner">
-                <div class="lb-cover-diamond">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.5">
-                        <polygon points="12,2 22,8.5 12,22 2,8.5"/>
-                        <line x1="2" y1="8.5" x2="22" y2="8.5"/>
-                        <line x1="12" y1="2" x2="8" y2="8.5"/>
-                        <line x1="12" y1="2" x2="16" y2="8.5"/>
-                        <line x1="8" y1="8.5" x2="12" y2="22"/>
-                        <line x1="16" y1="8.5" x2="12" y2="22"/>
+function renderSlide(slide) {
+    if (slide.type === 'cover') {
+        return `<div class="swiper-slide lb-slide lb-slide--cover">
+            <div class="lb-cover">
+                <div class="lb-cover-gem">
+                    <svg viewBox="0 0 60 60" fill="none" stroke="currentColor" stroke-width="0.4">
+                        <polygon points="30,4 56,20 30,56 4,20"/>
+                        <line x1="4" y1="20" x2="56" y2="20"/>
+                        <line x1="30" y1="4" x2="20" y2="20"/>
+                        <line x1="30" y1="4" x2="40" y2="20"/>
+                        <line x1="20" y1="20" x2="30" y2="56"/>
+                        <line x1="40" y1="20" x2="30" y2="56"/>
+                        <line x1="30" y1="4" x2="30" y2="56" opacity="0.3"/>
                     </svg>
                 </div>
-                <span class="lb-eyebrow">Bersaglio Jewelry</span>
-                <h3 class="lb-cover-title">Portafolio<br>Digital</h3>
-                <div class="lb-cover-line"></div>
-                <span class="lb-cover-sub">Alta Joyería · Esmeraldas Colombianas</span>
-                <span class="lb-year">${new Date().getFullYear()}</span>
+                <span class="lb-anim-el lb-cover-eyebrow">Bersaglio Jewelry</span>
+                <h3 class="lb-anim-el lb-cover-title">Portafolio<br>Digital</h3>
+                <div class="lb-anim-el lb-cover-line"></div>
+                <span class="lb-anim-el lb-cover-sub">Alta Joyería · Esmeraldas Colombianas</span>
+                <span class="lb-anim-el lb-cover-year">${new Date().getFullYear()}</span>
             </div>
         </div>`;
     }
 
-    if (page.type === 'back') {
-        return `<div class="${cls}" data-idx="${idx}">
-            <div class="lb-slide__inner">
-                <div class="lb-cover-diamond">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.5">
-                        <polygon points="12,2 22,8.5 12,22 2,8.5"/>
+    if (slide.type === 'back') {
+        return `<div class="swiper-slide lb-slide lb-slide--back">
+            <div class="lb-cover">
+                <div class="lb-cover-gem lb-cover-gem--sm">
+                    <svg viewBox="0 0 60 60" fill="none" stroke="currentColor" stroke-width="0.4">
+                        <polygon points="30,8 52,22 30,52 8,22"/>
                     </svg>
                 </div>
-                <span class="lb-back-brand">Bersaglio Jewelry</span>
-                <div class="lb-cover-line"></div>
-                <p class="lb-back-url">bersagliojewelry.co</p>
-                <a href="contacto.html" class="lb-back-cta">Agendar Asesoría</a>
+                <span class="lb-anim-el lb-back-brand">Bersaglio Jewelry</span>
+                <div class="lb-anim-el lb-cover-line"></div>
+                <p class="lb-anim-el lb-back-tagline">Fabricantes de Alta Joyería en Cartagena, Colombia</p>
+                <a href="contacto.html" class="lb-anim-el lb-back-cta">Agendar Asesoría</a>
             </div>
         </div>`;
     }
 
-    if (page.type === 'gallery') {
-        const c = page.collection;
-        const count = page.pieces.length;
-        return `<div class="${cls}" data-idx="${idx}">
-            <div class="lb-gallery__inner">
-                <div class="lb-gallery-header">
-                    <span class="lb-gallery-col">${c.name || c.slug}</span>
-                    <span class="lb-gallery-pag">${page.pageNum} / ${page.totalColPages}</span>
-                </div>
-                <div class="lb-gallery-grid lb-grid-${count}">
-                    ${page.pieces.map(p => `
-                        <a href="pieza.html?p=${p.slug}" class="lb-piece">
-                            <div class="lb-piece-img">
-                                ${p.image
-                                    ? `<img src="${p.image}" alt="${p.name}" loading="lazy">`
-                                    : `<div class="lb-piece-empty">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.5">
-                                            <polygon points="12,2 22,8.5 12,22 2,8.5"/>
-                                        </svg>
-                                    </div>`}
-                            </div>
-                            <div class="lb-piece-info">
-                                <span class="lb-piece-name">${p.name}</span>
-                                ${p.priceLabel ? `<span class="lb-piece-price">${p.priceLabel}</span>` : ''}
-                            </div>
-                        </a>
-                    `).join('')}
+    const p = slide.piece;
+    const c = slide.collection;
+    return `<div class="swiper-slide lb-slide lb-slide--piece">
+        <div class="lb-piece-layout">
+            <div class="lb-piece-visual">
+                <div class="lb-piece-frame">
+                    ${p.image
+                        ? `<img class="lb-piece-img" src="${p.image}" alt="${p.name}" loading="lazy">`
+                        : `<div class="lb-piece-placeholder">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.4">
+                                <polygon points="12,2 22,8.5 12,22 2,8.5"/>
+                            </svg>
+                        </div>`}
                 </div>
             </div>
-        </div>`;
-    }
-
-    return '';
+            <div class="lb-piece-meta">
+                <span class="lb-anim-el lb-piece-collection">${c.name || c.slug}</span>
+                <h4 class="lb-anim-el lb-piece-name">${p.name}</h4>
+                ${p.priceLabel ? `<span class="lb-anim-el lb-piece-price">${p.priceLabel}</span>` : ''}
+                <a href="pieza.html?p=${p.slug}" class="lb-anim-el lb-piece-link">
+                    Ver Pieza
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg>
+                </a>
+            </div>
+        </div>
+    </div>`;
 }
 
-/* ── State ───────────────────────────────────────────────────── */
+/* ── GSAP slide animations ──────────────────────────────────── */
 
-let _current = 0;
-let _total = 0;
-let _track = null;
-let _lastSignature = '';
+function animateSlideIn(slideEl) {
+    const els = slideEl.querySelectorAll('.lb-anim-el');
+    const img = slideEl.querySelector('.lb-piece-img');
+    const frame = slideEl.querySelector('.lb-piece-frame');
 
-/* ── Public render entry ─────────────────────────────────────── */
+    if (els.length) {
+        gsap.fromTo(els,
+            { opacity: 0, y: 25 },
+            { opacity: 1, y: 0, duration: 0.7, stagger: 0.1, ease: 'power2.out', delay: 0.15 }
+        );
+    }
+
+    if (img) {
+        gsap.fromTo(img,
+            { scale: 1.08, opacity: 0 },
+            { scale: 1, opacity: 1, duration: 0.9, ease: 'power2.out', delay: 0.1 }
+        );
+    }
+
+    if (frame) {
+        gsap.fromTo(frame,
+            { opacity: 0 },
+            { opacity: 1, duration: 0.6, ease: 'power2.out' }
+        );
+    }
+
+    const gem = slideEl.querySelector('.lb-cover-gem');
+    if (gem) {
+        gsap.fromTo(gem,
+            { scale: 0.7, opacity: 0, rotation: -15 },
+            { scale: 1, opacity: 1, rotation: 0, duration: 1, ease: 'power3.out', delay: 0.05 }
+        );
+    }
+}
+
+function resetSlide(slideEl) {
+    const els = slideEl.querySelectorAll('.lb-anim-el');
+    const img = slideEl.querySelector('.lb-piece-img');
+    const frame = slideEl.querySelector('.lb-piece-frame');
+    const gem = slideEl.querySelector('.lb-cover-gem');
+
+    gsap.set(els, { opacity: 0, y: 25 });
+    if (img) gsap.set(img, { scale: 1.08, opacity: 0 });
+    if (frame) gsap.set(frame, { opacity: 0 });
+    if (gem) gsap.set(gem, { scale: 0.7, opacity: 0, rotation: -15 });
+}
+
+/* ── Public render ──────────────────────────────────────────── */
 
 export function renderLookbook() {
     const root = document.querySelector('#lookbook');
@@ -136,112 +173,94 @@ export function renderLookbook() {
         return;
     }
 
-    const pages = buildPages(collections, allPieces);
-    if (pages.length < 2) { root.innerHTML = ''; return; }
+    const slides = buildSlides(collections, allPieces);
+    if (slides.length < 2) { root.innerHTML = ''; return; }
 
-    const sig = JSON.stringify(pages.map(p => {
-        if (p.type === 'gallery') return [p.type, p.collection?.id, p.pieces.map(x => `${x.id}|${x.image || ''}|${x.name}|${x.priceLabel || ''}`)];
-        return p.type;
+    const sig = JSON.stringify(slides.map(s => {
+        if (s.type === 'piece') return [s.piece.id, s.piece.image || '', s.piece.name, s.piece.priceLabel || ''];
+        return s.type;
     }));
     if (sig === _lastSignature) return;
     _lastSignature = sig;
 
-    _total = pages.length;
-    _current = 0;
-
-    const dots = pages.map((_, i) =>
-        `<button class="lb-dot${i === 0 ? ' is-active' : ''}" data-i="${i}" aria-label="Página ${i + 1}"></button>`
-    ).join('');
-
-    root.innerHTML = `
-        <div class="lb-viewport">
-            <div class="lb-track">
-                ${pages.map((p, i) => renderSlide(p, i)).join('')}
-            </div>
-            <button class="lb-arrow lb-arrow--prev" aria-label="Anterior">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="15,18 9,12 15,6"/></svg>
-            </button>
-            <button class="lb-arrow lb-arrow--next" aria-label="Siguiente">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="9,6 15,12 9,18"/></svg>
-            </button>
-        </div>
-        <div class="lb-controls">
-            <div class="lb-dots">${dots}</div>
-            <span class="lb-counter"><span class="lb-cur">1</span> / <span class="lb-tot">${_total}</span></span>
-        </div>`;
-
-    _track = root.querySelector('.lb-track');
-
-    initSlider(root);
-}
-
-/* ── Slider logic ────────────────────────────────────────────── */
-
-function initSlider(root) {
-    const track = root.querySelector('.lb-track');
-    const prevBtn = root.querySelector('.lb-arrow--prev');
-    const nextBtn = root.querySelector('.lb-arrow--next');
-    const curEl = root.querySelector('.lb-cur');
-    const dotsWrap = root.querySelector('.lb-dots');
-    const dots = root.querySelectorAll('.lb-dot');
-
-    function goTo(n) {
-        n = Math.max(0, Math.min(_total - 1, n));
-        if (n === _current && track.style.transform) return;
-        _current = n;
-        track.style.transform = `translateX(-${n * 100}%)`;
-        curEl.textContent = n + 1;
-        dots.forEach((d, i) => d.classList.toggle('is-active', i === n));
-        prevBtn.style.opacity = n === 0 ? '0.25' : '';
-        prevBtn.style.pointerEvents = n === 0 ? 'none' : '';
-        nextBtn.style.opacity = n === _total - 1 ? '0.25' : '';
-        nextBtn.style.pointerEvents = n === _total - 1 ? 'none' : '';
+    if (_swiper) {
+        _swiper.destroy(true, true);
+        _swiper = null;
     }
 
-    goTo(0);
+    root.innerHTML = `
+        <div class="lb-showcase swiper">
+            <div class="swiper-wrapper">
+                ${slides.map(s => renderSlide(s)).join('')}
+            </div>
+            <div class="lb-nav">
+                <button class="lb-nav-btn lb-nav-prev" aria-label="Anterior">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><polyline points="15,18 9,12 15,6"/></svg>
+                </button>
+                <div class="lb-pagination"></div>
+                <button class="lb-nav-btn lb-nav-next" aria-label="Siguiente">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><polyline points="9,6 15,12 9,18"/></svg>
+                </button>
+            </div>
+            <div class="lb-progress"><div class="lb-progress-bar"></div></div>
+        </div>`;
 
-    prevBtn.addEventListener('click', () => goTo(_current - 1));
-    nextBtn.addEventListener('click', () => goTo(_current + 1));
-
-    dotsWrap.addEventListener('click', (e) => {
-        const dot = e.target.closest('.lb-dot');
-        if (dot) goTo(parseInt(dot.dataset.i, 10));
+    _swiper = new Swiper(root.querySelector('.lb-showcase'), {
+        modules: [Navigation, Pagination, Keyboard, EffectCreative, A11y],
+        effect: 'creative',
+        creativeEffect: {
+            prev: {
+                translate: [0, 0, -400],
+                opacity: 0,
+            },
+            next: {
+                translate: ['100%', 0, 0],
+                opacity: 0,
+            },
+        },
+        speed: 800,
+        keyboard: { enabled: true, onlyInViewport: true },
+        navigation: {
+            nextEl: root.querySelector('.lb-nav-next'),
+            prevEl: root.querySelector('.lb-nav-prev'),
+        },
+        pagination: {
+            el: root.querySelector('.lb-pagination'),
+            clickable: true,
+            bulletClass: 'lb-bullet',
+            bulletActiveClass: 'lb-bullet--active',
+            renderBullet(index, className) {
+                return `<button class="${className}" aria-label="Slide ${index + 1}"></button>`;
+            },
+        },
+        a11y: {
+            prevSlideMessage: 'Pieza anterior',
+            nextSlideMessage: 'Siguiente pieza',
+        },
+        grabCursor: true,
+        on: {
+            init(swiper) {
+                const active = swiper.slides[swiper.activeIndex];
+                if (active) animateSlideIn(active);
+                updateProgress(swiper);
+            },
+            slideChangeTransitionStart(swiper) {
+                swiper.slides.forEach(sl => resetSlide(sl));
+                updateProgress(swiper);
+            },
+            slideChangeTransitionEnd(swiper) {
+                const active = swiper.slides[swiper.activeIndex];
+                if (active) animateSlideIn(active);
+            },
+        },
     });
+}
 
-    document.addEventListener('keydown', (e) => {
-        const rect = root.getBoundingClientRect();
-        if (rect.top > window.innerHeight || rect.bottom < 0) return;
-        if (e.key === 'ArrowRight') { goTo(_current + 1); e.preventDefault(); }
-        if (e.key === 'ArrowLeft') { goTo(_current - 1); e.preventDefault(); }
-    });
-
-    /* ── Touch / swipe ───────────────────────────────────────── */
-    let tx0 = 0, ty0 = 0, swiping = false;
-
-    track.addEventListener('touchstart', (e) => {
-        tx0 = e.touches[0].clientX;
-        ty0 = e.touches[0].clientY;
-        swiping = false;
-        track.style.transition = 'none';
-    }, { passive: true });
-
-    track.addEventListener('touchmove', (e) => {
-        const dx = e.touches[0].clientX - tx0;
-        const dy = e.touches[0].clientY - ty0;
-        if (!swiping && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) swiping = true;
-        if (swiping) {
-            const base = -_current * 100;
-            const pct = (dx / root.querySelector('.lb-viewport').offsetWidth) * 100;
-            track.style.transform = `translateX(${base + pct}%)`;
-        }
-    }, { passive: true });
-
-    track.addEventListener('touchend', (e) => {
-        track.style.transition = '';
-        if (!swiping) return;
-        const dx = e.changedTouches[0].clientX - tx0;
-        if (dx < -40) goTo(_current + 1);
-        else if (dx > 40) goTo(_current - 1);
-        else goTo(_current);
-    });
+function updateProgress(swiper) {
+    const bar = swiper.el.querySelector('.lb-progress-bar');
+    if (!bar) return;
+    const pct = swiper.slides.length > 1
+        ? (swiper.activeIndex / (swiper.slides.length - 1)) * 100
+        : 100;
+    bar.style.width = `${pct}%`;
 }

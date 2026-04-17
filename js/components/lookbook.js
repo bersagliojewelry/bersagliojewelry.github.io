@@ -1,11 +1,11 @@
 /**
- * Bersaglio Jewelry — Portfolio V8.1: Immersive Gallery (refined)
+ * Bersaglio Jewelry — Portfolio V9: Adaptive Luxury Grid
  *
- * Full-width grid organized by collection with intelligent layout.
- * - Smart grid: auto-flow dense fills every gap
- * - 8-piece initial limit with "Ver más" expand
- * - Collection tabs with GSAP transitions
- * - Cinematic hover overlays with staggered text reveals
+ * 12-column editorial grid with dynamic span assignment.
+ * Guarantees ZERO gaps regardless of piece count.
+ * Row patterns cycle: [6,3,3] → [4,4,4] → [3,3,6] for visual rhythm.
+ * Golden shine sweep on hover, staggered text reveals.
+ * GSAP entrance + collection filter transitions.
  */
 
 import { gsap } from '../gsap-core.js';
@@ -13,24 +13,93 @@ import db from '../data/catalog.js';
 
 let _lastSignature = '';
 let _activeCollection = 'all';
-const INITIAL_VISIBLE = 8;
+let _collections = [];
+let _allPieces = [];
 
-/* ── Render a single piece card ─────────────────────────────── */
+/* ── Layout algorithm ──────────────────────────────────────── */
 
-function renderCard(piece, col, index, isHero) {
+function computeRowPlan(count) {
+    if (count === 0) return [];
+    if (count <= 4) return [count];
+
+    const mod = count % 3;
+    const rows = [];
+    let rem = count;
+
+    if (mod === 0) {
+        while (rem > 0) { rows.push(3); rem -= 3; }
+    } else if (mod === 1) {
+        while (rem > 4) { rows.push(3); rem -= 3; }
+        rows.push(4);
+    } else {
+        while (rem > 2) { rows.push(3); rem -= 3; }
+        rows.push(2);
+    }
+
+    return rows;
+}
+
+const SPAN_PATTERNS_3 = [[6, 3, 3], [4, 4, 4], [3, 3, 6]];
+
+function assignSpans(rowPlan) {
+    const spans = [];
+    let p3 = 0;
+
+    for (const size of rowPlan) {
+        if (size === 1) spans.push(12);
+        else if (size === 2) spans.push(6, 6);
+        else if (size === 3) {
+            spans.push(...SPAN_PATTERNS_3[p3 % SPAN_PATTERNS_3.length]);
+            p3++;
+        } else if (size === 4) spans.push(3, 3, 3, 3);
+    }
+
+    return spans;
+}
+
+const MAX_INITIAL_ROWS = 3;
+
+function computeLayout(pieces) {
+    const count = pieces.length;
+    if (count === 0) return { spans: [], initialVisible: 0 };
+
+    const rowPlan = computeRowPlan(count);
+    const spans = assignSpans(rowPlan);
+
+    let initialVisible = 0;
+    for (let i = 0; i < Math.min(rowPlan.length, MAX_INITIAL_ROWS); i++) {
+        initialVisible += rowPlan[i];
+    }
+
+    return { spans, initialVisible };
+}
+
+function sortPieces(pieces) {
+    return [...pieces].sort((a, b) => {
+        const aS = (a.image ? 10 : 0) + (a.featured ? 1 : 0);
+        const bS = (b.image ? 10 : 0) + (b.featured ? 1 : 0);
+        return bS - aS;
+    });
+}
+
+/* ── Render a single card ──────────────────────────────────── */
+
+function renderCard(piece, col, span, index, isHidden) {
     const s = piece.specs || {};
     const specLine = [s.stone, s.metal, s.carat ? `${s.carat} ct` : '']
         .filter(Boolean).join(' · ');
 
-    const heroClass = isHero ? ' ptf-card--hero' : '';
-    const hiddenClass = index >= INITIAL_VISIBLE ? ' ptf-card--hidden' : '';
+    const lgClass = span >= 6 ? ' ptf-card--lg' : '';
+    const hiddenClass = isHidden ? ' ptf-card--hidden' : '';
 
     return `
-    <a href="pieza.html?p=${piece.slug}" class="ptf-card${heroClass}${hiddenClass}" data-col="${piece.collection}" data-idx="${index}">
+    <a href="pieza.html?p=${piece.slug}" class="ptf-card${lgClass}${hiddenClass}"
+       data-col="${piece.collection}" data-idx="${index}"
+       style="grid-column: span ${span}">
         <div class="ptf-card-visual">
             ${piece.image
-                ? `<img src="${piece.image}" alt="${piece.name}" loading="lazy" class="ptf-card-img">`
-                : `<div class="ptf-card-placeholder">
+            ? `<img src="${piece.image}" alt="${piece.name}" loading="lazy" class="ptf-card-img">`
+            : `<div class="ptf-card-placeholder">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.4">
                         <polygon points="12,2 22,8.5 12,22 2,8.5"/>
                     </svg>
@@ -43,36 +112,49 @@ function renderCard(piece, col, index, isHero) {
             ${piece.priceLabel ? `<span class="ptf-card-price">${piece.priceLabel}</span>` : ''}
             <span class="ptf-card-cta">
                 Ver Pieza
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13,6 19,12 13,18"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="1.5">
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                    <polyline points="13,6 19,12 13,18"/>
+                </svg>
             </span>
         </div>
         ${piece.badge ? `<span class="ptf-card-badge">${piece.badge}</span>` : ''}
     </a>`;
 }
 
-/* ── Build the full portfolio HTML ──────────────────────────── */
+/* ── Build grid cards for a set of pieces ──────────────────── */
 
-function buildPortfolioHTML(collections, allPieces) {
+function buildCards(pieces) {
+    const sorted = sortPieces(pieces);
+    const { spans, initialVisible } = computeLayout(sorted);
+
+    const html = sorted.map((piece, i) => {
+        const col = _collections.find(c =>
+            c.slug === piece.collection || c.id === piece.collection
+        );
+        return renderCard(piece, col, spans[i], i, i >= initialVisible);
+    }).join('');
+
+    return { html, count: sorted.length, initialVisible };
+}
+
+/* ── Build the full portfolio HTML ─────────────────────────── */
+
+function buildPortfolioHTML() {
     const tabs = [
         `<button class="ptf-tab is-active" data-col="all">Todas</button>`,
-        ...collections
-            .filter(c => allPieces.some(p => p.collection === c.slug || p.collection === c.id))
-            .map(c => `<button class="ptf-tab" data-col="${c.slug || c.id}">${c.name}</button>`)
+        ..._collections
+            .filter(c => _allPieces.some(p =>
+                p.collection === c.slug || p.collection === c.id
+            ))
+            .map(c =>
+                `<button class="ptf-tab" data-col="${c.slug || c.id}">${c.name}</button>`
+            )
     ].join('');
 
-    let cardIndex = 0;
-    const cards = [];
-    for (const col of collections) {
-        const pieces = allPieces.filter(p => p.collection === col.slug || p.collection === col.id);
-        for (const piece of pieces) {
-            const isHero = cardIndex === 0 || cardIndex === 5;
-            cards.push(renderCard(piece, col, cardIndex, isHero));
-            cardIndex++;
-        }
-    }
-
-    const count = allPieces.length;
-    const hasMore = count > INITIAL_VISIBLE;
+    const { html: cardsHtml, count, initialVisible } = buildCards(_allPieces);
+    const hasMore = count > initialVisible;
 
     return `
     <div class="ptf-container">
@@ -80,22 +162,25 @@ function buildPortfolioHTML(collections, allPieces) {
             <div class="ptf-tabs-wrap">
                 <div class="ptf-tabs">${tabs}</div>
             </div>
-            <span class="ptf-count"><span class="ptf-count-num">${count}</span> pieza${count !== 1 ? 's' : ''}</span>
+            <span class="ptf-count">
+                <span class="ptf-count-num">${count}</span> pieza${count !== 1 ? 's' : ''}
+            </span>
         </div>
-        <div class="ptf-grid">
-            ${cards.join('')}
-        </div>
+        <div class="ptf-grid">${cardsHtml}</div>
         ${hasMore ? `
         <div class="ptf-expand-wrap">
             <button class="ptf-expand-btn" data-total="${count}">
                 <span>Ver las ${count} piezas</span>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="6,9 12,15 18,9"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="1.5">
+                    <polyline points="6,9 12,15 18,9"/>
+                </svg>
             </button>
         </div>` : ''}
     </div>`;
 }
 
-/* ── Expand / collapse ──────────────────────────────────────── */
+/* ── Expand / collapse ─────────────────────────────────────── */
 
 function toggleExpand(root) {
     const btn = root.querySelector('.ptf-expand-btn');
@@ -111,16 +196,19 @@ function toggleExpand(root) {
             onComplete() {
                 hidden.forEach(c => c.style.display = 'none');
                 btn.classList.remove('is-expanded');
-                btn.querySelector('span').textContent = `Ver las ${btn.dataset.total} piezas`;
+                btn.querySelector('span').textContent =
+                    `Ver las ${btn.dataset.total} piezas`;
                 btn.querySelector('svg').style.transform = '';
-                root.querySelector('.ptf-grid').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                root.querySelector('.ptf-grid')
+                    .scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         });
     } else {
         hidden.forEach(c => c.style.display = '');
         gsap.fromTo(hidden,
             { opacity: 0, y: 30, scale: 0.96 },
-            { opacity: 1, y: 0, scale: 1, duration: 0.5, stagger: 0.06, ease: 'power3.out' }
+            { opacity: 1, y: 0, scale: 1, duration: 0.5,
+              stagger: 0.06, ease: 'power3.out' }
         );
         btn.classList.add('is-expanded');
         btn.querySelector('span').textContent = 'Mostrar menos';
@@ -128,77 +216,72 @@ function toggleExpand(root) {
     }
 }
 
-/* ── Filter by collection with GSAP ─────────────────────────── */
+/* ── Filter by collection ──────────────────────────────────── */
 
 function filterCollection(root, slug) {
     if (slug === _activeCollection) return;
     _activeCollection = slug;
 
-    const tabs = root.querySelectorAll('.ptf-tab');
-    tabs.forEach(t => t.classList.toggle('is-active', t.dataset.col === slug));
+    root.querySelectorAll('.ptf-tab').forEach(t =>
+        t.classList.toggle('is-active', t.dataset.col === slug)
+    );
 
-    const cards = root.querySelectorAll('.ptf-card');
-    const countEl = root.querySelector('.ptf-count-num');
-    const expandWrap = root.querySelector('.ptf-expand-wrap');
-    const expandBtn = root.querySelector('.ptf-expand-btn');
+    const filtered = slug === 'all'
+        ? _allPieces
+        : _allPieces.filter(p => p.collection === slug);
 
-    gsap.to(cards, {
+    const grid = root.querySelector('.ptf-grid');
+    const currentCards = grid.querySelectorAll('.ptf-card');
+
+    gsap.to(currentCards, {
         opacity: 0, y: 20, scale: 0.96,
         duration: 0.25, stagger: 0.015, ease: 'power2.in',
         onComplete() {
-            let visible = 0;
-            cards.forEach(card => {
-                const matchesCol = slug === 'all' || card.dataset.col === slug;
-                card.style.display = matchesCol ? '' : 'none';
-                card.classList.remove('ptf-card--hidden');
-                if (matchesCol) visible++;
-            });
+            const { html, count, initialVisible } = buildCards(filtered);
 
-            if (countEl) countEl.textContent = visible;
+            grid.innerHTML = html;
+            grid.querySelectorAll('.ptf-card--hidden')
+                .forEach(c => c.style.display = 'none');
 
-            if (expandWrap) expandWrap.style.display = 'none';
+            const countEl = root.querySelector('.ptf-count-num');
+            if (countEl) countEl.textContent = count;
+
+            const expandWrap = root.querySelector('.ptf-expand-wrap');
+            const expandBtn = root.querySelector('.ptf-expand-btn');
+            const hasMore = count > initialVisible;
+
+            if (expandWrap) expandWrap.style.display = hasMore ? '' : 'none';
             if (expandBtn) {
                 expandBtn.classList.remove('is-expanded');
-                expandBtn.querySelector('span').textContent = `Ver las ${visible} piezas`;
+                expandBtn.dataset.total = count;
+                expandBtn.querySelector('span').textContent =
+                    `Ver las ${count} piezas`;
                 expandBtn.querySelector('svg').style.transform = '';
             }
 
-            if (slug === 'all') {
-                let idx = 0;
-                cards.forEach(card => {
-                    if (card.style.display !== 'none') {
-                        if (idx >= INITIAL_VISIBLE) {
-                            card.classList.add('ptf-card--hidden');
-                            card.style.display = 'none';
-                        }
-                        idx++;
-                    }
-                });
-                if (expandWrap && visible > INITIAL_VISIBLE) {
-                    expandWrap.style.display = '';
-                }
-            }
-
-            const visibleCards = [...cards].filter(c => c.style.display !== 'none');
-            gsap.fromTo(visibleCards,
+            const newCards = [...grid.querySelectorAll('.ptf-card')]
+                .filter(c => c.style.display !== 'none');
+            gsap.fromTo(newCards,
                 { opacity: 0, y: 30, scale: 0.96 },
-                { opacity: 1, y: 0, scale: 1, duration: 0.5, stagger: 0.05, ease: 'power3.out' }
+                { opacity: 1, y: 0, scale: 1, duration: 0.5,
+                  stagger: 0.05, ease: 'power3.out' }
             );
         }
     });
 }
 
-/* ── Initial entrance animation ─────────────────────────────── */
+/* ── Entrance animation ────────────────────────────────────── */
 
 function animateEntrance(root) {
-    const cards = [...root.querySelectorAll('.ptf-card')].filter(c => c.style.display !== 'none');
+    const cards = [...root.querySelectorAll('.ptf-card')]
+        .filter(c => c.style.display !== 'none');
     const tabs = root.querySelectorAll('.ptf-tab');
     const header = root.querySelector('.ptf-header');
 
     gsap.set(cards, { opacity: 0, y: 40, scale: 0.95 });
     gsap.set(tabs, { opacity: 0, y: -10 });
 
-    const observer = new IntersectionObserver((entries) => {
+    const observer = new IntersectionObserver(entries => {
         entries.forEach(entry => {
             if (!entry.isIntersecting) return;
             observer.disconnect();
@@ -211,13 +294,13 @@ function animateEntrance(root) {
             }
 
             gsap.to(tabs, {
-                opacity: 1, y: 0, duration: 0.4, stagger: 0.05,
-                ease: 'power2.out', delay: 0.2,
+                opacity: 1, y: 0, duration: 0.4,
+                stagger: 0.05, ease: 'power2.out', delay: 0.2,
             });
 
             gsap.to(cards, {
-                opacity: 1, y: 0, scale: 1, duration: 0.6, stagger: 0.07,
-                ease: 'power3.out', delay: 0.3,
+                opacity: 1, y: 0, scale: 1, duration: 0.6,
+                stagger: 0.07, ease: 'power3.out', delay: 0.3,
             });
         });
     }, { threshold: 0.05, rootMargin: '100px' });
@@ -225,38 +308,40 @@ function animateEntrance(root) {
     observer.observe(root);
 }
 
-/* ── Public render entry ────────────────────────────────────── */
+/* ── Public render entry ───────────────────────────────────── */
 
 export function renderLookbook() {
     const root = document.querySelector('#lookbook');
     if (!root) return;
 
-    const collections = db.getCollections();
-    const allPieces = db.getAll();
+    _collections = db.getCollections();
+    _allPieces = db.getAll();
 
-    if (!allPieces.length) {
+    if (!_allPieces.length) {
         root.innerHTML = '';
         _lastSignature = '';
         return;
     }
 
-    const sig = JSON.stringify(allPieces.map(p =>
+    const sig = JSON.stringify(_allPieces.map(p =>
         `${p.id}|${p.image || ''}|${p.name}|${p.priceLabel || ''}|${p.badge || ''}|${p.collection}`
     ));
     if (sig === _lastSignature) return;
     _lastSignature = sig;
 
     _activeCollection = 'all';
-    root.innerHTML = buildPortfolioHTML(collections, allPieces);
+    root.innerHTML = buildPortfolioHTML();
 
-    root.querySelectorAll('.ptf-card--hidden').forEach(c => c.style.display = 'none');
+    root.querySelectorAll('.ptf-card--hidden')
+        .forEach(c => c.style.display = 'none');
 
-    root.querySelector('.ptf-tabs')?.addEventListener('click', e => {
+    root.addEventListener('click', e => {
         const tab = e.target.closest('.ptf-tab');
-        if (tab) filterCollection(root, tab.dataset.col);
-    });
+        if (tab) return filterCollection(root, tab.dataset.col);
 
-    root.querySelector('.ptf-expand-btn')?.addEventListener('click', () => toggleExpand(root));
+        const expandBtn = e.target.closest('.ptf-expand-btn');
+        if (expandBtn) return toggleExpand(root);
+    });
 
     animateEntrance(root);
 }

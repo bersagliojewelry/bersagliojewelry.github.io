@@ -7917,584 +7917,6 @@ nav .logo-badge {
     color: rgba(255,255,255,0.7) !important;
 }
 
-/* ── Layout: arrows on sides, book in center ───── */
-.pf-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    margin-top: var(--space-lg);
-    position: relative;
-}
-
-/* Fix #2: Side arrow buttons */
-.pf-side-btn {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    border: 1px solid rgba(201,169,110,0.2);
-    background: rgba(201,169,110,0.06);
-    color: var(--gold);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    z-index: 5;
-}
-
-.pf-side-btn:hover {
-    background: rgba(201,169,110,0.15);
-    border-color: var(--gold);
-    transform: scale(1.1);
-}
-
-.pf-side-btn:active {
-    transform: scale(0.95);
-}
-
-/* ── Book area — constrained to viewport ───────── */
-.pf-book-area {
-    flex: 1;
-    max-width: 1100px;
-    /* Fix #5: book height fits within viewport */
-    max-height: 62vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.pf-book {
-    width: 100%;
-}
-
-/* ── Page pagination below book ────────────────── */
-.pf-pagination {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    margin-top: var(--space-md);
-}
-
-/* Fix #2: Dot navigation for quick page access */
-.pf-dots {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    justify-content: center;
-    max-width: 400px;
-}
-
-.pf-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    border: 1px solid rgba(201,169,110,0.25);
-    background: transparent;
-    cursor: pointer;
-    padding: 0;
-    transition: all 0.3s ease;
-}
-
-.pf-dot:hover {
-    border-color: var(--gold);
-    background: rgba(201,169,110,0.2);
-}
-
-.pf-dot.is-active {
-    background: var(--gold);
-    border-color: var(--gold);
-    transform: scale(1.2);
-}
-
-.pf-indicator {
-    font-size: 0.78rem;
-    color: rgba(255,255,255,0.5);
-    letter-spacing: 1px;
-}
-
-.pf-cur {
-    color: var(--gold);
-    font-weight: 500;
-}
-
-.pf-hint {
-    font-size: 0.68rem;
-    color: rgba(201,169,110,0.35);
-    letter-spacing: 1px;
-    text-align: center;
-    margin: 8px 0 0;
-}
-
-/* ═══ PAGE STYLES ══════════════════════════════════ */
-
-.pf-page {
-    background: #faf8f4;
-    overflow: hidden;
-}
-
-.pf-page-content {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    box-sizing: border-box;
-}
-
-/* Subtle paper texture lines */
-.pf-page::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background:
-        repeating-linear-gradient(
-            0deg,
-            transparent,
-            transparent 30px,
-            rgba(0,0,0,0.01) 30px,
-            rgba(0,0,0,0.01) 31px
-        );
-    pointer-events: none;
-    z-index: 1;
-}
-
-/* Page inner frame */
-.pf-page-frame {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    margin: 16px;
-    border: 1px solid rgba(180,160,120,0.12);
-    padding: 16px;
-    position: relative;
-}
-
-/* Page number — Fix #1: legible dark color on cream bg */
-.pf-page-num {
-    font-family: var(--font-display);
-    font-size: 0.65rem;
-    color: #a09080;
-    letter-spacing: 3px;
-    text-align: center;
-    display: block;
-}
-
-.pf-page-num-bottom {
-    margin-top: auto;
-    padding-top: 8px;
-}
-
-/* ═══ COVER (front & back) — dark with gold ═══════ */
-.pf-cover,
-.pf-back {
-    background: linear-gradient(160deg, #1a1814 0%, #0e0d0b 100%);
-}
-
-.pf-cover::before,
-.pf-back::before {
-    display: none;
-}
-
-.pf-cover-content,
-.pf-back-content {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    padding: 20px;
-}
-
-.pf-cover-border {
-    border: 1px solid rgba(201,169,110,0.25);
-    padding: 24px 20px;
-    width: 100%;
-    height: calc(100% - 40px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.pf-cover-inner {
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-
-.pf-cover-line {
-    width: 50px;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(201,169,110,0.5), transparent);
-}
-
-/* Fix #1: Cover text — bright white and gold, clearly readable */
-.pf-cover-eyebrow {
-    font-size: 0.6rem;
-    text-transform: uppercase;
-    letter-spacing: 4px;
-    color: #c9a96e;
-    font-weight: 500;
-}
-
-.pf-cover-title {
-    font-family: var(--font-display);
-    font-size: clamp(1.3rem, 3.5vw, 2rem);
-    font-weight: 300;
-    color: #ffffff;
-    letter-spacing: 3px;
-    line-height: 1.3;
-    text-transform: uppercase;
-}
-
-.pf-cover-year {
-    font-family: var(--font-display);
-    font-size: 0.85rem;
-    color: #c9a96e;
-    letter-spacing: 6px;
-    font-weight: 300;
-}
-
-.pf-cover-tagline {
-    font-size: 0.65rem;
-    color: #c9a96e;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    opacity: 0.7;
-}
-
-/* ═══ BACK COVER ═══════════════════════════════════ */
-.pf-back-brand {
-    font-family: var(--font-display);
-    font-size: 1.1rem;
-    color: #ffffff;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-}
-
-.pf-back-text {
-    font-size: 0.75rem;
-    color: #c9a96e;
-    letter-spacing: 2px;
-}
-
-.pf-back-cta {
-    display: inline-block;
-    font-size: 0.68rem;
-    font-weight: 500;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: #c9a96e;
-    text-decoration: none;
-    padding: 8px 18px;
-    border: 1px solid rgba(201,169,110,0.35);
-    border-radius: 30px;
-    transition: all 0.3s ease;
-}
-
-.pf-back-cta:hover {
-    background: rgba(201,169,110,0.12);
-    border-color: #c9a96e;
-}
-
-/* ═══ FIN PAGE (no more blank) — Fix #4 ═══════════ */
-.pf-fin .pf-page-frame {
-    align-items: center;
-    justify-content: center;
-}
-
-.pf-fin-body {
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 14px;
-}
-
-.pf-fin-text {
-    font-family: var(--font-display);
-    font-size: 1rem;
-    color: #5a5040;
-    line-height: 1.6;
-    font-weight: 300;
-}
-
-.pf-fin-cta {
-    font-size: 0.68rem;
-    font-weight: 500;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: #8a7040;
-    text-decoration: none;
-    padding: 8px 20px;
-    border: 1px solid rgba(160,130,70,0.3);
-    border-radius: 30px;
-    transition: all 0.3s ease;
-}
-
-.pf-fin-cta:hover {
-    background: rgba(160,130,70,0.08);
-    border-color: #8a7040;
-}
-
-/* ═══ COLLECTION INTRO — Fix #1: dark legible text on cream ═══ */
-.pf-intro .pf-page-frame {
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-}
-
-.pf-intro-body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    max-width: 300px;
-}
-
-.pf-intro-ornament {
-    font-size: 0.7rem;
-    color: #b09060;
-    letter-spacing: 6px;
-}
-
-.pf-intro-title {
-    font-family: var(--font-display);
-    font-size: clamp(1.2rem, 3vw, 1.8rem);
-    font-weight: 400;
-    color: #2a2218;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    line-height: 1.2;
-}
-
-.pf-intro-sub {
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    color: #8a7040;
-    font-weight: 500;
-}
-
-.pf-intro-desc {
-    font-size: 0.78rem;
-    line-height: 1.7;
-    color: #5a5040;
-}
-
-.pf-intro-count {
-    font-size: 0.62rem;
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    color: #a09070;
-}
-
-/* ═══ GALLERY PAGE ═════════════════════════════════ */
-.pf-gallery-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 8px;
-    border-bottom: 1px solid rgba(180,160,120,0.1);
-    margin-bottom: 10px;
-}
-
-.pf-gallery-colname {
-    font-family: var(--font-display);
-    font-size: 0.68rem;
-    font-weight: 400;
-    color: #6b6050;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-}
-
-.pf-gallery-pag {
-    font-size: 0.6rem;
-    color: #a09080;
-    letter-spacing: 2px;
-}
-
-.pf-gallery-grid {
-    flex: 1;
-    display: grid;
-    gap: 8px;
-    align-content: start;
-}
-
-.pf-grid-1 { grid-template-columns: 1fr; max-width: 200px; margin: 0 auto; }
-.pf-grid-2 { grid-template-columns: repeat(2, 1fr); }
-.pf-grid-3 { grid-template-columns: repeat(2, 1fr); }
-.pf-grid-4 { grid-template-columns: repeat(2, 1fr); }
-
-/* ═══ PIECE CARD ═══════════════════════════════════ */
-.pf-piece {
-    display: block;
-    text-decoration: none;
-    border-radius: 4px;
-    overflow: hidden;
-    background: #f0ece4;
-    border: 1px solid rgba(180,160,120,0.1);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.pf-piece:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-}
-
-.pf-piece-img {
-    aspect-ratio: 1;
-    overflow: hidden;
-    background: #e8e2d8;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.pf-piece-img img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-
-.pf-piece-empty {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-}
-
-.pf-piece-empty svg {
-    width: 28px;
-    height: 28px;
-    color: rgba(180,160,120,0.2);
-}
-
-/* Fix #1: Piece text — dark color on cream background */
-.pf-piece-info {
-    padding: 6px 8px;
-}
-
-.pf-piece-name {
-    display: block;
-    font-family: var(--font-display);
-    font-size: 0.68rem;
-    font-weight: 400;
-    color: #2a2218;
-    line-height: 1.3;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.pf-piece-price {
-    display: block;
-    font-size: 0.58rem;
-    color: #8a7040;
-    margin-top: 1px;
-    letter-spacing: 0.5px;
-}
-
-/* ═══ PageFlip library overrides ═══════════════════ */
-.stf__parent {
-    margin: 0 auto;
-    /* Fix #5: constrain to viewport */
-    max-height: 62vh;
-}
-
-/* Drop shadow on the Canvas rendered book */
-.stf__parent canvas {
-    filter: drop-shadow(0 6px 24px rgba(0,0,0,0.35));
-}
-
-/* ═══ RESPONSIVE ═══════════════════════════════════ */
-@media (max-width: 1024px) {
-    .pf-side-btn {
-        width: 40px;
-        height: 40px;
-    }
-
-    .pf-wrapper {
-        gap: 8px;
-    }
-}
-
-@media (max-width: 768px) {
-    .pf-side-btn {
-        width: 36px;
-        height: 36px;
-    }
-
-    .pf-side-btn svg {
-        width: 18px;
-        height: 18px;
-    }
-
-    .pf-wrapper {
-        gap: 4px;
-    }
-
-    .pf-book-area {
-        max-height: 55vh;
-    }
-
-    .stf__parent {
-        max-height: 55vh;
-    }
-
-    .pf-page-frame {
-        margin: 10px;
-        padding: 12px;
-    }
-
-    .pf-cover-border {
-        padding: 16px 12px;
-    }
-
-    .pf-dots {
-        max-width: 280px;
-    }
-
-    .pf-dot {
-        width: 8px;
-        height: 8px;
-    }
-}
-
-@media (max-width: 480px) {
-    .pf-side-btn {
-        width: 32px;
-        height: 32px;
-        border: none;
-        background: rgba(201,169,110,0.08);
-    }
-
-    .pf-page-frame {
-        margin: 6px;
-        padding: 8px;
-    }
-
-    .pf-gallery-grid {
-        gap: 5px;
-    }
-
-    .pf-piece-info {
-        padding: 4px 5px;
-    }
-
-    .pf-piece-name {
-        font-size: 0.58rem;
-    }
-
-    .pf-intro-title {
-        font-size: 1rem;
-    }
-}
-
 /* ═══════════════════════════════════════════════════════════════
    SKELETON SHIMMER — loading placeholder for piece images
    ═══════════════════════════════════════════════════════════════ */
@@ -8547,7 +7969,6 @@ nav .logo-badge {
 /* Hide shimmer once image loads → fade-in reveal */
 .piece-img,
 .piece-card-img-real,
-.pf-piece-img img,
 .pieza-img {
     opacity: 0;
     transition: opacity 0.4s ease;
@@ -8555,7 +7976,6 @@ nav .logo-badge {
 
 .piece-img.is-loaded,
 .piece-card-img-real.is-loaded,
-.pf-piece-img img.is-loaded,
 .pieza-img.is-loaded {
     opacity: 1;
 }
@@ -8596,33 +8016,6 @@ nav .logo-badge {
     background: var(--black) !important;
 }
 
-/* Book wrapper: centered */
-.pf-wrapper {
-    justify-content: center !important;
-    align-items: center !important;
-}
-
-.pf-book-area {
-    max-width: min(1200px, 88vw) !important;
-    margin: 0 auto !important;
-}
-
-/* Navigation buttons: refined circles */
-.pf-side-btn {
-    background: rgba(201,169,110,0.06) !important;
-    border: 1px solid rgba(201,169,110,0.15) !important;
-    color: var(--gold) !important;
-    width: 48px !important;
-    height: 48px !important;
-    border-radius: 50% !important;
-    transition: all 0.3s ease !important;
-    flex-shrink: 0 !important;
-}
-
-.pf-side-btn:hover {
-    background: rgba(201,169,110,0.12) !important;
-    border-color: rgba(201,169,110,0.4) !important;
-}
 
 /* ─── 4. FEATURED: Same dark, hide when empty ───────────────── */
 .featured {
@@ -9416,10 +8809,6 @@ nav .logo-badge {
         aspect-ratio: 16 / 11 !important;
     }
 
-    .pf-side-btn {
-        width: 36px !important;
-        height: 36px !important;
-    }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -11173,393 +10562,472 @@ nav .logo-sub {
     color: var(--text-on-dark-muted) !important;
 }
 
-/* ─── 2. WRAPPER DEL LIBRO ────────────────────────────────────── */
-.lookbook-v7 .pf-wrapper {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 16px !important;
-    margin-top: var(--space-lg) !important;
-    position: relative !important;
-    z-index: 1 !important;
-}
-
-/* ─── 3. BOTONES LATERALES — Editorial, sharp ─────────────────── */
-.lookbook-v7 .pf-side-btn {
-    flex-shrink: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 50px !important;
-    height: 50px !important;
-    border-radius: 0 !important;
-    border: 1px solid rgba(201,169,110, 0.15) !important;
-    background: rgba(201,169,110, 0.03) !important;
-    color: var(--gold) !important;
-    cursor: pointer !important;
-    transition: all 0.3s ease !important;
-    z-index: 5 !important;
-    backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
-}
-
-.lookbook-v7 .pf-side-btn:hover {
-    background: rgba(201,169,110, 0.1) !important;
-    border-color: rgba(201,169,110, 0.4) !important;
-    box-shadow: 0 0 20px rgba(201,169,110, 0.08) !important;
-    transform: none !important;
-}
-
-.lookbook-v7 .pf-side-btn:active {
-    transform: scale(0.96) !important;
-    background: rgba(201,169,110, 0.15) !important;
-}
-
-/* ─── 4. ÁREA DEL LIBRO ───────────────────────────────────────── */
-.lookbook-v7 .pf-book-area {
-    flex: 1 !important;
-    max-width: 1100px !important;
-    max-height: 65vh !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-/* Sombra más dramática en el canvas del libro */
-.lookbook-v7 .stf__parent canvas {
-    filter: drop-shadow(0 8px 32px rgba(0,0,0, 0.45)) drop-shadow(0 2px 8px rgba(0,0,0, 0.2)) !important;
-}
-
-.lookbook-v7 .stf__parent {
-    max-height: 65vh !important;
-}
-
-/* ─── 5. PAGINACIÓN — Dots + indicator refinados ──────────────── */
-.lookbook-v7 .pf-pagination {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    gap: 10px !important;
-    margin-top: var(--space-lg) !important;
-    position: relative !important;
-    z-index: 1 !important;
-}
-
-.lookbook-v7 .pf-dots {
-    display: flex !important;
-    gap: 6px !important;
-    flex-wrap: wrap !important;
-    justify-content: center !important;
-    max-width: 420px !important;
-}
-
-.lookbook-v7 .pf-dot {
-    width: 8px !important;
-    height: 8px !important;
-    border-radius: 0 !important;
-    border: 1px solid rgba(201,169,110, 0.2) !important;
-    background: transparent !important;
-    cursor: pointer !important;
-    padding: 0 !important;
-    transition: all 0.3s ease !important;
-}
-
-.lookbook-v7 .pf-dot:hover {
-    border-color: var(--gold) !important;
-    background: rgba(201,169,110, 0.15) !important;
-}
-
-.lookbook-v7 .pf-dot.is-active {
-    background: var(--gold) !important;
-    border-color: var(--gold) !important;
-    transform: none !important;
-    box-shadow: 0 0 8px rgba(201,169,110, 0.3) !important;
-}
-
-.lookbook-v7 .pf-indicator {
-    font-family: var(--font-body) !important;
-    font-size: 9px !important;
-    font-weight: 500 !important;
-    letter-spacing: 2px !important;
-    text-transform: uppercase !important;
-    color: rgba(220,200,165, 0.4) !important;
-}
-
-.lookbook-v7 .pf-cur {
-    color: var(--gold) !important;
-    font-weight: 600 !important;
-}
-
-.lookbook-v7 .pf-hint {
-    font-family: var(--font-body) !important;
-    font-size: 9px !important;
-    font-weight: 400 !important;
-    letter-spacing: 1.5px !important;
-    color: rgba(201,169,110, 0.25) !important;
-    text-align: center !important;
-    margin: 6px 0 0 !important;
-}
-
-/* ─── 6. PÁGINAS DEL LIBRO — Más premium ──────────────────────── */
-.lookbook-v7 .pf-page {
-    background: #faf8f3 !important;
-}
-
-.lookbook-v7 .pf-page-frame {
-    border-color: rgba(180,160,120, 0.08) !important;
-}
-
-/* Cover — fondo más profundo */
-.lookbook-v7 .pf-cover,
-.lookbook-v7 .pf-back {
-    background: linear-gradient(160deg, #161410 0%, #0c0b09 100%) !important;
-}
-
-.lookbook-v7 .pf-cover-border {
-    border-color: rgba(201,169,110, 0.2) !important;
-}
-
-/* Piece cards dentro del libro */
-.lookbook-v7 .pf-piece {
-    border-radius: 0 !important;
-    border-color: rgba(180,160,120, 0.06) !important;
-    transition: transform 0.3s ease, box-shadow 0.3s ease !important;
-}
-
-.lookbook-v7 .pf-piece:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 4px 16px rgba(0,0,0, 0.1) !important;
-}
-
-/* Back cover CTA — sharp */
-.lookbook-v7 .pf-back-cta,
-.lookbook-v7 .pf-fin-cta {
-    border-radius: 0 !important;
-    letter-spacing: 2.5px !important;
-}
 
 /* ═══════════════════════════════════════════════════════════════
-   LOOKBOOK V7 — RESPONSIVE
+   PORTFOLIO V5 — CSS SLIDER (reemplaza StPageFlip)
+   Slider puro CSS con translateX. Sin dependencias externas.
+   Centrado, ocupa máximo ancho horizontal, responsive.
    ═══════════════════════════════════════════════════════════════ */
 
-@media (max-width: 767px) {
-    .lookbook-v7 .pf-side-btn {
-        width: 36px !important;
-        height: 36px !important;
-        border: none !important;
-        background: rgba(201,169,110, 0.06) !important;
-    }
+/* ─── Viewport ────────────────────────────────────────────────── */
+.lb-viewport {
+    position: relative;
+    width: 100%;
+    max-width: min(1100px, 92vw);
+    margin: 0 auto;
+    aspect-ratio: 4 / 3;
+    max-height: 70vh;
+    overflow: hidden;
+    border-radius: 2px;
+    border: 1px solid rgba(201,169,110, 0.12);
+    background: #faf8f3;
+}
 
-    .lookbook-v7 .pf-wrapper {
-        gap: 6px !important;
-    }
-
-    .lookbook-v7 .pf-book-area,
-    .lookbook-v7 .stf__parent {
-        max-height: 55vh !important;
-    }
-
-    .lookbook-v7 .pf-dots {
-        max-width: 260px !important;
-    }
-
-    .lookbook-v7 .pf-dot {
-        width: 7px !important;
-        height: 7px !important;
-    }
-
-    .lookbook-v7 .pf-pagination {
-        margin-top: var(--space-md) !important;
+@media (min-width: 1024px) {
+    .lb-viewport {
+        aspect-ratio: 16 / 10;
+        max-height: 72vh;
     }
 }
 
-@media (max-width: 479px) {
-    .lookbook-v7 .pf-side-btn {
-        width: 30px !important;
-        height: 30px !important;
-    }
-
-    .lookbook-v7 .pf-side-btn svg {
-        width: 16px !important;
-        height: 16px !important;
-    }
-
-    .lookbook-v7 .pf-page-frame {
-        margin: 6px !important;
-        padding: 8px !important;
-    }
-
-    .lookbook-v7 .pf-hint {
-        font-size: 8px !important;
-    }
-}
-
-@media (min-width: 1280px) {
-    .lookbook-v7 .pf-side-btn {
-        width: 56px !important;
-        height: 56px !important;
-    }
-
-    .lookbook-v7 .pf-wrapper {
-        gap: 24px !important;
-    }
-
-    .lookbook-v7 .pf-book-area,
-    .lookbook-v7 .stf__parent {
-        max-height: 70vh !important;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .lookbook-v7 .pf-side-btn,
-    .lookbook-v7 .pf-dot,
-    .lookbook-v7 .pf-piece {
-        transition: none !important;
-    }
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   LOOKBOOK V7 — LIBRO ESTABLE (SIN SHIFT)
-   El cover y back se quedan en su posición natural dentro del
-   spread de PageFlip. No se aplica ningún translateX al contenedor
-   .pf-book — esto elimina el gap que se producía al abrir/cerrar
-   la portada cuando el shift se desincronizaba con la rotación.
-   ═══════════════════════════════════════════════════════════════ */
-.lookbook-v7 .pf-book {
+/* ─── Track ───────────────────────────────────────────────────── */
+.lb-track {
+    display: flex;
+    height: 100%;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     will-change: transform;
 }
 
-/* ─── Spine strip — elimina gap visible entre páginas del spread ──
-   StPageFlip posiciona las páginas izq/der con `left: Npx` y
-   deberían estar flush, pero en la práctica queda una franja
-   delgada del fondo oscuro visible en el lomo (centro del spread)
-   debido a subpixel rendering, perspective:2000px en .stf__block,
-   y diferencias de redondeo entre navegadores.
+/* ─── Slide base ──────────────────────────────────────────────── */
+.lb-slide {
+    flex: 0 0 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+}
 
-   Fix: pseudo-elemento del color de las páginas (#faf8f3) en el
-   centro exacto de .stf__block, detrás de las páginas (z-index:0,
-   páginas en z-index:1+). Cubre cualquier gap de hasta 12px.
-   Se oculta en cover/back state (solo 1 página visible). */
-.lookbook-v7 .stf__block::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 50%;
-    width: 12px;
-    transform: translateX(-50%);
+/* ─── Cover & Back ────────────────────────────────────────────── */
+.lb-slide--cover,
+.lb-slide--back {
+    background: linear-gradient(160deg, #1a1814 0%, #0e0d0b 100%);
+}
+
+.lb-slide__inner {
+    text-align: center;
+    padding: 40px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.lb-accent {
+    width: 40px;
+    height: 1px;
+    background: var(--gold, #c8a96e);
+    opacity: 0.5;
+}
+
+.lb-eyebrow {
+    font-family: var(--font-body, 'Montserrat', sans-serif);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold, #c8a96e);
+    opacity: 0.7;
+}
+
+.lb-cover-title {
+    font-family: var(--font-display, 'Cormorant Garamond', serif);
+    font-size: clamp(28px, 5vw, 52px);
+    font-weight: 300;
+    color: #f5f0e8;
+    line-height: 1.15;
+    letter-spacing: 2px;
+    margin: 8px 0;
+}
+
+.lb-year {
+    font-family: var(--font-body, 'Montserrat', sans-serif);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 6px;
+    color: rgba(201,169,110, 0.5);
+}
+
+.lb-tagline {
+    font-family: var(--font-body, 'Montserrat', sans-serif);
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(245,240,232, 0.35);
+    margin: 0;
+}
+
+.lb-back-brand {
+    font-family: var(--font-display, 'Cormorant Garamond', serif);
+    font-size: clamp(20px, 3.5vw, 32px);
+    font-weight: 300;
+    color: #f5f0e8;
+    letter-spacing: 3px;
+}
+
+.lb-back-url {
+    font-family: var(--font-body, 'Montserrat', sans-serif);
+    font-size: 11px;
+    color: rgba(201,169,110, 0.6);
+    letter-spacing: 2px;
+    margin: 0;
+}
+
+.lb-back-cta {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 12px 32px;
+    border: 1px solid rgba(201,169,110, 0.35);
+    color: var(--gold, #c8a96e);
+    font-family: var(--font-body, 'Montserrat', sans-serif);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.lb-back-cta:hover {
+    background: rgba(201,169,110, 0.1);
+    border-color: var(--gold, #c8a96e);
+}
+
+/* ─── Collection Intro ────────────────────────────────────────── */
+.lb-slide--intro {
     background: #faf8f3;
-    z-index: 0;
-    pointer-events: none;
 }
 
-/* Spine strip visible en todos los estados — sin shift ya no hay
-   cover/back state que necesite ocultarlo */
-
-/* ─── Anti-flash en refresh (Ctrl+Shift+R) ───────────────────────
-   Antes de que PageFlip procese loadFromHTML, los .pf-page del
-   markup quedan visibles a tamaño completo y producen un "flash"
-   del libro agrandado. Los ocultamos hasta que JS añade
-   .is-ready al .pf-book — momento en que PageFlip ya construyó
-   su canvas y los .pf-page originales ya no son necesarios. */
-.lookbook-v7 .pf-book:not(.is-ready) .pf-page {
-    display: none !important;
+.lb-intro__inner {
+    text-align: center;
+    padding: 40px 32px;
+    max-width: 520px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   LOOKBOOK V7 — TIPOGRAFÍA INTERNA REFINADA EN MOBILE
-   Cuando el libro se renderiza pequeño en celular, las fuentes
-   por defecto del cover quedan ilegibles (aplastadas). Estas
-   reglas escalan tipografía y padding para que el texto respire.
-   ═══════════════════════════════════════════════════════════════ */
+.lb-intro-ornament {
+    font-size: 14px;
+    color: var(--gold, #c8a96e);
+    opacity: 0.6;
+}
+
+.lb-intro-title {
+    font-family: var(--font-display, 'Cormorant Garamond', serif);
+    font-size: clamp(24px, 4vw, 42px);
+    font-weight: 400;
+    color: #1a1814;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.lb-intro-sub {
+    font-family: var(--font-display, 'Cormorant Garamond', serif);
+    font-size: clamp(14px, 2vw, 18px);
+    font-style: italic;
+    color: #8a7a5a;
+    font-weight: 400;
+}
+
+.lb-intro-desc {
+    font-family: var(--font-body, 'Montserrat', sans-serif);
+    font-size: 12px;
+    line-height: 1.8;
+    color: #6a6050;
+    max-width: 400px;
+    margin: 0;
+}
+
+.lb-intro-count {
+    font-family: var(--font-body, 'Montserrat', sans-serif);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold, #c8a96e);
+    opacity: 0.7;
+    margin-top: 8px;
+}
+
+/* ─── Gallery ─────────────────────────────────────────────────── */
+.lb-slide--gallery {
+    background: #faf8f3;
+}
+
+.lb-gallery__inner {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 24px;
+    box-sizing: border-box;
+}
+
+.lb-gallery-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(160,140,100, 0.1);
+    margin-bottom: 16px;
+    flex-shrink: 0;
+}
+
+.lb-gallery-col {
+    font-family: var(--font-body, 'Montserrat', sans-serif);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #4a4030;
+}
+
+.lb-gallery-pag {
+    font-family: var(--font-body, 'Montserrat', sans-serif);
+    font-size: 10px;
+    color: #a09080;
+    letter-spacing: 1px;
+}
+
+.lb-gallery-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 12px;
+    min-height: 0;
+}
+
+.lb-grid-1 { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+.lb-grid-2 { grid-template-columns: repeat(2, 1fr); grid-template-rows: 1fr; }
+.lb-grid-3 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); }
+
+/* ─── Piece card ──────────────────────────────────────────────── */
+.lb-piece {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(160,140,100, 0.1);
+    text-decoration: none;
+    overflow: hidden;
+    transition: border-color 0.3s ease;
+    min-height: 0;
+}
+
+.lb-piece:hover {
+    border-color: rgba(201,169,110, 0.35);
+}
+
+.lb-piece-img {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0ece4;
+}
+
+.lb-piece-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.lb-piece:hover .lb-piece-img img {
+    transform: scale(1.04);
+}
+
+.lb-piece-empty {
+    width: 40px;
+    height: 40px;
+    color: rgba(160,140,100, 0.25);
+}
+
+.lb-piece-info {
+    padding: 8px 10px;
+    flex-shrink: 0;
+}
+
+.lb-piece-name {
+    display: block;
+    font-family: var(--font-body, 'Montserrat', sans-serif);
+    font-size: 11px;
+    font-weight: 500;
+    color: #3a3020;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lb-piece-price {
+    display: block;
+    font-family: var(--font-body, 'Montserrat', sans-serif);
+    font-size: 10px;
+    color: var(--gold, #c8a96e);
+    margin-top: 2px;
+}
+
+/* ─── Navigation arrows ───────────────────────────────────────── */
+.lb-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 5;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10,15,10, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(201,169,110, 0.2);
+    color: var(--gold, #c8a96e);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0;
+}
+
+.lb-arrow:hover {
+    background: rgba(10,15,10, 0.85);
+    border-color: rgba(201,169,110, 0.5);
+}
+
+.lb-arrow--prev { left: 12px; }
+.lb-arrow--next { right: 12px; }
+
+/* ─── Controls (dots + counter) ───────────────────────────────── */
+.lb-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.lb-dots {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 400px;
+}
+
+.lb-dot {
+    width: 8px;
+    height: 8px;
+    border: 1px solid rgba(201,169,110, 0.2);
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.3s ease;
+}
+
+.lb-dot:hover {
+    border-color: var(--gold, #c8a96e);
+    background: rgba(201,169,110, 0.15);
+}
+
+.lb-dot.is-active {
+    background: var(--gold, #c8a96e);
+    border-color: var(--gold, #c8a96e);
+}
+
+.lb-counter {
+    font-family: var(--font-body, 'Montserrat', sans-serif);
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(220,200,165, 0.4);
+}
+
+.lb-cur {
+    color: var(--gold, #c8a96e);
+    font-weight: 600;
+}
+
+/* ─── Mobile ──────────────────────────────────────────────────── */
 @media (max-width: 767px) {
-    .lookbook-v7 .pf-cover-content,
-    .lookbook-v7 .pf-back-content {
-        padding: 12px !important;
+    .lb-viewport {
+        aspect-ratio: 3 / 4;
+        max-height: 65vh;
+        max-width: 95vw;
     }
 
-    .lookbook-v7 .pf-cover-border {
-        padding: 16px 12px !important;
-        height: calc(100% - 24px) !important;
+    .lb-arrow {
+        width: 36px;
+        height: 36px;
     }
 
-    .lookbook-v7 .pf-cover-inner {
-        gap: 8px !important;
+    .lb-arrow--prev { left: 6px; }
+    .lb-arrow--next { right: 6px; }
+
+    .lb-gallery__inner {
+        padding: 14px 16px;
     }
 
-    .lookbook-v7 .pf-cover-eyebrow {
-        font-size: 8.5px !important;
-        letter-spacing: 2px !important;
+    .lb-gallery-grid {
+        gap: 8px;
     }
 
-    .lookbook-v7 .pf-cover-title {
-        font-size: clamp(1.4rem, 7vw, 2rem) !important;
-        line-height: 1.05 !important;
-        letter-spacing: 1px !important;
+    .lb-piece-info {
+        padding: 6px 8px;
     }
 
-    .lookbook-v7 .pf-cover-year {
-        font-size: 9px !important;
-        letter-spacing: 4px !important;
-    }
-
-    .lookbook-v7 .pf-cover-tagline {
-        font-size: 8px !important;
-        letter-spacing: 1.5px !important;
-        line-height: 1.5 !important;
-        max-width: 90% !important;
-    }
-
-    .lookbook-v7 .pf-cover-line {
-        width: 36px !important;
-    }
-
-    .lookbook-v7 .pf-intro-title {
-        font-size: clamp(1.1rem, 5.5vw, 1.6rem) !important;
-        line-height: 1.1 !important;
-    }
-
-    .lookbook-v7 .pf-intro-sub,
-    .lookbook-v7 .pf-intro-desc {
-        font-size: 10px !important;
-        line-height: 1.45 !important;
-    }
-
-    .lookbook-v7 .pf-intro-count {
-        font-size: 8.5px !important;
-        letter-spacing: 1.5px !important;
-    }
-
-    .lookbook-v7 .pf-gallery-colname {
-        font-size: 9px !important;
-        letter-spacing: 1.5px !important;
-    }
-
-    .lookbook-v7 .pf-piece-name {
-        font-size: 10px !important;
-        line-height: 1.2 !important;
-    }
-
-    .lookbook-v7 .pf-piece-price {
-        font-size: 8.5px !important;
-    }
-
-    .lookbook-v7 .pf-back-brand {
-        font-size: 11px !important;
-        letter-spacing: 2px !important;
-    }
-
-    .lookbook-v7 .pf-back-text {
-        font-size: 9px !important;
-    }
-
-    .lookbook-v7 .pf-back-cta,
-    .lookbook-v7 .pf-fin-cta {
-        font-size: 9px !important;
-        padding: 9px 14px !important;
-        letter-spacing: 1.8px !important;
-    }
+    .lb-piece-name { font-size: 10px; }
+    .lb-piece-price { font-size: 9px; }
 }
+
+@media (max-width: 479px) {
+    .lb-viewport {
+        max-width: 100vw;
+        border-left: none;
+        border-right: none;
+        border-radius: 0;
+    }
+
+    .lb-cover-title { letter-spacing: 1px; }
+
+    .lb-gallery-grid { gap: 6px; }
+}
+
+@media (min-width: 1280px) {
+    .lb-viewport {
+        max-width: 1200px;
+    }
+
+    .lb-arrow {
+        width: 52px;
+        height: 52px;
+    }
+
+    .lb-arrow--prev { left: 20px; }
+    .lb-arrow--next { right: 20px; }
+}
+
+/* ─── Reduced motion ──────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .lb-track { transition-duration: 0.1s; }
+    .lb-piece-img img { transition: none; }
+}
+
 
 /* ═══════════════════════════════════════════════════════════════
    FEATURED PIECES V7 — GRID EDITORIAL PREMIUM

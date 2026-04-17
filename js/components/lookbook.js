@@ -1,362 +1,243 @@
 /**
- * Bersaglio Jewelry — Digital Portfolio / Lookbook V4
- * Realistic page-flip using StPageFlip library.
- * ALL data from Firestore via catalog.js (real-time sync).
+ * Bersaglio Jewelry — Digital Portfolio V5
+ * Pure CSS slider — no external libraries.
+ * Data from Firestore via catalog.js (real-time sync).
  */
 
 import db from '../data/catalog.js';
-import { PageFlip } from 'page-flip';
 
 const PIECES_PER_PAGE = 4;
 
+/* ── Data → Pages ────────────────────────────────────────────── */
+
 function buildPages(collections, allPieces) {
     const pages = [];
-
-    // Front cover (hard density = doesn't bend)
     pages.push({ type: 'cover' });
 
     for (const col of collections) {
-        const colPieces = allPieces.filter(p => p.collection === col.slug);
-        if (!colPieces.length) continue;
+        const pieces = allPieces.filter(p => p.collection === col.slug);
+        if (!pieces.length) continue;
 
-        pages.push({
-            type: 'col-intro',
-            collection: col,
-            totalPieces: colPieces.length
-        });
+        pages.push({ type: 'intro', collection: col, total: pieces.length });
 
-        const totalColPages = Math.ceil(colPieces.length / PIECES_PER_PAGE);
-        for (let i = 0; i < colPieces.length; i += PIECES_PER_PAGE) {
+        const totalColPages = Math.ceil(pieces.length / PIECES_PER_PAGE);
+        for (let i = 0; i < pieces.length; i += PIECES_PER_PAGE) {
             pages.push({
                 type: 'gallery',
                 collection: col,
-                pieces: colPieces.slice(i, i + PIECES_PER_PAGE),
-                pageInCol: Math.floor(i / PIECES_PER_PAGE) + 1,
-                totalColPages
+                pieces: pieces.slice(i, i + PIECES_PER_PAGE),
+                pageNum: Math.floor(i / PIECES_PER_PAGE) + 1,
+                totalColPages,
             });
         }
     }
 
-    // Back cover
     pages.push({ type: 'back' });
-
-    // PageFlip needs even page count — add a branded page if odd
-    if (pages.length % 2 !== 0) {
-        // Insert a "fin" page before back cover
-        pages.splice(pages.length - 1, 0, { type: 'fin' });
-    }
-
     return pages;
 }
 
-function renderPage(page, index) {
-    // Covers use hard density (rigid like a real cover)
-    const density = (page.type === 'cover' || page.type === 'back')
-        ? 'data-density="hard"'
-        : 'data-density="soft"';
+/* ── Render individual slide ─────────────────────────────────── */
+
+function renderSlide(page, idx) {
+    const cls = `lb-slide lb-slide--${page.type}`;
 
     if (page.type === 'cover') {
-        return `
-            <div class="pf-page pf-cover" ${density}>
-                <div class="pf-page-content pf-cover-content">
-                    <div class="pf-cover-border">
-                        <div class="pf-cover-inner">
-                            <div class="pf-cover-line"></div>
-                            <span class="pf-cover-eyebrow">Bersaglio Jewelry</span>
-                            <h3 class="pf-cover-title">Portafolio<br>Digital</h3>
-                            <span class="pf-cover-year">${new Date().getFullYear()}</span>
-                            <div class="pf-cover-line"></div>
-                            <p class="pf-cover-tagline">Alta Joyería · Esmeraldas Colombianas</p>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
+        return `<div class="${cls}" data-idx="${idx}">
+            <div class="lb-slide__inner">
+                <div class="lb-accent"></div>
+                <span class="lb-eyebrow">Bersaglio Jewelry</span>
+                <h3 class="lb-cover-title">Portafolio<br>Digital</h3>
+                <span class="lb-year">${new Date().getFullYear()}</span>
+                <div class="lb-accent"></div>
+                <p class="lb-tagline">Alta Joyería · Esmeraldas Colombianas</p>
+            </div>
+        </div>`;
     }
 
     if (page.type === 'back') {
-        return `
-            <div class="pf-page pf-back" ${density}>
-                <div class="pf-page-content pf-back-content">
-                    <div class="pf-cover-border">
-                        <div class="pf-cover-inner">
-                            <div class="pf-cover-line"></div>
-                            <span class="pf-back-brand">Bersaglio Jewelry</span>
-                            <p class="pf-back-text">bersagliojewelry.co</p>
-                            <a href="contacto.html" class="pf-back-cta">Agendar Asesoría</a>
-                            <div class="pf-cover-line"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
+        return `<div class="${cls}" data-idx="${idx}">
+            <div class="lb-slide__inner">
+                <div class="lb-accent"></div>
+                <span class="lb-back-brand">Bersaglio Jewelry</span>
+                <p class="lb-back-url">bersagliojewelry.co</p>
+                <a href="contacto.html" class="lb-back-cta">Agendar Asesoría</a>
+                <div class="lb-accent"></div>
+            </div>
+        </div>`;
     }
 
-    if (page.type === 'fin') {
-        return `
-            <div class="pf-page pf-fin" ${density}>
-                <div class="pf-page-content">
-                    <div class="pf-page-frame">
-                        <div class="pf-fin-body">
-                            <div class="pf-cover-line"></div>
-                            <p class="pf-fin-text">Gracias por explorar<br>nuestra colección</p>
-                            <a href="contacto.html" class="pf-fin-cta">Solicitar asesoría personalizada</a>
-                            <div class="pf-cover-line"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-    }
-
-    if (page.type === 'col-intro') {
-        const col = page.collection;
-        return `
-            <div class="pf-page pf-intro" ${density}>
-                <div class="pf-page-content">
-                    <div class="pf-page-frame">
-                        <span class="pf-page-num">${String(index).padStart(2, '0')}</span>
-                        <div class="pf-intro-body">
-                            <div class="pf-intro-ornament">◆</div>
-                            <h3 class="pf-intro-title">${col.name || col.slug}</h3>
-                            ${col.subtitle ? `<span class="pf-intro-sub">${col.subtitle}</span>` : ''}
-                            <p class="pf-intro-desc">${col.description || ''}</p>
-                            <span class="pf-intro-count">${page.totalPieces} pieza${page.totalPieces !== 1 ? 's' : ''} en esta colección</span>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
+    if (page.type === 'intro') {
+        const c = page.collection;
+        return `<div class="${cls}" data-idx="${idx}">
+            <div class="lb-intro__inner">
+                <div class="lb-intro-ornament">◆</div>
+                <h3 class="lb-intro-title">${c.name || c.slug}</h3>
+                ${c.subtitle ? `<span class="lb-intro-sub">${c.subtitle}</span>` : ''}
+                <p class="lb-intro-desc">${c.description || ''}</p>
+                <span class="lb-intro-count">${page.total} pieza${page.total !== 1 ? 's' : ''} en esta colección</span>
+            </div>
+        </div>`;
     }
 
     if (page.type === 'gallery') {
-        const col = page.collection;
-        return `
-            <div class="pf-page pf-gallery" ${density}>
-                <div class="pf-page-content">
-                    <div class="pf-page-frame">
-                        <div class="pf-gallery-header">
-                            <span class="pf-gallery-colname">${col.name || col.slug}</span>
-                            <span class="pf-gallery-pag">${page.pageInCol}/${page.totalColPages}</span>
-                        </div>
-                        <div class="pf-gallery-grid pf-grid-${page.pieces.length}">
-                            ${page.pieces.map(p => `
-                                <a href="pieza.html?p=${p.slug}" class="pf-piece">
-                                    <div class="pf-piece-img">
-                                        ${p.image
-                                            ? `<img src="${p.image}" alt="${p.name}" loading="lazy">`
-                                            : `<div class="pf-piece-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.6"><polygon points="12,2 22,8.5 12,22 2,8.5"/></svg></div>`}
-                                    </div>
-                                    <div class="pf-piece-info">
-                                        <span class="pf-piece-name">${p.name}</span>
-                                        ${p.priceLabel ? `<span class="pf-piece-price">${p.priceLabel}</span>` : ''}
-                                    </div>
-                                </a>
-                            `).join('')}
-                        </div>
-                        <span class="pf-page-num pf-page-num-bottom">${String(index).padStart(2, '0')}</span>
-                    </div>
+        const c = page.collection;
+        return `<div class="${cls}" data-idx="${idx}">
+            <div class="lb-gallery__inner">
+                <div class="lb-gallery-header">
+                    <span class="lb-gallery-col">${c.name || c.slug}</span>
+                    <span class="lb-gallery-pag">${page.pageNum}/${page.totalColPages}</span>
                 </div>
-            </div>`;
+                <div class="lb-gallery-grid lb-grid-${page.pieces.length}">
+                    ${page.pieces.map(p => `
+                        <a href="pieza.html?p=${p.slug}" class="lb-piece">
+                            <div class="lb-piece-img">
+                                ${p.image
+                                    ? `<img src="${p.image}" alt="${p.name}" loading="lazy">`
+                                    : `<div class="lb-piece-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.6"><polygon points="12,2 22,8.5 12,22 2,8.5"/></svg></div>`}
+                            </div>
+                            <div class="lb-piece-info">
+                                <span class="lb-piece-name">${p.name}</span>
+                                ${p.priceLabel ? `<span class="lb-piece-price">${p.priceLabel}</span>` : ''}
+                            </div>
+                        </a>
+                    `).join('')}
+                </div>
+            </div>
+        </div>`;
     }
 
     return '';
 }
 
-let _flipInstance = null;
+/* ── State ───────────────────────────────────────────────────── */
+
+let _current = 0;
+let _total = 0;
+let _track = null;
 let _lastSignature = '';
-let _pendingObserver = null;
+
+/* ── Public render entry ─────────────────────────────────────── */
 
 export function renderLookbook() {
-    const container = document.querySelector('#lookbook');
-    if (!container) return;
+    const root = document.querySelector('#lookbook');
+    if (!root) return;
 
     const collections = db.getCollections();
-    const allPieces   = db.getAll();
+    const allPieces = db.getAll();
 
     if (!allPieces.length) {
-        container.innerHTML = '';
+        root.innerHTML = '';
         _lastSignature = '';
-        if (_flipInstance) { try { _flipInstance.destroy(); } catch {} _flipInstance = null; }
-        if (_pendingObserver) { _pendingObserver.disconnect(); _pendingObserver = null; }
         return;
     }
 
     const pages = buildPages(collections, allPieces);
-    if (pages.length < 2) {
-        container.innerHTML = '';
-        _lastSignature = '';
-        return;
-    }
+    if (pages.length < 2) { root.innerHTML = ''; return; }
 
-    // Dedupe: skip the expensive rebuild if neither pieces nor collections
-    // produced a structurally different page list. Avoids wasted PageFlip
-    // teardown + reinit on every realtime snapshot burst.
-    const signature = JSON.stringify(pages.map(p => {
+    const sig = JSON.stringify(pages.map(p => {
         if (p.type === 'gallery') return [p.type, p.collection?.id, p.pieces.map(x => `${x.id}|${x.image || ''}|${x.name}|${x.priceLabel || ''}`)];
-        if (p.type === 'col-intro') return [p.type, p.collection?.id, p.totalPieces];
+        if (p.type === 'intro') return [p.type, p.collection?.id, p.total];
         return p.type;
     }));
-    if (signature === _lastSignature && _flipInstance) return;
-    _lastSignature = signature;
+    if (sig === _lastSignature) return;
+    _lastSignature = sig;
 
-    if (_flipInstance) {
-        try { _flipInstance.destroy(); } catch {}
-        _flipInstance = null;
-    }
-    if (_pendingObserver) {
-        _pendingObserver.disconnect();
-        _pendingObserver = null;
-    }
+    _total = pages.length;
+    _current = 0;
 
-    // Build page dots for quick navigation
-    const dots = pages.map((_, i) => `<button class="pf-dot ${i === 0 ? 'is-active' : ''}" data-page="${i}" aria-label="Ir a página ${i + 1}"></button>`).join('');
+    const dots = pages.map((_, i) =>
+        `<button class="lb-dot${i === 0 ? ' is-active' : ''}" data-i="${i}" aria-label="Página ${i + 1}"></button>`
+    ).join('');
 
-    container.innerHTML = `
-        <div class="pf-wrapper">
-            <button class="pf-side-btn pf-side-prev" aria-label="Página anterior">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="15,18 9,12 15,6"/></svg>
-            </button>
-
-            <div class="pf-book-area">
-                <div class="pf-book" id="pf-book">
-                    ${pages.map((p, i) => renderPage(p, i)).join('')}
-                </div>
+    root.innerHTML = `
+        <div class="lb-viewport">
+            <div class="lb-track">
+                ${pages.map((p, i) => renderSlide(p, i)).join('')}
             </div>
-
-            <button class="pf-side-btn pf-side-next" aria-label="Página siguiente">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="9,6 15,12 9,18"/></svg>
+            <button class="lb-arrow lb-arrow--prev" aria-label="Anterior">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="15,18 9,12 15,6"/></svg>
+            </button>
+            <button class="lb-arrow lb-arrow--next" aria-label="Siguiente">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="9,6 15,12 9,18"/></svg>
             </button>
         </div>
+        <div class="lb-controls">
+            <div class="lb-dots">${dots}</div>
+            <span class="lb-counter"><span class="lb-cur">1</span> / <span class="lb-tot">${_total}</span></span>
+        </div>`;
 
-        <div class="pf-pagination">
-            <div class="pf-dots">${dots}</div>
-            <span class="pf-indicator">Página <span class="pf-cur">1</span> de <span class="pf-tot">${pages.length}</span></span>
-        </div>
-        <p class="pf-hint">Arrastra la esquina de la página para pasar la hoja</p>`;
+    _track = root.querySelector('.lb-track');
 
-    // Defer the heavy PageFlip init until the section is near the viewport.
-    // Dramatically improves first-paint on mobile because the canvas / event
-    // wiring isn't created until the user actually scrolls down.
-    const startInit = () => initPageFlip(container, pages.length);
-    if ('IntersectionObserver' in window) {
-        _pendingObserver = new IntersectionObserver((entries, observer) => {
-            if (entries.some(e => e.isIntersecting)) {
-                observer.disconnect();
-                _pendingObserver = null;
-                startInit();
-            }
-        }, { rootMargin: '300px 0px' });
-        _pendingObserver.observe(container);
-    } else {
-        startInit();
-    }
+    initSlider(root);
 }
 
-function initPageFlip(container, totalPages) {
-    const bookEl  = container.querySelector('#pf-book');
-    const wrapper = container.querySelector('.pf-wrapper');
-    const prevBtn = container.querySelector('.pf-side-prev');
-    const nextBtn = container.querySelector('.pf-side-next');
-    const curLabel = container.querySelector('.pf-cur');
-    const dots     = container.querySelectorAll('.pf-dot');
+/* ── Slider logic ────────────────────────────────────────────── */
 
-    // Calculate responsive dimensions — wider book for premium look.
-    // Mobile gets a much wider slice of the viewport so the cover is not
-    // squeezed into a 150-px-wide vertical strip.
-    const vh = window.innerHeight;
-    const vw = window.innerWidth;
-    const isMobile = vw < 768;
+function initSlider(root) {
+    const track = root.querySelector('.lb-track');
+    const prevBtn = root.querySelector('.lb-arrow--prev');
+    const nextBtn = root.querySelector('.lb-arrow--next');
+    const curEl = root.querySelector('.lb-cur');
+    const dotsWrap = root.querySelector('.lb-dots');
+    const dots = root.querySelectorAll('.lb-dot');
 
-    let maxW, maxH;
-    if (isMobile) {
-        // Reserve ~64-80px total for the side arrow buttons + gaps.
-        const reservedX = vw < 380 ? 56 : 80;
-        maxW = Math.min(vw - reservedX, 380);
-        // Portrait book aspect ratio ~ 1:1.4
-        maxH = Math.min(Math.round(maxW * 1.4), Math.round(vh * 0.72));
-    } else {
-        maxH = Math.min(Math.round(vh * 0.68), 750);
-        maxW = Math.min(Math.round(maxH * 0.78), Math.round(vw * 0.42));
+    function goTo(n) {
+        n = Math.max(0, Math.min(_total - 1, n));
+        if (n === _current && track.style.transform) return;
+        _current = n;
+        track.style.transform = `translateX(-${n * 100}%)`;
+        curEl.textContent = n + 1;
+        dots.forEach((d, i) => d.classList.toggle('is-active', i === n));
+        prevBtn.style.opacity = n === 0 ? '0.25' : '';
+        prevBtn.style.pointerEvents = n === 0 ? 'none' : '';
+        nextBtn.style.opacity = n === _total - 1 ? '0.25' : '';
+        nextBtn.style.pointerEvents = n === _total - 1 ? 'none' : '';
     }
 
-    _flipInstance = new PageFlip(bookEl, {
-        width:       maxW,
-        height:      maxH,
-        // 'fixed' uses width/height exactly — avoids the stretch flash on
-        // load and gives the book a predictable footprint that the parent
-        // flex container can center naturally.
-        size:        'fixed',
-        minWidth:    isMobile ? 220 : 240,
-        maxWidth:    maxW,
-        minHeight:   isMobile ? 300 : 320,
-        maxHeight:   maxH,
-        showCover:   true,
-        maxShadowOpacity: 0.5,
-        mobileScrollSupport: false, // Disable to prevent scroll hijack on touch
-        flippingTime: 600,
-        usePortrait: true,
-        startZIndex: 0,
-        autoSize:    false,
-        drawShadow:  true,
-        // Desactivado: el hover en las esquinas disparaba changeState y
-        // provocaba que el libro cerrado se desplazara a la derecha sin
-        // que el usuario hiciera click. Sin preview de esquina el libro
-        // queda siempre firme en su posición cuando está cerrado.
-        showPageCorners: false,
-        // Mouse events (drag) están habilitados. El listener de
-        // changeState sincroniza las clases is-cover-state / is-back-state
-        // al inicio del flip, así el shift CSS anima en paralelo con la
-        // rotación de la página tanto para clicks como para drags.
-        useMouseEvents: true,
+    goTo(0);
+
+    prevBtn.addEventListener('click', () => goTo(_current - 1));
+    nextBtn.addEventListener('click', () => goTo(_current + 1));
+
+    dotsWrap.addEventListener('click', (e) => {
+        const dot = e.target.closest('.lb-dot');
+        if (dot) goTo(parseInt(dot.dataset.i, 10));
     });
 
-    _flipInstance.loadFromHTML(bookEl.querySelectorAll('.pf-page'));
-    bookEl.classList.add('is-ready');
-    if (wrapper) wrapper.classList.add('is-ready');
-
-    let _currentPage = 0;
-
-    function updateUI(pageIndex) {
-        _currentPage = pageIndex;
-        curLabel.textContent = pageIndex + 1;
-        dots.forEach((d, i) => d.classList.toggle('is-active', i === pageIndex));
-    }
-
-    function goNext() {
-        if (!_flipInstance || _currentPage >= totalPages - 1) return;
-        _flipInstance.flipNext();
-    }
-
-    function goPrev() {
-        if (!_flipInstance || _currentPage <= 0) return;
-        _flipInstance.flipPrev();
-    }
-
-    function goTo(target) {
-        if (!_flipInstance) return;
-        target = Math.max(0, Math.min(totalPages - 1, target));
-        if (target === _currentPage) return;
-        _flipInstance.flip(target);
-    }
-
-    _flipInstance.on('flip', (e) => updateUI(e.data));
-
-    updateUI(0);
-
-    prevBtn.addEventListener('click', goPrev);
-    nextBtn.addEventListener('click', goNext);
-
-    // Dot navigation — quick jump to any page
-    dots.forEach(dot => {
-        dot.addEventListener('click', () => {
-            goTo(parseInt(dot.dataset.page, 10));
-        });
-    });
-
-    // Keyboard navigation (only when book is in view)
     document.addEventListener('keydown', (e) => {
-        if (!bookEl.closest('.lookbook-section')) return;
-        const rect = bookEl.getBoundingClientRect();
-        const inView = rect.top < window.innerHeight && rect.bottom > 0;
-        if (!inView) return;
-        if (e.key === 'ArrowRight') goNext();
-        if (e.key === 'ArrowLeft')  goPrev();
+        const rect = root.getBoundingClientRect();
+        if (rect.top > window.innerHeight || rect.bottom < 0) return;
+        if (e.key === 'ArrowRight') { goTo(_current + 1); e.preventDefault(); }
+        if (e.key === 'ArrowLeft') { goTo(_current - 1); e.preventDefault(); }
+    });
+
+    /* ── Touch / swipe ───────────────────────────────────────── */
+    let tx0 = 0, ty0 = 0, swiping = false;
+
+    track.addEventListener('touchstart', (e) => {
+        tx0 = e.touches[0].clientX;
+        ty0 = e.touches[0].clientY;
+        swiping = false;
+        track.style.transition = 'none';
+    }, { passive: true });
+
+    track.addEventListener('touchmove', (e) => {
+        const dx = e.touches[0].clientX - tx0;
+        const dy = e.touches[0].clientY - ty0;
+        if (!swiping && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) swiping = true;
+        if (swiping) {
+            const base = -_current * 100;
+            const pct = (dx / root.querySelector('.lb-viewport').offsetWidth) * 100;
+            track.style.transform = `translateX(${base + pct}%)`;
+        }
+    }, { passive: true });
+
+    track.addEventListener('touchend', (e) => {
+        track.style.transition = '';
+        if (!swiping) return;
+        const dx = e.changedTouches[0].clientX - tx0;
+        if (dx < -40) goTo(_current + 1);
+        else if (dx > 40) goTo(_current - 1);
+        else goTo(_current);
     });
 }

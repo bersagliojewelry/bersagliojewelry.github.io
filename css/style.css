@@ -10573,9 +10573,9 @@ nav .logo-sub {
    Golden shine sweep · Staggered reveals · GSAP entrance.
    ═══════════════════════════════════════════════════════════════ */
 
-/* ─── Section spacing override ──────────────────────────────── */
+/* ─── Hide old section-header (now rendered inside JS component) ── */
 .lookbook-v7 .section-header {
-    margin-bottom: var(--space-lg, 2rem) !important;
+    display: none !important;
 }
 
 /* ─── Container ─────────────────────────────────────────────── */
@@ -10583,14 +10583,57 @@ nav .logo-sub {
     width: 100%;
 }
 
-/* ─── Header: tabs + count ──────────────────────────────────── */
-.ptf-header {
+/* ─── Integrated editorial header ───────────────────────────── */
+.ptf-hero-header {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 20px;
+    gap: 32px;
     padding: 0 4px;
+}
+
+.ptf-hero-left {
+    flex-shrink: 0;
+}
+
+.ptf-hero-eyebrow {
+    display: block;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold, #c8a96e);
+    margin-bottom: 8px;
+}
+
+.ptf-hero-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(32px, 4vw, 56px);
+    font-weight: 300;
+    line-height: 1.05;
+    color: #f5f0e8;
+    letter-spacing: -0.5px;
+    margin: 0;
+}
+
+.ptf-hero-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.ptf-hero-divider {
+    height: 1px;
+    background: linear-gradient(90deg,
+        rgba(200, 169, 110, 0.5),
+        rgba(200, 169, 110, 0.15) 60%,
+        transparent
+    );
+    margin: 20px 0;
 }
 
 .ptf-tabs-wrap {
@@ -10954,6 +10997,17 @@ nav .logo-sub {
     }
 
     .ptf-card--lg .ptf-card-name { font-size: 18px; }
+
+    .ptf-hero-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .ptf-hero-right {
+        align-items: flex-start;
+        width: 100%;
+    }
 }
 
 /* Mobile: 2 per row, tighter */
@@ -10968,10 +11022,12 @@ nav .logo-sub {
     .ptf-card-overlay { padding: 14px; }
     .ptf-card-visual { padding: 16px; }
 
-    .ptf-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
+    .ptf-hero-title {
+        font-size: clamp(28px, 7vw, 36px);
+    }
+
+    .ptf-hero-divider {
+        margin: 14px 0;
     }
 }
 

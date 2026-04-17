@@ -10567,84 +10567,77 @@ nav .logo-sub {
 
 
 /* ═══════════════════════════════════════════════════════════════
-   PORTFOLIO V8.1 — IMMERSIVE GALLERY (refined)
-   Dense grid, no gaps. Smart hero cards. Badge contained.
-   8-piece limit with expand. Reduced section spacing.
+   PORTFOLIO V9 — ADAPTIVE LUXURY GRID
+   12-column editorial grid with dynamic span assignment.
+   Zero gaps for ANY piece count. Row patterns cycle for rhythm.
+   Golden shine sweep · Staggered reveals · GSAP entrance.
    ═══════════════════════════════════════════════════════════════ */
 
-/* ─── Reduce section header gap for lookbook only ────────────── */
+/* ─── Section spacing override ──────────────────────────────── */
 .lookbook-v7 .section-header {
     margin-bottom: var(--space-lg, 2rem) !important;
 }
 
-/* ─── Container ──────────────────────────────────────────────── */
+/* ─── Container ─────────────────────────────────────────────── */
 .ptf-container {
     width: 100%;
 }
 
-/* ─── Header: tabs + count ───────────────────────────────────── */
+/* ─── Header: tabs + count ──────────────────────────────────── */
 .ptf-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
     margin-bottom: 20px;
-    flex-wrap: wrap;
+    padding: 0 4px;
 }
 
 .ptf-tabs-wrap {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    -ms-overflow-style: none;
-    flex: 1;
-    min-width: 0;
 }
-
-.ptf-tabs-wrap::-webkit-scrollbar {
-    display: none;
-}
+.ptf-tabs-wrap::-webkit-scrollbar { display: none; }
 
 .ptf-tabs {
     display: flex;
     gap: 4px;
-    white-space: nowrap;
 }
 
 .ptf-tab {
-    padding: 10px 20px;
-    border: 1px solid rgba(201,169,110, 0.1);
+    padding: 8px 20px;
     background: transparent;
-    color: rgba(245,240,232, 0.5);
-    font-family: var(--font-body, 'Montserrat', sans-serif);
+    border: 1px solid rgba(200, 169, 110, 0.12);
+    color: rgba(245, 240, 232, 0.5);
+    font-family: 'Montserrat', sans-serif;
     font-size: 10px;
     font-weight: 500;
-    letter-spacing: 3px;
+    letter-spacing: 2.5px;
     text-transform: uppercase;
     cursor: pointer;
-    transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     white-space: nowrap;
-    flex-shrink: 0;
+    transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .ptf-tab:hover {
-    border-color: rgba(201,169,110, 0.3);
-    color: var(--gold, #c8a96e);
+    color: rgba(245, 240, 232, 0.8);
+    border-color: rgba(200, 169, 110, 0.3);
 }
 
 .ptf-tab.is-active {
-    background: rgba(201,169,110, 0.08);
-    border-color: rgba(201,169,110, 0.4);
+    background: rgba(200, 169, 110, 0.12);
+    border-color: rgba(200, 169, 110, 0.4);
     color: var(--gold, #c8a96e);
 }
 
 .ptf-count {
-    font-family: var(--font-body, 'Montserrat', sans-serif);
+    font-family: 'Montserrat', sans-serif;
     font-size: 10px;
-    letter-spacing: 2px;
-    color: rgba(201,169,110, 0.4);
-    flex-shrink: 0;
+    letter-spacing: 1.5px;
+    color: rgba(245, 240, 232, 0.3);
     white-space: nowrap;
+    text-transform: uppercase;
 }
 
 .ptf-count-num {
@@ -10652,268 +10645,286 @@ nav .logo-sub {
     font-weight: 600;
 }
 
-/* ─── Grid — dense auto-flow fills every gap ─────────────────── */
+/* ─── Grid: 12-column adaptive ──────────────────────────────── */
 .ptf-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-auto-flow: dense;
-    gap: 4px;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 3px;
+    grid-auto-rows: clamp(260px, 22vw, 380px);
 }
 
-/* ─── Card ───────────────────────────────────────────────────── */
+/* ─── Card base ─────────────────────────────────────────────── */
 .ptf-card {
     position: relative;
-    display: block;
     overflow: hidden;
+    display: flex;
+    background: linear-gradient(155deg, #0e1f15, #0a1610, #0c1a12);
+    border: 1px solid rgba(200, 169, 110, 0.06);
     text-decoration: none;
-    aspect-ratio: 1 / 1;
-    background: linear-gradient(160deg, #0e1a14, #0a1510);
-    border: 1px solid rgba(201,169,110, 0.04);
-    transition: border-color 0.5s ease;
+    cursor: pointer;
+    transition:
+        border-color 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        box-shadow 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .ptf-card:hover {
-    border-color: rgba(201,169,110, 0.25);
-    z-index: 2;
+    border-color: rgba(200, 169, 110, 0.35);
+    box-shadow:
+        0 8px 40px rgba(0, 0, 0, 0.4),
+        0 0 30px rgba(200, 169, 110, 0.06),
+        inset 0 0 40px rgba(200, 169, 110, 0.02);
 }
 
-/* Hero cards span 2×2 for visual impact */
-.ptf-card--hero {
-    grid-column: span 2;
-    grid-row: span 2;
+/* ─── Golden shine sweep ────────────────────────────────────── */
+.ptf-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        105deg,
+        transparent 40%,
+        rgba(200, 169, 110, 0.04) 44%,
+        rgba(200, 169, 110, 0.08) 50%,
+        rgba(200, 169, 110, 0.04) 56%,
+        transparent 60%
+    );
+    z-index: 3;
+    transform: translateX(-120%);
+    pointer-events: none;
+    transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-/* ─── Card image ─────────────────────────────────────────────── */
+.ptf-card:hover::before {
+    transform: translateX(120%);
+}
+
+/* ─── Card visual (image area) ──────────────────────────────── */
 .ptf-card-visual {
     position: absolute;
     inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 16px;
-    background: radial-gradient(ellipse at center, rgba(201,169,110,0.02) 0%, transparent 70%);
+    padding: 24px;
 }
 
 .ptf-card-img {
-    max-width: 100%;
-    max-height: 100%;
-    width: auto;
-    height: auto;
+    max-width: 90%;
+    max-height: 90%;
     object-fit: contain;
-    filter: drop-shadow(0 4px 16px rgba(0,0,0,0.35));
-    transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-                filter 0.7s ease;
+    filter: drop-shadow(0 4px 24px rgba(0, 0, 0, 0.4));
+    transition:
+        transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        filter 0.5s ease;
 }
 
 .ptf-card:hover .ptf-card-img {
-    transform: scale(1.06);
-    filter: drop-shadow(0 8px 30px rgba(0,0,0,0.45))
-           drop-shadow(0 0 12px rgba(201,169,110,0.05));
+    transform: scale(1.08);
+    filter:
+        drop-shadow(0 8px 32px rgba(0, 0, 0, 0.5))
+        drop-shadow(0 0 20px rgba(200, 169, 110, 0.08));
 }
 
-.ptf-card--hero .ptf-card-visual {
-    padding: 28px;
+.ptf-card--lg .ptf-card-visual {
+    padding: 32px;
 }
 
-.ptf-card--hero .ptf-card-img {
-    filter: drop-shadow(0 8px 28px rgba(0,0,0,0.4));
-}
-
+/* ─── Placeholder (no image) ────────────────────────────────── */
 .ptf-card-placeholder {
-    width: 40px;
-    height: 40px;
-    color: rgba(201,169,110, 0.12);
+    width: 48px;
+    height: 48px;
+    color: rgba(200, 169, 110, 0.15);
 }
 
-.ptf-card-placeholder svg {
-    width: 100%;
-    height: 100%;
+.ptf-card--lg .ptf-card-placeholder {
+    width: 64px;
+    height: 64px;
 }
 
-/* ─── Card overlay (appears on hover) ────────────────────────── */
+/* ─── Overlay ───────────────────────────────────────────────── */
 .ptf-card-overlay {
     position: absolute;
     inset: 0;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    padding: 18px;
+    padding: 20px;
     background: linear-gradient(
         0deg,
-        rgba(5,10,7, 0.92) 0%,
-        rgba(5,10,7, 0.55) 40%,
-        rgba(5,10,7, 0.05) 70%,
-        transparent 100%
+        rgba(5, 10, 7, 0.95) 0%,
+        rgba(5, 10, 7, 0.7) 30%,
+        rgba(5, 10, 7, 0.2) 55%,
+        transparent 75%
     );
+    z-index: 2;
     opacity: 0;
-    transition: opacity 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    pointer-events: none;
-    z-index: 1;
+    transition: opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .ptf-card:hover .ptf-card-overlay {
     opacity: 1;
 }
 
-.ptf-card--hero .ptf-card-overlay {
+.ptf-card--lg .ptf-card-overlay {
     padding: 28px;
 }
 
+/* ─── Overlay text (staggered reveal) ───────────────────────── */
 .ptf-card-col {
-    font-family: var(--font-body, 'Montserrat', sans-serif);
-    font-size: 8px;
-    font-weight: 600;
-    letter-spacing: 3.5px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 3px;
     text-transform: uppercase;
-    color: var(--gold, #c8a96e);
-    opacity: 0.7;
+    color: rgba(200, 169, 110, 0.7);
     margin-bottom: 4px;
-    transform: translateY(8px);
-    transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.04s;
-}
-
-.ptf-card:hover .ptf-card-col {
-    transform: translateY(0);
+    transform: translateY(12px);
+    opacity: 0;
+    transition: transform 0.4s ease, opacity 0.3s ease;
+    transition-delay: 0.05s;
 }
 
 .ptf-card-name {
-    font-family: var(--font-display, 'Cormorant Garamond', serif);
-    font-size: clamp(15px, 1.6vw, 22px);
-    font-weight: 400;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 300;
     color: #f5f0e8;
     line-height: 1.2;
-    letter-spacing: 0.3px;
-    margin: 0 0 4px;
-    transform: translateY(10px);
-    transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.08s;
+    margin: 2px 0 6px;
+    transform: translateY(12px);
+    opacity: 0;
+    transition: transform 0.4s ease, opacity 0.3s ease;
+    transition-delay: 0.1s;
 }
 
-.ptf-card:hover .ptf-card-name {
-    transform: translateY(0);
-}
-
-.ptf-card--hero .ptf-card-name {
-    font-size: clamp(18px, 2.2vw, 28px);
+.ptf-card--lg .ptf-card-name {
+    font-size: 22px;
 }
 
 .ptf-card-specs {
-    font-family: var(--font-body, 'Montserrat', sans-serif);
-    font-size: 9px;
-    color: rgba(245,240,232, 0.4);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
     letter-spacing: 0.5px;
-    margin-bottom: 2px;
-    transform: translateY(10px);
-    transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.1s;
-}
-
-.ptf-card:hover .ptf-card-specs {
-    transform: translateY(0);
+    color: rgba(245, 240, 232, 0.5);
+    margin-bottom: 4px;
+    transform: translateY(12px);
+    opacity: 0;
+    transition: transform 0.4s ease, opacity 0.3s ease;
+    transition-delay: 0.15s;
 }
 
 .ptf-card-price {
-    font-family: var(--font-body, 'Montserrat', sans-serif);
-    font-size: 10px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
     color: var(--gold, #c8a96e);
-    letter-spacing: 0.8px;
-    transform: translateY(10px);
-    transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.12s;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    transform: translateY(12px);
+    opacity: 0;
+    transition: transform 0.4s ease, opacity 0.3s ease;
+    transition-delay: 0.2s;
 }
 
-.ptf-card:hover .ptf-card-price {
-    transform: translateY(0);
+.ptf-card--lg .ptf-card-price {
+    font-size: 14px;
 }
 
 .ptf-card-cta {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    margin-top: 8px;
-    font-family: var(--font-body, 'Montserrat', sans-serif);
-    font-size: 8px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 9px;
     font-weight: 500;
-    letter-spacing: 2.5px;
-    text-transform: uppercase;
-    color: rgba(201,169,110, 0.75);
-    transform: translateY(12px);
-    transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.15s;
-}
-
-.ptf-card:hover .ptf-card-cta {
-    transform: translateY(0);
-}
-
-.ptf-card-cta svg {
-    transition: transform 0.3s ease;
-}
-
-.ptf-card:hover .ptf-card-cta svg {
-    transform: translateX(3px);
-}
-
-/* ─── Badge — INSIDE the card, never overflows ───────────────── */
-.ptf-card-badge {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    padding: 4px 10px;
-    background: rgba(10,15,10, 0.75);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(201,169,110, 0.2);
-    font-family: var(--font-body, 'Montserrat', sans-serif);
-    font-size: 7px;
-    font-weight: 600;
     letter-spacing: 2px;
     text-transform: uppercase;
     color: var(--gold, #c8a96e);
-    z-index: 3;
-    max-width: calc(100% - 20px);
+    transform: translateY(12px);
+    opacity: 0;
+    transition: transform 0.4s ease, opacity 0.3s ease, gap 0.3s ease;
+    transition-delay: 0.25s;
+}
+
+.ptf-card:hover .ptf-card-cta {
+    gap: 10px;
+}
+
+.ptf-card:hover .ptf-card-col,
+.ptf-card:hover .ptf-card-name,
+.ptf-card:hover .ptf-card-specs,
+.ptf-card:hover .ptf-card-price,
+.ptf-card:hover .ptf-card-cta {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+/* ─── Badge ─────────────────────────────────────────────────── */
+.ptf-card-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 4;
+    padding: 4px 10px;
+    background: rgba(200, 169, 110, 0.15);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(200, 169, 110, 0.25);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--gold, #c8a96e);
+    max-width: calc(100% - 24px);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-/* ─── Expand button ──────────────────────────────────────────── */
+/* ─── Expand button ─────────────────────────────────────────── */
 .ptf-expand-wrap {
     display: flex;
     justify-content: center;
-    margin-top: 24px;
+    margin-top: 32px;
 }
 
 .ptf-expand-btn {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 14px 36px;
-    border: 1px solid rgba(201,169,110, 0.15);
+    padding: 12px 32px;
     background: transparent;
-    color: var(--gold, #c8a96e);
-    font-family: var(--font-body, 'Montserrat', sans-serif);
+    border: 1px solid rgba(200, 169, 110, 0.2);
+    color: rgba(245, 240, 232, 0.6);
+    font-family: 'Montserrat', sans-serif;
     font-size: 10px;
     font-weight: 500;
-    letter-spacing: 3px;
+    letter-spacing: 2px;
     text-transform: uppercase;
     cursor: pointer;
-    transition: all 0.4s ease;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .ptf-expand-btn:hover {
-    border-color: rgba(201,169,110, 0.4);
-    background: rgba(201,169,110, 0.05);
+    border-color: rgba(200, 169, 110, 0.45);
+    color: var(--gold, #c8a96e);
+    background: rgba(200, 169, 110, 0.06);
 }
 
 .ptf-expand-btn svg {
     transition: transform 0.4s ease;
+    stroke: currentColor;
 }
 
-/* ─── Touch devices: show name + price always ────────────────── */
+/* ─── Touch devices: always show overlay ────────────────────── */
 @media (hover: none) {
     .ptf-card-overlay {
         opacity: 1;
         background: linear-gradient(
             0deg,
-            rgba(5,10,7, 0.85) 0%,
-            rgba(5,10,7, 0.3) 30%,
+            rgba(5, 10, 7, 0.9) 0%,
+            rgba(5, 10, 7, 0.5) 25%,
             transparent 55%
         );
     }
@@ -10924,93 +10935,92 @@ nav .logo-sub {
     .ptf-card-price,
     .ptf-card-cta {
         transform: translateY(0);
+        opacity: 1;
     }
 
-    .ptf-card-cta { display: none; }
-    .ptf-card-specs { display: none; }
+    .ptf-card::before { display: none; }
 }
 
-/* ─── Responsive: tablet ─────────────────────────────────────── */
+/* ─── Responsive ────────────────────────────────────────────── */
+
+/* Tablet: 2 cards per row */
 @media (max-width: 1024px) {
     .ptf-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-auto-rows: clamp(220px, 35vw, 320px);
     }
 
-    .ptf-card-overlay { padding: 16px; }
-    .ptf-card--hero .ptf-card-overlay { padding: 22px; }
+    .ptf-card {
+        grid-column: span 6 !important;
+    }
+
+    .ptf-card--lg .ptf-card-name { font-size: 18px; }
 }
 
-/* ─── Responsive: mobile ─────────────────────────────────────── */
+/* Mobile: 2 per row, tighter */
 @media (max-width: 640px) {
-    .lookbook-v7 .section-header {
-        margin-bottom: var(--space-md, 1.5rem) !important;
+    .ptf-grid {
+        gap: 2px;
+        grid-auto-rows: clamp(180px, 42vw, 260px);
     }
+
+    .ptf-card-name { font-size: 15px; }
+    .ptf-card--lg .ptf-card-name { font-size: 16px; }
+    .ptf-card-overlay { padding: 14px; }
+    .ptf-card-visual { padding: 16px; }
 
     .ptf-header {
         flex-direction: column;
         align-items: flex-start;
-        gap: 10px;
-        margin-bottom: 14px;
-    }
-
-    .ptf-tab {
-        padding: 8px 14px;
-        font-size: 9px;
-        letter-spacing: 2px;
-    }
-
-    .ptf-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 3px;
-    }
-
-    .ptf-card--hero {
-        grid-column: span 2;
-        grid-row: span 1;
-        aspect-ratio: 16 / 10;
-    }
-
-    .ptf-card-visual { padding: 10px; }
-    .ptf-card--hero .ptf-card-visual { padding: 16px; }
-    .ptf-card-overlay { padding: 12px; }
-    .ptf-card--hero .ptf-card-overlay { padding: 16px; }
-
-    .ptf-card-name { font-size: 13px; }
-    .ptf-card--hero .ptf-card-name { font-size: 15px; }
-    .ptf-card-col { font-size: 7px; letter-spacing: 2.5px; }
-    .ptf-card-price { font-size: 9px; }
-    .ptf-card-badge { font-size: 6px; padding: 3px 7px; }
-
-    .ptf-expand-btn {
-        padding: 12px 28px;
-        font-size: 9px;
+        gap: 8px;
     }
 }
 
-/* ─── Large desktop ──────────────────────────────────────────── */
+/* Small mobile: 1 per row */
+@media (max-width: 479px) {
+    .ptf-card {
+        grid-column: span 12 !important;
+    }
+
+    .ptf-grid {
+        grid-auto-rows: clamp(250px, 70vw, 350px);
+    }
+
+    .ptf-card-overlay { padding: 16px; }
+    .ptf-card-name { font-size: 18px; }
+    .ptf-card--lg .ptf-card-name { font-size: 18px; }
+}
+
+/* Wide screens */
 @media (min-width: 1400px) {
     .ptf-grid {
-        grid-template-columns: repeat(5, 1fr);
+        grid-auto-rows: clamp(300px, 20vw, 420px);
     }
 }
 
+/* Ultra-wide */
 @media (min-width: 1800px) {
     .ptf-grid {
-        grid-template-columns: repeat(6, 1fr);
+        grid-auto-rows: 420px;
     }
 }
 
-/* ─── Reduced motion ─────────────────────────────────────────── */
+/* ─── Reduced motion ───────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
     .ptf-card-img { transition: none; }
     .ptf-card-overlay { transition: none; }
+    .ptf-card { transition: none; }
+    .ptf-card::before { display: none; }
 
     .ptf-card-col, .ptf-card-name, .ptf-card-specs,
     .ptf-card-price, .ptf-card-cta {
         transform: translateY(0);
+        opacity: 1;
         transition: none;
     }
 }
+
+
+
 
 
 /* ═══════════════════════════════════════════════════════════════

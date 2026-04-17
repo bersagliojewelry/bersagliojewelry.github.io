@@ -1,164 +1,175 @@
 /**
- * Bersaglio Jewelry — Portfolio V7
- * Premium showcase: Swiper.js + GSAP cinematics.
- * Full-bleed piece presentation, fade + creative transitions,
- * GSAP-powered text reveals on each slide change.
+ * Bersaglio Jewelry — Portfolio V8: Immersive Gallery
+ *
+ * Concept: Full-width masonry-like grid organized by collection.
+ * Collection tabs for navigation. Each piece card shows the product
+ * large with a cinematic hover overlay revealing info + CTA.
+ * GSAP powers staggered reveals and collection transitions.
+ *
+ * No slider. The grid IS the portfolio — every piece visible,
+ * maximum space utilization, luxury hover interactions.
  */
 
-import Swiper from 'swiper';
-import { Navigation, Pagination, Keyboard, EffectCreative, A11y } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/effect-creative';
 import { gsap } from '../gsap-core.js';
 import db from '../data/catalog.js';
 
-let _swiper = null;
 let _lastSignature = '';
+let _activeCollection = 'all';
 
-/* ── Build flat list of slides ──────────────────────────────── */
+/* ── Render a single piece card ─────────────────────────────── */
 
-function buildSlides(collections, allPieces) {
-    const slides = [];
+function renderCard(piece, col, index) {
+    const s = piece.specs || {};
+    const specLine = [s.stone, s.metal, s.carat ? `${s.carat} ct` : '']
+        .filter(Boolean).join(' · ');
 
-    slides.push({ type: 'cover' });
+    return `
+    <a href="pieza.html?p=${piece.slug}" class="ptf-card" data-col="${piece.collection}" data-idx="${index}">
+        <div class="ptf-card-visual">
+            ${piece.image
+                ? `<img src="${piece.image}" alt="${piece.name}" loading="lazy" class="ptf-card-img">`
+                : `<div class="ptf-card-placeholder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.4">
+                        <polygon points="12,2 22,8.5 12,22 2,8.5"/>
+                    </svg>
+                </div>`}
+        </div>
+        <div class="ptf-card-overlay">
+            <span class="ptf-card-col">${col?.name || piece.collection}</span>
+            <h4 class="ptf-card-name">${piece.name}</h4>
+            ${specLine ? `<span class="ptf-card-specs">${specLine}</span>` : ''}
+            ${piece.priceLabel ? `<span class="ptf-card-price">${piece.priceLabel}</span>` : ''}
+            <span class="ptf-card-cta">
+                Ver Pieza
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13,6 19,12 13,18"/></svg>
+            </span>
+        </div>
+        ${piece.badge ? `<span class="ptf-card-badge">${piece.badge}</span>` : ''}
+    </a>`;
+}
 
+/* ── Build the full portfolio HTML ──────────────────────────── */
+
+function buildPortfolioHTML(collections, allPieces) {
+    const tabs = [
+        `<button class="ptf-tab is-active" data-col="all">Todas</button>`,
+        ...collections
+            .filter(c => allPieces.some(p => p.collection === c.slug || p.collection === c.id))
+            .map(c => `<button class="ptf-tab" data-col="${c.slug || c.id}">${c.name}</button>`)
+    ].join('');
+
+    let cardIndex = 0;
+    const cards = [];
     for (const col of collections) {
-        const pieces = allPieces.filter(p => p.collection === col.slug);
-        if (!pieces.length) continue;
-
+        const pieces = allPieces.filter(p => p.collection === col.slug || p.collection === col.id);
         for (const piece of pieces) {
-            slides.push({
-                type: 'piece',
-                piece,
-                collection: col,
-            });
+            cards.push(renderCard(piece, col, cardIndex++));
         }
     }
 
-    slides.push({ type: 'back' });
-    return slides;
-}
+    const count = allPieces.length;
 
-/* ── Render slide HTML ──────────────────────────────────────── */
-
-function renderSlide(slide) {
-    if (slide.type === 'cover') {
-        return `<div class="swiper-slide lb-slide lb-slide--cover">
-            <div class="lb-cover">
-                <div class="lb-cover-gem">
-                    <svg viewBox="0 0 60 60" fill="none" stroke="currentColor" stroke-width="0.4">
-                        <polygon points="30,4 56,20 30,56 4,20"/>
-                        <line x1="4" y1="20" x2="56" y2="20"/>
-                        <line x1="30" y1="4" x2="20" y2="20"/>
-                        <line x1="30" y1="4" x2="40" y2="20"/>
-                        <line x1="20" y1="20" x2="30" y2="56"/>
-                        <line x1="40" y1="20" x2="30" y2="56"/>
-                        <line x1="30" y1="4" x2="30" y2="56" opacity="0.3"/>
-                    </svg>
-                </div>
-                <span class="lb-anim-el lb-cover-eyebrow">Bersaglio Jewelry</span>
-                <h3 class="lb-anim-el lb-cover-title">Portafolio<br>Digital</h3>
-                <div class="lb-anim-el lb-cover-line"></div>
-                <span class="lb-anim-el lb-cover-sub">Alta Joyería · Esmeraldas Colombianas</span>
-                <span class="lb-anim-el lb-cover-year">${new Date().getFullYear()}</span>
+    return `
+    <div class="ptf-container">
+        <div class="ptf-header">
+            <div class="ptf-tabs-wrap">
+                <div class="ptf-tabs">${tabs}</div>
             </div>
-        </div>`;
-    }
-
-    if (slide.type === 'back') {
-        return `<div class="swiper-slide lb-slide lb-slide--back">
-            <div class="lb-cover">
-                <div class="lb-cover-gem lb-cover-gem--sm">
-                    <svg viewBox="0 0 60 60" fill="none" stroke="currentColor" stroke-width="0.4">
-                        <polygon points="30,8 52,22 30,52 8,22"/>
-                    </svg>
-                </div>
-                <span class="lb-anim-el lb-back-brand">Bersaglio Jewelry</span>
-                <div class="lb-anim-el lb-cover-line"></div>
-                <p class="lb-anim-el lb-back-tagline">Fabricantes de Alta Joyería en Cartagena, Colombia</p>
-                <a href="contacto.html" class="lb-anim-el lb-back-cta">Agendar Asesoría</a>
-            </div>
-        </div>`;
-    }
-
-    const p = slide.piece;
-    const c = slide.collection;
-    return `<div class="swiper-slide lb-slide lb-slide--piece">
-        <div class="lb-piece-layout">
-            <div class="lb-piece-visual">
-                <div class="lb-piece-frame">
-                    ${p.image
-                        ? `<img class="lb-piece-img" src="${p.image}" alt="${p.name}" loading="lazy">`
-                        : `<div class="lb-piece-placeholder">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.4">
-                                <polygon points="12,2 22,8.5 12,22 2,8.5"/>
-                            </svg>
-                        </div>`}
-                </div>
-            </div>
-            <div class="lb-piece-meta">
-                <span class="lb-anim-el lb-piece-collection">${c.name || c.slug}</span>
-                <h4 class="lb-anim-el lb-piece-name">${p.name}</h4>
-                ${p.priceLabel ? `<span class="lb-anim-el lb-piece-price">${p.priceLabel}</span>` : ''}
-                <a href="pieza.html?p=${p.slug}" class="lb-anim-el lb-piece-link">
-                    Ver Pieza
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg>
-                </a>
-            </div>
+            <span class="ptf-count"><span class="ptf-count-num">${count}</span> pieza${count !== 1 ? 's' : ''}</span>
+        </div>
+        <div class="ptf-grid">
+            ${cards.join('')}
         </div>
     </div>`;
 }
 
-/* ── GSAP slide animations ──────────────────────────────────── */
+/* ── Filter by collection with GSAP ─────────────────────────── */
 
-function animateSlideIn(slideEl) {
-    const els = slideEl.querySelectorAll('.lb-anim-el');
-    const img = slideEl.querySelector('.lb-piece-img');
-    const frame = slideEl.querySelector('.lb-piece-frame');
+function filterCollection(root, slug) {
+    if (slug === _activeCollection) return;
+    _activeCollection = slug;
 
-    if (els.length) {
-        gsap.fromTo(els,
-            { opacity: 0, y: 25 },
-            { opacity: 1, y: 0, duration: 0.7, stagger: 0.1, ease: 'power2.out', delay: 0.15 }
-        );
-    }
+    const tabs = root.querySelectorAll('.ptf-tab');
+    tabs.forEach(t => t.classList.toggle('is-active', t.dataset.col === slug));
 
-    if (img) {
-        gsap.fromTo(img,
-            { scale: 1.08, opacity: 0 },
-            { scale: 1, opacity: 1, duration: 0.9, ease: 'power2.out', delay: 0.1 }
-        );
-    }
+    const cards = root.querySelectorAll('.ptf-card');
+    const countEl = root.querySelector('.ptf-count-num');
 
-    if (frame) {
-        gsap.fromTo(frame,
-            { opacity: 0 },
-            { opacity: 1, duration: 0.6, ease: 'power2.out' }
-        );
-    }
+    gsap.to(cards, {
+        opacity: 0,
+        y: 20,
+        scale: 0.96,
+        duration: 0.25,
+        stagger: 0.02,
+        ease: 'power2.in',
+        onComplete() {
+            let visible = 0;
+            cards.forEach(card => {
+                const show = slug === 'all' || card.dataset.col === slug;
+                card.style.display = show ? '' : 'none';
+                if (show) visible++;
+            });
 
-    const gem = slideEl.querySelector('.lb-cover-gem');
-    if (gem) {
-        gsap.fromTo(gem,
-            { scale: 0.7, opacity: 0, rotation: -15 },
-            { scale: 1, opacity: 1, rotation: 0, duration: 1, ease: 'power3.out', delay: 0.05 }
-        );
-    }
+            if (countEl) countEl.textContent = visible;
+
+            const visibleCards = [...cards].filter(c => c.style.display !== 'none');
+            gsap.fromTo(visibleCards,
+                { opacity: 0, y: 30, scale: 0.96 },
+                {
+                    opacity: 1, y: 0, scale: 1,
+                    duration: 0.5,
+                    stagger: 0.06,
+                    ease: 'power3.out',
+                }
+            );
+        }
+    });
 }
 
-function resetSlide(slideEl) {
-    const els = slideEl.querySelectorAll('.lb-anim-el');
-    const img = slideEl.querySelector('.lb-piece-img');
-    const frame = slideEl.querySelector('.lb-piece-frame');
-    const gem = slideEl.querySelector('.lb-cover-gem');
+/* ── Initial entrance animation ─────────────────────────────── */
 
-    gsap.set(els, { opacity: 0, y: 25 });
-    if (img) gsap.set(img, { scale: 1.08, opacity: 0 });
-    if (frame) gsap.set(frame, { opacity: 0 });
-    if (gem) gsap.set(gem, { scale: 0.7, opacity: 0, rotation: -15 });
+function animateEntrance(root) {
+    const cards = root.querySelectorAll('.ptf-card');
+    const tabs = root.querySelectorAll('.ptf-tab');
+    const header = root.querySelector('.ptf-header');
+
+    gsap.set(cards, { opacity: 0, y: 40, scale: 0.95 });
+    gsap.set(tabs, { opacity: 0, y: -10 });
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (!entry.isIntersecting) return;
+            observer.disconnect();
+
+            if (header) {
+                gsap.fromTo(header,
+                    { opacity: 0, y: 20 },
+                    { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }
+                );
+            }
+
+            gsap.to(tabs, {
+                opacity: 1, y: 0,
+                duration: 0.4,
+                stagger: 0.05,
+                ease: 'power2.out',
+                delay: 0.2,
+            });
+
+            gsap.to(cards, {
+                opacity: 1, y: 0, scale: 1,
+                duration: 0.6,
+                stagger: 0.08,
+                ease: 'power3.out',
+                delay: 0.3,
+            });
+        });
+    }, { threshold: 0.1, rootMargin: '100px' });
+
+    observer.observe(root);
 }
 
-/* ── Public render ──────────────────────────────────────────── */
+/* ── Public render entry ────────────────────────────────────── */
 
 export function renderLookbook() {
     const root = document.querySelector('#lookbook');
@@ -173,94 +184,23 @@ export function renderLookbook() {
         return;
     }
 
-    const slides = buildSlides(collections, allPieces);
-    if (slides.length < 2) { root.innerHTML = ''; return; }
-
-    const sig = JSON.stringify(slides.map(s => {
-        if (s.type === 'piece') return [s.piece.id, s.piece.image || '', s.piece.name, s.piece.priceLabel || ''];
-        return s.type;
-    }));
+    const sig = JSON.stringify(allPieces.map(p =>
+        `${p.id}|${p.image || ''}|${p.name}|${p.priceLabel || ''}|${p.badge || ''}|${p.collection}`
+    ));
     if (sig === _lastSignature) return;
     _lastSignature = sig;
 
-    if (_swiper) {
-        _swiper.destroy(true, true);
-        _swiper = null;
+    _activeCollection = 'all';
+    root.innerHTML = buildPortfolioHTML(collections, allPieces);
+
+    // Tab click handlers
+    const tabsWrap = root.querySelector('.ptf-tabs');
+    if (tabsWrap) {
+        tabsWrap.addEventListener('click', e => {
+            const tab = e.target.closest('.ptf-tab');
+            if (tab) filterCollection(root, tab.dataset.col);
+        });
     }
 
-    root.innerHTML = `
-        <div class="lb-showcase swiper">
-            <div class="swiper-wrapper">
-                ${slides.map(s => renderSlide(s)).join('')}
-            </div>
-            <div class="lb-nav">
-                <button class="lb-nav-btn lb-nav-prev" aria-label="Anterior">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><polyline points="15,18 9,12 15,6"/></svg>
-                </button>
-                <div class="lb-pagination"></div>
-                <button class="lb-nav-btn lb-nav-next" aria-label="Siguiente">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><polyline points="9,6 15,12 9,18"/></svg>
-                </button>
-            </div>
-            <div class="lb-progress"><div class="lb-progress-bar"></div></div>
-        </div>`;
-
-    _swiper = new Swiper(root.querySelector('.lb-showcase'), {
-        modules: [Navigation, Pagination, Keyboard, EffectCreative, A11y],
-        effect: 'creative',
-        creativeEffect: {
-            prev: {
-                translate: [0, 0, -400],
-                opacity: 0,
-            },
-            next: {
-                translate: ['100%', 0, 0],
-                opacity: 0,
-            },
-        },
-        speed: 800,
-        keyboard: { enabled: true, onlyInViewport: true },
-        navigation: {
-            nextEl: root.querySelector('.lb-nav-next'),
-            prevEl: root.querySelector('.lb-nav-prev'),
-        },
-        pagination: {
-            el: root.querySelector('.lb-pagination'),
-            clickable: true,
-            bulletClass: 'lb-bullet',
-            bulletActiveClass: 'lb-bullet--active',
-            renderBullet(index, className) {
-                return `<button class="${className}" aria-label="Slide ${index + 1}"></button>`;
-            },
-        },
-        a11y: {
-            prevSlideMessage: 'Pieza anterior',
-            nextSlideMessage: 'Siguiente pieza',
-        },
-        grabCursor: true,
-        on: {
-            init(swiper) {
-                const active = swiper.slides[swiper.activeIndex];
-                if (active) animateSlideIn(active);
-                updateProgress(swiper);
-            },
-            slideChangeTransitionStart(swiper) {
-                swiper.slides.forEach(sl => resetSlide(sl));
-                updateProgress(swiper);
-            },
-            slideChangeTransitionEnd(swiper) {
-                const active = swiper.slides[swiper.activeIndex];
-                if (active) animateSlideIn(active);
-            },
-        },
-    });
-}
-
-function updateProgress(swiper) {
-    const bar = swiper.el.querySelector('.lb-progress-bar');
-    if (!bar) return;
-    const pct = swiper.slides.length > 1
-        ? (swiper.activeIndex / (swiper.slides.length - 1)) * 100
-        : 100;
-    bar.style.width = `${pct}%`;
+    animateEntrance(root);
 }

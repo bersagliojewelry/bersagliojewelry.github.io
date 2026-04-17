@@ -10565,12 +10565,17 @@ nav .logo-sub {
 
 
 
+
 /* ═══════════════════════════════════════════════════════════════
-   PORTFOLIO V8 — IMMERSIVE GALLERY
-   Full-width grid with collection tabs, cinematic hover overlays,
-   GSAP stagger reveals. No slider — the grid IS the portfolio.
-   Maximum space utilization, every piece visible at once.
+   PORTFOLIO V8.1 — IMMERSIVE GALLERY (refined)
+   Dense grid, no gaps. Smart hero cards. Badge contained.
+   8-piece limit with expand. Reduced section spacing.
    ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Reduce section header gap for lookbook only ────────────── */
+.lookbook-v7 .section-header {
+    margin-bottom: var(--space-lg, 2rem) !important;
+}
 
 /* ─── Container ──────────────────────────────────────────────── */
 .ptf-container {
@@ -10583,7 +10588,7 @@ nav .logo-sub {
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    margin-bottom: 28px;
+    margin-bottom: 20px;
     flex-wrap: wrap;
 }
 
@@ -10647,11 +10652,12 @@ nav .logo-sub {
     font-weight: 600;
 }
 
-/* ─── Grid ───────────────────────────────────────────────────── */
+/* ─── Grid — dense auto-flow fills every gap ─────────────────── */
 .ptf-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-flow: dense;
+    gap: 4px;
 }
 
 /* ─── Card ───────────────────────────────────────────────────── */
@@ -10660,7 +10666,7 @@ nav .logo-sub {
     display: block;
     overflow: hidden;
     text-decoration: none;
-    aspect-ratio: 4 / 5;
+    aspect-ratio: 1 / 1;
     background: linear-gradient(160deg, #0e1a14, #0a1510);
     border: 1px solid rgba(201,169,110, 0.04);
     transition: border-color 0.5s ease;
@@ -10668,12 +10674,13 @@ nav .logo-sub {
 
 .ptf-card:hover {
     border-color: rgba(201,169,110, 0.25);
+    z-index: 2;
 }
 
-/* Make every 4th card span 2 columns for visual variety */
-.ptf-card:nth-child(7n + 1) {
+/* Hero cards span 2×2 for visual impact */
+.ptf-card--hero {
     grid-column: span 2;
-    aspect-ratio: 8 / 5;
+    grid-row: span 2;
 }
 
 /* ─── Card image ─────────────────────────────────────────────── */
@@ -10683,7 +10690,8 @@ nav .logo-sub {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    padding: 16px;
+    background: radial-gradient(ellipse at center, rgba(201,169,110,0.02) 0%, transparent 70%);
 }
 
 .ptf-card-img {
@@ -10692,20 +10700,28 @@ nav .logo-sub {
     width: auto;
     height: auto;
     object-fit: contain;
-    filter: drop-shadow(0 6px 24px rgba(0,0,0,0.4));
+    filter: drop-shadow(0 4px 16px rgba(0,0,0,0.35));
     transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94),
                 filter 0.7s ease;
 }
 
 .ptf-card:hover .ptf-card-img {
     transform: scale(1.06);
-    filter: drop-shadow(0 12px 40px rgba(0,0,0,0.5))
-           drop-shadow(0 0 20px rgba(201,169,110,0.06));
+    filter: drop-shadow(0 8px 30px rgba(0,0,0,0.45))
+           drop-shadow(0 0 12px rgba(201,169,110,0.05));
+}
+
+.ptf-card--hero .ptf-card-visual {
+    padding: 28px;
+}
+
+.ptf-card--hero .ptf-card-img {
+    filter: drop-shadow(0 8px 28px rgba(0,0,0,0.4));
 }
 
 .ptf-card-placeholder {
-    width: 48px;
-    height: 48px;
+    width: 40px;
+    height: 40px;
     color: rgba(201,169,110, 0.12);
 }
 
@@ -10721,66 +10737,73 @@ nav .logo-sub {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    padding: 24px;
+    padding: 18px;
     background: linear-gradient(
         0deg,
         rgba(5,10,7, 0.92) 0%,
-        rgba(5,10,7, 0.6) 40%,
-        rgba(5,10,7, 0.1) 70%,
+        rgba(5,10,7, 0.55) 40%,
+        rgba(5,10,7, 0.05) 70%,
         transparent 100%
     );
     opacity: 0;
-    transition: opacity 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: opacity 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     pointer-events: none;
+    z-index: 1;
 }
 
 .ptf-card:hover .ptf-card-overlay {
     opacity: 1;
 }
 
+.ptf-card--hero .ptf-card-overlay {
+    padding: 28px;
+}
+
 .ptf-card-col {
     font-family: var(--font-body, 'Montserrat', sans-serif);
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 600;
-    letter-spacing: 4px;
+    letter-spacing: 3.5px;
     text-transform: uppercase;
     color: var(--gold, #c8a96e);
     opacity: 0.7;
-    margin-bottom: 6px;
-    transform: translateY(10px);
-    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.05s,
-                opacity 0.5s ease 0.05s;
+    margin-bottom: 4px;
+    transform: translateY(8px);
+    transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.04s;
 }
 
 .ptf-card:hover .ptf-card-col {
     transform: translateY(0);
-    opacity: 0.7;
 }
 
 .ptf-card-name {
     font-family: var(--font-display, 'Cormorant Garamond', serif);
-    font-size: clamp(18px, 2.2vw, 26px);
+    font-size: clamp(15px, 1.6vw, 22px);
     font-weight: 400;
     color: #f5f0e8;
     line-height: 1.2;
-    letter-spacing: 0.5px;
-    margin: 0 0 6px;
-    transform: translateY(12px);
-    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.1s;
+    letter-spacing: 0.3px;
+    margin: 0 0 4px;
+    transform: translateY(10px);
+    transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.08s;
 }
 
 .ptf-card:hover .ptf-card-name {
     transform: translateY(0);
 }
 
+.ptf-card--hero .ptf-card-name {
+    font-size: clamp(18px, 2.2vw, 28px);
+}
+
 .ptf-card-specs {
     font-family: var(--font-body, 'Montserrat', sans-serif);
-    font-size: 10px;
-    color: rgba(245,240,232, 0.45);
+    font-size: 9px;
+    color: rgba(245,240,232, 0.4);
     letter-spacing: 0.5px;
-    margin-bottom: 4px;
-    transform: translateY(12px);
-    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.13s;
+    margin-bottom: 2px;
+    transform: translateY(10px);
+    transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.1s;
 }
 
 .ptf-card:hover .ptf-card-specs {
@@ -10789,11 +10812,11 @@ nav .logo-sub {
 
 .ptf-card-price {
     font-family: var(--font-body, 'Montserrat', sans-serif);
-    font-size: 11px;
+    font-size: 10px;
     color: var(--gold, #c8a96e);
-    letter-spacing: 1px;
-    transform: translateY(12px);
-    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.15s;
+    letter-spacing: 0.8px;
+    transform: translateY(10px);
+    transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.12s;
 }
 
 .ptf-card:hover .ptf-card-price {
@@ -10804,16 +10827,15 @@ nav .logo-sub {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    margin-top: 12px;
+    margin-top: 8px;
     font-family: var(--font-body, 'Montserrat', sans-serif);
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 500;
-    letter-spacing: 3px;
+    letter-spacing: 2.5px;
     text-transform: uppercase;
-    color: rgba(201,169,110, 0.8);
-    transform: translateY(14px);
-    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.18s,
-                color 0.3s ease;
+    color: rgba(201,169,110, 0.75);
+    transform: translateY(12px);
+    transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.15s;
 }
 
 .ptf-card:hover .ptf-card-cta {
@@ -10828,34 +10850,71 @@ nav .logo-sub {
     transform: translateX(3px);
 }
 
-/* ─── Badge (Nuevo, Exclusivo, etc.) ─────────────────────────── */
+/* ─── Badge — INSIDE the card, never overflows ───────────────── */
 .ptf-card-badge {
     position: absolute;
-    top: 14px;
-    left: 14px;
-    padding: 5px 12px;
-    background: rgba(201,169,110, 0.12);
+    top: 10px;
+    left: 10px;
+    padding: 4px 10px;
+    background: rgba(10,15,10, 0.75);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     border: 1px solid rgba(201,169,110, 0.2);
     font-family: var(--font-body, 'Montserrat', sans-serif);
-    font-size: 8px;
+    font-size: 7px;
     font-weight: 600;
-    letter-spacing: 2.5px;
+    letter-spacing: 2px;
     text-transform: uppercase;
     color: var(--gold, #c8a96e);
     z-index: 3;
+    max-width: calc(100% - 20px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-/* ─── Touch devices: show overlay always ─────────────────────── */
+/* ─── Expand button ──────────────────────────────────────────── */
+.ptf-expand-wrap {
+    display: flex;
+    justify-content: center;
+    margin-top: 24px;
+}
+
+.ptf-expand-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 36px;
+    border: 1px solid rgba(201,169,110, 0.15);
+    background: transparent;
+    color: var(--gold, #c8a96e);
+    font-family: var(--font-body, 'Montserrat', sans-serif);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.4s ease;
+}
+
+.ptf-expand-btn:hover {
+    border-color: rgba(201,169,110, 0.4);
+    background: rgba(201,169,110, 0.05);
+}
+
+.ptf-expand-btn svg {
+    transition: transform 0.4s ease;
+}
+
+/* ─── Touch devices: show name + price always ────────────────── */
 @media (hover: none) {
     .ptf-card-overlay {
         opacity: 1;
         background: linear-gradient(
             0deg,
             rgba(5,10,7, 0.85) 0%,
-            rgba(5,10,7, 0.4) 35%,
-            transparent 65%
+            rgba(5,10,7, 0.3) 30%,
+            transparent 55%
         );
     }
 
@@ -10867,34 +10926,31 @@ nav .logo-sub {
         transform: translateY(0);
     }
 
-    .ptf-card-cta {
-        display: none;
-    }
+    .ptf-card-cta { display: none; }
+    .ptf-card-specs { display: none; }
 }
 
 /* ─── Responsive: tablet ─────────────────────────────────────── */
 @media (max-width: 1024px) {
     .ptf-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 4px;
+        grid-template-columns: repeat(3, 1fr);
     }
 
-    .ptf-card:nth-child(7n + 1) {
-        grid-column: span 2;
-    }
-
-    .ptf-card-overlay {
-        padding: 18px;
-    }
+    .ptf-card-overlay { padding: 16px; }
+    .ptf-card--hero .ptf-card-overlay { padding: 22px; }
 }
 
 /* ─── Responsive: mobile ─────────────────────────────────────── */
 @media (max-width: 640px) {
+    .lookbook-v7 .section-header {
+        margin-bottom: var(--space-md, 1.5rem) !important;
+    }
+
     .ptf-header {
         flex-direction: column;
         align-items: flex-start;
-        gap: 12px;
-        margin-bottom: 20px;
+        gap: 10px;
+        margin-bottom: 14px;
     }
 
     .ptf-tab {
@@ -10908,70 +10964,54 @@ nav .logo-sub {
         gap: 3px;
     }
 
-    .ptf-card {
-        aspect-ratio: 3 / 4;
-    }
-
-    .ptf-card:nth-child(7n + 1) {
+    .ptf-card--hero {
         grid-column: span 2;
-        aspect-ratio: 16 / 9;
+        grid-row: span 1;
+        aspect-ratio: 16 / 10;
     }
 
-    .ptf-card-visual {
-        padding: 12px;
-    }
+    .ptf-card-visual { padding: 10px; }
+    .ptf-card--hero .ptf-card-visual { padding: 16px; }
+    .ptf-card-overlay { padding: 12px; }
+    .ptf-card--hero .ptf-card-overlay { padding: 16px; }
 
-    .ptf-card-overlay {
-        padding: 14px;
-    }
+    .ptf-card-name { font-size: 13px; }
+    .ptf-card--hero .ptf-card-name { font-size: 15px; }
+    .ptf-card-col { font-size: 7px; letter-spacing: 2.5px; }
+    .ptf-card-price { font-size: 9px; }
+    .ptf-card-badge { font-size: 6px; padding: 3px 7px; }
 
-    .ptf-card-name {
-        font-size: 15px;
-    }
-
-    .ptf-card-col {
-        font-size: 8px;
-    }
-
-    .ptf-card-price {
-        font-size: 10px;
-    }
-
-    .ptf-card-specs {
-        display: none;
+    .ptf-expand-btn {
+        padding: 12px 28px;
+        font-size: 9px;
     }
 }
 
-/* ─── Responsive: large desktop ──────────────────────────────── */
+/* ─── Large desktop ──────────────────────────────────────────── */
 @media (min-width: 1400px) {
     .ptf-grid {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(5, 1fr);
     }
+}
 
-    .ptf-card:nth-child(7n + 1) {
-        grid-column: span 2;
+@media (min-width: 1800px) {
+    .ptf-grid {
+        grid-template-columns: repeat(6, 1fr);
     }
 }
 
 /* ─── Reduced motion ─────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-    .ptf-card-img {
-        transition: none;
-    }
+    .ptf-card-img { transition: none; }
+    .ptf-card-overlay { transition: none; }
 
-    .ptf-card-overlay {
-        transition: none;
-    }
-
-    .ptf-card-col,
-    .ptf-card-name,
-    .ptf-card-specs,
-    .ptf-card-price,
-    .ptf-card-cta {
+    .ptf-card-col, .ptf-card-name, .ptf-card-specs,
+    .ptf-card-price, .ptf-card-cta {
         transform: translateY(0);
         transition: none;
     }
 }
+
 
 /* ═══════════════════════════════════════════════════════════════
    FEATURED PIECES V7 — GRID EDITORIAL PREMIUM

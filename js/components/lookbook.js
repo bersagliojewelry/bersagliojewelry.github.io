@@ -158,14 +158,21 @@ function buildPortfolioHTML() {
 
     return `
     <div class="ptf-container">
-        <div class="ptf-header">
-            <div class="ptf-tabs-wrap">
-                <div class="ptf-tabs">${tabs}</div>
+        <div class="ptf-hero-header">
+            <div class="ptf-hero-left">
+                <span class="ptf-hero-eyebrow">Explorar</span>
+                <h2 class="ptf-hero-title">Nuestras Creaciones</h2>
             </div>
-            <span class="ptf-count">
-                <span class="ptf-count-num">${count}</span> pieza${count !== 1 ? 's' : ''}
-            </span>
+            <div class="ptf-hero-right">
+                <div class="ptf-tabs-wrap">
+                    <div class="ptf-tabs">${tabs}</div>
+                </div>
+                <span class="ptf-count">
+                    <span class="ptf-count-num">${count}</span> pieza${count !== 1 ? 's' : ''} únicas
+                </span>
+            </div>
         </div>
+        <div class="ptf-hero-divider"></div>
         <div class="ptf-grid">${cardsHtml}</div>
         ${hasMore ? `
         <div class="ptf-expand-wrap">
@@ -276,31 +283,58 @@ function animateEntrance(root) {
     const cards = [...root.querySelectorAll('.ptf-card')]
         .filter(c => c.style.display !== 'none');
     const tabs = root.querySelectorAll('.ptf-tab');
-    const header = root.querySelector('.ptf-header');
+    const heroTitle = root.querySelector('.ptf-hero-title');
+    const heroEyebrow = root.querySelector('.ptf-hero-eyebrow');
+    const heroRight = root.querySelector('.ptf-hero-right');
+    const divider = root.querySelector('.ptf-hero-divider');
 
     gsap.set(cards, { opacity: 0, y: 40, scale: 0.95 });
     gsap.set(tabs, { opacity: 0, y: -10 });
+    if (heroEyebrow) gsap.set(heroEyebrow, { opacity: 0, x: -20 });
+    if (heroTitle) gsap.set(heroTitle, { opacity: 0, y: 30 });
+    if (heroRight) gsap.set(heroRight, { opacity: 0, y: 15 });
+    if (divider) gsap.set(divider, { scaleX: 0, transformOrigin: 'left center' });
 
     const observer = new IntersectionObserver(entries => {
         entries.forEach(entry => {
             if (!entry.isIntersecting) return;
             observer.disconnect();
 
-            if (header) {
-                gsap.fromTo(header,
-                    { opacity: 0, y: 20 },
-                    { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }
-                );
+            if (heroEyebrow) {
+                gsap.to(heroEyebrow, {
+                    opacity: 1, x: 0, duration: 0.5, ease: 'power2.out'
+                });
+            }
+
+            if (heroTitle) {
+                gsap.to(heroTitle, {
+                    opacity: 1, y: 0, duration: 0.7,
+                    ease: 'power3.out', delay: 0.1,
+                });
+            }
+
+            if (heroRight) {
+                gsap.to(heroRight, {
+                    opacity: 1, y: 0, duration: 0.5,
+                    ease: 'power2.out', delay: 0.2,
+                });
+            }
+
+            if (divider) {
+                gsap.to(divider, {
+                    scaleX: 1, duration: 0.8,
+                    ease: 'power2.inOut', delay: 0.3,
+                });
             }
 
             gsap.to(tabs, {
                 opacity: 1, y: 0, duration: 0.4,
-                stagger: 0.05, ease: 'power2.out', delay: 0.2,
+                stagger: 0.05, ease: 'power2.out', delay: 0.35,
             });
 
             gsap.to(cards, {
                 opacity: 1, y: 0, scale: 1, duration: 0.6,
-                stagger: 0.07, ease: 'power3.out', delay: 0.3,
+                stagger: 0.07, ease: 'power3.out', delay: 0.5,
             });
         });
     }, { threshold: 0.05, rootMargin: '100px' });

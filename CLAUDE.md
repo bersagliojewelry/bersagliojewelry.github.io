@@ -129,8 +129,7 @@ Estas secciones son el diseno FINAL y ACTIVO. **NUNCA eliminar ni modificar sin 
 | 11138-11228 | Trust Strip V7 — Responsive | `.trust-strip.trust-strip-v7` |
 | 11229-11350 | Section Headers V7 — Tipografia editorial | `.section-eyebrow`, `.section-title`, `.section-subtitle` con padres V7 |
 | 11351-11511 | Brand Statement V7 — Cita editorial | `.brand-statement.brand-statement-v7` |
-| 11512-11724 | Lookbook V7 — Portafolio digital | `.lookbook-section.lookbook-v7` |
-| 11725-11804 | Lookbook V7 — Responsive | `.lookbook-section.lookbook-v7` |
+| ~10580+ | Portfolio V5 — CSS Slider | `.lb-viewport`, `.lb-track`, `.lb-slide`, `.lb-arrow`, `.lb-dot` |
 | 11805-12040 | Featured Pieces V7 — Grid editorial | `.featured.featured-v7` |
 | 12041-12135 | Featured V7 — Responsive | `.featured.featured-v7` |
 | 12136-12392 | Collections V7 — Categorias editoriales | `.collections.collections-v7` |
@@ -669,3 +668,57 @@ Tres bugs reportados:
 - **Root cause:** StPageFlip en HTML mode posiciona las páginas con `left: Npx` y `width: Npx` calculados desde `boundsRect`. Deberían estar flush (sin espacio), pero en la práctica queda un gap visible causado por: (1) subpixel rendering cuando `getBlockWidth()` es impar (centerX tiene decimales), (2) `perspective: 2000px` en `.stf__block` que afecta el rasterizado 3D de los `.stf__item` con `transform-style: preserve-3d`, (3) diferencias de redondeo entre navegadores.
 - **Fix:** Pseudo-elemento `::after` en `.stf__block` que funciona como "spine strip" — una franja vertical de 12px del color de las páginas (`#faf8f3`) centrada exactamente en el lomo del libro (`left: 50%; transform: translateX(-50%)`). Z-index 0 (detrás de las páginas que usan z-index 1+). Se oculta automáticamente en `is-cover-state` / `is-back-state` (cuando solo hay una página visible y no existe lomo).
 - **Nota:** Este es un fix visual (cosmético), no estructural. La causa raíz está dentro del renderizado interno de StPageFlip que no podemos modificar. El spine strip es la misma técnica usada en editores de PDF y eReaders para ocultar artefactos de renderizado en el lomo del libro.
+
+### 2026-04-17 — Portfolio V5: Reconstrucción completa sin StPageFlip
+**Archivos:** `js/components/lookbook.js` (reescrito), `css/style.css` (nuevos estilos + limpieza), `package.json`
+
+**Motivación:** Tras múltiples intentos de corregir bugs fundamentales de StPageFlip (gap al abrir/cerrar portada, libro atascado en página 2, hover displacement), se decidió eliminar la librería por completo y reconstruir el portafolio desde cero con tecnología más simple y robusta.
+
+**Enfoque nuevo: Slider CSS puro**
+- `transform: translateX(-N * 100%)` sobre un flex track — sin librerías externas
+- Cada slide ocupa 100% del viewport del slider
+- Navegación: flechas, dots, teclado (ArrowLeft/Right), swipe táctil
+- Datos desde Firestore via `catalog.js` (misma interfaz `renderLookbook()`)
+
+**Estructura de slides:**
+- **Cover** — Portada con marca, año, tagline
+- **Intro** (por colección) — Nombre, subtítulo, descripción, conteo de piezas
+- **Gallery** (por colección) — Grid 2×2 de piezas con imagen, nombre, precio
+- **Back** — Contraportada con CTA
+
+**Cambios en `lookbook.js`:**
+- Eliminado: import `PageFlip`, `initPageFlip()`, `flipNext/flipPrev`, sistema de shift `--pf-cover-shift`, listeners `changeState`/`changeOrientation`, `IntersectionObserver` para lazy init, clases `is-cover-state`/`is-back-state`
+- Nuevo: `buildPages()` (misma lógica de datos), `renderSlide()` genera HTML por tipo, `initSlider()` con `goTo(n)`, touch/swipe handling, keyboard nav, dot navigation por event delegation
+- Dedupe por content signature (JSON de páginas) — evita re-renders en bursts de Firestore
+
+**Nuevos estilos CSS (prefijo `lb-`):**
+- `.lb-viewport` — Contenedor con overflow:hidden, centrado, aspect-ratio 4/3 (desktop) / 3/4 (mobile)
+- `.lb-track` — Flex row con transition, contiene slides
+- `.lb-slide` — 100% flex-basis, variantes `--cover`, `--back`, `--intro`, `--gallery`
+- `.lb-arrow` — Flechas de navegación absolutas
+- `.lb-dots` / `.lb-dot` — Indicadores de página
+- `.lb-counter` — "1 / N"
+- `.lb-piece` — Card de pieza con hover gold border
+- Responsive: 479px, 767px, 1024px, 1280px
+
+**CSS eliminado (~1000 líneas):**
+- Todas las reglas `.pf-*` (wrapper, side-btn, book-area, pagination, dots, pages, cover, back, intro, gallery, piece, etc.)
+- Todas las reglas `.stf__*` (parent, canvas, block)
+- Bloque `.lookbook-v7 .pf-*` completo (overrides V7 para PageFlip)
+- Spine strip (`stf__block::after`)
+- Anti-flash (`.pf-book:not(.is-ready)`)
+- Cover shift system (`--pf-cover-shift`, `is-cover-state`, `is-back-state`)
+- Referencias `.pf-piece-img` en shimmer section
+
+**Dependencia eliminada:**
+- `page-flip: ^2.0.7` removida de `package.json`
+
+**NO TOCAR (reglas Portfolio V5):**
+- Los estilos `lb-*` en style.css son el diseño activo del portafolio
+- `renderLookbook()` es la interfaz pública — `app.js` la llama en paint y en `db.onChange`
+- El slider NO usa librerías externas — solo CSS transitions + JS vanilla
+- Touch/swipe usa threshold de 40px y 8px para distinguir scroll vertical de swipe horizontal
+- La signature de dedupe evita rebuilds innecesarios en snapshots de Firestore — no quitar
+
+**Reglas anteriores de PageFlip/Lookbook en este archivo (OBSOLETAS):**
+Las secciones documentadas arriba sobre StPageFlip (shift dinámico, sincronización, easing, spine strip, stuck bug, etc.) son historial. Ya no aplican al código actual.

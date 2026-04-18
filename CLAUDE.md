@@ -722,3 +722,27 @@ Tres bugs reportados:
 
 **Reglas anteriores de PageFlip/Lookbook en este archivo (OBSOLETAS):**
 Las secciones documentadas arriba sobre StPageFlip (shift dinámico, sincronización, easing, spine strip, stuck bug, etc.) son historial. Ya no aplican al código actual.
+
+### 2026-04-18 — Portfolio V9: smart adaptive fit (anti-crop + anti-white-rectangle)
+**Archivos:** `js/components/lookbook.js`, `css/style.css`
+
+**Problema:** Con `object-fit: cover` las piezas con aspect ratio distinto al de la card quedaban recortadas (ej. anillo plateado con brazo cortado). Con `object-fit: contain` aparecía un rectángulo blanco feo alrededor.
+
+**Solución — dos capas automáticas:**
+
+**Capa 1 — Detección de ratio (JS):** al cargar cada imagen, `applyAdaptiveFit()` compara `img.naturalWidth/naturalHeight` vs el ratio de la card. Si la diferencia supera el 18% (`FIT_TOLERANCE`), se agrega la clase `.ptf-card-visual--contain` → switch a `object-fit: contain` + `padding: 10%`. Si el ratio coincide, se mantiene `cover`.
+
+**Capa 2 — Blurred backdrop (CSS):** `.ptf-card-backdrop` es un div con `background-image` de la misma foto, `filter: blur(32px) saturate(1.1) brightness(0.55)` + `scale(1.15)`. Solo visible cuando la card está en modo contain (opacity 0 → 1). Rellena el espacio vacío con colores del propio producto, eliminando el rectángulo blanco.
+
+**Stacking de z-index en la card:**
+- `.ptf-card-backdrop` z-index 0 (fondo)
+- `.ptf-card-visual::before` shimmer (mismo contexto, antes en source)
+- `.ptf-card-img` z-index 1 (por encima de shimmer)
+- `.ptf-card-overlay` z-index 2 (hover text)
+
+**NO TOCAR:**
+- `FIT_TOLERANCE = 0.18` — calibrado para distinguir piezas alargadas de cuadradas
+- `padding: 10%` en `.ptf-card-visual--contain .ptf-card-img` — da respiro visual, no saturar
+- El backdrop usa la MISMA url de imagen (`piece.image`) — no pre-generar thumbnails
+- No volver a `vignette` / radial-gradient (falló previamente)
+- No volver a `contain` puro sin backdrop (rectángulo blanco)

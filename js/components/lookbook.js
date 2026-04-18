@@ -1,10 +1,11 @@
 /**
- * Bersaglio Jewelry — Portfolio V9.1: Adaptive Luxury Grid
+ * Bersaglio Jewelry — Portfolio V9.2: Adaptive Luxury Grid
  *
  * 12-column editorial grid with dynamic span assignment.
  * Guarantees ZERO gaps regardless of piece count.
  * Row patterns cycle: [6,3,3] → [4,4,4] → [3,3,6] for visual rhythm.
- * Progressive "Ver más" — reveals 3 rows per click (not all at once).
+ * Progressive "Ver más" — reveals 3 rows per click.
+ * Golden shimmer loading · Animated counter · Progress bar.
  * Golden shine sweep on hover, staggered text reveals.
  * GSAP entrance + collection filter transitions.
  */
@@ -160,11 +161,11 @@ function buildCards(pieces) {
     return { html, count: sorted.length, visibleCount };
 }
 
-/* ── Expand button text helper ─────────────────────────────── */
+/* ── UI helpers ────────────────────────────────────────────── */
 
 function updateExpandButton(btn, totalCount) {
     if (!btn) return;
-    const visibleCount = getVisibleCount();
+    const visibleCount = Math.min(getVisibleCount(), totalCount);
     const remaining = totalCount - visibleCount;
 
     if (remaining <= 0) {
@@ -177,6 +178,58 @@ function updateExpandButton(btn, totalCount) {
             `Ver más piezas · ${remaining} restante${remaining !== 1 ? 's' : ''}`;
         btn.querySelector('svg').style.transform = '';
     }
+}
+
+function updateProgress(root) {
+    const grid = root.querySelector('.ptf-grid');
+    const totalCount = grid ? grid.querySelectorAll('.ptf-card').length : 0;
+    const visibleCount = Math.min(getVisibleCount(), totalCount);
+    const pct = totalCount > 0 ? (visibleCount / totalCount) * 100 : 100;
+
+    const bar = root.querySelector('.ptf-progress-bar');
+    const text = root.querySelector('.ptf-progress-text');
+
+    if (bar) bar.style.width = `${pct}%`;
+    if (text) text.textContent = `Mostrando ${visibleCount} de ${totalCount}`;
+}
+
+function updateExpandUI(root) {
+    const grid = root.querySelector('.ptf-grid');
+    const totalCount = grid ? grid.querySelectorAll('.ptf-card').length : 0;
+    const visibleCount = Math.min(getVisibleCount(), totalCount);
+
+    const expandWrap = root.querySelector('.ptf-expand-wrap');
+    const expandBtn = root.querySelector('.ptf-expand-btn');
+    const hasMore = totalCount > visibleCount || _currentBatch > 1;
+
+    if (expandWrap) expandWrap.style.display = hasMore ? '' : 'none';
+    if (expandBtn) expandBtn.dataset.total = totalCount;
+
+    updateExpandButton(expandBtn, totalCount);
+    updateProgress(root);
+}
+
+/* ── Shimmer loading detection ─────────────────────────────── */
+
+function setupShimmer(container) {
+    container.querySelectorAll('.ptf-card-visual').forEach(visual => {
+        if (visual.classList.contains('is-loaded')) return;
+
+        const img = visual.querySelector('.ptf-card-img');
+        if (!img) {
+            visual.classList.add('is-loaded');
+            return;
+        }
+
+        if (img.complete && img.naturalWidth > 0) {
+            visual.classList.add('is-loaded');
+        } else {
+            img.addEventListener('load', () =>
+                visual.classList.add('is-loaded'), { once: true });
+            img.addEventListener('error', () =>
+                visual.classList.add('is-loaded'), { once: true });
+        }
+    });
 }
 
 /* ── Build the full portfolio HTML ─────────────────────────── */
@@ -196,6 +249,7 @@ function buildPortfolioHTML() {
     const { html: cardsHtml, count, visibleCount } = buildCards(_allPieces);
     const hasMore = count > visibleCount;
     const remaining = count - visibleCount;
+    const pct = count > 0 ? Math.round((visibleCount / count) * 100) : 100;
 
     return `
     <div class="ptf-container">
@@ -215,8 +269,11 @@ function buildPortfolioHTML() {
         </div>
         <div class="ptf-hero-divider"></div>
         <div class="ptf-grid">${cardsHtml}</div>
-        ${hasMore ? `
-        <div class="ptf-expand-wrap">
+        <div class="ptf-expand-wrap"${hasMore ? '' : ' style="display:none"'}>
+            <div class="ptf-progress">
+                <div class="ptf-progress-bar" style="width: ${pct}%"></div>
+            </div>
+            <span class="ptf-progress-text">Mostrando ${visibleCount} de ${count}</span>
             <button class="ptf-expand-btn" data-total="${count}">
                 <span>Ver más piezas · ${remaining} restante${remaining !== 1 ? 's' : ''}</span>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
@@ -224,7 +281,7 @@ function buildPortfolioHTML() {
                     <polyline points="6,9 12,15 18,9"/>
                 </svg>
             </button>
-        </div>` : ''}
+        </div>
     </div>`;
 }
 
@@ -242,7 +299,6 @@ function handleExpand(root) {
         const oldVisible = getVisibleCount();
         _currentBatch = 1;
         const newVisible = getVisibleCount();
-
         const toHide = allCards.slice(newVisible, oldVisible);
 
         gsap.to(toHide, {
@@ -253,7 +309,7 @@ function handleExpand(root) {
                     c.classList.add('ptf-card--hidden');
                     c.style.display = 'none';
                 });
-                updateExpandButton(btn, totalCount);
+                updateExpandUI(root);
                 grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         });
@@ -261,7 +317,6 @@ function handleExpand(root) {
         const oldVisible = getVisibleCount();
         _currentBatch++;
         const newVisible = getVisibleCount();
-
         const toShow = allCards.slice(oldVisible, newVisible);
 
         toShow.forEach(c => {
@@ -275,7 +330,16 @@ function handleExpand(root) {
               stagger: 0.06, ease: 'power3.out' }
         );
 
-        updateExpandButton(btn, totalCount);
+        updateExpandUI(root);
+        setupShimmer(grid);
+
+        if (toShow.length > 0) {
+            setTimeout(() => {
+                toShow[0].scrollIntoView({
+                    behavior: 'smooth', block: 'nearest'
+                });
+            }, 150);
+        }
     }
 }
 
@@ -324,7 +388,7 @@ function filterCollection(root, slug) {
                 return;
             }
 
-            const { html, count, visibleCount } = buildCards(filtered);
+            const { html, count } = buildCards(filtered);
 
             grid.innerHTML = html;
             grid.querySelectorAll('.ptf-card--hidden')
@@ -333,15 +397,8 @@ function filterCollection(root, slug) {
             const countEl = root.querySelector('.ptf-count-num');
             if (countEl) countEl.textContent = count;
 
-            const expandWrap = root.querySelector('.ptf-expand-wrap');
-            const expandBtn = root.querySelector('.ptf-expand-btn');
-            const hasMore = count > visibleCount;
-
-            if (expandWrap) expandWrap.style.display = hasMore ? '' : 'none';
-            if (expandBtn) {
-                expandBtn.dataset.total = count;
-                updateExpandButton(expandBtn, count);
-            }
+            updateExpandUI(root);
+            setupShimmer(grid);
 
             const newCards = [...grid.querySelectorAll('.ptf-card')]
                 .filter(c => c.style.display !== 'none');
@@ -364,6 +421,8 @@ function animateEntrance(root) {
     const heroEyebrow = root.querySelector('.ptf-hero-eyebrow');
     const heroRight = root.querySelector('.ptf-hero-right');
     const divider = root.querySelector('.ptf-hero-divider');
+    const countNum = root.querySelector('.ptf-count-num');
+    const progressBar = root.querySelector('.ptf-progress-bar');
 
     gsap.set(cards, { opacity: 0, y: 40, scale: 0.95 });
     gsap.set(tabs, { opacity: 0, y: -10 });
@@ -397,6 +456,20 @@ function animateEntrance(root) {
                 });
             }
 
+            if (countNum) {
+                const target = parseInt(countNum.textContent, 10);
+                if (!isNaN(target) && target > 0) {
+                    countNum.textContent = '0';
+                    gsap.to(countNum, {
+                        textContent: target,
+                        duration: 1.2,
+                        ease: 'power2.out',
+                        snap: { textContent: 1 },
+                        delay: 0.4,
+                    });
+                }
+            }
+
             if (divider) {
                 gsap.to(divider, {
                     scaleX: 1, duration: 0.8,
@@ -413,6 +486,15 @@ function animateEntrance(root) {
                 opacity: 1, y: 0, scale: 1, duration: 0.6,
                 stagger: 0.07, ease: 'power3.out', delay: 0.5,
             });
+
+            if (progressBar) {
+                const targetWidth = progressBar.style.width;
+                progressBar.style.width = '0%';
+                gsap.to(progressBar, {
+                    width: targetWidth,
+                    duration: 0.8, ease: 'power2.out', delay: 0.7,
+                });
+            }
         });
     }, { threshold: 0.05, rootMargin: '100px' });
 
@@ -446,6 +528,8 @@ export function renderLookbook() {
 
     root.querySelectorAll('.ptf-card--hidden')
         .forEach(c => c.style.display = 'none');
+
+    setupShimmer(root);
 
     root.addEventListener('click', e => {
         const tab = e.target.closest('.ptf-tab');

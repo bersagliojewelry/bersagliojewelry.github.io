@@ -10784,6 +10784,35 @@ nav .logo-sub {
     height: 64px;
 }
 
+/* ─── Shimmer loading effect ────────────────────────────────── */
+.ptf-card-visual::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(
+        110deg,
+        #0c1a12 30%,
+        rgba(200, 169, 110, 0.05) 48%,
+        rgba(200, 169, 110, 0.08) 50%,
+        rgba(200, 169, 110, 0.05) 52%,
+        #0c1a12 70%
+    );
+    background-size: 250% 100%;
+    animation: ptf-shimmer 2s ease-in-out infinite;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
+
+.ptf-card-visual.is-loaded::before {
+    opacity: 0;
+}
+
+@keyframes ptf-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
 /* ─── Overlay ───────────────────────────────────────────────── */
 .ptf-card-overlay {
     position: absolute;
@@ -10960,6 +10989,37 @@ nav .logo-sub {
     stroke: currentColor;
 }
 
+/* ─── Progress bar ──────────────────────────────────────────── */
+.ptf-progress {
+    width: 100%;
+    max-width: 300px;
+    height: 2px;
+    background: rgba(200, 169, 110, 0.08);
+    margin: 0 auto 12px;
+    overflow: hidden;
+    border-radius: 1px;
+}
+
+.ptf-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg,
+        var(--gold, #c8a96e),
+        rgba(200, 169, 110, 0.6)
+    );
+    border-radius: 1px;
+    transition: width 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.ptf-progress-text {
+    display: block;
+    text-align: center;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: rgba(245, 240, 232, 0.3);
+    margin-bottom: 16px;
+}
+
 /* ─── Empty state ───────────────────────────────────────────── */
 .ptf-empty {
     display: flex;
@@ -11086,6 +11146,8 @@ nav .logo-sub {
     .ptf-card-overlay { transition: none; }
     .ptf-card { transition: none; }
     .ptf-card::before { display: none; }
+    .ptf-card-visual::before { animation: none; opacity: 0; }
+    .ptf-progress-bar { transition: none; }
 
     .ptf-card-col, .ptf-card-name, .ptf-card-specs,
     .ptf-card-price, .ptf-card-cta {

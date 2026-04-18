@@ -10748,12 +10748,12 @@ nav .logo-sub {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 24px;
+    padding: 8px;
 }
 
 .ptf-card-img {
-    max-width: 90%;
-    max-height: 90%;
+    max-width: 100%;
+    max-height: 100%;
     object-fit: contain;
     filter: drop-shadow(0 4px 24px rgba(0, 0, 0, 0.4));
     transition:
@@ -10762,14 +10762,10 @@ nav .logo-sub {
 }
 
 .ptf-card:hover .ptf-card-img {
-    transform: scale(1.08);
+    transform: scale(1.05);
     filter:
         drop-shadow(0 8px 32px rgba(0, 0, 0, 0.5))
         drop-shadow(0 0 20px rgba(200, 169, 110, 0.08));
-}
-
-.ptf-card--lg .ptf-card-visual {
-    padding: 32px;
 }
 
 /* ─── Placeholder (no image) ────────────────────────────────── */
@@ -10811,6 +10807,30 @@ nav .logo-sub {
 @keyframes ptf-shimmer {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
+}
+
+/* ─── Spotlight vignette — blends white photo bg into dark card ── */
+.ptf-card-visual::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center,
+        transparent 25%,
+        rgba(12, 26, 18, 0.35) 50%,
+        rgba(12, 26, 18, 0.8) 70%,
+        #0c1a12 92%
+    );
+    pointer-events: none;
+    z-index: 1;
+}
+
+.ptf-card--lg .ptf-card-visual::after {
+    background: radial-gradient(ellipse at center,
+        transparent 30%,
+        rgba(12, 26, 18, 0.3) 55%,
+        rgba(12, 26, 18, 0.75) 73%,
+        #0c1a12 93%
+    );
 }
 
 /* ─── Overlay ───────────────────────────────────────────────── */
@@ -11100,7 +11120,7 @@ nav .logo-sub {
     .ptf-card-name { font-size: 15px; }
     .ptf-card--lg .ptf-card-name { font-size: 16px; }
     .ptf-card-overlay { padding: 14px; }
-    .ptf-card-visual { padding: 16px; }
+    .ptf-card-visual { padding: 6px; }
 
     .ptf-hero-title {
         font-size: clamp(28px, 7vw, 36px);

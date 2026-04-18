@@ -10960,6 +10960,26 @@ nav .logo-sub {
     stroke: currentColor;
 }
 
+/* ─── Empty state ───────────────────────────────────────────── */
+.ptf-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 80px 20px;
+    color: rgba(200, 169, 110, 0.25);
+}
+
+.ptf-empty p {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(245, 240, 232, 0.35);
+    margin: 0;
+}
+
 /* ─── Touch devices: always show overlay ────────────────────── */
 @media (hover: none) {
     .ptf-card-overlay {

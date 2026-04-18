@@ -1,9 +1,10 @@
 /**
- * Bersaglio Jewelry — Portfolio V9: Adaptive Luxury Grid
+ * Bersaglio Jewelry — Portfolio V9.1: Adaptive Luxury Grid
  *
  * 12-column editorial grid with dynamic span assignment.
  * Guarantees ZERO gaps regardless of piece count.
  * Row patterns cycle: [6,3,3] → [4,4,4] → [3,3,6] for visual rhythm.
+ * Progressive "Ver más" — reveals 3 rows per click (not all at once).
  * Golden shine sweep on hover, staggered text reveals.
  * GSAP entrance + collection filter transitions.
  */
@@ -15,6 +16,10 @@ let _lastSignature = '';
 let _activeCollection = 'all';
 let _collections = [];
 let _allPieces = [];
+
+const ROWS_PER_BATCH = 3;
+let _currentBatch = 1;
+let _rowBoundaries = [];
 
 /* ── Layout algorithm ──────────────────────────────────────── */
 
@@ -57,21 +62,34 @@ function assignSpans(rowPlan) {
     return spans;
 }
 
-const MAX_INITIAL_ROWS = 3;
-
 function computeLayout(pieces) {
     const count = pieces.length;
-    if (count === 0) return { spans: [], initialVisible: 0 };
+    if (count === 0) return { spans: [], rowBoundaries: [] };
 
     const rowPlan = computeRowPlan(count);
     const spans = assignSpans(rowPlan);
 
-    let initialVisible = 0;
-    for (let i = 0; i < Math.min(rowPlan.length, MAX_INITIAL_ROWS); i++) {
-        initialVisible += rowPlan[i];
+    const rowBoundaries = [];
+    let cumulative = 0;
+    for (const rowSize of rowPlan) {
+        cumulative += rowSize;
+        rowBoundaries.push(cumulative);
     }
 
-    return { spans, initialVisible };
+    return { spans, rowBoundaries };
+}
+
+function getVisibleCount() {
+    const targetIdx = Math.min(
+        _currentBatch * ROWS_PER_BATCH,
+        _rowBoundaries.length
+    ) - 1;
+    if (targetIdx < 0 || !_rowBoundaries.length) return 0;
+    return _rowBoundaries[targetIdx];
+}
+
+function isFullyExpanded() {
+    return _currentBatch * ROWS_PER_BATCH >= _rowBoundaries.length;
 }
 
 function sortPieces(pieces) {
@@ -127,16 +145,38 @@ function renderCard(piece, col, span, index, isHidden) {
 
 function buildCards(pieces) {
     const sorted = sortPieces(pieces);
-    const { spans, initialVisible } = computeLayout(sorted);
+    const { spans, rowBoundaries } = computeLayout(sorted);
+    _rowBoundaries = rowBoundaries;
+
+    const visibleCount = getVisibleCount();
 
     const html = sorted.map((piece, i) => {
         const col = _collections.find(c =>
             c.slug === piece.collection || c.id === piece.collection
         );
-        return renderCard(piece, col, spans[i], i, i >= initialVisible);
+        return renderCard(piece, col, spans[i], i, i >= visibleCount);
     }).join('');
 
-    return { html, count: sorted.length, initialVisible };
+    return { html, count: sorted.length, visibleCount };
+}
+
+/* ── Expand button text helper ─────────────────────────────── */
+
+function updateExpandButton(btn, totalCount) {
+    if (!btn) return;
+    const visibleCount = getVisibleCount();
+    const remaining = totalCount - visibleCount;
+
+    if (remaining <= 0) {
+        btn.classList.add('is-expanded');
+        btn.querySelector('span').textContent = 'Mostrar menos';
+        btn.querySelector('svg').style.transform = 'rotate(180deg)';
+    } else {
+        btn.classList.remove('is-expanded');
+        btn.querySelector('span').textContent =
+            `Ver más piezas · ${remaining} restante${remaining !== 1 ? 's' : ''}`;
+        btn.querySelector('svg').style.transform = '';
+    }
 }
 
 /* ── Build the full portfolio HTML ─────────────────────────── */
@@ -153,8 +193,9 @@ function buildPortfolioHTML() {
             )
     ].join('');
 
-    const { html: cardsHtml, count, initialVisible } = buildCards(_allPieces);
-    const hasMore = count > initialVisible;
+    const { html: cardsHtml, count, visibleCount } = buildCards(_allPieces);
+    const hasMore = count > visibleCount;
+    const remaining = count - visibleCount;
 
     return `
     <div class="ptf-container">
@@ -177,7 +218,7 @@ function buildPortfolioHTML() {
         ${hasMore ? `
         <div class="ptf-expand-wrap">
             <button class="ptf-expand-btn" data-total="${count}">
-                <span>Ver las ${count} piezas</span>
+                <span>Ver más piezas · ${remaining} restante${remaining !== 1 ? 's' : ''}</span>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
                      stroke="currentColor" stroke-width="1.5">
                     <polyline points="6,9 12,15 18,9"/>
@@ -187,39 +228,54 @@ function buildPortfolioHTML() {
     </div>`;
 }
 
-/* ── Expand / collapse ─────────────────────────────────────── */
+/* ── Progressive expand / collapse ─────────────────────────── */
 
-function toggleExpand(root) {
+function handleExpand(root) {
     const btn = root.querySelector('.ptf-expand-btn');
     if (!btn) return;
 
-    const hidden = root.querySelectorAll('.ptf-card--hidden');
-    const isExpanded = btn.classList.contains('is-expanded');
+    const grid = root.querySelector('.ptf-grid');
+    const allCards = [...grid.querySelectorAll('.ptf-card')];
+    const totalCount = allCards.length;
 
-    if (isExpanded) {
-        gsap.to(hidden, {
+    if (isFullyExpanded()) {
+        const oldVisible = getVisibleCount();
+        _currentBatch = 1;
+        const newVisible = getVisibleCount();
+
+        const toHide = allCards.slice(newVisible, oldVisible);
+
+        gsap.to(toHide, {
             opacity: 0, y: 20, scale: 0.96,
             duration: 0.3, stagger: 0.02, ease: 'power2.in',
             onComplete() {
-                hidden.forEach(c => c.style.display = 'none');
-                btn.classList.remove('is-expanded');
-                btn.querySelector('span').textContent =
-                    `Ver las ${btn.dataset.total} piezas`;
-                btn.querySelector('svg').style.transform = '';
-                root.querySelector('.ptf-grid')
-                    .scrollIntoView({ behavior: 'smooth', block: 'start' });
+                toHide.forEach(c => {
+                    c.classList.add('ptf-card--hidden');
+                    c.style.display = 'none';
+                });
+                updateExpandButton(btn, totalCount);
+                grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         });
     } else {
-        hidden.forEach(c => c.style.display = '');
-        gsap.fromTo(hidden,
+        const oldVisible = getVisibleCount();
+        _currentBatch++;
+        const newVisible = getVisibleCount();
+
+        const toShow = allCards.slice(oldVisible, newVisible);
+
+        toShow.forEach(c => {
+            c.classList.remove('ptf-card--hidden');
+            c.style.display = '';
+        });
+
+        gsap.fromTo(toShow,
             { opacity: 0, y: 30, scale: 0.96 },
             { opacity: 1, y: 0, scale: 1, duration: 0.5,
               stagger: 0.06, ease: 'power3.out' }
         );
-        btn.classList.add('is-expanded');
-        btn.querySelector('span').textContent = 'Mostrar menos';
-        btn.querySelector('svg').style.transform = 'rotate(180deg)';
+
+        updateExpandButton(btn, totalCount);
     }
 }
 
@@ -228,6 +284,7 @@ function toggleExpand(root) {
 function filterCollection(root, slug) {
     if (slug === _activeCollection) return;
     _activeCollection = slug;
+    _currentBatch = 1;
 
     root.querySelectorAll('.ptf-tab').forEach(t =>
         t.classList.toggle('is-active', t.dataset.col === slug)
@@ -244,7 +301,30 @@ function filterCollection(root, slug) {
         opacity: 0, y: 20, scale: 0.96,
         duration: 0.25, stagger: 0.015, ease: 'power2.in',
         onComplete() {
-            const { html, count, initialVisible } = buildCards(filtered);
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="ptf-empty" style="grid-column: 1 / -1">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="0.4" width="48" height="48">
+                            <polygon points="12,2 22,8.5 12,22 2,8.5"/>
+                        </svg>
+                        <p>No hay piezas en esta colección</p>
+                    </div>`;
+
+                const countEl = root.querySelector('.ptf-count-num');
+                if (countEl) countEl.textContent = '0';
+
+                const expandWrap = root.querySelector('.ptf-expand-wrap');
+                if (expandWrap) expandWrap.style.display = 'none';
+
+                gsap.fromTo(grid.querySelector('.ptf-empty'),
+                    { opacity: 0, y: 20 },
+                    { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }
+                );
+                return;
+            }
+
+            const { html, count, visibleCount } = buildCards(filtered);
 
             grid.innerHTML = html;
             grid.querySelectorAll('.ptf-card--hidden')
@@ -255,15 +335,12 @@ function filterCollection(root, slug) {
 
             const expandWrap = root.querySelector('.ptf-expand-wrap');
             const expandBtn = root.querySelector('.ptf-expand-btn');
-            const hasMore = count > initialVisible;
+            const hasMore = count > visibleCount;
 
             if (expandWrap) expandWrap.style.display = hasMore ? '' : 'none';
             if (expandBtn) {
-                expandBtn.classList.remove('is-expanded');
                 expandBtn.dataset.total = count;
-                expandBtn.querySelector('span').textContent =
-                    `Ver las ${count} piezas`;
-                expandBtn.querySelector('svg').style.transform = '';
+                updateExpandButton(expandBtn, count);
             }
 
             const newCards = [...grid.querySelectorAll('.ptf-card')]
@@ -364,6 +441,7 @@ export function renderLookbook() {
     _lastSignature = sig;
 
     _activeCollection = 'all';
+    _currentBatch = 1;
     root.innerHTML = buildPortfolioHTML();
 
     root.querySelectorAll('.ptf-card--hidden')
@@ -374,7 +452,7 @@ export function renderLookbook() {
         if (tab) return filterCollection(root, tab.dataset.col);
 
         const expandBtn = e.target.closest('.ptf-expand-btn');
-        if (expandBtn) return toggleExpand(root);
+        if (expandBtn) return handleExpand(root);
     });
 
     animateEntrance(root);

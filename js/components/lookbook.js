@@ -117,7 +117,8 @@ function renderCard(piece, col, span, index, isHidden) {
        style="grid-column: span ${span}">
         <div class="ptf-card-visual">
             ${piece.image
-            ? `<img src="${piece.image}" alt="${piece.name}" loading="lazy" class="ptf-card-img">`
+            ? `<div class="ptf-card-backdrop" style="background-image:url('${piece.image}')"></div>
+               <img src="${piece.image}" alt="${piece.name}" loading="lazy" class="ptf-card-img">`
             : `<div class="ptf-card-placeholder">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.4">
                         <polygon points="12,2 22,8.5 12,22 2,8.5"/>
@@ -209,7 +210,33 @@ function updateExpandUI(root) {
     updateProgress(root);
 }
 
-/* ── Shimmer loading detection ─────────────────────────────── */
+/* ── Shimmer loading + adaptive fit detection ──────────────── */
+
+/**
+ * Tier 1: compare image aspect ratio vs card aspect ratio.
+ * If difference > 18%, switch to contain mode (shows full piece,
+ * no cropping). Otherwise keep cover (natural fit, no letterbox).
+ */
+const FIT_TOLERANCE = 0.18;
+
+function applyAdaptiveFit(visual, img) {
+    const nw = img.naturalWidth;
+    const nh = img.naturalHeight;
+    if (!nw || !nh) return;
+
+    const rect = visual.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+
+    const imgRatio = nw / nh;
+    const cardRatio = rect.width / rect.height;
+    const diff = Math.abs(imgRatio - cardRatio) / cardRatio;
+
+    if (diff > FIT_TOLERANCE) {
+        visual.classList.add('ptf-card-visual--contain');
+    } else {
+        visual.classList.remove('ptf-card-visual--contain');
+    }
+}
 
 function setupShimmer(container) {
     container.querySelectorAll('.ptf-card-visual').forEach(visual => {
@@ -221,11 +248,15 @@ function setupShimmer(container) {
             return;
         }
 
-        if (img.complete && img.naturalWidth > 0) {
+        const finalize = () => {
+            applyAdaptiveFit(visual, img);
             visual.classList.add('is-loaded');
+        };
+
+        if (img.complete && img.naturalWidth > 0) {
+            finalize();
         } else {
-            img.addEventListener('load', () =>
-                visual.classList.add('is-loaded'), { once: true });
+            img.addEventListener('load', finalize, { once: true });
             img.addEventListener('error', () =>
                 visual.classList.add('is-loaded'), { once: true });
         }

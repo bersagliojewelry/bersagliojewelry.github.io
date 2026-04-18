@@ -10746,47 +10746,15 @@ nav .logo-sub {
     position: absolute;
     inset: 0;
     overflow: hidden;
-    background: #0c1a12;
-}
-
-/* Blurred backdrop — same image, heavily blurred, scaled.
-   Only visible when contain mode is active (fills empty space
-   around the piece with colors from the piece itself). */
-.ptf-card-backdrop {
-    position: absolute;
-    inset: -8%;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    filter: blur(32px) saturate(1.1) brightness(0.55);
-    transform: scale(1.15);
-    opacity: 0;
-    transition: opacity 0.6s ease;
-    pointer-events: none;
-    z-index: 0;
-}
-
-.ptf-card-visual--contain .ptf-card-backdrop {
-    opacity: 1;
 }
 
 .ptf-card-img {
-    position: relative;
-    z-index: 1;
     width: 100%;
     height: 100%;
     object-fit: cover;
     object-position: center;
     transition:
         transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-/* Tier 1: when image ratio differs from card ratio, show full piece
-   (no cropping). The blurred backdrop fills the surrounding space
-   so there's no harsh white rectangle. */
-.ptf-card-visual--contain .ptf-card-img {
-    object-fit: contain;
-    padding: 10%;
 }
 
 .ptf-card:hover .ptf-card-img {

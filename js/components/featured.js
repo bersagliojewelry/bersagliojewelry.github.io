@@ -1,7 +1,7 @@
 /**
- * Bersaglio Jewelry — Featured Pieces Component V3
+ * Bersaglio Jewelry — Featured Pieces Component V3.1
  * Asymmetric editorial cards · Gold shimmer border · Inner glow
- * Inspired by Claude Design "Piezas Cards" (Variant C — Asymmetric)
+ * Stitch-inspired spec grid, gold gradient CTA, sentence-case descriptions
  */
 
 import db from '../data/catalog.js';
@@ -17,14 +17,14 @@ const specLabels = {
     style: 'Estilo', finish: 'Acabado', length: 'Longitud'
 };
 
-const SPEC_PRIORITY = ['carat', 'weight', 'clarity', 'stone', 'cut', 'color'];
+const SPEC_PRIORITY = ['carat', 'weight', 'clarity', 'stone', 'cut', 'color', 'metal'];
 const OFFSETS = ['offset-up', 'offset-down', 'offset-mid'];
 
 function getTopSpecs(specs) {
     if (!specs) return [];
     return SPEC_PRIORITY
         .filter(k => specs[k])
-        .slice(0, 3)
+        .slice(0, 4)
         .map(k => ({ label: specLabels[k] || k, value: specs[k] }));
 }
 
@@ -34,6 +34,15 @@ function chipClass(metal) {
     if (m.includes('blanco') || m.includes('white')) return 'white';
     if (m.includes('rosa') || m.includes('rose')) return 'rose';
     return 'yellow';
+}
+
+function normCase(text) {
+    if (!text) return '';
+    if (text.length > 15 && !/[a-záéíóúñü]/.test(text)) {
+        return text.toLowerCase().replace(/(^|[.!?]\s*)([a-záéíóúñü])/g,
+            (m, prefix, char) => prefix + char.toUpperCase());
+    }
+    return text;
 }
 
 function wishlistBtn(piece) {
@@ -90,6 +99,7 @@ export function renderFeaturedPieces() {
         const specs = getTopSpecs(piece.specs);
         const ref = piece.code || '';
         const num = String(index + 1).padStart(2, '0');
+        const desc = normCase(piece.description);
 
         return `
         <article class="piece-card ${offset} animate-on-scroll" data-piece="${piece.id}">
@@ -103,14 +113,8 @@ export function renderFeaturedPieces() {
                         </svg>
                     </div>`}
                 <div class="piece-shine"></div>
-                ${specs.length ? `
-                <div class="piece-float-meta">
-                    ${specs.slice(0, 2).map(s =>
-                        `<span class="piece-float-dot">${s.value}</span>`
-                    ).join('')}
-                </div>` : ''}
                 ${piece.badge ? `<span class="piece-badge">${piece.badge}</span>` : ''}
-                <div class="piece-actions">
+                <div class="piece-actions top-right">
                     ${wishlistBtn(piece)}
                     ${cartBtn(piece)}
                 </div>
@@ -123,19 +127,25 @@ export function renderFeaturedPieces() {
                 <h3 class="piece-name">
                     <a href="pieza.html?p=${piece.slug}">${piece.name}</a>
                 </h3>
-                <p class="piece-desc">${piece.description}</p>
+                <p class="piece-desc">${desc}</p>
                 ${specs.length ? `
                 <div class="piece-spec-grid">
                     ${specs.map(s => `
-                        <div>
-                            <div class="spec-lbl">${s.label}</div>
-                            <div class="spec-val">${s.value}</div>
+                        <div class="spec-cell">
+                            <span class="spec-lbl">${s.label}</span>
+                            <span class="spec-val">${s.value}</span>
                         </div>
                     `).join('')}
                 </div>` : ''}
                 <div class="piece-cta-row">
                     <a href="pieza.html?p=${piece.slug}" class="piece-btn primary">Ver pieza</a>
-                    <a href="contacto.html" class="piece-btn ghost">Consultar</a>
+                    <a href="contacto.html" class="piece-btn-link">
+                        Consultar
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                            <polyline points="13,6 19,12 13,18"/>
+                        </svg>
+                    </a>
                 </div>
             </div>
         </article>`;

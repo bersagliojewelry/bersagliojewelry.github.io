@@ -130,8 +130,8 @@ Estas secciones son el diseno FINAL y ACTIVO. **NUNCA eliminar ni modificar sin 
 | 11229-11350 | Section Headers V7 — Tipografia editorial | `.section-eyebrow`, `.section-title`, `.section-subtitle` con padres V7 |
 | 11351-11511 | Brand Statement V7 — Cita editorial | `.brand-statement.brand-statement-v7` |
 | ~10580+ | Portfolio V5 — CSS Slider | `.lb-viewport`, `.lb-track`, `.lb-slide`, `.lb-arrow`, `.lb-dot` |
-| 11805-12040 | Featured Pieces V7 — Grid editorial | `.featured.featured-v7` |
-| 12041-12135 | Featured V7 — Responsive | `.featured.featured-v7` |
+| 11152-11530 | Featured Pieces V4 — 3D tilt, magnetic CTA, hover reveal | `.featured.featured-v7` |
+| 11531-11680 | Featured V4 — Responsive + Accessibility | `.featured.featured-v7` |
 | 12136-12392 | Collections V7 — Categorias editoriales | `.collections.collections-v7` |
 | 12393-12483 | Collections V7 — Responsive | `.collections.collections-v7` |
 | 12484-12813 | Services V7 — Showcase editorial | `.services.services-v7` |
@@ -746,3 +746,114 @@ Las secciones documentadas arriba sobre StPageFlip (shift dinámico, sincronizac
 - El backdrop usa la MISMA url de imagen (`piece.image`) — no pre-generar thumbnails
 - No volver a `vignette` / radial-gradient (falló previamente)
 - No volver a `contain` puro sin backdrop (rectángulo blanco)
+
+### 2026-04-18 — Revert: eliminar sistema adaptive fit del portfolio (commit `3aff9ed`)
+**Archivos:** `js/components/lookbook.js`, `css/style.css`
+
+**Motivo:** El sistema de backdrop borroso producía halos grises/verdes feos alrededor de las piezas. El usuario resolvió el problema de raíz subiendo fotos en PNG con fondo transparente, haciendo innecesario el sistema adaptativo.
+
+**Eliminado de lookbook.js:**
+- `applyAdaptiveFit()` y constante `FIT_TOLERANCE`
+- `ptf-card-backdrop` div del HTML de cada card
+- Clase `.ptf-card-visual--contain`
+- Restaurado `setupShimmer()` simple sin lógica adaptativa
+
+**Eliminado de style.css:**
+- Reglas `.ptf-card-backdrop` (blur, scale, opacity)
+- Reglas `.ptf-card-visual--contain` (padding, object-fit)
+- Reglas de shimmer para `.ptf-card-visual--contain`
+
+**NOTA:** La sección anterior de este archivo (Portfolio V9 adaptive fit) es ahora histórica. El código fue revertido completamente.
+
+### 2026-04-18 — Featured V3: implementación inicial Claude Design Variant C (commit `960570c`)
+**Archivos:** `js/components/featured.js`, `css/style.css`
+
+**Descripción:** Primera implementación de las tarjetas de la sección "Piezas que definen momentos" basada en el diseño Claude Design Variant C (Asimétrico), adaptada al tema oscuro esmeralda.
+
+**Características implementadas:**
+- Grid asimétrico: `grid-template-columns: 1.15fr 0.95fr 1.1fr`
+- Offsets verticales: `offset-up`, `offset-down`, `offset-mid` alternando cards
+- Numerales editoriales: `nº 01`, `nº 02` en serif italic
+- Gold shimmer border: `::before` con gradient animado `@keyframes feat-goldSweep`
+- Inner glow: `::after` con `radial-gradient` siguiendo mouse via `--mx`/`--my`
+- Shine sweep: diagonal gold flash across image on hover
+- Badge, wishlist/cart buttons, spec grid 2×2, CTA con botón primary + link
+- Imagen con grayscale parcial que se remueve en hover
+- Responsive: 3→2→1 columnas
+
+### 2026-04-18 — Featured V3.1: fix badge, contraste, spec grid, CTA (commit `43c7177`)
+**Archivos:** `js/components/featured.js`, `css/style.css`
+
+**Problemas corregidos:**
+1. **Badge roto** — Se veía como rectángulo vertical oscuro sobre imagen oscura. Cambiado a gold gradient bg (`#e8c086→#aa8752`), texto oscuro, `white-space: nowrap`, pill shape.
+2. **Texto ilegible** — Colores demasiado similares al fondo. piece-name subido a `#f5f0e8`, spec-lbl opacity de 0.4→0.55, spec-val a white `#f5f0e8` con weight 600.
+3. **Consultar invisible** — Ghost button transparente sobre fondo oscuro. Cambiado a text link (`.piece-btn-link`) con color gold y flecha SVG siempre visible.
+4. **Descripción en MAYÚSCULAS** — Base CSS `.piece-desc { text-transform: uppercase }` en línea 1085. Override con `text-transform: none !important` en V7. Plus `normCase()` en JS para convertir ALL-CAPS de Firestore a sentence case.
+5. **Badge/num overlap** — `piece-num` movido de top-left a `bottom:18px, right:20px`.
+6. **Actions overlap** — Movido de `top:52px, left:14px` a `top:8px, right:8px`.
+
+### 2026-04-19 — Featured V4: 3D tilt, magnetic buttons, hover reveal, scroll entrance (commit `d335387`)
+**Archivos:** `js/components/featured.js`, `css/style.css`
+
+**Descripción:** Reimplementación completa de la sección Featured basada en Claude Design V2 potentiated. Resuelve los 3 problemas pendientes del usuario y agrega tecnología visual premium.
+
+**Cambios en featured.js:**
+- **Eliminado:** `OFFSETS`, `piece-num`, clases `offset-*`, `animate-on-scroll`, `tallClass`, `piece-desc`, `piece-top-row`, `piece-btn-link`
+- **Nuevo HTML:**
+  - `.piece-media` reemplaza `.piece-image-wrapper` (link wrapper para imagen)
+  - `.piece-reveal` dentro de la imagen — descripción que sube desde abajo en hover
+  - `.piece-meta-row` reemplaza `.piece-top-row`
+  - `.piece-btn.ghost` reemplaza `.piece-btn-link` — dos botones side-by-side
+  - `.spec-cell.has-border` para separadores verticales en spec grid
+- **3D Tilt:** mousemove calcula `rotateX`/`rotateY` con `perspective(1000px)` + `translateZ(6px)`. Clase `.is-tilting` desactiva CSS transition de transform durante tracking activo.
+- **Magnetic buttons:** `--bx`/`--by` en `.piece-btn` para radial gold gradient que sigue el cursor.
+- **Scroll reveal:** IntersectionObserver con stagger delay (`i * 0.12s`). Solo desktop (no touch, no reduced-motion). Inline styles se limpian post-animación para evitar conflicto con tilt.
+- **getTopSpecs:** ahora retorna máx 3 specs (antes 4) para grid de 3 columnas.
+
+**Cambios en CSS (Featured V7 block, líneas ~11152-11680):**
+- **Readability fix:**
+  - `.piece-name`: color `#ffffff` (antes `#f5f0e8`)
+  - `.spec-val`: color `#ffffff`, `font-family: var(--font-display)`, `font-size: 16px`
+  - `.spec-lbl`: color `rgba(232,192,134,0.65)` (antes 0.55)
+  - `.piece-reveal p`: color `rgba(245,240,232,0.88)` con line-clamp 3
+- **Spacing fix:**
+  - Grid gap: `18px` (antes `28px`)
+  - Offsets eliminados completamente
+  - Imagen uniforme `aspect-ratio: 4/5` (no más alternancia tall/square)
+  - Responsive gap: `14px` en tablet/mobile
+- **Numbering removed:** sin `.piece-num` — elemento y CSS eliminados
+- **Spec grid:** 3 columnas con `border-left` gold como separador (antes 2×2 con dark cells)
+- **CTA row:** `flex-direction: row` con dos botones `flex: 1` (antes column con primary + link)
+- **Magnetic buttons CSS:**
+  - `.piece-btn.primary::before` — `radial-gradient(circle 80px at --bx --by, white 30%, transparent)` aparece en hover
+  - `.piece-btn.ghost::before` — `radial-gradient(circle 80px at --bx --by, gold 20%, transparent)` aparece en hover
+  - `.piece-btn.primary:hover` — `translateY(-1px)` + gold shadow
+  - `.piece-btn.ghost:hover` — border brightens + text lightens
+- **3D tilt CSS:**
+  - `.piece-card` base: `transform-style: preserve-3d`, CSS transition incluye transform
+  - `.piece-card.is-tilting`: CSS transition EXCLUYE transform (JS controla directo)
+  - Mouse leave → JS limpia inline transform → CSS transition suaviza regreso
+- **Hover reveal:**
+  - `.piece-reveal`: `position: absolute`, bottom-anchored, gradient `rgba(5,10,7,0.92)→transparent`
+  - `transform: translateY(100%)` → `translateY(0)` en hover
+  - Mobile/touch: siempre visible (`transform: translateY(0)`)
+
+**CSS Eliminado (~554 líneas reemplazadas por ~530 nuevas):**
+- `.piece-num` y hover
+- `.piece-image-wrapper` y `.piece-image-wrapper.tall`
+- `.piece-top-row`
+- `.piece-desc`
+- `.piece-btn-link` y hover
+- `.piece-float-meta`
+- Offset rules (`.offset-up`, `.offset-down`, `.offset-mid`)
+- Vignette `piece-image-wrapper::after`
+- Grayscale image filter
+
+**NO TOCAR (reglas Featured V4):**
+- Los estilos `.featured-v7 .piece-*` en style.css (líneas ~11152-11680) son el diseño activo
+- `renderFeaturedPieces()` es la interfaz pública — `app.js` la llama
+- La clase `.is-tilting` es crítica: sin ella, el CSS transition de transform interfiere con el tracking 3D
+- Scroll reveal usa inline styles temporales que se limpian post-animación — no mover a CSS classes
+- `getTopSpecs` retorna máx 3 specs — no subir a 4 (el grid es de 3 columnas)
+- Magnetic button vars `--bx`/`--by` se setean en mousemove del container — no mover a card-level
+- `@keyframes feat-goldSweep` sigue dentro del bloque Featured V7 — no mover

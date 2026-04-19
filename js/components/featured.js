@@ -1,7 +1,7 @@
 /**
- * Bersaglio Jewelry — Featured Pieces Component V3.1
- * Asymmetric editorial cards · Gold shimmer border · Inner glow
- * Stitch-inspired spec grid, gold gradient CTA, sentence-case descriptions
+ * Bersaglio Jewelry — Featured Pieces Component V4
+ * 3D parallax tilt · Magnetic buttons · Hover reveal · Scroll entrance
+ * Dark emerald · Claude Design V2 potentiated
  */
 
 import db from '../data/catalog.js';
@@ -18,13 +18,12 @@ const specLabels = {
 };
 
 const SPEC_PRIORITY = ['carat', 'weight', 'clarity', 'stone', 'cut', 'color', 'metal'];
-const OFFSETS = ['offset-up', 'offset-down', 'offset-mid'];
 
 function getTopSpecs(specs) {
     if (!specs) return [];
     return SPEC_PRIORITY
         .filter(k => specs[k])
-        .slice(0, 4)
+        .slice(0, 3)
         .map(k => ({ label: specLabels[k] || k, value: specs[k] }));
 }
 
@@ -91,20 +90,16 @@ export function renderFeaturedPieces() {
 
     if (section) section.classList.remove('is-empty');
 
-    Renderer.renderList('#featured-grid', pieces, (piece, index) => {
-        const offset = OFFSETS[index % 3];
-        const tallClass = index % 2 === 0 ? ' tall' : '';
+    Renderer.renderList('#featured-grid', pieces, (piece) => {
         const metal = piece.specs?.metal || 'Oro 18K';
-        const chip = chipClass(piece.specs?.metal);
+        const chip  = chipClass(piece.specs?.metal);
         const specs = getTopSpecs(piece.specs);
-        const ref = piece.code || '';
-        const num = String(index + 1).padStart(2, '0');
-        const desc = normCase(piece.description);
+        const ref   = piece.code || '';
+        const desc  = normCase(piece.description);
 
         return `
-        <article class="piece-card ${offset} animate-on-scroll" data-piece="${piece.id}">
-            <span class="piece-num">nº ${num}</span>
-            <a href="pieza.html?p=${piece.slug}" class="piece-image-wrapper${tallClass}" aria-label="Ver ${piece.name}">
+        <article class="piece-card" data-piece="${piece.id}">
+            <a href="pieza.html?p=${piece.slug}" class="piece-media" aria-label="Ver ${piece.name}">
                 ${piece.image
                     ? `<img src="${piece.image}" alt="${piece.name}" class="piece-img" loading="lazy">`
                     : `<div class="piece-placeholder" aria-hidden="true">
@@ -114,24 +109,24 @@ export function renderFeaturedPieces() {
                     </div>`}
                 <div class="piece-shine"></div>
                 ${piece.badge ? `<span class="piece-badge">${piece.badge}</span>` : ''}
-                <div class="piece-actions top-right">
+                <div class="piece-actions">
                     ${wishlistBtn(piece)}
                     ${cartBtn(piece)}
                 </div>
+                ${desc ? `<div class="piece-reveal"><p>${desc}</p></div>` : ''}
             </a>
             <div class="piece-info">
-                <div class="piece-top-row">
+                <div class="piece-meta-row">
                     <span class="piece-chip ${chip}">${metal}</span>
                     ${ref ? `<span class="piece-ref">${ref}</span>` : ''}
                 </div>
                 <h3 class="piece-name">
                     <a href="pieza.html?p=${piece.slug}">${piece.name}</a>
                 </h3>
-                <p class="piece-desc">${desc}</p>
                 ${specs.length ? `
                 <div class="piece-spec-grid">
-                    ${specs.map(s => `
-                        <div class="spec-cell">
+                    ${specs.map((s, i) => `
+                        <div class="spec-cell${i > 0 ? ' has-border' : ''}">
                             <span class="spec-lbl">${s.label}</span>
                             <span class="spec-val">${s.value}</span>
                         </div>
@@ -139,13 +134,7 @@ export function renderFeaturedPieces() {
                 </div>` : ''}
                 <div class="piece-cta-row">
                     <a href="pieza.html?p=${piece.slug}" class="piece-btn primary">Ver pieza</a>
-                    <a href="contacto.html" class="piece-btn-link">
-                        Consultar
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <line x1="5" y1="12" x2="19" y2="12"/>
-                            <polyline points="13,6 19,12 13,18"/>
-                        </svg>
-                    </a>
+                    <a href="contacto.html" class="piece-btn ghost">Consultar</a>
                 </div>
             </div>
         </article>`;
@@ -167,11 +156,67 @@ export function renderFeaturedPieces() {
         );
     });
 
+    const cards = container.querySelectorAll('.piece-card');
+
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            card.classList.add('is-tilting');
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = '';
+            card.classList.remove('is-tilting');
+        });
+    });
+
     container.addEventListener('mousemove', e => {
         const card = e.target.closest('.piece-card');
-        if (!card) return;
+        if (!card || !card.classList.contains('is-tilting')) return;
+
         const rect = card.getBoundingClientRect();
-        card.style.setProperty('--mx', ((e.clientX - rect.left) / rect.width * 100) + '%');
-        card.style.setProperty('--my', ((e.clientY - rect.top) / rect.height * 100) + '%');
+        const x = (e.clientX - rect.left) / rect.width;
+        const y = (e.clientY - rect.top) / rect.height;
+        const tiltX = (0.5 - y) * 6;
+        const tiltY = (x - 0.5) * 6;
+
+        card.style.transform =
+            `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateZ(6px)`;
+        card.style.setProperty('--mx', (x * 100) + '%');
+        card.style.setProperty('--my', (y * 100) + '%');
+
+        const btn = e.target.closest('.piece-btn');
+        if (btn) {
+            const br = btn.getBoundingClientRect();
+            btn.style.setProperty('--bx', ((e.clientX - br.left) / br.width * 100) + '%');
+            btn.style.setProperty('--by', ((e.clientY - br.top) / br.height * 100) + '%');
+        }
     });
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isTouch = window.matchMedia('(hover: none)').matches;
+
+    if (!prefersReducedMotion && !isTouch && 'IntersectionObserver' in window) {
+        cards.forEach((card, i) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(24px)';
+            const delay = i * 0.12;
+
+            const observer = new IntersectionObserver(entries => {
+                if (entries[0].isIntersecting) {
+                    card.style.transition =
+                        `opacity 0.7s cubic-bezier(0.19,1,0.22,1) ${delay}s, ` +
+                        `transform 0.7s cubic-bezier(0.19,1,0.22,1) ${delay}s`;
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                    observer.unobserve(card);
+                    setTimeout(() => {
+                        card.style.transition = '';
+                        card.style.opacity = '';
+                        card.style.transform = '';
+                    }, (delay + 0.8) * 1000);
+                }
+            }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+            observer.observe(card);
+        });
+    }
 }

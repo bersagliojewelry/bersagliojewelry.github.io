@@ -11203,6 +11203,7 @@ nav .logo-sub {
     box-shadow:
         0 30px 60px -20px rgba(0, 0, 0, 0.5),
         0 0 0 0.5px rgba(200, 169, 110, 0.25) !important;
+    transform: translateY(0);
 }
 
 /* ─── 4. GOLD SHIMMER BORDER — Animated sweep on hover ───────── */

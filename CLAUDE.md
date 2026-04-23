@@ -857,3 +857,22 @@ Las secciones documentadas arriba sobre StPageFlip (shift dinámico, sincronizac
 - `getTopSpecs` retorna máx 3 specs — no subir a 4 (el grid es de 3 columnas)
 - Magnetic button vars `--bx`/`--by` se setean en mousemove del container — no mover a card-level
 - `@keyframes feat-goldSweep` sigue dentro del bloque Featured V7 — no mover
+
+### 2026-04-23 — Featured V4.1: micro-cirugía de tarjetas (commit `02c4d41`)
+**Archivos:** `js/components/featured.js`, `css/style.css`
+
+**8 fixes aplicados:**
+1. **Card bg más transparente** — `rgba(8,12,9,0.65)` → `rgba(10,18,12,0.35)` para que el emerald marble del body se vea a través, como en portfolio.
+2. **Badge glassmorphism** — Cambiado de `linear-gradient(135deg, #e8c086, #aa8752)` (gold sólido) a `rgba(200,169,110,0.15)` + `backdrop-filter: blur(12px)` + `border: 1px solid rgba(200,169,110,0.25)` + `color: #e8c086`. Mismo estilo que `.ptf-card-badge` del portfolio.
+3. **Descripción siempre visible** — Eliminado `.piece-reveal` (hover slide-up). Descripción ahora es `<p class="piece-desc">` dentro de `.piece-info`, siempre visible, con `line-clamp: 3` y color `rgba(245,240,232,0.68)`.
+4. **Nombre en capitalize** — Agregado `text-transform: capitalize !important` a `.featured-v7 .piece-name` para override del base `text-transform: uppercase` (línea 1075 de style.css).
+5. **Info glass bg** — `.featured-v7 .piece-info` ahora tiene `background: rgba(10,20,14,0.55)` + `backdrop-filter: blur(14px)` para override del base `linear-gradient(to bottom, var(--champagne), var(--ivory))` (línea 1066). "Efecto agua" glassmorphism.
+6. **Contraste specs** — Resuelto por fix #5: el fondo glass oscuro hace que el texto blanco (`#ffffff`) de `.spec-val` sea legible.
+7. **Ghost button hover** — Agregado `background: rgba(200,169,110,0.1)` en hover para que el botón "Consultar" no desaparezca contra el fondo.
+8. **Buttons overlap** — Agregado `position: static !important` a `.featured-v7 .piece-wishlist-btn, .piece-cart-btn` para override del base `position: absolute; top: 10px; right: 10px` (línea 1630) que ponía ambos botones encima uno del otro ignorando el flex column layout de `.piece-actions`.
+
+**Eliminado de CSS:** Bloque `.piece-reveal` completo (~30 líneas), referencias en responsive (mobile 620px) y accessibility (reduced-motion, hover:none).
+
+**Root causes de los bugs:**
+- Base CSS sin namespace (`.piece-info`, `.piece-name`, `.piece-wishlist-btn`) tiene reglas con colores claros (ivory, champagne, black) y `position: absolute` que no eran overrideadas por V7 (faltaban `!important` + las propiedades específicas).
+- V7 usaba doble clase `.featured-v7 .piece-*` pero no cubría TODAS las propiedades del base → las no-overrideadas sangraban.

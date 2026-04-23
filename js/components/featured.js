@@ -113,7 +113,6 @@ export function renderFeaturedPieces() {
                     ${wishlistBtn(piece)}
                     ${cartBtn(piece)}
                 </div>
-                ${desc ? `<div class="piece-reveal"><p>${desc}</p></div>` : ''}
             </a>
             <div class="piece-info">
                 <div class="piece-meta-row">
@@ -123,6 +122,7 @@ export function renderFeaturedPieces() {
                 <h3 class="piece-name">
                     <a href="pieza.html?p=${piece.slug}">${piece.name}</a>
                 </h3>
+                ${desc ? `<p class="piece-desc">${desc}</p>` : ''}
                 ${specs.length ? `
                 <div class="piece-spec-grid">
                     ${specs.map((s, i) => `

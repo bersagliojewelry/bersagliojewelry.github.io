@@ -12898,19 +12898,9 @@ nav .logo-sub {
     display: none !important;
 }
 
-/* Glow esmeralda decorativo — esquina inferior derecha */
+/* Glow esmeralda removido — el aurora global ya crea profundidad */
 .about-v7 .about-teaser-inner::before {
-    content: '';
-    position: absolute;
-    bottom: -100px;
-    right: -100px;
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(ellipse at center,
-        rgba(11,61,46, 0.12) 0%,
-        transparent 70%);
-    pointer-events: none;
-    z-index: 0;
+    content: none !important;
 }
 
 /* ─── 2. INNER GRID ───────────────────────────────────────────── */
@@ -12922,14 +12912,14 @@ nav .logo-sub {
     position: relative !important;
 }
 
-/* ─── 3. COLLAGE / IMAGEN ─────────────────────────────────────── */
+/* ─── 3. COLLAGE / IMAGEN — crystal clear, no overlay ────────── */
 .about-v7 .about-teaser-collage {
     position: relative !important;
     overflow: hidden !important;
     border-radius: 0 !important;
     aspect-ratio: 16 / 10 !important;
-    background: rgba(10, 20, 14, 0.3) !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+    background: transparent !important;
+    box-shadow: none !important;
 }
 
 .about-v7 .about-teaser-collage img {
@@ -12946,17 +12936,12 @@ nav .logo-sub {
 
 /* Frame decorativo — very subtle, no golden fade */
 .about-v7 .about-teaser-collage-frame {
-    position: absolute !important;
-    inset: 12px !important;
-    border: 1px solid rgba(255, 255, 255, 0.06) !important;
-    border-radius: 0 !important;
-    pointer-events: none !important;
-    z-index: 1 !important;
-    transition: border-color 0.4s ease !important;
+    display: none !important;
 }
 
-.about-v7 .about-teaser-collage:hover .about-teaser-collage-frame {
-    border-color: rgba(255, 255, 255, 0.12) !important;
+/* Override legacy frame attempts across the codebase */
+.about-teaser-collage-frame {
+    display: none !important;
 }
 
 /* Placeholder */
@@ -13512,10 +13497,11 @@ nav .logo-sub {
    ANIMATION SPEED FIX — Carga más rápida, menos espera al scroll
    ═══════════════════════════════════════════════════════════════════ */
 
-/* Override: animaciones más rápidas — 0.5s en vez de 0.8-0.9s */
+/* Override: animaciones premium-fast — 0.35s con easing Apple-style */
 .animate-on-scroll {
-    transition-duration: 0.45s !important;
-    transform: translateY(18px) !important;
+    transition: opacity 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+                transform 0.35s cubic-bezier(0.32, 0.72, 0, 1) !important;
+    transform: translateY(12px) !important;
 }
 
 .animate-on-scroll.is-visible {
@@ -13525,7 +13511,7 @@ nav .logo-sub {
 /* Collection panels y service rows también más rápidos */
 .collection-panel,
 .service-row {
-    transition-duration: 0.4s !important;
+    transition-duration: 0.35s !important;
 }
 
 /* Reducir stagger delays para que no se sienta lento */
@@ -14309,5 +14295,302 @@ nav .logo-sub {
     .svc-card-number,
     .svc-card-desc {
         transition: none;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   AQUA LIQUID GLASS — UNIFIED THEME LAYER
+   Aplicado globalmente a todas las páginas secundarias.
+   Tokens: --aqua-bg, --aqua-blur, --aqua-saturate, --aqua-highlight
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+    --aqua-bg:        rgba(10, 20, 14, 0.42);
+    --aqua-bg-strong: rgba(10, 20, 14, 0.58);
+    --aqua-bg-soft:   rgba(14, 28, 20, 0.28);
+    --aqua-blur:      blur(18px) saturate(1.35);
+    --aqua-blur-lg:   blur(24px) saturate(1.4);
+    --aqua-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    --aqua-border:    1px solid rgba(200, 169, 110, 0.12);
+    --aqua-border-hover: 1px solid rgba(200, 169, 110, 0.28);
+    --aqua-glow-hover: 0 0 30px rgba(200, 169, 110, 0.08);
+}
+
+/* ─── Page Heroes (nosotros, servicios, journal, colecciones, catalog, cart, wishlist, contact, entrada, pieza) ─── */
+.page-hero {
+    background: linear-gradient(165deg, rgba(16, 40, 26, 0.55) 0%, rgba(6, 12, 9, 0.75) 70%) !important;
+    backdrop-filter: var(--aqua-blur-lg) !important;
+    -webkit-backdrop-filter: var(--aqua-blur-lg) !important;
+    box-shadow: var(--aqua-highlight) !important;
+}
+.page-hero::after { opacity: 0.04 !important; }
+.page-hero.has-banner .container::before {
+    background: linear-gradient(to top, rgba(6, 12, 9, 0.75) 0%, rgba(10, 26, 15, 0.35) 50%, rgba(16, 40, 26, 0.2) 100%) !important;
+}
+
+/* ─── Catalog filters (anillos, argollas, topos, dijes, colecciones) ─── */
+.catalog-filters {
+    background: var(--aqua-bg-soft) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    padding: 14px 18px !important;
+}
+.catalog-filter-btn {
+    background: transparent !important;
+    border: 1px solid rgba(200, 169, 110, 0.15) !important;
+    color: rgba(245, 240, 232, 0.8) !important;
+    transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+.catalog-filter-btn:hover {
+    background: rgba(200, 169, 110, 0.08) !important;
+    border-color: rgba(200, 169, 110, 0.35) !important;
+    color: var(--gold-light, #e8c086) !important;
+}
+.catalog-filter-btn.is-active {
+    background: rgba(200, 169, 110, 0.18) !important;
+    border-color: rgba(200, 169, 110, 0.45) !important;
+    color: var(--gold-light, #e8c086) !important;
+}
+
+/* ─── Catalog collection cards (colecciones.html) ─── */
+.catalog-collection-card {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    border-radius: 0 !important;
+    transition: all 0.4s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+.catalog-collection-card:hover {
+    border: var(--aqua-border-hover) !important;
+    box-shadow:
+        var(--aqua-highlight),
+        var(--aqua-glow-hover),
+        0 20px 40px -15px rgba(0, 0, 0, 0.5) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* ─── Contact grid (contacto.html) ─── */
+.contact-channel {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    border-radius: 0 !important;
+    transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+.contact-channel:hover {
+    border: var(--aqua-border-hover) !important;
+    background: var(--aqua-bg-strong) !important;
+    box-shadow:
+        var(--aqua-highlight),
+        var(--aqua-glow-hover) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* ─── Review cards (pieza detail) ─── */
+.review-card {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    border-radius: 0 !important;
+}
+
+/* ─── Related cards (pieza detail) ─── */
+.related-card {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    border-radius: 0 !important;
+}
+.related-card:hover {
+    border: var(--aqua-border-hover) !important;
+    box-shadow:
+        var(--aqua-highlight),
+        var(--aqua-glow-hover) !important;
+}
+
+/* ─── Pieza main image area ─── */
+.pieza-main-image,
+.pieza-thumbnails {
+    background: var(--aqua-bg-soft) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    box-shadow: var(--aqua-highlight) !important;
+}
+.pieza-info {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    border-radius: 0 !important;
+    padding: 32px !important;
+}
+
+/* ─── Pieza guarantees strip ─── */
+.pieza-guarantees,
+.guarantee-card {
+    background: var(--aqua-bg-soft) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    border-radius: 0 !important;
+}
+
+/* ─── Cart page items ─── */
+.cart-card,
+.cart-summary,
+.cart-inquiry-note {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    border-radius: 0 !important;
+}
+
+/* ─── Wishlist page items ─── */
+.wishlist-empty,
+.wishlist-actions {
+    background: var(--aqua-bg-soft) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    border-radius: 0 !important;
+}
+
+/* ─── Journal page article cards (journal.html, entrada.html) ─── */
+.journal-hero-card,
+.journal-grid-card {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    border-radius: 0 !important;
+    transition: all 0.4s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+.journal-hero-card:hover,
+.journal-grid-card:hover {
+    border: var(--aqua-border-hover) !important;
+    box-shadow:
+        var(--aqua-highlight),
+        var(--aqua-glow-hover),
+        0 20px 40px -15px rgba(0, 0, 0, 0.5) !important;
+    transform: translateY(-2px) !important;
+}
+
+.entrada-content,
+.entrada-hero,
+.entrada-meta {
+    background: transparent !important;
+}
+
+/* ─── Nosotros page cards (brand story, team cards, etc.) ─── */
+.nosotros-section,
+.team-card,
+.brand-story-card {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    border-radius: 0 !important;
+}
+
+/* ─── Servicios page cards (svc-card, svc-process-step) ─── */
+.svc-card {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    border-radius: 0 !important;
+    transition: all 0.4s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+.svc-card:hover {
+    border: var(--aqua-border-hover) !important;
+    box-shadow:
+        var(--aqua-highlight),
+        var(--aqua-glow-hover),
+        0 20px 40px -15px rgba(0, 0, 0, 0.5) !important;
+    transform: translateY(-2px) !important;
+}
+.svc-process-step {
+    background: var(--aqua-bg-soft) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    border-radius: 0 !important;
+}
+
+/* ─── Form inputs (contact, checkout, search, subscribe) ─── */
+input[type="text"], input[type="email"], input[type="tel"],
+input[type="search"], input[type="password"], textarea, select {
+    background: var(--aqua-bg-soft) !important;
+    backdrop-filter: blur(8px) saturate(1.2) !important;
+    -webkit-backdrop-filter: blur(8px) saturate(1.2) !important;
+    border: var(--aqua-border) !important;
+    color: var(--ivory, #f5f0e8) !important;
+    transition: all 0.25s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+input[type="text"]:focus, input[type="email"]:focus, input[type="tel"]:focus,
+input[type="search"]:focus, input[type="password"]:focus, textarea:focus, select:focus {
+    border: var(--aqua-border-hover) !important;
+    background: var(--aqua-bg) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(200, 169, 110, 0.08) !important;
+}
+
+/* ─── Touch devices: reduce blur for performance ─── */
+@media (pointer: coarse) {
+    .page-hero,
+    .catalog-filters,
+    .catalog-collection-card,
+    .contact-channel,
+    .review-card,
+    .related-card,
+    .pieza-info,
+    .cart-card,
+    .cart-summary,
+    .journal-hero-card,
+    .journal-grid-card,
+    .svc-card,
+    .svc-process-step {
+        backdrop-filter: blur(10px) saturate(1.25) !important;
+        -webkit-backdrop-filter: blur(10px) saturate(1.25) !important;
+    }
+}
+
+/* ─── Accesibilidad global: respeta reduced-motion en hovers ─── */
+@media (prefers-reduced-motion: reduce) {
+    .catalog-collection-card,
+    .contact-channel,
+    .related-card,
+    .journal-hero-card,
+    .journal-grid-card,
+    .svc-card {
+        transition: none !important;
+    }
+    .catalog-collection-card:hover,
+    .contact-channel:hover,
+    .related-card:hover,
+    .journal-hero-card:hover,
+    .journal-grid-card:hover,
+    .svc-card:hover {
+        transform: none !important;
     }
 }

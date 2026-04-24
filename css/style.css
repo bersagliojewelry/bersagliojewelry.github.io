@@ -103,12 +103,50 @@ body {
     overflow-x: clip;
 }
 
+/* ─── Aurora Layer — animated drift over marble (Liquid Glass) ─── */
+html::before {
+    content: '';
+    position: fixed;
+    top: -25%;
+    left: -25%;
+    width: 150%;
+    height: 150%;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 42% 36% at 22% 32%, rgba(40, 110, 72, 0.22), transparent 60%),
+        radial-gradient(ellipse 38% 30% at 78% 72%, rgba(200, 169, 110, 0.08), transparent 65%),
+        radial-gradient(ellipse 32% 28% at 58% 18%, rgba(26, 85, 52, 0.18), transparent 60%),
+        radial-gradient(ellipse 35% 28% at 15% 80%, rgba(50, 130, 82, 0.14), transparent 65%);
+    animation: aurora-drift 120s ease-in-out infinite;
+    will-change: transform;
+}
+
+@keyframes aurora-drift {
+    0%, 100% { transform: translate3d(0%, 0%, 0) scale(1); }
+    25%      { transform: translate3d(2.5%, -3%, 0) scale(1.03); }
+    50%      { transform: translate3d(-1.5%, 2.5%, 0) scale(1.05); }
+    75%      { transform: translate3d(-2.5%, -1.5%, 0) scale(1.02); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html::before { animation: none; }
+}
+
+/* Mobile: slower + reduced opacity to save battery */
+@media (pointer: coarse) {
+    html::before {
+        animation-duration: 240s;
+        opacity: 0.7;
+    }
+}
+
 /* ─── Emerald Marble Background — full page fixed layer ─── */
 body::before {
     content: '';
     position: fixed;
     inset: 0;
-    z-index: -1;
+    z-index: -2;
     background:
         /* Ultra-fine gold mineral veins — marble texture */
         repeating-linear-gradient(

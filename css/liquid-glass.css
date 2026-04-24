@@ -1,0 +1,862 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   BERSAGLIO JEWELRY · Liquid Glass iOS 26 — Light Theme Override Layer
+   Source design: bersaglio.html (Claude Design handoff)
+   Loaded AFTER style.css — tokens + primitives + dark→light flip.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+    /* ── Brand palette (oklch perceptually uniform) ───────────────── */
+    --bj-emerald-900: oklch(28% 0.08 155);
+    --bj-emerald-800: oklch(34% 0.11 155);
+    --bj-emerald-700: oklch(42% 0.14 155);
+    --bj-emerald-600: oklch(52% 0.16 155);
+    --bj-emerald-500: oklch(62% 0.18 155);
+    --bj-emerald-400: oklch(74% 0.15 152);
+    --bj-emerald-300: oklch(85% 0.10 150);
+    --bj-emerald-200: oklch(92% 0.05 150);
+    --bj-emerald-100: oklch(97% 0.02 150);
+
+    --bj-gold-900: oklch(55% 0.12 80);
+    --bj-gold-700: oklch(72% 0.14 82);
+    --bj-gold-500: oklch(82% 0.14 85);
+    --bj-gold-300: oklch(90% 0.08 88);
+    --bj-gold-100: oklch(96% 0.04 90);
+
+    --bj-pearl: oklch(98% 0.005 90);
+    --bj-ivory: oklch(96% 0.012 85);
+    --bj-cream: oklch(94% 0.018 82);
+    --bj-mist:  oklch(90% 0.01 150);
+
+    /* "Negro" de la marca = tinta-esmeralda, NUNCA negro puro */
+    --bj-ink-emerald: oklch(18% 0.05 155);
+    --bj-ink-soft:    oklch(32% 0.03 155);
+    --bj-ink-mute:    oklch(50% 0.02 155);
+
+    /* ── Liquid Glass tokens ──────────────────────────────────────── */
+    --glass-blur: 28px;
+    --glass-saturate: 180%;
+    --glass-tint: oklch(96% 0.02 150 / 0.55);
+    --glass-tint-strong: oklch(94% 0.03 150 / 0.72);
+    --glass-tint-dark: oklch(35% 0.08 155 / 0.35);
+    --glass-border: 1px solid oklch(100% 0 0 / 0.5);
+    --glass-border-inner: inset 0 1px 0 oklch(100% 0 0 / 0.85);
+    --glass-shadow:
+        0 1px 0 oklch(100% 0 0 / 0.9) inset,
+        0 -1px 0 oklch(100% 0 0 / 0.25) inset,
+        0 1px 2px oklch(35% 0.08 155 / 0.08),
+        0 10px 30px -8px oklch(28% 0.08 155 / 0.25),
+        0 30px 60px -20px oklch(28% 0.08 155 / 0.18);
+    --glass-shadow-lg:
+        0 1px 0 oklch(100% 0 0 / 0.9) inset,
+        0 -2px 0 oklch(100% 0 0 / 0.2) inset,
+        0 2px 4px oklch(35% 0.08 155 / 0.06),
+        0 20px 50px -10px oklch(28% 0.08 155 / 0.3),
+        0 60px 100px -30px oklch(28% 0.08 155 / 0.25);
+    --pinlight:
+        radial-gradient(ellipse 60% 50% at 50% 0%, oklch(100% 0 0 / 0.95) 0%, transparent 60%);
+    --iridescent-rim: conic-gradient(from 180deg at 50% 50%,
+        oklch(85% 0.14 155 / 0.8),
+        oklch(90% 0.12 90 / 0.8),
+        oklch(88% 0.10 30 / 0.6),
+        oklch(82% 0.13 200 / 0.7),
+        oklch(85% 0.14 155 / 0.8));
+
+    --r-pill: 999px;
+    --font-display-aqua: "Fraunces", "Cormorant Garamond", Georgia, serif;
+    --font-ui-aqua: "Inter", -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+    --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, monospace;
+
+    /* ── Override existing dark tokens to LIGHT values ────────────── */
+    --text-primary: var(--bj-ink-emerald);
+    --text-secondary: var(--bj-ink-soft);
+    --text-muted: var(--bj-ink-mute);
+    --text-on-dark: var(--bj-ink-emerald);
+    --text-on-dark-muted: var(--bj-ink-soft);
+
+    --black: var(--bj-ink-emerald);
+    --black-deep: var(--bj-ink-emerald);
+    --black-carbon: var(--bj-ink-emerald);
+    --black-soft: var(--bj-ink-soft);
+    --charcoal: var(--bj-ink-soft);
+
+    --ivory: var(--bj-pearl);
+    --ivory-warm: var(--bj-ivory);
+    --champagne: var(--bj-cream);
+    --champagne-dark: var(--bj-mist);
+
+    --emerald-deep: var(--bj-emerald-900);
+    --emerald: var(--bj-emerald-700);
+    --emerald-light: var(--bj-emerald-500);
+    --emerald-glow: var(--bj-emerald-400);
+
+    --border: oklch(100% 0 0 / 0.5);
+    --border-dark: oklch(100% 0 0 / 0.4);
+
+    /* ── Aqua tokens flipped to pearl translucent ─────────────────── */
+    --aqua-bg:        oklch(96% 0.02 150 / 0.55);
+    --aqua-bg-strong: oklch(94% 0.03 150 / 0.72);
+    --aqua-bg-soft:   oklch(98% 0.005 90 / 0.35);
+    --aqua-blur:      blur(28px) saturate(180%);
+    --aqua-blur-lg:   blur(32px) saturate(200%);
+    --aqua-highlight: inset 0 1px 0 oklch(100% 0 0 / 0.85);
+    --aqua-border:    1px solid oklch(100% 0 0 / 0.5);
+    --aqua-border-hover: 1px solid oklch(82% 0.14 85 / 0.45);
+    --aqua-glow-hover:   0 0 30px oklch(82% 0.14 85 / 0.18);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BODY BACKGROUND — kill dark marble, use pearl "world"
+   ═══════════════════════════════════════════════════════════════════ */
+body {
+    background: var(--bj-pearl) !important;
+    color: var(--bj-ink-emerald) !important;
+}
+body::before { display: none !important; }
+
+/* Aurora layer flipped to pearl + emerald + gold */
+html::before {
+    background:
+        radial-gradient(1200px 900px at 15% 10%, oklch(92% 0.07 150 / 0.65), transparent 60%),
+        radial-gradient(1000px 800px at 90% 20%, oklch(95% 0.06 90 / 0.55), transparent 55%),
+        radial-gradient(1400px 1000px at 50% 110%, oklch(88% 0.10 155 / 0.55), transparent 55%),
+        linear-gradient(180deg, oklch(97% 0.01 150) 0%, oklch(94% 0.02 150) 50%, oklch(96% 0.015 90) 100%) !important;
+}
+
+/* Extra dreamy blobs (bj-world optional layer) */
+.bj-world {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
+}
+.bj-world::before,
+.bj-world::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.55;
+    animation: bj-drift 28s ease-in-out infinite;
+}
+.bj-world::before {
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, oklch(70% 0.20 155 / 0.45), transparent 70%);
+    top: -10%; left: -10%;
+}
+.bj-world::after {
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, oklch(88% 0.14 85 / 0.42), transparent 70%);
+    bottom: -15%; right: -10%;
+    animation-delay: -14s;
+}
+@keyframes bj-drift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50%      { transform: translate(80px, -60px) scale(1.15); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .bj-world::before, .bj-world::after { animation: none; }
+}
+@media (pointer: coarse) {
+    .bj-world::before, .bj-world::after { opacity: 0.35; animation-duration: 60s; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLASS PRIMITIVES — reusable for new sections
+   ═══════════════════════════════════════════════════════════════════ */
+.glass {
+    position: relative;
+    background: var(--glass-tint);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    border: var(--glass-border);
+    border-radius: 22px;
+    box-shadow: var(--glass-shadow);
+    overflow: hidden;
+    isolation: isolate;
+}
+.glass::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: var(--pinlight);
+    opacity: 0.7;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    z-index: 1;
+}
+.glass > * { position: relative; z-index: 2; }
+.glass-lg { border-radius: 32px; box-shadow: var(--glass-shadow-lg); }
+.glass-pill { border-radius: var(--r-pill); }
+.glass-iridescent { position: relative; }
+.glass-iridescent::after {
+    content: "";
+    position: absolute; inset: 0;
+    padding: 1.5px;
+    border-radius: inherit;
+    background: var(--iridescent-rim);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    opacity: 0.55;
+    pointer-events: none;
+}
+.glass-emerald {
+    background: linear-gradient(145deg,
+        oklch(62% 0.18 155 / 0.5),
+        oklch(42% 0.14 155 / 0.75));
+    color: oklch(98% 0.01 150);
+}
+.glass-emerald::before { opacity: 0.5; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   BUTTON AQUA — gel líquido con refracción (pinlight top)
+   ═══════════════════════════════════════════════════════════════════ */
+.btn-aqua {
+    position: relative;
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5em;
+    padding: 14px 26px;
+    font-family: var(--font-ui-aqua);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: var(--bj-ink-emerald);
+    background: linear-gradient(180deg,
+        oklch(99% 0.01 150 / 0.95) 0%,
+        oklch(95% 0.03 150 / 0.85) 50%,
+        oklch(92% 0.05 150 / 0.9) 100%);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid oklch(100% 0 0 / 0.7);
+    border-radius: var(--r-pill);
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 1) inset,
+        0 -1px 0 oklch(100% 0 0 / 0.3) inset,
+        0 2px 4px oklch(35% 0.08 155 / 0.08),
+        0 8px 24px -6px oklch(42% 0.14 155 / 0.3);
+    transition: transform .35s cubic-bezier(.2,.9,.2,1), box-shadow .35s;
+    overflow: hidden; isolation: isolate;
+    cursor: pointer;
+    text-decoration: none;
+}
+.btn-aqua::before {
+    content: "";
+    position: absolute; top: 0; left: 0; right: 0; height: 55%;
+    background: linear-gradient(180deg, oklch(100% 0 0 / 0.85), transparent);
+    border-radius: var(--r-pill) var(--r-pill) 50% 50% / var(--r-pill) var(--r-pill) 18px 18px;
+    pointer-events: none;
+    z-index: 1;
+}
+.btn-aqua > * { position: relative; z-index: 2; }
+.btn-aqua:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 1) inset,
+        0 -1px 0 oklch(100% 0 0 / 0.4) inset,
+        0 4px 8px oklch(35% 0.08 155 / 0.1),
+        0 16px 40px -8px oklch(42% 0.14 155 / 0.45);
+}
+.btn-aqua:active { transform: translateY(0) scale(0.98); }
+
+.btn-aqua-emerald {
+    color: #fff;
+    background: linear-gradient(180deg,
+        oklch(65% 0.19 155) 0%,
+        oklch(52% 0.17 155) 48%,
+        oklch(38% 0.13 155) 100%);
+    border-color: oklch(68% 0.18 155);
+    text-shadow: 0 1px 1px oklch(20% 0.05 155 / 0.5);
+}
+.btn-aqua-emerald::before {
+    background: linear-gradient(180deg, oklch(88% 0.14 152 / 0.85), transparent);
+}
+.btn-aqua-gold {
+    color: oklch(32% 0.08 80);
+    background: linear-gradient(180deg,
+        oklch(93% 0.12 88) 0%,
+        oklch(80% 0.14 82) 48%,
+        oklch(68% 0.15 80) 100%);
+    border-color: oklch(90% 0.12 88);
+}
+.btn-aqua-gold::before {
+    background: linear-gradient(180deg, oklch(99% 0.05 90 / 0.9), transparent);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TYPE HELPERS
+   ═══════════════════════════════════════════════════════════════════ */
+.display-aqua { font-family: var(--font-display-aqua); font-weight: 300; letter-spacing: -0.025em; }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.gold-text {
+    background: linear-gradient(180deg, oklch(88% 0.13 88), oklch(62% 0.14 78));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.emerald-text {
+    background: linear-gradient(180deg, oklch(55% 0.17 155), oklch(30% 0.10 155));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--bj-emerald-800);
+    background: oklch(100% 0 0 / 0.55);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    border: 1px solid oklch(100% 0 0 / 0.6);
+    border-radius: var(--r-pill);
+    box-shadow: 0 1px 0 oklch(100% 0 0 / 0.8) inset, 0 4px 12px -4px oklch(42% 0.14 155 / 0.2);
+}
+.chip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--bj-emerald-500); box-shadow: 0 0 8px var(--bj-emerald-400); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   SITE-WIDE OVERRIDES — dark surfaces → light translucent
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Body + html base */
+html { background: var(--bj-pearl); }
+
+/* Headings default color */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--bj-ink-emerald) !important;
+}
+p { color: var(--bj-ink-soft); }
+
+/* Header → floating glass dock */
+.header {
+    background: transparent !important;
+}
+.header.scrolled {
+    background: oklch(96% 0.02 150 / 0.55) !important;
+    backdrop-filter: blur(28px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 0.8) inset,
+        0 4px 24px -6px oklch(42% 0.14 155 / 0.18) !important;
+    border-bottom: 1px solid oklch(100% 0 0 / 0.4) !important;
+}
+
+.nav-brand,
+.nav-brand-text,
+.logo-text {
+    color: var(--bj-emerald-800) !important;
+}
+.nav-link,
+.nav-link a {
+    color: var(--bj-ink-emerald) !important;
+}
+.nav-link:hover {
+    color: var(--bj-emerald-700) !important;
+}
+
+/* Dropdown menus → glass light */
+.dropdown-menu,
+.nav-dropdown-menu {
+    background: oklch(98% 0.005 90 / 0.85) !important;
+    backdrop-filter: blur(28px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+    border: 1px solid oklch(100% 0 0 / 0.5) !important;
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 0.9) inset,
+        0 20px 50px -10px oklch(28% 0.08 155 / 0.25) !important;
+    color: var(--bj-ink-emerald) !important;
+}
+.dropdown-link,
+.dropdown-link-name {
+    color: var(--bj-ink-emerald) !important;
+}
+.dropdown-link-description {
+    color: var(--bj-ink-soft) !important;
+}
+.dropdown-link:hover {
+    background: oklch(100% 0 0 / 0.5) !important;
+}
+
+/* Mobile menu → light panel */
+.nav-menu,
+.mobile-menu {
+    background: oklch(98% 0.005 90 / 0.92) !important;
+    backdrop-filter: blur(32px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(32px) saturate(200%) !important;
+    color: var(--bj-ink-emerald) !important;
+}
+.nav-menu .nav-link,
+.mobile-menu a {
+    color: var(--bj-ink-emerald) !important;
+}
+.nav-menu-header,
+.nav-menu-footer {
+    border-color: oklch(100% 0 0 / 0.4) !important;
+}
+
+/* Hero V7 */
+.hero.hero-v7,
+.hero {
+    background: transparent !important;
+    color: var(--bj-ink-emerald) !important;
+}
+.hero-title,
+.hero-heading,
+.hero-main-text {
+    color: var(--bj-ink-emerald) !important;
+    text-shadow: none !important;
+}
+.hero-subtitle,
+.hero-eyebrow,
+.hero-lead {
+    color: var(--bj-ink-soft) !important;
+}
+.hero-overlay { display: none !important; }
+.hero-canvas { opacity: 0.25 !important; mix-blend-mode: soft-light !important; }
+
+/* Hero ticker → gold accent on pearl */
+.hero-ticker {
+    background: oklch(96% 0.02 150 / 0.55) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    border-top: 1px solid oklch(100% 0 0 / 0.5) !important;
+    border-bottom: 1px solid oklch(100% 0 0 / 0.5) !important;
+}
+.hero-ticker-item,
+.hero-ticker-track {
+    color: var(--bj-emerald-800) !important;
+}
+.hero-ticker-sep {
+    color: var(--bj-gold-700) !important;
+}
+
+/* Section base (brand statement, collections, featured, services, journal, about, CTA) */
+.brand-statement.brand-statement-v7,
+.collections.collections-v7,
+.featured.featured-v7,
+.services.services-v7,
+.journal-preview.journal-v7,
+.about-teaser.about-v7,
+.cta-banner.cta-v7 {
+    background: transparent !important;
+    color: var(--bj-ink-emerald) !important;
+}
+
+/* Section titles and eyebrows */
+.section-title,
+.section-eyebrow,
+.section-subtitle {
+    color: var(--bj-ink-emerald) !important;
+}
+.section-eyebrow {
+    color: var(--bj-emerald-700) !important;
+    letter-spacing: 0.25em !important;
+}
+.section-subtitle {
+    color: var(--bj-ink-soft) !important;
+}
+
+/* Brand statement quote */
+.brand-statement blockquote,
+.brand-statement-quote,
+.brand-lines {
+    color: var(--bj-ink-emerald) !important;
+}
+
+/* Collections panels → light glass */
+.collection-panel,
+.collections-v7 .collection-panel,
+.catalog-collection-card {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow:
+        var(--aqua-highlight),
+        0 10px 30px -8px oklch(28% 0.08 155 / 0.22) !important;
+    color: var(--bj-ink-emerald) !important;
+}
+.collection-panel-name,
+.collection-panel h3,
+.catalog-collection-name {
+    color: var(--bj-ink-emerald) !important;
+}
+.collection-panel-description,
+.catalog-collection-desc {
+    color: var(--bj-ink-soft) !important;
+}
+.collection-panel:hover,
+.catalog-collection-card:hover {
+    border: var(--aqua-border-hover) !important;
+    box-shadow:
+        var(--aqua-highlight),
+        var(--aqua-glow-hover),
+        0 16px 40px -8px oklch(42% 0.14 155 / 0.28) !important;
+}
+
+/* Featured V7 — piece cards */
+.featured-v7 .piece-card,
+.piece-card {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    color: var(--bj-ink-emerald) !important;
+    box-shadow: var(--aqua-highlight), 0 10px 30px -8px oklch(28% 0.08 155 / 0.22) !important;
+}
+.featured-v7 .piece-info,
+.piece-info {
+    background: oklch(98% 0.005 90 / 0.55) !important;
+    backdrop-filter: blur(14px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
+    color: var(--bj-ink-emerald) !important;
+}
+.piece-name,
+.featured-v7 .piece-name {
+    color: var(--bj-ink-emerald) !important;
+}
+.piece-desc,
+.featured-v7 .piece-desc {
+    color: var(--bj-ink-soft) !important;
+}
+.spec-val,
+.featured-v7 .spec-val {
+    color: var(--bj-emerald-800) !important;
+}
+.spec-lbl,
+.featured-v7 .spec-lbl {
+    color: var(--bj-ink-mute) !important;
+}
+.piece-badge,
+.featured-v7 .piece-badge {
+    background: oklch(92% 0.05 150 / 0.6) !important;
+    color: var(--bj-emerald-800) !important;
+    border: 1px solid oklch(100% 0 0 / 0.6) !important;
+    backdrop-filter: blur(12px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(160%) !important;
+}
+.piece-media {
+    background: oklch(94% 0.02 150 / 0.4) !important;
+}
+
+/* Featured V7 piece buttons */
+.featured-v7 .piece-btn.primary,
+.piece-btn.primary {
+    color: #fff !important;
+    background: linear-gradient(180deg, oklch(65% 0.19 155), oklch(42% 0.14 155)) !important;
+    border: 1px solid oklch(68% 0.18 155) !important;
+    text-shadow: 0 1px 1px oklch(20% 0.05 155 / 0.4) !important;
+}
+.featured-v7 .piece-btn.ghost,
+.piece-btn.ghost {
+    color: var(--bj-emerald-800) !important;
+    background: oklch(100% 0 0 / 0.5) !important;
+    border: 1px solid oklch(100% 0 0 / 0.7) !important;
+}
+
+/* Services V7 */
+.services-v7 .svc-card,
+.svc-card {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    color: var(--bj-ink-emerald) !important;
+    box-shadow: var(--aqua-highlight), 0 10px 30px -8px oklch(28% 0.08 155 / 0.22) !important;
+}
+.svc-card-title {
+    color: var(--bj-ink-emerald) !important;
+}
+.svc-card-desc {
+    color: var(--bj-ink-soft) !important;
+}
+.svc-card-number {
+    color: var(--bj-gold-700) !important;
+    opacity: 0.6 !important;
+}
+.svc-process-step {
+    background: var(--aqua-bg-soft) !important;
+    backdrop-filter: blur(14px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
+    border: var(--aqua-border) !important;
+    color: var(--bj-ink-emerald) !important;
+}
+.svc-process-num { color: var(--bj-gold-700) !important; }
+.svc-intro-line { color: var(--bj-ink-soft) !important; }
+
+/* Journal V7 */
+.journal-v7 .journal-hero-card,
+.journal-v7 .journal-grid-card,
+.journal-hero-card,
+.journal-grid-card {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    color: var(--bj-ink-emerald) !important;
+    box-shadow: var(--aqua-highlight), 0 10px 30px -8px oklch(28% 0.08 155 / 0.22) !important;
+}
+.journal-grid-section { background: transparent !important; }
+
+/* About teaser */
+.about-v7 .about-teaser-collage {
+    background: transparent !important;
+}
+.about-stats .stat-card,
+.about-teaser .stat-card {
+    background: var(--aqua-bg-soft) !important;
+    backdrop-filter: blur(14px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
+    border: var(--aqua-border) !important;
+    color: var(--bj-ink-emerald) !important;
+    box-shadow: var(--aqua-highlight) !important;
+}
+.about-stat-number { color: var(--bj-emerald-800) !important; }
+.about-stat-label { color: var(--bj-ink-mute) !important; }
+
+/* CTA V7 */
+.cta-v7 .cta-inner {
+    background: linear-gradient(145deg, oklch(62% 0.18 155 / 0.18), oklch(88% 0.13 88 / 0.12)) !important;
+    backdrop-filter: blur(28px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight), 0 20px 50px -12px oklch(28% 0.08 155 / 0.25) !important;
+    color: var(--bj-ink-emerald) !important;
+}
+.cta-v7 .cta-title,
+.cta-title { color: var(--bj-ink-emerald) !important; }
+.cta-v7 .cta-subtitle,
+.cta-subtitle { color: var(--bj-ink-soft) !important; }
+.cta-v7-btn {
+    color: #fff !important;
+    background: linear-gradient(180deg, oklch(65% 0.19 155), oklch(42% 0.14 155)) !important;
+    border-color: oklch(68% 0.18 155) !important;
+}
+
+/* Page hero (nosotros, servicios, pieza, cart, wishlist, journal, entrada, contacto) */
+.page-hero {
+    background: var(--aqua-bg-soft) !important;
+    backdrop-filter: blur(14px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
+    color: var(--bj-ink-emerald) !important;
+}
+.page-hero-title {
+    color: var(--bj-ink-emerald) !important;
+}
+.page-hero-subtitle,
+.page-hero-lead {
+    color: var(--bj-ink-soft) !important;
+}
+
+/* Catalog filters */
+.catalog-filters,
+.catalog-filter-btn {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    color: var(--bj-ink-emerald) !important;
+}
+.catalog-filter-btn:hover,
+.catalog-filter-btn.is-active {
+    background: linear-gradient(180deg, oklch(65% 0.19 155), oklch(42% 0.14 155)) !important;
+    color: #fff !important;
+    border: 1px solid oklch(68% 0.18 155) !important;
+}
+
+/* Pieza detail */
+.pieza-info,
+.pieza-main-image,
+.pieza-guarantees,
+.review-card,
+.related-card {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    color: var(--bj-ink-emerald) !important;
+    box-shadow: var(--aqua-highlight), 0 10px 30px -8px oklch(28% 0.08 155 / 0.22) !important;
+}
+
+/* Cart + wishlist */
+.cart-card,
+.cart-summary,
+.cart-inquiry-note,
+.wishlist-empty,
+.wishlist-actions {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    color: var(--bj-ink-emerald) !important;
+    box-shadow: var(--aqua-highlight), 0 10px 30px -8px oklch(28% 0.08 155 / 0.22) !important;
+}
+
+/* Contact channels */
+.contact-channel {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    color: var(--bj-ink-emerald) !important;
+    box-shadow: var(--aqua-highlight) !important;
+}
+
+/* Team, brand story, nosotros sections */
+.nosotros-section,
+.team-card,
+.brand-story-card {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    color: var(--bj-ink-emerald) !important;
+    box-shadow: var(--aqua-highlight), 0 10px 30px -8px oklch(28% 0.08 155 / 0.22) !important;
+}
+
+/* Form inputs → glass light */
+input[type="text"], input[type="email"], input[type="tel"],
+input[type="search"], input[type="password"], textarea, select {
+    background: oklch(100% 0 0 / 0.6) !important;
+    backdrop-filter: blur(12px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(160%) !important;
+    border: 1px solid oklch(100% 0 0 / 0.6) !important;
+    color: var(--bj-ink-emerald) !important;
+    box-shadow: 0 1px 0 oklch(100% 0 0 / 0.8) inset, 0 2px 8px -2px oklch(42% 0.14 155 / 0.08) !important;
+}
+input::placeholder, textarea::placeholder { color: var(--bj-ink-mute) !important; }
+input:focus, textarea:focus, select:focus {
+    background: oklch(100% 0 0 / 0.75) !important;
+    border: 1px solid oklch(82% 0.14 85 / 0.5) !important;
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 0.9) inset,
+        0 0 0 3px oklch(82% 0.14 85 / 0.15) !important;
+    outline: none !important;
+}
+
+/* Footer → light glass */
+.footer {
+    background: oklch(96% 0.02 150 / 0.55) !important;
+    backdrop-filter: blur(28px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+    color: var(--bj-ink-emerald) !important;
+    border-top: 1px solid oklch(100% 0 0 / 0.5) !important;
+    box-shadow: 0 1px 0 oklch(100% 0 0 / 0.9) inset !important;
+}
+.footer * { color: var(--bj-ink-emerald) !important; }
+.footer a { color: var(--bj-ink-soft) !important; }
+.footer a:hover { color: var(--bj-emerald-700) !important; }
+.footer .footer-title,
+.footer h3,
+.footer h4 {
+    color: var(--bj-emerald-800) !important;
+}
+.footer-bottom {
+    border-top: 1px solid oklch(100% 0 0 / 0.4) !important;
+    color: var(--bj-ink-mute) !important;
+}
+
+/* Scroll indicator / watermark — remove dark emerald */
+.watermark,
+.hero-watermark { opacity: 0.06 !important; color: var(--bj-emerald-900) !important; }
+
+/* Buttons base — make emerald gradient default */
+.btn,
+.btn-primary {
+    color: #fff !important;
+    background: linear-gradient(180deg, oklch(65% 0.19 155), oklch(42% 0.14 155)) !important;
+    border: 1px solid oklch(68% 0.18 155) !important;
+    text-shadow: 0 1px 1px oklch(20% 0.05 155 / 0.4) !important;
+}
+.btn-secondary,
+.btn-ghost {
+    color: var(--bj-emerald-800) !important;
+    background: oklch(100% 0 0 / 0.5) !important;
+    border: 1px solid oklch(100% 0 0 / 0.7) !important;
+}
+
+/* Preloader — light instead of dark */
+.preloader,
+#preloader {
+    background: var(--bj-pearl) !important;
+}
+.preloader-logo,
+.preloader * {
+    color: var(--bj-emerald-800) !important;
+}
+
+/* Cookie consent + modal */
+.cookie-consent,
+.email-capture-modal {
+    background: oklch(98% 0.005 90 / 0.92) !important;
+    backdrop-filter: blur(28px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+    border: var(--aqua-border) !important;
+    color: var(--bj-ink-emerald) !important;
+    box-shadow: var(--glass-shadow-lg) !important;
+}
+
+/* Toast */
+.toast {
+    background: oklch(98% 0.005 90 / 0.92) !important;
+    color: var(--bj-ink-emerald) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--glass-shadow) !important;
+}
+
+/* Meta chips / hero badge */
+.hero-badge,
+.hero-chip {
+    background: oklch(100% 0 0 / 0.55) !important;
+    border: 1px solid oklch(100% 0 0 / 0.6) !important;
+    color: var(--bj-emerald-800) !important;
+    backdrop-filter: blur(16px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+}
+
+/* Links / paragraphs global */
+a { color: var(--bj-emerald-700); }
+a:hover { color: var(--bj-emerald-800); }
+
+/* Skip link */
+.skip-link {
+    background: var(--bj-gold-500) !important;
+    color: var(--bj-ink-emerald) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ACCESSIBILITY + PERFORMANCE
+   ═══════════════════════════════════════════════════════════════════ */
+@media (pointer: coarse) {
+    /* Reduce blur cost on mobile */
+    .glass,
+    .collection-panel,
+    .piece-card,
+    .svc-card,
+    .page-hero,
+    .journal-hero-card,
+    .journal-grid-card,
+    .catalog-filters,
+    .review-card,
+    .related-card,
+    .pieza-info,
+    .cart-card,
+    .cart-summary,
+    .nosotros-section,
+    .team-card,
+    .brand-story-card {
+        backdrop-filter: blur(14px) saturate(150%) !important;
+        -webkit-backdrop-filter: blur(14px) saturate(150%) !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn-aqua:hover { transform: none !important; }
+}
+
+/* Fallback for browsers without backdrop-filter */
+@supports not (backdrop-filter: blur(1px)) {
+    .glass,
+    .collection-panel,
+    .piece-card,
+    .svc-card,
+    .journal-hero-card,
+    .journal-grid-card,
+    .page-hero,
+    .contact-channel,
+    .footer,
+    .header.scrolled {
+        background: oklch(98% 0.005 90 / 0.94) !important;
+    }
+}

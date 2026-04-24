@@ -117,146 +117,114 @@
 
     <main>
 
-        <!-- ═══════════════ HERO V7 — EDITORIAL CINEMÁTICO ═══════════════ -->
-        <section id="inicio" class="hero hero-v7">
+        <!-- ═══════════════ HERO V8 — LIQUID GLASS iOS 26 3D PARALLAX ═══════════════ -->
+        <section id="inicio" class="hero hero-v7 hero-aqua">
 
-            <!-- Fotografía de fondo — Banner.png con Ken Burns -->
-            <picture>
-                <source
-                    type="image/avif"
-                    srcset="
-                        img/banner-800.avif   800w,
-                        img/banner-1200.avif 1200w,
-                        img/banner-1920.avif 1920w
-                    "
-                    sizes="100vw"
-                >
-                <source
-                    type="image/webp"
-                    srcset="
-                        img/banner-800.webp   800w,
-                        img/banner-1200.webp 1200w,
-                        img/banner-1920.webp 1920w
-                    "
-                    sizes="100vw"
-                >
-                <source srcset="img/banner.png" sizes="100vw">
-                <img
-                    src="img/banner-1200.webp"
-                    alt="Bersaglio Jewelry — Alta joyería con esmeraldas colombianas"
-                    class="hero-bg-img"
-                    loading="eager"
-                    fetchpriority="high"
-                    decoding="async"
-                    width="1920"
-                    height="1080"
-                >
-            </picture>
+            <div class="hero-aqua-grid container">
 
-            <!-- Canvas particles injected by JS -->
+                <!-- LEFT: copy -->
+                <div class="hero-aqua-copy" data-tilt="0.4">
+                    <div class="hero-aqua-chips">
+                        <span class="chip"><span class="chip-dot"></span>Alta Joyería · Colombia</span>
+                        <span class="chip">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="color: var(--bj-gold-700)" aria-hidden="true"><polygon points="12,2 22,8.5 12,22 2,8.5"/></svg>
+                            Esmeralda Colombiana
+                        </span>
+                    </div>
 
-            <!-- Overlay cinemático multicapa -->
-            <div class="hero-overlay" aria-hidden="true"></div>
-
-            <!-- Acento vertical dorado decorativo -->
-            <div class="hero-accent-line" aria-hidden="true"></div>
-
-            <!-- Contenido principal — editorial izquierda -->
-            <div class="hero-content container">
-
-                <!-- Overline con líneas decorativas -->
-                <span class="hero-eyebrow">Alta Joyería · Colombia</span>
-
-                <!-- Titular principal -->
-                <div class="hero-title-wrap">
-                    <h1 class="hero-title">
-                        Donde las gemas<br><em>cobran vida</em>
+                    <h1 class="hero-aqua-title">
+                        Donde la luz<br>
+                        <em class="emerald-text">cobra alma</em><br>
+                        <span class="hero-aqua-title-soft">&amp; la gema, eternidad.</span>
                     </h1>
-                    <span class="hero-title-line" aria-hidden="true"></span>
+
+                    <p class="hero-aqua-lead">
+                        Esmeraldas de Muzo, diamantes certificados y oro 18K esculpidos en piezas únicas. Cada creación Bersaglio es una arquitectura de luz diseñada para trascender generaciones.
+                    </p>
+
+                    <div class="hero-aqua-actions">
+                        <a href="colecciones.html" class="btn-aqua btn-aqua-emerald">
+                            Explorar colecciones
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                        </a>
+                        <a href="contacto.html" class="btn-aqua">
+                            Agendar asesoría privada
+                        </a>
+                    </div>
+
+                    <!-- Stats crystalline -->
+                    <div class="hero-aqua-stats">
+                        <div class="glass hero-aqua-stat">
+                            <div class="hero-aqua-stat-num">18K</div>
+                            <div class="hero-aqua-stat-lbl">Oro Ley 750</div>
+                        </div>
+                        <div class="glass hero-aqua-stat">
+                            <div class="hero-aqua-stat-num">GIA</div>
+                            <div class="hero-aqua-stat-lbl">Certificación</div>
+                        </div>
+                        <div class="glass hero-aqua-stat">
+                            <div class="hero-aqua-stat-num">1:1</div>
+                            <div class="hero-aqua-stat-lbl">Asesoría privada</div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Descripción -->
-                <p class="hero-desc">
-                    Esmeraldas colombianas, diamantes de fuego y oro noble.<br>
-                    Cada pieza Bersaglio es una obra de arte diseñada para trascender.
-                </p>
+                <!-- RIGHT: 3D jewelry crystal composition -->
+                <div class="hero-aqua-stage">
+                    <!-- Iridescent halo -->
+                    <div class="hero-aqua-halo" aria-hidden="true"></div>
 
-                <!-- CTAs -->
-                <div class="hero-actions">
-                    <a href="colecciones.html" class="btn btn-primary">Explorar Colecciones</a>
-                    <a href="contacto.html"    class="btn btn-outline btn-ghost">Agendar Asesoría</a>
+                    <!-- Main hero card — pieza producto -->
+                    <div class="glass glass-iridescent glass-lg hero-aqua-main" data-tilt="1">
+                        <picture>
+                            <source type="image/avif" srcset="img/banner-800.avif 800w, img/banner-1200.avif 1200w, img/banner-1920.avif 1920w" sizes="50vw">
+                            <source type="image/webp" srcset="img/banner-800.webp 800w, img/banner-1200.webp 1200w, img/banner-1920.webp 1920w" sizes="50vw">
+                            <img src="img/banner-1200.webp" alt="Bersaglio — alta joyería con esmeraldas colombianas" class="hero-aqua-main-img" loading="eager" fetchpriority="high" decoding="async" width="1200" height="1500">
+                        </picture>
+                        <div class="hero-aqua-main-overlay"></div>
+                        <div class="hero-aqua-main-info">
+                            <div>
+                                <div class="hero-aqua-main-eyebrow">Featured</div>
+                                <div class="hero-aqua-main-title">Halo Esmeralda</div>
+                                <div class="hero-aqua-main-sub">Topos · Oro 18K · Edición 2026</div>
+                            </div>
+                            <div class="glass-pill hero-aqua-main-price mono">$ 12.400.000</div>
+                        </div>
+                    </div>
+
+                    <!-- Floating spec card TOP RIGHT -->
+                    <div class="glass hero-aqua-float hero-aqua-float--gem" data-tilt="1.8">
+                        <div class="hero-aqua-float-icon hero-aqua-float-icon--emerald">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><polygon points="12,2 22,8.5 12,22 2,8.5"/></svg>
+                        </div>
+                        <div>
+                            <div class="hero-aqua-float-lbl">Gema</div>
+                            <div class="hero-aqua-float-val">Muzo · 2.4 ct</div>
+                        </div>
+                    </div>
+
+                    <!-- Floating GIA certificate card LEFT -->
+                    <div class="glass hero-aqua-float hero-aqua-float--cert" data-tilt="1.5">
+                        <div class="hero-aqua-float-icon hero-aqua-float-icon--gold">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                        </div>
+                        <div>
+                            <div class="hero-aqua-float-lbl">Certificado</div>
+                            <div class="hero-aqua-float-val">GIA · N° 2183-4412</div>
+                        </div>
+                    </div>
+
+                    <!-- Floating price tag BOTTOM CENTER -->
+                    <div class="glass glass-emerald hero-aqua-float hero-aqua-float--tag" data-tilt="2">
+                        <div class="hero-aqua-tag-eyebrow">Atelier 2026</div>
+                        <div class="hero-aqua-tag-title">Colección Muzo</div>
+                        <div class="hero-aqua-tag-sub">6 piezas únicas</div>
+                    </div>
                 </div>
 
             </div>
 
-            <!-- Marquee ticker — cinta inferior animada con toda la info de marca -->
-            <div class="hero-ticker" aria-label="Información de marca">
-                <div class="hero-ticker-track">
-                    <span class="hero-ticker-item">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                        Certificado La Verde / Jewelers of America
-                    </span>
-                    <span class="hero-ticker-sep" aria-hidden="true">◆</span>
-                    <span class="hero-ticker-item">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="4" y="7" width="16" height="10" rx="1"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="10" y1="7" x2="10" y2="17"/><line x1="14" y1="7" x2="14" y2="17"/></svg>
-                        Oro 18K · Ley 750
-                    </span>
-                    <span class="hero-ticker-sep" aria-hidden="true">◆</span>
-                    <span class="hero-ticker-item">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                        Envío asegurado
-                    </span>
-                    <span class="hero-ticker-sep" aria-hidden="true">◆</span>
-                    <span class="hero-ticker-item">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                        Asesoría personalizada
-                    </span>
-                    <span class="hero-ticker-sep" aria-hidden="true">◆</span>
-                    <span class="hero-ticker-item">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 2L17 6L20 12L17 18L12 22L7 18L4 12L7 6Z"/><path d="M12 6L15 9L16 12L15 15L12 18L9 15L8 12L9 9Z"/></svg>
-                        Esmeraldas colombianas
-                    </span>
-                    <span class="hero-ticker-sep" aria-hidden="true">◆</span>
-                    <span class="hero-ticker-item">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                        Visítanos en Cartagena, Colombia
-                    </span>
-                    <span class="hero-ticker-sep" aria-hidden="true">◆</span>
-                    <!-- Duplicado para loop infinito -->
-                    <span class="hero-ticker-item">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                        Certificado La Verde / Jewelers of America
-                    </span>
-                    <span class="hero-ticker-sep" aria-hidden="true">◆</span>
-                    <span class="hero-ticker-item">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="4" y="7" width="16" height="10" rx="1"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="10" y1="7" x2="10" y2="17"/><line x1="14" y1="7" x2="14" y2="17"/></svg>
-                        Oro 18K · Ley 750
-                    </span>
-                    <span class="hero-ticker-sep" aria-hidden="true">◆</span>
-                    <span class="hero-ticker-item">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                        Envío asegurado
-                    </span>
-                    <span class="hero-ticker-sep" aria-hidden="true">◆</span>
-                    <span class="hero-ticker-item">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                        Asesoría personalizada
-                    </span>
-                    <span class="hero-ticker-sep" aria-hidden="true">◆</span>
-                    <span class="hero-ticker-item">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 2L17 6L20 12L17 18L12 22L7 18L4 12L7 6Z"/><path d="M12 6L15 9L16 12L15 15L12 18L9 15L8 12L9 9Z"/></svg>
-                        Esmeraldas colombianas
-                    </span>
-                    <span class="hero-ticker-sep" aria-hidden="true">◆</span>
-                    <span class="hero-ticker-item">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                        Visítanos en Cartagena, Colombia
-                    </span>
-                    <span class="hero-ticker-sep" aria-hidden="true">◆</span>
-                </div>
-            </div>
-
-            <!-- Scroll cue — esquina inferior derecha -->
+            <!-- Scroll cue -->
             <div class="hero-scroll-indicator" aria-hidden="true">
                 <span class="hero-scroll-label">Scroll</span>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -264,6 +232,86 @@
                 </svg>
             </div>
 
+        </section>
+
+        <!-- ═══════════════ MARQUEE — cinta de credenciales glass pill ═══════════════ -->
+        <section class="hero-aqua-marquee-section" aria-label="Credenciales de marca">
+            <div class="container">
+                <div class="glass glass-pill hero-aqua-marquee">
+                    <div class="hero-aqua-marquee-track">
+                        <!-- items duplicados 3× para loop infinito -->
+                        <span class="hero-aqua-marquee-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>Certificado Jewelers of America</span>
+                        <span class="hero-aqua-marquee-sep">◆</span>
+                        <span class="hero-aqua-marquee-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="7" width="16" height="10" rx="1"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="10" y1="7" x2="10" y2="17"/><line x1="14" y1="7" x2="14" y2="17"/></svg>Oro 18K · Ley 750</span>
+                        <span class="hero-aqua-marquee-sep">◆</span>
+                        <span class="hero-aqua-marquee-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Envío asegurado mundial</span>
+                        <span class="hero-aqua-marquee-sep">◆</span>
+                        <span class="hero-aqua-marquee-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Asesoría personalizada</span>
+                        <span class="hero-aqua-marquee-sep">◆</span>
+                        <span class="hero-aqua-marquee-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12,2 22,8.5 12,22 2,8.5"/></svg>Esmeraldas colombianas</span>
+                        <span class="hero-aqua-marquee-sep">◆</span>
+                        <span class="hero-aqua-marquee-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Visítanos en Cartagena de Indias</span>
+                        <span class="hero-aqua-marquee-sep">◆</span>
+
+                        <span class="hero-aqua-marquee-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>Certificado Jewelers of America</span>
+                        <span class="hero-aqua-marquee-sep">◆</span>
+                        <span class="hero-aqua-marquee-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="7" width="16" height="10" rx="1"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="10" y1="7" x2="10" y2="17"/><line x1="14" y1="7" x2="14" y2="17"/></svg>Oro 18K · Ley 750</span>
+                        <span class="hero-aqua-marquee-sep">◆</span>
+                        <span class="hero-aqua-marquee-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Envío asegurado mundial</span>
+                        <span class="hero-aqua-marquee-sep">◆</span>
+                        <span class="hero-aqua-marquee-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Asesoría personalizada</span>
+                        <span class="hero-aqua-marquee-sep">◆</span>
+                        <span class="hero-aqua-marquee-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12,2 22,8.5 12,22 2,8.5"/></svg>Esmeraldas colombianas</span>
+                        <span class="hero-aqua-marquee-sep">◆</span>
+                        <span class="hero-aqua-marquee-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Visítanos en Cartagena de Indias</span>
+                        <span class="hero-aqua-marquee-sep">◆</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════ CATEGORIES DOCK — iOS-style gel circles ═══════════════ -->
+        <section class="hero-aqua-cats-section">
+            <div class="container">
+                <div class="hero-aqua-cats-header">
+                    <span class="section-eyebrow">Nuestras categorías</span>
+                    <h2 class="hero-aqua-cats-title">Un universo <em class="emerald-text">en cristal</em></h2>
+                    <p class="hero-aqua-cats-lead">Cada categoría es una exploración distinta de forma, luz y significado.</p>
+                </div>
+
+                <div class="glass glass-iridescent hero-aqua-cats-dock">
+                    <a href="anillos.html" class="glass hero-aqua-cat">
+                        <div class="hero-aqua-cat-gem" style="--hue: 155">◈</div>
+                        <div class="hero-aqua-cat-name">Anillos</div>
+                        <div class="hero-aqua-cat-count mono">24 piezas</div>
+                    </a>
+                    <a href="topos-aretes.html" class="glass hero-aqua-cat">
+                        <div class="hero-aqua-cat-gem" style="--hue: 85">◉</div>
+                        <div class="hero-aqua-cat-name">Topos</div>
+                        <div class="hero-aqua-cat-count mono">18 piezas</div>
+                    </a>
+                    <a href="argollas.html" class="glass hero-aqua-cat">
+                        <div class="hero-aqua-cat-gem" style="--hue: 155">○</div>
+                        <div class="hero-aqua-cat-name">Argollas</div>
+                        <div class="hero-aqua-cat-count mono">12 piezas</div>
+                    </a>
+                    <a href="dijes-colgantes.html" class="glass hero-aqua-cat">
+                        <div class="hero-aqua-cat-gem" style="--hue: 200">◇</div>
+                        <div class="hero-aqua-cat-name">Dijes</div>
+                        <div class="hero-aqua-cat-count mono">16 piezas</div>
+                    </a>
+                    <a href="colecciones.html" class="glass hero-aqua-cat">
+                        <div class="hero-aqua-cat-gem" style="--hue: 30">◐</div>
+                        <div class="hero-aqua-cat-name">Pulseras</div>
+                        <div class="hero-aqua-cat-count mono">9 piezas</div>
+                    </a>
+                    <a href="colecciones.html" class="glass hero-aqua-cat">
+                        <div class="hero-aqua-cat-gem" style="--hue: 155">✦</div>
+                        <div class="hero-aqua-cat-name">Editorial</div>
+                        <div class="hero-aqua-cat-count mono">6 piezas</div>
+                    </a>
+                </div>
+            </div>
         </section>
 
         <!-- ═══════════════════════════════════════════ DIGITAL PORTFOLIO / LOOKBOOK V7 ═══════════════════════════════════════════ -->
@@ -450,6 +498,7 @@
     </script>
 
     <script type="module" src="js/app.js"></script>
+    <script defer src="js/liquid-glass-hero.js"></script>
 
 </body>
 </html>

@@ -940,3 +940,35 @@ Las secciones documentadas arriba sobre StPageFlip (shift dinámico, sincronizac
 - La oversize del aurora layer (`150% × 150%`, `-25%` offset) es necesaria para que el `scale(1.05)` del keyframe no revele el fondo negro del body. No reducir.
 - Sin `mix-blend-mode` — probamos `screen` y quemaba la marble. Alpha blend natural es la decisión correcta.
 - Las opacidades de los 4 radial gradients (0.22, 0.08, 0.18, 0.14) están calibradas para ser perceptibles sin dominar — no subirlas.
+
+### 2026-04-24 — Aqua Liquid Glass: tratamiento sitewide a todas las secciones
+**Archivos:** `css/style.css`
+
+**Secciones transformadas:**
+
+| Sección | Antes | Después |
+|---|---|---|
+| **Header (scrolled)** | `rgba(5,9,8,0.95)` opaco, blur 12px | `rgba(10,20,14,0.55)` glass, blur 24px saturate 1.3 |
+| **Dropdown menus** | `rgba(10,10,10,0.95)` opaco, border-radius | Glass blur 24px saturate 1.3, sharp corners, specular |
+| **Mobile menu** | Opaque gradient `#0e1f15→#132b1e` | `rgba(10,20,14,0.75)` blur 30px saturate 1.4 |
+| **Footer** | `rgba(5,9,8,0.8)` semi-opaco | Glass blur 20px saturate 1.25 + specular highlight |
+| **Brand Statement** | `rgba(10,26,15,0.35)` sin glass | Glass blur 16px saturate 1.2 |
+| **Collections panels** | `rgba(8,14,10,0.5)` blur 8px | `rgba(10,20,14,0.35)` blur 18px saturate 1.3 + specular |
+| **Collections body** | `rgba(6,12,8,0.65)` opaco | Glass blur 14px saturate 1.2 + specular |
+| **Collections img area** | `rgba(5,10,7,0.6)` plano | Aqua radial gradient + emerald translúcido |
+| **Journal featured card** | `rgba(10,16,12,0.4)` sin glass | Glass blur 16px saturate 1.3 + specular + gold ambient hover |
+| **Journal body** | Sin glass | Glass blur 14px saturate 1.2 |
+| **About collage frame** | Gold border `rgba(201,169,110,0.12)` | White subtle `rgba(255,255,255,0.06)` — no more gold fade |
+| **About stats** | `rgba(5,10,7,0.3)` plano | Glass blur 12px saturate 1.2 + specular |
+| **CTA inner** | `rgba(10,26,15,0.4)` con blur 16px | Refinado: blur 20px saturate 1.3 + specular highlight |
+
+**Patrón unificado Aqua Liquid Glass:**
+- `backdrop-filter: blur(Npx) saturate(1.2-1.4)` — el `saturate` amplifica los colores del marble/aurora detrás, creando el "aqua" iridiscente.
+- `box-shadow: inset 0 1px 0 rgba(255,255,255,0.04-0.06)` — highlight especular superior que simula el borde brillante del glass.
+- Backgrounds semi-transparentes `rgba(10,20,14, 0.25-0.55)` — dejan pasar el marble + aurora.
+- Gold ambient glow en hover (`0 0 25-30px rgba(200,169,110,0.06-0.08)`).
+
+**NO TOCAR:**
+- Los valores de `saturate()` están calibrados por sección. El header usa 1.3 (bastante transparente), el mobile menu 1.4 (necesita más vibración por ser fullscreen).
+- El `blur(30px)` del mobile menu es intencionalmente alto — el panel es fullscreen y necesita más difuminado para verse glass sobre cualquier contenido.
+- Los `@supports not (backdrop-filter)` fallbacks usan opacidades más altas (0.85+) — no bajarlos.

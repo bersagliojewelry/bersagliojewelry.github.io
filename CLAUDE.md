@@ -910,3 +910,33 @@ Las secciones documentadas arriba sobre StPageFlip (shift dinámico, sincronizac
 - El `saturate(1.35)` en `.piece-media` backdrop-filter es el punto exacto — subir a 1.5+ introduce tinte verde excesivo, bajar a 1.1 pierde el "aqua".
 - Los spec values DEBEN tener `nowrap + ellipsis` — sin esto vuelve el bug de simetría.
 - `height: 100%` en `.piece-card` requiere `align-items: stretch` en el grid — ambos van juntos, no quitar uno sin el otro.
+
+### 2026-04-24 — Aurora Layer: fondo sitewide animado (Liquid Glass)
+**Archivos:** `css/style.css`
+
+**Cambio:** El fondo marble esmeralda estático ahora tiene una capa aurora animada encima — 4 radial gradients esmeralda/dorado que derivan lentamente (120s por ciclo) dando el feel "el fondo respira" de iOS 26 Liquid Glass.
+
+**Implementación:**
+- `body::before` (marble, ~línea 107) — z-index cambiado de `-1` a `-2` para dejar espacio al aurora encima.
+- Nuevo `html::before` con z-index `-1` — capa aurora fija, oversize (`150% × 150%`, `top: -25%; left: -25%`) para no revelar bordes durante el drift.
+- Animación `@keyframes aurora-drift`: translate3d + scale sutil en 4 puntos (0/25/50/75/100%). `ease-in-out` + 120s = movimiento orgánico casi imperceptible.
+- 4 radial gradients: esmeralda medio (0.22 opacity), gold accent (0.08), emerald profundo (0.18), emerald brillante (0.14). Sin mix-blend-mode — alpha blend natural para preservar los tonos del marble.
+
+**Performance:**
+- `prefers-reduced-motion: reduce` → `animation: none` (se queda estático pero visible).
+- `pointer: coarse` (touch devices) → `animation-duration: 240s` + `opacity: 0.7` (ahorra batería y GPU en móvil).
+- `will-change: transform` — GPU compositing layer dedicado, no repinta el resto de la página.
+- `pointer-events: none` — no intercepta eventos de touch/click.
+
+**Stacking context final del fondo:**
+- `body` background-color `#030806` (base)
+- `body::before` z-index `-2` → marble estático detallado
+- `html::before` z-index `-1` → aurora animado (encima del marble)
+- Contenido del sitio z-index `auto` (0+) → encima de todo el fondo
+- `body::after` z-index `+2` → film grain (solo desktop, oculto en touch)
+
+**NO TOCAR:**
+- El z-index `-2` del marble es crítico — si vuelve a `-1` el aurora queda detrás (invisible).
+- La oversize del aurora layer (`150% × 150%`, `-25%` offset) es necesaria para que el `scale(1.05)` del keyframe no revele el fondo negro del body. No reducir.
+- Sin `mix-blend-mode` — probamos `screen` y quemaba la marble. Alpha blend natural es la decisión correcta.
+- Las opacidades de los 4 radial gradients (0.22, 0.08, 0.18, 0.14) están calibradas para ser perceptibles sin dominar — no subirlas.

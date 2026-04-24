@@ -259,9 +259,12 @@ input, select, textarea { font-family: var(--font-body); }
 }
 
 .header.scrolled {
-    background: rgba(5, 9, 8, 0.95);
-    backdrop-filter: blur(12px);
-    box-shadow: 0 1px 0 rgba(201,169,110,0.15);
+    background: rgba(10, 20, 14, 0.55);
+    backdrop-filter: blur(24px) saturate(1.3);
+    -webkit-backdrop-filter: blur(24px) saturate(1.3);
+    box-shadow:
+        inset 0 -1px 0 rgba(200, 169, 110, 0.1),
+        0 4px 30px rgba(0, 0, 0, 0.15);
 }
 
 .header.header-hidden { transform: translateY(-100%); }
@@ -400,10 +403,15 @@ input, select, textarea { font-family: var(--font-body); }
     top: calc(100% + 20px);
     left: 50%;
     transform: translateX(-50%) translateY(-8px);
-    background: rgba(10,10,10,0.95);
-    border: 1px solid rgba(201,169,110,0.2);
-    border-radius: var(--radius-md);
-    box-shadow: 0 12px 48px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.2);
+    background: rgba(10, 20, 14, 0.55);
+    backdrop-filter: blur(24px) saturate(1.3);
+    -webkit-backdrop-filter: blur(24px) saturate(1.3);
+    border: 1px solid rgba(200, 169, 110, 0.12);
+    border-radius: 0;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 12px 48px rgba(0, 0, 0, 0.4),
+        0 2px 8px rgba(0, 0, 0, 0.2);
     min-width: 280px;
     padding: 10px 0;
     opacity: 0;
@@ -1468,10 +1476,13 @@ input, select, textarea { font-family: var(--font-body); }
    FOOTER
    ═══════════════════════════════════════════════════════════════ */
 .footer {
-    background: rgba(5,9,8,0.8);
+    background: rgba(10, 20, 14, 0.45);
+    backdrop-filter: blur(20px) saturate(1.25);
+    -webkit-backdrop-filter: blur(20px) saturate(1.25);
     color: var(--text-on-dark);
     padding: var(--space-2xl) 0 var(--space-lg);
-    border-top: 1px solid rgba(201,169,110,0.1);
+    border-top: 1px solid rgba(200, 169, 110, 0.12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .footer-grid {
@@ -10401,7 +10412,9 @@ nav .logo-sub {
    ═══════════════════════════════════════════════════════════════ */
 
 .brand-statement.brand-statement-v7 {
-    background: rgba(10,26,15, 0.35) !important;
+    background: rgba(10, 20, 14, 0.25) !important;
+    backdrop-filter: blur(16px) saturate(1.2) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(1.2) !important;
     padding: clamp(4rem, 8vw, 7rem) 0 !important;
     position: relative !important;
     overflow: hidden !important;
@@ -11807,11 +11820,12 @@ nav .logo-sub {
     position: relative !important;
     aspect-ratio: auto !important;
     overflow: hidden !important;
-    border: 1px solid rgba(201,169,110, 0.08) !important;
+    border: 1px solid rgba(201, 169, 110, 0.08) !important;
     border-radius: 0 !important;
-    background: rgba(8,14,10, 0.5) !important;
-    backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
+    background: rgba(10, 20, 14, 0.35) !important;
+    backdrop-filter: blur(18px) saturate(1.3) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(1.3) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
     opacity: 1 !important;
     transform: none !important;
     transition: border-color 0.4s ease, box-shadow 0.4s ease !important;
@@ -11824,10 +11838,11 @@ nav .logo-sub {
 }
 
 .collections-v7 .collection-panel:hover {
-    border-color: rgba(201,169,110, 0.3) !important;
+    border-color: rgba(201, 169, 110, 0.25) !important;
     box-shadow:
-        0 8px 40px rgba(0,0,0, 0.3),
-        0 0 0 1px rgba(201,169,110, 0.05) !important;
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 8px 40px rgba(0, 0, 0, 0.35),
+        0 0 30px rgba(200, 169, 110, 0.08) !important;
     transform: none !important;
 }
 
@@ -11879,7 +11894,9 @@ nav .logo-sub {
     aspect-ratio: 1 / 1 !important;
     overflow: hidden !important;
     flex-shrink: 0 !important;
-    background: rgba(5,10,7, 0.6) !important;
+    background:
+        radial-gradient(100% 80% at 30% 20%, rgba(26, 77, 46, 0.2), transparent 60%),
+        rgba(10, 20, 14, 0.45) !important;
 }
 
 .collections-v7 .collection-panel-img img {
@@ -11925,7 +11942,10 @@ nav .logo-sub {
     flex-direction: column !important;
     align-items: center !important;
     gap: 10px !important;
-    background: rgba(6,12,8, 0.65) !important;
+    background: rgba(10, 20, 14, 0.5) !important;
+    backdrop-filter: blur(14px) saturate(1.2) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(1.2) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
     flex-grow: 1 !important;
 }
 
@@ -12086,7 +12106,7 @@ nav .logo-sub {
 /* Fallback sin backdrop-filter */
 @supports not (backdrop-filter: blur(8px)) {
     .collections-v7 .collection-panel {
-        background: rgba(8,14,10, 0.88) !important;
+        background: rgba(10, 20, 14, 0.85) !important;
     }
 }
 
@@ -12574,17 +12594,23 @@ nav .logo-sub {
 .journal-v7 .journal-featured-card {
     display: flex !important;
     flex-direction: column !important;
-    border: 1px solid rgba(201,169,110, 0.06) !important;
+    border: 1px solid rgba(201, 169, 110, 0.06) !important;
     border-radius: 0 !important;
     overflow: hidden !important;
     text-decoration: none !important;
-    background: rgba(10,16,12, 0.4) !important;
+    background: rgba(10, 20, 14, 0.3) !important;
+    backdrop-filter: blur(16px) saturate(1.3) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(1.3) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
     transition: border-color 0.4s ease, box-shadow 0.4s ease !important;
 }
 
 .journal-v7 .journal-featured-card:hover {
-    border-color: rgba(201,169,110, 0.18) !important;
-    box-shadow: 0 8px 40px rgba(0,0,0, 0.2) !important;
+    border-color: rgba(201, 169, 110, 0.2) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 8px 40px rgba(0, 0, 0, 0.3),
+        0 0 25px rgba(200, 169, 110, 0.06) !important;
 }
 
 /* Visual / imagen */
@@ -12619,6 +12645,10 @@ nav .logo-sub {
     display: flex !important;
     flex-direction: column !important;
     gap: 12px !important;
+    background: rgba(10, 20, 14, 0.45) !important;
+    backdrop-filter: blur(14px) saturate(1.2) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(1.2) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
 }
 
 /* Título */
@@ -12898,7 +12928,8 @@ nav .logo-sub {
     overflow: hidden !important;
     border-radius: 0 !important;
     aspect-ratio: 16 / 10 !important;
-    background: rgba(5,10,7, 0.6) !important;
+    background: rgba(10, 20, 14, 0.3) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
 }
 
 .about-v7 .about-teaser-collage img {
@@ -12913,11 +12944,11 @@ nav .logo-sub {
     transform: scale(1.03) !important;
 }
 
-/* Frame decorativo — offset dorado */
+/* Frame decorativo — very subtle, no golden fade */
 .about-v7 .about-teaser-collage-frame {
     position: absolute !important;
     inset: 12px !important;
-    border: 1px solid rgba(201,169,110, 0.12) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
     border-radius: 0 !important;
     pointer-events: none !important;
     z-index: 1 !important;
@@ -12925,7 +12956,7 @@ nav .logo-sub {
 }
 
 .about-v7 .about-teaser-collage:hover .about-teaser-collage-frame {
-    border-color: rgba(201,169,110, 0.25) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
 }
 
 /* Placeholder */
@@ -12978,8 +13009,11 @@ nav .logo-sub {
     text-align: center !important;
     padding: 20px 16px !important;
     position: relative !important;
-    border: 1px solid rgba(201,169,110, 0.06) !important;
-    background: rgba(5,10,7, 0.3) !important;
+    border: 1px solid rgba(201, 169, 110, 0.06) !important;
+    background: rgba(10, 20, 14, 0.35) !important;
+    backdrop-filter: blur(12px) saturate(1.2) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(1.2) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
 }
 
 /* Línea dorada superior en cada stat */
@@ -13169,8 +13203,11 @@ nav .logo-sub {
 }
 
 .cta-banner.cta-v7 .cta-inner {
-    background: rgba(10, 26, 15, 0.4) !important;
-    border: 1px solid rgba(200, 169, 110, 0.15) !important;
+    background: rgba(10, 20, 14, 0.35) !important;
+    backdrop-filter: blur(20px) saturate(1.3) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(1.3) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(200, 169, 110, 0.12) !important;
     border-radius: 0px !important;
     padding: clamp(40px, 6vw, 80px) clamp(24px, 5vw, 60px) !important;
     text-align: center !important;
@@ -13682,7 +13719,9 @@ nav .logo-sub {
         height: 100vh !important;
         height: 100dvh !important;
         min-height: 100vh !important;
-        background: linear-gradient(170deg, #0e1f15 0%, #132b1e 40%, #0e1f15 100%) !important;
+        background: rgba(10, 20, 14, 0.75) !important;
+        backdrop-filter: blur(30px) saturate(1.4) !important;
+        -webkit-backdrop-filter: blur(30px) saturate(1.4) !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: stretch !important;

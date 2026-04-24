@@ -876,3 +876,37 @@ Las secciones documentadas arriba sobre StPageFlip (shift dinámico, sincronizac
 **Root causes de los bugs:**
 - Base CSS sin namespace (`.piece-info`, `.piece-name`, `.piece-wishlist-btn`) tiene reglas con colores claros (ivory, champagne, black) y `position: absolute` que no eran overrideadas por V7 (faltaban `!important` + las propiedades específicas).
 - V7 usaba doble clase `.featured-v7 .piece-*` pero no cubría TODAS las propiedades del base → las no-overrideadas sangraban.
+
+### 2026-04-24 — Featured V4.2 + Portfolio polish: simetría + Aqua Liquid Glass
+**Archivos:** `css/style.css`
+
+**Problemas reportados:**
+1. Fondo de `.piece-media` era negro casi opaco — rompía con la estética del portfolio (aqua).
+2. Las tarjetas tenían alturas distintas (la central más alta por wrap de "Superior – AA" en CALIDAD).
+3. Pedido general: elevar polish con estética "Liquid Glass" tipo iOS 26, sin reestructurar.
+
+**Fixes de simetría (Featured V4.2):**
+- `.featured-v7 .featured-grid { align-items: stretch }` (antes `start`) — las cards ahora se estiran al alto común.
+- `.featured-v7 .piece-card { display: flex; flex-direction: column; height: 100% }` — la card ahora es un contenedor flex vertical.
+- `.featured-v7 .piece-info { flex: 1 1 auto; display: flex; flex-direction: column }` — el info crece para llenar el espacio restante.
+- `.featured-v7 .piece-cta-row { margin-top: auto }` — los botones CTA quedan fijos al fondo aunque la descripción sea corta.
+- `.featured-v7 .spec-val { white-space: nowrap; overflow: hidden; text-overflow: ellipsis }` — evita el wrap de valores largos como "Superior – AA" que rompía la simetría.
+
+**Fixes de Aqua/Liquid Glass (Featured V4.2):**
+- `.featured-v7 .piece-media` — Cambio de `rgba(5,10,7,0.8)` (negro casi opaco) a multi-capa aqua: dos radial-gradients (tinte esmeralda + accent dorado) sobre un linear-gradient emerald translúcido + `backdrop-filter: blur(20px) saturate(1.35)`. El marble del body se ve a través, creando profundidad.
+- `.featured-v7 .piece-card` — Highlight superior especular via `box-shadow: inset 0 1px 0 rgba(255,255,255,0.06)` + sombra inferior inset sutil. En hover: highlight sube a 0.1 opacity + gold glow 40px ambient.
+- `.featured-v7 .piece-info` — Gradient vertical con saturate 1.3 en el backdrop-filter + highlight superior inset — "efecto agua" amplificado.
+
+**Retoques paralelos Portfolio V5:**
+- `.ptf-card` — Agregado mismo patrón de highlight especular superior + shadow inferior inset. Hover añade ambient glow gold 30px + gold inset glow 40px.
+- `.ptf-card-badge` — `backdrop-filter` subido de `blur(12px)` a `blur(14px) saturate(1.4)`. Agregado `box-shadow` con highlight especular superior + drop shadow sutil.
+
+**Notas Liquid Glass:**
+- Sin librerías externas — todo CSS nativo (`backdrop-filter`, `box-shadow` inset, multi-gradientes).
+- `saturate()` en backdrop-filter es clave para el look "aqua" — amplifica los colores del fondo detrás del blur, dando ese feel iridiscente de iOS 26.
+- Los highlights superiores (`inset 0 1px 0 rgba(255,255,255,0.x)`) simulan el borde brillante del glass refractivo.
+
+**NO TOCAR:**
+- El `saturate(1.35)` en `.piece-media` backdrop-filter es el punto exacto — subir a 1.5+ introduce tinte verde excesivo, bajar a 1.1 pierde el "aqua".
+- Los spec values DEBEN tener `nowrap + ellipsis` — sin esto vuelve el bug de simetría.
+- `height: 100%` en `.piece-card` requiere `align-items: stretch` en el grid — ambos van juntos, no quitar uno sin el otro.

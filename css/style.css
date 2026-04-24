@@ -11178,7 +11178,7 @@ nav .logo-sub {
 /* ─── 3. PIECE CARD — 3D tilt container ───────────────────────── */
 .featured-v7 .piece-card {
     position: relative !important;
-    background: rgba(8, 12, 9, 0.65) !important;
+    background: rgba(10, 18, 12, 0.35) !important;
     border: 1px solid rgba(200, 169, 110, 0.08) !important;
     border-radius: 0 !important;
     overflow: hidden !important;
@@ -11300,31 +11300,15 @@ nav .logo-sub {
     transform: translateX(120%) skewX(-12deg) !important;
 }
 
-/* ─── 8. HOVER REVEAL — Description slides up from bottom ────── */
-.featured-v7 .piece-reveal {
-    position: absolute !important;
-    inset: auto 0 0 0 !important;
-    background: linear-gradient(to top,
-        rgba(5, 10, 7, 0.92) 0%,
-        rgba(5, 10, 7, 0.7) 60%,
-        transparent 100%) !important;
-    padding: 40px 18px 16px !important;
-    transform: translateY(100%) !important;
-    transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1) !important;
-    z-index: 3 !important;
-    pointer-events: none !important;
-}
-
-.featured-v7 .piece-card:hover .piece-reveal {
-    transform: translateY(0) !important;
-}
-
-.featured-v7 .piece-reveal p {
+/* ─── 8. PIECE DESCRIPTION — Always visible in card body ─────── */
+.featured-v7 .piece-desc {
     font-family: var(--font-body) !important;
     font-size: 12.5px !important;
-    line-height: 1.6 !important;
-    color: rgba(245, 240, 232, 0.88) !important;
-    margin: 0 !important;
+    line-height: 1.65 !important;
+    color: rgba(245, 240, 232, 0.68) !important;
+    margin: 0 0 14px !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
     display: -webkit-box !important;
     -webkit-line-clamp: 3 !important;
     -webkit-box-orient: vertical !important;
@@ -11344,10 +11328,12 @@ nav .logo-sub {
     letter-spacing: 0.18em !important;
     text-transform: uppercase !important;
     padding: 5px 12px !important;
-    background: linear-gradient(135deg, #e8c086 0%, #aa8752 100%) !important;
-    color: #0a1a0f !important;
-    border: none !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    background: rgba(200, 169, 110, 0.15) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    color: #e8c086 !important;
+    border: 1px solid rgba(200, 169, 110, 0.25) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
     white-space: nowrap !important;
 }
 
@@ -11372,6 +11358,7 @@ nav .logo-sub {
 
 .featured-v7 .piece-wishlist-btn,
 .featured-v7 .piece-cart-btn {
+    position: static !important;
     width: 34px !important;
     height: 34px !important;
     background: rgba(5, 10, 7, 0.75) !important;
@@ -11404,6 +11391,9 @@ nav .logo-sub {
 .featured-v7 .piece-info {
     padding: 20px !important;
     position: relative !important;
+    background: rgba(10, 20, 14, 0.55) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
 }
 
 .featured-v7 .piece-meta-row {
@@ -11453,8 +11443,9 @@ nav .logo-sub {
     font-size: 22px !important;
     line-height: 1.15 !important;
     letter-spacing: -0.005em !important;
-    margin: 0 0 16px !important;
+    margin: 0 0 8px !important;
     color: #ffffff !important;
+    text-transform: capitalize !important;
 }
 
 .featured-v7 .piece-name a {
@@ -11583,6 +11574,7 @@ nav .logo-sub {
 }
 
 .featured-v7 .piece-btn.ghost:hover {
+    background: rgba(200, 169, 110, 0.1) !important;
     border-color: rgba(200, 169, 110, 0.5) !important;
     color: #f5f0e8 !important;
 }
@@ -11648,9 +11640,6 @@ nav .logo-sub {
         opacity: 1 !important;
         transform: translateY(0) !important;
     }
-    .featured-v7 .piece-reveal {
-        transform: translateY(0) !important;
-    }
 }
 
 /* ─── Accessibility ──────────────────────────────────────────── */
@@ -11660,7 +11649,6 @@ nav .logo-sub {
     .featured-v7 .piece-card::after,
     .featured-v7 .piece-img,
     .featured-v7 .piece-shine,
-    .featured-v7 .piece-reveal,
     .featured-v7 .piece-actions,
     .featured-v7 .piece-btn,
     .featured-v7 .piece-btn::before {
@@ -11669,13 +11657,10 @@ nav .logo-sub {
     }
 }
 
-/* ─── Touch devices: actions + reveal always visible ─────────── */
+/* ─── Touch devices: actions always visible ──────────────────── */
 @media (hover: none) {
     .featured-v7 .piece-actions {
         opacity: 1 !important;
-        transform: translateY(0) !important;
-    }
-    .featured-v7 .piece-reveal {
         transform: translateY(0) !important;
     }
 }

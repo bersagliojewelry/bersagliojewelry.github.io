@@ -972,3 +972,66 @@ Las secciones documentadas arriba sobre StPageFlip (shift dinámico, sincronizac
 - Los valores de `saturate()` están calibrados por sección. El header usa 1.3 (bastante transparente), el mobile menu 1.4 (necesita más vibración por ser fullscreen).
 - El `blur(30px)` del mobile menu es intencionalmente alto — el panel es fullscreen y necesita más difuminado para verse glass sobre cualquier contenido.
 - Los `@supports not (backdrop-filter)` fallbacks usan opacidades más altas (0.85+) — no bajarlos.
+
+### 2026-04-24 — Aqua Liquid Glass: unificación sitewide + fixes index + limpieza legacy
+**Archivos:** `css/style.css`, `CLAUDE.md`
+
+**1. Fixes específicos del index (commit `f947bb7`):**
+- Frame decorativo gold del About image eliminado (`display: none` en `.about-teaser-collage-frame` y `.about-v7` versión) — el usuario reportó que "opacaba" la imagen.
+- Fondo translúcido del collage removido (`background: transparent`) — imagen queda crystal clear.
+- Glow esmeralda decorativo en esquina inferior del about removido — el aurora global ya crea profundidad.
+- `.animate-on-scroll`: duración de 0.45s → 0.35s con easing Apple `cubic-bezier(0.32, 0.72, 0, 1)` + `translateY(12px)` (antes 18px). Sensación premium-fast.
+
+**2. Aqua Unified Theme Layer — nuevo bloque al final del archivo:**
+Tokens introducidos en `:root`:
+```
+--aqua-bg           rgba(10, 20, 14, 0.42)
+--aqua-bg-strong    rgba(10, 20, 14, 0.58)
+--aqua-bg-soft      rgba(14, 28, 20, 0.28)
+--aqua-blur         blur(18px) saturate(1.35)
+--aqua-blur-lg      blur(24px) saturate(1.4)
+--aqua-highlight    inset 0 1px 0 rgba(255, 255, 255, 0.06)
+--aqua-border       1px solid rgba(200, 169, 110, 0.12)
+--aqua-border-hover 1px solid rgba(200, 169, 110, 0.28)
+--aqua-glow-hover   0 0 30px rgba(200, 169, 110, 0.08)
+```
+
+Aplicado a TODAS las superficies restantes de páginas secundarias:
+- `.page-hero` (nosotros, servicios, colecciones, catalog pages, pieza, cart, wishlist, journal, entrada, contacto)
+- `.catalog-filters` + `.catalog-filter-btn` (anillos, argollas, topos-aretes, dijes-colgantes, colecciones)
+- `.catalog-collection-card` (colecciones.html)
+- `.contact-channel` (contacto.html)
+- `.review-card` + `.related-card` + `.pieza-main-image` + `.pieza-info` + `.pieza-guarantees` (pieza.html)
+- `.cart-card` + `.cart-summary` + `.cart-inquiry-note` (carrito.html)
+- `.wishlist-empty` + `.wishlist-actions` (lista-deseos.html)
+- `.journal-hero-card` + `.journal-grid-card` (journal.html)
+- `.nosotros-section` + `.team-card` + `.brand-story-card`
+- `.svc-card` + `.svc-process-step` (servicios.html)
+- Form inputs: text, email, tel, search, password, textarea, select (contacto, checkout, search overlay)
+
+Performance:
+- `@media (pointer: coarse)`: reduce blur a 10px saturate 1.25 para ahorrar GPU en móvil.
+- `@media (prefers-reduced-motion: reduce)`: remueve `transform` y `transition` de hovers.
+
+**3. Limpieza legacy — 596 líneas eliminadas:**
+Bloques removidos (líneas originales 8867-9462):
+- `INDEX REDESIGN V4 — EMERALD MARBLE BACKGROUND SYSTEM` (~145 líneas) — Kill hero photo + set emerald bg. V7 lo reemplazó.
+- `INDEX REDESIGN V5 — HERO + HEADER EDITORIAL` (~201 líneas) — Restore hero photo + split layout. V7 lo reemplazó.
+- `INDEX REDESIGN V6 — COLLECTIONS: TARJETAS EDITORIALES` (~248 líneas) — Tarjetas verticales collections. V7 lo reemplazó.
+
+**Verificación previa a eliminación:**
+- `.hero` selectors: solo se usan en `index.html` (otras páginas usan `.page-hero`).
+- `.collections` selectors: solo en `index.html` (`colecciones.html` usa `.catalog-collection-card`).
+- `.services` V6 selectors: solo en `index.html` (`servicios.html` usa `.svc-card`).
+- `.hero-badge` NO fue tocado — sigue existiendo para catálogo.
+
+**CSS total:** 14,596 → 14,000 líneas (4% reducción sin afectar visual).
+
+**Futuras tuneadas:**
+- Para ajustar la apariencia aqua en TODO el sitio, modificar solo los tokens `--aqua-*` en `:root` del bloque final — propaga automáticamente a todas las páginas.
+- Los tokens son la fuente de verdad. Cualquier componente nuevo debe referenciarlos vía `var(--aqua-*)` en vez de hardcodear valores.
+
+**NO TOCAR:**
+- Los tokens `--aqua-*` en `:root` del bloque final son el sistema unificado — nunca duplicar sus valores inline.
+- El bloque Aqua Unified está al final del archivo (después de "Responsive servicios") — debe mantenerse allí para ganar en source order sin necesidad de especificidad elevada.
+- `transparent !important` en `.about-v7 .about-teaser-collage` background es crítico — devuelve el velo oscuro si se toca.

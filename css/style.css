@@ -8864,602 +8864,6 @@ nav .logo-badge {
 
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   INDEX REDESIGN V4 — EMERALD MARBLE BACKGROUND SYSTEM
-   Referencia: bersaglio_jewelry_luxury_portfolio_home.png
-   Mármol esmeralda oscuro / dorado / negro — todo el index
-   Elimina: foto hero, fondos de sección, gradientes de transición
-   ═══════════════════════════════════════════════════════════════ */
-
-/* ─── HERO: Eliminar fotografía de banner ───────────────────── */
-.hero > picture,
-.hero-bg-img {
-    display: none !important;
-    visibility: hidden !important;
-}
-
-.hero {
-    background: transparent !important;
-    overflow: hidden !important;
-}
-
-/* Hero content: centrado sin foto lateral */
-.hero-content {
-    text-align: center !important;
-    max-width: min(800px, 90vw) !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-}
-.hero-eyebrow {
-    margin-left: auto !important;
-    margin-right: auto !important;
-}
-.hero-title-wrap {
-    align-items: center !important;
-}
-.hero-actions {
-    justify-content: center !important;
-}
-.hero-meta {
-    justify-content: center !important;
-}
-
-/* Overlay: solo viñeta de bordes, sin degradado lateral de foto */
-.hero-overlay {
-    background:
-        radial-gradient(ellipse 100% 35% at 50% 0%,    rgba(3,8,6,0.72) 0%, transparent 100%),
-        radial-gradient(ellipse 100% 28% at 50% 100%,  rgba(3,8,6,0.78) 0%, transparent 100%),
-        radial-gradient(ellipse 22%  100% at 0%   50%, rgba(3,8,6,0.48) 0%, transparent 100%),
-        radial-gradient(ellipse 22%  100% at 100% 50%, rgba(3,8,6,0.48) 0%, transparent 100%),
-        radial-gradient(ellipse 75%  65% at 48% 42%,   rgba(26,77,46,0.09) 0%, transparent 70%)
-    !important;
-}
-
-@media (max-width: 768px) {
-    .hero-overlay {
-        background:
-            radial-gradient(ellipse 100% 30% at 50% 0%,   rgba(3,8,6,0.75) 0%, transparent 100%),
-            radial-gradient(ellipse 100% 25% at 50% 100%, rgba(3,8,6,0.82) 0%, transparent 100%),
-            radial-gradient(ellipse 22%  100% at 0%  50%, rgba(3,8,6,0.52) 0%, transparent 100%)
-        !important;
-    }
-    /* Hero content: centrado en móvil sin foto lateral */
-    .hero-content {
-        max-width: 100% !important;
-        text-align: center !important;
-    }
-    .hero-eyebrow::before,
-    .hero-eyebrow::after { display: none !important; }
-}
-
-/* ─── ELIMINAR TODOS LOS GRADIENTES DE TRANSICIÓN ENTRE SECCIONES */
-.featured::after,
-.brand-statement::after,
-.collections::after,
-.services::after,
-.journal-preview::after,
-.about-teaser::after,
-.cta-banner::after {
-    display: none !important;
-    content: none !important;
-    background: none !important;
-    height: 0 !important;
-}
-
-/* ─── TRUST STRIP ────────────────────────────────────────────── */
-.trust-strip {
-    background: rgba(4,9,6,0.75) !important;
-    border-top: 1px solid rgba(200,169,110,0.06) !important;
-    border-bottom: 1px solid rgba(200,169,110,0.06) !important;
-}
-.trust-strip .trust-label { color: rgba(230,215,190,0.65) !important; }
-.trust-strip .trust-icon  { stroke: var(--gold) !important; opacity: 0.55 !important; }
-.trust-strip .trust-sep   { color: rgba(200,169,110,0.18) !important; }
-
-/* ─── LOOKBOOK / PORTAFOLIO ──────────────────────────────────── */
-.lookbook-section {
-    background: transparent !important;
-}
-
-/* ─── FEATURED PIECES ────────────────────────────────────────── */
-.featured {
-    background: transparent !important;
-}
-
-/* ─── BRAND STATEMENT ────────────────────────────────────────── */
-.brand-statement {
-    background: rgba(13,40,24,0.42) !important;
-}
-
-/* ─── COLLECTIONS ────────────────────────────────────────────── */
-.collections {
-    background: rgba(5,10,7,0.55) !important;
-}
-
-/* ─── SERVICES: oscuro (antes era ivory) ────────────────────── */
-.services {
-    background: rgba(8,15,11,0.68) !important;
-}
-.services .section-eyebrow  { color: var(--gold)               !important; }
-.services .section-title    { color: var(--ivory)              !important; }
-.services .section-desc     { color: var(--text-on-dark-muted) !important; }
-.service-row                { border-bottom-color: rgba(200,169,110,0.07) !important; }
-.service-row-num            { color: var(--gold) !important; opacity: 0.45 !important; }
-.service-row-icon svg       { color: var(--gold) !important; opacity: 0.55 !important; }
-.service-row-title          { color: var(--ivory) !important; font-size: 1.1rem !important; }
-.service-row-desc           { color: var(--text-on-dark-muted) !important; font-size: 13px !important; line-height: 1.7 !important; }
-.service-row::before        { background: linear-gradient(90deg, var(--gold), var(--emerald-glow)) !important; }
-.services .btn-outline      { border-color: rgba(200,169,110,0.15) !important; color: var(--gold-light) !important; font-size: 11px !important; letter-spacing: 2px !important; }
-.services .btn-outline:hover{ border-color: rgba(200,169,110,0.45) !important; background: rgba(200,169,110,0.05) !important; }
-
-/* ─── JOURNAL ────────────────────────────────────────────────── */
-.journal-preview {
-    background: rgba(5,10,7,0.72) !important;
-}
-
-/* ─── ABOUT TEASER ───────────────────────────────────────────── */
-.about-teaser {
-    background: rgba(12,24,16,0.60) !important;
-}
-
-/* ─── CTA BANNER: Esmeralda rica con venas doradas ──────────── */
-.cta-banner {
-    background:
-        radial-gradient(ellipse 60% 60% at 50% 50%, rgba(26,77,46,0.55) 0%, transparent 100%),
-        linear-gradient(135deg, #0a1e12 0%, #1a4d2e 50%, #0a1e12 100%)
-    !important;
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   INDEX REDESIGN V5 — HERO + HEADER EDITORIAL
-   Referencia: Image #1 + DESIGN.md "Digital Atelier"
-   Split layout: texto izquierda / foto derecha
-   ═══════════════════════════════════════════════════════════════ */
-
-/* ─── 1. RESTAURAR FOTO DEL HERO (anula V4 display:none) ───── */
-.hero > picture,
-.hero-bg-img {
-    display: block !important;
-    visibility: visible !important;
-}
-.hero-bg-img {
-    animation: hero-kb-zoom 16s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
-    object-position: 65% center !important;
-    z-index: 0 !important;
-}
-
-/* ─── 2. HERO OVERLAY: oscuro-izquierda → transparente-derecha */
-.hero-overlay {
-    background:
-        linear-gradient(
-            105deg,
-            rgba(5,10,7,0.97) 0%,
-            rgba(5,10,7,0.92) 18%,
-            rgba(5,10,7,0.78) 34%,
-            rgba(5,10,7,0.42) 50%,
-            rgba(5,10,7,0.14) 66%,
-            rgba(5,10,7,0.04) 80%,
-            transparent 92%
-        ),
-        /* Viñeta superior */
-        linear-gradient(to bottom, rgba(5,10,7,0.55) 0%, transparent 20%),
-        /* Viñeta inferior (sobre meta badges) */
-        linear-gradient(to top, rgba(5,10,7,0.65) 0%, transparent 15%)
-    !important;
-    z-index: 1 !important;
-}
-
-@media (max-width: 768px) {
-    .hero-overlay {
-        background:
-            linear-gradient(
-                to bottom,
-                rgba(5,10,7,0.96) 0%,
-                rgba(5,10,7,0.88) 45%,
-                rgba(5,10,7,0.70) 70%,
-                rgba(5,10,7,0.50) 100%
-            ) !important;
-    }
-    .hero-bg-img {
-        object-position: 62% center !important;
-    }
-}
-
-/* ─── 3. HERO CONTENT: izquierda, columna, editorial ─────────── */
-.hero-content {
-    text-align: left !important;
-    max-width: clamp(340px, 50%, 600px) !important;
-    margin-left: 0 !important;
-    margin-right: auto !important;
-    padding-top: 160px !important;
-    padding-bottom: 80px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    z-index: 3 !important;
-}
-.hero-eyebrow {
-    margin-left: 0 !important;
-    margin-right: auto !important;
-    padding: 0 !important;
-}
-/* Restaurar las líneas decorativas del eyebrow */
-.hero-eyebrow::before,
-.hero-eyebrow::after {
-    display: block !important;
-}
-.hero-actions {
-    justify-content: flex-start !important;
-}
-.hero-desc {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    text-align: left !important;
-}
-
-/* ─── 4. HERO TITLE: grande, editorial ───────────────────────── */
-.hero-title {
-    font-size: clamp(3rem, 6.5vw, 6rem) !important;
-    font-weight: 300 !important;
-    line-height: 1.08 !important;
-    letter-spacing: -1.5px !important;
-    color: var(--ivory) !important;
-}
-.hero-title em {
-    display: block !important;
-    font-style: italic !important;
-    color: var(--gold-light) !important;
-    font-weight: 300 !important;
-    letter-spacing: -0.5px !important;
-}
-.hero-title-line {
-    margin-left: 0 !important;
-    max-width: 340px !important;
-    margin-top: 22px !important;
-    transform-origin: left !important;
-}
-
-/* ─── 5. HERO META: anclado al pie del hero ──────────────────── */
-/* (movido fuera de .hero-content en HTML) */
-.hero > .hero-meta {
-    position: absolute !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    padding: 14px var(--space-md) !important;
-    border-top: 1px solid rgba(200,169,110,0.15) !important;
-    justify-content: flex-start !important;
-    gap: 24px !important;
-    z-index: 4 !important;
-    margin: 0 !important;
-    max-width: none !important;
-    width: 100% !important;
-    background: rgba(5,10,7,0.35) !important;
-    backdrop-filter: blur(4px) !important;
-    -webkit-backdrop-filter: blur(4px) !important;
-}
-.hero > .hero-meta .hero-badge {
-    font-size: 9px !important;
-    letter-spacing: 2.5px !important;
-    color: rgba(220,200,165,0.6) !important;
-    text-transform: uppercase !important;
-}
-.hero > .hero-meta .hero-badge-sep {
-    color: rgba(200,169,110,0.3) !important;
-}
-
-/* ─── 6. SCROLL INDICATOR: por encima del meta ───────────────── */
-.hero-scroll-indicator {
-    bottom: 72px !important;
-    left: auto !important;
-    right: var(--space-lg) !important;
-    transform: none !important;
-}
-
-/* ─── 7. HEADER: barra siempre visible (sutil) ───────────────── */
-.header:not(.scrolled) {
-    background: rgba(3,8,6,0.28) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border-bottom: 1px solid rgba(200,169,110,0.05) !important;
-}
-.header.scrolled {
-    background: rgba(5,9,7,0.96) !important;
-    backdrop-filter: blur(16px) !important;
-    -webkit-backdrop-filter: blur(16px) !important;
-    border-bottom: 1px solid rgba(200,169,110,0.10) !important;
-    box-shadow: 0 1px 24px rgba(0,0,0,0.25) !important;
-}
-
-/* ─── 8. LOGO: serif editorial ───────────────────────────────── */
-.header .logo-text,
-nav .logo-text {
-    font-family: var(--font-display) !important;
-    font-size: 22px !important;
-    font-weight: 500 !important;
-    letter-spacing: 1px !important;
-    color: var(--gold-light) !important;
-}
-.header .logo-sub,
-nav .logo-sub {
-    display: block !important;
-    font-size: 8.5px !important;
-    letter-spacing: 5px !important;
-    color: rgba(200,169,110,0.55) !important;
-    text-transform: uppercase !important;
-    margin-top: -1px !important;
-}
-
-/* ─── 9. CONTACTO — LEGACY (sobrescrito por header redesign final) ── */
-
-/* ─── 10. RESPONSIVE MÓVIL ───────────────────────────────────── */
-@media (max-width: 768px) {
-    .hero-content {
-        text-align: left !important;
-        max-width: 85% !important;
-        padding-top: 120px !important;
-        padding-bottom: 60px !important;
-    }
-    .hero-title {
-        font-size: clamp(2.4rem, 10vw, 3.5rem) !important;
-    }
-    .hero > .hero-meta {
-        padding: 10px var(--space-md) !important;
-        gap: 16px !important;
-    }
-    .hero-scroll-indicator {
-        display: none !important;
-    }
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   INDEX REDESIGN V6 — COLLECTIONS: TARJETAS EDITORIALES
-   Referencia: stitch_portafolio_digital_interactivo (2)
-   Tarjetas verticales con borde dorado, imagen prominente
-   ═══════════════════════════════════════════════════════════════ */
-
-/* ─── SECCIÓN: fondo transparente, header centrado ──────────── */
-.collections {
-    background: transparent !important;
-    overflow: visible !important;
-}
-.collections .section-header {
-    text-align: center !important;
-}
-.collections .section-eyebrow {
-    color: var(--gold) !important;
-    text-align: center !important;
-    display: block !important;
-}
-.collections .section-title {
-    text-align: center !important;
-    color: var(--ivory) !important;
-}
-.collections .section-desc {
-    text-align: center !important;
-    color: var(--text-on-dark-muted) !important;
-    max-width: 660px !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-}
-
-/* ─── Ocultar track-outer scroll horizontal (V3 legacy) ─────── */
-.collections-track-outer {
-    overflow: visible !important;
-    height: auto !important;
-    max-width: var(--container) !important;
-    margin: 0 auto !important;
-    padding: 0 var(--space-md) !important;
-}
-
-/* ─── GRID: 4 columnas desktop ──────────────────────────────── */
-.collections-grid {
-    display: grid !important;
-    grid-template-columns: repeat(4, 1fr) !important;
-    gap: 24px !important;
-    max-width: none !important;
-    width: 100% !important;
-    overflow: visible !important;
-    flex-wrap: nowrap !important;
-}
-
-/* ─── Ocultar barra de progreso (ya no hay scroll h.) ───────── */
-.collections-progress {
-    display: none !important;
-}
-
-/* ─── TARJETA: vertical, borde dorado, cristal oscuro ───────── */
-.collection-panel {
-    position: relative !important;
-    aspect-ratio: auto !important;
-    overflow: hidden !important;
-    border: 1px solid rgba(200,169,110,0.25) !important;
-    border-radius: 6px !important;
-    background: rgba(10,16,12,0.60) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    opacity: 1 !important;
-    transform: none !important;
-    transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease !important;
-    cursor: pointer !important;
-}
-.collection-panel.is-visible {
-    opacity: 1 !important;
-    transform: none !important;
-}
-
-.collection-panel:hover {
-    border-color: rgba(200,169,110,0.55) !important;
-    box-shadow:
-        0 8px 40px rgba(0,0,0,0.35),
-        0 0 24px rgba(200,169,110,0.06) !important;
-    transform: translateY(-4px) !important;
-}
-
-/* Eliminar barra dorada inferior (V2/V3 legacy) */
-.collection-panel::after {
-    display: none !important;
-    content: none !important;
-}
-
-/* ─── LINK: layout vertical flex ────────────────────────────── */
-.collection-panel-link {
-    display: flex !important;
-    flex-direction: column !important;
-    height: 100% !important;
-    padding: 0 !important;
-    background: none !important;
-    text-decoration: none !important;
-    justify-content: flex-start !important;
-    z-index: auto !important;
-    overflow: hidden !important;
-}
-
-/* ─── IMAGEN: área superior (cuadrada) ──────────────────────── */
-.collection-panel-img {
-    position: relative !important;
-    width: 100% !important;
-    aspect-ratio: 1 / 1 !important;
-    overflow: hidden !important;
-    flex-shrink: 0 !important;
-    background: rgba(5,10,7,0.5) !important;
-}
-
-.collection-panel-img img {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
-    object-position: center !important;
-    display: block !important;
-    transition: transform 0.6s var(--ease) !important;
-}
-
-.collection-panel:hover .collection-panel-img img {
-    transform: scale(1.06) !important;
-}
-
-/* Icono fallback cuando no hay banner */
-.collection-panel-icon {
-    width: 100% !important;
-    height: 100% !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    background: rgba(5,10,7,0.6) !important;
-}
-.collection-panel-icon svg {
-    width: 72px !important;
-    height: 72px !important;
-    color: var(--gold) !important;
-    opacity: 0.2 !important;
-}
-
-/* ─── CUERPO: área inferior con nombre + CTA ────────────────── */
-.collection-panel-body {
-    padding: 20px 16px 24px !important;
-    text-align: center !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    gap: 8px !important;
-    background: rgba(8,14,10,0.70) !important;
-    flex-grow: 1 !important;
-}
-
-/* ─── NOMBRE: dorado, serif, itálica, mayúsculas ────────────── */
-.collection-panel-name {
-    font-family: var(--font-display) !important;
-    font-size: clamp(1.05rem, 1.6vw, 1.35rem) !important;
-    font-weight: 400 !important;
-    font-style: italic !important;
-    letter-spacing: 3px !important;
-    text-transform: uppercase !important;
-    color: var(--gold-light) !important;
-    line-height: 1.25 !important;
-    margin: 0 !important;
-    transition: color 0.3s ease !important;
-    transform: none !important;
-}
-.collection-panel:hover .collection-panel-name {
-    color: var(--gold-bright) !important;
-    transform: none !important;
-}
-
-/* ─── CTA: "Ver Colección" ──────────────────────────────────── */
-.collection-panel-cta {
-    font-family: var(--font-body) !important;
-    font-size: 11px !important;
-    font-weight: 400 !important;
-    letter-spacing: 0.5px !important;
-    text-transform: none !important;
-    color: var(--gold) !important;
-    opacity: 0.55 !important;
-    transition: opacity 0.3s ease !important;
-    display: inline-block !important;
-    gap: 0 !important;
-    transform: none !important;
-}
-.collection-panel-cta svg { display: none !important; }
-.collection-panel:hover .collection-panel-cta {
-    opacity: 1 !important;
-    transform: none !important;
-}
-
-/* ─── OCULTAR elementos V2 que ya no existen en el template ─── */
-.collection-panel-num,
-.collection-panel-sub,
-.collection-panel-desc,
-.collection-panel-footer,
-.collection-panel-count,
-.collection-panel-bg-icon,
-.collection-panel-bg-img {
-    display: none !important;
-}
-
-/* ─── BOTÓN "Ver catálogo completo" ─────────────────────────── */
-.collections .section-footer {
-    text-align: center !important;
-}
-.collections .btn-outline {
-    border-color: rgba(200,169,110,0.18) !important;
-    color: var(--gold-light) !important;
-    font-size: 11px !important;
-    letter-spacing: 2px !important;
-    border-radius: 0 !important;
-}
-.collections .btn-outline:hover {
-    border-color: rgba(200,169,110,0.50) !important;
-    background: rgba(200,169,110,0.05) !important;
-}
-
-/* ─── RESPONSIVE ────────────────────────────────────────────── */
-@media (max-width: 1024px) {
-    .collections-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 18px !important;
-    }
-}
-
-@media (max-width: 600px) {
-    .collections-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 12px !important;
-    }
-    .collection-panel-img {
-        aspect-ratio: 4 / 3 !important;
-    }
-    .collection-panel-name {
-        font-size: 0.9rem !important;
-        letter-spacing: 1.5px !important;
-    }
-    .collection-panel-body {
-        padding: 14px 10px 18px !important;
-        gap: 5px !important;
-    }
-    .collection-panel-cta {
-        font-size: 10px !important;
-    }
-}
 
 /* ═══════════════════════════════════════════════════════════════
    INDEX REDESIGN V7 — SERVICES SHOWCASE + UNIFIED BACKGROUND
@@ -12898,19 +12302,9 @@ nav .logo-sub {
     display: none !important;
 }
 
-/* Glow esmeralda decorativo — esquina inferior derecha */
+/* Glow esmeralda removido — el aurora global ya crea profundidad */
 .about-v7 .about-teaser-inner::before {
-    content: '';
-    position: absolute;
-    bottom: -100px;
-    right: -100px;
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(ellipse at center,
-        rgba(11,61,46, 0.12) 0%,
-        transparent 70%);
-    pointer-events: none;
-    z-index: 0;
+    content: none !important;
 }
 
 /* ─── 2. INNER GRID ───────────────────────────────────────────── */
@@ -12922,14 +12316,14 @@ nav .logo-sub {
     position: relative !important;
 }
 
-/* ─── 3. COLLAGE / IMAGEN ─────────────────────────────────────── */
+/* ─── 3. COLLAGE / IMAGEN — crystal clear, no overlay ────────── */
 .about-v7 .about-teaser-collage {
     position: relative !important;
     overflow: hidden !important;
     border-radius: 0 !important;
     aspect-ratio: 16 / 10 !important;
-    background: rgba(10, 20, 14, 0.3) !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+    background: transparent !important;
+    box-shadow: none !important;
 }
 
 .about-v7 .about-teaser-collage img {
@@ -12946,17 +12340,12 @@ nav .logo-sub {
 
 /* Frame decorativo — very subtle, no golden fade */
 .about-v7 .about-teaser-collage-frame {
-    position: absolute !important;
-    inset: 12px !important;
-    border: 1px solid rgba(255, 255, 255, 0.06) !important;
-    border-radius: 0 !important;
-    pointer-events: none !important;
-    z-index: 1 !important;
-    transition: border-color 0.4s ease !important;
+    display: none !important;
 }
 
-.about-v7 .about-teaser-collage:hover .about-teaser-collage-frame {
-    border-color: rgba(255, 255, 255, 0.12) !important;
+/* Override legacy frame attempts across the codebase */
+.about-teaser-collage-frame {
+    display: none !important;
 }
 
 /* Placeholder */
@@ -13512,10 +12901,11 @@ nav .logo-sub {
    ANIMATION SPEED FIX — Carga más rápida, menos espera al scroll
    ═══════════════════════════════════════════════════════════════════ */
 
-/* Override: animaciones más rápidas — 0.5s en vez de 0.8-0.9s */
+/* Override: animaciones premium-fast — 0.35s con easing Apple-style */
 .animate-on-scroll {
-    transition-duration: 0.45s !important;
-    transform: translateY(18px) !important;
+    transition: opacity 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+                transform 0.35s cubic-bezier(0.32, 0.72, 0, 1) !important;
+    transform: translateY(12px) !important;
 }
 
 .animate-on-scroll.is-visible {
@@ -13525,7 +12915,7 @@ nav .logo-sub {
 /* Collection panels y service rows también más rápidos */
 .collection-panel,
 .service-row {
-    transition-duration: 0.4s !important;
+    transition-duration: 0.35s !important;
 }
 
 /* Reducir stagger delays para que no se sienta lento */
@@ -14309,5 +13699,302 @@ nav .logo-sub {
     .svc-card-number,
     .svc-card-desc {
         transition: none;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   AQUA LIQUID GLASS — UNIFIED THEME LAYER
+   Aplicado globalmente a todas las páginas secundarias.
+   Tokens: --aqua-bg, --aqua-blur, --aqua-saturate, --aqua-highlight
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+    --aqua-bg:        rgba(10, 20, 14, 0.42);
+    --aqua-bg-strong: rgba(10, 20, 14, 0.58);
+    --aqua-bg-soft:   rgba(14, 28, 20, 0.28);
+    --aqua-blur:      blur(18px) saturate(1.35);
+    --aqua-blur-lg:   blur(24px) saturate(1.4);
+    --aqua-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    --aqua-border:    1px solid rgba(200, 169, 110, 0.12);
+    --aqua-border-hover: 1px solid rgba(200, 169, 110, 0.28);
+    --aqua-glow-hover: 0 0 30px rgba(200, 169, 110, 0.08);
+}
+
+/* ─── Page Heroes (nosotros, servicios, journal, colecciones, catalog, cart, wishlist, contact, entrada, pieza) ─── */
+.page-hero {
+    background: linear-gradient(165deg, rgba(16, 40, 26, 0.55) 0%, rgba(6, 12, 9, 0.75) 70%) !important;
+    backdrop-filter: var(--aqua-blur-lg) !important;
+    -webkit-backdrop-filter: var(--aqua-blur-lg) !important;
+    box-shadow: var(--aqua-highlight) !important;
+}
+.page-hero::after { opacity: 0.04 !important; }
+.page-hero.has-banner .container::before {
+    background: linear-gradient(to top, rgba(6, 12, 9, 0.75) 0%, rgba(10, 26, 15, 0.35) 50%, rgba(16, 40, 26, 0.2) 100%) !important;
+}
+
+/* ─── Catalog filters (anillos, argollas, topos, dijes, colecciones) ─── */
+.catalog-filters {
+    background: var(--aqua-bg-soft) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    padding: 14px 18px !important;
+}
+.catalog-filter-btn {
+    background: transparent !important;
+    border: 1px solid rgba(200, 169, 110, 0.15) !important;
+    color: rgba(245, 240, 232, 0.8) !important;
+    transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+.catalog-filter-btn:hover {
+    background: rgba(200, 169, 110, 0.08) !important;
+    border-color: rgba(200, 169, 110, 0.35) !important;
+    color: var(--gold-light, #e8c086) !important;
+}
+.catalog-filter-btn.is-active {
+    background: rgba(200, 169, 110, 0.18) !important;
+    border-color: rgba(200, 169, 110, 0.45) !important;
+    color: var(--gold-light, #e8c086) !important;
+}
+
+/* ─── Catalog collection cards (colecciones.html) ─── */
+.catalog-collection-card {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    border-radius: 0 !important;
+    transition: all 0.4s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+.catalog-collection-card:hover {
+    border: var(--aqua-border-hover) !important;
+    box-shadow:
+        var(--aqua-highlight),
+        var(--aqua-glow-hover),
+        0 20px 40px -15px rgba(0, 0, 0, 0.5) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* ─── Contact grid (contacto.html) ─── */
+.contact-channel {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    border-radius: 0 !important;
+    transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+.contact-channel:hover {
+    border: var(--aqua-border-hover) !important;
+    background: var(--aqua-bg-strong) !important;
+    box-shadow:
+        var(--aqua-highlight),
+        var(--aqua-glow-hover) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* ─── Review cards (pieza detail) ─── */
+.review-card {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    border-radius: 0 !important;
+}
+
+/* ─── Related cards (pieza detail) ─── */
+.related-card {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    border-radius: 0 !important;
+}
+.related-card:hover {
+    border: var(--aqua-border-hover) !important;
+    box-shadow:
+        var(--aqua-highlight),
+        var(--aqua-glow-hover) !important;
+}
+
+/* ─── Pieza main image area ─── */
+.pieza-main-image,
+.pieza-thumbnails {
+    background: var(--aqua-bg-soft) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    box-shadow: var(--aqua-highlight) !important;
+}
+.pieza-info {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    border-radius: 0 !important;
+    padding: 32px !important;
+}
+
+/* ─── Pieza guarantees strip ─── */
+.pieza-guarantees,
+.guarantee-card {
+    background: var(--aqua-bg-soft) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    border-radius: 0 !important;
+}
+
+/* ─── Cart page items ─── */
+.cart-card,
+.cart-summary,
+.cart-inquiry-note {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    border-radius: 0 !important;
+}
+
+/* ─── Wishlist page items ─── */
+.wishlist-empty,
+.wishlist-actions {
+    background: var(--aqua-bg-soft) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    border-radius: 0 !important;
+}
+
+/* ─── Journal page article cards (journal.html, entrada.html) ─── */
+.journal-hero-card,
+.journal-grid-card {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    border-radius: 0 !important;
+    transition: all 0.4s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+.journal-hero-card:hover,
+.journal-grid-card:hover {
+    border: var(--aqua-border-hover) !important;
+    box-shadow:
+        var(--aqua-highlight),
+        var(--aqua-glow-hover),
+        0 20px 40px -15px rgba(0, 0, 0, 0.5) !important;
+    transform: translateY(-2px) !important;
+}
+
+.entrada-content,
+.entrada-hero,
+.entrada-meta {
+    background: transparent !important;
+}
+
+/* ─── Nosotros page cards (brand story, team cards, etc.) ─── */
+.nosotros-section,
+.team-card,
+.brand-story-card {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    border-radius: 0 !important;
+}
+
+/* ─── Servicios page cards (svc-card, svc-process-step) ─── */
+.svc-card {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    border-radius: 0 !important;
+    transition: all 0.4s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+.svc-card:hover {
+    border: var(--aqua-border-hover) !important;
+    box-shadow:
+        var(--aqua-highlight),
+        var(--aqua-glow-hover),
+        0 20px 40px -15px rgba(0, 0, 0, 0.5) !important;
+    transform: translateY(-2px) !important;
+}
+.svc-process-step {
+    background: var(--aqua-bg-soft) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+    border-radius: 0 !important;
+}
+
+/* ─── Form inputs (contact, checkout, search, subscribe) ─── */
+input[type="text"], input[type="email"], input[type="tel"],
+input[type="search"], input[type="password"], textarea, select {
+    background: var(--aqua-bg-soft) !important;
+    backdrop-filter: blur(8px) saturate(1.2) !important;
+    -webkit-backdrop-filter: blur(8px) saturate(1.2) !important;
+    border: var(--aqua-border) !important;
+    color: var(--ivory, #f5f0e8) !important;
+    transition: all 0.25s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+input[type="text"]:focus, input[type="email"]:focus, input[type="tel"]:focus,
+input[type="search"]:focus, input[type="password"]:focus, textarea:focus, select:focus {
+    border: var(--aqua-border-hover) !important;
+    background: var(--aqua-bg) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(200, 169, 110, 0.08) !important;
+}
+
+/* ─── Touch devices: reduce blur for performance ─── */
+@media (pointer: coarse) {
+    .page-hero,
+    .catalog-filters,
+    .catalog-collection-card,
+    .contact-channel,
+    .review-card,
+    .related-card,
+    .pieza-info,
+    .cart-card,
+    .cart-summary,
+    .journal-hero-card,
+    .journal-grid-card,
+    .svc-card,
+    .svc-process-step {
+        backdrop-filter: blur(10px) saturate(1.25) !important;
+        -webkit-backdrop-filter: blur(10px) saturate(1.25) !important;
+    }
+}
+
+/* ─── Accesibilidad global: respeta reduced-motion en hovers ─── */
+@media (prefers-reduced-motion: reduce) {
+    .catalog-collection-card,
+    .contact-channel,
+    .related-card,
+    .journal-hero-card,
+    .journal-grid-card,
+    .svc-card {
+        transition: none !important;
+    }
+    .catalog-collection-card:hover,
+    .contact-channel:hover,
+    .related-card:hover,
+    .journal-hero-card:hover,
+    .journal-grid-card:hover,
+    .svc-card:hover {
+        transform: none !important;
     }
 }

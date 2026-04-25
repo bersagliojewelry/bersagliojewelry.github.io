@@ -4,16 +4,15 @@
  */
 
 import { loadAllComponents }   from './components.js';
-import { renderCollections }   from './components/collections.js';
 import { renderFeaturedPieces } from './components/featured.js';
 import { renderServices }      from './components/services.js';
 import { renderJournal }       from './components/journal.js';
-import { renderLookbook }      from './components/lookbook.js';
+import { renderCategoriesDock, initCategoriesDock } from './components/categories-dock.js';
+// renderCollections + renderLookbook removed — replaced by aqua categories dock + design has no lookbook
 import Renderer from './utils/renderer.js';
 import db       from './data/catalog.js';
 import { initEffects }              from './effects.js';
-import { initHero }                 from './hero-animation.js';
-import { initCollectionsHScroll }   from './effects/hscroll.js';
+// initHero + initCollectionsHScroll removed — targeted V7 hero markup that no longer exists
 import { initGSAPScrollAnimations } from './scroll-animations.js';
 import { initParallax }             from './parallax.js';
 import { initMicroAnimations }      from './effects/micro.js';
@@ -37,14 +36,14 @@ async function initApp() {
     };
 
     const renderAllSections = (label = '') => {
-        safeRender(renderLookbook,       `renderLookbook${label}`);
-        safeRender(renderCollections,    `renderCollections${label}`);
+        safeRender(renderCategoriesDock, `renderCategoriesDock${label}`);
         safeRender(renderFeaturedPieces, `renderFeaturedPieces${label}`);
         safeRender(renderJournal,        `renderJournal${label}`);
         safeRender(renderServices,       `renderServices${label}`);
     };
 
     renderAllSections();
+    safeRender(initCategoriesDock, 'initCategoriesDock');
 
     Renderer.initScrollAnimations();
     Renderer.initLazyImages();
@@ -68,29 +67,11 @@ async function initApp() {
     safeEffect(initSkeletonShimmer,      'initSkeletonShimmer');
     safeEffect(initPrefetch,             'initPrefetch');
     safeEffect(initEffects,              'initEffects');
-    safeEffect(initHero,                 'initHero');
-    safeEffect(initCollectionsHScroll,   'initCollectionsHScroll');
     safeEffect(initGSAPScrollAnimations, 'initGSAPScrollAnimations');
     safeEffect(initParallax,             'initParallax');
     safeEffect(initMicroAnimations,      'initMicroAnimations');
-    safeEffect(initBannerKenBurns,       'initBannerKenBurns');
     safeEffect(initCookieConsent,         'initCookieConsent');
     safeEffect(initEmailCapture,          'initEmailCapture');
-}
-
-function initBannerKenBurns() {
-    const banner = document.querySelector('.banner-section');
-    if (!banner) return;
-    // Trigger Ken Burns scale-down when section is visible
-    const io = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                banner.classList.add('is-visible');
-                io.disconnect();
-            }
-        });
-    }, { threshold: 0.1 });
-    io.observe(banner);
 }
 
 function initWhatsAppButton() {

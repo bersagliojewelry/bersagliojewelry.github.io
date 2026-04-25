@@ -1228,3 +1228,297 @@ a:hover { color: var(--bj-emerald-800); }
 
 /* JS 3D tilt target data-attr — simple CSS fallback */
 [data-tilt] { will-change: transform; transform-style: preserve-3d; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   EDITORIAL SPLIT — image card + quote glass card
+   ═══════════════════════════════════════════════════════════════════ */
+.hero-aqua-editorial-section { padding: 80px 0 !important; }
+.brand-statement.brand-statement-v7.hero-aqua-editorial-section .brand-statement-inner,
+.brand-statement.brand-statement-v7.hero-aqua-editorial-section .brand-lines,
+.brand-statement.brand-statement-v7.hero-aqua-editorial-section .brand-quote,
+.brand-statement.brand-statement-v7.hero-aqua-editorial-section .brand-origin {
+    display: none !important;
+}
+.hero-aqua-editorial {
+    display: grid; grid-template-columns: 1.1fr 1fr;
+    gap: 40px; align-items: stretch;
+}
+.hero-aqua-editorial-img {
+    border-radius: 44px !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    min-height: 500px;
+    position: relative;
+}
+.hero-aqua-editorial-img picture,
+.hero-aqua-editorial-img img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+    z-index: 1;
+}
+.hero-aqua-editorial-img-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 40%, oklch(18% 0.05 155 / 0.65));
+    z-index: 2;
+}
+.hero-aqua-editorial-img-meta {
+    position: absolute; bottom: 28px; left: 28px; right: 28px;
+    color: #fff !important;
+    z-index: 3;
+}
+.hero-aqua-editorial-img-meta .chip {
+    background: oklch(100% 0 0 / 0.25) !important;
+    color: #fff !important;
+    border: 1px solid oklch(100% 0 0 / 0.4) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    margin-bottom: 14px;
+}
+.hero-aqua-editorial-img-title {
+    font-family: var(--font-display-aqua);
+    font-size: 38px; font-weight: 300;
+    letter-spacing: -0.02em;
+    color: #fff !important;
+    margin: 0;
+}
+.hero-aqua-editorial-img-title em { font-style: italic; font-weight: 300; }
+.hero-aqua-editorial-img-sub {
+    font-size: 14px; opacity: 0.9; margin-top: 8px;
+    max-width: 420px;
+    color: #fff !important;
+    font-family: var(--font-ui-aqua);
+}
+
+.hero-aqua-editorial-quote {
+    border-radius: 44px !important;
+    padding: 56px 48px !important;
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+}
+.hero-aqua-editorial-h2 {
+    font-family: var(--font-display-aqua);
+    font-size: clamp(32px, 3.6vw, 52px);
+    font-weight: 300;
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+    margin: 16px 0 28px;
+    color: var(--bj-ink-emerald) !important;
+}
+.hero-aqua-editorial-h2 em { font-style: italic; font-weight: 300; }
+.hero-aqua-editorial-p {
+    font-size: 16px; line-height: 1.7;
+    color: var(--bj-ink-soft);
+    margin: 0 0 24px;
+    font-family: var(--font-ui-aqua);
+}
+.hero-aqua-editorial-blockquote {
+    font-family: var(--font-display-aqua);
+    font-size: 22px; font-style: italic;
+    color: var(--bj-emerald-800);
+    padding-left: 20px;
+    border-left: 2px solid var(--bj-gold-500);
+    margin: 0 0 28px;
+}
+.hero-aqua-editorial-stats {
+    display: flex; gap: 40px;
+    padding-top: 24px;
+    border-top: 1px solid oklch(100% 0 0 / 0.5);
+}
+.hero-aqua-editorial-stat-num {
+    font-family: var(--font-display-aqua);
+    font-size: 32px;
+    font-weight: 300;
+    color: var(--bj-emerald-800);
+    margin-bottom: 4px;
+}
+
+@media (max-width: 920px) {
+    .hero-aqua-editorial { grid-template-columns: 1fr; }
+    .hero-aqua-editorial-img { min-height: 380px; }
+    .hero-aqua-editorial-quote { padding: 36px 28px !important; border-radius: 32px !important; }
+    .hero-aqua-editorial-stats { gap: 24px; flex-wrap: wrap; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ATELIER — emerald glass with 4 numbered steps
+   ═══════════════════════════════════════════════════════════════════ */
+.hero-aqua-atelier-section { padding: 80px 0; }
+.hero-aqua-atelier {
+    padding: 64px 48px !important;
+    border-radius: 48px !important;
+    position: relative;
+    overflow: hidden !important;
+    background: linear-gradient(145deg,
+        oklch(42% 0.14 155 / 0.65),
+        oklch(28% 0.08 155 / 0.85)) !important;
+    color: #fff !important;
+}
+.hero-aqua-atelier-glow {
+    position: absolute;
+    top: -120px; right: -80px;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, oklch(85% 0.14 85 / 0.4), transparent 70%);
+    filter: blur(40px);
+    pointer-events: none;
+    z-index: 1;
+}
+.hero-aqua-atelier-grid {
+    position: relative; z-index: 2;
+    display: grid; grid-template-columns: 1fr 2fr;
+    gap: 60px;
+    align-items: center;
+}
+.hero-aqua-atelier-copy { color: #fff !important; }
+.hero-aqua-atelier-chip {
+    background: oklch(100% 0 0 / 0.18) !important;
+    color: #fff !important;
+    border: 1px solid oklch(100% 0 0 / 0.3) !important;
+    margin-bottom: 20px;
+}
+.hero-aqua-atelier-h2 {
+    font-family: var(--font-display-aqua);
+    font-size: clamp(36px, 4vw, 56px);
+    font-weight: 300;
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+    margin: 0 0 24px;
+    color: #fff !important;
+    text-shadow: 0 2px 8px oklch(20% 0.05 155 / 0.3);
+}
+.hero-aqua-atelier-h2 em,
+.hero-aqua-atelier-gold {
+    font-style: italic;
+    color: var(--bj-gold-300);
+    font-weight: 300;
+}
+.hero-aqua-atelier-p {
+    font-size: 15px; opacity: 0.88;
+    line-height: 1.7;
+    margin: 0 0 28px;
+    color: #fff !important;
+    font-family: var(--font-ui-aqua);
+}
+.hero-aqua-atelier-steps {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+.hero-aqua-atelier-step {
+    padding: 24px;
+    background: oklch(100% 0 0 / 0.12);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid oklch(100% 0 0 / 0.2);
+    border-radius: 24px;
+    box-shadow: inset 0 1px 0 oklch(100% 0 0 / 0.3);
+    color: #fff !important;
+}
+.hero-aqua-atelier-num {
+    font-size: 11px; opacity: 0.7;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+}
+.hero-aqua-atelier-step-title {
+    font-family: var(--font-display-aqua);
+    font-size: 22px; font-weight: 500;
+    margin-bottom: 8px;
+    color: #fff !important;
+}
+.hero-aqua-atelier-step-desc {
+    font-size: 12px; opacity: 0.82;
+    line-height: 1.6;
+    color: #fff !important;
+    font-family: var(--font-ui-aqua);
+}
+
+@media (max-width: 920px) {
+    .hero-aqua-atelier-grid { grid-template-columns: 1fr; gap: 32px; }
+    .hero-aqua-atelier { padding: 40px 28px !important; border-radius: 32px !important; }
+    .hero-aqua-atelier-steps { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+    .hero-aqua-atelier-steps { grid-template-columns: 1fr; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CTA CARTAGENA — glass-iridescent with gold halo
+   ═══════════════════════════════════════════════════════════════════ */
+.hero-aqua-cta-section { padding: 80px 0 !important; background: transparent !important; }
+.cta-banner.cta-v7.hero-aqua-cta-section .cta-inner,
+.cta-banner.cta-v7.hero-aqua-cta-section .cta-content,
+.cta-banner.cta-v7.hero-aqua-cta-section .cta-accent-line { display: none !important; }
+.hero-aqua-cta {
+    padding: 72px 48px !important;
+    border-radius: 48px !important;
+    text-align: center;
+    position: relative;
+    overflow: hidden !important;
+}
+.hero-aqua-cta-halo {
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 600px; height: 300px;
+    background: radial-gradient(ellipse, oklch(88% 0.13 88 / 0.5), transparent 70%);
+    filter: blur(40px);
+    pointer-events: none;
+    z-index: 1;
+}
+.hero-aqua-cta-content { position: relative; z-index: 2; }
+.hero-aqua-cta-title {
+    font-family: var(--font-display-aqua);
+    font-size: clamp(38px, 5vw, 72px);
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin: 16px 0 20px;
+    color: var(--bj-ink-emerald) !important;
+}
+.hero-aqua-cta-title em { font-style: italic; font-weight: 300; }
+.hero-aqua-cta-lead {
+    font-size: 16px;
+    color: var(--bj-ink-soft);
+    max-width: 520px;
+    margin: 0 auto 32px;
+    font-family: var(--font-ui-aqua);
+}
+.hero-aqua-cta-actions {
+    display: flex; gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 620px) {
+    .hero-aqua-cta { padding: 48px 24px !important; border-radius: 32px !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   COLLECTIONS / FEATURED / SERVICES — apply iridescent + glass to JS-rendered cards
+   ═══════════════════════════════════════════════════════════════════ */
+.collections-v7 .collection-panel,
+.featured-v7 .piece-card {
+    border-radius: 30px !important;
+}
+.collections-v7 .collection-panel::after,
+.featured-v7 .piece-card::after {
+    content: "";
+    position: absolute; inset: 0;
+    padding: 1.5px;
+    border-radius: inherit;
+    background: var(--iridescent-rim);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    opacity: 0.35;
+    pointer-events: none;
+    transition: opacity 0.4s;
+}
+.collections-v7 .collection-panel:hover::after,
+.featured-v7 .piece-card:hover::after {
+    opacity: 0.7;
+}
+
+.services-v7 .svc-card {
+    border-radius: 28px !important;
+}

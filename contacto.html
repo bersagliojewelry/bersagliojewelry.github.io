@@ -46,11 +46,16 @@
     <main>
 
         <!-- Hero -->
-        <section class="page-hero">
+        <section class="page-hero hero-aqua-page">
             <div class="container">
-                <span class="page-hero-eyebrow">Estamos aquí</span>
-                <h1 class="page-hero-title">Hablemos de alta joyería</h1>
-                <p class="page-hero-sub">Cada consulta es atendida con discreción y dedicación</p>
+                <nav class="breadcrumb glass glass-pill" aria-label="Breadcrumb">
+                    <a href="/">Inicio</a>
+                    <span aria-hidden="true">›</span>
+                    <span aria-current="page">Contacto</span>
+                </nav>
+                <span class="section-eyebrow">Estamos aquí</span>
+                <h1 class="page-hero-title hero-aqua-page-title">Hablemos de <em class="emerald-text">alta joyería</em></h1>
+                <p class="page-hero-sub hero-aqua-page-lead">Cada consulta es atendida con discreción y dedicación.</p>
             </div>
         </section>
 
@@ -109,46 +114,69 @@
                         </div>
                     </div>
 
-                    <!-- Contact form -->
-                    <div class="contact-form-wrapper animate-on-scroll">
-                        <form class="contact-form" id="contactForm" novalidate>
-                            <h3 class="form-title">Solicita información</h3>
+                    <!-- Contact form (Liquid Glass) -->
+                    <div class="contact-form-wrapper">
+                        <form class="glass glass-iridescent contact-form contact-form-aqua" id="contactForm" novalidate>
+                            <span class="section-eyebrow">Cuéntanos</span>
+                            <h3 class="form-title contact-form-title">Solicita <em class="emerald-text">información</em></h3>
 
-                            <div class="form-field">
-                                <input type="text" id="contactName" name="name" placeholder=" " required autocomplete="name">
+                            <!-- Motivo pills -->
+                            <div class="contact-motivo-pills" role="radiogroup" aria-label="Motivo de la consulta">
+                                <input type="radio" name="motivo" id="motivo-esmeraldas" value="esmeraldas">
+                                <label for="motivo-esmeraldas" class="motivo-pill">
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="12,2 22,8.5 12,22 2,8.5"/></svg>
+                                    Esmeraldas
+                                </label>
+
+                                <input type="radio" name="motivo" id="motivo-personalizado" value="personalizado" checked>
+                                <label for="motivo-personalizado" class="motivo-pill">
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                                    Diseño a medida
+                                </label>
+
+                                <input type="radio" name="motivo" id="motivo-asesoria" value="asesoria">
+                                <label for="motivo-asesoria" class="motivo-pill">
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                    Asesoría privada
+                                </label>
+
+                                <input type="radio" name="motivo" id="motivo-garantia" value="garantia">
+                                <label for="motivo-garantia" class="motivo-pill">
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                    Garantía
+                                </label>
+
+                                <input type="radio" name="motivo" id="motivo-otro" value="otro">
+                                <label for="motivo-otro" class="motivo-pill">Otro</label>
+                            </div>
+
+                            <!-- Hidden mirror for legacy interest field (kept for backend compat) -->
+                            <input type="hidden" id="contactInterest" name="interest" value="personalizado">
+
+                            <div class="form-field-aqua">
                                 <label for="contactName">Nombre completo</label>
+                                <input type="text" id="contactName" name="name" required autocomplete="name" placeholder="Tu nombre">
                             </div>
 
-                            <div class="form-field">
-                                <input type="email" id="contactEmail" name="email" placeholder=" " required autocomplete="email">
+                            <div class="form-field-aqua">
                                 <label for="contactEmail">Correo electrónico</label>
+                                <input type="email" id="contactEmail" name="email" required autocomplete="email" placeholder="tu@email.com">
                             </div>
 
-                            <div class="form-field">
-                                <input type="tel" id="contactPhone" name="phone" placeholder=" " autocomplete="tel">
+                            <div class="form-field-aqua">
                                 <label for="contactPhone">Teléfono <span class="form-label-optional">(opcional)</span></label>
+                                <input type="tel" id="contactPhone" name="phone" autocomplete="tel" placeholder="+57 ...">
                             </div>
 
-                            <div class="form-field form-field--select">
-                                <select id="contactInterest" name="interest" required>
-                                    <option value="" disabled selected></option>
-                                    <option value="esmeraldas">Esmeraldas Colombianas</option>
-                                    <option value="diamantes">Diamantes</option>
-                                    <option value="oro">Piezas en Oro</option>
-                                    <option value="compromiso">Anillos de Compromiso</option>
-                                    <option value="personalizado">Diseño Personalizado</option>
-                                    <option value="otro">Otro</option>
-                                </select>
-                                <label for="contactInterest">¿Qué te interesa?</label>
-                                <svg class="form-select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13" aria-hidden="true"><polyline points="6,9 12,15 18,9"/></svg>
-                            </div>
-
-                            <div class="form-field form-field--textarea">
-                                <textarea id="contactMessage" name="message" rows="4" placeholder=" "></textarea>
+                            <div class="form-field-aqua">
                                 <label for="contactMessage">Cuéntanos sobre lo que buscas</label>
+                                <textarea id="contactMessage" name="message" rows="4" placeholder="Describe la pieza que imaginas, ocasión, presupuesto aproximado..."></textarea>
                             </div>
 
-                            <button type="submit" class="btn btn-primary btn-full">Enviar Consulta</button>
+                            <button type="submit" class="btn-aqua btn-aqua-emerald contact-form-submit">
+                                Enviar consulta
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                            </button>
                             <p class="form-note">Responderemos en menos de 24 horas</p>
                         </form>
                     </div>
@@ -158,12 +186,19 @@
         </section>
 
         <!-- Services CTA -->
-        <section class="cta-banner">
+        <section class="cta-banner cta-v7 hero-aqua-cta-section">
             <div class="container">
-                <div class="cta-inner animate-on-scroll">
-                    <h2 class="cta-title">¿Prefieres vernos en persona?</h2>
-                    <p class="cta-desc">Visítanos en el Centro Histórico de Cartagena de Indias y vive la experiencia Bersaglio de cerca.</p>
-                    <a href="servicios.html#personalizado" class="btn btn-primary btn-lg">Ver nuestros servicios</a>
+                <div class="glass glass-iridescent hero-aqua-cta">
+                    <div class="hero-aqua-cta-halo" aria-hidden="true"></div>
+                    <div class="hero-aqua-cta-content">
+                        <span class="section-eyebrow">Visita nuestra casa</span>
+                        <h2 class="hero-aqua-cta-title">¿Prefieres<br><em class="emerald-text">vernos en persona?</em></h2>
+                        <p class="hero-aqua-cta-lead">Visítanos en el Centro Histórico de Cartagena de Indias y vive la experiencia Bersaglio de cerca.</p>
+                        <div class="hero-aqua-cta-actions">
+                            <a href="servicios.html#personalizado" class="btn-aqua btn-aqua-emerald">Ver nuestros servicios</a>
+                            <a href="https://maps.app.goo.gl/9p5cjFQpqMjLeXti8" target="_blank" rel="noopener noreferrer" class="btn-aqua">Cómo llegar</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -185,10 +220,19 @@
     <script type="module" src="js/page.js"></script>
     <script type="module">
         import { initFormExperience } from './js/effects/form.js';
-        // Wait for page.js to inject the header/footer, then init the form
         document.addEventListener('DOMContentLoaded', () => {
-            // Small delay ensures components.js has finished
-            requestAnimationFrame(() => initFormExperience('#contactForm'));
+            requestAnimationFrame(() => {
+                initFormExperience('#contactForm');
+
+                // Sync motivo pill selection → hidden #contactInterest field
+                // (preserves the existing backend payload contract)
+                const interestField = document.getElementById('contactInterest');
+                document.querySelectorAll('input[name="motivo"]').forEach(radio => {
+                    radio.addEventListener('change', () => {
+                        if (radio.checked && interestField) interestField.value = radio.value;
+                    });
+                });
+            });
         });
     </script>
 

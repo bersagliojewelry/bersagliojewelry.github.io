@@ -7,6 +7,7 @@ import { loadAllComponents }   from './components.js';
 import { renderFeaturedPieces } from './components/featured.js';
 import { renderServices }      from './components/services.js';
 import { renderJournal }       from './components/journal.js';
+import { renderCategoriesDock, initCategoriesDock } from './components/categories-dock.js';
 // renderCollections + renderLookbook removed — replaced by aqua categories dock + design has no lookbook
 import Renderer from './utils/renderer.js';
 import db       from './data/catalog.js';
@@ -35,12 +36,14 @@ async function initApp() {
     };
 
     const renderAllSections = (label = '') => {
+        safeRender(renderCategoriesDock, `renderCategoriesDock${label}`);
         safeRender(renderFeaturedPieces, `renderFeaturedPieces${label}`);
         safeRender(renderJournal,        `renderJournal${label}`);
         safeRender(renderServices,       `renderServices${label}`);
     };
 
     renderAllSections();
+    safeRender(initCategoriesDock, 'initCategoriesDock');
 
     Renderer.initScrollAnimations();
     Renderer.initLazyImages();

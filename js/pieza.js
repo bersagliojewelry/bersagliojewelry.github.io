@@ -14,6 +14,7 @@ import Renderer                from './utils/renderer.js';
 import db                      from './data/catalog.js';
 import { getRecommendations, trackView } from './recommendations.js';
 import { buildProductSchema, injectJsonLd } from './utils/schema.js';
+import { renderPieceCardHTML, wirePieceCardActions } from './components/piece-card.js';
 import { initSkeletonShimmer } from './skeleton.js';
 import { initPrefetch }        from './prefetch.js';
 
@@ -214,99 +215,107 @@ function renderPiece(piece) {
             </tr>
         `).join('');
 
+    // Specs grid (4 cells max for visual balance)
+    const SPEC_PRIORITY = ['stone', 'carat', 'metal', 'cut', 'color', 'clarity', 'weight', 'accent'];
+    const topSpecs = SPEC_PRIORITY
+        .filter(k => piece.specs?.[k])
+        .slice(0, 4)
+        .map(k => ({ label: specLabels[k] || k, value: piece.specs[k] }));
+
     container.innerHTML = `
-        <!-- Breadcrumb -->
-        <nav class="breadcrumb animate-on-scroll" aria-label="Breadcrumb">
-            <a href="colecciones.html">Colecciones</a>
+        <!-- Glass-pill breadcrumb -->
+        <nav class="breadcrumb glass glass-pill pieza-breadcrumb" aria-label="Breadcrumb">
+            <a href="/">Inicio</a>
             <span aria-hidden="true">›</span>
-            ${collection ? `<a href="${collection.slug}.html">${collection.name}</a>` : ''}
-            ${collection ? `<span aria-hidden="true">›</span>` : ''}
+            <a href="colecciones.html">Colecciones</a>
+            ${collection ? `<span aria-hidden="true">›</span><a href="${collection.slug}.html">${collection.name}</a>` : ''}
+            <span aria-hidden="true">›</span>
             <span aria-current="page">${piece.name}</span>
         </nav>
 
-        <div class="pieza-layout">
+        <div class="pieza-layout pieza-aqua-layout">
 
             <!-- Gallery -->
             <div class="pieza-gallery">
-                <div class="pieza-main-image animate-on-scroll">
+                <div class="glass glass-iridescent pieza-main-image">
                     ${piece.image
                         ? `<img src="${piece.image}" alt="${piece.name}" class="pieza-img">`
-                        : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.7" width="120" height="120">
-                            <polygon points="12,2 22,8.5 12,22 2,8.5"/>
-                            <line x1="2" y1="8.5" x2="22" y2="8.5"/>
-                            <polyline points="7,2 12,8.5 17,2"/>
-                        </svg>`}
+                        : `<div class="pieza-placeholder" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.7" width="120" height="120">
+                                <polygon points="12,2 22,8.5 12,22 2,8.5"/>
+                                <line x1="2" y1="8.5" x2="22" y2="8.5"/>
+                                <polyline points="7,2 12,8.5 17,2"/>
+                            </svg>
+                        </div>`}
                 </div>
                 ${piece.images?.length > 1 ? `
                 <div class="pieza-thumbs">
                     ${piece.images.map((img, i) => `
-                        <button class="pieza-thumb ${i === 0 ? 'is-active' : ''}" data-img="${img}">
+                        <button class="glass pieza-thumb ${i === 0 ? 'is-active' : ''}" data-img="${img}" aria-label="Foto ${i + 1}">
                             <img src="${img}" alt="${piece.name} foto ${i + 1}" loading="lazy">
                         </button>
                     `).join('')}
                 </div>` : ''}
             </div>
 
-            <!-- Info -->
-            <div class="pieza-info animate-on-scroll">
+            <!-- Info card -->
+            <div class="glass pieza-info">
 
-                ${piece.badge ? `
+                ${piece.badge || piece.specs?.certificate ? `
                     <div class="pieza-badge-row">
-                        <span class="piece-badge">${piece.badge}</span>
-                        ${piece.specs?.certificate ? `<span class="piece-badge" style="background: rgba(201,168,76,0.15); color: var(--gold);">${piece.specs.certificate}</span>` : ''}
+                        ${piece.badge ? `<span class="chip pieza-badge"><span class="chip-dot"></span>${piece.badge}</span>` : ''}
+                        ${piece.specs?.certificate ? `<span class="chip pieza-badge pieza-badge--cert">${piece.specs.certificate}</span>` : ''}
                     </div>
                 ` : ''}
 
-                ${collection ? `<a href="${collection.slug}.html" class="pieza-collection-link">${collection.name}</a>` : ''}
+                ${collection ? `<a href="${collection.slug}.html" class="pieza-collection-link section-eyebrow">${collection.name}</a>` : ''}
 
                 <h1 class="pieza-name">${piece.name}</h1>
                 <p class="pieza-desc">${piece.description}</p>
 
-                <!-- Specs table -->
-                <table class="pieza-specs-table" aria-label="Especificaciones de la pieza">
-                    <tbody>
-                        ${specsRows}
-                    </tbody>
-                </table>
+                <!-- Specs grid (glass cards) -->
+                ${topSpecs.length ? `
+                <div class="pieza-specs-grid">
+                    ${topSpecs.map(s => `
+                        <div class="glass pieza-spec-cell">
+                            <div class="pieza-spec-label">${s.label}</div>
+                            <div class="pieza-spec-value">${s.value}</div>
+                        </div>
+                    `).join('')}
+                </div>` : ''}
 
                 <!-- Price -->
                 <div class="pieza-price-row">
-                    <span class="pieza-price">${piece.priceLabel}</span>
+                    <span class="section-eyebrow">Inversión</span>
+                    <span class="pieza-price mono">${piece.priceLabel}</span>
                 </div>
 
                 <!-- CTAs -->
                 <div class="pieza-cta-group">
-                    <a href="#" class="btn btn-primary" id="pieza-wa-btn" target="_blank" rel="noopener noreferrer">
-                        <svg viewBox="0 0 32 32" width="15" height="15" aria-hidden="true">
-                            <path fill="currentColor" d="M16 0C7.163 0 0 7.163 0 16c0 2.825.739 5.488 2.037 7.813L.112 31.488l8.013-2.038C10.413 30.725 13.113 32 16 32c8.837 0 16-7.163 16-16S24.837 0 16 0zm7.35 19.35c-.4-.2-2.363-1.175-2.725-1.3-.363-.125-.625-.2-.888.2-.262.4-1.012 1.3-1.237 1.563-.225.262-.45.3-.85.1-.4-.2-1.688-.625-3.213-2-1.2-1.075-2.013-2.4-2.25-2.8-.238-.4-.025-.613.175-.813.175-.175.4-.45.6-.675.2-.225.263-.375.4-.625.138-.25.063-.475-.025-.675-.088-.2-.888-2.138-1.213-2.925-.325-.788-.65-.675-.888-.688-.225-.012-.475-.012-.725-.012s-.663.088-1.013.438c-.35.35-1.338 1.313-1.338 3.2s1.375 3.713 1.563 3.975c.188.263 2.638 4.025 6.4 5.638.888.388 1.588.625 2.125.8.9.275 1.713.238 2.363.15.725-.113 2.238-.925 2.55-1.8.313-.875.313-1.625.225-1.8z"/>
-                        </svg>
+                    <a href="#" class="btn-aqua btn-aqua-emerald" id="pieza-wa-btn" target="_blank" rel="noopener noreferrer">
+                        <svg viewBox="0 0 32 32" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M16 0C7.163 0 0 7.163 0 16c0 2.825.739 5.488 2.037 7.813L.112 31.488l8.013-2.038C10.413 30.725 13.113 32 16 32c8.837 0 16-7.163 16-16S24.837 0 16 0zm7.35 19.35c-.4-.2-2.363-1.175-2.725-1.3-.363-.125-.625-.2-.888.2-.262.4-1.012 1.3-1.237 1.563-.225.262-.45.3-.85.1-.4-.2-1.688-.625-3.213-2-1.2-1.075-2.013-2.4-2.25-2.8-.238-.4-.025-.613.175-.813.175-.175.4-.45.6-.675.2-.225.263-.375.4-.625.138-.25.063-.475-.025-.675-.088-.2-.888-2.138-1.213-2.925-.325-.788-.65-.675-.888-.688-.225-.012-.475-.012-.725-.012s-.663.088-1.013.438c-.35.35-1.338 1.313-1.338 3.2s1.375 3.713 1.563 3.975c.188.263 2.638 4.025 6.4 5.638.888.388 1.588.625 2.125.8.9.275 1.713.238 2.363.15.725-.113 2.238-.925 2.55-1.8.313-.875.313-1.625.225-1.8z"/></svg>
                         Consultar por WhatsApp
                     </a>
                     <button
-                        class="btn btn-outline piece-cart-btn-lg ${inCart ? 'is-in-cart' : ''}"
+                        class="btn-aqua piece-cart-btn-lg ${inCart ? 'is-in-cart' : ''}"
                         id="pieza-cart-btn"
                         data-cart-slug="${piece.slug}"
                         aria-label="${inCart ? 'Quitar del carrito' : 'Añadir al carrito'}"
                     >
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                         <span class="cart-btn-label">${inCart ? 'En carrito' : 'Añadir al carrito'}</span>
                     </button>
-                </div>
-
-                <!-- Wishlist row -->
-                <div style="display: flex; align-items: center; gap: 10px;">
                     <button
-                        class="piece-wishlist-btn ${inWishlist ? 'is-saved' : ''}"
+                        class="btn-aqua piece-wishlist-btn-lg ${inWishlist ? 'is-saved' : ''}"
                         id="pieza-wishlist-btn"
                         data-wishlist-slug="${piece.slug}"
                         aria-label="${inWishlist ? 'Quitar de lista de deseos' : 'Añadir a lista de deseos'}"
-                        style="position: static; width: auto; height: auto; background: transparent; box-shadow: none; padding: 0;"
+                        title="Guardar en lista de deseos"
                     >
-                        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="${inWishlist ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                         </svg>
                     </button>
-                    <span style="font-family: var(--font-body); font-size: 12px; color: var(--text-muted);">Guardar en lista de deseos</span>
                 </div>
 
                 <p class="pieza-note">Certificación incluida · Envío asegurado · Atención personalizada</p>
@@ -479,72 +488,23 @@ function renderRelatedPieces(piece) {
     if (!container) return;
 
     const related = getRecommendations(piece, db.getAll(), 3);
-
     if (!related.length) return;
 
-    const specLabelsLocal = {
-        stone: 'Piedra', carat: 'Quilates', metal: 'Metal', cut: 'Talla',
-    };
-
-    const cards = related.map(p => {
-        const inCart     = cart.has(p.slug);
-        const inWishlist = wishlist.has(p.slug);
-        const mainSpec   = p.specs?.stone || p.specs?.metal || '';
-
-        return `
-            <article class="related-card animate-on-scroll">
-                <a href="pieza.html?p=${p.slug}" class="related-card-img" aria-label="${p.name}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.7" width="64" height="64" aria-hidden="true">
-                        <polygon points="12,2 22,8.5 12,22 2,8.5"/>
-                        <line x1="2" y1="8.5" x2="22" y2="8.5"/>
-                        <polyline points="7,2 12,8.5 17,2"/>
-                    </svg>
-                    ${p.badge ? `<span class="piece-badge related-badge">${p.badge}</span>` : ''}
-                </a>
-                <div class="related-card-body">
-                    ${mainSpec ? `<span class="related-card-spec">${mainSpec}</span>` : ''}
-                    <a href="pieza.html?p=${p.slug}" class="related-card-name">${p.name}</a>
-                    <span class="related-card-price">${p.priceLabel}</span>
-                </div>
-                <div class="related-card-actions">
-                    <button
-                        class="piece-action-btn wishlist-action ${inWishlist ? 'is-saved' : ''}"
-                        data-wishlist-slug="${p.slug}"
-                        aria-label="${inWishlist ? 'Quitar de lista de deseos' : 'Añadir a lista de deseos'}"
-                    >
-                        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                    </button>
-                    <button
-                        class="piece-action-btn cart-action ${inCart ? 'is-in-cart' : ''}"
-                        data-cart-slug="${p.slug}"
-                        aria-label="${inCart ? 'En carrito' : 'Añadir al carrito'}"
-                    >
-                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                    </button>
-                </div>
-            </article>
-        `;
-    }).join('');
+    const cards = related.map(renderPieceCardHTML).join('');
 
     const section = document.createElement('section');
-    section.className = 'related-section';
+    section.className = 'related-section pieza-related-section';
     const hasCollectionMatch = related.some(p => p.collection === piece.collection);
     section.innerHTML = `
         <div class="related-header animate-on-scroll">
             <span class="section-eyebrow">${hasCollectionMatch ? 'De la misma colección' : 'Piezas seleccionadas'}</span>
-            <h2 class="related-title">También te puede interesar</h2>
+            <h2 class="pieza-related-title">También te puede <em class="emerald-text">interesar</em></h2>
         </div>
-        <div class="related-grid">${cards}</div>
+        <div class="related-grid featured-grid">${cards}</div>
     `;
     container.appendChild(section);
 
-    // Init wishlist + cart on the related section
-    wishlist.initButtons(section, (_slug, added) => {
-        toast.show(added ? 'Añadida a lista de deseos' : 'Eliminada de la lista', added ? 'added' : 'removed');
-    });
-    cart.initButtons(section, (_slug, added) => {
-        toast.show(added ? 'Añadida al carrito' : 'Eliminada del carrito', added ? 'added' : 'removed');
-    });
+    wirePieceCardActions(section);
 }
 
 /* ─── GSAP entrance for piece detail ────────────────────────── */

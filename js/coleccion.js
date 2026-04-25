@@ -6,11 +6,9 @@
 
 import { loadAllComponents }   from './components.js';
 import { initEffects }         from './effects.js';
-import { wishlist }            from './wishlist.js';
-import { cart }                from './cart.js';
-import { toast }               from './toast.js';
 import Renderer                from './utils/renderer.js';
 import db                      from './data/catalog.js';
+import { renderPieceCardHTML, wirePieceCardActions } from './components/piece-card.js';
 import { buildProductListSchema, injectJsonLd } from './utils/schema.js';
 import { initSkeletonShimmer } from './skeleton.js';
 import { initPrefetch }        from './prefetch.js';
@@ -128,83 +126,24 @@ function renderPieces(col, slug) {
 
     if (!pieces.length) {
         grid.innerHTML = `
-            <div class="col-empty animate-on-scroll">
-                <div style="color: var(--border); margin-bottom: var(--space-lg);">
+            <div class="col-empty">
+                <div style="color: var(--bj-emerald-300); margin-bottom: 28px; display: flex; justify-content: center;">
                     ${collectionIcons[slug] || collectionIcons['anillos']}
                 </div>
-                <p style="font-family: var(--font-display); font-size: 1.4rem; font-weight: 300; color: var(--text-muted);">
+                <p style="font-family: var(--font-display-aqua); font-size: 1.4rem; font-weight: 300; color: var(--bj-ink-soft); text-align: center;">
                     Próximamente en esta colección
                 </p>
-                <a href="contacto.html" class="btn btn-outline" style="margin-top: var(--space-lg);">
-                    Consultar disponibilidad
-                </a>
+                <div style="text-align:center; margin-top: 24px;">
+                    <a href="contacto.html" class="btn-aqua btn-aqua-emerald">Consultar disponibilidad</a>
+                </div>
             </div>`;
         return;
     }
 
-    grid.innerHTML = pieces.map(p => {
-        const inWishlist = wishlist.has(p.slug);
-        const inCart     = cart.has(p.slug);
-        const mainSpec   = p.specs?.stone || p.specs?.metal || '';
+    grid.innerHTML = pieces.map(renderPieceCardHTML).join('');
 
-        return `
-            <article class="piece-card animate-on-scroll">
-                <a href="pieza.html?p=${p.slug}" class="piece-card-img" aria-label="Ver ${p.name}">
-                    <div class="piece-card-visual">
-                        ${p.image
-                            ? `<img src="${p.image}" alt="${p.name}" class="piece-card-img-real" loading="lazy">`
-                            : (collectionIcons[p.collection] || collectionIcons['anillos'])}
-                    </div>
-                    ${p.badge ? `<span class="piece-badge">${p.badge}</span>` : ''}
-                    <div class="piece-card-actions">
-                        <button
-                            class="piece-action-btn wishlist-action ${inWishlist ? 'is-saved' : ''}"
-                            data-wishlist-slug="${p.slug}"
-                            aria-label="${inWishlist ? 'Quitar de lista de deseos' : 'Añadir a lista de deseos'}"
-                            title="Lista de deseos"
-                        >
-                            <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
-                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                            </svg>
-                        </button>
-                        <button
-                            class="piece-action-btn cart-action ${inCart ? 'is-in-cart' : ''}"
-                            data-cart-slug="${p.slug}"
-                            aria-label="${inCart ? 'En carrito' : 'Añadir al carrito'}"
-                            title="Añadir al carrito"
-                        >
-                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-                                <line x1="3" y1="6" x2="21" y2="6"/>
-                                <path d="M16 10a4 4 0 0 1-8 0"/>
-                            </svg>
-                        </button>
-                    </div>
-                </a>
-                <div class="piece-card-body">
-                    ${mainSpec ? `<span class="piece-card-spec">${mainSpec}</span>` : ''}
-                    <h2 class="piece-card-name">
-                        <a href="pieza.html?p=${p.slug}">${p.name}</a>
-                    </h2>
-                    <p class="piece-card-desc">${p.description.length > 100 ? p.description.slice(0, 100) + '…' : p.description}</p>
-                    <div class="piece-card-footer">
-                        <span class="piece-card-price">${p.priceLabel}</span>
-                        <a href="pieza.html?p=${p.slug}" class="btn btn-outline btn-sm">Ver pieza</a>
-                    </div>
-                </div>
-            </article>`;
-    }).join('');
-
-    // Inject Product structured data (JSON-LD) for Google
     injectJsonLd('collection-products-schema', buildProductListSchema(pieces));
-
-    // Init wishlist + cart
-    wishlist.initButtons(grid, (_slug, added) => {
-        toast.show(added ? 'Añadida a lista de deseos' : 'Eliminada de la lista', added ? 'added' : 'removed');
-    });
-    cart.initButtons(grid, (_slug, added) => {
-        toast.show(added ? 'Añadida al carrito' : 'Eliminada del carrito', added ? 'added' : 'removed');
-    });
+    wirePieceCardActions(grid);
 }
 
 function initWhatsAppButton(col) {

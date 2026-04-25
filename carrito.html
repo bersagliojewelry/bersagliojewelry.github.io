@@ -29,11 +29,16 @@
     <main>
 
         <!-- Hero -->
-        <section class="page-hero">
+        <section class="page-hero hero-aqua-page">
             <div class="container">
-                <span class="page-hero-eyebrow">Tu selección</span>
-                <h1 class="page-hero-title">Carrito</h1>
-                <p class="page-hero-sub">Piezas que has guardado para consultar o adquirir</p>
+                <nav class="breadcrumb glass glass-pill" aria-label="Breadcrumb">
+                    <a href="/">Inicio</a>
+                    <span aria-hidden="true">›</span>
+                    <span aria-current="page">Carrito</span>
+                </nav>
+                <span class="section-eyebrow">Tu selección</span>
+                <h1 class="page-hero-title hero-aqua-page-title">Tu <em class="emerald-text">carrito</em></h1>
+                <p class="page-hero-sub hero-aqua-page-lead">Piezas que has guardado para consultar o adquirir.</p>
             </div>
         </section>
 
@@ -59,7 +64,7 @@
                 </div>
 
                 <!-- Pieces grid -->
-                <div id="cart-grid" class="pieces-grid"></div>
+                <div id="cart-grid" class="pieces-grid featured-grid"></div>
 
                 <!-- Empty state -->
                 <div id="cart-empty" class="wishlist-empty" hidden>

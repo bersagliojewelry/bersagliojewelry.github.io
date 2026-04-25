@@ -1522,3 +1522,589 @@ a:hover { color: var(--bj-emerald-800); }
 .services-v7 .svc-card {
     border-radius: 28px !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   TOTAL LIGHT THEME SWEEP — eliminate every dark surface leak
+   This block must remain at the bottom of the file (highest cascade weight).
+   Targets explicit dark backgrounds, text colors, gradients, and shadows
+   that bypass the :root token overrides because they are hardcoded.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Sections + Wrappers: never dark backgrounds ─────────────── */
+section,
+.section,
+main,
+article,
+aside,
+.hero,
+.hero-v7,
+.lookbook-section,
+.lookbook-v7,
+.featured,
+.featured-v7,
+.collections,
+.collections-v7,
+.services,
+.services-v7,
+.journal-preview,
+.journal-v7,
+.about-teaser,
+.about-v7,
+.cta-banner,
+.cta-v7,
+.brand-statement,
+.brand-statement-v7,
+.page-section,
+.section-content,
+.page-content,
+.svc-intro,
+.svc-process-section,
+.team-section,
+.brand-story-section {
+    background-color: transparent !important;
+    background-image: none !important;
+}
+
+/* Re-enable the new aqua sections we WANT to keep their bg */
+.hero-aqua-atelier,
+.hero-aqua-cta,
+.hero-aqua-editorial-img,
+.hero-aqua-editorial-quote,
+.hero-aqua-marquee,
+.hero-aqua-cats-dock {
+    /* These come from .glass / inline rules and use translucent pearl bg */
+}
+
+/* ── 2. Text colors: kill any "white on dark" leakage ───────────── */
+body,
+main,
+section,
+article,
+aside,
+.section,
+.hero,
+.hero-v7,
+.featured,
+.featured-v7,
+.collections,
+.collections-v7,
+.services,
+.services-v7,
+.journal-preview,
+.journal-v7,
+.about-teaser,
+.about-v7,
+.cta-banner,
+.cta-v7,
+.brand-statement,
+.brand-statement-v7,
+.page-hero,
+.svc-intro,
+.svc-process-section,
+.team-section,
+.brand-story-section,
+.nosotros-section,
+.contacto-section,
+.cart-section,
+.wishlist-section,
+.journal-section,
+.entrada-section,
+.pieza-section {
+    color: var(--bj-ink-emerald);
+}
+
+/* ── 3. Headers + Nav: must always be glass-light ───────────────── */
+.header,
+.header.scrolled,
+nav,
+.nav,
+.nav-bar,
+.dropdown-menu,
+.nav-dropdown-menu,
+.nav-menu,
+.mobile-menu,
+.search-overlay {
+    color: var(--bj-ink-emerald) !important;
+}
+.header,
+.nav-bar { background: transparent !important; }
+
+/* ── 4. Footer: light glass ─────────────────────────────────────── */
+.footer,
+.footer-content,
+footer {
+    background: oklch(96% 0.02 150 / 0.55) !important;
+    background-image: none !important;
+    color: var(--bj-ink-emerald) !important;
+    border-top: 1px solid oklch(100% 0 0 / 0.5) !important;
+}
+.footer *:not(.btn):not(.btn-primary):not(.btn-aqua):not(.btn-aqua-emerald):not(.btn-aqua-gold) {
+    color: var(--bj-ink-emerald) !important;
+}
+.footer a:not(.btn) { color: var(--bj-ink-soft) !important; }
+.footer a:not(.btn):hover { color: var(--bj-emerald-700) !important; }
+
+/* ── 5. Hero V7 legacy media + ticker (now hidden in hero-aqua) ── */
+.hero.hero-v7 .hero-bg-img,
+.hero.hero-v7 picture,
+.hero.hero-v7 .hero-overlay,
+.hero.hero-v7 .hero-canvas,
+.hero.hero-v7 .hero-accent-line,
+.hero.hero-v7 .hero-content,
+.hero.hero-v7 .hero-ticker,
+.hero.hero-v7 .hero-watermark {
+    display: none !important;
+}
+
+/* ── 6. JS-rendered cards that bake dark gradients inline ───────── */
+.piece-card,
+.piece-card *,
+.piece-info,
+.collection-panel,
+.collection-panel *,
+.svc-card,
+.svc-card *,
+.journal-hero-card,
+.journal-grid-card,
+.related-card,
+.review-card,
+.cart-card,
+.cart-summary,
+.wishlist-card,
+.contact-channel,
+.team-card,
+.brand-story-card {
+    color: var(--bj-ink-emerald);
+}
+
+/* Card buttons inside dark-themed widgets stay white-on-emerald */
+.piece-card .btn,
+.piece-card .piece-btn.primary,
+.collection-panel .btn,
+.collection-panel .btn-primary {
+    color: #fff !important;
+}
+
+/* ── 7. Specific dark gradient overrides by selector pattern ────── */
+.featured-v7,
+.featured,
+.collections-v7,
+.collections,
+.services-v7,
+.services,
+.cta-banner,
+.cta-v7,
+.brand-statement-v7,
+.about-teaser,
+.about-v7,
+.journal-preview,
+.journal-v7,
+.lookbook-section,
+.lookbook-v7,
+.section-bg-emerald,
+.section-bg-dark,
+.bg-emerald-marble {
+    background: transparent !important;
+    background-image: none !important;
+}
+
+/* ── 8. Page hero overrides for inner pages ─────────────────────── */
+.page-hero,
+.page-hero-section,
+.page-hero-inner,
+.page-hero-container {
+    background: oklch(96% 0.02 150 / 0.45) !important;
+    background-image: none !important;
+    color: var(--bj-ink-emerald) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+}
+.page-hero h1,
+.page-hero .page-hero-title,
+.page-hero-title {
+    color: var(--bj-ink-emerald) !important;
+}
+.page-hero p,
+.page-hero .page-hero-subtitle,
+.page-hero-subtitle {
+    color: var(--bj-ink-soft) !important;
+}
+
+/* ── 9. Pieza detail page surfaces ──────────────────────────────── */
+.pieza-main-image,
+.pieza-thumbs,
+.pieza-info,
+.pieza-spec-grid,
+.pieza-spec-card,
+.pieza-cta-card,
+.pieza-guarantees,
+.pieza-related,
+.related-pieces {
+    background: var(--aqua-bg) !important;
+    background-image: none !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    color: var(--bj-ink-emerald) !important;
+    box-shadow: var(--aqua-highlight), 0 10px 30px -8px oklch(28% 0.08 155 / 0.18) !important;
+}
+.pieza-main-image,
+.pieza-thumb {
+    background: oklch(94% 0.02 150 / 0.4) !important;
+}
+
+/* ── 10. Cart + wishlist surfaces ───────────────────────────────── */
+.cart-list,
+.cart-item,
+.cart-card,
+.cart-summary,
+.cart-summary-card,
+.cart-inquiry,
+.cart-inquiry-note,
+.cart-empty,
+.wishlist-list,
+.wishlist-item,
+.wishlist-card,
+.wishlist-empty,
+.wishlist-actions,
+.checkout-summary,
+.checkout-card {
+    background: var(--aqua-bg) !important;
+    background-image: none !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    color: var(--bj-ink-emerald) !important;
+    box-shadow: var(--aqua-highlight), 0 10px 30px -8px oklch(28% 0.08 155 / 0.18) !important;
+}
+
+/* ── 11. Contact page ───────────────────────────────────────────── */
+.contact-form,
+.contact-channel,
+.contact-grid,
+.contact-card,
+.contact-info,
+.contact-map {
+    background: var(--aqua-bg) !important;
+    background-image: none !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    color: var(--bj-ink-emerald) !important;
+}
+.contact-form { box-shadow: var(--aqua-highlight) !important; }
+
+/* ── 12. Nosotros + Servicios ───────────────────────────────────── */
+.nosotros-hero,
+.nosotros-section,
+.nosotros-content,
+.team-grid,
+.team-card,
+.brand-story-card,
+.brand-story-section,
+.values-grid,
+.value-card,
+.timeline,
+.timeline-item,
+.svc-intro,
+.svc-card,
+.svc-process-step,
+.svc-process-grid,
+.svc-cta {
+    background: var(--aqua-bg) !important;
+    background-image: none !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    color: var(--bj-ink-emerald) !important;
+    box-shadow: var(--aqua-highlight), 0 10px 30px -8px oklch(28% 0.08 155 / 0.18) !important;
+}
+.svc-intro { background: transparent !important; box-shadow: none !important; }
+
+/* ── 13. Journal + entrada ──────────────────────────────────────── */
+.journal-hero-card,
+.journal-grid-card,
+.journal-grid-section,
+.entrada-content,
+.entrada-card,
+.entry-content,
+.entry-card,
+.entry-meta,
+.entry-author {
+    background: var(--aqua-bg) !important;
+    background-image: none !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    color: var(--bj-ink-emerald) !important;
+}
+.journal-grid-section { background: transparent !important; }
+
+/* ── 14. Catalog filters ────────────────────────────────────────── */
+.catalog-filters,
+.catalog-filters-bar,
+.catalog-filter-btn:not(.is-active):not(:hover) {
+    background: var(--aqua-bg) !important;
+    background-image: none !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    color: var(--bj-ink-emerald) !important;
+}
+
+/* ── 15. Forms & inputs everywhere ──────────────────────────────── */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="search"],
+input[type="password"],
+input[type="number"],
+input[type="url"],
+textarea,
+select,
+.form-input,
+.form-textarea,
+.form-select {
+    background: oklch(100% 0 0 / 0.6) !important;
+    background-image: none !important;
+    backdrop-filter: blur(12px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(160%) !important;
+    border: 1px solid oklch(100% 0 0 / 0.6) !important;
+    color: var(--bj-ink-emerald) !important;
+}
+input::placeholder, textarea::placeholder, select::placeholder { color: var(--bj-ink-mute) !important; }
+input:focus, textarea:focus, select:focus {
+    background: oklch(100% 0 0 / 0.78) !important;
+    border-color: oklch(82% 0.14 85 / 0.6) !important;
+    box-shadow: 0 0 0 3px oklch(82% 0.14 85 / 0.18) !important;
+    outline: none !important;
+}
+label,
+.form-label,
+.form-help,
+.field-label {
+    color: var(--bj-ink-soft) !important;
+}
+
+/* ── 16. Toast, modal, drawer surfaces ──────────────────────────── */
+.toast,
+.toast-container,
+.modal,
+.modal-content,
+.modal-overlay,
+.drawer,
+.drawer-content,
+.search-overlay,
+.cookie-consent,
+.email-capture-modal,
+.preloader,
+#preloader,
+.preloader-content {
+    background: oklch(98% 0.005 90 / 0.94) !important;
+    background-image: none !important;
+    backdrop-filter: blur(28px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+    border: var(--aqua-border) !important;
+    color: var(--bj-ink-emerald) !important;
+    box-shadow: var(--glass-shadow-lg) !important;
+}
+.modal-overlay,
+.drawer-overlay {
+    background: oklch(28% 0.08 155 / 0.35) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+.preloader { background: var(--bj-pearl) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; box-shadow: none !important; border: none !important; }
+
+/* ── 17. Buttons baseline ───────────────────────────────────────── */
+.btn,
+.btn-primary,
+.btn-lg.cta-v7-btn {
+    color: #fff !important;
+    background: linear-gradient(180deg, oklch(65% 0.19 155), oklch(42% 0.14 155)) !important;
+    background-image: linear-gradient(180deg, oklch(65% 0.19 155), oklch(42% 0.14 155)) !important;
+    border: 1px solid oklch(68% 0.18 155) !important;
+    text-shadow: 0 1px 1px oklch(20% 0.05 155 / 0.4) !important;
+}
+.btn-secondary,
+.btn-outline,
+.btn-ghost {
+    color: var(--bj-emerald-800) !important;
+    background: oklch(100% 0 0 / 0.55) !important;
+    background-image: none !important;
+    border: 1px solid oklch(100% 0 0 / 0.7) !important;
+    backdrop-filter: blur(14px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
+    text-shadow: none !important;
+}
+.btn-secondary:hover,
+.btn-outline:hover,
+.btn-ghost:hover {
+    background: oklch(100% 0 0 / 0.75) !important;
+    border-color: oklch(82% 0.14 85 / 0.5) !important;
+}
+
+/* ── 18. Whatsapp float button — keep brand green but airy ──────── */
+.whatsapp-float,
+.wa-float,
+.fab-whatsapp {
+    background: linear-gradient(180deg, #25D366, #1ebe59) !important;
+    color: #fff !important;
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 0.6) inset,
+        0 8px 24px -6px oklch(50% 0.18 145 / 0.45) !important;
+    border: 1px solid oklch(70% 0.18 145) !important;
+}
+
+/* ── 19. Borders and dividers — flip dark to translucent gold ──── */
+hr,
+.divider,
+.section-divider,
+.brand-line,
+.cta-accent-line {
+    border-color: oklch(82% 0.14 85 / 0.25) !important;
+    background-color: oklch(82% 0.14 85 / 0.25) !important;
+    color: oklch(82% 0.14 85 / 0.25) !important;
+}
+
+/* ── 20. Pricing / mono numerics: emerald ink, never dark grey ──── */
+.price,
+.piece-price,
+.cart-price,
+.product-price,
+.pieza-price {
+    color: var(--bj-emerald-800) !important;
+    font-family: var(--font-mono) !important;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── 21. Watermark / decorative texts ───────────────────────────── */
+.watermark,
+.hero-watermark,
+.section-watermark,
+.bg-text-decoration {
+    color: var(--bj-emerald-200) !important;
+    opacity: 0.35 !important;
+}
+
+/* ── 22. SCROLLBAR ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent !important; }
+::-webkit-scrollbar-thumb {
+    background: oklch(70% 0.08 155 / 0.4) !important;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: padding-box !important;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: oklch(55% 0.14 155 / 0.6) !important;
+    background-clip: padding-box !important;
+}
+
+/* ── 23. Selection ──────────────────────────────────────────────── */
+::selection {
+    background: oklch(82% 0.14 85 / 0.45) !important;
+    color: var(--bj-ink-emerald) !important;
+}
+
+/* ── 24. Lookbook portfolio cards (Portfolio V5) ────────────────── */
+.lookbook-section,
+.lookbook-v7,
+.ptf-frame,
+.ptf-track,
+.lb-viewport,
+.lb-track {
+    background: transparent !important;
+    background-image: none !important;
+}
+.ptf-card,
+.lb-slide,
+.lb-piece {
+    background: var(--aqua-bg) !important;
+    background-image: none !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    color: var(--bj-ink-emerald) !important;
+    box-shadow: var(--aqua-highlight), 0 10px 30px -8px oklch(28% 0.08 155 / 0.22) !important;
+}
+.ptf-card-img,
+.lb-piece-img,
+.ptf-card-visual {
+    background: oklch(94% 0.02 150 / 0.4) !important;
+}
+.ptf-card-name,
+.lb-piece-name { color: var(--bj-ink-emerald) !important; }
+.ptf-card-meta,
+.lb-piece-meta { color: var(--bj-ink-soft) !important; }
+.ptf-card-badge,
+.lb-piece-badge {
+    background: oklch(100% 0 0 / 0.55) !important;
+    color: var(--bj-emerald-800) !important;
+    border: 1px solid oklch(100% 0 0 / 0.6) !important;
+    backdrop-filter: blur(12px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(160%) !important;
+}
+.lb-arrow,
+.lb-dot {
+    background: oklch(100% 0 0 / 0.55) !important;
+    color: var(--bj-emerald-800) !important;
+    border: 1px solid oklch(100% 0 0 / 0.6) !important;
+}
+.lb-dot.is-active {
+    background: linear-gradient(180deg, oklch(65% 0.19 155), oklch(42% 0.14 155)) !important;
+    border-color: oklch(68% 0.18 155) !important;
+}
+
+/* ── 25. Force the .hero-canvas (particles) off — was dark only ── */
+.hero-canvas { display: none !important; }
+
+/* ── 26. Featured V4 piece-media: pearl translucent, no dark ───── */
+.featured-v7 .piece-media,
+.piece-media {
+    background:
+        radial-gradient(ellipse at 30% 0%, oklch(95% 0.04 150 / 0.35), transparent 60%),
+        radial-gradient(ellipse at 70% 100%, oklch(92% 0.06 88 / 0.20), transparent 65%),
+        oklch(96% 0.012 85 / 0.25) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+}
+
+/* ── 27. Final CTA accent line + brand lines: gold instead of dark ── */
+.cta-accent-line,
+.brand-line,
+.hero-accent-line,
+.hero-title-line {
+    background: linear-gradient(90deg, transparent, oklch(82% 0.14 85 / 0.45), transparent) !important;
+    background-color: transparent !important;
+    border: none !important;
+}
+
+/* ── 28. Catalog page card grids ────────────────────────────────── */
+.catalog-grid,
+.catalog-section,
+.catalog-collection-grid,
+.catalog-products-grid {
+    background: transparent !important;
+}
+.catalog-product-card {
+    background: var(--aqua-bg) !important;
+    background-image: none !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    color: var(--bj-ink-emerald) !important;
+    box-shadow: var(--aqua-highlight), 0 10px 30px -8px oklch(28% 0.08 155 / 0.22) !important;
+}
+
+/* ── 29. ALL elements with explicit "color: white/#fff/#FFF" ────── */
+/* (we accept these only on emerald/gold gel buttons + atelier dark glass) */
+
+/* ── 30. Catch-all: any element with class containing "dark" or "black" gets neutralized */
+[class*="-dark"]:not(.btn-aqua):not([class*="dropdown"]):not([class*="modal-overlay"]),
+[class*="-black"]:not(.btn-aqua) {
+    background-color: transparent !important;
+    color: var(--bj-ink-emerald) !important;
+}

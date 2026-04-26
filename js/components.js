@@ -86,27 +86,8 @@ function initializeHeader() {
         const closeBtn = document.getElementById('navMenuClose');
         if (closeBtn) closeBtn.addEventListener('click', closeMenu);
 
-        // Mobile: toggle dropdown on parent link click
-        navMenu.querySelectorAll('.nav-item.dropdown > .nav-link').forEach(link => {
-            link.addEventListener('click', (e) => {
-                if (window.innerWidth <= 968) {
-                    e.preventDefault();
-                    const item = link.closest('.nav-item');
-                    // Close other open dropdowns
-                    navMenu.querySelectorAll('.nav-item.dropdown.is-open').forEach(other => {
-                        if (other !== item) {
-                            other.classList.remove('is-open');
-                            other.querySelector('.nav-link').setAttribute('aria-expanded', 'false');
-                        }
-                    });
-                    item.classList.toggle('is-open');
-                    link.setAttribute('aria-expanded', item.classList.contains('is-open'));
-                }
-            });
-        });
-
-        // Close menu when a non-dropdown nav link is clicked
-        navMenu.querySelectorAll('a:not(.dropdown-toggle)').forEach(link => {
+        // Header is now flat (no dropdowns) — every nav-link closes the mobile menu on click
+        navMenu.querySelectorAll('a').forEach(link => {
             link.addEventListener('click', closeMenu);
         });
 

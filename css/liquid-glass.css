@@ -3694,3 +3694,250 @@ main:has(> .hero.hero-aqua) { padding-top: 0; }
         transform: none !important;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   PHASE 11 — Simplified header (4 nav + cart) + Catalog page redesign
+   Matches bersaglio.html (UJDpyaeGYl68tMwai8d--A) screenshot exactly.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Logo: solid emerald-deep B mark + tracked wordmark */
+.header.header-aqua .header-aqua-logo-mark {
+    color: var(--bj-emerald-800);
+    line-height: 0;
+}
+.header.header-aqua .header-aqua-logo-name {
+    font-size: 18px;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+}
+.header.header-aqua .header-aqua-logo-sub {
+    font-size: 8.5px;
+    letter-spacing: 0.42em;
+    color: var(--bj-ink-mute);
+    margin-top: 4px;
+}
+
+/* Nav-list: tighter spacing now that there are only 4 items */
+.header.header-aqua .nav-list {
+    gap: 0;
+    padding: 4px !important;
+}
+.header.header-aqua .nav-link {
+    padding: 8px 18px !important;
+    font-size: 13px !important;
+}
+
+/* Hidden #wa-nav anchor (kept only for href sync from initWhatsAppButton) */
+.header.header-aqua #wa-nav[hidden] {
+    display: none !important;
+}
+
+/* Cart icon: keep emerald gradient circular badge */
+.header.header-aqua .cart-btn {
+    background: oklch(100% 0 0 / 0.7) !important;
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 0.95) inset,
+        0 4px 12px -4px oklch(42% 0.14 155 / 0.18) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CATALOG PAGE — bersaglio.html design (controls bar + pills + sort)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Hero overrides for the catalog (no breadcrumb, big title) */
+.hero-catalog-aqua {
+    padding: 100px 0 30px !important;
+    text-align: center;
+}
+.hero-catalog-aqua .section-eyebrow {
+    color: var(--bj-emerald-700) !important;
+    font-size: 11px !important;
+    letter-spacing: 0.4em !important;
+    text-transform: uppercase !important;
+    font-family: var(--font-ui-aqua);
+}
+.hero-catalog-aqua .hero-aqua-page-title {
+    font-size: clamp(48px, 7vw, 90px) !important;
+    margin: 22px 0 18px !important;
+    line-height: 1.02 !important;
+}
+.hero-catalog-aqua .hero-aqua-page-lead {
+    max-width: 600px;
+    margin: 0 auto !important;
+    font-size: 16px !important;
+    line-height: 1.6 !important;
+}
+@media (max-width: 768px) {
+    .hero-catalog-aqua { padding: 84px 0 20px !important; }
+    .hero-catalog-aqua .hero-aqua-page-title {
+        font-size: clamp(38px, 9vw, 56px) !important;
+    }
+}
+
+/* Controls section: pills (left) + sort (right) */
+.catalog-controls-section {
+    padding: 16px 0 24px !important;
+    background: transparent !important;
+}
+.catalog-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+/* Filter pills container — single glass pill with inner buttons */
+.catalog-pills.glass.glass-pill {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 4px !important;
+    padding: 6px !important;
+    background: oklch(96% 0.02 150 / 0.6) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    border: 1px solid oklch(100% 0 0 / 0.55) !important;
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 0.85) inset,
+        0 8px 20px -6px oklch(28% 0.08 155 / 0.12) !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-width: 100%;
+    scrollbar-width: none;
+}
+.catalog-pills.glass.glass-pill::-webkit-scrollbar { display: none; }
+
+.catalog-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 9px 18px;
+    font-family: var(--font-ui-aqua);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.005em;
+    color: var(--bj-emerald-800);
+    background: transparent;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(.32,.72,0,1);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.catalog-pill:hover {
+    background: oklch(100% 0 0 / 0.6);
+    color: var(--bj-ink-emerald);
+}
+.catalog-pill.is-active {
+    color: #fff !important;
+    background: linear-gradient(180deg, oklch(62% 0.18 155), oklch(42% 0.14 155)) !important;
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 0.5) inset,
+        0 4px 12px -4px oklch(42% 0.14 155 / 0.45) !important;
+    text-shadow: 0 1px 1px oklch(20% 0.05 155 / 0.4);
+}
+
+/* Sort dropdown */
+.catalog-sort.glass.glass-pill {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 14px !important;
+    padding: 8px 8px 8px 22px !important;
+    background: oklch(96% 0.02 150 / 0.6) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    border: 1px solid oklch(100% 0 0 / 0.55) !important;
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 0.85) inset,
+        0 8px 20px -6px oklch(28% 0.08 155 / 0.12) !important;
+}
+.catalog-sort-label {
+    font-family: var(--font-ui-aqua);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--bj-ink-mute);
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+}
+.catalog-sort-select-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+.catalog-sort-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding: 8px 32px 8px 16px !important;
+    font-family: var(--font-ui-aqua) !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: var(--bj-ink-emerald) !important;
+    background: oklch(100% 0 0 / 0.7) !important;
+    border: 1px solid oklch(100% 0 0 / 0.6) !important;
+    border-radius: 999px !important;
+    cursor: pointer;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    transition: all 0.25s cubic-bezier(.32,.72,0,1);
+    box-shadow: 0 1px 0 oklch(100% 0 0 / 0.85) inset;
+    line-height: 1;
+}
+.catalog-sort-select:hover {
+    background: oklch(100% 0 0 / 0.9) !important;
+}
+.catalog-sort-select:focus {
+    outline: none;
+    border-color: oklch(82% 0.14 85 / 0.55) !important;
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 0.95) inset,
+        0 0 0 3px oklch(82% 0.14 85 / 0.18) !important;
+}
+.catalog-sort-arrow {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--bj-emerald-700);
+    pointer-events: none;
+    opacity: 0.85;
+}
+
+/* Catalog grid section */
+.catalog-grid-section {
+    padding: 12px 0 60px !important;
+    background: transparent !important;
+}
+
+@media (max-width: 768px) {
+    .catalog-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    .catalog-pills.glass.glass-pill {
+        order: 1;
+        width: 100%;
+        justify-content: flex-start;
+    }
+    .catalog-sort.glass.glass-pill {
+        order: 2;
+        width: 100%;
+        justify-content: space-between;
+        padding: 8px 8px 8px 18px !important;
+    }
+    .catalog-pill {
+        padding: 8px 14px;
+        font-size: 12px;
+    }
+}
+
+/* ─── Footer wishlist link rescue ─────────────────────────────────
+   Header no longer shows wishlist icon. Make sure footer shows
+   "Lista de Deseos" link prominently so users still reach it. ── */
+.footer a[href="lista-deseos.html"] {
+    color: var(--bj-emerald-700) !important;
+    font-weight: 500;
+}

@@ -1035,3 +1035,216 @@ Bloques removidos (líneas originales 8867-9462):
 - Los tokens `--aqua-*` en `:root` del bloque final son el sistema unificado — nunca duplicar sus valores inline.
 - El bloque Aqua Unified está al final del archivo (después de "Responsive servicios") — debe mantenerse allí para ganar en source order sin necesidad de especificidad elevada.
 - `transparent !important` en `.about-v7 .about-teaser-collage` background es crítico — devuelve el velo oscuro si se toca.
+
+---
+
+## 2026-04-26 — REDISEÑO LIQUID GLASS iOS AQUA (Fases 1-10)
+
+**Source design:** `bersaglio.html` (handoff de Claude Design — `https://api.anthropic.com/v1/design/h/UqqQSXNapxuUvUhGsP-yvw`)
+**Branch original:** `redesign-liquid-glass` (snapshot React independiente, no se mergea)
+**Branch de implementación:** `claude/review-liquid-glass-pr-Aciap` (mergeado a main vía PRs #130-#139)
+**Commits:** 11 (10 fases + 1 fix)
+
+### Decisión arquitectónica
+
+**Cambio fundamental:** flip total del tema de **dark emerald V7 → light pearl Liquid Glass iOS 26**.
+
+Estética nueva:
+- **Cero negro puro** — todos los `--black*` tokens remappean a `--bj-ink-emerald` (`oklch(18% 0.05 155)`)
+- **Fondo pearl** — `body { background: oklch(98% 0.005 90) }` con aurora pearl/emerald/gold + capa `.bj-world` con blobs animados
+- **Glassmorphism iOS 26** — `backdrop-filter: blur(28px) saturate(180%)` con highlight pinlight superior + iridescent rim conic-gradient
+- **Botones aqua gel** — `.btn-aqua` con linear-gradient + pinlight + 3D lift en hover
+- **Tipografía**: Fraunces (display) + Inter (UI) + JetBrains Mono (numeric) — los nuevos tokens son `--font-display-aqua`, `--font-ui-aqua`, `--font-mono`. Los legacy Cormorant + Montserrat siguen cargados pero no usados en el nuevo theme.
+
+### Arquitectura final
+
+#### CSS — single source of truth
+| Archivo | Líneas | Rol |
+|---|---|---|
+| `css/style.css` | 12,504 | **Solo estructura** (layout, grid, animations, JS hooks). Sin colores oscuros activos. V2/V3/V4/V5/V6 legacy eliminados. |
+| `css/liquid-glass.css` | 3,696 | **Único source visual.** Tokens + primitives + overrides + componentes específicos del nuevo diseño. Cargado AFTER `style.css` en cada `<link>` de las 17 páginas públicas. |
+
+#### JS — componentes refactorizados
+| Archivo | Líneas | Rol |
+|---|---|---|
+| `js/components/piece-card.js` | ~140 | **Renderer compartido**. `renderPieceCardHTML(piece)` + `wirePieceCardActions(container)`. Usado por 6 surfaces: home featured, colecciones overview, 4 catálogos individuales, pieza related, carrito, wishlist. Single source of truth para el markup de cards. |
+| `js/components/categories-dock.js` | ~95 | **Dock iOS-style en home**. Lee `db.getCollections()` + cuenta live via `db.getByCollection(slug).length`. Suscribe a `db.onChange()`. Mapeo cosmético `slug → glyph + hue` (anillos ◈ 155, topos ◉ 85, etc.). |
+| `js/components/featured.js` | ~35 | Slim wrapper que delega a `renderPieceCardHTML` + `wirePieceCardActions`. Antes ~140 líneas. |
+| `snippets/header.html` | ~150 | **Header pill flotante** — `.header.header-aqua` shell + `.header-aqua-pill` glass-iridescent + nav-pills + cart/wishlist badges + mobile drawer |
+
+#### JS — código eliminado (~2,400 líneas)
+- `js/components/lookbook.js` — Portfolio V5 slider, no en diseño
+- `js/effects/hscroll.js` — `initCollectionsHScroll`, target era `#collections-track-outer` que se eliminó
+- `js/canvas/particles.js` — solo lo importaba `hero-animation.js`
+- `js/hero-animation.js` — `initHero` para markup V7 que se eliminó
+
+### Las 10 fases (commits)
+
+| Fase | Commit | Descripción | Archivos |
+|---|---|---|---|
+| **1** | `945810d` | Limpieza HTML/JS muerto del home: `<section.lookbook-v7>`, `<section.brand-statement>` legacy, `<section.collections-v7>`, `<section.about-teaser>`. Removidos imports + safeRender de `renderLookbook`, `renderCollections`, `initHero`, `initCollectionsHScroll`, `initBannerKenBurns` en `app.js`. | `index.html`, `app.js` |
+| **2** | `9904b49` | `categories-dock.js` con count live de Firestore. HTML del dock convertido en `<div id="categories-dock">` rellenado por JS. Suscripción a `db.onChange()`. | `categories-dock.js`, `index.html`, `app.js` |
+| **3** | `b1cbba4` | Featured cards rewrite: glass-iridescent + image 4/5 + badge chip + wishlist+cart top-right + eyebrow (collection name live) + título Fraunces + meta `stones · metal` + price+arrow. Eliminados: 3D tilt, magnetic buttons, hover reveal, scroll entrance. | `featured.js`, `liquid-glass.css` |
+| **4** | `d00f94c` | Header pill flotante (top:18px, max 1080px, glass-iridescent). Nav-pills con active emerald gradient. Dropdowns glass blur 28px. Mobile drawer fullscreen pearl. Todos los IDs preservados (`#header`, `#hamburger`, `#navMenu`, `#navMenuClose`, `#wa-nav`, `#wa-nav-mobile`, `#wishlistCount`, `#cartCount`, `#search-trigger`). | `snippets/header.html`, `liquid-glass.css` |
+| **5** | `8af3474` | `piece-card.js` shared renderer extraído. Catálogos (anillos/argollas/topos/dijes/colecciones) con hero editorial (breadcrumb glass-pill + section-eyebrow + display title con italic emerald-text + lead) + CTA aqua. CSS scope loosened: `.featured-v7 .piece-*` → `.piece-*` para que aplique en todas las grids. | 5 catalog HTMLs + `coleccion.js`, `colecciones.js`, `featured.js` (refactor), `piece-card.js` (nuevo), `liquid-glass.css` |
+| **6** | `1dd9847` | Pieza detail aqua: gallery glass-iridescent (aspect 4/5) + thumbs grid + glass info card + 4-cell specs glass + price row mono + 3-button CTA group (WhatsApp emerald + cart toggle + wishlist 48×48). Related section usa `renderPieceCardHTML`. | `pieza.js`, `liquid-glass.css` |
+| **7** | `e18d21c` | Carrito + wishlist. Cards delegan a `renderPieceCardHTML`. `wirePieceCardActions` reemplaza wire-up manual. Heros editoriales con breadcrumb glass-pill. | `carrito.html`, `lista-deseos.html`, `cart-page.js`, `wishlist-page.js` |
+| **8** | `3092661` | Contacto: glass form con 5 motivo pills (Esmeraldas / Diseño a medida / Asesoría privada / Garantía / Otro) como radios estilizados. Pre-selected: "Diseño a medida". Hidden `#contactInterest` mirror sync para preservar payload backend. Form-fields aqua con label-above-input. Submit `btn-aqua-emerald`. | `contacto.html`, `liquid-glass.css` |
+| **9** | `29d15a3` | Heros aqua + CTAs en nosotros, servicios, journal, gracias, terminos, privacidad. `entrada.html` skipped (renderiza dynamic). | 6 HTMLs |
+| **10** | `6b3ef5f` | Mobile hero responsive (floating cards stack compact ≤620px). Preloader pearl (gradient text contrastado). Eliminados 4 archivos JS muertos. Removida 1 inline style oscura en `nosotros.html`. | `liquid-glass.css`, `nosotros.html`, JS deletions |
+| extra | `00aa557` | Fix: wishlist page wirea ahora también el cart button (era no-op desde Phase 7). | `wishlist-page.js` |
+
+### Tokens canónicos (en `:root` de liquid-glass.css)
+
+```css
+/* Brand palette (oklch perceptually uniform) */
+--bj-emerald-{100..900}     /* 100=oklch(97% 0.02 150), 900=oklch(28% 0.08 155) */
+--bj-gold-{100..900}        /* 100=oklch(96% 0.04 90),  900=oklch(55% 0.12 80) */
+--bj-pearl                  /* oklch(98% 0.005 90)  — body bg */
+--bj-ivory                  /* oklch(96% 0.012 85) */
+--bj-cream                  /* oklch(94% 0.018 82) */
+--bj-mist                   /* oklch(90% 0.01 150) */
+--bj-ink-emerald            /* oklch(18% 0.05 155) — "negro" de marca */
+--bj-ink-soft               /* oklch(32% 0.03 155) */
+--bj-ink-mute               /* oklch(50% 0.02 155) */
+
+/* Liquid Glass tokens */
+--glass-blur:    28px;
+--glass-saturate: 180%;
+--glass-tint:    oklch(96% 0.02 150 / 0.55);
+--glass-border:  1px solid oklch(100% 0 0 / 0.5);
+--glass-shadow:  /* multi-layer inset highlight + emerald drop shadow */
+--pinlight:      radial-gradient(ellipse 60% 50% at 50% 0%, white 95% / 0%, transparent 60%);
+--iridescent-rim: conic-gradient(from 180deg, emerald → gold → champagne → sapphire → emerald);
+
+/* Aqua tokens (existing system, flipped to light) */
+--aqua-bg:        oklch(96% 0.02 150 / 0.55);
+--aqua-bg-strong: oklch(94% 0.03 150 / 0.72);
+--aqua-bg-soft:   oklch(98% 0.005 90 / 0.35);
+--aqua-blur:      blur(28px) saturate(180%);
+--aqua-blur-lg:   blur(32px) saturate(200%);
+--aqua-highlight: inset 0 1px 0 oklch(100% 0 0 / 0.85);
+--aqua-border:    1px solid oklch(100% 0 0 / 0.5);
+--aqua-border-hover: 1px solid oklch(82% 0.14 85 / 0.45);
+--aqua-glow-hover:   0 0 30px oklch(82% 0.14 85 / 0.18);
+
+/* Override de tokens legacy (mantienen compat con style.css) */
+--text-primary    → var(--bj-ink-emerald)
+--text-secondary  → var(--bj-ink-soft)
+--text-on-dark    → var(--bj-ink-emerald)  /* invertido: ahora es ink */
+--black           → var(--bj-ink-emerald)
+--black-deep      → var(--bj-ink-emerald)
+--black-carbon    → var(--bj-ink-emerald)
+--ivory           → var(--bj-pearl)
+--emerald-deep    → var(--bj-emerald-900)
+
+/* Fonts */
+--font-display-aqua: "Fraunces", "Cormorant Garamond", Georgia, serif;
+--font-ui-aqua:      "Inter", -apple-system, "SF Pro Text", sans-serif;
+--font-mono:         "JetBrains Mono", "SF Mono", ui-monospace, Menlo, monospace;
+```
+
+### Primitives reutilizables
+
+```html
+<!-- Glass card base -->
+<div class="glass">…</div>                       <!-- radius 22px, blur 28px, pinlight top -->
+<div class="glass glass-lg">…</div>              <!-- radius 32px + larger shadow -->
+<div class="glass glass-pill">…</div>            <!-- radius 999px -->
+<div class="glass glass-iridescent">…</div>      <!-- + conic gradient rim ::after -->
+<div class="glass glass-emerald">…</div>         <!-- emerald linear-gradient bg + white text -->
+
+<!-- Aqua gel button -->
+<a class="btn-aqua">Default</a>                  <!-- white-translucent gel + emerald text -->
+<a class="btn-aqua btn-aqua-emerald">Primary</a> <!-- emerald gradient + white text -->
+<a class="btn-aqua btn-aqua-gold">Gold</a>       <!-- gold gradient + dark text -->
+
+<!-- Chip pill (badges, tags) -->
+<span class="chip"><span class="chip-dot"></span>Texto</span>
+
+<!-- Type helpers -->
+<span class="emerald-text">italic emerald gradient text</span>
+<span class="gold-text">gold gradient text</span>
+<span class="mono">$ 12.400.000</span>           <!-- JetBrains Mono tabular-nums -->
+```
+
+### Sync admin → público (invariantes)
+
+Cada surface pública con data dinámica suscribe a `db.onChange()`:
+
+| Página | Listener | Re-renders |
+|---|---|---|
+| `index.html` (`app.js`) | `renderAllSections(' (realtime)')` | categories dock + featured + journal + services |
+| `pieza.html` (`pieza.js`) | `handleRealtimeUpdate(piece)` | pieza completa + related |
+| `colecciones.html` (`colecciones.js`) | inline arrow | grid colecciones + filtros |
+| `anillos/argollas/topos/dijes` (`coleccion.js`) | inline arrow | hero + grid filtrado |
+| `carrito.html` (`cart-page.js`) | `renderCart()` | items + summary |
+| `lista-deseos.html` (`wishlist-page.js`) | `renderWishlist()` | grid + count |
+
+**Schema Firestore intacto:** ningún campo renombrado o eliminado. Optimistic locking + audit log + version conflicts (Fases 1-3 del admin de 2026-04-14) siguen funcionando sin cambios.
+
+### Páginas alcanzadas
+
+**Públicas (17, todas con liquid-glass.css):**
+- `index.html` — hero 3D parallax + marquee + categories dock + featured + editorial split + atelier + Cartagena CTA
+- `colecciones.html`, `anillos.html`, `argollas.html`, `topos-aretes.html`, `dijes-colgantes.html` — heros editoriales + cards aqua
+- `pieza.html` — gallery + glass info card + specs grid + 3-button CTA + related
+- `carrito.html`, `lista-deseos.html` — cards aqua + heros editoriales
+- `contacto.html` — glass form + motivo pills
+- `nosotros.html`, `servicios.html` — heros editoriales + CTAs aqua
+- `journal.html`, `entrada.html` — heros aqua (entrada renderiza dinámico)
+- `gracias.html`, `terminos.html`, `privacidad.html` — heros aqua
+
+**Admin (intactas):** `admin.html`, `admin-login.html`, `admin-piezas.html`, `admin-colecciones.html`, `admin-consultas.html`, `admin-usuarios.html` — siguen con `admin.css` propio. Decisión consciente: el panel admin tiene su propia estética dark editorial separada.
+
+### REGLAS — NO TOCAR
+
+1. **`liquid-glass.css` es el único source de visuales.** No agregar reglas de color/bg/typography en `style.css`. Si necesitas extender, hazlo al final de `liquid-glass.css`.
+2. **Tokens en `:root` del top de `liquid-glass.css`** son la fuente de verdad. Nunca hardcodear `oklch(...)` o `rgba(...)` inline en componentes — siempre referenciar `var(--bj-*)` o `var(--aqua-*)`.
+3. **`renderPieceCardHTML(piece)`** es el único renderer de cards. Cualquier nueva página que muestre piezas DEBE usar este helper + `wirePieceCardActions(container)`. NO duplicar markup.
+4. **`db.onChange()` es obligatorio** en cada página que muestre data dinámica. Sin él, el admin sync se rompe.
+5. **IDs del header son contrato con `js/components.js`.** Si reescribes `snippets/header.html`, preserva: `#header`, `#hamburger`, `#navMenu`, `#navMenuClose`, `#wa-nav`, `#wa-nav-mobile`, `#wishlistCount`, `#cartCount`, `#search-trigger`, clase `.nav-link[href]` para active state, clase `.dropdown-toggle` para mobile accordion.
+6. **Schema Firestore intacto.** No renombrar ni eliminar campos de `pieces`, `collections`, `journal`, `consultas`, `system/meta`. Si una nueva sección necesita un dato derivado (ej. count por categoría), calcularlo on-the-fly via `db.getByCollection(slug).length`, NO agregar campo nuevo.
+7. **Header pill flotante:** `.header.header-aqua` con `position: fixed, top: 18px, pointer-events: none` y el `.header-aqua-pill` interior con `pointer-events: auto`. Esto es el contrato — sin ello el header bloquea clicks de TODO el sitio.
+8. **`main { padding-top: 92px }`** compensa el header flotante. En home, `.hero.hero-aqua` tiene su propio `padding-top: 92px` y `main:has(> .hero.hero-aqua) { padding-top: 0 }` evita doble-spacing.
+9. **Mobile drawer técnica:** `body.menu-open { position: fixed; width: 100% }` + JS guarda/restaura `window.scrollY` via `body.style.top`. Es la solución oficial WebKit para iOS Safari scroll lock detrás de modal.
+10. **Skeleton placeholder hide rule:** `#pieza-content:has(.pieza-aqua-layout) + #pieza-skeleton { display: none }` — el skeleton se oculta automáticamente cuando el contenido renderiza.
+
+### Cómo extender el sistema
+
+**Para agregar una nueva sección al home:**
+```html
+<section class="hero-aqua-newthing">
+    <div class="container">
+        <span class="section-eyebrow">Eyebrow</span>
+        <h2 class="hero-aqua-page-title">Título <em class="emerald-text">accent</em></h2>
+        <p class="hero-aqua-page-lead">Lead.</p>
+        <div class="glass glass-iridescent">
+            …contenido glass…
+        </div>
+    </div>
+</section>
+```
+Si necesita data dinámica: importar `db` + suscribir a `db.onChange()` + render method.
+
+**Para agregar una nueva página interna:**
+1. Copy structure from `anillos.html` o `nosotros.html`
+2. Asegurar 4 `<link>` en orden: preconnects → Cormorant+Montserrat → Fraunces+Inter+JetBrains → `style.css` → `liquid-glass.css`
+3. `<div class="bj-world" aria-hidden="true">` justo después de `<body>`
+4. `<meta name="theme-color" content="#f8faf6">`
+5. Page hero: `<section class="page-hero hero-aqua-page">` con breadcrumb glass-pill + eyebrow + título display + lead
+
+**Para agregar una nueva categoría/colección:**
+- Crear el doc en Firestore vía admin panel
+- Si quieres página dedicada: copiar `anillos.html`, cambiar `data-collection="<nuevo-slug>"`, agregar entry a `VISUAL_MAP` en `categories-dock.js` con glyph + hue. Si NO creas página, el dock linkea a `colecciones.html?col=<slug>` automáticamente.
+
+**Para tunear apariencia global:**
+- Los tokens `--bj-*` y `--aqua-*` en `:root` son la palanca. Cambiar 1 valor propaga a todo el sitio.
+- Para cambiar el balance del Liquid Glass effect: ajustar `--glass-blur`, `--glass-saturate`, `--glass-tint` en `:root`.
+- Para cambiar el "aurora": editar `html::before { background: ... }` en liquid-glass.css.
+
+### Ramas y PRs (referencia histórica)
+
+- `redesign-liquid-glass` (origen): handoff React de Claude Design. NO se mergea — historia no compartida con `main`.
+- `claude/review-liquid-glass-pr-Aciap`: branch de implementación de las 10 fases sobre `main`. Auto-mergeada commit-por-commit vía PRs #130-#139 (bot del repo).
+- Sesión: `https://claude.ai/code/session_01P55KdjwfpEtaiZV7kpVvmC`

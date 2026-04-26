@@ -1,6 +1,16 @@
 /**
- * Bersaglio Jewelry — Colecciones Page
- * Soporta filtrado por colección: ?col=slug pre-selecciona el filtro activo.
+ * Bersaglio Jewelry — Colecciones Page (Liquid Glass Aqua, Phase 11)
+ *
+ * Pre-selección de filtro vía URL: ?col=<slug>
+ *
+ * Layout (matches bersaglio.html design):
+ *   1. Hero: "CATÁLOGO · 2026" eyebrow + "Todas las piezas" / "<col name>" title + lead
+ *   2. Filter pills container (glass-pill) with "Todo" + dynamic pills from db.getCollections()
+ *   3. Sort dropdown (glass-pill) — featured / newest / price asc/desc / name
+ *   4. Cards grid via renderPieceCardHTML
+ *
+ * Real-time: db.onChange() re-renders pills (admin adds collection),
+ *            grid (admin adds/edits pieces), and title (active collection name).
  */
 
 import { loadAllComponents } from './components.js';
@@ -12,29 +22,71 @@ import { buildProductListSchema, injectJsonLd } from './utils/schema.js';
 import { initSkeletonShimmer, processImages } from './skeleton.js';
 import { initPrefetch }      from './prefetch.js';
 
-const collectionIcons = {
-    'anillos':          `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="64" height="64"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="3" ry="9"/></svg>`,
-    'topos-aretes':     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="64" height="64"><polygon points="12,2 22,8.5 12,22 2,8.5"/><line x1="2" y1="8.5" x2="22" y2="8.5"/><polyline points="7,2 12,8.5 17,2"/></svg>`,
-    'dijes-colgantes':  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="64" height="64"><path d="M12 2v14M8 12l4 4 4-4"/><circle cx="12" cy="20" r="2"/></svg>`,
-    'argollas':         `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="64" height="64"><circle cx="9" cy="12" r="7"/><circle cx="15" cy="12" r="7"/></svg>`,
-};
+// ─── State ──────────────────────────────────────────────────────────────────
+let activeFilter = 'all';        // 'all' | <collection.slug>
+let activeSort   = 'featured';   // 'featured' | 'newest' | 'price-asc' | 'price-desc' | 'name'
 
-// Filtro activo actual
-let activeFilter = 'all';
+// ─── Helpers ────────────────────────────────────────────────────────────────
+function escapeHtml(s) {
+    return String(s ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
 
+function activeCollection() {
+    if (activeFilter === 'all') return null;
+    return db.getCollections().find(c => (c.slug || c.id) === activeFilter) || null;
+}
+
+function priceOf(p) {
+    if (typeof p.price === 'number' && Number.isFinite(p.price)) return p.price;
+    return Number.POSITIVE_INFINITY;  // unpriced items go last in price sorts
+}
+
+function sortPieces(arr) {
+    const list = [...arr];
+    switch (activeSort) {
+        case 'newest':
+            return list.sort((a, b) => {
+                const ta = a.updatedAt?.seconds ?? a.createdAt?.seconds ?? 0;
+                const tb = b.updatedAt?.seconds ?? b.createdAt?.seconds ?? 0;
+                return tb - ta;
+            });
+        case 'price-asc':
+            return list.sort((a, b) => priceOf(a) - priceOf(b));
+        case 'price-desc':
+            return list.sort((a, b) => priceOf(b) - priceOf(a));
+        case 'name':
+            return list.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es'));
+        case 'featured':
+        default:
+            return list.sort((a, b) => {
+                if (a.featured && !b.featured) return -1;
+                if (b.featured && !a.featured) return 1;
+                return 0;
+            });
+    }
+}
+
+// ─── Init ───────────────────────────────────────────────────────────────────
 async function init() {
     await loadAllComponents();
     await db.load();
 
-    // Leer filtro desde URL (?col=slug)
+    // Pre-select via ?col=slug
     const urlParams = new URLSearchParams(window.location.search);
     const colParam  = urlParams.get('col');
-    if (colParam && db.getCollections().find(c => c.slug === colParam)) {
+    if (colParam && db.getCollections().find(c => (c.slug || c.id) === colParam)) {
         activeFilter = colParam;
     }
 
-    renderCatalogCollections();
-    renderFiltersAndPieces();
+    renderTitle();
+    renderPills();
+    renderPieces();
+    initSort();
     injectCatalogSchema();
     initWhatsAppButton();
     Renderer.initScrollAnimations();
@@ -46,11 +98,128 @@ async function init() {
     // Real-time: re-render when admin changes data
     db.startRealtime().catch(() => {});
     db.onChange(() => {
-        renderCatalogCollections();
-        renderPieces(document.getElementById('featured-grid'));
+        renderTitle();
+        renderPills();
+        renderPieces();
     });
 }
 
+// ─── Title (dynamic per active filter) ──────────────────────────────────────
+function renderTitle() {
+    const titleEl = document.getElementById('catalog-title');
+    const leadEl  = document.getElementById('catalog-lead');
+    if (!titleEl) return;
+
+    const col = activeCollection();
+    if (col) {
+        const name = col.name || col.slug;
+        // Italicize the last word for visual rhythm (matches design)
+        const parts = name.split(' ');
+        if (parts.length > 1) {
+            const last = parts.pop();
+            titleEl.innerHTML = `${escapeHtml(parts.join(' '))} <em class="emerald-text">${escapeHtml(last)}</em>`;
+        } else {
+            titleEl.innerHTML = `<em class="emerald-text">${escapeHtml(name)}</em>`;
+        }
+        if (leadEl && col.description) leadEl.textContent = col.description;
+        else if (leadEl) leadEl.textContent = `Explora la colección ${name}.`;
+    } else {
+        titleEl.innerHTML = 'Todas las <em class="emerald-text">piezas</em>';
+        if (leadEl) leadEl.textContent = 'Explora nuestra colección completa. Cada pieza es única, con certificación de origen y oro de ley 750.';
+    }
+}
+
+// ─── Pills (dynamic from db.getCollections) ────────────────────────────────
+function renderPills() {
+    const wrap = document.getElementById('catalog-pills');
+    if (!wrap) return;
+
+    const collections = db.getCollections();
+
+    const html = [
+        `<button type="button" class="catalog-pill ${activeFilter === 'all' ? 'is-active' : ''}"
+                data-filter="all" role="tab" aria-selected="${activeFilter === 'all'}">
+            Todo
+        </button>`,
+        ...collections.map(col => {
+            const slug = col.slug || col.id;
+            const name = col.name || slug;
+            const isActive = activeFilter === slug;
+            return `<button type="button" class="catalog-pill ${isActive ? 'is-active' : ''}"
+                    data-filter="${escapeHtml(slug)}" role="tab" aria-selected="${isActive}">
+                ${escapeHtml(name)}
+            </button>`;
+        })
+    ].join('');
+
+    wrap.innerHTML = html;
+
+    // Click delegation
+    wrap.querySelectorAll('.catalog-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+            activeFilter = btn.dataset.filter;
+            wrap.querySelectorAll('.catalog-pill').forEach(b => {
+                const on = b.dataset.filter === activeFilter;
+                b.classList.toggle('is-active', on);
+                b.setAttribute('aria-selected', on);
+            });
+            // Update URL without full reload (preserves history)
+            const url = new URL(window.location.href);
+            if (activeFilter === 'all') url.searchParams.delete('col');
+            else url.searchParams.set('col', activeFilter);
+            window.history.replaceState({}, '', url);
+
+            renderTitle();
+            renderPieces();
+        });
+    });
+}
+
+// ─── Sort dropdown ──────────────────────────────────────────────────────────
+function initSort() {
+    const select = document.getElementById('catalog-sort-select');
+    if (!select) return;
+    select.value = activeSort;
+    select.addEventListener('change', () => {
+        activeSort = select.value;
+        renderPieces();
+    });
+}
+
+// ─── Pieces grid ────────────────────────────────────────────────────────────
+function renderPieces() {
+    const grid = document.getElementById('featured-grid');
+    if (!grid) return;
+
+    const all = activeFilter === 'all'
+        ? db.getAll()
+        : db.getByCollection(activeFilter);
+
+    const pieces = sortPieces(all);
+
+    if (!pieces.length) {
+        grid.innerHTML = `
+            <div class="col-empty" style="grid-column:1/-1; text-align:center; padding: 80px 0;">
+                <p style="font-family:var(--font-display-aqua); font-size:1.4rem; font-weight:300; color:var(--bj-ink-soft);">
+                    Próximamente en esta colección
+                </p>
+                <a href="contacto.html" class="btn-aqua btn-aqua-emerald" style="margin-top: 24px;">
+                    Consultar disponibilidad
+                </a>
+            </div>`;
+        return;
+    }
+
+    grid.innerHTML = pieces.map(renderPieceCardHTML).join('');
+
+    injectJsonLd('catalog-products-schema', buildProductListSchema(pieces));
+    wirePieceCardActions(grid);
+
+    Renderer.initScrollAnimations();
+    processImages();
+}
+
+// ─── SEO ────────────────────────────────────────────────────────────────────
 function injectCatalogSchema() {
     const base = 'https://bersagliojewelry.co';
     injectJsonLd('breadcrumb-schema', {
@@ -65,7 +234,7 @@ function injectCatalogSchema() {
         '@context':    'https://schema.org',
         '@type':       'CollectionPage',
         name:          'Colecciones — Bersaglio Jewelry',
-        description:   'Explora las colecciones de Bersaglio Jewelry: Anillos, Topos & Aretes, Dijes & Colgantes y Argollas. Alta joyería certificada.',
+        description:   'Explora las colecciones de Bersaglio Jewelry. Alta joyería certificada con esmeraldas colombianas, diamantes y oro 18k.',
         url:           `${base}/colecciones.html`,
         isPartOf:      { '@type': 'WebSite', name: 'Bersaglio Jewelry', url: base },
     });
@@ -76,111 +245,7 @@ function initWhatsAppButton() {
     const phone = whatsapp.replace('+', '');
     const msg   = encodeURIComponent('Hola Bersaglio Jewelry, me interesa conocer más sobre sus colecciones.');
     const url   = `https://wa.me/${phone}?text=${msg}`;
-    document.querySelectorAll('.wa-float, #wa-nav').forEach(btn => { btn.href = url; });
-}
-
-function renderCatalogCollections() {
-    const grid = document.getElementById('catalog-collections-grid');
-    if (!grid) return;
-
-    const collections = db.getCollections();
-
-    grid.innerHTML = collections.map(col => `
-        <article class="catalog-collection-card animate-on-scroll">
-            <a href="${col.slug}.html" class="catalog-collection-link" aria-label="Explorar ${col.name}">
-                <div class="catalog-collection-visual">
-                    ${col.bannerUrl
-                        ? `<img src="${col.bannerUrl}" alt="${col.name}" loading="lazy">`
-                        : (collectionIcons[col.slug] || collectionIcons['anillos'])}
-                </div>
-                <div class="catalog-collection-body">
-                    <div class="catalog-collection-count">${col.pieces} piezas</div>
-                    <h2 class="catalog-collection-name">${col.name}</h2>
-                    <p class="catalog-collection-subtitle">${col.subtitle}</p>
-                    <p class="catalog-collection-desc">${col.description}</p>
-                    <span class="catalog-collection-cta">
-                        Explorar colección
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                    </span>
-                </div>
-            </a>
-        </article>
-    `).join('');
-}
-
-function renderFiltersAndPieces() {
-    const section = document.querySelector('.section.featured');
-    if (!section) return;
-
-    const header = section.querySelector('.section-header');
-    const grid   = document.getElementById('featured-grid');
-    if (!grid) return;
-
-    // Insertar filtros entre el header y el grid
-    const existingFilters = section.querySelector('.catalog-filters');
-    if (!existingFilters) {
-        const filtersEl = document.createElement('div');
-        filtersEl.className = 'catalog-filters animate-on-scroll';
-        filtersEl.setAttribute('role', 'tablist');
-        filtersEl.setAttribute('aria-label', 'Filtrar por colección');
-
-        const collections = db.getCollections();
-        filtersEl.innerHTML = `
-            <button class="catalog-filter-btn ${activeFilter === 'all' ? 'is-active' : ''}"
-                    data-filter="all" role="tab" aria-selected="${activeFilter === 'all'}">
-                Todas las piezas
-            </button>
-            ${collections.map(col => `
-                <button class="catalog-filter-btn ${activeFilter === col.slug ? 'is-active' : ''}"
-                        data-filter="${col.slug}" role="tab" aria-selected="${activeFilter === col.slug}">
-                    ${col.name}
-                </button>
-            `).join('')}
-        `;
-
-        header.after(filtersEl);
-
-        // Eventos de filtro
-        filtersEl.querySelectorAll('.catalog-filter-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                activeFilter = btn.dataset.filter;
-                filtersEl.querySelectorAll('.catalog-filter-btn').forEach(b => {
-                    b.classList.toggle('is-active', b.dataset.filter === activeFilter);
-                    b.setAttribute('aria-selected', b.dataset.filter === activeFilter);
-                });
-                renderPieces(grid);
-            });
-        });
-    }
-
-    renderPieces(grid);
-}
-
-function renderPieces(grid) {
-    const allPieces = activeFilter === 'all'
-        ? db.getAll()
-        : db.getByCollection(activeFilter);
-
-    if (!allPieces.length) {
-        grid.innerHTML = `
-            <div class="col-empty" style="grid-column:1/-1; text-align:center; padding: 80px 0;">
-                <p style="font-family:var(--font-display-aqua); font-size:1.4rem; font-weight:300; color:var(--bj-ink-soft);">
-                    Próximamente en esta colección
-                </p>
-                <a href="contacto.html" class="btn-aqua btn-aqua-emerald" style="margin-top: 24px;">
-                    Consultar disponibilidad
-                </a>
-            </div>`;
-        return;
-    }
-
-    grid.innerHTML = allPieces.map(renderPieceCardHTML).join('');
-
-    injectJsonLd('catalog-products-schema', buildProductListSchema(allPieces));
-    wirePieceCardActions(grid);
-
-    Renderer.initScrollAnimations();
-    processImages();
+    document.querySelectorAll('.wa-float, #wa-nav, #wa-nav-mobile').forEach(btn => { btn.href = url; });
 }
 
 init();

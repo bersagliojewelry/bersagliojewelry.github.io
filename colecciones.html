@@ -49,45 +49,47 @@
 
     <main>
 
-        <!-- Hero -->
-        <section class="page-hero hero-aqua-page">
+        <!-- Hero — Catálogo 2026 -->
+        <section class="page-hero hero-aqua-page hero-catalog-aqua">
             <div class="container">
-                <nav class="breadcrumb glass glass-pill" aria-label="Breadcrumb">
-                    <a href="/">Inicio</a>
-                    <span aria-hidden="true">›</span>
-                    <span aria-current="page">Colecciones</span>
-                </nav>
-                <span class="section-eyebrow">Catálogo Completo</span>
-                <h1 class="page-hero-title hero-aqua-page-title">Nuestras <em class="emerald-text">Colecciones</em></h1>
-                <p class="page-hero-sub hero-aqua-page-lead">Mundos de belleza excepcional — encuentra la pieza que te define.</p>
+                <span class="section-eyebrow">Catálogo · 2026</span>
+                <h1 class="page-hero-title hero-aqua-page-title" id="catalog-title">Todas las <em class="emerald-text">piezas</em></h1>
+                <p class="page-hero-sub hero-aqua-page-lead" id="catalog-lead">Explora nuestra colección completa. Cada pieza es única, con certificación de origen y oro de ley 750.</p>
             </div>
         </section>
 
-        <!-- Collections overview -->
-        <section class="section catalog-section">
+        <!-- Filter pills + sort dropdown -->
+        <section class="catalog-controls-section">
             <div class="container">
-                <div class="section-header animate-on-scroll">
-                    <span class="section-eyebrow">Colecciones</span>
-                    <h2 class="section-title">Cada colección, un universo</h2>
-                    <p class="section-desc">Cuatro categorías de alta joyería donde las gemas más puras encuentran su forma definitiva.</p>
-                </div>
+                <div class="catalog-controls">
+                    <!-- Pills (Todo + dynamic from db.getCollections) -->
+                    <div class="glass glass-pill catalog-pills" id="catalog-pills" role="tablist" aria-label="Filtrar por colección">
+                        <!-- Rendered by js/colecciones.js — first item is "Todo", rest from admin -->
+                    </div>
 
-                <div class="catalog-collections-grid" id="catalog-collections-grid">
-                    <!-- Rendered by JS -->
+                    <!-- Sort dropdown -->
+                    <div class="glass glass-pill catalog-sort">
+                        <label for="catalog-sort-select" class="catalog-sort-label">Orden</label>
+                        <div class="catalog-sort-select-wrap">
+                            <select id="catalog-sort-select" class="catalog-sort-select" aria-label="Ordenar piezas">
+                                <option value="featured">Destacados</option>
+                                <option value="newest">Más recientes</option>
+                                <option value="price-asc">Precio: menor a mayor</option>
+                                <option value="price-desc">Precio: mayor a menor</option>
+                                <option value="name">Nombre A-Z</option>
+                            </select>
+                            <svg class="catalog-sort-arrow" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6,9 12,15 18,9"/></svg>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- All featured pieces -->
-        <section class="section featured">
+        <!-- Pieces grid -->
+        <section class="section featured catalog-grid-section">
             <div class="container">
-                <div class="section-header animate-on-scroll">
-                    <span class="section-eyebrow">Piezas Destacadas</span>
-                    <h2 class="section-title">Selección de alta joyería</h2>
-                    <p class="section-desc">Las creaciones más extraordinarias de nuestra colección actual.</p>
-                </div>
                 <div id="featured-grid" class="featured-grid">
-                    <!-- Rendered by js/components/featured.js -->
+                    <!-- Rendered by js/colecciones.js -->
                 </div>
             </div>
         </section>

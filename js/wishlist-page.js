@@ -8,7 +8,7 @@ import { initEffects } from './effects.js';
 import db    from './data/catalog.js';
 import { wishlist } from './wishlist.js';
 import { toast }    from './toast.js';
-import { renderPieceCardHTML } from './components/piece-card.js';
+import { renderPieceCardHTML, wirePieceCardActions } from './components/piece-card.js';
 
 // pieceCard delegates to the shared aqua renderer (consistent with home + catalog)
 const pieceCard = renderPieceCardHTML;
@@ -37,13 +37,10 @@ function renderWishlist() {
 
     gridEl.innerHTML = pieces.map(pieceCard).join('');
 
-    // Re-init wishlist delegation on the refreshed grid
-    wishlist.initButtons(gridEl, (slug, added) => {
-        if (!added) {
-            // On this page, removing is the main action — grid re-renders via onChange
-            toast.show('Eliminada de tu lista de deseos', 'removed');
-        }
-    });
+    // Wires both wishlist + cart icon buttons on each card.
+    // Wishlist removal triggers wishlist.onChange → renderWishlist re-runs
+    // (the row disappears) and the toast in piece-card.js fires automatically.
+    wirePieceCardActions(gridEl);
 }
 
 // ─── Acciones ─────────────────────────────────────────────────────────────────

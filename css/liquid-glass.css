@@ -105,26 +105,30 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   BODY BACKGROUND — kill dark marble, use pearl "world"
+   BODY BACKGROUND — match Claude Design exactly:
+   1. body bg = solid pearl
+   2. .bj-world (fixed div) carries ALL the visible layers — linear
+      base + 3 radial gradients + 2 drifting blobs.
+   3. NO html::before aurora — was a competing layer that broke
+      visual consistency across pages. Removed.
    ═══════════════════════════════════════════════════════════════════ */
 body {
     background: var(--bj-pearl) !important;
     color: var(--bj-ink-emerald) !important;
 }
-body::before { display: none !important; }
+body::before  { display: none !important; }
+html::before  { display: none !important; }
 
-/* Aurora layer flipped to pearl + emerald + gold */
-html::before {
+/* The single, unified background layer — replicates bersaglio.html exactly */
+.bj-world {
+    position: fixed; inset: 0; z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
     background:
         radial-gradient(1200px 900px at 15% 10%, oklch(92% 0.07 150 / 0.65), transparent 60%),
         radial-gradient(1000px 800px at 90% 20%, oklch(95% 0.06 90 / 0.55), transparent 55%),
         radial-gradient(1400px 1000px at 50% 110%, oklch(88% 0.10 155 / 0.55), transparent 55%),
-        linear-gradient(180deg, oklch(97% 0.01 150) 0%, oklch(94% 0.02 150) 50%, oklch(96% 0.015 90) 100%) !important;
-}
-
-/* Extra dreamy blobs (bj-world optional layer) */
-.bj-world {
-    position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
+        linear-gradient(180deg, oklch(97% 0.01 150) 0%, oklch(94% 0.02 150) 50%, oklch(96% 0.015 90) 100%);
 }
 .bj-world::before,
 .bj-world::after {
@@ -132,17 +136,18 @@ html::before {
     position: absolute;
     border-radius: 50%;
     filter: blur(60px);
-    opacity: 0.55;
+    opacity: 0.6;
     animation: bj-drift 28s ease-in-out infinite;
+    will-change: transform;
 }
 .bj-world::before {
     width: 700px; height: 700px;
-    background: radial-gradient(circle, oklch(70% 0.20 155 / 0.45), transparent 70%);
+    background: radial-gradient(circle, oklch(70% 0.20 155 / 0.55), transparent 70%);
     top: -10%; left: -10%;
 }
 .bj-world::after {
     width: 600px; height: 600px;
-    background: radial-gradient(circle, oklch(88% 0.14 85 / 0.42), transparent 70%);
+    background: radial-gradient(circle, oklch(88% 0.14 85 / 0.5), transparent 70%);
     bottom: -15%; right: -10%;
     animation-delay: -14s;
 }
@@ -154,7 +159,7 @@ html::before {
     .bj-world::before, .bj-world::after { animation: none; }
 }
 @media (pointer: coarse) {
-    .bj-world::before, .bj-world::after { opacity: 0.35; animation-duration: 60s; }
+    .bj-world::before, .bj-world::after { opacity: 0.4; animation-duration: 60s; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════

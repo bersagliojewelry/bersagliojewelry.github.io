@@ -316,7 +316,9 @@ export function initPreloader() {
 
     /* ── Progress tracking ─────────────────────────────────────── */
     const startTime = Date.now();
-    const minMs = 1800;
+    /* Reduced from 1800 → 350ms — Claude Design loads "instantly".
+       Long preloader was the main cause of perceived load jank. */
+    const minMs = 350;
 
     const progressInterval = setInterval(() => {
         const elapsed = Date.now() - startTime;
@@ -339,9 +341,9 @@ export function initPreloader() {
                 onUpdate() { updateProgress(progress + (1 - progress) * this.progress()); }
             });
 
-            // Exit animation
+            // Exit animation — fast fade-out (was 0.3s delay + ~1.2s exit, now 0.05s + ~0.5s)
             const exitTl = gsap.timeline({
-                delay: 0.3,
+                delay: 0.05,
                 onComplete() {
                     running = false;
                     ro.disconnect();
@@ -352,19 +354,8 @@ export function initPreloader() {
                 }
             });
 
-            exitTl
-                .to('.preloader-progress-line', { opacity: 0, duration: 0.25, ease: 'power2.in' }, 0)
-                .to('.preloader-sub', { opacity: 0, y: -8, duration: 0.3, ease: 'power2.in' }, 0)
-                .to('.preloader-brand', { opacity: 0, y: -12, duration: 0.35, ease: 'power2.in' }, 0.05)
-                .to('.pl-cross', { opacity: 0, duration: 0.3, ease: 'power2.in' }, 0.05)
-                .to('.pl-tick', { opacity: 0, duration: 0.2, ease: 'power2.in' }, 0.05)
-                .to('.pl-dot', { opacity: 0, scale: 3, duration: 0.4, ease: 'power2.in', transformOrigin: '100px 100px' }, 0.1)
-                .to('.pl-ring-outer', { opacity: 0, scale: 1.3, duration: 0.5, ease: 'power3.in', transformOrigin: '100px 100px' }, 0.1)
-                .to('.pl-ring-inner', { opacity: 0, scale: 1.3, duration: 0.5, ease: 'power3.in', transformOrigin: '100px 100px' }, 0.12)
-                .to('.pl-progress', { opacity: 0, scale: 1.3, duration: 0.5, ease: 'power3.in', transformOrigin: '100px 100px' }, 0.1)
-                .to(canvas, { opacity: 0, duration: 0.5, ease: 'power2.in' }, 0.15)
-                .to('.preloader-aurora', { opacity: 0, duration: 0.4 }, 0.2)
-                .to(el, { opacity: 0, duration: 0.4, ease: 'power2.inOut' }, 0.4);
+            // Single fast crossfade — feels instant on subsequent reveals
+            exitTl.to(el, { opacity: 0, duration: 0.35, ease: 'power2.out' }, 0);
         }, wait);
     }
 

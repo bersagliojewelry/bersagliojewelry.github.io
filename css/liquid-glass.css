@@ -106,14 +106,21 @@
 
 /* ═══════════════════════════════════════════════════════════════════
    BODY BACKGROUND — match Claude Design exactly:
-   1. body bg = solid pearl
-   2. .bj-world (fixed div) carries ALL the visible layers — linear
-      base + 3 radial gradients + 2 drifting blobs.
-   3. NO html::before aurora — was a competing layer that broke
-      visual consistency across pages. Removed.
+   1. html bg = solid pearl (the FALLBACK before .bj-world paints)
+   2. body bg = transparent (so .bj-world is visible)
+   3. .bj-world (fixed div, z-index -1) carries ALL the visible layers
+      — linear base + 3 radial gradients + 2 drifting blobs.
+
+   Fix vs previous: the body's solid pearl bg was painting OVER the
+   .bj-world (classic "z-index: -1 stuck behind body bg" issue). With
+   body transparent, the bg-pearl on html is the safe fallback while
+   .bj-world becomes the actual visible layered background.
    ═══════════════════════════════════════════════════════════════════ */
-body {
+html {
     background: var(--bj-pearl) !important;
+}
+body {
+    background: transparent !important;
     color: var(--bj-ink-emerald) !important;
 }
 body::before  { display: none !important; }

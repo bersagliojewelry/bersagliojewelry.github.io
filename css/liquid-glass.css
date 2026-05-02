@@ -4045,3 +4045,398 @@ section[class*="-v7"]::after {
     content: none !important;
     background: none !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   PHASE 16 — NOSOTROS: Editorial banner + Timeline
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Editorial image banner (matches design: 21/9 image card with overlay quote) */
+.nosotros-editorial-section { padding: 40px 0; }
+.nosotros-editorial-banner {
+    position: relative;
+    border-radius: 48px !important;
+    overflow: hidden !important;
+    aspect-ratio: 21 / 9;
+    padding: 0 !important;
+    min-height: 320px;
+}
+.nosotros-editorial-banner picture,
+.nosotros-editorial-banner .nosotros-editorial-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+}
+.nosotros-editorial-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 50%, oklch(18% 0.05 155 / 0.6));
+    z-index: 2;
+}
+.nosotros-editorial-content {
+    position: absolute;
+    bottom: 32px; left: 32px; right: 32px;
+    color: #fff !important;
+    z-index: 3;
+}
+.nosotros-editorial-chip {
+    background: oklch(100% 0 0 / 0.25) !important;
+    border: 1px solid oklch(100% 0 0 / 0.4) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    color: #fff !important;
+    margin-bottom: 14px;
+}
+.nosotros-editorial-quote {
+    font-family: var(--font-display-aqua);
+    font-size: clamp(24px, 3vw, 38px);
+    font-style: italic;
+    font-weight: 300;
+    color: #fff !important;
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+.nosotros-editorial-quote em { font-style: italic; color: var(--bj-gold-300); }
+@media (max-width: 768px) {
+    .nosotros-editorial-banner { border-radius: 32px !important; aspect-ratio: 4 / 3; }
+    .nosotros-editorial-content { bottom: 22px; left: 20px; right: 20px; }
+}
+
+/* Timeline section */
+.nosotros-timeline-section { padding: 60px 0; }
+.nosotros-timeline {
+    padding: 56px 48px !important;
+    border-radius: 40px !important;
+}
+@media (max-width: 768px) {
+    .nosotros-timeline { padding: 36px 24px !important; border-radius: 28px !important; }
+}
+.nosotros-timeline-title {
+    font-family: var(--font-display-aqua);
+    font-size: clamp(28px, 3.6vw, 44px);
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    color: var(--bj-ink-emerald) !important;
+    margin: 12px 0 40px;
+    text-align: center;
+}
+.nosotros-timeline-title em { font-style: italic; font-weight: 300; }
+.nosotros-timeline-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 22px;
+}
+.nosotros-timeline-item { position: relative; }
+.nosotros-timeline-year {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--bj-gold-700);
+    font-weight: 600;
+    margin-bottom: 10px;
+    letter-spacing: 0.05em;
+}
+.nosotros-timeline-line {
+    height: 2px;
+    background: linear-gradient(90deg, var(--bj-gold-500), transparent);
+    margin-bottom: 14px;
+}
+.nosotros-timeline-name {
+    font-family: var(--font-display-aqua);
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--bj-ink-emerald);
+    margin-bottom: 6px;
+}
+.nosotros-timeline-desc {
+    font-family: var(--font-ui-aqua);
+    font-size: 13px;
+    color: var(--bj-ink-soft);
+    line-height: 1.55;
+    margin: 0;
+}
+@media (max-width: 820px) {
+    .nosotros-timeline-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PHASE 17 — PIEZA detail: GIA chip on image, IVA badge, Talla selector,
+   secondary asesor CTA
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* GIA chip overlay on the main image (top-right) */
+.pieza-aqua-layout .pieza-main-image .pieza-cert-chip {
+    position: absolute !important;
+    top: 20px;
+    right: 20px;
+    z-index: 4;
+    background: oklch(100% 0 0 / 0.85) !important;
+    color: var(--bj-emerald-800) !important;
+    border: 1px solid oklch(100% 0 0 / 0.7) !important;
+    backdrop-filter: blur(16px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+    box-shadow: 0 4px 12px -4px oklch(28% 0.08 155 / 0.18);
+}
+.pieza-aqua-layout .pieza-main-image .pieza-cert-chip svg {
+    color: var(--bj-gold-700);
+}
+
+/* Price row — flex with mono price + IVA section-eyebrow */
+.pieza-aqua-layout .pieza-price-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: baseline !important;
+    gap: 16px;
+    padding-top: 14px;
+    border-top: 1px solid oklch(100% 0 0 / 0.5);
+}
+.pieza-aqua-layout .pieza-price-iva {
+    color: var(--bj-ink-mute) !important;
+    font-size: 10px !important;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+/* Talla selector */
+.pieza-talla-row {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 4px;
+}
+.pieza-talla-label {
+    font-size: 10px !important;
+    letter-spacing: 0.2em;
+    color: var(--bj-ink-mute) !important;
+}
+.pieza-talla-pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.pieza-talla-btn {
+    width: 48px;
+    height: 48px;
+    padding: 0 !important;
+    border-radius: 999px !important;
+    font-family: var(--font-ui-aqua);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--bj-ink-emerald) !important;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(.32,.72,0,1);
+    background: oklch(100% 0 0 / 0.55) !important;
+    border: 1px solid oklch(100% 0 0 / 0.55) !important;
+    box-shadow: 0 1px 0 oklch(100% 0 0 / 0.85) inset;
+}
+.pieza-talla-btn:hover {
+    background: oklch(100% 0 0 / 0.85) !important;
+    transform: translateY(-1px);
+}
+.pieza-talla-btn.is-active {
+    background: linear-gradient(180deg, oklch(62% 0.18 155), oklch(42% 0.14 155)) !important;
+    color: #fff !important;
+    border-color: oklch(68% 0.18 155) !important;
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 0.5) inset,
+        0 4px 12px -4px oklch(42% 0.14 155 / 0.45);
+    text-shadow: 0 1px 1px oklch(20% 0.05 155 / 0.4);
+}
+.pieza-talla-btn--custom {
+    width: auto !important;
+    padding: 0 18px !important;
+    color: var(--bj-ink-soft) !important;
+    font-size: 12px !important;
+}
+
+/* Secondary CTA: Consultar con un asesor (gold gradient, full width) */
+.pieza-aqua-layout .pieza-cta-asesor {
+    width: 100%;
+    margin-top: 8px;
+    justify-content: center;
+    padding: 16px 28px !important;
+    font-size: 13px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PHASE 18 — CONTACTO sidebar: 3 cards (Casa / Directo / <24h)
+   ═══════════════════════════════════════════════════════════════════ */
+.contact-page-grid {
+    grid-template-columns: 1.25fr 1fr !important;
+}
+@media (max-width: 920px) {
+    .contact-page-grid { grid-template-columns: 1fr !important; }
+}
+
+.contact-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+.contact-sidebar-card {
+    padding: 28px 28px !important;
+    border-radius: 28px !important;
+    color: var(--bj-ink-emerald) !important;
+}
+.contact-sidebar-eyebrow {
+    display: block;
+    margin-bottom: 12px !important;
+    color: var(--bj-emerald-700) !important;
+    font-size: 10.5px !important;
+    letter-spacing: 0.25em !important;
+}
+
+/* Card 1: Casa (emerald glass) */
+.contact-sidebar-card--casa {
+    color: #fff !important;
+    background: linear-gradient(145deg,
+        oklch(62% 0.18 155 / 0.5),
+        oklch(42% 0.14 155 / 0.75)) !important;
+}
+.contact-sidebar-card--casa .contact-sidebar-eyebrow {
+    color: oklch(92% 0.08 150) !important;
+}
+.contact-sidebar-card--casa .contact-sidebar-title {
+    font-family: var(--font-display-aqua);
+    font-size: 24px;
+    font-weight: 400;
+    color: #fff !important;
+    margin-bottom: 10px;
+}
+.contact-sidebar-card--casa .contact-sidebar-address {
+    font-family: var(--font-ui-aqua);
+    font-size: 13px;
+    line-height: 1.6;
+    opacity: 0.9;
+    color: #fff !important;
+    margin: 0 0 16px;
+}
+.contact-sidebar-card--casa .contact-sidebar-hours {
+    font-family: var(--font-ui-aqua);
+    font-size: 12px;
+    opacity: 0.85;
+    color: #fff !important;
+    padding-top: 14px;
+    border-top: 1px solid oklch(100% 0 0 / 0.25);
+    margin-bottom: 14px;
+}
+.contact-sidebar-card--casa .contact-sidebar-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-ui-aqua);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--bj-gold-300) !important;
+    text-decoration: none;
+    transition: gap 0.25s, color 0.25s;
+}
+.contact-sidebar-card--casa .contact-sidebar-link:hover {
+    color: #fff !important;
+    gap: 10px;
+}
+
+/* Card 2: Directo (white-ish glass) */
+.contact-sidebar-card--direct {
+    background: var(--aqua-bg) !important;
+    backdrop-filter: var(--aqua-blur) !important;
+    -webkit-backdrop-filter: var(--aqua-blur) !important;
+    border: var(--aqua-border) !important;
+    box-shadow: var(--aqua-highlight) !important;
+}
+.contact-direct-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 12px 0;
+    border-bottom: 1px solid oklch(100% 0 0 / 0.4);
+    text-decoration: none;
+    color: var(--bj-ink-emerald) !important;
+}
+.contact-direct-row:last-of-type {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+.contact-direct-label {
+    font-family: var(--font-ui-aqua);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--bj-ink-mute) !important;
+    font-weight: 500;
+}
+.contact-direct-value {
+    font-family: var(--font-ui-aqua);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--bj-emerald-800) !important;
+}
+.contact-direct-value.mono {
+    font-family: var(--font-mono) !important;
+}
+.contact-direct-socials {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid oklch(100% 0 0 / 0.4);
+}
+.contact-direct-social {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: oklch(100% 0 0 / 0.55);
+    border: 1px solid oklch(100% 0 0 / 0.6);
+    color: var(--bj-emerald-800) !important;
+    transition: all 0.25s;
+}
+.contact-direct-social:hover {
+    background: oklch(100% 0 0 / 0.85);
+    transform: translateY(-1px);
+}
+
+/* Card 3: Respuesta garantizada (gold gradient) */
+.contact-sidebar-card--gold {
+    background: linear-gradient(145deg,
+        oklch(93% 0.12 88 / 0.5),
+        oklch(80% 0.14 82 / 0.3)) !important;
+    border: 1px solid oklch(82% 0.14 85 / 0.5) !important;
+    backdrop-filter: blur(18px) saturate(170%) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(170%) !important;
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 0.85) inset,
+        0 8px 24px -6px oklch(72% 0.14 82 / 0.25) !important;
+}
+.contact-sidebar-card--gold .contact-sidebar-eyebrow,
+.contact-sidebar-eyebrow--gold {
+    color: oklch(45% 0.12 80) !important;
+}
+.contact-sidebar-time {
+    font-family: var(--font-display-aqua);
+    font-size: 48px;
+    font-weight: 400;
+    color: oklch(35% 0.08 80) !important;
+    line-height: 1;
+    margin-bottom: 10px;
+    letter-spacing: -0.02em;
+}
+.contact-sidebar-time-note {
+    font-family: var(--font-ui-aqua);
+    font-size: 13px;
+    line-height: 1.55;
+    color: oklch(40% 0.08 80) !important;
+    margin: 0;
+}

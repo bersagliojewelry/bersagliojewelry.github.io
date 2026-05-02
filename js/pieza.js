@@ -247,6 +247,11 @@ function renderPiece(piece) {
                                 <polyline points="7,2 12,8.5 17,2"/>
                             </svg>
                         </div>`}
+                    ${piece.specs?.certificate ? `
+                    <span class="chip pieza-cert-chip">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="12,2 22,8.5 12,22 2,8.5"/></svg>
+                        ${piece.specs.certificate}
+                    </span>` : ''}
                 </div>
                 ${piece.images?.length > 1 ? `
                 <div class="pieza-thumbs">
@@ -284,11 +289,23 @@ function renderPiece(piece) {
                     `).join('')}
                 </div>` : ''}
 
-                <!-- Price -->
+                <!-- Price + IVA badge -->
                 <div class="pieza-price-row">
-                    <span class="section-eyebrow">Inversión</span>
                     <span class="pieza-price mono">${piece.priceLabel}</span>
+                    <span class="pieza-price-iva section-eyebrow">IVA incluido</span>
                 </div>
+
+                <!-- Talla selector (only shown when relevant — anillos / argollas) -->
+                ${(piece.collection === 'anillos' || piece.collection === 'argollas') ? `
+                <div class="pieza-talla-row">
+                    <span class="section-eyebrow pieza-talla-label">Talla</span>
+                    <div class="pieza-talla-pills">
+                        ${[5, 6, 7, 8, 9].map(s => `
+                            <button type="button" class="glass pieza-talla-btn" data-talla="${s}" aria-label="Talla ${s}">${s}</button>
+                        `).join('')}
+                        <button type="button" class="glass pieza-talla-btn pieza-talla-btn--custom">A medida</button>
+                    </div>
+                </div>` : ''}
 
                 <!-- CTAs -->
                 <div class="pieza-cta-group">
@@ -318,10 +335,24 @@ function renderPiece(piece) {
                     </button>
                 </div>
 
+                <!-- Secondary CTA: gold (consultar con asesor) -->
+                <a href="contacto.html?ref=${encodeURIComponent(piece.slug)}" class="btn-aqua btn-aqua-gold pieza-cta-asesor">
+                    Consultar con un asesor
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                </a>
+
                 <p class="pieza-note">Certificación incluida · Envío asegurado · Atención personalizada</p>
             </div>
         </div>
     `;
+
+    // Talla selector handler (only present on anillos / argollas)
+    container.querySelectorAll('.pieza-talla-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            container.querySelectorAll('.pieza-talla-btn').forEach(b => b.classList.remove('is-active'));
+            btn.classList.add('is-active');
+        });
+    });
 
     // Init cart button
     const cartBtn = document.getElementById('pieza-cart-btn');

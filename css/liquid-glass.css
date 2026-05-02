@@ -3953,3 +3953,95 @@ main:has(> .hero.hero-aqua) { padding-top: 0; }
     color: var(--bj-emerald-700) !important;
     font-weight: 500;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   PHASE 14 — Kill section dividers + dark washes that break bg flow
+   User screenshot showed a dark green band between cards and CTA on
+   colecciones.html. Root cause: legacy V7 sections had decorative
+   gold borders + dark emerald radial washes that made sense on the
+   old dark theme but break the unified pearl bg.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* 1. Kill all border-top/bottom decorative lines on V7 sections — they
+   create visible horizontal dividers against the pearl bg. */
+.lookbook-v7,
+.featured-v7,
+.brand-statement-v7,
+.collections-v7,
+.services-v7,
+.journal-v7,
+.about-v7,
+.about-teaser-v7,
+.cta-banner.cta-v7 {
+    border-top: none !important;
+    border-bottom: none !important;
+}
+
+/* 2. Kill the soft gradient fade ::before line that V7 inserted at the
+   top of every section. */
+.featured-v7::before,
+.collections-v7::before,
+.services-v7::before,
+.journal-v7::before,
+.about-v7::before,
+.about-teaser-v7::before,
+.brand-statement-v7::before,
+.lookbook-v7::before,
+.lookbook-section::before {
+    display: none !important;
+    content: none !important;
+    background: none !important;
+}
+
+/* 3. Kill the dark emerald radial wash + noise texture on cta-banner V7.
+   These were V7 atmospheric layers that paint dark on the pearl bg. */
+.cta-banner.cta-v7::before,
+.cta-banner.cta-v7::after,
+.cta-banner::before,
+.cta-banner::after {
+    display: none !important;
+    content: none !important;
+    background: none !important;
+}
+
+/* 4. Section-divider class that some legacy code may use — invisible on
+   the unified bg. */
+.section-divider,
+.section-transition,
+hr.section-divider {
+    display: none !important;
+    border: none !important;
+    background: none !important;
+}
+
+/* 5. Kill any decorative ::before/::after on sections that paint dark
+   bg or borders. (Belt-and-suspenders for any legacy I missed.) */
+section[class*="-v7"]::before,
+section[class*="-v7"]::after {
+    background-color: transparent !important;
+    border: none !important;
+}
+
+/* 6. Final cta-banner reset — no border, no padding bg */
+.cta-banner.cta-v7 {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* 7. Kill any inset/border-top on .footer that creates a hard line at
+   the top of the footer (the user complained about visible separators
+   that break the design). */
+.footer {
+    border-top: none !important;
+    box-shadow: none !important;
+}
+
+/* 8. Hero V7 ::before/::after — kill if they paint anything visible.
+   Hero V7 markup is hidden but pseudos may paint anyway. */
+.hero.hero-v7::before,
+.hero.hero-v7::after {
+    display: none !important;
+    content: none !important;
+    background: none !important;
+}

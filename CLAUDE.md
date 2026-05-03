@@ -1248,3 +1248,261 @@ Si necesita data dinámica: importar `db` + suscribir a `db.onChange()` + render
 - `redesign-liquid-glass` (origen): handoff React de Claude Design. NO se mergea — historia no compartida con `main`.
 - `claude/review-liquid-glass-pr-Aciap`: branch de implementación de las 10 fases sobre `main`. Auto-mergeada commit-por-commit vía PRs #130-#139 (bot del repo).
 - Sesión: `https://claude.ai/code/session_01P55KdjwfpEtaiZV7kpVvmC`
+
+---
+
+## 2026-04-27 — ITERACIÓN POST-LAUNCH (Fases 11-18 + fixes de fondo)
+
+Después de las 10 fases del rediseño inicial, el usuario reportó varios issues de paridad visual con el diseño Claude (a través de iteraciones del mismo bundle handoff con distintos hashes: `UJDpyaeGYl68tMwai8d--A`, `PCgqgjtOtSt7F7YZv_lN0A`, `46JeX6nXuv9FXkPt70BgnQ`, `qCRgz7dRtGiigfTkz97mtQ`, `mgw73qlVL6it2nXTafW0_g`, `u7FZqnxLdcZ5SWrKVKPCWQ`, `Ta-Pmh5qKfAS4uFupe4Q0Q`, `82uDQdS1-yE3ReJrrIATyw` — todos comparten la misma estructura del bundle pero `WebFetch` falla con maxContentLength por el tamaño del JSON). Trabajo iterativo en 8 commits microquirúrgicos.
+
+### Fase 11 — Header simplificado + Catálogo dinámico (commit `d6c19e6`)
+
+**Problema reportado:** el header tenía 2 dropdowns + 4 íconos. El diseño tiene solo 4 nav links planos + 1 cart.
+
+**Solución:**
+- `snippets/header.html` reescrito: logo + 4 links (Inicio · Colecciones · Nosotros · Contacto) + 1 cart icon. Eliminados Servicios dropdown, Colecciones submenu, search trigger, wishlist icon, account icon, WhatsApp visible icon. `<a id="wa-nav" hidden>` se mantiene oculto para que `initWhatsAppButton` siga funcionando.
+- `js/components.js`: removido handler de dropdown-toggle (~22 líneas). Cualquier nav-link click cierra el mobile drawer.
+- `colecciones.html` reescrito: hero "CATÁLOGO · 2026" + "Todas las **piezas**" (italic emerald) + filter pills container (.glass-pill con `Todo` + N pills dinámicos por cada `db.getCollections()`) + sort dropdown (5 opciones: destacados/recientes/precio asc/precio desc/nombre).
+- `js/colecciones.js` reescrito: tracks `activeFilter` + `activeSort`, `renderTitle()` actualiza dinámicamente el título según filtro activo (collection name italic emerald + col.description), URL state via `history.replaceState({}, '', '?col=<slug>')`.
+- CSS Phase 11: ~250 líneas para `.catalog-pills`, `.catalog-pill`, `.catalog-sort`, `.catalog-sort-select` con focus ring dorado.
+
+### Fase 12 — Background unification + load fluidity (commit `465f511`)
+
+**Problema reportado:** "el fondo no está igual" + "la fluidez con la que carga la página no es la misma".
+
+**Root cause:** mi implementación tenía DOS capas de bg compitiendo:
+- `html::before` (aurora layer que YO añadí — el diseño NO la tiene)
+- `.bj-world` con valores ligeramente distintos
+
+**Fix bg:**
+- `html::before { display: none }` — eliminada capa fantasma
+- `.bj-world` ahora carga el bg EXACTO del bersaglio.html source: 3 radial-gradients + 1 linear-gradient + 2 blobs ::before/::after con drift 28s. Opacidad blobs 0.55 → 0.6 (match exacto). Colores corregidos.
+
+**Fix fluidez:**
+- `js/preloader.js`: `minMs: 1800ms → 350ms` (5× más rápido)
+- Animación de salida: 11-step staggered GSAP timeline → crossfade único de 0.35s
+- Total tiempo a página visible: ~3s → ~0.7s
+
+### Fase 13 — Body transparente para hacer .bj-world visible (commit `ee2e0d6`)
+
+**Problema:** después de Fase 12, el usuario seguía viendo el fondo plano pearl, NO los gradientes del diseño.
+
+**Root cause:** `body { background: var(--bj-pearl) !important }` pintaba un color sólido ENCIMA del `.bj-world` (z-index: -1). Bug clásico de CSS: cuando body tiene bg-color y un hijo tiene z-index:-1 (con body como non-stacking-context), el hijo queda detrás del body's bg.
+
+**Fix:**
+```css
+html { background: var(--bj-pearl) !important; }     /* fallback antes de bj-world */
+body { background: transparent !important; }          /* deja pasar bj-world */
+.bj-world { position: fixed; z-index: -1; ... }       /* ahora SÍ visible */
+```
+
+### Fase 14 — Kill section dividers + dark washes (commit `4cc8ed0`)
+
+**Problema reportado:** banda verde oscura full-width entre cards y CTA en colecciones.html. Otras líneas ocultas similares.
+
+**Root cause encontrado en style.css:**
+- L11810: `.cta-banner.cta-v7` con border-top + border-bottom dorados (`rgba(200,169,110,0.12)`) — 2 líneas thin visibles
+- L11821: `.cta-banner.cta-v7::before` con radial-gradient `rgba(26,77,46,0.15)` — wash esmeralda oscuro
+- L11831: `.cta-banner.cta-v7::after` con textura de ruido
+- L12018: `.lookbook-v7, .featured-v7, .brand-statement-v7, .collections-v7, .services-v7, .journal-v7, .about-v7` con `border-top: 1px solid rgba(200, 169, 110, 0.08)` — gold dividers entre cada sección
+- L12029: mismos selectores con `::before` gradient `linear-gradient(90deg, transparent, gold 0.12, transparent)` — otra línea decorativa
+- L4498-4534: legacy `.cta-banner::before` con shimmer-border animation + `::after` con logo watermark
+- L1484: `.footer { border-top: 1px solid gold }`
+
+**Fix:** nuevo bloque PHASE 14 al final de liquid-glass.css (~99 líneas) con `!important` para ganar la cascada:
+1. `border-top: none + border-bottom: none` en cada V7 section + .cta-banner.cta-v7
+2. `::before` en cada V7 section: `display:none + content:none + bg:none`
+3. `.cta-banner.cta-v7::before/::after` AND legacy `.cta-banner::before/::after`: killed
+4. `.section-divider`, `.section-transition`, `hr.section-divider`: hidden
+5. Catch-all `section[class*="-v7"]::before/::after`: bg transparent + no border
+6. `.footer`: no border-top + no box-shadow
+7. `.hero.hero-v7::before/::after`: killed
+
+### Fase 15 — Purga de 2348 líneas de CSS muerto (commit `7d656a9`)
+
+**Pedido del usuario:** "verifiquemos código muerto del diseño viejo".
+
+Auditados los bloques V7-era donde los selectores ya no existen en HTML/JS. Eliminadas ~2348 líneas de `style.css`:
+
+| Bloque borrado | Líneas | Razón |
+|---|---|---|
+| HERO V7 EDITORIAL CINEMÁTICO | 272 | Markup `<picture>`, `.hero-overlay`, `.hero-canvas`, `.hero-accent-line`, etc. ya no existen |
+| HERO V7 RESPONSIVE | 169 | Mismos selectors muertos |
+| HERO TICKER (marquee viejo) | 84 | Reemplazado por `.hero-aqua-marquee` en Phase 1 |
+| PHASE 10 CTA V7 + Section Transitions + Final Polish | 263 | Inner classes `.cta-content`, `.cta-title`, `.cta-desc`, `.cta-btn` muertas |
+| LOOKBOOK V7 | 52 | Componente eliminado en Phase 1 |
+| PORTFOLIO V9 ADAPTIVE LUXURY GRID | 590 | Componente eliminado |
+| HEADER REDESIGN V2 + Mobile/Tablet | 484 | Reemplazado por `.header.header-aqua.pill` (Phase 4) |
+| ABOUT TEASER V7 + Responsive | 270 | Reemplazado por editorial split |
+| BRAND STATEMENT V7 | 163 | Reemplazado por `hero-aqua-editorial-quote` |
+
+**HTML cleanup adicional:** `nosotros.html` reemplazó `<section.brand-statement>` legacy (con `.brand-statement-inner`, `.brand-divider`, `.brand-quote`, `.brand-origin`) por su versión aqua glass.
+
+**Resultado:** `style.css` 13,252 → 10,904 líneas (-18%).
+
+### Fase 16 — Nosotros: editorial banner + timeline (commit `ea39ac1`, parte 1)
+
+Nueva sección entre page-hero y brand-statement:
+- `.glass.glass-iridescent.nosotros-editorial-banner` 21:9 con banner.png full-bleed + dark gradient overlay + chip "Atelier Bersaglio · Cartagena" + cita italic Fraunces "Nuestra casa es **tu casa**." con accent gold
+
+Nueva sección antes del CTA:
+- `.glass.nosotros-timeline` con título "Nuestra **línea del tiempo**" + grid 4 columnas: 2012 (El comienzo) / 2016 (Atelier) / 2020 (Certificación) / 2026 (Colección La Verde). Cada milestone: año mono dorado + línea gold→transparent + título Fraunces 20px + descripción Inter 13px.
+
+### Fase 17 — Pieza detail enhancements (commit `ea39ac1`, parte 2)
+
+| Mejora | Detalle |
+|---|---|
+| **GIA chip overlay** | Movido del info-card a esquina top-right de la imagen principal con `backdrop-filter: blur(16px) saturate(180%)`. Lee `piece.specs.certificate` |
+| **IVA incluido** | `pieza-price-iva` section-eyebrow (10px tracked) al lado del precio mono |
+| **Talla selector** | Solo aparece cuando `piece.collection ∈ {anillos, argollas}`. 5 glass pills (5/6/7/8/9) + "A medida". Active state emerald gradient + white text. Click handler toggles `.is-active` |
+| **Consultar con asesor** | Nuevo `btn-aqua-gold` full-width debajo del grupo de 3 CTAs. Link a `contacto.html?ref=<slug>` para tracking |
+
+### Fase 18 — Contacto sidebar (commit `ea39ac1`, parte 3)
+
+Reemplazado el listado vertical de 5 canales por sidebar de 3 cards del diseño:
+
+| Card | Estilo | Contenido |
+|---|---|---|
+| **Casa Bersaglio** | `glass-emerald` (linear-gradient esmeralda + texto blanco) | "Cartagena de Indias" + dirección + horario + "Cómo llegar →" link gold |
+| **Directo** | Glass white translucent | WhatsApp + Email rows con label tracked uppercase + value (mono para teléfono) + Instagram + Facebook como social icons circulares |
+| **Respuesta garantizada** | Gold gradient glass | Eyebrow gold + Fraunces gigante "< 24h" + nota descriptiva |
+
+Form column ajustada a 1.25fr para balancear.
+
+---
+
+## INVENTARIO COMPLETO post-Fase 18
+
+### Estructura CSS final
+| Archivo | Líneas | Rol |
+|---|---|---|
+| `css/style.css` | 10,904 | Solo estructura (layout, grid, animations, JS hooks). Sin colores oscuros activos. V2/V3/V4/V5/V6/V7 legacy mayormente eliminados. |
+| `css/liquid-glass.css` | 4,442 | **Único source visual.** Tokens + primitives + overrides + componentes específicos del nuevo diseño. Cargado AFTER `style.css` en cada `<link>` de las 17 páginas públicas. |
+
+### Componentes JS finales
+| Archivo | Líneas | Rol |
+|---|---|---|
+| `js/components/piece-card.js` | ~140 | Renderer compartido (single source of truth para markup de cards en 6 surfaces) |
+| `js/components/categories-dock.js` | ~95 | Dock iOS con count live de Firestore |
+| `js/components/featured.js` | ~35 | Slim wrapper que delega a piece-card |
+| `js/components/journal.js` | (sin cambios) | Render de journal preview |
+| `js/components/services.js` | (sin cambios) | Render de services |
+| `js/components/collections.js` | (sin cambios — sigue usándose en colecciones.html legacy) | |
+| `snippets/header.html` | ~80 | Header pill flotante simplificado (4 nav + 1 cart) |
+| `snippets/footer.html` | (sin cambios) | Footer con grid de columnas |
+
+### JS legacy eliminado
+- `js/components/lookbook.js` (Phase 1)
+- `js/effects/hscroll.js` (Phase 1)
+- `js/canvas/particles.js` (Phase 10)
+- `js/hero-animation.js` (Phase 10)
+- (Total: ~2400 líneas de JS muerto eliminadas)
+
+### Sección por página — qué se ve
+
+**index.html** (home, render por `js/app.js`):
+1. Hero 3D parallax + halo iridiscente + 3 floating glass cards (gem / GIA cert / Atelier 2026 tag)
+2. Marquee glass-pill con 6 credenciales + ◆ separadores
+3. Categories Dock iOS (6 gel circles dinámicos desde admin)
+4. Featured V8 grid (cards glass-iridescent con eyebrow + título + meta + price)
+5. Editorial split (image card + quote glass)
+6. Atelier process (4 pasos numerados en emerald glass)
+7. CTA Cartagena (glass-iridescent + gold halo)
+
+**colecciones.html** (catálogo, render por `js/colecciones.js`):
+1. Hero centrado: "CATÁLOGO · 2026" + "Todas las **piezas**"
+2. Controls bar: filter pills (Todo + dynamic) + sort dropdown
+3. Grid de cards via `renderPieceCardHTML`
+4. CTA "¿No encuentras lo que buscas?"
+
+**anillos.html / argollas.html / topos-aretes.html / dijes-colgantes.html** (catálogos individuales, render por `js/coleccion.js`):
+1. Hero editorial con breadcrumb glass-pill
+2. Grid de cards filtradas por slug
+
+**pieza.html** (render por `js/pieza.js`):
+1. Breadcrumb glass-pill
+2. Layout 1.05fr 1fr: gallery (main image glass-iridescent + thumbs) | info card glass
+3. Info: badges + collection link + nombre + descripción + 4-cell specs grid + price+IVA + talla selector (anillos/argollas) + 3-button CTA group + "Consultar con asesor" gold
+4. GIA chip overlay sobre imagen
+5. Guarantees pill strip
+6. Related pieces grid
+
+**carrito.html / lista-deseos.html**:
+1. Hero editorial
+2. Grid cards via `renderPieceCardHTML`
+3. Cart summary (carrito) / share + clear actions (wishlist)
+
+**contacto.html**:
+1. Hero editorial
+2. Grid 1.25fr 1fr: form glass-iridescent con motivo pills | sidebar 3 cards
+
+**nosotros.html**:
+1. Hero editorial
+2. Editorial banner (NUEVO Phase 16)
+3. Brand statement quote
+4. Quiénes somos / Misión / Visión (texto)
+5. Valores (6 cards)
+6. Timeline (NUEVO Phase 16)
+7. CTA
+
+**servicios.html**:
+1. Hero editorial
+2. Atelier intro narrativa
+3. 5 service cards (numbered)
+4. 3-step process
+5. CTA
+
+**journal.html / entrada.html**:
+1. Hero aqua
+2. Grid de entradas
+3. Detalle de entrada (entrada renderiza dinámico)
+
+**gracias.html / terminos.html / privacidad.html**:
+1. Hero aqua simple
+2. Contenido legal/agradecimiento
+
+### Sync admin verificado en cada página
+- `db.onChange()` re-renderiza: home (categories dock + featured + journal + services), pieza, carrito, wishlist, colecciones (pills + grid), catálogos individuales (hero + grid)
+- Optimistic locking + audit log + version conflicts intactos
+- Wishlist + cart localStorage persist
+- Schema Firestore intacto (no se borran ni renombran campos)
+
+---
+
+## Notas para futuras iteraciones
+
+1. **Talla selector en pieza** es solo client-side por ahora. Si necesitas guardar la selección en cart, agrega un campo `size` al cart item y modifica `cart.toggle(slug)` para recibir size opcional.
+2. **Hero 3D parallax** depende de `js/liquid-glass-hero.js` que solo corre si `pointer: fine` (desktop) y NO `prefers-reduced-motion`. Si quitas el script, los floating cards quedan estáticos pero todavía se ven bien.
+3. **Bloques style.css restantes potencialmente muertos:** Featured V7 (~471 líneas), Featured V7 Responsive (~70), Collections V7 + Responsive (~353), Services V7 + Responsive (~452), Journal V7 + Responsive (~313), Section Headers V7 (~121). Pueden seguir limpiándose en futuras iteraciones — el override liquid-glass.css ya neutraliza su efecto visual.
+4. **Background system:** la regla **definitiva** es `html { background: var(--bj-pearl) }` + `body { background: transparent }` + `.bj-world { z-index: -1; ...gradientes... }`. NO TOCAR — si vuelves a poner `body { background: pearl }` el `.bj-world` queda invisible (bug del z-index:-1 detrás de body bg).
+5. **Section dividers:** todos los `border-top/bottom` decorativos en V7 sections + `::before` gradient lines fueron neutralizados en Phase 14. Si en una futura iteración añades un divider intencional, hazlo dentro de `.glass` containers — NO con borders en sections fullwidth porque rompen el flow del bj-world.
+6. **CSS scope loosening:** las cards `.piece-*` tienen sus rules sin parent `.featured-v7` (Phase 5). Esto permite que el mismo markup funcione en home/catálogo/wishlist/cart. No re-anidar bajo `.featured-v7`.
+
+---
+
+## REGLAS — NO TOCAR (post-Fase 18)
+
+Adicional a las reglas previas (1-10), añade:
+
+11. **`html { background: pearl }` + `body { background: transparent }`** es el único patrón válido para que `.bj-world` se vea. Cambiar uno de los dos rompe el fondo.
+12. **`.cta-banner.cta-v7` debe permanecer transparent** — la legacy `.cta-banner { background: var(--emerald-deep) !important }` (style.css L7866 antes de Phase 15) ya está limpiada, pero si vuelve, override en liquid-glass.css con specificity ≥ 2 + !important.
+13. **No uses `border-top/bottom` en `<section>` fullwidth** — rompe el flow del bj-world. Para dividers usa `<hr>` dentro de `.container` (max-width 1360px) o sólo dentro de glass cards.
+14. **`renderPieceCardHTML` es el único renderer de cards** — wishlist-page, cart-page, colecciones, coleccion, featured, pieza-related TODAS lo usan. Si necesitas variantes (ej. compact card para sidebar), agrega un parámetro al helper, NO duplicar markup.
+15. **El header pill simplificado de Phase 11 es el contrato actual** — 4 nav links + 1 cart icon. NO volver a meter dropdowns ni íconos extra (search/wishlist/account/wa). Wishlist queda accesible solo via footer link y los heart buttons en cards.
+16. **`#wa-nav[hidden]`** se mantiene en el header como anchor invisible para que `initWhatsAppButton` no rompa. NO eliminar.
+17. **El preloader minMs es 350ms** (Phase 12). Si subes a 1000+ms se siente lento. Si bajas a 0, el preloader no se ve y los users que llegan directo a una página interna pueden ver flash de pearl bg.
+18. **Talla selector visible solo en `collection ∈ {anillos, argollas}`** — si admin crea una colección "alianzas" o similar que también necesita talla, añade el slug al check en `renderPiece()`.
+19. **Todos los gradientes del bg deben usar oklch** — no hex ni rgba para colores de marca. Mantiene la coherencia perceptual a través de medios.
+20. **`--emerald-deep` ahora es `oklch(28% 0.08 155)`** vía remapeo en `:root`. Si renombras este token o cambias su valor, verifica todos los usos legacy en style.css.
+
+### Próximos handoffs Claude Design
+
+Si el usuario te pasa un nuevo URL `api.anthropic.com/v1/design/h/<hash>?open_file=bersaglio.html`, **NO intentes WebFetch** — el endpoint devuelve >10MB JSON y siempre falla con `maxContentLength size of 10485760 exceeded`. En su lugar, usa el bundle previamente extraído en `/tmp/`:
+- `/tmp/liquid-glass.css` (design system)
+- `/tmp/page-home.jsx` (Home component)
+- `/tmp/shell.jsx` (Header/Footer/Cart drawer)
+- `/tmp/pages.jsx` (Catalogo, Producto, Nosotros, Contacto, Checkout)
+
+Estos archivos representan la base del diseño que el usuario itera. Los cambios entre hashes son típicamente sub-pixel ajustes que no se reflejan en el bundle estructural.
+
+Si el bundle no está en `/tmp` (sesión nueva), pídelo al usuario o usa la rama `redesign-liquid-glass` del repo donde está como snapshot histórico.

@@ -4440,3 +4440,138 @@ section[class*="-v7"]::after {
     color: oklch(40% 0.08 80) !important;
     margin: 0;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   PHASE 21 — Mobile responsive polish (sitewide)
+   Catches gaps in the 480/620/768 breakpoints and unifies behavior.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── ≤480px: Compact phone ───────────────────────────────────────── */
+@media (max-width: 480px) {
+    /* Hero further compact — title scales tighter */
+    .hero-aqua-title {
+        font-size: clamp(40px, 11vw, 56px) !important;
+        line-height: 1 !important;
+    }
+    .hero-aqua-lead { font-size: 14px !important; }
+    .hero-aqua-actions { flex-direction: column; align-items: stretch; }
+    .hero-aqua-actions .btn-aqua { width: 100%; justify-content: center; }
+    .hero-aqua-stats { gap: 6px !important; }
+
+    /* Header pill: hide subtitle, smaller logo */
+    .header.header-aqua .header-aqua-pill {
+        gap: 4px;
+        padding: 4px 6px 4px 10px !important;
+    }
+    .header.header-aqua .header-aqua-logo-name { font-size: 13px !important; letter-spacing: 0.04em !important; }
+    .header.header-aqua .header-aqua-icon { width: 32px; height: 32px; }
+
+    /* Page hero compact */
+    .hero-aqua-page-title,
+    .page-hero.hero-aqua-page .hero-aqua-page-title {
+        font-size: clamp(34px, 9vw, 48px) !important;
+    }
+    .page-hero.hero-aqua-page { padding: 80px 0 28px !important; }
+
+    /* Categories dock smaller */
+    .hero-aqua-cat-gem { width: 48px; height: 48px; font-size: 22px; }
+    .hero-aqua-cat-name { font-size: 13px; }
+
+    /* Catalog controls: stack with smaller pills */
+    .catalog-pill { padding: 8px 12px !important; font-size: 11px !important; }
+    .catalog-sort.glass.glass-pill { padding: 6px 6px 6px 14px !important; }
+    .catalog-sort-label { font-size: 9.5px !important; }
+    .catalog-sort-select { font-size: 12px !important; padding: 6px 26px 6px 12px !important; }
+
+    /* Pieza CTA group: stack vertical at very small widths */
+    .pieza-aqua-layout .pieza-cta-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .pieza-aqua-layout .pieza-cta-group .btn-aqua-emerald,
+    .pieza-aqua-layout .pieza-cta-group .piece-cart-btn-lg {
+        flex: 1 1 auto;
+    }
+    .pieza-aqua-layout .piece-wishlist-btn-lg {
+        width: 100% !important;
+        flex: 0 0 auto;
+    }
+
+    /* Pieza talla pills wrap */
+    .pieza-talla-btn { width: 42px; height: 42px; }
+    .pieza-talla-btn--custom { padding: 0 14px !important; font-size: 11px !important; }
+
+    /* Pieza specs grid: keep 2-col for compact (was already 2)
+       but make padding tighter */
+    .pieza-aqua-layout .pieza-spec-cell { padding: 12px 14px !important; }
+    .pieza-aqua-layout .pieza-spec-value { font-size: 14px; }
+
+    /* Contacto: motivo pills tighter */
+    .contact-motivo-pills .motivo-pill {
+        padding: 7px 12px !important;
+        font-size: 11px !important;
+    }
+
+    /* Editorial split / Atelier / CTA Cartagena: tighter padding */
+    .hero-aqua-editorial-quote {
+        padding: 28px 22px !important;
+        border-radius: 28px !important;
+    }
+    .hero-aqua-editorial-h2 { font-size: clamp(26px, 7vw, 34px) !important; }
+    .hero-aqua-cta { padding: 40px 20px !important; border-radius: 28px !important; }
+    .hero-aqua-cta-title { font-size: clamp(32px, 9vw, 48px) !important; }
+}
+
+/* ── ≤620px: Mobile portrait ─────────────────────────────────────── */
+@media (max-width: 620px) {
+    /* Hero floating cards: less aggressive offsets */
+    .hero-aqua-float--gem { right: 4px; top: 8px; }
+    .hero-aqua-float--cert { left: 4px; top: 38%; }
+    .hero-aqua-float--tag { bottom: -2%; }
+
+    /* Editorial section single column */
+    .hero-aqua-editorial { gap: 20px !important; }
+
+    /* Marquee: smaller items + faster */
+    .hero-aqua-marquee-item { font-size: 11px !important; }
+    .hero-aqua-marquee-track { gap: 36px !important; padding: 0 22px !important; }
+
+    /* CTA group buttons full width on mobile */
+    .hero-aqua-cta-actions { flex-direction: column; align-items: stretch; }
+    .hero-aqua-cta-actions .btn-aqua { width: 100%; justify-content: center; }
+}
+
+/* ── ≤768px: Tablet ──────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    /* Catalog controls stack (already covered but ensure full-width sort) */
+    .catalog-sort-select { width: auto; }
+
+    /* Pieza price row: keep horizontal but allow wrap */
+    .pieza-aqua-layout .pieza-price-row { flex-wrap: wrap; gap: 10px; }
+
+    /* Contacto sidebar: stays 1-col below 920px (already in css);
+       cards more compact here */
+    .contact-sidebar-card { padding: 22px 22px !important; border-radius: 24px !important; }
+    .contact-sidebar-time { font-size: 40px !important; }
+
+    /* Pieza guarantees pill: vertical stack */
+    .pieza-guarantees-list {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        border-radius: 24px !important;
+        padding: 18px 22px !important;
+        gap: 12px !important;
+    }
+}
+
+/* ── Touch-only fixes ────────────────────────────────────────────── */
+@media (hover: none) and (pointer: coarse) {
+    /* Disable hover transforms on cards (battery + accidental tap) */
+    .piece-card:hover,
+    .hero-aqua-cat:hover,
+    .nosotros-timeline-item:hover,
+    .contact-channel:hover,
+    .contact-direct-social:hover {
+        transform: none !important;
+    }
+}

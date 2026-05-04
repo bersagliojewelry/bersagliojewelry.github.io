@@ -5162,3 +5162,77 @@ body.cart-drawer-open {
     .cart-drawer { transition: none; }
     .cart-drawer-backdrop { transition: opacity 0s; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   SESSION 3 — POLISH
+   Entrance animations + accessibility + final consistency
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Section entrance: fade-up on scroll into view ──────────────── */
+.aqua-fade-in {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.7s cubic-bezier(.32,.72,0,1), transform 0.7s cubic-bezier(.32,.72,0,1);
+    will-change: opacity, transform;
+}
+.aqua-fade-in.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Stagger children inside .aqua-stagger when they get .is-visible */
+.aqua-stagger > * {
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.6s cubic-bezier(.32,.72,0,1), transform 0.6s cubic-bezier(.32,.72,0,1);
+    will-change: opacity, transform;
+}
+.aqua-stagger.is-visible > *:nth-child(1) { opacity: 1; transform: translateY(0); transition-delay: 0.05s; }
+.aqua-stagger.is-visible > *:nth-child(2) { opacity: 1; transform: translateY(0); transition-delay: 0.12s; }
+.aqua-stagger.is-visible > *:nth-child(3) { opacity: 1; transform: translateY(0); transition-delay: 0.19s; }
+.aqua-stagger.is-visible > *:nth-child(4) { opacity: 1; transform: translateY(0); transition-delay: 0.26s; }
+.aqua-stagger.is-visible > *:nth-child(5) { opacity: 1; transform: translateY(0); transition-delay: 0.33s; }
+.aqua-stagger.is-visible > *:nth-child(6) { opacity: 1; transform: translateY(0); transition-delay: 0.40s; }
+
+@media (prefers-reduced-motion: reduce) {
+    .aqua-fade-in, .aqua-stagger > * {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+    }
+}
+
+/* ── Focus-visible: gold ring everywhere (a11y) ─────────────────── */
+*:focus-visible {
+    outline: 2px solid oklch(82% 0.14 85 / 0.7) !important;
+    outline-offset: 3px !important;
+    border-radius: 2px;
+}
+.btn-aqua:focus-visible,
+.btn-aqua-emerald:focus-visible,
+.btn-aqua-gold:focus-visible {
+    outline-offset: 4px !important;
+}
+
+/* ── Skip link: visible on focus ────────────────────────────────── */
+.skip-link {
+    position: absolute !important;
+    top: -100px;
+    left: 16px;
+    z-index: 9999;
+    padding: 12px 20px;
+    background: var(--bj-emerald-700) !important;
+    color: #fff !important;
+    border-radius: 999px;
+    font-family: var(--font-ui-aqua);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: top 0.2s;
+}
+.skip-link:focus,
+.skip-link:focus-visible {
+    top: 16px;
+}

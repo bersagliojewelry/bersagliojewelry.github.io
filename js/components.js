@@ -11,6 +11,7 @@ import { initSearch }   from './search.js';
 import { initPWA }             from './pwa.js';
 import { initAnalytics }       from './analytics.js';
 import { initCartDrawer }      from './components/cart-drawer.js';
+import { initAquaAnimations, refreshAquaAnimations } from './aqua-animations.js';
 
 const SNIPPETS = 'snippets/';
 
@@ -264,6 +265,10 @@ export async function loadAllComponents() {
     initSearch();
     initAnalytics();
     initPWA();
+    // Aqua entrance animations: auto-tags sections + grids and observes for is-visible
+    requestAnimationFrame(initAquaAnimations);
+    // Re-observe after JS-rendered grids arrive (featured + categories + journal)
+    setTimeout(() => refreshAquaAnimations(), 1500);
 
     // Safety net: guarantee body scroll is never permanently locked.
     // Cleans up is-preloading, search-open classes, inline overflow and position:fixed

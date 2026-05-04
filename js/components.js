@@ -10,6 +10,7 @@ import { initPreloader } from './preloader.js';
 import { initSearch }   from './search.js';
 import { initPWA }             from './pwa.js';
 import { initAnalytics }       from './analytics.js';
+import { initCartDrawer }      from './components/cart-drawer.js';
 
 const SNIPPETS = 'snippets/';
 
@@ -258,6 +259,7 @@ export async function loadAllComponents() {
     initializeHeader();
     initializeWishlist();
     initializeCart();
+    initCartDrawer();
     initializeDevBanner();
     initSearch();
     initAnalytics();

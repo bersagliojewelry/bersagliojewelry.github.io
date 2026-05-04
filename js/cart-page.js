@@ -23,6 +23,7 @@ async function init() {
     db.onChange(() => renderCart());
 
     initActions();
+    initStepper();
     initWhatsAppButton();
     initEffects();
 }
@@ -36,22 +37,27 @@ function initWhatsAppButton() {
 }
 
 function renderCart() {
-    const slugs   = cart.getAll();
-    const grid    = document.getElementById('cart-grid');
-    const empty   = document.getElementById('cart-empty');
-    const actions = document.getElementById('cart-actions');
-    const countEl = document.getElementById('cart-item-count');
+    const slugs       = cart.getAll();
+    const grid        = document.getElementById('cart-grid');
+    const empty       = document.getElementById('cart-empty');
+    const actions     = document.getElementById('cart-actions');
+    const countEl     = document.getElementById('cart-item-count');
+    const stepperWrap = document.getElementById('checkout-stepper-wrap');
+    const layout      = document.getElementById('checkout-layout');
 
     if (!slugs.length) {
-        if (grid)    grid.innerHTML    = '';
-        if (empty)   empty.hidden      = false;
-        if (actions) actions.hidden    = true;
-        hideCheckoutSummary();
+        if (grid)        grid.innerHTML  = '';
+        if (empty)       empty.hidden    = false;
+        if (actions)     actions.hidden  = true;
+        if (stepperWrap) stepperWrap.hidden = true;
+        if (layout)      layout.hidden   = true;
         return;
     }
 
-    if (empty)   empty.hidden   = true;
-    if (actions) actions.hidden = false;
+    if (empty)       empty.hidden    = true;
+    if (actions)     actions.hidden  = false;
+    if (stepperWrap) stepperWrap.hidden = false;
+    if (layout)      layout.hidden   = false;
 
     const pieces = slugs.map(s => db.getBySlug(s)).filter(Boolean);
 
@@ -74,36 +80,45 @@ function renderCart() {
 // which fires cart.onChange and re-renders this page.
 const cartCard = renderPieceCardHTML;
 
-/* ─── Checkout Summary ──────────────────────────────────────────────────────── */
+/* ─── Checkout Summary (sticky sidebar — Phase Item-1) ─────────────────────── */
 
 function renderCheckoutSummary(pieces) {
-    const summaryEl = document.getElementById('cart-summary');
-    if (!summaryEl) return;
-
     const { pricedItems, unpricedItems, totalFormatted } = wompiCheckout.summary(pieces);
 
-    // No priced items at all → hide summary
-    if (!pricedItems.length) {
-        summaryEl.hidden = true;
-        return;
-    }
-
-    summaryEl.hidden = false;
-
-    // Line items
+    // Line items inside the sticky sidebar
     const linesEl = document.getElementById('cart-summary-lines');
     if (linesEl) {
-        linesEl.innerHTML = pricedItems.map(p => `
-            <div class="cart-summary-line">
-                <span class="cart-summary-line-name">${p.name}</span>
-                <span class="cart-summary-line-price">${wompiCheckout.formatCOP(p.price)}</span>
-            </div>
-        `).join('');
+        if (!pricedItems.length) {
+            linesEl.innerHTML = '';
+        } else {
+            linesEl.innerHTML = pricedItems.map(p => `
+                <div class="cart-summary-line">
+                    <span class="cart-summary-line-name">${p.name}</span>
+                    <span class="cart-summary-line-price mono">${wompiCheckout.formatCOP(p.price)}</span>
+                </div>
+            `).join('');
+        }
     }
+
+    // Subtotal
+    const subEl = document.getElementById('cart-summary-subtotal');
+    if (subEl) subEl.textContent = pricedItems.length ? totalFormatted : '—';
 
     // Total
     const totalEl = document.getElementById('cart-summary-total-value');
-    if (totalEl) totalEl.textContent = totalFormatted;
+    if (totalEl) totalEl.textContent = pricedItems.length ? totalFormatted : 'Cotización';
+
+    // Wompi quick-pay button (hide if no priced items)
+    const wompiBtn = document.getElementById('btn-wompi-pay');
+    if (wompiBtn) wompiBtn.hidden = !pricedItems.length;
+
+    // Confirm button label on step 3
+    const confirmLabel = document.getElementById('btn-confirm-label');
+    if (confirmLabel) {
+        confirmLabel.textContent = pricedItems.length
+            ? `Confirmar compra · ${totalFormatted}`
+            : 'Solicitar cotización';
+    }
 
     // Unpriced items note
     const unpricedNote = document.getElementById('cart-unpriced-note');
@@ -112,16 +127,11 @@ function renderCheckoutSummary(pieces) {
         if (unpricedItems.length) {
             unpricedNote.hidden = false;
             const names = unpricedItems.map(p => `<strong>${p.name}</strong>`).join(', ');
-            unpricedText.innerHTML = `${names} ${unpricedItems.length === 1 ? 'requiere' : 'requieren'} cotización personalizada. Consulta por WhatsApp para conocer el precio.`;
+            unpricedText.innerHTML = `${names} ${unpricedItems.length === 1 ? 'requiere' : 'requieren'} cotización por WhatsApp.`;
         } else {
             unpricedNote.hidden = true;
         }
     }
-}
-
-function hideCheckoutSummary() {
-    const summaryEl = document.getElementById('cart-summary');
-    if (summaryEl) summaryEl.hidden = true;
 }
 
 /* ─── Actions ───────────────────────────────────────────────────────────────── */
@@ -159,6 +169,98 @@ function initActions() {
             pricedItems.forEach(p => cart.remove(p.slug));
             toast.show('¡Pago exitoso! Gracias por tu compra.', 'added');
         });
+    });
+}
+
+/* ─── Stepper navigation (3 steps: Carrito → Envío → Pago) ──────────────── */
+
+function initStepper() {
+    const stepper = document.querySelector('.checkout-stepper');
+    if (!stepper) return;
+
+    function goToStep(n) {
+        // Update stepper buttons
+        stepper.querySelectorAll('.checkout-step').forEach(btn => {
+            btn.classList.toggle('is-active', Number(btn.dataset.step) === n);
+        });
+        // Show only the active step view
+        document.querySelectorAll('.checkout-step-view').forEach(view => {
+            const isActive = view.id === `checkout-step-${n}`;
+            view.hidden = !isActive;
+            view.classList.toggle('is-active', isActive);
+        });
+        // Show/hide elements bound to a specific step (e.g. quick-pay only on step 1)
+        document.querySelectorAll('[data-step-show]').forEach(el => {
+            el.hidden = Number(el.dataset.stepShow) !== n;
+        });
+        // Scroll back to the top of the stepper for context
+        stepper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Direct stepper clicks
+    stepper.addEventListener('click', e => {
+        const btn = e.target.closest('.checkout-step');
+        if (!btn) return;
+        const n = Number(btn.dataset.step);
+        if (n === 1 || cart.getAll().length) goToStep(n);
+    });
+
+    // "Continuar" forward buttons
+    document.querySelectorAll('.checkout-step-next').forEach(btn => {
+        btn.addEventListener('click', () => goToStep(Number(btn.dataset.next)));
+    });
+
+    // "Volver" backward buttons
+    document.querySelectorAll('.checkout-step-prev').forEach(btn => {
+        btn.addEventListener('click', () => goToStep(Number(btn.dataset.prev)));
+    });
+
+    // Shipping form: validates HTML5 + advances to step 3 on submit
+    document.getElementById('shipping-form')?.addEventListener('submit', e => {
+        e.preventDefault();
+        if (!e.target.checkValidity()) {
+            e.target.reportValidity();
+            return;
+        }
+        // Persist shipping data in sessionStorage so a refresh doesn't lose it
+        const fd = new FormData(e.target);
+        const data = Object.fromEntries(fd.entries());
+        try { sessionStorage.setItem('bj-shipping', JSON.stringify(data)); } catch {}
+        goToStep(3);
+    });
+
+    // Restore shipping data on page load
+    try {
+        const saved = JSON.parse(sessionStorage.getItem('bj-shipping') || 'null');
+        if (saved) {
+            Object.entries(saved).forEach(([k, v]) => {
+                const input = document.querySelector(`#shipping-form [name="${k}"]`);
+                if (input) input.value = v;
+            });
+        }
+    } catch {}
+
+    // Confirm payment button (step 3)
+    document.getElementById('btn-confirm-payment')?.addEventListener('click', () => {
+        const slugs = cart.getAll();
+        if (!slugs.length) return;
+        const pieces = slugs.map(s => db.getBySlug(s)).filter(Boolean);
+        const method = document.querySelector('input[name="payMethod"]:checked')?.value || 'wompi';
+
+        if (method === 'wompi') {
+            wompiCheckout.pay(pieces, () => {
+                const { pricedItems } = wompiCheckout.summary(pieces);
+                pricedItems.forEach(p => cart.remove(p.slug));
+                try { sessionStorage.removeItem('bj-shipping'); } catch {}
+                toast.show('¡Pago exitoso! Gracias por tu compra.', 'added');
+            });
+        } else if (method === 'transfer') {
+            // For now: redirect to gracias.html with method query
+            window.location.href = 'gracias.html?method=transfer';
+        } else if (method === 'whatsapp') {
+            // Reuse the existing WA inquiry flow
+            document.getElementById('btn-cart-wa')?.click();
+        }
     });
 }
 

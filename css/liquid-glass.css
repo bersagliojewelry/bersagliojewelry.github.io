@@ -5529,3 +5529,476 @@ body.wishlist-drawer-open {
     .wishlist-drawer { transition: none; }
     .wishlist-drawer-backdrop { transition: opacity 0s; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   EMAIL CAPTURE MODAL — aqua override (Sesion 4)
+   Restyles js/email-capture.js modal with glass + emerald gradient
+   ═══════════════════════════════════════════════════════════════════ */
+.email-modal {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 1200 !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    opacity: 0;
+    transition: opacity 0.4s cubic-bezier(.32,.72,0,1);
+    background: transparent !important;
+}
+.email-modal.is-visible { opacity: 1; }
+.email-modal[hidden] { display: none !important; }
+
+.email-modal-backdrop {
+    position: absolute !important;
+    inset: 0 !important;
+    background: oklch(28% 0.08 155 / 0.4) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    cursor: pointer;
+}
+
+.email-modal-content {
+    position: relative !important;
+    z-index: 1;
+    max-width: 460px;
+    width: 100%;
+    padding: 44px 36px !important;
+    background: oklch(98% 0.005 90 / 0.95) !important;
+    backdrop-filter: blur(28px) saturate(190%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+    border: 1px solid oklch(100% 0 0 / 0.6) !important;
+    border-radius: 32px !important;
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 0.95) inset,
+        0 -1px 0 oklch(100% 0 0 / 0.25) inset,
+        0 24px 64px -12px oklch(28% 0.08 155 / 0.3) !important;
+    text-align: center;
+    transform: translateY(24px) scale(0.97);
+    transition: transform 0.45s cubic-bezier(.32,.72,0,1);
+    color: var(--bj-ink-emerald) !important;
+
+    /* Iridescent rim */
+    isolation: isolate;
+    overflow: hidden;
+}
+.email-modal-content::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: var(--pinlight);
+    opacity: 0.6;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    z-index: 1;
+}
+.email-modal-content::after {
+    content: "";
+    position: absolute; inset: 0;
+    padding: 1.5px;
+    border-radius: inherit;
+    background: var(--iridescent-rim);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 1;
+}
+.email-modal-content > * { position: relative; z-index: 2; }
+.email-modal.is-visible .email-modal-content {
+    transform: translateY(0) scale(1);
+}
+
+.email-modal-close {
+    position: absolute !important;
+    top: 16px !important;
+    right: 16px !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 999px !important;
+    background: oklch(100% 0 0 / 0.6) !important;
+    border: 1px solid oklch(100% 0 0 / 0.55) !important;
+    color: var(--bj-ink-emerald) !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.25s !important;
+    box-shadow: 0 1px 0 oklch(100% 0 0 / 0.85) inset !important;
+}
+.email-modal-close:hover {
+    background: oklch(100% 0 0 / 0.95) !important;
+    transform: scale(1.05);
+    color: var(--bj-emerald-700) !important;
+}
+
+.email-modal-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 24px !important;
+    border-radius: 50%;
+    background: linear-gradient(145deg, oklch(72% 0.18 155), oklch(38% 0.13 155));
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    color: #fff !important;
+    box-shadow:
+        inset 0 2px 0 oklch(100% 0 0 / 0.7),
+        0 0 40px oklch(65% 0.18 155 / 0.4);
+}
+
+.email-modal-title {
+    font-family: var(--font-display-aqua) !important;
+    font-size: clamp(26px, 3vw, 34px) !important;
+    font-weight: 300 !important;
+    letter-spacing: -0.02em !important;
+    color: var(--bj-ink-emerald) !important;
+    margin: 0 0 14px !important;
+    line-height: 1.1 !important;
+    text-transform: none !important;
+}
+
+.email-modal-desc {
+    font-family: var(--font-ui-aqua) !important;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+    color: var(--bj-ink-soft) !important;
+    margin: 0 0 24px !important;
+}
+
+.email-modal-form {
+    display: flex !important;
+    gap: 8px !important;
+    margin: 0 !important;
+    flex-direction: column;
+}
+
+.email-modal-input {
+    width: 100%;
+    padding: 14px 18px !important;
+    background: oklch(100% 0 0 / 0.6) !important;
+    border: 1px solid oklch(100% 0 0 / 0.55) !important;
+    border-radius: 999px !important;
+    font-family: var(--font-ui-aqua) !important;
+    font-size: 14px !important;
+    color: var(--bj-ink-emerald) !important;
+    text-align: center;
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    box-shadow: 0 1px 0 oklch(100% 0 0 / 0.85) inset;
+    transition: all 0.25s;
+}
+.email-modal-input::placeholder {
+    color: var(--bj-ink-mute);
+    text-align: center;
+}
+.email-modal-input:focus {
+    outline: none !important;
+    background: oklch(100% 0 0 / 0.85) !important;
+    border-color: oklch(82% 0.14 85 / 0.6) !important;
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 0.95) inset,
+        0 0 0 3px oklch(82% 0.14 85 / 0.18) !important;
+}
+
+.email-modal-submit {
+    padding: 14px 26px !important;
+    font-family: var(--font-ui-aqua) !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.05em !important;
+    color: #fff !important;
+    background: linear-gradient(180deg, oklch(65% 0.19 155), oklch(42% 0.14 155)) !important;
+    border: 1px solid oklch(68% 0.18 155) !important;
+    border-radius: 999px !important;
+    cursor: pointer;
+    transition: transform 0.35s cubic-bezier(.2,.9,.2,1), box-shadow 0.35s !important;
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 0.5) inset,
+        0 4px 12px -4px oklch(42% 0.14 155 / 0.45) !important;
+    text-shadow: 0 1px 1px oklch(20% 0.05 155 / 0.4);
+}
+.email-modal-submit:hover {
+    transform: translateY(-1px);
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 0.5) inset,
+        0 8px 20px -4px oklch(42% 0.14 155 / 0.6) !important;
+}
+
+.email-modal-privacy {
+    font-family: var(--font-ui-aqua) !important;
+    font-size: 11px !important;
+    color: var(--bj-ink-mute) !important;
+    margin: 18px 0 0 !important;
+    letter-spacing: 0.04em;
+}
+
+@media (max-width: 480px) {
+    .email-modal-content { padding: 36px 24px !important; border-radius: 26px !important; }
+    .email-modal-title { font-size: 24px !important; }
+    .email-modal-icon { width: 64px; height: 64px; margin-bottom: 18px !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .email-modal,
+    .email-modal-content { transition: none !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   COOKIE CONSENT BANNER — aqua override (Sesion 4)
+   Floating glass pill at the bottom of the viewport
+   ═══════════════════════════════════════════════════════════════════ */
+.cookie-banner {
+    position: fixed !important;
+    bottom: 16px !important;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1050 !important;
+    width: calc(100% - 32px);
+    max-width: 720px;
+    padding: 16px 22px !important;
+    display: flex !important;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+    justify-content: space-between;
+
+    background: oklch(96% 0.02 150 / 0.78) !important;
+    backdrop-filter: blur(28px) saturate(190%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+    border: 1px solid oklch(100% 0 0 / 0.55) !important;
+    border-radius: 22px !important;
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 0.85) inset,
+        0 -1px 0 oklch(100% 0 0 / 0.25) inset,
+        0 12px 32px -8px oklch(28% 0.08 155 / 0.22),
+        0 32px 64px -16px oklch(28% 0.08 155 / 0.18) !important;
+    color: var(--bj-ink-emerald) !important;
+}
+.cookie-banner[hidden] { display: none !important; }
+
+.cookie-banner p {
+    flex: 1;
+    min-width: 240px;
+    margin: 0 !important;
+    font-family: var(--font-ui-aqua) !important;
+    font-size: 12.5px !important;
+    line-height: 1.5;
+    color: var(--bj-ink-soft) !important;
+}
+.cookie-banner a {
+    color: var(--bj-emerald-700) !important;
+    text-decoration: underline !important;
+    text-underline-offset: 2px;
+}
+.cookie-banner a:hover {
+    color: var(--bj-emerald-800) !important;
+}
+
+.cookie-actions {
+    display: flex !important;
+    gap: 8px !important;
+    flex-shrink: 0;
+}
+
+.btn-cookie {
+    padding: 10px 18px !important;
+    font-family: var(--font-ui-aqua) !important;
+    font-size: 11.5px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.05em !important;
+    border-radius: 999px !important;
+    cursor: pointer !important;
+    transition: all 0.25s cubic-bezier(.32,.72,0,1) !important;
+    line-height: 1;
+    border: none !important;
+}
+
+.btn-cookie--accept {
+    color: #fff !important;
+    background: linear-gradient(180deg, oklch(65% 0.19 155), oklch(42% 0.14 155)) !important;
+    border: 1px solid oklch(68% 0.18 155) !important;
+    text-shadow: 0 1px 1px oklch(20% 0.05 155 / 0.4) !important;
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 0.5) inset,
+        0 4px 12px -4px oklch(42% 0.14 155 / 0.45) !important;
+}
+.btn-cookie--accept:hover {
+    transform: translateY(-1px);
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 0.5) inset,
+        0 8px 18px -4px oklch(42% 0.14 155 / 0.6) !important;
+}
+
+.btn-cookie--decline {
+    color: var(--bj-ink-soft) !important;
+    background: oklch(100% 0 0 / 0.6) !important;
+    border: 1px solid oklch(100% 0 0 / 0.55) !important;
+    box-shadow: 0 1px 0 oklch(100% 0 0 / 0.85) inset !important;
+}
+.btn-cookie--decline:hover {
+    background: oklch(100% 0 0 / 0.85) !important;
+    color: var(--bj-emerald-700) !important;
+}
+
+@media (max-width: 568px) {
+    .cookie-banner {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 14px 18px !important;
+    }
+    .cookie-banner p { font-size: 11.5px !important; }
+    .cookie-actions { justify-content: flex-end; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SEARCH OVERLAY — aqua override (Sesion 4)
+   Cmd+K palette restyled in glass aqua. Existing JS in js/search.js.
+   ═══════════════════════════════════════════════════════════════════ */
+.search-overlay {
+    background: oklch(28% 0.08 155 / 0.4) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+}
+
+.search-panel {
+    background: oklch(98% 0.005 90 / 0.95) !important;
+    backdrop-filter: blur(28px) saturate(190%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+    border: 1px solid oklch(100% 0 0 / 0.6) !important;
+    border-radius: 22px !important;
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 0.95) inset,
+        0 -1px 0 oklch(100% 0 0 / 0.25) inset,
+        0 24px 64px -12px oklch(28% 0.08 155 / 0.3) !important;
+    color: var(--bj-ink-emerald) !important;
+    overflow: hidden;
+}
+
+.search-input-wrap {
+    border-bottom: 1px solid oklch(100% 0 0 / 0.5) !important;
+    padding: 18px 22px !important;
+    background: transparent !important;
+}
+
+.search-input-icon {
+    color: var(--bj-emerald-700) !important;
+}
+
+.search-input {
+    background: transparent !important;
+    color: var(--bj-ink-emerald) !important;
+    font-family: var(--font-ui-aqua) !important;
+    font-size: 15px !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+.search-input::placeholder {
+    color: var(--bj-ink-mute) !important;
+}
+
+.search-clear,
+.search-close {
+    background: oklch(100% 0 0 / 0.6) !important;
+    border: 1px solid oklch(100% 0 0 / 0.55) !important;
+    color: var(--bj-ink-emerald) !important;
+    box-shadow: 0 1px 0 oklch(100% 0 0 / 0.85) inset !important;
+}
+.search-clear:hover,
+.search-close:hover {
+    background: oklch(100% 0 0 / 0.95) !important;
+    color: var(--bj-emerald-700) !important;
+}
+
+.search-hint,
+.search-empty {
+    color: var(--bj-ink-mute) !important;
+    font-family: var(--font-ui-aqua) !important;
+    font-size: 12.5px !important;
+}
+
+.search-results {
+    background: transparent !important;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.search-result-item {
+    background: transparent !important;
+    border-bottom: 1px solid oklch(100% 0 0 / 0.4) !important;
+    padding: 12px 22px !important;
+    color: var(--bj-ink-emerald) !important;
+    transition: background 0.2s !important;
+    text-decoration: none;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+.search-result-item:hover,
+.search-result-item.is-active {
+    background: oklch(100% 0 0 / 0.6) !important;
+}
+
+.search-result-item img,
+.search-result-item .search-result-img {
+    border-radius: 10px;
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: oklch(94% 0.02 150 / 0.4);
+}
+
+.search-result-name,
+.search-result-title {
+    font-family: var(--font-display-aqua) !important;
+    font-weight: 500 !important;
+    color: var(--bj-ink-emerald) !important;
+    font-size: 14px !important;
+}
+.search-result-meta,
+.search-result-cat {
+    font-family: var(--font-ui-aqua) !important;
+    font-size: 11px !important;
+    color: var(--bj-ink-mute) !important;
+    letter-spacing: 0.04em;
+}
+.search-result-price {
+    font-family: var(--font-mono) !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: var(--bj-emerald-800) !important;
+    margin-left: auto;
+}
+
+/* Cmd+K kbd hint inside the input area */
+.search-shortcut-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--bj-ink-mute);
+    background: oklch(100% 0 0 / 0.6);
+    border: 1px solid oklch(100% 0 0 / 0.5);
+    border-radius: 6px;
+}
+
+/* Search-trigger inside header pill (visible cue for users) */
+.header.header-aqua .search-trigger {
+    background: oklch(100% 0 0 / 0.55) !important;
+    border: 1px solid oklch(100% 0 0 / 0.5) !important;
+}
+.header.header-aqua .search-trigger:hover {
+    background: oklch(100% 0 0 / 0.85) !important;
+    color: var(--bj-emerald-700) !important;
+    transform: scale(1.05);
+}
+@media (max-width: 968px) {
+    /* On mobile, keep search trigger hidden (Cmd+K still works on iPad) */
+    .header.header-aqua .header-aqua-actions .search-trigger {
+        display: none;
+    }
+}

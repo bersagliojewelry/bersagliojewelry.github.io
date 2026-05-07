@@ -6002,3 +6002,72 @@ body.wishlist-drawer-open {
         display: none;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   PHASE 22 — Kill ALL legacy section transition ::before/::after pseudos
+   These were V7-era "fade to dark" gradient bands between sections.
+   On the pearl bj-world they appear as dark green strips that break
+   the unified bg flow.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Kill ALL ::before/::after on these section-level selectors,
+   regardless of their .featured-v7 / .brand-statement-v7 / etc modifier */
+.featured::before,
+.featured::after,
+.featured-v7::before,
+.featured-v7::after,
+.brand-statement::before,
+.brand-statement::after,
+.brand-statement-v7::before,
+.brand-statement-v7::after,
+.collections::before,
+.collections::after,
+.collections-v7::before,
+.collections-v7::after,
+.services::before,
+.services::after,
+.services-v7::before,
+.services-v7::after,
+.journal-preview::before,
+.journal-preview::after,
+.journal-v7::before,
+.journal-v7::after,
+.about-teaser::before,
+.about-teaser::after,
+.about-v7::before,
+.about-v7::after,
+.cta-banner::before,
+.cta-banner::after,
+.cta-v7::before,
+.cta-v7::after,
+.lookbook::before,
+.lookbook::after,
+.lookbook-section::before,
+.lookbook-section::after,
+.hero::before,
+.hero::after,
+.hero-v7::before,
+.hero-v7::after {
+    display: none !important;
+    content: none !important;
+    background: none !important;
+    background-image: none !important;
+    border: none !important;
+}
+
+/* Belt-and-suspenders: catch any other section/decorative ::after with dark bg */
+section::before,
+section::after {
+    background-image: none !important;
+    background-color: transparent !important;
+    border: none !important;
+}
+/* Keep our legitimate aqua section pseudos working */
+.hero-aqua-editorial-img-overlay,
+.hero-aqua-main-overlay,
+.hero-aqua-cta-halo,
+.hero-aqua-atelier-glow,
+.nosotros-editorial-overlay {
+    /* These aren't ::before/::after — they're real elements with bg.
+       Listed here as documentation that they should keep their bg. */
+}

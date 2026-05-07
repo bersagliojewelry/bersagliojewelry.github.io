@@ -1664,3 +1664,99 @@ Añadidos 4 bloques `@media` para cubrir gaps en breakpoints existentes:
 28. **`refreshAquaAnimations()`** debe llamarse después de cualquier `innerHTML = ...` que renderice secciones nuevas. Ya está hookead en components.js para el delay inicial.
 29. **`*:focus-visible`** override es global — si una librería externa (Wompi widget, search overlay) tiene su propio focus style, agregar selector específico para no quitarlo.
 30. **Skip-link** debe permanecer como PRIMER elemento dentro de `<body>` (después del `<div class="bj-world">`). Tab key debe revelarlo. NO mover.
+
+---
+
+## 2026-04-29 — SESSION 4: Mejoras post-roadmap (drawers + modals + search)
+
+Tras cerrar el roadmap principal, el usuario aprobó iniciar las "mejoras pendientes" listadas. 2 commits adicionales que completan UX y a11y.
+
+### Wishlist drawer (commit `b5faeb7`)
+
+Análogo al cart drawer de Item 2, pero para wishlist. Resolvió el gap dejado en Phase 11 cuando se simplificó el header eliminando el icono de wishlist.
+
+**Nuevo archivo `js/components/wishlist-drawer.js` (~180 líneas):**
+- Lazy DOM build en primer `openDrawer()` call
+- Empty state: heart SVG + Fraunces "Tu lista está vacía" + sub-copy "Guarda piezas que te inspiren..." + btn-aqua-emerald
+- Populated: header con count eyebrow + display title + items list scrolleable + footer (WhatsApp share verde + "Ver lista completa" + "Seguir explorando")
+- Cada item: imagen 70px + name (Fraunces ellipsis) + meta + mono price + inline pill **"Al carrito"** (toggle cart membership; muestra "En carrito" emerald cuando active) + remove button (red on hover)
+- Click delegation en `document` para `a[href$="lista-deseos.html"]` → `e.preventDefault() + openDrawer()`. Cmd/Ctrl/Shift-Click preserva navegación.
+- Skip intercept cuando `location.pathname.endsWith('lista-deseos.html')` (evita drawer sobre la misma página)
+- iOS body scroll lock idéntico a cart-drawer
+- ESC + backdrop close
+- 3 listeners: `wishlist.onChange()` + `cart.onChange()` + `db.onChange()` re-render si abierto
+- Exposed `window.openWishlistDrawer`
+
+**Wire-up (js/components.js):**
+- Import + `initWishlistDrawer()` después de `initCartDrawer()` en `loadAllComponents()`
+
+**CSS (~290 líneas):**
+- `.wishlist-drawer-backdrop`: emerald 35% alpha + blur(8px)
+- `.wishlist-drawer`: 440px max width (100vw mobile), pearl glass blur 32 sat 190%, slide 0.45s
+- `.wishlist-drawer-item-cart`: pill button con `.is-in-cart` emerald gradient state
+- WhatsApp share button: verde brand color con shadow
+- `body.wishlist-drawer-open`: position:fixed iOS technique
+
+### Email capture + Cookie banner + Search palette (commit `63dd9ac`)
+
+3 surfaces globales que existían en el código pero seguían con estilos legacy dark. Restyled en aqua sin cambiar la lógica JS.
+
+**Email capture modal (~210 líneas CSS):**
+- `.email-modal-content`: pearl glass blur 28 sat 190% + iridescent rim conic gradient + pinlight overlay + scale-up entrance (translateY 24 + scale 0.97 → 0 + 1)
+- Icon 80px emerald gradient circle + emerald glow shadow
+- Title Fraunces clamp 26-34px 300, desc Inter 14px ink-soft
+- Input pill-shaped pearl glass + gold focus ring
+- Submit btn-aqua-emerald con hover lift
+- Mobile (≤480): tighter padding + 64px icon + 24px title
+- prefers-reduced-motion respeta
+
+**Cookie consent banner (~95 líneas CSS):**
+- Floating glass pill bottom-center 16px from edge, max 720px
+- 22px radius, blur 28 sat 190%, multi-layer shadow con depth
+- Flex layout: paragraph + cookie-actions
+- `.btn-cookie--accept`: emerald gradient pill
+- `.btn-cookie--decline`: white-translucent ghost pill
+- Mobile (≤568): stack vertical, actions justify-end
+
+**Search palette + Cmd+K reactivation (~150 líneas CSS + 1 HTML edit):**
+
+HTML — añadido `<button id="search-trigger">` de regreso al header pill entre el hidden wa-nav y el cart-btn. Visible solo desktop (≥968px), hidden mobile.
+
+CSS:
+- `.search-overlay`: emerald 40% alpha backdrop + blur(10px)
+- `.search-panel`: pearl glass blur 28 sat 190%, 22px radius
+- `.search-input`: transparent bg, Inter 15px, ink-mute placeholder
+- `.search-clear / .search-close`: 36px circle glass icon buttons
+- `.search-result-item`: row 48px image + Fraunces title + Inter meta + mono price (right-aligned)
+- Active/hover: white 0.6 alpha highlight
+- `.search-shortcut-hint`: small mono kbd-style pill
+- `.header.header-aqua .search-trigger`: white-glass con emerald hover scale 1.05
+
+Existing `js/search.js` ya tenía Cmd+K shortcut + click delegation en `#search-trigger` + `.search-trigger` → no requiere cambios JS. Solo agregué el botón al markup del header.
+
+### INVENTARIO FINAL post-Sesión 4
+
+| Recurso | Estado |
+|---|---|
+| `css/style.css` | 10,549 líneas |
+| `css/liquid-glass.css` | 6,004 líneas |
+| Total commits en branch | **48** |
+
+**Componentes JS finales (7 activos):**
+- `js/components/piece-card.js` — renderer compartido
+- `js/components/categories-dock.js` — dock iOS
+- `js/components/featured.js` — wrapper para piece-card
+- `js/components/journal.js` — render journal
+- `js/components/services.js` — render services
+- `js/components/cart-drawer.js` — drawer cart (Sesión 3)
+- `js/components/wishlist-drawer.js` — drawer wishlist (NUEVO Sesión 4)
+- `js/aqua-animations.js` — entrance animations (Sesión 3)
+
+### REGLAS — NO TOCAR (post-Sesión 4, suma a las 30 anteriores)
+
+31. **`wishlist-drawer` y `cart-drawer` deben usar el mismo z-index 1100/1101**. Si añades otro drawer (ej. account, search-as-drawer), usa 1102+ para que se apile encima si está abierto sobre otro.
+32. **Click delegation en `document` para drawers** — ambos usan `e.target.closest('a[href$="..."]')` para interceptar cualquier link. NO mover esa lógica a un component-by-component handler porque rompería links inyectados dinámicamente (ej. desde piece-card.js).
+33. **Email capture localStorage key `bj_subscribed`** — si el valor es 'dismissed' el modal NO vuelve a aparecer; si es un email, el usuario suscribió. NO cambiar la key sin migración.
+34. **Cookie banner aparece solo si NO hay localStorage `bj_cookie_consent`** — la lógica está en `js/cookie-consent.js`. Si lo restyleas, mantén `#cookie-banner`, `#cookie-accept`, `#cookie-decline` IDs y `[hidden]` toggle pattern.
+35. **Search trigger button visible solo en desktop** (`@media min-width: 968px`). Cmd+K shortcut funciona en mobile con teclado externo (iPad).
+36. **`#search-trigger` puede ser `<button>` o anchor con `.search-trigger` class** — el click delegation lo maneja por selector combinado, NO requiere ID exacto.

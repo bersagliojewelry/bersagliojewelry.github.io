@@ -11,6 +11,7 @@ import { initSearch }   from './search.js';
 import { initPWA }             from './pwa.js';
 import { initAnalytics }       from './analytics.js';
 import { initCartDrawer }      from './components/cart-drawer.js';
+import { initWishlistDrawer }  from './components/wishlist-drawer.js';
 import { initAquaAnimations, refreshAquaAnimations } from './aqua-animations.js';
 
 const SNIPPETS = 'snippets/';
@@ -261,6 +262,7 @@ export async function loadAllComponents() {
     initializeWishlist();
     initializeCart();
     initCartDrawer();
+    initWishlistDrawer();
     initializeDevBanner();
     initSearch();
     initAnalytics();

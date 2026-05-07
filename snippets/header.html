@@ -49,8 +49,11 @@
                 </div>
             </nav>
 
-            <!-- Right action: cart only (matches Claude Design simplified header) -->
+            <!-- Right actions: search + cart (matches Claude Design simplified header) -->
             <div class="header-aqua-actions">
+                <button type="button" class="header-aqua-icon search-trigger" id="search-trigger" aria-label="Buscar piezas (Cmd+K)" title="Buscar (Cmd+K)">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </button>
                 <a href="carrito.html" class="header-aqua-icon cart-btn" aria-label="Carrito de compras">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                     <span class="cart-count header-aqua-badge" id="cartCount" aria-live="polite"></span>

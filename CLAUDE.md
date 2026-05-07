@@ -1506,3 +1506,257 @@ Si el usuario te pasa un nuevo URL `api.anthropic.com/v1/design/h/<hash>?open_fi
 Estos archivos representan la base del diseño que el usuario itera. Los cambios entre hashes son típicamente sub-pixel ajustes que no se reflejan en el bundle estructural.
 
 Si el bundle no está en `/tmp` (sesión nueva), pídelo al usuario o usa la rama `redesign-liquid-glass` del repo donde está como snapshot histórico.
+
+---
+
+## 2026-04-28 — POLISH SESSION (Fases 19-21 + Items 1-2 + Session 3)
+
+Tras documentar Phases 11-18, el usuario aprobó proceder con el roadmap pendiente que se le había propuesto en orden. 4 commits adicionales que cierran el rediseño.
+
+### Fase 19 — Limpieza adicional de V7 muerto + Phase 20 verificación + Phase 21 mobile (commit `8522c1f`)
+
+**Phase 19 — Collections V7 purgado:**
+Auditados los selectores legacy V7 restantes en `style.css`. Encontrados con 0 referencias en HTML/JS:
+- `collections-v7` wrapper (eliminado de index.html en Phase 1, no aparece en colecciones.html post-Phase 11)
+- `js/components/collections.js` orphan (no se importa en ningún sitio — `app.js` lo eliminó en Phase 1, `colecciones.html` ahora usa el nuevo layout `.catalog-pills + .featured-grid`)
+
+Eliminados:
+- CSS Collections V7 + Responsive bloque (~355 líneas, lines 9167-9521)
+- `js/components/collections.js` (orphan)
+
+`style.css`: 10,904 → 10,549 líneas.
+
+**Phase 20 — Pieza thumbs verificación (no-code-change):**
+Auditado `js/pieza.js renderPiece()` — los `pieza-thumbs` ya iteran correctamente sobre `piece.images?.map()` con click handler `initGalleryThumbs()` que swappea `mainImg.src` via `data-img` attribute. Ya estaba funcionando, no requirió fix. Documentado para evitar futuras auditorías redundantes.
+
+**Phase 21 — Mobile responsive polish (~135 líneas en liquid-glass.css):**
+Añadidos 4 bloques `@media` para cubrir gaps en breakpoints existentes:
+
+| Breakpoint | Cambios |
+|---|---|
+| `≤480px` (compact phone) | Hero title clamp 40-56px, lead 14px, CTAs vertical full-width. Header pill compact (gap 4px, padding 4-10, logo 13px, icons 32px). Page hero title 34-48px. Categories dock gem 48px. Catalog pills + sort 11/12px. Pieza CTA group vertical, talla pills 42px, specs cell 12-14 padding. Contacto motivo pills 7px×12px. Editorial/CTA Cartagena padding tighter. |
+| `≤620px` (mobile portrait) | Hero floating cards offsets reducidos (gem right 4, cert left 4, tag bottom -2%). Marquee items 11px gap 36px. CTA actions vertical full-width. Editorial gap 20px. |
+| `≤768px` (tablet) | Pieza price row wrap. Contacto sidebar cards 22px padding, time 40px. Pieza guarantees pill stack vertical 12px gap. |
+| `(hover:none) and (pointer:coarse)` | Disable hover transforms en `.piece-card`, `.hero-aqua-cat`, `.nosotros-timeline-item`, `.contact-channel`, `.contact-direct-social` (battery + previene accidental scale en touch) |
+
+### Item 1 — Checkout 3-step stepper (commit `83bd734`)
+
+**Source:** `/tmp/pages.jsx` Checkout component (Carrito → Envío → Pago).
+
+**HTML restructure (carrito.html):**
+- `.glass.glass-pill.checkout-stepper` arriba con 3 botones (Carrito 01 / Envío 02 / Pago 03), activo con emerald gradient
+- `.checkout-layout` grid 1.4fr 1fr (single-col en ≤920px): main content izquierda + sticky `.glass-emerald` summary derecha
+- Step 1: cart actions existentes + grid via `renderPieceCardHTML` + nuevo "Continuar al envío"
+- Step 2 (NUEVO): glass card con shipping form — 7 fields en grid 2/3-col (Nombre/Apellido, Dirección, Ciudad/País/CP, Teléfono/Email), HTML5 validation
+- Step 3 (NUEVO): glass card con 3 payment radio cards (Wompi / Transferencia bancaria / Coordinar por WhatsApp) con highlight emerald glow ring usando `:has(input:checked)`
+- Sticky aside `.glass-emerald` con line items + subtotal/envío/IVA + total mono + Wompi quick-pay (solo step 1 vía `[data-step-show="1"]`)
+
+**JS additions (js/cart-page.js):**
+- `initStepper()`:
+  - Click delegation en `.checkout-stepper` permite saltar entre pasos
+  - `.checkout-step-next/prev` buttons advance/rewind
+  - Shipping form submit: HTML5 `checkValidity()` → `sessionStorage 'bj-shipping'` → `goToStep(3)`
+  - Restore al cargar la página si hay datos guardados
+  - `btn-confirm-payment`: lee radio `payMethod`:
+    - `wompi` → existing `wompiCheckout.pay()` + clears cart on success
+    - `transfer` → redirect `gracias.html?method=transfer`
+    - `whatsapp` → reuses `btn-cart-wa` click
+- `renderCart()` actualizado para toggle visibility de stepper + layout (oculto cuando cart vacío)
+- `renderCheckoutSummary()` rewritten para nuevo sidebar sticky markup
+
+**CSS (~290 líneas en liquid-glass.css "ITEM 1" block):**
+- `.checkout-stepper`: glass-pill 460px max + 3 inner pills con activo emerald gradient
+- `.checkout-layout`: grid 1.4fr 1fr
+- `.checkout-step-view.glass`: 28px radius 36px padding (24px en ≤568px)
+- `.checkout-step-title`: Fraunces clamp 24-32px con italic emerald em
+- `.checkout-shipping-form`: flex column 16px gap, `.checkout-form-row--2/3` variants colapsan en 568px
+- `.checkout-step-prev`: ghost transparent border button
+- `.checkout-payment-opt`: glass radio cards con `:has(input:checked)` emerald bg + 2px glow ring
+- `.checkout-summary-sticky`: glass-emerald sticky top:110px, white text
+- `.checkout-unpriced-note`: white-translucent inset note dentro del sidebar emerald
+- `.cart-inquiry-note`: neutralizada (era dark legacy → aqua glass)
+- Mobile (≤480): stepper 8px padding, summary static (no sticky)
+
+### Item 2 — Cart drawer lateral (commit `01ad5e9`)
+
+**Source:** `/tmp/shell.jsx` CartDrawer component.
+
+**Nuevo archivo `js/components/cart-drawer.js` (~165 líneas):**
+- Lazy DOM build: drawer + backdrop solo se crean en primer `openDrawer()` call
+- Empty state: gem SVG + "Tu carrito está vacío" + btn-aqua-emerald
+- Populated: header (eyebrow count + display title) + scrollable items list + footer (subtotal/quote-note + checkout CTA + "Seguir explorando")
+- iOS body scroll lock: `position:fixed` + saved `scrollY` restore on close
+- `cart.onChange()` + `db.onChange()` re-render si está abierto
+- Exposed `window.openCartDrawer` para uso programático futuro
+
+**Wire-up (js/components.js):**
+- `initCartDrawer()` después de `initializeCart()`
+- Header `.cart-btn` intercept: `e.preventDefault()` + `openDrawer()` salvo Cmd/Ctrl/Shift-Click (preserva new-tab)
+
+**CSS (~280 líneas en liquid-glass.css "ITEM 2" block):**
+- `.cart-drawer-backdrop`: dimmed emerald + blur(8px), opacity transition 0.4s
+- `.cart-drawer`: fixed right, width min(440px,100vw), pearl glass blur 32 sat 190%, slide-in `translateX(110%→0)` 0.45s `cubic-bezier(.32,.72,0,1)`
+- `.cart-drawer-header`: padded title + close button (36px circle glass)
+- `.cart-drawer-empty`: centered icon + Fraunces tagline + CTA
+- `.cart-drawer-items`: scrollable middle area
+- `.cart-drawer-item`: 14px padded white-translucent rounded card con 70px square image + name (ellipsis) + meta + mono price + 28px remove button (red on hover)
+- `.cart-drawer-footer`: subtotal mono 22px + checkout-btn full-width emerald gel + ghost "Seguir explorando"
+- `body.cart-drawer-open`: `position:fixed; width:100%` (iOS scroll lock)
+- Mobile (≤480px): drawer = 100vw
+
+### Sesión 3 — Polish: animations + a11y (commit `c426b2d`)
+
+**Nuevo archivo `js/aqua-animations.js` (~70 líneas):**
+- `initAquaAnimations()`:
+  - Auto-tags every `<section>` in `<main>` con `.aqua-fade-in` (skip si ya tagged)
+  - Auto-tags grid containers (`.featured-grid`, `.hero-aqua-cats-dock`, `.nosotros-timeline-grid`, `.checkout-payment-options`, `.contact-sidebar`) con `.aqua-stagger`
+  - IntersectionObserver con threshold 12% + rootMargin -10% bottom → revela cada elemento una vez, después unobserve
+  - Respeta `prefers-reduced-motion` (no-op si reduce)
+- `refreshAquaAnimations(rootEl?)` exportado para re-observar nuevos elementos rendered async (Featured cards, journal, categories dock)
+
+**Wire-up (js/components.js):**
+- `initAquaAnimations()` en `requestAnimationFrame` después de loadAllComponents
+- `refreshAquaAnimations()` después de 1500ms para JS-rendered cards
+
+**CSS additions (~75 líneas en liquid-glass.css "SESSION 3" block):**
+- `.aqua-fade-in`: opacity 0 → 1 + translateY 18 → 0, 0.7s
+- `.aqua-stagger > *`: opacity 0 + translateY 14, transition 0.6s con `nth-child` delays 0.05/0.12/0.19/0.26/0.33/0.40s
+- `*:focus-visible`: 2px gold outline `oklch(82% 0.14 85 / 0.7)` at 3px offset (sitewide a11y)
+- `.btn-aqua*:focus-visible`: 4px offset
+- `.skip-link`: emerald pill 999px hidden -100px top → revela on focus a top:16px (Tab key)
+- Reduced-motion kills todas las transitions
+
+### INVENTARIO FINAL post-Sesión 3
+
+| Recurso | Estado |
+|---|---|
+| `css/style.css` | 10,549 líneas |
+| `css/liquid-glass.css` | 5,238 líneas |
+| `CLAUDE.md` | 1,508 líneas (antes de este apéndice) |
+| Total commits en branch | **45** (todos auto-mergeados a main) |
+
+**Componentes JS finales:**
+- `js/components/piece-card.js` — renderer compartido (6 surfaces)
+- `js/components/categories-dock.js` — dock iOS live count
+- `js/components/featured.js` — slim wrapper para piece-card
+- `js/components/journal.js` — render journal preview
+- `js/components/services.js` — render services
+- `js/components/cart-drawer.js` — drawer lateral (NUEVO Sesión 3)
+- `js/aqua-animations.js` — entrance animations (NUEVO Sesión 3)
+
+**Componentes JS borrados (limpieza acumulada):**
+- `js/components/lookbook.js` (Phase 1)
+- `js/effects/hscroll.js` (Phase 1)
+- `js/canvas/particles.js` (Phase 10)
+- `js/hero-animation.js` (Phase 10)
+- `js/components/collections.js` (Phase 19)
+- Total: ~2,500 líneas de JS muerto eliminadas a lo largo del proceso
+
+### REGLAS — NO TOCAR (post-Sesión 3, suma a las 20 anteriores)
+
+21. **`.cart-drawer` se construye lazy** en el primer `openDrawer()` call. NO crear DOM upfront — desperdicia ciclos y no aporta nada hasta que el usuario abre el drawer.
+22. **Header `.cart-btn` debe usar `e.preventDefault()`** condicionado a no-modifier-keys. Cmd/Ctrl/Shift-Click preserva navegación a `carrito.html` (UX standard de e-commerce: open in new tab).
+23. **`body.cart-drawer-open`** usa la misma técnica que `body.menu-open`: `position:fixed; width:100%; top:-{savedY}`. NO mezclar con `overflow:hidden` — en iOS Safari es la única técnica que respeta scroll position al cerrar.
+24. **Stepper buttons en `.checkout-stepper`** — los 3 botones de paso son clickables solo si cart tiene items. Si vacío, click en step 2/3 hace nada (return en delegation).
+25. **Form shipping persistence** usa `sessionStorage 'bj-shipping'`. NO usar `localStorage` (datos sensibles + temporales). Se limpia en Wompi success.
+26. **Payment radio cards** usan CSS `:has(input:checked)` para el highlight ring. Esto es Chrome 105+/Safari 15.4+/Firefox 121+. Para fallback, también usamos JS `accent-color` + el border default. Si Firefox <121 muestra fallback, no es bug.
+27. **Animation classes** (`.aqua-fade-in`, `.aqua-stagger`) deben ser auto-tagged via `initAquaAnimations()`. Solo override manual en HTML si quieres skip alguna section específica.
+28. **`refreshAquaAnimations()`** debe llamarse después de cualquier `innerHTML = ...` que renderice secciones nuevas. Ya está hookead en components.js para el delay inicial.
+29. **`*:focus-visible`** override es global — si una librería externa (Wompi widget, search overlay) tiene su propio focus style, agregar selector específico para no quitarlo.
+30. **Skip-link** debe permanecer como PRIMER elemento dentro de `<body>` (después del `<div class="bj-world">`). Tab key debe revelarlo. NO mover.
+
+---
+
+## 2026-04-29 — SESSION 4: Mejoras post-roadmap (drawers + modals + search)
+
+Tras cerrar el roadmap principal, el usuario aprobó iniciar las "mejoras pendientes" listadas. 2 commits adicionales que completan UX y a11y.
+
+### Wishlist drawer (commit `b5faeb7`)
+
+Análogo al cart drawer de Item 2, pero para wishlist. Resolvió el gap dejado en Phase 11 cuando se simplificó el header eliminando el icono de wishlist.
+
+**Nuevo archivo `js/components/wishlist-drawer.js` (~180 líneas):**
+- Lazy DOM build en primer `openDrawer()` call
+- Empty state: heart SVG + Fraunces "Tu lista está vacía" + sub-copy "Guarda piezas que te inspiren..." + btn-aqua-emerald
+- Populated: header con count eyebrow + display title + items list scrolleable + footer (WhatsApp share verde + "Ver lista completa" + "Seguir explorando")
+- Cada item: imagen 70px + name (Fraunces ellipsis) + meta + mono price + inline pill **"Al carrito"** (toggle cart membership; muestra "En carrito" emerald cuando active) + remove button (red on hover)
+- Click delegation en `document` para `a[href$="lista-deseos.html"]` → `e.preventDefault() + openDrawer()`. Cmd/Ctrl/Shift-Click preserva navegación.
+- Skip intercept cuando `location.pathname.endsWith('lista-deseos.html')` (evita drawer sobre la misma página)
+- iOS body scroll lock idéntico a cart-drawer
+- ESC + backdrop close
+- 3 listeners: `wishlist.onChange()` + `cart.onChange()` + `db.onChange()` re-render si abierto
+- Exposed `window.openWishlistDrawer`
+
+**Wire-up (js/components.js):**
+- Import + `initWishlistDrawer()` después de `initCartDrawer()` en `loadAllComponents()`
+
+**CSS (~290 líneas):**
+- `.wishlist-drawer-backdrop`: emerald 35% alpha + blur(8px)
+- `.wishlist-drawer`: 440px max width (100vw mobile), pearl glass blur 32 sat 190%, slide 0.45s
+- `.wishlist-drawer-item-cart`: pill button con `.is-in-cart` emerald gradient state
+- WhatsApp share button: verde brand color con shadow
+- `body.wishlist-drawer-open`: position:fixed iOS technique
+
+### Email capture + Cookie banner + Search palette (commit `63dd9ac`)
+
+3 surfaces globales que existían en el código pero seguían con estilos legacy dark. Restyled en aqua sin cambiar la lógica JS.
+
+**Email capture modal (~210 líneas CSS):**
+- `.email-modal-content`: pearl glass blur 28 sat 190% + iridescent rim conic gradient + pinlight overlay + scale-up entrance (translateY 24 + scale 0.97 → 0 + 1)
+- Icon 80px emerald gradient circle + emerald glow shadow
+- Title Fraunces clamp 26-34px 300, desc Inter 14px ink-soft
+- Input pill-shaped pearl glass + gold focus ring
+- Submit btn-aqua-emerald con hover lift
+- Mobile (≤480): tighter padding + 64px icon + 24px title
+- prefers-reduced-motion respeta
+
+**Cookie consent banner (~95 líneas CSS):**
+- Floating glass pill bottom-center 16px from edge, max 720px
+- 22px radius, blur 28 sat 190%, multi-layer shadow con depth
+- Flex layout: paragraph + cookie-actions
+- `.btn-cookie--accept`: emerald gradient pill
+- `.btn-cookie--decline`: white-translucent ghost pill
+- Mobile (≤568): stack vertical, actions justify-end
+
+**Search palette + Cmd+K reactivation (~150 líneas CSS + 1 HTML edit):**
+
+HTML — añadido `<button id="search-trigger">` de regreso al header pill entre el hidden wa-nav y el cart-btn. Visible solo desktop (≥968px), hidden mobile.
+
+CSS:
+- `.search-overlay`: emerald 40% alpha backdrop + blur(10px)
+- `.search-panel`: pearl glass blur 28 sat 190%, 22px radius
+- `.search-input`: transparent bg, Inter 15px, ink-mute placeholder
+- `.search-clear / .search-close`: 36px circle glass icon buttons
+- `.search-result-item`: row 48px image + Fraunces title + Inter meta + mono price (right-aligned)
+- Active/hover: white 0.6 alpha highlight
+- `.search-shortcut-hint`: small mono kbd-style pill
+- `.header.header-aqua .search-trigger`: white-glass con emerald hover scale 1.05
+
+Existing `js/search.js` ya tenía Cmd+K shortcut + click delegation en `#search-trigger` + `.search-trigger` → no requiere cambios JS. Solo agregué el botón al markup del header.
+
+### INVENTARIO FINAL post-Sesión 4
+
+| Recurso | Estado |
+|---|---|
+| `css/style.css` | 10,549 líneas |
+| `css/liquid-glass.css` | 6,004 líneas |
+| Total commits en branch | **48** |
+
+**Componentes JS finales (7 activos):**
+- `js/components/piece-card.js` — renderer compartido
+- `js/components/categories-dock.js` — dock iOS
+- `js/components/featured.js` — wrapper para piece-card
+- `js/components/journal.js` — render journal
+- `js/components/services.js` — render services
+- `js/components/cart-drawer.js` — drawer cart (Sesión 3)
+- `js/components/wishlist-drawer.js` — drawer wishlist (NUEVO Sesión 4)
+- `js/aqua-animations.js` — entrance animations (Sesión 3)
+
+### REGLAS — NO TOCAR (post-Sesión 4, suma a las 30 anteriores)
+
+31. **`wishlist-drawer` y `cart-drawer` deben usar el mismo z-index 1100/1101**. Si añades otro drawer (ej. account, search-as-drawer), usa 1102+ para que se apile encima si está abierto sobre otro.
+32. **Click delegation en `document` para drawers** — ambos usan `e.target.closest('a[href$="..."]')` para interceptar cualquier link. NO mover esa lógica a un component-by-component handler porque rompería links inyectados dinámicamente (ej. desde piece-card.js).
+33. **Email capture localStorage key `bj_subscribed`** — si el valor es 'dismissed' el modal NO vuelve a aparecer; si es un email, el usuario suscribió. NO cambiar la key sin migración.
+34. **Cookie banner aparece solo si NO hay localStorage `bj_cookie_consent`** — la lógica está en `js/cookie-consent.js`. Si lo restyleas, mantén `#cookie-banner`, `#cookie-accept`, `#cookie-decline` IDs y `[hidden]` toggle pattern.
+35. **Search trigger button visible solo en desktop** (`@media min-width: 968px`). Cmd+K shortcut funciona en mobile con teclado externo (iPad).
+36. **`#search-trigger` puede ser `<button>` o anchor con `.search-trigger` class** — el click delegation lo maneja por selector combinado, NO requiere ID exacto.

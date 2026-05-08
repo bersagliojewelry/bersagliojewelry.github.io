@@ -1320,3 +1320,61 @@ Lo que YA es dinámico (no requiere migración):
 
 Branch: `claude/recambio-total-novo` (a crear desde main)
 Backup tag: `pre-novo-backup`
+
+---
+
+## 16. ESTADO DE EJECUCIÓN — actualizado 2026-05-08
+
+### Branch + PR
+- **Rama de rebuild:** `claude/recambio-total-novo`
+- **Backup:** `backup/pre-novo` (snapshot de main antes de demoler)
+- **PR a main:** [#160](https://github.com/bersagliojewelry/bersagliojewelry.github.io/pull/160)
+
+### Tabla de phases
+
+| Phase | Estado | Commit | Descripción breve |
+|---|---|---|---|
+| A — Setup | ✅ DONE | `3d25389` | Backup branch + relocate handoff bundle a `.handoff/` |
+| B — Demolición | ✅ DONE | `b79c561` | -25,998 líneas: 11 páginas públicas + 50 JS + 7 CSS + snippets/ |
+| C — Foundation | ✅ DONE | `c6f001c` | 5 SEO shells + js/core/* (7 archivos) + 7+8 stubs + liquid-glass.css mirror |
+| D — Shell components | ✅ DONE | `f89c179` | header pill + footer + 5 drawers/modals + components.css ~750L |
+| E — HOME 9 secciones | ✅ DONE | `be71d43` | hero parallax 3D + marquee + cats + featured Firestore + editorial + services + atelier + journal NYT + CTA |
+| build-fix | ✅ DONE | `88eef95` | assets→public/, restored admin deps, SW v3, vite tolerant |
+| F — Catálogo | ✅ DONE | `d45f15f` | filtros + sort + grid dinámico + URL state |
+| G — Pieza detail | ✅ DONE | `33b7553` | gallery sticky + thumbs + info card + specs + talla + 3 CTAs + related + 404 + skeleton |
+| **H — Nosotros** | ⏳ NEXT | — | hero + 5 chapters + manifiesto + valores + atelier + equipo + prensa + FAQ |
+| I — Contacto | ⏳ TODO | — | form glass + 5 motivo pills + sidebar 3 cards + map |
+| J — Carrito stepper | ⏳ TODO | — | 3-step: cards+summary → shipping form → payment radios (Wompi/Transfer/WhatsApp) |
+| K — Journal + Entrada | ⏳ TODO | — | grid editorial + drop-cap + masthead + ticker live |
+| L — Legal + perf polish | ⏳ TODO | — | gracias/terminos/privacidad + AVIF/WebP responsive + SW stale-while-revalidate |
+| M — QA admin sync | ⏳ TODO | — | Test admin → home/catálogo/pieza/related/search live updates |
+| N — Documentación + cleanup | ⏳ TODO | — | actualizar PLAN-NOVO + cleanup `.handoff/` |
+
+### Métricas
+
+- **CSS total nuevo:** ~3,200 líneas (liquid-glass + components + home + catalogo + pieza)
+- **JS total nuevo:** ~2,300 líneas (core 7 archivos + 7 components + 3 page modules implementados)
+- **Vite build:** 5.22s, 51 modules, 13 entry points HTML
+- **Bundle size:** firebase-config 119kB gzip (límite Firebase, ineludible) + home page 7kB gzip + pieza 3.6kB gzip + chunks pequeños
+- **Files committed:** 73 cambios netos en la rama (vs main)
+
+### Decisiones arquitectónicas confirmadas
+
+1. **5 SEO shells** + SPA dinámico: index.html, colecciones.html, nosotros.html, contacto.html, journal.html
+2. **3 dynamic SPA shells** (necesarios para que boot.js detecte data-page): pieza.html ✓, carrito.html ⏳, entrada.html ⏳
+3. **Admin intocado:** todos los admin-*.html, css/admin.css, js/admin/*, js/firebase-config.js, js/firestore-service.js, js/storage-service.js, js/image-optimizer.js, js/auth.js, js/analytics.js
+4. **Bundle como referencia única:** `.handoff/BERSAGLIO NOVO/` (URL Claude Design expira, este folder es source of truth)
+5. **Vanilla ESM** + tagged templates `html\`` — sin React, sin build framework adicional (solo Vite para bundling)
+6. **Firestore real-time** vía `js/core/data.js` wrapping `js/firestore-service.js`
+7. **localStorage** para cart/wishlist/cookie/email — todos con cross-tab sync via storage event
+
+### Reglas críticas (NO TOCAR)
+
+Ver `CLAUDE.md` reglas 37-50. Resumen:
+- Vite `publicDir: 'public'` — assets estáticos van a `/public/`, NO a `/img/` raíz.
+- `sw.js` cache version `bersaglio-v3` — bump al cambiar shell assets.
+- `html\`` template requiere `escape(value)` para datos externos.
+- Page modules se cargan vía dynamic `import()` en `js/core/boot.js`.
+- CSS se bundlea con Vite — `sw.js SHELL_ASSETS` solo lista archivos del `public/` (no hashed CSS).
+- Critical CSS inline en cada shell es REQUERIDO (FOUC sin él).
+- Talla selector solo en `collection ∈ {anillos, argollas}`.

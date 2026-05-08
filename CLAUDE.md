@@ -1760,3 +1760,223 @@ Existing `js/search.js` ya tenía Cmd+K shortcut + click delegation en `#search-
 34. **Cookie banner aparece solo si NO hay localStorage `bj_cookie_consent`** — la lógica está en `js/cookie-consent.js`. Si lo restyleas, mantén `#cookie-banner`, `#cookie-accept`, `#cookie-decline` IDs y `[hidden]` toggle pattern.
 35. **Search trigger button visible solo en desktop** (`@media min-width: 968px`). Cmd+K shortcut funciona en mobile con teclado externo (iPad).
 36. **`#search-trigger` puede ser `<button>` o anchor con `.search-trigger` class** — el click delegation lo maneja por selector combinado, NO requiere ID exacto.
+
+---
+
+## 2026-05-08 — RECAMBIO TOTAL: BERSAGLIO NOVO MIRROR (rebuild completo desde cero)
+
+**Origen:** El usuario solicitó demolición total del sitio público y rebuild
+pixel-perfect mirror del bundle Claude Design **BERSAGLIO NOVO**. El admin
+queda **intocado** (admin*.html, js/admin/*, js/firebase-config.js,
+js/firestore-service.js, js/storage-service.js, js/image-optimizer.js,
+js/auth.js, js/analytics.js, css/admin.css).
+
+**Mensaje literal del usuario:**
+> "NECESITO ELIMINAR ABSOLUTAMENTE TODAS LAS PAGINAS Y SECCIONES DE BERSAGLIO
+> JEWELRY YA QUE HAREMOS UNA IMPLEMENTACION DE DISEÑO MASIVA HACIENDO UN MIRROR
+> PRECISO Y EXACTO DE LA WEB PUBLICA TAL COMO APARECE EN [Claude Design]"
+
+**Decisiones aprobadas explícitamente por el usuario:**
+1. ✅ Demolición total del sitio público
+2. ✅ Vanilla ESM (no React) con tagged template literals como JSX-equivalent
+3. ✅ Web 100% dinámica + solo 5 shells estáticas para SEO
+4. ✅ Migración a Firestore SOLO si queda mirror del bundle
+5. ✅ Apple-style image optimization (AVIF + WebP + JPG fallback con responsive srcset)
+
+### Branch + PR
+
+- **Branch de rebuild:** `claude/recambio-total-novo` (creada desde `main` en Phase A)
+- **Backup branch:** `backup/pre-novo` (snapshot de main antes de demoler)
+- **PR #160:** https://github.com/bersagliojewelry/bersagliojewelry.github.io/pull/160 (claude/recambio-total-novo → main)
+  - Cuando el merge ocurra, el workflow `.github/workflows/deploy.yml` corre `npm run build` y publica `dist/` en GH Pages.
+  - SW v3 reemplaza al v2 cacheado en navegadores existentes (activate handler limpia cache antiguo automático).
+
+### Bundle de referencia
+
+**Ubicación:** `.handoff/BERSAGLIO NOVO/` (relocated en Phase A para no servirse en deploy)
+
+| Archivo | Líneas | Rol |
+|---|---|---|
+| `project/bersaglio.html` | 87 | HTML root con estilos liquid-glass inline |
+| `project/css/liquid-glass.css` | 350 | Design system completo (oklch tokens + glass primitives + btn-aqua + chip + type) |
+| `project/js/shell.jsx` | 319 | Logo SVG, CartProvider, RouterProvider, Header, CartDrawer, Footer, PRODUCTS array |
+| `project/js/page-home.jsx` | 1075 | 9 secciones del home con copy literal |
+| `project/js/pages.jsx` | 1106 | Catalogo (7-97), Producto (98-197), Nosotros (198-537), Contacto (538-969), Field (970-994), Checkout (995-1106) |
+| `project/js/tweaks-panel.jsx` | 419 | DEV-ONLY, NO portar |
+| `project/assets/` | 6 archivos | banner-hero.png, model-emerald.png, earrings-emerald.png, earrings-travertino.png, ring-sapphire.jpg, logo-bersaglio.png |
+
+**IMPORTANTE — URL expira:** El URL original del handoff (`api.anthropic.com/v1/design/h/<hash>?open_file=bersaglio.html`) expira y `WebFetch` falla con maxContentLength. La carpeta `.handoff/BERSAGLIO NOVO/` es la **única fuente de verdad** + `PLAN-NOVO.md` documenta líneas exactas.
+
+### Stack arquitectónico
+
+- **Build:** Vite 6 (auto-discovery de `*.html` en root como entries via `discoverHtmlEntries()`)
+- **Routing:** Híbrido — 5 SEO shells reales (HTML files servidas de Vite) + SPA dinámico vía `js/core/router.js` (View Transitions API + pushState para mismo-shell, real nav cross-shell)
+- **CSS:** lightningcss + critical CSS inline en cada shell (~3.2KB con design tokens + bj-world background)
+- **JS:** Vanilla ESM + tagged template `html\`` literals como JSX equivalent (ver `js/core/html.js`)
+- **Datos:** Firestore real-time vía `js/firestore-service.js` (intocado) wrapped en `js/core/data.js` con coalesce rAF
+- **State:** localStorage para cart (`bj-cart-v2`) + wishlist (`bj-wishlist-v2`) + cookie consent (`bj-cookie-consent`) + email subscription (`bj-email-subscribed`)
+
+### Estructura de archivos final (pos Phase G)
+
+```
+bersagliojewelry.github.io/
+├── index.html                  Phase C  data-page="home"
+├── colecciones.html            Phase C  data-page="colecciones"
+├── nosotros.html               Phase C  data-page="nosotros"   ← shell creada, page module pending Phase H
+├── contacto.html               Phase C  data-page="contacto"   ← shell creada, page module pending Phase I
+├── journal.html                Phase C  data-page="journal"    ← shell creada, page module pending Phase K
+├── pieza.html                  Phase G  data-page="pieza"      ← shell + page module ✓
+├── carrito.html                ⏳        ← NOT YET — Phase J creará
+├── lista-deseos.html           ⏳        ← NOT YET — Phase J creará (o flotará solo como drawer)
+├── entrada.html                ⏳        ← NOT YET — Phase K creará
+├── gracias.html, terminos.html, privacidad.html  ⏳ Phase L
+│
+├── admin*.html                 ← INTOCADO (5 archivos admin)
+├── googlea3095f6436afe156.html ← INTOCADO (Google verification)
+│
+├── css/
+│   ├── admin.css               ← INTOCADO
+│   ├── liquid-glass.css        Phase C  350 líneas — mirror exacto del bundle
+│   ├── components.css          Phase D  ~750 líneas (header, footer, drawers, banner, modal, search)
+│   ├── home.css                Phase E  1408 líneas (9 home sections styles)
+│   ├── catalogo.css            Phase F  273 líneas
+│   └── pieza.css               Phase G  303 líneas
+│
+├── js/
+│   ├── core/                   Phase C — utilidades del rebuild
+│   │   ├── boot.js             Boot detector body[data-page] + lazy import page module
+│   │   ├── router.js           Hash + push-state hybrid + view-transitions
+│   │   ├── data.js             PublicData class wrapping Firestore listeners
+│   │   ├── cart.js             localStorage bj-cart-v2 + cross-tab sync
+│   │   ├── wishlist.js         localStorage bj-wishlist-v2
+│   │   ├── html.js             html`` tagged template + escape() + mount()
+│   │   └── format.js           formatCOP, format$, slugify, formatDateShort, debounce, rafThrottle
+│   │
+│   ├── components/             Phase D — shell components reales
+│   │   ├── header.js           Pill flotante 4-nav + cart + mobile drawer
+│   │   ├── footer.js           4-col glass grid + social
+│   │   ├── cart-drawer.js      Right slide-in con qty stepper + iOS scroll lock
+│   │   ├── wishlist-drawer.js  Análogo con WhatsApp share + al-carrito toggle
+│   │   ├── cookie-banner.js    Glass-pill bottom-center con accept/decline lazy
+│   │   ├── email-modal.js      Iridescent modal con auto-trigger 25s en home
+│   │   └── search-overlay.js   Cmd+K palette con normalize NFD + score + kbd nav
+│   │
+│   ├── pages/                  — page modules
+│   │   ├── home.js             Phase E  722 líneas (9 secciones)
+│   │   ├── catalogo.js         Phase F  261 líneas (filtros + sort + grid)
+│   │   ├── pieza.js            Phase G  368 líneas (gallery + info + related + 404)
+│   │   ├── nosotros.js         ⏳ STUB    Phase H pendiente
+│   │   ├── contacto.js         ⏳ STUB    Phase I pendiente
+│   │   ├── carrito.js          ⏳ STUB    Phase J pendiente
+│   │   ├── journal.js          ⏳ STUB    Phase K pendiente
+│   │   └── entrada.js          ⏳ STUB    Phase K pendiente
+│   │
+│   ├── firestore-service.js    ← INTOCADO 800+ líneas
+│   ├── firebase-config.js      ← INTOCADO
+│   ├── auth.js                 ← INTOCADO
+│   ├── analytics.js            ← INTOCADO
+│   ├── storage-service.js      ← Restaurado en build-fix (admin lo usa)
+│   ├── image-optimizer.js      ← Restaurado en build-fix (admin lo usa)
+│   └── admin/                  ← INTOCADO 6 archivos
+│
+├── public/                     Vite publicDir — copiado tal cual a dist/
+│   ├── manifest.json
+│   ├── favicon-16.png, favicon-32.png, favicon-192.png, favicon.ico
+│   ├── 404.html, offline.html
+│   ├── robots.txt, sitemap.xml
+│   ├── CNAME (bersagliojewelry.co)
+│   ├── sw.js                   Service Worker v3 (bumped en build-fix)
+│   └── img/
+│       ├── banner-hero.png      ← bundle, Phase E (movido a public/img/ en build-fix)
+│       ├── earrings-emerald.png  ← bundle
+│       ├── earrings-travertino.png ← bundle
+│       ├── logo-bersaglio.png    ← bundle
+│       ├── model-emerald.png     ← bundle
+│       ├── ring-sapphire.jpg     ← bundle
+│       └── (banner-1200/1920/800.avif/webp, banner.png/webp, collage*, gema*, logo-bj2.png) ← legacy del antiguo design
+│
+├── .handoff/BERSAGLIO NOVO/    ← bundle de referencia (no servido por Vite)
+│
+├── PLAN-NOVO.md                Plan autosuficiente del rebuild (1322 líneas)
+├── CLAUDE.md                   Memoria permanente del proyecto (este archivo)
+├── package.json                Vite + Firebase + GSAP + Lenis + lightningcss + sharp
+├── vite.config.js              auto-discovery + copySnippetsPlugin (tolerant)
+└── .github/workflows/
+    ├── deploy.yml              GH Pages deploy on push to main
+    └── firebase-deploy.yml
+```
+
+### Log de ejecución — Phases A-G + build-fix
+
+| Fase | Commit | Stat | Descripción |
+|---|---|---|---|
+| **A** | `3d25389` | +1322/-0 | Backup branch + relocate handoff bundle a `.handoff/`. Tag `pre-novo-backup` falló con HTTP 403, fallback a branch `backup/pre-novo`. |
+| **B** | `b79c561` | +6675/-25998 | DEMOLICIÓN: 11 páginas públicas, ~50 archivos JS, 7 CSS, snippets/, todos los componentes legacy. Admin intacto. |
+| **C** | `c6f001c` | +XXXX/-XX | FOUNDATION: 5 SEO shells (index/colecciones/nosotros/contacto/journal generadas vía Python sed) + js/core/* (7 archivos: boot, router, data, cart, wishlist, html, format) + 7 component stubs + 8 page stubs + css/liquid-glass.css mirror. |
+| **D** | `f89c179` | +2084/-21 | SHELL COMPONENTS: header pill flotante (Logo + 4 nav + cart icon + mobile drawer), footer 4-col, cart-drawer (qty stepper, iOS scroll lock con position:fixed + savedScrollY), wishlist-drawer (analog + WhatsApp share + al-carrito toggle), cookie-banner (lazy, accept/decline), email-modal (iridescent, auto-trigger 25s en home), search-overlay (Cmd+K, "/" key, normalize NFD, score-based ranking, ↑↓ keyboard nav). +css/components.css. |
+| **E** | `be71d43` | +2128/-5 | HOME 9 SECCIONES: Hero parallax 3D con --mx/--my CSS vars + manifesto + btn-hero shimmer, Marquee infinito 50s loop con 7 items + diamond separators, Categories iOS-dock con count live, Featured DINÁMICO desde Firestore (4 piezas con price), Editorial split image+manifesto+stats, Services 4 cards con SVG icons, Atelier scene con joya central + 4 corner cards, Journal NYT-style masthead con cover (16:10 + dropcap excerpt + author avatar) + sidebar 4 stories numeradas + newsletter + trio. CTA Cartagena. +css/home.css 1408L. +6 assets bundle a /img/. |
+| **F** | `d45f15f` | +529/-5 | CATÁLOGO: header centrado dinámico (varía título según ?col=<slug>), filter pills glass + sort dropdown (4 opciones), grid auto-fit min 280px, URL state ?col=&sort= via replaceState, re-render en data.onChange, empty state. +css/catalogo.css 273L. |
+| **build-fix** | `88eef95` | +308/-10 | URGENT FIX (usuario reportó "aún me sale el index antiguo"): assets movidos `/img/` → `/public/img/` (Vite publicDir), restaurado `js/storage-service.js` + `js/image-optimizer.js` (admin lazy-imports), bumped `sw.js` v2→v3 (activate handler clears v2 cache), `vite.config.js copySnippetsPlugin` ahora tolerant via `existsSync()`, eliminados 17 archivos legacy de `/img/` (no servidos). `npm run build` ahora pasa limpio. |
+| **G** | `33b7553` | +950/-5 | PIEZA DETAIL: nuevo shell `pieza.html` (data-page="pieza") generado desde index.html template, page module 368L con: breadcrumb glass, layout 1.1fr 1fr (gallery sticky | info), gallery con main image glass-iridescent + GIA chip overlay + grid 3-col thumbs (max 6, active state), info con eyebrow/name/price+IVA/desc/specs glass 2×2/talla pills (anillos+argollas only, 5/6/7/8/9 + "A medida")/3 CTAs (cart emerald + wishlist heart + asesor gold), related grid (4 misma colección con fillers), 404 state, skeleton loading, og:tags + canonical + title dinámicos. +css/pieza.css 303L. |
+
+### Bugs encontrados + resoluciones
+
+1. **HTTP 403 al pushear tag `pre-novo-backup`** (Phase A) → fallback a branch `backup/pre-novo`
+2. **Phase B borró admin deps** (`storage-service.js` + `image-optimizer.js`) → restaurados desde origin/main en build-fix
+3. **Phase B borró `snippets/` folder** pero `vite.config.js copySnippetsPlugin` aún lo usaba → guard con `existsSync()`
+4. **Phase E coloco assets en `/img/` raíz** que Vite NO procesa (`publicDir: 'public'`) → movidos a `/public/img/` en build-fix
+5. **SW v2 cacheaba CSS/imágenes viejos** del diseño anterior → bump v3 en build-fix (activate handler auto-borra v2)
+6. **`/img/` raíz tenía 17 archivos legacy duplicados** → eliminados en build-fix
+7. **Usuario reportó "aún me sale el index antiguo"** → root cause: GH Pages despliega de `main`, no de `claude/recambio-total-novo`. Solución: PR #160 para mergear cuando aprueben.
+
+### Lo que falta — Phases H-N
+
+| Phase | Páginas/features | Bundle ref (líneas en pages.jsx o page-home.jsx) | Complejidad |
+|---|---|---|---|
+| **H** | Nosotros completo: hero + 5 chapters histórica (2013/2015/2018/2022/2026) + manifiesto + valores 6-grid + atelier + equipo 4 cards + prensa 4 logos + FAQ accordion | pages.jsx L198-537 (340L) | Media-alta — copy literal extensa |
+| **I** | Contacto: hero + 3-col grid (form glass-iridescent con 5 motivo pills + sidebar 3 cards Casa/Directo/Respuesta + map embed con coords Cartagena) | pages.jsx L538-969 (432L) | Media — form validation + WhatsApp redirect |
+| **J** | Carrito 3-step stepper: paso 1 (cards via piece-card + summary glass-emerald sticky + quote-note) → paso 2 (shipping form 7 fields HTML5 validation + sessionStorage 'bj-shipping') → paso 3 (3 payment radio cards: Wompi/Transferencia/WhatsApp con `:has(input:checked)` highlight) | pages.jsx L995-1106 (Checkout 112L) | Alta — flow multi-paso |
+| **K** | Journal index + Entrada detail (post): grid editorial + drop-cap + masthead + ticker live + sidebar más-leídos | NO está en bundle — implementar custom basado en Home Journal section | Media |
+| **L** | Legal pages (gracias.html, terminos.html, privacidad.html): hero aqua simple + contenido legal + skip-link. Optimización imágenes AVIF + WebP responsive vía sharp-cli. Service Worker mejorar con stale-while-revalidate. | NO en bundle — usar template hero-aqua | Baja-media |
+| **M** | QA + sync admin verification: subir piezas/colecciones via admin → verificar live update en home, catálogo, pieza, related, search, journal | — | Baja |
+| **N** | Documentación final + cleanup `.handoff/`: actualizar PLAN-NOVO.md status, agregar notas para mantenimiento, limpiar archivos no usados | — | Baja |
+
+### Reglas — NO TOCAR (post Phase G)
+
+37. **`claude/recambio-total-novo` es la rama de rebuild.** Todos los Phases A-G + build-fix viven aquí. NO commitear directamente a main; abrir PR (como #160).
+38. **`.handoff/BERSAGLIO NOVO/` es read-only fuente de verdad.** No editar. Si `.handoff/` se pierde, hay copia en branch `redesign-liquid-glass` y commit `4b0d6b7` ("Add files via upload").
+39. **Vite `publicDir: 'public'`** — todo asset estático debe ir a `/public/`, NO a `/img/` raíz. `/public/*` se copia tal cual a `dist/` durante build.
+40. **`sw.js` cache version es `bersaglio-v3`** — bump a v4 cuando se cambien shell assets. El activate handler limpia caches que no coincidan.
+41. **`/img/banner-hero.png` es el LCP del home** — `<link rel="preload" as="image" fetchpriority="high">` en index.html. NO renombrar sin actualizar el preload.
+42. **Admin lazy-importa `../storage-service.js` + `../image-optimizer.js`** — ambos archivos en `js/` raíz. NO eliminar.
+43. **Vite copySnippetsPlugin** ahora es tolerant — si `snippets/` no existe, skip silently. NO crear `snippets/` vacío para que el plugin no cope.
+44. **Page modules cargan vía dynamic import en `boot.js`** — agregar nueva página = (1) crear shell `<page>.html`, (2) `data-page="<key>"`, (3) agregar `<key>: () => import('../pages/<key>.js')` en el PAGES map de `js/core/boot.js`, (4) crear `js/pages/<key>.js` con `export async function init()`.
+45. **`html\`` tagged template** — el helper en `js/core/html.js` NO escapa por sí solo. SIEMPRE usar `escape(value)` para datos externos (Firestore, URLs, user input). Ver patrón en `js/pages/home.js`.
+46. **CSS bundling con Vite** — Vite bundles `<link rel="preload" href="css/foo.css" as="style" onload>` en `dist/assets/[name]-[hash].css`. NO se sirve `/css/foo.css` directamente. Por eso `sw.js SHELL_ASSETS` solo lista archivos estáticos del `public/`, NO archivos hashed.
+47. **Critical CSS inline** en cada shell debe permanecer (design tokens + bj-world + reset + skip-link + initial fade-in). Sin esto hay FOUC porque el resto de CSS se carga `rel="preload"` async.
+48. **El SEO de pieza.html es genérico al cargar** (canonical/og-url apuntan a `/pieza.html` sin slug). El page module sobrescribe `document.title`, canonical, og:url, og:title, og:image con datos del slug en `refresh()`. Crawlers que no ejecutan JS verán el título genérico — ok porque queremos que indexen el catálogo en lugar de cada pieza individualmente.
+49. **Talla selector aparece solo en `collection ∈ {anillos, argollas}`** — set hardcoded en `js/pages/pieza.js:TALLAS_COLLECTIONS`. Si admin crea colección "alianzas" o similar, agregar slug ahí.
+50. **PR #160 es el deploy del rebuild.** El bot que mergea PRs auto era específico para `claude/review-liquid-glass-pr-Aciap`; NO se sabe si el bot también auto-mergea esta rama. Si no, el usuario debe mergear manualmente desde GitHub UI.
+
+### Cómo retomar el trabajo si la sesión se pierde
+
+1. **Leer este archivo** (CLAUDE.md). Esta sección documenta TODO el estado del rebuild.
+2. **Verificar branch:** `git checkout claude/recambio-total-novo`
+3. **Verificar último commit:** `git log --oneline -10` debe mostrar `33b7553` (Phase G) como tip o más reciente.
+4. **Verificar PR:** revisar https://github.com/bersagliojewelry/bersagliojewelry.github.io/pull/160 estado.
+5. **Verificar build local:** `npm ci && npm run build` debe pasar limpio (~5-7s).
+6. **Próximo trabajo:** Phase H (Nosotros) — leer `.handoff/BERSAGLIO NOVO/project/js/pages.jsx` líneas 198-537. Crear shell already exists (`nosotros.html`). Crear `js/pages/nosotros.js` + `css/nosotros.css`.
+7. **Después de cada phase:** commit con mensaje descriptivo + push a `claude/recambio-total-novo` (NO a main). PR #160 acumula commits automáticamente.
+
+### Sesión actual (2026-05-08)
+
+**Trabajo realizado en esta sesión:**
+- Phase D (header + footer + 5 drawers/modals + components.css)
+- Phase E (HOME 9 secciones)
+- Phase F (Catálogo)
+- Build fix (assets→public/, restored admin deps, SW bump, vite tolerant)
+- PR #160 abierto a main
+- Phase G (Pieza detail)
+- Esta documentación
+
+**Pendiente:** Phase H, I, J, K, L, M, N (ver tabla arriba).

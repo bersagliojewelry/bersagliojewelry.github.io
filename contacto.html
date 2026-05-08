@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Contacto · Bersaglio Jewelry</title>
+    <meta name="description" content="Agenda una asesoría privada en nuestro atelier en Cartagena de Indias. Respondemos cada consulta en menos de 24 horas.">
+    <meta name="author" content="Bersaglio Jewelry">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#f8faf6">
+    <link rel="canonical" href="https://bersagliojewelry.co/contacto.html">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://bersagliojewelry.co/">
+    <meta property="og:title" content="Contacto · Bersaglio Jewelry">
+    <meta property="og:description" content="Agenda una asesoría privada en nuestro atelier en Cartagena de Indias. Respondemos cada consulta en menos de 24 horas.">
+    <meta property="og:image" content="https://bersagliojewelry.co/img/og-image.jpg">
+    <meta property="og:locale" content="es_CO">
+    <meta property="og:site_name" content="Bersaglio Jewelry">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <!-- Favicon & PWA -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" href="/favicon-192.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Bersaglio">
+
+    <!-- Resource hints -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+
+    <!-- Fonts (mirror BERSAGLIO NOVO) -->
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Manrope:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- CRITICAL CSS — inline tokens + bj-world + base reset (above-the-fold) -->
+    <style>
+        :root {
+            /* Brand emerald */
+            --bj-emerald-900: oklch(28% 0.08 155);
+            --bj-emerald-800: oklch(34% 0.11 155);
+            --bj-emerald-700: oklch(42% 0.14 155);
+            --bj-emerald-600: oklch(52% 0.16 155);
+            --bj-emerald-500: oklch(62% 0.18 155);
+            --bj-emerald-400: oklch(74% 0.15 152);
+            --bj-emerald-300: oklch(85% 0.10 150);
+            --bj-emerald-200: oklch(92% 0.05 150);
+            --bj-emerald-100: oklch(97% 0.02 150);
+            /* Gold */
+            --bj-gold-900: oklch(55% 0.12 80);
+            --bj-gold-700: oklch(72% 0.14 82);
+            --bj-gold-500: oklch(82% 0.14 85);
+            --bj-gold-300: oklch(90% 0.08 88);
+            --bj-gold-100: oklch(96% 0.04 90);
+            /* Neutrals */
+            --bj-pearl: oklch(98% 0.005 90);
+            --bj-ivory: oklch(96% 0.012 85);
+            --bj-cream: oklch(94% 0.018 82);
+            --bj-mist:  oklch(90% 0.01 150);
+            /* Ink (replaces black) */
+            --bj-ink-emerald: oklch(18% 0.05 155);
+            --bj-ink-soft:    oklch(32% 0.03 155);
+            --bj-ink-mute:    oklch(50% 0.02 155);
+            /* Glass */
+            --glass-blur: 28px;
+            --glass-saturate: 180%;
+            --glass-tint: oklch(96% 0.02 150 / 0.55);
+            /* Type */
+            --font-brand:   "Fraunces", "Cormorant Garamond", "Times New Roman", serif;
+            --font-display: "Cormorant Garamond", "Fraunces", "Times New Roman", serif;
+            --font-ui:      "Manrope", -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+            --font-mono:    "Space Mono", "SF Mono", ui-monospace, Menlo, monospace;
+            /* Radii */
+            --r-sm: 10px; --r-md: 16px; --r-lg: 22px;
+            --r-xl: 32px; --r-2xl: 44px; --r-pill: 999px;
+        }
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; }
+        body {
+            font-family: var(--font-ui);
+            color: var(--bj-ink-emerald);
+            background: var(--bj-pearl);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            line-height: 1.55;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        h1,h2,h3,h4 { font-family: var(--font-display); font-weight: 400; letter-spacing: -0.015em; line-height: 1.05; margin: 0; }
+        p { margin: 0; }
+        a { color: inherit; text-decoration: none; }
+        button { font: inherit; border: none; background: none; cursor: pointer; color: inherit; }
+        img { max-width: 100%; height: auto; display: block; }
+        .container { width: 100%; max-width: 1360px; margin: 0 auto; padding: 0 32px; }
+        @media (max-width: 680px) { .container { padding: 0 20px; } }
+        /* bj-world global background — below all content (z-index -1) */
+        .bj-world {
+            position: fixed; inset: 0; z-index: -1;
+            background:
+                radial-gradient(1200px 900px at 15% 10%, oklch(92% 0.07 150 / 0.65), transparent 60%),
+                radial-gradient(1000px 800px at 90% 20%, oklch(95% 0.06 90 / 0.55), transparent 55%),
+                radial-gradient(1400px 1000px at 50% 110%, oklch(88% 0.10 155 / 0.55), transparent 55%),
+                linear-gradient(180deg, oklch(97% 0.01 150) 0%, oklch(94% 0.02 150) 50%, oklch(96% 0.015 90) 100%);
+            overflow: hidden;
+        }
+        .bj-world::before, .bj-world::after {
+            content: ""; position: absolute; border-radius: 50%;
+            filter: blur(60px); opacity: 0.6;
+            animation: bjDrift 28s ease-in-out infinite;
+        }
+        .bj-world::before {
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, oklch(70% 0.20 155 / 0.55), transparent 70%);
+            top: -10%; left: -10%;
+        }
+        .bj-world::after {
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, oklch(88% 0.14 85 / 0.5), transparent 70%);
+            bottom: -15%; right: -10%;
+            animation-delay: -14s;
+        }
+        @keyframes bjDrift {
+            0%,100% { transform: translate(0,0) scale(1); }
+            50%     { transform: translate(80px, -60px) scale(1.15); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .bj-world::before, .bj-world::after { animation: none; }
+        }
+        /* Skip link */
+        .skip-link {
+            position: absolute; top: -100px; left: 16px; z-index: 9999;
+            padding: 12px 20px;
+            background: var(--bj-emerald-700); color: #fff;
+            border-radius: 999px;
+            font-family: var(--font-ui); font-size: 12px; font-weight: 500;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            transition: top 0.2s;
+        }
+        .skip-link:focus, .skip-link:focus-visible { top: 16px; }
+        /* Initial fade-in to avoid FOUC */
+        body { opacity: 0; transition: opacity 0.3s ease-out; }
+        body.bj-ready { opacity: 1; }
+    </style>
+
+    <!-- Defer non-critical CSS -->
+    <link rel="preload" href="css/liquid-glass.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="css/liquid-glass.css"></noscript>
+
+    <!-- Boot: detects body[data-page] and lazy-loads page module -->
+    <script type="module" src="js/core/boot.js"></script>
+</head>
+<body data-page="contacto">
+    <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+
+    <!-- Background (fixed, z:-1, paints behind everything) -->
+    <div class="bj-world" aria-hidden="true"></div>
+
+    <!-- Header mount point — filled by js/components/header.js -->
+    <div id="header-mount"></div>
+
+    <!-- Main content — page module fills via mount() in js/pages/home.js -->
+    <main id="main-content" data-screen-label="contacto">
+        <!-- Loading skeleton while JS hydrates -->
+        <div style="min-height: 80vh; display: flex; align-items: center; justify-content: center; padding: 0 32px;">
+            <div style="text-align: center; opacity: 0.5;">
+                <div style="font-family: var(--font-display); font-size: clamp(48px, 7vw, 96px); font-weight: 300; letter-spacing: -0.025em;">
+                    Bersaglio<br><em style="font-style: italic;">Jewelry</em>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer mount point — filled by js/components/footer.js -->
+    <div id="footer-mount"></div>
+</body>
+</html>

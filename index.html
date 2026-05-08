@@ -152,6 +152,11 @@
     <noscript><link rel="stylesheet" href="css/liquid-glass.css"></noscript>
     <link rel="preload" href="css/components.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="css/components.css"></noscript>
+    <link rel="preload" href="css/home.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="css/home.css"></noscript>
+
+    <!-- Preload the hero banner since it's LCP -->
+    <link rel="preload" as="image" href="/img/banner-hero.png" fetchpriority="high">
 
     <!-- Boot: detects body[data-page] and lazy-loads page module -->
     <script type="module" src="js/core/boot.js"></script>

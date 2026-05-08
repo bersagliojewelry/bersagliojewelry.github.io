@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import { resolve }       from 'path';
-import { readdirSync, cpSync, mkdirSync } from 'fs';
+import { readdirSync, cpSync, mkdirSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
@@ -34,7 +34,8 @@ function copySnippetsPlugin() {
     return {
         name: 'copy-snippets',
         closeBundle() {
-            const src  = resolve(__dirname, 'snippets');
+            const src = resolve(__dirname, 'snippets');
+            if (!existsSync(src)) return; // Phase B demolition removed snippets/
             const dest = resolve(__dirname, 'dist', 'snippets');
             mkdirSync(dest, { recursive: true });
             cpSync(src, dest, { recursive: true });

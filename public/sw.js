@@ -7,16 +7,16 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-const CACHE_NAME    = 'bersaglio-v2';
+// Bumped to v3 for the BERSAGLIO NOVO rebuild — clears all v2 entries on activate.
+const CACHE_NAME    = 'bersaglio-v3';
 const OFFLINE_URL   = '/offline.html';
 
+// Vite hashes CSS/JS so we can't precache them by path. Static assets only.
 const SHELL_ASSETS = [
     OFFLINE_URL,
-    '/css/style.css',
-    '/img/logo-bj2.png',
-    '/img/banner-1200.webp',
-    '/img/banner-800.webp',
-    '/img/collage.webp',
+    '/img/banner-hero.png',
+    '/img/logo-bersaglio.png',
+    '/manifest.json',
 ];
 
 /* ─── Install ────────────────────────────────────────────────── */
@@ -97,8 +97,8 @@ self.addEventListener('push', event => {
     const title = data.notification?.title || data.title || 'Bersaglio Jewelry';
     const options = {
         body:  data.notification?.body || data.body || '',
-        icon:  '/img/logo-bj2.png',
-        badge: '/img/logo-bj2.png',
+        icon:  '/img/logo-bersaglio.png',
+        badge: '/img/logo-bersaglio.png',
         data:  { url: data.data?.url || data.url || '/' },
         tag:   data.tag || 'bersaglio-notification',
     };

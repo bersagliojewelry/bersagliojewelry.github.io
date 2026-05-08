@@ -1167,3 +1167,156 @@ Uso en footer con tone gold: cambiar `#0f5132` por `#d4a94a`.
 Una vez confirmado, el plan se ejecuta en orden A → O sin saltos. Cualquier desvío de scope debe documentarse aquí y aprobarse por separado.
 
 **Source of truth final:** `BERSAGLIO NOVO/project/` + este documento.
+
+---
+
+## 14. CLARIFICACIONES FINALES DEL USUARIO (decisiones tomadas)
+
+Después de la primera revisión del plan, el usuario respondió:
+
+### 14.1 Demolición total — CONFIRMADO
+Sin medias tintas. Todo el sitio público antiguo se elimina. Admin queda intacto.
+
+### 14.2 Arquitectura: SPA principal + 4 SEO shells (cambio crítico)
+
+> _"Necesito que implementes ingeniería arquitectónica, no quiero páginas estáticas — solo las que sean necesarias para SEO. El resto, web 100% dinámica."_
+
+**Implementación:**
+
+| Tipo | Archivos | Por qué |
+|---|---|---|
+| **SEO shells** (5 archivos `.html`) | `index.html`, `colecciones.html`, `nosotros.html`, `contacto.html`, `journal.html` | Crawlers de Google, og:image preview en redes sociales, URLs compartibles |
+| **SPA dinámico** (todo lo demás) | Pieza detail, Entrada blog, Carrito, Checkout, Wishlist, Search results | Render via JS leyendo Firestore, hash routing `#/<route>/<param>` |
+| **Páginas legales estáticas** | `gracias.html`, `terminos.html`, `privacidad.html` | Contenido legal raramente cambia |
+
+**Routing:**
+- URL canónica para piezas: `/pieza.html?p=<slug>` — Google lo indexa, og:tags inyectados al cargar
+- Navegación interna: usa `view-transitions` API + JS push-state para sentirse como SPA sin recarga
+- Header/footer/drawers son persistentes — solo el `<main>` cambia entre rutas
+- `js/core/router.js` intercepta clicks en `<a>` internos, hace fetch del HTML target, intercambia el `<main>` con view-transition, mantiene el shell
+
+**Tipos de routing:**
+1. **Pages SEO** (`/colecciones`, `/nosotros`): full HTML shell + JS hidrata. El crawler ve todo.
+2. **Dynamic params** (`/pieza?p=trinity`): shell mínimo + JS lee Firestore + actualiza `<title>` + `<meta>` + content. Google JS-aware lo indexa.
+3. **Pure dynamic** (carrito, búsqueda, wishlist drawer): solo en JS, no necesitan SEO.
+
+### 14.3 Vanilla ESM = JavaScript modular nativo (aclaración técnica)
+
+> _"NO entiendo esto de Vainilla ESM"_
+
+**Significa:** JavaScript nativo del navegador con módulos ES (`import`/`export`). NO React. NO Webpack. NO build step.
+
+**Ventajas vs React + Babel del bundle:**
+- 0 KB de framework (React = 50 KB gzip)
+- Sin paso de compilación → deploy directo a GitHub Pages
+- Más rápido en first paint (no hay que parsear React + transpile JSX en el navegador)
+- Mismo resultado visual exacto que el bundle
+
+**Cómo replicamos React sin React:** usamos **tagged template literals** (`html\`<div>...</div>\``) que generan strings + `<container>.innerHTML = html\`...\``. Equivalente expresivo, ~5 KB de utilidades en lugar de 50 KB.
+
+### 14.4 Migración de contenido a Firestore = mirror del bundle
+
+> _"Solo migramos si así lo podemos implementar en Bersaglio NOVO pero siempre que sea un mirror del proyecto"_
+
+**Decisión:** el bundle tiene todo hardcoded (es un prototipo). Replicamos:
+
+- **Fase 1:** copy literal del bundle hardcoded en módulos JS (`js/data/copy.js`). Mismo contenido, mismo orden, misma estructura.
+- **Fase 2 (opcional):** crear `admin-nosotros.html`, `admin-journal.html`, `admin-marquee.html` que escriben a Firestore. Las páginas públicas ya están suscritas a `data.onChange()`, así que admin → público live.
+
+Lo que YA es dinámico (no requiere migración):
+- `pieces` (catálogo) — admin existente
+- `collections` (categorías) — admin existente
+- `consultas` (formulario contacto) — admin existente
+
+### 14.5 Imágenes Apple-style — implementación
+
+> _"Lo ideal es que como haremos como lo hace apple importante es mirar como lo hace si son pesadas reducir su tamaño y formato sin perder calidad o decide tu"_
+
+**Apple-style image pipeline (lo que hace apple.com):**
+
+1. **AVIF first, WebP fallback, JPG/PNG último recurso** vía `<picture>`:
+   ```html
+   <picture>
+     <source type="image/avif" srcset="img/hero-640.avif 640w, img/hero-1280.avif 1280w, img/hero-1920.avif 1920w" sizes="100vw">
+     <source type="image/webp" srcset="img/hero-640.webp 640w, ..." sizes="100vw">
+     <img src="img/hero-1280.jpg" alt="..." loading="eager" fetchpriority="high" decoding="async" width="1920" height="1080">
+   </picture>
+   ```
+2. **Tamaños responsive:** generar 3 resoluciones por imagen (640w mobile, 1280w tablet, 1920w desktop). Browser elige según viewport.
+3. **AVIF compresión:** quality 60 mantiene calidad visual con ~30% del tamaño JPG. Las imágenes del bundle (5-6 MB cada una) bajan a ~150-300 KB.
+4. **Hero image:** `<link rel="preload" as="image" fetchpriority="high">` en `<head>` para cargar antes del CSS.
+5. **Below-fold:** `loading="lazy" decoding="async"`.
+6. **LQIP (Low Quality Image Placeholder):** versión 24×24 px en base64 inline como background-color del `<picture>` mientras carga el real. Apple usa esto en su tienda. Da percepción instantánea.
+7. **Connection-aware (opcional avanzado):** `if (navigator.connection.effectiveType === '2g')` → cargar solo la versión 640w.
+8. **Image CDN no aplica** (GitHub Pages no soporta) → pre-procesamos las imágenes en build manual: usar `sharp` o `cwebp/avifenc` localmente y commit las versiones procesadas.
+
+**Implementación práctica:**
+- Las imágenes finales las sube admin a Firebase Storage en su versión raw (PNG/JPG)
+- Cuando admin guarda una pieza, un Cloud Function (futuro) genera AVIF + WebP + 3 resoluciones automáticamente y guarda las URLs en el doc Firestore
+- Por ahora (manual): proveer al cliente unas instrucciones de cómo procesar imágenes antes de subirlas, OR procesarlas en cliente (browser) usando Canvas API antes de subir a Storage
+
+**Para las imágenes del bundle (placeholder), las procesaremos manualmente** durante Fase L (performance polish).
+
+### 14.6 Estructura final de carpetas (post-clarificaciones)
+
+```
+.
+├── index.html                      ← SPA principal con view-transitions
+├── colecciones.html                ← SEO shell (catálogo)
+├── nosotros.html                   ← SEO shell (historia)
+├── contacto.html                   ← SEO shell (form + canales)
+├── journal.html                    ← SEO shell (archivo blog)
+├── gracias.html                    ← legal estática
+├── privacidad.html                 ← legal estática
+├── terminos.html                   ← legal estática
+│
+├── admin*.html                     ← INTACTO (5 admin pages)
+├── admin.css                       ← INTACTO
+│
+├── css/
+│   ├── liquid-glass.css            mirror exacto bundle (350 líneas)
+│   ├── components.css              header/footer/drawers/cards
+│   └── pages.css                   estilos por página
+│
+├── js/
+│   ├── core/                       boot, router, data, cart, wishlist, format, html
+│   ├── components/                 header, footer, drawers, search, banner, modal, piece-card, glass-image, tilt-3d
+│   ├── home/                       9 secciones del home
+│   ├── pages/                      home, catalogo, pieza, nosotros, contacto, carrito, journal, entrada
+│   ├── data/
+│   │   └── copy.js                 contenido literal del bundle (chapters, valores, equipo, prensa, faqs, journal entries, marquee, services)
+│   ├── firebase-config.js          ← INTACTO
+│   ├── firestore-service.js        ← INTACTO
+│   ├── auth.js                     ← INTACTO
+│   ├── analytics.js                ← INTACTO
+│   └── admin/                      ← INTACTO
+│
+├── img/                            optimizado AVIF + WebP responsive
+├── sw.js                           Service Worker
+├── manifest.json                   PWA manifest aqua theme
+└── .handoff/
+    └── BERSAGLIO NOVO/             bundle de referencia (en .gitignore para deploy, conservado en repo)
+```
+
+### 14.7 Definition of Done — actualizado
+
+✅ Mirror visual pixel-perfecto del bundle
+✅ **Web 100% dinámica con SPA-feel + 5 SEO shells** (no 11 páginas estáticas)
+✅ Routing client-side con view-transitions API + push-state
+✅ Lighthouse Mobile ≥ 90 cada métrica
+✅ Sync admin → público live verificado
+✅ Mobile responsive 320/480/768/920/1280/1600
+✅ A11y completo
+✅ Cross-browser Safari/Chrome/Firefox/Edge
+✅ SEO: og:tags dinámicos por pieza, schema.org JSON-LD, canonical, sitemap, robots
+✅ Imágenes AVIF + WebP responsive con LQIP
+
+---
+
+## 15. Status post-aprobación
+
+✅ **Plan aprobado por usuario.**
+🚀 **Iniciando Fase A inmediatamente.**
+
+Branch: `claude/recambio-total-novo` (a crear desde main)
+Backup tag: `pre-novo-backup`

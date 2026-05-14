@@ -49,7 +49,11 @@ function renderHero() {
             <div class="home-hero-stage">
                 <div class="home-hero-frame">
                     <div class="home-hero-banner" data-tilt>
-                        <div class="home-hero-img" data-parallax-img></div>
+                        <picture class="home-hero-img" data-parallax-img>
+                            <source type="image/avif" srcset="/img/banner-hero-800.avif 800w, /img/banner-hero-1200.avif 1200w, /img/banner-hero-1600.avif 1600w" sizes="100vw">
+                            <source type="image/webp" srcset="/img/banner-hero-800.webp 800w, /img/banner-hero-1200.webp 1200w, /img/banner-hero-1600.webp 1600w" sizes="100vw">
+                            <img src="/img/banner-hero.png" alt="" fetchpriority="high" decoding="async" class="home-hero-img-fallback">
+                        </picture>
                         <div aria-hidden="true" class="home-hero-rim"></div>
 
                         <div class="home-hero-content">

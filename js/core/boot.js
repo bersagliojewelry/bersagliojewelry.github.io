@@ -32,6 +32,9 @@ const PAGES = {
     'lista-deseos': () => import('../pages/lista-deseos.js'),
     journal:        () => import('../pages/journal.js'),
     entrada:        () => import('../pages/entrada.js'),
+    gracias:        () => import('../pages/gracias.js'),
+    terminos:       () => import('../pages/terminos.js'),
+    privacidad:     () => import('../pages/privacidad.js'),
 };
 
 async function boot() {

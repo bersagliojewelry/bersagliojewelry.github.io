@@ -89,9 +89,16 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 }
 .home-hero-img {
     position: absolute; inset: 0;
-    background: url('/img/banner-hero.png') center/cover no-repeat;
+    display: block;
     transform: scale(1.06) translate3d(calc(var(--mx) * -10px), calc(var(--my) * -10px), 0);
     transition: transform 0.8s cubic-bezier(.2,.9,.2,1);
+    overflow: hidden;
+}
+.home-hero-img-fallback {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
 }
 .home-hero-rim {
     position: absolute; inset: 0;

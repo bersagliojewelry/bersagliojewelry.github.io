@@ -28,9 +28,10 @@ const PAGES = {
     pieza:       () => import('../pages/pieza.js'),
     nosotros:    () => import('../pages/nosotros.js'),
     contacto:    () => import('../pages/contacto.js'),
-    carrito:     () => import('../pages/carrito.js'),
-    journal:     () => import('../pages/journal.js'),
-    entrada:     () => import('../pages/entrada.js'),
+    carrito:        () => import('../pages/carrito.js'),
+    'lista-deseos': () => import('../pages/lista-deseos.js'),
+    journal:        () => import('../pages/journal.js'),
+    entrada:        () => import('../pages/entrada.js'),
 };
 
 async function boot() {

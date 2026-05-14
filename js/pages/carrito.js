@@ -1,12 +1,528 @@
 /**
- * Bersaglio Jewelry — carrito page module stub.
- * STUB: Phase C foundation. Real implementation lands in Phase E onward.
+ * Bersaglio Jewelry — Carrito (3-step checkout stepper).
+ *
+ * Mirror exacto de BERSAGLIO NOVO/project/js/pages.jsx (Checkout L995-1106, 112L)
+ * + extensiones reales para Firestore + cart store + persistencia.
+ *
+ * Flow:
+ *   Step 1 (Carrito): items con qty stepper + remove + "Continuar al envío"
+ *   Step 2 (Envío):   7-field shipping form (Nombre/Apellido, Dirección, Ciudad/País/CP,
+ *                     Teléfono/Email) con HTML5 validation + sessionStorage 'bj-shipping'
+ *   Step 3 (Pago):    3 payment radio cards (WhatsApp / Transferencia / "Coordinar"),
+ *                     "Confirmar compra · subtotal" CTA full-width
+ *
+ * Stepper bar: 3 pills emerald, click salta entre pasos. Si el cart está vacío,
+ * solo step 1 es clickeable.
+ *
+ * Summary sidebar (glass-emerald, sticky top:100):
+ *   Subtotal / Envío (Cotizar) / IVA (incluido) / Total mono 24px
+ *
+ * Datos:
+ *   - cart.getAll() entrega items {slug, qty, addedAt}
+ *   - data.getBySlug() une con piece (name, price, images)
+ *   - data.onChange + cart.onChange → re-render del step actual
+ *
+ * Submit handlers:
+ *   - Step 1 → goToStep(2)
+ *   - Step 2 form submit → saveDraft + goToStep(3) (sessionStorage 'bj-shipping')
+ *   - Step 3 confirm:
+ *       method=whatsapp → window.open(wa.me link con cart items)
+ *       method=transferencia → saveInquiry + redirect a gracias.html?method=transfer
+ *       method=coordinar    → saveInquiry + redirect a gracias.html?method=coordinar
+ *
+ * Empty state cuando cart vacío: CTA al catálogo.
  */
-import { mount } from '../core/html.js';
+
+import { html, escape } from '../core/html.js';
+import { format$ } from '../core/format.js';
+import { cart } from '../core/cart.js';
+import { data } from '../core/data.js';
+import { saveInquiry } from '../firestore-service.js';
+
+const SHIPPING_KEY = 'bj-shipping';
+const STEPS = ['Carrito', 'Envío', 'Pago'];
+let _step = 1;
+let _shipping = { firstName: '', lastName: '', email: '', phone: '', address: '', city: '', country: 'Colombia', zip: '' };
+let _payment = 'whatsapp';
+
+function loadShipping() {
+    try {
+        const raw = sessionStorage.getItem(SHIPPING_KEY);
+        if (!raw) return;
+        Object.assign(_shipping, JSON.parse(raw));
+    } catch {}
+}
+function saveShipping() {
+    try { sessionStorage.setItem(SHIPPING_KEY, JSON.stringify(_shipping)); } catch {}
+}
+function clearShipping() {
+    try { sessionStorage.removeItem(SHIPPING_KEY); } catch {}
+}
+
+function joinCart() {
+    return cart.getAll().map(item => ({
+        ...item,
+        piece: data.getBySlug(item.slug),
+    }));
+}
+
+function computeTotals(rows) {
+    const subtotal = rows.reduce((s, r) => s + Number(r.piece?.price || 0) * (r.qty || 1), 0);
+    const totalQty = rows.reduce((s, r) => s + (r.qty || 1), 0);
+    return { subtotal, totalQty };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 1. STEPPER BAR
+// ═══════════════════════════════════════════════════════════════════
+function renderStepper(rows) {
+    const empty = rows.length === 0;
+    return html`
+        <nav class="glass ck-stepper" role="tablist" aria-label="Pasos del checkout">
+            ${STEPS.map((s, i) => {
+                const idx = i + 1;
+                const disabled = empty && idx > 1;
+                return html`
+                    <button type="button"
+                            class="ck-step ${_step === idx ? 'is-active' : ''} ${disabled ? 'is-disabled' : ''}"
+                            data-action="step"
+                            data-step="${idx}"
+                            ${disabled ? 'disabled aria-disabled="true"' : ''}
+                            role="tab"
+                            aria-selected="${_step === idx ? 'true' : 'false'}">
+                        <span class="mono ck-step-num">0${idx}</span>${escape(s)}
+                    </button>`;
+            })}
+        </nav>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 2. STEP 1 — CART
+// ═══════════════════════════════════════════════════════════════════
+function renderStepCart(rows) {
+    if (rows.length === 0) return renderEmpty();
+    return html`
+        <div class="ck-step-body">
+            <h3 class="ck-step-title">Tus piezas</h3>
+            <div class="ck-items">
+                ${rows.map(renderItemRow)}
+            </div>
+            <div class="ck-step-footer">
+                <button type="button"
+                        class="btn-aqua btn-aqua-emerald ck-cta"
+                        data-action="step-next">
+                    Continuar al envío
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                </button>
+            </div>
+        </div>`;
+}
+
+function renderItemRow(row) {
+    const { slug, qty, piece } = row;
+    if (!piece) {
+        return html`
+            <article class="ck-item ck-item--stale" data-slug="${escape(slug)}">
+                <div class="ck-item-img ck-item-img--missing" aria-hidden="true"></div>
+                <div class="ck-item-body">
+                    <div class="ck-item-name">Pieza retirada del catálogo</div>
+                    <div class="mono ck-item-meta">${escape(slug)}</div>
+                    <div class="ck-item-controls">
+                        <button type="button"
+                                class="ck-item-remove"
+                                data-action="remove"
+                                data-slug="${escape(slug)}">Quitar</button>
+                    </div>
+                </div>
+            </article>`;
+    }
+    const img = piece.images?.[0] || piece.image || '';
+    return html`
+        <article class="ck-item" data-slug="${escape(slug)}">
+            <a class="ck-item-img" href="/pieza.html?p=${encodeURIComponent(piece.slug || slug)}"
+               style="background:url('${escape(img)}') center/cover"
+               aria-label="Ver ${escape(piece.name || '')}"></a>
+            <div class="ck-item-body">
+                <a class="ck-item-name" href="/pieza.html?p=${encodeURIComponent(piece.slug || slug)}">${escape(piece.name || 'Pieza')}</a>
+                <div class="mono ck-item-price">${escape(format$(piece.price))}</div>
+                <div class="ck-item-controls">
+                    <div class="ck-qty">
+                        <button type="button" class="ck-qty-btn" data-action="dec" data-slug="${escape(slug)}" aria-label="Restar uno">−</button>
+                        <span class="mono ck-qty-val">${qty}</span>
+                        <button type="button" class="ck-qty-btn" data-action="inc" data-slug="${escape(slug)}" aria-label="Sumar uno">+</button>
+                    </div>
+                    <button type="button"
+                            class="ck-item-remove"
+                            data-action="remove"
+                            data-slug="${escape(slug)}">Quitar</button>
+                </div>
+            </div>
+        </article>`;
+}
+
+function renderEmpty() {
+    return html`
+        <div class="ck-empty">
+            <div class="ck-empty-icon" aria-hidden="true">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                    <path d="M6 2l-2 5v15h16V7l-2-5H6z"/>
+                    <path d="M4 7h16M10 11a2 2 0 0 0 4 0"/>
+                </svg>
+            </div>
+            <h3 class="ck-empty-title">Tu carrito espera la primera pieza</h3>
+            <p class="ck-empty-sub">
+                Explora la colección. Cada pieza Bersaglio se elige con tiempo,
+                con calma y con un café.
+            </p>
+            <div class="ck-empty-actions">
+                <a href="/colecciones.html" class="btn-aqua btn-aqua-emerald">Ver el catálogo</a>
+                <a href="/contacto.html" class="btn-aqua">Hablar con un asesor</a>
+            </div>
+        </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 3. STEP 2 — SHIPPING
+// ═══════════════════════════════════════════════════════════════════
+function fieldHTML({ name, label, value, type = 'text', required = false, placeholder = '', autocomplete = '' }) {
+    const reqMark = required ? html`<span class="ck-field-required">*</span>` : '';
+    const reqAttr = required ? 'required' : '';
+    return html`
+        <label class="ck-field">
+            <span class="eyebrow">${escape(label)}${reqMark}</span>
+            <input type="${escape(type)}"
+                   name="${escape(name)}"
+                   class="ck-field-input"
+                   value="${escape(value)}"
+                   placeholder="${escape(placeholder)}"
+                   ${autocomplete ? `autocomplete="${escape(autocomplete)}"` : ''}
+                   ${reqAttr}>
+        </label>`;
+}
+
+function renderStepShipping() {
+    return html`
+        <div class="ck-step-body">
+            <h3 class="ck-step-title">Información de envío</h3>
+            <form class="ck-shipping" data-form="shipping" novalidate>
+                <div class="ck-field-row ck-field-row--2">
+                    ${fieldHTML({ name: 'firstName', label: 'Nombre',   value: _shipping.firstName, autocomplete: 'given-name',  required: true })}
+                    ${fieldHTML({ name: 'lastName',  label: 'Apellido', value: _shipping.lastName,  autocomplete: 'family-name', required: true })}
+                </div>
+                <div class="ck-field-row ck-field-row--2">
+                    ${fieldHTML({ name: 'email', label: 'Email',                value: _shipping.email, type: 'email', autocomplete: 'email', required: true })}
+                    ${fieldHTML({ name: 'phone', label: 'Teléfono / WhatsApp',   value: _shipping.phone, type: 'tel',   autocomplete: 'tel',   required: true })}
+                </div>
+                ${fieldHTML({ name: 'address', label: 'Dirección', value: _shipping.address, autocomplete: 'street-address', required: true })}
+                <div class="ck-field-row ck-field-row--3">
+                    ${fieldHTML({ name: 'city',    label: 'Ciudad',        value: _shipping.city,    autocomplete: 'address-level2', required: true })}
+                    ${fieldHTML({ name: 'country', label: 'País',          value: _shipping.country, autocomplete: 'country-name',   required: true })}
+                    ${fieldHTML({ name: 'zip',     label: 'Código postal', value: _shipping.zip,     autocomplete: 'postal-code' })}
+                </div>
+
+                <div class="ck-step-footer">
+                    <button type="button" class="btn-aqua ck-back" data-action="step-prev">← Volver</button>
+                    <button type="submit" class="btn-aqua btn-aqua-emerald ck-cta">
+                        Continuar al pago
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                    </button>
+                </div>
+            </form>
+        </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 4. STEP 3 — PAYMENT
+// ═══════════════════════════════════════════════════════════════════
+const PAYMENT_OPTIONS = [
+    {
+        k: 'whatsapp',
+        t: 'Coordinar por WhatsApp',
+        d: 'Hablas directo con Kary, eliges el método de pago y los plazos.',
+        icon: html`<path d="M20.5 3.5A11 11 0 0 0 3.4 17l-1.4 5.1 5.2-1.4A11 11 0 1 0 20.5 3.5z"/><path d="M8 10.5c.3 2 2 3.7 4 4.2 1 .3 1.9.1 2.5-.5"/>`,
+        primary: true,
+    },
+    {
+        k: 'transferencia',
+        t: 'Transferencia bancaria',
+        d: 'Bancolombia o Davivienda. Te enviamos los datos por correo.',
+        icon: html`<path d="M3 9h18v11H3z"/><path d="M3 9l9-6 9 6"/>`,
+    },
+    {
+        k: 'asesor',
+        t: 'Que un asesor me llame',
+        d: 'Preferimos hablar antes de avanzar. Te llamamos en menos de 4 horas hábiles.',
+        icon: html`<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>`,
+    },
+];
+
+function renderStepPayment(rows) {
+    const { subtotal } = computeTotals(rows);
+    return html`
+        <div class="ck-step-body">
+            <h3 class="ck-step-title">Cómo quieres avanzar</h3>
+            <p class="ck-step-lead">
+                Las piezas Bersaglio son únicas y de alto valor: cerramos cada compra
+                en conversación. Elige cómo prefieres coordinar.
+            </p>
+
+            <div class="ck-payment-list">
+                ${PAYMENT_OPTIONS.map(opt => html`
+                    <label class="glass ck-payment ${_payment === opt.k ? 'is-active' : ''}"
+                           data-action="payment"
+                           data-key="${escape(opt.k)}">
+                        <input type="radio" name="payment" value="${escape(opt.k)}" ${_payment === opt.k ? 'checked' : ''} class="ck-payment-radio">
+                        <div class="ck-payment-icon">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">${opt.icon}</svg>
+                        </div>
+                        <div class="ck-payment-body">
+                            <div class="ck-payment-title">${escape(opt.t)}</div>
+                            <div class="ck-payment-desc">${escape(opt.d)}</div>
+                        </div>
+                    </label>`)}
+            </div>
+
+            <div class="ck-step-footer">
+                <button type="button" class="btn-aqua ck-back" data-action="step-prev">← Volver</button>
+                <button type="button" class="btn-aqua btn-aqua-emerald ck-cta ck-confirm" data-action="confirm">
+                    Confirmar · ${escape(format$(subtotal))}
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                </button>
+            </div>
+        </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 5. SIDEBAR SUMMARY
+// ═══════════════════════════════════════════════════════════════════
+function renderSummary(rows) {
+    const { subtotal, totalQty } = computeTotals(rows);
+    return html`
+        <aside class="glass glass-emerald ck-summary">
+            <div class="eyebrow ck-summary-eyebrow">Resumen</div>
+            <div class="ck-summary-lines">
+                <div class="ck-summary-row">
+                    <span>Subtotal · ${totalQty} ${totalQty === 1 ? 'pieza' : 'piezas'}</span>
+                    <span class="mono">${escape(format$(subtotal))}</span>
+                </div>
+                <div class="ck-summary-row">
+                    <span>Envío asegurado</span>
+                    <span class="mono">Cotizar</span>
+                </div>
+                <div class="ck-summary-row">
+                    <span>IVA</span>
+                    <span class="mono">incluido</span>
+                </div>
+            </div>
+            <div class="ck-summary-divider"></div>
+            <div class="ck-summary-total">
+                <span class="ck-summary-total-label">Total</span>
+                <span class="mono ck-summary-total-val">${escape(format$(subtotal))}</span>
+            </div>
+            <div class="ck-summary-note">
+                Los precios se confirman al cierre con Kary. El envío internacional
+                se cotiza por DHL Express o FedEx Priority.
+            </div>
+        </aside>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// PAGE LAYOUT
+// ═══════════════════════════════════════════════════════════════════
+function renderHeader() {
+    return html`
+        <header class="ck-header">
+            <div class="eyebrow">Checkout</div>
+            <h1 class="ck-title">Finalizar <span class="italic emerald-text">compra</span></h1>
+        </header>`;
+}
+
+function renderStepBody(rows) {
+    if (_step === 1) return renderStepCart(rows);
+    if (_step === 2) return renderStepShipping();
+    return renderStepPayment(rows);
+}
+
+function renderAll() {
+    const rows = joinCart();
+    return html`
+        <div class="container ck-page">
+            ${renderHeader()}
+            ${renderStepper(rows)}
+            <div class="ck-grid">
+                <div class="glass ck-card">${renderStepBody(rows)}</div>
+                ${rows.length > 0 ? renderSummary(rows) : ''}
+            </div>
+        </div>`;
+}
+
+function refresh() {
+    const main = document.getElementById('main-content');
+    if (!main) return;
+    main.innerHTML = renderAll();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// HANDLERS
+// ═══════════════════════════════════════════════════════════════════
+
+function goToStep(n) {
+    _step = Math.max(1, Math.min(3, n));
+    refresh();
+    requestAnimationFrame(() => {
+        document.querySelector('.ck-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+}
+
+function buildWhatsAppCheckoutURL(rows) {
+    const phone = '573108136829';
+    const lines = rows.map(r => {
+        const name = r.piece?.name || r.slug;
+        const url  = `https://bersagliojewelry.co/pieza.html?p=${encodeURIComponent(r.slug)}`;
+        const px   = format$(r.piece?.price);
+        return `• ${name} × ${r.qty}\n  ${px}\n  ${url}`;
+    });
+    const ship = _shipping;
+    const shipInfo = (ship.firstName || ship.address)
+        ? `\n\nEnvío a:\n${ship.firstName} ${ship.lastName}\n${ship.address}, ${ship.city}, ${ship.country} ${ship.zip || ''}\n${ship.email} · ${ship.phone}`
+        : '';
+    const { subtotal } = computeTotals(rows);
+    const msg = `Hola Bersaglio, quiero coordinar la compra de estas piezas:\n\n${lines.join('\n\n')}\n\nSubtotal: ${format$(subtotal)}${shipInfo}`;
+    return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+}
+
+async function confirmOrder(rows) {
+    const { subtotal } = computeTotals(rows);
+    const ship = _shipping;
+    const itemsList = rows.map(r => `${r.piece?.name || r.slug} × ${r.qty}`).join(', ');
+
+    const payload = {
+        name:    `${ship.firstName} ${ship.lastName}`.trim() || 'Compra sin shipping',
+        email:   ship.email || '',
+        phone:   ship.phone || '',
+        message: `[Pedido ${_payment}] ${itemsList} · Subtotal ${format$(subtotal)} · Envío: ${ship.address}, ${ship.city}, ${ship.country}`.trim(),
+        pieceSlug: rows[0]?.slug || null,
+        source:  `carrito-${_payment}`,
+    };
+
+    if (_payment === 'whatsapp') {
+        const url = buildWhatsAppCheckoutURL(rows);
+        saveInquiry(payload).catch(err => console.warn('[carrito] saveInquiry whatsapp:', err));
+        // Open WhatsApp in a new tab; keep the cart so the user can come back if needed.
+        window.open(url, '_blank', 'noopener');
+        return;
+    }
+
+    // For transferencia / asesor: save inquiry, clear cart, send to gracias
+    try {
+        await saveInquiry(payload);
+    } catch (err) {
+        console.warn('[carrito] saveInquiry failed:', err);
+    }
+    cart.clear();
+    clearShipping();
+    location.href = `/gracias.html?method=${encodeURIComponent(_payment)}`;
+}
+
+function onMainClick(e) {
+    const btn = e.target.closest('[data-action]');
+    if (!btn || btn.hasAttribute('disabled')) return;
+    const action = btn.dataset.action;
+    const slug = btn.dataset.slug;
+
+    if (action === 'step') {
+        e.preventDefault();
+        const n = Number(btn.dataset.step);
+        if (Number.isNaN(n)) return;
+        // Only allow forward if cart non-empty
+        if (cart.count() === 0 && n > 1) return;
+        goToStep(n);
+        return;
+    }
+    if (action === 'step-next') { e.preventDefault(); goToStep(_step + 1); return; }
+    if (action === 'step-prev') { e.preventDefault(); goToStep(_step - 1); return; }
+
+    if (action === 'inc' && slug) {
+        const it = cart.get(slug);
+        cart.updateQty(slug, (it?.qty || 1) + 1);
+        return;
+    }
+    if (action === 'dec' && slug) {
+        const it = cart.get(slug);
+        cart.updateQty(slug, (it?.qty || 1) - 1);
+        return;
+    }
+    if (action === 'remove' && slug) {
+        cart.remove(slug);
+        return;
+    }
+
+    if (action === 'payment') {
+        e.preventDefault();
+        _payment = btn.dataset.key;
+        document.querySelectorAll('.ck-payment').forEach(el => {
+            el.classList.toggle('is-active', el.dataset.key === _payment);
+            const input = el.querySelector('input[type="radio"]');
+            if (input) input.checked = (el.dataset.key === _payment);
+        });
+        return;
+    }
+
+    if (action === 'confirm') {
+        e.preventDefault();
+        const rows = joinCart();
+        if (rows.length === 0) return;
+        confirmOrder(rows);
+    }
+}
+
+function onMainInput(e) {
+    const form = e.target.closest('form[data-form="shipping"]');
+    if (!form) return;
+    const name = e.target.name;
+    if (!name || !(name in _shipping)) return;
+    _shipping[name] = e.target.value;
+    saveShipping();
+}
+
+function onMainSubmit(e) {
+    const form = e.target.closest('form[data-form="shipping"]');
+    if (!form) return;
+    e.preventDefault();
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    // Capture form values once more (defensive — input events may miss change in autofill)
+    new FormData(form).forEach((v, k) => {
+        if (k in _shipping) _shipping[k] = String(v);
+    });
+    saveShipping();
+    goToStep(3);
+}
 
 export async function init() {
     const main = document.getElementById('main-content');
     if (!main) return;
-    // TODO: Phase E onward — implement carrito page sections
-    // For now: keep the loading skeleton visible.
+
+    loadShipping();
+
+    // Kick off Firestore (cart items reference pieces by slug)
+    data.load().catch(() => {});
+
+    refresh();
+
+    main.addEventListener('click', onMainClick);
+    main.addEventListener('input',  onMainInput);
+    main.addEventListener('change', onMainInput);
+    main.addEventListener('submit', onMainSubmit);
+
+    // Re-render on cart/data updates
+    cart.onChange(() => {
+        if (cart.count() === 0 && _step > 1) _step = 1;
+        refresh();
+    });
+    data.onChange(refresh);
 }
+
+export default { init };

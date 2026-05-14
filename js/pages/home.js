@@ -26,6 +26,14 @@
 import { html, escape } from '../core/html.js';
 import { format$ } from '../core/format.js';
 import { data } from '../core/data.js';
+import {
+    JOURNAL_ENTRIES as JOURNAL_DATA_ALL,
+    JOURNAL_ISSUE   as JOURNAL_DATA_ISSUE,
+    JOURNAL_TICKER,
+    getFeatured     as journalGetFeatured,
+} from '../data/journal.js';
+
+const JOURNAL_DATA_FEATURED = journalGetFeatured();
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 1. HERO — Cinematic banner with parallax 3D
@@ -476,40 +484,31 @@ function renderAtelier() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 8. JOURNAL — masthead estilo NYT (literal copy del bundle)
+// 8. JOURNAL — masthead estilo NYT (datos compartidos con journal/entrada pages)
 // ═══════════════════════════════════════════════════════════════════════════
-const JOURNAL_COVER = {
-    issue: 'Issue Nº 14',
-    date: 'Marzo 2026',
-    section: 'Reportaje',
-    read: '8 min',
-    kicker: 'Las gemas que cambiaron Cartagena',
-    title: 'Esmeraldas: la historia oculta detrás del verde colombiano',
-    excerpt: 'Un viaje al corazón de Muzo y Coscuez, donde la geología, la herencia indígena y el oficio artesanal convergen para producir las esmeraldas más codiciadas del planeta. Conversamos con tres mineros, un gemólogo y la directora del Atelier Bersaglio.',
-    author: 'Por María Camila Bersaglio',
-    img: '/img/earrings-emerald.png',
-    slug: 'esmeraldas-historia-oculta',
-};
-const JOURNAL_TICKER = [
-    'Nuevo: Colección Atrato 2026 disponible',
-    'Live · Subasta privada Casa Bersaglio 14·04',
-    'Guía: 7 mitos sobre las esmeraldas colombianas',
-    'Atelier abierto · Cartagena · Cita previa',
-];
-const JOURNAL_SIDE = [
-    { sec: 'Atelier', date: '12·03·26', title: 'Los seis pulsos de un anillo a medida',     read: '5 min', slug: 'seis-pulsos-anillo' },
-    { sec: 'Mercado', date: '06·03·26', title: 'Por qué el oro 18K supera al 14K en patrimonio', read: '4 min', slug: 'oro-18k-vs-14k' },
-    { sec: 'Diseño',  date: '28·02·26', title: 'Trinity: la geometría que enamoró a Cartier',  read: '6 min', slug: 'trinity-cartier' },
-    { sec: 'Cuidado', date: '19·02·26', title: 'Rituales caseros para conservar el fuego de tu diamante', read: '3 min', slug: 'rituales-diamante' },
-];
-const JOURNAL_TRIO = [
-    { sec: 'Entrevista', title: '"La esmeralda es paciencia geológica"', who: 'Andrés Forero, gemólogo GIA', img: '/img/earrings-emerald.png',  slug: 'paciencia-geologica' },
-    { sec: 'Editorial',  title: 'Bodas que no se desvanecen',           who: 'Ensayo · Lina Restrepo',     img: '/img/ring-sapphire.jpg',     slug: 'bodas-no-se-desvanecen' },
-    { sec: 'Patrimonio', title: 'Joyas que cruzaron tres generaciones', who: 'Archivo familiar Bersaglio', img: '/img/earrings-travertino.png', slug: 'tres-generaciones' },
-];
 
 function renderJournal() {
-    const cover = JOURNAL_COVER;
+    // Build cover/side/trio from the shared journal data module.
+    const feat = JOURNAL_DATA_FEATURED;
+    const cover = {
+        issue: JOURNAL_DATA_ISSUE.number,
+        date: feat.dateLong,
+        section: feat.section,
+        read: feat.read,
+        kicker: feat.kicker,
+        title: feat.title,
+        excerpt: feat.excerpt,
+        author: feat.author,
+        img: feat.image,
+        slug: feat.slug,
+    };
+    const nonFeatured = JOURNAL_DATA_ALL.filter(e => e.slug !== feat.slug);
+    const JOURNAL_SIDE = nonFeatured.slice(0, 4).map(e => ({
+        sec: e.section, date: e.date, title: e.title, read: e.read, slug: e.slug,
+    }));
+    const JOURNAL_TRIO = nonFeatured.slice(4, 7).map(e => ({
+        sec: e.section, title: e.title, who: e.author, img: e.image, slug: e.slug,
+    }));
     const ticker = JOURNAL_TICKER;
     const tickerDoubled = [...ticker, ...ticker];
     return html`

@@ -70,16 +70,16 @@ function renderHero() {
                             <div class="home-hero-body">
                                 <div class="home-hero-eyebrow-row">
                                     <span class="home-hero-eyebrow-line"></span>
-                                    <span class="mono home-hero-eyebrow">Alta Joyería de Autor y Esmeraldas Singulares</span>
+                                    <span class="mono home-hero-eyebrow">Alta Joyería Personalizada y de Confianza</span>
                                 </div>
 
                                 <h1 class="home-hero-headline">
-                                    Donde la esmeralda y el oro<br>
-                                    <span class="home-hero-headline-italic">custodian tu legado.</span>
+                                    El arte de escuchar tu historia,<br>
+                                    <span class="home-hero-headline-italic">tallado en una joya única.</span>
                                 </h1>
 
                                 <p class="home-hero-manifesto">
-                                    En el silencio de nuestro atelier en Cartagena, cada joya se concibe como una confidencia eterna. Escuchamos la historia que define tu vida, seleccionamos manualmente esmeraldas colombianas de brillo excepcional —extraídas éticamente de los históricos yacimientos de Muzo y Chivor— y esculpimos con metales nobles y oro de 18 quilates un legado físico destinado a trascender de generación en generación.
+                                    Nacimos visitando a nuestros clientes de puerta en puerta, cimentando una relación de cercanía y confianza duradera. En nuestro atelier privado del Centro Histórico de Cartagena, no diseñamos simples accesorios: nos tomamos el tiempo para asesorarte y dar vida a piezas irrepetibles de oro de 18 quilates y esmeraldas colombianas éticas. Una inversión emocional y material destinada a custodiar tu esencia para siempre.
                                 </p>
 
                                 <div class="home-hero-actions">
@@ -108,30 +108,7 @@ function renderHero() {
         </section>`;
 }
 
-function initHeroParallax() {
-    const hero = document.querySelector('[data-hero]');
-    if (!hero) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    if (window.matchMedia('(pointer: coarse)').matches) return;
 
-    let raf = 0;
-    let nextX = 0, nextY = 0;
-
-    function onMove(e) {
-        const r = hero.getBoundingClientRect();
-        nextX = ((e.clientX - r.left) / r.width - 0.5) * 2;
-        nextY = ((e.clientY - r.top) / r.height - 0.5) * 2;
-        if (raf) return;
-        raf = requestAnimationFrame(apply);
-    }
-    function apply() {
-        raf = 0;
-        hero.style.setProperty('--mx', nextX);
-        hero.style.setProperty('--my', nextY);
-    }
-
-    window.addEventListener('mousemove', onMove, { passive: true });
-}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 2. MARQUEE — credentials ribbon
@@ -707,7 +684,6 @@ export async function init() {
 
     // Hero parallax + journal newsletter wire-up
     requestAnimationFrame(() => {
-        initHeroParallax();
         initJournalNewsletter();
     });
 

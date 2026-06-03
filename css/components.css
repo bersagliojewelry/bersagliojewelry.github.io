@@ -538,7 +538,7 @@ body.wishlist-drawer-open {
 .bj-email-modal-backdrop {
     position: fixed; inset: 0;
     z-index: 300;
-    background: oklch(28% 0.08 155 / 0.45);
+    background: oklch(15% 0 0 / 0.45);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     opacity: 0;

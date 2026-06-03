@@ -28,27 +28,27 @@ let _openFaq = 0;
 let _activeChapter = 0;
 
 const CHAPTERS = [
-    { y: '2013', t: 'El Diálogo Inicial', d: 'Kary Mendoza emprende el viaje visitando a familias cartageneras en sus hogares. Más que ofrecer metales y gemas, se dedicó a escuchar. Cada historia compartida sentó los cimientos de una pieza cargada de alma.' },
-    { y: '2016', t: 'La Consagración del Espacio', d: 'Establecemos nuestro primer atelier privado en el Centro Histórico. Una puerta que solo se abre bajo cita concertada, resguardando la intimidad de cada visitante y celebrando la joyería de intención.' },
-    { y: '2020', t: 'Estándares del Oficio', d: 'Bersaglio es admitida en Jewelers of America. Asumimos el compromiso inquebrantable de la trazabilidad ética, seleccionando exclusivamente gemas Muzo y diamantes avalados por la GIA.' },
-    { y: '2023', t: 'Una Década de Legado', d: 'Mil piezas singulares esculpidas, cada una documentada en su bitácora de origen: la procedencia exacta de la gema, las manos artesanas involucradas y el relato familiar que conmemora.' },
-    { y: '2026', t: 'La Verde y el Futuro', d: 'Presentamos una colección icónica: seis creaciones exclusivas con esmeraldas Muzo sin tratamiento térmico y monturas en oro paladiado. Un tributo puro a la naturaleza indómita de la gema soberana de Colombia.' },
+    { y: '2013', t: 'El Diálogo Inicial', d: 'Kary Mendoza inicia este viaje visitando a familias cartageneras en la calidez de sus hogares. Más que presentar gemas o metales preciosos, se dedicó a escuchar con el corazón. Cada confidencia compartida sentó las bases de un taller consagrado a tallar joyas con alma y memorias vivas.' },
+    { y: '2016', t: 'La Consagración del Espacio', d: 'Abrimos las puertas de nuestro primer atelier privado en el centro histórico de Cartagena. Un refugio consagrado a la orfebrería pausada, accesible únicamente bajo cita para proteger la intimidad de nuestros huéspedes y celebrar el arte de la co-creación.' },
+    { y: '2020', t: 'Estándares del Oficio', d: 'Consolidamos nuestra visión ética al ser admitidos en Jewelers of America. Nos comprometemos con una trazabilidad absoluta, seleccionando directamente esmeraldas colombianas de origen certificado en Muzo, Coscuez y Chivor, junto a diamantes con reporte GIA.' },
+    { y: '2023', t: 'Una Década de Legado', d: 'Celebramos una década de historias inmortalizadas. Cada una de nuestras piezas exclusivas se entrega con su bitácora de origen única, detallando la procedencia exacta de la gema, los maestros artesanos involucrados y el relato familiar que la inspiró.' },
+    { y: '2026', t: 'La Verde y el Futuro', d: 'Presentamos la colección icónica "La Verde": seis piezas singulares de alta joyería creadas alrededor de esmeraldas de Muzo de una pureza excepcional, engastadas a mano en oro de 18 quilates. Un tributo eterno a la soberana de las tierras colombianas.' },
 ];
 
 const VALORES = [
-    { n: '01', t: 'La Confidencia como Preludio', d: 'Prescindimos de catálogos y guiones comerciales. Nos adentramos en el sentimiento y la memoria que inspiran tu encargo. La joya ideal se revela a través del diálogo.' },
-    { n: '02', t: 'Linaje y Origen Noble', d: 'Cada esmeralda singular es respaldada por su procedencia de mina (Muzo, Coscuez o Chivor). Cada diamante posee reporte GIA y el oro cuenta con certificación ética de trazabilidad RJC.' },
-    { n: '03', t: 'Orfebrería Pausada', d: 'Dedicamos de cuatro a seis semanas a cada pieza. Sin atajos ni moldes en serie. Empleamos técnicas ancestrales, cera perdida y el labrado paciente a mano del maestro orfebre.' },
-    { n: '04', t: 'Custodia Eterna', d: 'Limpieza, reajuste y restauración de por vida. Si una joya lleva la impronta de Bersaglio, siempre tendrá las puertas abiertas de nuestra casa para su preservación absoluta.' },
-    { n: '05', t: 'El Respeto al Secreto', d: 'Garantizamos discreción absoluta. No divulgamos nombres ni exponemos las piezas de nuestros clientes. Comprendemos que cada joya custodia un relato privado.' },
-    { n: '06', t: 'El Éxito en la Trascendencia', d: 'No evaluamos nuestro triunfo en cifras, sino en el retorno de nuestras piezas al atelier décadas más tarde, portadas orgullosamente por la siguiente generación.' },
+    { n: '01', t: 'La Confidencia como Preludio', d: 'Prescindimos de vitrinas comerciales y catálogos estandarizados. Nos sentamos a conversar para comprender el amor, el logro o la memoria que inspira tu encargo. La joya perfecta nace solo del diálogo sincero y sin prisa.' },
+    { n: '02', t: 'Linaje y Origen Ético', d: 'Cada esmeralda colombiana que seleccionamos está respaldada por su trazabilidad total desde las minas de Muzo, Chivor o Coscuez. Cada diamante cuenta con certificación GIA y el oro posee sello de origen ético y responsable.' },
+    { n: '03', t: 'Orfebrería Pausada', d: 'Dedicamos semanas de devoción y paciencia a cada pieza. Sin moldes industriales ni atajos. Preservamos las técnicas ancestrales de la filigrana momposina, el tallado manual y la fundición a cera perdida de los maestros orfebres.' },
+    { n: '04', t: 'Custodia Vitalicia', d: 'Mantenimiento, pulido y ajuste de engastes de por vida. Sentimos que una creación firmada por Bersaglio es un miembro eterno de nuestra Maison, y nuestras puertas en Cartagena siempre estarán abiertas para su cuidado.' },
+    { n: '05', t: 'Respeto al Relato Privado', d: 'Protegemos la discreción de tu legado familiar. No exponemos nombres de clientes ni piezas hechas a medida en vitrinas públicas. Comprendemos que tu patrimonio material es una historia íntima y sagrada.' },
+    { n: '06', t: 'La Trascendencia como Única Cifra', d: 'No medimos nuestro éxito en volumen de ventas, sino en el regreso de nuestras joyas familiares al atelier décadas después, portadas con el mismo orgullo por las nuevas generaciones.' },
 ];
 
 const EQUIPO = [
-    { n: 'Kary Mendoza',         r: 'Fundadora & Directora',     b: 'Diez años escuchando historias y traduciéndolas en piezas. Su firma está en cada decisión: la gema, el orfebre, el detalle final.' },
-    { n: 'Maestro Eliécer Patiño', r: 'Orfebre principal',         b: 'Treinta y dos años en oficio. Aprendiz en Mompox, oficial en Cartagena. Cera perdida, engaste pavé, tallado de filigrana.' },
-    { n: 'Lucía Restrepo',       r: 'Gemóloga GIA',              b: 'Certificada por el Gemological Institute of America. Selecciona y autentica cada esmeralda y diamante antes de que entre al taller.' },
-    { n: 'Andrés Beltrán',       r: 'Diseño & dibujo técnico',   b: 'Boceto a mano, render 3D, prototipado en cera. Traduce conversaciones en planos que el orfebre puede ejecutar.' },
+    { n: 'Kary Mendoza',         r: 'Fundadora & Directora',     b: 'Diez años dedicada a escuchar con empatía las historias de nuestros clientes para traducirlas en obras de arte eternas. Su mirada sensible guía la selección de cada gema y supervisa el detalle final de cada pieza.' },
+    { n: 'Maestro Eliécer Patiño', r: 'Orfebre principal',         b: 'Treinta y dos años de maestría y devoción orfebre. Formado bajo la tradición de la filigrana en Mompox y perfeccionado en Cartagena, domina la fundición a cera perdida y el engaste pavé de alta precisión.' },
+    { n: 'Lucía Restrepo',       r: 'Gemóloga GIA',              b: 'Certificada por el prestigioso Gemological Institute of America (GIA). Es la guardiana de la excelencia gemológica de la Maison, analizando la pureza, color y procedencia de cada esmeralda y diamante.' },
+    { n: 'Andrés Beltrán',       r: 'Diseño & dibujo técnico',   b: 'Traduce las conversaciones íntimas del atelier en bocetos poéticos a mano alzada, planos técnicos y modelados 3D meticulosos, sirviendo de puente entre el deseo del cliente y el crisol del orfebre.' },
 ];
 
 const PRENSA = [

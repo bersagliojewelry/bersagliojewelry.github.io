@@ -388,3 +388,17 @@ Refinamiento narrativo y espacial de Bersaglio Jewelry para lograr un posicionam
 - **UX-10**: Micro-interacción de resplandor difuso coloreado (hover glow) con tonos de esmeralda fina y oro en `.home-featured-card:hover` dentro de `css/home.css`.
 - **UX-11**: Rediseño definitivo y unificación del panel administrativo (`css/admin.css`) integrando el fondo dinámico `.bj-world` atenuado en `body`, habilitando fuentes de visualización premium (`Fraunces` y `Cormorant Garamond`), y puliendo los bordes y cristalería acrílica.
 
+---
+
+## 2026-06-03 — SEO, Tracking, Optimización AVIF y Rediseño Premium de Autor en Admin
+Implementación de mejoras de SEO JSON-LD, analítica e-commerce (GA4 + Pixel de Facebook), compresión AVIF dinámica en subida de imágenes, rediseño de sidebar claro perlado (Light Liquid Glass) y copywriting emocional optimizado.
+
+**Entregables:**
+- **SEO-01**: Inyección de esquemas JSON-LD dinámicos para productos, colecciones y migas de pan (Breadcrumbs) en `js/core/schema.js` y páginas.
+- **ANALYTICS-01**: Integración asíncrona de Google Analytics 4 y Pixel de Facebook mapeando eventos clave de e-commerce y conversión de leads en `js/analytics.js` y formularios.
+- **IMG-01**: Verificación de exportación AVIF dinámica vía Canvas con fallback a WebP en el cargador de imágenes `js/image-optimizer.js`.
+- **ADMIN-01**: Rediseño del sidebar del panel administrativo a estilo traslúcido perlado claro (Light Liquid Glass), unificación de botones y campos de entrada con la marca, e inyección del logotipo SVG oficial de Bersaglio en todos los encabezados administrativos.
+- **ADMIN-02**: Solución técnica en el login de administración (`css/admin.css`) para corregir la superposición de los formularios de ingreso y restablecimiento de contraseña mediante la regla `[hidden] { display: none !important; }`.
+- **COPY-01**: Modificación integral de los textos del Home, Nosotros y Contacto con copywriting literario, emotivo y enriquecido con palabras clave de SEO (esmeraldas colombianas de Muzo/Chivor, filigrana momposina, atelier, oro de 18 quilates).
+
+

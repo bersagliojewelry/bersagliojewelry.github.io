@@ -33,6 +33,7 @@
 
 import { html, escape } from '../core/html.js';
 import { saveInquiry } from '../firestore-service.js';
+import { track } from '../analytics.js';
 
 let _tab = 'mensaje';
 let _sent = false;
@@ -124,10 +125,10 @@ const URGENCIAS = [
 ];
 
 const PROCESO = [
-    { n: '01', t: 'Lectura personal',   d: 'Tu mensaje lo lee Kary o alguien de su equipo. Sin chatbots, sin filtros automáticos.', tiempo: 'En el día' },
-    { n: '02', t: 'Primera respuesta',  d: 'Te contactamos con preguntas de contexto: ocasión, tiempos, presupuesto.', tiempo: '< 24 horas' },
-    { n: '03', t: 'Conversación',       d: 'Llamada, WhatsApp o visita al atelier. Lo que prefieras, sin presión de venta.', tiempo: 'A tu ritmo' },
-    { n: '04', t: 'Boceto y propuesta', d: 'Si decides avanzar, recibirás boceto a mano, render 3D y plan de pago.', tiempo: '3–5 días' },
+    { n: '01', t: 'Lectura Personal',   d: 'Tu mensaje es leído directamente por Kary Mendoza o un gemólogo experto de nuestro atelier. Prescindimos de respuestas automáticas o chatbots; valoramos el contacto humano desde el primer segundo.', tiempo: 'En el día' },
+    { n: '02', t: 'Primer Diálogo',  d: 'Nos pondremos en contacto para entender mejor el contexto de tu joya: la historia detrás del encargo, el tipo de gema preferida y las expectativas de entrega.', tiempo: '< 24 horas' },
+    { n: '03', t: 'Encuentro Pausado',       d: 'Agendamos una llamada de voz, chat directo o un café en nuestra Maison en el centro histórico de Cartagena. Una conversación íntima, sin presiones comerciales de ningún tipo.', tiempo: 'A tu ritmo' },
+    { n: '04', t: 'Revelación de la Pieza', d: 'Si decides que Bersaglio sea el custodio de tu legado, elaboramos los primeros bocetos a mano alzada y renderizados 3D para tu aprobación antes de fundir en el crisol.', tiempo: '3–5 días' },
 ];
 
 function getMinDate() {
@@ -712,6 +713,16 @@ function onMainSubmit(e) {
             pieceSlug: ref || null,
             source:  'contacto-llamada',
         };
+    }
+
+    // Track Lead event for analytical conversion measurements (GA4 + Meta Pixel)
+    try {
+        track('generate_lead', {
+            lead_type: formName, // 'mensaje', 'visita', 'llamada'
+            piece_slug: ref || ''
+        });
+    } catch (err) {
+        console.warn('[contacto] generate_lead tracking failed:', err);
     }
 
     // Optimistic UI: show success immediately. Firestore happens in background.

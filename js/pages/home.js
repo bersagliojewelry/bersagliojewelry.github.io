@@ -74,15 +74,12 @@ function renderHero() {
                                 </div>
 
                                 <h1 class="home-hero-headline">
-                                    Donde la luz<br>
-                                    <span class="home-hero-headline-italic">esculpe el alma.</span>
+                                    Donde la esmeralda y el oro<br>
+                                    <span class="home-hero-headline-italic">custodian tu legado.</span>
                                 </h1>
 
                                 <p class="home-hero-manifesto">
-                                    Cada creación de Bersaglio nace como una confidencia íntima. Escuchamos el relato 
-                                    que desea inmortalizar, seleccionamos personalmente la esmeralda singular que 
-                                    custodiará su memoria y esculpimos a mano una pieza eterna, destinada a trascender 
-                                    como patrimonio familiar.
+                                    En el silencio de nuestro atelier en Cartagena, cada joya se concibe como una confidencia eterna. Escuchamos la historia que define tu vida, seleccionamos manualmente esmeraldas colombianas de brillo excepcional —extraídas éticamente de los históricos yacimientos de Muzo y Chivor— y esculpimos con metales nobles y oro de 18 quilates un legado físico destinado a trascender de generación en generación.
                                 </p>
 
                                 <div class="home-hero-actions">
@@ -201,7 +198,7 @@ function renderCategories() {
                         La refracción del <span class="italic emerald-text">alma verde</span>
                     </h2>
                     <p class="home-cats-lead">
-                        Cada pieza representa una búsqueda estética diferente; una veneración al fuego interno del metal y la esmeralda.
+                        Nuestras colecciones son capítulos de una historia compartida. Cada anillo, arete y dije es esculpido pacientemente en oro de 18K, rindiendo homenaje al fuego interno y la mística de la esmeralda colombiana.
                     </p>
                 </div>
 
@@ -347,14 +344,14 @@ function renderEditorial() {
                     <div class="glass home-editorial-text">
                         <div class="eyebrow">Nuestra filosofía</div>
                         <h2 class="home-editorial-title">
-                            El arte de la gemología íntima:<br>
-                            <span class="italic emerald-text">más que una adquisición, un legado.</span>
+                            El arte de la orfebrería pausada:<br>
+                            <span class="italic emerald-text">más que una joya, un legado familiar.</span>
                         </h2>
                         <p class="home-editorial-lead">
-                            Entendemos el metal y la piedra como portadores de memoria. Somos los cómplices silenciosos de los instantes que definen una vida entera: una promesa perpetua, una consagración, un recuerdo indeleble.
+                            Entendemos la esmeralda y el oro de 18 quilates como portadores de la memoria humana. Nos convertimos en cómplices silenciosos de los instantes que definen una vida: promesas que trascienden el tiempo, hitos de amor incondicional y el recuerdo indeleble de quienes somos.
                         </p>
                         <blockquote class="home-editorial-quote">
-                            "Una esmeralda Bersaglio no pertenece a quien la compra; es custodiada por quien la adopta para la siguiente generación."
+                            "Nuestras esmeraldas colombianas de Muzo y Chivor no son meras pertenencias; son fragmentos de tierra viva custodiados por almas sensibles para ser entregados a la siguiente generación."
                         </blockquote>
                         <div class="home-editorial-stats">
                             <div class="home-editorial-stat">
@@ -669,7 +666,7 @@ function renderCTA() {
                             <span class="italic emerald-text">Cartagena de Indias</span>
                         </h2>
                         <p class="home-cta-lead">
-                            Te invitamos a sumergirte en nuestro espacio exclusivo en el corazón del Centro Histórico. Permítenos guiarte a puerta cerrada, en compañía de un café excepcional.
+                            Te invitamos a cruzar el umbral de nuestra Maison en el centro histórico de Cartagena de Indias. En la intimidad de nuestra Casa San Agustín, a puerta cerrada y con la calma de un buen café, conversaremos sin prisa sobre la pieza que habitará en tu linaje familiar.
                         </p>
                         <div class="home-cta-actions">
                             <a href="/contacto.html" class="btn-aqua btn-aqua-emerald">Agendar cita privada</a>

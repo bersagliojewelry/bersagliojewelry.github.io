@@ -6,8 +6,8 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v4 to cache Vite JS bundles with Cache-First strategy.
-const CACHE_NAME    = 'bersaglio-v4';
+// Bumped to v5 to cache dynamic schemas and pixel tracking scripts.
+const CACHE_NAME    = 'bersaglio-v5';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

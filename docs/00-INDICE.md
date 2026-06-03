@@ -75,8 +75,7 @@
 | §32 | 2026-06-03 — Optimización de Rendimiento (PERF-01 y PERF-02) | 359 |
 | §33 | 2026-06-03 — Mejoras Estéticas Premium (Estilo iOS y Rediseño de Panel Admin) | 369 |
 | §34 | 2026-06-03 — Diseño Ultra-Premium, Composición Espacial y Copywriting Editorial | 381 |
-
-
+| §35 | 2026-06-03 — SEO, Tracking, Optimización AVIF y Rediseño Premium de Autor en Admin | 393 |
 ---
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §32+ al historial,

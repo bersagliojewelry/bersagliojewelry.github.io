@@ -38,6 +38,7 @@ import { format$ } from '../core/format.js';
 import { cart } from '../core/cart.js';
 import { data } from '../core/data.js';
 import { saveInquiry } from '../firestore-service.js';
+import { trackBeginCheckout, trackPurchase } from '../analytics.js';
 
 const SHIPPING_KEY = 'bj-shipping';
 const STEPS = ['Carrito', 'Envío', 'Pago'];
@@ -367,8 +368,21 @@ function refresh() {
 // ═══════════════════════════════════════════════════════════════════
 
 function goToStep(n) {
+    const oldStep = _step;
     _step = Math.max(1, Math.min(3, n));
     refresh();
+    
+    // Trigger begin_checkout event when user proceeds to Step 2 (shipping)
+    if (_step === 2 && oldStep === 1) {
+        try {
+            const rows = joinCart();
+            const { subtotal } = computeTotals(rows);
+            trackBeginCheckout(rows, subtotal);
+        } catch (err) {
+            console.warn('[carrito] begin_checkout tracking failed:', err);
+        }
+    }
+    
     requestAnimationFrame(() => {
         document.querySelector('.ck-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
@@ -404,6 +418,13 @@ async function confirmOrder(rows) {
         pieceSlug: rows[0]?.slug || null,
         source:  `carrito-${_payment}`,
     };
+
+    // Track Purchase event for GA4 and Facebook Meta Pixel
+    try {
+        trackPurchase(rows, subtotal, _payment);
+    } catch (err) {
+        console.warn('[carrito] purchase tracking failed:', err);
+    }
 
     if (_payment === 'whatsapp') {
         const url = buildWhatsAppCheckoutURL(rows);

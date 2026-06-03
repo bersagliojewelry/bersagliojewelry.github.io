@@ -27,7 +27,7 @@ function joinWishlist() {
 }
 
 function buildShareURL(rows) {
-    const phone = '573108136829';
+    const phone = '573013752592';
     const lines = rows.map(r => {
         const name = r.piece?.name || r.slug;
         const url  = `https://bersagliojewelry.co/pieza.html?p=${encodeURIComponent(r.slug)}`;

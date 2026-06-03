@@ -131,7 +131,7 @@ function renderAll() {
             </div>
 
             <div class="lg-foot">
-                <p>¿Una duda específica? Escríbenos a <a href="mailto:hola@bersagliojewelry.com">hola@bersagliojewelry.com</a> o por <a href="https://wa.me/573108136829" target="_blank" rel="noopener">WhatsApp</a>.</p>
+                <p>¿Una duda específica? Escríbenos a <a href="mailto:info@bersagliojewelry.co">info@bersagliojewelry.co</a> o por <a href="https://wa.me/573013752592" target="_blank" rel="noopener">WhatsApp</a>.</p>
                 <a href="/" class="btn-aqua lg-back-btn">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
                     Volver al inicio

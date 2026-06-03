@@ -26,7 +26,7 @@ Esta política explica qué datos recolectamos, por qué, cómo los protegemos y
         title: 'Responsable del tratamiento',
         body: `Bersaglio Jewelry S.A.S., NIT en proceso de actualización, con domicilio en Calle 36 # 6-32, San Agustín Chiquita, Centro Histórico, Cartagena de Indias, Bolívar, Colombia.
 
-Contacto del responsable: hola@bersagliojewelry.com · WhatsApp +57 310 813 6829.`,
+Contacto del responsable: info@bersagliojewelry.co · WhatsApp +57 301 375 2592.`,
     },
     {
         id: 'datos-recolectados',
@@ -62,7 +62,7 @@ En el caso de autoridades judiciales o regulatorias, cumpliremos con cualquier s
         id: 'derechos',
         n: '06',
         title: 'Tus derechos',
-        body: `Tienes derecho a conocer, actualizar, rectificar y suprimir tus datos personales en cualquier momento. Para ejercer estos derechos, escribe a hola@bersagliojewelry.com con asunto "Datos personales" y te responderemos en máximo 10 días hábiles.
+        body: `Tienes derecho a conocer, actualizar, rectificar y suprimir tus datos personales en cualquier momento. Para ejercer estos derechos, escribe a info@bersagliojewelry.co con asunto "Datos personales" y te responderemos en máximo 10 días hábiles.
 
 También puedes solicitar una copia de toda la información que tenemos sobre ti, oponerte al uso de cookies analíticas, o revocar tu suscripción al newsletter desde cualquier correo que recibas. Ningún ejercicio de derechos afecta el servicio que prestamos.`,
     },
@@ -141,7 +141,7 @@ function renderAll() {
             </div>
 
             <div class="lg-foot">
-                <p>¿Quieres ejercer un derecho sobre tus datos? Escríbenos a <a href="mailto:hola@bersagliojewelry.com">hola@bersagliojewelry.com</a>.</p>
+                <p>¿Quieres ejercer un derecho sobre tus datos? Escríbenos a <a href="mailto:info@bersagliojewelry.co">info@bersagliojewelry.co</a>.</p>
                 <a href="/" class="btn-aqua lg-back-btn">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
                     Volver al inicio

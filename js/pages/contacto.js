@@ -47,9 +47,9 @@ const CANALES = [
     {
         k: 'whatsapp',
         t: 'WhatsApp',
-        v: '+57 310 813 6829',
+        v: '+57 301 375 2592',
         d: 'Respuesta inmediata · 09:00–20:00',
-        href: 'https://wa.me/573108136829',
+        href: 'https://wa.me/573013752592',
         icon: html`<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-1.9-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.7-1.4-1.7-1.6-1.9-.2-.3 0-.4.1-.5.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5 0-.2 0-.4-.1-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.5c-.2 0-.5.1-.7.4-.2.3-.9.9-.9 2.2 0 1.3.9 2.5 1 2.7.1.2 1.8 2.7 4.3 3.8.6.3 1.1.4 1.4.5.6.2 1.1.2 1.6.1.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2-.1-.2-.3-.2-.5-.3zM12 2C6.5 2 2 6.5 2 12c0 1.7.4 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18c-1.5 0-3-.4-4.3-1.2l-.3-.2-3.1.8.8-3.1-.2-.3C4.4 14.9 4 13.5 4 12c0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8z"/></svg>`,
     },
     {
@@ -63,9 +63,9 @@ const CANALES = [
     {
         k: 'email',
         t: 'Correo',
-        v: 'hola@bersagliojewelry.com',
+        v: 'info@bersagliojewelry.co',
         d: 'Respondemos en < 24h',
-        href: 'mailto:hola@bersagliojewelry.com',
+        href: 'mailto:info@bersagliojewelry.co',
         icon: html`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>`,
     },
     {
@@ -540,7 +540,7 @@ function renderFAQRapido() {
                     Cuatro respuestas rápidas para que llegues con todo claro.
                     Si te queda alguna duda, escríbenos por WhatsApp.
                 </p>
-                <a href="https://wa.me/573108136829" target="_blank" rel="noopener" class="btn-aqua ct-faq-cta">
+                <a href="https://wa.me/573013752592" target="_blank" rel="noopener" class="btn-aqua ct-faq-cta">
                     Preguntar por WhatsApp
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
                 </a>

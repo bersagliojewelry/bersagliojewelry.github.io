@@ -10,8 +10,8 @@
 | Señal | Valor (al 2026-06-03) |
 |---|---|
 | **Build** | 🟢 **Vite build e integridad verificados**. La prueba experimental de activos (`scripts/test-build.mjs`) pasó con éxito (0 rotos, 200 OK en todas las páginas). |
-| **Cache version vigente** | `bersaglio-v3` (en `public/sw.js`). |
-| **Branch activa** | `main` (limpia, sin commits locales pendientes de sync). |
+| **Cache version vigente** | `bersaglio-v5` (en `public/sw.js`). |
+| **Branch activa** | `Desarrollo` (con cambios locales listos para confirmación). |
 | **Backend / Firebase** | Reglas de Firestore y Storage configuradas en `firestore.rules` y `storage.rules`. |
 | **Hosting** | GitHub Pages (`bersagliojewelry.co` o `bersagliojewelry.github.io`). Auto-deploy vía GitHub Actions. |
 

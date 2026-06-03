@@ -1,19 +1,22 @@
 /**
  * Bersaglio Jewelry — Analytics
- * Phase 6: Google Analytics 4 + Hotjar + micro-conversion event tracking.
+ * Phase 6: Google Analytics 4 + Facebook Meta Pixel + Hotjar + e-commerce event tracking.
  *
  * ──────────────────────────────────────────────────
  *  CONFIGURACIÓN:
  *  1. Reemplaza GA4_ID con tu Measurement ID real (G-XXXXXXXXXX)
- *  2. Reemplaza HOTJAR_ID con tu Site ID real (número entero)
+ *  2. Reemplaza FB_PIXEL_ID con tu Pixel ID real (número o string)
+ *  3. Reemplaza HOTJAR_ID con tu Site ID real (número entero)
  *     → Deja HOTJAR_ID = 0 para deshabilitar Hotjar
  * ──────────────────────────────────────────────────
  */
 
-const GA4_ID    = 'G-HS26X60DK3';
-const HOTJAR_ID = 0;              // ← reemplazar con Site ID real (0 = deshabilitado)
+const GA4_ID      = 'G-HS26X60DK3';
+const FB_PIXEL_ID = 'PIXEL_ID_PLACEHOLDER'; // ← Reemplazar con ID real del Pixel de Facebook
+const HOTJAR_ID   = 0;                     // ← Reemplazar con Site ID real (0 = deshabilitado)
 
 let gaReady = false;
+let fbReady = false;
 
 /* ─── Google Analytics 4 ─────────────────────────────────────── */
 function loadGA4() {
@@ -36,6 +39,27 @@ function loadGA4() {
     gaReady = true;
 }
 
+/* ─── Facebook Meta Pixel ────────────────────────────────────── */
+function loadFBPixel() {
+    if (!FB_PIXEL_ID || FB_PIXEL_ID === 'PIXEL_ID_PLACEHOLDER') return;
+
+    /* eslint-disable */
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    /* eslint-enable */
+
+    window.fbq('init', FB_PIXEL_ID);
+    window.fbq('track', 'PageView');
+
+    fbReady = true;
+}
+
 /* ─── Hotjar ─────────────────────────────────────────────────── */
 function loadHotjar() {
     if (!HOTJAR_ID) return;
@@ -53,21 +77,100 @@ function loadHotjar() {
     /* eslint-enable */
 }
 
+/* ─── Event Mapping Helper ──────────────────────────────────── */
+/**
+ * Maps GA4 standard e-commerce events to Facebook Pixel standard events.
+ * @param {string} eventName - GA4 event name
+ * @param {Object} params - Event parameters
+ * @returns {{ name: string, params: Object }|null} Meta Pixel event or null
+ */
+function mapEventToFB(eventName, params) {
+    const items = params.items || [];
+    const firstItem = items[0] || {};
+
+    switch (eventName) {
+        case 'view_item':
+            return {
+                name: 'ViewContent',
+                params: {
+                    content_type: 'product',
+                    content_ids: [firstItem.item_id || ''],
+                    content_name: firstItem.item_name || '',
+                    content_category: firstItem.item_category || '',
+                    value: Number(params.value || firstItem.price || 0),
+                    currency: params.currency || 'COP'
+                }
+            };
+        case 'add_to_cart':
+            return {
+                name: 'AddToCart',
+                params: {
+                    content_type: 'product',
+                    content_ids: items.map(i => i.item_id),
+                    value: Number(params.value || firstItem.price || 0),
+                    currency: params.currency || 'COP'
+                }
+            };
+        case 'begin_checkout':
+            return {
+                name: 'InitiateCheckout',
+                params: {
+                    content_type: 'product',
+                    content_ids: items.map(i => i.item_id),
+                    value: Number(params.value || 0),
+                    currency: params.currency || 'COP',
+                    num_items: items.length
+                }
+            };
+        case 'purchase':
+            return {
+                name: 'Purchase',
+                params: {
+                    content_type: 'product',
+                    content_ids: items.map(i => i.item_id),
+                    value: Number(params.value || 0),
+                    currency: params.currency || 'COP',
+                    num_items: items.length
+                }
+            };
+        case 'generate_lead':
+            return {
+                name: 'Lead',
+                params: {
+                    content_name: params.lead_type || 'contact',
+                    value: 0,
+                    currency: 'COP'
+                }
+            };
+        default:
+            return null;
+    }
+}
+
 /* ─── Event tracking API ─────────────────────────────────────── */
 /**
- * Track a GA4 event.
- * @param {string} eventName - GA4 event name
+ * Track a GA4 and Meta Pixel event.
+ * @param {string} eventName - Standard event name
  * @param {Object} [params]  - Event parameters
  */
 export function track(eventName, params = {}) {
-    if (!gaReady || typeof window.gtag !== 'function') return;
-    window.gtag('event', eventName, params);
+    // 1. Google Analytics 4
+    if (gaReady && typeof window.gtag === 'function') {
+        window.gtag('event', eventName, params);
+    }
+
+    // 2. Facebook Pixel
+    if (fbReady && typeof window.fbq === 'function') {
+        const fbEvent = mapEventToFB(eventName, params);
+        if (fbEvent) {
+            window.fbq('track', fbEvent.name, fbEvent.params);
+        }
+    }
 }
 
 /* ─── Auto delegation ────────────────────────────────────────── */
 function bindDelegatedEvents() {
     document.addEventListener('click', e => {
-
         // add_to_wishlist
         const wishBtn = e.target.closest('[data-wishlist-slug]');
         if (wishBtn) {
@@ -126,11 +229,20 @@ function bindDelegatedEvents() {
             }, 1000);
         }
     });
+
+    // Listen to custom newsletter subscription event
+    document.addEventListener('bj:email-subscribed', e => {
+        track('generate_lead', {
+            lead_type: 'newsletter',
+            email: e.detail
+        });
+    });
 }
 
 /* ─── Main init ─────────────────────────────────────────────── */
 export function initAnalytics() {
     loadGA4();
+    loadFBPixel();
     loadHotjar();
     bindDelegatedEvents();
 }
@@ -142,11 +254,53 @@ export function initAnalytics() {
 export function trackPieceView(piece) {
     track('view_item', {
         currency: 'COP',
+        value: piece.price || 0,
         items: [{
             item_id:       piece.slug,
             item_name:     piece.name,
             item_category: piece.collection,
             price:         piece.price || 0,
         }],
+    });
+}
+
+/**
+ * Track an InitiateCheckout event.
+ * @param {Array} rows - Cart items with pieces joined
+ * @param {number} value - Subtotal value
+ */
+export function trackBeginCheckout(rows, value) {
+    track('begin_checkout', {
+        currency: 'COP',
+        value: value,
+        items: rows.map(r => ({
+            item_id:       r.slug,
+            item_name:     r.piece?.name || r.slug,
+            item_category: r.piece?.collection || '',
+            price:         r.piece?.price || 0,
+            quantity:      r.qty || 1
+        }))
+    });
+}
+
+/**
+ * Track a Purchase event.
+ * @param {Array} rows - Cart items with pieces joined
+ * @param {number} value - Subtotal value
+ * @param {string} paymentMethod
+ */
+export function trackPurchase(rows, value, paymentMethod) {
+    track('purchase', {
+        currency: 'COP',
+        value: value,
+        transaction_id: `T-${Date.now()}`,
+        payment_type: paymentMethod,
+        items: rows.map(r => ({
+            item_id:       r.slug,
+            item_name:     r.piece?.name || r.slug,
+            item_category: r.piece?.collection || '',
+            price:         r.piece?.price || 0,
+            quantity:      r.qty || 1
+        }))
     });
 }

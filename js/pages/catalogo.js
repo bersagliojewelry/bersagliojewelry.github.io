@@ -20,6 +20,7 @@
 import { html, escape } from '../core/html.js';
 import { format$ } from '../core/format.js';
 import { data } from '../core/data.js';
+import { injectCatalogSchema } from '../core/schema.js';
 
 const SORTS = [
     { key: 'destacados', label: 'Destacados' },
@@ -175,11 +176,22 @@ function renderAll() {
         </div>`;
 }
 
+function updateSchemaMetadata() {
+    try {
+        const collection = _state.cat !== 'all' ? data.getCollections().find(c => c.slug === _state.cat) : null;
+        const filteredList = applyFilters();
+        injectCatalogSchema(collection, filteredList);
+    } catch (err) {
+        console.warn('[catalogo] Schema injection failed:', err);
+    }
+}
+
 function refreshGrid() {
     const grid = document.querySelector('[data-grid]');
     if (!grid) return;
     const list = applyFilters();
     grid.innerHTML = list.length === 0 ? renderEmpty() : list.map(renderCard).join('');
+    updateSchemaMetadata();
 }
 
 function refreshHeader() {
@@ -240,6 +252,7 @@ export async function init() {
 
     // Initial paint
     main.innerHTML = renderAll();
+    updateSchemaMetadata();
 
     main.addEventListener('click', onMainClick);
     main.addEventListener('change', onMainChange);

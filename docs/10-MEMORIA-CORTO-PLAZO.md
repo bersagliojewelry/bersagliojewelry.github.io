@@ -10,8 +10,8 @@
 ---
 
 ## 🎯 Foco actual
-*   **Implementación del Cerebro de MDs**: Reorganización de la documentación y reducción de `CLAUDE.md` para evitar saturación de contexto.
-*   **Auditoría de Mejoras**: Analizar el repositorio para identificar optimizaciones posibles en UX, Accesibilidad, SEO, Performance y Seguridad.
+*   **Finalización e Integración Premium**: Validación del rediseño Light Liquid Glass del panel admin y la narrativa cálida optimizada para SEO.
+*   **Chequeo de Integridad**: Asegurar compilación sin errores y sincronización del cerebro documental antes del despliegue.
 
 ---
 
@@ -19,16 +19,15 @@
 
 | ID | Item | Estado | Bloqueo |
 |---|---|---|---|
-| **TODO-01** | Portar e integrar la estructura de la carpeta `skills/` desde Altorra Cars | 🚀 En curso | — |
-| **TODO-02** | Ejecutar el script `brain-check.mjs` y verificar que la estructura del cerebro esté libre de huérfanas o desincronizaciones | ⏳ Pendiente | — |
-| **TODO-03** | Realizar un análisis exhaustivo del repositorio de Bersaglio (código legacy, optimización CSS/JS) y crear lóbulo de mejoras | ⏳ Pendiente | — |
+| **TODO-01** | Integrar cambios a la rama principal e iniciar despliegue | ⏳ Pendiente | — |
 
 ---
 
 ## 🔮 Contexto estratégico
-El rediseño "Liquid Glass" de Bersaglio está completado en su frontend modular. El objetivo actual es asegurar que la IA trabaje de manera óptima con un contexto ultraligero y estructurado como el de Altorra Cars, para luego diagnosticar mejoras incrementales en el rendimiento y accesibilidad del e-commerce.
+El rediseño estético y de contenido (copywriting) de la Maison Bersaglio Jewelry está completamente finalizado tanto en la web pública como en el panel administrativo. Con la inyección de metadatos estructurados (JSON-LD) y píxeles de seguimiento (GA4 + Meta), el sitio está listo para producción.
 
 ---
 
 ## 📝 Bitácora (efímera — se vacía al consolidar)
-- **2026-06-03**: Migración e inicio del sharding de `CLAUDE.md`. Se crearon `docs/99-HISTORIAL-ADR.md`, `docs/00-INDICE.md`, `docs/05-ESTADO-GLOBAL.md` y este archivo.
+- **2026-06-03**: Finalización de la Fase 5 (SEO, Analítica, AVIF, Rediseño del Admin Perlado y Copywriting Storytelling). Compilación limpia de Vite e integridad del cerebro certificada (`brain:check`).
+

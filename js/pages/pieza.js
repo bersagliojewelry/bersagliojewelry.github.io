@@ -22,6 +22,7 @@ import { format$ } from '../core/format.js';
 import { data } from '../core/data.js';
 import { cart } from '../core/cart.js';
 import { wishlist } from '../core/wishlist.js';
+import { injectProductSchema, injectBreadcrumbSchema } from '../core/schema.js';
 
 let _slug = '';
 let _viewIdx = 0;
@@ -47,7 +48,7 @@ function heartSolidSVG() {
 function descriptionFor(piece) {
     if (piece.description) return piece.description;
     const stones = (piece.specs?.stones || piece.specs?.stone || 'esmeralda colombiana').toLowerCase();
-    return `Una pieza de alta joyería esculpida en oro de 18 quilates alrededor de una ${stones}. Acabado pulido a mano por nuestro atelier en Cartagena.`;
+    return `Una pieza de alta joyería esculpida a mano en oro de 18 quilates, concebida alrededor del fuego interior de una ${stones}. Acabado pulido y perfeccionado pacientemente por los maestros orfebres de nuestro atelier en Cartagena de Indias.`;
 }
 
 function buildSpecs(piece) {
@@ -230,7 +231,7 @@ function renderNotFound() {
                     </svg>
                 </div>
                 <h1 class="pz-notfound-title">Esta pieza descansa en otro lugar</h1>
-                <p class="pz-notfound-sub">No la encontramos en el atelier — quizá fue retirada o el enlace cambió.</p>
+                <p class="pz-notfound-sub">La pieza solicitada no se encuentra disponible actualmente en nuestro atelier. Es posible que haya sido adquirida o que el enlace sea incorrecto.</p>
                 <div class="pz-notfound-actions">
                     <a href="/colecciones.html" class="btn-aqua btn-aqua-emerald">Ver el catálogo</a>
                     <a href="/contacto.html" class="btn-aqua">Hablar con un asesor</a>
@@ -287,6 +288,14 @@ function refresh() {
         const ogImg = document.querySelector('meta[property="og:image"]');
         if (ogImg && (piece.images?.[0] || piece.image)) {
             ogImg.setAttribute('content', piece.images?.[0] || piece.image);
+        }
+
+        // Inject dynamic JSON-LD schemas for GSC and SEO optimization
+        try {
+            injectProductSchema(piece, getCategoryLabel, descriptionFor);
+            injectBreadcrumbSchema(piece, getCategoryLabel);
+        } catch (err) {
+            console.warn('[pieza] Schema injection failed:', err);
         }
     }
 }

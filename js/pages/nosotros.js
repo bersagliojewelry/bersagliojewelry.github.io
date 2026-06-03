@@ -28,20 +28,20 @@ let _openFaq = 0;
 let _activeChapter = 0;
 
 const CHAPTERS = [
-    { y: '2013', t: 'El Diálogo Inicial', d: 'Kary Mendoza inicia este viaje visitando a familias cartageneras en la calidez de sus hogares. Más que presentar gemas o metales preciosos, se dedicó a escuchar con el corazón. Cada confidencia compartida sentó las bases de un taller consagrado a tallar joyas con alma y memorias vivas.' },
-    { y: '2016', t: 'La Consagración del Espacio', d: 'Abrimos las puertas de nuestro primer atelier privado en el centro histórico de Cartagena. Un refugio consagrado a la orfebrería pausada, accesible únicamente bajo cita para proteger la intimidad de nuestros huéspedes y celebrar el arte de la co-creación.' },
-    { y: '2020', t: 'Estándares del Oficio', d: 'Consolidamos nuestra visión ética al ser admitidos en Jewelers of America. Nos comprometemos con una trazabilidad absoluta, seleccionando directamente esmeraldas colombianas de origen certificado en Muzo, Coscuez y Chivor, junto a diamantes con reporte GIA.' },
-    { y: '2023', t: 'Una Década de Legado', d: 'Celebramos una década de historias inmortalizadas. Cada una de nuestras piezas exclusivas se entrega con su bitácora de origen única, detallando la procedencia exacta de la gema, los maestros artesanos involucrados y el relato familiar que la inspiró.' },
-    { y: '2026', t: 'La Verde y el Futuro', d: 'Presentamos la colección icónica "La Verde": seis piezas singulares de alta joyería creadas alrededor de esmeraldas de Muzo de una pureza excepcional, engastadas a mano en oro de 18 quilates. Un tributo eterno a la soberana de las tierras colombianas.' },
+    { y: '2013', t: 'El Diálogo Inicial', d: 'El taller comenzó con un sueño, dedicación y visitas personalizadas directamente en los hogares de nuestros clientes. Este contacto íntimo nos enseñó que antes que una joya, el huésped busca sentirse seguro, asesorado y acompañado en su elección.' },
+    { y: '2016', t: 'La Consagración del Espacio', d: 'Gracias a esta filosofía de servicio y cercanía, crecimos paso a paso. Abrimos las puertas de nuestro primer atelier privado en el centro histórico de Cartagena, un refugio para mantener esa atención pausada e individual.' },
+    { y: '2020', t: 'Estándares y Confianza', d: 'Consolidamos nuestra reputación basándonos en la transparencia absoluta de cada gema. Cada esmeralda y diamante se entrega con trazabilidad total y certificación ética, reforzando la credibilidad y el valor real de cada inversión.' },
+    { y: '2023', t: 'Una Década de Relaciones', d: 'Cumplimos diez años de trayectoria construyendo vínculos duraderos. El acompañamiento y asesoramiento personalizado se consolidan formalmente como el corazón absoluto de Bersaglio.' },
+    { y: '2026', t: 'La Verde y la Esencia', d: 'Hoy, seguimos conservando intacta la misma esencia con la que iniciamos: ofrecer una experiencia cercana, elegante y completamente personalizada, donde cada cliente se siente especial y cada joya tiene un significado real.' },
 ];
 
 const VALORES = [
-    { n: '01', t: 'La Confidencia como Preludio', d: 'Prescindimos de vitrinas comerciales y catálogos estandarizados. Nos sentamos a conversar para comprender el amor, el logro o la memoria que inspira tu encargo. La joya perfecta nace solo del diálogo sincero y sin prisa.' },
-    { n: '02', t: 'Linaje y Origen Ético', d: 'Cada esmeralda colombiana que seleccionamos está respaldada por su trazabilidad total desde las minas de Muzo, Chivor o Coscuez. Cada diamante cuenta con certificación GIA y el oro posee sello de origen ético y responsable.' },
-    { n: '03', t: 'Orfebrería Pausada', d: 'Dedicamos semanas de devoción y paciencia a cada pieza. Sin moldes industriales ni atajos. Preservamos las técnicas ancestrales de la filigrana momposina, el tallado manual y la fundición a cera perdida de los maestros orfebres.' },
-    { n: '04', t: 'Custodia Vitalicia', d: 'Mantenimiento, pulido y ajuste de engastes de por vida. Sentimos que una creación firmada por Bersaglio es un miembro eterno de nuestra Maison, y nuestras puertas en Cartagena siempre estarán abiertas para su cuidado.' },
-    { n: '05', t: 'Respeto al Relato Privado', d: 'Protegemos la discreción de tu legado familiar. No exponemos nombres de clientes ni piezas hechas a medida en vitrinas públicas. Comprendemos que tu patrimonio material es una historia íntima y sagrada.' },
-    { n: '06', t: 'La Trascendencia como Única Cifra', d: 'No medimos nuestro éxito en volumen de ventas, sino en el regreso de nuestras joyas familiares al atelier décadas después, portadas con el mismo orgullo por las nuevas generaciones.' },
+    { n: '01', t: 'La Elegancia como Silencio', d: 'Entendemos la sofisticación no como un destello ruidoso, sino como un susurro de distinción. Una joya Bersaglio es una expresión poética de tu estilo personal y sofisticación.' },
+    { n: '02', t: 'El Pacto de Credibilidad', d: 'Construimos relaciones duraderas basadas en la transparencia, la credibilidad y una confianza inquebrantable que custodia tu tranquilidad.' },
+    { n: '03', t: 'La Asesoría antes del Oficio', d: 'Antes que vender, nos dedicamos a guiarte y asesorarte con paciencia, asegurando que cada cliente encuentre o co-cree la pieza idónea.' },
+    { n: '04', t: 'Devoción en cada Detalle', d: 'Cada milímetro esculpido y cada interacción con nosotros está cuidada con devoción, buscando hacer de tu experiencia un recuerdo memorable.' },
+    { n: '05', t: 'Cómplices de tu Felicidad', d: 'Nos apasiona ser parte de tus momentos más significativos. Diseñamos con el orgullo de dar forma física a tus emociones y celebraciones sagradas.' },
+    { n: '06', t: 'Valor e Inversión Eterna', d: 'Transmitimos a nuestros clientes que una joya no es un gasto efímero, sino una inversión duradera que conserva e incrementa su significado y valor en el tiempo.' },
 ];
 
 const EQUIPO = [
@@ -95,10 +95,10 @@ function renderHero() {
                     no se compra.
                 </h1>
                 <p class="abt-hero-lead">
-                    Hace trece años, Kary Mendoza recorría las calles empedradas de Cartagena. No llevaba consigo un portafolio de ventas; llevaba el deseo de escuchar historias íntimas y la convicción de que una esmeralda fina debe ser el reflejo de quien la posee.
+                    Nacimos con una visión clara: acercar piezas únicas a quienes aprecian la elegancia y el valor de una joya auténtica. Nuestro viaje comenzó desde cero, visitando a nuestros clientes en la calidez de sus hogares, construyendo relaciones basadas en la confianza y en una cercanía que hoy se mantiene como el alma del atelier.
                 </p>
                 <p class="abt-hero-italic">
-                    Hoy, el ritual permanece intacto en nuestro atelier del Centro Histórico. Un encuentro sin prisas, a puerta cerrada, consagrado a dar forma a tus instantes más preciados.
+                    Más que vender joyas, nos apasiona asesorar. Diseñamos con la convicción de que una pieza no es un simple accesorio, sino un reflejo de tu esencia, una emoción duradera y una inversión que trasciende en el tiempo.
                 </p>
                 <div class="abt-hero-actions">
                     <a href="/contacto.html" class="btn-aqua btn-aqua-emerald">
@@ -402,12 +402,35 @@ function renderCTA() {
 // ═══════════════════════════════════════════════════════════════════
 // MOUNT
 // ═══════════════════════════════════════════════════════════════════
+function renderFilosofia() {
+    return html`
+        <section class="abt-section">
+            <div class="filosofia-grid">
+                <div class="glass glass-iridescent val-card">
+                    <div class="mono val-card-num">MISIÓN</div>
+                    <h3 class="val-card-title">Nuestra Promesa</h3>
+                    <p class="val-card-desc">
+                        Concebir piezas exclusivas mediante una asesoría íntima y cercana. Acompañamos a nuestros clientes en la elección de joyas que representen su distinción y los instantes más valiosos de su vida, asegurando siempre una experiencia de confianza, calidad y emotividad perdurable.
+                    </p>
+                </div>
+                <div class="glass glass-iridescent val-card">
+                    <div class="mono val-card-num">VISIÓN</div>
+                    <h3 class="val-card-title">El Horizonte</h3>
+                    <p class="val-card-desc">
+                        Ser el atelier de alta joyería personalizada de referencia en excelencia y discreción, consolidando un acompañamiento generacional que perpetúa el legado emocional de nuestros clientes a través de piezas de autor únicas que vencen al tiempo.
+                    </p>
+                </div>
+            </div>
+        </section>`;
+}
+
 function renderAll() {
     return html`
         <div class="container abt-page">
             ${renderHero()}
             ${renderStats()}
             ${renderManifiesto()}
+            ${renderFilosofia()}
             ${renderValores()}
             ${renderTimeline()}
             ${renderAtelier()}

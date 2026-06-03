@@ -664,6 +664,21 @@
 .abt-cta-actions .btn-aqua { padding: 16px 32px; }
 
 /* ═══════════════════════════════════════════════════════════════════
+   FILOSOFÍA (MISIÓN & VISIÓN)
+   ═══════════════════════════════════════════════════════════════════ */
+.filosofia-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+    margin-bottom: 110px;
+}
+@media (max-width: 768px) {
+    .filosofia-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
    ACCESSIBILITY
    ═══════════════════════════════════════════════════════════════════ */
 @media (prefers-reduced-motion: reduce) {

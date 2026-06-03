@@ -2,13 +2,12 @@
  * Bersaglio Jewelry — Service Worker
  * Strategy:
  *   • HTML pages:  network-first → cache fallback → /offline.html
- *   • CSS + images: cache-first → network
- *   • JS (hashed): network-only (hashes change each build)
+ *   • CSS + JS + assets: cache-first → network
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v3 for the BERSAGLIO NOVO rebuild — clears all v2 entries on activate.
-const CACHE_NAME    = 'bersaglio-v3';
+// Bumped to v4 to cache Vite JS bundles with Cache-First strategy.
+const CACHE_NAME    = 'bersaglio-v4';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.
@@ -68,9 +67,10 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // ── CSS + images: cache-first ─────────────────────────────
+    // ── CSS + JS + assets: cache-first ────────────────────────
     const isCacheable =
         request.destination === 'style' ||
+        request.destination === 'script' ||
         request.destination === 'image' ||
         request.destination === 'font';
 
@@ -87,8 +87,7 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // ── Everything else (JS scripts, etc.): network-only ─────
-    // Hashed JS chunks from Vite change per build — don't cache them.
+    // ── Everything else: network-only ─────────────────────────
 });
 
 /* ─── Push Notifications (FCM) ──────────────────────────────── */

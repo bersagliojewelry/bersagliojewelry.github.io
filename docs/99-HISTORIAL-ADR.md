@@ -353,3 +353,13 @@ Mejoras de paridad visual tras lanzarse el diseño Liquid Glass.
 - **Item 1**: Checkout de 3 pasos (Carrito, Envío, Pago). Stepper glass y persistencia en sessionStorage.
 - **Item 2**: Cart drawer lateral con animaciones fluidas y iOS scroll lock.
 - **Sesión 3**: Animaciones de entrada staggered (`js/aqua-animations.js`), focus ring de accesibilidad global y skip-link.
+
+---
+
+## 2026-06-03 — Optimización de Rendimiento (PERF-01 y PERF-02)
+Implementación de mejoras de rendimiento y fluidez visual en la rama `Desarrollo`.
+
+**Entregables:**
+- **PERF-01**: Eliminación del wrapper de JS para `document.startViewTransition` en `router.js` que causaba parpadeos en navegaciones completas. Habilitación de transiciones entre documentos nativas mediante CSS `@view-transition { navigation: auto; }` en `css/liquid-glass.css`.
+- **PERF-02**: Caché de tipo Cache-First para todos los bundles de JS compilados por Vite en el Service Worker (`public/sw.js`). Incremento de la versión de caché del sistema a `bersaglio-v4` para renovación limpia.
+- **PERF-03**: Verificación de que la deuda de código muerto de `style.css` ya se encuentra solventada (archivo eliminado en versiones previas).

@@ -39,7 +39,6 @@ const SEO_SHELLS = new Set([
 
 let _currentRoute = parseRoute(location.pathname + location.search + location.hash);
 const _routeListeners = new Set();
-const _supportsViewTransition = typeof document.startViewTransition === 'function';
 
 /** Returns { page, params, hash } from a URL. */
 function parseRoute(urlPath) {
@@ -80,15 +79,9 @@ export function navigate(href, opts = {}) {
     transitionTo(href);
 }
 
-/** Real page nav with optional view-transition. */
+/** Real page nav. Native cross-document view transitions handle the transition. */
 function transitionTo(href) {
-    if (_supportsViewTransition) {
-        document.startViewTransition(() => {
-            location.href = href;
-        });
-    } else {
-        location.href = href;
-    }
+    location.href = href;
 }
 
 /** Returns true if href points to a SEO shell page (different .html file). */

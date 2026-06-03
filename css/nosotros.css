@@ -77,7 +77,11 @@
 }
 .abt-hero-image-bg {
     position: absolute; inset: 0;
-    background: url('/img/earrings-travertino.png') center/cover no-repeat;
+    background: url('/img/earrings-travertino-1200.webp') center/cover no-repeat;
+    background: image-set(
+        url('/img/earrings-travertino-1200.avif') type('image/avif'),
+        url('/img/earrings-travertino-1200.webp') type('image/webp')
+    ) center/cover no-repeat;
 }
 .abt-hero-image-shade {
     position: absolute; inset: 0;
@@ -338,7 +342,11 @@
 }
 .atl-image-bg {
     position: absolute; inset: 0;
-    background: url('/img/ring-sapphire.jpg') center/cover no-repeat;
+    background: url('/img/ring-sapphire-800.webp') center/cover no-repeat;
+    background: image-set(
+        url('/img/ring-sapphire-800.avif') type('image/avif'),
+        url('/img/ring-sapphire-800.webp') type('image/webp')
+    ) center/cover no-repeat;
 }
 .atl-chip {
     position: absolute;

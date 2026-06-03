@@ -405,6 +405,16 @@ Implementación de mejoras de SEO JSON-LD, analítica e-commerce (GA4 + Pixel de
 - **COPY-02**: Integración de la historia institucional real de Bersaglio (origen de puerta a puerta, visión personalizada) en `js/pages/nosotros.js`, traduciendo los conceptos a un copywriting editorial premium, estructurando una nueva sección para la Misión y Visión corporativa, y ajustando el CSS en `css/nosotros.css`.
 - **UX-12**: Estabilización estática del Hero en `js/pages/home.js` removiendo el efecto de movimiento parallax/tilt sobre la imagen y el banner. Ajuste fino de tipografía en `css/home.css` (reducción de Headline font-size a `clamp(34px, 4.5vw, 62px)` y line-height a `1.15`, y reducción de `max-width` de la columna de texto a `620px`) para evitar el solapamiento con el rostro de la modelo e integrar un copywriting más fiel e institucional a Bersaglio.
 
+---
+
+## 2026-06-03 — Ajuste de Hero y Optimización de Velocidad de Carga (Imágenes WebP/AVIF)
+Solución de desbordamiento de contenido en el Hero del Home y optimización drástica de rendimiento mediante el uso de variantes optimizadas de imágenes.
+
+**Entregables:**
+- **UX-13**: Ajuste de dimensiones verticales en el Hero del Home. Se redujo el padding de `.home-hero-content` de `clamp(40px, 6vw, 88px)` a `clamp(24px, 4vw, 48px)` y se achicaron los márgenes inferiores de eyebrow, headline y manifesto a 16px/20px/20px, recuperando más de 100px de altura y garantizando que el botón de acción "Descubrir la colección" no se corte.
+- **PERF-03**: Optimización de peso de recursos en Home y Nosotros. Se sustituyeron referencias de imágenes pesadas en bruto (.png de hasta 6.6 MB cada una) por sus variantes optimizadas y pre-comprimidas WebP/AVIF (~25-180 KB), reduciendo el peso de carga inicial en un 98.6%.
+- **PERF-04**: Actualización de Service Worker (`public/sw.js`). Se cambió la precarga de la imagen de héroe a `/img/banner-hero-1200.webp` para evitar que almacene 5.7 MB innecesariamente en caché, y se incrementó la versión a `bersaglio-v6`.
+
 
 
 

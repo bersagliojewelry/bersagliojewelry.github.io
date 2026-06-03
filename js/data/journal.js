@@ -41,7 +41,7 @@ Conversamos con tres mineros de Muzo, un gemólogo del Instituto Gemológico de 
         read: '8 min',
         author: 'Por María Camila Bersaglio',
         authorRole: 'Directora editorial',
-        image: '/img/earrings-emerald.png',
+        image: '/img/earrings-emerald-800.webp',
         featured: true,
     },
     {
@@ -68,7 +68,7 @@ Pulso seis: el pulido. Hilo dental con pasta de diamante. Sí, hilo dental. Es l
         read: '5 min',
         author: 'Por Andrés Beltrán',
         authorRole: 'Diseñador atelier',
-        image: '/img/ring-sapphire.jpg',
+        image: '/img/ring-sapphire-800.webp',
         featured: false,
     },
     {
@@ -89,7 +89,7 @@ En Bersaglio solo trabajamos 18K paladiado para piezas con piedras. Es la ley eu
         read: '4 min',
         author: 'Por Kary Mendoza',
         authorRole: 'Directora',
-        image: '/img/banner-hero.png',
+        image: '/img/banner-hero-800.webp',
         featured: false,
     },
     {
@@ -108,7 +108,7 @@ Cien años después, Trinity sigue siendo una de las piezas más reproducidas. E
         read: '6 min',
         author: 'Por María Camila Bersaglio',
         authorRole: 'Directora editorial',
-        image: '/img/model-emerald.png',
+        image: '/img/model-emerald-800.webp',
         featured: false,
     },
     {
@@ -131,7 +131,7 @@ Una vez al año, llévalo al atelier para verificación de engaste y pulido prof
         read: '3 min',
         author: 'Por Lucía Restrepo',
         authorRole: 'Gemóloga GIA',
-        image: '/img/earrings-travertino.png',
+        image: '/img/earrings-travertino-800.webp',
         featured: false,
     },
     {
@@ -155,7 +155,7 @@ Una vez al año, llévalo al atelier para verificación de engaste y pulido prof
         read: '9 min',
         author: 'Por María Camila Bersaglio',
         authorRole: 'Directora editorial',
-        image: '/img/earrings-emerald.png',
+        image: '/img/earrings-emerald-800.webp',
         featured: false,
     },
     {
@@ -176,7 +176,7 @@ La eternidad no es estridente. Es discreta.`,
         read: '5 min',
         author: 'Por Lina Restrepo',
         authorRole: 'Ensayista invitada',
-        image: '/img/ring-sapphire.jpg',
+        image: '/img/ring-sapphire-800.webp',
         featured: false,
     },
     {
@@ -197,7 +197,7 @@ La segunda: un par de aretes de diamante briolette, originalmente diseñados par
         read: '7 min',
         author: 'Archivo familiar Bersaglio',
         authorRole: 'Memoria viva',
-        image: '/img/earrings-travertino.png',
+        image: '/img/earrings-travertino-800.webp',
         featured: false,
     },
 ];

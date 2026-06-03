@@ -400,5 +400,7 @@ Implementación de mejoras de SEO JSON-LD, analítica e-commerce (GA4 + Pixel de
 - **ADMIN-01**: Rediseño del sidebar del panel administrativo a estilo traslúcido perlado claro (Light Liquid Glass), unificación de botones y campos de entrada con la marca, e inyección del logotipo SVG oficial de Bersaglio en todos los encabezados administrativos.
 - **ADMIN-02**: Solución técnica en el login de administración (`css/admin.css`) para corregir la superposición de los formularios de ingreso y restablecimiento de contraseña mediante la regla `[hidden] { display: none !important; }`.
 - **COPY-01**: Modificación integral de los textos del Home, Nosotros y Contacto con copywriting literario, emotivo y enriquecido con palabras clave de SEO (esmeraldas colombianas de Muzo/Chivor, filigrana momposina, atelier, oro de 18 quilates).
+- **CONTACT-01**: Actualización global de datos de contacto unificados (Dominio: `bersagliojewelry.co`, Correo: `info@bersagliojewelry.co`, Celular/WhatsApp: `+57 301 375 2592`) en `carrito.js`, `lista-deseos.js`, `privacidad.js`, `terminos.js` y `contacto.js`.
+
 
 

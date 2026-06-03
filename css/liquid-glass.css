@@ -79,6 +79,10 @@
   --font-mono:    "Space Mono", "SF Mono", ui-monospace, Menlo, monospace;
 }
 
+@view-transition {
+  navigation: auto;
+}
+
 /* ── Reset + Base ──────────────────────────────────────────────────── */
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }

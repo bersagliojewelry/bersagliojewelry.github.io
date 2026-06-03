@@ -79,8 +79,6 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     border-radius: 40px;
     overflow: hidden;
     transform-style: preserve-3d;
-    transform: rotateX(calc(var(--my) * 1.5deg)) rotateY(calc(var(--mx) * -1.5deg));
-    transition: transform 0.8s cubic-bezier(.2,.9,.2,1);
     box-shadow:
         inset 0 2px 0 oklch(100% 0 0 / 0.7),
         inset 0 1px 12px oklch(100% 0 0 / 0.15),
@@ -90,8 +88,7 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 .home-hero-img {
     position: absolute; inset: 0;
     display: block;
-    transform: scale(1.06) translate3d(calc(var(--mx) * -10px), calc(var(--my) * -10px), 0);
-    transition: transform 0.8s cubic-bezier(.2,.9,.2,1);
+    transform: none;
     overflow: hidden;
 }
 .home-hero-img-fallback {
@@ -127,7 +124,7 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     display: flex; align-items: center; gap: 10px;
 }
 
-.home-hero-body { max-width: 760px; }
+.home-hero-body { max-width: 620px; }
 .home-hero-eyebrow-row {
     display: flex; align-items: center; gap: 14px;
     margin-bottom: 24px;
@@ -144,10 +141,10 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 }
 
 .home-hero-headline {
-    font-size: clamp(52px, 7vw, 108px);
-    line-height: 0.92;
+    font-size: clamp(34px, 4.5vw, 62px);
+    line-height: 1.15;
     font-weight: 300;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.03em;
     margin-bottom: 28px;
     color: #fff;
     text-shadow:
@@ -172,33 +169,17 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 }
 
 .home-hero-manifesto {
-    font-size: clamp(15px, 1.1vw, 17px);
+    font-size: clamp(14px, 1vw, 15px);
     line-height: 1.7;
     color: #fff;
-    max-width: 540px;
+    max-width: 500px;
     margin-bottom: 28px;
     font-weight: 400;
-    text-align: justify;
-    hyphens: auto;
+    text-align: left;
     text-shadow:
         0 2px 4px oklch(10% 0.03 155),
         0 1px 16px oklch(15% 0.04 155 / 0.95),
         0 0 32px oklch(15% 0.04 155 / 0.7);
-    transition: text-shadow 0.5s ease;
-}
-.home-hero-manifesto:hover {
-    text-shadow:
-        -1px -1px 0 oklch(8% 0.02 155 / 0.9),
-         1px -1px 0 oklch(8% 0.02 155 / 0.9),
-        -1px 1px 0 oklch(8% 0.02 155 / 0.9),
-         1px 1px 0 oklch(8% 0.02 155 / 0.9),
-         0 -1px 0 oklch(8% 0.02 155 / 0.9),
-         0 1px 0 oklch(8% 0.02 155 / 0.9),
-        -1px 0 0 oklch(8% 0.02 155 / 0.9),
-         1px 0 0 oklch(8% 0.02 155 / 0.9),
-         0 0 6px  oklch(85% 0.14 88 / 0.6),
-         0 0 12px oklch(85% 0.14 88 / 0.4),
-         0 2px 18px oklch(15% 0.04 155 / 0.85);
 }
 
 .home-hero-actions {

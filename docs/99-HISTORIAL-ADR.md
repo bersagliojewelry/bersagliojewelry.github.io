@@ -402,6 +402,8 @@ Implementación de mejoras de SEO JSON-LD, analítica e-commerce (GA4 + Pixel de
 - **COPY-01**: Modificación integral de los textos del Home, Nosotros y Contacto con copywriting literario, emotivo y enriquecido con palabras clave de SEO (esmeraldas colombianas de Muzo/Chivor, filigrana momposina, atelier, oro de 18 quilates).
 - **CONTACT-01**: Actualización global de datos de contacto unificados (Dominio: `bersagliojewelry.co`, Correo: `info@bersagliojewelry.co`, Celular/WhatsApp: `+57 301 375 2592`) en `carrito.js`, `lista-deseos.js`, `privacidad.js`, `terminos.js` y `contacto.js`.
 - **SEO-02**: Estrategia de Lanzamiento Suave (Soft Launch) configurando `noindex, nofollow` en las 9 páginas en borrador o con información no verídica (`colecciones.html`, `pieza.html`, `carrito.html`, `lista-deseos.html`, `journal.html`, `entrada.html`, `gracias.html`, `privacidad.html` y `terminos.html`) y dejando indexables solo Home, Nosotros y Contacto. Reconstrucción de `sitemap.xml` para reflejar estas 3 URL únicas.
+- **COPY-02**: Integración de la historia institucional real de Bersaglio (origen de puerta a puerta, visión personalizada) en `js/pages/nosotros.js`, traduciendo los conceptos a un copywriting editorial premium, estructurando una nueva sección para la Misión y Visión corporativa, y ajustando el CSS en `css/nosotros.css`.
+
 
 
 

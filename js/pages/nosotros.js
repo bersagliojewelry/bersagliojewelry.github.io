@@ -28,20 +28,20 @@ let _openFaq = 0;
 let _activeChapter = 0;
 
 const CHAPTERS = [
-    { y: '2013', t: 'El primer encuentro', d: 'Kary Mendoza comienza visitando familias en Cartagena, casa por casa. No vendía joyas: escuchaba historias. Cumpleaños, aniversarios, primeras comuniones, herencias. Cada conversación se convertía en una pieza pensada con propósito.' },
-    { y: '2016', t: 'La primera vitrina', d: 'Tras tres años de relaciones íntimas, abre un primer espacio en el Centro Histórico. La filosofía no cambió: la puerta se abre con cita previa, una taza de café tinto, y la promesa de que ninguna pieza sale del atelier sin haber sido pensada para alguien específico.' },
-    { y: '2020', t: 'Reconocimiento internacional', d: 'Bersaglio se convierte en miembro de Jewelers of America, certificación que avala estándares éticos en abastecimiento de gemas, trazabilidad de oro y prácticas laborales. Esmeraldas certificadas Muzo y diamantes con reporte GIA.' },
-    { y: '2023', t: 'Diez años de oficio', d: 'Más de mil piezas entregadas, cada una con su libreta de origen: la mina de la gema, el orfebre que la talló, el cliente que la encargó, la ocasión que celebra. La memoria viva del atelier.' },
-    { y: '2026', t: 'Colección La Verde', d: 'Seis piezas únicas con esmeraldas Muzo Vieja sin tratamiento, monturas en oro 18K paladiado y diamantes briolette. Una declaración: la esmeralda colombiana no necesita imitar a otras gemas, basta con dejar que cuente su propia historia.' },
+    { y: '2013', t: 'El Diálogo Inicial', d: 'Kary Mendoza emprende el viaje visitando a familias cartageneras en sus hogares. Más que ofrecer metales y gemas, se dedicó a escuchar. Cada historia compartida sentó los cimientos de una pieza cargada de alma.' },
+    { y: '2016', t: 'La Consagración del Espacio', d: 'Establecemos nuestro primer atelier privado en el Centro Histórico. Una puerta que solo se abre bajo cita concertada, resguardando la intimidad de cada visitante y celebrando la joyería de intención.' },
+    { y: '2020', t: 'Estándares del Oficio', d: 'Bersaglio es admitida en Jewelers of America. Asumimos el compromiso inquebrantable de la trazabilidad ética, seleccionando exclusivamente gemas Muzo y diamantes avalados por la GIA.' },
+    { y: '2023', t: 'Una Década de Legado', d: 'Mil piezas singulares esculpidas, cada una documentada en su bitácora de origen: la procedencia exacta de la gema, las manos artesanas involucradas y el relato familiar que conmemora.' },
+    { y: '2026', t: 'La Verde y el Futuro', d: 'Presentamos una colección icónica: seis creaciones exclusivas con esmeraldas Muzo sin tratamiento térmico y monturas en oro paladiado. Un tributo puro a la naturaleza indómita de la gema soberana de Colombia.' },
 ];
 
 const VALORES = [
-    { n: '01', t: 'Asesoría antes que venta',     d: 'No te mostramos catálogos. Te preguntamos por la persona, la ocasión, el presupuesto, el sentimiento. La pieza correcta aparece después, no antes.' },
-    { n: '02', t: 'Origen verificable',           d: 'Cada esmeralda viene con certificado de mina (Muzo, Coscuez, Chivor). Cada diamante con reporte GIA. Cada gramo de oro con trazabilidad RJC.' },
-    { n: '03', t: 'Orfebrería paciente',          d: 'Cuatro a seis semanas por pieza. Sin atajos, sin moldes industriales. Cera perdida, lima en mano, lupa de relojero.' },
-    { n: '04', t: 'Servicio de por vida',         d: 'Limpieza, pulido, reanclaje, redimensionado. Si la pieza salió de Bersaglio, vuelve cuando lo necesite. Sin costo, sin condiciones, durante toda la vida.' },
-    { n: '05', t: 'Discreción absoluta',          d: 'No publicamos nombres, no etiquetamos clientes, no compartimos imágenes sin permiso explícito. Tu pieza es tu historia.' },
-    { n: '06', t: 'Herencia como medida del éxito', d: 'No medimos por ventas. Medimos por cuántas de nuestras piezas vuelven al atelier veinte años después, esta vez en manos de la siguiente generación.' },
+    { n: '01', t: 'La Confidencia como Preludio', d: 'Prescindimos de catálogos y guiones comerciales. Nos adentramos en el sentimiento y la memoria que inspiran tu encargo. La joya ideal se revela a través del diálogo.' },
+    { n: '02', t: 'Linaje y Origen Noble', d: 'Cada esmeralda singular es respaldada por su procedencia de mina (Muzo, Coscuez o Chivor). Cada diamante posee reporte GIA y el oro cuenta con certificación ética de trazabilidad RJC.' },
+    { n: '03', t: 'Orfebrería Pausada', d: 'Dedicamos de cuatro a seis semanas a cada pieza. Sin atajos ni moldes en serie. Empleamos técnicas ancestrales, cera perdida y el labrado paciente a mano del maestro orfebre.' },
+    { n: '04', t: 'Custodia Eterna', d: 'Limpieza, reajuste y restauración de por vida. Si una joya lleva la impronta de Bersaglio, siempre tendrá las puertas abiertas de nuestra casa para su preservación absoluta.' },
+    { n: '05', t: 'El Respeto al Secreto', d: 'Garantizamos discreción absoluta. No divulgamos nombres ni exponemos las piezas de nuestros clientes. Comprendemos que cada joya custodia un relato privado.' },
+    { n: '06', t: 'El Éxito en la Trascendencia', d: 'No evaluamos nuestro triunfo en cifras, sino en el retorno de nuestras piezas al atelier décadas más tarde, portadas orgullosamente por la siguiente generación.' },
 ];
 
 const EQUIPO = [
@@ -88,20 +88,17 @@ function renderHero() {
     return html`
         <section class="abt-hero">
             <div class="abt-hero-text">
-                <div class="mono abt-eyebrow">CAPÍTULO 00 · QUIÉNES SOMOS</div>
+                <div class="mono abt-eyebrow">CAPÍTULO 00 · NUESTRA ALMA</div>
                 <h1 class="abt-hero-title">
-                    Una joya<br>
-                    <span class="italic emerald-text abt-hero-title-em">se elige,</span><br>
+                    Un legado<br>
+                    <span class="italic emerald-text abt-hero-title-em">se susurra,</span><br>
                     no se compra.
                 </h1>
                 <p class="abt-hero-lead">
-                    Trece años atrás, Kary Mendoza tocaba puertas en Cartagena. No llevaba un catálogo.
-                    Llevaba tiempo, atención y la convicción de que detrás de cada joya hay una conversación pendiente.
+                    Hace trece años, Kary Mendoza recorría las calles empedradas de Cartagena. No llevaba consigo un portafolio de ventas; llevaba el deseo de escuchar historias íntimas y la convicción de que una esmeralda fina debe ser el reflejo de quien la posee.
                 </p>
                 <p class="abt-hero-italic">
-                    Hoy seguimos haciendo lo mismo. Solo cambiaron las paredes: ahora la conversación
-                    ocurre en un atelier en el Centro Histórico, sigue siendo a puerta cerrada,
-                    sigue empezando con un café.
+                    Hoy, el ritual permanece intacto en nuestro atelier del Centro Histórico. Un encuentro sin prisas, a puerta cerrada, consagrado a dar forma a tus instantes más preciados.
                 </p>
                 <div class="abt-hero-actions">
                     <a href="/contacto.html" class="btn-aqua btn-aqua-emerald">
@@ -144,14 +141,14 @@ function renderStats() {
 function renderManifiesto() {
     return html`
         <section class="abt-manifiesto">
-            <div class="mono abt-eyebrow">MANIFIESTO</div>
+            <div class="mono abt-eyebrow">EL MANIFIESTO</div>
             <h2 class="abt-manifiesto-title">
-                Creemos que el lujo verdadero no se grita.
-                <span class="italic emerald-text">Se susurra entre dos personas</span>,
-                en una mesa con café, mientras una conversación lenta da forma a algo que un día — sin nosotros — seguirá siendo importante.
+                Sostenemos que el lujo auténtico carece de estridencias.
+                <span class="italic emerald-text">Es un secreto compartido entre dos personas</span>, 
+                esbozado en la calidez de nuestro atelier, donde el tiempo se detiene para dar vida a una creación que trascenderá nuestra propia existencia.
             </h2>
             <div class="abt-manifiesto-divider"></div>
-            <div class="mono abt-manifiesto-foot">BERSAGLIO JOYERÍA · CARTAGENA</div>
+            <div class="mono abt-manifiesto-foot">MAISON BERSAGLIO · CARTAGENA DE INDIAS</div>
         </section>`;
 }
 

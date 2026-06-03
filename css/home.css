@@ -406,7 +406,7 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 /* ═══════════════════════════════════════════════════════════════════
    3. CATEGORIES — iOS dock
    ═══════════════════════════════════════════════════════════════════ */
-.home-cats { padding: 24px 0 32px; }
+.home-cats { padding: 100px 0 110px; }
 .home-cats-header {
     text-align: center;
     margin-bottom: 22px;
@@ -491,7 +491,7 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 /* ═══════════════════════════════════════════════════════════════════
    4. FEATURED
    ═══════════════════════════════════════════════════════════════════ */
-.home-featured { padding: 24px 0 20px; }
+.home-featured { padding: 100px 0; }
 .home-featured-header {
     display: flex; justify-content: space-between; align-items: flex-end;
     margin-bottom: 20px;
@@ -527,8 +527,9 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 .home-featured-card:hover {
     transform: translateY(-10px);
     box-shadow:
-        0 1px 0 oklch(100% 0 0 / 0.9) inset,
-        0 40px 80px -20px oklch(42% 0.14 155 / 0.35);
+        0 1px 0 oklch(100% 0 0 / 0.95) inset,
+        0 40px 80px -20px oklch(42% 0.14 155 / 0.18),
+        0 15px 35px -10px oklch(82% 0.14 85 / 0.12);
 }
 .home-featured-card-imgwrap {
     position: relative;
@@ -621,7 +622,7 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 /* ═══════════════════════════════════════════════════════════════════
    5. EDITORIAL
    ═══════════════════════════════════════════════════════════════════ */
-.home-editorial { padding: 20px 0; }
+.home-editorial { padding: 110px 0; }
 .home-editorial-grid {
     display: grid;
     grid-template-columns: 1.1fr 1fr;
@@ -720,7 +721,7 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 /* ═══════════════════════════════════════════════════════════════════
    6. SERVICES
    ═══════════════════════════════════════════════════════════════════ */
-.home-services { padding: 20px 0; }
+.home-services { padding: 100px 0; }
 .home-services-header {
     text-align: center;
     margin-bottom: 22px;
@@ -767,7 +768,7 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 /* ═══════════════════════════════════════════════════════════════════
    7. ATELIER — process scene
    ═══════════════════════════════════════════════════════════════════ */
-.home-atelier { padding: 20px 0; }
+.home-atelier { padding: 110px 0; }
 .home-atelier-header {
     text-align: center;
     max-width: 680px;
@@ -961,7 +962,7 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
    8. JOURNAL — NYT-style masthead
    ═══════════════════════════════════════════════════════════════════ */
 .home-journal {
-    padding: 28px 0 24px;
+    padding: 110px 0;
     position: relative;
 }
 .hj-masthead {
@@ -1363,7 +1364,7 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 /* ═══════════════════════════════════════════════════════════════════
    9. CTA — Cartagena
    ═══════════════════════════════════════════════════════════════════ */
-.home-cta { padding: 24px 0 36px; }
+.home-cta { padding: 120px 0; }
 .home-cta-card {
     padding: 48px 40px;
     border-radius: 48px;

@@ -3,7 +3,7 @@
    Mirror exacto de BERSAGLIO NOVO/project/js/pages.jsx (Nosotros L198-533)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-.abt-page { padding-top: 116px; padding-bottom: 40px; }
+.abt-page { padding-top: 120px; padding-bottom: 120px; }
 @media (max-width: 680px) { .abt-page { padding-top: 100px; } }
 
 /* Shared eyebrow style (mono · gold · 0.3em) */
@@ -16,7 +16,7 @@
 }
 
 /* Section header (eyebrow + display title centered) */
-.abt-section { margin-bottom: 44px; }
+.abt-section { margin-bottom: 110px; }
 .abt-section-header {
     text-align: center;
     margin-bottom: 24px;
@@ -36,7 +36,7 @@
     grid-template-columns: 1.1fr 1fr;
     gap: 28px;
     align-items: center;
-    margin-bottom: 32px;
+    margin-bottom: 110px;
 }
 .abt-hero-text { display: flex; flex-direction: column; }
 .abt-hero-title {
@@ -121,7 +121,7 @@
 .abt-stats {
     padding: 24px;
     border-radius: 36px;
-    margin-bottom: 44px;
+    margin-bottom: 110px;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 24px;
@@ -164,8 +164,8 @@
    ═══════════════════════════════════════════════════════════════════ */
 .abt-manifiesto {
     text-align: center;
-    padding: 28px 20px;
-    margin-bottom: 44px;
+    padding: 48px 20px;
+    margin-bottom: 110px;
     position: relative;
 }
 .abt-manifiesto .abt-eyebrow { margin-bottom: 22px; }
@@ -327,7 +327,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 28px;
-    margin-bottom: 44px;
+    margin-bottom: 110px;
     align-items: stretch;
 }
 .atl-image {
@@ -463,7 +463,7 @@
 .cert-section {
     padding: 28px;
     border-radius: 40px;
-    margin-bottom: 44px;
+    margin-bottom: 110px;
 }
 .cert-grid {
     display: grid;

@@ -70,18 +70,19 @@ function renderHero() {
                             <div class="home-hero-body">
                                 <div class="home-hero-eyebrow-row">
                                     <span class="home-hero-eyebrow-line"></span>
-                                    <span class="mono home-hero-eyebrow">Joyería de autor</span>
+                                    <span class="mono home-hero-eyebrow">Alta Joyería de Autor y Esmeraldas Singulares</span>
                                 </div>
 
                                 <h1 class="home-hero-headline">
                                     Donde la luz<br>
-                                    <span class="home-hero-headline-italic">cobra alma.</span>
+                                    <span class="home-hero-headline-italic">esculpe el alma.</span>
                                 </h1>
 
                                 <p class="home-hero-manifesto">
-                                    Cada Bersaglio comienza con una conversación. Escuchamos tu historia,
-                                    elegimos la gema y damos forma a una pieza que viajará contigo,
-                                    te hará sentir como alguien único y se convertirá en herencia para los tuyos.
+                                    Cada creación de Bersaglio nace como una confidencia íntima. Escuchamos el relato 
+                                    que desea inmortalizar, seleccionamos personalmente la esmeralda singular que 
+                                    custodiará su memoria y esculpimos a mano una pieza eterna, destinada a trascender 
+                                    como patrimonio familiar.
                                 </p>
 
                                 <div class="home-hero-actions">
@@ -195,12 +196,12 @@ function renderCategories() {
         <section class="home-cats">
             <div class="container">
                 <div class="home-cats-header">
-                    <div class="eyebrow">Nuestras categorías</div>
+                    <div class="eyebrow">Colecciones singulares</div>
                     <h2 class="home-cats-title">
-                        Un universo <span class="italic emerald-text">en cristal</span>
+                        La refracción del <span class="italic emerald-text">alma verde</span>
                     </h2>
                     <p class="home-cats-lead">
-                        Cada categoría es una exploración distinta de forma, luz y significado.
+                        Cada pieza representa una búsqueda estética diferente; una veneración al fuego interno del metal y la esmeralda.
                     </p>
                 </div>
 
@@ -236,11 +237,11 @@ function renderFeatured() {
             <div class="container">
                 <div class="home-featured-header">
                     <div>
-                        <div class="eyebrow">Piezas destacadas</div>
-                        <h2 class="home-featured-title">Selección <span class="italic emerald-text">curada</span></h2>
+                        <div class="eyebrow">Curaduría del Atelier</div>
+                        <h2 class="home-featured-title">Piezas <span class="italic emerald-text">singulares</span></h2>
                     </div>
                     <a href="/colecciones.html" class="btn-aqua home-featured-cta">
-                        Ver todo el catálogo
+                        Explorar el catálogo entero
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
                     </a>
                 </div>
@@ -346,15 +347,14 @@ function renderEditorial() {
                     <div class="glass home-editorial-text">
                         <div class="eyebrow">Nuestra filosofía</div>
                         <h2 class="home-editorial-title">
-                            Más que vender joyas,<br>
-                            <span class="italic emerald-text">nos apasiona asesorar.</span>
+                            El arte de la gemología íntima:<br>
+                            <span class="italic emerald-text">más que una adquisición, un legado.</span>
                         </h2>
                         <p class="home-editorial-lead">
-                            Cada pieza tiene un significado. Somos cómplices silenciosos de los momentos
-                            que definen una vida: una propuesta, una promesa, un legado.
+                            Entendemos el metal y la piedra como portadores de memoria. Somos los cómplices silenciosos de los instantes que definen una vida entera: una promesa perpetua, una consagración, un recuerdo indeleble.
                         </p>
                         <blockquote class="home-editorial-quote">
-                            "Una joya Bersaglio no se compra. Se adopta."
+                            "Una esmeralda Bersaglio no pertenece a quien la compra; es custodiada por quien la adopta para la siguiente generación."
                         </blockquote>
                         <div class="home-editorial-stats">
                             <div class="home-editorial-stat">
@@ -398,10 +398,10 @@ function renderServices() {
         <section class="home-services">
             <div class="container">
                 <div class="home-services-header">
-                    <div class="eyebrow">Experiencia premium</div>
+                    <div class="eyebrow">El valor de lo excepcional</div>
                     <h2 class="home-services-title">
-                        Un servicio a la altura<br>
-                        <span class="italic emerald-text">de cada pieza</span>
+                        Una experiencia a la altura<br>
+                        <span class="italic emerald-text">de tu propia historia</span>
                     </h2>
                 </div>
                 <div class="home-services-grid">
@@ -424,10 +424,10 @@ function renderServices() {
 // 7. ATELIER — process scene with central jewel
 // ═══════════════════════════════════════════════════════════════════════════
 const ATELIER_STEPS = [
-    { n: '01', t: 'Diseño a medida',       d: 'Fabricamos y diseñamos. Creamos la joya de tus sueños desde cero, con los mejores metales y gemas.', corner: 0 },
-    { n: '02', t: 'Asesoría cercana',      d: 'Te visitamos puerta a puerta. Esa cercanía es nuestro sello: encontramos la pieza que refleje tu esencia.', corner: 1 },
-    { n: '03', t: 'Garantía certificada',  d: 'Todas nuestras piezas vienen garantizadas. Diamantería con certificación internacional GIA.', corner: 2 },
-    { n: '04', t: 'Cuidado de por vida',   d: 'Limpieza, mantenimiento y restauración. Tus joyas brillarán como el primer día, siempre.', corner: 3 },
+    { n: '01', t: 'El Diseño y Concepto', d: 'Concebimos la joya desde el boceto inicial sobre papel, seleccionando metales nobles y gemas con carácter propio.', corner: 0 },
+    { n: '02', t: 'Asesoría Confidencial', d: 'Te acompañamos en cada etapa de la elección. Un diálogo íntimo y pausado para dar con la pieza exacta que refleje tu legado.', corner: 1 },
+    { n: '03', t: 'Garantía y Certificación', d: 'Respaldamos la autenticidad y excelencia de cada piedra con reportes internacionales de la GIA y origen de mina.', corner: 2 },
+    { n: '04', t: 'Custodia de por vida', d: 'Nuestras piezas nacen con vocación de eternidad. Ofrecemos mantenimiento, pulido y restauración vitalicia sin límites.', corner: 3 },
 ];
 
 function renderAtelier() {
@@ -437,10 +437,10 @@ function renderAtelier() {
                 <div class="home-atelier-header">
                     <div class="chip"><span class="chip-dot"></span>Atelier Bersaglio</div>
                     <h2 class="home-atelier-title">
-                        El proceso detrás de <span class="italic emerald-text">una pieza única</span>
+                        El viaje de creación de <span class="italic emerald-text">una pieza de culto</span>
                     </h2>
                     <p class="home-atelier-lead">
-                        Cuatro pasos que convierten una idea en patrimonio familiar.
+                        Un recorrido artesanal meticuloso que transforma una visión en un objeto eterno.
                     </p>
                 </div>
 
@@ -663,18 +663,17 @@ function renderCTA() {
                 <div class="glass glass-iridescent home-cta-card">
                     <div class="home-cta-glow" aria-hidden="true"></div>
                     <div class="home-cta-content">
-                        <div class="eyebrow">Visita nuestra casa</div>
+                        <div class="eyebrow">Visita nuestro Atelier privado</div>
                         <h2 class="home-cta-title">
-                            Cartagena<br>
-                            <span class="italic emerald-text">de Indias</span>
+                            Casa San Agustín<br>
+                            <span class="italic emerald-text">Cartagena de Indias</span>
                         </h2>
                         <p class="home-cta-lead">
-                            Calle 36 # 6-32, Calle San Agustín Chiquita.
-                            Te esperamos con una experiencia privada.
+                            Te invitamos a sumergirte en nuestro espacio exclusivo en el corazón del Centro Histórico. Permítenos guiarte a puerta cerrada, en compañía de un café excepcional.
                         </p>
                         <div class="home-cta-actions">
-                            <a href="/contacto.html" class="btn-aqua btn-aqua-emerald">Agendar visita</a>
-                            <a href="/colecciones.html" class="btn-aqua">Ver catálogo online</a>
+                            <a href="/contacto.html" class="btn-aqua btn-aqua-emerald">Agendar cita privada</a>
+                            <a href="/colecciones.html" class="btn-aqua">Explorar colecciones</a>
                         </div>
                     </div>
                 </div>

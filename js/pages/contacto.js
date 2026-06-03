@@ -169,14 +169,13 @@ function readRefFromURL() {
 function renderHero() {
     return html`
         <section class="ct-hero">
-            <div class="mono ct-hero-eyebrow">HABLEMOS</div>
+            <div class="mono ct-hero-eyebrow">CONSERJERÍA PRIVADA</div>
             <h1 class="ct-hero-title">
-                Una conversación,<br>
-                <span class="italic emerald-text ct-hero-title-em">un café,</span> una pieza.
+                Un encuentro pausado,<br>
+                <span class="italic emerald-text ct-hero-title-em">una esmeralda única,</span> un legado eterno.
             </h1>
             <p class="ct-hero-lead">
-                Elige cómo prefieres que iniciemos. Tres canales, cero formularios fríos:
-                cada mensaje lo lee Kary y su equipo en persona.
+                Te invitamos a dar el primer paso. Elige la vía de comunicación que te resulte más cómoda; cada mensaje es atendido de manera directa y confidencial por Kary Mendoza y su equipo.
             </p>
         </section>`;
 }
@@ -280,10 +279,10 @@ function renderFormMensaje() {
 
             ${fieldInput({
                 name: 'm',
-                label: 'Cuéntanos en pocas palabras',
+                label: 'Describe el motivo de tu inspiración',
                 value: _form.m,
                 area: true,
-                placeholder: '¿Para quién es la pieza? ¿Hay una fecha importante? ¿Tienes una piedra o boceto?',
+                placeholder: '¿Qué historia o momento desea conmemorar? ¿Tiene alguna preferencia por una gema en particular?',
             })}
 
             <div class="ct-form-foot">
@@ -305,8 +304,8 @@ function renderFormVisita() {
             <div class="ct-banner ct-banner--visit">
                 <div class="ct-banner-icon" aria-hidden="true">☕</div>
                 <div>
-                    <div class="ct-banner-title">Visita privada al atelier</div>
-                    <div class="ct-banner-desc">Centro Histórico, Cartagena · 60–90 minutos · Sin compromiso de compra</div>
+                    <div class="ct-banner-title">Cita Privada en la Maison</div>
+                    <div class="ct-banner-desc">Centro Histórico, Cartagena · 60–90 min · Un espacio consagrado a tus ideas</div>
                 </div>
             </div>
 
@@ -367,8 +366,8 @@ function renderFormLlamada() {
             <div class="ct-banner ct-banner--call">
                 <div class="ct-banner-icon" aria-hidden="true">☎</div>
                 <div>
-                    <div class="ct-banner-title">Te llamamos cuando puedas</div>
-                    <div class="ct-banner-desc">Indícanos la franja y te contactamos en menos de 4 horas hábiles.</div>
+                    <div class="ct-banner-title">Llamada Confidencial</div>
+                    <div class="ct-banner-desc">Establezcamos una conversación telefónica en el horario de tu preferencia.</div>
                 </div>
             </div>
 
@@ -410,14 +409,14 @@ function renderFormLlamada() {
 }
 
 function renderSuccess() {
-    const name = (_tab === 'mensaje' ? _form.n : _tab === 'visita' ? _visit.n : _call.n) || 'amigo';
+    const name = (_tab === 'mensaje' ? _form.n : _tab === 'visita' ? _visit.n : _call.n) || 'distinguido huésped';
     let msg;
     if (_tab === 'visita') {
-        msg = `Confirmaremos tu cita por WhatsApp para el ${_visit.fecha || 'día acordado'} a las ${_visit.hora}. Llega cinco minutos antes; el café estará listo.`;
+        msg = `Confirmaremos los detalles de tu cita privada por canales directos para el ${_visit.fecha || 'día solicitado'} a las ${_visit.hora}. El atelier estará reservado exclusivamente para ti.`;
     } else if (_tab === 'llamada') {
-        msg = 'Te llamaremos en la franja que indicaste. Si no respondes, lo intentaremos una segunda vez.';
+        msg = `Nos comunicaremos contigo telefónicamente en la franja horaria establecida. Esperamos conversar pronto.`;
     } else {
-        msg = 'Kary o alguien del equipo te responderá en menos de 24 horas. Mientras tanto, puedes seguirnos en Instagram para ver lo que sale del atelier esta semana.';
+        msg = `Agradecemos tu confidencia. Kary Mendoza o un gemólogo del atelier se pondrá en contacto contigo en las próximas horas.`;
     }
     return html`
         <div class="ct-success">

@@ -375,3 +375,16 @@ Implementación de mejoras visuales en la rama `Desarrollo` para lograr un look 
 - **UX-03**: Morfosis dinámica en scroll del header pill flotante (Dynamic Island effect), aplicando reducción de escala, padding y desenfoque acrílico ultra-saturado (`backdrop-filter: blur(40px) saturate(210%)`).
 - **UX-04**: Suavizado de radios de esquina (`--r-sm` a `--r-2xl`) para emular la curvatura squircle de Apple.
 - **UX-06**: Rediseño completo del panel de administración (`css/admin.css`) integrando sidebar y topbar translúcidos (glassmorphism), radios squircle, botones en forma de píldora (pill), respuesta táctil `:active`, y unificación de colores con la paleta esmeralda y oro de Bersaglio.
+
+---
+
+## 2026-06-03 — Diseño Ultra-Premium, Composición Espacial y Copywriting Editorial
+Refinamiento narrativo y espacial de Bersaglio Jewelry para lograr un posicionamiento de ultra-lujo al estilo de una maison de alta joyería, y unificación estética del Panel de Administración con el branding público en la rama `Desarrollo`.
+
+**Entregables:**
+- **UX-07**: Copywriting editorial poético y evocativo sitewide en `js/pages/home.js`, `js/pages/nosotros.js`, y `js/pages/contacto.js`, eliminando frases comerciales convencionales.
+- **UX-08**: Aumento masivo de paddings verticales y gaps en `css/home.css`, `css/nosotros.css`, y `css/contacto.css` para dotar a las páginas de "whitespace" lujoso.
+- **UX-09**: Refinamiento de variables tipográficas sitewide aumentando el kerning a `0.32em` para la clase `.eyebrow` y creación del helper `.display-luxe`.
+- **UX-10**: Micro-interacción de resplandor difuso coloreado (hover glow) con tonos de esmeralda fina y oro en `.home-featured-card:hover` dentro de `css/home.css`.
+- **UX-11**: Rediseño definitivo y unificación del panel administrativo (`css/admin.css`) integrando el fondo dinámico `.bj-world` atenuado en `body`, habilitando fuentes de visualización premium (`Fraunces` y `Cormorant Garamond`), y puliendo los bordes y cristalería acrílica.
+

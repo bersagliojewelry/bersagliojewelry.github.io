@@ -363,3 +363,15 @@ Implementación de mejoras de rendimiento y fluidez visual en la rama `Desarroll
 - **PERF-01**: Eliminación del wrapper de JS para `document.startViewTransition` en `router.js` que causaba parpadeos en navegaciones completas. Habilitación de transiciones entre documentos nativas mediante CSS `@view-transition { navigation: auto; }` en `css/liquid-glass.css`.
 - **PERF-02**: Caché de tipo Cache-First para todos los bundles de JS compilados por Vite en el Service Worker (`public/sw.js`). Incremento de la versión de caché del sistema a `bersaglio-v4` para renovación limpia.
 - **PERF-03**: Verificación de que la deuda de código muerto de `style.css` ya se encuentra solventada (archivo eliminado en versiones previas).
+
+---
+
+## 2026-06-03 — Mejoras Estéticas Premium (Estilo iOS y Rediseño de Panel Admin)
+Implementación de mejoras visuales en la rama `Desarrollo` para lograr un look & feel moderno tipo iOS / Apple en el sitio público y el panel de administración.
+
+**Entregables:**
+- **UX-01**: Respuesta táctil sitewide en el estado `:active { transform: scale(0.96) }` para todos los botones, tarjetas de producto y enlaces interactivos.
+- **UX-02**: Transición elástica controlada en los cajones laterales (`.bj-cart-drawer` y `.bj-wishlist-drawer`) mediante curvas cubic-bezier de rebote iOS.
+- **UX-03**: Morfosis dinámica en scroll del header pill flotante (Dynamic Island effect), aplicando reducción de escala, padding y desenfoque acrílico ultra-saturado (`backdrop-filter: blur(40px) saturate(210%)`).
+- **UX-04**: Suavizado de radios de esquina (`--r-sm` a `--r-2xl`) para emular la curvatura squircle de Apple.
+- **UX-06**: Rediseño completo del panel de administración (`css/admin.css`) integrando sidebar y topbar translúcidos (glassmorphism), radios squircle, botones en forma de píldora (pill), respuesta táctil `:active`, y unificación de colores con la paleta esmeralda y oro de Bersaglio.

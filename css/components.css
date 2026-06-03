@@ -33,8 +33,13 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     border-radius: 999px;
     max-width: min(980px, calc(100vw - 32px));
     width: 100%;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), padding 0.4s, backdrop-filter 0.4s, box-shadow 0.4s;
 }
 .bj-header.is-scrolled .bj-header-pill {
+    transform: scale(0.97);
+    padding: 6px 12px 6px 18px;
+    backdrop-filter: blur(40px) saturate(210%) brightness(102%);
+    -webkit-backdrop-filter: blur(40px) saturate(210%) brightness(102%);
     box-shadow: var(--glass-shadow-lg);
 }
 
@@ -268,7 +273,7 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     padding: 24px;
     z-index: 201;
     transform: translateX(110%);
-    transition: transform 0.45s cubic-bezier(.32,.72,0,1);
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.04);
     box-shadow: var(--glass-shadow-lg);
     overflow: hidden;
 }

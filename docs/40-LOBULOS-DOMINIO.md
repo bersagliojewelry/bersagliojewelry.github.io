@@ -10,7 +10,7 @@
 
 | Lóbulo | Dominio | Estado | Skills asociadas |
 |---|---|---|---|
-| `docs/43-UX.md` | Experiencia de Usuario y Diseño Visual | ⏳ Planificado | `frontend-design`, `impeccable` |
+| `docs/43-UX.md` | Experiencia de Usuario y Diseño Visual | 🟢 Activo | `frontend-design`, `impeccable` |
 | `docs/45-PERFORMANCE.md` | Core Web Vitals y Carga de Activos | 🟢 Activo | `seo-audit`, `performance-check` |
 | `docs/48-ACCESIBILIDAD.md` | Pautas de Accesibilidad WCAG 2.2 AA | ⏳ Planificado | `accessibility-audit` |
 

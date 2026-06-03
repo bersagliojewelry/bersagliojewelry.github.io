@@ -6,14 +6,14 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v5 to cache dynamic schemas and pixel tracking scripts.
-const CACHE_NAME    = 'bersaglio-v5';
+// Bumped to v6 to cache optimized hero assets and dynamic schemas.
+const CACHE_NAME    = 'bersaglio-v6';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.
 const SHELL_ASSETS = [
     OFFLINE_URL,
-    '/img/banner-hero.png',
+    '/img/banner-hero-1200.webp',
     '/img/logo-bersaglio.png',
     '/manifest.json',
 ];

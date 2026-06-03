@@ -52,7 +52,7 @@ function renderHero() {
                         <picture class="home-hero-img" data-parallax-img>
                             <source type="image/avif" srcset="/img/banner-hero-800.avif 800w, /img/banner-hero-1200.avif 1200w, /img/banner-hero-1600.avif 1600w" sizes="100vw">
                             <source type="image/webp" srcset="/img/banner-hero-800.webp 800w, /img/banner-hero-1200.webp 1200w, /img/banner-hero-1600.webp 1600w" sizes="100vw">
-                            <img src="/img/banner-hero.png" alt="" fetchpriority="high" decoding="async" class="home-hero-img-fallback">
+                            <img src="/img/banner-hero-1200.webp" alt="" fetchpriority="high" decoding="async" class="home-hero-img-fallback">
                         </picture>
                         <div aria-hidden="true" class="home-hero-rim"></div>
 
@@ -157,12 +157,12 @@ function renderMarquee() {
 // 3. CATEGORIES — iOS-style dock
 // ═══════════════════════════════════════════════════════════════════════════
 const CATEGORIES = [
-    { name: 'Anillos',   slug: 'anillos',         img: '/img/ring-sapphire.jpg',        hue: 200, pos: 'center' },
-    { name: 'Topos',     slug: 'topos-aretes',    img: '/img/earrings-travertino.png',  hue: 30,  pos: 'center' },
-    { name: 'Argollas',  slug: 'argollas',        img: '/img/earrings-emerald.png',     hue: 155, pos: 'center' },
-    { name: 'Dijes',     slug: 'dijes-colgantes', img: '/img/model-emerald.png',        hue: 155, pos: 'center top' },
-    { name: 'Pulseras',  slug: 'pulseras',        img: '/img/banner-hero.png',          hue: 90,  pos: 'center' },
-    { name: 'Editorial', slug: 'editorial',       img: '/img/model-emerald.png',        hue: 155, pos: 'center' },
+    { name: 'Anillos',   slug: 'anillos',         img: '/img/ring-sapphire-800.webp',        hue: 200, pos: 'center' },
+    { name: 'Topos',     slug: 'topos-aretes',    img: '/img/earrings-travertino-800.webp',  hue: 30,  pos: 'center' },
+    { name: 'Argollas',  slug: 'argollas',        img: '/img/earrings-emerald-800.webp',     hue: 155, pos: 'center' },
+    { name: 'Dijes',     slug: 'dijes-colgantes', img: '/img/model-emerald-800.webp',        hue: 155, pos: 'center top' },
+    { name: 'Pulseras',  slug: 'pulseras',        img: '/img/banner-hero-800.webp',          hue: 90,  pos: 'center' },
+    { name: 'Editorial', slug: 'editorial',       img: '/img/model-emerald-800.webp',        hue: 155, pos: 'center' },
 ];
 
 function renderCategories() {
@@ -436,7 +436,7 @@ function renderAtelier() {
                     <div aria-hidden="true" class="at-ring"></div>
 
                     <div class="at-jewel">
-                        <img src="/img/ring-sapphire.jpg" alt="" class="at-jewel-img" loading="lazy" decoding="async">
+                        <img src="/img/ring-sapphire-800.webp" alt="" class="at-jewel-img" loading="lazy" decoding="async">
                         <div aria-hidden="true" class="at-jewel-glint"></div>
                     </div>
 

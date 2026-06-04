@@ -10,8 +10,7 @@
 ---
 
 ## 🎯 Foco actual
-*   **Ajuste de Hero y Velocidad de Carga**: Rediseñar espaciados en el Hero del Home para acomodar el botón sin cortes, y optimizar las imágenes del carrusel, journal y fondos usando WebP/AVIF.
-*   **Integración y Despliegue**: Fusionar cambios locales a la rama principal (`main`) para despliegue automatizado en producción.
+*   **Nueva Conversación / Inicio de Sprint**: El repositorio se encuentra limpio, compilado y desplegado con todas las correcciones estéticas y optimizaciones de velocidad al 100%. Listo para recibir nuevos requerimientos del cliente.
 
 ---
 
@@ -19,15 +18,14 @@
 
 | ID | Item | Estado | Bloqueo |
 |---|---|---|---|
-| **TODO-01** | Integrar cambios a la rama principal (main) y desplegar | ⏳ En curso | — |
+| — | Ninguno. Todos los items anteriores han sido consolidados y cerrados | — | — |
 
 ---
 
 ## 🔮 Contexto estratégico
-La optimización del Hero del Home resuelve un problema visual crítico de corte de botones. Al mismo tiempo, sustituir los PNGs pesados de la carga inicial por WebP de ~25-180KB mitiga por completo el retraso de renderizado inicial (LCP).
+El sitio web se encuentra en una versión sumamente madura y rápida, con todas las imágenes del home y timeline histórico optimizadas (ahorro del 98.6% en assets) y el Service Worker cacheando con la versión `bersaglio-v6`.
 
 ---
 
 ## 📝 Bitácora (efímera — se vacía al consolidar)
-- **2026-06-03**: Ajuste de padding/márgenes en el Hero. Sustitución de imágenes PNG pesadas en CSS y JS por sus equivalentes optimizados. Bump de Service Worker a v6. Compilación e integridad certificadas.
-
+*(Vacía. Lista para la nueva conversación)*

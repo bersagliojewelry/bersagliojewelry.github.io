@@ -10,11 +10,11 @@
 ---
 
 ## 🎯 Foco actual
-> 🏗️ **Cerebro neuronal actualizado a template v1.0.0** (2026-06-05, upgrade quirúrgico). Toda la memoria previa PRESERVADA (36 ADRs en `99`, lecciones L-01..L-04, lóbulos `43-UX`/`45-PERFORMANCE`). **Nuevo**: nodo `15-CONSEJO-EXTERNO` (red team 🛰️ vía Gemini/Antigravity), `skills-inventory.md`, gobernanza ampliada (§G.5 sharding + reflejos), linter `brain:check` mejorado y adaptado a `public/sw.js`/`bersaglio-vN`, hook `SessionStart` + `githooks/pre-commit`. CLAUDE.md previo cuarentenado en `_legacy/`.
+> ✅ **Sesión 2026-06-05 cerrada — cerebro v1.0.0 instalado, curado, auditado y PUSHEADO** a `origin/Desarrollo` (5 commits, ADR §37-§39). `brain:check` SANO, sin huérfanos ni vacíos. **Listo para nuevos requerimientos del cliente.**
 >
-> **Curación inicial hecha** (§38, commit `1be38d1`): skills 78→74 (4 ruido a `_legacy/skills-removed/`), inventario reconciliado, `CEREBRO NUEVO/` retirada del repo. Queda solo TODO-03 (opcional, baja prioridad).
+> **Qué se hizo** (detalle en ADRs): §37 upgrade quirúrgico a template v1.0.0 (memoria preservada: 36 ADRs, L-01..L-04, lóbulos 43-UX/45-PERFORMANCE; nuevo nodo `15-CONSEJO-EXTERNO` red team 🛰️ Gemini/Antigravity; gobernanza §G.5; hook+pre-commit). §38 curación de skills (78→74, 4 ruido a `_legacy/skills-removed/`, `CEREBRO NUEVO/` retirada). Auditoría de integridad (0 huérfanos/dangling, `05` fresco). §39 auditoría+instalación de skills + Reflejo de Catalogación §G.4 + `brain-check` check #6.
 >
-> Proyecto: build 🟢, branch `Desarrollo`, cache `bersaglio-v6`. Listo para nuevos requerimientos.
+> **Contexto para el próximo "tú"**: 3 skills instaladas user-level en `~/.claude/skills/` (FUERA del repo, no se ven en git): `claude-automation-recommender`, `claude-md-improver`, `session-report`. Producción NO desplegada (deploy = push a `main`; hoy solo `Desarrollo`).
 >
 > **🚫 Callejones sin salida**: ninguno.
 
@@ -24,9 +24,12 @@
 
 | ID | Item | Estado | Bloqueo |
 |---|---|---|---|
-| TODO-01 | **Dedup de skills/**: 4 carpetas-ruido cuarentenadas a `_legacy/skills-removed/` (78→74). | ✅ Cerrado | → §38 / commit `1be38d1` |
-| TODO-02 | **Curar `docs/skills-inventory.md`**: reconciliado vs 74 carpetas reales; +`sales-enablement`; documentado folder≠name + cuarentena. | ✅ Cerrado | → §38 / commit `1be38d1` |
 | TODO-03 | (Opcional) Migrar headers de `99-HISTORIAL` a formato numerado `## NN.` para el offset-drift estricto del linter (hoy convención por fecha, válida y verde). | 🔲 Abierto | Baja prioridad |
+| TODO-04 | (Opcional) Limpieza de anomalías 🔧 en `skills/`: cuarentenar `skill-creator/skill-creator/` (anidado redundante); `code-simplifier`/`code-modernization` son formatos subagente/plugin (no skill) — normalizar o dejar documentadas. | 🔲 Abierto | Baja prioridad |
+| TODO-05 | Merge `Desarrollo → main` para desplegar a producción (dispara GitHub Pages + Firebase). **Solo a pedido explícito del cliente.** | 🔲 Abierto | A pedido |
+| — | `.claude/settings.local.json` sin commitear (permisos del harness). El cliente decide si versionarlo. | ℹ️ info | — |
+
+> ✅ Cerrados y consolidados: **TODO-01 / TODO-02** → ADR §38 (commit `1be38d1`).
 
 ---
 
@@ -40,3 +43,4 @@ El sitio web se encuentra en una versión sumamente madura y rápida, con todas 
 - **2026-06-05**: Curación post-upgrade (ADR §38, commit `1be38d1`): dedup de skills (78→74), inventario reconciliado, `CEREBRO NUEVO/` eliminada. TODO-01/02 cerrados.
 - **2026-06-05**: Auditoría de integridad (ADR no — fix `23122a0`): 0 huérfanos/vacíos, dangling 48 cerrado, 05 fresco.
 - **2026-06-05**: Auditoría e instalación de skills + auto-detección (ADR §39): 70/74 ya cargadas; instaladas 3 user-level (`claude-automation-recommender`, `claude-md-improver`, `session-report`); nuevo Reflejo de Catalogación §G.4 + `brain-check` check #6. Inventario al día.
+- **2026-06-05**: 🏁 Sesión cerrada. Todo pusheado a `origin/Desarrollo`. Handoff (estado + pendientes TODO-03/04/05) documentado en foco + TODOs. Próximo chat hereda cerebro SANO.

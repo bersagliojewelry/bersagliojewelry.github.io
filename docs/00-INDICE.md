@@ -84,6 +84,7 @@
 | §38 | 2026-06-05 — Curación post-upgrade: dedup de skills + reconciliación inventario | 439 |
 | §39 | 2026-06-05 — Auditoría de instalación de skills + auto-detección (catalogación) | 452 |
 | §40 | 2026-06-05 — Rediseño Fase 1 (mirror): shell + Home + Nosotros + Contacto + dock Atajos | 469 |
+| §41 | 2026-06-05 — Fase 1 pulido: auditoría visual + 3 fixes doctrina (transition/radii/#000) | 488 |
 ---
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §32+ al historial,

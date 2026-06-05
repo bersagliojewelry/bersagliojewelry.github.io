@@ -6,8 +6,8 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v7 for the Fase 1 redesign (shell + home/nosotros/contacto + dock Atajos).
-const CACHE_NAME    = 'bersaglio-v7';
+// Bumped to v8 for Fase 1 polish (transition:all→props, critical-CSS radii sync ×12 shells, hero #000→ink-emerald).
+const CACHE_NAME    = 'bersaglio-v8';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

@@ -483,6 +483,25 @@ Cliente: aplicar con fidelidad de pixel el rediseño nuevo (`design_handoff_bers
 
 **40.7 Doctrina + cache**: §3.1 perf (transform/opacity + RM), §3.2 API estable, §3.4 IAP por incremento. Cache `public/sw.js` **v6→v7** (§4) + reflejado en `05`. Riesgos de seguridad detectados → `41-SEGURIDAD` (Fase 2). TODOs de contenido real (reseñas Google Maps, Films, Redes Meta/TikTok) en código + `10`. Siguiente: Fase 2 hardening + Fase 3 CRM/facturación/inventario. Lecciones → `30-LECCIONES`; estructura nueva → `20-ESPACIAL`.
 
+---
+
+## 2026-06-05 — Fase 1 pulido: auditoría visual en vivo + 3 fixes de doctrina (transition/radii/#000)
+Sesión "retomar Nuevo Bersaglio" → opción A: revisar el rediseño Fase 1 en `npm run dev` y ajustar detalles visuales. Metodología: skill `impeccable` (audit-first) + doctrina del cerebro (la fuente de contexto de diseño aquí es el cerebro, no PRODUCT/DESIGN.md).
+
+**41.1 RCA / contexto**: Fase 1 (`e290f83`) estaba commiteada+pusheada (no "WIP" como decía el cerebro — corregido) pero verificada solo por build+DOM (L-05). Auditoría en vivo (`preview_eval`/`inspect` + lectura de CSS de Home/Nosotros/Contacto/`components`) → el rediseño está **sólido** (L-08: pulir, no demoler). 3 desviaciones objetivas de doctrina detectadas con evidencia file:line.
+
+**41.2 Solución estructural (3 fixes)**: (1) `transition: all` → lista explícita (`background-color,border-color,color,box-shadow,transform`) en 12 spots Fase 1 (`components`×3, `home`×2, `nosotros`×2, `contacto`×5) — cumple §3.1 y elimina un reflow latente (border-width 1→1.5px se animaba). (2) Radii del critical-CSS inline sincronizadas en los **12 shells HTML** (`10/16/22/32/44`→`12/18/24/34/48`) para igualar `liquid-glass.css` + doctrina (`30 §2`). (3) Hero `background: #000` → `var(--bj-ink-emerald)` (sin negro puro; estado de carga tibio).
+
+**41.3 No-regresión**: solo CSS/HTML cosmético; sin tocar JS, Firebase/rules, admin; `transition:all` de otras páginas (carrito/pieza/lista-deseos/admin) NO tocado (misma deuda, otra fase). IDs/clases/selectores intactos.
+
+**41.4 Verificación**: `npm run build` VERDE (✓ 3.68s; warning de chunk = Firebase SDK, preexistente). En vivo (`preview_eval`): `--r-sm=12px`, `--r-2xl=48px`; `.home-hero-banner` bg = oklch(18% .05 155) (no #000); `.films-pill` transition = lista explícita (no `all`). Fonts verificadas **activas** por render-width (Cormorant/Fraunces/Manrope/Space Mono) — `document.fonts.check()` daba falso negativo por subsetting `unicode-range`. Sin errores nuevos en consola (solo Firestore-offline del emulador local).
+
+**41.5 Anti-patterns evitados**: no `transition: all` (§3.1); no `#000` en superficies (impeccable); edición CSS in-place; sin tocar lo fuera de scope; verificación por **evidencia/computed-values**, no por screenshot (L-05).
+
+**41.6 Archivos** — MODIFICADOS: `css/{components,home,nosotros,contacto}.css`; los 12 shells HTML (critical-CSS radii: index, nosotros, contacto, carrito, colecciones, entrada, gracias, journal, lista-deseos, pieza, privacidad, terminos); `public/sw.js` (v8). INTACTOS: JS, admin/, firestore/firebase, otras CSS.
+
+**41.7 Doctrina + cache**: §3.1 (transition explícito), §3.4 IAP previo. Cache `public/sw.js` **v7→v8** (§4, cambian shells) + reflejado en `05`. UX-01 (haptic) ya estaba implementado → `43-UX` actualizado. Observaciones (fuera de scope): modal email-capture auto-abre en load (intrusivo; su backdrop full-screen `blur(8px)` causa timeouts de screenshot — refina L-05); deuda `transition:all` en carrito/pieza/lista-deseos/admin. Lecciones → `30` L-09/L-10.
+
 
 
 

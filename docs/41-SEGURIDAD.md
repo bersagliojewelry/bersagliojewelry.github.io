@@ -19,7 +19,7 @@ de esto bloquea el rediseño (Fase 1), pero **debe resolverse antes de crecer en
 
 | # | Sev | Hallazgo | Evidencia | Arreglo |
 |---|---|---|---|---|
-| S1 | 🔴 Crítico | `.env` con llaves Firebase reales versionado + **fallback hardcodeado** | `.env` · `js/firebase-config.js` (apiKey `... || 'AIza...'`) | Rotar llaves en consola Firebase (cliente) · sacar `.env` de git (BFG/filter-repo, **necesita pedido explícito**: reescribe historia) · `.gitignore` · quitar fallback. |
+| S1 | 🟠 Alto (corr. 2026-06-05) | **Fallback hardcodeado** de llaves Firebase. ⚠️ Corrección verificada: el `.env` **NO está versionado** (`git log --all -- .env` vacío; ignorado en `.gitignore:3`) — la suposición original "`.env` commiteado" era **falsa**. Las API keys web de Firebase **no son secretas por diseño** (viajan en el bundle cliente igual; identifican el proyecto, no autorizan datos). | `js/firebase-config.js:21-27` (`apiKey: import.meta.env... \|\| 'AIzaSy...'`) | (1) Restringir la API key en GCP (HTTP referrer al dominio) · (2) **App Check** (reCAPTCHA) = barrera real contra abuso/quota · (3) reglas S2/S5/S6 · (4) quitar el fallback (que `.env`/CI sea la única fuente). Rotación = opcional (no hubo fuga a git); BFG/filter-repo **innecesario** (nada que purgar). |
 | S2 | 🟠 Alto | **Storage rules**: `allow create,update: if request.auth != null` (sin rol) | `storage.rules` | Exigir `request.auth.token.role in ['admin','editor']` (custom claims) + validar existencia del doc. |
 | S3 | 🟠 Alto | **Escalabilidad**: `onSnapshot` admin sobre colección completa, sin `limit`/cursor/unsubscribe | `js/firestore-service.js` (onPiecesChange / onInquiriesChange) | `query(..., limit(500))` + paginación por cursor (`startAfter`) + `unsubscribe` al salir. |
 | S4 | 🟠 Alto | **Roles leídos en cada regla** (`get(users/$uid)`) → coste/latencia ×N | `firestore.rules` `getUserRole()` | Migrar rol a **custom claims** (set por Cloud Function al cambiar rol); leer `request.auth.token.role`. |
@@ -35,7 +35,7 @@ de esto bloquea el rediseño (Fase 1), pero **debe resolverse antes de crecer en
 - Público (pieces/collections) está OK (read directo, cacheable).
 
 ## 3. Orden sugerido de Fase 2
-1. **S1** (urgente, barato salvo rotación de llaves del cliente).
+1. **S1** (re-caracterizado 2026-06-05: **NO urgente** — no hubo fuga a git; foco real = App Check + restricción de key + quitar fallback).
 2. **S2 + S5 + S6** (reglas: rol en storage, reviews approved, validate de campos).
 3. **S4** (custom claims) + ajustar `firestore.rules` para usar el claim.
 4. **S3** (paginación de listeners admin).

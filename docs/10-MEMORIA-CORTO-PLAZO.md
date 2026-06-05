@@ -38,3 +38,5 @@ El sitio web se encuentra en una versión sumamente madura y rápida, con todas 
 ## 📝 Bitácora (efímera — se vacía al consolidar)
 - **2026-06-05**: Upgrade del cerebro a template v1.0.0 (upgrade quirúrgico, memoria preservada). ADR §37 + fila en `00-INDICE`. Detalle del proceso en `docs/INSTALACION-CEREBRO.md`. Commit `76764ea`.
 - **2026-06-05**: Curación post-upgrade (ADR §38, commit `1be38d1`): dedup de skills (78→74), inventario reconciliado, `CEREBRO NUEVO/` eliminada. TODO-01/02 cerrados.
+- **2026-06-05**: Auditoría de integridad (ADR no — fix `23122a0`): 0 huérfanos/vacíos, dangling 48 cerrado, 05 fresco.
+- **2026-06-05**: Auditoría e instalación de skills + auto-detección (ADR §39): 70/74 ya cargadas; instaladas 3 user-level (`claude-automation-recommender`, `claude-md-improver`, `session-report`); nuevo Reflejo de Catalogación §G.4 + `brain-check` check #6. Inventario al día.

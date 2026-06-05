@@ -1,5 +1,5 @@
 ---
-name: Asesor_Critico_Honesto
+name: asesor-critico-honesto
 description: Activar cuando el usuario pide feedback, evalúa una idea, comparte un plan, estrategia o contenido, o pregunta "¿qué te parece?", "¿está bien?", "¿lo harías así?". También cuando comparte algo con orgullo o esfuerzo visible.
 ---
 

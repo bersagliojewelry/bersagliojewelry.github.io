@@ -26,6 +26,8 @@
 > 🧹 **Última curación: 2026-06-05** — `skills/` = **74 carpetas** (reconciliado contra este catálogo). Se cuarentenaron 4 carpetas-ruido a `_legacy/skills-removed/`: `SKILL-canvas-design` (dup malformado de `canvas-design-creative`, archivo interno mal nombrado), `ecommerce skills` (dup byte-idéntico de `ecommerce`, nombre con espacio), `example-plugin` (boilerplate demo), `accessibility-audit-workspace` (solo eval JSON, sin `SKILL.md`).
 >
 > **Carpeta ≠ nombre de skill** (NO son "faltantes" — el catálogo usa el `name:` del frontmatter): `animate` → `animate-skill-main/` · `llm-council` → `claude-skills-llm-council-main/` · `firecrawl` → `firecrawl-cli/` · bundle "taste" → anidado en `taste-skill-main/<sub>/`.
+>
+> 🔌 **Auditoría de instalación (2026-06-05)**: cruzado el `name:` real de cada `SKILL.md` del repo vs las skills cargadas en la interfaz. **Instaladas user-level hoy** (`~/.claude/skills/`, activas en sesión): `claude-automation-recommender`, `claude-md-improver`, `session-report`. **Legacy — NO instalar**: `design-taste-frontend-v1` (en `taste-skill-main/taste-skill-v1/`; usar `design-taste-frontend`). **Anomalías 🔧**: `code-simplifier` (def. de subagente, sin `SKILL.md`), `code-modernization` (plugin de comandos/agentes), `skill-creator/skill-creator/` (anidado redundante). `asesor-critico-honesto` → name corregido a kebab.
 
 ---
 
@@ -157,13 +159,21 @@
 
 ---
 
-## 🧰 Meta Claude Code (repo-only — NO instaladas)
+## 🧰 Meta Claude Code (instaladas user-level · `~/.claude/skills/`)
+
+> Instaladas el 2026-06-05 a `~/.claude/skills/` (activas en sesión, sin reinicio). No vienen en el bundle `anthropic-skills:*`; viven a nivel usuario (global — todos los proyectos). Reversible: borrar la carpeta de `~/.claude/skills/`.
 
 | Skill (name) | Para qué | Disp. |
 |---|---|---|
-| `claude-automation-recommender` | Analiza el repo y recomienda automatizaciones de Claude Code (hooks/subagentes/skills/plugins/MCP). Read-only. | ⚠️ repo-only |
-| `claude-md-improver` | Audita y mejora archivos CLAUDE.md contra plantillas. | ⚠️ repo-only |
-| `session-report` | Genera reporte HTML de uso de sesiones Claude Code (tokens/cache/subagentes). | ⚠️ repo-only |
+| `claude-automation-recommender` | Analiza el repo y recomienda automatizaciones de Claude Code (hooks/subagentes/skills/plugins/MCP). Read-only. | ✅ user-level |
+| `claude-md-improver` | Audita y mejora archivos CLAUDE.md contra plantillas. | ✅ user-level |
+| `session-report` | Genera reporte HTML de uso de sesiones Claude Code (tokens/cache/subagentes). | ✅ user-level |
+
+---
+
+## 🔎 Skills en mi interfaz que NO están en el repo (bundle del entorno)
+
+Disponibles vía tool `Skill` pero SIN carpeta en `skills/` (vienen del bundle `anthropic-skills:*` / plugins, no del repo). No requieren acción — ya son usables; se listan para completitud del inventario: `algorithmic-art`, `brand-guidelines`, `canvas-design`, `caveman` (+ `-commit`/`-compress`/`-help`/`-review`), `ckmbanner-design`, `ckmbrand`, `ckmdesign`, `ckmdesign-system`, `ckmslides`, `ckmui-styling`, `consolidate-memory`, `docx`, `pdf`, `pptx`, `xlsx`, `schedule`, `setup-cowork`, `ui-ux-pro-max`.
 
 ---
 
@@ -175,4 +185,4 @@
 4. Invocas la skill vía tool `Skill` con el nombre exacto.
 5. La aplicas al código del proyecto y capturas findings en el lóbulo hijo (`41-*..49-*`), registrando QUÉ skill usaste.
 
-**Mantenimiento (Reflejo de Frescura)**: si agregas/quitas una carpeta en `skills/` o instalas una skill nueva, actualiza este catálogo en el mismo cambio. El cliente puede ampliar la carpeta `skills/` libremente (curaduría); este catálogo refleja lo que hay.
+**Mantenimiento (Reflejo de Catalogación de Skills · `CLAUDE.md §G.4` — auto-detección)**: TODA skill nueva en `skills/` (o instalada en `~/.claude/skills/`) DEBE auto-detectarse y catalogarse aquí en el MISMO cambio, **sin que el cliente lo pida** — con su `name:`, 1 línea de propósito y marca de Disp. (✅ instalada · ⚠️ repo-only · 🔧 anomalía). **Backstop determinista**: `brain:check` (check #6) marca cualquier carpeta de `skills/` ausente de este inventario como "skill sin catalogar"; al ARRANCAR, si lo reporta, catalogar ANTES de la tarea. El cliente puede ampliar `skills/` libremente (curaduría); este catálogo refleja lo que hay.

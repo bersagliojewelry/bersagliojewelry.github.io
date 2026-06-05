@@ -244,5 +244,38 @@ const missingDocs = [...refDocs].filter((f) => !PLACEHOLDER.test(f) && !existsSy
 if (!missingDocs.length) ok(`hojas docs/*.md referenciadas en CLAUDE.md (${refDocs.size}) existen`);
 else warn(`hojas referenciadas en CLAUDE.md INEXISTENTES: ${missingDocs.join(', ')}`);
 
+// 6) Skills del repo catalogadas (auto-detección — Reflejo de Catalogación de Skills §G.4).
+//    Cada carpeta de skills/ debe aparecer en docs/skills-inventory.md (por su nombre de
+//    carpeta o el name: de su SKILL.md, incl. bundles con sub-skills anidadas). Marca las
+//    skills nuevas sin catalogar para que se documenten antes de cerrar la tarea.
+console.log('\n6) Skills del repo catalogadas en skills-inventory:');
+const SKILLS_DIR = join(ROOT, 'skills');
+const invPath = join(DOCS, 'skills-inventory.md');
+if (existsSync(SKILLS_DIR) && existsSync(invPath)) {
+  const inv = read(invPath);
+  const grabName = (p) => { const m = read(p).match(/^[ \t]*name:[ \t]*["']?([^"'\n]+)/im); return m ? m[1].trim() : null; };
+  const dirs = readdirSync(SKILLS_DIR, { withFileTypes: true }).filter((d) => d.isDirectory());
+  let uncat = 0;
+  for (const d of dirs) {
+    const names = [];
+    const own = join(SKILLS_DIR, d.name, 'SKILL.md');
+    if (existsSync(own)) { const n = grabName(own); if (n) names.push(n); }
+    else { // bundle: recoger names de las sub-skills */SKILL.md
+      try {
+        for (const sub of readdirSync(join(SKILLS_DIR, d.name), { withFileTypes: true })) {
+          if (!sub.isDirectory()) continue;
+          const p = join(SKILLS_DIR, d.name, sub.name, 'SKILL.md');
+          if (existsSync(p)) { const n = grabName(p); if (n) names.push(n); }
+        }
+      } catch { /* sin permiso/illegible: se cataloga por nombre de carpeta */ }
+    }
+    const catalogued = inv.includes(d.name) || names.some((n) => inv.includes(n));
+    if (!catalogued) { warn(`skill '${d.name}'${names.length ? ' (' + names.join(', ') + ')' : ''} NO está en skills-inventory.md → catalogar (§G.4)`); uncat++; }
+  }
+  if (!uncat) ok(`${dirs.length} carpetas de skills/ catalogadas en skills-inventory.md`);
+} else {
+  info('skills/ o skills-inventory.md no existe — chequeo de catálogo de skills omitido');
+}
+
 console.log(`\n${problems === 0 ? '✅ CEREBRO SANO' : '⚠️  ' + problems + ' problema(s) — revisar antes de avanzar'}\n`);
 process.exit(problems ? 1 : 0);

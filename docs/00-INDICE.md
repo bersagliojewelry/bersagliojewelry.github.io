@@ -82,6 +82,7 @@
 | §36 | 2026-06-03 — Ajuste de Hero y Optimización de Velocidad de Carga (Imágenes WebP/AVIF) | 410 |
 | §37 | 2026-06-05 — Upgrade del cerebro neuronal a template v1.0.0 | 420 |
 | §38 | 2026-06-05 — Curación post-upgrade: dedup de skills + reconciliación inventario | 439 |
+| §39 | 2026-06-05 — Auditoría de instalación de skills + auto-detección (catalogación) | 452 |
 ---
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §32+ al historial,

@@ -447,6 +447,23 @@ Primera curación tras el upgrade del cerebro (§37). Cierra TODO-01 y TODO-02 d
 
 **38.4 Pendiente**: TODO-03 (opcional) — migrar headers de `99` a formato numerado `## NN.` para activar el offset-drift estricto del linter. NO se hizo: la convención por fecha es válida y el linter ya la respeta (parche check #3).
 
+---
+
+## 2026-06-05 — Auditoría de instalación de skills + auto-detección (catalogación)
+Cruce de las 74 skills del repo vs las cargadas en la interfaz, instalación de las repo-only útiles, y mecanismo de auto-catalogación. A pedido del cliente.
+
+**39.1 Listado instaladas vs no**: cruzado el `name:` real de cada `SKILL.md` (varias carpetas tienen nombre ≠ name) contra las skills disponibles vía tool `Skill`. Resultado: **70/74 ya disponibles** (bundle `anthropic-skills:*` + `superpowers:*`). **Repo-only (no cargadas)**: `claude-automation-recommender`, `claude-md-improver`, `session-report`, y `design-taste-frontend-v1` (legacy, dentro del bundle taste).
+
+**39.2 Instalación**: copiadas las 3 útiles a `~/.claude/skills/` (nivel usuario) → **activas en sesión sin reinicio** (la interfaz re-escaneó). `design-taste-frontend-v1` NO instalada (es la v1 legacy; el default `design-taste-frontend` ya está cargado). No se puede "hot-cargar" por API en la sesión viva, pero `~/.claude/skills/` surtió efecto. Es config global (todos los proyectos), reversible.
+
+**39.3 Anomalías**: `asesor-critico-honesto` tenía `name: Asesor_Critico_Honesto` → corregido a kebab `asesor-critico-honesto`. 🔧 documentadas (no rompen — el repo es catálogo, no fuente): `code-simplifier` (def. de subagente sin `SKILL.md`), `code-modernization` (plugin de comandos/agentes), `skill-creator/skill-creator/` (anidado redundante).
+
+**39.4 Auto-detección (regla nueva)**: (a) `CLAUDE.md §G.4` nuevo **Reflejo de Catalogación de Skills** — toda skill nueva en `skills/`/`~/.claude/skills/` se auto-detecta y documenta en `skills-inventory` sin pedirlo. (b) `brain-check.mjs` **check #6**: marca toda carpeta de `skills/` ausente del inventario ("skill sin catalogar") — backstop determinista (maneja folder≠name y bundles anidados). (c) `skills-inventory.md` reconciliado: 3 meta ✅ user-level, nota de auditoría de instalación, sección de skills del bundle no-presentes-en-repo, doctrina de mantenimiento auto-detección.
+
+**39.5 Verificación**: `brain:check` → SANO (74/74 skills catalogadas, CLAUDE.md 231/320, sin huérfanos/vacíos).
+
+**39.6 Pendiente**: ninguno bloqueante. Limpieza opcional de las 🔧 (quarantine de `skill-creator/skill-creator/`, normalización de `code-*`) queda como mejora menor.
+
 
 
 

@@ -43,6 +43,7 @@ El cerebro se divide en **nodos**. Auto-cargas SOLO `CLAUDE.md` + `05` + `10` (�
 | 🗂️ **Índice sináptico** | `docs/00-INDICE.md` | ❌ on-demand | ANTES de leer el historial (offset exacto) Y para el enrutamiento semántico (síntoma → neurona). |
 | 📚 **Largo Plazo** | `docs/99-HISTORIAL-ADR.md` | ❌ on-demand | Trigger de Error / detalle histórico de un §. NUNCA completo — usa offset/limit. |
 | 🎯 **Lóbulos de Dominio** | `docs/40-LOBULOS-DOMINIO.md` | ❌ on-demand | Trigger 🔵 §G.2: registry de dominios especializados; lóbulos hijos activos (`41-SEGURIDAD`, `43-UX`, `45-PERFORMANCE`) + planificados (`48-ACCESIBILIDAD`, etc.) nacen on-demand con contenido real. |
+| 🏛️ **Arquitectura** | `docs/50-ARQUITECTURA.md` | ❌ on-demand | North-star técnico + **charter de reconstrucción del CRM** (Fase 3). Léelo ante Decisión Fuerte (§G.2) o al diseñar/extender módulos. Resumen always-on en §3.6. |
 | 🛠️ **Skills externas** | `skills/` + tool Skill | ❌ on-demand | Expertise general de terceros (frameworks portables). NO es neurona — recurso paralelo. Consultar PRIMERO al disparar Trigger 🔵. **Catálogo completo → `docs/skills-inventory.md`** (el repo NO es la fuente de las skills cargadas; ver esa hoja). |
 | 📖 **Manual del cerebro** | `docs/INSTALACION-CEREBRO.md` | ❌ on-demand | Protocolo de instalación + reinstalación + migración entre versiones del template. Consulta al actualizar la versión del cerebro. |
 
@@ -130,6 +131,12 @@ Antes de CUALQUIER commit no-trivial: 5 secciones → (A) archivos a modificar, 
 - CERO `MutationObserver` global con `subtree:true` que ejecute ops DOM (causa clicks bloqueados / loops). Usar refresh explícito desde el callsite.
 - CERO `pointermove` persistente global (solo durante drag activo).
 - Selectores substring `[class*="x"]` son peligrosos — matchean clases hijas; excluir namespaces con `:not()`.
+
+### 3.6 Mentalidad de arquitecto (siempre)
+- Decide pensando en el **sistema completo** (no en una sola función): impacto en negocio · escalabilidad · seguridad-por-diseño · costo · mantenibilidad · integración. *El código hace que funcione; la arquitectura hace que sobreviva.*
+- **Cero monolitos**: módulos desacoplados, límites claros, cambios/despliegues independientes.
+- **Zero-budget/serverless (Firebase)**: aprovecha la escala gestionada + límites de módulo limpios + event-driven (triggers) + patrones cost-aware; **NO** microservicios/gRPC/k8s por moda (*más valor con menos fricción*).
+- Detalle + charter de reconstrucción del CRM → `docs/50-ARQUITECTURA.md`.
 
 ---
 

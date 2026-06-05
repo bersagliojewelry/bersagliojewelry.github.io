@@ -28,6 +28,20 @@ de esto bloquea el rediseño (Fase 1), pero **debe resolverse antes de crecer en
 | S7 | 🟡 Medio | Sin verificación de email al crear usuario | `functions/index.js` createUser | Verificación de email o estado "suspendido" hasta confirmar. |
 | S8 | 🔵 Bajo | Sin headers de seguridad (CSP, X-Frame-Options) en hosting | `firebase.json` | Añadir headers; CSP compatible con Firebase + GA. |
 
+## 1.5 Progreso Fase 2 (2026-06-05, sesión "continua")
+Grounding verificado contra el código → **3 correcciones** al backlog original:
+- ✅ **CI inyecta los 7 `VITE_*`** en build (`.github/workflows/deploy.yml:28-35`) → quitar el fallback es seguro.
+- ⚠️ **S8 corregido**: el sitio se sirve por **GitHub Pages** (no Firebase Hosting; `deploy.yml` usa `upload-pages-artifact`/`deploy-pages`), así que los `headers` de `firebase.json` **NO se envían**. CSP debe ir en `<meta http-equiv>` en los shells HTML.
+- 🔗 **S2 depende de S4**: roles solo en `users/{uid}.data.role` (sin custom claims en `functions/`) → cada regla hace `get()`. Storage role-check necesita S4 (claims) o `firestore.get()` en `storage.rules`.
+
+Estado de hallazgos:
+- **S1** — ✅ *código*: fallback eliminado (`firebase-config.js`, env única fuente + guard). ⏳ *cliente/Tier C*: restringir API key (GCP) + App Check. Rotación innecesaria.
+- **S3** — ✅ `limit(500)` en `onPiecesChange` + `onInquiriesChange` (sin cambio a escala actual). Futuro: `orderBy`+cursor en pieces; `unsubscribe` al salir = responsabilidad del callsite (auditar admin).
+- **S5** — ✅ regla endurecida (`allow read: if approved==true || isAdmin()`) + test en `tests/firestore-rules.test.mjs`. Verificación = **CI** (`firestore-rules-test.yml`); pendiente push para green. Deploy gated.
+- **S2/S4/S6/S7/S8** — pendientes (Tier B reglas: S6 con CI+deploy gated; Tier C: S4 claims, S2 storage, S7 email-verify, App Check, CSP `<meta>`).
+
+> 🧪 **Harness de testing de reglas (CI, 2026-06-05)**: `@firebase/rules-unit-testing` + `tests/firestore-rules.test.mjs` (node:test) + `.github/workflows/firestore-rules-test.yml` (setup-java + `emulators:exec`). Toda regla nueva se verifica en CI antes de `firebase-deploy.yml`. Local necesita JDK (no instalado) → `30 §L-12`.
+
 ## 2. Escalabilidad (cuello de botella real)
 - **Listeners admin sin límite** (S3): a ~1k+ piezas, cada cambio reenvía toda la colección.
   Paginar + cursores + unsubscribe es la prioridad de escala.

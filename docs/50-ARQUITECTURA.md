@@ -1,0 +1,48 @@
+# 🏛️ 50 — ARQUITECTURA (North-Star + Charter de Reconstrucción del CRM)
+
+> **Nodo neuronal: doctrina de arquitectura.** El "norte" técnico del proyecto:
+> cómo se conecta, escala, se mantiene seguro y evoluciona el sistema. Se lee
+> on-demand ante **Trigger de Decisión Fuerte** (`CLAUDE.md §G.2`) o al diseñar/
+> extender la reconstrucción del CRM. Resumen always-on en `CLAUDE.md §3.6`.
+>
+> **Origen**: directiva del cliente (2026-06-05) — *"piensa como arquitecto de
+> software, no solo escribas código"*. Tope ~200 líneas (§G.5); shard por dominio si crece.
+
+---
+
+## 0. Mandato — qué significa "pensar como arquitecto" aquí
+No es escribir más código, sino **tomar mejores decisiones** que impactan todo el sistema.
+Cada decisión se evalúa por su efecto en: **negocio · escalabilidad · seguridad · costo ·
+mantenibilidad · integración**. *El código hace que funcione; la arquitectura hace que
+**sobreviva**.* Lema rector: **"la mejor arquitectura no es la más compleja, es la que
+genera más valor con menos fricción"**.
+
+## 1. Principios rectores (always-on)
+1. **Sistema completo, no la función** — decidir por cómo se conectan e impactan los módulos.
+2. **Diseñar para el crecimiento** — soportar más carga sin perder rendimiento/estabilidad: desacoplar, cachear, evitar cuellos de botella.
+3. **Seguridad por diseño (no al final)** — autenticación, autorización (least-privilege), protección de datos (tránsito/reposo), validación server-side, secretos fuera del código, monitoreo/auditoría.
+4. **Cost-aware** — toda decisión tiene impacto financiero (infra, rendimiento, mantenimiento). Invertir en diseño hoy ahorra mañana.
+5. **Cero monolitos** — bajo acoplamiento, límites claros, cambios/despliegues independientes.
+6. **Integración deliberada** — definir CÓMO colaboran los servicios (sync/async/eventos/colas/webhooks), no solo que funcionen.
+
+## 2. Reconciliación con la realidad (zero-budget · serverless · free-tier)
+**Restricción**: AltorraCars (el dev) trabaja **sin presupuesto** — sin dominio aún; stack GitHub (Pages) + Firebase (Spark/free) + Node (Cloud Functions). El arquitecto **NO** hace cargo-cult de microservicios/gRPC/Kubernetes (caros y sobre-dimensionados aquí). Decisiones correctas para ESTE contexto:
+- **Serverless = escala horizontal gratis y gestionada**: Firestore y Functions escalan solos → la "escala horizontal" ya la resuelve la plataforma; el foco es **usarla bien**.
+- **Wins reales de arquitectura aquí**: (a) **límites de módulo limpios** (Catálogo/Inventario · CRM-leads · Pipeline · Facturación · Reportes) que PODRÍAN separarse luego; (b) **modelado de datos** consciente del costo de lectura (índices, desnormalización deliberada); (c) **seguridad por diseño** (reglas least-privilege, App Check, custom claims, validación) → `41-SEGURIDAD`; (d) **event-driven** vía triggers Firestore + Functions para async/pesado (ya: `onPieceDeleted`/`onInquiryCreated`); (e) **patrones cost-aware** (paginación de listeners — S3 ✅; lecturas mínimas; cache cliente vía `system/meta`).
+- **Regla**: elegir lo que da más valor con menos fricción/costo, **no** lo más "enterprise".
+
+## 3. Charter — Reconstrucción del CRM (Fase 3, reencuadrada)
+**Objetivo**: REEMPLAZAR el CRM/admin actual por uno **bien arquitecturado, escalable, seguro y completo**.
+**Dominio**: **Bersaglio Jewelry (alta joyería)** — ⚠️ *pendiente confirmar el vertical con el cliente; AltorraCars = dev/agencia, no el cliente final.*
+- **Skills de apoyo** (ya disponibles — NO requieren crear skill nueva): `crm-architect` (modelo de datos, pipeline, RBAC, reglas, Functions, CI/CD; packs joyería-retail/inmobiliaria/concesionario) + `ecommerce` (DIAN/PSE/Wompi, facturación CO) + `security-review`.
+- **Módulos previstos** (límites candidatos, bajo acoplamiento): Catálogo/Inventario · CRM (leads/clientes/contactos) · Pipeline de ventas · Facturación (DIAN — necesita proveedor → fasificar) · Reportes · Auth/RBAC.
+- **Arranque de Fase 3** (cuando se decida): brainstorm → spec → `writing-plans` → ejecución incremental verificada; cada decisión fuerte → Consejo Externo (`15`) + registrar en §5.
+
+## 4. Stack y topología actual (base sobre la que se construye)
+- **Front**: HTML/CSS/JS vanilla modular + Vite. **Hosting**: GitHub Pages (CSP solo via `<meta>` — `30 §L-11`).
+- **Back**: Firebase — Firestore (datos + realtime), Auth (rol en `users/{uid}.data.role`; migrar a custom claims, S4), Storage, FCM, Cloud Functions (`functions/`: triggers + `onCall`). Reglas: `firestore.rules` / `storage.rules`.
+- **CI/CD**: GitHub Actions — `deploy.yml` (build Vite → Pages, inyecta `VITE_*`) + `firebase-deploy.yml` (rules/functions).
+- Detalle espacial → `20-ESPACIAL` · seguridad → `41-SEGURIDAD` · performance → `45-PERFORMANCE`.
+
+## 5. Decision log (ADRs de arquitectura — apéndalos aquí)
+- *(vacío — la 1ª decisión fuerte de la reconstrucción se registra aquí; si toca gobernanza/datos, también ADR en `99`).*

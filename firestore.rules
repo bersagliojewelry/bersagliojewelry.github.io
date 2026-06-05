@@ -43,7 +43,7 @@ service cloud.firestore {
     // ─── Reviews ───────────────────────────────────────────────────────────────
 
     match /reviews/{reviewId} {
-      allow read: if true;                     // Public (filtered by approved in queries)
+      allow read: if resource.data.approved == true || isAdmin();  // S5: público solo aprobadas; admin ve todas
       allow create: if true;                   // Anyone can submit a review
       allow update, delete: if isAdmin();      // Admin+ moderates reviews
     }

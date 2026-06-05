@@ -7,9 +7,12 @@
     "dev": "vite --host",
     "build": "vite build",
     "preview": "vite preview --host",
-    "brain:check": "node scripts/brain-check.mjs"
+    "brain:check": "node scripts/brain-check.mjs",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-bersaglio \"node --test tests/firestore-rules.test.mjs\"",
+    "test:rules:run": "node --test tests/firestore-rules.test.mjs"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.1",
     "lightningcss": "^1.32.0",
     "sharp-cli": "^5.2.0",
     "terser": "^5.46.1",

@@ -174,8 +174,10 @@ export async function fetchPieceBySlug(slug) {
  * @returns {Function} unsubscribe function
  */
 export function onPiecesChange(callback) {
+    // S3: cota de escalabilidad. Con <500 piezas devuelve TODO (sin cambio de
+    // comportamiento); solo limita a escala. Futuro: orderBy + cursor (startAfter).
     return onSnapshot(
-        collection(firestoreDb, COLLECTIONS.pieces),
+        query(collection(firestoreDb, COLLECTIONS.pieces), limit(500)),
         snap => {
             const pieces = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             callback(pieces);
@@ -593,7 +595,8 @@ export async function fetchInquiries() {
 export function onInquiriesChange(callback) {
     const q = query(
         collection(firestoreDb, COLLECTIONS.inquiries),
-        orderBy('createdAt', 'desc')
+        orderBy('createdAt', 'desc'),
+        limit(500)   // S3: 500 leads más recientes (cota de escalabilidad del listener admin)
     );
     return onSnapshot(q,
         snap => {

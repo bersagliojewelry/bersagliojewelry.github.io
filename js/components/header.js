@@ -1,22 +1,24 @@
 /**
- * Bersaglio Jewelry — Floating glass pill header.
+ * Bersaglio Jewelry — Floating glass pill header (Dynamic Island).
  *
- * Mirror exact de BERSAGLIO NOVO/project/js/shell.jsx (Header L63-178):
+ * Mirror del rediseño:
  *   - Logo (B en círculo + BERSAGLIO + "Jewelry" subtítulo)
  *   - Nav pills con active emerald gradient (Inicio · Colecciones · Nosotros · Contacto)
- *   - Cart button con badge live (count desde cart.js)
+ *   - Acciones: Buscar (desktop) · Favoritos (corazón + badge wishlist) · Carrito (badge)
  *   - Mobile hamburger + drawer below the pill
+ *   - "Dynamic Island": el pill se airea arriba (scale 1.03) y se compacta al hacer
+ *     scroll (`is-scrolled` sobre el PILL — toggled en onScroll/render).
  *
- * Diferencias con el bundle:
- *  - Routing real (no hash) via js/core/router.js. Active state se calcula
- *    desde location.pathname.
- *  - Cart count viene de cart.count() (localStorage), no del React state.
- *  - El cart click dispara `bj:cart-drawer:open` event para que cart-drawer.js
- *    lo maneje sin acoplamiento directo.
+ * Desacoplamiento:
+ *  - Buscar → dispara `bj:search:open` (search-overlay.js lo maneja).
+ *  - Carrito → dispara `bj:cart-drawer:open` (cart-drawer.js lo maneja).
+ *  - Favoritos → navega a /lista-deseos.html (router intercepta el <a>).
+ *  - Counts vienen de cart.js / wishlist.js (localStorage), no de estado React.
  */
 
 import { html, mount, escape } from '../core/html.js';
 import { cart } from '../core/cart.js';
+import { wishlist } from '../core/wishlist.js';
 
 const NAV = [
     { key: 'home',        label: 'Inicio',      href: '/' },
@@ -45,11 +47,27 @@ function logoSVG() {
         </svg>`;
 }
 
+function searchIconSVG() {
+    return html`
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"/>
+            <path d="M21 21l-4.3-4.3"/>
+        </svg>`;
+}
+
+function heartIconSVG() {
+    return html`
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+        </svg>`;
+}
+
 function cartIconSVG() {
     return html`
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-            <path d="M6 2l-2 5v15h16V7l-2-5H6z"/>
-            <path d="M4 7h16M10 11a2 2 0 0 0 4 0"/>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="9" cy="21" r="1"/>
+            <circle cx="20" cy="21" r="1"/>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
         </svg>`;
 }
 
@@ -73,6 +91,7 @@ function render() {
     if (!_root) return;
     const currentKey = getCurrentKey();
     const cartCount = cart.count();
+    const wishCount = wishlist.count();
 
     _root.innerHTML = html`
         <header class="bj-header" role="banner">
@@ -95,6 +114,20 @@ function render() {
                                ${active ? 'aria-current="page"' : ''}>${escape(n.label)}</a>`;
                     })}
                 </nav>
+
+                <button class="bj-header-cart bj-header-search"
+                        type="button"
+                        data-action="open-search"
+                        aria-label="Buscar (Ctrl+K)">
+                    ${searchIconSVG()}
+                </button>
+
+                <a class="bj-header-cart bj-header-fav"
+                   href="/lista-deseos.html"
+                   aria-label="Favoritos (${wishCount} ${wishCount === 1 ? 'pieza' : 'piezas'})">
+                    ${heartIconSVG()}
+                    ${wishCount > 0 ? html`<span class="bj-header-badge">${wishCount}</span>` : ''}
+                </a>
 
                 <button class="bj-header-cart"
                         type="button"
@@ -122,8 +155,14 @@ function render() {
                                href="${n.href}"
                                ${active ? 'aria-current="page"' : ''}>${escape(n.label)}</a>`;
                     })}
+                    <a class="bj-drawer-link" href="/lista-deseos.html">Favoritos${wishCount > 0 ? html` (${wishCount})` : ''}</a>
                 </div>` : ''}
         </header>`;
+
+    // Preserva el estado "scrolled" del pill entre re-renders (cart/wishlist/ruta).
+    if (window.scrollY > 30) {
+        _root.querySelector('.bj-header-pill')?.classList.add('is-scrolled');
+    }
 }
 
 function onClick(e) {
@@ -142,6 +181,11 @@ function onClick(e) {
         document.dispatchEvent(new CustomEvent('bj:cart-drawer:open'));
         return;
     }
+    if (a === 'open-search') {
+        e.preventDefault();
+        document.dispatchEvent(new CustomEvent('bj:search:open'));
+        return;
+    }
     if (a === 'toggle-mobile') {
         e.preventDefault();
         _mobileOpen = !_mobileOpen;
@@ -153,7 +197,7 @@ function onScroll() {
     if (!_root) return;
     const y = window.scrollY;
     if ((y > 30) !== (_scrollTop > 30)) {
-        _root.firstElementChild?.classList.toggle('is-scrolled', y > 30);
+        _root.querySelector('.bj-header-pill')?.classList.toggle('is-scrolled', y > 30);
     }
     _scrollTop = y;
 }
@@ -175,8 +219,9 @@ export function mountHeader() {
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onResize);
 
-    // Re-render on cart changes to update badge
+    // Re-render on cart / wishlist changes to update badges
     cart.onChange(() => render());
+    wishlist.onChange(() => render());
 
     // Re-render on route changes (back/forward) so active state stays correct
     window.addEventListener('popstate', () => {

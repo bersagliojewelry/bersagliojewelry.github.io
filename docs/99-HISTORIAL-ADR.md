@@ -464,6 +464,25 @@ Cruce de las 74 skills del repo vs las cargadas en la interfaz, instalación de 
 
 **39.6 Pendiente**: ninguno bloqueante. Limpieza opcional de las 🔧 (quarantine de `skill-creator/skill-creator/`, normalización de `code-*`) queda como mejora menor.
 
+---
+
+## 2026-06-05 — Rediseño Fase 1 (mirror Liquid Glass): shell + Home + Nosotros + Contacto + dock Atajos
+Cliente: aplicar con fidelidad de pixel el rediseño nuevo (`design_handoff_bersaglio_redesign` + 38 CAPTURAS) sobre la base actual, **pensando como arquitecto** (modular, sin monolitos, escalable, seguro). El live link de Claude Design expiró (404) → fuente de verdad local.
+
+**40.1 RCA / contexto**: auditoría inicial (3 agentes) reveló que el "recambio total" del PLAN-NOVO YA estaba ejecutado → **no se re-demolió, se pulió**. El frontend ya era modular; los gaps reales son backend/seguridad (→ `41-SEGURIDAD`) + aplicar el mirror visual. Spec: `docs/superpowers/specs/2026-06-05-rediseno-fase1-design.md`.
+
+**40.2 Solución estructural (9 incrementos verificados)**: (1) Foundation: tokens de motion en `:root`, capa `.reveal` + `js/core/reveal.js` (IntersectionObserver + red de robustez anti-invisibilidad + prefers-reduced-motion), assets. (2) Shell: header "Dynamic Island" (morph sobre el pill) + Buscar/Favoritos(badge wishlist)/ícono carrito nuevo; footer legal. (3) Home base: `home.js` → `js/home/*` (9 módulos, sin monolito), spacing 46px, parallax OFF, reveals, íconos servicios Lucide, CTA "Nuestra Maison"+dirección, shimmer. (4) Atelier: `gema.png` flotante + anillo `atSpin` + `.at-flow` + 4 cards con dot (sin números), 6 destacadas. (5) Films + Redes (`js/home/{films,social}.js` + `js/data/home-media.js`, datos Firestore-ready, logos de marca, sin emoji, sin nota Meta API). (6) QuickDock "Atajos" (`js/components/quick-dock.js` + `.qd-*` + filtro gooey). (7) Nosotros (tipografía↓, spacing 72, quitar eyebrows, timeline 1 fila, Prensa→Reseñas Google Maps, copy sin datos inventados). (8) Contacto (tipografía↓, spacing, padding-top 132, 3 canales sin Teléfono, SVGs WhatsApp/IG/coffee/phone, proceso alineado, FAQ 2×2, copy). (9) Cierre.
+
+**40.3 No-regresión**: Firestore intacto (destacadas/categorías en vivo vía `data.onChange`); admin/`firestore-service`/`firebase-config`/`auth`/`analytics` NO tocados; `renderPieceCardHTML` intacto; IDs/clases reusadas; CSS editado **in-place** (sin override-layer); cada incremento con build verde + verificación DOM por `preview_eval`.
+
+**40.4 Verificación**: `npm run build` VERDE en cada incremento (✓ ~3s, 0 errores propios; solo Firestore-offline en sandbox). Estructura verificada: 9 secciones home en orden; atelier gema/atSpin/4-dots; films(5 pills, lightbox)/social(4 tabs, logos); dock 5 tools+gooey; nosotros 4 reseñas/20★ + prensa fuera + timeline 5 tabs + copy "abierto al público"/"Con o sin cita"; contacto 3 canales + FAQ 2×2 + proceso "Manos a la Obra" + hero 132. Imágenes nuevas optimizadas con sharp: emerald-gem 1833→13.5KB, cart-gems 1284→69.8KB (webp).
+
+**40.5 Anti-patterns evitados**: NO override-layer `enhancements.css` (CSS in-place, una fuente por selector); NO re-demolición; NO monolito (home partido a `js/home/*`); NO emoji; NO datos inventados (m²/cargos/convenios/renders 3D corregidos); reveals con IO (no polling rAF del kit); parallax OFF; CERO CSS muerto (press/banner-emoji/blob-dock/telefono removidos).
+
+**40.6 Archivos** — NUEVOS: `js/core/reveal.js`, `js/home/{hero,marquee,categories,featured,editorial,services,atelier,journal-preview,cta,films,social}.js`, `js/components/quick-dock.js`, `js/data/home-media.js`, `.claude/launch.json`, `docs/41-SEGURIDAD.md`, el spec, `public/img/{emerald-gem,cart-gems}.webp`. MODIFICADOS: `css/{liquid-glass,components,home,nosotros,contacto}.css`, `js/core/boot.js`, `js/components/{header,footer,cart-drawer}.js`, `js/pages/{home,nosotros,contacto}.js`, `public/sw.js`. INTACTOS: admin/, firestore-service, firebase-config, auth.
+
+**40.7 Doctrina + cache**: §3.1 perf (transform/opacity + RM), §3.2 API estable, §3.4 IAP por incremento. Cache `public/sw.js` **v6→v7** (§4) + reflejado en `05`. Riesgos de seguridad detectados → `41-SEGURIDAD` (Fase 2). TODOs de contenido real (reseñas Google Maps, Films, Redes Meta/TikTok) en código + `10`. Siguiente: Fase 2 hardening + Fase 3 CRM/facturación/inventario. Lecciones → `30-LECCIONES`; estructura nueva → `20-ESPACIAL`.
+
 
 
 

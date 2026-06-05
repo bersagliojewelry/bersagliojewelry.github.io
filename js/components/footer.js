@@ -125,7 +125,13 @@ export function mountFooter() {
 
                 <div class="bj-footer-meta">
                     <span>© ${year} Bersaglio Jewelry · Cartagena de Indias, Colombia</span>
-                    <span>Certificado JA · Jewelers of America</span>
+                    <div class="bj-footer-legal">
+                        <a href="/terminos.html">Términos</a>
+                        <span aria-hidden="true">·</span>
+                        <a href="/privacidad.html#cookies">Cookies</a>
+                        <span aria-hidden="true">·</span>
+                        <a href="/privacidad.html">Privacidad</a>
+                    </div>
                 </div>
             </div>
         </footer>`;

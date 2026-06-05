@@ -8,21 +8,21 @@
 
 ## 🎨 Doctrinas CSS y Principios de Diseño "Liquid Glass"
 
-### 1. Sistema de Capas CSS
-*   `css/style.css` contiene la estructura base y animaciones legacy.
-*   `css/liquid-glass.css` es el **único origen visual activo**. Contiene la paleta OKLCH y primitivas de cristal iridiscente.
-*   **Regla de oro**: NO añadir reglas de color, fuentes o fondos en `style.css`. Todo lo estético debe ir en `liquid-glass.css`.
+### 1. Arquitectura CSS (post-NOVO — actualizado 2026-06-05)
+*   **NO existe `css/style.css`** (lo eliminó el recambio NOVO). El CSS es **modular por página**: `css/liquid-glass.css` (design system: tokens OKLCH + motion `--ease-*` + primitivas de cristal + `.reveal`), `css/components.css` (header/footer/drawers/dock `.qd-*`), y un archivo por página (`home.css`, `nosotros.css`, `contacto.css`, …).
+*   **Carga por página**: critical CSS inline → `liquid-glass` → `components` → `<página>` (la de página gana por cascada).
+*   **Regla de oro (rediseño)**: editar el CSS **in-place** en el archivo de su selector. NO crear capa-sombra de override (`enhancements.css`) — una sola fuente de verdad por selector.
 
 ### 2. Estética Editorial Premium
-*   **0px border-radius** en todo (estética editorial afilada Cartier/Bulgari).
+*   **Squircles suaves** (radii 12/18/24/34/48px + pill 999) — NUNCA esquinas a 0px. Botones/chips = pill; tarjetas = 24–34; hero/footer = 40–48. (La nota previa de "0px" era de una era V7 anterior, ya obsoleta.)
 *   **Glassmorphism iOS 26**: `backdrop-filter: blur(28px) saturate(180%)` con pinlight superior (`--pinlight`) y borde iridiscente cónico (`--iridescent-rim`).
 *   **Background Unification**: El patrón exacto es `html { background: var(--bj-pearl) }`, `body { background: transparent }` y `.bj-world { z-index: -1 }`. Si se pinta background sólido en el body, la capa de auroras `.bj-world` queda invisible.
 *   **No dividers full-width**: No usar `border-top/bottom` decorativos en secciones. Si se necesitan separadores, usar `<hr>` dentro del contenedor o bordes internos de las tarjetas glass.
 
-### 3. Tipografía
-*   **Display/Títulos**: Fraunces, serif.
-*   **Body/UI**: Inter, sans-serif.
-*   **Numéricos**: JetBrains Mono con `font-variant-numeric: tabular-nums` (ideal para precios alineados).
+### 3. Tipografía (post-NOVO — actualizado)
+*   **Display/Títulos**: Cormorant Garamond (`--font-display`, peso 300, itálicas) + Fraunces para el wordmark (`--font-brand`).
+*   **Body/UI**: **Manrope** (`--font-ui`) — NO Inter.
+*   **Numéricos/eyebrows**: **Space Mono** (`--font-mono`) con `tabular-nums` — NO JetBrains Mono.
 
 ---
 
@@ -57,3 +57,15 @@ window.scrollTo(0, scrollY);
 ### L-04: Contrato del Header Flotante
 *   El header pill flotante tiene `position: fixed; pointer-events: none` para no bloquear los clicks debajo de su área transparente lateral. El elemento interno `.header-aqua-pill` tiene `pointer-events: auto` para que el menú sí sea clickable.
 *   Si se altera esta estructura, se pueden bloquear clicks en toda la parte superior del sitio web.
+
+### L-05: Preview headless (Claude Preview MCP) no recalcula estilos dinámicos
+Síntoma: tras añadir clases por JS, `getComputedStyle` devuelve el valor del snapshot inicial (incluso un `style.opacity` inline lee "0"); IntersectionObserver NO dispara; `preview_screenshot` hace timeout en páginas con mucho `backdrop-filter`. Causa: el renderer del sandbox hace UN pase de estilo inicial, sin recalc/paint en vivo. **Receta**: verificar lo dinámico (reveals, hover, scroll, IO) por CÓDIGO + estructura DOM (`preview_eval` de DOM/text/estilos-de-parse), NO por screenshot ni estilos-post-mutación. Lo visual real, en `npm run dev`/deploy.
+
+### L-06: Reveal-on-scroll robusto (anti-invisibilidad)
+`.reveal { opacity:0 }` activado solo por JS es single-point-of-failure: si el activador falla, el contenido queda invisible. `js/core/reveal.js` = IntersectionObserver primario + red de robustez (revelar lo ya visible al cargar + listener scroll/resize pasivo auto-removible) + `prefers-reduced-motion`. Patrón reusable.
+
+### L-07: Optimizar PNG pesados del handoff antes de servir
+PNG del handoff venían a 1.3–1.9 MB para mostrarse a 34–140px. `sharp` (en devDeps) → webp: emerald-gem 1833→13.5KB, cart-gems 1284→69.8KB. Receta: `sharp(src).resize(N,{fit:'inside'}).webp({quality:82})`. Borrar el PNG pesado tras migrar.
+
+### L-08: Mirror ≠ rebuild — auditar el estado real antes de "reconstruir"
+El cliente pidió "reconstruir"; la auditoría (3 agentes en paralelo) mostró que el rebuild (PLAN-NOVO) YA estaba hecho. Lección: ante "rehacer todo", auditar primero el estado real y proponer pulir > re-demoler si la base ya es sana ("invertir mejor, no gastar por gastar").

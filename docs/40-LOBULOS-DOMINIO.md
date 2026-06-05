@@ -10,6 +10,7 @@
 
 | Lóbulo | Dominio | Estado | Skills asociadas |
 |---|---|---|---|
+| `docs/41-SEGURIDAD.md` | Seguridad backend + escalabilidad (Firebase rules, secretos, listeners) | 🟢 Activo · backlog Fase 2 | `security-review`, `ecommerce`, `crm-architect` |
 | `docs/43-UX.md` | Experiencia de Usuario y Diseño Visual | 🟢 Activo | `frontend-design`, `impeccable` |
 | `docs/45-PERFORMANCE.md` | Core Web Vitals y Carga de Activos | 🟢 Activo | `seo-audit`, `performance-check` |
 | 48-ACCESIBILIDAD (a11y) | Pautas de Accesibilidad WCAG 2.2 AA | ⏳ Planificado (sin archivo aún — nace en la 1ª auditoría) | `accessibility-audit` |

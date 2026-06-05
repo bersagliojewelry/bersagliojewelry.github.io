@@ -36,7 +36,7 @@ const CHAPTERS = [
 ];
 
 const VALORES = [
-    { n: '01', t: 'La Elegancia como Silencio', d: 'Entendemos la sofisticación no como un destello ruidoso, sino como un susurro de distinción. Una joya Bersaglio es una expresión poética de tu estilo personal y sofisticación.' },
+    { n: '01', t: 'La Elegancia como Silencio', d: 'Entendemos la sofisticación no como un destello ruidoso, sino como un susurro de distinción. Una joya Bersaglio es la expresión poética de tu estilo y de tu esencia.' },
     { n: '02', t: 'El Pacto de Credibilidad', d: 'Construimos relaciones duraderas basadas en la transparencia, la credibilidad y una confianza inquebrantable que custodia tu tranquilidad.' },
     { n: '03', t: 'La Asesoría antes del Oficio', d: 'Antes que vender, nos dedicamos a guiarte y asesorarte con paciencia, asegurando que cada cliente encuentre o co-cree la pieza idónea.' },
     { n: '04', t: 'Devoción en cada Detalle', d: 'Cada milímetro esculpido y cada interacción con nosotros está cuidada con devoción, buscando hacer de tu experiencia un recuerdo memorable.' },
@@ -51,11 +51,12 @@ const EQUIPO = [
     { n: 'Andrés Beltrán',       r: 'Diseño & dibujo técnico',   b: 'Traduce las conversaciones íntimas del atelier en bocetos poéticos a mano alzada, planos técnicos y modelados 3D meticulosos, sirviendo de puente entre el deseo del cliente y el crisol del orfebre.' },
 ];
 
-const PRENSA = [
-    { m: 'Vogue Latinoamérica', t: '"La nueva ola de la alta joyería colombiana"', y: '2024' },
-    { m: 'Forbes Colombia',     t: '"Bersaglio: el lujo discreto de Cartagena"',   y: '2023' },
-    { m: 'El Espectador',       t: '"Kary Mendoza, la voz detrás del atelier"',    y: '2023' },
-    { m: 'Revista Diners',      t: '"Esmeraldas con apellido"',                     y: '2022' },
+// TODO(contenido real): sustituir por reseñas reales de Google Maps (Places API / export).
+const RESENAS = [
+    { n: 'Valentina Restrepo', t: 'Llegué sin saber muy bien qué quería y salí con la pieza de mis sueños. Kary entendió mi historia mejor que yo. El trato es de otro nivel.', loc: 'Reseña en Google Maps' },
+    { n: 'Andrés Mejía', t: 'Mandé hacer el anillo de compromiso y superó todo lo que imaginaba. Se siente el amor por el oficio en cada detalle. Mil gracias.', loc: 'Reseña en Google Maps' },
+    { n: 'Camila Tordecilla', t: 'Un lugar precioso en el Centro Histórico. Te reciben con un café y una paciencia que ya no se ve. La esmeralda quedó espectacular.', loc: 'Reseña en Google Maps' },
+    { n: 'Juan Pablo Vergara', t: 'Calidad real y honestidad. Me explicaron cada piedra con su certificado. Volveré sin duda para la próxima ocasión especial.', loc: 'Reseña en Google Maps' },
 ];
 
 const FAQS = [
@@ -141,7 +142,6 @@ function renderStats() {
 function renderManifiesto() {
     return html`
         <section class="abt-manifiesto">
-            <div class="mono abt-eyebrow">EL MANIFIESTO</div>
             <h2 class="abt-manifiesto-title">
                 Sostenemos que el lujo auténtico carece de estridencias.
                 <span class="italic emerald-text">Es un secreto compartido entre dos personas</span>, 
@@ -186,7 +186,6 @@ function renderTimeline() {
     return html`
         <section class="abt-section">
             <div class="abt-section-header">
-                <div class="mono abt-eyebrow">RECORRIDO</div>
                 <h2 class="abt-section-title">
                     Trece años en <span class="italic emerald-text">cinco capítulos</span>
                 </h2>
@@ -226,29 +225,24 @@ function renderAtelier() {
                 <div class="chip glass-pill atl-chip">El Atelier</div>
             </div>
             <div class="glass atl-text">
-                <div class="mono abt-eyebrow">EL TALLER</div>
                 <h3 class="atl-text-title">
                     Donde el oficio<br>
                     <span class="italic emerald-text">toma forma</span>
                 </h3>
                 <p class="atl-text-p">
-                    Doscientos metros cuadrados en el Centro Histórico de Cartagena.
-                    Mesas de orfebrería del siglo pasado, lupas binoculares calibradas,
-                    hornos de fundición, microscopios para engaste pavé.
-                    Todo lo que entra al atelier sale firmado a mano.
+                    En el corazón del Centro Histórico de Cartagena tenemos nuestra casa: un espacio abierto al público donde te recibimos con calma y una atención cálida y personalizada. Aquí se conversa, se diseña y se crea — porque en Bersaglio no revendemos: fabricamos cada pieza.
                 </p>
                 <p class="atl-text-p">
-                    Tres orfebres en planta, una gemóloga GIA certificada, un dibujante técnico
-                    y Kary supervisando cada decisión. Sin más, sin menos.
+                    Kary y su equipo acompañan cada paso: desde la primera conversación y el boceto a mano alzada, hasta dar vida a la joya y entregarla firmada. Un proceso cercano, sin prisas y hecho a la medida de tu historia.
                 </p>
                 <div class="atl-stats">
                     <div>
                         <div class="mono atl-stat-key">UBICACIÓN</div>
-                        <div class="atl-stat-val">Centro Histórico<br>Cartagena de Indias</div>
+                        <div class="atl-stat-val">Calle 36 # 6-32 · San Agustín Chiquita<br>Centro Histórico · Cartagena de Indias</div>
                     </div>
                     <div>
                         <div class="mono atl-stat-key">VISITAS</div>
-                        <div class="atl-stat-val">Solo con cita<br>Lun–Sáb · 10:00–19:00</div>
+                        <div class="atl-stat-val">Con o sin cita previa<br>Lun–Sáb · 10:00–19:00</div>
                     </div>
                 </div>
             </div>
@@ -269,7 +263,6 @@ function renderEquipo() {
     return html`
         <section class="abt-section">
             <div class="abt-section-header">
-                <div class="mono abt-eyebrow">LAS MANOS</div>
                 <h2 class="abt-section-title">
                     El equipo <span class="italic emerald-text">detrás del atelier</span>
                 </h2>
@@ -316,23 +309,28 @@ function renderCerts() {
 // ═══════════════════════════════════════════════════════════════════
 // 9. PRENSA
 // ═══════════════════════════════════════════════════════════════════
-function renderPrensa() {
+function starsSVG() {
+    return [0, 1, 2, 3, 4].map(() => html`<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.9 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 7.1-1.01L12 2z"/></svg>`);
+}
+
+function renderResenas() {
     return html`
         <section class="abt-section">
             <div class="abt-section-header">
-                <div class="mono abt-eyebrow">NOS HAN ESCRITO</div>
+                <div class="mono abt-eyebrow">EN SUS PALABRAS</div>
                 <h2 class="abt-section-title">
-                    En la <span class="italic emerald-text">prensa</span>
+                    Historias que <span class="italic emerald-text">nos confiaron</span>
                 </h2>
             </div>
-            <div class="press-grid">
-                ${PRENSA.map(p => html`
-                    <div class="glass press-card">
-                        <div class="display press-card-medium">${escape(p.m)}</div>
-                        <div class="press-card-quote-wrap">
-                            <div class="press-card-quote">${escape(p.t)}</div>
+            <div class="resena-grid">
+                ${RESENAS.map(r => html`
+                    <div class="glass glass-iridescent resena-card">
+                        <div class="resena-stars" aria-label="5 de 5 estrellas">${starsSVG()}</div>
+                        <p class="resena-quote">${escape(r.t)}</p>
+                        <div class="resena-foot">
+                            <span class="resena-name">${escape(r.n)}</span>
+                            <span class="mono resena-src">${escape(r.loc)}</span>
                         </div>
-                        <div class="mono press-card-year">${escape(p.y)}</div>
                     </div>`)}
             </div>
         </section>`;
@@ -345,7 +343,6 @@ function renderFAQ() {
     return html`
         <section class="abt-section">
             <div class="abt-section-header">
-                <div class="mono abt-eyebrow">PREGUNTAS FRECUENTES</div>
                 <h2 class="abt-section-title">
                     Lo que <span class="italic emerald-text">suelen preguntarnos</span>
                 </h2>
@@ -436,7 +433,7 @@ function renderAll() {
             ${renderAtelier()}
             ${renderEquipo()}
             ${renderCerts()}
-            ${renderPrensa()}
+            ${renderResenas()}
             ${renderFAQ()}
             ${renderCTA()}
         </div>`;

@@ -50,15 +50,7 @@ const CANALES = [
         v: '+57 301 375 2592',
         d: 'Respuesta inmediata · 09:00–20:00',
         href: 'https://wa.me/573013752592',
-        icon: html`<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-1.9-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.7-1.4-1.7-1.6-1.9-.2-.3 0-.4.1-.5.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5 0-.2 0-.4-.1-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.5c-.2 0-.5.1-.7.4-.2.3-.9.9-.9 2.2 0 1.3.9 2.5 1 2.7.1.2 1.8 2.7 4.3 3.8.6.3 1.1.4 1.4.5.6.2 1.1.2 1.6.1.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2-.1-.2-.3-.2-.5-.3zM12 2C6.5 2 2 6.5 2 12c0 1.7.4 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18c-1.5 0-3-.4-4.3-1.2l-.3-.2-3.1.8.8-3.1-.2-.3C4.4 14.9 4 13.5 4 12c0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8z"/></svg>`,
-    },
-    {
-        k: 'telefono',
-        t: 'Teléfono atelier',
-        v: '+57 (5) 660 1234',
-        d: 'Lun–Sáb · 10:00–19:00',
-        href: 'tel:+5756601234',
-        icon: html`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`,
+        icon: html`<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 0 1-1.587-5.945C.16 5.335 5.495 0 12.05 0a11.817 11.817 0 0 1 8.413 3.488 11.824 11.824 0 0 1 3.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 0 1-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 0 0 1.51 5.26l-.999 3.648 3.737-.979zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>`,
     },
     {
         k: 'email',
@@ -74,7 +66,7 @@ const CANALES = [
         v: '@bersagliojewelry',
         d: 'Mensaje directo',
         href: 'https://instagram.com/bersagliojewelry',
-        icon: html`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>`,
+        icon: html`<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41a3.7 3.7 0 0 1-1.38-.9 3.7 3.7 0 0 1-.9-1.38c-.16-.42-.36-1.06-.41-2.23C2.17 15.58 2.16 15.2 2.16 12s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41C8.42 2.17 8.8 2.16 12 2.16zm0 3.68A6.16 6.16 0 1 0 18.16 12 6.16 6.16 0 0 0 12 5.84zm0 10.16A4 4 0 1 1 16 12a4 4 0 0 1-4 4zm6.4-10.4a1.44 1.44 0 1 1-1.44-1.44 1.44 1.44 0 0 1 1.44 1.44z"/></svg>`,
     },
 ];
 
@@ -90,10 +82,10 @@ const HORARIOS = [
 ];
 
 const FAQS_RAPIDO = [
-    { q: '¿Necesito cita previa?',         a: 'Sí, recibimos solo con cita para garantizar una atención dedicada.' },
-    { q: '¿Hay parqueadero?',              a: 'Tenemos convenio con parqueadero a 80m del atelier. Validamos tu tiquete.' },
+    { q: '¿Necesito cita previa?',         a: 'No es obligatoria: puedes acercarte directamente o reservar una cita para una atención más dedicada. Ambas son bienvenidas.' },
+    { q: '¿Hay parqueadero?',              a: 'En el Centro Histórico encuentras varios parqueaderos privados y seguros a pocos pasos del atelier.' },
     { q: '¿Puedo llevar acompañantes?',    a: 'Hasta tres personas. Indícalo al agendar para preparar el espacio.' },
-    { q: '¿Atienden en otro idioma?',      a: 'Español, inglés y francés. Italiano con cita previa.' },
+    { q: '¿Atienden en otro idioma?',      a: 'Español e inglés. Francés e italiano con cita previa, informándolo al agendar.' },
 ];
 
 const MOTIVOS = [
@@ -125,10 +117,10 @@ const URGENCIAS = [
 ];
 
 const PROCESO = [
-    { n: '01', t: 'Lectura Personal',   d: 'Tu mensaje es leído directamente por Kary Mendoza o un gemólogo experto de nuestro atelier. Prescindimos de respuestas automáticas o chatbots; valoramos el contacto humano desde el primer segundo.', tiempo: 'En el día' },
+    { n: '01', t: 'Lectura Personal',   d: 'Tu mensaje es leído directamente por Kary Mendoza y su equipo. Prescindimos de respuestas automáticas o chatbots; valoramos el contacto humano desde el primer segundo.', tiempo: 'En el día' },
     { n: '02', t: 'Primer Diálogo',  d: 'Nos pondremos en contacto para entender mejor el contexto de tu joya: la historia detrás del encargo, el tipo de gema preferida y las expectativas de entrega.', tiempo: '< 24 horas' },
     { n: '03', t: 'Encuentro Pausado',       d: 'Agendamos una llamada de voz, chat directo o un café en nuestra Maison en el centro histórico de Cartagena. Una conversación íntima, sin presiones comerciales de ningún tipo.', tiempo: 'A tu ritmo' },
-    { n: '04', t: 'Revelación de la Pieza', d: 'Si decides que Bersaglio sea el custodio de tu legado, elaboramos los primeros bocetos a mano alzada y renderizados 3D para tu aprobación antes de fundir en el crisol.', tiempo: '3–5 días' },
+    { n: '04', t: 'Manos a la Obra', d: 'Si decides que Bersaglio sea el custodio de tu legado, damos vida a tu pieza paso a paso: del primer boceto a mano alzada hasta la creación final en nuestro taller, siempre con tu aprobación.', tiempo: 'A medida' },
 ];
 
 function getMinDate() {
@@ -303,7 +295,9 @@ function renderFormVisita() {
     return html`
         <form class="ct-form" data-form="visita" novalidate>
             <div class="ct-banner ct-banner--visit">
-                <div class="ct-banner-icon" aria-hidden="true">☕</div>
+                <div class="ct-banner-icon" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z"/><path d="M6 1v3M10 1v3M14 1v3"/></svg>
+                </div>
                 <div>
                     <div class="ct-banner-title">Cita Privada en la Maison</div>
                     <div class="ct-banner-desc">Centro Histórico, Cartagena · 60–90 min · Un espacio consagrado a tus ideas</div>
@@ -365,7 +359,9 @@ function renderFormLlamada() {
     return html`
         <form class="ct-form" data-form="llamada" novalidate>
             <div class="ct-banner ct-banner--call">
-                <div class="ct-banner-icon" aria-hidden="true">☎</div>
+                <div class="ct-banner-icon" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                </div>
                 <div>
                     <div class="ct-banner-title">Llamada Confidencial</div>
                     <div class="ct-banner-desc">Establezcamos una conversación telefónica en el horario de tu preferencia.</div>
@@ -417,7 +413,7 @@ function renderSuccess() {
     } else if (_tab === 'llamada') {
         msg = `Nos comunicaremos contigo telefónicamente en la franja horaria establecida. Esperamos conversar pronto.`;
     } else {
-        msg = `Agradecemos tu confidencia. Kary Mendoza o un gemólogo del atelier se pondrá en contacto contigo en las próximas horas.`;
+        msg = `Agradecemos tu confidencia. Kary Mendoza y su equipo se pondrán en contacto contigo en las próximas horas.`;
     }
     return html`
         <div class="ct-success">
@@ -532,22 +528,21 @@ function renderProceso() {
 
 function renderFAQRapido() {
     return html`
-        <section class="ct-faq-section contact-grid">
-            <div class="ct-faq-side">
+        <section class="ct-faq-section">
+            <div class="ct-faq-header">
                 <div class="mono ct-faq-eyebrow">ANTES DE TU VISITA</div>
                 <h3 class="ct-faq-title">Lo que necesitas <span class="italic emerald-text">saber</span></h3>
                 <p class="ct-faq-lead">
-                    Cuatro respuestas rápidas para que llegues con todo claro.
-                    Si te queda alguna duda, escríbenos por WhatsApp.
+                    Cuatro respuestas rápidas para que llegues con todo claro. Si te queda alguna duda, escríbenos por WhatsApp.
                 </p>
-                <a href="https://wa.me/573013752592" target="_blank" rel="noopener" class="btn-aqua ct-faq-cta">
+                <a href="https://wa.me/573013752592" target="_blank" rel="noopener" class="btn-aqua btn-aqua-emerald ct-faq-cta">
                     Preguntar por WhatsApp
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
                 </a>
             </div>
-            <div class="glass ct-faq-list">
-                ${FAQS_RAPIDO.map((f, i) => html`
-                    <div class="ct-faq-row ${i < FAQS_RAPIDO.length - 1 ? 'ct-faq-row--bordered' : ''}">
+            <div class="ct-faq-grid">
+                ${FAQS_RAPIDO.map(f => html`
+                    <div class="glass glass-iridescent ct-faq-card">
                         <div class="ct-faq-q">${escape(f.q)}</div>
                         <p class="ct-faq-a">${escape(f.a)}</p>
                     </div>`)}

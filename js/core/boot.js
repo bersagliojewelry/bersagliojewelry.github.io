@@ -20,6 +20,7 @@
  */
 
 import { initRouter } from './router.js';
+import { observeReveals } from './reveal.js';
 
 const PAGES = {
     home:        () => import('../pages/home.js'),
@@ -61,7 +62,11 @@ async function boot() {
         console.warn(`[boot] unknown page: ${pageKey}`);
     }
 
-    // 4. Mark body ready for any CSS that depends on hydration complete.
+    // 4. Activate scroll reveals for `.reveal` elements now in the DOM.
+    //    Idempotent + re-callable after dynamic re-renders (Firestore onChange).
+    observeReveals();
+
+    // 5. Mark body ready for any CSS that depends on hydration complete.
     document.body.classList.add('bj-ready');
 }
 
@@ -75,6 +80,7 @@ async function loadShell() {
         import('../components/cookie-banner.js').then(m => m.initCookieBanner?.()),
         import('../components/email-modal.js').then(m => m.initEmailModal?.()),
         import('../components/search-overlay.js').then(m => m.initSearchOverlay?.()),
+        import('../components/quick-dock.js').then(m => m.mountQuickDock?.()),
     ];
     await Promise.allSettled(tasks);
 }

@@ -10,7 +10,11 @@
 ---
 
 ## 🎯 Foco actual
-*   **Nueva Conversación / Inicio de Sprint**: El repositorio se encuentra limpio, compilado y desplegado con todas las correcciones estéticas y optimizaciones de velocidad al 100%. Listo para recibir nuevos requerimientos del cliente.
+> 🏗️ **Cerebro neuronal actualizado a template v1.0.0** (2026-06-05, upgrade quirúrgico). Toda la memoria previa PRESERVADA (36 ADRs en `99`, lecciones L-01..L-04, lóbulos `43-UX`/`45-PERFORMANCE`). **Nuevo**: nodo `15-CONSEJO-EXTERNO` (red team 🛰️ vía Gemini/Antigravity), `skills-inventory.md`, gobernanza ampliada (§G.5 sharding + reflejos), linter `brain:check` mejorado y adaptado a `public/sw.js`/`bersaglio-vN`, hook `SessionStart` + `githooks/pre-commit`. CLAUDE.md previo cuarentenado en `_legacy/`.
+>
+> Proyecto: build 🟢, branch `Desarrollo`, cache `bersaglio-v6`. Listo para nuevos requerimientos.
+>
+> **🚫 Callejones sin salida**: ninguno.
 
 ---
 
@@ -18,7 +22,9 @@
 
 | ID | Item | Estado | Bloqueo |
 |---|---|---|---|
-| — | Ninguno. Todos los items anteriores han sido consolidados y cerrados | — | — |
+| TODO-01 | **Curación de skills/**: dedup de variantes (`SKILL-canvas-design` vs `canvas-design-creative`; `ecommerce skills` vs `ecommerce`) + revisar utilidad de `example-plugin` y `accessibility-audit-workspace`. | 🔲 Abierto | — |
+| TODO-02 | **Curar `docs/skills-inventory.md`**: vino de la plantilla; ajustarlo al set real de skills cargado en ESTE entorno (marcar ✅ usable / ⚠️ repo-only / 🔧 anomalía por skill). | 🔲 Abierto | — |
+| TODO-03 | (Opcional) Migrar headers de `99-HISTORIAL` a formato numerado `## NN.` para activar el chequeo estricto de offset-drift del linter (hoy usa convención por fecha, válida y verde). | 🔲 Abierto | — |
 
 ---
 
@@ -28,4 +34,4 @@ El sitio web se encuentra en una versión sumamente madura y rápida, con todas 
 ---
 
 ## 📝 Bitácora (efímera — se vacía al consolidar)
-*(Vacía. Lista para la nueva conversación)*
+- **2026-06-05**: Upgrade del cerebro a template v1.0.0 (upgrade quirúrgico, memoria preservada). Consolidado como ADR en `99` + fila en `00-INDICE`. Detalle del proceso en `docs/INSTALACION-CEREBRO.md`.

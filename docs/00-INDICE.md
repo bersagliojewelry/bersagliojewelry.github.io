@@ -27,7 +27,7 @@
 | ¿Dónde vive un módulo / ruta / flujo / componente? | 🗺️ `20-ESPACIAL` |
 | Voy a mover/renombrar archivos, refactor de estructura | 🧪 `30-LECCIONES` + 🗺️ `20-ESPACIAL` |
 | Conflicto al fusionar / cache / service worker | 🧪 `30-LECCIONES` L-02 + `CLAUDE.md §4` |
-| Errores conocidos y gotchas de estilo (style.css) | 🧪 `30-LECCIONES` |
+| Errores conocidos y gotchas de estilo (CSS modular por página) | 🧪 `30-LECCIONES` |
 | ¿Qué hay pendiente? estado del sprint | ⚡ `10-CORTO-PLAZO` (TODOs) |
 | 🔵 Audita SEGURIDAD / Firebase rules | 🎯 `40-LOBULOS-DOMINIO` → 41-SEGURIDAD (on-demand) |
 | 🔵 Audita UX / interfaz / componentes | 🎯 `40-LOBULOS-DOMINIO` → 43-UX |
@@ -83,6 +83,7 @@
 | §37 | 2026-06-05 — Upgrade del cerebro neuronal a template v1.0.0 | 420 |
 | §38 | 2026-06-05 — Curación post-upgrade: dedup de skills + reconciliación inventario | 439 |
 | §39 | 2026-06-05 — Auditoría de instalación de skills + auto-detección (catalogación) | 452 |
+| §40 | 2026-06-05 — Rediseño Fase 1 (mirror): shell + Home + Nosotros + Contacto + dock Atajos | 469 |
 ---
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §32+ al historial,

@@ -129,12 +129,7 @@ function renderContents() {
 function renderEmpty() {
     return html`
         <div class="bj-cart-empty">
-            <div class="bj-cart-empty-icon">
-                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true">
-                    <path d="M6 2l-2 5v15h16V7l-2-5H6z"/>
-                    <path d="M4 7h16M10 11a2 2 0 0 0 4 0"/>
-                </svg>
-            </div>
+            <img class="bj-cart-empty-illus" src="/img/cart-gems.webp" alt="" width="140" height="140" loading="lazy" decoding="async">
             <p class="bj-cart-empty-title">Tu carrito está vacío</p>
             <p class="bj-cart-empty-sub">Explora la colección y guarda piezas que te inspiren.</p>
             <a href="/colecciones.html"

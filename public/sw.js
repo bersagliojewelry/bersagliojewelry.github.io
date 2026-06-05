@@ -6,8 +6,8 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v6 to cache optimized hero assets and dynamic schemas.
-const CACHE_NAME    = 'bersaglio-v6';
+// Bumped to v7 for the Fase 1 redesign (shell + home/nosotros/contacto + dock Atajos).
+const CACHE_NAME    = 'bersaglio-v7';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

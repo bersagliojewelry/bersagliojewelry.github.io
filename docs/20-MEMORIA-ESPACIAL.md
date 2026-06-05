@@ -16,9 +16,11 @@
 │   └── workflows/
 │       ├── deploy.yml          # GitHub Pages auto-deploy (push a main)
 │       └── firebase-deploy.yml
-├── css/
-│   ├── style.css               # Estructura base legacy (layout, grids, anims)
-│   └── liquid-glass.css        # Diseño Liquid Glass (Tokens + primitivas + overrides)
+├── css/                        # CSS modular por página (NO existe style.css monolito)
+│   ├── liquid-glass.css        # Design system: tokens (incl. --ease-*/motion) + primitivas + .reveal
+│   ├── components.css          # Header/footer/drawers + dock "Atajos" (.qd-*)
+│   ├── home.css                # Home (incl. Atelier redesign, Films, Redes)
+│   └── nosotros · contacto · pieza · catalogo · journal · admin · …  (1 por página)
 ├── js/
 │   ├── core/                   # Núcleo de la aplicación
 │   │   ├── boot.js             # Lazy-imports de páginas según body[data-page]
@@ -27,7 +29,8 @@
 │   │   ├── cart.js             # Manejo de carrito local + sincronización cross-tab
 │   │   ├── wishlist.js         # Manejo de lista de deseos
 │   │   ├── html.js             # Tagged templates html`` + escape() + mount()
-│   │   └── format.js           # Formateadores numéricos y de fechas
+│   │   ├── format.js           # Formateadores numéricos y de fechas
+│   │   └── reveal.js           # Reveal-on-scroll (IntersectionObserver + fallback robusto)
 │   ├── components/             # Componentes de UI modulares
 │   │   ├── header.js           # Navbar pill flotante + mobile drawer
 │   │   ├── footer.js           # Footer modular 4 columnas
@@ -35,9 +38,16 @@
 │   │   ├── wishlist-drawer.js  # Wishlist lateral + share WhatsApp
 │   │   ├── cookie-banner.js    # Banner de consentimiento
 │   │   ├── email-modal.js      # Modal de suscripción a newsletter (25s)
-│   │   └── search-overlay.js   # Buscador inteligente Cmd+K / "/"
+│   │   ├── search-overlay.js   # Buscador inteligente Cmd+K / "/"
+│   │   └── quick-dock.js       # Dock "Atajos" (isla de agua arrastrable, global)
+│   ├── home/                   # Secciones del Home (1 módulo c/u — sin monolito)
+│   │   ├── hero·marquee·categories·featured·editorial·services·atelier·journal-preview·cta
+│   │   └── films.js · social.js  # secciones nuevas (datos en js/data/home-media.js)
+│   ├── data/
+│   │   ├── journal.js          # Datos del journal (hardcoded, Firestore-ready)
+│   │   └── home-media.js       # FILMS + SOCIAL (Firestore-ready; TODO: fuentes reales)
 │   ├── pages/                  # Módulos controladores por página
-│   │   ├── home.js             # Renderizador de las 9 secciones del Index
+│   │   ├── home.js             # Compositor: importa js/home/* + suscribe Firestore
 │   │   ├── catalogo.js         # Filtros, ordenación y grilla de piezas
 │   │   ├── pieza.js            # Galería, specs, tallas y similares de pieza individual
 │   │   ├── nosotros.js         # 11 secciones (timeline, equipo, manifiesto)
@@ -50,7 +60,7 @@
 │       ├── piezas.js           # Control de piezas admin
 │       └── colecciones.js      # Control de colecciones admin
 ├── public/                     # Archivos estáticos copiados a dist/ en el build
-│   ├── sw.js                   # Service Worker (Caché bersaglio-v3)
+│   ├── sw.js                   # Service Worker (Caché bersaglio-v7)
 │   └── img/                    # Activos gráficos optimizados (Vite publicDir)
 ├── docs/                       # Cerebro Neuronal Documental
 ├── package.json                # Vite, Firebase, GSAP, Lenis, lightningcss

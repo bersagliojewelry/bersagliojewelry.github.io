@@ -3,8 +3,8 @@
    Mirror exacto de BERSAGLIO NOVO/project/js/pages.jsx (Contacto L538-968)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-.ct-page { padding-top: 120px; padding-bottom: 120px; }
-@media (max-width: 680px) { .ct-page { padding-top: 100px; } }
+.ct-page { padding-top: 132px; padding-bottom: 72px; }
+@media (max-width: 680px) { .ct-page { padding-top: 92px; } }
 
 /* ═══════════════════════════════════════════════════════════════════
    1. HERO
@@ -12,7 +12,7 @@
 .ct-hero {
     text-align: center;
     max-width: 780px;
-    margin: 0 auto 110px;
+    margin: 0 auto 72px;
 }
 .ct-hero-eyebrow {
     font-size: 11px;
@@ -22,7 +22,7 @@
     text-transform: uppercase;
 }
 .ct-hero-title {
-    font-size: clamp(56px, 7vw, 110px);
+    font-size: clamp(40px, 4.6vw, 66px);
     font-weight: 200;
     letter-spacing: -0.04em;
     line-height: 0.94;
@@ -30,7 +30,7 @@
 }
 .ct-hero-title-em { font-weight: 300; }
 .ct-hero-lead {
-    font-size: 18px;
+    font-size: 16px;
     color: var(--bj-ink-soft);
     line-height: 1.7;
     max-width: 600px;
@@ -42,9 +42,9 @@
    ═══════════════════════════════════════════════════════════════════ */
 .ct-canales {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 14px;
-    margin-bottom: 110px;
+    margin-bottom: 72px;
 }
 .canal-card {
     padding: 20px;
@@ -73,13 +73,12 @@
     flex-shrink: 0;
 }
 .canal-icon--whatsapp  { background: linear-gradient(145deg, oklch(72% 0.16 155), oklch(48% 0.18 150)); }
-.canal-icon--telefono  { background: linear-gradient(145deg, oklch(85% 0.14 88),  oklch(65% 0.16 80)); }
 .canal-icon--email     { background: linear-gradient(145deg, oklch(85% 0.14 88),  oklch(65% 0.16 80)); }
 .canal-icon--instagram { background: linear-gradient(145deg, oklch(75% 0.18 30),  oklch(55% 0.22 340)); }
 
 .canal-title {
     font-family: var(--font-display);
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 500;
     color: var(--bj-ink-emerald);
     margin-bottom: 4px;
@@ -107,7 +106,7 @@
     display: grid;
     grid-template-columns: 1.3fr 1fr;
     gap: 22px;
-    margin-bottom: 110px;
+    margin-bottom: 72px;
 }
 @media (max-width: 980px) { .ct-mainrow { grid-template-columns: 1fr; } }
 
@@ -314,7 +313,16 @@ textarea.ct-field-input { min-height: 120px; line-height: 1.6; }
 .ct-banner--call {
     background: linear-gradient(145deg, oklch(94% 0.08 88 / 0.6), oklch(88% 0.10 80 / 0.4));
 }
-.ct-banner-icon { font-size: 32px; line-height: 1; }
+.ct-banner-icon {
+    display: flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; flex-shrink: 0;
+    border-radius: 14px;
+    background: oklch(100% 0 0 / 0.6);
+    border: 1px solid oklch(100% 0 0 / 0.7);
+    box-shadow: inset 0 1px 0 oklch(100% 0 0 / 0.6);
+}
+.ct-banner--visit .ct-banner-icon { color: var(--bj-emerald-700); }
+.ct-banner--call .ct-banner-icon { color: var(--bj-gold-700); }
 .ct-banner-title {
     font-family: var(--font-display);
     font-size: 16px;
@@ -422,7 +430,7 @@ textarea.ct-field-input { min-height: 120px; line-height: 1.6; }
     100% { transform: scale(1);   opacity: 1; }
 }
 .ct-success-title {
-    font-size: 32px;
+    font-size: 26px;
     font-weight: 300;
     margin-bottom: 12px;
     font-family: var(--font-display);
@@ -530,7 +538,7 @@ textarea.ct-field-input { min-height: 120px; line-height: 1.6; }
 }
 .ct-atelier-title {
     font-family: var(--font-display);
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 400;
     margin-bottom: 10px;
     letter-spacing: -0.01em;
@@ -633,7 +641,7 @@ textarea.ct-field-input { min-height: 120px; line-height: 1.6; }
 }
 .ct-respuesta-num {
     font-family: var(--font-display);
-    font-size: 48px;
+    font-size: 40px;
     font-weight: 300;
     color: oklch(35% 0.08 80);
     line-height: 1;
@@ -652,7 +660,7 @@ textarea.ct-field-input { min-height: 120px; line-height: 1.6; }
 .ct-proceso {
     padding: 48px 36px;
     border-radius: 40px;
-    margin-bottom: 110px;
+    margin-bottom: 72px;
 }
 .ct-proceso-header {
     text-align: center;
@@ -665,7 +673,7 @@ textarea.ct-field-input { min-height: 120px; line-height: 1.6; }
     margin-bottom: 10px;
 }
 .ct-proceso-title {
-    font-size: clamp(28px, 3.4vw, 44px);
+    font-size: clamp(24px, 2.9vw, 38px);
     font-weight: 300;
     letter-spacing: -0.02em;
 }
@@ -678,7 +686,7 @@ textarea.ct-field-input { min-height: 120px; line-height: 1.6; }
 @media (max-width: 980px) { .ct-proceso-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 600px) { .ct-proceso-grid { grid-template-columns: 1fr; } }
 
-.ct-proceso-step { position: relative; }
+.ct-proceso-step { position: relative; display: flex; flex-direction: column; height: 100%; }
 .ct-proceso-num {
     font-family: var(--font-display);
     font-size: 14px;
@@ -689,7 +697,7 @@ textarea.ct-field-input { min-height: 120px; line-height: 1.6; }
 }
 .ct-proceso-stepname {
     font-family: var(--font-display);
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 500;
     color: var(--bj-ink-emerald);
     margin-bottom: 10px;
@@ -710,21 +718,15 @@ textarea.ct-field-input { min-height: 120px; line-height: 1.6; }
     padding: 5px 10px;
     border-radius: 999px;
     background: oklch(94% 0.04 155 / 0.5);
-    display: inline-block;
+    align-self: flex-start;
+    margin-top: auto;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
    FAQ RÁPIDO
    ═══════════════════════════════════════════════════════════════════ */
-.ct-faq-section {
-    display: grid;
-    grid-template-columns: 1fr 1.4fr;
-    gap: 28px;
-    margin-bottom: 120px;
-    align-items: start;
-}
-@media (max-width: 980px) { .ct-faq-section { grid-template-columns: 1fr; } }
-
+.ct-faq-section { margin-bottom: 0; }
+.ct-faq-header { text-align: center; max-width: 640px; margin: 0 auto 30px; }
 .ct-faq-eyebrow {
     font-size: 11px;
     letter-spacing: 0.3em;
@@ -732,32 +734,39 @@ textarea.ct-field-input { min-height: 120px; line-height: 1.6; }
     margin-bottom: 10px;
 }
 .ct-faq-title {
-    font-size: clamp(28px, 3.5vw, 42px);
+    font-size: clamp(24px, 2.8vw, 36px);
     font-weight: 300;
     letter-spacing: -0.025em;
     line-height: 1.05;
-    margin-bottom: 18px;
+    margin-bottom: 14px;
 }
 .ct-faq-lead {
     font-size: 15px;
     color: var(--bj-ink-soft);
     line-height: 1.7;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 }
 .ct-faq-cta {
     padding: 14px 22px;
     font-size: 13px;
     display: inline-flex;
+    white-space: nowrap;
 }
-
-.ct-faq-list {
-    padding: 8px;
-    border-radius: 28px;
+.ct-faq-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
 }
-.ct-faq-row {
-    padding: 22px 24px;
+@media (max-width: 760px) { .ct-faq-grid { grid-template-columns: 1fr; } }
+.ct-faq-card {
+    padding: 26px 28px;
+    border-radius: 26px;
+    transition: transform .4s var(--ease-glass), box-shadow .4s;
 }
-.ct-faq-row--bordered { border-bottom: 1px solid oklch(100% 0 0 / 0.45); }
+.ct-faq-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 1px 0 oklch(100% 0 0 / 0.9) inset, 0 22px 46px -18px oklch(42% 0.14 155 / 0.26);
+}
 .ct-faq-q {
     font-family: var(--font-display);
     font-size: 16px;

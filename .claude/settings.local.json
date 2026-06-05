@@ -5,7 +5,28 @@
       "mcp__stitch__generate_screen_from_text",
       "mcp__stitch__list_screens",
       "mcp__stitch__get_screen",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(mkdir -p _legacy githooks)",
+      "Bash(cp CLAUDE.md _legacy/CLAUDE-previo.md)",
+      "Bash(cp \"CEREBRO NUEVO/docs/15-CONSEJO-EXTERNO.md\" docs/15-CONSEJO-EXTERNO.md)",
+      "Bash(cp \"CEREBRO NUEVO/docs/skills-inventory.md\" docs/skills-inventory.md)",
+      "Bash(cp \"CEREBRO NUEVO/githooks/pre-commit\" githooks/pre-commit)",
+      "Bash([ -e \"skills/$s\" ])",
+      "Bash(cp -r 'CEREBRO NUEVO/skills/__TRACKED_VAR__' skills/__TRACKED_VAR__)",
+      "Bash(git config *)",
+      "Bash(chmod +x githooks/pre-commit)",
+      "Bash(cp \"CEREBRO NUEVO/INSTALACION.md\" docs/INSTALACION-CEREBRO.md)",
+      "Bash(node scripts/brain-check.mjs)",
+      "Bash(echo \"EXIT CODE: $?\")",
+      "Bash(git add *)",
+      "Bash(sh githooks/pre-commit)",
+      "Bash(git restore *)",
+      "Bash(git commit *)",
+      "Bash(grep -oE '^\\\\| `[^`]+`' docs/skills-inventory.md)",
+      "Bash(git rm *)",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('.claude/settings.json','utf8'\\)\\); console.log\\('  ✅ settings.json JSON válido'\\)\")",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\('  brain:check =', p.scripts['brain:check']\\)\")",
+      "Bash(node --check scripts/brain-check.mjs)"
     ]
   }
 }

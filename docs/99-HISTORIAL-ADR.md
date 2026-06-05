@@ -415,6 +415,38 @@ Solución de desbordamiento de contenido en el Hero del Home y optimización dr�
 - **PERF-03**: Optimización de peso de recursos en Home y Nosotros. Se sustituyeron referencias de imágenes pesadas en bruto (.png de hasta 6.6 MB cada una) por sus variantes optimizadas y pre-comprimidas WebP/AVIF (~25-180 KB), reduciendo el peso de carga inicial en un 98.6%.
 - **PERF-04**: Actualización de Service Worker (`public/sw.js`). Se cambió la precarga de la imagen de héroe a `/img/banner-hero-1200.webp` para evitar que almacene 5.7 MB innecesariamente en caché, y se incrementó la versión a `bersaglio-v6`.
 
+---
+
+## 2026-06-05 — Upgrade del cerebro neuronal a template v1.0.0 (Consejo Externo + gobernanza ampliada)
+Migración del cerebro documental vivo a la plantilla portable v1.0.0 mediante **upgrade quirúrgico**: adoptar la estructura/gobernanza nueva SIN perder la memoria acumulada (36 ADRs previos, lecciones L-01..L-04, lóbulos 43-UX/45-PERFORMANCE). Disparado por el cliente: instalación de `CEREBRO NUEVO/` vía `INSTALACION.md`.
+
+**37.1 Causa raíz / contexto**: el proyecto YA tenía un cerebro neuronal (misma arquitectura, versión previa sin marcador de template). El protocolo de `INSTALACION.md` asumía un proyecto sin cerebro; aplicarlo literal habría pisado la memoria. Se confirmó con el cliente la estrategia (AskUserQuestion: upgrade quirúrgico + provider Gemini/Antigravity + merge de skills).
+
+**37.2 Solución estructural**: (a) `CLAUDE.md` reescrito a la gobernanza v1.0.0 (§G.1–G.5: sharding + reflejos ampliados + Trigger 🛰️) conservando §1 real (Bersaglio) y §4 adaptado a `public/sw.js`/`bersaglio-vN`; marcador `<!-- brain-template-version: 1.0.0 -->`. (b) Nuevos nodos: `15-CONSEJO-EXTERNO.md` (red team) y `docs/skills-inventory.md`. (c) `brain-check.mjs` actualizado al linter superset (cap 40-LOBULOS, refs cruzadas 5a/5b/5c) con 2 parches: check #3 consciente de convención (headers por fecha vs `## NN.`) y check #4a adaptado a `public/sw.js`. (d) Hook `SessionStart` en `.claude/settings.json` + `githooks/pre-commit` + `core.hooksPath=githooks`.
+
+**37.3 No-regresión**: memoria intacta — `00/05/10/20/30/40/43/45/99` preservados (solo se APENDIÓ wiring de 15 + skills-inventory + esta ADR). CLAUDE.md previo cuarentenado en `_legacy/CLAUDE-previo.md`. `package.json` ya tenía `brain:check` + `type:module` (sin cambios). `skills/` curada intacta (75) + 3 anexadas → 78.
+
+**37.4 Verificación**: `npm run brain:check` → ✅ CEREBRO SANO (huérfanas, caps, desync índice, refs cruzadas). Barrido anti-placeholders (FASE 3.9) limpio.
+
+**37.5 Anti-patterns evitados**: NO se pisó memoria (REGLA DURA #1/#4); NO se inventaron datos (§1 y 15 §2.2 derivados de evidencia leída del repo); NO se crearon lóbulos vacíos; cuarentena en vez de borrado (§G.4 límite de guardián).
+
+**37.6 Archivos**: NUEVOS → `docs/15-CONSEJO-EXTERNO.md`, `docs/skills-inventory.md`, `docs/INSTALACION-CEREBRO.md`, `.claude/settings.json`, `githooks/pre-commit`, `_legacy/{README,CLAUDE-previo}.md`, +3 skills. MODIFICADOS → `CLAUDE.md`, `scripts/brain-check.mjs`, `docs/{00,10,40}`. INTACTOS → `docs/{05,20,30,43,45}`, `package.json`, código de la app.
+
+**37.7 Doctrina aplicada**: §G.3 consolidación (esta ADR), §G.4 captura + límite de guardián. Pendientes de curación → TODO-01..03 en `10`. Sin cache bump (no cambió el shell de la app).
+
+---
+
+## 2026-06-05 — Curación post-upgrade: dedup de skills + reconciliación de inventario
+Primera curación tras el upgrade del cerebro (§37). Cierra TODO-01 y TODO-02 de `10`.
+
+**38.1 Contexto**: tras el upgrade, `skills/` tenía 78 carpetas con ruido/duplicados detectados en el barrido de instalación.
+
+**38.2 Acciones**: (a) **Dedup (TODO-01)**: cuarentenadas 4 carpetas a `_legacy/skills-removed/` (verificadas con evidencia, reversibles vía `git mv`): `SKILL-canvas-design` (dup malformado de `canvas-design-creative` — archivo interno mal nombrado), `ecommerce skills` (dup byte-idéntico de `ecommerce`, nombre con espacio), `example-plugin` (boilerplate demo), `accessibility-audit-workspace` (solo eval JSON, sin `SKILL.md`). `skills/` 78 → 74. (b) **Inventario (TODO-02)**: `docs/skills-inventory.md` reconciliado contra las 74 carpetas reales; añadida `sales-enablement` (faltaba del catálogo); documentadas las carpetas cuyo nombre ≠ `name:` (`animate-skill-main`, `claude-skills-llm-council-main`, `firecrawl-cli`, bundle "taste" anidado) + registro de la cuarentena. (c) **Limpieza**: `CEREBRO NUEVO/` (paquete fuente, commit `6f49236`) eliminada del repo — ya trasplantada; manual en `docs/INSTALACION-CEREBRO.md`.
+
+**38.3 No-regresión / verificación**: ninguna skill canónica perdida (las 4 retiradas eran ruido o dup; sus canónicas `canvas-design-creative`/`ecommerce`/`accessibility-audit` siguen activas). Contenido cuarentenado intacto y reversible. `brain:check` → SANO. Commits `76764ea` (upgrade) + `1be38d1` (curación).
+
+**38.4 Pendiente**: TODO-03 (opcional) — migrar headers de `99` a formato numerado `## NN.` para activar el offset-drift estricto del linter. NO se hizo: la convención por fecha es válida y el linter ya la respeta (parche check #3).
+
 
 
 

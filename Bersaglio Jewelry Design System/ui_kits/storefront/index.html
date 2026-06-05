@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bersaglio Jewelry · Storefront UI Kit</title>
+  <link rel="stylesheet" href="css/liquid-glass.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/home.css" />
+  <link rel="stylesheet" href="css/catalogo.css" />
+  <link rel="stylesheet" href="css/nosotros.css" />
+  <link rel="stylesheet" href="css/contacto.css" />
+  <link rel="stylesheet" href="css/pieza.css" />
+  <link rel="stylesheet" href="css/carrito.css" />
+  <link rel="stylesheet" href="css/journal.css" />
+  <link rel="stylesheet" href="css/lista-deseos.css" />
+  <link rel="stylesheet" href="css/legal.css" />
+  <link rel="stylesheet" href="css/kit.css" />
+  <style>
+    html, body { margin: 0; }
+  </style>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div class="bj-world" aria-hidden="true"></div>
+  <div id="root"></div>
+
+  <script type="text/babel" src="data.jsx"></script>
+  <script type="text/babel" src="Shell.jsx"></script>
+  <script type="text/babel" src="Screens.jsx"></script>
+  <script type="text/babel" src="Sections.jsx"></script>
+  <script type="text/babel" src="Overlays.jsx"></script>
+  <script type="text/babel" src="Pages.jsx"></script>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function SimpleScreen({ eyebrow, title, lead, navigate }) {
+      return (
+        <section className="k-section" style={{ paddingTop: 140, minHeight: '70vh' }}>
+          <div className="k-container">
+            <div className="glass glass-iridescent" style={{ borderRadius: 44, padding: 'clamp(40px,6vw,72px)', textAlign: 'center' }}>
+              <span className="eyebrow">{eyebrow}</span>
+              <h2 style={{ fontSize: 'clamp(34px,4.5vw,56px)', fontWeight: 300, letterSpacing: '-0.025em', margin: '12px 0 18px' }} dangerouslySetInnerHTML={{ __html: title }} />
+              <p style={{ maxWidth: 520, margin: '0 auto 28px', color: 'var(--bj-ink-soft)', fontSize: 15, lineHeight: 1.7 }}>{lead}</p>
+              <button className="btn-aqua btn-aqua-emerald" onClick={() => navigate('catalogo')}>Explorar colecciones</button>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    function App() {
+      const [route, setRoute] = useState('home');
+      const [piezaId, setPiezaId] = useState(null);
+      const [entrySlug, setEntrySlug] = useState(null);
+      const [cartOpen, setCartOpen] = useState(false);
+      const [items, setItems] = useState([
+        { id: 'trinity-sapphire', name: 'Anillo Trinity Zafiro', price: 14800000, qty: 1, img: '../../assets/ring-sapphire.webp' },
+      ]);
+      const [wishlist, setWishlist] = useState(['emerald-classic']);
+      const [toast, setToast] = useState('');
+      const [searchOpen, setSearchOpen] = useState(false);
+      const [qvId, setQvId] = useState(null);
+
+      const scrollTop = () => window.scrollTo({ top: 0, behavior: 'instant' });
+      const navigate = (to) => { setRoute(to); scrollTop(); };
+      const openPieza = (id) => { setPiezaId(id); setRoute('pieza'); setSearchOpen(false); setQvId(null); scrollTop(); };
+      const openQuickView = (id) => setQvId(id);
+      const openEntrada = (slug) => { setEntrySlug(slug); setRoute('entrada'); scrollTop(); };
+
+      const showToast = (msg) => { setToast(msg); clearTimeout(window.__t); window.__t = setTimeout(() => setToast(''), 2200); };
+      const addToCart = (p) => {
+        setItems((prev) => {
+          const e = prev.find((i) => i.id === p.id);
+          if (e) return prev.map((i) => i.id === p.id ? { ...i, qty: i.qty + 1 } : i);
+          return [...prev, { id: p.id, name: p.name, price: p.price, qty: 1, img: p.img }];
+        });
+        showToast('Añadido al carrito');
+        setCartOpen(true);
+      };
+      const onQty = (id, qty) => setItems((prev) => qty <= 0 ? prev.filter((i) => i.id !== id) : prev.map((i) => i.id === id ? { ...i, qty } : i));
+      const onRemove = (id) => setItems((prev) => prev.filter((i) => i.id !== id));
+      const toggleWish = (id) => setWishlist((prev) => {
+        const on = prev.includes(id);
+        showToast(on ? 'Quitado de tu lista' : 'Guardado en tu lista');
+        return on ? prev.filter((x) => x !== id) : [...prev, id];
+      });
+
+      const cartCount = items.reduce((s, i) => s + i.qty, 0);
+      const product = PRODUCTS.find((p) => p.id === piezaId);
+      const qvProduct = PRODUCTS.find((p) => p.id === qvId);
+
+      // Keyboard: ⌘K / Ctrl+K opens search, Esc closes overlays
+      useEffect(() => {
+        const onKey = (e) => {
+          if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setSearchOpen((v) => !v); }
+          else if (e.key === 'Escape') { setSearchOpen(false); setQvId(null); }
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+      }, []);
+
+      // Motion: hero cursor parallax (reveals are handled per-component via useReveal)
+      useEffect(() => {
+        const banner = document.querySelector('[data-tilt]');
+        const tiltImg = document.querySelector('[data-tilt-img]');
+        if (!banner || !tiltImg || !window.matchMedia('(pointer:fine)').matches) return;
+        return; // hero parallax disabled
+        const onMove = (ev) => {
+          const r = banner.getBoundingClientRect();
+          const mx = (ev.clientX - r.left) / r.width - 0.5;
+          const my = (ev.clientY - r.top) / r.height - 0.5;
+          banner.style.transform = `rotateX(${-my * 3}deg) rotateY(${mx * 3}deg)`;
+          tiltImg.style.transform = `translate(${mx * -18}px, ${my * -18}px) scale(1.06)`;
+        };
+        const onLeave = () => { banner.style.transform = ''; tiltImg.style.transform = ''; };
+        banner.addEventListener('pointermove', onMove);
+        banner.addEventListener('pointerleave', onLeave);
+        return () => { banner.removeEventListener('pointermove', onMove); banner.removeEventListener('pointerleave', onLeave); };
+      }, [route]);
+
+      return (
+        <React.Fragment>
+          <Header route={route} navigate={navigate} cartCount={cartCount} onCart={() => setCartOpen(true)} onSearch={() => setSearchOpen(true)} wishlistCount={wishlist.length} />
+          <main>
+            {route === 'home' && <HomeScreen navigate={navigate} openPieza={openPieza} wishlist={wishlist} toggleWish={toggleWish} showToast={showToast} openQuickView={openQuickView} openEntrada={openEntrada} />}
+            {route === 'catalogo' && <CatalogScreen openPieza={openPieza} wishlist={wishlist} toggleWish={toggleWish} openQuickView={openQuickView} />}
+            {route === 'pieza' && <PiezaScreen product={product} navigate={navigate} addToCart={addToCart} wishlist={wishlist} toggleWish={toggleWish} openPieza={openPieza} />}
+            {route === 'carrito' && <CarritoScreen items={items} onQty={onQty} onRemove={onRemove} navigate={navigate} />}
+            {route === 'gracias' && <GraciasScreen method="mensaje" navigate={navigate} />}
+            {route === 'terminos' && <TerminosScreen navigate={navigate} />}
+            {route === 'privacidad' && <PrivacidadScreen navigate={navigate} />}
+            {route === 'journal' && <JournalScreen navigate={navigate} openEntrada={openEntrada} />}
+            {route === 'entrada' && <EntradaScreen entrySlug={entrySlug} navigate={navigate} openEntrada={openEntrada} />}
+            {route === 'lista-deseos' && <ListaDeseosScreen wishlist={wishlist} items={items} onToggleWish={toggleWish} onAddCart={addToCart} onClear={() => setWishlist([])} navigate={navigate} />}
+            {route === 'nosotros' && <NosotrosScreen navigate={navigate} />}
+            {route === 'contacto' && <ContactoScreen />}
+          </main>
+          <Footer navigate={navigate} />
+          <CartDrawer open={cartOpen} items={items} onClose={() => setCartOpen(false)} onQty={onQty} onRemove={onRemove} onCheckout={() => { setCartOpen(false); navigate('carrito'); }} />
+          <SearchPalette open={searchOpen} onClose={() => setSearchOpen(false)} onOpen={openPieza} />
+          <QuickView product={qvProduct} onClose={() => setQvId(null)} addToCart={addToCart} toggleWish={toggleWish} wished={qvProduct ? wishlist.includes(qvProduct.id) : false} onFull={openPieza} />
+          <QuickDock navigate={navigate} onSearch={() => setSearchOpen(true)} />
+          <div className={'k-toast glass glass-iridescent' + (toast ? ' on' : '')} aria-live="polite">
+            {toast && <React.Fragment><IconCheck size={16} /> {toast}</React.Fragment>}
+          </div>
+        </React.Fragment>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

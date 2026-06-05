@@ -23,6 +23,10 @@
 
 **Leyenda Disp.**: ✅ contraparte instalada usable vía `Skill` · ⚠️ repo-only (no instalada) · 🔧 anomalía estructural (no carga tal cual).
 
+> 🧹 **Última curación: 2026-06-05** — `skills/` = **74 carpetas** (reconciliado contra este catálogo). Se cuarentenaron 4 carpetas-ruido a `_legacy/skills-removed/`: `SKILL-canvas-design` (dup malformado de `canvas-design-creative`, archivo interno mal nombrado), `ecommerce skills` (dup byte-idéntico de `ecommerce`, nombre con espacio), `example-plugin` (boilerplate demo), `accessibility-audit-workspace` (solo eval JSON, sin `SKILL.md`).
+>
+> **Carpeta ≠ nombre de skill** (NO son "faltantes" — el catálogo usa el `name:` del frontmatter): `animate` → `animate-skill-main/` · `llm-council` → `claude-skills-llm-council-main/` · `firecrawl` → `firecrawl-cli/` · bundle "taste" → anidado en `taste-skill-main/<sub>/`.
+
 ---
 
 ## 🧬 Proceso / Desarrollo (superpowers + dev)
@@ -113,6 +117,7 @@
 | `pricing-strategy` | Estrategia de precios | ✅ |
 | `product-marketing-context` | Contexto de product marketing | ✅ |
 | `revops` | Revenue operations | ✅ |
+| `sales-enablement` | Colateral de ventas: pitch decks, one-pagers, objection handling, demo scripts | ✅ |
 | `customer-research` | Investigación de clientes / VOC / ICP | ✅ |
 | `churn-prevention` | Reducir churn / flujos de cancelación | ✅ |
 | `ab-test-setup` | Diseñar A/B tests y experimentación | ✅ |

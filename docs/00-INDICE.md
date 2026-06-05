@@ -81,6 +81,7 @@
 | §35 | 2026-06-03 — SEO, Tracking, Optimización AVIF y Rediseño Premium de Autor en Admin | 393 |
 | §36 | 2026-06-03 — Ajuste de Hero y Optimización de Velocidad de Carga (Imágenes WebP/AVIF) | 410 |
 | §37 | 2026-06-05 — Upgrade del cerebro neuronal a template v1.0.0 | 420 |
+| §38 | 2026-06-05 — Curación post-upgrade: dedup de skills + reconciliación inventario | 439 |
 ---
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §32+ al historial,

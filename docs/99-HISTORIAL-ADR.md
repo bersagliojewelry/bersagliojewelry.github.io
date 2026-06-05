@@ -434,6 +434,19 @@ Migración del cerebro documental vivo a la plantilla portable v1.0.0 mediante *
 
 **37.7 Doctrina aplicada**: §G.3 consolidación (esta ADR), §G.4 captura + límite de guardián. Pendientes de curación → TODO-01..03 en `10`. Sin cache bump (no cambió el shell de la app).
 
+---
+
+## 2026-06-05 — Curación post-upgrade: dedup de skills + reconciliación de inventario
+Primera curación tras el upgrade del cerebro (§37). Cierra TODO-01 y TODO-02 de `10`.
+
+**38.1 Contexto**: tras el upgrade, `skills/` tenía 78 carpetas con ruido/duplicados detectados en el barrido de instalación.
+
+**38.2 Acciones**: (a) **Dedup (TODO-01)**: cuarentenadas 4 carpetas a `_legacy/skills-removed/` (verificadas con evidencia, reversibles vía `git mv`): `SKILL-canvas-design` (dup malformado de `canvas-design-creative` — archivo interno mal nombrado), `ecommerce skills` (dup byte-idéntico de `ecommerce`, nombre con espacio), `example-plugin` (boilerplate demo), `accessibility-audit-workspace` (solo eval JSON, sin `SKILL.md`). `skills/` 78 → 74. (b) **Inventario (TODO-02)**: `docs/skills-inventory.md` reconciliado contra las 74 carpetas reales; añadida `sales-enablement` (faltaba del catálogo); documentadas las carpetas cuyo nombre ≠ `name:` (`animate-skill-main`, `claude-skills-llm-council-main`, `firecrawl-cli`, bundle "taste" anidado) + registro de la cuarentena. (c) **Limpieza**: `CEREBRO NUEVO/` (paquete fuente, commit `6f49236`) eliminada del repo — ya trasplantada; manual en `docs/INSTALACION-CEREBRO.md`.
+
+**38.3 No-regresión / verificación**: ninguna skill canónica perdida (las 4 retiradas eran ruido o dup; sus canónicas `canvas-design-creative`/`ecommerce`/`accessibility-audit` siguen activas). Contenido cuarentenado intacto y reversible. `brain:check` → SANO. Commits `76764ea` (upgrade) + `1be38d1` (curación).
+
+**38.4 Pendiente**: TODO-03 (opcional) — migrar headers de `99` a formato numerado `## NN.` para activar el offset-drift estricto del linter. NO se hizo: la convención por fecha es válida y el linter ya la respeta (parche check #3).
+
 
 
 

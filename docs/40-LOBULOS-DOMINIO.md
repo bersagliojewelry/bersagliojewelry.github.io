@@ -2,7 +2,7 @@
 
 > **Nodo neuronal: Lóbulos de Dominio.** Registro de los lóbulos hijos especializados creados bajo el **Trigger 🔵 de Auditoría (`CLAUDE.md §G.2`)**.
 >
-> **Cómo opera (Reflejo de Neurogénesis §G.4)**: los lóbulos hijos (`docs/45-PERFORMANCE.md`, `docs/48-ACCESIBILIDAD.md`, etc.) no nacen vacíos; se crean en el momento de realizar una auditoría real y se registran aquí.
+> **Cómo opera (Reflejo de Neurogénesis §G.4)**: los lóbulos hijos (`docs/43-UX.md`, `docs/45-PERFORMANCE.md`, etc.) no nacen vacíos; se crean en el momento de realizar una auditoría real y se registran aquí.
 
 ---
 
@@ -12,7 +12,7 @@
 |---|---|---|---|
 | `docs/43-UX.md` | Experiencia de Usuario y Diseño Visual | 🟢 Activo | `frontend-design`, `impeccable` |
 | `docs/45-PERFORMANCE.md` | Core Web Vitals y Carga de Activos | 🟢 Activo | `seo-audit`, `performance-check` |
-| `docs/48-ACCESIBILIDAD.md` | Pautas de Accesibilidad WCAG 2.2 AA | ⏳ Planificado | `accessibility-audit` |
+| 48-ACCESIBILIDAD (a11y) | Pautas de Accesibilidad WCAG 2.2 AA | ⏳ Planificado (sin archivo aún — nace en la 1ª auditoría) | `accessibility-audit` |
 
 ---
 

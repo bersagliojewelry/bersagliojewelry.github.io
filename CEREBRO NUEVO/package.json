@@ -1,0 +1,10 @@
+{
+  "name": "cerebro-neuronal-template",
+  "version": "1.0.0",
+  "description": "Plantilla portable del cerebro neuronal de memoria documental para Claude Code. Reusable para cualquier proyecto nuevo.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "brain:check": "node scripts/brain-check.mjs"
+  }
+}

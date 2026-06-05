@@ -1,0 +1,231 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   BERSAGLIO JEWELRY · Colors & Type Foundations
+   Liquid Glass Design System — iOS Aqua × Alta Joyería (Esmeraldas + Oro 18K)
+   Extracted verbatim from css/liquid-glass.css (the production source of truth).
+   Fonts: Fraunces + Cormorant Garamond + Manrope + Space Mono — all self-hosted (below).
+   No CDN / Google Fonts link is required.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Fraunces · self-hosted variable font (wordmark, monogram, numerals) ── */
+@font-face {
+  font-family: "Fraunces";
+  src: url("fonts/Fraunces-VariableFont_SOFT_WONK_opsz_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-stretch: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Fraunces";
+  src: url("fonts/Fraunces-Italic-VariableFont_SOFT_WONK_opsz_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-stretch: normal;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* ── Cormorant Garamond · self-hosted variable font (editorial display) ── */
+@font-face {
+  font-family: "Cormorant Garamond";
+  src: url("fonts/CormorantGaramond-VariableFont_wght.ttf") format("truetype");
+  font-weight: 300 700;
+  font-stretch: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Cormorant Garamond";
+  src: url("fonts/CormorantGaramond-Italic-VariableFont_wght.ttf") format("truetype");
+  font-weight: 300 700;
+  font-stretch: normal;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* ── Manrope · self-hosted variable font (UI, body, buttons, forms) ── */
+@font-face {
+  font-family: "Manrope";
+  src: url("fonts/Manrope-VariableFont_wght.ttf") format("truetype");
+  font-weight: 200 800;
+  font-stretch: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ── Space Mono · self-hosted (prices, eyebrows, coordinates, tabular nums) ── */
+@font-face {
+  font-family: "Space Mono";
+  src: url("fonts/SpaceMono-Regular.ttf") format("truetype");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Space Mono";
+  src: url("fonts/SpaceMono-Italic.ttf") format("truetype");
+  font-weight: 400; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: "Space Mono";
+  src: url("fonts/SpaceMono-Bold.ttf") format("truetype");
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Space Mono";
+  src: url("fonts/SpaceMono-BoldItalic.ttf") format("truetype");
+  font-weight: 700; font-style: italic; font-display: swap;
+}
+
+:root {
+  /* ── COLOR · Emerald (primary brand scale, OKLCH) ─────────────────── */
+  --bj-emerald-900: oklch(28% 0.08 155);
+  --bj-emerald-800: oklch(34% 0.11 155);
+  --bj-emerald-700: oklch(42% 0.14 155);   /* primary */
+  --bj-emerald-600: oklch(52% 0.16 155);
+  --bj-emerald-500: oklch(62% 0.18 155);
+  --bj-emerald-400: oklch(74% 0.15 152);
+  --bj-emerald-300: oklch(85% 0.10 150);
+  --bj-emerald-200: oklch(92% 0.05 150);
+  --bj-emerald-100: oklch(97% 0.02 150);
+
+  /* ── COLOR · Colombian 18k Gold (accent scale) ───────────────────── */
+  --bj-gold-900: oklch(55% 0.12 80);
+  --bj-gold-700: oklch(72% 0.14 82);
+  --bj-gold-500: oklch(82% 0.14 85);       /* accent */
+  --bj-gold-300: oklch(90% 0.08 88);
+  --bj-gold-100: oklch(96% 0.04 90);
+
+  /* ── COLOR · Light neutrals (never stark white) ──────────────────── */
+  --bj-pearl: oklch(98% 0.005 90);          /* page background */
+  --bj-ivory: oklch(96% 0.012 85);
+  --bj-cream: oklch(94% 0.018 82);
+  --bj-mist:  oklch(90% 0.01 150);
+
+  /* ── COLOR · Ink (luxury "black" is always emerald-tinted) ───────── */
+  --bj-ink-emerald: oklch(18% 0.05 155);    /* primary text */
+  --bj-ink-soft:    oklch(32% 0.03 155);    /* body / secondary */
+  --bj-ink-mute:    oklch(50% 0.02 155);    /* captions / meta */
+
+  /* ── SEMANTIC color aliases ──────────────────────────────────────── */
+  --bg:        var(--bj-pearl);
+  --surface:   oklch(96% 0.02 150 / 0.55);  /* glass tint */
+  --primary:   var(--bj-emerald-700);
+  --primary-strong: var(--bj-emerald-900);
+  --accent:    var(--bj-gold-500);
+  --fg1:       var(--bj-ink-emerald);       /* headings / high emphasis */
+  --fg2:       var(--bj-ink-soft);          /* body */
+  --fg3:       var(--bj-ink-mute);          /* muted / meta */
+  --hairline:  oklch(100% 0 0 / 0.5);       /* glass border */
+  --danger:    oklch(50% 0.18 25);
+
+  /* ── LIQUID GLASS tokens ─────────────────────────────────────────── */
+  --glass-blur: 28px;
+  --glass-saturate: 180%;
+  --glass-tint: oklch(96% 0.02 150 / 0.55);
+  --glass-tint-strong: oklch(94% 0.03 150 / 0.72);
+  --glass-tint-dark: oklch(35% 0.08 155 / 0.35);
+  --glass-border: 1px solid oklch(100% 0 0 / 0.5);
+  --pinlight: radial-gradient(ellipse 60% 50% at 50% 0%, oklch(100% 0 0 / 0.95) 0%, transparent 60%);
+  --iridescent-rim: conic-gradient(from 180deg at 50% 50%,
+    oklch(85% 0.14 155 / 0.8), oklch(90% 0.12 90 / 0.8),
+    oklch(88% 0.10 30 / 0.6),  oklch(82% 0.13 200 / 0.7),
+    oklch(85% 0.14 155 / 0.8));
+
+  /* ── ELEVATION · shadow system ───────────────────────────────────── */
+  --glass-shadow:
+    0 1px 0 oklch(100% 0 0 / 0.9) inset,
+    0 -1px 0 oklch(100% 0 0 / 0.25) inset,
+    0 1px 2px oklch(35% 0.08 155 / 0.08),
+    0 10px 30px -8px oklch(28% 0.08 155 / 0.25),
+    0 30px 60px -20px oklch(28% 0.08 155 / 0.18);
+  --glass-shadow-lg:
+    0 1px 0 oklch(100% 0 0 / 0.9) inset,
+    0 -2px 0 oklch(100% 0 0 / 0.2) inset,
+    0 2px 4px oklch(35% 0.08 155 / 0.06),
+    0 20px 50px -10px oklch(28% 0.08 155 / 0.3),
+    0 60px 100px -30px oklch(28% 0.08 155 / 0.25);
+
+  /* ── RADII · soft squircle scale ─────────────────────────────────── */
+  --r-sm: 12px;
+  --r-md: 18px;
+  --r-lg: 24px;
+  --r-xl: 34px;
+  --r-2xl: 48px;
+  --r-pill: 999px;
+
+  /* ── SPACING (8pt-ish rhythm used across the site) ───────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 14px;
+  --space-4: 20px;
+  --space-5: 28px;
+  --space-6: 40px;
+  --space-7: 64px;
+  --space-8: 100px;   /* section vertical padding */
+
+  /* ── MOTION · elastic / haptic curves ────────────────────────────── */
+  --ease-elastic: cubic-bezier(0.175, 0.885, 0.32, 1.05);
+  --ease-glass:   cubic-bezier(0.2, 0.9, 0.2, 1);
+  --ease-drawer:  cubic-bezier(0.32, 0.72, 0, 1);
+  --press-scale:  0.96;   /* haptic active press */
+
+  /* ── TYPE · families ─────────────────────────────────────────────── */
+  --font-brand:   "Fraunces", "Cormorant Garamond", "Times New Roman", serif;   /* wordmark / numerals */
+  --font-display: "Cormorant Garamond", "Fraunces", "Times New Roman", serif;   /* editorial headings */
+  --font-ui:      "Manrope", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  --font-mono:    "Space Mono", "SF Mono", ui-monospace, Menlo, monospace;      /* prices, eyebrows, meta */
+
+  /* ── TYPE · semantic roles (font / weight / size / spacing) ──────── */
+  --h1-font: var(--font-display); --h1-size: clamp(38px, 5vw, 64px); --h1-weight: 300; --h1-spacing: -0.025em; --h1-leading: 1.05;
+  --h2-font: var(--font-display); --h2-size: clamp(32px, 3.6vw, 52px); --h2-weight: 300; --h2-spacing: -0.025em; --h2-leading: 1.05;
+  --h3-font: var(--font-display); --h3-size: clamp(22px, 2vw, 32px);  --h3-weight: 400; --h3-spacing: -0.015em; --h3-leading: 1.15;
+  --h4-font: var(--font-display); --h4-size: 22px; --h4-weight: 500; --h4-spacing: -0.01em; --h4-leading: 1.2;
+  --body-font: var(--font-ui);    --body-size: 16px; --body-weight: 400; --body-leading: 1.7;
+  --small-font: var(--font-ui);   --small-size: 13px; --small-weight: 400; --small-leading: 1.6;
+  --eyebrow-font: var(--font-ui); --eyebrow-size: 11px; --eyebrow-weight: 500; --eyebrow-spacing: 0.32em; /* UPPERCASE */
+  --mono-font: var(--font-mono);  --mono-size: 12px; --mono-spacing: 0.02em;  /* tabular-nums */
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Base element styling — apply when this file governs a document.
+   ═══════════════════════════════════════════════════════════════════ */
+body {
+  font-family: var(--font-ui);
+  color: var(--fg1);
+  background: var(--bg);
+  line-height: var(--body-leading);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1 { font-family: var(--h1-font); font-weight: var(--h1-weight); font-size: var(--h1-size); letter-spacing: var(--h1-spacing); line-height: var(--h1-leading); margin: 0; }
+h2 { font-family: var(--h2-font); font-weight: var(--h2-weight); font-size: var(--h2-size); letter-spacing: var(--h2-spacing); line-height: var(--h2-leading); margin: 0; }
+h3 { font-family: var(--h3-font); font-weight: var(--h3-weight); font-size: var(--h3-size); letter-spacing: var(--h3-spacing); line-height: var(--h3-leading); margin: 0; }
+h4 { font-family: var(--h4-font); font-weight: var(--h4-weight); font-size: var(--h4-size); letter-spacing: var(--h4-spacing); line-height: var(--h4-leading); margin: 0; }
+p  { font-family: var(--body-font); font-size: var(--body-size); line-height: var(--body-leading); color: var(--fg2); margin: 0; }
+
+/* Editorial flourish — italic display, used in nearly every headline */
+.italic { font-style: italic; }
+.emerald-text {
+  background: linear-gradient(180deg, oklch(55% 0.17 155), oklch(30% 0.10 155));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.gold-text {
+  background: linear-gradient(180deg, oklch(88% 0.13 88), oklch(62% 0.14 78));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+/* Eyebrow — spaced uppercase label above headings */
+.eyebrow {
+  font-family: var(--eyebrow-font);
+  font-size: var(--eyebrow-size);
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--eyebrow-spacing);
+  text-transform: uppercase;
+  color: var(--bj-emerald-700);
+}
+
+/* Mono — prices, coordinates, issue numbers, "EN VIVO" tags */
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--mono-spacing);
+}

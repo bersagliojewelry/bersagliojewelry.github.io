@@ -91,7 +91,7 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     border-radius: 999px;
     color: var(--bj-emerald-800);
     background: transparent;
-    transition: all 0.3s;
+    transition: background-color 0.3s, border-color 0.3s, color 0.3s, box-shadow 0.3s, transform 0.3s;
     white-space: nowrap;
     cursor: pointer;
 }
@@ -464,7 +464,7 @@ body.wishlist-drawer-open {
     border: 1px solid oklch(100% 0 0 / 0.6);
     border-radius: 999px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
 .bj-wishlist-cart-pill:hover {
     background: var(--bj-emerald-700); color: #fff;
@@ -524,7 +524,7 @@ body.wishlist-drawer-open {
     letter-spacing: 0.03em;
     border-radius: 999px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
 .bj-cookie-btn--decline {
     background: oklch(100% 0 0 / 0.45);

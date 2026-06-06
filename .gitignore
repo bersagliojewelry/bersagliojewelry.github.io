@@ -6,3 +6,8 @@ dist/
 Thumbs.db
 .mcp.json
 
+# Datos privados del negocio — NUNCA subir al repo (saldos/clientes reales)
+*.xlsx
+*.xls
+*.csv
+

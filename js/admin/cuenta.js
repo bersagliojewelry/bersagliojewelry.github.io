@@ -11,12 +11,13 @@ import adminDb from './db.js';
 import { currentUser } from '../auth.js';
 import {
     getCliente, onClienteChange, onMovimientosChange,
-    addMovimiento, anularMovimiento, fetchVendedoras, fmtCOP,
+    addMovimiento, anularMovimiento, updateCliente, fetchVendedoras, fmtCOP,
 } from '../crm-service.js';
 
 const CLIENTE_ID = new URLSearchParams(location.search).get('id');
 const _vendedoras = new Map();
 let _tipo = 'factura';   // tipo activo del modal
+let _cliente = null;     // datos vivos (para corregir saldo / editar)
 
 const TIPO_LABEL = { factura: 'Factura', abono: 'Abono', apertura: 'Apertura', ajuste: 'Ajuste' };
 const SIGNO = { factura: 1, apertura: 1, ajuste: 1, abono: -1 };
@@ -34,6 +35,7 @@ function showError(msg) {
 
 function renderHeader(cli) {
     if (!cli) { showError('Este cliente ya no existe.'); return; }
+    _cliente = cli;
     document.getElementById('ficha-title').textContent = cli.nombre || 'Cliente';
     document.getElementById('f-nombre').textContent = cli.nombre || 'Sin nombre';
     const meta = [nombreVendedora(cli.vendedoraUid), cli.telefono || cli.whatsapp]
@@ -142,6 +144,93 @@ function wireAnular() {
     });
 }
 
+// ─── Corregir saldo (admin) — registra un ajuste para llegar al saldo correcto ──
+function wireCorregir() {
+    const modal = document.getElementById('corregir-modal');
+    const open = () => {
+        const actual = typeof _cliente?.saldoActual === 'number' ? _cliente.saldoActual : 0;
+        document.getElementById('corregir-form').reset();
+        document.getElementById('corregir-actual').textContent = `(actual: ${fmtCOP(actual)})`;
+        document.getElementById('corregir-saldo').value = actual;
+        modal.hidden = false;
+        document.getElementById('corregir-saldo').focus();
+    };
+    const close = () => { modal.hidden = true; };
+    document.getElementById('btn-corregir').addEventListener('click', open);
+    document.getElementById('corregir-close').addEventListener('click', close);
+    document.getElementById('corregir-cancel').addEventListener('click', close);
+    modal.addEventListener('click', (e) => { if (e.target.id === 'corregir-modal') close(); });
+
+    document.getElementById('corregir-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const nuevo = Number(document.getElementById('corregir-saldo').value);
+        if (!Number.isFinite(nuevo)) { admToast('Escribe un saldo válido.', 'danger'); return; }
+        const actual = typeof _cliente?.saldoActual === 'number' ? _cliente.saldoActual : 0;
+        const delta = Math.round((nuevo - actual) * 100) / 100;
+        if (delta === 0) { admToast('El saldo ya es ese.'); close(); return; }
+        const motivo = document.getElementById('corregir-motivo').value.trim();
+        try {
+            await addMovimiento(CLIENTE_ID, {
+                tipo: 'ajuste', monto: delta,
+                descripcion: 'Corrección de saldo' + (motivo ? `: ${motivo}` : ''),
+                registradoPor: currentUser()?.user?.uid,
+            });
+            admToast('Corrección aplicada. El saldo se actualizará en un momento.');
+            close();
+        } catch (err) {
+            console.error('[cuenta] corregir saldo:', err);
+            admToast('No se pudo aplicar la corrección.', 'danger');
+        }
+    });
+}
+
+// ─── Editar datos del cliente (admin) ──────────────────────────────────────────
+function wireEditar() {
+    const sel = document.getElementById('ed-vendedora');
+    for (const [uid, nombre] of _vendedoras) {
+        const o = document.createElement('option'); o.value = uid; o.textContent = nombre; sel.appendChild(o);
+    }
+    const modal = document.getElementById('editar-modal');
+    const open = () => {
+        const c = _cliente || {};
+        document.getElementById('ed-nombre').value = c.nombre || '';
+        document.getElementById('ed-telefono').value = c.telefono || '';
+        document.getElementById('ed-whatsapp').value = c.whatsapp || '';
+        document.getElementById('ed-vendedora').value = c.vendedoraUid || '';
+        document.getElementById('ed-cumpleanos').value = c.cumpleanos || '';
+        document.getElementById('ed-notas').value = c.notas || '';
+        modal.hidden = false;
+        document.getElementById('ed-nombre').focus();
+    };
+    const close = () => { modal.hidden = true; };
+    document.getElementById('btn-editar').addEventListener('click', open);
+    document.getElementById('editar-close').addEventListener('click', close);
+    document.getElementById('editar-cancel').addEventListener('click', close);
+    modal.addEventListener('click', (e) => { if (e.target.id === 'editar-modal') close(); });
+
+    document.getElementById('editar-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const nombre = document.getElementById('ed-nombre').value.trim();
+        if (!nombre) { admToast('El nombre es obligatorio.', 'danger'); return; }
+        try {
+            await updateCliente(CLIENTE_ID, {
+                nombre,
+                telefono:   document.getElementById('ed-telefono').value.trim(),
+                whatsapp:   document.getElementById('ed-whatsapp').value.trim(),
+                vendedoraUid: document.getElementById('ed-vendedora').value || null,
+                cumpleanos: document.getElementById('ed-cumpleanos').value,
+                notas:      document.getElementById('ed-notas').value.trim(),
+            });
+            admToast('Datos actualizados.');
+            close();
+            // renderHeader se refresca solo por onClienteChange.
+        } catch (err) {
+            console.error('[cuenta] updateCliente:', err);
+            admToast('No se pudieron guardar los cambios.', 'danger');
+        }
+    });
+}
+
 async function init() {
     await requireAuth('admin');
     await adminDb.init();
@@ -162,6 +251,8 @@ async function init() {
 
     wireModal();
     wireAnular();
+    wireCorregir();
+    wireEditar();
 
     onClienteChange(CLIENTE_ID, (c) => renderHeader(c));
     onMovimientosChange(CLIENTE_ID, (list) => renderMovimientos(list));

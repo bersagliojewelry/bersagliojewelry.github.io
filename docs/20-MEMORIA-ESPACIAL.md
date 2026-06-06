@@ -91,9 +91,16 @@ Backend del CRM (aún SIN UI; las pantallas son Bloques 3-4). Vive en archivos y
 *   **`js/crm-service.js`** — capa de datos Firestore del CRM, **desacoplada** del `firestore-service.js` público (límite de módulo, charter §3). Clientes/movimientos/solicitudes/config + `carteraTotals`/`carteraPorVendedora` + `fmtCOP`.
 *   **`admin-cuentas.html` + `js/admin/cuentas.js`** (✅): lista de clientes con saldo + cartera total/por vendedora + modal nuevo cliente + búsqueda. Filas → ficha. Link "Cuentas" en las 6 páginas admin, gateado en `shared.js`.
 *   **`admin-cuenta.html` + `js/admin/cuenta.js`** (✅, singular = ficha): saldo en vivo (`onClienteChange`) + historial + registrar factura/abono (modal) + anular (admin). El saldo lo pone la CF; la UI solo agrega/anula y observa.
-*   **`admin-config.html` + `js/admin/config.js`** (✅): fecha de corte de migración + datos del negocio (`config/negocio`). Acceso vía ⚙ en el topbar de Cuentas.
+*   **`admin-config.html` + `js/admin/config.js`** (✅): fecha de corte de migración + datos del negocio (`config/negocio`) + **tablero de Pendientes** (colección `pendientes`, admin-only: listar/agregar/marcar resuelto — para mostrar a Kary los pendientes de setup). Acceso vía ⚙ en el topbar de Cuentas.
+*   **Migración (Bloque 5, en curso)**: `tools/extraer-kardex.py` (Excel→CSV revisable local) + `functions/seed-pendientes.mjs` (siembra el tablero) + `functions/seed-emulator.mjs` (E2E). Plan/hallazgos: `docs/PENDIENTES-Y-HALLAZGOS.md`.
 *   En **Cuentas** además: bandeja de **solicitudes de corrección** (aprobar→anula el movimiento+marca aprobada / rechazar) + **cumpleaños del mes** (link WhatsApp).
-*   **Bloque 3 (Panel de Kary) ✅ COMPLETO** (ADR §44). ⚠️ "cuentas atrasadas" (spec §7) diferido (necesita modelo de vencimiento). ⚠️ `auth.js ROLE_LEVELS` NO incluye `vendedora` → añadir en **Bloque 4** (app vendedora). Verificación funcional: emuladores+`npm run dev`+login (`30 §L-18`).
+*   **Bloque 3 (Panel de Kary) ✅ COMPLETO** (ADR §44). ⚠️ "cuentas atrasadas" (spec §7) diferido (necesita modelo de vencimiento).
+
+**App de vendedora (Bloque 4 ✅, ADR §45)** — móvil-first, scoped, shell propio (`.vend-*`, sin sidebar):
+*   **`vendedora.html` + `js/vendedora/cuentas.js`**: mis clientes (tarjetas) + mi cartera + nuevo cliente (a su nombre).
+*   **`vendedora-cliente.html` + `js/vendedora/ficha.js`**: saldo en vivo + movimientos + ➕factura/abono + **solicitar corrección** (no anula). `js/vendedora/ui.js` = helpers lean.
+*   Auth: `auth.js requireAuthExact(['vendedora','admin','owner'])` (membresía exacta — `vendedora` NO está en `ROLE_LEVELS`, es un eje aparte, L-19). `login.js` redirige por rol (vendedora→`vendedora.html`). `crm-service.onClientesDeVendedora` filtra por `vendedoraUid` (el `list` sin filtro lo deniegan las reglas).
+*   Verificación funcional del CRM (todos los bloques): emuladores+`npm run dev`+login (`30 §L-18`) o desplegar.
 
 **Colecciones nuevas en Firestore** (canal-agnósticas, spec `crm-cuentas-design.md`):
 | Colección | Quién escribe | Regla clave |

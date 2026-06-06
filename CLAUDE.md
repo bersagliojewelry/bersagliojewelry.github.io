@@ -97,8 +97,8 @@ Encabezado `## <fecha> — <título>` (convención por fecha de este cerebro) + 
 
 ### Reglas git
 
-- **Quién commitea: Claude, por defecto** (directiva del cliente 2026-06-06 — ver memoria `feedback-claude-commits`). Al cerrar una tarea, commitea tú: `git add` de archivos ESPECÍFICOS (NUNCA `git add -A` / `.`), mensaje HEREDOC con footer `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`, en la branch activa. Separa commits por tipo (código vs cerebro/docs).
-- NUNCA push sin pedido explícito. NUNCA `--amend` / `--no-verify` / `--no-gpg-sign` sin pedido. NO commitear `.claude/settings.local.json` (decisión del cliente).
+- **Quién commitea Y despliega: Claude, por defecto** (directivas del cliente 2026-06-06 — memoria `feedback-claude-commits`). **Commits**: al cerrar tarea, `git add` ESPECÍFICO (NUNCA `-A`/`.`), HEREDOC + footer `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`, branch activa, separados por tipo (código vs cerebro). **Deploys**: cuando toque desplegar, hazlo tú — pero SOLO con build/tests VERDES y anunciando qué se despliega; nunca un build roto (incidente L-14). Deploy a prod = merge `Desarrollo→main` (Pages) + `firebase deploy --only functions,firestore:rules`.
+- NUNCA `--amend` / `--no-verify` / `--no-gpg-sign` sin pedido. NO commitear `.claude/settings.local.json` ni secretos/datos privados (`*.xlsx`, `.env`).
 - NUNCA commitear secrets (`.env`, credentials, `*.pem`).
 - Al cerrar un pendiente, marcar su `TODO-NN` como ✅ + link al §X. Mantén este CLAUDE.md liviano.
 

@@ -559,6 +559,44 @@ Cliente: "continuemos con lo que recomiendes" (+ directiva: Claude commitea; rev
 
 **44.7 Doctrina + siguiente**: §3.6 (módulos desacoplados, reuso), patrón existente. Sin cache bump. ⚠️ **"Cuentas atrasadas"** (spec §7) **NO implementado**: requiere modelo de vencimiento/aging (los movimientos no tienen fecha de vencimiento) → diferido (decidir el modelo con Daniel/Kary). **Pendiente despliegue** (gated). **Siguiente (Bloque 4)**: app de vendedora responsive — **añadir `vendedora` a `auth.js ROLE_LEVELS`** (hoy no está) + vistas scoped. Luego B5 (migración Excel) y B6 (reportes). Lección L-18 (dev↔emuladores); espacial → `20`; arquitectura → `50 §5`.
 
+---
+
+## 2026-06-06 — CRM Fase 3 · Bloque 4 (App de vendedora, responsive)
+Cliente: "vamos a Bloque 4 y luego probamos". App móvil-first para que cada vendedora gestione SOLO su cartera, separada del Panel de Kary.
+
+**45.1 RCA / contexto**: las vendedoras (uso diario en celular) necesitan vistas simples scoped a sus clientes. Reusa `crm-service.js` + componentes de `css/admin.css` + auth Firebase compartida; pero shell propio (sin el sidebar admin).
+
+**45.2 Solución estructural**: (1) **`auth.js` `requireAuthExact(roles)`** — guard por **membresía exacta**. **Decisión clave**: `vendedora` NO se mete en `ROLE_LEVELS` (jerarquía owner>admin>editor); si tuviera nivel 1 (=editor) heredaría acceso a páginas de editor. Queda FUERA (nivel 0 → bloqueada de páginas jerárquicas); sus páginas usan `requireAuthExact(['vendedora','admin','owner'])`. (2) **`login.js`**: redirect por rol (`vendedora`→`vendedora.html`, resto→`admin.html`). (3) **`crm-service`**: `onClientesDeVendedora(uid)` (query `where vendedoraUid==uid` — un `list` sin ese filtro lo deniegan las reglas) + `crearSolicitud`. (4) **`vendedora.html`+`cuentas.js`**: mis clientes (tarjetas táctiles) + mi cartera + nuevo cliente (a su nombre, `origen:'vendedora'`). (5) **`vendedora-cliente.html`+`ficha.js`**: saldo en vivo + movimientos + ➕factura/➕abono + **solicitar corrección** (no anula; pide a Kary). `js/vendedora/ui.js` = helpers lean (sin arrastrar `firestore-service`). (6) `css/admin.css` `.vend-*` (móvil-first, fondo sólido sin auroras → ligero).
+
+**45.3 No-regresión**: archivos nuevos + `auth.js`/`login.js`/`crm-service.js` aditivos + `admin.css` aditivo. Backend, sitio público y panel admin intactos. Build VERDE. Sin cache bump (Vite hashea `admin.css`; páginas nuevas network-first).
+
+**45.4 Verificación**: `npm run build` VERDE (Vite descubre `vendedora.html` + `vendedora-cliente.html` + bundles). **Diseño validado por mocks** (capturas móviles de "Mis cuentas" + ficha mostradas a Daniel → consistente, aprobado). Funcional pendiente: login como vendedora con emuladores+seed (L-18) o desplegado.
+
+**45.5 Anti-patterns evitados**: rol como **eje separado** (no forzar la jerarquía → L-19); app **desacoplada y lean** (`ui.js` propio); las **reglas** son la fuente del aislamiento (la UI filtra, las reglas garantizan); **solicitar corrección** en vez de editar (append-only para vendedora).
+
+**45.6 Archivos** — NUEVOS: `vendedora.html`, `vendedora-cliente.html`, `js/vendedora/{ui,cuentas,ficha}.js`. MODIFICADOS: `js/auth.js` (`requireAuthExact`), `js/admin/login.js` (redirect por rol), `js/crm-service.js` (`onClientesDeVendedora`+`crearSolicitud`), `css/admin.css` (`.vend-*`). INTACTOS: backend, admin, sitio público.
+
+**45.7 Doctrina + siguiente**: §3.3, §3.6. Sin cache bump. Lección **L-19** (rol no-jerárquico). **Siguiente = PROBAR** (cliente: "luego probamos"): desplegar reglas+functions (o emuladores+seed), login como Kary y como vendedora, validar el flujo **factura → saldo** end-to-end. Luego B5 (migración del Kardex) y B6 (reportes). Espacial → `20`.
+
+---
+
+## 2026-06-06 — CRM Fase 3 · Verificación E2E (emuladores) + fix de login (lastLogin)
+Cliente: "vamos a Bloque 4 y luego probamos". Prueba end-to-end real en local tras construir B1-B4 (emuladores Firestore+Auth+Functions, SIN tocar producción).
+
+**46.1 RCA / contexto**: B1-B4 estaban verificados por tests (reglas 57, CF 12+5) + build, pero el **glue del navegador** (login por rol, UI→datos, CF→UI en vivo) no se había probado. Setup: `firebase emulators:start --only firestore,auth,functions --project bersaglio-jewelry` + `functions/seed-emulator.mjs` (owner+vendedora+1 cliente) + `npm run dev` (la app conecta a emuladores, L-18) + login automatizado en el preview.
+
+**46.2 Bug encontrado + fix**: el login de la **vendedora** falló con `PERMISSION_DENIED`. Causa: `signIn()` (`auth.js`) escribía `lastLogin` en `users/{uid}` del **propio** usuario, pero la regla `users` `update` solo permite owner/admin → vendedora/editor **denegados** → el `await setDoc` lanzaba → **login fallaba**. Habría bloqueado el login de TODA vendedora/editor en producción. **Fix**: `lastLogin` best-effort (try/catch) — es telemetría, no debe tumbar la sesión.
+
+**46.3 No-regresión**: solo `auth.js` (try/catch aditivo). Login de owner/admin intacto (su `lastLogin` sí lo permiten las reglas). Build verde.
+
+**46.4 Verificación (E2E, post-fix)**: **vendedora** login → su app (solo SU cliente, scoped) → registrar **factura $500.000** → CF `recalcSaldoCliente` recomputa → saldo en vivo **$500.000** → **abono $200.000** → saldo **$300.000** (resta exacta). **Owner** login → redirect a `admin.html` → Panel de Kary ve el mismo cliente + cartera **$300.000** (read admin sin filtro). Toda la cadena (auth + RBAC scoped + CF + UI en vivo) confirmada con datos reales en emulador.
+
+**46.5 Anti-patterns evitados**: telemetría no-crítica nunca bloquea auth (best-effort); **E2E con emuladores caza bugs de integración** que los tests de reglas/unitarios NO ven (el write de `lastLogin` de signIn no estaba en ningún test); verificación con datos reales, no asumida (§3.3).
+
+**46.6 Archivos** — MODIF: `js/auth.js` (lastLogin best-effort). NUEVO: `functions/seed-emulator.mjs` (herramienta E2E local). `firebase.json` (ignore `*.test.mjs` + `seed-emulator.mjs` del deploy de functions).
+
+**46.7 Doctrina + siguiente**: §3.3. Sin cache bump. **CRM (B1-B4) VERIFICADO end-to-end.** Pendiente: B5 (migración del Kardex), B6 (reportes), "atrasados" (aging). **Despliegue a producción gated por Daniel** (merge a `main` + `firebase deploy --only functions,firestore:rules`). Lección **L-20**; procedimiento E2E reusable (seed + L-18).
+
 
 
 

@@ -113,5 +113,21 @@ Caso real: ADR §43 (`recalcSaldoCliente` + `functions/saldo.js`). Java local: `
 - **Mostrar SOLO el diseño** (sin auth/datos, p.ej. para que el cliente apruebe la dirección): crear un **mock estático** `_preview-*.html` (mismo `css/admin.css`, datos hardcodeados, sin imports de JS), renderizarlo en el preview, capturar, y BORRARLO (no commitear). Sortea el guard de auth y L-05.
 - ⚠️ Screenshots del preview se **cuelgan** con el CSS de cristal del admin (L-09): la 1ª captura tras carga fresca a veces pasa; si insiste en timeout, NO pelear — describir + confiar en build/estructura + reuso de componentes ya validados. Caso real: ADR §44.
 
+### L-19: Roles que no son jerárquicos — no forzarlos en la escala de niveles
+`vendedora` NO es "más/menos que" owner/admin/editor: es un **eje distinto** (CRM scoped vs contenido web). Meterla en `ROLE_LEVELS={owner:3,admin:2,editor:1}` con nivel 1 le daría acceso a páginas de `editor` (`hasMinRole('vendedora','editor')` = 1>=1 = true → piezas/colecciones). Solución: dejarla **FUERA** de la escala (queda nivel 0 → bloqueada de las páginas jerárquicas) + un guard por **membresía exacta** `requireAuthExact(['vendedora','admin','owner'])` para sus propias páginas. Regla general: si un rol no encaja en un "≥ que" limpio, NO lo metas en la jerarquía numérica; usa allow-list exacta. (En `functions/index.js` sí está `vendedora:1` pero ahí `ROLE_LEVEL` solo valida que el CALLER tenga ≥ owner para crear usuarios — no concede acceso.) Caso: ADR §45.
+
+### L-20: Una escritura secundaria (telemetría) no debe tumbar un flujo crítico (login)
+`signIn` hacía `await setDoc({lastLogin})` en el doc del propio usuario SIN try/catch; como las reglas de `users` no dejan auto-actualizarse (solo owner/admin), una vendedora/editor era **denegada** y el LOGIN entero fallaba. Regla: una escritura **secundaria** (telemetría, contadores, lastLogin, analytics) va en **best-effort** (try/catch) — nunca bloquea el flujo principal. Corolario: si una regla restringe `users` a admin, "el usuario actualiza su propio lastLogin" choca → best-effort en cliente (elegido) o permitir self-update de campos no-sensibles en reglas. **Lo cazó el E2E con emuladores** (los tests de reglas no cubrían el write de `lastLogin` de signIn) — recordatorio de que el E2E ve lo que el unit test no. Caso: ADR §46.
+
+### L-21: Verificar la estructura de CADA hoja de un Excel heredado (no extrapolar)
+Migrando el Kardex, el supuesto "una fila = un cliente con saldo" valió para la hoja de Kary
+(por cliente) pero NO para la de vendedoras (**por factura**: cada fila es una compra). El
+extractor produjo basura para vendedoras: los "#REF! de clientas" eran descripciones de
+producto ("Cadena", "Dije San Benito"). Solo un **volcado crudo de filas reales** lo reveló.
+Regla: ante un Excel heredado/desordenado, **verifica la estructura de CADA hoja con un volcado
+crudo ANTES de escribir el extractor**; no extrapoles de una hoja a otra ni confíes en un
+análisis previo (el `kardex-analisis` describía la hoja de Kary y se asumió igual para todas).
+Consecuencia: la hoja de vendedoras no se auto-migra → se cargan los clientes fresco. Caso: Bloque 5.
+
 ### L-15: Datos privados del negocio NUNCA al repo (sobre todo si es público)
 GitHub Pages en cuentas Free sirve desde repos **públicos** → TODO el repo (incl. `docs/`) es visible en internet. Un Excel/CSV con saldos, nombres de clientes o deudas en la raíz = **fuga de datos** al commitear. Receta: `.gitignore` para `*.xlsx`/`*.xls`/`*.csv` (datos operativos ≠ código); en docs de diseño **anonimizar** nombres reales (`[Nombre]`, "Vendedora N"). Los datos reales viven LOCAL o en Firestore (privado, con reglas), nunca en el repo. Caso real (2026-06-06): el Kardex `*.xlsx` se gitignoró + el análisis se anonimizó.

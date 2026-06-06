@@ -90,10 +90,16 @@ export async function signIn(email, password) {
 
         _userProfile = snap.data();
 
-        // Update last login
-        await setDoc(doc(firestoreDb, 'users', cred.user.uid), {
-            lastLogin: serverTimestamp()
-        }, { merge: true });
+        // Update last login — best-effort: las reglas de `users` no dejan que un
+        // usuario actualice su PROPIO doc (solo owner/admin), así que para editor/
+        // vendedora este write es denegado. NO debe tumbar el login (es telemetría).
+        try {
+            await setDoc(doc(firestoreDb, 'users', cred.user.uid), {
+                lastLogin: serverTimestamp()
+            }, { merge: true });
+        } catch (e) {
+            console.warn('[auth] lastLogin no actualizado (permiso):', e?.code || e);
+        }
 
         return { user: cred.user, profile: _userProfile };
     } catch (err) {
@@ -199,6 +205,41 @@ export async function requireAuth(minRole = 'editor') {
     // Auth passed — show the page
     document.body.style.display = '';
 
+    return { user: _currentUser, profile: _userProfile };
+}
+
+/**
+ * Auth guard por MEMBRESÍA EXACTA de rol (no jerárquico). Para la app de vendedora:
+ * `vendedora` NO está en la jerarquía de contenido (owner>admin>editor) a propósito,
+ * para que no herede acceso a páginas de editor. Aquí se permite por lista explícita.
+ *
+ * @param {string[]} allowedRoles - p.ej. ['vendedora','admin','owner']
+ */
+export async function requireAuthExact(allowedRoles) {
+    await waitForAuth();
+
+    if (!_currentUser) {
+        sessionStorage.removeItem('bj_auth');
+        window.location.replace('admin-login.html');
+        throw new Error('Not authenticated');
+    }
+
+    if (!_userProfile) {
+        try {
+            const snap = await getDoc(doc(firestoreDb, 'users', _currentUser.uid));
+            _userProfile = snap.exists() ? snap.data() : null;
+        } catch {
+            _userProfile = null;
+        }
+    }
+
+    if (!_userProfile || !allowedRoles.includes(_userProfile.role)) {
+        sessionStorage.removeItem('bj_auth');
+        window.location.replace('admin-login.html?error=forbidden');
+        throw new Error('Role not allowed');
+    }
+
+    document.body.style.display = '';
     return { user: _currentUser, profile: _userProfile };
 }
 

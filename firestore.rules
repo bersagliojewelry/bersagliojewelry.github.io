@@ -185,6 +185,12 @@ service cloud.firestore {
       allow update, delete: if isAdmin();   // aprobar / rechazar / limpiar
     }
 
+    // ─── CRM: pendientes de configuración / setup (tablero visible para Kary) ────
+    match /pendientes/{id} {
+      allow read:  if isAdmin();
+      allow write: if isAdmin();
+    }
+
     // ─── Users (role management) ───────────────────────────────────────────────
 
     match /users/{userId} {

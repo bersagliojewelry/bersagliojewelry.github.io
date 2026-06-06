@@ -54,6 +54,7 @@ before(async () => {
         await setDoc(doc(db, 'config/status'),  { ok: true });
         await setDoc(doc(db, 'config/negocio'), { fechaCorteMigracion: '2025-12-31' });
         await setDoc(doc(db, 'solicitudesCorreccion/s1'), { vendedoraUid: 'vendUid', clienteId: 'cliV', estado: 'pendiente' });
+        await setDoc(doc(db, 'pendientes/p1'), { titulo: 'Definir corte', categoria: 'definir-kary', estado: 'pendiente' });
     });
 });
 
@@ -287,4 +288,14 @@ test('SALDO · admin crea ajuste con monto negativo (corrección a la baja)', as
 test('SALDO · vendedora NO crea factura con monto negativo', async () => {
     await assertFails(setDoc(doc(asUser('vendUid'), 'clientes/cliV/movimientos/mFacNeg'),
         { tipo: 'factura', monto: -1, registradoPor: 'vendUid' }));
+});
+
+// ─── CRM: pendientes (tablero admin-only) ────────────────────────────────────
+test('PEND · admin lee y escribe pendientes', async () => {
+    await assertSucceeds(getDoc(doc(asUser('adminUid'), 'pendientes/p1')));
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'pendientes/p2'), { titulo: 'Nuevo', estado: 'pendiente' }));
+});
+test('PEND · vendedora y editor NO acceden a pendientes', async () => {
+    await assertFails(getDoc(doc(asUser('vendUid'), 'pendientes/p1')));
+    await assertFails(getDoc(doc(asUser('editorUid'), 'pendientes/p1')));
 });

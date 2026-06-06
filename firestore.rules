@@ -24,20 +24,60 @@ service cloud.firestore {
       return isAuth() && getUserRole() in ['owner', 'admin', 'editor'];
     }
 
+    // ─── S6: validación de campos (tolerante a merge/partial updates) ────────────
+    // En update con merge, request.resource.data = estado RESULTANTE completo, por
+    // eso en `update` solo validamos TIPOS si el campo está presente (no exigimos
+    // presencia → no rompe patches de imágenes ni docs legacy). En `create` sí
+    // exigimos los obligatorios (name/code que el form de admin garantiza).
+    function pieceCreateValid() {
+      let d = request.resource.data;
+      return d.name is string && d.name.size() > 0
+          && d.code is string && d.code.size() > 0
+          && (d.price == null    || d.price is number)
+          && (d.featured == null || d.featured is bool)
+          && (d.images == null   || d.images is list)
+          && (d.specs == null    || d.specs is map);
+    }
+    function pieceTypesValid() {
+      let d = request.resource.data;
+      return (d.name == null       || d.name is string)
+          && (d.code == null       || d.code is string)
+          && (d.slug == null       || d.slug is string)
+          && (d.collection == null || d.collection is string)
+          && (d.featured == null   || d.featured is bool)
+          && (d.price == null      || d.price is number)
+          && (d.images == null     || d.images is list)
+          && (d.specs == null      || d.specs is map);
+    }
+    function colCreateValid() {
+      let d = request.resource.data;
+      return d.name is string && d.name.size() > 0
+          && (d.featured == null || d.featured is bool);
+    }
+    function colTypesValid() {
+      let d = request.resource.data;
+      return (d.name == null     || d.name is string)
+          && (d.slug == null     || d.slug is string)
+          && (d.subtitle == null || d.subtitle is string)
+          && (d.featured == null || d.featured is bool);
+    }
+
     // ─── Pieces (products) ─────────────────────────────────────────────────────
 
     match /pieces/{pieceId} {
-      allow read: if true;                     // Public: anyone can browse
-      allow create, update: if isEditor();     // Editors+ can create/edit
-      allow delete: if isAdmin();              // Admin+ can delete
+      allow read: if true;                                 // Public: anyone can browse
+      allow create: if isEditor() && pieceCreateValid();   // S6: editor+ con campos válidos
+      allow update: if isEditor() && pieceTypesValid();    // S6: tolerante a merge/partial
+      allow delete: if isAdmin();                          // Admin+ can delete
     }
 
     // ─── Collections (categories) ──────────────────────────────────────────────
 
     match /collections/{colId} {
-      allow read: if true;                     // Public
-      allow create, update: if isEditor();     // Editors+
-      allow delete: if isAdmin();              // Admin+
+      allow read: if true;                                 // Public
+      allow create: if isEditor() && colCreateValid();     // S6
+      allow update: if isEditor() && colTypesValid();      // S6: tolerante a merge/partial
+      allow delete: if isAdmin();                          // Admin+
     }
 
     // ─── Reviews ───────────────────────────────────────────────────────────────

@@ -6,8 +6,8 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v8 for Fase 1 polish (transition:all→props, critical-CSS radii sync ×12 shells, hero #000→ink-emerald).
-const CACHE_NAME    = 'bersaglio-v8';
+// Bumped to v9 — HOTFIX prod: restaurar fallback de llaves Firebase (S1 tumbó el sitio). Fuerza refresco del shell.
+const CACHE_NAME    = 'bersaglio-v9';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

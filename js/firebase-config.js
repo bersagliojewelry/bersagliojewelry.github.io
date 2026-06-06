@@ -17,22 +17,20 @@ import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
 
-// Env es la ÚNICA fuente — sin fallback hardcodeado (S1). CI inyecta los secrets
-// (.github/workflows/deploy.yml); en local viven en .env (NO commiteado, .gitignore).
+// Las API keys WEB de Firebase son PÚBLICAS por diseño (viajan en el bundle cliente
+// igual). El fallback hardcodeado es una RED DE SEGURIDAD: si el build no recibe los
+// VITE_* (p.ej. secrets de CI sin configurar), el sitio NO se cae. La seguridad real
+// son las reglas (firestore/storage) + App Check, NO esconder la key. (Revertido S1:
+// quitar el fallback tumbó producción — ver docs/30 L-14.)
 const firebaseConfig = {
-    apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
-    authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-    projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID,
-    storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    appId:             import.meta.env.VITE_FIREBASE_APP_ID,
-    measurementId:     import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+    apiKey:            import.meta.env.VITE_FIREBASE_API_KEY            || 'AIzaSyDcAvuRKN8_h_uSXzXkCzC0foLxTOkd5WM',
+    authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN        || 'bersaglio-jewelry.firebaseapp.com',
+    projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID         || 'bersaglio-jewelry',
+    storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET     || 'bersaglio-jewelry.firebasestorage.app',
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '111509809378',
+    appId:             import.meta.env.VITE_FIREBASE_APP_ID             || '1:111509809378:web:8df8ee7df50afe6f1896bb',
+    measurementId:     import.meta.env.VITE_FIREBASE_MEASUREMENT_ID     || 'G-F0CEWY7SP1'
 };
-
-// Fallo claro si falta el entorno (en vez de inicializar Firebase a medias).
-if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-    console.error('[Firebase] Faltan variables VITE_FIREBASE_* (.env local o secrets de CI). Revisa tu entorno antes de continuar.');
-}
 
 // ─── Initialize Firebase ─────────────────────────────────────────────────────
 

@@ -10,15 +10,15 @@
 | Señal | Valor (al 2026-06-05) |
 |---|---|
 | **Build** | 🟢 Vite VERDE (✓ ~3.2s). **Rediseño Fase 1 (mirror) aplicado**: shell global + Home (modularizada `js/home/*` + Atelier + Films + Redes + dock Atajos) + Nosotros + Contacto. Verificado por build + estructura DOM + **pulido de doctrina (transition/radii/#000) aplicado y verificado en vivo** (ADR §41, build ✓3.68s). ⚠️ Preview headless local no pinta dinámico (L-05) — verificar visual en `npm run dev`/deploy. |
-| **Cache version vigente** | `bersaglio-v8` (en `public/sw.js`). Bump por pulido Fase 1 (transition/radii/#000). |
+| **Cache version vigente** | `bersaglio-v9` (en `public/sw.js`). Bump por HOTFIX prod (restaurar fallback de llaves Firebase). |
 | **Branch activa** | `Desarrollo` — rediseño Fase 1 **commiteado (`e290f83`) + pusheado a `origin/Desarrollo`** (0/0 ahead/behind, verif. 2026-06-05). Producción (`main`) sin tocar. |
 | **Cerebro** | 🧠 template v1.0.0 · `brain:check` SANO (sin huérfanos/vacíos) · skills: 74 catalogadas, 3 instaladas user-level (`~/.claude/skills/`). |
 | **Backend / Firebase** | Reglas de Firestore y Storage configuradas en `firestore.rules` y `storage.rules`. |
 | **Hosting** | GitHub Pages (`bersagliojewelry.co` o `bersagliojewelry.github.io`). Auto-deploy vía GitHub Actions. |
 
 ## ⚠️ Flags de riesgo activos (→ Fase 2 hardening · detalle en `docs/41-SEGURIDAD.md`)
-- 🟡 **Fase 2 S1 en curso**: fallback hardcodeado **eliminado** (`firebase-config.js`, env = única fuente + guard; CI inyecta secrets ✓). Pendiente cliente/consola: restringir API key (GCP) + **App Check**. Las API keys web no son secretas por diseño. Detalle: `docs/41-SEGURIDAD §1.5`.
-- 🟠 **Reglas/escala (Fase 2)**: ✅ S5 (reseñas approved) + S6 (validate de campos) escritas + tests CI; ✅ `onSnapshot` con `limit(500)` (S3). Pendiente Tier C: S2 storage (dep. S4 claims), App Check, CSP `<meta>`. Verificar CI verde + deploy gated antes de merge a main.
+- 🟢 **Incidente prod 2026-06-06 RESUELTO en código**: quitar el fallback de llaves (S1) tumbó el sitio (secrets `VITE_*` no estaban en GitHub) → **fallback restaurado** (build verde); revive al desplegar. Pendiente: poblar secrets `VITE_*` en GitHub. Detalle: `41 §1.5` + `30 L-14`.
+- 🟠 **Reglas/escala (Fase 2)**: ✅ S5 (reseñas approved) + S6 (validate de campos) escritas + tests CI; ✅ `onSnapshot` con `limit(500)` (S3). Pendiente Tier C: S2 storage (dep. S4 claims), App Check, CSP `<meta>`. ⚠️ CI rules-test **pausado** (auto-run off; falla sin diagnosticar). Reglas S5/S6 desplegadas vía merge a main.
 
 ## 🧩 Sub-sistemas (resumen)
 Diseño Liquid Glass (Vite/Bundled) ✅ · Sincronización en vivo con Firestore ✅ · Checkout Stepper de 3 pasos ✅ · Cart Drawer lateral ✅ · Animaciones de entrada Staggered ✅

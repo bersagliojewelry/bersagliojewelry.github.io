@@ -25,6 +25,17 @@ OUT = "tools/migracion-review.csv"
 
 REF_TOKENS = ("#REF!", "#VALUE!", "#NAME?", "#DIV/0!", "#N/A", "#NULL!", "#NUM!")
 
+# Filas que NO son cliente: la fila de TOTAL/SUBTOTAL/SUMA del Excel (col A) trae un saldo
+# numérico (la suma de la columna) y se colaba como si fuera una clienta. Incidente del
+# lanzamiento 2026-06-06: "TOTAL" entró con $506M (= la suma de todos) e infló la cartera al
+# doble; se borró de prod. Anclado al inicio para NO matchear nombres reales que contengan la
+# palabra a mitad de cadena. (Ver docs/30 L-22.)
+NON_CLIENT_RE = re.compile(r"(?i)^\s*(gran\s+)?(total(es)?|subtotal|suma|cartera)\b")
+
+
+def is_non_client_row(raw):
+    return bool(NON_CLIENT_RE.match(str(raw or "")))
+
 
 def detect_saldo_col(ws_formulas):
     """La columna de saldo final = la de la fórmula con más referencias de celda
@@ -80,6 +91,8 @@ def main():
         for r in range(2, wsV.max_row + 1):
             raw = wsV.cell(r, 1).value          # col A
             if raw is None or str(raw).strip() == "":
+                continue
+            if is_non_client_row(raw):           # fila de TOTAL/SUBTOTAL del Excel, no un cliente
                 continue
             saldo_ini = wsV.cell(r, 2).value     # col B
             saldo_fin_f = wsF.cell(r, saldo_col).value if saldo_col else None

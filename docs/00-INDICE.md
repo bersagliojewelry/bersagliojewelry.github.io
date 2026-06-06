@@ -91,6 +91,8 @@
 | §44 | 2026-06-06 — CRM Fase 3 · Bloque 3: Panel de Kary (primera UI — Cuentas, ficha, bandeja, cumpleaños, config) | 545 |
 | §45 | 2026-06-06 — CRM Fase 3 · Bloque 4: App de vendedora responsive (mis clientes, ficha, factura/abono, solicitar corrección) | 564 |
 | §46 | 2026-06-06 — CRM Fase 3 · Verificación E2E (emuladores) + fix login (lastLogin best-effort) | 583 |
+| §47 | 2026-06-06 — CRM Fase 3 · LANZAMIENTO a prod: deploy (reglas+functions) + migración Fase A (344 clientes de Kary) | 600 |
+| §48 | 2026-06-06 — Mantenimiento · Upgrade runtime Cloud Functions (Node 20→22 + firebase-functions v6→v7) | 617 |
 ---
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §32+ al historial,

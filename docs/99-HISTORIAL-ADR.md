@@ -597,6 +597,40 @@ Cliente: "vamos a Bloque 4 y luego probamos". Prueba end-to-end real en local tr
 
 **46.7 Doctrina + siguiente**: §3.3. Sin cache bump. **CRM (B1-B4) VERIFICADO end-to-end.** Pendiente: B5 (migración del Kardex), B6 (reportes), "atrasados" (aging). **Despliegue a producción gated por Daniel** (merge a `main` + `firebase deploy --only functions,firestore:rules`). Lección **L-20**; procedimiento E2E reusable (seed + L-18).
 
+## 2026-06-06 — CRM Fase 3 · LANZAMIENTO a producción: deploy + migración Fase A (344 clientes de Kary)
+Cliente: "retomemos el lanzamiento del CRM". Día de lanzamiento: desplegar el CRM a prod y migrar la cartera real de Kary. Precedido por una auditoría de preparación read-only (workflow de 4 agentes) que aterrizó el estado REAL (§3.3) y corrigió supuestos del playbook.
+
+**47.1 Causa raíz / contexto**: El CRM (B1-B5 + editabilidad) estaba construido y verificado en emulador (345/345) pero NO desplegado a prod. El audit reveló 3 correcciones al cerebro: (a) `main` NO estaba "intacta" — ya tenía rediseño Fase 1 + CRM B1-4 (merge del incidente L-14); (b) el playbook afirmaba que `firebase-deploy.yml` despliega reglas+functions → **FALSO**, es Hosting-only (L-22); (c) **`recalcSaldoCliente` NO existía en prod** (`functions:list` mostró solo las 5 pre-CRM) = bloqueo duro para migrar (el cargador hace poll esperándola).
+
+**47.2 Solución (secuencia de lanzamiento)**: (1) **Deploy manual** `firebase deploy --only firestore:rules,firestore:indexes,functions` → reglas CRM + índices + **`recalcSaldoCliente` creada** + 5 functions actualizadas (`--force` seguro: `index.js` sigue exportando las 5). (2) Merge `Desarrollo→main` ya hecho vía **PR #189** (`a04b1a3`, 12:35) → CI redesplegó sitio (Pages+Hosting). (3) **ADC** para el Admin SDK: `gcloud auth application-default login` + `set-quota-project` (NO basta `firebase login`, L-23). (4) **Preflight read-only** (ADC ok, `clientes`=0, sin marca) antes de escribir. (5) **Migración** `$env:CUTOFF='2026-06-06'; node functions/cargar-migracion.mjs` → 345 clientes + aperturas → CF recomputó → **345/345 exacto** al primer intento. (6) Seed de 12 pendientes.
+
+**47.3 No-regresión**: sitio en vivo HTTP 200 verificado (`bersagliojewelry.co` + `.github.io`) post-deploy; fallback de llaves Firebase presente (L-14 cubierto). Reglas compiladas OK; las 5 functions previas solo actualizadas (no borradas).
+
+**47.4 Verificación + corrección de datos**: la verificación post-migración leyó **cartera $1.012M** con un cliente **"TOTAL" = $506M** en el top → era la **fila de totales del Excel** colada como cliente (su saldo ≈ la suma de los demás). Borrado de prod (1 doc + movimiento). **Estado final correcto: 344 clientes, cartera $506.510.780, 12 pendientes, 13 con saldo a favor (anticipos).** Extractor parchado (`NON_CLIENT_RE`) para no recolarla (L-24).
+
+**47.5 Anti-patterns evitados**: no confiar en refs/playbook stale (audit + `git fetch` + `functions:list` reales, §3.3); no escribir a prod sin preflight read-only; no asumir que el merge a `main` despliega reglas/functions (es manual); verificación de datos post-migración (cazó la fila TOTAL), no asumir "345 ok".
+
+**47.6 Archivos** — código MODIF: `tools/extraer-kardex.py` (filtro `NON_CLIENT_RE`). PROD (no-código): reglas+índices+functions desplegadas; 344 clientes + aperturas + 12 pendientes en Firestore. Temporales creados+borrados (`functions/_{preflight,verify,analyze,delete-total}.mjs`). Cerebro: 05/10/30/99/00.
+
+**47.7 Doctrina + siguiente**: §3.3 + §G.4 (auditoría previa). Sin cache bump (no se tocó shell). Lecciones **L-22/L-23/L-24**. **Pendiente post-lanzamiento**: vendedoras (crear accesos — faltan correos; cargan clientes fresco, L-21), revisar nombres con Kary (editabilidad lista), B6 reportes + "atrasados" (aging con `config.diasPlazo`). Deuda técnica: runtime **Node 20** (decommission 2026-10-30) + `firebase-functions` viejo.
+
+## 2026-06-06 — Mantenimiento · Upgrade del runtime de Cloud Functions (Node 20→22 + firebase-functions v6→v7)
+Tarea spin-off de la deuda técnica de ADR §47 (avisos del deploy). Daniel la lanzó; ejecutada en la rama `chore/upgrade-functions-v7-node22`.
+
+**48.1 Causa**: El deploy del lanzamiento avisó que el runtime **Node 20** se decomisiona el 2026-10-30 y que `firebase-functions` (6.6.0) estaba viejo (latest 7.2.5, un major por delante). Sin actualizar, a futuro no se podría desplegar functions.
+
+**48.2 Solución**: `functions/package.json` → `engines.node` 20→**22**, `firebase-functions` ^6.3.0→**^7.2.5**, `firebase-admin` ^13.0.0→**^13.10.0**. `npm install --prefix functions`. **Cero cambios de código**: la superficie usada (v2 `onCall`/`HttpsError` + `onDocumentWritten/Created/Deleted`) NO cambió en v7.
+
+**48.3 No-regresión / compatibilidad** (§3.3, evidencia múltiple): (a) breaking changes v7 del release oficial (WebFetch) — Node mín 18, se elimina `functions.config()`, v1 Event→LegacyEvent; NADA toca nuestra superficie; (b) el `package.json` instalado (autoritativo offline): `engines.node>=18` (22 ✅) + `peerDependencies.firebase-admin ^11||^12||^13` (13.10 ✅) + exports `./v2/https` y `./v2/firestore` con `require`; (c) **tests verdes con v7**: `test:saldo` 12/12 (puro) + `test:saldo:integration` 5/5 (emulador carga las 6 functions y `recalcSaldoCliente` ejecuta).
+
+**48.4 Deploy + verificación en prod**: `firebase deploy --only functions` → las **6 functions actualizadas a Node.js 22 (2nd Gen)**, sin avisos de deprecación. `functions:list` confirma `nodejs22` en las 6. **Smoke test en prod** (cliente TEMP `activo:false`): `recalcSaldoCliente` recalculó factura→123, abono→100; cliente borrado. Verificado: **344 clientes reales intactos, 0 residuos**.
+
+**48.5 Anti-patterns evitados**: no subir un major a ciegas (breaking changes + tests + smoke); no confiar solo en memoria del changelog (el agente de research quedó sin red y NO inventó, §3.3 — se usó el paquete instalado + release oficial); smoke en prod sin tocar datos reales (temp + cleanup).
+
+**48.6 Archivos** — MODIF: `functions/package.json` (+ `functions/package-lock.json`). PROD: 6 functions redeployadas a nodejs22. Temporales creados+borrados (`functions/_smoke-v7.mjs`, `_count.mjs`). Cerebro: 05/10/30/99/00.
+
+**48.7 Doctrina + siguiente**: §3.3 + L-17 (testing functions). Sin cache bump. Lección **L-25**. Deuda Node 20 de §47 → **RESUELTA**. Repo: rama `chore/upgrade-functions-v7-node22` mergeada a `Desarrollo`; PR a `main` pendiente (flujo de Daniel).
+
 
 
 

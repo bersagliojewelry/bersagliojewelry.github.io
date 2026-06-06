@@ -75,6 +75,27 @@ test('pieces · lectura pública', async () => {
 test('pieces · cliente autenticado SIN rol NO escribe', async () => {
     await assertFails(setDoc(doc(asUser('customerUid'), 'pieces/p2'), { name: 'X', slug: 'x' }));
 });
-test('pieces · editor SÍ escribe', async () => {
-    await assertSucceeds(setDoc(doc(asUser('editorUid'), 'pieces/p3'), { name: 'X', slug: 'x' }));
+test('pieces · editor SÍ crea (con name+code)', async () => {
+    await assertSucceeds(setDoc(doc(asUser('editorUid'), 'pieces/p3'), { name: 'X', code: 'C-3', slug: 'x' }));
+});
+
+// ─── S6: validación de campos server-side ────────────────────────────────────
+test('S6 · NO crea pieza sin code', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'pieces/p4'), { name: 'Sin code' }));
+});
+test('S6 · NO crea pieza con name no-string', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'pieces/p5'), { name: 123, code: 'C-5' }));
+});
+test('S6 · NO crea pieza con price no-numérico', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'pieces/p6'), { name: 'X', code: 'C-6', price: 'caro' }));
+});
+test('S6 · patch parcial (solo images, merge) en pieza existente SÍ pasa', async () => {
+    // Flujo crítico del admin (patchPiece con merge) — NO debe romperse.
+    await assertSucceeds(setDoc(doc(asUser('editorUid'), 'pieces/p1'), { images: ['a.webp'], image: 'a.webp' }, { merge: true }));
+});
+test('S6 · colección: editor crea con name', async () => {
+    await assertSucceeds(setDoc(doc(asUser('editorUid'), 'collections/c1'), { name: 'Anillos', slug: 'anillos' }));
+});
+test('S6 · colección: NO crea sin name', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'collections/c2'), { subtitle: 'x' }));
 });

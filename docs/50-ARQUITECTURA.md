@@ -33,7 +33,7 @@ genera más valor con menos fricción"**.
 
 ## 3. Charter — Reconstrucción del CRM (Fase 3, reencuadrada)
 **Objetivo**: REEMPLAZAR el CRM/admin actual por uno **bien arquitecturado, escalable, seguro y completo**.
-**Dominio**: **Bersaglio Jewelry (alta joyería)** — ⚠️ *pendiente confirmar el vertical con el cliente; AltorraCars = dev/agencia, no el cliente final.*
+**Dominio**: **Bersaglio Jewelry (alta joyería)** — ✅ confirmado (2026-06-05): a Bersaglio se le hará **CRM + facturación + inventario** en ESTA web. AltorraCars = dev/agencia que lleva **varios proyectos en paralelo** (de ahí cruces ocasionales de mensajes de commit entre repos — el commit `8249f19` quedó con un mensaje de otro proyecto, pero su contenido SÍ es de Bersaglio).
 - **Skills de apoyo** (ya disponibles — NO requieren crear skill nueva): `crm-architect` (modelo de datos, pipeline, RBAC, reglas, Functions, CI/CD; packs joyería-retail/inmobiliaria/concesionario) + `ecommerce` (DIAN/PSE/Wompi, facturación CO) + `security-review`.
 - **Módulos previstos** (límites candidatos, bajo acoplamiento): Catálogo/Inventario · CRM (leads/clientes/contactos) · Pipeline de ventas · Facturación (DIAN — necesita proveedor → fasificar) · Reportes · Auth/RBAC.
 - **Arranque de Fase 3** (cuando se decida): brainstorm → spec → `writing-plans` → ejecución incremental verificada; cada decisión fuerte → Consejo Externo (`15`) + registrar en §5.

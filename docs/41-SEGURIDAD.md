@@ -38,7 +38,8 @@ Estado de hallazgos:
 - **S1** — ✅ *código*: fallback eliminado (`firebase-config.js`, env única fuente + guard). ⏳ *cliente/Tier C*: restringir API key (GCP) + App Check. Rotación innecesaria.
 - **S3** — ✅ `limit(500)` en `onPiecesChange` + `onInquiriesChange` (sin cambio a escala actual). Futuro: `orderBy`+cursor en pieces; `unsubscribe` al salir = responsabilidad del callsite (auditar admin).
 - **S5** — ✅ regla endurecida (`allow read: if approved==true || isAdmin()`) + test en `tests/firestore-rules.test.mjs`. Verificación = **CI** (`firestore-rules-test.yml`); pendiente push para green. Deploy gated.
-- **S2/S4/S6/S7/S8** — pendientes (Tier B reglas: S6 con CI+deploy gated; Tier C: S4 claims, S2 storage, S7 email-verify, App Check, CSP `<meta>`).
+- **S6** — ✅ `validate` tolerante a merge (pieces: name+code obligatorios en create, tipos-si-presente en update; collections: name) + 6 tests (incl. patch parcial de imágenes). Verificación CI. **Tier B (reglas) COMPLETO: S5 + S6.**
+- **S2/S4/S7/S8** — pendientes Tier C: S4 custom claims (functions), S2 storage role (dep. S4), S7 email-verify (functions), App Check + restricción de key (consola), CSP `<meta>` (GitHub Pages).
 
 > 🧪 **Harness de testing de reglas (CI, 2026-06-05)**: `@firebase/rules-unit-testing` + `tests/firestore-rules.test.mjs` (node:test) + `.github/workflows/firestore-rules-test.yml` (setup-java + `emulators:exec`). Toda regla nueva se verifica en CI antes de `firebase-deploy.yml`. Local necesita JDK (no instalado) → `30 §L-12`.
 

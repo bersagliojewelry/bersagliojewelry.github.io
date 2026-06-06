@@ -18,7 +18,7 @@
 
 ## ⚠️ Flags de riesgo activos (→ Fase 2 hardening · detalle en `docs/41-SEGURIDAD.md`)
 - 🟡 **Fase 2 S1 en curso**: fallback hardcodeado **eliminado** (`firebase-config.js`, env = única fuente + guard; CI inyecta secrets ✓). Pendiente cliente/consola: restringir API key (GCP) + **App Check**. Las API keys web no son secretas por diseño. Detalle: `docs/41-SEGURIDAD §1.5`.
-- 🟠 **Reglas/escala (Fase 2 pendiente)**: Storage sube cualquier autenticado (S2, dep. S4); reseñas `read:if true` (S5, cliente ya filtra); sin `validate` server-side (S6). ✅ `onSnapshot` admin con `limit(500)` (S3). Reglas = "decisión cara" → emulador + deploy gated.
+- 🟠 **Reglas/escala (Fase 2)**: ✅ S5 (reseñas approved) + S6 (validate de campos) escritas + tests CI; ✅ `onSnapshot` con `limit(500)` (S3). Pendiente Tier C: S2 storage (dep. S4 claims), App Check, CSP `<meta>`. Verificar CI verde + deploy gated antes de merge a main.
 
 ## 🧩 Sub-sistemas (resumen)
 Diseño Liquid Glass (Vite/Bundled) ✅ · Sincronización en vivo con Firestore ✅ · Checkout Stepper de 3 pasos ✅ · Cart Drawer lateral ✅ · Animaciones de entrada Staggered ✅

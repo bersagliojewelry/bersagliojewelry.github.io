@@ -14,7 +14,7 @@
 
 import { firestoreDb } from './firebase-config.js';
 import {
-    collection, doc, getDocs, getDoc, addDoc, setDoc, updateDoc,
+    collection, doc, getDocs, getDoc, addDoc, setDoc, updateDoc, deleteDoc,
     query, where, orderBy, limit, onSnapshot, serverTimestamp,
 } from 'firebase/firestore';
 
@@ -160,6 +160,29 @@ export async function fetchVendedoras() {
     const q = query(collection(firestoreDb, 'users'), where('role', '==', 'vendedora'));
     const snap = await getDocs(q);
     return snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
+}
+
+// ─── Pendientes de configuración (tablero para Kary) ──────────────────────────
+export function onPendientesChange(cb) {
+    const q = query(collection(firestoreDb, 'pendientes'), limit(MAX));
+    return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
+}
+export async function addPendiente({ titulo, detalle, categoria }) {
+    const payload = {
+        titulo: (titulo || '').trim(),
+        detalle: (detalle || '').trim(),
+        categoria: categoria || 'definir-kary',
+        estado: 'pendiente',
+        createdAt: serverTimestamp(),
+    };
+    const ref = await addDoc(collection(firestoreDb, 'pendientes'), payload);
+    return { id: ref.id, ...payload };
+}
+export async function setPendienteEstado(id, estado) {
+    await updateDoc(doc(firestoreDb, 'pendientes', id), { estado });
+}
+export async function deletePendiente(id) {
+    await deleteDoc(doc(firestoreDb, 'pendientes', id));
 }
 
 // ─── Config del negocio ───────────────────────────────────────────────────────

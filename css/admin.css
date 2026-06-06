@@ -776,6 +776,13 @@ select.adm-input { cursor: pointer; appearance: none; -webkit-appearance: none; 
 .vend-mov--anulado { opacity: 0.5; }
 .vend-mov--anulado .vend-mov-monto { text-decoration: line-through; }
 
+/* ─── Pendientes (tablero en Configuración) ──────────────────────────────────── */
+.adm-pend-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border: 1px solid var(--adm-border); border-radius: var(--adm-radius); margin-bottom: 8px; }
+.adm-pend-item--done { opacity: 0.55; }
+.adm-pend-titulo { margin-left: 8px; color: var(--adm-text); }
+.adm-pend-item--done .adm-pend-titulo { text-decoration: line-through; }
+.adm-pend-detalle { font-size: 12px; color: var(--adm-muted); margin-top: 4px; }
+
 /* ─── Toast ───────────────────────────────────────────────────────────────── */
 .adm-toast-wrap {
     position: fixed;

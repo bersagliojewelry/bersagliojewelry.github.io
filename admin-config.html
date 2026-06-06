@@ -125,6 +125,27 @@
                     </div>
                 </div>
             </form>
+
+            <!-- Pendientes (tablero para mostrar a Kary) -->
+            <div class="adm-section">
+                <div class="adm-section-head"><h2>Pendientes por definir / completar</h2></div>
+                <div class="adm-section-body">
+                    <p style="color:var(--adm-muted);font-size:13px;margin:0 0 14px;">
+                        Cosas por definir con Kary o completar. Márcalas como resueltas a medida que avancen.
+                    </p>
+                    <div id="pendientes-list"></div>
+                    <div class="adm-empty" id="pendientes-empty" hidden><p>Sin pendientes. 🎉</p></div>
+                    <form id="pendiente-form" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
+                        <input type="text" id="pend-titulo" class="adm-input" placeholder="Nuevo pendiente…" style="flex:1;min-width:200px;" maxlength="160">
+                        <select id="pend-cat" class="adm-input" style="max-width:210px;">
+                            <option value="definir-kary">Definir con Kary</option>
+                            <option value="datos">Datos por confirmar</option>
+                            <option value="roadmap">Próxima fase</option>
+                        </select>
+                        <button type="submit" class="adm-btn adm-btn--ghost">Agregar</button>
+                    </form>
+                </div>
+            </div>
         </div>
     </main>
 </div>

@@ -57,7 +57,7 @@
         "firebase-debug.*.log",
         "*.local",
         "*.test.mjs",
-        "seed-emulator.mjs"
+        "seed-*.mjs"
       ]
     }
   ],

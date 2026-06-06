@@ -14,6 +14,7 @@ AGREGADOS (conteos/totales), nunca nombres ni saldos individuales (repo público
 Uso:  python tools/extraer-kardex.py
 """
 import csv
+import json
 import re
 import sys
 from openpyxl import load_workbook
@@ -116,6 +117,16 @@ def main():
                                           "saldo_inicial", "saldo_final", "flag"])
         w.writeheader()
         w.writerows(rows_out)
+
+    # JSON para el cargador de la Fase A (SOLO clientes de Kary con saldo numérico).
+    kary = [
+        {"nombre": (r["nombre_sugerido"] or r["nombre_crudo"]).strip(), "saldo": r["saldo_final"]}
+        for r in rows_out
+        if r["hoja"] == "kardex KARY 2026" and isinstance(r["saldo_final"], (int, float))
+    ]
+    with open("tools/migracion-kary.json", "w", encoding="utf-8") as jf:
+        json.dump(kary, jf, ensure_ascii=False, indent=0)
+    print(f"\n  Fase A (Kary) -> tools/migracion-kary.json : {len(kary)} clientes")
 
     # Consola: SOLO agregados (sin datos individuales)
     print(f"\n=== RESUMEN MIGRACIÓN (agregado) -> {OUT} ===")

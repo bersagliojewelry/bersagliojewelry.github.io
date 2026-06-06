@@ -18,7 +18,7 @@
 > 1. **Vendedoras** (Fase B): crear sus accesos — **faltan los correos** (Tania/Daniela internas; resto externas; `tools/vendedoras.csv` local). Cada una carga sus clientes **fresco** (su hoja es por factura, NO auto-migrable, L-21).
 > 2. **Revisar nombres con Kary**: la migración trajo nombres crudos del Excel ("Claribel Fernandez ctas de () ( )", etc.) → Kary los limpia con la editabilidad ya construida.
 > 3. **B6 reportes + "atrasados"** (aging con `config.diasPlazo`) — diferido, siguiente bloque de valor.
-> 4. **Deuda técnica**: actualizar runtime de functions (**Node 20** decommission 2026-10-30 + `firebase-functions` viejo). Opcional: poblar secrets `VITE_*` en GitHub (el fallback ya cubre).
+> 4. ✅ **Deuda técnica de runtime RESUELTA**: functions en **Node 22 + firebase-functions v7** (ADR §48). Opcional restante: poblar secrets `VITE_*` en GitHub (el fallback ya cubre).
 >
 > ⚠️ **Recordatorio de deploy (L-22)**: el CI NO despliega reglas/functions; tras cambiarlas hay que `firebase deploy --only firestore:rules,firestore:indexes,functions` **manual** (CLI logueado). Los scripts Admin SDK necesitan **ADC**, no `firebase login` (L-23); ADC ya configurado local.
 
@@ -48,5 +48,6 @@ Programa "Nuevo Bersaglio" (3 fases): **Fase 1** rediseño Liquid Glass ✅ · *
 ---
 
 ## 📝 Bitácora (efímera — se vacía al consolidar)
+- **2026-06-06 (Mantenimiento — upgrade runtime functions, ADR §48)**: Node 20→22 + firebase-functions 6.6→7.2.5 + firebase-admin 13.7→13.10 en `functions/package.json`. Cero cambios de código (la API v2 no cambió en v7; verificado por release oficial + package instalado + tests). `test:saldo` 12/12 + integración 5/5 con v7. Deploy → 6 functions en nodejs22; smoke test en prod OK (`recalcSaldoCliente` recalcula); 344 clientes intactos. Rama `chore/upgrade-functions-v7-node22` mergeada a Desarrollo. L-25. Deuda Node 20 de §47 resuelta.
 - **2026-06-06 (LANZAMIENTO CRM, ADR §47)**: Audit de preparación read-only (workflow 4 agentes) → 3 correcciones al cerebro (`main` ya tenía el CRM; `firebase-deploy.yml` es Hosting-only; `recalcSaldoCliente` no estaba en prod). Deploy manual reglas+índices+functions (`recalcSaldoCliente` viva) + merge vía **PR #189** + ADC (`gcloud auth application-default login` + quota project) + **migración Fase A 345/345 exacto** → se borró 1 fila "TOTAL" basura (L-24) → **344 clientes, cartera $506.510.780**, 12 pendientes. Extractor parchado (`NON_CLIENT_RE`). Sitio HTTP 200. Lecciones L-22/23/24.
 - _Historial previo (cerebro v1.0.0, Fase 1 rediseño+pulido, Fase 2 hardening, CRM B1-B5, verificación E2E) ya consolidado en ADRs §37–§46 — ver `00-INDICE`._

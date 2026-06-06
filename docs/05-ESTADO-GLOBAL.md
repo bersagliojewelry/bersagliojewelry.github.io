@@ -18,7 +18,7 @@
 
 ## ⚠️ Flags de riesgo activos (→ Fase 2 hardening · detalle en `docs/41-SEGURIDAD.md`)
 - 🟢 **Incidente prod L-14 RESUELTO**: fallback de llaves restaurado; **sitio en vivo verificado HTTP 200** (`bersagliojewelry.co` + `.github.io`, 2026-06-06). Opcional: poblar secrets `VITE_*` en GitHub (el fallback ya cubre). Detalle: `41 §1.5` + `30 L-14`.
-- 🟠 **Deploy reglas/functions = MANUAL** (CI es Hosting/Pages only, **L-22**): `firebase deploy --only firestore:rules,firestore:indexes,functions`. Reglas S5/S6 + CRM ya desplegadas (2026-06-06). 🟠 **Deuda runtime**: Node 20 decommission **2026-10-30** + `firebase-functions` viejo → actualizar functions. Tier C pendiente (App Check, CSP, S2 storage).
+- 🟠 **Deploy reglas/functions = MANUAL** (CI es Hosting/Pages only, **L-22**): `firebase deploy --only firestore:rules,firestore:indexes,functions`. Reglas S5/S6 + CRM desplegadas. ✅ **Functions en Node 22 + firebase-functions v7** (ADR §48 — deuda runtime resuelta). Tier C pendiente (App Check, CSP, S2 storage).
 
 ## 🧩 Sub-sistemas (resumen)
 Diseño Liquid Glass (Vite/Bundled) ✅ · Sincronización en vivo con Firestore ✅ · Checkout Stepper de 3 pasos ✅ · Cart Drawer lateral ✅ · Animaciones de entrada Staggered ✅

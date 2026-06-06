@@ -83,8 +83,9 @@
 ### 3. CRM — Cuentas por cobrar / fiado (Fase 3, Bloque 1 · backend) — ADR §42
 Backend del CRM (aún SIN UI; las pantallas son Bloques 3-4). Vive en archivos ya existentes:
 *   **`firestore.rules`** (raíz) — RBAC del CRM. Helpers: `isVendedora()`, `clienteOwnerUid()` (tolerante a cliente directo de Kary), `clienteValido()` (whitelist `hasOnly`, bloquea `saldoActual`), `movimientoValido()` (no nace anulado; `monto>=0`).
-*   **`functions/index.js`** — rol `vendedora` en `ROLE_LEVEL`/`createUser`/`updateUserRole`. (Bloque 2 añadirá aquí el trigger `onWrite` de `movimientos` que recalcula `saldoActual`.)
-*   **`tests/firestore-rules.test.mjs`** — 54 tests (S5/S6 + CRM + endurecimiento) corren en el emulador (`npm run test:rules`, JDK local `30 §L-12`).
+*   **`functions/index.js`** — rol `vendedora` (`ROLE_LEVEL`/`createUser`/`updateUserRole`) + trigger **`recalcSaldoCliente`** (`onDocumentWritten` sobre `clientes/{id}/movimientos/{movId}` → transacción → recomputa `saldoActual`, Bloque 2 ADR §43).
+*   **`functions/saldo.js`** — función PURA `computeSaldo(movimientos)` (aritmética del saldo, signo por tipo). Testeable sin emulador.
+*   **Tests del CRM**: `tests/firestore-rules.test.mjs` (57, `npm run test:rules`) + `functions/saldo.test.mjs` (12, `test:saldo`) + `functions/saldo.integration.test.mjs` (5, `test:saldo:integration`, emulador Functions+Firestore). JDK local `30 §L-12`.
 
 **Colecciones nuevas en Firestore** (canal-agnósticas, spec `crm-cuentas-design.md`):
 | Colección | Quién escribe | Regla clave |

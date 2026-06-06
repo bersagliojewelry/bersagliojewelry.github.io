@@ -8,11 +8,12 @@
  */
 
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
-const { onDocumentDeleted } = require('firebase-functions/v2/firestore');
+const { onDocumentDeleted, onDocumentWritten } = require('firebase-functions/v2/firestore');
 const { initializeApp } = require('firebase-admin/app');
 const { getAuth } = require('firebase-admin/auth');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { getStorage } = require('firebase-admin/storage');
+const { computeSaldo } = require('./saldo');
 
 initializeApp();
 
@@ -145,4 +146,30 @@ exports.onInquiryCreated = onDocumentCreated('inquiries/{inquiryId}', async (eve
         { unreadInquiries: FieldValue.increment(1) },
         { merge: true }
     );
+});
+
+// ─── recalcSaldoCliente (CRM Bloque 2) ───────────────────────────────────────
+// Trigger: al crear/editar/borrar un movimiento, recalcula el saldo del cliente
+// SERVER-SIDE desde la fuente de verdad (todos sus movimientos no anulados). Es la
+// ÚNICA escritura de `saldoActual` (las reglas prohíben que el cliente lo escriba).
+// Idempotente (recomputa desde cero) + transacción (evita carreras). No re-dispara:
+// escribe en el doc del cliente, no en la subcolección de movimientos.
+
+exports.recalcSaldoCliente = onDocumentWritten('clientes/{clienteId}/movimientos/{movId}', async (event) => {
+    const { clienteId } = event.params;
+    const clienteRef = db.collection('clientes').doc(clienteId);
+    const movsRef = clienteRef.collection('movimientos');
+
+    await db.runTransaction(async (tx) => {
+        const clienteSnap = await tx.get(clienteRef);
+        if (!clienteSnap.exists) return; // cliente borrado → no resucitarlo
+
+        const movsSnap = await tx.get(movsRef);
+        const saldo = computeSaldo(movsSnap.docs.map((d) => d.data()));
+
+        tx.set(clienteRef, {
+            saldoActual: saldo,
+            saldoActualizadoEn: FieldValue.serverTimestamp(),
+        }, { merge: true });
+    });
 });

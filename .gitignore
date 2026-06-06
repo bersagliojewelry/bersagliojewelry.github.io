@@ -11,3 +11,10 @@ Thumbs.db
 *.xls
 *.csv
 
+# Artefactos de los emuladores de Firebase (ruido local, no versionar)
+*-debug.log
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+.firebase/
+

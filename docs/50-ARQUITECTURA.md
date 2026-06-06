@@ -54,3 +54,7 @@ genera más valor con menos fricción"**.
   - **Canal-agnóstico** (ya en §3): cliente con `origen`, movimientos sin acoplar al canal → web/inventario/facturación encajan por fases sin reescribir.
   - **`config` partido por sensibilidad**: `config/status` público (health-check), resto restringido → no exponer datos del negocio al ser la web un repo público (L-15).
   - Verificación: TDD en emulador real (54 tests) + revisión adversarial multi-agente (L-16). Despliegue gated (merge a `main` con OK de Daniel).
+- **2026-06-06 · CRM Bloque 2 (ADR §43)** — cálculo de saldo:
+  - **Saldo por recompute idempotente** (Cloud Function `recalcSaldoCliente`, `onDocumentWritten` de movimientos): recalcula desde la fuente de verdad (todos los movimientos no anulados) en transacción, en vez de incrementar → imposible de desincronizar (elimina la fragilidad del Excel). Es la **única** escritura de `saldoActual` (Admin SDK bypassa reglas; el cliente lo tiene prohibido).
+  - **Lógica de dinero como función pura** (`functions/saldo.js`) → aritmética exacta testeable sin emulador (doctrina "precisión exacta"). Glue del trigger validado por integración (L-17).
+  - **Modelo de signo**: `factura`/`apertura`/`ajuste` suman, `abono` resta; `monto` de apertura/ajuste puede ser negativo (saldo a favor / corrección a la baja). Saldo +debe / −a favor. Marcado confirmable por Daniel/Kary.

@@ -274,3 +274,17 @@ test('HARD config · anónimo NO lee config/negocio', async () => {
 test('HARD config · editor NO lee config/negocio (datos del negocio)', async () => {
     await assertFails(getDoc(doc(asUser('editorUid'), 'config/negocio')));
 });
+
+// ─── CRM Bloque 2: modelo de signo del monto (saldo a favor / ajuste a la baja) ──
+test('SALDO · admin crea apertura con monto negativo (saldo a favor inicial)', async () => {
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mApFavor'),
+        { tipo: 'apertura', monto: -30000, registradoPor: 'adminUid' }));
+});
+test('SALDO · admin crea ajuste con monto negativo (corrección a la baja)', async () => {
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mAjNeg'),
+        { tipo: 'ajuste', monto: -5000, registradoPor: 'adminUid' }));
+});
+test('SALDO · vendedora NO crea factura con monto negativo', async () => {
+    await assertFails(setDoc(doc(asUser('vendUid'), 'clientes/cliV/movimientos/mFacNeg'),
+        { tipo: 'factura', monto: -1, registradoPor: 'vendUid' }));
+});

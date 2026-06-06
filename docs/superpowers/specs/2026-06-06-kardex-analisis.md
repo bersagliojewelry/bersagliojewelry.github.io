@@ -21,6 +21,14 @@ y ventas por **vendedora**.
 | KARDEX KARY 2024 | 1191 | 62 (BJ) | 283 | 0 | Histórico Kary 2024 |
 | Hoja1 | — | — | — | — | Oculta, vacía |
 
+> ⚠️ **CORRECCIÓN (2026-06-06, verificada con volcado crudo)**: las dos hojas activas NO
+> tienen la misma estructura. **`kardex KARY 2026` = por CLIENTE** (una fila por cliente:
+> nombre + saldo, lo de abajo aplica). **`KARDEX VENDEDORAS 2026` = por FACTURA** (cada fila
+> es una compra individual bajo el bloque de su vendedora; col A = descripción de la factura,
+> NO el nombre de la clienta; los `#REF!` son saldos iniciales de facturas perdidos). → La
+> hoja de vendedoras NO se auto-migra; las vendedoras cargan sus clientes fresco (ver
+> `docs/PENDIENTES-Y-HALLAZGOS.md §6` y `30 §L-21`).
+
 ### Patrón de columnas (cuenta corriente mensual)
 - **A** — cliente, en TEXTO LIBRE: nombre + notas + montos embebidos (ej. `"[Nombre] 1635000 dic 7"`, `"[Nombre] - CUMPLEAÑOS 09/11"`). *(Nombres reales solo en el Excel local, no aquí — privacidad.)*
 - **B** — saldo inicial (saldo a diciembre del año anterior).

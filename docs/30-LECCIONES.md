@@ -119,5 +119,15 @@ Caso real: ADR §43 (`recalcSaldoCliente` + `functions/saldo.js`). Java local: `
 ### L-20: Una escritura secundaria (telemetría) no debe tumbar un flujo crítico (login)
 `signIn` hacía `await setDoc({lastLogin})` en el doc del propio usuario SIN try/catch; como las reglas de `users` no dejan auto-actualizarse (solo owner/admin), una vendedora/editor era **denegada** y el LOGIN entero fallaba. Regla: una escritura **secundaria** (telemetría, contadores, lastLogin, analytics) va en **best-effort** (try/catch) — nunca bloquea el flujo principal. Corolario: si una regla restringe `users` a admin, "el usuario actualiza su propio lastLogin" choca → best-effort en cliente (elegido) o permitir self-update de campos no-sensibles en reglas. **Lo cazó el E2E con emuladores** (los tests de reglas no cubrían el write de `lastLogin` de signIn) — recordatorio de que el E2E ve lo que el unit test no. Caso: ADR §46.
 
+### L-21: Verificar la estructura de CADA hoja de un Excel heredado (no extrapolar)
+Migrando el Kardex, el supuesto "una fila = un cliente con saldo" valió para la hoja de Kary
+(por cliente) pero NO para la de vendedoras (**por factura**: cada fila es una compra). El
+extractor produjo basura para vendedoras: los "#REF! de clientas" eran descripciones de
+producto ("Cadena", "Dije San Benito"). Solo un **volcado crudo de filas reales** lo reveló.
+Regla: ante un Excel heredado/desordenado, **verifica la estructura de CADA hoja con un volcado
+crudo ANTES de escribir el extractor**; no extrapoles de una hoja a otra ni confíes en un
+análisis previo (el `kardex-analisis` describía la hoja de Kary y se asumió igual para todas).
+Consecuencia: la hoja de vendedoras no se auto-migra → se cargan los clientes fresco. Caso: Bloque 5.
+
 ### L-15: Datos privados del negocio NUNCA al repo (sobre todo si es público)
 GitHub Pages en cuentas Free sirve desde repos **públicos** → TODO el repo (incl. `docs/`) es visible en internet. Un Excel/CSV con saldos, nombres de clientes o deudas en la raíz = **fuga de datos** al commitear. Receta: `.gitignore` para `*.xlsx`/`*.xls`/`*.csv` (datos operativos ≠ código); en docs de diseño **anonimizar** nombres reales (`[Nombre]`, "Vendedora N"). Los datos reales viven LOCAL o en Firestore (privado, con reglas), nunca en el repo. Caso real (2026-06-06): el Kardex `*.xlsx` se gitignoró + el análisis se anonimizó.

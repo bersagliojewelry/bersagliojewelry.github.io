@@ -72,16 +72,23 @@ fecha de corte en adelante, todo se registra en la plataforma.
 5. ¿Qué se considera **"cuenta atrasada"**? (definir días de plazo) — hoy no está, requiere esa regla.
 
 ## 6. PENDIENTES de DATOS para completar la migración
-1. **Los 15 saldos `#REF!`** (clientes de vendedoras cuyo saldo se perdió en el Excel) → hay que
-   ponerlos a mano; **el sistema NO los inventa**.
-2. Confirmar que las **19 filas "sin saldo"** son los subtotales de vendedora (no clientes).
-3. **Atribución cliente→vendedora** en la hoja de vendedoras (qué cliente es de cuál) — depende del punto 5.3.
-4. **Revisión de nombres**: en el Excel el nombre viene mezclado con montos/notas; el sistema los
-   limpió automáticamente, conviene revisar una muestra antes de cargar.
+> ⚠️ **Hallazgo clave (2026-06-06)**: las dos hojas activas están estructuradas DISTINTO:
+> - **Hoja de Kary = por CLIENTE** (una fila por cliente, con su nombre y saldo). Migrable.
+> - **Hoja de vendedoras = por FACTURA** (cada fila es una compra, no una clienta; los `#REF!`
+>   son saldos iniciales de facturas perdidos, NO saldos de clientas). **No se puede
+>   auto-migrar de forma confiable** — los nombres de clienta no están separados.
 
-> **Plan de migración por fases**: **Fase A** = los **345 clientes directos de Kary** (limpios,
-> sin errores) apenas se defina la fecha de corte. **Fase B** = los clientes de vendedoras
-> (tras dar de alta a las vendedoras + confirmar los 15 `#REF!`).
+1. **Revisión de nombres (Kary)**: en su hoja el nombre viene mezclado con montos/notas
+   (ej. "Andrea Marzan 1635000 dic 7"); el sistema los limpia automáticamente, pero conviene
+   revisar la lista antes de cargar (hay duplicados y filas con 2 nombres).
+
+> **Plan de migración REVISADO**:
+> - **Fase A** = los **345 clientes directos de Kary** (su hoja es por cliente, limpia): se
+>   migran automáticamente apenas se defina la fecha de corte + se revisen los nombres.
+> - **Fase B (vendedoras)** = NO auto-import (la hoja es por factura, demasiado enredada para
+>   confiar). En su lugar, **cada vendedora carga sus clientes y saldos FRESCOS** cuando entre a
+>   su app (o Kary entrega una lista limpia por vendedora: cliente + saldo de hoy). Así se
+>   arranca con datos correctos en vez de arrastrar el desorden del Excel.
 
 ---
 

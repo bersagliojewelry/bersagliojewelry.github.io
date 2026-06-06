@@ -11,6 +11,10 @@ Thumbs.db
 *.xls
 *.csv
 
+# Salidas de migración con datos reales (privadas, NUNCA al repo)
+tools/migracion-*.json
+tools/*.local.*
+
 # Artefactos de los emuladores de Firebase (ruido local, no versionar)
 *-debug.log
 firebase-debug.log

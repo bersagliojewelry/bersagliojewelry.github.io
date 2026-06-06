@@ -9,7 +9,9 @@
     "preview": "vite preview --host",
     "brain:check": "node scripts/brain-check.mjs",
     "test:rules": "firebase emulators:exec --only firestore --project demo-bersaglio \"node --test tests/firestore-rules.test.mjs\"",
-    "test:rules:run": "node --test tests/firestore-rules.test.mjs"
+    "test:rules:run": "node --test tests/firestore-rules.test.mjs",
+    "test:saldo": "node --test functions/saldo.test.mjs",
+    "test:saldo:integration": "firebase emulators:exec --only firestore,functions --project demo-bersaglio \"node --test functions/saldo.integration.test.mjs\""
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.1",

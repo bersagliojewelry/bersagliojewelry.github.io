@@ -48,11 +48,14 @@ service cloud.firestore {
           && (!('telefono' in d)     || d.telefono is string);
     }
     // En CREATE: el asiento NO nace anulado y la auditoría de anulación es solo del
-    // admin (vía update). El signo lo da el `tipo` (factura/apertura suman; abono resta).
+    // admin (vía update). El signo lo da el `tipo` (factura/apertura/ajuste suman;
+    // abono resta). `monto`: factura/abono siempre ≥0; apertura/ajuste (solo admin)
+    // pueden ser NEGATIVOS → saldo a favor inicial / corrección a la baja (ADR §43).
     function movimientoValido() {
       let d = request.resource.data;
       return d.tipo in ['apertura', 'factura', 'abono', 'ajuste']
-          && d.monto is number && d.monto >= 0
+          && d.monto is number
+          && (d.tipo in ['apertura', 'ajuste'] || d.monto >= 0)
           && (!('descripcion' in d) || d.descripcion is string)
           && d.registradoPor == request.auth.uid
           && (!('anulado' in d) || d.anulado == false)

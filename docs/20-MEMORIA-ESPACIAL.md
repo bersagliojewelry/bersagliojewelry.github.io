@@ -90,8 +90,10 @@ Backend del CRM (aún SIN UI; las pantallas son Bloques 3-4). Vive en archivos y
 **UI del CRM (Panel de Kary, Bloque 3 — en curso)**: páginas admin (estilo oscuro `css/admin.css`, patrón `admin-*.html` + `js/admin/*.js`, auth `requireAuth`/`hasRole`).
 *   **`js/crm-service.js`** — capa de datos Firestore del CRM, **desacoplada** del `firestore-service.js` público (límite de módulo, charter §3). Clientes/movimientos/solicitudes/config + `carteraTotals`/`carteraPorVendedora` + `fmtCOP`.
 *   **`admin-cuentas.html` + `js/admin/cuentas.js`** (✅): lista de clientes con saldo + cartera total/por vendedora + modal nuevo cliente + búsqueda. Filas → ficha. Link "Cuentas" en las 6 páginas admin, gateado en `shared.js`.
-*   **`admin-cuenta.html` + `js/admin/cuenta.js`** (✅, singular = ficha): saldo en vivo (`onClienteChange`) + historial de movimientos + registrar factura/abono (modal) + anular (admin). El saldo lo pone la CF; la UI solo agrega/anula y observa.
-*   Pendiente Bloque 3: bandeja de correcciones (`solicitudesCorreccion`), configuración (fecha de corte), cumpleaños del mes. ⚠️ `auth.js ROLE_LEVELS` NO incluye `vendedora` → añadir en Bloque 4 (app vendedora).
+*   **`admin-cuenta.html` + `js/admin/cuenta.js`** (✅, singular = ficha): saldo en vivo (`onClienteChange`) + historial + registrar factura/abono (modal) + anular (admin). El saldo lo pone la CF; la UI solo agrega/anula y observa.
+*   **`admin-config.html` + `js/admin/config.js`** (✅): fecha de corte de migración + datos del negocio (`config/negocio`). Acceso vía ⚙ en el topbar de Cuentas.
+*   En **Cuentas** además: bandeja de **solicitudes de corrección** (aprobar→anula el movimiento+marca aprobada / rechazar) + **cumpleaños del mes** (link WhatsApp).
+*   **Bloque 3 (Panel de Kary) ✅ COMPLETO** (ADR §44). ⚠️ "cuentas atrasadas" (spec §7) diferido (necesita modelo de vencimiento). ⚠️ `auth.js ROLE_LEVELS` NO incluye `vendedora` → añadir en **Bloque 4** (app vendedora). Verificación funcional: emuladores+`npm run dev`+login (`30 §L-18`).
 
 **Colecciones nuevas en Firestore** (canal-agnósticas, spec `crm-cuentas-design.md`):
 | Colección | Quién escribe | Regla clave |

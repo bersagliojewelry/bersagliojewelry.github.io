@@ -90,10 +90,16 @@ export async function signIn(email, password) {
 
         _userProfile = snap.data();
 
-        // Update last login
-        await setDoc(doc(firestoreDb, 'users', cred.user.uid), {
-            lastLogin: serverTimestamp()
-        }, { merge: true });
+        // Update last login — best-effort: las reglas de `users` no dejan que un
+        // usuario actualice su PROPIO doc (solo owner/admin), así que para editor/
+        // vendedora este write es denegado. NO debe tumbar el login (es telemetría).
+        try {
+            await setDoc(doc(firestoreDb, 'users', cred.user.uid), {
+                lastLogin: serverTimestamp()
+            }, { merge: true });
+        } catch (e) {
+            console.warn('[auth] lastLogin no actualizado (permiso):', e?.code || e);
+        }
 
         return { user: cred.user, profile: _userProfile };
     } catch (err) {

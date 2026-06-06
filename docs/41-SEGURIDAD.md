@@ -35,7 +35,8 @@ Grounding verificado contra el código → **3 correcciones** al backlog origina
 - 🔗 **S2 depende de S4**: roles solo en `users/{uid}.data.role` (sin custom claims en `functions/`) → cada regla hace `get()`. Storage role-check necesita S4 (claims) o `firestore.get()` en `storage.rules`.
 
 Estado de hallazgos:
-- **S1** — ✅ *código*: fallback eliminado (`firebase-config.js`, env única fuente + guard). ⏳ *cliente/Tier C*: restringir API key (GCP) + App Check. Rotación innecesaria.
+- **S1** — ⚠️ **REVERTIDO (incidente prod 2026-06-06)**: quitar el fallback tumbó el sitio (secrets `VITE_*` NO configurados en GitHub → Firebase sin llaves → arranque caído). **Fallback público RESTAURADO** (red de seguridad; las keys web son públicas igual). Pendiente real (Tier C, sin tocar el fallback): configurar secrets en GitHub + restringir API key (GCP) + App Check. Lección **L-14**.
+- ⚠️ **CI rules-test PAUSADO** (auto-run off, solo `workflow_dispatch`): falla por causa no diagnosticada (sin log detallado del step / sin Java local). Reactivar `push`/`pull_request` al arreglarlo.
 - **S3** — ✅ `limit(500)` en `onPiecesChange` + `onInquiriesChange` (sin cambio a escala actual). Futuro: `orderBy`+cursor en pieces; `unsubscribe` al salir = responsabilidad del callsite (auditar admin).
 - **S5** — ✅ regla endurecida (`allow read: if approved==true || isAdmin()`) + test en `tests/firestore-rules.test.mjs`. Verificación = **CI** (`firestore-rules-test.yml`); pendiente push para green. Deploy gated.
 - **S6** — ✅ `validate` tolerante a merge (pieces: name+code obligatorios en create, tipos-si-presente en update; collections: name) + 6 tests (incl. patch parcial de imágenes). Verificación CI. **Tier B (reglas) COMPLETO: S5 + S6.**

@@ -87,6 +87,7 @@ async function init() {
         const cfg = await getConfig('negocio');
         if (cfg) {
             setVal('cfg-fecha-corte', cfg.fechaCorteMigracion);
+            setVal('cfg-dias-plazo', cfg.diasPlazo);
             setVal('cfg-negocio', cfg.negocioNombre);
             setVal('cfg-nit', cfg.nit);
             setVal('cfg-direccion', cfg.direccion);
@@ -103,6 +104,7 @@ async function init() {
         try {
             await setConfig('negocio', {
                 fechaCorteMigracion: getVal('cfg-fecha-corte') || null,
+                diasPlazo: getVal('cfg-dias-plazo') ? Number(getVal('cfg-dias-plazo')) : null,
                 negocioNombre: getVal('cfg-negocio'),
                 nit:           getVal('cfg-nit'),
                 direccion:     getVal('cfg-direccion'),

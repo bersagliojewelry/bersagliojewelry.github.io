@@ -94,6 +94,8 @@
                 <div class="adm-ficha-actions">
                     <button id="btn-factura" class="adm-btn adm-btn--primary">➕ Registrar factura</button>
                     <button id="btn-abono" class="adm-btn adm-btn--ghost">➕ Registrar abono</button>
+                    <button id="btn-corregir" class="adm-btn adm-btn--ghost">⚖ Corregir saldo</button>
+                    <button id="btn-editar" class="adm-btn adm-btn--ghost">✎ Editar datos</button>
                 </div>
             </div>
 
@@ -158,6 +160,74 @@
 </div>
 
 <!-- Toast container -->
+<!-- Modal: corregir saldo (admin) -->
+<div class="adm-modal" id="corregir-modal" hidden>
+    <div class="adm-modal-box">
+        <div class="adm-modal-head">
+            <h2>Corregir saldo</h2>
+            <button class="adm-modal-close" id="corregir-close" aria-label="Cerrar">✕</button>
+        </div>
+        <form id="corregir-form">
+            <div class="adm-modal-body">
+                <p style="color:var(--adm-muted);font-size:13px;margin:0 0 14px;">
+                    Escribe el saldo CORRECTO que el cliente debe hoy. El sistema registra el ajuste
+                    automáticamente (queda en el historial como corrección).
+                </p>
+                <div class="adm-form-row adm-col-1">
+                    <div class="adm-field">
+                        <label for="corregir-saldo">Saldo correcto (COP) <span class="adm-opt" id="corregir-actual"></span></label>
+                        <input type="number" id="corregir-saldo" class="adm-input" step="1" inputmode="numeric" required>
+                    </div>
+                </div>
+                <div class="adm-form-row adm-col-1">
+                    <div class="adm-field">
+                        <label for="corregir-motivo">Motivo</label>
+                        <input type="text" id="corregir-motivo" class="adm-input" maxlength="200" placeholder="Ej. corrección de migración" autocomplete="off">
+                    </div>
+                </div>
+            </div>
+            <div class="adm-modal-foot">
+                <button type="button" class="adm-btn adm-btn--ghost" id="corregir-cancel">Cancelar</button>
+                <button type="submit" class="adm-btn adm-btn--primary">Aplicar corrección</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: editar datos del cliente (admin) -->
+<div class="adm-modal" id="editar-modal" hidden>
+    <div class="adm-modal-box">
+        <div class="adm-modal-head">
+            <h2>Editar datos del cliente</h2>
+            <button class="adm-modal-close" id="editar-close" aria-label="Cerrar">✕</button>
+        </div>
+        <form id="editar-form">
+            <div class="adm-modal-body">
+                <div class="adm-form-row adm-col-1">
+                    <div class="adm-field"><label for="ed-nombre">Nombre <span class="adm-opt">(obligatorio)</span></label>
+                        <input type="text" id="ed-nombre" class="adm-input" required maxlength="120" autocomplete="off"></div>
+                </div>
+                <div class="adm-form-row">
+                    <div class="adm-field"><label for="ed-telefono">Teléfono</label><input type="tel" id="ed-telefono" class="adm-input" maxlength="40"></div>
+                    <div class="adm-field"><label for="ed-whatsapp">WhatsApp</label><input type="tel" id="ed-whatsapp" class="adm-input" maxlength="40"></div>
+                </div>
+                <div class="adm-form-row">
+                    <div class="adm-field"><label for="ed-vendedora">Vendedora</label>
+                        <select id="ed-vendedora" class="adm-input"><option value="">Directo de Kary</option></select></div>
+                    <div class="adm-field"><label for="ed-cumpleanos">Cumpleaños</label><input type="date" id="ed-cumpleanos" class="adm-input"></div>
+                </div>
+                <div class="adm-form-row adm-col-1">
+                    <div class="adm-field"><label for="ed-notas">Notas</label><textarea id="ed-notas" class="adm-input" maxlength="500"></textarea></div>
+                </div>
+            </div>
+            <div class="adm-modal-foot">
+                <button type="button" class="adm-btn adm-btn--ghost" id="editar-cancel">Cancelar</button>
+                <button type="submit" class="adm-btn adm-btn--primary">Guardar cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="adm-toast-wrap" id="toast-wrap"></div>
 <script>
 (function(){var b=document.getElementById('hamburger-btn'),s=document.querySelector('.adm-sidebar'),o=document.getElementById('sidebar-backdrop');if(!b||!s)return;function toggle(){s.classList.toggle('is-open');o.classList.toggle('is-visible')}b.addEventListener('click',toggle);o.addEventListener('click',toggle);s.querySelectorAll('.adm-nav-link').forEach(function(l){l.addEventListener('click',function(){s.classList.remove('is-open');o.classList.remove('is-visible')})})})();

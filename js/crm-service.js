@@ -65,6 +65,18 @@ export async function updateCliente(id, patch) {
     await updateDoc(doc(firestoreDb, 'clientes', id), { ...patch, updatedAt: serverTimestamp() });
 }
 
+export async function getCliente(id) {
+    const snap = await getDoc(doc(firestoreDb, 'clientes', id));
+    return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+/** Suscripción en vivo a UN cliente (su saldoActual cambia cuando corre la CF). */
+export function onClienteChange(id, cb) {
+    return onSnapshot(doc(firestoreDb, 'clientes', id), (snap) => {
+        cb(snap.exists() ? { id: snap.id, ...snap.data() } : null);
+    });
+}
+
 // ─── Movimientos (cuenta corriente de un cliente) ─────────────────────────────
 export function onMovimientosChange(clienteId, cb) {
     const q = query(
@@ -89,6 +101,16 @@ export async function addMovimiento(clienteId, { tipo, monto, descripcion, regis
     };
     const ref = await addDoc(collection(firestoreDb, 'clientes', clienteId, 'movimientos'), payload);
     return { id: ref.id, ...payload };
+}
+
+/**
+ * Anula un movimiento (NO lo borra — anular ≠ eliminar, spec §3). Solo admin/owner
+ * (reglas). Dispara el recálculo del saldo (el anulado deja de contar).
+ */
+export async function anularMovimiento(clienteId, movId, anuladoPor) {
+    await updateDoc(doc(firestoreDb, 'clientes', clienteId, 'movimientos', movId), {
+        anulado: true, anuladoPor, anuladoEn: serverTimestamp(),
+    });
 }
 
 // ─── Solicitudes de corrección (bandeja de Kary) ──────────────────────────────

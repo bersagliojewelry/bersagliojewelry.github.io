@@ -24,8 +24,8 @@ function nombreVendedora(uid) {
 }
 
 function saldoCell(saldo) {
-    if (typeof saldo !== 'number') return '<span style="color:var(--adm-text-dim)">—</span>';
-    const color = saldo > 0 ? 'var(--adm-danger,#c0392b)' : saldo < 0 ? 'var(--adm-success,#1b7a4b)' : 'var(--adm-text-dim)';
+    if (typeof saldo !== 'number') return '<span style="color:var(--adm-muted)">—</span>';
+    const color = saldo > 0 ? 'var(--adm-danger,#c0392b)' : saldo < 0 ? 'var(--adm-success,#1b7a4b)' : 'var(--adm-muted)';
     return `<strong style="color:${color}">${esc(fmtCOP(saldo))}</strong>`;
 }
 
@@ -46,7 +46,7 @@ function renderCarteraVendedora() {
                     <td style="text-align:right"><strong>${esc(fmtCOP(v.porCobrar))}</strong></td></tr>`;
         }).join('');
     document.getElementById('cartera-vendedora-body').innerHTML =
-        rows || '<tr><td colspan="3" style="color:var(--adm-text-dim)">Sin datos todavía.</td></tr>';
+        rows || '<tr><td colspan="3" style="color:var(--adm-muted)">Sin datos todavía.</td></tr>';
 }
 
 function renderClientes() {
@@ -68,13 +68,13 @@ function renderClientes() {
     table.hidden = false; empty.hidden = true;
 
     body.innerHTML = list.map(c => `
-        <tr>
+        <tr data-id="${esc(c.id)}" style="cursor:pointer">
             <td>${esc(c.nombre || 'Sin nombre')}</td>
             <td>${esc(nombreVendedora(c.vendedoraUid))}</td>
             <td>${esc(c.telefono || c.whatsapp || '—')}</td>
             <td style="text-align:right">${saldoCell(c.saldoActual)}</td>
         </tr>
-    `).join('') || `<tr><td colspan="4" style="color:var(--adm-text-dim)">Sin coincidencias para "${esc(_filter)}".</td></tr>`;
+    `).join('') || `<tr><td colspan="4" style="color:var(--adm-muted)">Sin coincidencias para "${esc(_filter)}".</td></tr>`;
 }
 
 function render() {
@@ -146,6 +146,14 @@ function wireSearch() {
     });
 }
 
+function wireRows() {
+    document.getElementById('clientes-body').addEventListener('click', (e) => {
+        const tr = e.target.closest('tr[data-id]');
+        if (!tr) return;
+        location.href = `admin-cuenta.html?id=${encodeURIComponent(tr.getAttribute('data-id'))}`;
+    });
+}
+
 async function init() {
     await requireAuth('admin');
     await adminDb.init();      // mantiene el badge de consultas del sidebar
@@ -161,6 +169,7 @@ async function init() {
 
     wireModal();
     wireSearch();
+    wireRows();
 
     onClientesChange(list => { _clientes = list; render(); });
 }

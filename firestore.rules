@@ -24,42 +24,80 @@ service cloud.firestore {
       return isAuth() && getUserRole() in ['owner', 'admin', 'editor'];
     }
 
+    // ─── CRM (cuentas por cobrar): rol vendedora + validadores ───────────────────
+    function isVendedora() {
+      return isAuth() && getUserRole() == 'vendedora';
+    }
+    // Tolerante a cliente directo de Kary (sin vendedoraUid) → null en vez de error.
+    function clienteOwnerUid(clienteId) {
+      let c = get(/databases/$(database)/documents/clientes/$(clienteId)).data;
+      return ('vendedoraUid' in c) ? c.vendedoraUid : null;
+    }
+    function nonEmptyStr(v) { return v is string && v.size() > 0; }
+    // Optativos con el idiom seguro `!('campo' in d) || ...` (ver nota de S6: el
+    // acceso a un campo ausente lanza error en reglas → presencia primero).
+    // `hasOnly` = whitelist anti-inyección: bloquea saldoActual (lo escribe SOLO la
+    // Cloud Function vía el movimiento de apertura) y cualquier campo no previsto.
+    function clienteValido() {
+      let d = request.resource.data;
+      return nonEmptyStr(d.nombre)
+          && d.keys().hasOnly(['nombre', 'telefono', 'whatsapp', 'cumpleanos', 'notas',
+                               'vendedoraUid', 'origen', 'activo',
+                               'createdAt', 'createdBy', 'updatedAt'])
+          && (!('vendedoraUid' in d) || d.vendedoraUid is string)
+          && (!('telefono' in d)     || d.telefono is string);
+    }
+    // En CREATE: el asiento NO nace anulado y la auditoría de anulación es solo del
+    // admin (vía update). El signo lo da el `tipo` (factura/apertura suman; abono resta).
+    function movimientoValido() {
+      let d = request.resource.data;
+      return d.tipo in ['apertura', 'factura', 'abono', 'ajuste']
+          && d.monto is number && d.monto >= 0
+          && (!('descripcion' in d) || d.descripcion is string)
+          && d.registradoPor == request.auth.uid
+          && (!('anulado' in d) || d.anulado == false)
+          && !('anuladoPor' in d) && !('anuladoEn' in d);
+    }
+
     // ─── S6: validación de campos (tolerante a merge/partial updates) ────────────
     // En update con merge, request.resource.data = estado RESULTANTE completo, por
     // eso en `update` solo validamos TIPOS si el campo está presente (no exigimos
     // presencia → no rompe patches de imágenes ni docs legacy). En `create` sí
     // exigimos los obligatorios (name/code que el form de admin garantiza).
+    // NOTA (reglas Firestore): acceder a un campo AUSENTE lanza error de evaluación
+    // ("Property X is undefined on object") → NO usar `d.campo == null` para opcionales.
+    // Idiom correcto: `!('campo' in d) || d.campo is <tipo>` (presencia primero).
     function pieceCreateValid() {
       let d = request.resource.data;
       return d.name is string && d.name.size() > 0
           && d.code is string && d.code.size() > 0
-          && (d.price == null    || d.price is number)
-          && (d.featured == null || d.featured is bool)
-          && (d.images == null   || d.images is list)
-          && (d.specs == null    || d.specs is map);
+          && (!('price' in d)    || d.price is number)
+          && (!('featured' in d) || d.featured is bool)
+          && (!('images' in d)   || d.images is list)
+          && (!('specs' in d)    || d.specs is map);
     }
     function pieceTypesValid() {
       let d = request.resource.data;
-      return (d.name == null       || d.name is string)
-          && (d.code == null       || d.code is string)
-          && (d.slug == null       || d.slug is string)
-          && (d.collection == null || d.collection is string)
-          && (d.featured == null   || d.featured is bool)
-          && (d.price == null      || d.price is number)
-          && (d.images == null     || d.images is list)
-          && (d.specs == null      || d.specs is map);
+      return (!('name' in d)       || d.name is string)
+          && (!('code' in d)       || d.code is string)
+          && (!('slug' in d)       || d.slug is string)
+          && (!('collection' in d) || d.collection is string)
+          && (!('featured' in d)   || d.featured is bool)
+          && (!('price' in d)      || d.price is number)
+          && (!('images' in d)     || d.images is list)
+          && (!('specs' in d)      || d.specs is map);
     }
     function colCreateValid() {
       let d = request.resource.data;
       return d.name is string && d.name.size() > 0
-          && (d.featured == null || d.featured is bool);
+          && (!('featured' in d) || d.featured is bool);
     }
     function colTypesValid() {
       let d = request.resource.data;
-      return (d.name == null     || d.name is string)
-          && (d.slug == null     || d.slug is string)
-          && (d.subtitle == null || d.subtitle is string)
-          && (d.featured == null || d.featured is bool);
+      return (!('name' in d)     || d.name is string)
+          && (!('slug' in d)     || d.slug is string)
+          && (!('subtitle' in d) || d.subtitle is string)
+          && (!('featured' in d) || d.featured is bool);
     }
 
     // ─── Pieces (products) ─────────────────────────────────────────────────────
@@ -105,6 +143,45 @@ service cloud.firestore {
       allow delete: if isAdmin();              // Admin cleans up
     }
 
+    // ─── CRM: clientes (cuentas por cobrar / fiado) ──────────────────────────────
+    // admin/owner: todo. vendedora: solo SUS clientes; crea (scoped a sí misma);
+    // NO edita ni borra (corrección vía solicitudesCorreccion).
+    match /clientes/{clienteId} {
+      allow read:   if isAdmin() ||
+                       (isVendedora() && ('vendedoraUid' in resource.data)
+                        && resource.data.vendedoraUid == request.auth.uid);
+      allow create: if clienteValido() && (isAdmin() ||
+                       (isVendedora() && request.resource.data.vendedoraUid == request.auth.uid));
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+
+      // Movimientos = cuenta corriente. Append-only para vendedora; admin corrige.
+      // La vendedora SOLO registra factura/abono; apertura/ajuste son del admin (migración/corrección).
+      match /movimientos/{movId} {
+        allow read:   if isAdmin() || (isVendedora() && clienteOwnerUid(clienteId) == request.auth.uid);
+        allow create: if movimientoValido() && (isAdmin() ||
+                         (isVendedora() && clienteOwnerUid(clienteId) == request.auth.uid
+                          && request.resource.data.tipo in ['factura', 'abono']));
+        allow update, delete: if isAdmin();
+      }
+    }
+
+    // ─── CRM: solicitudes de corrección (flujo con autorización) ─────────────────
+    // La vendedora solo crea solicitudes PENDIENTES sobre SUS clientes; nunca se
+    // auto-aprueba (estado/autorización son del admin vía update).
+    match /solicitudesCorreccion/{id} {
+      allow read:   if isAdmin() ||
+                       (isVendedora() && resource.data.vendedoraUid == request.auth.uid);
+      allow create: if isVendedora()
+                    && request.resource.data.vendedoraUid == request.auth.uid
+                    && request.resource.data.estado == 'pendiente'
+                    && !('autorizadoPor' in request.resource.data)
+                    && !('autorizadoEn' in request.resource.data)
+                    && ('clienteId' in request.resource.data)
+                    && clienteOwnerUid(request.resource.data.clienteId) == request.auth.uid;
+      allow update, delete: if isAdmin();   // aprobar / rechazar / limpiar
+    }
+
     // ─── Users (role management) ───────────────────────────────────────────────
 
     match /users/{userId} {
@@ -118,8 +195,10 @@ service cloud.firestore {
     // ─── Config (site settings, status) ────────────────────────────────────────
 
     match /config/{docId} {
-      allow read: if true;                     // Public (health check, site config)
-      allow write: if isOwner();               // Only owner changes config
+      // Solo `config/status` es público (health-check de la web, js/firestore-service.js).
+      // El resto (parámetros del negocio: fechaCorteMigracion, datos fiscales) = admin/vendedora.
+      allow read:  if docId == 'status' || isAdmin() || isVendedora();
+      allow write: if isAdmin();               // CRM: endurecido owner→admin (Kary edita config)
     }
 
     // ─── Push Tokens ───────────────────────────────────────────────────────────

@@ -6,17 +6,24 @@
  * Datos vía el módulo desacoplado `js/crm-service.js`.
  */
 
-import { requireAuth, initSidebar, admToast, esc } from './shared.js';
+import { requireAuth, initSidebar, admToast, admConfirm, esc } from './shared.js';
 import adminDb from './db.js';
 import { currentUser } from '../auth.js';
 import {
     onClientesChange, createCliente, fetchVendedoras,
-    fmtCOP, carteraTotals, carteraPorVendedora,
+    onSolicitudesChange, resolverSolicitud, anularMovimiento,
+    fmtCOP, carteraTotals, carteraPorVendedora, cumpleanosDelMes,
 } from '../crm-service.js';
 
 let _clientes = [];
+let _solicitudes = [];
 const _vendedoras = new Map();   // uid -> nombre
 let _filter = '';
+
+function clienteNombre(id) {
+    const c = _clientes.find(x => x.id === id);
+    return c ? (c.nombre || 'Sin nombre') : id;
+}
 
 function nombreVendedora(uid) {
     if (!uid) return 'Directo de Kary';
@@ -77,10 +84,49 @@ function renderClientes() {
     `).join('') || `<tr><td colspan="4" style="color:var(--adm-muted)">Sin coincidencias para "${esc(_filter)}".</td></tr>`;
 }
 
+function renderSolicitudes() {
+    const section = document.getElementById('solic-section');
+    const body = document.getElementById('solic-body');
+    const pend = _solicitudes.filter(s => (s.estado || 'pendiente') === 'pendiente');
+    if (!pend.length) { section.hidden = true; body.innerHTML = ''; return; }
+    section.hidden = false;
+    body.innerHTML = pend.map(s => `
+        <tr>
+            <td>${esc(clienteNombre(s.clienteId))}</td>
+            <td>${esc(nombreVendedora(s.vendedoraUid))}</td>
+            <td>${esc(s.motivo || '—')}</td>
+            <td style="text-align:right;white-space:nowrap">
+                <button class="adm-btn adm-btn--ghost adm-btn--sm" data-rechazar="${esc(s.id)}">Rechazar</button>
+                <button class="adm-btn adm-btn--primary adm-btn--sm" data-aprobar="${esc(s.id)}"
+                        data-cli="${esc(s.clienteId || '')}" data-mov="${esc(s.movId || '')}">Aprobar</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function renderCumple() {
+    const section = document.getElementById('cumple-section');
+    const body = document.getElementById('cumple-body');
+    const mes = new Date().getMonth();
+    const list = cumpleanosDelMes(_clientes, mes);
+    if (!list.length) { section.hidden = true; body.innerHTML = ''; return; }
+    section.hidden = false;
+    body.innerHTML = list.map(c => {
+        const wa = (c.whatsapp || c.telefono || '').replace(/[^0-9]/g, '');
+        const contacto = wa
+            ? `<a href="https://wa.me/57${esc(wa)}" target="_blank" rel="noopener">WhatsApp</a>`
+            : (c.telefono ? esc(c.telefono) : '—');
+        return `<tr><td>${c._dia}</td><td>${esc(c.nombre || 'Sin nombre')}</td>
+                <td>${esc(nombreVendedora(c.vendedoraUid))}</td><td>${contacto}</td></tr>`;
+    }).join('');
+}
+
 function render() {
     renderStats();
     renderCarteraVendedora();
     renderClientes();
+    renderSolicitudes();
+    renderCumple();
 }
 
 function populateVendedoraSelect() {
@@ -154,6 +200,41 @@ function wireRows() {
     });
 }
 
+function wireSolicitudes() {
+    document.getElementById('solic-body').addEventListener('click', (e) => {
+        const uid = currentUser()?.user?.uid;
+        const aprobar = e.target.closest('[data-aprobar]');
+        const rechazar = e.target.closest('[data-rechazar]');
+
+        if (aprobar) {
+            const id = aprobar.getAttribute('data-aprobar');
+            const cli = aprobar.getAttribute('data-cli');
+            const mov = aprobar.getAttribute('data-mov');
+            admConfirm('¿Aprobar la corrección? Si referencia un movimiento, se anulará y el saldo se recalculará.', async () => {
+                try {
+                    if (cli && mov) await anularMovimiento(cli, mov, uid);
+                    await resolverSolicitud(id, 'aprobada', uid);
+                    admToast('Solicitud aprobada.');
+                } catch (err) {
+                    console.error('[cuentas] aprobar:', err);
+                    admToast('No se pudo aprobar.', 'danger');
+                }
+            });
+        } else if (rechazar) {
+            const id = rechazar.getAttribute('data-rechazar');
+            admConfirm('¿Rechazar esta solicitud?', async () => {
+                try {
+                    await resolverSolicitud(id, 'rechazada', uid);
+                    admToast('Solicitud rechazada.');
+                } catch (err) {
+                    console.error('[cuentas] rechazar:', err);
+                    admToast('No se pudo rechazar.', 'danger');
+                }
+            });
+        }
+    });
+}
+
 async function init() {
     await requireAuth('admin');
     await adminDb.init();      // mantiene el badge de consultas del sidebar
@@ -170,8 +251,10 @@ async function init() {
     wireModal();
     wireSearch();
     wireRows();
+    wireSolicitudes();
 
     onClientesChange(list => { _clientes = list; render(); });
+    onSolicitudesChange(list => { _solicitudes = list; renderSolicitudes(); });
 }
 
 init();

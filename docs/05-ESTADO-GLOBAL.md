@@ -13,7 +13,7 @@
 | **Cache version vigente** | `bersaglio-v9` (en `public/sw.js`). Bump por HOTFIX prod (restaurar fallback de llaves Firebase). |
 | **Branch activa** | `Desarrollo` — rediseño Fase 1 **commiteado (`e290f83`) + pusheado a `origin/Desarrollo`** (0/0 ahead/behind, verif. 2026-06-05). Producción (`main`) sin tocar. |
 | **Cerebro** | 🧠 template v1.0.0 · `brain:check` SANO (sin huérfanos/vacíos) · skills: 74 catalogadas, 3 instaladas user-level (`~/.claude/skills/`). |
-| **Backend / Firebase** | Reglas Firestore/Storage. **CRM Fase 3 Bloques 1+2 LISTOS** (backend): rol `vendedora` + RBAC (clientes/movimientos append-only/solicitudes/config) + **CF `recalcSaldoCliente`** (saldo server-side, `functions/saldo.js`). Tests: `test:rules` **57/57** + `test:saldo` **12/12** + `test:saldo:integration` **5/5** (emulador local, JDK 25 `30 §L-12`). NO desplegado (merge gated). |
+| **Backend / Firebase** | **CRM Fase 3 Bloques 1+2+3 LISTOS**: B1 RBAC (rol `vendedora`, clientes/movimientos append-only/solicitudes/config) · B2 **CF `recalcSaldoCliente`** (saldo server-side, `functions/saldo.js`) · B3 **UI Panel de Kary** (`admin-cuentas/cuenta/config.html` + `js/crm-service.js`: lista+cartera, ficha ➕factura/abono, bandeja correcciones, cumpleaños, config). Tests: `test:rules` 57 + `test:saldo` 12 + integración 5. Build verde. **NO desplegado** (merge gated). Verificación funcional pendiente (emuladores+login, `30 §L-18`). |
 | **Hosting** | GitHub Pages (`bersagliojewelry.co` o `bersagliojewelry.github.io`). Auto-deploy vía GitHub Actions. |
 
 ## ⚠️ Flags de riesgo activos (→ Fase 2 hardening · detalle en `docs/41-SEGURIDAD.md`)

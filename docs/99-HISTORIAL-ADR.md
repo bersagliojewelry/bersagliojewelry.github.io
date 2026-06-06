@@ -540,6 +540,25 @@ Cliente: "YA COMMITEÉ TODO CONTINUA" (tras Bloque 1, commit `903b758`). Constru
 
 **43.7 Doctrina + cache + siguiente**: §3.3, §3.4, §3.6 (cost-aware: recompute O(movs/cliente), aceptable para un libro de fiado), memoria "precisión exacta / no asumir". Sin cache bump. **Pendiente de despliegue**: el trigger solo corre desplegado (`firebase-deploy.yml` al merge a `main`, gated por Daniel). **Recomendado**: el CI debería correr también `test:saldo` (+ integración) además de `test:rules`. **Siguiente (Bloque 3)**: Panel de Kary (cartera total/por vendedora, atrasados, cumpleaños) + bandeja de correcciones — primera UI del CRM. Lecciones → `30 §L-17`; espacial → `20`; seguridad → `41 §1.6`; arquitectura → `50 §5`.
 
+---
+
+## 2026-06-06 — CRM Fase 3 · Bloque 3 (Panel de Kary): primera UI del CRM
+Cliente: "continuemos con lo que recomiendes" (+ directiva: Claude commitea; revisión visual de Daniel al final). Primera interfaz del CRM, dentro del panel admin existente.
+
+**44.1 RCA / contexto**: el backend (B1 reglas + B2 saldo) necesitaba UI para que Kary opere el fiado. Se reusó el patrón admin existente (`admin-*.html` + `js/admin/*.js` + `css/admin.css` oscuro + auth `requireAuth`/`hasRole` + `adminDb`). Spec §7.
+
+**44.2 Solución estructural**: (1) **`js/crm-service.js`** — capa de datos del CRM **desacoplada** del `firestore-service.js` público (límite de módulo, charter §3): clientes/movimientos/solicitudes/config + helpers (`carteraTotals`, `carteraPorVendedora`, `cumpleanosDelMes`, `fmtCOP`). (2) **Cuentas** (`admin-cuentas.html`+`cuentas.js`): lista de clientes con saldo (coloreado) + cartera total/por vendedora + nuevo cliente (modal) + búsqueda + **bandeja de solicitudes pendientes** (aprobar = anula el movimiento referido y marca aprobada / rechazar) + **cumpleaños del mes** (link WhatsApp). (3) **Ficha** (`admin-cuenta.html`+`cuenta.js`): saldo en vivo (`onClienteChange`) + historial + ➕factura/➕abono (modal) + anular. (4) **Configuración** (`admin-config.html`+`config.js`): fecha de corte de migración + datos del negocio (`config/negocio`). (5) Nav "Cuentas" en las 6 páginas admin + gating en `shared.js` (oculto a editor); ⚙ Configuración en el topbar de Cuentas. La UI es **solo-lectura del saldo** (lo escribe la CF); solo agrega/anula movimientos.
+
+**44.3 No-regresión**: archivos nuevos + nav aditivo (1 link en 6 páginas) + `shared.js` (1 gating) + `css/admin.css` (estilos ficha, aditivos). Vite **hashea** `admin.css` (`/assets/auth-*.css`) → **sin cache bump** (auto-invalida, §4 verificado). Resto del admin intacto. Build Vite VERDE.
+
+**44.4 Verificación**: `npm run build` VERDE (Vite descubre las 3 páginas nuevas + bundles). **Diseño validado visualmente** vía mocks estáticos renderizados en el preview (capturas de Cuentas + ficha + móvil mostradas a Daniel → consistente con el admin, aprobado). Las secciones añadidas (bandeja/cumpleaños/config) reusan los MISMOS componentes ya validados. ⚠️ Verificación **funcional** (con datos+auth) pendiente: en `dev` la app conecta a **emuladores** (L-18) → camino real = `firebase emulators:start` + seed + `npm run dev` + login; o desplegar. Screenshots del preview se cuelgan con el CSS de cristal del admin (L-09) → no se pelean.
+
+**44.5 Anti-patterns evitados**: módulo CRM **desacoplado** (no inflar el service público); **reuso** del patrón y componentes admin (no reinventar UI); saldo **solo-lectura** en la UI (fuente = CF); verificación visual por mock estático (sortea auth+L-05); no pelear screenshots (L-09).
+
+**44.6 Archivos** — NUEVOS: `admin-cuentas.html`, `admin-cuenta.html`, `admin-config.html`, `js/admin/{cuentas,cuenta,config}.js`, `js/crm-service.js`. MODIFICADOS: `admin.html` + `admin-{piezas,colecciones,consultas,usuarios}.html` (nav), `js/admin/shared.js` (gating), `css/admin.css` (ficha). INTACTOS: backend, sitio público.
+
+**44.7 Doctrina + siguiente**: §3.6 (módulos desacoplados, reuso), patrón existente. Sin cache bump. ⚠️ **"Cuentas atrasadas"** (spec §7) **NO implementado**: requiere modelo de vencimiento/aging (los movimientos no tienen fecha de vencimiento) → diferido (decidir el modelo con Daniel/Kary). **Pendiente despliegue** (gated). **Siguiente (Bloque 4)**: app de vendedora responsive — **añadir `vendedora` a `auth.js ROLE_LEVELS`** (hoy no está) + vistas scoped. Luego B5 (migración Excel) y B6 (reportes). Lección L-18 (dev↔emuladores); espacial → `20`; arquitectura → `50 §5`.
+
 
 
 

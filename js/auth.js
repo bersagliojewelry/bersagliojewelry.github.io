@@ -202,6 +202,41 @@ export async function requireAuth(minRole = 'editor') {
     return { user: _currentUser, profile: _userProfile };
 }
 
+/**
+ * Auth guard por MEMBRESÍA EXACTA de rol (no jerárquico). Para la app de vendedora:
+ * `vendedora` NO está en la jerarquía de contenido (owner>admin>editor) a propósito,
+ * para que no herede acceso a páginas de editor. Aquí se permite por lista explícita.
+ *
+ * @param {string[]} allowedRoles - p.ej. ['vendedora','admin','owner']
+ */
+export async function requireAuthExact(allowedRoles) {
+    await waitForAuth();
+
+    if (!_currentUser) {
+        sessionStorage.removeItem('bj_auth');
+        window.location.replace('admin-login.html');
+        throw new Error('Not authenticated');
+    }
+
+    if (!_userProfile) {
+        try {
+            const snap = await getDoc(doc(firestoreDb, 'users', _currentUser.uid));
+            _userProfile = snap.exists() ? snap.data() : null;
+        } catch {
+            _userProfile = null;
+        }
+    }
+
+    if (!_userProfile || !allowedRoles.includes(_userProfile.role)) {
+        sessionStorage.removeItem('bj_auth');
+        window.location.replace('admin-login.html?error=forbidden');
+        throw new Error('Role not allowed');
+    }
+
+    document.body.style.display = '';
+    return { user: _currentUser, profile: _userProfile };
+}
+
 // ─── User Management (Owner only) ──────────────────────────────────────────
 
 /**

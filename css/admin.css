@@ -736,6 +736,46 @@ select.adm-input { cursor: pointer; appearance: none; -webkit-appearance: none; 
     .adm-ficha-actions .adm-btn { flex: 1; justify-content: center; }
 }
 
+/* ─── App de vendedora (responsive, móvil-first) ──────────────────────────── */
+.vend-app { min-height: 100vh; background: #f3f6f4; }
+.vend-topbar {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px; background: #fff; border-bottom: 1px solid var(--adm-border);
+}
+.vend-topbar .vend-back { color: var(--adm-text); display: inline-flex; align-items: center; }
+.vend-topbar h1 { flex: 1; margin: 0; font-family: var(--adm-font-display); font-size: 19px; font-weight: 500; color: var(--adm-text); }
+.vend-main { max-width: 680px; margin: 0 auto; padding: 16px; }
+.vend-summary {
+    background: var(--adm-accent); color: #fff;
+    border-radius: var(--adm-radius-lg); padding: 18px 20px; margin-bottom: 16px;
+}
+.vend-summary-label { font-size: 12px; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.05em; }
+.vend-summary-val { font-family: 'Space Mono', monospace; font-size: 28px; font-weight: 700; line-height: 1.15; }
+.vend-summary-sub { font-size: 13px; opacity: 0.9; margin-top: 4px; }
+.vend-toolbar { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.vend-toolbar .adm-input { flex: 1; min-width: 160px; }
+.vend-list { display: flex; flex-direction: column; gap: 10px; }
+.vend-card {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 14px 16px; background: #fff; border: 1px solid var(--adm-border);
+    border-radius: var(--adm-radius); cursor: pointer; transition: transform 0.12s ease, box-shadow 0.2s ease;
+}
+.vend-card:hover { box-shadow: var(--adm-shadow-sm); }
+.vend-card:active { transform: scale(0.99); }
+.vend-card-name { font-weight: 600; color: var(--adm-text); }
+.vend-card-sub { font-size: 12px; color: var(--adm-muted); margin-top: 2px; }
+.vend-card-saldo { font-family: 'Space Mono', monospace; font-weight: 700; white-space: nowrap; }
+.vend-section-title { font-family: var(--adm-font-display); font-size: 17px; color: var(--adm-text); margin: 22px 0 10px; }
+.vend-empty { text-align: center; color: var(--adm-muted); padding: 32px 16px; font-size: 14px; }
+.vend-mov { display: flex; justify-content: space-between; gap: 12px; padding: 12px 14px; background: #fff; border: 1px solid var(--adm-border); border-radius: var(--adm-radius); margin-bottom: 8px; }
+.vend-mov-main { min-width: 0; }
+.vend-mov-tipo { font-weight: 600; color: var(--adm-text); }
+.vend-mov-meta { font-size: 12px; color: var(--adm-muted); margin-top: 2px; }
+.vend-mov-monto { font-family: 'Space Mono', monospace; font-weight: 700; white-space: nowrap; }
+.vend-mov--anulado { opacity: 0.5; }
+.vend-mov--anulado .vend-mov-monto { text-decoration: line-through; }
+
 /* ─── Toast ───────────────────────────────────────────────────────────────── */
 .adm-toast-wrap {
     position: fixed;

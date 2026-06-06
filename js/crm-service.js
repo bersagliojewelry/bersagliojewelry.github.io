@@ -77,6 +77,18 @@ export function onClienteChange(id, cb) {
     });
 }
 
+/**
+ * Clientes de UNA vendedora (app de vendedora). La query DEBE filtrar por
+ * vendedoraUid: las reglas deniegan un `list` sin ese filtro (aislamiento de cartera).
+ */
+export function onClientesDeVendedora(uid, cb) {
+    const q = query(
+        collection(firestoreDb, 'clientes'),
+        where('vendedoraUid', '==', uid), limit(MAX),
+    );
+    return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
+}
+
 // ─── Movimientos (cuenta corriente de un cliente) ─────────────────────────────
 export function onMovimientosChange(clienteId, cb) {
     const q = query(
@@ -123,6 +135,24 @@ export async function resolverSolicitud(id, estado, autorizadoPor) {
     await updateDoc(doc(firestoreDb, 'solicitudesCorreccion', id), {
         estado, autorizadoPor, autorizadoEn: serverTimestamp(),
     });
+}
+
+/**
+ * Una vendedora pide una corrección sobre un movimiento suyo (no edita nada ella;
+ * Kary aprueba/rechaza). Las reglas exigen estado 'pendiente' + dueña del clienteId.
+ */
+export async function crearSolicitud({ vendedoraUid, clienteId, movId, motivo }) {
+    const payload = {
+        vendedoraUid,
+        clienteId,
+        ...(movId ? { movId } : {}),
+        motivo: (motivo || '').trim(),
+        estado: 'pendiente',
+        solicitadoPor: vendedoraUid,
+        createdAt: serverTimestamp(),
+    };
+    const ref = await addDoc(collection(firestoreDb, 'solicitudesCorreccion'), payload);
+    return { id: ref.id, ...payload };
 }
 
 // ─── Vendedoras (usuarios con rol vendedora) ──────────────────────────────────

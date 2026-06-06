@@ -4,12 +4,18 @@
 
 import { signIn, resetPassword, currentUser } from '../auth.js';
 
+// Las vendedoras van a su app responsive; owner/admin/editor al panel admin.
+function landingFor(role) {
+    return role === 'vendedora' ? 'vendedora.html' : 'admin.html';
+}
+
 async function init() {
-    // If already logged in, redirect to dashboard
+    // If already logged in, redirect by role
     // Small delay to let auth state resolve
     await new Promise(r => setTimeout(r, 500));
-    if (currentUser()) {
-        window.location.replace('admin.html');
+    const u = currentUser();
+    if (u) {
+        window.location.replace(landingFor(u.profile?.role));
         return;
     }
 
@@ -44,8 +50,8 @@ async function handleLogin(e) {
     hideError('login-error');
 
     try {
-        await signIn(email, pass);
-        window.location.replace('admin.html');
+        const { profile } = await signIn(email, pass);
+        window.location.replace(landingFor(profile?.role));
     } catch (err) {
         showError('login-error', err.message);
         btn.disabled    = false;

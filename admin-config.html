@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración — Bersaglio Admin</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Manrope:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/admin.css">
+    <script type="module" src="js/admin/config.js"></script>
+</head>
+<body style="display:none">
+<script>try{if(!sessionStorage.getItem('bj_auth'))throw 0}catch(e){location.replace('admin-login.html');document.body.style.display='none'}</script>
+<div class="adm-layout">
+
+    <aside class="adm-sidebar">
+        <div class="adm-brand">
+            <div class="adm-brand-logo">
+                <svg width="28" height="29" viewBox="0 0 80 84" fill="none" aria-hidden="true" class="adm-brand-logo-svg">
+                    <circle cx="40" cy="42" r="28" stroke="currentColor" stroke-width="1.2" opacity="0.85" fill="none"/>
+                    <line x1="40" y1="4" x2="40" y2="80" stroke="currentColor" stroke-width="0.8" opacity="0.5"/>
+                    <text x="40" y="54" text-anchor="middle" font-family="Fraunces, serif" font-weight="600" font-size="32" fill="currentColor">B</text>
+                </svg>
+            </div>
+            <div>
+                <div class="adm-brand-name">BERSAGLIO</div>
+                <div class="adm-brand-role">Panel Admin</div>
+            </div>
+        </div>
+        <nav class="adm-nav">
+            <a href="admin.html" class="adm-nav-link">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z"/></svg>
+                Dashboard
+            </a>
+            <a href="admin-cuentas.html" class="adm-nav-link">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"/><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zm-5 4a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
+                Cuentas
+            </a>
+            <a href="admin-piezas.html" class="adm-nav-link">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M10 2L3 7l7 5 7-5-7-5zM3 13l7 5 7-5-7-5-7 5z" clip-rule="evenodd"/></svg>
+                Piezas
+            </a>
+            <a href="admin-colecciones.html" class="adm-nav-link">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zm-2 4a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/></svg>
+                Colecciones
+            </a>
+            <a href="admin-consultas.html" class="adm-nav-link">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7z" clip-rule="evenodd"/></svg>
+                Consultas
+                <span class="adm-nav-badge" id="inq-badge" hidden></span>
+            </a>
+            <a href="admin-usuarios.html" class="adm-nav-link">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
+                Usuarios
+            </a>
+            <div class="adm-nav-divider"></div>
+            <a href="index.html" class="adm-nav-link" target="_blank" rel="noopener">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"/><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"/></svg>
+                Ver sitio
+            </a>
+        </nav>
+    </aside>
+    <div class="adm-sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <main class="adm-main">
+        <header class="adm-topbar">
+            <button class="adm-hamburger" id="hamburger-btn" aria-label="Menú">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="22" height="22"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <h1>Configuración</h1>
+            <div class="adm-topbar-actions">
+                <a href="admin-cuentas.html" class="adm-btn adm-btn--ghost">← Volver a Cuentas</a>
+            </div>
+        </header>
+
+        <div class="adm-content">
+            <form id="config-form">
+                <div class="adm-section">
+                    <div class="adm-section-head"><h2>Migración del Kardex</h2></div>
+                    <div class="adm-section-body">
+                        <p style="color:var(--adm-muted);font-size:13px;margin:0 0 16px;">
+                            Fecha de corte: los saldos del Excel se importan como saldo inicial (apertura) a ESTA fecha.
+                            El historial anterior queda archivado en el Excel.
+                        </p>
+                        <div class="adm-form-row">
+                            <div class="adm-field">
+                                <label for="cfg-fecha-corte">Fecha de corte de migración</label>
+                                <input type="date" id="cfg-fecha-corte" class="adm-input">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="adm-section">
+                    <div class="adm-section-head"><h2>Datos del negocio</h2></div>
+                    <div class="adm-section-body">
+                        <p style="color:var(--adm-muted);font-size:13px;margin:0 0 16px;">
+                            Se usarán en las facturas/recibos más adelante.
+                        </p>
+                        <div class="adm-form-row">
+                            <div class="adm-field">
+                                <label for="cfg-negocio">Nombre del negocio</label>
+                                <input type="text" id="cfg-negocio" class="adm-input" maxlength="120">
+                            </div>
+                            <div class="adm-field">
+                                <label for="cfg-nit">NIT / Documento</label>
+                                <input type="text" id="cfg-nit" class="adm-input" maxlength="40">
+                            </div>
+                        </div>
+                        <div class="adm-form-row">
+                            <div class="adm-field">
+                                <label for="cfg-direccion">Dirección</label>
+                                <input type="text" id="cfg-direccion" class="adm-input" maxlength="160">
+                            </div>
+                            <div class="adm-field">
+                                <label for="cfg-telefono">Teléfono</label>
+                                <input type="tel" id="cfg-telefono" class="adm-input" maxlength="40">
+                            </div>
+                        </div>
+                        <div style="margin-top:18px;">
+                            <button type="submit" class="adm-btn adm-btn--primary" id="cfg-save">Guardar configuración</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+
+<div class="adm-toast-wrap" id="toast-wrap"></div>
+<script>
+(function(){var b=document.getElementById('hamburger-btn'),s=document.querySelector('.adm-sidebar'),o=document.getElementById('sidebar-backdrop');if(!b||!s)return;function toggle(){s.classList.toggle('is-open');o.classList.toggle('is-visible')}b.addEventListener('click',toggle);o.addEventListener('click',toggle);s.querySelectorAll('.adm-nav-link').forEach(function(l){l.addEventListener('click',function(){s.classList.remove('is-open');o.classList.remove('is-visible')})})})();
+</script>
+</body>
+</html>

@@ -156,6 +156,22 @@ export function carteraTotals(clientes) {
     return { porCobrar, aFavor, neto: porCobrar + aFavor, clientes: clientes.length };
 }
 
+/**
+ * Clientes que cumplen años en el mes dado (0-11). `cumpleanos` se guarda como
+ * 'YYYY-MM-DD' (input date). Devuelve ordenados por día, con el día extraído.
+ */
+export function cumpleanosDelMes(clientes, mes) {
+    const out = [];
+    for (const c of clientes) {
+        if (!c.cumpleanos) continue;
+        const m = parseInt(String(c.cumpleanos).slice(5, 7), 10);   // mes 1-12
+        if (m !== mes + 1) continue;
+        const dia = parseInt(String(c.cumpleanos).slice(8, 10), 10) || 0;
+        out.push({ ...c, _dia: dia });
+    }
+    return out.sort((a, b) => a._dia - b._dia);
+}
+
 /** Cartera por vendedora: Map<vendedoraUid|null, {porCobrar, clientes}>. */
 export function carteraPorVendedora(clientes) {
     const map = new Map();

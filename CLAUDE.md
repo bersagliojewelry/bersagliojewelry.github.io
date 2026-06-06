@@ -97,10 +97,8 @@ Encabezado `## <fecha> — <título>` (convención por fecha de este cerebro) + 
 
 ### Reglas git
 
-- Crear commits SOLO cuando el usuario lo pida explícitamente.
-- `git add` archivos específicos (NUNCA `git add -A` / `.`).
-- **Quién commitea**: si el cliente prefiere commitear (GitHub Desktop/web), entrégale el mensaje listo (summary + descripción). Si commiteas tú: HEREDOC + footer `Co-Authored-By: Claude <noreply@anthropic.com>`.
-- NUNCA push sin pedido explícito. NUNCA `--amend` / `--no-verify` / `--no-gpg-sign` sin pedido.
+- **Quién commitea: Claude, por defecto** (directiva del cliente 2026-06-06 — ver memoria `feedback-claude-commits`). Al cerrar una tarea, commitea tú: `git add` de archivos ESPECÍFICOS (NUNCA `git add -A` / `.`), mensaje HEREDOC con footer `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`, en la branch activa. Separa commits por tipo (código vs cerebro/docs).
+- NUNCA push sin pedido explícito. NUNCA `--amend` / `--no-verify` / `--no-gpg-sign` sin pedido. NO commitear `.claude/settings.local.json` (decisión del cliente).
 - NUNCA commitear secrets (`.env`, credentials, `*.pem`).
 - Al cerrar un pendiente, marcar su `TODO-NN` como ✅ + link al §X. Mantén este CLAUDE.md liviano.
 

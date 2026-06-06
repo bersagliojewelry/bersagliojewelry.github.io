@@ -47,4 +47,10 @@ genera más valor con menos fricción"**.
 - Detalle espacial → `20-ESPACIAL` · seguridad → `41-SEGURIDAD` · performance → `45-PERFORMANCE`.
 
 ## 5. Decision log (ADRs de arquitectura — apéndalos aquí)
-- *(vacío — la 1ª decisión fuerte de la reconstrucción se registra aquí; si toca gobernanza/datos, también ADR en `99`).*
+- **2026-06-06 · CRM Bloque 1 (ADR §42)** — decisiones fundacionales del núcleo de cuentas por cobrar:
+  - **Libro append-only** como fuente de verdad: la vendedora SOLO agrega `movimientos` (factura/abono); nunca edita/borra. Correcciones por flujo autorizado (`solicitudesCorreccion`). → trazabilidad e integridad sin "archivo único" frágil (vs. el Kardex Excel con `#REF!`).
+  - **Saldo desnormalizado + CF como única escritura** de `saldoActual`: lecturas O(1) de cartera; el cálculo server-side (Bloque 2) garantiza que SIEMPRE cuadre. Reglas prohíben que el cliente escriba `saldoActual` (whitelist `hasOnly`).
+  - **RBAC server-side por reglas** (least-privilege) leyendo rol de `users/{uid}` (custom claims = optimización futura S4, no bloqueante). Multi-tenant por pertenencia (`get()` del padre), no por confianza en el uid firmante.
+  - **Canal-agnóstico** (ya en §3): cliente con `origen`, movimientos sin acoplar al canal → web/inventario/facturación encajan por fases sin reescribir.
+  - **`config` partido por sensibilidad**: `config/status` público (health-check), resto restringido → no exponer datos del negocio al ser la web un repo público (L-15).
+  - Verificación: TDD en emulador real (54 tests) + revisión adversarial multi-agente (L-16). Despliegue gated (merge a `main` con OK de Daniel).

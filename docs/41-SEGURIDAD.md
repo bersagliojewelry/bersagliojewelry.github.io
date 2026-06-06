@@ -36,13 +36,23 @@ Grounding verificado contra el código → **3 correcciones** al backlog origina
 
 Estado de hallazgos:
 - **S1** — ⚠️ **REVERTIDO (incidente prod 2026-06-06)**: quitar el fallback tumbó el sitio (secrets `VITE_*` NO configurados en GitHub → Firebase sin llaves → arranque caído). **Fallback público RESTAURADO** (red de seguridad; las keys web son públicas igual). Pendiente real (Tier C, sin tocar el fallback): configurar secrets en GitHub + restringir API key (GCP) + App Check. Lección **L-14**.
-- ⚠️ **CI rules-test PAUSADO** (auto-run off, solo `workflow_dispatch`): falla por causa no diagnosticada (sin log detallado del step / sin Java local). Reactivar `push`/`pull_request` al arreglarlo.
+- ✅ **CI rules-test — MISTERIO RESUELTO (2026-06-06)**: el "fallo sin diagnosticar" eran **3 tests S5/S6 en rojo** por el bug del `== null` (ver S6 abajo), no un problema de CI. Reproducido y corregido **local** (Java SÍ estaba instalado: Temurin 25, `30 §L-12`). Suite **54/54 verde** local. ⏭️ El workflow sigue en `workflow_dispatch` (auto-run off); ahora que la causa está resuelta, **reactivar** `push`/`pull_request` es seguro (pendiente: lo hace Daniel al pushear).
 - **S3** — ✅ `limit(500)` en `onPiecesChange` + `onInquiriesChange` (sin cambio a escala actual). Futuro: `orderBy`+cursor en pieces; `unsubscribe` al salir = responsabilidad del callsite (auditar admin).
 - **S5** — ✅ regla endurecida (`allow read: if approved==true || isAdmin()`) + test en `tests/firestore-rules.test.mjs`. Verificación = **CI** (`firestore-rules-test.yml`); pendiente push para green. Deploy gated.
-- **S6** — ✅ `validate` tolerante a merge (pieces: name+code obligatorios en create, tipos-si-presente en update; collections: name) + 6 tests (incl. patch parcial de imágenes). Verificación CI. **Tier B (reglas) COMPLETO: S5 + S6.**
+- **S6** — ✅ `validate` tolerante a merge (pieces: name+code obligatorios en create, tipos-si-presente en update; collections: name) + 6 tests. ⚠️ **BUG ENCONTRADO+CORREGIDO (2026-06-06)**: los 4 validadores usaban `d.campo == null` para opcionales, pero acceder a un campo AUSENTE **lanza** en reglas → rechazaba writes legítimos (crear pieza sin price; patch de imágenes en doc sin code; colección sin featured). Fix: `!('campo' in d) || d.campo is <tipo>` (`30 §L-13` corregida). Era la causa del rojo de CI. **Tier B (reglas) COMPLETO: S5 + S6.**
 - **S2/S4/S7/S8** — pendientes Tier C: S4 custom claims (functions), S2 storage role (dep. S4), S7 email-verify (functions), App Check + restricción de key (consola), CSP `<meta>` (GitHub Pages).
 
 > 🧪 **Harness de testing de reglas (CI, 2026-06-05)**: `@firebase/rules-unit-testing` + `tests/firestore-rules.test.mjs` (node:test) + `.github/workflows/firestore-rules-test.yml` (setup-java + `emulators:exec`). Toda regla nueva se verifica en CI antes de `firebase-deploy.yml`. Local necesita JDK (no instalado) → `30 §L-12`.
+
+## 1.6 RBAC del CRM (Fase 3 · Bloque 1, 2026-06-06 · ADR §42)
+Seguridad-por-diseño del núcleo de cuentas por cobrar (reglas en `firestore.rules`, 54 tests verde):
+- **Modelo**: rol en `users/{uid}.data.role` ∈ {owner, admin, vendedora, editor}. owner/admin = todo el CRM; vendedora = scoped + append-only; **editor excluido** del CRM (verificado por test).
+- **Append-only para vendedora**: crea cliente/movimiento (solo `factura`/`abono`) pero NUNCA edita/borra → integridad del libro de fiado. Correcciones vía `solicitudesCorreccion` (la vendedora no se auto-aprueba; estado/autorización solo admin).
+- **Campos server-only**: `saldoActual` (solo la CF, Bloque 2), `anulado`/auditoría de anulación, `autorizadoPor/En` → bloqueados en create del cliente con `hasOnly` whitelist + chequeos explícitos (anti-inyección, hallazgos de la revisión adversarial L-16).
+- **Multi-tenant**: la pertenencia se valida con `get()` del recurso padre (`clienteOwnerUid`), no solo con el uid firmante → una vendedora no toca la cartera de otra.
+- **Confidencialidad de `config`**: solo `config/status` es público (health-check web); el resto (datos del negocio) = admin/vendedora.
+- **Baja de vendedora**: `deactivateUser` (`functions/index.js:114`) deshabilita el usuario en **Auth** (`disabled:true`) → no puede autenticarse; las reglas no necesitan chequear `activo`.
+- **Pendiente Bloque 2 (seguridad/integridad)**: CF `onWrite` de `movimientos` (recalcula `saldoActual` server-side, transacción idempotente) + decidir el signo de `ajuste`/saldo a favor (hoy `monto>=0`). Sigue dependiendo de S4 (custom claims) como optimización futura (hoy `get()` por regla).
 
 ## 2. Escalabilidad (cuello de botella real)
 - **Listeners admin sin límite** (S3): a ~1k+ piezas, cada cambio reenvía toda la colección.

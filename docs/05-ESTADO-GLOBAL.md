@@ -13,12 +13,12 @@
 | **Cache version vigente** | `bersaglio-v9` (en `public/sw.js`). Bump por HOTFIX prod (restaurar fallback de llaves Firebase). |
 | **Branch activa** | `Desarrollo` — rediseño Fase 1 **commiteado (`e290f83`) + pusheado a `origin/Desarrollo`** (0/0 ahead/behind, verif. 2026-06-05). Producción (`main`) sin tocar. |
 | **Cerebro** | 🧠 template v1.0.0 · `brain:check` SANO (sin huérfanos/vacíos) · skills: 74 catalogadas, 3 instaladas user-level (`~/.claude/skills/`). |
-| **Backend / Firebase** | Reglas de Firestore y Storage configuradas en `firestore.rules` y `storage.rules`. |
+| **Backend / Firebase** | Reglas Firestore/Storage en `firestore.rules`/`storage.rules`. **CRM Fase 3 Bloque 1 LISTO** (backend): rol `vendedora` + RBAC clientes/movimientos(append-only)/solicitudes/config. **`npm run test:rules` 54/54 verde** (emulador local, JDK 25 Temurin `30 §L-12`). NO desplegado (merge gated). |
 | **Hosting** | GitHub Pages (`bersagliojewelry.co` o `bersagliojewelry.github.io`). Auto-deploy vía GitHub Actions. |
 
 ## ⚠️ Flags de riesgo activos (→ Fase 2 hardening · detalle en `docs/41-SEGURIDAD.md`)
 - 🟢 **Incidente prod 2026-06-06 RESUELTO en código**: quitar el fallback de llaves (S1) tumbó el sitio (secrets `VITE_*` no estaban en GitHub) → **fallback restaurado** (build verde); revive al desplegar. Pendiente: poblar secrets `VITE_*` en GitHub. Detalle: `41 §1.5` + `30 L-14`.
-- 🟠 **Reglas/escala (Fase 2)**: ✅ S5 (reseñas approved) + S6 (validate de campos) escritas + tests CI; ✅ `onSnapshot` con `limit(500)` (S3). Pendiente Tier C: S2 storage (dep. S4 claims), App Check, CSP `<meta>`. ⚠️ CI rules-test **pausado** (auto-run off; falla sin diagnosticar). Reglas S5/S6 desplegadas vía merge a main.
+- 🟠 **Reglas/escala (Fase 2)**: ✅ S5 + S6 (⚠️ S6 tenía bug `==null` → corregido 2026-06-06, era el rojo de CI) + S3 (`limit(500)`). Pendiente Tier C: S2 storage (dep. S4 claims), App Check, CSP `<meta>`. ✅ **CI rules-test: misterio resuelto** (era S6); reactivar `push`/`pull_request` cuando Daniel pushee (`41 §1.5`). S5/S6 desplegadas vía merge a main; reglas CRM Bloque 1 aún NO en main.
 
 ## 🧩 Sub-sistemas (resumen)
 Diseño Liquid Glass (Vite/Bundled) ✅ · Sincronización en vivo con Firestore ✅ · Checkout Stepper de 3 pasos ✅ · Cart Drawer lateral ✅ · Animaciones de entrada Staggered ✅

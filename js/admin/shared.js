@@ -94,6 +94,11 @@ function renderUserInfo() {
     if (usersLink && !hasRole('owner')) {
         usersLink.style.display = 'none';
     }
+    // CRM (Cuentas) = admin/owner (la app de vendedora será aparte, Bloque 4)
+    const cuentasLink = document.querySelector('a[href="admin-cuentas.html"]');
+    if (cuentasLink && !hasRole('admin')) {
+        cuentasLink.style.display = 'none';
+    }
 }
 
 // ─── Toast ────────────────────────────────────────────────────────────────────

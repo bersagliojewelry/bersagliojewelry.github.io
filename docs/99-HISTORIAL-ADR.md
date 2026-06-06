@@ -578,6 +578,25 @@ Cliente: "vamos a Bloque 4 y luego probamos". App móvil-first para que cada ven
 
 **45.7 Doctrina + siguiente**: §3.3, §3.6. Sin cache bump. Lección **L-19** (rol no-jerárquico). **Siguiente = PROBAR** (cliente: "luego probamos"): desplegar reglas+functions (o emuladores+seed), login como Kary y como vendedora, validar el flujo **factura → saldo** end-to-end. Luego B5 (migración del Kardex) y B6 (reportes). Espacial → `20`.
 
+---
+
+## 2026-06-06 — CRM Fase 3 · Verificación E2E (emuladores) + fix de login (lastLogin)
+Cliente: "vamos a Bloque 4 y luego probamos". Prueba end-to-end real en local tras construir B1-B4 (emuladores Firestore+Auth+Functions, SIN tocar producción).
+
+**46.1 RCA / contexto**: B1-B4 estaban verificados por tests (reglas 57, CF 12+5) + build, pero el **glue del navegador** (login por rol, UI→datos, CF→UI en vivo) no se había probado. Setup: `firebase emulators:start --only firestore,auth,functions --project bersaglio-jewelry` + `functions/seed-emulator.mjs` (owner+vendedora+1 cliente) + `npm run dev` (la app conecta a emuladores, L-18) + login automatizado en el preview.
+
+**46.2 Bug encontrado + fix**: el login de la **vendedora** falló con `PERMISSION_DENIED`. Causa: `signIn()` (`auth.js`) escribía `lastLogin` en `users/{uid}` del **propio** usuario, pero la regla `users` `update` solo permite owner/admin → vendedora/editor **denegados** → el `await setDoc` lanzaba → **login fallaba**. Habría bloqueado el login de TODA vendedora/editor en producción. **Fix**: `lastLogin` best-effort (try/catch) — es telemetría, no debe tumbar la sesión.
+
+**46.3 No-regresión**: solo `auth.js` (try/catch aditivo). Login de owner/admin intacto (su `lastLogin` sí lo permiten las reglas). Build verde.
+
+**46.4 Verificación (E2E, post-fix)**: **vendedora** login → su app (solo SU cliente, scoped) → registrar **factura $500.000** → CF `recalcSaldoCliente` recomputa → saldo en vivo **$500.000** → **abono $200.000** → saldo **$300.000** (resta exacta). **Owner** login → redirect a `admin.html` → Panel de Kary ve el mismo cliente + cartera **$300.000** (read admin sin filtro). Toda la cadena (auth + RBAC scoped + CF + UI en vivo) confirmada con datos reales en emulador.
+
+**46.5 Anti-patterns evitados**: telemetría no-crítica nunca bloquea auth (best-effort); **E2E con emuladores caza bugs de integración** que los tests de reglas/unitarios NO ven (el write de `lastLogin` de signIn no estaba en ningún test); verificación con datos reales, no asumida (§3.3).
+
+**46.6 Archivos** — MODIF: `js/auth.js` (lastLogin best-effort). NUEVO: `functions/seed-emulator.mjs` (herramienta E2E local). `firebase.json` (ignore `*.test.mjs` + `seed-emulator.mjs` del deploy de functions).
+
+**46.7 Doctrina + siguiente**: §3.3. Sin cache bump. **CRM (B1-B4) VERIFICADO end-to-end.** Pendiente: B5 (migración del Kardex), B6 (reportes), "atrasados" (aging). **Despliegue a producción gated por Daniel** (merge a `main` + `firebase deploy --only functions,firestore:rules`). Lección **L-20**; procedimiento E2E reusable (seed + L-18).
+
 
 
 

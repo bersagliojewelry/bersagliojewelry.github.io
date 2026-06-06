@@ -57,11 +57,13 @@ custom claims — S4 de Fase 2). Una vendedora del sistema = un usuario de Auth 
 > la cartera total/por vendedora sea instantánea (no hay que leer todos los movimientos), y la
 > Cloud Function garantiza que SIEMPRE cuadre con los movimientos (imposible romperlo a mano).
 
-## 4. Cálculo de saldo (Cloud Function trigger)
-- Trigger `onWrite` sobre `clientes/{id}/movimientos/{movId}` (en `functions/`).
-- Recalcula `saldoActual = Σ(cargos no anulados) − Σ(abonos no anulados)` y lo escribe en el cliente.
+## 4. Cálculo de saldo (Cloud Function trigger) — ✅ IMPLEMENTADO (Bloque 2, ADR §43)
+- Trigger `onDocumentWritten` sobre `clientes/{id}/movimientos/{movId}` (`functions/index.js` → `recalcSaldoCliente`, lógica pura en `functions/saldo.js`).
+- Recalcula `saldoActual = Σ(movimientos no anulados con signo)` y lo escribe en el cliente (única escritura de ese campo; las reglas lo prohíben al cliente).
 - Server-side → confiable, independiente del dispositivo, auditado. Nunca `#REF!`.
-- Idempotente; usa transacción para evitar condiciones de carrera.
+- Idempotente (recomputa desde cero); transacción para evitar condiciones de carrera.
+- **Modelo de signo (RESUELTO, confirmable por Daniel/Kary)**: `factura`/`apertura`/`ajuste` **suman** (`+monto`); `abono` **resta** (`−monto`). `monto`: `factura`/`abono` siempre ≥ 0; `apertura`/`ajuste` (solo admin) pueden ser **negativos** → saldo a favor inicial / corrección a la baja. Saldo **positivo = el cliente debe**; **negativo = saldo a favor** (coherente con §11).
+- Verificado: 12 tests de aritmética pura + 5 de integración (emulador Functions+Firestore).
 
 ## 5. Permisos (reglas Firestore — conceptual)
 - `clientes`: **read** si `admin|owner` **o** (`vendedora` y `resource.vendedoraUid == auth.uid`). **create** si `admin|owner` **o** (`vendedora` y `request.vendedoraUid == auth.uid`). **update/delete** solo `admin|owner` (vendedora NO).

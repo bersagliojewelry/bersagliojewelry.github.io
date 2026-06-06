@@ -52,7 +52,8 @@ Seguridad-por-diseño del núcleo de cuentas por cobrar (reglas en `firestore.ru
 - **Multi-tenant**: la pertenencia se valida con `get()` del recurso padre (`clienteOwnerUid`), no solo con el uid firmante → una vendedora no toca la cartera de otra.
 - **Confidencialidad de `config`**: solo `config/status` es público (health-check web); el resto (datos del negocio) = admin/vendedora.
 - **Baja de vendedora**: `deactivateUser` (`functions/index.js:114`) deshabilita el usuario en **Auth** (`disabled:true`) → no puede autenticarse; las reglas no necesitan chequear `activo`.
-- **Pendiente Bloque 2 (seguridad/integridad)**: CF `onWrite` de `movimientos` (recalcula `saldoActual` server-side, transacción idempotente) + decidir el signo de `ajuste`/saldo a favor (hoy `monto>=0`). Sigue dependiendo de S4 (custom claims) como optimización futura (hoy `get()` por regla).
+- **Saldo server-side (Bloque 2 ✅, ADR §43)**: CF `recalcSaldoCliente` (`onDocumentWritten` de movimientos → transacción idempotente → `saldoActual`, vía Admin SDK = única escritura; el cliente nunca lo escribe). Modelo de signo resuelto (factura/apertura/ajuste suman; abono resta; apertura/ajuste admiten negativo = saldo a favor). Integridad verificada: 12 tests puros + 5 de integración.
+- **Pendiente Tier C (no bloquea)**: S4 (custom claims) como optimización (hoy `get()` por regla); S2 storage (dep. S4); App Check; CSP `<meta>`.
 
 ## 2. Escalabilidad (cuello de botella real)
 - **Listeners admin sin límite** (S3): a ~1k+ piezas, cada cambio reenvía toda la colección.

@@ -87,6 +87,7 @@
 | §40 | 2026-06-05 — Rediseño Fase 1 (mirror): shell + Home + Nosotros + Contacto + dock Atajos | 469 |
 | §41 | 2026-06-05 — Fase 1 pulido: auditoría visual + 3 fixes doctrina (transition/radii/#000) | 488 |
 | §42 | 2026-06-06 — CRM Fase 3 · Bloque 1: rol vendedora + reglas RBAC cuentas por cobrar + endurecimiento adversarial | 507 |
+| §43 | 2026-06-06 — CRM Fase 3 · Bloque 2: Cloud Function `recalcSaldoCliente` (saldo server-side) + modelo de signo | 526 |
 ---
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §32+ al historial,

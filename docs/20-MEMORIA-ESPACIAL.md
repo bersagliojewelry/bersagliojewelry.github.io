@@ -93,7 +93,13 @@ Backend del CRM (aún SIN UI; las pantallas son Bloques 3-4). Vive en archivos y
 *   **`admin-cuenta.html` + `js/admin/cuenta.js`** (✅, singular = ficha): saldo en vivo (`onClienteChange`) + historial + registrar factura/abono (modal) + anular (admin). El saldo lo pone la CF; la UI solo agrega/anula y observa.
 *   **`admin-config.html` + `js/admin/config.js`** (✅): fecha de corte de migración + datos del negocio (`config/negocio`). Acceso vía ⚙ en el topbar de Cuentas.
 *   En **Cuentas** además: bandeja de **solicitudes de corrección** (aprobar→anula el movimiento+marca aprobada / rechazar) + **cumpleaños del mes** (link WhatsApp).
-*   **Bloque 3 (Panel de Kary) ✅ COMPLETO** (ADR §44). ⚠️ "cuentas atrasadas" (spec §7) diferido (necesita modelo de vencimiento). ⚠️ `auth.js ROLE_LEVELS` NO incluye `vendedora` → añadir en **Bloque 4** (app vendedora). Verificación funcional: emuladores+`npm run dev`+login (`30 §L-18`).
+*   **Bloque 3 (Panel de Kary) ✅ COMPLETO** (ADR §44). ⚠️ "cuentas atrasadas" (spec §7) diferido (necesita modelo de vencimiento).
+
+**App de vendedora (Bloque 4 ✅, ADR §45)** — móvil-first, scoped, shell propio (`.vend-*`, sin sidebar):
+*   **`vendedora.html` + `js/vendedora/cuentas.js`**: mis clientes (tarjetas) + mi cartera + nuevo cliente (a su nombre).
+*   **`vendedora-cliente.html` + `js/vendedora/ficha.js`**: saldo en vivo + movimientos + ➕factura/abono + **solicitar corrección** (no anula). `js/vendedora/ui.js` = helpers lean.
+*   Auth: `auth.js requireAuthExact(['vendedora','admin','owner'])` (membresía exacta — `vendedora` NO está en `ROLE_LEVELS`, es un eje aparte, L-19). `login.js` redirige por rol (vendedora→`vendedora.html`). `crm-service.onClientesDeVendedora` filtra por `vendedoraUid` (el `list` sin filtro lo deniegan las reglas).
+*   Verificación funcional del CRM (todos los bloques): emuladores+`npm run dev`+login (`30 §L-18`) o desplegar.
 
 **Colecciones nuevas en Firestore** (canal-agnósticas, spec `crm-cuentas-design.md`):
 | Colección | Quién escribe | Regla clave |

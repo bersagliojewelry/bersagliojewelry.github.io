@@ -723,6 +723,19 @@ select.adm-input { cursor: pointer; appearance: none; -webkit-appearance: none; 
 .adm-empty svg { margin: 0 auto 12px; opacity: 0.25; }
 .adm-empty p { font-size: 13px; }
 
+/* ─── CRM: ficha de cliente ──────────────────────────────────────────────── */
+.adm-ficha-grid { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
+.adm-ficha-datos h2 { margin: 0 0 4px; }
+.adm-ficha-meta { color: var(--adm-muted); font-size: 13px; margin: 0; }
+.adm-ficha-saldo { text-align: right; }
+.adm-ficha-saldo-label { font-size: 12px; color: var(--adm-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.adm-ficha-saldo-val { font-family: 'Space Mono', monospace; font-size: 28px; font-weight: 700; line-height: 1.1; }
+.adm-ficha-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+@media (max-width: 560px) {
+    .adm-ficha-saldo { text-align: left; }
+    .adm-ficha-actions .adm-btn { flex: 1; justify-content: center; }
+}
+
 /* ─── Toast ───────────────────────────────────────────────────────────────── */
 .adm-toast-wrap {
     position: fixed;

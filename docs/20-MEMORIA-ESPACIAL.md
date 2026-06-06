@@ -87,6 +87,12 @@ Backend del CRM (aún SIN UI; las pantallas son Bloques 3-4). Vive en archivos y
 *   **`functions/saldo.js`** — función PURA `computeSaldo(movimientos)` (aritmética del saldo, signo por tipo). Testeable sin emulador.
 *   **Tests del CRM**: `tests/firestore-rules.test.mjs` (57, `npm run test:rules`) + `functions/saldo.test.mjs` (12, `test:saldo`) + `functions/saldo.integration.test.mjs` (5, `test:saldo:integration`, emulador Functions+Firestore). JDK local `30 §L-12`.
 
+**UI del CRM (Panel de Kary, Bloque 3 — en curso)**: páginas admin (estilo oscuro `css/admin.css`, patrón `admin-*.html` + `js/admin/*.js`, auth `requireAuth`/`hasRole`).
+*   **`js/crm-service.js`** — capa de datos Firestore del CRM, **desacoplada** del `firestore-service.js` público (límite de módulo, charter §3). Clientes/movimientos/solicitudes/config + `carteraTotals`/`carteraPorVendedora` + `fmtCOP`.
+*   **`admin-cuentas.html` + `js/admin/cuentas.js`** (✅): lista de clientes con saldo + cartera total/por vendedora + modal nuevo cliente + búsqueda. Filas → ficha. Link "Cuentas" en las 6 páginas admin, gateado en `shared.js`.
+*   **`admin-cuenta.html` + `js/admin/cuenta.js`** (✅, singular = ficha): saldo en vivo (`onClienteChange`) + historial de movimientos + registrar factura/abono (modal) + anular (admin). El saldo lo pone la CF; la UI solo agrega/anula y observa.
+*   Pendiente Bloque 3: bandeja de correcciones (`solicitudesCorreccion`), configuración (fecha de corte), cumpleaños del mes. ⚠️ `auth.js ROLE_LEVELS` NO incluye `vendedora` → añadir en Bloque 4 (app vendedora).
+
 **Colecciones nuevas en Firestore** (canal-agnósticas, spec `crm-cuentas-design.md`):
 | Colección | Quién escribe | Regla clave |
 |---|---|---|

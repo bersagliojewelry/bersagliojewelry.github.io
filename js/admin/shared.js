@@ -6,6 +6,8 @@
 import adminDb from './db.js';
 import { requireAuth, currentUser, currentRole, hasRole, signOut } from '../auth.js';
 import { setAuthContext } from '../firestore-service.js';
+import { renderSidebar } from './render-sidebar.js';
+import { NAV } from './sidebar-data.js';
 
 // ─── Auth guard ────────────────────────────────────────────────────────────────
 
@@ -16,10 +18,20 @@ import { setAuthContext } from '../firestore-service.js';
  */
 export { requireAuth, currentUser, currentRole, hasRole, signOut };
 
-// ─── Sidebar: marca el link activo, muestra badge e info de usuario ───────────
+// ─── Sidebar: monta el rail desde datos, marca el link activo, badge, user ───
 
 export function initSidebar() {
+    const sidebar = document.querySelector('.adm-sidebar');
     const page = location.pathname.split('/').pop() || 'admin.html';
+
+    // Montar el rail desde datos (si el <aside> está vacío).
+    if (sidebar && !sidebar.querySelector('.adm-nav')) {
+        const role = currentRole() || 'editor';
+        sidebar.insertAdjacentHTML('afterbegin', renderSidebar(NAV, { role, activePage: page }));
+        wireSidebarToggle(sidebar);
+    }
+
+    // Marca el link activo (por si el HTML ya traía nav, defensivo).
     document.querySelectorAll('.adm-nav-link').forEach(link => {
         const href = link.getAttribute('href');
         link.classList.toggle('is-active', href === page);
@@ -33,8 +45,7 @@ export function initSidebar() {
         adminDb.on('inquiries', () => updateBadge());
     }
 
-    // Propagate auth context to the Firestore service so every write gets
-    // stamped with actorUid / actorEmail for the audit log.
+    // Propagate auth context to the Firestore service for audit stamping.
     const user = currentUser();
     if (user) {
         setAuthContext({
@@ -45,6 +56,19 @@ export function initSidebar() {
     }
 
     renderUserInfo();
+}
+
+// Cablea la hamburguesa (antes vivía como <script> inline en cada HTML).
+function wireSidebarToggle(sidebar) {
+    const btn = document.getElementById('hamburger-btn');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    if (!btn || !backdrop) return;
+    const toggle = () => { sidebar.classList.toggle('is-open'); backdrop.classList.toggle('is-visible'); };
+    btn.addEventListener('click', toggle);
+    backdrop.addEventListener('click', toggle);
+    sidebar.addEventListener('click', (e) => {
+        if (e.target.closest('.adm-nav-link')) { sidebar.classList.remove('is-open'); backdrop.classList.remove('is-visible'); }
+    });
 }
 
 function updateBadge() {

@@ -60,6 +60,8 @@
 │       ├── sidebar-data.js     # NAV como DATO (grupos→items, rol, placeholders) — IA "C" (F-CHASIS-A §50)
 │       ├── render-sidebar.js   # renderSidebar() PURO (datos→HTML, testeable) — único origen del rail
 │       ├── saldo-format.js     # color/etiqueta del saldo por tokens .adm-money (sin hex)
+│       ├── lead-format.js      # estado/color/origen del pipeline de leads (Bandeja, F4 §53)
+│       ├── consultas.js        # Bandeja de leads (pipeline 5 estados + convertir a cliente)
 │       ├── db.js · piezas.js · colecciones.js · cuentas.js · cuenta.js · config.js · dashboard.js
 │       └── (nav NO duplicada en HTML; cada admin*.html tiene <aside> vacío que llena shared.js)
 ├── public/                     # Archivos estáticos copiados a dist/ en el build
@@ -116,4 +118,5 @@ Modelo de roles: rol en `users/{uid}.data.role` ∈ {owner, admin, editor}. **CR
 **Norte del sistema completo (mini-ERP)**: `docs/superpowers/specs/2026-06-07-bersaglio-arquitectura-maestra-design.md` (v3, incluye Consejo Externo §16). Fases F-CHASIS-A→F9.
 *   **Rail como dato**: `js/admin/sidebar-data.js` (`NAV` = grupos→items con `role` y `soon`) + `js/admin/render-sidebar.js` (`renderSidebar()` PURO, testeado en `tests/render-sidebar.test.mjs`, `npm run test:sidebar`). `shared.js initSidebar()` lo monta en el `<aside class="adm-sidebar">` vacío de cada `admin*.html` (**ya NO se duplica la nav**; hamburguesa en `wireSidebarToggle`). Grupos IA "C": Hoy · CRM (Clientes, Bandeja) · Ventas · Cobranza · Catálogo/Inventario · Reportes · Sistema (Vendedoras, Usuarios, Config). Gating por rol declarativo (item.role).
 *   **Design-system de dinero**: clase `.adm-money` (Space Mono + tabular-nums) + `saldo-format.js` (`saldoClass/saldoLabel/saldoCellHTML`, color por tokens, **sin hex**); stat-cards con `min-width:0`/`clamp` (fin de números desbordados); `#confirm-dialog` propio (`.adm-confirm`) en ficha + config.
-*   **Pendiente (futuras fases del spec)**: F1 `estadoCuenta` · F2 fecha real/aging · F4 Bandeja/leads (reemplaza "Consultas") · F7 ventas+facturación+pagos (event-driven, CF callable = único escritor, saldo síncrono O(M)) · F8 inventario (único+lote). Evolución C→B (conmutador de áreas) sin reescribir.
+*   **F4 Bandeja ✅ construido** (ADR §53): pipeline de leads (5 estados + origen + convertir-a-cliente) sobre `inquiries` evolucionada (NO colección `leads` aún); helper puro `lead-format.js`. La colección `leads` formal + ingestión por CF + App Check = F6.
+*   **Pendiente (futuras fases del spec)**: F6 escala+hardening (App Check, agregados, leads formales, paginación) · F7 ventas+facturación+pagos (event-driven, CF callable = único escritor, saldo síncrono O(M)) · F8 inventario (único+lote). Evolución C→B (conmutador de áreas) sin reescribir.

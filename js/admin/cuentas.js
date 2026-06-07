@@ -9,14 +9,35 @@
 import { requireAuth, initSidebar, admToast, esc } from './shared.js';
 import adminDb from './db.js';
 import {
-    onClientesChange, createCliente, fetchVendedoras,
+    onClientesChange, createCliente, fetchVendedoras, onAllMovimientosChange, getConfig,
     fmtCOP, carteraTotals, carteraPorVendedora, cumpleanosDelMes,
 } from '../crm-service.js';
-import { saldoCellHTML } from './saldo-format.js';
+import { saldoCellHTML, estadoBadgeHTML } from './saldo-format.js';
+import { estadoCuenta } from '../crm-estado-cuenta.js';
 
 let _clientes = [];
 const _vendedoras = new Map();   // vendedoraId -> nombre
+const _estados = new Map();      // clienteId -> estadoCuenta (mora, calculado al cargar)
+let _diasPlazo = 30;             // config/negocio.diasPlazo
+let _fechaCorte = null;          // config/negocio.fechaCorteMigracion (fallback de fecha)
 let _filter = '';
+
+// Estado de mora de un cliente (objeto estadoCuenta); null si aún no se calculó.
+function estadoDe(id) { return _estados.get(id) || null; }
+
+// Recalcula la mora por cliente desde TODOS los movimientos (en vivo).
+function rebuildEstados(movs) {
+    _estados.clear();
+    const byCliente = new Map();
+    for (const m of movs) {
+        if (!m.clienteId) continue;
+        if (!byCliente.has(m.clienteId)) byCliente.set(m.clienteId, []);
+        byCliente.get(m.clienteId).push(m);
+    }
+    for (const [cid, lst] of byCliente) {
+        _estados.set(cid, estadoCuenta(lst, { diasPlazo: _diasPlazo, fechaCorte: _fechaCorte }));
+    }
+}
 
 function nombreVendedora(id) {
     if (!id) return 'Directo de Kary';
@@ -28,11 +49,27 @@ function saldoCell(saldo) {
     return saldoCellHTML(saldo);
 }
 
+// Totales de cartera vencida (suma de la mora de todos los clientes).
+function carteraVencida() {
+    let vencido = 0, d1_30 = 0, d31_60 = 0, d60plus = 0;
+    for (const e of _estados.values()) {
+        vencido += e.vencido;
+        d1_30 += e.buckets.d1_30; d31_60 += e.buckets.d31_60; d60plus += e.buckets.d60plus;
+    }
+    return { vencido, d1_30, d31_60, d60plus };
+}
+
 function renderStats() {
     const t = carteraTotals(_clientes);
     document.getElementById('stat-por-cobrar').textContent = fmtCOP(t.porCobrar);
     document.getElementById('stat-clientes').textContent = String(t.clientes);
     document.getElementById('stat-a-favor').textContent = fmtCOP(Math.abs(t.aFavor));
+
+    const v = carteraVencida();
+    document.getElementById('stat-vencida').textContent = fmtCOP(v.vencido);
+    document.getElementById('stat-vencida-desglose').innerHTML = v.vencido > 0
+        ? `1-30: ${esc(fmtCOP(v.d1_30))} · 31-60: ${esc(fmtCOP(v.d31_60))} · +60: ${esc(fmtCOP(v.d60plus))}`
+        : 'Todo al día';
 }
 
 function renderCarteraVendedora() {
@@ -54,10 +91,19 @@ function renderClientes() {
     const table = document.getElementById('clientes-table');
 
     const f = _filter.trim().toLowerCase();
+    // Orden por MORA (vencidos primero) → más vencido a menos; luego saldo; luego nombre.
     const list = (f
         ? _clientes.filter(c => (c.nombre || '').toLowerCase().includes(f))
         : _clientes
-    ).slice().sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
+    ).slice().sort((a, b) => {
+        const ea = estadoDe(a.id), eb = estadoDe(b.id);
+        const ma = ea ? ea.diasMora : 0, mb = eb ? eb.diasMora : 0;
+        const va = ea ? ea.vencido : 0, vb = eb ? eb.vencido : 0;
+        const sa = typeof a.saldoActual === 'number' ? a.saldoActual : 0;
+        const sb = typeof b.saldoActual === 'number' ? b.saldoActual : 0;
+        return (mb - ma) || (vb - va) || (sb - sa)
+            || (a.nombre || '').localeCompare(b.nombre || '', 'es');
+    });
 
     if (!_clientes.length) {
         table.hidden = true; empty.hidden = false;
@@ -66,14 +112,22 @@ function renderClientes() {
     }
     table.hidden = false; empty.hidden = true;
 
-    body.innerHTML = list.map(c => `
+    body.innerHTML = list.map(c => {
+        const e = estadoDe(c.id);
+        const saldo = typeof c.saldoActual === 'number' ? c.saldoActual : 0;
+        const estadoTd = (e && saldo > 0) ? estadoBadgeHTML(e) : '<span style="color:var(--adm-muted)">—</span>';
+        const vencidoTd = (e && e.vencido > 0)
+            ? `<strong class="adm-money adm-money--debe">${esc(fmtCOP(e.vencido))}</strong>`
+            : '<span class="adm-money adm-money--cero">—</span>';
+        return `
         <tr data-id="${esc(c.id)}" style="cursor:pointer">
             <td>${esc(c.nombre || 'Sin nombre')}</td>
             <td>${esc(nombreVendedora(c.vendedoraId))}</td>
-            <td>${esc(c.telefono || c.whatsapp || '—')}</td>
+            <td>${estadoTd}</td>
+            <td style="text-align:right">${vencidoTd}</td>
             <td style="text-align:right">${saldoCell(c.saldoActual)}</td>
-        </tr>
-    `).join('') || `<tr><td colspan="4" style="color:var(--adm-muted)">Sin coincidencias para "${esc(_filter)}".</td></tr>`;
+        </tr>`;
+    }).join('') || `<tr><td colspan="5" style="color:var(--adm-muted)">Sin coincidencias para "${esc(_filter)}".</td></tr>`;
 }
 
 
@@ -187,10 +241,22 @@ async function init() {
     }
     populateVendedoraSelect();
 
+    // Config de mora (díasPlazo + fecha de corte): cambia rara vez → se lee una vez.
+    try {
+        const cfg = await getConfig('negocio');
+        if (typeof cfg?.diasPlazo === 'number' && cfg.diasPlazo >= 0) _diasPlazo = cfg.diasPlazo;
+        if (cfg?.fechaCorteMigracion) _fechaCorte = cfg.fechaCorteMigracion;
+    } catch (err) {
+        console.warn('[cuentas] getConfig:', err);
+    }
+
     wireModal();
     wireSearch();
     wireRows();
 
+    // Mora/aging EN VIVO (norte §10.2-F2): saldo y vencido salen del MISMO origen
+    // (los movimientos) → no se desincronizan. Recalcula y re-renderiza en cada cambio.
+    onAllMovimientosChange((movs) => { rebuildEstados(movs); render(); });
     onClientesChange(list => { _clientes = list; render(); });
 }
 

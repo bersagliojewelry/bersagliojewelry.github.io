@@ -23,3 +23,30 @@ export function saldoLabel(saldo) {
 export function saldoCellHTML(saldo) {
   return `<strong class="${saldoClass(saldo)}">${fmtCOP(saldo)}</strong>`;
 }
+
+// ─── Mora / aging (cartera vencida) ───────────────────────────────────────────
+// Consumen el objeto `estadoCuenta` de js/crm-estado-cuenta.js. Color por tokens
+// (sin hex): vencido = rojo (--adm-danger), a favor = verde, al día/sin = neutro.
+
+/** Etiqueta legible del estado de cuenta (resumen de mora). */
+export function estadoLabel(est) {
+  if (!est) return 'Sin deuda';
+  if (est.estado === 'a-favor') return 'Saldo a favor';
+  if (est.estado === 'sin-deuda') return 'Sin deuda';
+  if (est.estado === 'vencido') {
+    const d = est.diasMora;
+    return `Vencido · ${d} ${d === 1 ? 'día' : 'días'} de mora`;
+  }
+  if (est.sinFecha > 0) return 'Falta fecha de corte';
+  return 'Al día';
+}
+
+/** Pill de estado de cuenta (token-based) para innerHTML. */
+export function estadoBadgeHTML(est) {
+  const e = est?.estado;
+  const cls = e === 'vencido' ? 'adm-pill--red'
+            : e === 'a-favor' ? 'adm-pill--green'
+            : (est?.sinFecha > 0) ? 'adm-pill--gold'   // deuda sin fecha → requiere atención de Kary
+            : 'adm-pill--gray';
+  return `<span class="adm-pill ${cls}">${estadoLabel(est)}</span>`;
+}

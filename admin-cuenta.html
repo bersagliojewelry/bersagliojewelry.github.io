@@ -43,6 +43,7 @@
                     <div class="adm-ficha-saldo">
                         <div class="adm-ficha-saldo-label" id="f-saldo-label">Saldo</div>
                         <div class="adm-ficha-saldo-val" id="f-saldo">—</div>
+                        <div class="adm-ficha-estado" id="f-estado" hidden></div>
                     </div>
                 </div>
                 <div class="adm-ficha-actions">
@@ -92,10 +93,14 @@
         </div>
         <form id="mov-form">
             <div class="adm-modal-body">
-                <div class="adm-form-row adm-col-1">
+                <div class="adm-form-row">
                     <div class="adm-field">
                         <label for="mov-monto" id="mov-monto-label">Monto (COP) <span class="adm-opt">(obligatorio)</span></label>
                         <input type="number" id="mov-monto" class="adm-input" required min="1" step="1" inputmode="numeric">
+                    </div>
+                    <div class="adm-field">
+                        <label for="mov-fecha">Fecha <span class="adm-opt">(del hecho)</span></label>
+                        <input type="date" id="mov-fecha" class="adm-input" required>
                     </div>
                 </div>
                 <div class="adm-form-row adm-col-1">

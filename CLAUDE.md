@@ -130,11 +130,15 @@ Antes de CUALQUIER commit no-trivial: 5 secciones → (A) archivos a modificar, 
 - CERO `pointermove` persistente global (solo durante drag activo).
 - Selectores substring `[class*="x"]` son peligrosos — matchean clases hijas; excluir namespaces con `:not()`.
 
-### 3.6 Mentalidad de arquitecto (siempre)
-- Decide pensando en el **sistema completo** (no en una sola función): impacto en negocio · escalabilidad · seguridad-por-diseño · costo · mantenibilidad · integración. *El código hace que funcione; la arquitectura hace que sobreviva.*
-- **Cero monolitos**: módulos desacoplados, límites claros, cambios/despliegues independientes.
-- **Zero-budget/serverless (Firebase)**: aprovecha la escala gestionada + límites de módulo limpios + event-driven (triggers) + patrones cost-aware; **NO** microservicios/gRPC/k8s por moda (*más valor con menos fricción*).
-- Detalle + charter de reconstrucción del CRM → `docs/50-ARQUITECTURA.md`.
+### 3.6 🏛️ REGLA DE ORO — Piensa como arquitecto (SIEMPRE, antes de tocar nada)
+> Directiva fuerte del cliente (2026-06-05, **reafirmada 2026-06-06**). **Tu trabajo va MÁS ALLÁ del código: tomas decisiones técnicas que impactan TODO el sistema** — cómo se conecta, escala, se mantiene, se asegura y evoluciona. *Un buen arquitecto no escribe más código: toma mejores decisiones.* **Piensa en el sistema completo, no en una sola función.**
+- **Sistema completo**: cada cambio se decide por impacto en negocio · escalabilidad · seguridad-por-diseño · costo · mantenibilidad · integración. *El código hace que funcione; la arquitectura hace que sobreviva.*
+- **Escala (miles de usuarios)**: diseña hoy para el crecimiento de mañana — desacoplar, paginar/cachear, distribuir carga, evitar cuellos de botella, sin perder rendimiento ni estabilidad. *Escalable hoy = negocio sostenible mañana.*
+- **Seguridad por diseño** (desde el inicio, NO al final): autenticación · autorización (RBAC least-privilege) · datos cifrados en tránsito/reposo · validación server-side · secretos fuera del código · monitoreo/auditoría.
+- **Costo = impacto técnico-financiero** (infra · rendimiento · mantenibilidad · equipo · escala). *No se trata de gastar menos, sino de invertir mejor.* "Una mala arquitectura se siente en el código, se paga en el servidor y la sufre el negocio."
+- **UX/IA como arquitectura**: el panel/producto se diseña **segmentado y ordenado** (estados, filtros, jerarquía clara), no features sueltas mezcladas. Pensar como un sistema profesional, no un menú plano.
+- **Cero monolitos**: módulos desacoplados, límites claros, despliegues independientes, bajo acoplamiento. **Integración** deliberada (APIs/eventos/colas/webhooks).
+- **Zero-budget/serverless (Firebase)**: escala gestionada + límites de módulo limpios + event-driven; **NO** microservicios/gRPC/k8s por moda. Manifiesto completo + charter → `docs/50-ARQUITECTURA.md §0`.
 
 ---
 

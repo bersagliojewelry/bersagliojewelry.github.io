@@ -43,7 +43,8 @@ service cloud.firestore {
     function vendedoraValida() {
       let d = request.resource.data;
       return nonEmptyStr(d.nombre)
-          && d.keys().hasOnly(['nombre', 'activa', 'createdAt', 'createdBy', 'updatedAt']);
+          && d.keys().hasOnly(['nombre', 'activa', 'createdAt', 'createdBy', 'updatedAt'])
+          && (!('activa' in d) || d.activa is bool);
     }
     // En CREATE: el asiento NO nace anulado y la auditoría de anulación es solo del
     // admin (vía update). El signo lo da el `tipo` (factura/apertura/ajuste suman;

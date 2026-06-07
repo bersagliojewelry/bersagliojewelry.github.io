@@ -19,7 +19,6 @@ import {
 } from '@firebase/rules-unit-testing';
 import {
     doc, getDoc, setDoc, addDoc, deleteDoc, collection,
-    getDocs, query, where,
 } from 'firebase/firestore';
 
 let testEnv;
@@ -122,6 +121,9 @@ test('CRM vend · owner gestiona vendedoras', async () => {
 });
 test('CRM vend · sin nombre es rechazada', async () => {
     await assertFails(setDoc(doc(asUser('adminUid'), 'vendedoras/vBad'), { activa: true }));
+});
+test('CRM vend · activa no-bool es rechazada', async () => {
+    await assertFails(setDoc(doc(asUser('adminUid'), 'vendedoras/vBool'), { nombre: 'X', activa: 'sí' }));
 });
 test('CRM vend · editor y sin-rol NO acceden', async () => {
     await assertFails(getDoc(doc(asUser('editorUid'), 'vendedoras/vendA')));

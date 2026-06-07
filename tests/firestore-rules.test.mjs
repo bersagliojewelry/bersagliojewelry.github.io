@@ -18,7 +18,7 @@ import {
     assertSucceeds,
 } from '@firebase/rules-unit-testing';
 import {
-    doc, getDoc, setDoc, addDoc, deleteDoc, collection,
+    doc, getDoc, setDoc, addDoc, deleteDoc, updateDoc, collection,
 } from 'firebase/firestore';
 
 let testEnv;
@@ -47,7 +47,7 @@ before(async () => {
         await setDoc(doc(db, 'users/vendUid'),  { role: 'vendedora' }); // rol RESIDUAL: debe quedar SIN acceso al CRM
         await setDoc(doc(db, 'vendedoras/vendA'), { nombre: 'Vendedora A', activa: true });
         await setDoc(doc(db, 'clientes/cliV'), { nombre: 'Cliente V', vendedoraId: 'vendA', saldoActual: 0 });
-        await setDoc(doc(db, 'clientes/cliV/movimientos/m1'), { tipo: 'factura', monto: 100000, registradoPor: 'adminUid' });
+        await setDoc(doc(db, 'clientes/cliV/movimientos/m1'), { tipo: 'factura', monto: 100000, registradoPor: 'adminUid', anulado: false });
         await setDoc(doc(db, 'config/status'),  { ok: true });
         await setDoc(doc(db, 'config/negocio'), { fechaCorteMigracion: '2025-12-31' });
         await setDoc(doc(db, 'solicitudesCorreccion/s1'), { clienteId: 'cliV', estado: 'pendiente' }); // legacy: debe quedar INACCESIBLE
@@ -158,6 +158,23 @@ test('CRM mov · admin crea abono y apertura(neg); tipo inválido rechazado', as
 test('CRM mov · vendedora(residual) y editor NO crean', async () => {
     await assertFails(setDoc(doc(asUser('vendUid'), 'clientes/cliV/movimientos/mV'), { tipo: 'abono', monto: 1, registradoPor: 'vendUid' }));
     await assertFails(setDoc(doc(asUser('editorUid'), 'clientes/cliV/movimientos/mE'), { tipo: 'abono', monto: 1, registradoPor: 'editorUid' }));
+});
+
+// ─── CRM: movimientos APPEND-ONLY (PRE: solo anular con motivo; nunca editar/borrar) ──
+test('CRM mov · anular SIN motivo es rechazado', async () => {
+    await assertFails(updateDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m1'),
+        { anulado: true, anuladoPor: 'adminUid', anuladoEn: '2026-06-07T00:00:00Z' }));
+});
+test('CRM mov · editar monto/tipo de un asiento es rechazado (append-only)', async () => {
+    await assertFails(updateDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m1'), { monto: 999 }));
+    await assertFails(updateDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m1'), { tipo: 'abono' }));
+});
+test('CRM mov · NADIE borra un movimiento (ni admin)', async () => {
+    await assertFails(deleteDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m1')));
+});
+test('CRM mov · admin SÍ anula con motivo (anulado false→true + motivoAnulacion)', async () => {
+    await assertSucceeds(updateDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m1'),
+        { anulado: true, anuladoPor: 'adminUid', anuladoEn: '2026-06-07T00:00:00Z', motivoAnulacion: 'duplicado' }));
 });
 
 // ─── CRM Fase R: solicitudesCorreccion ELIMINADA (sin regla = denegado a todos) ─

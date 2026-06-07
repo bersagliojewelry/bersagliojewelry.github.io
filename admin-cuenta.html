@@ -182,15 +182,30 @@
     </div>
 </div>
 
-<!-- Confirm (anular movimiento, etc.) -->
-<div class="adm-confirm" id="confirm-dialog" hidden>
-    <div class="adm-confirm-box">
-        <h3>Confirmar acción</h3>
-        <p id="confirm-msg"></p>
-        <div class="adm-confirm-actions">
-            <button class="adm-btn adm-btn--ghost" id="confirm-cancel">Cancelar</button>
-            <button class="adm-btn adm-btn--danger" id="confirm-ok">Confirmar</button>
+<!-- Modal: anular movimiento (motivo obligatorio para auditoría — append-only) -->
+<div class="adm-modal" id="anular-modal" hidden>
+    <div class="adm-modal-box">
+        <div class="adm-modal-head">
+            <h2>Anular movimiento</h2>
+            <button class="adm-modal-close" id="anular-close" aria-label="Cerrar">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+            </button>
         </div>
+        <form id="anular-form">
+            <div class="adm-modal-body">
+                <p style="color:var(--adm-muted);font-size:13px;margin:0 0 14px;">El movimiento NO se borra: se marca como anulado y deja de contar en el saldo. Queda registrado quién y por qué.</p>
+                <div class="adm-form-row adm-col-1">
+                    <div class="adm-field">
+                        <label for="anular-motivo">Motivo de la anulación <span class="adm-opt">(obligatorio)</span></label>
+                        <input type="text" id="anular-motivo" class="adm-input" required maxlength="200" autocomplete="off" placeholder="Ej. error de digitación, duplicado…">
+                    </div>
+                </div>
+            </div>
+            <div class="adm-modal-foot">
+                <button type="button" class="adm-btn adm-btn--ghost" id="anular-cancel">Cancelar</button>
+                <button type="submit" class="adm-btn adm-btn--danger" id="anular-confirm">Anular movimiento</button>
+            </div>
+        </form>
     </div>
 </div>
 

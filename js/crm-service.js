@@ -2,20 +2,20 @@
  * Bersaglio CRM — Servicio Firestore del módulo de cuentas por cobrar (fiado).
  *
  * MÓDULO DESACOPLADO del catálogo público (`firestore-service.js`): el CRM es un
- * límite de módulo propio (charter `docs/50-ARQUITECTURA.md §3`). Lo consumen las
- * pantallas admin del CRM (Panel de Kary) y, más adelante, la app de vendedora.
+ * límite de módulo propio (charter `docs/50-ARQUITECTURA.md §3`). Lo consumen
+ * exclusivamente las pantallas admin del CRM (Panel de Kary — operación centralizada).
  *
  * Colecciones (reglas en `firestore.rules`, ADR §42):
  *   clientes/{id}                      — saldoActual lo escribe SOLO la Cloud Function.
- *   clientes/{id}/movimientos/{movId}  — append-only para vendedora (factura/abono).
- *   solicitudesCorreccion/{id}         — vendedora crea pendiente; admin aprueba.
+ *   clientes/{id}/movimientos/{movId}  — append-only; Kary registra facturas/abonos.
+ *   vendedoras/{id}                    — entidad de datos; las gestiona Kary.
  *   config/{docId}                     — parámetros del negocio (write admin).
  */
 
 import { firestoreDb } from './firebase-config.js';
 import {
     collection, doc, getDocs, getDoc, addDoc, setDoc, updateDoc, deleteDoc,
-    query, where, orderBy, limit, onSnapshot, serverTimestamp,
+    query, orderBy, limit, onSnapshot, serverTimestamp,
 } from 'firebase/firestore';
 
 // Tope de seguridad para listeners (doctrina S3). La cartera de fiado es acotada;
@@ -52,7 +52,7 @@ export async function createCliente(data) {
         ...(data.whatsapp   ? { whatsapp: data.whatsapp.trim() } : {}),
         ...(data.cumpleanos ? { cumpleanos: data.cumpleanos } : {}),
         ...(data.notas      ? { notas: data.notas.trim() } : {}),
-        ...(data.vendedoraUid ? { vendedoraUid: data.vendedoraUid } : {}),
+        ...(data.vendedoraId ? { vendedoraId: data.vendedoraId } : {}),
         origen: data.origen || 'kary',
         activo: true,
         createdAt: serverTimestamp(),
@@ -75,18 +75,6 @@ export function onClienteChange(id, cb) {
     return onSnapshot(doc(firestoreDb, 'clientes', id), (snap) => {
         cb(snap.exists() ? { id: snap.id, ...snap.data() } : null);
     });
-}
-
-/**
- * Clientes de UNA vendedora (app de vendedora). La query DEBE filtrar por
- * vendedoraUid: las reglas deniegan un `list` sin ese filtro (aislamiento de cartera).
- */
-export function onClientesDeVendedora(uid, cb) {
-    const q = query(
-        collection(firestoreDb, 'clientes'),
-        where('vendedoraUid', '==', uid), limit(MAX),
-    );
-    return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
 }
 
 // ─── Movimientos (cuenta corriente de un cliente) ─────────────────────────────
@@ -125,41 +113,27 @@ export async function anularMovimiento(clienteId, movId, anuladoPor) {
     });
 }
 
-// ─── Solicitudes de corrección (bandeja de Kary) ──────────────────────────────
-export function onSolicitudesChange(cb) {
-    const q = query(collection(firestoreDb, 'solicitudesCorreccion'), limit(MAX));
+// ─── Vendedoras (entidad de datos; las gestiona Kary) ─────────────────────────
+export function onVendedorasChange(cb) {
+    const q = query(collection(firestoreDb, 'vendedoras'), limit(MAX));
     return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
 }
-
-export async function resolverSolicitud(id, estado, autorizadoPor) {
-    await updateDoc(doc(firestoreDb, 'solicitudesCorreccion', id), {
-        estado, autorizadoPor, autorizadoEn: serverTimestamp(),
-    });
+export async function fetchVendedoras() {
+    const snap = await getDocs(query(collection(firestoreDb, 'vendedoras'), limit(MAX)));
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
-
-/**
- * Una vendedora pide una corrección sobre un movimiento suyo (no edita nada ella;
- * Kary aprueba/rechaza). Las reglas exigen estado 'pendiente' + dueña del clienteId.
- */
-export async function crearSolicitud({ vendedoraUid, clienteId, movId, motivo }) {
+export async function createVendedora({ nombre, createdBy }) {
     const payload = {
-        vendedoraUid,
-        clienteId,
-        ...(movId ? { movId } : {}),
-        motivo: (motivo || '').trim(),
-        estado: 'pendiente',
-        solicitadoPor: vendedoraUid,
+        nombre: (nombre || '').trim(),
+        activa: true,
         createdAt: serverTimestamp(),
+        ...(createdBy ? { createdBy } : {}),
     };
-    const ref = await addDoc(collection(firestoreDb, 'solicitudesCorreccion'), payload);
+    const ref = await addDoc(collection(firestoreDb, 'vendedoras'), payload);
     return { id: ref.id, ...payload };
 }
-
-// ─── Vendedoras (usuarios con rol vendedora) ──────────────────────────────────
-export async function fetchVendedoras() {
-    const q = query(collection(firestoreDb, 'users'), where('role', '==', 'vendedora'));
-    const snap = await getDocs(q);
-    return snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
+export async function updateVendedora(id, patch) {
+    await updateDoc(doc(firestoreDb, 'vendedoras', id), { ...patch, updatedAt: serverTimestamp() });
 }
 
 // ─── Pendientes de configuración (tablero para Kary) ──────────────────────────
@@ -225,11 +199,11 @@ export function cumpleanosDelMes(clientes, mes) {
     return out.sort((a, b) => a._dia - b._dia);
 }
 
-/** Cartera por vendedora: Map<vendedoraUid|null, {porCobrar, clientes}>. */
+/** Cartera por vendedora: Map<vendedoraId|'__kary__', {porCobrar, clientes}>. */
 export function carteraPorVendedora(clientes) {
     const map = new Map();
     for (const c of clientes) {
-        const key = c.vendedoraUid || '__kary__';
+        const key = c.vendedoraId || '__kary__';
         const cur = map.get(key) || { porCobrar: 0, clientes: 0 };
         const s = typeof c.saldoActual === 'number' ? c.saldoActual : 0;
         cur.porCobrar += s > 0 ? s : 0;

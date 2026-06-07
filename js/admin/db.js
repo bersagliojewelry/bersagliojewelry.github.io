@@ -21,6 +21,7 @@ import {
     onInquiriesChange,
     deleteCollection as fsDeleteCollection,
 } from '../firestore-service.js';
+import { esPendiente, leadStatus, LEAD_LABEL, origenLabel } from './lead-format.js';
 
 const CACHE = {
     pieces:      'bj_cache_pieces',
@@ -279,17 +280,14 @@ class AdminDatabase {
     }
 
     async addInquiry(data) {
-        const inq = {
-            ...data,
-            createdAt: new Date().toISOString(),
-            read:      false,
-        };
-        await fsSaveInquiry(inq);
-        return inq;
+        // `saveInquiry` (firestore-service) fija status:'nuevo' y serverTimestamp.
+        await fsSaveInquiry(data);
+        return data;
     }
 
-    async markRead(id, read = true) {
-        await fsUpdateInquiry(id, { read });
+    // Parche genérico de un lead/consulta (estado del pipeline, convertedTo… — F4).
+    async updateInquiry(id, patch) {
+        await fsUpdateInquiry(id, patch);
     }
 
     async deleteInquiry(id) {
@@ -303,23 +301,29 @@ class AdminDatabase {
             totalPieces:    this._pieces.length,
             featuredPieces: this._pieces.filter(p => p.featured).length,
             collections:    this._collections.filter(c => c.featured).length,
-            unread:         this._inquiries.filter(i => !i.read).length,
+            unread:         this._inquiries.filter(esPendiente).length,   // leads 'nuevo' (F4, coherente con el badge)
         };
     }
 
     // ─── Export ────────────────────────────────────────────────────────────────
 
     exportInquiriesCSV() {
+        const fecha = (c) => {
+            const d = c?.toDate ? c.toDate() : (c?.seconds ? new Date(c.seconds * 1000) : new Date(c));
+            return isNaN(d) ? '' : d.toLocaleDateString('es-CO');
+        };
         const rows = this._inquiries.map(i => ({
-            Fecha:    new Date(i.createdAt).toLocaleDateString('es-CO'),
+            Fecha:    fecha(i.createdAt),
             Nombre:   i.name || '',
             Email:    i.email || '',
             'Telefono': i.phone || '',
+            Origen:   origenLabel(i.source),
             Pieza:    i.piece || i.pieceSlug || '',
             Mensaje:  (i.message || '').replace(/\n/g, ' '),
-            Estado:   i.read ? 'Leida' : 'Nueva',
+            Estado:   LEAD_LABEL[leadStatus(i)],
+            Cliente:  i.convertedTo || '',
         }));
-        AdminDatabase.downloadCSV(rows, 'consultas-bersaglio.csv');
+        AdminDatabase.downloadCSV(rows, 'leads-bersaglio.csv');
     }
 
     exportPiecesCSV() {

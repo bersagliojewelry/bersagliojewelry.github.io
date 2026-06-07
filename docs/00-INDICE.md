@@ -94,6 +94,7 @@
 | §47 | 2026-06-06 — CRM Fase 3 · LANZAMIENTO a prod: deploy (reglas+functions) + migración Fase A (344 clientes de Kary) | 600 |
 | §48 | 2026-06-06 — Mantenimiento · Upgrade runtime Cloud Functions (Node 20→22 + firebase-functions v6→v7) | 617 |
 | §49 | 2026-06-06 — CRM Reestructura Fase R: vendedora = dato (no usuario) + CRM admin-only | 634 |
+| §50 | 2026-06-07 — Panel v2 (mini-ERP): diseño maestro + Consejo Externo + F-CHASIS-A construido y desplegado | 651 |
 ---
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §32+ al historial,

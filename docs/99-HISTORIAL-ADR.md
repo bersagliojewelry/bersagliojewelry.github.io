@@ -648,6 +648,23 @@ Cliente: "Kary me dijo que ninguna de las vendedoras tendrán usuario… ella es
 
 **49.7 Doctrina + siguiente**: §3.3 + §G.4 + memoria `project-crm-kary-sole-operator`. Sin cache bump (Vite hashea; shell público no tocado). Lección **L-26**. **Siguiente = Fase M** (movimientos robustos: `fecha` real editable + `historial` de edición + transparencia; spec listo). Pendiente operativo: que Kary cree sus vendedoras + revise nombres.
 
+## 2026-06-07 — Panel v2 (mini-ERP): diseño maestro + Consejo Externo + F-CHASIS-A construido y desplegado
+Cliente: el panel se veía "muy básico / no parece un CRM que contiene todo"; exige pensar TODO el sistema desde ya (CRM/leads + cartera + facturación + inventario + pagos + trazabilidad) y construir por fases. Brainstorm con compañero visual + 5 workflows (grounding del panel · investigación de CRMs líderes · diseño del sistema completo con estudio del blueprint de Altorra Cars + suites Alegra/Siigo/Shopify/Odoo/Square · red-team empresarial 7 lentes · revisión adversarial del spec). Diseño: spec maestro `docs/superpowers/specs/2026-06-07-bersaglio-arquitectura-maestra-design.md` (v3) + plan `docs/superpowers/plans/2026-06-07-f-chasis-a-navegacion-v2.md`.
+
+**50.1 Causa**: la BD del CRM ya es sólida (ADR §42/§43), pero la capa de presentación + dominio era cruda: nav plana duplicada en 8 HTML, números desbordados, Vendedoras enterrada en Config, sin estados de cuenta. El cliente además amplió el alcance a mini-ERP.
+
+**50.2 Solución (arquitectura, v3)**: IA "C" (HubSpot: barra superior + rail agrupado como DATO + Workspace "Hoy"), evoluciona a "B" (conmutador de áreas) sin reescribir. Event-driven con **orquestador síncrono** (CF callable = único escritor del dinero; **saldo síncrono O(M)** en la misma transacción). **Money entero de COP sin backfill**. Factura **DIAN-ready por Adapter** (no acopla el schema a UBL). Append-only + anular≠borrar. RBAC por custom claims. Leads/Comunicaciones reemplazan "Consultas". Fases F-CHASIS-A→F9. Backup/observabilidad = owner (Daniel), no Kary; **descuadre financiero alerta a Kary (dueña tienda) Y Daniel (dueño software)**.
+
+**50.3 Consejo Externo (Gemini 3.1 Pro, anti-anclaje, §16 del spec)**: peer review → **adoptado**: saldo síncrono (mata el read-your-writes race), recompute O(M) (no incremental prematuro — revierte una rec del red-team interno), SIN backfill (COP ya entero exacto en JS), DIAN por Adapter. **Refutado con razón**: x10000/decimal.js (innecesario con residual de IVA). Neto: diseño más simple y correcto, dos workstreams riesgosos eliminados.
+
+**50.4 F-CHASIS-A construido (7 tasks TDD, subagentes + doble revisión)**: `render-sidebar.js` (`renderSidebar()` PURO) + `sidebar-data.js` (`NAV` como dato, gating por rol, placeholders "pronto") + 6 tests; rail montado desde datos en `shared.js` (elimina nav duplicada + script inline de hamburguesa en los 8 HTML); CSS de grupos + `.adm-money` (Space Mono/tabular-nums) + fix de stat-cards desbordadas + nowrap solo numérico; `saldo-format.js` (quita hex hardcodeado `#c0392b`/`#1b7a4b` de cuentas.js/cuenta.js); `#confirm-dialog` en ficha + config. Vendedoras y Clientes promovidos a nav.
+
+**50.5 No-regresión / verificación**: `test:sidebar` 6/6 + build verde en cada paso; render verificado por snapshot del preview (7 grupos, placeholders, Vendedoras visible, adm-money); revisión final adversarial APPROVED_WITH_NITS → 3 fixes aplicados (gating de placeholders por rol; dialog en config; limpieza de dead code). 0 hex de saldo. Sin cache bump (shell público no tocado; Vite hashea).
+
+**50.6 Archivos** — nuevos: `js/admin/{sidebar-data,render-sidebar,saldo-format}.js`, `tests/render-sidebar.test.mjs`, 2 docs spec/plan; modificados: `js/admin/{shared,cuentas,cuenta}.js`, los 8 `admin*.html`, `css/admin.css`, `package.json`, `.gitignore`. Commits `91f9105`..`080df2b` (rama `feat/panel-v2-f-chasis-a` → Desarrollo ff → main PR #194/#195). **Desplegado**: Pages deploy de `2fef1fe` success; `bersagliojewelry.co` HTTP 200; `admin.html` servido con 0 nav hardcodeada (rail v2 vivo).
+
+**50.7 Doctrina + siguiente**: §3.6 (arquitecto) + §G.2 (Consejo Externo) + §G.4. Lecciones **L-27** (verificar el repo tras subagentes — no fiarse del reporte: truncado/socket/pasos omitidos) + **L-28** (el Consejo Externo puede SIMPLIFICAR: a veces lo correcto es menos máquina, no más). **Siguiente = F1** (dominio `estadoCuenta`: helper puro + centralizar signo/color/etiqueta). Decisiones fuertes restantes (ventas/facturación/inventario) → Consejo Externo antes de F7.
+
 
 
 

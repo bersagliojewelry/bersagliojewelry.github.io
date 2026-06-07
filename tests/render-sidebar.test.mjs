@@ -1,0 +1,39 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { renderSidebar } from '../js/admin/render-sidebar.js';
+import { NAV } from '../js/admin/sidebar-data.js';
+
+test('renderiza grupos y labels', () => {
+  const html = renderSidebar(NAV, { role: 'owner', activePage: 'admin.html' });
+  assert.match(html, /adm-nav-label">CRM</);
+  assert.match(html, /adm-nav-label">Cobranza</);
+  assert.match(html, /adm-nav-label">Sistema</);
+});
+
+test('marca el link activo por filename', () => {
+  const html = renderSidebar(NAV, { role: 'admin', activePage: 'admin-cuentas.html' });
+  assert.match(html, /href="admin-cuentas\.html"[^>]*class="adm-nav-link is-active"/);
+});
+
+test('oculta Usuarios si el rol no es owner', () => {
+  const adminHtml = renderSidebar(NAV, { role: 'admin', activePage: 'admin.html' });
+  assert.doesNotMatch(adminHtml, /href="admin-usuarios\.html"/);
+  const ownerHtml = renderSidebar(NAV, { role: 'owner', activePage: 'admin.html' });
+  assert.match(ownerHtml, /href="admin-usuarios\.html"/);
+});
+
+test('placeholders futuros salen deshabilitados', () => {
+  const html = renderSidebar(NAV, { role: 'admin', activePage: 'admin.html' });
+  assert.match(html, /adm-nav-link--soon/);
+  assert.match(html, /aria-disabled="true"/);
+});
+
+test('conserva el badge de la Bandeja', () => {
+  const html = renderSidebar(NAV, { role: 'admin', activePage: 'admin.html' });
+  assert.match(html, /id="inq-badge"/);
+});
+
+test('Vendedoras es visible en la nav (grupo Sistema)', () => {
+  const html = renderSidebar(NAV, { role: 'admin', activePage: 'admin.html' });
+  assert.match(html, /Vendedoras/);
+});

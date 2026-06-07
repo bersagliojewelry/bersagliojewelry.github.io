@@ -106,6 +106,25 @@
                     <h2>Clientes</h2>
                     <input type="search" id="cli-search" class="adm-input" placeholder="Buscar por nombre…" style="max-width:260px;">
                 </div>
+                <div class="adm-filtros-bar" id="cli-filtros">
+                    <div class="adm-filters" data-group="estado">
+                        <button type="button" class="adm-filter-btn is-active" data-estado="todos">Todos</button>
+                        <button type="button" class="adm-filter-btn" data-estado="vencido">Vencidos</button>
+                        <button type="button" class="adm-filter-btn" data-estado="aldia">Al día</button>
+                        <button type="button" class="adm-filter-btn" data-estado="favor">A favor</button>
+                    </div>
+                    <div class="adm-filters" data-group="rango">
+                        <span class="adm-filtros-label">Mora:</span>
+                        <button type="button" class="adm-filter-btn is-active" data-rango="todos">Todas</button>
+                        <button type="button" class="adm-filter-btn" data-rango="d1_30">1-30</button>
+                        <button type="button" class="adm-filter-btn" data-rango="d31_60">31-60</button>
+                        <button type="button" class="adm-filter-btn" data-rango="d60plus">+60</button>
+                    </div>
+                    <select id="cli-filtro-vendedora" class="adm-input adm-filtro-sel">
+                        <option value="">Todas las vendedoras</option>
+                    </select>
+                    <span class="adm-filtros-count" id="cli-count"></span>
+                </div>
                 <div id="clientes-wrap">
                     <div class="adm-table-wrap">
                         <table class="adm-table" id="clientes-table">

@@ -7,9 +7,11 @@
 
 import { requireAuth, initSidebar, admToast, admConfirm, esc } from './shared.js';
 import adminDb from './db.js';
+import { currentUser } from '../auth.js';
 import {
     getConfig, setConfig,
     onPendientesChange, addPendiente, setPendienteEstado, deletePendiente,
+    onVendedorasChange, createVendedora, updateVendedora,
 } from '../crm-service.js';
 
 function setVal(id, v) { const el = document.getElementById(id); if (el) el.value = v ?? ''; }
@@ -75,11 +77,53 @@ function wirePendientes() {
     });
 }
 
+function renderVendedoras(list) {
+    const wrap = document.getElementById('vendedoras-list');
+    const empty = document.getElementById('vendedoras-empty');
+    if (!list.length) { wrap.innerHTML = ''; empty.hidden = false; return; }
+    empty.hidden = true;
+    const orden = list.slice().sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
+    wrap.innerHTML = orden.map((v) => {
+        const inactiva = v.activa === false;
+        return `
+            <div class="adm-pend-item${inactiva ? ' adm-pend-item--done' : ''}">
+                <div style="flex:1;min-width:0;">
+                    <span class="adm-pend-titulo">${esc(v.nombre || 'Sin nombre')}</span>
+                    ${inactiva ? '<span class="adm-pill adm-pill--gray">inactiva</span>' : ''}
+                </div>
+                <div style="display:flex;gap:6px;white-space:nowrap;">
+                    <button class="adm-btn adm-btn--ghost adm-btn--sm" data-vend-toggle="${esc(v.id)}" data-activa="${inactiva ? 'true' : 'false'}">${inactiva ? 'Reactivar' : 'Desactivar'}</button>
+                </div>
+            </div>`;
+    }).join('');
+}
+
+function wireVendedoras() {
+    document.getElementById('vendedora-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const nombre = getVal('vend-nombre');
+        if (!nombre) { admToast('Escribe el nombre.', 'danger'); return; }
+        try {
+            await createVendedora({ nombre, createdBy: currentUser()?.user?.uid });
+            document.getElementById('vendedora-form').reset();
+        } catch (err) { console.error('[config] createVendedora:', err); admToast('No se pudo agregar.', 'danger'); }
+    });
+    document.getElementById('vendedoras-list').addEventListener('click', async (e) => {
+        const tg = e.target.closest('[data-vend-toggle]');
+        if (!tg) return;
+        const activa = tg.getAttribute('data-activa') === 'true';   // valor objetivo
+        try { await updateVendedora(tg.getAttribute('data-vend-toggle'), { activa }); }
+        catch (err) { console.error('[config] updateVendedora:', err); admToast('No se pudo actualizar.', 'danger'); }
+    });
+}
+
 async function init() {
     await requireAuth('admin');
     await adminDb.init();
     initSidebar();
 
+    wireVendedoras();
+    onVendedorasChange(renderVendedoras);
     wirePendientes();
     onPendientesChange(renderPendientes);
 

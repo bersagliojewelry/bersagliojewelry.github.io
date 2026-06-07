@@ -22,8 +22,8 @@ let _cliente = null;     // datos vivos (para corregir saldo / editar)
 const TIPO_LABEL = { factura: 'Factura', abono: 'Abono', apertura: 'Apertura', ajuste: 'Ajuste' };
 const SIGNO = { factura: 1, apertura: 1, ajuste: 1, abono: -1 };
 
-function nombreVendedora(uid) {
-    return uid ? (_vendedoras.get(uid) || 'Vendedora') : 'Directo de Kary';
+function nombreVendedora(id) {
+    return id ? (_vendedoras.get(id) || 'Vendedora') : 'Directo de Kary';
 }
 
 function showError(msg) {
@@ -38,7 +38,7 @@ function renderHeader(cli) {
     _cliente = cli;
     document.getElementById('ficha-title').textContent = cli.nombre || 'Cliente';
     document.getElementById('f-nombre').textContent = cli.nombre || 'Sin nombre';
-    const meta = [nombreVendedora(cli.vendedoraUid), cli.telefono || cli.whatsapp]
+    const meta = [nombreVendedora(cli.vendedoraId), cli.telefono || cli.whatsapp]
         .filter(Boolean).join('  ·  ');
     document.getElementById('f-meta').textContent = meta || '—';
 
@@ -196,7 +196,7 @@ function wireEditar() {
         document.getElementById('ed-nombre').value = c.nombre || '';
         document.getElementById('ed-telefono').value = c.telefono || '';
         document.getElementById('ed-whatsapp').value = c.whatsapp || '';
-        document.getElementById('ed-vendedora').value = c.vendedoraUid || '';
+        document.getElementById('ed-vendedora').value = c.vendedoraId || '';
         document.getElementById('ed-cumpleanos').value = c.cumpleanos || '';
         document.getElementById('ed-notas').value = c.notas || '';
         modal.hidden = false;
@@ -217,7 +217,7 @@ function wireEditar() {
                 nombre,
                 telefono:   document.getElementById('ed-telefono').value.trim(),
                 whatsapp:   document.getElementById('ed-whatsapp').value.trim(),
-                vendedoraUid: document.getElementById('ed-vendedora').value || null,
+                vendedoraId: document.getElementById('ed-vendedora').value || null,
                 cumpleanos: document.getElementById('ed-cumpleanos').value,
                 notas:      document.getElementById('ed-notas').value.trim(),
             });
@@ -239,8 +239,9 @@ async function init() {
     if (!CLIENTE_ID) { showError('Falta el identificador del cliente.'); return; }
 
     try {
-        (await fetchVendedoras()).forEach(v =>
-            _vendedoras.set(v.uid, v.displayName || v.email || 'Vendedora'));
+        (await fetchVendedoras())
+            .filter(v => v.activa !== false)
+            .forEach(v => _vendedoras.set(v.id, v.nombre || 'Vendedora'));
     } catch (err) {
         console.warn('[cuenta] fetchVendedoras:', err);
     }

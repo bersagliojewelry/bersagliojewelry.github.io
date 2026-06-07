@@ -19,7 +19,6 @@ import {
 } from '@firebase/rules-unit-testing';
 import {
     doc, getDoc, setDoc, addDoc, deleteDoc, collection,
-    getDocs, query, where,
 } from 'firebase/firestore';
 
 let testEnv;
@@ -43,17 +42,15 @@ before(async () => {
         await setDoc(doc(db, 'reviews/pendingRev'),  { approved: false, pieceSlug: 'x', rating: 5 });
         await setDoc(doc(db, 'pieces/p1'), { name: 'Anillo', slug: 'anillo' });
 
-        // ─── CRM (Bloque 1): vendedoras, cliente, movimiento, config, solicitud ──
+        // ─── CRM Fase R: vendedoras (entidad), cliente (vendedoraId), config, pendientes ──
         await setDoc(doc(db, 'users/ownerUid'), { role: 'owner' });
-        await setDoc(doc(db, 'users/vendUid'),  { role: 'vendedora' });
-        await setDoc(doc(db, 'users/vend2Uid'), { role: 'vendedora' });
-        await setDoc(doc(db, 'clientes/cliV'), { nombre: 'Cliente V', vendedoraUid: 'vendUid', saldoActual: 0 });
-        await setDoc(doc(db, 'clientes/cliV/movimientos/m1'), { tipo: 'factura', monto: 100000, registradoPor: 'vendUid' });
-        // Cliente directo de Kary: SIN vendedoraUid (caso spec §3).
-        await setDoc(doc(db, 'clientes/cliDirecto'), { nombre: 'Directo Kary' });
+        await setDoc(doc(db, 'users/vendUid'),  { role: 'vendedora' }); // rol RESIDUAL: debe quedar SIN acceso al CRM
+        await setDoc(doc(db, 'vendedoras/vendA'), { nombre: 'Vendedora A', activa: true });
+        await setDoc(doc(db, 'clientes/cliV'), { nombre: 'Cliente V', vendedoraId: 'vendA', saldoActual: 0 });
+        await setDoc(doc(db, 'clientes/cliV/movimientos/m1'), { tipo: 'factura', monto: 100000, registradoPor: 'adminUid' });
         await setDoc(doc(db, 'config/status'),  { ok: true });
         await setDoc(doc(db, 'config/negocio'), { fechaCorteMigracion: '2025-12-31' });
-        await setDoc(doc(db, 'solicitudesCorreccion/s1'), { vendedoraUid: 'vendUid', clienteId: 'cliV', estado: 'pendiente' });
+        await setDoc(doc(db, 'solicitudesCorreccion/s1'), { clienteId: 'cliV', estado: 'pendiente' }); // legacy: debe quedar INACCESIBLE
         await setDoc(doc(db, 'pendientes/p1'), { titulo: 'Definir corte', categoria: 'definir-kary', estado: 'pendiente' });
     });
 });
@@ -114,188 +111,69 @@ test('S6 · colección: NO crea sin name', async () => {
     await assertFails(setDoc(doc(asUser('editorUid'), 'collections/c2'), { subtitle: 'x' }));
 });
 
-// ─── CRM Bloque 1: clientes (RBAC + scoped a la vendedora) ───────────────────
-test('CRM clientes · admin lee cualquier cliente', async () => {
+// ─── CRM Fase R: vendedoras = entidad de datos (solo admin/owner) ─────────────
+test('CRM vend · admin lee y crea vendedoras', async () => {
+    await assertSucceeds(getDoc(doc(asUser('adminUid'), 'vendedoras/vendA')));
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'vendedoras/vNueva'), { nombre: 'Tania', activa: true }));
+});
+test('CRM vend · owner gestiona vendedoras', async () => {
+    await assertSucceeds(setDoc(doc(asUser('ownerUid'), 'vendedoras/vO'), { nombre: 'Daniela', activa: true }));
+});
+test('CRM vend · sin nombre es rechazada', async () => {
+    await assertFails(setDoc(doc(asUser('adminUid'), 'vendedoras/vBad'), { activa: true }));
+});
+test('CRM vend · activa no-bool es rechazada', async () => {
+    await assertFails(setDoc(doc(asUser('adminUid'), 'vendedoras/vBool'), { nombre: 'X', activa: 'sí' }));
+});
+test('CRM vend · editor y sin-rol NO acceden', async () => {
+    await assertFails(getDoc(doc(asUser('editorUid'), 'vendedoras/vendA')));
+    await assertFails(setDoc(doc(asUser('editorUid'), 'vendedoras/vE'), { nombre: 'X', activa: true }));
+});
+
+// ─── CRM Fase R: clientes y movimientos = SOLO admin/owner ───────────────────
+test('CRM clientes · admin lee/crea/edita', async () => {
     await assertSucceeds(getDoc(doc(asUser('adminUid'), 'clientes/cliV')));
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliNuevo'), { nombre: 'Nueva', vendedoraId: 'vendA' }));
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV'), { nombre: 'Editado' }, { merge: true }));
 });
-test('CRM clientes · vendedora lee SU cliente', async () => {
-    await assertSucceeds(getDoc(doc(asUser('vendUid'), 'clientes/cliV')));
-});
-test('CRM clientes · vendedora NO lee cliente de otra', async () => {
-    await assertFails(getDoc(doc(asUser('vend2Uid'), 'clientes/cliV')));
-});
-test('CRM clientes · vendedora crea cliente asignado a sí misma', async () => {
-    await assertSucceeds(setDoc(doc(asUser('vendUid'), 'clientes/cliNuevo'), { nombre: 'Nueva', vendedoraUid: 'vendUid' }));
-});
-test('CRM clientes · vendedora NO crea cliente asignado a otra', async () => {
-    await assertFails(setDoc(doc(asUser('vendUid'), 'clientes/cliX'), { nombre: 'X', vendedoraUid: 'vend2Uid' }));
-});
-test('CRM clientes · vendedora NO edita ni borra', async () => {
-    await assertFails(setDoc(doc(asUser('vendUid'), 'clientes/cliV'), { nombre: 'Cambiado', vendedoraUid: 'vendUid' }, { merge: true }));
-    await assertFails(deleteDoc(doc(asUser('vendUid'), 'clientes/cliV')));
-});
-test('CRM clientes · admin edita y borra', async () => {
-    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV'), { nombre: 'Editado por Kary' }, { merge: true }));
-});
-
-// ─── CRM Bloque 1: movimientos (append-only para vendedora) ───────────────────
-test('CRM mov · vendedora añade movimiento a SU cliente', async () => {
-    await assertSucceeds(setDoc(doc(asUser('vendUid'), 'clientes/cliV/movimientos/m2'), { tipo: 'abono', monto: 50000, registradoPor: 'vendUid' }));
-});
-test('CRM mov · vendedora NO añade a cliente de otra', async () => {
-    await assertFails(setDoc(doc(asUser('vend2Uid'), 'clientes/cliV/movimientos/m3'), { tipo: 'abono', monto: 50000, registradoPor: 'vend2Uid' }));
-});
-test('CRM mov · vendedora NO edita ni borra movimientos (append-only)', async () => {
-    await assertFails(setDoc(doc(asUser('vendUid'), 'clientes/cliV/movimientos/m1'), { monto: 1 }, { merge: true }));
-    await assertFails(deleteDoc(doc(asUser('vendUid'), 'clientes/cliV/movimientos/m1')));
-});
-test('CRM mov · movimiento con tipo inválido es rechazado', async () => {
-    await assertFails(setDoc(doc(asUser('vendUid'), 'clientes/cliV/movimientos/mBad'), { tipo: 'regalo', monto: 1, registradoPor: 'vendUid' }));
-});
-test('CRM mov · admin edita/borra movimientos (correcciones)', async () => {
-    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m1'), { anulado: true }, { merge: true }));
-});
-
-// ─── CRM Bloque 1: config (write admin) y solicitudesCorreccion ───────────────
-test('CRM config · cualquiera autenticado lee config', async () => {
-    await assertSucceeds(getDoc(doc(asUser('vendUid'), 'config/negocio')));
-});
-test('CRM config · vendedora NO escribe config', async () => {
-    await assertFails(setDoc(doc(asUser('vendUid'), 'config/negocio'), { fechaCorteMigracion: 'x' }, { merge: true }));
-});
-test('CRM config · admin escribe config', async () => {
-    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'config/negocio'), { fechaCorteMigracion: '2026-01-01' }, { merge: true }));
-});
-test('CRM solicitud · vendedora crea su solicitud', async () => {
-    await assertSucceeds(setDoc(doc(asUser('vendUid'), 'solicitudesCorreccion/s2'), { vendedoraUid: 'vendUid', clienteId: 'cliV', estado: 'pendiente' }));
-});
-test('CRM solicitud · vendedora NO aprueba (update)', async () => {
-    await assertFails(setDoc(doc(asUser('vendUid'), 'solicitudesCorreccion/s1'), { estado: 'aprobada' }, { merge: true }));
-});
-test('CRM solicitud · admin aprueba', async () => {
-    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'solicitudesCorreccion/s1'), { estado: 'aprobada' }, { merge: true }));
-});
-
-// ─── CRM Bloque 1: endurecimiento (revisión adversarial) ─────────────────────
-// Integridad de movimientos: la vendedora no manipula el saldo por el payload de create.
-test('HARD mov · vendedora NO crea movimiento ya anulado', async () => {
-    await assertFails(setDoc(doc(asUser('vendUid'), 'clientes/cliV/movimientos/mAnul'),
-        { tipo: 'factura', monto: 5000000, registradoPor: 'vendUid', anulado: true }));
-});
-test('HARD mov · vendedora NO crea movimiento con auditoría de anulación', async () => {
-    await assertFails(setDoc(doc(asUser('vendUid'), 'clientes/cliV/movimientos/mAud'),
-        { tipo: 'abono', monto: 1, registradoPor: 'vendUid', anuladoPor: 'adminUid' }));
-});
-test('HARD mov · vendedora NO usa tipo apertura ni ajuste (solo factura/abono)', async () => {
-    await assertFails(setDoc(doc(asUser('vendUid'), 'clientes/cliV/movimientos/mAp'),
-        { tipo: 'apertura', monto: 9999999, registradoPor: 'vendUid' }));
-    await assertFails(setDoc(doc(asUser('vendUid'), 'clientes/cliV/movimientos/mAj'),
-        { tipo: 'ajuste', monto: 9999999, registradoPor: 'vendUid' }));
-});
-test('HARD mov · admin SÍ crea apertura (migración)', async () => {
-    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mAperturaOk'),
-        { tipo: 'apertura', monto: 200000, registradoPor: 'adminUid' }));
-});
-test('HARD mov · vendedora NO falsifica registradoPor de otra', async () => {
-    await assertFails(setDoc(doc(asUser('vendUid'), 'clientes/cliV/movimientos/mFake'),
-        { tipo: 'abono', monto: 1, registradoPor: 'vend2Uid' }));
-});
-
-// Integridad de clientes: whitelist anti-inyección (saldoActual = solo CF).
-test('HARD cliente · vendedora NO siembra saldoActual', async () => {
-    await assertFails(setDoc(doc(asUser('vendUid'), 'clientes/cliHackSaldo'),
-        { nombre: 'X', vendedoraUid: 'vendUid', saldoActual: 5000000 }));
-});
-test('HARD cliente · vendedora NO inyecta campo desconocido', async () => {
-    await assertFails(setDoc(doc(asUser('vendUid'), 'clientes/cliHackKey'),
-        { nombre: 'X', vendedoraUid: 'vendUid', hack: true }));
-});
-
-// solicitudesCorreccion: sin auto-aprobación ni manipulación cruzada.
-test('HARD solicitud · vendedora NO crea solicitud ya aprobada', async () => {
-    await assertFails(setDoc(doc(asUser('vendUid'), 'solicitudesCorreccion/sApr'),
-        { vendedoraUid: 'vendUid', clienteId: 'cliV', estado: 'aprobada' }));
-});
-test('HARD solicitud · vendedora NO crea solicitud con autorizadoPor', async () => {
-    await assertFails(setDoc(doc(asUser('vendUid'), 'solicitudesCorreccion/sAuth'),
-        { vendedoraUid: 'vendUid', clienteId: 'cliV', estado: 'pendiente', autorizadoPor: 'adminUid' }));
-});
-test('HARD solicitud · vendedora NO crea solicitud sobre cliente de OTRA', async () => {
-    await assertFails(setDoc(doc(asUser('vend2Uid'), 'solicitudesCorreccion/sCruz'),
-        { vendedoraUid: 'vend2Uid', clienteId: 'cliV', estado: 'pendiente' }));
-});
-
-// Robustez: cliente directo de Kary (sin vendedoraUid) no rompe ni filtra.
-test('HARD directo · vendedora NO lee cliente directo de Kary (deny limpio)', async () => {
-    await assertFails(getDoc(doc(asUser('vendUid'), 'clientes/cliDirecto')));
-});
-test('HARD directo · vendedora NO crea movimiento en cliente directo de Kary', async () => {
-    await assertFails(setDoc(doc(asUser('vendUid'), 'clientes/cliDirecto/movimientos/x'),
-        { tipo: 'abono', monto: 1, registradoPor: 'vendUid' }));
-});
-test('HARD directo · admin SÍ lee cliente directo de Kary', async () => {
-    await assertSucceeds(getDoc(doc(asUser('adminUid'), 'clientes/cliDirecto')));
-});
-
-// Cobertura de roles: owner = admin; editor/customer/ghost excluidos del CRM.
-test('HARD rol · owner lee y crea clientes', async () => {
+test('CRM clientes · owner también lee', async () => {
     await assertSucceeds(getDoc(doc(asUser('ownerUid'), 'clientes/cliV')));
-    await assertSucceeds(setDoc(doc(asUser('ownerUid'), 'clientes/cliOwner'), { nombre: 'De Daniel' }));
 });
-test('HARD rol · editor NO toca el CRM', async () => {
+test('CRM clientes · vendedora (rol residual) NO accede', async () => {
+    await assertFails(getDoc(doc(asUser('vendUid'), 'clientes/cliV')));
+    await assertFails(setDoc(doc(asUser('vendUid'), 'clientes/cliZ'), { nombre: 'Z', vendedoraId: 'vendA' }));
+});
+test('CRM clientes · editor y sin-rol NO acceden', async () => {
     await assertFails(getDoc(doc(asUser('editorUid'), 'clientes/cliV')));
-    await assertFails(getDoc(doc(asUser('editorUid'), 'clientes/cliV/movimientos/m1')));
-    await assertFails(getDoc(doc(asUser('editorUid'), 'solicitudesCorreccion/s1')));
-});
-test('HARD rol · customer sin rol y ghost (auth sin doc) NO leen clientes', async () => {
     await assertFails(getDoc(doc(asUser('customerUid'), 'clientes/cliV')));
-    await assertFails(getDoc(doc(asUser('ghostUid'), 'clientes/cliV')));
+});
+test('CRM clientes · saldoActual NO se puede sembrar (hasOnly)', async () => {
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliHack'), { nombre: 'H', saldoActual: 999 }));
+});
+test('CRM mov · admin crea abono y apertura(neg); tipo inválido rechazado', async () => {
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mA'), { tipo: 'abono', monto: 5000, registradoPor: 'adminUid', anulado: false }));
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mAp'), { tipo: 'apertura', monto: -1000, registradoPor: 'adminUid' }));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mBad'), { tipo: 'regalo', monto: 1, registradoPor: 'adminUid' }));
+});
+test('CRM mov · vendedora(residual) y editor NO crean', async () => {
+    await assertFails(setDoc(doc(asUser('vendUid'), 'clientes/cliV/movimientos/mV'), { tipo: 'abono', monto: 1, registradoPor: 'vendUid' }));
+    await assertFails(setDoc(doc(asUser('editorUid'), 'clientes/cliV/movimientos/mE'), { tipo: 'abono', monto: 1, registradoPor: 'editorUid' }));
 });
 
-// Aislamiento de cartera en list/query (no solo get de doc individual).
-test('HARD list · vendedora NO enumera clientes sin filtro', async () => {
-    await assertFails(getDocs(collection(asUser('vendUid'), 'clientes')));
-});
-test('HARD list · vendedora SÍ lista los suyos con filtro vendedoraUid', async () => {
-    await assertSucceeds(getDocs(query(collection(asUser('vendUid'), 'clientes'),
-        where('vendedoraUid', '==', 'vendUid'))));
-});
-test('HARD list · vendedora NO lista la cartera de OTRA aunque filtre', async () => {
-    await assertFails(getDocs(query(collection(asUser('vend2Uid'), 'clientes'),
-        where('vendedoraUid', '==', 'vendUid'))));
+// ─── CRM Fase R: solicitudesCorreccion ELIMINADA (sin regla = denegado a todos) ─
+test('CRM solicitudes · colección eliminada: ni admin accede', async () => {
+    await assertFails(getDoc(doc(asUser('adminUid'), 'solicitudesCorreccion/s1')));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'solicitudesCorreccion/s2'), { x: 1 }));
 });
 
-// Confidencialidad de config: status público; negocio solo admin/vendedora.
-test('HARD config · anónimo lee config/status (health check)', async () => {
+// ─── CRM Fase R: config + pendientes ─────────────────────────────────────────
+test('CRM config · admin lee/escribe negocio; status público; editor NO lee negocio', async () => {
+    await assertSucceeds(getDoc(doc(asUser('adminUid'), 'config/negocio')));
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'config/negocio'), { diasPlazo: 30 }, { merge: true }));
     await assertSucceeds(getDoc(doc(anon(), 'config/status')));
-});
-test('HARD config · anónimo NO lee config/negocio', async () => {
-    await assertFails(getDoc(doc(anon(), 'config/negocio')));
-});
-test('HARD config · editor NO lee config/negocio (datos del negocio)', async () => {
     await assertFails(getDoc(doc(asUser('editorUid'), 'config/negocio')));
 });
-
-// ─── CRM Bloque 2: modelo de signo del monto (saldo a favor / ajuste a la baja) ──
-test('SALDO · admin crea apertura con monto negativo (saldo a favor inicial)', async () => {
-    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mApFavor'),
-        { tipo: 'apertura', monto: -30000, registradoPor: 'adminUid' }));
-});
-test('SALDO · admin crea ajuste con monto negativo (corrección a la baja)', async () => {
-    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mAjNeg'),
-        { tipo: 'ajuste', monto: -5000, registradoPor: 'adminUid' }));
-});
-test('SALDO · vendedora NO crea factura con monto negativo', async () => {
-    await assertFails(setDoc(doc(asUser('vendUid'), 'clientes/cliV/movimientos/mFacNeg'),
-        { tipo: 'factura', monto: -1, registradoPor: 'vendUid' }));
-});
-
-// ─── CRM: pendientes (tablero admin-only) ────────────────────────────────────
-test('PEND · admin lee y escribe pendientes', async () => {
+test('PEND · admin sí; editor no', async () => {
     await assertSucceeds(getDoc(doc(asUser('adminUid'), 'pendientes/p1')));
-    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'pendientes/p2'), { titulo: 'Nuevo', estado: 'pendiente' }));
-});
-test('PEND · vendedora y editor NO acceden a pendientes', async () => {
-    await assertFails(getDoc(doc(asUser('vendUid'), 'pendientes/p1')));
     await assertFails(getDoc(doc(asUser('editorUid'), 'pendientes/p1')));
 });

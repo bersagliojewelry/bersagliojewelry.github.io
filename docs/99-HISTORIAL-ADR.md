@@ -682,6 +682,23 @@ Cliente (sesión previa): tras F-CHASIS-A, "construir la función de morosos/ven
 
 **51.7 Doctrina + siguiente**: §3.6 + §3.3 + §G.2 (revisión adversarial). Lección **L-29** (aging FIFO en vivo + collectionGroup filter-free + validación de fecha round-trip). **Cache: SIN bump** (admin no está en `SHELL_ASSETS`; HTML network-first; Vite hashea). ✅ **DESPLEGADO a prod 2026-06-07** (Daniel mergeó `Desarrollo→main` PR #199 `0cfdb1d` → front por Pages; Claude desplegó `firebase deploy --only firestore:rules,functions` — reglas append-only/collectionGroup/fecha ISO + 6 functions nodejs22 incl. `onInquiryCreated` idempotente §13). Smoke: `functions:list` OK + `.co` HTTP 200. **TODO-13 cerrado**. **Siguiente**: F5 completo (chips/filtros/control de crédito) o F4-leads (Bandeja).
 
+## 2026-06-07 — F5 (slice): filtros/chips de la lista CxC (segmentar la cartera)
+Daniel: tras desplegar morosos, "F5 completo". Decisión de alcance (AskUserQuestion): **control de crédito NO** ahora — la tienda no usa cupo por cliente; la validación de crédito de todos modos vive en la venta (F7). Así F5 = **solo filtros** sobre la lista CxC ya construida en §51.
+
+**52.1 Causa**: la lista CxC (§51) muestra los clientes ordenados por mora, pero sin segmentar; Kary necesita responder "¿a quién le cobro?" filtrando por estado, antigüedad y vendedora.
+
+**52.2 Solución (front puro)**: barra de filtros sobre la lista — chips de **estado** (Todos/Vencidos/Al día/A favor) + **rango de mora** (Todas/1-30/31-60/+60) + **select de vendedora** (Todas/Directo de Kary/cada una) + **contador** ("N de M") — combinables con la búsqueda por nombre y el orden por mora. Predicado puro `pasaFiltros(c)` (AND de los filtros activos), `_filterEstado/_filterRango/_filterVendedora`. **Reusa** los componentes existentes `.adm-filters`/`.adm-filter-btn` (no reinventa, §3.2).
+
+**52.3 No-regresión**: front-only (CERO reglas/datos/functions/CF). Búsqueda + orden por mora + estado de cuenta (`estadoCuenta`, §51) intactos. Sin tocar el helper ni el servicio.
+
+**52.4 Verificación**: `vite build` verde + ids HTML↔JS verificados (Grep). Admin tras login → smoke visual de Kary (igual que §51; preview headless no autentica, L-05).
+
+**52.5 Anti-patterns evitados**: re-uso estricto del chip existente (§3.2). De paso, **fix de doctrina** en `.adm-filter-btn`: quita `transition: all` → props específicas (§3.1) + añade `cursor: pointer` que faltaba. Tokens (el único `#fff` es texto sobre `--adm-accent`, igual que el patrón ya usado en `.vend-summary`).
+
+**52.6 Archivos**: `js/admin/cuentas.js` (estado de filtros + `pasaFiltros` + `wireFiltros` + `populateFiltroVendedora` + contador), `admin-cuentas.html` (barra de filtros), `css/admin.css` (`.adm-filtros-bar` + fix `.adm-filter-btn`). **INTACTOS**: `crm-estado-cuenta.js`, `crm-service.js`, reglas, functions.
+
+**52.7 Doctrina + siguiente**: §3.2 (re-uso) + §3.1 (transition). **Sin cache bump** (admin no precacheado). **Front-only** → live al mergear `Desarrollo→main` (Pages); no requiere deploy de reglas/functions. **Siguiente**: F4-leads (Bandeja) o control de crédito junto con F7 (ventas).
+
 
 
 

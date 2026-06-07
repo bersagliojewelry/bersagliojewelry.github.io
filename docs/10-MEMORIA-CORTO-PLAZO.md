@@ -14,12 +14,13 @@
 >
 > **En prod ahora**: 344 clientes de Kary (cartera **$506.510.780**) + 12 pendientes · `recalcSaldoCliente` viva (Node 22 / ff v7) · sitio HTTP 200. **Fase R aplicada**: **solo Kary (admin) + Daniel (owner) operan**; las vendedoras NO tienen usuario → son entidad de datos (`vendedoras/{id}`, Kary las crea y asigna clientes); CRM admin-only; app de vendedora + rol + `solicitudesCorreccion` eliminados.
 >
-> **▶️ RETOMAR AQUÍ:**
-> 1. **Smoke de panel por Kary** (pendiente, necesita su login): Configuración → Vendedoras → crear una + asignarla a un cliente; confirmar cartera por vendedora.
-> 2. **Fase M (movimientos robustos)** — siguiente bloque; **spec LISTO** (`docs/superpowers/specs/2026-06-06-crm-restructure-kary-y-movimientos-design.md`): `fecha` real editable (puede ser anterior) + `registradoEn` automático (ambas visibles = transparencia) + edición con `historial` de auditoría + aging por fecha real. Hacer plan con `writing-plans` al retomar.
-> 3. **Revisar nombres con Kary** (editabilidad lista) + crear las vendedoras reales.
+> **▶️ RETOMAR AQUÍ — REDISEÑO "PANEL v2"** (auditoría arquitectónica 2026-06-06 → doc `docs/superpowers/specs/2026-06-06-auditoria-panel-crm.md`):
+> El cliente vio el panel "muy básico"; auditado con lente de arquitecto (`CLAUDE.md §3.6`). **Veredicto: backend sólido; faltan 3 capas** (design-system de datos, IA segmentada, modelo de estados de cuenta) + blindaje de integridad. **NO parchar — diseñar Panel v2 y construir por fases.** Roadmap:
+> - **F0** integridad (unsubscribe listeners + detección de truncado del `limit`, "no mentir en silencio") · **F1** dominio `estadoCuenta` (A_FAVOR/SIN_DEUDA/AL_DIA/VENCIDO) + centralizar signo/color/etiqueta (hoy triplicado) · **F2 = Fase M** (fecha real + conectar `diasPlazo` huérfano + `diasVencido`; spec `2026-06-06-crm-restructure-...`) · **F3** design-system de datos (`adm-money` tabular-nums, tablas responsive, tokens → arregla "números desbordados") · **F4** IA segmentada (`renderSidebar()` como DATO: grupos Cobranza/Tienda/Sistema; saca Vendedoras de Config; promueve Clientes) · **F5** vista CxC pro (KPI cartera vencida + chips/filtros/orden) · **F6** escala (saldo incremental + agregados desnorm. + paginación + índices). **SOLO DESPUÉS:** facturación/inventario (canal-agnóstico, Consejo Externo §15).
+> - **Siguiente paso**: diseñar Panel v2 (brainstorm→spec consolidando la dirección A-D del audit) → implementar por fases con subagentes + doble revisión (como Fase R). Recomendado: **sesión nueva** (contexto limpio, §G.2 relevo).
+> - **Pendiente operativo**: smoke de panel por Kary (Config→Vendedoras→crear+asignar); revisar nombres; crear vendedoras reales.
 >
-> ⚠️ **Deploy (L-22 + L-26)**: reglas/functions = `firebase deploy --only firestore:rules,functions` manual; el sitio + merge a `main` los dispara el PR que mergea Daniel en GitHub (`git fetch` siempre). Scripts Admin SDK = ADC (L-23, ya configurado).
+> ⚠️ **Deploy (L-22 + L-26)**: reglas/functions = deploy manual; sitio + merge a `main` = PR que mergea Daniel en GitHub (`git fetch` siempre). Admin SDK = ADC (L-23).
 
 ---
 

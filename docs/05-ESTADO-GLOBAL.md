@@ -7,11 +7,11 @@
 > **Mantenimiento (Reflejo de Frescura §G.4)**: actualizar al cambiar cache version,
 > branch o al detectar/resolver un riesgo. **Tope ~25 líneas (§G.5)**.
 
-| Señal | Valor (al 2026-06-06) |
+| Señal | Valor (al 2026-06-07) |
 |---|---|
-| **Build** | 🟢 Vite VERDE (✓ ~3.2s). **Rediseño Fase 1 (mirror) aplicado**: shell global + Home (modularizada `js/home/*` + Atelier + Films + Redes + dock Atajos) + Nosotros + Contacto. Verificado por build + estructura DOM + **pulido de doctrina (transition/radii/#000) aplicado y verificado en vivo** (ADR §41, build ✓3.68s). ⚠️ Preview headless local no pinta dinámico (L-05) — verificar visual en `npm run dev`/deploy. |
+| **Build** | 🟢 Vite VERDE (✓ ~3.2s). **Rediseño Fase 1 (mirror) aplicado**: shell global + Home (modularizada `js/home/*` + Atelier + Films + Redes + dock Atajos) + Nosotros + Contacto. Verificado por build + estructura DOM + **pulido de doctrina (transition/radii/#000) aplicado y verificado en vivo** (ADR §41, build ✓3.68s). ⚠️ Preview headless local no pinta dinámico (L-05) — verificar visual en `npm run dev`/deploy. · **Panel v2 F-CHASIS-A desplegado** (ADR §50): navegación "C" como dato (`renderSidebar`/`sidebar-data`) + `adm-money` + saldo por tokens. Norte del sistema completo (mini-ERP): spec `specs/2026-06-07-bersaglio-arquitectura-maestra-design.md` v3. `test:sidebar` 6/6. |
 | **Cache version vigente** | `bersaglio-v9` (en `public/sw.js`). Bump por HOTFIX prod (restaurar fallback de llaves Firebase). |
-| **Branch activa** | `Desarrollo` (`3719787`, ancestro de `main`). **Prod `main` = `62bb5fd` (PR #191) DESPLEGADO**: rediseño + CRM + **Reestructura Fase R**. Sitio HTTP 200 verif. 2026-06-06. |
+| **Branch activa** | `Desarrollo` (`080df2b`, alineado con origin). **Prod `main` = `2fef1fe` (PR #195) DESPLEGADO**: rediseño + CRM + Fase R + **Panel v2 F-CHASIS-A** (rail IA "C" como dato + adm-money + #confirm-dialog). Pages deploy success; `bersagliojewelry.co` HTTP 200 + `admin.html` con 0 nav hardcodeada (rail v2 vivo) verif. 2026-06-07. ⚠️ `main` local quedó detrás (merge por web). |
 | **Cerebro** | 🧠 template v1.0.0 · `brain:check` SANO (sin huérfanos/vacíos) · skills: 74 catalogadas, 3 instaladas user-level (`~/.claude/skills/`). |
 | **Backend / Firebase** | **CRM en prod + Reestructura Fase R desplegada** (ADR §47 + §49, 2026-06-06). **344 clientes** de Kary (**cartera $506.510.780**) + 12 pendientes. **Fase R**: vendedoras = entidad de datos (`vendedoras/{id}`, Kary las crea); CRM (`clientes`/`movimientos`/`vendedoras`) **admin/owner-only**; rol `vendedora` + app + `solicitudesCorreccion` ELIMINADOS. `recalcSaldoCliente` viva (Node 22 / ff v7). ⚠️ Reglas/functions = deploy manual (L-22). **Pendiente: smoke de panel por Kary · Fase M (movimientos robustos) · revisar nombres.** |
 | **Hosting** | GitHub Pages (`bersagliojewelry.co` o `bersagliojewelry.github.io`). Auto-deploy vía GitHub Actions. |

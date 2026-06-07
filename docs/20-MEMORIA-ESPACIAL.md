@@ -56,9 +56,12 @@
 │   ├── firebase-config.js      # Configuración del SDK
 │   ├── firestore-service.js    # Envoltura de base de datos Firestore (800+ líneas)
 │   └── admin/                  # Panel administrativo privado (estilo oscuro)
-│       ├── db.js               # Conexión Firestore admin con versión y auditoría
-│       ├── piezas.js           # Control de piezas admin
-│       └── colecciones.js      # Control de colecciones admin
+│       ├── shared.js           # initSidebar() monta el rail (renderSidebar) + auth/toast/admConfirm
+│       ├── sidebar-data.js     # NAV como DATO (grupos→items, rol, placeholders) — IA "C" (F-CHASIS-A §50)
+│       ├── render-sidebar.js   # renderSidebar() PURO (datos→HTML, testeable) — único origen del rail
+│       ├── saldo-format.js     # color/etiqueta del saldo por tokens .adm-money (sin hex)
+│       ├── db.js · piezas.js · colecciones.js · cuentas.js · cuenta.js · config.js · dashboard.js
+│       └── (nav NO duplicada en HTML; cada admin*.html tiene <aside> vacío que llena shared.js)
 ├── public/                     # Archivos estáticos copiados a dist/ en el build
 │   ├── sw.js                   # Service Worker (Caché bersaglio-v9; versión vigente en 05)
 │   └── img/                    # Activos gráficos optimizados (Vite publicDir)
@@ -107,3 +110,9 @@
 | `pendientes/{id}` | admin | tablero de setup para Kary |
 
 Modelo de roles: rol en `users/{uid}.data.role` ∈ {owner, admin, editor}. **CRM = solo owner/admin (Daniel/Kary)**; `editor` (contenido web) EXCLUIDO del CRM; el rol `vendedora` ya no existe. Jerarquía: Daniel(owner) → Kary(admin); vendedoras = datos.
+
+### 4. Panel v2 — Navegación como DATO (F-CHASIS-A, 2026-06-07) — ADR §50
+**Norte del sistema completo (mini-ERP)**: `docs/superpowers/specs/2026-06-07-bersaglio-arquitectura-maestra-design.md` (v3, incluye Consejo Externo §16). Fases F-CHASIS-A→F9.
+*   **Rail como dato**: `js/admin/sidebar-data.js` (`NAV` = grupos→items con `role` y `soon`) + `js/admin/render-sidebar.js` (`renderSidebar()` PURO, testeado en `tests/render-sidebar.test.mjs`, `npm run test:sidebar`). `shared.js initSidebar()` lo monta en el `<aside class="adm-sidebar">` vacío de cada `admin*.html` (**ya NO se duplica la nav**; hamburguesa en `wireSidebarToggle`). Grupos IA "C": Hoy · CRM (Clientes, Bandeja) · Ventas · Cobranza · Catálogo/Inventario · Reportes · Sistema (Vendedoras, Usuarios, Config). Gating por rol declarativo (item.role).
+*   **Design-system de dinero**: clase `.adm-money` (Space Mono + tabular-nums) + `saldo-format.js` (`saldoClass/saldoLabel/saldoCellHTML`, color por tokens, **sin hex**); stat-cards con `min-width:0`/`clamp` (fin de números desbordados); `#confirm-dialog` propio (`.adm-confirm`) en ficha + config.
+*   **Pendiente (futuras fases del spec)**: F1 `estadoCuenta` · F2 fecha real/aging · F4 Bandeja/leads (reemplaza "Consultas") · F7 ventas+facturación+pagos (event-driven, CF callable = único escritor, saldo síncrono O(M)) · F8 inventario (único+lote). Evolución C→B (conmutador de áreas) sin reescribir.

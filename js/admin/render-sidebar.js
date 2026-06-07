@@ -47,7 +47,7 @@ function linkHTML(item, activePage) {
 export function renderSidebar(nav, { role = 'editor', activePage = 'admin.html' } = {}) {
   const groups = nav.map(group => {
     const items = group.items
-      .filter(it => it.soon || canSee(it.role, role))
+      .filter(it => canSee(it.role, role))
       .map(it => linkHTML(it, activePage))
       .join('');
     if (!items) return '';
@@ -66,7 +66,7 @@ export function renderSidebar(nav, { role = 'editor', activePage = 'admin.html' 
           <text x="40" y="54" text-anchor="middle" font-family="Fraunces, serif" font-weight="600" font-size="32" fill="currentColor">B</text>
         </svg>
       </div>
-      <div><div class="adm-brand-name">BERSAGLIO</div><div class="adm-brand-role">Panel</div></div>
+      <div><div class="adm-brand-name">BERSAGLIO</div><div class="adm-brand-role">Panel Admin</div></div>
     </div>
     <nav class="adm-nav">${groups}${footer}</nav>`;
 }

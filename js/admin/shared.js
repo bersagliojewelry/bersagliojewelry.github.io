@@ -31,7 +31,7 @@ export function initSidebar() {
         wireSidebarToggle(sidebar);
     }
 
-    // Marca el link activo (por si el HTML ya traía nav, defensivo).
+    // Marca el link activo (segunda pasada defensiva tras el montaje).
     document.querySelectorAll('.adm-nav-link').forEach(link => {
         const href = link.getAttribute('href');
         link.classList.toggle('is-active', href === page);
@@ -113,16 +113,7 @@ function renderUserInfo() {
 
     document.getElementById('btn-logout')?.addEventListener('click', () => signOut());
 
-    // Hide nav items based on role
-    const usersLink = document.querySelector('a[href="admin-usuarios.html"]');
-    if (usersLink && !hasRole('owner')) {
-        usersLink.style.display = 'none';
-    }
-    // CRM (Cuentas) = admin/owner (la app de vendedora será aparte, Bloque 4)
-    const cuentasLink = document.querySelector('a[href="admin-cuentas.html"]');
-    if (cuentasLink && !hasRole('admin')) {
-        cuentasLink.style.display = 'none';
-    }
+    // El gating por rol lo hace renderSidebar() (los ítems no existen si el rol no aplica).
 }
 
 // ─── Toast ────────────────────────────────────────────────────────────────────

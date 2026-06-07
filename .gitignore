@@ -22,3 +22,6 @@ firestore-debug.log
 ui-debug.log
 .firebase/
 
+# Mockups efímeros del compañero visual de brainstorming (no versionar)
+.superpowers/
+

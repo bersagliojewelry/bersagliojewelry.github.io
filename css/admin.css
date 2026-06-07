@@ -218,6 +218,27 @@ svg { display: block; flex-shrink: 0; }
     line-height: 16px;
 }
 
+/* Grupos del rail (IA v2) */
+.adm-nav-group + .adm-nav-group { margin-top: 6px; }
+.adm-nav-group .adm-nav-label:first-child { margin-top: 4px; }
+
+/* Ítems "pronto" (módulos futuros) */
+.adm-nav-link--soon {
+    color: oklch(28% 0.08 155 / 0.38);
+    cursor: default;
+}
+.adm-nav-link--soon svg { color: oklch(28% 0.08 155 / 0.3); }
+.adm-nav-soon-tag {
+    margin-left: auto;
+    font-size: 8.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: oklch(28% 0.08 155 / 0.45);
+    background: oklch(28% 0.08 155 / 0.06);
+    padding: 2px 6px;
+    border-radius: 6px;
+}
+
 /* Dev notice */
 .adm-dev-notice {
     margin: 10px;
@@ -293,6 +314,7 @@ svg { display: block; flex-shrink: 0; }
     align-items: flex-start;
     gap: 14px;
     box-shadow: var(--adm-shadow-sm);
+    min-width: 0;
 }
 
 .adm-stat-icon {
@@ -310,14 +332,15 @@ svg { display: block; flex-shrink: 0; }
 .adm-stat-icon--red     { background: var(--adm-danger-light);   color: var(--adm-danger); }
 .adm-stat-icon--green   { background: var(--adm-success-light);  color: var(--adm-success); }
 
-.adm-stat-body {}
+.adm-stat-body { min-width: 0; }
 
 .adm-stat-value {
-    font-size: 26px;
+    font-size: clamp(18px, 2.2vw, 26px);
     font-weight: 700;
     color: var(--adm-text);
-    line-height: 1;
+    line-height: 1.05;
     letter-spacing: -0.5px;
+    overflow-wrap: anywhere;
 }
 
 .adm-stat-label {
@@ -325,6 +348,17 @@ svg { display: block; flex-shrink: 0; }
     color: var(--adm-muted);
     margin-top: 4px;
 }
+
+/* Números de dinero: monoespaciado tabular para que no se desborden ni "bailen" */
+.adm-money, .adm-num {
+    font-family: 'Space Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    white-space: nowrap;
+}
+.adm-money--debe   { color: var(--adm-danger); }
+.adm-money--favor  { color: var(--adm-success); }
+.adm-money--cero   { color: var(--adm-muted); }
 
 /* ─── Sections ────────────────────────────────────────────────────────────── */
 .adm-section {
@@ -398,8 +432,11 @@ svg { display: block; flex-shrink: 0; }
 .adm-table {
     width: 100%;
     border-collapse: collapse;
-    white-space: nowrap;
 }
+
+.adm-table td, .adm-table th { white-space: normal; }
+.adm-table .adm-money, .adm-table .adm-num, .adm-table .adm-nowrap { white-space: nowrap; }
+.adm-table td.adm-cell-main { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .adm-table thead th {
     text-align: left;

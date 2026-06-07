@@ -15,54 +15,8 @@
 <script>try{if(!sessionStorage.getItem('bj_auth'))throw 0}catch(e){location.replace('admin-login.html');document.body.style.display='none'}</script>
 <div class="adm-layout">
 
-    <!-- Sidebar -->
-    <aside class="adm-sidebar">
-        <div class="adm-brand">
-            <div class="adm-brand-logo">
-                <svg width="28" height="29" viewBox="0 0 80 84" fill="none" aria-hidden="true" class="adm-brand-logo-svg">
-                    <circle cx="40" cy="42" r="28" stroke="currentColor" stroke-width="1.2" opacity="0.85" fill="none"/>
-                    <line x1="40" y1="4" x2="40" y2="80" stroke="currentColor" stroke-width="0.8" opacity="0.5"/>
-                    <text x="40" y="54" text-anchor="middle" font-family="Fraunces, serif" font-weight="600" font-size="32" fill="currentColor">B</text>
-                </svg>
-            </div>
-            <div>
-                <div class="adm-brand-name">BERSAGLIO</div>
-                <div class="adm-brand-role">Panel Admin</div>
-            </div>
-        </div>
-        <nav class="adm-nav">
-            <a href="admin.html" class="adm-nav-link">
-                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z"/></svg>
-                Dashboard
-            </a>
-            <a href="admin-cuentas.html" class="adm-nav-link">
-                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"/><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zm-5 4a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
-                Cuentas
-            </a>
-            <a href="admin-piezas.html" class="adm-nav-link">
-                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M10 2L3 7l7 5 7-5-7-5zM3 13l7 5 7-5-7-5-7 5z" clip-rule="evenodd"/></svg>
-                Piezas
-            </a>
-            <a href="admin-colecciones.html" class="adm-nav-link">
-                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zm-2 4a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/></svg>
-                Colecciones
-            </a>
-            <a href="admin-consultas.html" class="adm-nav-link">
-                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7z" clip-rule="evenodd"/></svg>
-                Consultas
-                <span class="adm-nav-badge" id="inq-badge" hidden></span>
-            </a>
-            <a href="admin-usuarios.html" class="adm-nav-link">
-                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
-                Usuarios
-            </a>
-            <div class="adm-nav-divider"></div>
-            <a href="index.html" class="adm-nav-link" target="_blank" rel="noopener">
-                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"/><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"/></svg>
-                Ver sitio
-            </a>
-        </nav>
-    </aside>
+    <!-- Sidebar (se rellena desde datos por js/admin/shared.js → renderSidebar) -->
+    <aside class="adm-sidebar"></aside>
     <div class="adm-sidebar-backdrop" id="sidebar-backdrop"></div>
 
     <!-- Main -->
@@ -228,9 +182,18 @@
     </div>
 </div>
 
+<!-- Confirm (anular movimiento, etc.) -->
+<div class="adm-confirm" id="confirm-dialog" hidden>
+    <div class="adm-confirm-box">
+        <h3>Confirmar acción</h3>
+        <p id="confirm-msg"></p>
+        <div class="adm-confirm-actions">
+            <button class="adm-btn adm-btn--ghost" id="confirm-cancel">Cancelar</button>
+            <button class="adm-btn adm-btn--danger" id="confirm-ok">Confirmar</button>
+        </div>
+    </div>
+</div>
+
 <div class="adm-toast-wrap" id="toast-wrap"></div>
-<script>
-(function(){var b=document.getElementById('hamburger-btn'),s=document.querySelector('.adm-sidebar'),o=document.getElementById('sidebar-backdrop');if(!b||!s)return;function toggle(){s.classList.toggle('is-open');o.classList.toggle('is-visible')}b.addEventListener('click',toggle);o.addEventListener('click',toggle);s.querySelectorAll('.adm-nav-link').forEach(function(l){l.addEventListener('click',function(){s.classList.remove('is-open');o.classList.remove('is-visible')})})})();
-</script>
 </body>
 </html>

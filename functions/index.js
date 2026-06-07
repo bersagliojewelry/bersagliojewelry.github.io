@@ -18,7 +18,7 @@ const { computeSaldo } = require('./saldo');
 initializeApp();
 
 const db = getFirestore();
-const ROLE_LEVEL = { owner: 3, admin: 2, editor: 1, vendedora: 1 };
+const ROLE_LEVEL = { owner: 3, admin: 2, editor: 1 };
 
 // ─── Helper: verify caller has minimum role ─────────────────────────────────
 
@@ -45,8 +45,8 @@ exports.createUser = onCall({ region: 'us-central1' }, async (request) => {
     if (!email || !password || !displayName || !role) {
         throw new HttpsError('invalid-argument', 'Todos los campos son obligatorios.');
     }
-    if (!['admin', 'editor', 'vendedora'].includes(role)) {
-        throw new HttpsError('invalid-argument', 'Rol inválido. Usa "admin", "editor" o "vendedora".');
+    if (!['admin', 'editor'].includes(role)) {
+        throw new HttpsError('invalid-argument', 'Rol inválido. Usa "admin" o "editor".');
     }
     if (password.length < 8) {
         throw new HttpsError('invalid-argument', 'La contraseña debe tener al menos 8 caracteres.');
@@ -78,7 +78,7 @@ exports.updateUserRole = onCall({ region: 'us-central1' }, async (request) => {
 
     const { uid, newRole } = request.data;
     if (!uid || !newRole) throw new HttpsError('invalid-argument', 'UID y rol son obligatorios.');
-    if (!['admin', 'editor', 'vendedora'].includes(newRole)) {
+    if (!['admin', 'editor'].includes(newRole)) {
         throw new HttpsError('invalid-argument', 'Rol inválido.');
     }
 

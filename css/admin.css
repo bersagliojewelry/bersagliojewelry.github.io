@@ -757,11 +757,26 @@ select.adm-input { cursor: pointer; appearance: none; -webkit-appearance: none; 
     border: 1px solid var(--adm-border);
     background: transparent;
     color: var(--adm-muted);
-    transition: all var(--adm-tr);
+    cursor: pointer;
+    transition: background var(--adm-tr), color var(--adm-tr), border-color var(--adm-tr);
 }
 
 .adm-filter-btn:hover { border-color: var(--adm-accent); color: var(--adm-accent); }
-.adm-filter-btn.is-active { background: var(--adm-accent); color: white; border-color: var(--adm-accent); }
+.adm-filter-btn.is-active { background: var(--adm-accent); color: #fff; border-color: var(--adm-accent); }
+
+/* Barra de filtros de la lista CxC (F5) — reusa .adm-filters/.adm-filter-btn */
+.adm-filtros-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 18px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--adm-border);
+}
+.adm-filtros-bar .adm-filters { flex-wrap: wrap; }
+.adm-filtros-label { font-size: 12px; color: var(--adm-muted); align-self: center; }
+.adm-filtro-sel { max-width: 210px; font-size: 12px; padding: 6px 10px; }
+.adm-filtros-count { font-size: 12px; color: var(--adm-muted); margin-left: auto; white-space: nowrap; }
 
 /* ─── Empty state ─────────────────────────────────────────────────────────── */
 .adm-empty {

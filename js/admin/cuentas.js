@@ -20,10 +20,32 @@ const _vendedoras = new Map();   // vendedoraId -> nombre
 const _estados = new Map();      // clienteId -> estadoCuenta (mora, calculado al cargar)
 let _diasPlazo = 30;             // config/negocio.diasPlazo
 let _fechaCorte = null;          // config/negocio.fechaCorteMigracion (fallback de fecha)
-let _filter = '';
+let _filter = '';                // búsqueda por nombre
+let _filterEstado = 'todos';     // todos | vencido | aldia | favor
+let _filterRango = 'todos';      // todos | d1_30 | d31_60 | d60plus
+let _filterVendedora = '';       // '' (todas) | vendedoraId | '__kary__'
 
 // Estado de mora de un cliente (objeto estadoCuenta); null si aún no se calculó.
 function estadoDe(id) { return _estados.get(id) || null; }
+
+// ¿El cliente pasa los filtros activos (estado + rango de mora + vendedora + búsqueda)?
+function pasaFiltros(c) {
+    const e = estadoDe(c.id);
+    const saldo = typeof c.saldoActual === 'number' ? c.saldoActual : 0;
+
+    if (_filterEstado === 'vencido' && !(e && e.estado === 'vencido')) return false;
+    if (_filterEstado === 'aldia'   && !(saldo > 0 && (!e || e.estado === 'al-dia'))) return false;
+    if (_filterEstado === 'favor'   && !(saldo < 0)) return false;
+
+    if (_filterRango !== 'todos' && !(e && e.buckets[_filterRango] > 0)) return false;
+
+    if (_filterVendedora && (c.vendedoraId || '__kary__') !== _filterVendedora) return false;
+
+    const f = _filter.trim().toLowerCase();
+    if (f && !(c.nombre || '').toLowerCase().includes(f)) return false;
+
+    return true;
+}
 
 // Recalcula la mora por cliente desde TODOS los movimientos (en vivo).
 function rebuildEstados(movs) {
@@ -90,12 +112,16 @@ function renderClientes() {
     const empty = document.getElementById('clientes-empty');
     const table = document.getElementById('clientes-table');
 
-    const f = _filter.trim().toLowerCase();
-    // Orden por MORA (vencidos primero) → más vencido a menos; luego saldo; luego nombre.
-    const list = (f
-        ? _clientes.filter(c => (c.nombre || '').toLowerCase().includes(f))
-        : _clientes
-    ).slice().sort((a, b) => {
+    if (!_clientes.length) {
+        table.hidden = true; empty.hidden = false;
+        body.innerHTML = '';
+        const c0 = document.getElementById('cli-count'); if (c0) c0.textContent = '';
+        return;
+    }
+
+    // Filtra (estado/rango/vendedora/búsqueda) y ordena por MORA (vencidos primero) →
+    // más vencido a menos; luego saldo; luego nombre.
+    const list = _clientes.filter(pasaFiltros).sort((a, b) => {
         const ea = estadoDe(a.id), eb = estadoDe(b.id);
         const ma = ea ? ea.diasMora : 0, mb = eb ? eb.diasMora : 0;
         const va = ea ? ea.vencido : 0, vb = eb ? eb.vencido : 0;
@@ -105,12 +131,11 @@ function renderClientes() {
             || (a.nombre || '').localeCompare(b.nombre || '', 'es');
     });
 
-    if (!_clientes.length) {
-        table.hidden = true; empty.hidden = false;
-        body.innerHTML = '';
-        return;
-    }
     table.hidden = false; empty.hidden = true;
+    const cnt = document.getElementById('cli-count');
+    if (cnt) cnt.textContent = list.length === _clientes.length
+        ? `${_clientes.length} clientes`
+        : `${list.length} de ${_clientes.length}`;
 
     body.innerHTML = list.map(c => {
         const e = estadoDe(c.id);
@@ -127,7 +152,7 @@ function renderClientes() {
             <td style="text-align:right">${vencidoTd}</td>
             <td style="text-align:right">${saldoCell(c.saldoActual)}</td>
         </tr>`;
-    }).join('') || `<tr><td colspan="5" style="color:var(--adm-muted)">Sin coincidencias para "${esc(_filter)}".</td></tr>`;
+    }).join('') || `<tr><td colspan="5" style="color:var(--adm-muted)">Ningún cliente coincide con los filtros.</td></tr>`;
 }
 
 
@@ -218,6 +243,40 @@ function wireSearch() {
     });
 }
 
+// Opciones del filtro por vendedora (Directo de Kary + cada vendedora activa).
+function populateFiltroVendedora() {
+    const sel = document.getElementById('cli-filtro-vendedora');
+    if (!sel) return;
+    const optK = document.createElement('option');
+    optK.value = '__kary__'; optK.textContent = 'Directo de Kary';
+    sel.appendChild(optK);
+    for (const [id, nombre] of _vendedoras) {
+        const o = document.createElement('option');
+        o.value = id; o.textContent = nombre;
+        sel.appendChild(o);
+    }
+}
+
+// Chips de estado/rango (delegación) + select de vendedora.
+function wireFiltros() {
+    const bar = document.getElementById('cli-filtros');
+    if (!bar) return;
+    bar.addEventListener('click', (e) => {
+        const btn = e.target.closest('.adm-filter-btn');
+        if (!btn) return;
+        const group = btn.parentElement;
+        const g = group.getAttribute('data-group');
+        if (g === 'estado') _filterEstado = btn.getAttribute('data-estado');
+        else if (g === 'rango') _filterRango = btn.getAttribute('data-rango');
+        else return;
+        group.querySelectorAll('.adm-filter-btn').forEach(b => b.classList.remove('is-active'));
+        btn.classList.add('is-active');
+        renderClientes();
+    });
+    const sel = document.getElementById('cli-filtro-vendedora');
+    sel.addEventListener('change', () => { _filterVendedora = sel.value; renderClientes(); });
+}
+
 function wireRows() {
     document.getElementById('clientes-body').addEventListener('click', (e) => {
         const tr = e.target.closest('tr[data-id]');
@@ -240,6 +299,7 @@ async function init() {
         console.warn('[cuentas] fetchVendedoras:', err);
     }
     populateVendedoraSelect();
+    populateFiltroVendedora();
 
     // Config de mora (díasPlazo + fecha de corte): cambia rara vez → se lee una vez.
     try {
@@ -252,6 +312,7 @@ async function init() {
 
     wireModal();
     wireSearch();
+    wireFiltros();
     wireRows();
 
     // Mora/aging EN VIVO (norte §10.2-F2): saldo y vencido salen del MISMO origen

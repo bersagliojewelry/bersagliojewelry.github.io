@@ -631,6 +631,23 @@ Tarea spin-off de la deuda técnica de ADR §47 (avisos del deploy). Daniel la l
 
 **48.7 Doctrina + siguiente**: §3.3 + L-17 (testing functions). Sin cache bump. Lección **L-25**. Deuda Node 20 de §47 → **RESUELTA**. Repo: rama `chore/upgrade-functions-v7-node22` mergeada a `Desarrollo`; PR a `main` pendiente (flujo de Daniel).
 
+## 2026-06-06 — CRM Reestructura Fase R: vendedora = dato (no usuario) + CRM admin-only
+Cliente: "Kary me dijo que ninguna de las vendedoras tendrán usuario… ella es quien creará a las vendedoras y asignará sus clientes". Reestructura del CRM ya en producción (ADR §47). Diseño: spec `docs/superpowers/specs/2026-06-06-crm-restructure-kary-y-movimientos-design.md`; plan `docs/superpowers/plans/2026-06-06-crm-fase-r-roles.md`. Ejecutada con subagentes (1 implementador + doble revisión spec/calidad por tarea).
+
+**49.1 Causa**: el diseño original (spec §2/§5/§6/§7) modelaba a la vendedora como USUARIO (rol `vendedora`, app móvil propia, flujo `solicitudesCorreccion`). El negocio real: **solo Kary (admin) opera**; las vendedoras le pasan la info y ella carga todo (memoria `project-crm-kary-sole-operator`).
+
+**49.2 Solución (6 tareas TDD)**: (1) reglas: nueva colección `vendedoras` + CRM (`clientes`/`movimientos`/`vendedoras`) **admin/owner-only**; quitar `isVendedora()` y el bloque `solicitudesCorreccion`; `clienteValido` usa `vendedoraId`. (2) `crm-service.js`: API de vendedoras (`onVendedorasChange`/`createVendedora`/`updateVendedora`) + `vendedoraId`; quitar scope/solicitudes. (3) UI gestión de vendedoras en Configuración (crear/desactivar). (4) Panel usa `vendedoraId` + dropdown desde `vendedoras`; quitar bandeja de solicitudes. (5) quitar el rol vendedora (auth/login/functions) + **borrar la app de vendedora** (`vendedora*.html`, `js/vendedora/*`). (6) verificación + deploy.
+
+**49.3 No-regresión / verificación**: reglas 29/29, saldo 12/12 + integración 5/5, build verde; revisión de coherencia end-to-end (GO). `recalcSaldoCliente` intacta. Los **344 clientes** quedan sin tocar (sin vendedora → "Directo de Kary", editables por admin). Smoke en prod: 344 intactos, colección `vendedoras` write/read/delete OK.
+
+**49.4 Deploy**: `firebase deploy --only firestore:rules,functions` (manual, L-22) — reglas + 6 functions actualizadas. Sitio (panel nuevo) por **PR #191 → `main` → CI**. Sitio HTTP 200. Falta solo el smoke de panel en navegador (Kary): Configuración→Vendedoras→crear + asignar a un cliente.
+
+**49.5 Anti-patterns evitados**: subagentes con doble revisión por tarea (spec, luego calidad); TDD en reglas (red→green); `node --check` por archivo + build full al final (tareas acopladas por el build); verificación de datos en prod; no asumir estado de git — `origin/main` avanzó por PR de Daniel (`git fetch` siempre, §3.3, **L-26**).
+
+**49.6 Archivos** — 16 (−905/+184): `firestore.rules`, `tests/firestore-rules.test.mjs`, `js/crm-service.js`, `js/admin/{config,cuentas,cuenta}.js`, `admin-{config,cuentas}.html`, `js/auth.js`, `js/admin/login.js`, `functions/index.js`; borrados `vendedora.html`, `vendedora-cliente.html`, `js/vendedora/*`. Commits `e37a466·bae17ac·274a097·ddef8f3·26d6327·3719787` (`feature/crm-fase-r-roles` → Desarrollo → main PR #191). Cerebro: 05/10/20/30/99/00.
+
+**49.7 Doctrina + siguiente**: §3.3 + §G.4 + memoria `project-crm-kary-sole-operator`. Sin cache bump (Vite hashea; shell público no tocado). Lección **L-26**. **Siguiente = Fase M** (movimientos robustos: `fecha` real editable + `historial` de edición + transparencia; spec listo). Pendiente operativo: que Kary cree sus vendedoras + revise nombres.
+
 
 
 

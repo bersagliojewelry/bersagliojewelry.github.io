@@ -13,6 +13,7 @@ import {
     getCliente, onClienteChange, onMovimientosChange,
     addMovimiento, anularMovimiento, updateCliente, fetchVendedoras, fmtCOP,
 } from '../crm-service.js';
+import { saldoClass, saldoLabel } from './saldo-format.js';
 
 const CLIENTE_ID = new URLSearchParams(location.search).get('id');
 const _vendedoras = new Map();
@@ -43,11 +44,12 @@ function renderHeader(cli) {
     document.getElementById('f-meta').textContent = meta || '—';
 
     const saldo = typeof cli.saldoActual === 'number' ? cli.saldoActual : 0;
-    const label = saldo < 0 ? 'Saldo a favor' : saldo > 0 ? 'Saldo (debe)' : 'Saldo';
+    const label = saldoLabel(saldo);
     const valEl = document.getElementById('f-saldo');
     valEl.textContent = fmtCOP(Math.abs(saldo));
-    valEl.style.color = saldo > 0 ? 'var(--adm-danger,#c0392b)'
-        : saldo < 0 ? 'var(--adm-success,#1b7a4b)' : 'var(--adm-text,inherit)';
+    valEl.style.color = '';
+    valEl.classList.remove('adm-money--debe', 'adm-money--favor', 'adm-money--cero');
+    valEl.classList.add(...saldoClass(saldo).split(' '));
     document.getElementById('f-saldo-label').textContent = label;
 
     document.getElementById('ficha-head').hidden = false;

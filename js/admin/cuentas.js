@@ -12,6 +12,7 @@ import {
     onClientesChange, createCliente, fetchVendedoras,
     fmtCOP, carteraTotals, carteraPorVendedora, cumpleanosDelMes,
 } from '../crm-service.js';
+import { saldoCellHTML } from './saldo-format.js';
 
 let _clientes = [];
 const _vendedoras = new Map();   // vendedoraId -> nombre
@@ -23,9 +24,8 @@ function nombreVendedora(id) {
 }
 
 function saldoCell(saldo) {
-    if (typeof saldo !== 'number') return '<span style="color:var(--adm-muted)">—</span>';
-    const color = saldo > 0 ? 'var(--adm-danger,#c0392b)' : saldo < 0 ? 'var(--adm-success,#1b7a4b)' : 'var(--adm-muted)';
-    return `<strong style="color:${color}">${esc(fmtCOP(saldo))}</strong>`;
+    if (typeof saldo !== 'number') return '<span class="adm-money adm-money--cero">—</span>';
+    return saldoCellHTML(saldo);
 }
 
 function renderStats() {

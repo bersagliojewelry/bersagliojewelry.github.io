@@ -5,8 +5,8 @@
 > on-demand ante **Trigger de Decisión Fuerte** (`CLAUDE.md §G.2`) o al diseñar/
 > extender la reconstrucción del CRM. Resumen always-on en `CLAUDE.md §3.6`.
 >
-> **Origen**: directiva del cliente (2026-06-05) — *"piensa como arquitecto de
-> software, no solo escribas código"*. Tope ~200 líneas (§G.5); shard por dominio si crece.
+> **Origen**: directiva del cliente (2026-06-05, **reafirmada con fuerza 2026-06-06** tras revisar el panel) — *"piensa como arquitecto de
+> software, no solo escribas código; piensa en el sistema completo, no en una función"*. Gobierna el rediseño del panel admin + CRM/facturación/inventario. Tope ~200 líneas (§G.5); shard por dominio si crece.
 
 ---
 
@@ -24,6 +24,7 @@ genera más valor con menos fricción"**.
 4. **Cost-aware** — toda decisión tiene impacto financiero (infra, rendimiento, mantenimiento). Invertir en diseño hoy ahorra mañana.
 5. **Cero monolitos** — bajo acoplamiento, límites claros, cambios/despliegues independientes.
 6. **Integración deliberada** — definir CÓMO colaboran los servicios (sync/async/eventos/colas/webhooks), no solo que funcionen.
+7. **UX / Arquitectura de Información** — el panel y el producto se diseñan **segmentados y ordenados** (jerarquía clara, estados explícitos, filtros/orden), como un sistema profesional que escala a más módulos — NO features sueltas en un menú plano. La IA es decisión de arquitectura (directiva 2026-06-06).
 
 ## 2. Reconciliación con la realidad (zero-budget · serverless · free-tier)
 **Restricción**: AltorraCars (el dev) trabaja **sin presupuesto** — sin dominio aún; stack GitHub (Pages) + Firebase (Spark/free) + Node (Cloud Functions). El arquitecto **NO** hace cargo-cult de microservicios/gRPC/Kubernetes (caros y sobre-dimensionados aquí). Decisiones correctas para ESTE contexto:

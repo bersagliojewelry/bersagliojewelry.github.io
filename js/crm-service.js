@@ -14,7 +14,7 @@
 
 import { firestoreDb } from './firebase-config.js';
 import {
-    collection, doc, getDocs, getDoc, addDoc, setDoc, updateDoc, deleteDoc,
+    collection, collectionGroup, doc, getDocs, getDoc, addDoc, setDoc, updateDoc, deleteDoc,
     query, orderBy, limit, onSnapshot, serverTimestamp,
 } from 'firebase/firestore';
 
@@ -89,18 +89,45 @@ export function onMovimientosChange(clienteId, cb) {
 /**
  * Registra un movimiento (factura/abono/apertura/ajuste). El saldo del cliente lo
  * recalcula la Cloud Function `recalcSaldoCliente` (ADR §43) — aquí no se toca.
+ *
+ * `fecha` ('YYYY-MM-DD') = fecha REAL del hecho que elige Kary (base de la mora,
+ * ADR §51). Es inmutable tras crearse (las reglas solo permiten anular). Si no se
+ * envía, el movimiento queda sin fecha → la mora cae al fallback `fechaCorteMigracion`.
  */
-export async function addMovimiento(clienteId, { tipo, monto, descripcion, registradoPor }) {
+export async function addMovimiento(clienteId, { tipo, monto, descripcion, registradoPor, fecha }) {
     const payload = {
         tipo,
         monto: Number(monto),
         ...(descripcion ? { descripcion: descripcion.trim() } : {}),
+        ...(/^\d{4}-\d{2}-\d{2}$/.test(fecha || '') ? { fecha } : {}),
         registradoPor,
         registradoEn: serverTimestamp(),
         anulado: false,
     };
     const ref = await addDoc(collection(firestoreDb, 'clientes', clienteId, 'movimientos'), payload);
     return { id: ref.id, ...payload };
+}
+
+/**
+ * Suscripción EN VIVO a TODOS los movimientos de todos los clientes (collectionGroup)
+ * para calcular la mora/aging de la lista CxC (norte §10.2-F2: en vivo, sin materializar
+ * `diasVencido` todavía). Mantiene saldo y vencido coherentes (no se desincronizan).
+ * Cada item incluye su `clienteId` (del path del padre).
+ *
+ * IMPORTANTE: la query DEBE quedar SIN filtros (solo `limit`) → así NO requiere índice
+ * compuesto (un índice faltante = FAILED_PRECONDITION = pantalla en blanco en prod, spec
+ * §9.1). Añadir un `where`/`orderBy` aquí OBLIGA a declarar el índice en firestore.indexes.json.
+ * Acotado por `limit(MAX)` (deuda de escala → paginación por cursor en F6); si se trunca,
+ * avisa por consola (detector de truncado, doctrina S3).
+ */
+export function onAllMovimientosChange(cb) {
+    const q = query(collectionGroup(firestoreDb, 'movimientos'), limit(MAX));
+    return onSnapshot(q, (snap) => {
+        if (snap.size >= MAX) {
+            console.warn(`[crm] onAllMovimientosChange truncado en ${MAX} (S3): la mora de la lista puede quedar incompleta → paginar por cursor (F6, spec §9.1).`);
+        }
+        cb(snap.docs.map((d) => ({ id: d.id, clienteId: d.ref.parent.parent?.id, ...d.data() })));
+    });
 }
 
 /**

@@ -56,6 +56,9 @@ service cloud.firestore {
           && d.monto is number
           && (d.tipo in ['apertura', 'ajuste'] || d.monto >= 0)
           && (!('descripcion' in d) || d.descripcion is string)
+          // fecha real del hecho (mora, ADR §51); inmutable. Formato ISO 'YYYY-MM-DD'
+          // validado server-side (el date-picker ya lo garantiza; defensa en profundidad).
+          && (!('fecha' in d) || (d.fecha is string && d.fecha.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
           && d.registradoPor == request.auth.uid
           && (!('anulado' in d) || d.anulado == false)
           && !('anuladoPor' in d) && !('anuladoEn' in d);
@@ -157,6 +160,13 @@ service cloud.firestore {
       allow create: if true;                   // Anyone can send inquiry
       allow update: if isEditor();             // Mark as read, etc.
       allow delete: if isAdmin();              // Admin cleans up
+    }
+
+    // collectionGroup de `movimientos`: lectura para el aging/mora de la lista CxC
+    // (ADR §51). Solo admin. Los WRITES siguen gobernados por el match anidado de
+    // abajo (clientes/{id}/movimientos/{id}); este match SOLO concede lectura de grupo.
+    match /{path=**}/movimientos/{movId} {
+      allow read: if isAdmin();
     }
 
     // ─── CRM: clientes y movimientos (cuentas por cobrar) — SOLO admin/owner ─────

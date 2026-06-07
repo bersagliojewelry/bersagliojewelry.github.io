@@ -18,7 +18,7 @@ import {
     assertSucceeds,
 } from '@firebase/rules-unit-testing';
 import {
-    doc, getDoc, setDoc, addDoc, deleteDoc, updateDoc, collection,
+    doc, getDoc, getDocs, setDoc, addDoc, deleteDoc, updateDoc, collection, collectionGroup, query,
 } from 'firebase/firestore';
 
 let testEnv;
@@ -175,6 +175,22 @@ test('CRM mov · NADIE borra un movimiento (ni admin)', async () => {
 test('CRM mov · admin SÍ anula con motivo (anulado false→true + motivoAnulacion)', async () => {
     await assertSucceeds(updateDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m1'),
         { anulado: true, anuladoPor: 'adminUid', anuladoEn: '2026-06-07T00:00:00Z', motivoAnulacion: 'duplicado' }));
+});
+
+// ─── CRM: collectionGroup de movimientos (lectura para el aging de la lista CxC, §51) ──
+test('CRM mov · admin SÍ lee el collectionGroup de movimientos', async () => {
+    await assertSucceeds(getDocs(query(collectionGroup(asUser('adminUid'), 'movimientos'))));
+});
+test('CRM mov · editor NO lee el collectionGroup de movimientos', async () => {
+    await assertFails(getDocs(query(collectionGroup(asUser('editorUid'), 'movimientos'))));
+});
+test('CRM mov · admin crea movimiento con fecha real (mora)', async () => {
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mFecha'),
+        { tipo: 'factura', monto: 50000, fecha: '2026-06-07', registradoPor: 'adminUid', anulado: false }));
+});
+test('CRM mov · fecha con formato NO ISO es rechazada (validación server-side)', async () => {
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mBadFecha'),
+        { tipo: 'factura', monto: 1000, fecha: '2026/06/07', registradoPor: 'adminUid', anulado: false }));
 });
 
 // ─── CRM Fase R: solicitudesCorreccion ELIMINADA (sin regla = denegado a todos) ─

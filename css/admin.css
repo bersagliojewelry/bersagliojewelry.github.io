@@ -360,6 +360,18 @@ svg { display: block; flex-shrink: 0; }
 .adm-money--favor  { color: var(--adm-success); }
 .adm-money--cero   { color: var(--adm-muted); }
 
+/* Mora / aging: desglose de la cartera vencida (KPI) + sello de estado en la ficha */
+.adm-aging-desglose {
+    font-family: 'Space Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 11px;
+    color: var(--adm-muted);
+    margin-top: 6px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+.adm-ficha-estado { margin-top: 8px; }
+
 /* ─── Sections ────────────────────────────────────────────────────────────── */
 .adm-section {
     background: var(--adm-white);

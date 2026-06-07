@@ -11,14 +11,24 @@ import adminDb from './db.js';
 import { currentUser } from '../auth.js';
 import {
     getCliente, onClienteChange, onMovimientosChange,
-    addMovimiento, anularMovimiento, updateCliente, fetchVendedoras, fmtCOP,
+    addMovimiento, anularMovimiento, updateCliente, fetchVendedoras, fmtCOP, getConfig,
 } from '../crm-service.js';
-import { saldoClass, saldoLabel } from './saldo-format.js';
+import { saldoClass, saldoLabel, estadoBadgeHTML } from './saldo-format.js';
+import { estadoCuenta, hoyISO } from '../crm-estado-cuenta.js';
 
 const CLIENTE_ID = new URLSearchParams(location.search).get('id');
 const _vendedoras = new Map();
 let _tipo = 'factura';   // tipo activo del modal
 let _cliente = null;     // datos vivos (para corregir saldo / editar)
+let _diasPlazo = 30;     // config/negocio.diasPlazo (mora)
+let _fechaCorte = null;  // config/negocio.fechaCorteMigracion (fallback de fecha)
+
+// 'YYYY-MM-DD' → 'DD/MM/YYYY' (fecha real del hecho); '' si no es una fecha ISO.
+function fmtFecha(iso) {
+    if (typeof iso !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return '';
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+}
 
 const TIPO_LABEL = { factura: 'Factura', abono: 'Abono', apertura: 'Apertura', ajuste: 'Ajuste' };
 const SIGNO = { factura: 1, apertura: 1, ajuste: 1, abono: -1 };
@@ -56,9 +66,24 @@ function renderHeader(cli) {
     document.getElementById('hist-section').hidden = false;
 }
 
+function renderEstado(list) {
+    const el = document.getElementById('f-estado');
+    if (!el) return;
+    const est = estadoCuenta(list, { diasPlazo: _diasPlazo, fechaCorte: _fechaCorte });
+    // Solo mostramos el sello si hay deuda (positiva); a favor/cero ya lo dice el saldo.
+    if (est.saldo > 0) {
+        el.innerHTML = estadoBadgeHTML(est);
+        el.hidden = false;
+    } else {
+        el.innerHTML = '';
+        el.hidden = true;
+    }
+}
+
 function renderMovimientos(list) {
     const body = document.getElementById('mov-body');
     const empty = document.getElementById('mov-empty');
+    renderEstado(list);
     if (!list.length) { empty.hidden = false; body.innerHTML = ''; return; }
     empty.hidden = true;
 
@@ -69,12 +94,14 @@ function renderMovimientos(list) {
         const aporte = signo * monto;
         const montoTxt = (aporte > 0 ? '+' : '') + fmtCOP(aporte);
         const tipoTxt = TIPO_LABEL[m.tipo] || m.tipo || '—';
+        // Fecha real del hecho (base de la mora); fallback al sello de sistema.
+        const fechaTxt = fmtFecha(m.fecha) || esc(fmtDateTime(m.registradoEn));
         const accion = anulado || !(m.tipo)
             ? ''
             : `<button class="adm-btn adm-btn--ghost adm-btn--sm" data-anular="${esc(m.id)}">Anular</button>`;
         return `
             <tr${anulado ? ' style="opacity:.5"' : ''}>
-                <td>${esc(fmtDateTime(m.registradoEn))}</td>
+                <td title="Registrado: ${esc(fmtDateTime(m.registradoEn))}">${fechaTxt}</td>
                 <td>${esc(tipoTxt)}${anulado ? ' <span class="adm-pill">anulado</span>' : ''}</td>
                 <td>${esc(m.descripcion || '—')}</td>
                 <td style="text-align:right${anulado ? ';text-decoration:line-through' : ''}">${esc(montoTxt)}</td>
@@ -87,6 +114,7 @@ function renderMovimientos(list) {
 function openMovModal(tipo) {
     _tipo = tipo;
     document.getElementById('mov-form').reset();
+    document.getElementById('mov-fecha').value = hoyISO();   // default: hoy (Kary puede cambiarla)
     document.getElementById('mov-modal-title').textContent = `Registrar ${TIPO_LABEL[tipo].toLowerCase()}`;
     document.getElementById('mov-save').textContent = `Registrar ${TIPO_LABEL[tipo].toLowerCase()}`;
     document.getElementById('mov-modal').hidden = false;
@@ -107,6 +135,8 @@ function wireModal() {
         e.preventDefault();
         const monto = Number(document.getElementById('mov-monto').value);
         if (!(monto > 0)) { admToast('El monto debe ser mayor que 0.', 'danger'); return; }
+        const fecha = document.getElementById('mov-fecha').value;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) { admToast('Elige la fecha del movimiento.', 'danger'); return; }
 
         const uid = currentUser()?.user?.uid;
         const btn = document.getElementById('mov-save');
@@ -115,6 +145,7 @@ function wireModal() {
             await addMovimiento(CLIENTE_ID, {
                 tipo: _tipo,
                 monto,
+                fecha,
                 descripcion: document.getElementById('mov-desc').value,
                 registradoPor: uid,
             });
@@ -195,7 +226,7 @@ function wireCorregir() {
         const motivo = document.getElementById('corregir-motivo').value.trim();
         try {
             await addMovimiento(CLIENTE_ID, {
-                tipo: 'ajuste', monto: delta,
+                tipo: 'ajuste', monto: delta, fecha: hoyISO(),
                 descripcion: 'Corrección de saldo' + (motivo ? `: ${motivo}` : ''),
                 registradoPor: currentUser()?.user?.uid,
             });
@@ -268,6 +299,14 @@ async function init() {
             .forEach(v => _vendedoras.set(v.id, v.nombre || 'Vendedora'));
     } catch (err) {
         console.warn('[cuenta] fetchVendedoras:', err);
+    }
+
+    try {
+        const cfg = await getConfig('negocio');
+        if (typeof cfg?.diasPlazo === 'number' && cfg.diasPlazo >= 0) _diasPlazo = cfg.diasPlazo;
+        if (cfg?.fechaCorteMigracion) _fechaCorte = cfg.fechaCorteMigracion;
+    } catch (err) {
+        console.warn('[cuenta] getConfig:', err);
     }
 
     const cli = await getCliente(CLIENTE_ID);

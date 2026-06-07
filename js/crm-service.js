@@ -107,9 +107,10 @@ export async function addMovimiento(clienteId, { tipo, monto, descripcion, regis
  * Anula un movimiento (NO lo borra — anular ≠ eliminar, spec §3). Solo admin/owner
  * (reglas). Dispara el recálculo del saldo (el anulado deja de contar).
  */
-export async function anularMovimiento(clienteId, movId, anuladoPor) {
+export async function anularMovimiento(clienteId, movId, anuladoPor, motivo) {
     await updateDoc(doc(firestoreDb, 'clientes', clienteId, 'movimientos', movId), {
         anulado: true, anuladoPor, anuladoEn: serverTimestamp(),
+        motivoAnulacion: (motivo || '').trim(),
     });
 }
 

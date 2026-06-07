@@ -141,11 +141,17 @@ exports.onPieceDeleted = onDocumentDeleted('pieces/{pieceId}', async (event) => 
 const { onDocumentCreated } = require('firebase-functions/v2/firestore');
 
 exports.onInquiryCreated = onDocumentCreated('inquiries/{inquiryId}', async (event) => {
-    const configRef = db.collection('config').doc('counters');
-    await configRef.set(
-        { unreadInquiries: FieldValue.increment(1) },
-        { merge: true }
-    );
+    // Idempotente: los triggers son at-least-once. Marcamos la consulta como contada
+    // DENTRO de la misma transacción que incrementa → un reintento no duplica el contador.
+    const inqRef = event.data?.ref;
+    if (!inqRef) return;
+    const counterRef = db.collection('config').doc('counters');
+    await db.runTransaction(async (tx) => {
+        const snap = await tx.get(inqRef);
+        if (!snap.exists || snap.get('_counted') === true) return;
+        tx.update(inqRef, { _counted: true });
+        tx.set(counterRef, { unreadInquiries: FieldValue.increment(1) }, { merge: true });
+    });
 });
 
 // ─── recalcSaldoCliente (CRM Bloque 2) ───────────────────────────────────────

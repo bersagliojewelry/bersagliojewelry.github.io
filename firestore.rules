@@ -60,6 +60,20 @@ service cloud.firestore {
           && (!('anulado' in d) || d.anulado == false)
           && !('anuladoPor' in d) && !('anuladoEn' in d);
     }
+    // Append-only: el ÚNICO update permitido sobre un movimiento es ANULARLO
+    // (anulado false→true) + sellar auditoría (anuladoPor/anuladoEn + motivoAnulacion
+    // obligatorio). Prohíbe reescribir tipo/monto/fecha/registradoPor/descripción del
+    // asiento (solo esas 4 claves pueden cambiar). `.get('anulado', false)` tolera
+    // movimientos legacy sin el campo.
+    function anulacionValida() {
+      let d = request.resource.data;
+      return resource.data.get('anulado', false) == false
+          && d.anulado == true
+          && d.anuladoPor == request.auth.uid
+          && nonEmptyStr(d.motivoAnulacion)
+          && d.diff(resource.data).affectedKeys()
+               .hasOnly(['anulado', 'anuladoPor', 'anuladoEn', 'motivoAnulacion']);
+    }
 
     // ─── S6: validación de campos (tolerante a merge/partial updates) ────────────
     // En update con merge, request.resource.data = estado RESULTANTE completo, por
@@ -155,7 +169,8 @@ service cloud.firestore {
       match /movimientos/{movId} {
         allow read:   if isAdmin();
         allow create: if isAdmin() && movimientoValido();
-        allow update, delete: if isAdmin();
+        allow update: if isAdmin() && anulacionValida();   // append-only: SOLO anular (no editar el asiento)
+        allow delete: if false;                            // libro append-only: NUNCA borrar (ni admin)
       }
     }
 

@@ -6,7 +6,7 @@
  * movimientos y se observa el resultado. Solo admin/owner.
  */
 
-import { requireAuth, initSidebar, admToast, admConfirm, esc, fmtDateTime } from './shared.js';
+import { requireAuth, initSidebar, admToast, esc, fmtDateTime } from './shared.js';
 import adminDb from './db.js';
 import { currentUser } from '../auth.js';
 import {
@@ -130,19 +130,41 @@ function wireModal() {
 }
 
 function wireAnular() {
+    let anularId = null;
+    const modal    = document.getElementById('anular-modal');
+    const form     = document.getElementById('anular-form');
+    const motivoEl = document.getElementById('anular-motivo');
+    const close = () => { modal.hidden = true; anularId = null; form.reset(); };
+
     document.getElementById('mov-body').addEventListener('click', (e) => {
         const btn = e.target.closest('[data-anular]');
         if (!btn) return;
-        const movId = btn.getAttribute('data-anular');
-        admConfirm('¿Anular este movimiento? No se borra, pero dejará de contar en el saldo.', async () => {
-            try {
-                await anularMovimiento(CLIENTE_ID, movId, currentUser()?.user?.uid);
-                admToast('Movimiento anulado.');
-            } catch (err) {
-                console.error('[cuenta] anularMovimiento:', err);
-                admToast('No se pudo anular.', 'danger');
-            }
-        });
+        anularId = btn.getAttribute('data-anular');
+        form.reset();
+        modal.hidden = false;
+        motivoEl.focus();
+    });
+    document.getElementById('anular-cancel').addEventListener('click', close);
+    document.getElementById('anular-close').addEventListener('click', close);
+    modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const motivo = motivoEl.value.trim();
+        if (!motivo) { admToast('El motivo es obligatorio.', 'danger'); return; }
+        if (!anularId) return;
+        const btn = document.getElementById('anular-confirm');
+        btn.disabled = true;
+        try {
+            await anularMovimiento(CLIENTE_ID, anularId, currentUser()?.user?.uid, motivo);
+            admToast('Movimiento anulado.');
+            close();
+        } catch (err) {
+            console.error('[cuenta] anularMovimiento:', err);
+            admToast('No se pudo anular.', 'danger');
+        } finally {
+            btn.disabled = false;
+        }
     });
 }
 

@@ -4,6 +4,7 @@
 
 import adminDb from './db.js';
 import { admToast, initSidebar, requireAuth } from './shared.js';
+import { leadBadgeHTML } from './lead-format.js';
 
 async function init() {
     await requireAuth('editor');
@@ -54,11 +55,7 @@ function renderRecentInquiries(inquiries) {
             <td class="adm-td-muted">${fmtDate(i.createdAt)}</td>
             <td style="font-weight:500;">${esc(i.name)}</td>
             <td class="adm-td-muted">${esc(i.piece || i.pieceSlug || '\u2014')}</td>
-            <td>
-                <span class="adm-pill ${i.read ? 'adm-pill--gray' : 'adm-pill--red'}">
-                    ${i.read ? 'Le\u00edda' : 'Nueva'}
-                </span>
-            </td>
+            <td>${leadBadgeHTML(i)}</td>
             <td>
                 <a href="admin-consultas.html" class="adm-btn adm-btn--ghost adm-btn--sm">Ver</a>
             </td>

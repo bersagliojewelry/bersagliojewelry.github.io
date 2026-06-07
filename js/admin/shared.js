@@ -8,6 +8,7 @@ import { requireAuth, currentUser, currentRole, hasRole, signOut } from '../auth
 import { setAuthContext } from '../firestore-service.js';
 import { renderSidebar } from './render-sidebar.js';
 import { NAV } from './sidebar-data.js';
+import { esPendiente } from './lead-format.js';
 
 // ─── Auth guard ────────────────────────────────────────────────────────────────
 
@@ -72,11 +73,12 @@ function wireSidebarToggle(sidebar) {
 }
 
 function updateBadge() {
-    const unread = adminDb.getInquiries().filter(i => !i.read).length;
+    // Leads que piden atención = en estado 'nuevo' (F4). Legacy sin status → por `read`.
+    const pendientes = adminDb.getInquiries().filter(esPendiente).length;
     const badge  = document.getElementById('inq-badge');
     if (badge) {
-        badge.textContent = unread > 9 ? '9+' : unread;
-        badge.hidden = unread === 0;
+        badge.textContent = pendientes > 9 ? '9+' : pendientes;
+        badge.hidden = pendientes === 0;
     }
 }
 

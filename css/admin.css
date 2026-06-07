@@ -494,6 +494,17 @@ svg { display: block; flex-shrink: 0; }
 .adm-pill--gray   { background: rgba(0,0,0,0.05);          color: var(--adm-muted); }
 .adm-pill--gold   { background: rgba(201,168,76,0.1);       color: #9a7730; }
 .adm-pill--red    { background: var(--adm-danger-light);    color: var(--adm-danger); }
+.adm-pill--emerald{ background: var(--adm-accent-light);    color: var(--adm-accent); }
+
+/* Etiqueta de campo en modales (clave→valor) — Bandeja/leads (F4) */
+.adm-kv-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--adm-muted);
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
 
 .adm-table-actions {
     display: flex;

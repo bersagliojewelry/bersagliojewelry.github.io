@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consultas — Bersaglio Admin</title>
+    <title>Bandeja — Bersaglio Admin</title>
     <meta name="robots" content="noindex, nofollow">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,40 +25,43 @@
             <button class="adm-hamburger" id="hamburger-btn" aria-label="Menú">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="22" height="22"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
             </button>
-            <h1>Consultas</h1>
+            <h1>Bandeja</h1>
             <div class="adm-topbar-actions">
-                <button class="adm-btn adm-btn--ghost" id="btn-mark-all-read">Marcar todas leídas</button>
-                <button class="adm-btn adm-btn--primary" id="btn-export-csv">
-                    <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
-                    Exportar CSV
+                <button class="adm-btn adm-btn--ghost" id="btn-export-csv">↓ Exportar CSV</button>
+                <button class="adm-btn adm-btn--primary" id="btn-nuevo-lead">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+                    Nuevo lead
                 </button>
             </div>
         </header>
 
         <div class="adm-content">
 
-            <!-- Filters -->
+            <!-- Filtros por estado del pipeline + búsqueda -->
             <div class="adm-toolbar">
-                <div class="adm-filters" id="inq-filters">
-                    <button class="adm-filter-btn is-active" data-filter="all">Todas</button>
-                    <button class="adm-filter-btn" data-filter="unread">Sin leer</button>
-                    <button class="adm-filter-btn" data-filter="read">Leídas</button>
+                <div class="adm-filters" id="inq-filters" style="flex-wrap:wrap;">
+                    <button class="adm-filter-btn is-active" data-filter="todos">Todos <span class="inq-chip-n"></span></button>
+                    <button class="adm-filter-btn" data-filter="nuevo">Nuevos <span class="inq-chip-n"></span></button>
+                    <button class="adm-filter-btn" data-filter="trabajando">Trabajando <span class="inq-chip-n"></span></button>
+                    <button class="adm-filter-btn" data-filter="calificado">Calificados <span class="inq-chip-n"></span></button>
+                    <button class="adm-filter-btn" data-filter="convertido">Clientes <span class="inq-chip-n"></span></button>
+                    <button class="adm-filter-btn" data-filter="perdido">Perdidos <span class="inq-chip-n"></span></button>
                 </div>
                 <div class="adm-search">
                     <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
-                    <input type="search" id="search-input" placeholder="Buscar por nombre o email…">
+                    <input type="search" id="search-input" placeholder="Buscar por nombre, email o teléfono…">
                 </div>
             </div>
 
-            <!-- Table -->
+            <!-- Tabla de leads -->
             <div class="adm-table-wrap">
                 <table class="adm-table">
                     <thead>
                         <tr>
                             <th>Fecha</th>
                             <th>Nombre</th>
-                            <th>Email / Teléfono</th>
-                            <th>Pieza</th>
+                            <th>Contacto</th>
+                            <th>Origen</th>
                             <th>Estado</th>
                             <th></th>
                         </tr>
@@ -68,74 +71,117 @@
             </div>
             <div id="inq-empty" class="adm-empty" hidden>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="48" height="48"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg>
-                <p>No hay consultas con ese filtro.</p>
-            </div>
-
-            <!-- Export section -->
-            <div class="adm-section" style="margin-top:24px;">
-                <div class="adm-section-head"><h2>Exportación de interesados</h2></div>
-                <div class="adm-section-body">
-                    <p style="font-size:13px;color:var(--adm-muted);margin-bottom:16px;line-height:1.7;">
-                        Descarga los datos de contacto de todos los clientes que han enviado consultas.<br>
-                        <strong style="color:var(--adm-text);">Nota:</strong> La exportación de listas de deseos entre dispositivos requiere Firestore (Fase 6).
-                    </p>
-                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                        <button class="adm-btn adm-btn--ghost" id="btn-export-inquiries">↓ Consultas completas (CSV)</button>
-                        <button class="adm-btn adm-btn--ghost" id="btn-export-unread">↓ Solo sin leer (CSV)</button>
-                    </div>
-                </div>
+                <p>No hay leads con ese filtro.</p>
             </div>
 
         </div>
     </main>
 </div>
 
-<!-- Modal: ver consulta -->
+<!-- Modal: ver/gestionar lead -->
 <div class="adm-modal" id="inq-modal" hidden>
     <div class="adm-modal-box">
         <div class="adm-modal-head">
-            <h2 id="inq-modal-title">Consulta</h2>
+            <h2 id="inq-modal-title">Lead</h2>
             <button class="adm-modal-close" id="inq-modal-close" aria-label="Cerrar">✕</button>
         </div>
         <div class="adm-modal-body">
             <div style="display:grid;gap:12px;">
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                     <div>
-                        <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--adm-muted);letter-spacing:0.5px;margin-bottom:4px;">Nombre</div>
+                        <div class="adm-kv-label">Nombre</div>
                         <div id="inq-detail-name" style="font-size:14px;font-weight:500;"></div>
                     </div>
                     <div>
-                        <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--adm-muted);letter-spacing:0.5px;margin-bottom:4px;">Fecha</div>
+                        <div class="adm-kv-label">Fecha</div>
                         <div id="inq-detail-date" style="font-size:14px;"></div>
                     </div>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                     <div>
-                        <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--adm-muted);letter-spacing:0.5px;margin-bottom:4px;">Email</div>
+                        <div class="adm-kv-label">Email</div>
                         <div id="inq-detail-email" style="font-size:14px;"></div>
                     </div>
                     <div>
-                        <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--adm-muted);letter-spacing:0.5px;margin-bottom:4px;">Teléfono</div>
+                        <div class="adm-kv-label">Teléfono</div>
                         <div id="inq-detail-phone" style="font-size:14px;"></div>
                     </div>
                 </div>
+                <div>
+                    <div class="adm-kv-label">Origen</div>
+                    <div id="inq-detail-origen" style="font-size:14px;"></div>
+                </div>
                 <div id="inq-detail-piece-wrap">
-                    <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--adm-muted);letter-spacing:0.5px;margin-bottom:4px;">Pieza de interés</div>
+                    <div class="adm-kv-label">Pieza de interés</div>
                     <div id="inq-detail-piece" style="font-size:14px;"></div>
                 </div>
                 <div>
-                    <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--adm-muted);letter-spacing:0.5px;margin-bottom:6px;">Mensaje</div>
+                    <div class="adm-kv-label">Mensaje</div>
                     <div id="inq-detail-message" class="adm-inq-detail"></div>
+                </div>
+                <div>
+                    <div class="adm-kv-label">Estado del lead</div>
+                    <div class="adm-filters" id="inq-status-btns" style="flex-wrap:wrap;margin-top:4px;"></div>
                 </div>
             </div>
         </div>
-        <div class="adm-modal-foot">
-            <button class="adm-btn adm-btn--ghost adm-btn--danger" id="inq-modal-delete">Eliminar</button>
-            <button class="adm-btn adm-btn--ghost" id="inq-modal-toggle-read"></button>
-            <a class="adm-btn adm-btn--primary" id="inq-modal-wa" href="#" target="_blank" rel="noopener">
-                Responder por WhatsApp
-            </a>
+        <div class="adm-modal-foot" style="flex-wrap:wrap;gap:8px;">
+            <button class="adm-btn adm-btn--ghost adm-btn--danger" id="inq-modal-delete" hidden>Eliminar</button>
+            <a class="adm-btn adm-btn--ghost" id="inq-modal-ficha" href="#" hidden>Ver ficha del cliente</a>
+            <button class="adm-btn adm-btn--ghost" id="inq-modal-convert" hidden>★ Convertir a cliente</button>
+            <a class="adm-btn adm-btn--primary" id="inq-modal-wa" href="#" target="_blank" rel="noopener">Responder por WhatsApp</a>
         </div>
+    </div>
+</div>
+
+<!-- Modal: nuevo lead (alta manual / mostrador) -->
+<div class="adm-modal" id="nuevo-modal" hidden>
+    <div class="adm-modal-box">
+        <div class="adm-modal-head">
+            <h2>Nuevo lead</h2>
+            <button class="adm-modal-close" id="nuevo-close" aria-label="Cerrar">✕</button>
+        </div>
+        <form id="nuevo-form">
+            <div class="adm-modal-body">
+                <div class="adm-form-row adm-col-1">
+                    <div class="adm-field">
+                        <label for="nl-nombre">Nombre <span class="adm-opt">(obligatorio)</span></label>
+                        <input type="text" id="nl-nombre" class="adm-input" required maxlength="120" autocomplete="off">
+                    </div>
+                </div>
+                <div class="adm-form-row">
+                    <div class="adm-field">
+                        <label for="nl-telefono">Teléfono / WhatsApp</label>
+                        <input type="tel" id="nl-telefono" class="adm-input" maxlength="40" autocomplete="off">
+                    </div>
+                    <div class="adm-field">
+                        <label for="nl-origen">Origen</label>
+                        <select id="nl-origen" class="adm-input">
+                            <option value="mostrador">Mostrador</option>
+                            <option value="whatsapp">WhatsApp</option>
+                            <option value="instagram">Instagram</option>
+                            <option value="manual">Otro</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="adm-form-row adm-col-1">
+                    <div class="adm-field">
+                        <label for="nl-email">Email</label>
+                        <input type="email" id="nl-email" class="adm-input" maxlength="120" autocomplete="off">
+                    </div>
+                </div>
+                <div class="adm-form-row adm-col-1">
+                    <div class="adm-field">
+                        <label for="nl-mensaje">Nota / interés</label>
+                        <textarea id="nl-mensaje" class="adm-input" maxlength="500"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="adm-modal-foot">
+                <button type="button" class="adm-btn adm-btn--ghost" id="nuevo-cancel">Cancelar</button>
+                <button type="submit" class="adm-btn adm-btn--primary" id="nuevo-save">Agregar lead</button>
+            </div>
+        </form>
     </div>
 </div>
 

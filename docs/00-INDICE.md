@@ -97,6 +97,7 @@
 | §50 | 2026-06-07 — Panel v2 (mini-ERP): diseño maestro + Consejo Externo + F-CHASIS-A construido y desplegado | 651 |
 | §51 | 2026-06-07 — F1+F2+slice F5: función de Morosos/Vencidos (aging de cartera) — en vivo, sin CF nueva | 668 |
 | §52 | 2026-06-07 — F5 (slice): filtros/chips de la lista CxC (estado · mora · vendedora) | 685 |
+| §53 | 2026-06-07 — F4-leads: Bandeja (pipeline de leads sobre `inquiries`) + convertir a cliente | 702 |
 ---
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §32+ al historial,

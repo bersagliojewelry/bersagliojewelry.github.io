@@ -699,6 +699,23 @@ Daniel: tras desplegar morosos, "F5 completo". Decisión de alcance (AskUserQues
 
 **52.7 Doctrina + siguiente**: §3.2 (re-uso) + §3.1 (transition). **Sin cache bump** (admin no precacheado). **Front-only** → live al mergear `Desarrollo→main` (Pages); no requiere deploy de reglas/functions. **Siguiente**: F4-leads (Bandeja) o control de crédito junto con F7 (ventas).
 
+## 2026-06-07 — F4-leads: Bandeja (pipeline de leads sobre `inquiries`)
+Daniel: tras F5, "vamos con F4". Decisión de alcance (AskUserQuestion): pipeline de **5 estados** (Nuevo→Trabajando→Calificado→Cliente/Perdido). Decisión de arquitecto: **evolucionar `inquiries`** (NO crear la colección `leads` aún) → F4 es **front+servicio**, sin reglas/functions/CF, se publica por Pages. La colección `leads` formal + ingestión blindada por CF + App Check es **F6** (depende de TODO-14, acción de Daniel en consola).
+
+**53.1 Causa**: la "Bandeja" (`admin-consultas.html`) era una bandeja de entrada read/unread; no había forma de trabajar a un interesado por etapas hasta volverlo cliente.
+
+**53.2 Solución**: pipeline de leads sobre `inquiries`. Helper PURO `js/admin/lead-format.js` (espejo de `saldo-format.js`): `leadStatus` (normaliza + alias legacy `new`→`nuevo` + deriva de `read`), `esPendiente` (badge = estado 'nuevo'), `leadBadgeHTML`, `origenLabel`, `diasDesde` (Timestamp/`{seconds}`-aware), `estaDemorado` (SLA simple). UI (`consultas.js` reescrito): chips por estado + conteo, columna Origen, antigüedad + aviso "demorado", modal con selector de estado + **"Convertir a cliente"** (admin → `createCliente` + marca convertido + abre ficha) + **alta manual** de lead (mostrador). `saveInquiry` setea `status:'nuevo'` (entra al pipeline). Badge del rail + stat del dashboard + pill de recientes coherentes (`esPendiente`/`leadBadgeHTML`).
+
+**53.3 No-regresión**: front+servicio (CERO reglas/functions/CF). Reglas de `inquiries` intactas. Saldo/CRM/morosos intactos. Legacy (`status:'new'` o sin status) mapeado sin migración. CSV migrado a estado de pipeline (+ Origen/Cliente). `markRead` (código muerto) eliminado; `read:false` redundante quitado de `addInquiry`.
+
+**53.4 Tests/verificación**: `test:leads` **8/8** (estado/legacy/origen/antigüedad-Timestamp/demorado) + build verde + cross-check **31 ids HTML↔JS, 0 faltantes**. **Revisión adversarial 2 lentes** (integración/RBAC + no-regresión) → aplicados: convertir **idempotente** (guarda `convertedTo`) + marcado **best-effort** (no deja cliente huérfano invisible; navega a la ficha igual), CSV con estado real, dashboard coherente (label "Leads pendientes" + pill por estado), `setStatus` sincroniza `_all` (anti-parpadeo), estado 'convertido' visible en el modal. **Rechazado**: "addInquiry no setea status" (lo fija `saveInquiry`).
+
+**53.5 Anti-patterns evitados**: re-uso de `.adm-filter-btn`/pills (§3.2). Sin CF/App Check prematuro (F6). Convertir idempotente + best-effort en vez de fingir atomicidad (la plena = CF transaccional, F7). Helper de leads aislado y testeado (no lógica de estado dispersa en la vista).
+
+**53.6 Archivos** — nuevos: `js/admin/lead-format.js`, `tests/lead-format.test.mjs`; modificados: `js/admin/{consultas,db,shared,dashboard}.js`, `js/firestore-service.js` (saveInquiry `status:'nuevo'`), `admin-consultas.html` (reescrito a Bandeja), `admin.html` (label del stat), `css/admin.css` (`.adm-pill--emerald` + `.adm-kv-label`), `package.json` (`test:leads`). **INTACTOS**: `firestore.rules`, `functions/*`, `crm-estado-cuenta.js`, `crm-service.js`.
+
+**53.7 Doctrina + siguiente**: §3.2 + §3.6 + §G.2. **Gaps conocidos diferidos a F6** (hardening): (a) `inquiries.update` (reglas) deja a un editor escribir `convertedTo` — impacto BAJO (el botón es admin-gated; editores no operan la Bandeja; es solo un link, sin dinero); F6 endurece leads (`create:if false` + App Check + reglas de campo); (b) colección `leads` formal + ingestión por CF (normaliza/dedup/consent/dead-letter). Atomicidad plena de "convertir" = F7 (CF transaccional). **Sin cache bump** (admin no precacheado). **Front-only** → live al mergear `Desarrollo→main`. **Siguiente**: F6 (escala + hardening: App Check, agregados, leads formales) o F7 (ventas/factura — requiere Consejo Externo + PRE-infra TODO-14).
+
 
 
 

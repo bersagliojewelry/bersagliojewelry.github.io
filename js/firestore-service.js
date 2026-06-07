@@ -571,8 +571,8 @@ export async function saveInquiry({ name, email, phone, message, pieceSlug, sour
         phone,
         message,
         pieceSlug: pieceSlug || null,
-        source:    source || 'website',
-        status:    'new',
+        source:    source || 'web',
+        status:    'nuevo',   // entra al pipeline de la Bandeja (F4, ADR §53)
         createdAt: serverTimestamp()
     });
 }

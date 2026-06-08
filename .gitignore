@@ -25,3 +25,7 @@ ui-debug.log
 # Mockups efímeros del compañero visual de brainstorming (no versionar)
 .superpowers/
 
+# Permisos LOCALES del harness de Claude Code (por máquina, no versionar; CLAUDE.md §2).
+# `settings.json` (compartido) SÍ se versiona; `settings.local.json` NO.
+.claude/settings.local.json
+

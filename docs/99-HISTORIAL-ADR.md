@@ -716,6 +716,23 @@ Daniel: tras F5, "vamos con F4". Decisión de alcance (AskUserQuestion): pipelin
 
 **53.7 Doctrina + siguiente**: §3.2 + §3.6 + §G.2. **Gaps conocidos diferidos a F6** (hardening): (a) `inquiries.update` (reglas) deja a un editor escribir `convertedTo` — impacto BAJO (el botón es admin-gated; editores no operan la Bandeja; es solo un link, sin dinero); F6 endurece leads (`create:if false` + App Check + reglas de campo); (b) colección `leads` formal + ingestión por CF (normaliza/dedup/consent/dead-letter). Atomicidad plena de "convertir" = F7 (CF transaccional). **Sin cache bump** (admin no precacheado). **Front-only** → live al mergear `Desarrollo→main`. **Siguiente**: F6 (escala + hardening: App Check, agregados, leads formales) o F7 (ventas/factura — requiere Consejo Externo + PRE-infra TODO-14).
 
+## 2026-06-08 — F6 inicio: App Check (código listo, rollout pendiente de consola de Daniel)
+Daniel: "pasemos a F6" + eligió (AskUserQuestion) arrancar por **App Check** (cerrar el hueco de spam/costos). F6 = fase de escala+hardening (4 frentes); plan grounded por workflow de 4 agentes → `docs/superpowers/specs/2026-06-08-f6-hardening-plan.md`. **Housekeeping previo** (commit `e3d390f`): `.claude/settings.local.json` desindexado + gitignorado (era config local del harness, trackeada por error → ruido cada sesión).
+
+**54.1 Causa**: hueco **denial-of-wallet** VIVO en prod — `firestore.rules` con `create: if true` en `reviews`/`subscriptions`/`inquiries`/`push_tokens` + apiKey pública en el bundle → un bot puede spamear las colecciones públicas y **agotar la cuota/factura** de Firebase. Riesgo #1 (spec §1.1/§8).
+
+**54.2 Solución (slice elegido)**: **App Check sobre Firestore directo** (NO reescribir los formularios a Cloud Functions — eso es defensa-en-profundidad posterior; proporcionalidad). `initializeAppCheck` con **reCAPTCHA v3** en `js/firebase-config.js` (UN solo punto → cubre sitio público **y** admin). Gateado por `VITE_RECAPTCHA_SITE_KEY` + **skip en dev** (emuladores). Cableado en `deploy.yml` (secret del build) + `.env.example`. **NO rompe nada por sí solo**: solo ADJUNTA un token a cada petición; el rechazo se activa con **Enforcement** en la consola (rollout **monitor→enforce**).
+
+**54.3 No-regresión**: gateado — sin la key (o en dev) → **no-op**, el sitio sigue vivo (misma red de seguridad que el fallback de llaves, L-14). CERO cambios a reglas/forms/functions. Build verde (`firebase/app-check` resuelve en firebase v12.11).
+
+**54.4 Verificación**: `vite build` verde. El efecto real se observa en el **monitor de App Check** (consola) tras que Daniel registre reCAPTCHA + agregue el secret + mergee → Pages rebuild con la key → tokens fluyen.
+
+**54.5 Anti-patterns evitados**: NO reescribir los forms públicos a CF callables (el workflow lo propuso; App Check directo cierra el hueco con UN `init` — la CF-ingestion con dedup/rate-limit es follow-up, no el core fix). Gateado por key = **no big-bang**, no romper prod. Rollout **monitor-only antes de enforce**.
+
+**54.6 Archivos**: `js/firebase-config.js` (`initializeAppCheck` + reorden de `isDev`), `.env.example` (`VITE_RECAPTCHA_SITE_KEY`), `.github/workflows/deploy.yml` (secret del build), `docs/superpowers/specs/2026-06-08-f6-hardening-plan.md` (plan F6), `.gitignore` (housekeeping). **INTACTOS**: `firestore.rules`, `functions/*`, formularios.
+
+**54.7 Doctrina + ACCIONES DE DANIEL (consola, desbloquean el efecto)**: §3.6 (seguridad por diseño). (1) Firebase Console → **App Check** → registrar la web app con **reCAPTCHA v3** → copiar la **site key**; (2) GitHub repo → Settings → Secrets and variables → Actions → nuevo secret **`VITE_RECAPTCHA_SITE_KEY`**; (3) mergear `Desarrollo→main` → Pages rebuild; (4) verificar en el **monitor** de App Check que llegan peticiones "verificadas"; (5) cuando el tráfico legítimo esté tokenizado, activar **Enforcement** (Firestore + Storage + Functions). Lección **L-30** (App Check directo > reescribir forms a CF para cerrar denial-of-wallet; gatear por key = rollout sin romper). **Siguiente F6**: cimientos (CI rule-test + entero-COP) · reconciliación/Salud · RBAC claims · backup (PRE-1, antes de F7).
+
 
 
 

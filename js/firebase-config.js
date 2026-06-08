@@ -13,6 +13,7 @@
  */
 
 import { initializeApp } from 'firebase/app';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
@@ -34,14 +35,37 @@ const firebaseConfig = {
 
 // ─── Initialize Firebase ─────────────────────────────────────────────────────
 
-const app        = initializeApp(firebaseConfig);
-const firestoreDb = getFirestore(app);
-const auth       = getAuth(app);
-const storage    = getStorage(app);
-
-// Connect to emulators in development
+// Dev = emuladores locales. NO se activa App Check en dev (rompería las llamadas al
+// emulador) ni se conecta a prod.
 const isDev = typeof location !== 'undefined' &&
               (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+
+const app = initializeApp(firebaseConfig);
+
+// ─── App Check (anti-abuso, F6 §A) ───────────────────────────────────────────
+// "Sello de navegador real" (reCAPTCHA v3) que el SDK adjunta a CADA petición a
+// Firestore/Storage/Functions → cierra el hueco "denial-of-wallet" (un bot ya no
+// puede spamear las colecciones públicas y agotar la cuota/factura). NO rompe nada
+// por sí solo: solo ADJUNTA el token; el rechazo se activa en la consola (Enforcement)
+// cuando Daniel ya vio tráfico legítimo tokenizado en el monitor (rollout seguro).
+// Gateado por la key: sin `VITE_RECAPTCHA_SITE_KEY` (o en dev) → no-op, el sitio sigue
+// vivo (red de seguridad, igual que el fallback de llaves — L-14). Detalle: spec
+// docs/superpowers/specs/2026-06-08-f6-hardening-plan.md + docs/41-SEGURIDAD.
+const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+if (!isDev && recaptchaSiteKey) {
+    try {
+        initializeAppCheck(app, {
+            provider: new ReCaptchaV3Provider(recaptchaSiteKey),
+            isTokenAutoRefreshEnabled: true,
+        });
+    } catch (err) {
+        console.warn('[Firebase] App Check no se pudo inicializar:', err);
+    }
+}
+
+const firestoreDb = getFirestore(app);
+const auth        = getAuth(app);
+const storage     = getStorage(app);
 
 if (isDev) {
     try {

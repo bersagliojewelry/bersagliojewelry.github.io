@@ -48,11 +48,12 @@ filtros/orden) como un sistema profesional que escala a más módulos — NO fea
 4. **Decisión cara de revertir** (arquitectura, modelo de datos, seguridad, integración de pago) = es
    Decisión Fuerte → **Comité ×3** + 2ª opinión externa, y registra el porqué (ADR).
 
-## En el proyecto Bersaglio (si estás en ESTE repo)
-- North-star + charter del CRM → `docs/50-ARQUITECTURA.md`. Resumen always-on → `CLAUDE.md §3.6` + IAP `§3.4`.
-- **Antes de moldear una fase del panel: barrido holístico de TODO el panel admin** (no la pieza
-  aislada) → `docs/50-ARQUITECTURA.md §3 (Protocolo de fase)`.
-- Seguridad → `docs/41-SEGURIDAD.md` · mapa de código → `docs/20-MEMORIA-ESPACIAL.md`.
+## En tu proyecto activo (consulta el cerebro del repo — NO rutas fijas)
+> Skill PORTABLE: funciona en cualquier proyecto. NO hardcodear rutas/§ de un repo (contaminaría a los demás).
+- Lee el resumen always-on de arquitectura del `CLAUDE.md` del proyecto activo (sección de doctrinas) + su IAP.
+- Si el proyecto tiene una neurona de arquitectura (north-star/charter) o de escalabilidad, léela ANTES
+  de moldear un módulo o una fase: **barrido holístico del sistema completo, no la pieza aislada**.
+- Seguridad y mapa de código: consulta los lóbulos/neuronas del proyecto vía su `00-INDICE` / `40-LOBULOS-DOMINIO`.
 
 ## Cuándo NO usar
 - Edits triviales sin consecuencias de diseño (un texto, un color, un typo).

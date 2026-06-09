@@ -7,7 +7,7 @@
 >
 > **Cerebro completo**: 🧠 `CLAUDE.md` (router/identidad) · 🩺 `docs/05-ESTADO-GLOBAL.md` (signos vitales)
 > · ⚡ `docs/10-MEMORIA-CORTO-PLAZO.md` (WIP) · 🛰️ `docs/15-CONSEJO-EXTERNO.md` (red team) · 🗺️ `docs/20-MEMORIA-ESPACIAL.md` (arquitectura)
-> · 🧪 `docs/30-LECCIONES.md` (experiencia/recetas) · 🎯 `docs/40-LOBULOS-DOMINIO.md` (registry dominios) · 🏛️ `docs/50-ARQUITECTURA.md` (arquitectura/charter CRM) · 🗂️ este (índice) · 📚 `docs/99-HISTORIAL-ADR.md` (largo plazo) · 🛠️ `docs/skills-inventory.md` (catálogo skills).
+> · 🧪 `docs/30-LECCIONES.md` (experiencia/recetas) · 🎯 `docs/40-LOBULOS-DOMINIO.md` (registry dominios) · 🏛️ `docs/50-ARQUITECTURA.md` (arquitectura/charter CRM) · 🔁 `docs/60-WORKFLOWS.md` (workflows reutilizables) · 🗂️ este (índice) · 📚 `docs/99-HISTORIAL-ADR.md` (largo plazo) · 🛠️ `docs/skills-inventory.md` (catálogo skills).
 >
 > **Cómo usarlo (regla de oro anti-saturación)**:
 > 1. Busca aquí el § que necesitas y su línea de inicio.
@@ -33,6 +33,8 @@
 | 🔵 Audita UX / interfaz / componentes | 🎯 `40-LOBULOS-DOMINIO` → 43-UX |
 | 🔵 Audita PERFORMANCE / LCP / Vite | 🎯 `40-LOBULOS-DOMINIO` → 45-PERFORMANCE |
 | 🔵 Audita ACCESIBILIDAD / skip-link / focus | 🎯 `40-LOBULOS-DOMINIO` → 48-ACCESIBILIDAD + Skill `accessibility-audit` |
+| ⚖️ Algo LEGAL: términos, privacidad, datos personales, retracto, garantía, cookies, RUCOM, IVA, lavado de activos | 🎯 `40-LOBULOS` → `42-LEGAL` + Skill `legal-colombia` (NUNCA plugins legales extranjeros) |
+| 🔁 Voy a revisar/auditar/verificar algo de forma sistemática (reglas, diseño, lo que dejó un subagente, si algo cumple) | 🔁 `docs/60-WORKFLOWS.md` (catálogo de workflows de detección reutilizables) |
 | 🛰️ Decisión fuerte / cara de revertir / fork 50-50 → ¿2ª opinión? | 🛰️ `docs/15-CONSEJO-EXTERNO.md` (cuándo + qué tier del provider externo §0) |
 | 🏛️ Decisión de arquitectura / diseño o escalado del CRM / límites de módulo / "cero monolitos" | 🏛️ `docs/50-ARQUITECTURA.md` |
 | 🛠️ ¿Qué skill tengo para X? / mapa de skills | 🛠️ `docs/skills-inventory.md` + 🎯 `40-LOBULOS §Recursos Externos` |
@@ -99,6 +101,7 @@
 | §52 | 2026-06-07 — F5 (slice): filtros/chips de la lista CxC (estado · mora · vendedora) | 685 |
 | §53 | 2026-06-07 — F4-leads: Bandeja (pipeline de leads sobre `inquiries`) + convertir a cliente | 702 |
 | §54 | 2026-06-08 — F6 inicio: App Check (código listo, rollout pendiente de consola) | 719 |
+| §55 | 2026-06-08 — Mejoras al cerebro (TODO-16): Comité ×3 + Legal Colombia + Arquitecto + Workflows | 736 |
 ---
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §32+ al historial,

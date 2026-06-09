@@ -42,8 +42,9 @@ El cerebro se divide en **nodos**. Auto-cargas SOLO `CLAUDE.md` + `05` + `10` (�
 | 🧪 **Procedimental (experiencia)** | `docs/30-LECCIONES.md` | ❌ on-demand | Trigger de Experiencia: ANTES de una op riesgosa/repetitiva (refactor CSS, tocar caché/SW) o si un síntoma "te suena". Gotchas + recetas + doctrinas Liquid Glass. |
 | 🗂️ **Índice sináptico** | `docs/00-INDICE.md` | ❌ on-demand | ANTES de leer el historial (offset exacto) Y para el enrutamiento semántico (síntoma → neurona). |
 | 📚 **Largo Plazo** | `docs/99-HISTORIAL-ADR.md` | ❌ on-demand | Trigger de Error / detalle histórico de un §. NUNCA completo — usa offset/limit. |
-| 🎯 **Lóbulos de Dominio** | `docs/40-LOBULOS-DOMINIO.md` | ❌ on-demand | Trigger 🔵 §G.2: registry de dominios especializados; lóbulos hijos activos (`41-SEGURIDAD`, `43-UX`, `45-PERFORMANCE`) + planificados (`48-ACCESIBILIDAD`, etc.) nacen on-demand con contenido real. |
+| 🎯 **Lóbulos de Dominio** | `docs/40-LOBULOS-DOMINIO.md` | ❌ on-demand | Trigger 🔵 §G.2: registry de dominios especializados; lóbulos hijos activos (`41-SEGURIDAD`, `42-LEGAL`, `43-UX`, `45-PERFORMANCE`) + planificados (`48-ACCESIBILIDAD`, etc.) nacen on-demand con contenido real. |
 | 🏛️ **Arquitectura** | `docs/50-ARQUITECTURA.md` | ❌ on-demand | North-star técnico + **charter de reconstrucción del CRM** (Fase 3). Léelo ante Decisión Fuerte (§G.2) o al diseñar/extender módulos. Resumen always-on en §3.6. |
+| 🔁 **Workflows reutilizables** | `docs/60-WORKFLOWS.md` | ❌ on-demand | Catálogo de recetas reutilizables que detectan las MISMAS inconsistencias/errores (red-team de reglas, auditoría por dimensiones, verificación post-subagente, comité ×3, investigación grounded…). Léelo antes de una revisión/auditoría/op repetitiva. |
 | 🛠️ **Skills externas** | `skills/` + tool Skill | ❌ on-demand | Expertise general de terceros (frameworks portables). NO es neurona — recurso paralelo. Consultar PRIMERO al disparar Trigger 🔵. **Catálogo completo → `docs/skills-inventory.md`** (el repo NO es la fuente de las skills cargadas; ver esa hoja). |
 | 📖 **Manual del cerebro** | `docs/INSTALACION-CEREBRO.md` | ❌ on-demand | Protocolo de instalación + reinstalación + migración entre versiones del template. Consulta al actualizar la versión del cerebro. |
 
@@ -139,6 +140,12 @@ Antes de CUALQUIER commit no-trivial: 5 secciones → (A) archivos a modificar, 
 - **UX/IA como arquitectura**: el panel/producto se diseña **segmentado y ordenado** (estados, filtros, jerarquía clara), no features sueltas mezcladas. Pensar como un sistema profesional, no un menú plano.
 - **Cero monolitos**: módulos desacoplados, límites claros, despliegues independientes, bajo acoplamiento. **Integración** deliberada (APIs/eventos/colas/webhooks).
 - **Zero-budget/serverless (Firebase)**: escala gestionada + límites de módulo limpios + event-driven; **NO** microservicios/gRPC/k8s por moda. Manifiesto completo + charter → `docs/50-ARQUITECTURA.md §0`.
+
+### 3.7 🧠 Calidad por defecto — auto-crítica SIEMPRE · Comité ×3 por iniciativa propia
+> Directiva de Daniel (2026-06-08): *"no debería tener que pedir el comité; Claude da su mejor respuesta por defecto."* Mecánica completa → skill `comite-expertos`.
+- **Auto-crítica SIEMPRE (casi gratis)**: antes de entregar CUALQUIER respuesta sustantiva, una pasada interna — *"¿qué falla? ¿asumí algo falso? ¿se puede mejorar?"* — y corrige. No esperes a que lo pidan.
+- **Comité ×3 por INICIATIVA PROPIA (caro)**: dispara `comite-expertos` SIN que el usuario lo pida cuando la respuesta sea una DECISIÓN con consecuencias, tenga incertidumbre genuina / varias opciones válidas, sea cara de revertir (arquitectura/datos/seguridad/legal/dinero) o un entregable importante (plan/diseño/copy clave/texto legal). **Anuncia que lo activaste.** En Decisión Fuerte, suma 2ª opinión externa (`docs/15-CONSEJO-EXTERNO.md`).
+- **NO lo dispares en lo trivial**: datos/hechos, estados, ediciones mecánicas, ejecutar un plan ya decidido, charla. Un comité de ~30 agentes sobre "¿cuántos clientes hay?" es gastar peor (costo/latencia) → viola §3.6. *Mejor calidad ≠ más proceso siempre: es el proceso correcto para cada caso.*
 
 ---
 

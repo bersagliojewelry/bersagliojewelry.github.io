@@ -11,6 +11,7 @@
 | Lóbulo | Dominio | Estado | Skills asociadas |
 |---|---|---|---|
 | `docs/41-SEGURIDAD.md` | Seguridad backend + escalabilidad (Firebase rules, secretos, listeners) | 🟢 Activo · backlog Fase 2 | `security-review`, `ecommerce`, `crm-architect` |
+| `docs/42-LEGAL.md` | Marco legal **COLOMBIANO** (e-commerce/Ley 1480, datos/Habeas Data Ley 1581, joyería/RUCOM, LA-FT/SAGRILAFT, DIAN/IVA) + guardrail anti-jurisdicción-extranjera | 🟢 Activo · auditoría 2026-06-08 | `legal-colombia` |
 | `docs/43-UX.md` | Experiencia de Usuario y Diseño Visual | 🟢 Activo | `frontend-design`, `impeccable` |
 | `docs/45-PERFORMANCE.md` | Core Web Vitals y Carga de Activos | 🟢 Activo | `seo-audit`, `performance-check` |
 | 48-ACCESIBILIDAD (a11y) | Pautas de Accesibilidad WCAG 2.2 AA | ⏳ Planificado (sin archivo aún — nace en la 1ª auditoría) | `accessibility-audit` |
@@ -42,5 +43,6 @@ Cuando el cliente solicita un análisis o auditoría de un dominio especializado
 - ✍️ **Copywriting** (47) → `copywriting`, `copy-editing`, `marketing-psychology`.
 - ♿ **Accesibilidad** (48) → `accessibility-audit` (WCAG 2.2 AA — usar PRIMERO).
 - 🛒 **E-commerce / pagos** → `ecommerce` (PSE/Wompi/Stripe, DIAN, SIC).
+- ⚖️ **Legal Colombia** (42) → `legal-colombia` (guardrail + método; lee `docs/42-LEGAL.md`). **NUNCA** `legal:*`/`legalzoom:*` (son de EE.UU., excluyen ley no-estadounidense).
 
 **Sugerir una skill nueva** (capacidad portable, NO específica del proyecto): proponer al cliente → si aprueba, leer skill `skill-creator` → instalar en `skills/<nombre>/` → registrar aquí + en `skills-inventory.md`.

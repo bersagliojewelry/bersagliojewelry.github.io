@@ -52,6 +52,7 @@
 | `using-superpowers` | Cómo descubrir/usar skills (boot) | ✅ |
 | `writing-skills` | Escribir/editar skills | ✅ |
 | `skill-creator` | Crear/optimizar/evaluar skills | ✅ |
+| `arquitecto-software` | Pensar como ARQUITECTO antes de codear (6 lentes: negocio·escala·seguridad·costo·mantenibilidad·integración). Portátil. Instalada user-level. | ✅ user-level |
 | `code-simplifier` | (definición de SUBAGENTE en el repo, NO `SKILL.md`) | ⚠️🔧 |
 | `code-modernization` | (PLUGIN de comandos/agentes en el repo, NO skill) | ⚠️🔧 |
 
@@ -147,6 +148,7 @@
 | `firecrawl-download` | Descargar contenido | ✅ |
 | `firecrawl-interact` | Interacción con páginas | ✅ |
 | `llm-council` | Panel de varios LLMs para deliberar | ✅ |
+| `comite-expertos` | Comité que MEJORA ×3 la última respuesta: infiere expertos por tema → debaten → síntesis; 2ª opinión externa (Gemini) en decisiones fuertes. Instalada user-level + en repo. | ✅ user-level |
 
 ---
 
@@ -156,6 +158,7 @@
 |---|---|---|
 | `crm-architect` | Framework para CONSTRUIR CRMs sobre Firebase + Firestore + Cloud Functions (vertical automotive-dealership incluido, RBAC + GDPR/Ley 1581). | ✅ user+bundle (si está instalada) |
 | `asesor-critico-honesto` | Feedback crítico honesto sobre ideas/planes (es) | ✅ |
+| `legal-colombia` | Guardrail + método legal **COLOMBIANO** (e-commerce/datos/joyería); bloquea plugins legales extranjeros (`legal:*`, `legalzoom:*`); lee `docs/42-LEGAL.md`. Instalada user-level. | ✅ user-level |
 
 ---
 

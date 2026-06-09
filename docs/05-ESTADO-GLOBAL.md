@@ -18,7 +18,7 @@
 
 ## ⚠️ Flags de riesgo activos (→ hardening F6 · detalle en `docs/41-SEGURIDAD.md`)
 - 🟠 **Deploy reglas/functions = MANUAL** (CI es Hosting/Pages only, **L-22**): `firebase deploy --only firestore:rules,firestore:indexes,functions`. ✅ Functions Node 22 + ff v7 (ADR §48).
-- 🟠 **F6 en curso · App Check casi listo** (ADR §54): reCAPTCHA v3 registrado + código **EN PROD y verificado en vivo** (site key exacta + wired, `firebase-config-9fcTmO9d.js`). **FALTA SOLO Enforcement** (TODO-14): monitor en 0% verificadas por propagación/caché (NO bug) → activar Enforce cuando "verificadas" suba (guiado, reversible; NO aplicar con 0%). Resto F6: CI rule-test (TODO-10) · entero-COP · reconciliación/Salud · RBAC claims · backup PRE-1 (TODO-15). **Mejoras al cerebro TODO-16 ✅ (ADR §55). Próximo: App Check enforcement (TODO-14) + seguir F6.** Plan: `specs/2026-06-08-f6-hardening-plan.md`.
+- 🟠 **F6 en curso · App Check ROTO en el canje** (RCA ADR §57.3, verificada EN VIVO 2026-06-09): `exchangeRecaptchaV3Token` → **403** → 96-100% "no válidas" en el monitor (NO es propagación; corrige la nota anterior). Fix: re-registrar la llave **SECRETA** de reCAPTCHA v3 en la consola App Check (TODO-14, guiado a Daniel). **Enforce PROHIBIDO** hasta ~100% verificadas ×7d (L-32). Resto F6: CI rule-test (TODO-10) · entero-COP · reconciliación/Salud · RBAC claims · backup PRE-1 (TODO-15, semana 1). **Próximo: plan operación integral §57 (semana 1 + 9 decisiones de Daniel) → bóveda `plan-operacion-robustecimiento-2026-06.md`.**
 
 ## 🧩 Sub-sistemas (resumen)
 Diseño Liquid Glass (Vite/Bundled) ✅ · Sincronización en vivo con Firestore ✅ · Checkout Stepper de 3 pasos ✅ · Cart Drawer lateral ✅ · Animaciones de entrada Staggered ✅

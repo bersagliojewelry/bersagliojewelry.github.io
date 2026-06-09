@@ -760,3 +760,27 @@ Daniel (orden de la sesión): *"ahora íbamos a mejorar el cerebro"* → describ
 
 
 
+## 2026-06-09 — §56: Cerebro multi-proyecto (canon) — linter canónico + manifest + cerebros INDEPENDIENTES + kernel v1.1
+
+> Consolidación de la sesión 2026-06-09 trabajada cross-repo desde cars (el "por qué" debe vivir TAMBIÉN en el
+> canon — hallazgo del comité v6). **Deliberación:** crudo + síntesis en cars
+> (`altorracars.github.io/docs/superpowers/research-archive/` + `…/specs/2026-06-09-comite-v6-…VEREDICTO.md`).
+
+- **Qué pasó**: este repo es el CANON del cerebro multi-proyecto. Se instaló el **linter canónico**
+  `scripts/brain-check.mjs` byte-idéntico en los 3 repos (commit `9f7bdfd`), con caps en CHARS +
+  modo `--boot` liviano + budgets por-repo en `docs/.brain-manifest.json`; boot-budget honesto
+  (informativo explícito, `424dbfd`); las 4 skills de gobernanza (`comite-expertos`, `legal-colombia`,
+  `arquitecto-software`, `crm-architect`) descontaminadas y VERSIONADAS en `skills/` (`3bca0c0`);
+  el Reflejo de Captura de Deliberación aterrizado en §G.4 de los 3 (`65b9195`).
+- **Decisión de arquitectura (cars ADR §171/§172, ratificada por el cliente)**: cerebros
+  **INDEPENDIENTES** — NO sync P2P del KERNEL (sobreingeniería); copia manual de mejoras genéricas;
+  template/generator (Opción C) diferido a cuando exista build step. Este repo sigue siendo el canon
+  del template (`INSTALACION-CEREBRO.md` + marcador de versión).
+- **Kernel v1.1 (comité v6, 2026-06-09)**: check #6 endurecido — `skills/` sin `skills-inventory.md`
+  ahora es **warn** (problema real), no info. Propagado byte-idéntico ×3 (SHA256 `15D72117…`).
+  + `archiveDir` en el manifest (`docs/research-archive/`, README esqueleto creado) + literal "Gemini"
+  del Reflejo de Cierre → "consejo externo" (descontaminación pre-clonado) + skill fantasma
+  `performance-check` retirada del registro de lóbulos (40:16).
+- **Pendiente tracked (checklist v6 en cars)**: GC dos palancas de ESTE repo (CLAUDE.md 27.7k/27k ↗ y
+  10 19.2k/18k ↗ — destilar), actualizar `INSTALACION-CEREBRO.md` al estado kernel + bump template
+  1.1.0 (ítem P), skill `auditoria-cerebro` (ítem N).

@@ -1,6 +1,6 @@
 ---
 name: legal-colombia
-description: "Guardrail + método para CUALQUIER tarea legal de un negocio COLOMBIANO (e-commerce, joyería, datos personales). Garantiza que todo lo legal se haga en marco jurídico de COLOMBIA, con investigación profunda en fuentes oficiales (.gov.co), NUNCA con plugins extranjeros (legal:*, legalzoom:* son de EE.UU. y excluyen la ley no-estadounidense). GATILLOS OBLIGATORIOS: redactar/revisar términos y condiciones, política de privacidad / tratamiento de datos / habeas data, aviso de privacidad, política de cookies, política de devoluciones/garantías/retracto, política de envíos, contrato, 'es legal esto', cumplimiento normativo, derecho de retracto, garantía legal, reversión de pago, datos personales, Ley 1581, Ley 1480, SIC, RUCOM, lavado de activos / SARLAFT / SAGRILAFT, UIAF, factura electrónica, IVA, DIAN, registrar base de datos / RNBD. Dispara TAMBIÉN como guardrail si se va a usar un skill/plugin legal extranjero (legal:*, legalzoom:*, small-business:contract-review, legal:review-contract) para contenido del sitio o del negocio: DETENTE y usa este marco colombiano. NO disparar para temas legales de OTRO país explícitamente solicitados."
+description: "Guardrail + método para CUALQUIER tarea legal de un negocio COLOMBIANO (e-commerce, joyería, datos personales). Garantiza que todo lo legal se haga en marco jurídico de COLOMBIA, con investigación profunda en fuentes oficiales (.gov.co), NUNCA con plugins extranjeros. GATILLOS OBLIGATORIOS: redactar/revisar términos y condiciones, política de privacidad / tratamiento de datos / habeas data, aviso de privacidad, política de cookies, política de devoluciones/garantías/retracto, política de envíos, contrato, 'es legal esto', cumplimiento normativo, derecho de retracto, garantía legal, reversión de pago, datos personales, Ley 1581, Ley 1480, SIC, RUCOM, lavado de activos / SARLAFT / SAGRILAFT, UIAF, factura electrónica, IVA, DIAN, registrar base de datos / RNBD. Dispara TAMBIÉN como guardrail si se va a usar un skill/plugin legal extranjero para contenido del sitio o del negocio: DETENTE y usa este marco colombiano. NO disparar para temas legales de OTRO país explícitamente solicitados."
 ---
 
 # ⚖️ Legal Colombia — guardrail + método
@@ -24,7 +24,7 @@ Usa este método. (Puedes usar esos plugins solo si el usuario pide EXPLÍCITAME
 ## 📚 Método (en orden)
 
 1. **Lee el lóbulo legal del proyecto PRIMERO** si existe (su número varía por proyecto, p.ej.
-   `docs/42-LEGAL.md`): marco colombiano curado — Ley 1480, Ley 1581, RUCOM, SAGRILAFT, DIAN/IVA,
+   el lóbulo legal del proyecto, si existe): marco colombiano curado — Ley 1480, Ley 1581, RUCOM, SAGRILAFT, DIAN/IVA,
    páginas legales del sitio, TODOs `LEGAL-NN`. Si el proyecto no tiene lóbulo legal, ve directo al paso 2.
 2. **Investigación profunda con agentes/workflow** (directiva del cliente: *siempre, con workflows y
    agentes*). Para algo sustantivo (redactar una política, decidir cumplimiento, verificar un
@@ -34,11 +34,11 @@ Usa este método. (Puedes usar esos plugins solo si el usuario pide EXPLÍCITAME
    **anm.gov.co** (RUCOM/minerales). **Nunca** de memoria ni de plugins extranjeros. Marca lo no
    verificado como **[a verificar]**.
 3. **Produce SIEMPRE en marco colombiano**, citando la norma (Ley/Decreto Nº y año) + fuente oficial.
-4. **Disclaimer obligatorio** (de `docs/42-LEGAL.md §0`): esto es **orientación, NO asesoría legal**;
+4. **Disclaimer obligatorio** (del lóbulo legal del proyecto, si existe): esto es **orientación, NO asesoría legal**;
    antes de **publicar** texto legal o decidir cumplimiento, **validar con un abogado colombiano**.
 5. **Es Decisión Fuerte** (ver la doctrina de comité del proyecto + el nodo de Consejo Externo, p.ej. `docs/15-CONSEJO-EXTERNO.md`): redactar/decidir algo
-   legal sustantivo → activa **Comité ×3** + prepara **2ª opinión externa** (Gemini).
-6. **Captura** lo nuevo en `docs/42-LEGAL.md` (Reflejo de Frescura). Tarea legal grande cerrada →
+   legal sustantivo → activa **Comité ×3** + prepara **2ª opinión externa** (provider configurado, docs/15).
+6. **Captura** lo nuevo en el lóbulo legal del proyecto (Reflejo de Frescura; créalo si no existe — Trigger 🔵). Tarea legal grande cerrada →
    ADR en `99` + fila en `00-INDICE`.
 
 ---

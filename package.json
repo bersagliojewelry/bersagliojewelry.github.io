@@ -14,7 +14,8 @@
     "test:saldo:integration": "firebase emulators:exec --only firestore,functions --project demo-bersaglio \"node --test functions/saldo.integration.test.mjs\"",
     "test:sidebar": "node --test tests/render-sidebar.test.mjs",
     "test:estado": "node --test tests/estado-cuenta.test.mjs",
-    "test:leads": "node --test tests/lead-format.test.mjs"
+    "test:leads": "node --test tests/lead-format.test.mjs",
+    "brain:diff": "node scripts/brain-diff.mjs"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.1",

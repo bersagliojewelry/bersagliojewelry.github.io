@@ -1,4 +1,4 @@
-<!-- brain-template-version: 1.0.0 -->
+<!-- brain-template-version: 1.1.0 -->
 # CLAUDE.md — Bersaglio Jewelry · 🧠 Tronco Encefálico (Router Neuronal)
 
 > **Este archivo se auto-carga en CADA sesión.** Es el enrutador central del
@@ -6,7 +6,7 @@
 > saturar tu contexto. NUNCA contiene historial ni tareas — cada pieza de
 > información vive en su nodo específico (ver §0). El detalle se lee on-demand.
 >
-> **Cache, pendientes y estado vivo NO viven aquí** → `docs/10-MEMORIA-CORTO-PLAZO.md`.
+> **Estado/cache → `05` · pendientes/WIP → `10`** — nunca aquí.
 
 ---
 
@@ -45,7 +45,7 @@ El cerebro se divide en **nodos**. Auto-cargas SOLO `CLAUDE.md` + `05` + `10` (�
 | 🎯 **Lóbulos de Dominio** | `docs/40-LOBULOS-DOMINIO.md` | ❌ on-demand | Trigger 🔵 §G.2: registry de dominios especializados; lóbulos hijos activos (`41-SEGURIDAD`, `42-LEGAL`, `43-UX`, `45-PERFORMANCE`) + planificados (`48-ACCESIBILIDAD`, etc.) nacen on-demand con contenido real. |
 | 🏛️ **Arquitectura** | `docs/50-ARQUITECTURA.md` | ❌ on-demand | North-star técnico + **charter de reconstrucción del CRM** (Fase 3). Léelo ante Decisión Fuerte (§G.2) o al diseñar/extender módulos. Resumen always-on en §3.6. |
 | 🔁 **Workflows reutilizables** | `docs/60-WORKFLOWS.md` | ❌ on-demand | Catálogo de recetas reutilizables que detectan las MISMAS inconsistencias/errores (red-team de reglas, auditoría por dimensiones, verificación post-subagente, comité ×3, investigación grounded…). Léelo antes de una revisión/auditoría/op repetitiva. |
-| 🛠️ **Skills externas** | `skills/` + tool Skill | ❌ on-demand | Expertise general de terceros (frameworks portables). NO es neurona — recurso paralelo. Consultar PRIMERO al disparar Trigger 🔵. **Catálogo completo → `docs/skills-inventory.md`** (el repo NO es la fuente de las skills cargadas; ver esa hoja). |
+| 🛠️ **Skills externas** | `skills/` + tool Skill | ❌ on-demand | Expertise de terceros. NO es neurona — recurso paralelo; consultar PRIMERO al disparar Trigger 🔵. **Catálogo → `docs/skills-inventory.md`** (la fuente; el repo no refleja las cargadas). |
 | 📖 **Manual del cerebro** | `docs/INSTALACION-CEREBRO.md` | ❌ on-demand | Protocolo de instalación + reinstalación + migración entre versiones del template. Consulta al actualizar la versión del cerebro. |
 
 **Hojas de detalle** (enlazadas desde su neurona madre, on-demand): nacen cuando hay contenido. Convención de nombre: `docs/<tema>.md`. Cada hoja queda referenciada desde la neurona madre — nada huérfano (§G.5).
@@ -57,9 +57,8 @@ NUNCA leas `docs/99-HISTORIAL-ADR.md` completo (puede llegar a 40k+ líneas = mu
 1. `Read docs/00-INDICE.md` → encuentra la línea del § que buscas.
 2. `Read docs/99-HISTORIAL-ADR.md offset=<línea> limit=~150` → lee SOLO ese tramo.
 
-> ⚠️ La línea es una **pista, no verdad absoluta** (puede desincronizarse). Si el
-> tramo no arranca en el header esperado, regenera con `grep -n "^## "` o
-> corre `npm run brain:check` (valida el desync automáticamente). Robustez sobre fe ciega.
+> ⚠️ La línea es **pista, no verdad absoluta**: si el tramo no arranca en el header
+> esperado, regenera con `grep -n "^## "` o corre `npm run brain:check`.
 
 ---
 
@@ -71,8 +70,7 @@ NUNCA leas `docs/99-HISTORIAL-ADR.md` completo (puede llegar a 40k+ líneas = mu
 - **Project IDs / namespaces**: Firebase project `bersaglio-jewelry` (`.firebaserc`; config en `js/firebase-config.js` vía vars `VITE_*`).
 - **Áreas**: (1) **Sitio público** (`index`, `colecciones`, `pieza`, `nosotros`, `contacto`, `carrito`, `journal`, `lista-deseos`, legales); (2) **Panel admin privado** (`admin*.html`, `js/admin/` — estilo oscuro, auth + versionado); (3) **Backend Firebase** (`functions/`, `firestore.rules`, `storage.rules`, `firestore.indexes.json`).
 - **Secretos esperados** (de `.env.example`, NO re-preguntar): `VITE_FIREBASE_*` (API_KEY, AUTH_DOMAIN, PROJECT_ID, STORAGE_BUCKET, MESSAGING_SENDER_ID, APP_ID, MEASUREMENT_ID) + `VITE_VAPID_KEY` (FCM push). El `.env` real existe local; NUNCA commitearlo.
-- **Características clave**: animaciones staggered (IntersectionObserver) · checkout de 3 pasos (sessionStorage) · Cart Drawer lateral · Wishlist lateral · live sync del catálogo vía `onSnapshot` de Firestore · Service Worker (`public/sw.js`) offline-first.
-- **Entorno**: OS Windows 11 · shell PowerShell · working dir raíz del repo · invalidar cache cliente con **Ctrl+Shift+R** tras un bump de SW (§4).
+- **Características clave**: animaciones staggered (IntersectionObserver) · checkout de 3 pasos (sessionStorage) · Cart Drawer lateral · Wishlist lateral · live sync del catálogo vía `onSnapshot` de Firestore · Service Worker (`public/sw.js`) offline-first. (Entorno → §7.)
 
 Detalle profundo de cualquier subsistema → `docs/20-MEMORIA-ESPACIAL.md` + ADRs vía `docs/00-INDICE.md`.
 
@@ -98,9 +96,8 @@ Encabezado `## <fecha> — <título>` (convención por fecha de este cerebro) + 
 
 ### Reglas git
 
-- **Quién commitea Y despliega: Claude, por defecto** (directivas del cliente 2026-06-06 — memoria `feedback-claude-commits`). **Commits**: al cerrar tarea, `git add` ESPECÍFICO (NUNCA `-A`/`.`), HEREDOC + footer `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`, branch activa, separados por tipo (código vs cerebro). **Deploys**: cuando toque desplegar, hazlo tú — pero SOLO con build/tests VERDES y anunciando qué se despliega; nunca un build roto (incidente L-14). Deploy a prod = merge `Desarrollo→main` (Pages) + `firebase deploy --only functions,firestore:rules`.
-- NUNCA `--amend` / `--no-verify` / `--no-gpg-sign` sin pedido. NO commitear `.claude/settings.local.json` ni secretos/datos privados (`*.xlsx`, `.env`).
-- NUNCA commitear secrets (`.env`, credentials, `*.pem`).
+- **Quién commitea Y despliega: Claude, por defecto** (cliente 2026-06-06). **Commits**: `git add` ESPECÍFICO (nunca `-A`/`.`), footer `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`, separados por tipo (código vs cerebro). **Deploys**: solo con build/tests VERDES, anunciando qué (incidente L-14). Prod = merge `Desarrollo→main` (Pages) + `firebase deploy --only functions,firestore:rules`.
+- NUNCA `--amend`/`--no-verify`/`--no-gpg-sign` sin pedido. NUNCA commitear secretos/datos privados (`.env`, credentials, `*.pem`, `*.xlsx`, `.claude/settings.local.json`).
 - Al cerrar un pendiente, marcar su `TODO-NN` como ✅ + link al §X. Mantén este CLAUDE.md liviano.
 
 ---
@@ -153,12 +150,9 @@ Antes de CUALQUIER commit no-trivial: 5 secciones → (A) archivos a modificar, 
 
 Bersaglio TIENE service worker (`public/sw.js`). Al cambiar comportamiento o archivos estáticos del shell:
 
-- Incrementar `CACHE_NAME` en `public/sw.js` (ej. `bersaglio-v6` ➔ `bersaglio-v7`). El siguiente bump debe ser MAYOR.
-- **La versión vigente vive en `docs/05-ESTADO-GLOBAL.md`** ("Cache version vigente"). Tras bumpear, actualízala ahí (Reflejo de Frescura §G.4). `brain:check` valida que `05` == `public/sw.js`.
-- Estrategia SW: HTML network-first → cache → `/offline.html`; CSS/JS/assets cache-first → network; cross-origin pass-through. Vite hashea CSS/JS (no se precachean por ruta; solo assets estáticos en `SHELL_ASSETS`).
-- Cada shell HTML lleva **Critical CSS inline** (tokens + reset + skip-link + fade-in) para evitar FOUC al cargar las hojas async (L-02).
-- Cliente final invalida con **Ctrl+Shift+R** la primera vez.
-- **Conflicto merge ↔ cache**: `git merge origin/main` → resolver → re-bump a versión MAYOR → verificar build → commit merge.
+- Incrementar `CACHE_NAME` en `public/sw.js` (bump siempre MAYOR). **La versión vigente vive en `docs/05-ESTADO-GLOBAL.md`** (`brain:check` valida 05 == sw.js); tras bumpear, actualiza el 05. Cliente invalida con **Ctrl+Shift+R**.
+- Estrategia SW: HTML network-first → cache → `/offline.html`; CSS/JS cache-first (Vite hashea; solo `SHELL_ASSETS` se precachea). Cada shell lleva **Critical CSS inline** anti-FOUC (L-02).
+- **Conflicto merge ↔ cache**: resolver → re-bump MAYOR → build OK → commit merge.
 
 ---
 
@@ -195,6 +189,7 @@ Cuando se dispara un trigger, leer el nodo correspondiente deja de ser opcional:
 ### G.3 — Protocolo de Consolidación (sinapsis)
 
 La memoria fluye en una sola dirección: Corto Plazo → Largo Plazo.
+**Regla de PROPIEDAD (SSoT)**: un hecho = UN nodo dueño; el resto APUNTA (estado actual→`05` · dominio→lóbulo · WIP→`10` · decisión→`99`). Duplicar estado = divergencia garantizada.
 
 - **Por cada commit / tarea finalizada**: actualiza `docs/10-MEMORIA-CORTO-PLAZO.md` (foco actual, bitácora, estado de TODO-NN).
 - **Cuando una tarea se cierra por completo**: MUEVE ese recuerdo del Corto Plazo al Largo Plazo — apéndalo como ADR al final de `docs/99-HISTORIAL-ADR.md` (formato canónico §2), añade su fila en `docs/00-INDICE.md`, marca su `TODO-NN` como ✅ con link al §, y retíralo de la tabla de pendientes del Corto Plazo.
@@ -204,7 +199,7 @@ La memoria fluye en una sola dirección: Corto Plazo → Largo Plazo.
 
 El cerebro se mantiene y CRECE solo — pero **nunca sin ti**. Tú, el constructor y guardián, ejecutas estos reflejos con juicio y cuidado para que la red se fortalezca sin dañarse. Son VINCULANTES y se disparan durante el trabajo normal, **sin que el usuario los pida**:
 
-- **Reflejo de Captura (auto-alimentación)**: TODO conocimiento reutilizable que generes o descubras se escribe en su neurona ANTES de cerrar la tarea. Bug / causa-raíz / lección → `30-LECCIONES`. Cambio de arquitectura → `20-ESPACIAL`. WIP / estado → `10-CORTO-PLAZO`. Decisión cerrada → `99-HISTORIAL` (ADR) + fila en `00-INDICE`. **Deliberación** (comité / consejo externo / workflow de agentes, cara de reproducir) → CRUDO a `docs/research-archive/` (`archiveDir` del manifest) + SÍNTESIS con *callejones probados* ANTES de cerrar (no perder el sacrificio de investigación de los agentes).
+- **Reflejo de Captura (auto-alimentación)**: TODO conocimiento reutilizable que generes o descubras se escribe en su neurona ANTES de cerrar la tarea. Bug / causa-raíz / lección → `30-LECCIONES`. Cambio de arquitectura → `20-ESPACIAL`. WIP / estado → `10-CORTO-PLAZO`. Decisión cerrada → `99-HISTORIAL` (ADR) + fila en `00-INDICE`. **Deliberación** (comité / consejo externo / workflow de agentes, cara de reproducir) → CRUDO al `archiveDir` del manifest (bóveda privada `../brain-private/`) + SÍNTESIS con *callejones probados* ANTES de cerrar (no perder el sacrificio de investigación de los agentes).
 - **Reflejo de Neurogénesis (crear neurona nueva)**: si un conocimiento reutilizable NO encaja en ninguna neurona Y es una categoría que crecerá (no un caso aislado), CREA `docs/NN-NOMBRE.md`. Al nacer una neurona DEBES, en el mismo acto: (1) fila en la tabla §0, (2) registrarla en el mapa de neuronas de `00-INDICE`, (3) anotarla en la bitácora. **Anti-fragmentación**: si dudas, apéndalo a una neurona existente. **Lóbulos de Dominio (`40-LOBULOS-DOMINIO`)**: análisis especializados nacen como lóbulos hijos (`41-SEGURIDAD`, `42-LEGAL`, etc.) bajo Trigger 🔵 §G.2, SOLO con contenido real de una auditoría concreta — nunca archivos vacíos por anticipado.
 - **Reflejo de Frescura**: si mueves/creas/renombras/eliminas un componente, ruta o flujo, actualiza `20-ESPACIAL` (+ hoja de detalle afectada) en el MISMO cambio. Una neurona vieja engaña al próximo "tú" → reproceso/regresión.
 - **Reflejo de Higiene = Garbage Collector (cuantificado, no opcional)**: `10-CORTO-PLAZO` es pizarra (cap ~110, §G.5). **Al cerrar una tarea, si `10` supera su cap → PODA OBLIGATORIA**: (1) consolida cada tarea CERRADA como ADR en `99` + fila en `00-INDICE`, (2) extrae sus lecciones a `30`, (3) actualiza `05` si cambió el estado, (4) recorta `10` dejando SOLO el foco vivo + pendientes abiertos. ⛔ Nunca volcar a `99` sin convertir en ADR (eso es basura, no consolidación).
@@ -215,6 +210,8 @@ El cerebro se mantiene y CRECE solo — pero **nunca sin ti**. Tú, el construct
 - **Reflejo de Cierre (anti-patrón "lo documento después")**: una tarea NO está cerrada hasta verificar **concretamente**: ¿`10` refleja el progreso (TODO-NN)? · ¿`05` actualizado si cambió la salud? · ¿decisión cerrada → ADR en `99` + fila en `00`? · ¿lección reutilizable → `30` con disparador? · ¿cambio de comportamiento → cache bumpeado §4 si aplica? · ¿`npm run brain:check` SANO? · **¿hubo deliberación (comité/consejo externo/workflow)? → CRUDO + SÍNTESIS enlazados, o la tarea está INCOMPLETA** (✅ con deliberación no capturada = NO cerrada) · ¿si fue auditoría especializada, lóbulo hijo creado/actualizado + skills consultadas registradas? Si falta cualquiera, vuelve y hazlo ANTES de pasar a la siguiente.
 - **Reflejo de Sugerencia de Skills (§40)**: si aprendes una capacidad/framework REUSABLE y PORTABLE (sirve en cualquier proyecto, NO específica de ESTE proyecto → eso va al cerebro), SUGIERE crear una skill vía `skill-creator`; el cliente decide. **Skill = capacidad general; neurona/lóbulo = conocimiento del proyecto.** Flujo + registro en `40-LOBULOS`.
 - **Reflejo de Catalogación de Skills (auto-detección + documentación)**: si aparece una skill NUEVA en `skills/` o instalada en `~/.claude/skills/` (la añadió el cliente, la instalaste tú, o llegó con el entorno), DEBES auto-detectarla y documentarla en `docs/skills-inventory.md` (name + propósito + Disp. ✅/⚠️/🔧) en el MISMO cambio, **sin que el cliente lo pida**. **Backstop determinista**: `npm run brain:check` (check #6) marca toda carpeta de `skills/` ausente del inventario.
+
+**Regla de ADMISIÓN (anti-teatro)**: toda regla/reflejo nuevo declara su gate mecánico (check del linter) o lleva la etiqueta `[HONOR]` explícita — prohibido fingir cobertura.
 
 **🛡️ Límite de guardián (cuidado ante todo)**: los reflejos ENRIQUECEN, nunca borran a la ligera. Eliminar o reescribir conocimiento histórico exige certeza verificada (§3.3). Ante la duda: **apendar, no sobrescribir; cuarentenar en `_legacy/`, no borrar.** Proteger la red es prioritario sobre alimentarla.
 
@@ -238,9 +235,8 @@ Una neurona sobrecargada satura el contexto. Cada neurona tiene un TOPE BLANDO (
 
 ---
 
-## §7 — Cómo retomar (recap rápido)
+## §7 — Cómo retomar (recap)
 
-1. **Boot** (§G.1 + §0.0): lee `CLAUDE.md` + `05` + `10` + auto-auditoría `brain:check` (§G.4); imprime los signos vitales. "¿Qué hay pendiente?" → TODO-NN del Corto Plazo.
-2. **Triggers** (§G.2): desorientación → `20`; op riesgosa/repetitiva → `30`; "por qué"/detalle de un § o 2 fallos seguidos → Índice `00` → Largo Plazo `99`; auditoría especializada → Skill + `40` (+ lóbulo hijo); decisión cara de revertir → `15`.
-3. **Antes de tocar código**: IAP §3.4. **Antes de commit**: §2. **Tras CADA tarea**: alimenta el cerebro (§G.4) + cache bump §4 (si aplica).
-4. **Entorno**: Windows 11 · PowerShell · raíz del repo · `Ctrl+Shift+R` para invalidar cache cliente tras bump de SW.
+1. **Boot** (§G.1): `CLAUDE.md`+`05`+`10` + `brain:check`; imprime signos vitales; pendientes → TODO-NN.
+2. **Triggers** §G.2 · antes de código: IAP §3.4 · antes de commit: §2 · tras CADA tarea: §G.4 + cache §4.
+3. **Entorno**: Windows 11 · PowerShell · raíz del repo · `Ctrl+Shift+R` tras bump de SW.

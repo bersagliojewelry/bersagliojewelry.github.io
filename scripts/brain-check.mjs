@@ -105,8 +105,11 @@ for (const [rel, cap] of Object.entries(CAPS)) {
 }
 if (BOOT_CHARS_TARGET) {
   const bootTok = Math.round(bootChars / 3.5);
+  // INFORMATIVO por diseño (NO incrementa problems / NO afecta exit-code): el objetivo de boot es
+  // aspiracional; el exceso se reduce destilando o difiriendo superficie always-on, NO es un fallo
+  // bloqueante. Honesto: nudge declarado, no un símbolo que finge ser warning (anti-teatro de proceso).
   if (bootChars > Math.round(BOOT_CHARS_TARGET * 1.1))
-    console.log(`  ↗  BOOT always-on = ${bootChars}c (~${bootTok} tok) vs objetivo ${BOOT_CHARS_TARGET}c → DESTILAR`);
+    console.log(`  ℹ️  BOOT always-on = ${bootChars}c (~${bootTok} tok) vs objetivo ${BOOT_CHARS_TARGET}c — informativo (aspiracional; destilar/diferir, NO bloquea)`);
   else ok(`BOOT always-on = ${bootChars}c (~${bootTok} tok) ≤ objetivo ${BOOT_CHARS_TARGET}c`);
 }
 

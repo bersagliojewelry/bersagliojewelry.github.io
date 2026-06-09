@@ -5,9 +5,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node scripts/brain-check.mjs",
+            "command": "node scripts/brain-check.mjs --boot",
             "timeout": 30,
-            "statusMessage": "Auto-auditoria del cerebro (brain:check)…"
+            "statusMessage": "Auto-auditoria del cerebro (brain:check --boot)…"
           }
         ]
       }

@@ -51,7 +51,11 @@ const app = initializeApp(firebaseConfig);
 // Gateado por la key: sin `VITE_RECAPTCHA_SITE_KEY` (o en dev) → no-op, el sitio sigue
 // vivo (red de seguridad, igual que el fallback de llaves — L-14). Detalle: spec
 // docs/superpowers/specs/2026-06-08-f6-hardening-plan.md + docs/41-SEGURIDAD.
-const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+// Site key reCAPTCHA v3 (PÚBLICA — viaja en el bundle igual). Fallback hardcodeado
+// como las llaves Firebase (L-14): registrada para bersagliojewelry.co + .github.io
+// (proyecto bersaglio-jewelry, 2026-06-08). La clave SECRETA vive SOLO en Firebase
+// App Check (servidor), nunca en el cliente.
+const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LdSoxQtAAAAAAAiQ_dZz8-Cy5mARqjhCMtcZa3K';
 if (!isDev && recaptchaSiteKey) {
     try {
         initializeAppCheck(app, {

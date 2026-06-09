@@ -23,10 +23,10 @@ Usa este método. (Puedes usar esos plugins solo si el usuario pide EXPLÍCITAME
 
 ## 📚 Método (en orden)
 
-1. **Lee el lóbulo legal del proyecto PRIMERO.** En este repo: `docs/42-LEGAL.md` (marco colombiano
-   curado y verificado: Ley 1480, Ley 1581, RUCOM, SAGRILAFT, DIAN/IVA, páginas legales del sitio,
-   TODOs `LEGAL-NN`). En otro proyecto colombiano sin lóbulo, ve directo al paso 2.
-2. **Investigación profunda con agentes/workflow** (lo pidió Daniel: *siempre, con workflows y
+1. **Lee el lóbulo legal del proyecto PRIMERO** si existe (su número varía por proyecto, p.ej.
+   `docs/42-LEGAL.md`): marco colombiano curado — Ley 1480, Ley 1581, RUCOM, SAGRILAFT, DIAN/IVA,
+   páginas legales del sitio, TODOs `LEGAL-NN`. Si el proyecto no tiene lóbulo legal, ve directo al paso 2.
+2. **Investigación profunda con agentes/workflow** (directiva del cliente: *siempre, con workflows y
    agentes*). Para algo sustantivo (redactar una política, decidir cumplimiento, verificar un
    umbral), despacha subagentes que verifiquen en **fuentes OFICIALES** `.gov.co`:
    funcionpublica.gov.co · secretariasenado.gov.co · **sic.gov.co** (consumidor + datos) ·
@@ -36,7 +36,7 @@ Usa este método. (Puedes usar esos plugins solo si el usuario pide EXPLÍCITAME
 3. **Produce SIEMPRE en marco colombiano**, citando la norma (Ley/Decreto Nº y año) + fuente oficial.
 4. **Disclaimer obligatorio** (de `docs/42-LEGAL.md §0`): esto es **orientación, NO asesoría legal**;
    antes de **publicar** texto legal o decidir cumplimiento, **validar con un abogado colombiano**.
-5. **Es Decisión Fuerte** (`CLAUDE.md §3.7` + `docs/15-CONSEJO-EXTERNO.md §2`): redactar/decidir algo
+5. **Es Decisión Fuerte** (ver la doctrina de comité del proyecto + el nodo de Consejo Externo, p.ej. `docs/15-CONSEJO-EXTERNO.md`): redactar/decidir algo
    legal sustantivo → activa **Comité ×3** + prepara **2ª opinión externa** (Gemini).
 6. **Captura** lo nuevo en `docs/42-LEGAL.md` (Reflejo de Frescura). Tarea legal grande cerrada →
    ADR en `99` + fila en `00-INDICE`.

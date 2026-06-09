@@ -11,8 +11,8 @@ description: "Monta un comité de expertos que MEJORA ×3 la última respuesta d
 > y eso es fricción. Esta skill lo hace sola: **infiere los expertos según el tema de
 > la respuesta**, los hace debatir, y **mejora la respuesta en 3 rondas**.
 
-Adaptada de la metodología LLM Council (Karpathy) que ya vive en `skills/claude-skills-llm-council-main/`,
-con tres cambios deliberados respecto al original: (1) **expertos inferidos por tema**, no 5 lentes fijos;
+Adaptada de la metodología LLM Council (Karpathy), con tres cambios deliberados respecto al original:
+(1) **expertos inferidos por tema**, no 5 lentes fijos;
 (2) opera sobre **la última respuesta del asistente**, no sobre una pregunta nueva; (3) **itera ×3**.
 
 ---
@@ -92,14 +92,14 @@ Si una ronda no produce mejora real (el comité converge antes de la 3ª), dilo 
 
 ### Paso 5 — 2ª opinión externa (CONDICIONAL — solo Decisión Fuerte)
 
-> Daniel eligió: **Claude + 2ª opinión externa en decisiones caras de revertir.**
+> El cliente eligió: **Claude + 2ª opinión externa en decisiones caras de revertir.**
 
 Si el tema es una **Decisión Fuerte** (arquitectura/modelo de datos, seguridad/legal, operación
 irreversible, fork 50/50 — ver criterios en `docs/15-CONSEJO-EXTERNO.md §2`):
 1. Tras el comité interno, **prepara un prompt autocontenido** para el proveedor externo (Gemini,
    `docs/15-CONSEJO-EXTERNO.md §0` y §4) — el modelo externo no ve nuestro código ni el cerebro, todo
    el contexto va en el prompt. Aplica **anti-anclaje** (§4.2): en decisiones TOP no incluyas tu postura.
-2. **Pausa y entrégaselo a Daniel** (humano en el medio): él lo pega en Gemini y te trae la respuesta.
+2. **Pausa y entrégaselo al cliente** (humano en el medio): lo pega en Gemini y te trae la respuesta.
 3. Integra esa respuesta como **un peer review más**: adopta lo correcto, **refuta con razones** lo que
    esté mal, y sintetiza. Nunca te subordines al modelo externo: es insumo, no oráculo.
 
@@ -118,7 +118,7 @@ Para temas rutinarios/reversibles, **omite el Paso 5** (el comité interno ×3 b
 
 ## Tono de los expertos
 
-Crítica directa y sin complacencia (estilo `skills/asesor-critico-honesto/SKILL.md`): ir al problema,
+Crítica directa y sin complacencia (estilo *asesor crítico honesto*): ir al problema,
 ser específico (no "esto no sirve" sino *por qué* y *cómo* arreglarlo), nada de elogios de relleno.
 Cada experto **asume que la respuesta original tiene fallos** y los busca activamente.
 

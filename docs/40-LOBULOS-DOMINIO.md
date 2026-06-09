@@ -13,7 +13,7 @@
 | `docs/41-SEGURIDAD.md` | Seguridad backend + escalabilidad (Firebase rules, secretos, listeners) | 🟢 Activo · backlog Fase 2 | `security-review`, `ecommerce`, `crm-architect` |
 | `docs/42-LEGAL.md` | Marco legal **COLOMBIANO** (e-commerce/Ley 1480, datos/Habeas Data Ley 1581, joyería/RUCOM, LA-FT/SAGRILAFT, DIAN/IVA) + guardrail anti-jurisdicción-extranjera | 🟢 Activo · auditoría 2026-06-08 | `legal-colombia` |
 | `docs/43-UX.md` | Experiencia de Usuario y Diseño Visual | 🟢 Activo | `frontend-design`, `impeccable` |
-| `docs/45-PERFORMANCE.md` | Core Web Vitals y Carga de Activos | 🟢 Activo | `seo-audit`, `performance-check` |
+| `docs/45-PERFORMANCE.md` | Core Web Vitals y Carga de Activos | 🟢 Activo | `seo-audit` (`performance-check` retirada — NO existe, comité v6 2026-06-09) |
 | 48-ACCESIBILIDAD (a11y) | Pautas de Accesibilidad WCAG 2.2 AA | ⏳ Planificado (sin archivo aún — nace en la 1ª auditoría) | `accessibility-audit` |
 
 ---

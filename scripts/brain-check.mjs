@@ -257,8 +257,11 @@ if (BOOT) {
     if (!catalogued) { warn(`skill '${d.name}'${names.length ? ' (' + names.join(', ') + ')' : ''} NO está en skills-inventory.md → catalogar (§G.4)`); uncat++; }
   }
   if (!uncat) ok(`${dirs.length} carpetas de skills/ catalogadas en skills-inventory.md`);
+} else if (existsSync(SKILLS_DIR)) {
+  // skills/ SIN catálogo = invisibles para el cerebro → problema real, no nota (ADR §173 / kernel v1.1)
+  warn('skills/ existe pero docs/skills-inventory.md NO → crear el catálogo (§G.4)');
 } else {
-  info('skills/ o skills-inventory.md no existe — chequeo de catálogo de skills omitido');
+  info('skills/ no existe — chequeo de catálogo de skills omitido');
 }
 
 console.log(`\n${problems === 0 ? '✅ CEREBRO SANO' : '⚠️  ' + problems + ' problema(s) — revisar antes de avanzar'}\n`);

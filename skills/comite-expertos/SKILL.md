@@ -1,6 +1,6 @@
 ---
 name: comite-expertos
-description: "Monta un comité de expertos que MEJORA ×3 la última respuesta de Claude. Infiere SOLO qué expertos convienen según el tema (no son fijos), los hace criticar y debatir entre ellos, y un 'presidente' sintetiza una versión mejor en 3 rondas. En decisiones caras de revertir, suma una 2ª opinión externa (Gemini, vía docs/15-CONSEJO-EXTERNO.md). GATILLOS OBLIGATORIOS (dispara sí o sí): 'monta el comité', 'comité de expertos', 'mejora esto x3', 'mejórala x3', 'aplícale el comité', 'pásale el comité', 'tribunal de expertos', 'que debatan esto', 'mejora tu respuesta', 'mejora la respuesta anterior', 'puedes mejorar esa respuesta'. GATILLOS de niveles ligeros: 'mejórala un poco' (1 ronda), 'piensa críticamente y asume que cometiste un error' (auto-crítica honesta). Úsala SIEMPRE que el usuario pida mejorar, criticar, pulir o profundizar una respuesta ya dada, o cuando una respuesta importante merezca un segundo par de ojos antes de actuar. NO disparar para datos triviales de un solo dato correcto, ni para tareas puramente mecánicas."
+description: "Monta un comité de expertos que MEJORA ×3 la última respuesta de Claude. Infiere SOLO qué expertos convienen según el tema (no son fijos), los hace criticar y debatir, y un presidente sintetiza una versión mejor en 3 rondas. En decisiones caras de revertir, suma 2ª opinión externa (provider configurado en docs/15-CONSEJO-EXTERNO.md). GATILLOS OBLIGATORIOS: monta el comité, comité de expertos, mejora esto x3, mejórala x3, aplícale el comité, pásale el comité, tribunal de expertos, que debatan esto, mejora tu respuesta, mejora la respuesta anterior, puedes mejorar esa respuesta. GATILLOS ligeros: mejórala un poco (1 ronda), piensa críticamente y asume que cometiste un error (auto-crítica). Úsala SIEMPRE que pidan mejorar/criticar/pulir/profundizar una respuesta ya dada, o cuando una respuesta importante merezca segundo par de ojos. NO disparar para datos triviales ni tareas mecánicas."
 ---
 
 # 🧠 Comité de Expertos — mejora ×3 de una respuesta
@@ -96,10 +96,10 @@ Si una ronda no produce mejora real (el comité converge antes de la 3ª), dilo 
 
 Si el tema es una **Decisión Fuerte** (arquitectura/modelo de datos, seguridad/legal, operación
 irreversible, fork 50/50 — ver criterios en `docs/15-CONSEJO-EXTERNO.md §2`):
-1. Tras el comité interno, **prepara un prompt autocontenido** para el proveedor externo (Gemini,
+1. Tras el comité interno, **prepara un prompt autocontenido** para el proveedor externo configurado (ver docs/15,
    `docs/15-CONSEJO-EXTERNO.md §0` y §4) — el modelo externo no ve nuestro código ni el cerebro, todo
    el contexto va en el prompt. Aplica **anti-anclaje** (§4.2): en decisiones TOP no incluyas tu postura.
-2. **Pausa y entrégaselo al cliente** (humano en el medio): lo pega en Gemini y te trae la respuesta.
+2. **Pausa y entrégaselo al cliente** (humano en el medio): lo pega en el provider externo y te trae la respuesta.
 3. Integra esa respuesta como **un peer review más**: adopta lo correcto, **refuta con razones** lo que
    esté mal, y sintetiza. Nunca te subordines al modelo externo: es insumo, no oráculo.
 
@@ -112,7 +112,7 @@ Para temas rutinarios/reversibles, **omite el Paso 5** (el comité interno ×3 b
 1. **La respuesta mejorada** (es el producto principal — entrégala completa, lista para usar).
 2. **Qué mejoró y por qué** — 3–6 bullets: los cambios netos más importantes que introdujeron las
    rondas (idealmente uno por punto ciego tapado). Honesto: si algo de la respuesta original estaba mal, dilo.
-3. Si hubo 2ª opinión externa: 1 línea de qué aportó/cambió Gemini y qué refutaste.
+3. Si hubo 2ª opinión externa: 1 línea de qué aportó/cambió el provider externo y qué refutaste.
 
 ---
 

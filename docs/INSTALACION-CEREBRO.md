@@ -1,6 +1,6 @@
 # 🧠 CEREBRO NUEVO — Protocolo de instalación
 
-<!-- brain-template-version: 1.0.0 -->
+<!-- brain-template-version: 1.1.0 -->
 
 > **PARA QUIEN LEE ESTO**: si eres **Claude Code**, este archivo es tu **prompt
 > ejecutable**. Sigue el protocolo de las FASES 0-7 al pie, sin saltarte ninguna.
@@ -8,7 +8,7 @@
 > en tu proyecto cuando le digas: *"Revisa el archivo de instalación del cerebro
 > neuronal e instálalo en este repositorio"*.
 >
-> **Versión del template**: 1.0.0 (ver `package.json` del paquete origen). Esta
+> **Versión del template**: **1.1.0** (2026-06-09 — kernel v1.2 con 15 checks, manifest obligatorio, brain-diff, archiveDir/bóveda privada, quiet-boot; ADR §56 local + §173/§174 de cars).
 > versión queda marcada como comentario en el `CLAUDE.md` instalado para que en
 > el futuro se pueda comparar contra una versión nueva del template y migrar.
 
@@ -42,12 +42,15 @@ CEREBRO NUEVO/   ← esta carpeta (origen)
 │   ├── 40-LOBULOS-DOMINIO.md        Registry de dominios + cableado a skills
 │   ├── 99-HISTORIAL-ADR.md          Largo plazo (vacío al inicio)
 │   └── skills-inventory.md          Catálogo de skills
-├── scripts/brain-check.mjs          Linter del cerebro
+├── docs/.brain-manifest.json        ⚠️ OBLIGATORIO: caps/budgets/peers/deepAudit del repo (sin él, el linter cae a defaults pobres de líneas)
+├── scripts/brain-check.mjs          Linter del cerebro (kernel v1.2 · 15 checks · byte-idéntico en todos los repos)
+├── scripts/brain-diff.mjs           Inventario federado de cerebros (manual: npm run brain:diff — detecta repos nuevos sin cerebro)
 ├── githooks/pre-commit              Bloquea commit con cerebro roto
 ├── .claude/settings.json            Hook SessionStart
-├── skills/                          74 skills portables (~3.4 MB)
+├── skills/                          77 skills portables (~3.4 MB; incluye auditoria-cerebro = auditoría Nivel-2)
 ├── _legacy/README.md                Cuarentena reversible
 ├── package.json                     Solo declara `brain:check`
+├── docs/research-archive/README.md  Stub → bóveda privada (../brain-private/<repo>/research-archive = archiveDir del manifest)
 └── INSTALACION.md                   Este archivo
 ```
 
@@ -241,7 +244,7 @@ Ejemplo de mergeo correcto cuando ya hay otros hooks:
   "hooks": {
     "SessionStart": [
       { "hooks": [ { "type": "command", "command": "<hook-existente>" } ] },
-      { "hooks": [ { "type": "command", "command": "node scripts/brain-check.mjs", "timeout": 30, "statusMessage": "Auto-auditoria del cerebro (brain:check)…" } ] }
+      { "hooks": [ { "type": "command", "command": "node scripts/brain-check.mjs --boot", "timeout": 30, "statusMessage": "Auto-auditoria del cerebro (brain:check --boot)…" } ] }
     ],
     "<otros-eventos-si-existen>": [ ... ]
   }

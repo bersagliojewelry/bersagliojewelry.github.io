@@ -7,7 +7,7 @@
 > **Mantenimiento (Reflejo de Frescura §G.4)**: actualizar al cambiar cache version,
 > branch o al detectar/resolver un riesgo. **Tope ~25 líneas (§G.5)**.
 
-| Señal | Valor (al 2026-06-07) |
+| Señal | Valor (al 2026-06-09) |
 |---|---|
 | **Build** | 🟢 Vite VERDE (✓ ~3.2s). **Rediseño Fase 1 (mirror) aplicado**: shell global + Home (modularizada `js/home/*` + Atelier + Films + Redes + dock Atajos) + Nosotros + Contacto. Verificado por build + estructura DOM + **pulido de doctrina (transition/radii/#000) aplicado y verificado en vivo** (ADR §41, build ✓3.68s). ⚠️ Preview headless local no pinta dinámico (L-05) — verificar visual en `npm run dev`/deploy. · **Panel v2 F-CHASIS-A desplegado** (ADR §50): navegación "C" como dato (`renderSidebar`/`sidebar-data`) + `adm-money` + saldo por tokens. Norte (mini-ERP): spec `specs/2026-06-07-bersaglio-arquitectura-maestra-design.md` v3. **Morosos/Vencidos (ADR §51) construido en `Desarrollo` (sin desplegar)**: mora EN VIVO (helper puro `crm-estado-cuenta.js`, FIFO) + `fecha` en movimientos + KPI cartera vencida. Tests: sidebar 6/6 · estado 15/15 · saldo 12/12 · rules 37/37. |
 | **Cache version vigente** | `bersaglio-v9` (en `public/sw.js`). Bump por HOTFIX prod (restaurar fallback de llaves Firebase). |

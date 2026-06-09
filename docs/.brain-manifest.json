@@ -1,5 +1,5 @@
 {
-  "brainTemplateVersion": "1.0.0",
+  "brainTemplateVersion": "1.1.0",
   "repo": "bersagliojewelry",
   "_comment": "Config INSTANCE del cerebro (topes/budgets). El linter scripts/brain-check.mjs es KERNEL (idéntico en los 3 repos); estos budgets son por-repo. chars = unidad real de contexto (plan v5 §6). NO auto-cargado: solo lo lee el linter.",
   "bootCharsTarget": 31500,
@@ -15,11 +15,11 @@
     },
     "docs/05-ESTADO-GLOBAL.md": {
       "lines": 25,
-      "chars": 4500
+      "chars": 4300
     },
     "docs/10-MEMORIA-CORTO-PLAZO.md": {
       "lines": 110,
-      "chars": 18000
+      "chars": 8000
     },
     "docs/20-MEMORIA-ESPACIAL.md": {
       "lines": 280,
@@ -38,5 +38,26 @@
       "chars": 16000
     }
   },
-  "archiveDir": "docs/research-archive"
+  "archiveDir": "../brain-private/bersaglio/research-archive",
+  "_caps_trinquete": "ADR §56/comité v6: caps bajados al tamaño post-GC + headroom (trinquete: bajar libre; SUBIR exige ADR). bootCharsTarget 31500 = aspiracional (resta cirugía del router, gated por cuidado-de-canon).",
+  "staleDays": 10,
+  "kernelFiles": [
+    "scripts/brain-check.mjs",
+    "scripts/brain-diff.mjs"
+  ],
+  "ignoreDirs": [
+    "bersaglio-design"
+  ],
+  "orphanAllowlist": [],
+  "peers": [
+    "../altorracars.github.io",
+    "../altorrainmobiliaria.github.io"
+  ],
+  "specsDir": "docs/superpowers/specs",
+  "deepAudit": {
+    "last": "2026-06-09",
+    "coveredHeaderCount": null,
+    "maxAdrGap": 12,
+    "maxDays": 30
+  }
 }

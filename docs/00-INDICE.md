@@ -14,7 +14,7 @@
 > 2. Lee SOLO ese tramo: `Read docs/99-HISTORIAL-ADR.md offset=<línea> limit=~150`.
 > 3. NUNCA leas el historial completo (satura el contexto al instante).
 >
-> Ejemplo: para el Plan §19 → línea 311 → `Read docs/99-HISTORIAL-ADR.md offset=311 limit=150`.
+> Ejemplo: para el Lookbook §19 → línea 256 → `Read docs/99-HISTORIAL-ADR.md offset=256 limit=150`.
 >
 > Grep rápido: `grep -n "^## " docs/99-HISTORIAL-ADR.md` o PowerShell `Select-String` regenera este mapa.
 
@@ -25,6 +25,7 @@
 | Tu situación / síntoma | Ve a |
 |---|---|
 | ¿Dónde vive un módulo / ruta / flujo / componente? | 🗺️ `20-ESPACIAL` |
+| Hallazgos/presentación para Kary (histórico Kardex→plataforma) / pendientes viejos | bóveda privada → stub `docs/PENDIENTES-Y-HALLAZGOS.md` (los VIVOS = tabla TODO del `10`) |
 | Voy a mover/renombrar archivos, refactor de estructura | 🧪 `30-LECCIONES` + 🗺️ `20-ESPACIAL` |
 | Conflicto al fusionar / cache / service worker | 🧪 `30-LECCIONES` L-02 + `CLAUDE.md §4` |
 | Errores conocidos y gotchas de estilo (CSS modular por página) | 🧪 `30-LECCIONES` |
@@ -104,5 +105,5 @@
 | §55 | 2026-06-08 — Mejoras al cerebro (TODO-16): Comité ×3 + Legal Colombia + Arquitecto + Workflows | 736 |
 ---
 
-> Mantener este índice sincronizado: cuando se agregue un ADR §32+ al historial,
+> Mantener este índice sincronizado: cuando se agregue un ADR §57+ al historial,
 > añadir su fila aquí con la línea de inicio (`Select-String` o `grep`).

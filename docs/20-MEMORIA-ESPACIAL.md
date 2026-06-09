@@ -99,7 +99,7 @@
 *   **`admin-cuenta.html` + `js/admin/cuenta.js`** (✅, ficha): saldo en vivo (`onClienteChange`) + historial + factura/abono + anular + **corregir saldo** (ajuste) + **editar cliente** (incl. reasignar vendedora). El saldo lo pone la CF.
 *   **`admin-config.html` + `js/admin/config.js`** (✅): fecha de corte + datos del negocio (`config/negocio`) + **días de plazo** + **gestión de Vendedoras** (crear/desactivar) + **tablero de Pendientes** (colección `pendientes`). Acceso vía ⚙ en el topbar de Cuentas.
 *   **Migración (ADR §47)**: `tools/extraer-kardex.py` (Excel→JSON local; filtra fila TOTAL, L-24) + `functions/cargar-migracion.mjs` (Fase A) + `functions/seed-pendientes.mjs`. **344 clientes de Kary en prod**, cartera $506.510.780.
-*   ✅ **Morosos/Vencidos (aging) construido** (ADR §51, en `Desarrollo` sin desplegar): mora EN VIVO (helper puro `crm-estado-cuenta.js`, sin CF/denormalización) + `fecha` real en movimientos + KPI cartera vencida + vencidos en rojo + orden por mora en la lista CxC. Materialización de `diasVencido` + paginación = F6.
+*   ✅ **Morosos/Vencidos (aging) DESPLEGADO a prod 2026-06-07** (ADR §51, PR #199): mora EN VIVO (helper puro `crm-estado-cuenta.js`, sin CF/denormalización) + `fecha` real en movimientos + KPI cartera vencida + vencidos en rojo + orden por mora en la lista CxC. Materialización de `diasVencido` + paginación = F6.
 
 > **Eliminado en Fase R (ADR §49)**: la app de vendedora (`vendedora.html`, `vendedora-cliente.html`, `js/vendedora/*`), el rol `vendedora` (auth/login/functions) y el flujo `solicitudesCorreccion`. "vendedora" pasó de rol/usuario → atributo `vendedoraId` del cliente, gestionado por Kary.
 

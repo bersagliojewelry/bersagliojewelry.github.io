@@ -29,10 +29,11 @@ export const NAV = [
     { label: 'Reportes / KPIs', href: '#', icon: 'chart', role: 'admin', soon: true },
   ]},
   { label: 'Sistema', items: [
-    { label: 'Vendedoras',    href: 'admin-config.html#vendedoras', icon: 'users',  role: 'admin' },
-    { label: 'Usuarios',      href: 'admin-usuarios.html',          icon: 'shield', role: 'owner' },
-    { label: 'Salud',         href: 'admin-salud.html',             icon: 'pulse',  role: 'owner' },
-    { label: 'Configuración', href: 'admin-config.html',            icon: 'gear',   role: 'admin' },
+    { label: 'Vendedoras',    href: 'admin-config.html#vendedoras', icon: 'users',   role: 'admin' },
+    { label: 'Usuarios',      href: 'admin-usuarios.html',          icon: 'shield',  role: 'owner' },
+    { label: 'Salud',         href: 'admin-salud.html',             icon: 'pulse',   role: 'owner' },
+    { label: 'Parámetros',    href: 'admin-parametros.html',        icon: 'sliders', role: 'owner' },
+    { label: 'Configuración', href: 'admin-config.html',            icon: 'gear',    role: 'admin' },
   ]},
 ];
 

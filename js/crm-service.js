@@ -247,6 +247,25 @@ export function cumpleanosDelMes(clientes, mes) {
     return out.sort((a, b) => a._dia - b._dia);
 }
 
+// ─── Parámetros de gobierno (M0-C §70) — panel owner-only `admin-parametros.html` ──
+// `config/cartera`: límites de la política de cartera v1. Las REGLAS solo dejan
+// escribir al owner (Daniel); el admin lee (la UI de Kary necesita los límites).
+
+export function onConfigCarteraChange(cb) {
+    return onSnapshot(doc(firestoreDb, 'config', 'cartera'), (snap) => {
+        cb(snap.exists() ? snap.data() : null);
+    });
+}
+
+/** Guarda parámetros (merge). La frontera real es la regla owner-only. */
+export async function updateConfigCartera(parcial, actorEmail) {
+    await setDoc(doc(firestoreDb, 'config', 'cartera'), {
+        ...parcial,
+        actualizadoEn: serverTimestamp(),
+        actualizadoPor: actorEmail || 'owner',
+    }, { merge: true });
+}
+
 // ─── Salud del sistema (F6 frente D) — vista owner-only `admin-salud.html` ────
 // `salud/*` y `saludEventos/*` los escriben SOLO las Cloud Functions; aquí solo
 // se leen (+ marcar un evento como resuelto, whitelist en firestore.rules).

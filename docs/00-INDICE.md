@@ -117,6 +117,7 @@
 | §67 | 2026-06-10 — CI de reglas REPARADO: emulador Firestore exige Java 21 (era 17) + pin firebase-tools; post-mortem de §62 | 961 |
 | §68 | 2026-06-10 — F6 CERRADO: alerta visible de truncado (spec §9.1); paginación GATED a materializar aging (banner = gate) | 977 |
 | §69 | 2026-06-10 — FASE M diseñada (Comité ×3, 33 agentes): plan v3 → bóveda fase-m-plan.md; M0-H hotfix + tren M2a/M2b/M3 | 995 |
+| §70 | 2026-06-10 — Fase M: M0-H desplegado + M0 ejecutado (config/cartera sembrada owner-only · calibración: cero histórico → tope provisional · preguntas 1-5 disparadas) | 1009 |
 ---
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §57+ al historial,

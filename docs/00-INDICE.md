@@ -112,6 +112,8 @@
 | §62 | 2026-06-09 — F6 cimientos: CI de reglas reactivado (TODO-10 ✅) + entero-COP en 3 capas (desplegado) | 873 |
 | §63 | 2026-06-10 — PRE-1 CERRADO: restauración PROBADA (702/702 → gemelo, vista por Daniel) + copia fuera de cuenta | 890 |
 | §64 | 2026-06-10 — F6 frente D: reconciliación de cartera + vista Salud (trigger blindado · reconciliacionDiaria · repararSaldo) | 907 |
+| §65 | 2026-06-10 — F6 frente B: RBAC por custom claims (rol en el token) + hardening frontera users/ (anti escalada de rol) | 925 |
+| §66 | 2026-06-10 — Seg: "Desactivar usuario" bloquea acceso (CF deshabilita Auth + active check) + reglas users/ owner-only | 943 |
 ---
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §57+ al historial,

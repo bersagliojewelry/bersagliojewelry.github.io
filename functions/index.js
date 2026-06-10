@@ -21,17 +21,86 @@ const db = getFirestore();
 const ROLE_LEVEL = { owner: 3, admin: 2, editor: 1 };
 
 // ─── Helper: verify caller has minimum role ─────────────────────────────────
+// F6 frente B (RBAC claims): el rol viaja como CUSTOM CLAIM en el token → cero
+// lecturas de Firestore por chequeo. Fallback dual a users/{uid} durante la
+// transición (usuario sin backfill o claim aún no propagado al token, ≤1h).
+// Deprecar el fallback a +30 días del backfill (ver ADR §65).
 
 async function verifyRole(auth, minRole) {
     if (!auth) throw new HttpsError('unauthenticated', 'Debes iniciar sesión.');
-    const snap = await db.collection('users').doc(auth.uid).get();
-    if (!snap.exists) throw new HttpsError('permission-denied', 'Usuario no registrado.');
-    const callerRole = snap.data().role;
+    let callerRole = typeof auth.token?.role === 'string' ? auth.token.role : null;
+    let callerData = null;
+    if (!callerRole) {
+        const snap = await db.collection('users').doc(auth.uid).get();
+        if (!snap.exists) throw new HttpsError('permission-denied', 'Usuario no registrado.');
+        callerData = snap.data();
+        callerRole = callerData.role;
+    }
     if ((ROLE_LEVEL[callerRole] || 0) < (ROLE_LEVEL[minRole] || 99)) {
         throw new HttpsError('permission-denied', 'No tienes permisos suficientes.');
     }
-    return { callerRole, callerData: snap.data() };
+    return { callerRole, callerData };
 }
+
+// ─── syncRoleClaim (F6 frente B) ─────────────────────────────────────────────
+// Trigger RECONCILIADOR Auth↔doc: users/{uid} (fuente de verdad) → custom claim
+// del token + estado disabled de Auth. Cubre a TODOS los escritores (el panel
+// escribe el doc DIRECTO vía auth.js, las CFs, la consola).
+//
+// CONVERGENTE (no usa el snapshot del evento): deriva el estado DESEADO del doc
+// y lo compara con el estado REAL en Auth, escribiendo solo si difieren. Así es
+// idempotente ante la entrega desordenada/at-least-once de los triggers (dos
+// cambios de rol rápidos no dejan un claim viejo "pegado") y un reintento sana.
+//
+// `active:false` (desactivación desde el panel) ahora SÍ cierra la cuenta:
+// disabled en Auth + claim retirado + refresh tokens revocados (cierra la ventana
+// de privilegio retenido; el ID token vigente expira en ≤1h y ya no se renueva).
+
+exports.syncRoleClaim = onDocumentWritten({ document: 'users/{uid}', retry: true }, async (event) => {
+    const { uid } = event.params;
+
+    const after = event.data?.after;
+    const existe = after?.exists === true;
+    const data = existe ? after.data() : null;
+    const activo = !data || data.active !== false;            // sin doc → tratar como inactivo
+    const rolDoc = data?.role;
+    const rolValido = typeof rolDoc === 'string'
+        && Object.prototype.hasOwnProperty.call(ROLE_LEVEL, rolDoc);
+
+    // Estado DESEADO en Auth derivado del doc actual.
+    const claimDeseado = (existe && activo && rolValido) ? rolDoc : null;
+    const disabledDeseado = existe ? !activo : false;         // doc borrado: no tocamos disabled
+
+    try {
+        const user = await getAuth().getUser(uid);
+        const claimActual = user.customClaims?.role ?? null;
+
+        if (claimActual === claimDeseado && user.disabled === disabledDeseado) return; // ya converge → no-op
+
+        await getAuth().setCustomUserClaims(uid, claimDeseado ? { role: claimDeseado } : null);
+        if (existe && user.disabled !== disabledDeseado) {
+            await getAuth().updateUser(uid, { disabled: disabledDeseado });
+        }
+        // Degradación / desactivación / pérdida de rol → cortar sesiones vigentes.
+        if (claimActual && (claimDeseado === null || ROLE_LEVEL[claimDeseado] < ROLE_LEVEL[claimActual] || disabledDeseado)) {
+            await getAuth().revokeRefreshTokens(uid);
+        }
+    } catch (err) {
+        if (err?.code === 'auth/user-not-found') {
+            // Doc sin usuario en Auth (uid mal tecleado / doc-antes-que-Auth, ver
+            // js/auth.js createUserProfile). Se registra y se omite (no re-lanza).
+            console.warn(`[syncRoleClaim] users/${uid} sin usuario en Auth — se omite`);
+            try {
+                await db.collection('saludEventos').doc(`claim-${uid}`).set({
+                    tipo: 'sync-claim-huerfano', clienteId: null, uid,
+                    error: 'doc users/ sin usuario en Auth', at: FieldValue.serverTimestamp(), resuelto: false,
+                }, { merge: true });
+            } catch (_) { /* best-effort */ }
+            return;
+        }
+        throw err; // transitorio → retry:true reintenta
+    }
+});
 
 // ─── createUser ─────────────────────────────────────────────────────────────
 // Callable: creates a Firebase Auth user + Firestore profile.

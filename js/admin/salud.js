@@ -103,6 +103,7 @@ function renderDescuadres(recon) {
 
 const TIPO_LABEL = {
     'recalc-saldo-error': 'Falló el recálculo de un saldo',
+    'sync-claim-huerfano': 'Usuario con perfil pero sin cuenta de acceso',
 };
 
 function renderEventos() {

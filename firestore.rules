@@ -8,8 +8,17 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // F6 frente B (RBAC claims): el rol se lee PRIMERO del custom claim del token
+    // (cero lecturas extra, S4) con fallback dual al doc users/{uid} durante la
+    // transición (usuario sin backfill / claim aún no en el token). El claim lo
+    // espeja SOLO la CF syncRoleClaim desde users/{uid}.role (fuente de verdad).
+    // PRECEDENCIA: si el claim existe, MANDA (un claim desactualizado dura ≤1h de
+    // token). Deprecar el fallback a +30 días del backfill (ADR §65).
     function getUserRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+      let claim = request.auth.token.get('role', null);
+      return claim != null
+          ? claim
+          : get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
 
     function isOwner() {
@@ -237,14 +246,29 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // ─── Users (role management) ───────────────────────────────────────────────
+    // ─── Users (role management) — SOLO OWNER ──────────────────────────────────
+    // El panel escribe users/{uid} DIRECTO (js/auth.js) → las REGLAS son la única
+    // frontera server-side (las CFs callable con guardas NO están en ese camino;
+    // y las que sí lo están corren con Admin SDK, que SALTA estas reglas).
+    // Gestión de usuarios = OWNER-only (la página es `requireAuth('owner')`). Un
+    // admin NO escribe docs de usuario: así no puede reescribir el `role` de otros
+    // ni tocar al owner (§66) — y sin esto el trigger `syncRoleClaim` sellaría un
+    // claim REAL escalado (§65). `role:'owner'` no se acuña desde la app (seed/consola).
+    function usersFieldsValidos() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['email', 'displayName', 'role', 'active',
+                               'createdAt', 'createdBy', 'updatedAt', 'updatedBy',
+                               'lastLogin', 'deactivatedAt', 'deactivatedBy'])
+          && (!('role' in d)   || d.role in ['owner', 'admin', 'editor'])
+          && (!('active' in d) || d.active is bool);
+    }
 
     match /users/{userId} {
-      allow read: if isAuth() && (request.auth.uid == userId || isAdmin());
-      allow create: if isOwner();              // Only owner creates users
-      allow update: if isOwner() ||            // Owner can change any role
-                       (isAdmin() && userId != request.auth.uid); // Admin can edit non-self
-      allow delete: if isOwner();              // Only owner removes users
+      allow read:   if isAuth() && (request.auth.uid == userId || isAdmin());
+      allow create: if isOwner() && usersFieldsValidos()
+                    && request.resource.data.role in ['admin', 'editor'];
+      allow update: if isOwner() && usersFieldsValidos();   // solo el owner muta usuarios
+      allow delete: if isOwner();
     }
 
     // ─── Config (site settings, status) ────────────────────────────────────────

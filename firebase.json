@@ -58,7 +58,8 @@
         "*.local",
         "*.test.mjs",
         "seed-*.mjs",
-        "cargar-*.mjs"
+        "cargar-*.mjs",
+        "backfill-*.mjs"
       ]
     }
   ],

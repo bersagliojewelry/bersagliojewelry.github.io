@@ -30,8 +30,15 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          # Java 21: el emulador de Firestore de firebase-tools 15.x está compilado
+          # a class file 65.0 (Java 21) → con Java 17 daba UnsupportedClassVersionError
+          # y `emulators:exec` salía 1 ANTES de los tests (CI rojo desde 2026-06-05,
+          # cuando firebase-tools@latest pasó a v15). Verificado: pasa con Java 21+.
+          java-version: 21
       - run: npm ci
-      - run: npm install -g firebase-tools
+      # Pin de firebase-tools (NO `latest`): un bump de toolchain (p.ej. el salto a
+      # Java 21 en v15) no debe volver a romper el CI en silencio. 15.18.0 = versión
+      # validada verde en local con el comando idéntico del CI (76/76).
+      - run: npm install -g firebase-tools@15.18.0
       - name: Run Firestore rules tests in emulator
         run: firebase emulators:exec --only firestore --project demo-bersaglio "node --test tests/firestore-rules.test.mjs"

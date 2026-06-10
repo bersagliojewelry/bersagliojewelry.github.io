@@ -167,21 +167,104 @@ exports.onInquiryCreated = onDocumentCreated('inquiries/{inquiryId}', async (eve
 
 exports.backupDiario = require('./backup').backupDiario;
 
-exports.recalcSaldoCliente = onDocumentWritten('clientes/{clienteId}/movimientos/{movId}', async (event) => {
-    const { clienteId } = event.params;
+// ─── reconciliacionDiaria (F6 frente D) ──────────────────────────────────────
+// Programada 3:30 AM Bogotá: recomputa el saldo de TODOS los clientes desde sus
+// movimientos y lo compara contra `saldoActual` → `salud/reconciliacion` (panel
+// Salud). Lógica en ./salud.js; detección pura en ./reconciliacion.js.
+
+exports.reconciliacionDiaria = require('./salud').reconciliacionDiaria;
+
+// Recalcula el saldo de UN cliente desde su fuente de verdad, en transacción.
+// Compartida por el trigger recalcSaldoCliente y el callable repararSaldo.
+async function recalcularSaldoCliente(clienteId) {
     const clienteRef = db.collection('clientes').doc(clienteId);
     const movsRef = clienteRef.collection('movimientos');
+    let saldo = null;
 
     await db.runTransaction(async (tx) => {
+        saldo = null; // reset por intento: un retry no debe heredar el saldo de un intento abortado
         const clienteSnap = await tx.get(clienteRef);
         if (!clienteSnap.exists) return; // cliente borrado → no resucitarlo
 
         const movsSnap = await tx.get(movsRef);
-        const saldo = computeSaldo(movsSnap.docs.map((d) => d.data()));
+        saldo = computeSaldo(movsSnap.docs.map((d) => d.data()));
 
         tx.set(clienteRef, {
             saldoActual: saldo,
             saldoActualizadoEn: FieldValue.serverTimestamp(),
         }, { merge: true });
     });
+
+    return saldo;
+}
+
+exports.recalcSaldoCliente = onDocumentWritten('clientes/{clienteId}/movimientos/{movId}', async (event) => {
+    const { clienteId, movId } = event.params;
+    try {
+        await recalcularSaldoCliente(clienteId);
+    } catch (err) {
+        // F6 frente D: un fallo aquí = saldo desactualizado EN SILENCIO. Se registra
+        // como evento de salud (panel) y se RE-LANZA (visible en métricas/Monitoring).
+        // Id determinista por event.id → un reintento no duplica el evento.
+        console.error(`[recalcSaldoCliente] FALLO clienteId=${clienteId} movId=${movId}:`, err);
+        try {
+            await db.collection('saludEventos').doc(`recalc-${event.id}`).set({
+                tipo: 'recalc-saldo-error',
+                clienteId,
+                movId,
+                error: String(err?.message || err),
+                at: FieldValue.serverTimestamp(),
+                resuelto: false,
+            });
+        } catch (err2) {
+            console.error('[recalcSaldoCliente] no se pudo registrar el evento de salud:', err2);
+        }
+        throw err;
+    }
+});
+
+// ─── reconciliarCartera (F6 frente D) ────────────────────────────────────────
+// Callable: corre la reconciliación completa bajo demanda (botón "Reconciliar
+// ahora" de la vista Salud). Solo admin/owner.
+
+exports.reconciliarCartera = onCall({ region: 'us-central1', timeoutSeconds: 300 }, async (request) => {
+    await verifyRole(request.auth, 'admin');
+    return require('./salud').runReconciliacion(db, 'manual');
+});
+
+// ─── repararSaldo (F6 frente D) ──────────────────────────────────────────────
+// Callable: recomputa el saldo de UN cliente con la MISMA transacción que el
+// trigger (idempotente) — el botón "Reparar" de la vista Salud ante un descuadre.
+
+exports.repararSaldo = onCall({ region: 'us-central1' }, async (request) => {
+    await verifyRole(request.auth, 'admin');
+
+    const { clienteId } = request.data || {};
+    // Sin '/': un id con barras resolvería a OTRO documento bajo clientes/** vía el
+    // Admin SDK (inyección de ruta) y violaría el append-only de movimientos.
+    if (typeof clienteId !== 'string' || !clienteId.trim() || clienteId.includes('/')) {
+        throw new HttpsError('invalid-argument', 'clienteId inválido.');
+    }
+    const id = clienteId.trim();
+
+    const saldo = await recalcularSaldoCliente(id);
+    if (saldo === null) throw new HttpsError('not-found', 'El cliente no existe.');
+
+    // El saldo quedó cuadrado → los fallos de recálculo ABIERTOS de este cliente ya
+    // no son accionables: se auto-resuelven (queda constancia de quién/cómo). Solo
+    // filtros de IGUALDAD → no exige índice compuesto. Best-effort: si falla, la
+    // reparación sigue siendo válida.
+    try {
+        const abiertos = await db.collection('saludEventos')
+            .where('clienteId', '==', id).where('resuelto', '==', false).get();
+        await Promise.all(abiertos.docs.map((d) => d.ref.update({
+            resuelto: true,
+            resueltoEn: FieldValue.serverTimestamp(),
+            resueltoPor: `auto:repararSaldo (${request.auth.uid})`,
+        })));
+    } catch (err) {
+        console.error('[repararSaldo] saldo reparado pero no se pudieron auto-resolver eventos:', err);
+    }
+
+    return { clienteId: id, saldo };
 });

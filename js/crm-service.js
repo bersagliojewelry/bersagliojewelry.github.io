@@ -12,7 +12,7 @@
  *   config/{docId}                     — parámetros del negocio (write admin).
  */
 
-import { firestoreDb } from './firebase-config.js';
+import { app, firestoreDb } from './firebase-config.js';
 import {
     collection, collectionGroup, doc, getDocs, getDoc, addDoc, setDoc, updateDoc, deleteDoc,
     query, orderBy, limit, onSnapshot, serverTimestamp,
@@ -225,6 +225,60 @@ export function cumpleanosDelMes(clientes, mes) {
         out.push({ ...c, _dia: dia });
     }
     return out.sort((a, b) => a._dia - b._dia);
+}
+
+// ─── Salud del sistema (F6 frente D) — vista owner-only `admin-salud.html` ────
+// `salud/*` y `saludEventos/*` los escriben SOLO las Cloud Functions; aquí solo
+// se leen (+ marcar un evento como resuelto, whitelist en firestore.rules).
+
+/** Suscripción a los singletons de salud → cb({ backup, reconciliacion }). */
+export function onSaludChange(cb) {
+    return onSnapshot(collection(firestoreDb, 'salud'), (snap) => {
+        const out = {};
+        snap.docs.forEach((d) => { out[d.id] = d.data(); });
+        cb(out);
+    });
+}
+
+/** Eventos de fallo (recalc-saldo-error…), más recientes primero. orderBy de UN
+ *  solo campo = índice automático (NO compuesto, spec §9.1: solo where+orderBy
+ *  combinados lo exigirían). Sin él, un truncado en MAX dejaría fuera justo los
+ *  más nuevos. Sort en cliente se mantiene como defensa (timestamps pendientes). */
+export function onSaludEventosChange(cb) {
+    const q = query(collection(firestoreDb, 'saludEventos'), orderBy('at', 'desc'), limit(MAX));
+    return onSnapshot(q, (snap) => {
+        if (snap.size >= MAX) {
+            console.warn(`[crm] onSaludEventosChange truncado en ${MAX} (S3): hay más eventos de salud de los que muestra el panel → purga/paginación pendiente.`);
+        }
+        const eventos = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        eventos.sort((a, b) => (b.at?.toMillis?.() || 0) - (a.at?.toMillis?.() || 0));
+        cb(eventos);
+    });
+}
+
+export async function marcarEventoResuelto(id, uid) {
+    await updateDoc(doc(firestoreDb, 'saludEventos', id), {
+        resuelto: true, resueltoEn: serverTimestamp(), resueltoPor: uid,
+    });
+}
+
+// Callables (primera vez que el cliente llama Cloud Functions): import LAZY de
+// firebase/functions — solo la página Salud paga ese peso de bundle.
+async function _callable(name) {
+    const { getFunctions, httpsCallable } = await import('firebase/functions');
+    return httpsCallable(getFunctions(app, 'us-central1'), name);
+}
+
+/** Corre la reconciliación completa bajo demanda. → { ok, totalClientes, totalDescuadres } */
+export async function reconciliarAhora() {
+    const fn = await _callable('reconciliarCartera');
+    return (await fn()).data;
+}
+
+/** Recomputa el saldo de UN cliente (misma transacción que el trigger). */
+export async function repararSaldoCliente(clienteId) {
+    const fn = await _callable('repararSaldo');
+    return (await fn({ clienteId })).data;
 }
 
 /** Cartera por vendedora: Map<vendedoraId|'__kary__', {porCobrar, clientes}>. */

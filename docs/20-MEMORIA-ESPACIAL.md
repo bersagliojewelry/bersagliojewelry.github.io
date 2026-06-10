@@ -62,7 +62,7 @@
 │       ├── saldo-format.js     # color/etiqueta del saldo por tokens .adm-money (sin hex)
 │       ├── lead-format.js      # estado/color/origen del pipeline de leads (Bandeja, F4 §53)
 │       ├── consultas.js        # Bandeja de leads (pipeline 5 estados + convertir a cliente)
-│       ├── db.js · piezas.js · colecciones.js · cuentas.js · cuenta.js · config.js · dashboard.js
+│       ├── db.js · piezas.js · colecciones.js · cuentas.js · cuenta.js · config.js · dashboard.js · salud.js
 │       └── (nav NO duplicada en HTML; cada admin*.html tiene <aside> vacío que llena shared.js)
 ├── public/                     # Archivos estáticos copiados a dist/ en el build
 │   ├── sw.js                   # Service Worker (Caché bersaglio-v9; versión vigente en 05)
@@ -88,8 +88,9 @@
 ### 3. CRM — Cuentas por cobrar / fiado (Fase 3) — ADRs §42–§49
 **Operación centralizada en Kary** (memoria `project-crm-kary-sole-operator`): solo Kary (admin) + Daniel (owner) acceden; **las vendedoras NO tienen usuario** — son una **entidad de datos** (`vendedoras/{id}`) que Kary gestiona. Reestructura Fase R = ADR §49.
 *   **`firestore.rules`** (raíz) — RBAC del CRM, **admin/owner-only** (`clientes`/`movimientos`/`vendedoras`). Validadores: `clienteValido()` (whitelist `hasOnly`, bloquea `saldoActual`, usa `vendedoraId`), `movimientoValido()` (no nace anulado; `monto>=0`), `vendedoraValida()` (nombre + `activa` bool). Quitados en Fase R: `isVendedora()`, `clienteOwnerUid()`, bloque `solicitudesCorreccion`.
-*   **`functions/index.js`** — gestión de usuarios (`createUser`/`updateUserRole`, roles `admin`/`editor`) + trigger **`recalcSaldoCliente`** (`onDocumentWritten` sobre `clientes/{id}/movimientos/{movId}` → transacción → recomputa `saldoActual`, ADR §43). Runtime Node 22 + firebase-functions v7 (ADR §48).
+*   **`functions/index.js`** — gestión de usuarios (`createUser`/`updateUserRole`, roles `admin`/`editor`) + trigger **`recalcSaldoCliente`** (`onDocumentWritten` sobre `clientes/{id}/movimientos/{movId}` → transacción compartida `recalcularSaldoCliente()` → recomputa `saldoActual`, ADR §43; **blindado §64**: fallo → evento en `saludEventos` + re-lanza) + callables **`reconciliarCartera`** y **`repararSaldo`** (admin, §64). Runtime Node 22 + firebase-functions v7 (ADR §48).
 *   **`functions/saldo.js`** — función PURA `computeSaldo(movimientos)` (signo por tipo). Testeable sin emulador.
+*   **`functions/salud.js` + `functions/reconciliacion.js`** (§64) — red de seguridad del dinero: `compararSaldos()` PURA + `runReconciliacion()` (full-scan con re-verificación puntual anti falsa-alarma) + scheduled `reconciliacionDiaria` (3:30 AM Bogotá; el backup de `backup.js` corre 3:00 y reporta a `salud/backup`).
 *   **Tests del CRM**: `tests/firestore-rules.test.mjs` (29, `npm run test:rules`) + `functions/saldo.test.mjs` (12, `test:saldo`) + `functions/saldo.integration.test.mjs` (5, `test:saldo:integration`). JDK local `30 §L-12`.
 
 **UI del CRM (Panel de Kary)** — páginas admin (oscuro `css/admin.css`, `admin-*.html` + `js/admin/*.js`, auth `requireAuth('admin')`/`hasRole`):
@@ -98,6 +99,7 @@
 *   **`admin-cuentas.html` + `js/admin/cuentas.js`** (✅): lista de clientes con saldo + cartera total/por vendedora + **cumpleaños del mes** (link WhatsApp) + modal nuevo cliente (asigna vendedora desde la colección) + búsqueda. Filas → ficha. Link "Cuentas" gateado en `shared.js`. (Fase R: quitada la bandeja de solicitudes.)
 *   **`admin-cuenta.html` + `js/admin/cuenta.js`** (✅, ficha): saldo en vivo (`onClienteChange`) + historial + factura/abono + anular + **corregir saldo** (ajuste) + **editar cliente** (incl. reasignar vendedora). El saldo lo pone la CF.
 *   **`admin-config.html` + `js/admin/config.js`** (✅): fecha de corte + datos del negocio (`config/negocio`) + **días de plazo** + **gestión de Vendedoras** (crear/desactivar) + **tablero de Pendientes** (colección `pendientes`). Acceso vía ⚙ en el topbar de Cuentas.
+*   **`admin-salud.html` + `js/admin/salud.js`** (✅ §64, UI owner-only / reglas admin): semáforo backup·cuadre·fallos + tabla de descuadres (botón **Reparar** → callable) + registro de fallos (**Marcar resuelto**) + **Reconciliar ahora**. Primer uso de `httpsCallable` en el cliente (import lazy en `crm-service.js`).
 *   **Migración (ADR §47)**: `tools/extraer-kardex.py` (Excel→JSON local; filtra fila TOTAL, L-24) + `functions/cargar-migracion.mjs` (Fase A) + `functions/seed-pendientes.mjs`. **344 clientes de Kary en prod**, cartera $506.510.780.
 *   ✅ **Morosos/Vencidos (aging) DESPLEGADO a prod 2026-06-07** (ADR §51, PR #199): mora EN VIVO (helper puro `crm-estado-cuenta.js`, sin CF/denormalización) + `fecha` real en movimientos + KPI cartera vencida + vencidos en rojo + orden por mora en la lista CxC. Materialización de `diasVencido` + paginación = F6.
 
@@ -111,6 +113,8 @@
 | `vendedoras/{id}` | admin/owner | entidad de datos (`nombre`, `activa`); la gestiona Kary en Configuración |
 | `config/{docId}` | admin (write) | read: solo `config/status` público; resto admin |
 | `pendientes/{id}` | admin | tablero de setup para Kary |
+| `salud/{backup\|reconciliacion}` | SOLO Cloud Functions | singletons (pisar); read admin; write `false` (§64) |
+| `saludEventos/{id}` | SOLO Cloud Functions | fallos del recálculo; el panel solo marca `resuelto` (whitelist + sello `request.time`) |
 
 Modelo de roles: rol en `users/{uid}.data.role` ∈ {owner, admin, editor}. **CRM = solo owner/admin (Daniel/Kary)**; `editor` (contenido web) EXCLUIDO del CRM; el rol `vendedora` ya no existe. Jerarquía: Daniel(owner) → Kary(admin); vendedoras = datos.
 

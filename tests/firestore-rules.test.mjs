@@ -53,6 +53,15 @@ before(async () => {
         await setDoc(doc(db, 'config/negocio'), { fechaCorteMigracion: '2025-12-31' });
         await setDoc(doc(db, 'solicitudesCorreccion/s1'), { clienteId: 'cliV', estado: 'pendiente' }); // legacy: debe quedar INACCESIBLE
         await setDoc(doc(db, 'pendientes/p1'), { titulo: 'Definir corte', categoria: 'definir-kary', estado: 'pendiente' });
+
+        // ─── F6 frente D: salud del sistema (las escriben SOLO las CFs) ──────────
+        await setDoc(doc(db, 'salud/backup'), { ultimoOk: new Date(), archivo: 'backups/firestore/backup-x.json.gz', totalDocs: 700 });
+        await setDoc(doc(db, 'saludEventos/ev1'), { tipo: 'recalc-saldo-error', clienteId: 'cliV', error: 'boom', resuelto: false });
+        await setDoc(doc(db, 'saludEventos/ev2'), { tipo: 'recalc-saldo-error', clienteId: 'cliV', error: 'boom', resuelto: false });
+        await setDoc(doc(db, 'saludEventos/ev3'), { tipo: 'recalc-saldo-error', clienteId: 'cliV', error: 'boom', resuelto: false });
+        await setDoc(doc(db, 'saludEventos/ev4'), { tipo: 'recalc-saldo-error', clienteId: 'cliV', error: 'boom', resuelto: false });
+        await setDoc(doc(db, 'saludEventos/ev5'), { tipo: 'recalc-saldo-error', clienteId: 'cliV', error: 'boom', resuelto: false });
+        await setDoc(doc(db, 'saludEventos/evResuelto'), { tipo: 'recalc-saldo-error', error: 'boom', resuelto: true, resueltoPor: 'adminUid' });
     });
 });
 
@@ -301,4 +310,55 @@ test('F6 entero-COP · monto con decimales es RECHAZADO (pesos enteros)', async 
 test('F6 entero-COP · monto entero SÍ pasa', async () => {
     await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mEntero'),
         { tipo: 'abono', monto: 12345, registradoPor: 'adminUid', anulado: false }));
+});
+
+// ─── F6 frente D: salud del sistema (solo lectura admin; escribe la CF) ────────
+test('F6 salud · admin SÍ lee salud/backup', async () => {
+    await assertSucceeds(getDoc(doc(asUser('adminUid'), 'salud/backup')));
+});
+test('F6 salud · anónimo y editor NO leen salud', async () => {
+    await assertFails(getDoc(doc(anon(), 'salud/backup')));
+    await assertFails(getDoc(doc(asUser('editorUid'), 'salud/backup')));
+});
+test('F6 salud · ni el admin escribe salud (solo la Cloud Function)', async () => {
+    await assertFails(setDoc(doc(asUser('adminUid'), 'salud/reconciliacion'), { ok: true }));
+});
+test('F6 saludEventos · admin lee; editor NO', async () => {
+    await assertSucceeds(getDoc(doc(asUser('adminUid'), 'saludEventos/ev1')));
+    await assertFails(getDoc(doc(asUser('editorUid'), 'saludEventos/ev1')));
+});
+test('F6 saludEventos · admin marca resuelto (3 claves exactas)', async () => {
+    await assertSucceeds(updateDoc(doc(asUser('adminUid'), 'saludEventos/ev1'), {
+        resuelto: true, resueltoEn: serverTimestamp(), resueltoPor: 'adminUid',
+    }));
+});
+test('F6 saludEventos · update que reescribe el testimonio (error) es rechazado', async () => {
+    await assertFails(updateDoc(doc(asUser('adminUid'), 'saludEventos/ev2'), {
+        resuelto: true, resueltoEn: serverTimestamp(), resueltoPor: 'adminUid', error: 'no pasó nada',
+    }));
+});
+test('F6 saludEventos · resuelto:false (des-resolver) es rechazado', async () => {
+    await assertFails(updateDoc(doc(asUser('adminUid'), 'saludEventos/ev3'), {
+        resuelto: false, resueltoEn: serverTimestamp(), resueltoPor: 'adminUid',
+    }));
+});
+test('F6 saludEventos · resueltoPor ajeno (suplantación) es rechazado', async () => {
+    await assertFails(updateDoc(doc(asUser('adminUid'), 'saludEventos/ev4'), {
+        resuelto: true, resueltoEn: serverTimestamp(), resueltoPor: 'otroUid',
+    }));
+});
+test('F6 saludEventos · el cliente NO crea eventos (solo la Cloud Function)', async () => {
+    await assertFails(setDoc(doc(asUser('adminUid'), 'saludEventos/evNuevo'), {
+        tipo: 'recalc-saldo-error', resuelto: false,
+    }));
+});
+test('F6 saludEventos · re-resolver un evento YA resuelto es rechazado', async () => {
+    await assertFails(updateDoc(doc(asUser('adminUid'), 'saludEventos/evResuelto'), {
+        resuelto: true, resueltoEn: serverTimestamp(), resueltoPor: 'adminUid',
+    }));
+});
+test('F6 saludEventos · resueltoEn del cliente (no serverTimestamp) es rechazado', async () => {
+    await assertFails(updateDoc(doc(asUser('adminUid'), 'saludEventos/ev5'), {
+        resuelto: true, resueltoEn: new Date('2020-01-01'), resueltoPor: 'adminUid',
+    }));
 });

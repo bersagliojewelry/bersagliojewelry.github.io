@@ -169,8 +169,12 @@ export function admConfirm(message, onConfirm) {
 
 // ─── DOM helpers ──────────────────────────────────────────────────────────────
 
+// Escapa también comillas: esc() se interpola en ATRIBUTOS (title="...", data-*)
+// y una comilla sin escapar cierra el atributo (inyección de atributos, F6 frente D).
 export function esc(str) {
-    return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return String(str ?? '')
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 export function fmtDate(val) {

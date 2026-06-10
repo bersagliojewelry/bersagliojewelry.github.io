@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parámetros del sistema — Bersaglio Admin</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Manrope:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/admin.css">
+    <script type="module" src="js/admin/parametros.js"></script>
+</head>
+<body style="display:none">
+<script>try{if(!sessionStorage.getItem('bj_auth'))throw 0}catch(e){location.replace('admin-login.html');document.body.style.display='none'}</script>
+<div class="adm-layout">
+
+    <aside class="adm-sidebar"></aside>
+    <div class="adm-sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <main class="adm-main">
+        <header class="adm-topbar">
+            <button class="adm-hamburger" id="hamburger-btn" aria-label="Menú">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="22" height="22"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <h1>Parámetros del sistema</h1>
+            <div class="adm-topbar-actions">
+                <span class="adm-pill adm-pill--gold" title="Solo el dueño puede modificar estos valores (regla del servidor)">Solo dueño</span>
+            </div>
+        </header>
+
+        <div class="adm-content">
+            <p style="font-size:13px;color:var(--adm-muted);margin:0 0 18px;max-width:720px;line-height:1.6;">
+                Aquí viven las reglas de juego del negocio: topes, plazos, motivos y criterios.
+                Nada está quemado en el código — lo que cambies aquí gobierna el panel de Kary.
+                Cada campo explica qué controla. <strong>Los cambios quedan registrados con fecha y usuario.</strong>
+            </p>
+
+            <!-- Secciones renderizadas por js/admin/parametros.js desde los metadatos -->
+            <div id="parametros-root">
+                <div class="adm-empty"><p>Cargando parámetros…</p></div>
+            </div>
+
+            <!-- Pie: trazabilidad -->
+            <div class="adm-section" style="margin-top:20px;" id="meta-section" hidden>
+                <div class="adm-section-body" style="font-size:12px;color:var(--adm-muted);">
+                    <span id="meta-info">—</span>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div class="adm-confirm" id="confirm-dialog" hidden>
+    <div class="adm-confirm-box">
+        <h3>Confirmar cambio</h3>
+        <p id="confirm-msg"></p>
+        <div class="adm-confirm-actions">
+            <button class="adm-btn adm-btn--ghost" id="confirm-cancel">Cancelar</button>
+            <button class="adm-btn adm-btn--danger" id="confirm-ok">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<div class="adm-toast-wrap" id="toast-wrap"></div>
+</body>
+</html>

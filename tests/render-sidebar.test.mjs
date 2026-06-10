@@ -44,3 +44,10 @@ test('Salud solo es visible para el owner (F6 frente D)', () => {
   const ownerHtml = renderSidebar(NAV, { role: 'owner', activePage: 'admin.html' });
   assert.match(ownerHtml, /href="admin-salud\.html"/);
 });
+
+test('Parámetros solo es visible para el owner (M0-C: Kary no gobierna sus límites)', () => {
+  const adminHtml = renderSidebar(NAV, { role: 'admin', activePage: 'admin.html' });
+  assert.doesNotMatch(adminHtml, /href="admin-parametros\.html"/);
+  const ownerHtml = renderSidebar(NAV, { role: 'owner', activePage: 'admin.html' });
+  assert.match(ownerHtml, /href="admin-parametros\.html"/);
+});

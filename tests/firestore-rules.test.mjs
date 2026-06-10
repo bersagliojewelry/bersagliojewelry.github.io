@@ -443,3 +443,18 @@ test('M0-H · no-regresión: ajuste negativo de admin conserva su régimen (hast
     await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/ajNeg'),
         { tipo: 'ajuste', monto: -10000, registradoPor: 'adminUid', anulado: false }));
 });
+
+// ─── Fase M · M0 (§69): config/cartera = límites de la operadora → owner-only ──
+test('M0 · config/cartera: admin NO la escribe (sus propios límites), owner SÍ', async () => {
+    await assertFails(setDoc(doc(asUser('adminUid'), 'config/cartera'),
+        { autoAprobacionMax: 999999999 }, { merge: true }));
+    await assertSucceeds(setDoc(doc(asUser('ownerUid'), 'config/cartera'),
+        { autoAprobacionMax: 50000 }, { merge: true }));
+});
+test('M0 · config/cartera: admin SÍ la lee (la UI necesita los límites)', async () => {
+    await assertSucceeds(getDoc(doc(asUser('adminUid'), 'config/cartera')));
+});
+test('M0 · no-regresión: config/negocio sigue siendo editable por admin (Kary)', async () => {
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'config/negocio'),
+        { diasPlazo: 30 }, { merge: true }));
+});

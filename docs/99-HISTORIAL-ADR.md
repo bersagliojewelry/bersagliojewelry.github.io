@@ -886,3 +886,20 @@ Daniel: "¿no se puede hacer nada hoy?" → sí: los ítems de Etapa 1 que no es
 **62.6 Archivos**: `firestore.rules` (is int), `functions/saldo.js` (redondearAPeso), `functions/saldo.test.mjs` (test reescrito), `tests/firestore-rules.test.mjs` (+2), `.github/workflows/firestore-rules-test.yml` (reactivado). INTACTOS: front, demás functions.
 
 **62.7 Doctrina + cache**: spec §5.1/Consejo §16 ejecutados. **TODO-10 ✅ CERRADO** (efectivo al push/merge). Sin cache bump. Restante Etapa 1/F6: restore probado (mañana) · RBAC claims · reconciliación + Salud · paginación cursor · kill-switch doc.
+
+## 2026-06-10 — §63: PRE-1 CERRADO — restauración PROBADA con ojos de Daniel (backup→gemelo→verificado→limpiado)
+Daniel forzó la 1ª corrida de `backupDiario` (Cloud Scheduler "Forzar ejecución") → ensayo completo de restauración la misma noche en que se construyó el sistema de backup.
+
+**63.1 Ensayo ejecutado (ciclo completo)**: (1) `backupDiario` corrió OK en prod → `backups/firestore/backup-2026-06-10.json.gz` (**702 docs, 29 KB**; el guard anti-vacío no saltó); (2) `download-backup.mjs` la bajó (solo-lectura); (3) `restore-backup.mjs --target bersaglio-gemelo` restauró **702/702**; (4) **verificación con ojos en el panel del gemelo**: "Directo de Kary — 344 clientes — $506.664.328" + 349 totales (344 reales + 5 juguete) — los datos reales REVIVIDOS desde la copia, captura vista por Daniel; (5) **limpieza obligatoria** (regla §57: datos reales NUNCA viven en el ambiente de pruebas): `firestore:delete --all-collections --project bersaglio-gemelo --force` + re-seed de juguete; (6) la copia descargada quedó como **1ª copia FUERA de la cuenta**: `C:\Users\romad\Documents\BersaglioBackups\` (carpeta local; rutina: viernes, manual, hasta automatizar).
+
+**63.2 Resultado**: **TODO-15 / PRE-1 CERRADO** — backup diario automático (3 AM, retención 30d) + restauración probada de punta a punta + runbook (`restore-backup.mjs` con bloqueo anti-prod) + copia off-account. La cartera ya nunca duerme sin red. Nota de frescura: la cartera viva marca $506.664.328 (evolucionó desde los $506.510.780 de la migración — Kary o ajustes posteriores; el snapshot del backup es la verdad del día).
+
+**63.3 No-regresión**: prod solo fue LEÍDO (download + el dump de la función); el wipe fue exclusivamente en el gemelo (--project explícito); el gemelo quedó como antes del ensayo (juguete).
+
+**63.4 Verificación**: salida de cada paso capturada + screenshot del panel del gemelo con los datos reales + gemelo re-verificado con seed de juguete.
+
+**63.5 Anti-patterns evitados**: "copia que nunca se restauró = promesa" (el comité §57) — probada el día 1; datos reales borrados del entorno de pruebas inmediatamente; wipe SOLO con --project gemelo explícito; el archivo local NO se versionó en git (datos de clientas fuera de repos).
+
+**63.6 Archivos**: cero código nuevo (se usaron las piezas de §60/§61). Local: `BersaglioBackups\backup-2026-06-10.json.gz`.
+
+**63.7 Doctrina**: la dupla §60+§61 pagó el mismo día (backup+gemelo = restauración ensayable a demanda). **Restante F6**: RBAC claims · reconciliación+Salud · paginación cursor · alertas presupuesto (Daniel) · recorrido del kill-switch (Daniel).

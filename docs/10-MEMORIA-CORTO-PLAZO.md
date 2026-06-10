@@ -33,7 +33,7 @@
 | TODO-09 | **Fase 3 CRM**: en prod ✅; siguiente **Fase M** (movimientos robustos, spec listo) + B6 reportes/atrasados | 🟡 | Fase M = nuevo plan |
 | TODO-10 | Reactivar CI rules-test (`on: [push, pull_request]` en `firestore-rules-test.yml`; causa del rojo ya resuelta) | 🔲 | a pedido (requiere push) |
 | TODO-14 | **App Check: reparar el registro** (RCA 403 §57.3: llave SECRETA en consola) → ~100% ×7d → enforce | 🟡 | Daniel (consolas, guiado) |
-| TODO-15 | **Backup PRE-1** (bloqueante F7): export diario + **restore probado en el gemelo** (runbook) — semana 1 del plan §57 | 🔲 | Daniel (consola+presupuesto) |
+| TODO-15 | **Backup PRE-1**: `backupDiario` ✅ DESPLEGADA (§60: 3AM, retención 30d, restore script listo). Falta: verificar 1ª corrida (mañana) · gemelo · **restore probado** · copia semanal fuera | 🟡 | gemelo (próxima sesión) |
 | TODO-17 | **Toda captura → CRM**: contacto→Bandeja ✅; falta newsletter (`addSubscription`→`subscriptions`) en el panel | 🔲 | tras App Check |
 | TODO-18 | **Plan operación integral §57**: semana 1 día a día · 9 decisiones de Daniel · compuerta de adopción · campaña cartera (diseño del contador ANTES del piloto) → bóveda | 🟡 | Daniel (decisiones 1-9 + contador) |
 

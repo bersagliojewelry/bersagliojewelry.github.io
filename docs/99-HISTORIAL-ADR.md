@@ -835,3 +835,20 @@ Daniel: "apruebo todo, continuemos" (política de cartera v1 **APROBADA** → b�
 **59.6 Archivos**: `firestore.rules` (+3 validadores, 4 matches endurecidos), `tests/firestore-rules.test.mjs` (+14 tests, 1 actualizado, import serverTimestamp). **INTACTOS**: js/, functions/, *.html.
 
 **59.7 Doctrina + cache**: §3.6 (defensa en profundidad cost-aware) + **L-33 nueva** (firebase CLI multi-cuenta: deploy 403 "caller does not have permission" = cuenta activa equivocada → `firebase login:list` / `login:use` ANTES de diagnosticar IAM; `login:use` fija el default POR DIRECTORIO y previene la recaída). Sin cache bump (reglas son server-side, no tocan el SW).
+
+## 2026-06-09 — §60: Backup diario automático de Firestore DESPLEGADO (PRE-1, parte 1)
+Daniel: "continuemos" → segunda roca de la semana 1 del plan §57. Hasta hoy la cartera de $506M NO tenía copia de seguridad (bloqueante PRE-1, spec maestra §10.1).
+
+**60.1 Causa**: riesgo de pérdida total — sin export, sin PITR; el peor escenario del comité §57 ("copias que se probaron restaurando") estaba en cero.
+
+**60.2 Solución estructural (zero-budget deliberado, §3.6)**: función programada **`backupDiario`** (v2 onSchedule, 3:00 AM America/Bogota, retry 2, maxInstances 1): dump COMPLETO de Firestore (recursivo con subcolecciones) → JSON comprimido en el bucket por defecto (`backups/firestore/backup-YYYY-MM-DD.json.gz`) + **retención 30 días** (borra copias viejas en la misma corrida) + guard anti-dump-vacío (una base vacía no rota copias buenas). **Por qué JSON dump y no el export gestionado**: cero IAM extra (el SA por defecto ya lee Firestore/escribe Storage), restaurable y legible, suficiente a esta escala (cientos de docs); el export oficial/PITR queda como upgrade path documentado. Piezas: `functions/backup.js` (handler) + `functions/backup-codec.js` (serialización PURA de Timestamp/ref/GeoPoint/Buffer, patrón L-17) + `functions/restore-backup.mjs` (restauración al gemelo/emulador; **se NIEGA a escribir sobre prod sin `--force-prod`**).
+
+**60.3 No-regresión**: deploy dirigido `--only functions:backupDiario` (las 6 functions existentes intactas); index.js solo re-exporta. Limitación documentada: docs "fantasma" no se recorren (no existen en este modelo).
+
+**60.4 Verificación**: codec `npm run test:backup` **7/7** (round-trip de todos los tipos; map plano {latitude,longitude} NO se confunde con GeoPoint) · deploy **Successful create** (us-central1, Node 22 2nd Gen; APIs eventarc/pubsub habilitadas automáticamente) · **PENDIENTE: verificar la 1ª corrida real** (3 AM) en la próxima sesión — `backups/firestore/` debe tener el archivo del día; alternativa: Daniel fuerza una corrida en Cloud Scheduler.
+
+**60.5 Anti-patterns evitados**: no big-bang (deploy dirigido); restore-sobre-prod bloqueado por diseño; sin IAM nuevo que mantener; guard de dump vacío; copia ≠ probada — el "restore probado" (PRE-1 parte 2) queda explícitamente PENDIENTE hasta el gemelo.
+
+**60.6 Archivos**: NUEVOS `functions/{backup.js,backup-codec.js,backup.test.mjs,restore-backup.mjs}`; EDITADOS `functions/index.js` (re-export), `package.json` (script test:backup). INTACTOS: resto de functions, reglas, front.
+
+**60.7 Doctrina + cache**: §3.6 (valor con menos fricción: dump JSON > maquinaria IAM a esta escala) + L-17 (lógica pura testeable). Sin cache bump. **Restante PRE-1**: 1ª corrida verificada → gemelo → restore probado con ojos de Daniel → copia semanal FUERA de la cuenta (descarga manual viernes hasta automatizar).

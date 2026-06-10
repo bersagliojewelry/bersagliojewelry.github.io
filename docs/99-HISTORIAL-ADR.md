@@ -957,3 +957,19 @@ Reporte verificado de Daniel (spawned task, derivado de la revisión del §65): 
 **66.6 Archivos**: MODIFICADOS `js/auth.js` · `firestore.rules` · `tests/firestore-rules.test.mjs`. INTACTOS `js/admin/usuarios.js` (la firma del wrapper no cambió), CFs (ya correctas).
 
 **66.7 Doctrina + DESPLIEGUE**: la corrección de **acceso viaja con el deploy del SITIO** (merge del PR → Pages) y funciona en prod YA (la CF `deactivateUser` está viva) — **NO requiere deploy de functions**. El endurecimiento de **reglas** (`users/` owner-only) se apila sobre las reglas pendientes del §65 → sale con ese mismo `firebase deploy --only firestore:rules` (OK de Daniel). Lección L-36 → `30`.
+
+## 2026-06-10 — §67: CI de reglas REPARADO — el emulador Firestore exige Java 21 (post-mortem de §62)
+
+Daniel notó que TODOS los merges salían con los checks en rojo ("All checks have failed · Firestore Rules Tests"). Investigación grounded (workflow 3 agentes, evidencia oficial, confianza alta) — construido en `Desarrollo` (`8b12fc4`).
+
+**67.1 Causa raíz**: el emulador de Cloud Firestore que trae `firebase-tools` 15.x está compilado a **class file 65.0 (Java 21)**; el workflow `firestore-rules-test.yml` instalaba **Java 17** → `UnsupportedClassVersionError` al arrancar el emulador → `firebase emulators:exec` devolvía **exit 1 ANTES de ejecutar `node --test`** (el exit code no distingue "emulador no arrancó" de "test rojo"). Detonante: el CI instalaba `firebase-tools` **sin pin** (`npm install -g firebase-tools` = latest); cuando salió **v15.0.0 (2025-12-10, "Removed support for running emulators with Java versions prior to 21")** el piso de Java saltó a 21 de un día para otro → el CI empezó a fallar el **2026-06-05** sin que se tocara el repo. Firma: falla SIEMPRE, en todos los commits (docs incluidos), en el step del emulador, no en aserciones.
+
+**67.2 Solución**: en `.github/workflows/firestore-rules-test.yml` — `actions/setup-java java-version: 17 → 21` + **pin `firebase-tools@15.18.0`** (la versión validada verde en local con el comando IDÉNTICO del CI, 76/76). El pin impide que un futuro bump de toolchain vuelva a romper el CI en silencio (§3.6, builds reproducibles).
+
+**67.3 Post-mortem (autocrítica §G.4 — el cerebro contribuyó al error)**: **§62 (TODO-10) declaró "CI reactivado verde" asumiéndolo porque la suite pasaba en LOCAL — sin verificar un run real de Actions.** El CI NUNCA pasó desde la reactivación. Defecto: afirmar estado de CI sin evidencia del CI real (§3.3 / [[L-26]] / [[L-27]] aplicados a Actions, no solo a git). Corrección de doctrina → [[L-37]]: "verde local ≠ verde en CI"; verificar `conclusion` del run vía API; PIN de toolchain de CI.
+
+**67.4 No-regresión**: cambio acotado al workflow YAML; no toca reglas, tests ni código de app. Las `actions/*@v4` se dejan como están (el warning de Node 20 es informativo, no bloquea — node24 = mantenimiento aparte, fuera de alcance).
+
+**67.5 Verificación**: el run sobre `8b12fc4` debe pasar (replica el entorno local verde: Java 21 + firebase-tools 15.18.0). Evidencia: Firebase CLI release notes v15.0.0/v14.19.0 + doc oficial del emulador (Java 21 / gcloud 528.0.0). CRUDO de la investigación en `archiveDir`.
+
+**67.6 Archivos**: MODIFICADO `.github/workflows/firestore-rules-test.yml`. **Estado real corregido**: el CI de reglas estaba ROJO desde 2026-06-05 (no "verde" como decía §62/05).

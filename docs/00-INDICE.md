@@ -114,6 +114,7 @@
 | §64 | 2026-06-10 — F6 frente D: reconciliación de cartera + vista Salud (trigger blindado · reconciliacionDiaria · repararSaldo) | 907 |
 | §65 | 2026-06-10 — F6 frente B: RBAC por custom claims (rol en el token) + hardening frontera users/ (anti escalada de rol) | 925 |
 | §66 | 2026-06-10 — Seg: "Desactivar usuario" bloquea acceso (CF deshabilita Auth + active check) + reglas users/ owner-only | 943 |
+| §67 | 2026-06-10 — CI de reglas REPARADO: emulador Firestore exige Java 21 (era 17) + pin firebase-tools; post-mortem de §62 | 961 |
 ---
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §57+ al historial,

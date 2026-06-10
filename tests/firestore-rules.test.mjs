@@ -61,6 +61,7 @@ before(async () => {
         await setDoc(doc(db, 'clientes/cliV/solicitudes/sol2'), { tipo: 'ajuste', monto: -90000, motivo: 'OTRO', nota: 'caso raro', solicitadoPor: 'adminUid', creadoEn: new Date(), estado: 'pendiente' });
         await setDoc(doc(db, 'clientes/cliV/solicitudes/sol3'), { tipo: 'correccion', monto: 60000, motivo: 'ERROR_REGISTRO', nota: 'dedazo', solicitadoPor: 'adminUid', creadoEn: new Date(), estado: 'pendiente' });
         await setDoc(doc(db, 'clientes/cliV/solicitudes/sol4'), { tipo: 'ajuste', monto: -70000, motivo: 'OTRO', nota: 'x', solicitadoPor: 'adminUid', creadoEn: new Date(), estado: 'pendiente' });
+        await setDoc(doc(db, 'clientes/cliV/solicitudes/sol5'), { tipo: 'ajuste', monto: -50000, motivo: 'OTRO', nota: 'dedicada al test de motivoRechazo en aprobada', solicitadoPor: 'adminUid', creadoEn: new Date(), estado: 'pendiente' });
         await setDoc(doc(db, 'clientes/cliV/gestiones/g1'), { tipo: 'llamada', nota: 'no contesta', fecha: '2026-06-10', resultado: 'no_contesto', registradoPor: 'adminUid', creadoEn: new Date() });
 
         // ─── F6 frente D: salud del sistema (las escriben SOLO las CFs) ──────────
@@ -522,6 +523,16 @@ test('M1 transición · rechazar SIN motivo es rechazado; con motivo pasa', asyn
     }));
     await assertSucceeds(updateDoc(doc(asUser('ownerUid'), 'clientes/cliV/solicitudes/sol2'), {
         estado: 'rechazada', resueltoPor: 'ownerUid', resueltoEn: serverTimestamp(), motivoRechazo: 'no procede',
+    }));
+});
+test('M1 transición · aprobar con motivoRechazo colado es rechazado (contrato estado↔campo, ADR §72)', async () => {
+    // 'aprobada' NO puede portar motivoRechazo → estado de datos contradictorio que M2b leería.
+    await assertFails(updateDoc(doc(asUser('ownerUid'), 'clientes/cliV/solicitudes/sol5'), {
+        estado: 'aprobada', resueltoPor: 'ownerUid', resueltoEn: serverTimestamp(), motivoRechazo: 'no me convence',
+    }));
+    // la misma pendiente, aprobada LIMPIA (sin el campo), SÍ pasa.
+    await assertSucceeds(updateDoc(doc(asUser('ownerUid'), 'clientes/cliV/solicitudes/sol5'), {
+        estado: 'aprobada', resueltoPor: 'ownerUid', resueltoEn: serverTimestamp(),
     }));
 });
 test('M1 transición · la solicitante cancela la suya; un admin AJENO no', async () => {

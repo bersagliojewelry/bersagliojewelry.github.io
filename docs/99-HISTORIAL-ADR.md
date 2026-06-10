@@ -852,3 +852,20 @@ Daniel: "continuemos" → segunda roca de la semana 1 del plan §57. Hasta hoy l
 **60.6 Archivos**: NUEVOS `functions/{backup.js,backup-codec.js,backup.test.mjs,restore-backup.mjs}`; EDITADOS `functions/index.js` (re-export), `package.json` (script test:backup). INTACTOS: resto de functions, reglas, front.
 
 **60.7 Doctrina + cache**: §3.6 (valor con menos fricción: dump JSON > maquinaria IAM a esta escala) + L-17 (lógica pura testeable). Sin cache bump. **Restante PRE-1**: 1ª corrida verificada → gemelo → restore probado con ojos de Daniel → copia semanal FUERA de la cuenta (descarga manual viernes hasta automatizar).
+
+## 2026-06-09 — §61: GEMELO vivo — bersaglio-gemelo.web.app (aula de Kary + banco de pruebas + sala de restore)
+"continuemos" → tercera roca de la semana 1 §57. Proyecto `bersaglio-gemelo` creado por CLI (display name SIN paréntesis — GCP los rechaza), Firestore `(default)` us-central1 creado por CLI (la consola habilitó la API al abrir el asistente — el primer intento CLI dio 403 API-disabled), Auth email/password habilitada por Daniel (consola, 2 clics).
+
+**61.1 Causa**: el plan §57 exige un entorno idéntico a prod donde (a) Kary aprenda con datos de juguete, (b) todo cambio que toque dinero se ensaye ANTES de prod, (c) el backup se restaure "con ojos".
+
+**61.2 Solución**: proyecto **Spark (SIN Blaze, deliberado**: sin facturación vinculada → imposible que genere costos) + config de deploy **AISLADA** (`firebase.gemelo.json` — jamás se cruza con la de prod) + mismas reglas 51/51 desplegadas + sembrador `functions/seed-gemelo.mjs` (**se NIEGA a correr contra prod**; 5 clientas ficticias con saldos PRE-calculados usando el `computeSaldo` de prod, 2 vendedoras, 3 piezas demo, usuarios del aula admin/owner) + hosting con build parametrizado (VITE_* del gemelo en UN solo comando para no contaminar builds futuros) + **interruptor NUEVO `VITE_RECAPTCHA_SITE_KEY='off'`** en `js/firebase-config.js` (apaga App Check explícitamente en entornos sin él; el fallback de prod solo aplica cuando la var no viene).
+
+**61.3 No-regresión**: build de prod de control → fallback `6LdSoxQt` presente en `dist/js/chunks/firebase-config-*.js`. Gotcha de verificación: los chunks JS viven en `dist/js/chunks/`, NO en `dist/assets/` (ahí va el CSS) — grep en la carpeta correcta antes de concluir. Prod sin cambios de comportamiento (var ausente = mismo camino de siempre).
+
+**61.4 Verificación E2E EN VIVO (navegador real)**: login `aula-kary@…` → panel Piezas (3 demo visibles) → CRM Cuentas: total $4.300.000 · vencida $1.900.000 con rangos 31-60/+60 · cartera por vendedora · "Ámbar Entrenamiento" **Vencido · 89 días de mora** → el motor de aging corre idéntico sobre datos de juguete. (Truco de automatización: el tecleo del Chrome MCP no aterrizaba en el input del login → rellenar por JS + `dispatchEvent('input')` + click del submit.)
+
+**61.5 Anti-patterns evitados**: Spark deliberado con limitación DOCUMENTADA (las Cloud Functions NO corren en el gemelo → `recalcSaldoCliente` no vive ahí; los saldos del aula van pre-calculados en el seed; si el aula avanzada las necesita → vincular Blaze, decisión de Daniel, seguiría ~$0) · datos 100% ficticios (la regla §57: datos reales SOLO en ensayos de restore y se borran después) · deploy con `--config` explícito (cero riesgo de pisar prod).
+
+**61.6 Archivos**: NUEVOS `firebase.gemelo.json`, `functions/seed-gemelo.mjs`; EDITADO `js/firebase-config.js` (interruptor 'off'). Consolas: Firestore DB (CLI) + Auth (Daniel).
+
+**61.7 Doctrina + cache**: §3.6 (aislamiento por archivo de config > flags mentales). Sin cache bump (el chunk va hasheado por Vite; el shell no cambió). **Restante PRE-1**: restaurar el 1er backup EN el gemelo con ojos de Daniel (mañana, cuando exista `backup-2026-06-10.json.gz`) · alertas de presupuesto (Daniel) · kill-switch doc.

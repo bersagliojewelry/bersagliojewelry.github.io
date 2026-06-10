@@ -108,6 +108,7 @@
 | §58 | 2026-06-09 — App Check REPARADO en vivo: API key restringida sin App Check API (API_KEY_SERVICE_BLOCKED) → 200 | 805 |
 | §59 | 2026-06-09 — F6 frenos de gasto: forms públicos con forma exacta + push_tokens cerrado (51/51, desplegado) | 822 |
 | §60 | 2026-06-09 — Backup diario automático de Firestore desplegado (PRE-1 parte 1; restore probado pendiente) | 839 |
+| §61 | 2026-06-09 — GEMELO vivo: bersaglio-gemelo.web.app (Spark, aula+banco de pruebas+restore) — E2E verificado | 856 |
 ---
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §57+ al historial,

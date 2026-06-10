@@ -161,6 +161,12 @@ exports.onInquiryCreated = onDocumentCreated('inquiries/{inquiryId}', async (eve
 // Idempotente (recomputa desde cero) + transacción (evita carreras). No re-dispara:
 // escribe en el doc del cliente, no en la subcolección de movimientos.
 
+// ─── backupDiario (F6 / PRE-1) ───────────────────────────────────────────────
+// Programada 3:00 AM Bogotá: dump completo de Firestore → Storage (backups/firestore/)
+// + retención 30 días. Lógica y diseño en ./backup.js; codec puro en ./backup-codec.js.
+
+exports.backupDiario = require('./backup').backupDiario;
+
 exports.recalcSaldoCliente = onDocumentWritten('clientes/{clienteId}/movimientos/{movId}', async (event) => {
     const { clienteId } = event.params;
     const clienteRef = db.collection('clientes').doc(clienteId);

@@ -19,6 +19,7 @@ import {
 } from '@firebase/rules-unit-testing';
 import {
     doc, getDoc, getDocs, setDoc, addDoc, deleteDoc, updateDoc, collection, collectionGroup, query,
+    serverTimestamp,
 } from 'firebase/firestore';
 
 let testEnv;
@@ -71,9 +72,12 @@ test('S5 · admin SÍ lee reseña pendiente', async () => {
     await assertSucceeds(getDoc(doc(asUser('adminUid'), 'reviews/pendingRev')));
 });
 
-// ─── Reseñas: create abierto, moderación solo admin ──────────────────────────
-test('reseñas · cualquiera puede crear (no aprobada)', async () => {
-    await assertSucceeds(addDoc(collection(anon(), 'reviews'), { approved: false, rating: 5, pieceSlug: 'x' }));
+// ─── Reseñas: create público pero con FORMA EXACTA (F6 frenos de gasto) ───────
+test('reseñas · cualquiera puede crear una reseña BIEN FORMADA (no aprobada)', async () => {
+    await assertSucceeds(addDoc(collection(anon(), 'reviews'), {
+        pieceSlug: 'anillo', pieceName: 'Anillo', author: 'Clienta', rating: 5,
+        comment: 'Hermosa pieza', email: 'c@x.co', approved: false, createdAt: serverTimestamp(),
+    }));
 });
 test('reseñas · no-admin NO puede borrar', async () => {
     await assertFails(deleteDoc(doc(asUser('editorUid'), 'reviews/approvedRev')));
@@ -209,4 +213,82 @@ test('CRM config · admin lee/escribe negocio; status público; editor NO lee ne
 test('PEND · admin sí; editor no', async () => {
     await assertSucceeds(getDoc(doc(asUser('adminUid'), 'pendientes/p1')));
     await assertFails(getDoc(doc(asUser('editorUid'), 'pendientes/p1')));
+});
+
+// ─── F6 frenos de gasto: forms públicos con forma exacta (ADR §59) ───────────
+// Reseñas
+test('F6 reseñas · rating fuera de 1-5 es rechazado', async () => {
+    await assertFails(addDoc(collection(anon(), 'reviews'), {
+        author: 'X', rating: 9, comment: 'spam', approved: false, createdAt: serverTimestamp(),
+    }));
+});
+test('F6 reseñas · NO puede nacer aprobada (anti auto-aprobación)', async () => {
+    await assertFails(addDoc(collection(anon(), 'reviews'), {
+        author: 'X', rating: 5, comment: 'ok', approved: true, createdAt: serverTimestamp(),
+    }));
+});
+test('F6 reseñas · comentario gigante (>2000) es rechazado', async () => {
+    await assertFails(addDoc(collection(anon(), 'reviews'), {
+        author: 'X', rating: 5, comment: 'a'.repeat(2500), approved: false, createdAt: serverTimestamp(),
+    }));
+});
+test('F6 reseñas · campo NO previsto (inyección) es rechazado', async () => {
+    await assertFails(addDoc(collection(anon(), 'reviews'), {
+        author: 'X', rating: 5, comment: 'ok', approved: false, createdAt: serverTimestamp(), hacked: true,
+    }));
+});
+test('F6 reseñas · createdAt del cliente (no serverTimestamp) es rechazado', async () => {
+    await assertFails(addDoc(collection(anon(), 'reviews'), {
+        author: 'X', rating: 5, comment: 'ok', approved: false, createdAt: new Date('2020-01-01'),
+    }));
+});
+
+// Newsletter (subscriptions)
+test('F6 news · email válido se suscribe', async () => {
+    await assertSucceeds(addDoc(collection(anon(), 'subscriptions'), {
+        email: 'clienta@correo.co', source: 'website_modal', active: true, createdAt: serverTimestamp(),
+    }));
+});
+test('F6 news · email sin @ es rechazado', async () => {
+    await assertFails(addDoc(collection(anon(), 'subscriptions'), {
+        email: 'no-es-un-correo', source: 'website_modal', active: true, createdAt: serverTimestamp(),
+    }));
+});
+test('F6 news · active:false (forma rara) es rechazado', async () => {
+    await assertFails(addDoc(collection(anon(), 'subscriptions'), {
+        email: 'a@b.co', source: 'website_modal', active: false, createdAt: serverTimestamp(),
+    }));
+});
+test('F6 news · campo extra es rechazado', async () => {
+    await assertFails(addDoc(collection(anon(), 'subscriptions'), {
+        email: 'a@b.co', source: 'website_modal', active: true, createdAt: serverTimestamp(), admin: true,
+    }));
+});
+
+// Consultas (inquiries → Bandeja)
+test('F6 leads · payload EXACTO del form de contacto pasa', async () => {
+    await assertSucceeds(addDoc(collection(anon(), 'inquiries'), {
+        name: 'Clienta', email: 'c@x.co', phone: '3000000000', message: 'Quiero el anillo',
+        pieceSlug: null, source: 'web', status: 'nuevo', createdAt: serverTimestamp(),
+    }));
+});
+test('F6 leads · status pre-cocinado (≠ nuevo) es rechazado', async () => {
+    await assertFails(addDoc(collection(anon(), 'inquiries'), {
+        name: 'X', message: 'hola', pieceSlug: null, source: 'web', status: 'convertido', createdAt: serverTimestamp(),
+    }));
+});
+test('F6 leads · mensaje gigante (>3000) es rechazado', async () => {
+    await assertFails(addDoc(collection(anon(), 'inquiries'), {
+        name: 'X', message: 'a'.repeat(3500), pieceSlug: null, source: 'web', status: 'nuevo', createdAt: serverTimestamp(),
+    }));
+});
+test('F6 leads · sin nombre es rechazado', async () => {
+    await assertFails(addDoc(collection(anon(), 'inquiries'), {
+        message: 'hola', pieceSlug: null, source: 'web', status: 'nuevo', createdAt: serverTimestamp(),
+    }));
+});
+
+// push_tokens: sin writer legítimo en el código → cerrado
+test('F6 push_tokens · creación pública CERRADA (sin uso legítimo)', async () => {
+    await assertFails(setDoc(doc(anon(), 'push_tokens/t1'), { token: 'abc' }));
 });

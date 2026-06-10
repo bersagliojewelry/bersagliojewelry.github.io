@@ -103,6 +103,11 @@
 | §53 | 2026-06-07 — F4-leads: Bandeja (pipeline de leads sobre `inquiries`) + convertir a cliente | 702 |
 | §54 | 2026-06-08 — F6 inicio: App Check (código listo, rollout pendiente de consola) | 719 |
 | §55 | 2026-06-08 — Mejoras al cerebro (TODO-16): Comité ×3 + Legal Colombia + Arquitecto + Workflows | 736 |
+| §56 | 2026-06-09 — Cerebro multi-proyecto (canon): linter canónico + manifest + cerebros INDEPENDIENTES + kernel v1.1 | 763 |
+| §57 | 2026-06-09 — Comité ×3 "Operación integral" (plan negocio+sistema → bóveda) + RCA App Check (403 en el canje) | 788 |
+| §58 | 2026-06-09 — App Check REPARADO en vivo: API key restringida sin App Check API (API_KEY_SERVICE_BLOCKED) → 200 | 805 |
+| §59 | 2026-06-09 — F6 frenos de gasto: forms públicos con forma exacta + push_tokens cerrado (51/51, desplegado) | 822 |
+| §60 | 2026-06-09 — Backup diario automático de Firestore desplegado (PRE-1 parte 1; restore probado pendiente) | 839 |
 ---
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §57+ al historial,

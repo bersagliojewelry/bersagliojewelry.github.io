@@ -784,3 +784,71 @@ Daniel (orden de la sesión): *"ahora íbamos a mejorar el cerebro"* → describ
 - **Pendiente tracked (checklist v6 en cars)**: GC dos palancas de ESTE repo (CLAUDE.md 27.7k/27k ↗ y
   10 19.2k/18k ↗ — destilar), actualizar `INSTALACION-CEREBRO.md` al estado kernel + bump template
   1.1.0 (ítem P), skill `auditoria-cerebro` (ítem N).
+
+## 2026-06-09 — Comité ×3 "Operación integral" (plan negocio+sistema) + RCA App Check (403 en el canje)
+Daniel: "antes de seguir... lanza un comité de expertos sobre todo lo que necesita Bersaglio a nivel general para operar y robustecer facturación, CRM e inventario junto con la web y el punto físico". Comité ×3 (skill `comite-expertos` / W-07) vía Workflow: 5 expertos (arquitecto serverless ejecutor · contador DIAN · ops retail de lujo · seguridad/datos · escéptico PyME), 3 rondas (exactitud → profundidad → claridad), peer review anónimo + presidente. 33 agentes; las 3 rondas aportaron (sin convergencia temprana).
+
+**57.1 Causa/contexto**: tras CRM+Panel v2 en prod, el cliente pidió la vista de NEGOCIO completa (tecnología + operación + legal/tributario + personas), no solo el roadmap técnico. En paralelo, sus capturas del monitor App Check refutaron la suposición del cerebro ("0% verificadas = propagación, NO bug"): 96-100% caía en "no válidas".
+
+**57.2 Resultado (plan estratégico)**: plan integral → bóveda `../brain-private/bersaglio/plan-operacion-robustecimiento-2026-06.md` (CRUDO de la deliberación en `research-archive/2026-06-09-comite-operacion-CRUDO.md`). Núcleo: (a) 4 huecos ANTES de construir módulos: adopción de Kary (compuerta talonario-vs-sistema; >2/10 faltantes = pausa de construcción) · backup probado RESTAURANDO · verdad de la cartera $506M (campaña de confirmación DISEÑADA por el contador antes del piloto — las firmas documentan ventas viejas quizá no declaradas) · estado fiscal DIAN (si la obligación de facturar YA existe, la facturación salta al 1er lugar: facturador gratuito DIAN en días + doble digitación + conciliación semanal); (b) 9 decisiones que solo Daniel puede tomar (con default y fecha); (c) semana 1 día a día con dueño y prueba de "listo"; (d) gemelo (2º proyecto Firebase gratis) = aula de Kary + banco de pruebas + ensayo de restore; (e) "comprobante interno" — PROHIBIDO llamar factura a lo no habilitado por DIAN; (f) RADIAN: factura electrónica a crédito = título de cobro automático del fiado (inclina adelantar F7-DIAN; criterio de proveedor = que maneje eventos de cobro); (g) pasivos invisibles: anticipos de apartados vivos, piezas de clientas en taller sin acta/seguro, contrato de encargo de datos Kary↔Daniel (Ley 1581), riesgo laboral al formalizar vendedoras (forma la define el contador); (h) costo mensual honesto $450-850k COP (contador = el grueso).
+
+**57.3 RCA App Check (verificada EN VIVO, §3.3)**: navegando bersagliojewelry.co → `exchangeRecaptchaV3Token` responde **403** → el SDK adjunta token dummy → el monitor clasifica todo como "no válidas". reCAPTCHA SÍ emite (site key `6LdSoxQt…` correcta en el bundle desplegado). Hipótesis #1: llave **SECRETA** mal registrada en la consola App Check (o tipo de llave ≠ v3 clásica / dominio no autorizado en el admin de reCAPTCHA). Autocrítica (§G.4): la nota "NO bug" de 05/10 era suposición no verificada — corregida en ambos nodos. **Enforcement BLOQUEADO** hasta ~100% verificadas ×7 días.
+
+**57.4 Verificación**: workflow completado (logs 3/3 rondas, 18 cambios clave registrados en el CRUDO); evidencia de red capturada en vivo (status 403); `brain:check` SANO tras consolidar.
+
+**57.5 Anti-patterns evitados**: comité con tensión obligatoria (ejecutor+escéptico, §3.7); deliberación capturada ANTES de cerrar (CRUDO+síntesis, L-31 kernel); NO se activó Enforce con métricas en rojo; plan sensible del negocio → bóveda privada (repo público, L-15); fila §56 faltante en `00-INDICE` detectada y repuesta; L-28 duplicada renumerada (→L-31).
+
+**57.6 Archivos**: bóveda (NUEVOS): `plan-operacion-robustecimiento-2026-06.md` + `research-archive/2026-06-09-comite-operacion-CRUDO.md`. Repo (consolidación): `docs/{99-HISTORIAL-ADR,00-INDICE,05-ESTADO-GLOBAL,10-MEMORIA-CORTO-PLAZO,30-LECCIONES}.md`. Código de app INTACTO (cero cambios).
+
+**57.7 Doctrina**: §3.6/§3.7 + lección nueva **L-32** (monitor App Check: "no válidas" ≠ propagación → diagnóstico por red/403 en el canje). Sin cache bump (no toca SW).
+
+## 2026-06-09 — §58: App Check REPARADO en vivo — causa real: API key restringida sin "Firebase App Check API"
+Continuación de §57.3 (canje 403). Sesión guiada con Daniel (consolas GCP/Firebase/reCAPTCHA) + diagnóstico en vivo vía navegador conectado (Claude in Chrome).
+
+**58.1 Causa raíz (verificada leyendo el CUERPO del 403, §3.3)**: la hipótesis inicial de §57.3 (llave secreta mal registrada) resultó FALSA — Daniel re-pegó la secreta y el 403 persistió. Replicando el canje a mano (`grecaptcha.execute(0, {action:'fire_app_check'})` por widgetId + POST `recaptcha_v3_token`) el body reveló: **`API_KEY_SERVICE_BLOCKED`** — la API key del navegador ("Nuevo Browser key", la del bundle `AIzaSyDcAv…`) tiene **allowlist de 6 APIs** (hardening Tier A previo) que NO incluía `firebaseappcheck.googleapis.com`. App Check se instaló (§54) DESPUÉS de restringir la key → todo canje nacía bloqueado, independiente del secreto. Descartes documentados en el camino: tipo de llave v3 ✅, dominios .co/.github.io ✅, site key del bundle == consola ✅, secreta re-pegada ✅.
+
+**58.2 Solución estructural (Daniel, guiado, GCP Console)**: Credenciales → "Nuevo Browser key" → Restricciones de API → añadir **Firebase App Check API** (6→7 APIs) → Guardar (~5 min de propagación). **Cero cambios de código.**
+
+**58.3 No-regresión**: el resto del allowlist y los referrers HTTP quedaron intactos (el candado del hardening sigue vivo); ninguna otra API añadida.
+
+**58.4 Verificación**: EN VIVO post-propagación: `exchangeRecaptchaV3Token` → **200** (antes 403). Observación pendiente (TODO-14): monitor de App Check subiendo a ~100% verificadas ×7 días → recién entonces **Enforce**.
+
+**58.5 Anti-patterns evitados**: NO encadenar hipótesis a ciegas (tras fallar la #1 se leyó la EVIDENCIA del body — Trigger 🔴 §G.2); NO Enforce con métricas en rojo; diagnóstico con el canje REAL del SDK (por widgetId — ejecutar por site key da el falso negativo "Invalid site key"); datos de consolas del cliente manejados sin exfiltrar secretos (la clave secreta nunca pasó por el chat).
+
+**58.6 Archivos**: código de la app: CERO. Cerebro: `docs/{05,10,30 (L-32 reescrita),99,00-INDICE}`. Consolas (Daniel): GCP API key. Además hoy: 2FA activado en Google ×2 y GitHub.
+
+**58.7 Doctrina + cache**: L-32 reescrita con la receta completa (leer el body del 403; `API_KEY_SERVICE_BLOCKED` vs `App attestation failed`; **meta-regla: al instalar un servicio Google nuevo, revisar las API restrictions de la key PRIMERO**). Sin cache bump (no se tocó el SW ni el shell).
+
+## 2026-06-09 — §59: F6 frenos de gasto — forms públicos con forma exacta + push_tokens cerrado (desplegado)
+Daniel: "apruebo todo, continuemos" (política de cartera v1 **APROBADA** → bóveda actualizada). Primera tarea técnica de la semana 1 del plan §57.
+
+**59.1 Causa**: hueco denial-of-wallet residual (spec maestra §1.1): `create: if true` SIN validación en `reviews`/`subscriptions`/`inquiries`/`push_tokens` — un bot podía escribir documentos de cualquier forma y tamaño. App Check (§58) ya sella el navegador pero sin Enforce aún; defensa en profundidad exige forma exacta server-side.
+
+**59.2 Solución estructural**: 3 validadores de create (whitelist `keys().hasOnly` + tipos + tamaños máximos + `createdAt == request.time` ⇒ solo `serverTimestamp()`, nunca fechas del cliente) espejo del payload REAL de `js/firestore-service.js`: **reviews** (author≤120, comment≤2000, rating 1-5, `approved == false` anti auto-aprobación), **subscriptions** (email con regex + ≤254, active solo true), **inquiries** (name≤120, message≤3000, `status == 'nuevo'` forzado, pieceSlug null|string). **push_tokens: CERRADO** (`create, update: if false`) — grep verificó CERO writers en js/ y functions/ (la feature FCM nunca aterrizó); reabrir con validación cuando exista.
+
+**59.3 No-regresión**: tests con el payload EXACTO de los 3 formularios públicos (pasan) → los forms del sitio siguen vivos; los 37 tests previos intactos; cero cambios al código de la app.
+
+**59.4 Verificación**: `npm run test:rules` **51/51** (14 nuevos + 1 actualizado) · `firebase deploy --only firestore:rules` **Deploy complete** · el probe de spam contra prod fue denegado por el clasificador del harness — verificación queda en emulador + release del mismo archivo (suficiente; no se insistió).
+
+**59.5 Anti-patterns evitados**: validar contra el payload real (no romper forms en prod); cerrar ≠ borrar la regla de push_tokens (read admin se conserva); NO re-investigar el "origen de las 3.6K inválidas" — quedó explicado por §58 (el canje estaba bloqueado para TODOS los visitantes, no era abuso); primer test-run "todo rojo" era un emulador huérfano en el puerto 8080, no las reglas (matar proceso antes de re-diagnosticar).
+
+**59.6 Archivos**: `firestore.rules` (+3 validadores, 4 matches endurecidos), `tests/firestore-rules.test.mjs` (+14 tests, 1 actualizado, import serverTimestamp). **INTACTOS**: js/, functions/, *.html.
+
+**59.7 Doctrina + cache**: §3.6 (defensa en profundidad cost-aware) + **L-33 nueva** (firebase CLI multi-cuenta: deploy 403 "caller does not have permission" = cuenta activa equivocada → `firebase login:list` / `login:use` ANTES de diagnosticar IAM; `login:use` fija el default POR DIRECTORIO y previene la recaída). Sin cache bump (reglas son server-side, no tocan el SW).
+
+## 2026-06-09 — §60: Backup diario automático de Firestore DESPLEGADO (PRE-1, parte 1)
+Daniel: "continuemos" → segunda roca de la semana 1 del plan §57. Hasta hoy la cartera de $506M NO tenía copia de seguridad (bloqueante PRE-1, spec maestra §10.1).
+
+**60.1 Causa**: riesgo de pérdida total — sin export, sin PITR; el peor escenario del comité §57 ("copias que se probaron restaurando") estaba en cero.
+
+**60.2 Solución estructural (zero-budget deliberado, §3.6)**: función programada **`backupDiario`** (v2 onSchedule, 3:00 AM America/Bogota, retry 2, maxInstances 1): dump COMPLETO de Firestore (recursivo con subcolecciones) → JSON comprimido en el bucket por defecto (`backups/firestore/backup-YYYY-MM-DD.json.gz`) + **retención 30 días** (borra copias viejas en la misma corrida) + guard anti-dump-vacío (una base vacía no rota copias buenas). **Por qué JSON dump y no el export gestionado**: cero IAM extra (el SA por defecto ya lee Firestore/escribe Storage), restaurable y legible, suficiente a esta escala (cientos de docs); el export oficial/PITR queda como upgrade path documentado. Piezas: `functions/backup.js` (handler) + `functions/backup-codec.js` (serialización PURA de Timestamp/ref/GeoPoint/Buffer, patrón L-17) + `functions/restore-backup.mjs` (restauración al gemelo/emulador; **se NIEGA a escribir sobre prod sin `--force-prod`**).
+
+**60.3 No-regresión**: deploy dirigido `--only functions:backupDiario` (las 6 functions existentes intactas); index.js solo re-exporta. Limitación documentada: docs "fantasma" no se recorren (no existen en este modelo).
+
+**60.4 Verificación**: codec `npm run test:backup` **7/7** (round-trip de todos los tipos; map plano {latitude,longitude} NO se confunde con GeoPoint) · deploy **Successful create** (us-central1, Node 22 2nd Gen; APIs eventarc/pubsub habilitadas automáticamente) · **PENDIENTE: verificar la 1ª corrida real** (3 AM) en la próxima sesión — `backups/firestore/` debe tener el archivo del día; alternativa: Daniel fuerza una corrida en Cloud Scheduler.
+
+**60.5 Anti-patterns evitados**: no big-bang (deploy dirigido); restore-sobre-prod bloqueado por diseño; sin IAM nuevo que mantener; guard de dump vacío; copia ≠ probada — el "restore probado" (PRE-1 parte 2) queda explícitamente PENDIENTE hasta el gemelo.
+
+**60.6 Archivos**: NUEVOS `functions/{backup.js,backup-codec.js,backup.test.mjs,restore-backup.mjs}`; EDITADOS `functions/index.js` (re-export), `package.json` (script test:backup). INTACTOS: resto de functions, reglas, front.
+
+**60.7 Doctrina + cache**: §3.6 (valor con menos fricción: dump JSON > maquinaria IAM a esta escala) + L-17 (lógica pura testeable). Sin cache bump. **Restante PRE-1**: 1ª corrida verificada → gemelo → restore probado con ojos de Daniel → copia semanal FUERA de la cuenta (descarga manual viernes hasta automatizar).

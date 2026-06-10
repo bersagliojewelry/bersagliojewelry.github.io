@@ -100,7 +100,10 @@ service cloud.firestore {
           && (!('saldoAlSolicitar' in d) || d.saldoAlSolicitar is int);
     }
     // Transiciones ONE-WAY desde 'pendiente' (espejo de saludEventos):
-    //  · owner → aprobada/rechazada (sello server-time + autor; rechazo CON motivo)
+    //  · owner → aprobada/rechazada (sello server-time + autor). Estado y campo van
+    //    ATADOS (ADR §72): rechazo EXIGE motivoRechazo; aprobación NO lo porta — un
+    //    guard `(A || B)` con hasOnly que whitelista B dejaba pasar 'aprobada'+motivoRechazo
+    //    (estado contradictorio que M2b leería); el ternario por presencia lo cierra.
     //  · la SOLICITANTE → cancelada (nadie cancela solicitudes ajenas)
     function transicionSolicitudValida() {
       let d = request.resource.data;
@@ -112,7 +115,7 @@ service cloud.firestore {
                    .hasOnly(['estado', 'resueltoPor', 'resueltoEn', 'motivoRechazo'])
               && d.resueltoPor == request.auth.uid
               && d.resueltoEn == request.time
-              && (d.estado == 'aprobada' || nonEmptyStr(d.motivoRechazo)))
+              && (d.estado == 'rechazada' ? nonEmptyStr(d.motivoRechazo) : !('motivoRechazo' in d)))
             ||
             (d.estado == 'cancelada'
               && resource.data.solicitadoPor == request.auth.uid

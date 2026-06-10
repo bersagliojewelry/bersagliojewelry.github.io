@@ -103,6 +103,14 @@
                         <input type="date" id="mov-fecha" class="adm-input" required>
                     </div>
                 </div>
+                <div class="adm-form-row adm-col-1" id="mov-mediopago-row" hidden>
+                    <div class="adm-field">
+                        <label for="mov-mediopago">Medio de pago <span class="adm-opt">(obligatorio)</span></label>
+                        <select id="mov-mediopago" class="adm-input">
+                            <option value="">Elige…</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="adm-form-row adm-col-1">
                     <div class="adm-field">
                         <label for="mov-desc">Descripción</label>
@@ -201,7 +209,15 @@
                 <p style="color:var(--adm-muted);font-size:13px;margin:0 0 14px;">El movimiento NO se borra: se marca como anulado y deja de contar en el saldo. Queda registrado quién y por qué.</p>
                 <div class="adm-form-row adm-col-1">
                     <div class="adm-field">
-                        <label for="anular-motivo">Motivo de la anulación <span class="adm-opt">(obligatorio)</span></label>
+                        <label for="anular-categoria">Tipo de corrección <span class="adm-opt">(obligatorio)</span></label>
+                        <select id="anular-categoria" class="adm-input" required>
+                            <option value="">Elige…</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="adm-form-row adm-col-1">
+                    <div class="adm-field">
+                        <label for="anular-motivo">Detalle del motivo <span class="adm-opt">(obligatorio)</span></label>
                         <input type="text" id="anular-motivo" class="adm-input" required maxlength="200" autocomplete="off" placeholder="Ej. error de digitación, duplicado…">
                     </div>
                 </div>

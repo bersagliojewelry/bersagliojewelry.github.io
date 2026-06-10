@@ -116,12 +116,15 @@ export function onMovimientosChange(clienteId, cb) {
  * ADR §51). Es inmutable tras crearse (las reglas solo permiten anular). Si no se
  * envía, el movimiento queda sin fecha → la mora cae al fallback `fechaCorteMigracion`.
  */
-export async function addMovimiento(clienteId, { tipo, monto, descripcion, registradoPor, fecha }) {
+export async function addMovimiento(clienteId, { tipo, monto, descripcion, registradoPor, fecha, medioPago }) {
     const payload = {
         tipo,
         monto: Number(monto),
         ...(descripcion ? { descripcion: descripcion.trim() } : {}),
         ...(/^\d{4}-\d{2}-\d{2}$/.test(fecha || '') ? { fecha } : {}),
+        // medioPago: M2a lo escribe en abonos (lista literal); M3 lo hará obligatorio
+        // en la regla. `movimientoValido` lo admite hoy (sin hasOnly hasta M3).
+        ...(medioPago ? { medioPago } : {}),
         registradoPor,
         registradoEn: serverTimestamp(),
         anulado: false,
@@ -154,10 +157,13 @@ export function onAllMovimientosChange(cb) {
  * Anula un movimiento (NO lo borra — anular ≠ eliminar, spec §3). Solo admin/owner
  * (reglas). Dispara el recálculo del saldo (el anulado deja de contar).
  */
-export async function anularMovimiento(clienteId, movId, anuladoPor, motivo) {
+export async function anularMovimiento(clienteId, movId, anuladoPor, motivo, motivoCategoria) {
     await updateDoc(doc(firestoreDb, 'clientes', clienteId, 'movimientos', movId), {
         anulado: true, anuladoPor, anuladoEn: serverTimestamp(),
         motivoAnulacion: (motivo || '').trim(),
+        // M2a-1b (§73): la categoría hace auditable "por qué se anuló" (cierra el
+        // tramo huérfano antes de que M3 la vuelva obligatoria). Solo se envía si viene.
+        ...(motivoCategoria ? { motivoCategoria } : {}),
     });
 }
 

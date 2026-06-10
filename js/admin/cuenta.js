@@ -33,6 +33,32 @@ function fmtFecha(iso) {
 const TIPO_LABEL = { factura: 'Factura', abono: 'Abono', apertura: 'Apertura', ajuste: 'Ajuste' };
 const SIGNO = { factura: 1, apertura: 1, ajuste: 1, abono: -1 };
 
+// Listas del negocio (espejo de config/cartera, M0 §70); fallback literal si el doc
+// no cargó. La frontera real son las reglas; estas listas son la UI de Kary.
+let _motivosAnulacion = ['ERROR_REGISTRO', 'DUPLICADO', 'CORRECCION', 'CORRECCION_FECHA', 'DEVOLUCION_PIEZA', 'OTRO'];
+let _mediosPago = ['efectivo', 'transferencia', 'datafono', 'otro'];
+// Etiquetas humanas (Kary no ve códigos). Fallback: el código crudo.
+const CAT_LABEL = {
+    ERROR_REGISTRO: 'Error de digitación', DUPLICADO: 'Movimiento duplicado',
+    CORRECCION: 'Corrección de monto', CORRECCION_FECHA: 'Corrección de fecha',
+    DEVOLUCION_PIEZA: 'Devolución de pieza', OTRO: 'Otro',
+};
+const MEDIO_LABEL = { efectivo: 'Efectivo', transferencia: 'Transferencia', datafono: 'Datáfono', otro: 'Otro' };
+
+// Rellena un <select> con métodos DOM seguros (textContent, no innerHTML).
+function fillSelect(sel, codes, labels, placeholder) {
+    if (!sel) return;
+    sel.replaceChildren();
+    const ph = document.createElement('option');
+    ph.value = ''; ph.textContent = placeholder;
+    sel.appendChild(ph);
+    for (const c of codes) {
+        const o = document.createElement('option');
+        o.value = c; o.textContent = labels[c] || c;
+        sel.appendChild(o);
+    }
+}
+
 function nombreVendedora(id) {
     return id ? (_vendedoras.get(id) || 'Vendedora') : 'Directo de Kary';
 }
@@ -117,6 +143,15 @@ function openMovModal(tipo) {
     document.getElementById('mov-fecha').value = hoyISO();   // default: hoy (Kary puede cambiarla)
     document.getElementById('mov-modal-title').textContent = `Registrar ${TIPO_LABEL[tipo].toLowerCase()}`;
     document.getElementById('mov-save').textContent = `Registrar ${TIPO_LABEL[tipo].toLowerCase()}`;
+    // Medio de pago: obligatorio SOLO en abonos (cómo entró la plata).
+    const mpRow = document.getElementById('mov-mediopago-row');
+    const mpSel = document.getElementById('mov-mediopago');
+    if (tipo === 'abono') {
+        fillSelect(mpSel, _mediosPago, MEDIO_LABEL, 'Elige…');
+        mpRow.hidden = false; mpSel.required = true;
+    } else {
+        mpRow.hidden = true; mpSel.required = false; mpSel.value = '';
+    }
     document.getElementById('mov-modal').hidden = false;
     document.getElementById('mov-monto').focus();
 }
@@ -138,6 +173,13 @@ function wireModal() {
         const fecha = document.getElementById('mov-fecha').value;
         if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) { admToast('Elige la fecha del movimiento.', 'danger'); return; }
 
+        // Abono: el medio de pago es obligatorio (cómo entró la plata).
+        let medioPago;
+        if (_tipo === 'abono') {
+            medioPago = document.getElementById('mov-mediopago').value;
+            if (!medioPago) { admToast('Elige el medio de pago.', 'danger'); return; }
+        }
+
         const uid = currentUser()?.user?.uid;
         const btn = document.getElementById('mov-save');
         btn.disabled = true;
@@ -148,6 +190,7 @@ function wireModal() {
                 fecha,
                 descripcion: document.getElementById('mov-desc').value,
                 registradoPor: uid,
+                ...(medioPago ? { medioPago } : {}),
             });
             admToast(`${TIPO_LABEL[_tipo]} registrada. El saldo se actualizará en un momento.`);
             closeMovModal();
@@ -165,6 +208,8 @@ function wireAnular() {
     const modal    = document.getElementById('anular-modal');
     const form     = document.getElementById('anular-form');
     const motivoEl = document.getElementById('anular-motivo');
+    const catEl    = document.getElementById('anular-categoria');
+    fillSelect(catEl, _motivosAnulacion, CAT_LABEL, 'Elige…');
     const close = () => { modal.hidden = true; anularId = null; form.reset(); };
 
     document.getElementById('mov-body').addEventListener('click', (e) => {
@@ -173,7 +218,7 @@ function wireAnular() {
         anularId = btn.getAttribute('data-anular');
         form.reset();
         modal.hidden = false;
-        motivoEl.focus();
+        catEl.focus();
     });
     document.getElementById('anular-cancel').addEventListener('click', close);
     document.getElementById('anular-close').addEventListener('click', close);
@@ -181,18 +226,22 @@ function wireAnular() {
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const categoria = catEl.value;
+        if (!categoria) { admToast('Elige el tipo de corrección.', 'danger'); return; }
         const motivo = motivoEl.value.trim();
-        if (!motivo) { admToast('El motivo es obligatorio.', 'danger'); return; }
+        if (!motivo) { admToast('El detalle del motivo es obligatorio.', 'danger'); return; }
         if (!anularId) return;
         const btn = document.getElementById('anular-confirm');
         btn.disabled = true;
         try {
-            await anularMovimiento(CLIENTE_ID, anularId, currentUser()?.user?.uid, motivo);
+            await anularMovimiento(CLIENTE_ID, anularId, currentUser()?.user?.uid, motivo, categoria);
             admToast('Movimiento anulado.');
             close();
         } catch (err) {
             console.error('[cuenta] anularMovimiento:', err);
-            admToast('No se pudo anular.', 'danger');
+            admToast(err?.code === 'permission-denied'
+                ? 'Esta operación necesita aprobación de Daniel.'
+                : 'No se pudo anular.', 'danger');
         } finally {
             btn.disabled = false;
         }
@@ -306,7 +355,17 @@ async function init() {
         if (typeof cfg?.diasPlazo === 'number' && cfg.diasPlazo >= 0) _diasPlazo = cfg.diasPlazo;
         if (cfg?.fechaCorteMigracion) _fechaCorte = cfg.fechaCorteMigracion;
     } catch (err) {
-        console.warn('[cuenta] getConfig:', err);
+        console.warn('[cuenta] getConfig negocio:', err);
+    }
+
+    // config/cartera (M0 §70): listas del negocio para los selects (categoría de
+    // anulación, medios de pago). Fallback literal si no carga (las reglas mandan).
+    try {
+        const cc = await getConfig('cartera');
+        if (Array.isArray(cc?.motivosAnulacion) && cc.motivosAnulacion.length) _motivosAnulacion = cc.motivosAnulacion;
+        if (Array.isArray(cc?.mediosPago) && cc.mediosPago.length) _mediosPago = cc.mediosPago;
+    } catch (err) {
+        console.warn('[cuenta] getConfig cartera:', err);
     }
 
     const cli = await getCliente(CLIENTE_ID);

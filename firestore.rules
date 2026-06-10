@@ -8,8 +8,17 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // F6 frente B (RBAC claims): el rol se lee PRIMERO del custom claim del token
+    // (cero lecturas extra, S4) con fallback dual al doc users/{uid} durante la
+    // transición (usuario sin backfill / claim aún no en el token). El claim lo
+    // espeja SOLO la CF syncRoleClaim desde users/{uid}.role (fuente de verdad).
+    // PRECEDENCIA: si el claim existe, MANDA (un claim desactualizado dura ≤1h de
+    // token). Deprecar el fallback a +30 días del backfill (ADR §65).
     function getUserRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+      let claim = request.auth.token.get('role', null);
+      return claim != null
+          ? claim
+          : get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
 
     function isOwner() {
@@ -238,12 +247,31 @@ service cloud.firestore {
     }
 
     // ─── Users (role management) ───────────────────────────────────────────────
+    // El panel escribe users/{uid} DIRECTO (js/auth.js) → las REGLAS son la única
+    // frontera server-side (las CFs callable con guardas NO están en ese camino).
+    // F6 frente B: validar el `role` aquí es crítico — sin esto un admin podría
+    // escribir role:'owner' en otro doc (escalar) o degradar al owner, y el trigger
+    // `syncRoleClaim` lo sellaría en un custom claim REAL (privilegio durable).
+    function usersFieldsValidos() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['email', 'displayName', 'role', 'active',
+                               'createdAt', 'createdBy', 'updatedAt', 'updatedBy',
+                               'lastLogin', 'deactivatedAt', 'deactivatedBy'])
+          && (!('role' in d)   || d.role in ['owner', 'admin', 'editor'])
+          && (!('active' in d) || d.active is bool);
+    }
 
     match /users/{userId} {
       allow read: if isAuth() && (request.auth.uid == userId || isAdmin());
-      allow create: if isOwner();              // Only owner creates users
-      allow update: if isOwner() ||            // Owner can change any role
-                       (isAdmin() && userId != request.auth.uid); // Admin can edit non-self
+      // 'owner' NO se acuña desde la app (se siembra por consola/seed) → create solo admin|editor.
+      allow create: if isOwner() && usersFieldsValidos()
+                    && request.resource.data.role in ['admin', 'editor'];
+      allow update: if usersFieldsValidos() && (
+                       isOwner()                                          // owner (Daniel): cualquier cambio válido
+                       || (isAdmin() && userId != request.auth.uid        // admin (Kary) sobre OTROS, y…
+                           && resource.data.role != 'owner'               // …NO puede tocar al owner…
+                           && request.resource.data.role in ['admin', 'editor'])  // …ni acuñar un owner
+                    );
       allow delete: if isOwner();              // Only owner removes users
     }
 

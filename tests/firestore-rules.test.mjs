@@ -46,6 +46,8 @@ before(async () => {
         // ─── CRM Fase R: vendedoras (entidad), cliente (vendedoraId), config, pendientes ──
         await setDoc(doc(db, 'users/ownerUid'), { role: 'owner' });
         await setDoc(doc(db, 'users/vendUid'),  { role: 'vendedora' }); // rol RESIDUAL: debe quedar SIN acceso al CRM
+        await setDoc(doc(db, 'users/degradadoUid'), { role: 'admin' }); // F6-B: doc admin + claim editor → claim manda
+        await setDoc(doc(db, 'users/objetivoUid'), { role: 'editor', email: 'o@x.co', displayName: 'Obj' }); // F6-B: víctima de los tests de escalada
         await setDoc(doc(db, 'vendedoras/vendA'), { nombre: 'Vendedora A', activa: true });
         await setDoc(doc(db, 'clientes/cliV'), { nombre: 'Cliente V', vendedoraId: 'vendA', saldoActual: 0 });
         await setDoc(doc(db, 'clientes/cliV/movimientos/m1'), { tipo: 'factura', monto: 100000, registradoPor: 'adminUid', anulado: false });
@@ -69,6 +71,8 @@ after(async () => { await testEnv?.cleanup(); });
 
 const anon   = () => testEnv.unauthenticatedContext().firestore();
 const asUser = (uid) => testEnv.authenticatedContext(uid).firestore();
+// F6 frente B: contexto con custom claim `role` en el token (sin depender del doc users/).
+const asClaim = (uid, role) => testEnv.authenticatedContext(uid, { role }).firestore();
 
 // ─── S5: reseñas legibles solo si approved (admin ve todas) ──────────────────
 test('S5 · público lee reseña APROBADA', async () => {
@@ -361,4 +365,53 @@ test('F6 saludEventos · resueltoEn del cliente (no serverTimestamp) es rechazad
     await assertFails(updateDoc(doc(asUser('adminUid'), 'saludEventos/ev5'), {
         resuelto: true, resueltoEn: new Date('2020-01-01'), resueltoPor: 'adminUid',
     }));
+});
+
+// ─── F6 frente B: RBAC por custom claims (dual: claim del token ?? doc users) ─
+test('F6 claims · admin POR CLAIM (sin doc en users/) SÍ accede al CRM', async () => {
+    await assertSucceeds(getDoc(doc(asClaim('soloClaimAdmin', 'admin'), 'clientes/cliV')));
+});
+test('F6 claims · editor POR CLAIM NO accede al CRM (admin-only)', async () => {
+    await assertFails(getDoc(doc(asClaim('soloClaimEditor', 'editor'), 'clientes/cliV')));
+});
+test('F6 claims · owner POR CLAIM puede crear usuarios', async () => {
+    await assertSucceeds(setDoc(doc(asClaim('soloClaimOwner', 'owner'), 'users/nuevoUid'), {
+        email: 'n@x.co', displayName: 'Nuevo', role: 'editor',
+    }));
+});
+test('F6 claims · el claim TIENE PRECEDENCIA sobre el doc (degradado no retiene acceso)', async () => {
+    // users/degradadoUid dice admin, pero su token ya trae claim editor → el claim manda.
+    await assertFails(getDoc(doc(asClaim('degradadoUid', 'editor'), 'clientes/cliV')));
+});
+test('F6 claims · sin claim, el fallback al doc users/ sigue vivo (transición)', async () => {
+    await assertSucceeds(getDoc(doc(asUser('adminUid'), 'clientes/cliV')));
+});
+
+// ─── F6 frente B: integridad de la frontera users/ (anti escalada de rol) ─────
+test('F6 users · admin NO puede acuñar un owner en el doc de otro', async () => {
+    await assertFails(setDoc(doc(asUser('adminUid'), 'users/objetivoUid'),
+        { role: 'owner' }, { merge: true }));
+});
+test('F6 users · admin NO puede degradar/tocar al owner', async () => {
+    await assertFails(setDoc(doc(asUser('adminUid'), 'users/ownerUid'),
+        { role: 'editor' }, { merge: true }));
+});
+test('F6 users · admin SÍ cambia a otro entre admin/editor', async () => {
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'users/objetivoUid'),
+        { role: 'admin' }, { merge: true }));
+});
+test('F6 users · admin NO puede auto-promoverse (userId == self)', async () => {
+    await assertFails(setDoc(doc(asUser('adminUid'), 'users/adminUid'),
+        { role: 'owner' }, { merge: true }));
+});
+test('F6 users · owner crea editor desde la app, pero NO un owner', async () => {
+    await assertSucceeds(setDoc(doc(asUser('ownerUid'), 'users/nuevoApp'),
+        { email: 'n@x.co', displayName: 'N', role: 'editor', active: true,
+          createdAt: serverTimestamp(), createdBy: 'ownerUid' }));
+    await assertFails(setDoc(doc(asUser('ownerUid'), 'users/nuevoOwner'),
+        { email: 'o@x.co', displayName: 'O', role: 'owner', active: true }));
+});
+test('F6 users · campo no previsto (inyección) en users es rechazado', async () => {
+    await assertFails(setDoc(doc(asUser('ownerUid'), 'users/objetivoUid'),
+        { hackeado: true }, { merge: true }));
 });

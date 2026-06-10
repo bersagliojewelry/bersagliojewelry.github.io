@@ -22,6 +22,21 @@ import {
 // si se llegara a este límite, hay que paginar (ver docs/41-SEGURIDAD §S3).
 const MAX = 2000;
 
+// ─── Detector de truncado (spec §9.1: "alerta cuando rowcount == limit") ──────
+// Un listener que llega a su tope = datos INCOMPLETOS en pantallas de dinero (la
+// mora EN VIVO necesita el set completo de movimientos, L-29). Antes esto era un
+// console.warn mudo; ahora además emite un evento que el panel pinta como banner
+// visible (js/admin/truncado.js). GATE de escala (ADR §68): si este banner aparece,
+// toca materializar el aging y RECIÉN entonces paginar por cursor las listas.
+function detectarTruncado(origen, size, limite = MAX) {
+    if (size < limite) return false;
+    console.warn(`[crm] ${origen} truncado en ${limite} (S3): los datos visibles están incompletos.`);
+    try {
+        document.dispatchEvent(new CustomEvent('bj:truncado', { detail: { origen, limite } }));
+    } catch { /* entorno sin DOM (tests/SSR): el warn ya quedó */ }
+    return true;
+}
+
 // ─── Formato de dinero (COP, sin decimales) ──────────────────────────────────
 const _cop = new Intl.NumberFormat('es-CO', {
     style: 'currency', currency: 'COP', maximumFractionDigits: 0,
@@ -33,12 +48,16 @@ export function fmtCOP(n) {
 // ─── Clientes ────────────────────────────────────────────────────────────────
 export async function fetchClientes() {
     const snap = await getDocs(query(collection(firestoreDb, 'clientes'), limit(MAX)));
+    detectarTruncado('Clientes', snap.size);
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
 export function onClientesChange(cb) {
     const q = query(collection(firestoreDb, 'clientes'), limit(MAX));
-    return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
+    return onSnapshot(q, (snap) => {
+        detectarTruncado('Clientes', snap.size);
+        cb(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    });
 }
 
 /**
@@ -83,7 +102,10 @@ export function onMovimientosChange(clienteId, cb) {
         collection(firestoreDb, 'clientes', clienteId, 'movimientos'),
         orderBy('registradoEn', 'desc'), limit(MAX),
     );
-    return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
+    return onSnapshot(q, (snap) => {
+        detectarTruncado('Historial del cliente', snap.size);
+        cb(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    });
 }
 
 /**
@@ -123,9 +145,7 @@ export async function addMovimiento(clienteId, { tipo, monto, descripcion, regis
 export function onAllMovimientosChange(cb) {
     const q = query(collectionGroup(firestoreDb, 'movimientos'), limit(MAX));
     return onSnapshot(q, (snap) => {
-        if (snap.size >= MAX) {
-            console.warn(`[crm] onAllMovimientosChange truncado en ${MAX} (S3): la mora de la lista puede quedar incompleta → paginar por cursor (F6, spec §9.1).`);
-        }
+        detectarTruncado('Movimientos (mora de la lista)', snap.size);
         cb(snap.docs.map((d) => ({ id: d.id, clienteId: d.ref.parent.parent?.id, ...d.data() })));
     });
 }
@@ -247,9 +267,7 @@ export function onSaludChange(cb) {
 export function onSaludEventosChange(cb) {
     const q = query(collection(firestoreDb, 'saludEventos'), orderBy('at', 'desc'), limit(MAX));
     return onSnapshot(q, (snap) => {
-        if (snap.size >= MAX) {
-            console.warn(`[crm] onSaludEventosChange truncado en ${MAX} (S3): hay más eventos de salud de los que muestra el panel → purga/paginación pendiente.`);
-        }
+        detectarTruncado('Registro de fallos (Salud)', snap.size);
         const eventos = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
         eventos.sort((a, b) => (b.at?.toMillis?.() || 0) - (a.at?.toMillis?.() || 0));
         cb(eventos);

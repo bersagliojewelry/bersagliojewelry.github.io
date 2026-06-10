@@ -600,6 +600,12 @@ export function onInquiriesChange(callback) {
     );
     return onSnapshot(q,
         snap => {
+            // Spec §9.1: el truncado NUNCA es mudo — banner visible en el panel
+            // (js/admin/truncado.js escucha; en el sitio público no hay listener = no-op).
+            if (snap.size >= 500) {
+                console.warn('[Firestore] inquiries truncado en 500 (S3): la Bandeja muestra solo los 500 leads más recientes.');
+                try { document.dispatchEvent(new CustomEvent('bj:truncado', { detail: { origen: 'Bandeja (leads)', limite: 500 } })); } catch { /* sin DOM */ }
+            }
             const inquiries = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             callback(inquiries);
         },

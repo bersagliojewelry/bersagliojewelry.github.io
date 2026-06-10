@@ -66,6 +66,10 @@ service cloud.firestore {
           // int; un decimal llega como double y se RECHAZA en la frontera de escritura.
           && d.monto is int
           && (d.tipo in ['apertura', 'ajuste'] || d.monto >= 0)
+          // M0-H (Fase M §69): apertura NEGATIVA reduce saldo sin motivo ni tope —
+          // su único uso legítimo (saldo a favor de migración §43) ya pasó → owner-only.
+          // (El ajuste negativo conserva su régimen actual hasta el candado M3.)
+          && (d.tipo != 'apertura' || d.monto >= 0 || isOwner())
           && (!('descripcion' in d) || d.descripcion is string)
           // fecha real del hecho (mora, ADR §51); inmutable. Formato ISO 'YYYY-MM-DD'
           // validado server-side (el date-picker ya lo garantiza; defensa en profundidad).
@@ -222,7 +226,13 @@ service cloud.firestore {
     match /clientes/{clienteId} {
       allow read:   if isAdmin();
       allow create: if isAdmin() && clienteValido();
-      allow update: if isAdmin();
+      // M0-H (Fase M §69): whitelist en UPDATE — cierra `saldoActual` (lo escribe
+      // SOLO la CF recalcSaldoCliente; antes un admin podía pisarlo a mano).
+      allow update: if isAdmin()
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['nombre', 'telefono', 'whatsapp', 'cumpleanos', 'notas',
+                                   'vendedoraId', 'origen', 'activo',
+                                   'createdAt', 'createdBy', 'updatedAt']);
       allow delete: if isAdmin();
 
       match /movimientos/{movId} {

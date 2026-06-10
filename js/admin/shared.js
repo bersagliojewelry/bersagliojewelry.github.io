@@ -9,6 +9,7 @@ import { setAuthContext } from '../firestore-service.js';
 import { renderSidebar } from './render-sidebar.js';
 import { NAV } from './sidebar-data.js';
 import { esPendiente } from './lead-format.js';
+import { initTruncadoBanner } from './truncado.js';
 
 // ─── Auth guard ────────────────────────────────────────────────────────────────
 
@@ -24,6 +25,10 @@ export { requireAuth, currentUser, currentRole, hasRole, signOut };
 export function initSidebar() {
     const sidebar = document.querySelector('.adm-sidebar');
     const page = location.pathname.split('/').pop() || 'admin.html';
+
+    // Banner de truncado (spec §9.1): toda página admin escucha la alerta de
+    // "datos incompletos" de las capas de datos. Idempotente (se cablea 1 vez).
+    initTruncadoBanner();
 
     // Montar el rail desde datos (si el <aside> está vacío).
     if (sidebar && !sidebar.querySelector('.adm-nav')) {

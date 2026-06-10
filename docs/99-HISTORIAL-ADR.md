@@ -818,3 +818,20 @@ Continuación de §57.3 (canje 403). Sesión guiada con Daniel (consolas GCP/Fir
 **58.6 Archivos**: código de la app: CERO. Cerebro: `docs/{05,10,30 (L-32 reescrita),99,00-INDICE}`. Consolas (Daniel): GCP API key. Además hoy: 2FA activado en Google ×2 y GitHub.
 
 **58.7 Doctrina + cache**: L-32 reescrita con la receta completa (leer el body del 403; `API_KEY_SERVICE_BLOCKED` vs `App attestation failed`; **meta-regla: al instalar un servicio Google nuevo, revisar las API restrictions de la key PRIMERO**). Sin cache bump (no se tocó el SW ni el shell).
+
+## 2026-06-09 — §59: F6 frenos de gasto — forms públicos con forma exacta + push_tokens cerrado (desplegado)
+Daniel: "apruebo todo, continuemos" (política de cartera v1 **APROBADA** → bóveda actualizada). Primera tarea técnica de la semana 1 del plan §57.
+
+**59.1 Causa**: hueco denial-of-wallet residual (spec maestra §1.1): `create: if true` SIN validación en `reviews`/`subscriptions`/`inquiries`/`push_tokens` — un bot podía escribir documentos de cualquier forma y tamaño. App Check (§58) ya sella el navegador pero sin Enforce aún; defensa en profundidad exige forma exacta server-side.
+
+**59.2 Solución estructural**: 3 validadores de create (whitelist `keys().hasOnly` + tipos + tamaños máximos + `createdAt == request.time` ⇒ solo `serverTimestamp()`, nunca fechas del cliente) espejo del payload REAL de `js/firestore-service.js`: **reviews** (author≤120, comment≤2000, rating 1-5, `approved == false` anti auto-aprobación), **subscriptions** (email con regex + ≤254, active solo true), **inquiries** (name≤120, message≤3000, `status == 'nuevo'` forzado, pieceSlug null|string). **push_tokens: CERRADO** (`create, update: if false`) — grep verificó CERO writers en js/ y functions/ (la feature FCM nunca aterrizó); reabrir con validación cuando exista.
+
+**59.3 No-regresión**: tests con el payload EXACTO de los 3 formularios públicos (pasan) → los forms del sitio siguen vivos; los 37 tests previos intactos; cero cambios al código de la app.
+
+**59.4 Verificación**: `npm run test:rules` **51/51** (14 nuevos + 1 actualizado) · `firebase deploy --only firestore:rules` **Deploy complete** · el probe de spam contra prod fue denegado por el clasificador del harness — verificación queda en emulador + release del mismo archivo (suficiente; no se insistió).
+
+**59.5 Anti-patterns evitados**: validar contra el payload real (no romper forms en prod); cerrar ≠ borrar la regla de push_tokens (read admin se conserva); NO re-investigar el "origen de las 3.6K inválidas" — quedó explicado por §58 (el canje estaba bloqueado para TODOS los visitantes, no era abuso); primer test-run "todo rojo" era un emulador huérfano en el puerto 8080, no las reglas (matar proceso antes de re-diagnosticar).
+
+**59.6 Archivos**: `firestore.rules` (+3 validadores, 4 matches endurecidos), `tests/firestore-rules.test.mjs` (+14 tests, 1 actualizado, import serverTimestamp). **INTACTOS**: js/, functions/, *.html.
+
+**59.7 Doctrina + cache**: §3.6 (defensa en profundidad cost-aware) + **L-33 nueva** (firebase CLI multi-cuenta: deploy 403 "caller does not have permission" = cuenta activa equivocada → `firebase login:list` / `login:use` ANTES de diagnosticar IAM; `login:use` fija el default POR DIRECTORIO y previene la recaída). Sin cache bump (reglas son server-side, no tocan el SW).

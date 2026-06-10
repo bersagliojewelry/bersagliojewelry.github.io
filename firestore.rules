@@ -78,6 +78,65 @@ service cloud.firestore {
           && (!('anulado' in d) || d.anulado == false)
           && !('anuladoPor' in d) && !('anuladoEn' in d);
     }
+    // ─── Fase M (M1 §69): validadores de solicitudes y gestiones ─────────────────
+    // Solicitud de aprobación: nace 'pendiente', con autor y reloj del SERVIDOR
+    // (creadoEn == request.time ⇒ solo serverTimestamp()). `tipo` 'ajuste' = pide
+    // un asiento nuevo; 'correccion' = pide el par anular+crear (datosCorreccion).
+    function solicitudValida() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['tipo', 'monto', 'motivo', 'nota', 'fecha',
+                               'solicitadoPor', 'creadoEn', 'estado',
+                               'correccionDe', 'datosCorreccion', 'saldoAlSolicitar'])
+          && d.estado == 'pendiente'
+          && d.tipo in ['ajuste', 'correccion']
+          && d.monto is int
+          && nonEmptyStr(d.motivo)
+          && nonEmptyStr(d.nota)
+          && d.solicitadoPor == request.auth.uid
+          && d.creadoEn == request.time
+          && (!('fecha' in d) || (d.fecha is string && d.fecha.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
+          && (!('correccionDe' in d)    || d.correccionDe is string)
+          && (!('datosCorreccion' in d) || d.datosCorreccion is map)
+          && (!('saldoAlSolicitar' in d) || d.saldoAlSolicitar is int);
+    }
+    // Transiciones ONE-WAY desde 'pendiente' (espejo de saludEventos):
+    //  · owner → aprobada/rechazada (sello server-time + autor; rechazo CON motivo)
+    //  · la SOLICITANTE → cancelada (nadie cancela solicitudes ajenas)
+    function transicionSolicitudValida() {
+      let d = request.resource.data;
+      return resource.data.estado == 'pendiente'
+          && (
+            (isOwner()
+              && d.estado in ['aprobada', 'rechazada']
+              && d.diff(resource.data).affectedKeys()
+                   .hasOnly(['estado', 'resueltoPor', 'resueltoEn', 'motivoRechazo'])
+              && d.resueltoPor == request.auth.uid
+              && d.resueltoEn == request.time
+              && (d.estado == 'aprobada' || nonEmptyStr(d.motivoRechazo)))
+            ||
+            (d.estado == 'cancelada'
+              && resource.data.solicitadoPor == request.auth.uid
+              && d.diff(resource.data).affectedKeys()
+                   .hasOnly(['estado', 'canceladoPor', 'canceladoEn'])
+              && d.canceladoPor == request.auth.uid
+              && d.canceladoEn == request.time)
+          );
+    }
+    // Gestión de cobro: tipo y resultado de listas LITERALES (cero get() a config
+    // en el camino diario — decisión C2 §69); fecha del hecho + reloj del servidor.
+    function gestionValida() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['tipo', 'nota', 'fecha', 'resultado',
+                               'registradoPor', 'creadoEn', 'soporte'])
+          && d.tipo in ['llamada', 'whatsapp', 'visita', 'otro']
+          && d.resultado in ['promesa_pago', 'sin_acuerdo', 'no_contesto', 'numero_invalido', 'otro']
+          && d.fecha is string && d.fecha.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && (!('nota' in d)    || d.nota is string)
+          && (!('soporte' in d) || d.soporte is string)
+          && d.registradoPor == request.auth.uid
+          && d.creadoEn == request.time;
+    }
+
     // Append-only: el ÚNICO update permitido sobre un movimiento es ANULARLO
     // (anulado false→true) + sellar auditoría (anuladoPor/anuladoEn + motivoAnulacion
     // obligatorio). Prohíbe reescribir tipo/monto/fecha/registradoPor/descripción del
@@ -222,6 +281,18 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
+    // collectionGroup de `solicitudes`: la cola de aprobación de Daniel (M2b) lee
+    // TODAS las pendientes cruzando clientas. Índice COLLECTION_GROUP declarado en
+    // firestore.indexes.json (estado ASC, creadoEn ASC) — sin él, FAILED_PRECONDITION.
+    match /{path=**}/solicitudes/{solId} {
+      allow read: if isAdmin();
+    }
+
+    // collectionGroup de `gestiones`: conteos del expediente de castigo (M5/M7).
+    match /{path=**}/gestiones/{gestId} {
+      allow read: if isAdmin();
+    }
+
     // ─── CRM: clientes y movimientos (cuentas por cobrar) — SOLO admin/owner ─────
     match /clientes/{clienteId} {
       allow read:   if isAdmin();
@@ -240,6 +311,27 @@ service cloud.firestore {
         allow create: if isAdmin() && movimientoValido();
         allow update: if isAdmin() && anulacionValida();   // append-only: SOLO anular (no editar el asiento)
         allow delete: if false;                            // libro append-only: NUNCA borrar (ni admin)
+      }
+
+      // ─── Fase M (M1 §69): solicitudes de aprobación — "el asiento nace solo al
+      // aprobarse". Kary crea la solicitud (nace 'pendiente', sellada por el reloj
+      // del SERVIDOR); SOLO Daniel la transiciona a aprobada/rechazada (one-way,
+      // espejo de saludEventos); solo la SOLICITANTE puede cancelar la suya.
+      // El asiento real lo crea Daniel al aprobar (M2b); el saldo no se toca antes.
+      match /solicitudes/{solId} {
+        allow read:   if isAdmin();
+        allow create: if isAdmin() && solicitudValida();
+        allow update: if isAdmin() && transicionSolicitudValida();
+        allow delete: if false;                            // el ciclo completo queda en el libro
+      }
+
+      // ─── Fase M (M1 §69): gestiones de cobro — evidencia del expediente de
+      // castigo (art. 146 ET). INMUTABLES: una equivocación se aclara con OTRA
+      // gestión, nunca editando la anterior.
+      match /gestiones/{gestId} {
+        allow read:   if isAdmin();
+        allow create: if isAdmin() && gestionValida();
+        allow update, delete: if false;
       }
     }
 

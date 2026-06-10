@@ -19,7 +19,7 @@ import {
 } from '@firebase/rules-unit-testing';
 import {
     doc, getDoc, getDocs, setDoc, addDoc, deleteDoc, updateDoc, collection, collectionGroup, query,
-    serverTimestamp,
+    where, serverTimestamp,
 } from 'firebase/firestore';
 
 let testEnv;
@@ -55,6 +55,13 @@ before(async () => {
         await setDoc(doc(db, 'config/negocio'), { fechaCorteMigracion: '2025-12-31' });
         await setDoc(doc(db, 'solicitudesCorreccion/s1'), { clienteId: 'cliV', estado: 'pendiente' }); // legacy: debe quedar INACCESIBLE
         await setDoc(doc(db, 'pendientes/p1'), { titulo: 'Definir corte', categoria: 'definir-kary', estado: 'pendiente' });
+
+        // ─── Fase M (M1): solicitudes pendientes + gestión sembrada ──────────────
+        await setDoc(doc(db, 'clientes/cliV/solicitudes/sol1'), { tipo: 'ajuste', monto: -80000, motivo: 'DESCUENTO_AUTORIZADO', nota: 'desc autorizado', solicitadoPor: 'adminUid', creadoEn: new Date(), estado: 'pendiente' });
+        await setDoc(doc(db, 'clientes/cliV/solicitudes/sol2'), { tipo: 'ajuste', monto: -90000, motivo: 'OTRO', nota: 'caso raro', solicitadoPor: 'adminUid', creadoEn: new Date(), estado: 'pendiente' });
+        await setDoc(doc(db, 'clientes/cliV/solicitudes/sol3'), { tipo: 'correccion', monto: 60000, motivo: 'ERROR_REGISTRO', nota: 'dedazo', solicitadoPor: 'adminUid', creadoEn: new Date(), estado: 'pendiente' });
+        await setDoc(doc(db, 'clientes/cliV/solicitudes/sol4'), { tipo: 'ajuste', monto: -70000, motivo: 'OTRO', nota: 'x', solicitadoPor: 'adminUid', creadoEn: new Date(), estado: 'pendiente' });
+        await setDoc(doc(db, 'clientes/cliV/gestiones/g1'), { tipo: 'llamada', nota: 'no contesta', fecha: '2026-06-10', resultado: 'no_contesto', registradoPor: 'adminUid', creadoEn: new Date() });
 
         // ─── F6 frente D: salud del sistema (las escriben SOLO las CFs) ──────────
         await setDoc(doc(db, 'salud/backup'), { ultimoOk: new Date(), archivo: 'backups/firestore/backup-x.json.gz', totalDocs: 700 });
@@ -457,4 +464,103 @@ test('M0 · config/cartera: admin SÍ la lee (la UI necesita los límites)', asy
 test('M0 · no-regresión: config/negocio sigue siendo editable por admin (Kary)', async () => {
     await assertSucceeds(setDoc(doc(asUser('adminUid'), 'config/negocio'),
         { diasPlazo: 30 }, { merge: true }));
+});
+
+// ─── Fase M · M1 (§69): solicitudes de aprobación ("el asiento nace al aprobarse") ─
+test('M1 solicitud · admin crea válida (nace pendiente, sellada por el servidor)', async () => {
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/solicitudes/solNueva'), {
+        tipo: 'ajuste', monto: -120000, motivo: 'DESCUENTO_AUTORIZADO', nota: 'autorizado por WhatsApp',
+        solicitadoPor: 'adminUid', creadoEn: serverTimestamp(), estado: 'pendiente',
+    }));
+});
+test('M1 solicitud · estado pre-cocinado (nace aprobada) es rechazado', async () => {
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/solicitudes/solPre'), {
+        tipo: 'ajuste', monto: -1000, motivo: 'OTRO', nota: 'x',
+        solicitadoPor: 'adminUid', creadoEn: serverTimestamp(), estado: 'aprobada',
+    }));
+});
+test('M1 solicitud · solicitadoPor ajeno (suplantación) es rechazado', async () => {
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/solicitudes/solSupl'), {
+        tipo: 'ajuste', monto: -1000, motivo: 'OTRO', nota: 'x',
+        solicitadoPor: 'ownerUid', creadoEn: serverTimestamp(), estado: 'pendiente',
+    }));
+});
+test('M1 solicitud · creadoEn del cliente (no serverTimestamp) es rechazado', async () => {
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/solicitudes/solReloj'), {
+        tipo: 'ajuste', monto: -1000, motivo: 'OTRO', nota: 'x',
+        solicitadoPor: 'adminUid', creadoEn: new Date('2020-01-01'), estado: 'pendiente',
+    }));
+});
+test('M1 solicitud · campo extra (inyección) y editor son rechazados', async () => {
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/solicitudes/solIny'), {
+        tipo: 'ajuste', monto: -1000, motivo: 'OTRO', nota: 'x', hacked: true,
+        solicitadoPor: 'adminUid', creadoEn: serverTimestamp(), estado: 'pendiente',
+    }));
+    await assertFails(setDoc(doc(asUser('editorUid'), 'clientes/cliV/solicitudes/solEd'), {
+        tipo: 'ajuste', monto: -1000, motivo: 'OTRO', nota: 'x',
+        solicitadoPor: 'editorUid', creadoEn: serverTimestamp(), estado: 'pendiente',
+    }));
+});
+test('M1 transición · el ADMIN no aprueba (el corazón del SoD)', async () => {
+    await assertFails(updateDoc(doc(asUser('adminUid'), 'clientes/cliV/solicitudes/sol1'), {
+        estado: 'aprobada', resueltoPor: 'adminUid', resueltoEn: serverTimestamp(),
+    }));
+});
+test('M1 transición · owner aprueba con sello del servidor', async () => {
+    await assertSucceeds(updateDoc(doc(asUser('ownerUid'), 'clientes/cliV/solicitudes/sol1'), {
+        estado: 'aprobada', resueltoPor: 'ownerUid', resueltoEn: serverTimestamp(),
+    }));
+});
+test('M1 transición · re-resolver una APROBADA es rechazado (one-way)', async () => {
+    await assertFails(updateDoc(doc(asUser('ownerUid'), 'clientes/cliV/solicitudes/sol1'), {
+        estado: 'rechazada', resueltoPor: 'ownerUid', resueltoEn: serverTimestamp(), motivoRechazo: 'cambio de idea',
+    }));
+});
+test('M1 transición · rechazar SIN motivo es rechazado; con motivo pasa', async () => {
+    await assertFails(updateDoc(doc(asUser('ownerUid'), 'clientes/cliV/solicitudes/sol2'), {
+        estado: 'rechazada', resueltoPor: 'ownerUid', resueltoEn: serverTimestamp(),
+    }));
+    await assertSucceeds(updateDoc(doc(asUser('ownerUid'), 'clientes/cliV/solicitudes/sol2'), {
+        estado: 'rechazada', resueltoPor: 'ownerUid', resueltoEn: serverTimestamp(), motivoRechazo: 'no procede',
+    }));
+});
+test('M1 transición · la solicitante cancela la suya; un admin AJENO no', async () => {
+    await assertFails(updateDoc(doc(asClaim('otroAdmin', 'admin'), 'clientes/cliV/solicitudes/sol4'), {
+        estado: 'cancelada', canceladoPor: 'otroAdmin', canceladoEn: serverTimestamp(),
+    }));
+    await assertSucceeds(updateDoc(doc(asUser('adminUid'), 'clientes/cliV/solicitudes/sol3'), {
+        estado: 'cancelada', canceladoPor: 'adminUid', canceladoEn: serverTimestamp(),
+    }));
+});
+test('M1 solicitud · NADIE borra (el ciclo queda en el libro)', async () => {
+    await assertFails(deleteDoc(doc(asUser('ownerUid'), 'clientes/cliV/solicitudes/sol4')));
+});
+test('M1 solicitudes · collectionGroup: admin lee pendientes; editor NO', async () => {
+    await assertSucceeds(getDocs(query(collectionGroup(asUser('adminUid'), 'solicitudes'),
+        where('estado', '==', 'pendiente'))));
+    await assertFails(getDocs(query(collectionGroup(asUser('editorUid'), 'solicitudes'),
+        where('estado', '==', 'pendiente'))));
+});
+
+// ─── Fase M · M1 (§69): gestiones de cobro (evidencia inmutable, art. 146 ET) ──
+test('M1 gestión · admin registra una gestión válida', async () => {
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/gestiones/gNueva'), {
+        tipo: 'whatsapp', nota: 'prometió abonar el viernes', fecha: '2026-06-10',
+        resultado: 'promesa_pago', registradoPor: 'adminUid', creadoEn: serverTimestamp(),
+    }));
+});
+test('M1 gestión · sin resultado o con resultado/tipo fuera de lista es rechazada', async () => {
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/gestiones/gSin'), {
+        tipo: 'llamada', fecha: '2026-06-10', registradoPor: 'adminUid', creadoEn: serverTimestamp(),
+    }));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/gestiones/gRes'), {
+        tipo: 'llamada', fecha: '2026-06-10', resultado: 'se_intentó', registradoPor: 'adminUid', creadoEn: serverTimestamp(),
+    }));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/gestiones/gTipo'), {
+        tipo: 'telegrama', fecha: '2026-06-10', resultado: 'otro', registradoPor: 'adminUid', creadoEn: serverTimestamp(),
+    }));
+});
+test('M1 gestión · INMUTABLE: ni update ni delete (ni el owner)', async () => {
+    await assertFails(updateDoc(doc(asUser('ownerUid'), 'clientes/cliV/gestiones/g1'), { nota: 'editada' }));
+    await assertFails(deleteDoc(doc(asUser('ownerUid'), 'clientes/cliV/gestiones/g1')));
 });

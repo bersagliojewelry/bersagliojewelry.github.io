@@ -12,9 +12,11 @@ import { currentUser } from '../auth.js';
 import {
     getCliente, onClienteChange, onMovimientosChange,
     addMovimiento, anularMovimiento, updateCliente, fetchVendedoras, fmtCOP, getConfig,
+    crearSolicitud,
 } from '../crm-service.js';
 import { saldoClass, saldoLabel, estadoBadgeHTML } from './saldo-format.js';
 import { estadoCuenta, hoyISO } from '../crm-estado-cuenta.js';
+import { planearCorreccionSaldo } from '../crm-correccion.js';
 
 const CLIENTE_ID = new URLSearchParams(location.search).get('id');
 const _vendedoras = new Map();
@@ -37,6 +39,13 @@ const SIGNO = { factura: 1, apertura: 1, ajuste: 1, abono: -1 };
 // no cargó. La frontera real son las reglas; estas listas son la UI de Kary.
 let _motivosAnulacion = ['ERROR_REGISTRO', 'DUPLICADO', 'CORRECCION', 'CORRECCION_FECHA', 'DEVOLUCION_PIEZA', 'OTRO'];
 let _mediosPago = ['efectivo', 'transferencia', 'datafono', 'otro'];
+let _motivosAjuste = ['ERROR_REGISTRO', 'ABONO_NO_REGISTRADO', 'RECLASIFICACION', 'DEVOLUCION_PIEZA', 'DESCUENTO_AUTORIZADO', 'CASTIGO', 'OTRO'];
+let _cfgCartera = null;   // config/cartera completa (autoAprobacionMax, motivosNeutros) para el gate
+const AJUSTE_LABEL = {
+    ERROR_REGISTRO: 'Error de digitación', ABONO_NO_REGISTRADO: 'Pago no registrado',
+    RECLASIFICACION: 'Reclasificación', DEVOLUCION_PIEZA: 'Devolución de pieza',
+    DESCUENTO_AUTORIZADO: 'Descuento autorizado', CASTIGO: 'Castigo de cartera', OTRO: 'Otro',
+};
 // Etiquetas humanas (Kary no ve códigos). Fallback: el código crudo.
 const CAT_LABEL = {
     ERROR_REGISTRO: 'Error de digitación', DUPLICADO: 'Movimiento duplicado',
@@ -248,42 +257,85 @@ function wireAnular() {
     });
 }
 
-// ─── Corregir saldo (admin) — registra un ajuste para llegar al saldo correcto ──
+// ─── Corregir saldo (admin) — ajuste hacia el saldo correcto, con gate del candado ──
+// Rediseño M2a (§69): el motivo alimenta el gate (js/crm-correccion.js); se ANUNCIA en
+// pesos antes de enviar y se enruta: dentro del límite → ajuste directo; si no → SOLICITUD
+// a Daniel (el saldo no cambia hasta que apruebe). Espejo de lo que M3 impondrá en reglas.
 function wireCorregir() {
-    const modal = document.getElementById('corregir-modal');
+    const modal    = document.getElementById('corregir-modal');
+    const saldoEl  = document.getElementById('corregir-saldo');
+    const motivoEl = document.getElementById('corregir-motivo');
+    const notaEl   = document.getElementById('corregir-nota');
+    const anuncioEl = document.getElementById('corregir-anuncio');
+    fillSelect(motivoEl, _motivosAjuste, AJUSTE_LABEL, 'Elige…');
+
+    const saldoActual = () => (typeof _cliente?.saldoActual === 'number' ? _cliente.saldoActual : 0);
+
+    // Anuncio EN VIVO: cuánto cambia y quién lo aplica (Kary ya / Daniel aprueba).
+    const refrescarAnuncio = () => {
+        const plan = planearCorreccionSaldo(saldoActual(), Number(saldoEl.value), motivoEl.value, _cfgCartera);
+        if (plan.noOp) { anuncioEl.textContent = ''; return; }
+        const txt = `${plan.delta > 0 ? '+' : '−'}${fmtCOP(Math.abs(plan.delta))}`;
+        anuncioEl.textContent = plan.requiereAprobacion
+            ? `Se registrará un ajuste de ${txt}. Necesita aprobación de Daniel → se enviará como solicitud (el saldo no cambia hasta que apruebe).`
+            : `Se registrará un ajuste de ${txt}. Está dentro de tu límite → se aplica de inmediato.`;
+        anuncioEl.style.color = plan.requiereAprobacion ? '#b8860b' : 'var(--adm-muted)';
+    };
+
     const open = () => {
-        const actual = typeof _cliente?.saldoActual === 'number' ? _cliente.saldoActual : 0;
         document.getElementById('corregir-form').reset();
-        document.getElementById('corregir-actual').textContent = `(actual: ${fmtCOP(actual)})`;
-        document.getElementById('corregir-saldo').value = actual;
+        document.getElementById('corregir-actual').textContent = `(actual: ${fmtCOP(saldoActual())})`;
+        saldoEl.value = saldoActual();
+        anuncioEl.textContent = '';
         modal.hidden = false;
-        document.getElementById('corregir-saldo').focus();
+        saldoEl.focus();
     };
     const close = () => { modal.hidden = true; };
     document.getElementById('btn-corregir').addEventListener('click', open);
     document.getElementById('corregir-close').addEventListener('click', close);
     document.getElementById('corregir-cancel').addEventListener('click', close);
     modal.addEventListener('click', (e) => { if (e.target.id === 'corregir-modal') close(); });
+    saldoEl.addEventListener('input', refrescarAnuncio);
+    motivoEl.addEventListener('change', refrescarAnuncio);
 
     document.getElementById('corregir-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const nuevo = Number(document.getElementById('corregir-saldo').value);
-        if (!Number.isFinite(nuevo)) { admToast('Escribe un saldo válido.', 'danger'); return; }
-        const actual = typeof _cliente?.saldoActual === 'number' ? _cliente.saldoActual : 0;
-        const delta = Math.round((nuevo - actual) * 100) / 100;
-        if (delta === 0) { admToast('El saldo ya es ese.'); close(); return; }
-        const motivo = document.getElementById('corregir-motivo').value.trim();
+        const motivo = motivoEl.value;
+        if (!motivo) { admToast('Elige por qué se corrige.', 'danger'); return; }
+        const nota = notaEl.value.trim();
+        if (!nota) { admToast('Escribe el detalle de la corrección.', 'danger'); return; }
+        const actual = saldoActual();
+        const plan = planearCorreccionSaldo(actual, Number(saldoEl.value), motivo, _cfgCartera);
+        if (plan.noOp) { admToast('El saldo ya es ese.'); close(); return; }
+
+        const uid = currentUser()?.user?.uid;
+        const btn = e.submitter;
+        if (btn) btn.disabled = true;
         try {
-            await addMovimiento(CLIENTE_ID, {
-                tipo: 'ajuste', monto: delta, fecha: hoyISO(),
-                descripcion: 'Corrección de saldo' + (motivo ? `: ${motivo}` : ''),
-                registradoPor: currentUser()?.user?.uid,
-            });
-            admToast('Corrección aplicada. El saldo se actualizará en un momento.');
+            if (plan.requiereAprobacion) {
+                // SOLICITUD a Daniel — el saldo NO se toca hasta que apruebe (M2b).
+                await crearSolicitud(CLIENTE_ID, {
+                    tipo: 'ajuste', monto: plan.delta, motivo, nota,
+                    fecha: hoyISO(), solicitadoPor: uid, saldoAlSolicitar: Math.round(actual),
+                });
+                admToast('Enviado a Daniel. El saldo no cambia hasta que apruebe.');
+            } else {
+                // Dentro del límite → ajuste directo (sin toast optimista: ya esperamos el commit).
+                await addMovimiento(CLIENTE_ID, {
+                    tipo: 'ajuste', monto: plan.delta, fecha: hoyISO(),
+                    descripcion: `Corrección (${motivo}): ${nota}`,
+                    registradoPor: uid,
+                });
+                admToast('Corrección aplicada. El saldo se actualizará en un momento.');
+            }
             close();
         } catch (err) {
             console.error('[cuenta] corregir saldo:', err);
-            admToast('No se pudo aplicar la corrección.', 'danger');
+            admToast(err?.code === 'permission-denied'
+                ? 'Esta corrección necesita aprobación de Daniel.'
+                : 'No se pudo aplicar la corrección.', 'danger');
+        } finally {
+            if (btn) btn.disabled = false;
         }
     });
 }
@@ -362,8 +414,10 @@ async function init() {
     // anulación, medios de pago). Fallback literal si no carga (las reglas mandan).
     try {
         const cc = await getConfig('cartera');
+        _cfgCartera = cc || null;
         if (Array.isArray(cc?.motivosAnulacion) && cc.motivosAnulacion.length) _motivosAnulacion = cc.motivosAnulacion;
         if (Array.isArray(cc?.mediosPago) && cc.mediosPago.length) _mediosPago = cc.mediosPago;
+        if (Array.isArray(cc?.motivosAjuste) && cc.motivosAjuste.length) _motivosAjuste = cc.motivosAjuste;
     } catch (err) {
         console.warn('[cuenta] getConfig cartera:', err);
     }

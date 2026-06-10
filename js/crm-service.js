@@ -161,6 +161,83 @@ export async function anularMovimiento(clienteId, movId, anuladoPor, motivo) {
     });
 }
 
+// ─── Solicitudes de aprobación + gestiones de cobro (Fase M · M1 desplegado §72) ──
+// Reglas: clientes/{id}/solicitudes y clientes/{id}/gestiones (firestore.rules).
+// "El asiento nace al aprobarse": cuando una corrección excede el carril auto-aprobable
+// (js/crm-correccion.js), Kary crea una SOLICITUD pendiente; el movimiento real lo crea
+// Daniel al aprobar (M2b). Las gestiones son evidencia de cobro INMUTABLE (art. 146 ET).
+
+/** Solicitudes de UN cliente, más nuevas primero (para la ficha). */
+export function onSolicitudesChange(clienteId, cb) {
+    const q = query(
+        collection(firestoreDb, 'clientes', clienteId, 'solicitudes'),
+        orderBy('creadoEn', 'desc'), limit(MAX),
+    );
+    return onSnapshot(q, (snap) => {
+        detectarTruncado('Solicitudes del cliente', snap.size);
+        cb(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    });
+}
+
+/**
+ * Crea una solicitud de aprobación (nace 'pendiente', sellada por el reloj del
+ * SERVIDOR). Campos espejo EXACTO de solicitudValida() (firestore.rules): el `monto`
+ * va como ENTERO (COP sin centavos); los opcionales solo se incluyen si vienen.
+ * @param {object} s { tipo:'ajuste'|'correccion', monto, motivo, nota, solicitadoPor,
+ *                     fecha?, correccionDe?, datosCorreccion?, saldoAlSolicitar? }
+ */
+export async function crearSolicitud(clienteId, s) {
+    const payload = {
+        tipo: s.tipo,
+        monto: Math.round(Number(s.monto)),
+        motivo: (s.motivo || '').trim(),
+        nota: (s.nota || '').trim(),
+        solicitadoPor: s.solicitadoPor,
+        estado: 'pendiente',
+        creadoEn: serverTimestamp(),
+        ...(/^\d{4}-\d{2}-\d{2}$/.test(s.fecha || '') ? { fecha: s.fecha } : {}),
+        ...(s.correccionDe ? { correccionDe: String(s.correccionDe) } : {}),
+        ...(s.datosCorreccion && typeof s.datosCorreccion === 'object' ? { datosCorreccion: s.datosCorreccion } : {}),
+        ...(Number.isInteger(s.saldoAlSolicitar) ? { saldoAlSolicitar: s.saldoAlSolicitar } : {}),
+    };
+    const ref = await addDoc(collection(firestoreDb, 'clientes', clienteId, 'solicitudes'), payload);
+    return { id: ref.id, ...payload };
+}
+
+/** La SOLICITANTE cancela su propia solicitud pendiente (one-way; nadie cancela ajenas). */
+export async function cancelarSolicitud(clienteId, solId, uid) {
+    await updateDoc(doc(firestoreDb, 'clientes', clienteId, 'solicitudes', solId), {
+        estado: 'cancelada', canceladoPor: uid, canceladoEn: serverTimestamp(),
+    });
+}
+
+/**
+ * Registra una gestión de cobro (evidencia INMUTABLE — sin update/delete por reglas).
+ * Campos espejo de gestionValida(): tipo y resultado de listas literales; `fecha`
+ * ('YYYY-MM-DD') OBLIGATORIA; reloj del servidor.
+ * @param {object} g { tipo, resultado, fecha, registradoPor, nota?, soporte? }
+ */
+export async function registrarGestion(clienteId, g) {
+    const payload = {
+        tipo: g.tipo,
+        resultado: g.resultado,
+        fecha: g.fecha,
+        registradoPor: g.registradoPor,
+        creadoEn: serverTimestamp(),
+        ...(g.nota ? { nota: g.nota.trim() } : {}),
+        ...(g.soporte ? { soporte: String(g.soporte) } : {}),
+    };
+    const ref = await addDoc(collection(firestoreDb, 'clientes', clienteId, 'gestiones'), payload);
+    return { id: ref.id, ...payload };
+}
+
+// ⏳ PENDIENTE M2a-2 (par atómico de corrección): corregirMovimientoBatch (writeBatch:
+// anular original + crear reemplazo enlazado) requiere ENSANCHAR anulacionValida para
+// admitir 'motivoCategoria' + 'corregidoPor' (hoy su hasOnly solo permite 4 claves; esas
+// dos las añade M3). Es un cambio ADITIVO (expand) seguro, pero es regla de dinero →
+// su propio ciclo test + red-team (W-01) + deploy ANTES de construir el par. Ver
+// bóveda fase-m-m2a-design.md y ADR §72.
+
 // ─── Vendedoras (entidad de datos; las gestiona Kary) ─────────────────────────
 export function onVendedorasChange(cb) {
     const q = query(collection(firestoreDb, 'vendedoras'), limit(MAX));

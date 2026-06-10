@@ -18,6 +18,7 @@
     "test:truncado": "node --test tests/truncado.test.mjs",
     "test:parametros": "node --test tests/parametros-form.test.mjs",
     "test:estado": "node --test tests/estado-cuenta.test.mjs",
+    "test:correccion": "node --test tests/crm-correccion.test.mjs",
     "test:leads": "node --test tests/lead-format.test.mjs",
     "brain:diff": "node scripts/brain-diff.mjs"
   },

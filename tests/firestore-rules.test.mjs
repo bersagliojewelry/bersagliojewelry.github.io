@@ -167,9 +167,10 @@ test('CRM clientes · editor y sin-rol NO acceden', async () => {
 test('CRM clientes · saldoActual NO se puede sembrar (hasOnly)', async () => {
     await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliHack'), { nombre: 'H', saldoActual: 999 }));
 });
-test('CRM mov · admin crea abono y apertura(neg); tipo inválido rechazado', async () => {
+test('CRM mov · admin crea abono y apertura positiva; tipo inválido rechazado', async () => {
     await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mA'), { tipo: 'abono', monto: 5000, registradoPor: 'adminUid', anulado: false }));
-    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mAp'), { tipo: 'apertura', monto: -1000, registradoPor: 'adminUid' }));
+    // M0-H (§69): la apertura NEGATIVA pasó a owner-only (test propio abajo); la positiva sigue admin.
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mAp'), { tipo: 'apertura', monto: 1000, registradoPor: 'adminUid' }));
     await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mBad'), { tipo: 'regalo', monto: 1, registradoPor: 'adminUid' }));
 });
 test('CRM mov · vendedora(residual) y editor NO crean', async () => {
@@ -420,4 +421,25 @@ test('F6 users · owner crea editor desde la app, pero NO un owner', async () =>
 test('F6 users · campo no previsto (inyección) en users es rechazado', async () => {
     await assertFails(setDoc(doc(asUser('ownerUid'), 'users/objetivoUid'),
         { hackeado: true }, { merge: true }));
+});
+
+// ─── Fase M · M0-H (§69): cierre de los 2 agujeros verificados ─────────────────
+test('M0-H · admin NO puede pisar saldoActual del cliente (solo la CF)', async () => {
+    // Valor DISTINTO al sembrado (0): un merge con el mismo valor da diff vacío y pasa vacuamente.
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV'),
+        { saldoActual: 999999 }, { merge: true }));
+});
+test('M0-H · editar cliente (flujo actual del panel) SIGUE pasando', async () => {
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV'),
+        { nombre: 'Cliente V2', telefono: '300', updatedAt: serverTimestamp() }, { merge: true }));
+});
+test('M0-H · apertura NEGATIVA: admin NO, owner SÍ', async () => {
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/apNegA'),
+        { tipo: 'apertura', monto: -50000, registradoPor: 'adminUid', anulado: false }));
+    await assertSucceeds(setDoc(doc(asUser('ownerUid'), 'clientes/cliV/movimientos/apNegO'),
+        { tipo: 'apertura', monto: -50000, registradoPor: 'ownerUid', anulado: false }));
+});
+test('M0-H · no-regresión: ajuste negativo de admin conserva su régimen (hasta M3)', async () => {
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/ajNeg'),
+        { tipo: 'ajuste', monto: -10000, registradoPor: 'adminUid', anulado: false }));
 });

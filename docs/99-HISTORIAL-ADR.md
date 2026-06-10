@@ -973,3 +973,21 @@ Daniel notó que TODOS los merges salían con los checks en rojo ("All checks ha
 **67.5 Verificación**: el run sobre `8b12fc4` debe pasar (replica el entorno local verde: Java 21 + firebase-tools 15.18.0). Evidencia: Firebase CLI release notes v15.0.0/v14.19.0 + doc oficial del emulador (Java 21 / gcloud 528.0.0). CRUDO de la investigación en `archiveDir`.
 
 **67.6 Archivos**: MODIFICADO `.github/workflows/firestore-rules-test.yml`. **Estado real corregido**: el CI de reglas estaba ROJO desde 2026-06-05 (no "verde" como decía §62/05).
+
+## 2026-06-10 — §68: F6 CERRADO — alerta visible de truncado (spec §9.1) · paginación GATED a materializar aging
+
+Último frente técnico de F6. Construido en `Desarrollo` (`196484e`).
+
+**68.1 Causa raíz**: el `limit(2000)` de los listeners era MUDO — si una lista de dinero llegaba al tope, el panel mostraba datos incompletos (mora/cartera calculadas sobre un subconjunto) y solo quedaba un `console.warn` que nadie ve. La spec §9.1 lo pide textual: *"paginación por cursor + alerta cuando rowcount == limit"*.
+
+**68.2 Solución (la mitad con valor HOY)**: la capa de datos emite `bj:truncado` cuando un snapshot llega al tope (`detectarTruncado()` en `crm-service`: Clientes · Historial del cliente · collectionGroup de mora · Registro de fallos; detector inline en `onInquiriesChange` de `firestore-service` — módulos desacoplados, mismo evento) → `js/admin/truncado.js` (STANDALONE, testeable, espejo del patrón `render-sidebar`) pinta un **banner persistente** en todas las páginas admin (cableado en `initSidebar`), con dedup por origen y cierre que NO silencia para siempre. En el sitio público el evento no tiene listener (no-op).
+
+**68.3 DECISIÓN ARQUITECTÓNICA — paginación por cursor GATED, no construida**: la mora EN VIVO (ficha + lista) se calcula recorriendo TODOS los movimientos (diseño deliberado [[L-29]], avalado por el Consejo §16: *"no materialices hasta que la escala lo exija"*). **Paginar esas listas hoy = mora calculada sobre datos incompletos = números falsos de dinero.** La paginación real DEPENDE de materializar primero el aging (`diasVencido` + recompute) — trabajo diferido a propósito. **El banner ES el gate**: si aparece (≈2000 movimientos totales, años a ritmo actual; o 500 leads), se dispara el trabajo de materialización+paginación. Construir paginación hoy sería teatro (la lista paginada seguiría cargando TODOS los movimientos para la mora).
+
+**68.4 No-regresión**: detección read-only en callbacks de snapshot (cero cambio del flujo de datos); `dispatchEvent` con try/catch (entornos sin DOM); vendedoras/pendientes sin detector (tablas mínimas, evitar ruido — deliberado).
+
+**68.5 Tests**: `truncado.test.mjs` 4/4 (origen nombrado, multi-origen, botón de cierre, escape XSS) → **62 puros totales** · build ✓. Autocrítica en construcción: un import `shared.js↔truncado.js` circular se detectó y corrigió ANTES del commit (standalone, patrón del proyecto).
+
+**68.6 Archivos**: NUEVOS `js/admin/truncado.js` + `tests/truncado.test.mjs`. MODIFICADOS `js/crm-service.js` · `js/firestore-service.js` · `js/admin/shared.js` · `package.json` (`test:truncado`). Viaja con el **merge del PR** (solo sitio — sin deploy de functions/reglas).
+
+**68.7 Doctrina + estado**: **F6 TÉCNICO COMPLETO** — A App Check ✅(§58, Enforce a ×7d) · C cimientos ✅(§62) · D reconciliación+Salud ✅(§64) · B RBAC claims ✅(§65) + §66/§67. Siguiente del programa: **compuerta de adopción** (smoke de Kary) → **Fase M** (movimientos robustos, nuevo plan) → F7 con Consejo Externo. Gate de escala documentado aquí y en el banner.

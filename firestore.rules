@@ -286,8 +286,11 @@ service cloud.firestore {
     match /config/{docId} {
       // Solo `config/status` es público (health-check de la web, js/firestore-service.js).
       // El resto (parámetros del negocio: fechaCorteMigracion, datos fiscales) = admin.
+      // EXCEPCIÓN M0 (Fase M §69): `config/cartera` guarda los LÍMITES que gobiernan
+      // a la operadora (tope de auto-aprobación, motivos, criterios de castigo) —
+      // write OWNER-ONLY: quien opera bajo los límites no puede reescribirlos.
       allow read:  if docId == 'status' || isAdmin();
-      allow write: if isAdmin();               // CRM: endurecido owner→admin (Kary edita config)
+      allow write: if docId == 'cartera' ? isOwner() : isAdmin();
     }
 
     // ─── Push Tokens ───────────────────────────────────────────────────────────

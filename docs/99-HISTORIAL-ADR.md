@@ -869,3 +869,20 @@ Daniel: "continuemos" → segunda roca de la semana 1 del plan §57. Hasta hoy l
 **61.6 Archivos**: NUEVOS `firebase.gemelo.json`, `functions/seed-gemelo.mjs`; EDITADO `js/firebase-config.js` (interruptor 'off'). Consolas: Firestore DB (CLI) + Auth (Daniel).
 
 **61.7 Doctrina + cache**: §3.6 (aislamiento por archivo de config > flags mentales). Sin cache bump (el chunk va hasheado por Vite; el shell no cambió). **Restante PRE-1**: restaurar el 1er backup EN el gemelo con ojos de Daniel (mañana, cuando exista `backup-2026-06-10.json.gz`) · alertas de presupuesto (Daniel) · kill-switch doc.
+
+## 2026-06-09 — §62: F6 cimientos — CI de reglas REACTIVADO (TODO-10) + entero-COP en 3 capas (desplegado)
+Daniel: "¿no se puede hacer nada hoy?" → sí: los ítems de Etapa 1 que no esperan al backup de las 3 AM.
+
+**62.1 Causa**: (a) el CI de reglas llevaba pausado desde 2026-06-06 (rojo sin diagnosticar entonces; la suite ya corre verde local con el MISMO comando) → las reglas se desplegaban sin red automática; (b) el dinero aún aceptaba decimales (`monto is number` + `round2` a centavos) contradiciendo la decisión congelada entero-COP (spec §5.1, Consejo §16).
+
+**62.2 Solución**: (a) **CI reactivado** (`firestore-rules-test.yml`): triggers `push`/`pull_request` CON filtro de paths (solo corre cuando cambian reglas/tests — cost-aware §3.6, no quema runner en commits de docs) + `workflow_dispatch`. (b) **entero-COP en 3 capas**: reglas `monto is int` (un decimal llega como double y se RECHAZA en la frontera; JS envía enteros como int → cero fricción para el panel) · `saldo.js` `round2`→`redondearAPeso` (Math.round al peso completo; residuo flotante legacy redondea, nunca fracciona) · tests en ambas capas (decimal rechazado / entero pasa / saldo siempre `Number.isInteger`).
+
+**62.3 No-regresión**: la cartera migrada es entera (Excel COP) → `is int` no rechaza operaciones legítimas; el panel ya produce enteros (`adm-money`, F-CHASIS-A). Test antiguo "redondeo a 2 decimales" REESCRITO a la doctrina nueva (0.1+0.2 → 0 pesos, no 0.3).
+
+**62.4 Verificación**: saldo **12/12** · reglas **53/53** (2 nuevos entero-COP) · `deploy --only firestore:rules` ✅ · `deploy --only functions:recalcSaldoCliente` ✅. ⚠️ El CI queda ACTIVO en GitHub cuando la rama se suba/mergee (el workflow vive en el repo remoto); local ya está commiteado.
+
+**62.5 Anti-patterns evitados**: validación en la FRONTERA (reglas) y no solo en la UI; redondeo en UNA capa autoritativa (la CF) en vez de regado por el front; CI con path-filter (no big-bang de minutos); test legacy actualizado en el MISMO cambio (no quedó mintiendo).
+
+**62.6 Archivos**: `firestore.rules` (is int), `functions/saldo.js` (redondearAPeso), `functions/saldo.test.mjs` (test reescrito), `tests/firestore-rules.test.mjs` (+2), `.github/workflows/firestore-rules-test.yml` (reactivado). INTACTOS: front, demás functions.
+
+**62.7 Doctrina + cache**: spec §5.1/Consejo §16 ejecutados. **TODO-10 ✅ CERRADO** (efectivo al push/merge). Sin cache bump. Restante Etapa 1/F6: restore probado (mañana) · RBAC claims · reconciliación + Salud · paginación cursor · kill-switch doc.

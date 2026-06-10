@@ -31,13 +31,12 @@
 | TODO-07 | **Contenido real**: reseñas Google Maps (Nosotros), Films, feed Redes (`js/data/home-media.js`, `js/pages/nosotros.js`) | 🔲 | cliente entrega datos |
 | TODO-08 | **Fase 2 Hardening**: Tier A ✅; pendiente CSP/reglas/claims (Tier B/C) → bóveda `41-SEGURIDAD §1.5` | 🟡 | Tier B = emulador+deploy gated |
 | TODO-09 | **Fase 3 CRM**: en prod ✅; siguiente **Fase M** (movimientos robustos, spec listo) + B6 reportes/atrasados | 🟡 | Fase M = nuevo plan |
-| TODO-10 | Reactivar CI rules-test (`on: [push, pull_request]` en `firestore-rules-test.yml`; causa del rojo ya resuelta) | 🔲 | a pedido (requiere push) |
 | TODO-14 | **App Check: reparar el registro** (RCA 403 §57.3: llave SECRETA en consola) → ~100% ×7d → enforce | 🟡 | Daniel (consolas, guiado) |
 | TODO-15 | **Backup PRE-1**: `backupDiario` ✅ DESPLEGADA (§60: 3AM, retención 30d, restore script listo). Falta: verificar 1ª corrida (mañana) · gemelo · **restore probado** · copia semanal fuera | 🟡 | gemelo (próxima sesión) |
 | TODO-17 | **Toda captura → CRM**: contacto→Bandeja ✅; falta newsletter (`addSubscription`→`subscriptions`) en el panel | 🔲 | tras App Check |
 | TODO-18 | **Plan operación integral §57**: semana 1 día a día · 9 decisiones de Daniel · compuerta de adopción · campaña cartera (diseño del contador ANTES del piloto) → bóveda | 🟡 | Daniel (decisiones 1-9 + contador) |
 
-> ✅ Cerrados y consolidados (retirados en el GC 2026-06-09): TODO-01/02→§38 · 05→§47 · 06→`e290f83` · 11→spec §16 · 12→§50 · 13→§51 · 16→§55 · settings.local→`e3d390f`.
+> ✅ Cerrados y consolidados (retirados en el GC 2026-06-09): TODO-01/02→§38 · 05→§47 · 06→`e290f83` · **10→§62** (CI reactivado; activo al subir/mergear) · 11→spec §16 · 12→§50 · 13→§51 · 16→§55 · settings.local→`e3d390f`.
 
 ---
 

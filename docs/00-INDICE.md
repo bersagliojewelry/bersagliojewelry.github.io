@@ -111,6 +111,7 @@
 | §61 | 2026-06-09 — GEMELO vivo: bersaglio-gemelo.web.app (Spark, aula+banco de pruebas+restore) — E2E verificado | 856 |
 | §62 | 2026-06-09 — F6 cimientos: CI de reglas reactivado (TODO-10 ✅) + entero-COP en 3 capas (desplegado) | 873 |
 | §63 | 2026-06-10 — PRE-1 CERRADO: restauración PROBADA (702/702 → gemelo, vista por Daniel) + copia fuera de cuenta | 890 |
+| §64 | 2026-06-10 — F6 frente D: reconciliación de cartera + vista Salud (trigger blindado · reconciliacionDiaria · repararSaldo) | 907 |
 ---
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §57+ al historial,

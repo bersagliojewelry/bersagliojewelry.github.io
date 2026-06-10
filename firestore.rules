@@ -119,6 +119,44 @@ service cloud.firestore {
           && (!('featured' in d) || d.featured is bool);
     }
 
+    // ─── F6 frenos de gasto: forms públicos con forma EXACTA (anti spam / denial-of-wallet) ──
+    // Whitelist de claves + tipos + tamaños máximos + serverTimestamp obligatorio
+    // (`createdAt == request.time` ⇒ solo pasa serverTimestamp(), nunca fechas del cliente).
+    // Payload espejo en js/firestore-service.js (submitReview / addSubscription / saveInquiry).
+    function reviewCreateValida() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['pieceSlug', 'pieceName', 'author', 'rating', 'comment', 'email', 'approved', 'createdAt'])
+          && nonEmptyStr(d.author)  && d.author.size()  <= 120
+          && nonEmptyStr(d.comment) && d.comment.size() <= 2000
+          && d.rating is number && d.rating >= 1 && d.rating <= 5
+          && d.approved == false
+          && (!('pieceSlug' in d) || (d.pieceSlug is string && d.pieceSlug.size() <= 200))
+          && (!('pieceName' in d) || (d.pieceName is string && d.pieceName.size() <= 200))
+          && (!('email' in d)     || (d.email is string && d.email.size() <= 254))
+          && d.createdAt == request.time;
+    }
+    function subscriptionCreateValida() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['email', 'source', 'createdAt', 'active'])
+          && d.email is string && d.email.size() >= 5 && d.email.size() <= 254
+          && d.email.matches('^[^@]+@[^@]+[.][^@]+$')
+          && (!('source' in d) || (d.source is string && d.source.size() <= 40))
+          && (!('active' in d) || d.active == true)
+          && d.createdAt == request.time;
+    }
+    function inquiryCreateValida() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['name', 'email', 'phone', 'message', 'pieceSlug', 'source', 'status', 'createdAt'])
+          && nonEmptyStr(d.name)    && d.name.size()    <= 120
+          && nonEmptyStr(d.message) && d.message.size() <= 3000
+          && (!('email' in d) || (d.email is string && d.email.size() <= 254))
+          && (!('phone' in d) || (d.phone is string && d.phone.size() <= 30))
+          && (!('pieceSlug' in d) || d.pieceSlug == null || (d.pieceSlug is string && d.pieceSlug.size() <= 200))
+          && d.source is string && d.source.size() <= 40
+          && d.status == 'nuevo'
+          && d.createdAt == request.time;
+    }
+
     // ─── Pieces (products) ─────────────────────────────────────────────────────
 
     match /pieces/{pieceId} {
@@ -141,7 +179,7 @@ service cloud.firestore {
 
     match /reviews/{reviewId} {
       allow read: if resource.data.approved == true || isAdmin();  // S5: público solo aprobadas; admin ve todas
-      allow create: if true;                   // Anyone can submit a review
+      allow create: if reviewCreateValida();   // F6: forma exacta + nunca nace aprobada
       allow update, delete: if isAdmin();      // Admin+ moderates reviews
     }
 
@@ -149,7 +187,7 @@ service cloud.firestore {
 
     match /subscriptions/{subId} {
       allow read: if isAdmin();                // Admin only
-      allow create: if true;                   // Anyone can subscribe
+      allow create: if subscriptionCreateValida(); // F6: email válido + forma exacta
       allow update, delete: if isAdmin();      // Admin manages
     }
 
@@ -157,7 +195,7 @@ service cloud.firestore {
 
     match /inquiries/{inqId} {
       allow read: if isEditor();               // Editors+ can see leads
-      allow create: if true;                   // Anyone can send inquiry
+      allow create: if inquiryCreateValida();  // F6: forma exacta + status 'nuevo' forzado
       allow update: if isEditor();             // Mark as read, etc.
       allow delete: if isAdmin();              // Admin cleans up
     }
@@ -218,9 +256,12 @@ service cloud.firestore {
 
     // ─── Push Tokens ───────────────────────────────────────────────────────────
 
+    // F6 frenos de gasto: NINGÚN código escribe push_tokens hoy (verificado por grep
+    // js/ + functions/ 2026-06-09) — era una puerta pública sin uso legítimo (spam).
+    // Cuando aterrice FCM, reabrir create con validación de forma (como los forms).
     match /push_tokens/{tokenId} {
       allow read: if isAdmin();                // Admin sees subscribers
-      allow create, update: if true;           // Anyone registers their token
+      allow create, update: if false;          // cerrado: sin writer legítimo en el código
       allow delete: if isAdmin();
     }
   }

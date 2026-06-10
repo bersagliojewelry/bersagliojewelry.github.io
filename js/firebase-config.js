@@ -55,7 +55,10 @@ const app = initializeApp(firebaseConfig);
 // como las llaves Firebase (L-14): registrada para bersagliojewelry.co + .github.io
 // (proyecto bersaglio-jewelry, 2026-06-08). La clave SECRETA vive SOLO en Firebase
 // App Check (servidor), nunca en el cliente.
-const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LdSoxQtAAAAAAAiQ_dZz8-Cy5mARqjhCMtcZa3K';
+// `VITE_RECAPTCHA_SITE_KEY='off'` = apagado EXPLÍCITO (builds del GEMELO/entornos sin
+// App Check); el fallback de prod solo aplica cuando la var no viene en absoluto.
+const _rawRecaptchaKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+const recaptchaSiteKey = _rawRecaptchaKey === 'off' ? '' : (_rawRecaptchaKey || '6LdSoxQtAAAAAAAiQ_dZz8-Cy5mARqjhCMtcZa3K');
 if (!isDev && recaptchaSiteKey) {
     try {
         initializeAppCheck(app, {

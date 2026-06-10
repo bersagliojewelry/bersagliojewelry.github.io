@@ -852,3 +852,54 @@ Daniel: "continuemos" → segunda roca de la semana 1 del plan §57. Hasta hoy l
 **60.6 Archivos**: NUEVOS `functions/{backup.js,backup-codec.js,backup.test.mjs,restore-backup.mjs}`; EDITADOS `functions/index.js` (re-export), `package.json` (script test:backup). INTACTOS: resto de functions, reglas, front.
 
 **60.7 Doctrina + cache**: §3.6 (valor con menos fricción: dump JSON > maquinaria IAM a esta escala) + L-17 (lógica pura testeable). Sin cache bump. **Restante PRE-1**: 1ª corrida verificada → gemelo → restore probado con ojos de Daniel → copia semanal FUERA de la cuenta (descarga manual viernes hasta automatizar).
+
+## 2026-06-09 — §61: GEMELO vivo — bersaglio-gemelo.web.app (aula de Kary + banco de pruebas + sala de restore)
+"continuemos" → tercera roca de la semana 1 §57. Proyecto `bersaglio-gemelo` creado por CLI (display name SIN paréntesis — GCP los rechaza), Firestore `(default)` us-central1 creado por CLI (la consola habilitó la API al abrir el asistente — el primer intento CLI dio 403 API-disabled), Auth email/password habilitada por Daniel (consola, 2 clics).
+
+**61.1 Causa**: el plan §57 exige un entorno idéntico a prod donde (a) Kary aprenda con datos de juguete, (b) todo cambio que toque dinero se ensaye ANTES de prod, (c) el backup se restaure "con ojos".
+
+**61.2 Solución**: proyecto **Spark (SIN Blaze, deliberado**: sin facturación vinculada → imposible que genere costos) + config de deploy **AISLADA** (`firebase.gemelo.json` — jamás se cruza con la de prod) + mismas reglas 51/51 desplegadas + sembrador `functions/seed-gemelo.mjs` (**se NIEGA a correr contra prod**; 5 clientas ficticias con saldos PRE-calculados usando el `computeSaldo` de prod, 2 vendedoras, 3 piezas demo, usuarios del aula admin/owner) + hosting con build parametrizado (VITE_* del gemelo en UN solo comando para no contaminar builds futuros) + **interruptor NUEVO `VITE_RECAPTCHA_SITE_KEY='off'`** en `js/firebase-config.js` (apaga App Check explícitamente en entornos sin él; el fallback de prod solo aplica cuando la var no viene).
+
+**61.3 No-regresión**: build de prod de control → fallback `6LdSoxQt` presente en `dist/js/chunks/firebase-config-*.js`. Gotcha de verificación: los chunks JS viven en `dist/js/chunks/`, NO en `dist/assets/` (ahí va el CSS) — grep en la carpeta correcta antes de concluir. Prod sin cambios de comportamiento (var ausente = mismo camino de siempre).
+
+**61.4 Verificación E2E EN VIVO (navegador real)**: login `aula-kary@…` → panel Piezas (3 demo visibles) → CRM Cuentas: total $4.300.000 · vencida $1.900.000 con rangos 31-60/+60 · cartera por vendedora · "Ámbar Entrenamiento" **Vencido · 89 días de mora** → el motor de aging corre idéntico sobre datos de juguete. (Truco de automatización: el tecleo del Chrome MCP no aterrizaba en el input del login → rellenar por JS + `dispatchEvent('input')` + click del submit.)
+
+**61.5 Anti-patterns evitados**: Spark deliberado con limitación DOCUMENTADA (las Cloud Functions NO corren en el gemelo → `recalcSaldoCliente` no vive ahí; los saldos del aula van pre-calculados en el seed; si el aula avanzada las necesita → vincular Blaze, decisión de Daniel, seguiría ~$0) · datos 100% ficticios (la regla §57: datos reales SOLO en ensayos de restore y se borran después) · deploy con `--config` explícito (cero riesgo de pisar prod).
+
+**61.6 Archivos**: NUEVOS `firebase.gemelo.json`, `functions/seed-gemelo.mjs`; EDITADO `js/firebase-config.js` (interruptor 'off'). Consolas: Firestore DB (CLI) + Auth (Daniel).
+
+**61.7 Doctrina + cache**: §3.6 (aislamiento por archivo de config > flags mentales). Sin cache bump (el chunk va hasheado por Vite; el shell no cambió). **Restante PRE-1**: restaurar el 1er backup EN el gemelo con ojos de Daniel (mañana, cuando exista `backup-2026-06-10.json.gz`) · alertas de presupuesto (Daniel) · kill-switch doc.
+
+## 2026-06-09 — §62: F6 cimientos — CI de reglas REACTIVADO (TODO-10) + entero-COP en 3 capas (desplegado)
+Daniel: "¿no se puede hacer nada hoy?" → sí: los ítems de Etapa 1 que no esperan al backup de las 3 AM.
+
+**62.1 Causa**: (a) el CI de reglas llevaba pausado desde 2026-06-06 (rojo sin diagnosticar entonces; la suite ya corre verde local con el MISMO comando) → las reglas se desplegaban sin red automática; (b) el dinero aún aceptaba decimales (`monto is number` + `round2` a centavos) contradiciendo la decisión congelada entero-COP (spec §5.1, Consejo §16).
+
+**62.2 Solución**: (a) **CI reactivado** (`firestore-rules-test.yml`): triggers `push`/`pull_request` CON filtro de paths (solo corre cuando cambian reglas/tests — cost-aware §3.6, no quema runner en commits de docs) + `workflow_dispatch`. (b) **entero-COP en 3 capas**: reglas `monto is int` (un decimal llega como double y se RECHAZA en la frontera; JS envía enteros como int → cero fricción para el panel) · `saldo.js` `round2`→`redondearAPeso` (Math.round al peso completo; residuo flotante legacy redondea, nunca fracciona) · tests en ambas capas (decimal rechazado / entero pasa / saldo siempre `Number.isInteger`).
+
+**62.3 No-regresión**: la cartera migrada es entera (Excel COP) → `is int` no rechaza operaciones legítimas; el panel ya produce enteros (`adm-money`, F-CHASIS-A). Test antiguo "redondeo a 2 decimales" REESCRITO a la doctrina nueva (0.1+0.2 → 0 pesos, no 0.3).
+
+**62.4 Verificación**: saldo **12/12** · reglas **53/53** (2 nuevos entero-COP) · `deploy --only firestore:rules` ✅ · `deploy --only functions:recalcSaldoCliente` ✅. ⚠️ El CI queda ACTIVO en GitHub cuando la rama se suba/mergee (el workflow vive en el repo remoto); local ya está commiteado.
+
+**62.5 Anti-patterns evitados**: validación en la FRONTERA (reglas) y no solo en la UI; redondeo en UNA capa autoritativa (la CF) en vez de regado por el front; CI con path-filter (no big-bang de minutos); test legacy actualizado en el MISMO cambio (no quedó mintiendo).
+
+**62.6 Archivos**: `firestore.rules` (is int), `functions/saldo.js` (redondearAPeso), `functions/saldo.test.mjs` (test reescrito), `tests/firestore-rules.test.mjs` (+2), `.github/workflows/firestore-rules-test.yml` (reactivado). INTACTOS: front, demás functions.
+
+**62.7 Doctrina + cache**: spec §5.1/Consejo §16 ejecutados. **TODO-10 ✅ CERRADO** (efectivo al push/merge). Sin cache bump. Restante Etapa 1/F6: restore probado (mañana) · RBAC claims · reconciliación + Salud · paginación cursor · kill-switch doc.
+
+## 2026-06-10 — §63: PRE-1 CERRADO — restauración PROBADA con ojos de Daniel (backup→gemelo→verificado→limpiado)
+Daniel forzó la 1ª corrida de `backupDiario` (Cloud Scheduler "Forzar ejecución") → ensayo completo de restauración la misma noche en que se construyó el sistema de backup.
+
+**63.1 Ensayo ejecutado (ciclo completo)**: (1) `backupDiario` corrió OK en prod → `backups/firestore/backup-2026-06-10.json.gz` (**702 docs, 29 KB**; el guard anti-vacío no saltó); (2) `download-backup.mjs` la bajó (solo-lectura); (3) `restore-backup.mjs --target bersaglio-gemelo` restauró **702/702**; (4) **verificación con ojos en el panel del gemelo**: "Directo de Kary — 344 clientes — $506.664.328" + 349 totales (344 reales + 5 juguete) — los datos reales REVIVIDOS desde la copia, captura vista por Daniel; (5) **limpieza obligatoria** (regla §57: datos reales NUNCA viven en el ambiente de pruebas): `firestore:delete --all-collections --project bersaglio-gemelo --force` + re-seed de juguete; (6) la copia descargada quedó como **1ª copia FUERA de la cuenta**: `C:\Users\romad\Documents\BersaglioBackups\` (carpeta local; rutina: viernes, manual, hasta automatizar).
+
+**63.2 Resultado**: **TODO-15 / PRE-1 CERRADO** — backup diario automático (3 AM, retención 30d) + restauración probada de punta a punta + runbook (`restore-backup.mjs` con bloqueo anti-prod) + copia off-account. La cartera ya nunca duerme sin red. Nota de frescura: la cartera viva marca $506.664.328 (evolucionó desde los $506.510.780 de la migración — Kary o ajustes posteriores; el snapshot del backup es la verdad del día).
+
+**63.3 No-regresión**: prod solo fue LEÍDO (download + el dump de la función); el wipe fue exclusivamente en el gemelo (--project explícito); el gemelo quedó como antes del ensayo (juguete).
+
+**63.4 Verificación**: salida de cada paso capturada + screenshot del panel del gemelo con los datos reales + gemelo re-verificado con seed de juguete.
+
+**63.5 Anti-patterns evitados**: "copia que nunca se restauró = promesa" (el comité §57) — probada el día 1; datos reales borrados del entorno de pruebas inmediatamente; wipe SOLO con --project gemelo explícito; el archivo local NO se versionó en git (datos de clientas fuera de repos).
+
+**63.6 Archivos**: cero código nuevo (se usaron las piezas de §60/§61). Local: `BersaglioBackups\backup-2026-06-10.json.gz`.
+
+**63.7 Doctrina**: la dupla §60+§61 pagó el mismo día (backup+gemelo = restauración ensayable a demanda). **Restante F6**: RBAC claims · reconciliación+Salud · paginación cursor · alertas presupuesto (Daniel) · recorrido del kill-switch (Daniel).

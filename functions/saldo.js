@@ -24,9 +24,12 @@ const SIGNO_POR_TIPO = Object.freeze({
     abono: -1,
 });
 
-// Redondeo a 2 decimales para evitar artefactos de punto flotante (precisión exacta).
-function round2(n) {
-    return Math.round((n + Number.EPSILON) * 100) / 100;
+// Entero-COP (spec maestra §5.1, Consejo §16): el COP no circula con centavos →
+// todo saldo es un ENTERO de pesos. Cualquier residuo flotante (dato legacy) se
+// redondea al peso completo (half-up). La frontera de escritura (firestore.rules
+// `monto is int`) impide que entren decimales nuevos.
+function redondearAPeso(n) {
+    return Math.round(n);
 }
 
 /**
@@ -46,13 +49,13 @@ function aporteSaldo(mov) {
 /**
  * Saldo total a partir de la lista de movimientos (data plana de cada doc).
  * @param {Array<object>} movimientos
- * @returns {number} saldo redondeado a 2 decimales.
+ * @returns {number} saldo en PESOS ENTEROS de COP (entero-COP §5.1).
  */
 function computeSaldo(movimientos) {
     if (!Array.isArray(movimientos)) return 0;
     let saldo = 0;
     for (const mov of movimientos) saldo += aporteSaldo(mov);
-    return round2(saldo);
+    return redondearAPeso(saldo);
 }
 
 module.exports = { computeSaldo, aporteSaldo, SIGNO_POR_TIPO };

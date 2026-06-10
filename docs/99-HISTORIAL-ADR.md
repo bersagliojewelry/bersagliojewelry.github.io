@@ -1051,3 +1051,21 @@ Con autorización explícita de Daniel ("autorizo todo").
 **72.6 Archivos**: MODIFICADOS `firestore.rules` (1 cláusula + comentario en `transicionSolicitudValida`) · `tests/firestore-rules.test.mjs` (semilla `sol5` + 1 test). CRUDO del red-team → bóveda `research-archive/2026-06-10-redteam-m1-firestore-CRUDO.json`. INTACTOS: `firestore.indexes.json`, functions, resto de reglas.
 
 **72.7 Doctrina + cache**: lección **L-38** (guard `(A||B)` + `hasOnly` que whitelista B = estado contradictorio → ternario por presencia). Sin cache bump (§4: solo reglas, cero shell/JS público). **Deploy de rules+indexes de M1 = DESPLEGADO 2026-06-10** (Daniel autorizó deploy permanente; PR #221 mergeado a `main`; índice COLLECTION_GROUP `solicitudes` confirmado en prod). W-01 funcionó como gate: atrapó exactamente lo que Daniel vio + 4 forward-risks que M2b heredará documentados.
+
+## 2026-06-10 — §73: M2a-1b — ensanche aditivo de anulacionValida (enlace de corrección) + par atómico
+
+> El par de corrección de M2a (anular original + crear reemplazo) enlaza ambas patas con `motivoCategoria` (qué tipo de corrección) + `corregidoPor` (id del reemplazo) en la anulación. La `anulacionValida` desplegada (M1 no la tocó) solo permitía 4 claves en su `hasOnly` → bloqueaba el par. Primer slice del build M2a tras el cimiento (contrato puro + capa de datos).
+
+**73.1 Causa/necesidad** (verificada en `firestore.rules`): `anulacionValida.hasOnly(['anulado','anuladoPor','anuladoEn','motivoAnulacion'])` rechazaba cualquier campo extra → la pata "anular" del par no podía portar el enlace al reemplazo.
+
+**73.2 Solución estructural**: **EXPAND aditivo** — +`motivoCategoria` y +`corregidoPor` al `hasOnly`, ambos OPCIONALES con validación de tipo (`nonEmptyStr(motivoCategoria)`; `corregidoPor is string`). NO se exigen todavía (M3 hará `motivoCategoria` obligatorio + gate por tipo/monto = contract). `corregidoPor` NO se verifica cross-doc por diseño (§69; M4 audita "corrección sin enlace" de forma detectiva).
+
+**73.3 No-regresión**: los 4 controles previos INTACTOS (append-only one-way `anulado false→true`, `anuladoPor==uid`, `motivoAnulacion` no vacío); el test existente "admin SÍ anula con motivo" (sin los campos nuevos) sigue verde. El whitelist sigue bloqueando inyección de claves.
+
+**73.4 Tests + red-team**: reglas **100/100** en emulador (+1 M2a-1b: enlace válido pasa; campo extra `hacked` y tipos inválidos `motivoCategoria:''`/`corregidoPor:123` fallan). **Red-team W-01 enfocado** (5 agentes, 3 lentes: alcance del expand · abuso de campos · no-regresión/forward → verificación adversarial). **Veredicto: 0 bloqueantes, 0 bugs del ensanche** (es estrictamente EXPAND: antes `motivoCategoria` ni existía → no introduce ni debilita nada).
+
+**73.5 FORWARD-RISK registrado** (del red-team, no explotable, no bloquea): entre el deploy de M2a-1b y el de M3, una anulación puede hacerse SIN `motivoCategoria` (operación legítima, válido hoy). Como la anulación es one-way append-only, M3 al volverlo obligatorio **NO cubre retroactivamente** (no se puede re-anular para backfillear). **Mitigación**: (a) M2a-4 incorpora `motivoCategoria` al modal de anular → toda anulación de M2a en adelante lo lleva → cierra la ventana huérfana; (b) M3/M4 deben tratar las anulaciones legacy/pre-M2a-4 con una categoría `sin_clasificar_legacy`, NUNCA asumir cobertura retroactiva. *Endurecer la regla es trivial; reconstruir la intención de una anulación pasada, no.*
+
+**73.6 Par atómico construido** (desbloquea M2a-2): `crm-service.js` `corregirMovimientoBatch` — `writeBatch` atómico (anular original enlazado con `motivoCategoria`+`corregidoPor` + crear reemplazo con `correccionDe`, MISMO tipo y fecha; fecha nueva + `CORRECCION_FECHA` para corrección de fecha). `movimientoValido` admite `correccionDe` (sin `hasOnly` hasta M3). Build verde.
+
+**73.7 Archivos + deploy**: MODIFICADOS `firestore.rules` (`anulacionValida` +2 claves) · `tests/firestore-rules.test.mjs` (semilla `mLink` + 1 test) · `js/crm-service.js` (`corregirMovimientoBatch` + import `writeBatch`). CRUDO → bóveda `research-archive/2026-06-10-redteam-m2a1b-anulacion-CRUDO.json`. **DESPLEGADO 2026-06-10** (solo reglas; índices sin cambio; autorización permanente de Daniel). Sin cache bump (reglas + JS dormido sin UI). Siguiente: UI de Kary (M2a-3).

@@ -18,7 +18,7 @@
 
 ## ⚠️ Flags de riesgo activos (→ hardening F6 · detalle en `docs/41-SEGURIDAD.md`)
 - 🟠 **Deploy reglas/functions = MANUAL** (CI es Hosting/Pages only, **L-22**): `firebase deploy --only firestore:rules,firestore:indexes,functions`. ✅ Functions Node 22 + ff v7 (ADR §48).
-- 🟠 **F6 en curso · App Check ROTO en el canje** (RCA ADR §57.3, verificada EN VIVO 2026-06-09): `exchangeRecaptchaV3Token` → **403** → 96-100% "no válidas" en el monitor (NO es propagación; corrige la nota anterior). Fix: re-registrar la llave **SECRETA** de reCAPTCHA v3 en la consola App Check (TODO-14, guiado a Daniel). **Enforce PROHIBIDO** hasta ~100% verificadas ×7d (L-32). Resto F6: CI rule-test (TODO-10) · entero-COP · reconciliación/Salud · RBAC claims · backup PRE-1 (TODO-15, semana 1). **Próximo: plan operación integral §57 (semana 1 + 9 decisiones de Daniel) → bóveda `plan-operacion-robustecimiento-2026-06.md`.**
+- 🟠 **F6 en curso · App Check REPARADO 2026-06-09** (ADR §58): causa real = API key del navegador con allowlist SIN "Firebase App Check API" (`API_KEY_SERVICE_BLOCKED`; la hipótesis "llave secreta" §57.3 quedó descartada). Daniel añadió la API (6→7) en GCP → canje `exchangeRecaptchaV3Token` **200 verificado en vivo**. TODO-14 restante: monitor ~100% verificadas ×7d → **Enforce** guiado (PROHIBIDO antes, L-32). 2FA Google+GitHub ✅. Resto F6: CI rule-test (TODO-10) · entero-COP · reconciliación/Salud · RBAC claims · backup PRE-1 (TODO-15, semana 1). **Próximo: semana 1 del plan §57 → bóveda `plan-operacion-robustecimiento-2026-06.md`.**
 
 ## 🧩 Sub-sistemas (resumen)
 Diseño Liquid Glass (Vite/Bundled) ✅ · Sincronización en vivo con Firestore ✅ · Checkout Stepper de 3 pasos ✅ · Cart Drawer lateral ✅ · Animaciones de entrada Staggered ✅

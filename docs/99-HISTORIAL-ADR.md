@@ -801,3 +801,20 @@ Daniel: "antes de seguir... lanza un comité de expertos sobre todo lo que neces
 **57.6 Archivos**: bóveda (NUEVOS): `plan-operacion-robustecimiento-2026-06.md` + `research-archive/2026-06-09-comite-operacion-CRUDO.md`. Repo (consolidación): `docs/{99-HISTORIAL-ADR,00-INDICE,05-ESTADO-GLOBAL,10-MEMORIA-CORTO-PLAZO,30-LECCIONES}.md`. Código de app INTACTO (cero cambios).
 
 **57.7 Doctrina**: §3.6/§3.7 + lección nueva **L-32** (monitor App Check: "no válidas" ≠ propagación → diagnóstico por red/403 en el canje). Sin cache bump (no toca SW).
+
+## 2026-06-09 — §58: App Check REPARADO en vivo — causa real: API key restringida sin "Firebase App Check API"
+Continuación de §57.3 (canje 403). Sesión guiada con Daniel (consolas GCP/Firebase/reCAPTCHA) + diagnóstico en vivo vía navegador conectado (Claude in Chrome).
+
+**58.1 Causa raíz (verificada leyendo el CUERPO del 403, §3.3)**: la hipótesis inicial de §57.3 (llave secreta mal registrada) resultó FALSA — Daniel re-pegó la secreta y el 403 persistió. Replicando el canje a mano (`grecaptcha.execute(0, {action:'fire_app_check'})` por widgetId + POST `recaptcha_v3_token`) el body reveló: **`API_KEY_SERVICE_BLOCKED`** — la API key del navegador ("Nuevo Browser key", la del bundle `AIzaSyDcAv…`) tiene **allowlist de 6 APIs** (hardening Tier A previo) que NO incluía `firebaseappcheck.googleapis.com`. App Check se instaló (§54) DESPUÉS de restringir la key → todo canje nacía bloqueado, independiente del secreto. Descartes documentados en el camino: tipo de llave v3 ✅, dominios .co/.github.io ✅, site key del bundle == consola ✅, secreta re-pegada ✅.
+
+**58.2 Solución estructural (Daniel, guiado, GCP Console)**: Credenciales → "Nuevo Browser key" → Restricciones de API → añadir **Firebase App Check API** (6→7 APIs) → Guardar (~5 min de propagación). **Cero cambios de código.**
+
+**58.3 No-regresión**: el resto del allowlist y los referrers HTTP quedaron intactos (el candado del hardening sigue vivo); ninguna otra API añadida.
+
+**58.4 Verificación**: EN VIVO post-propagación: `exchangeRecaptchaV3Token` → **200** (antes 403). Observación pendiente (TODO-14): monitor de App Check subiendo a ~100% verificadas ×7 días → recién entonces **Enforce**.
+
+**58.5 Anti-patterns evitados**: NO encadenar hipótesis a ciegas (tras fallar la #1 se leyó la EVIDENCIA del body — Trigger 🔴 §G.2); NO Enforce con métricas en rojo; diagnóstico con el canje REAL del SDK (por widgetId — ejecutar por site key da el falso negativo "Invalid site key"); datos de consolas del cliente manejados sin exfiltrar secretos (la clave secreta nunca pasó por el chat).
+
+**58.6 Archivos**: código de la app: CERO. Cerebro: `docs/{05,10,30 (L-32 reescrita),99,00-INDICE}`. Consolas (Daniel): GCP API key. Además hoy: 2FA activado en Google ×2 y GitHub.
+
+**58.7 Doctrina + cache**: L-32 reescrita con la receta completa (leer el body del 403; `API_KEY_SERVICE_BLOCKED` vs `App attestation failed`; **meta-regla: al instalar un servicio Google nuevo, revisar las API restrictions de la key PRIMERO**). Sin cache bump (no se tocó el SW ni el shell).

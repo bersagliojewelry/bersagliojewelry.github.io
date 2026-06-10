@@ -11,7 +11,7 @@
  *   await requireAuth('editor');  // redirects to login if not authorized
  */
 
-import { auth, firestoreDb } from './firebase-config.js';
+import { app, auth, firestoreDb } from './firebase-config.js';
 import {
     signInWithEmailAndPassword,
     signOut as firebaseSignOut,
@@ -88,6 +88,14 @@ export async function signIn(email, password) {
             throw new Error('No tienes permisos para acceder al panel de administración.');
         }
 
+        // Cuenta desactivada (active:false): cerrar sesión y rechazar. El bloqueo
+        // DURO es Auth disabled (lo pone la CF deactivateUser); esto es defensa en
+        // profundidad para el caso de un doc en active:false sin disabled aún.
+        if (snap.data().active === false) {
+            await firebaseSignOut(auth);
+            throw new Error('Tu cuenta fue desactivada. Contacta al administrador.');
+        }
+
         _userProfile = snap.data();
 
         // Update last login — best-effort: las reglas de `users` solo dejan que
@@ -105,6 +113,9 @@ export async function signIn(email, password) {
     } catch (err) {
         if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
             throw new Error('Email o contraseña incorrectos.');
+        }
+        if (err.code === 'auth/user-disabled') {
+            throw new Error('Tu cuenta fue desactivada. Contacta al administrador.');
         }
         if (err.code === 'auth/too-many-requests') {
             throw new Error('Demasiados intentos. Intenta de nuevo en unos minutos.');
@@ -202,6 +213,15 @@ export async function requireAuth(minRole = 'editor') {
         throw new Error('Insufficient role');
     }
 
+    // Cuenta desactivada → fuera (cada página admin es una carga fresca → el perfil
+    // se re-lee, así que esto cierra la ventana de una sesión abierta tras desactivar).
+    if (_userProfile.active === false) {
+        sessionStorage.removeItem('bj_auth');
+        await firebaseSignOut(auth);
+        window.location.replace('admin-login.html?error=disabled');
+        throw new Error('Account disabled');
+    }
+
     // Auth passed — show the page
     document.body.style.display = '';
 
@@ -244,15 +264,18 @@ export async function updateUserRole(uid, newRole) {
 }
 
 /**
- * Deactivate a user (soft delete).
+ * Desactiva un usuario. Llama la Cloud Function `deactivateUser` (no escribe el
+ * doc directo) porque desactivar DEBE deshabilitar la cuenta en Firebase Auth
+ * (`disabled:true`) — un write de solo `active:false` NO bloquea el acceso (un
+ * doc no es una credencial). La CF: verifica owner server-side, protege al owner,
+ * deshabilita Auth y marca `active:false`. firebase/functions se importa LAZY para
+ * no inflar el bundle público (auth.js viaja en el sitio).
  */
 export async function deactivateUser(uid) {
     if (!hasRole('owner')) throw new Error('Solo el owner puede desactivar usuarios.');
     if (uid === _currentUser.uid) throw new Error('No puedes desactivarte a ti mismo.');
 
-    await setDoc(doc(firestoreDb, 'users', uid), {
-        active: false,
-        deactivatedAt: serverTimestamp(),
-        deactivatedBy: _currentUser.uid
-    }, { merge: true });
+    const { getFunctions, httpsCallable } = await import('firebase/functions');
+    const fn = httpsCallable(getFunctions(app, 'us-central1'), 'deactivateUser');
+    await fn({ uid });
 }

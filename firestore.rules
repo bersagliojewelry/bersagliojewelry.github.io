@@ -246,12 +246,14 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // ─── Users (role management) ───────────────────────────────────────────────
+    // ─── Users (role management) — SOLO OWNER ──────────────────────────────────
     // El panel escribe users/{uid} DIRECTO (js/auth.js) → las REGLAS son la única
-    // frontera server-side (las CFs callable con guardas NO están en ese camino).
-    // F6 frente B: validar el `role` aquí es crítico — sin esto un admin podría
-    // escribir role:'owner' en otro doc (escalar) o degradar al owner, y el trigger
-    // `syncRoleClaim` lo sellaría en un custom claim REAL (privilegio durable).
+    // frontera server-side (las CFs callable con guardas NO están en ese camino;
+    // y las que sí lo están corren con Admin SDK, que SALTA estas reglas).
+    // Gestión de usuarios = OWNER-only (la página es `requireAuth('owner')`). Un
+    // admin NO escribe docs de usuario: así no puede reescribir el `role` de otros
+    // ni tocar al owner (§66) — y sin esto el trigger `syncRoleClaim` sellaría un
+    // claim REAL escalado (§65). `role:'owner'` no se acuña desde la app (seed/consola).
     function usersFieldsValidos() {
       let d = request.resource.data;
       return d.keys().hasOnly(['email', 'displayName', 'role', 'active',
@@ -262,17 +264,11 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if isAuth() && (request.auth.uid == userId || isAdmin());
-      // 'owner' NO se acuña desde la app (se siembra por consola/seed) → create solo admin|editor.
+      allow read:   if isAuth() && (request.auth.uid == userId || isAdmin());
       allow create: if isOwner() && usersFieldsValidos()
                     && request.resource.data.role in ['admin', 'editor'];
-      allow update: if usersFieldsValidos() && (
-                       isOwner()                                          // owner (Daniel): cualquier cambio válido
-                       || (isAdmin() && userId != request.auth.uid        // admin (Kary) sobre OTROS, y…
-                           && resource.data.role != 'owner'               // …NO puede tocar al owner…
-                           && request.resource.data.role in ['admin', 'editor'])  // …ni acuñar un owner
-                    );
-      allow delete: if isOwner();              // Only owner removes users
+      allow update: if isOwner() && usersFieldsValidos();   // solo el owner muta usuarios
+      allow delete: if isOwner();
     }
 
     // ─── Config (site settings, status) ────────────────────────────────────────

@@ -396,9 +396,15 @@ test('F6 users · admin NO puede degradar/tocar al owner', async () => {
     await assertFails(setDoc(doc(asUser('adminUid'), 'users/ownerUid'),
         { role: 'editor' }, { merge: true }));
 });
-test('F6 users · admin SÍ cambia a otro entre admin/editor', async () => {
-    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'users/objetivoUid'),
+test('F6 users · admin NO muta usuarios (gestión owner-only, §66)', async () => {
+    // Ni siquiera un cambio de rol "benigno" editor→admin: la frontera es owner-only.
+    await assertFails(setDoc(doc(asUser('adminUid'), 'users/objetivoUid'),
         { role: 'admin' }, { merge: true }));
+});
+test('F6 users · admin NO puede desactivar a otro por write directo (§66)', async () => {
+    // Desactivar va por la CF (deshabilita Auth); el write directo del admin se niega.
+    await assertFails(setDoc(doc(asUser('adminUid'), 'users/objetivoUid'),
+        { active: false }, { merge: true }));
 });
 test('F6 users · admin NO puede auto-promoverse (userId == self)', async () => {
     await assertFails(setDoc(doc(asUser('adminUid'), 'users/adminUid'),

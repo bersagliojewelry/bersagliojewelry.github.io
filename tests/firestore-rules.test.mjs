@@ -292,3 +292,13 @@ test('F6 leads · sin nombre es rechazado', async () => {
 test('F6 push_tokens · creación pública CERRADA (sin uso legítimo)', async () => {
     await assertFails(setDoc(doc(anon(), 'push_tokens/t1'), { token: 'abc' }));
 });
+
+// entero-COP (spec §5.1): pesos enteros en la frontera de escritura
+test('F6 entero-COP · monto con decimales es RECHAZADO (pesos enteros)', async () => {
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mFloat'),
+        { tipo: 'factura', monto: 50000.5, registradoPor: 'adminUid', anulado: false }));
+});
+test('F6 entero-COP · monto entero SÍ pasa', async () => {
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mEntero'),
+        { tipo: 'abono', monto: 12345, registradoPor: 'adminUid', anulado: false }));
+});

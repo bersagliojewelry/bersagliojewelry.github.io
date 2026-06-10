@@ -53,7 +53,9 @@ service cloud.firestore {
     function movimientoValido() {
       let d = request.resource.data;
       return d.tipo in ['apertura', 'factura', 'abono', 'ajuste']
-          && d.monto is number
+          // entero-COP (spec §5.1): pesos SIN centavos. JS envía números enteros como
+          // int; un decimal llega como double y se RECHAZA en la frontera de escritura.
+          && d.monto is int
           && (d.tipo in ['apertura', 'ajuste'] || d.monto >= 0)
           && (!('descripcion' in d) || d.descripcion is string)
           // fecha real del hecho (mora, ADR §51); inmutable. Formato ISO 'YYYY-MM-DD'

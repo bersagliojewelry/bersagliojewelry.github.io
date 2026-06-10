@@ -90,9 +90,17 @@ test('saldo · defensivo: tipo desconocido, monto faltante o no-numérico aporta
     assert.equal(aporteSaldo({}), 0);
 });
 
-test('saldo · sin artefactos de punto flotante (redondeo a 2 decimales)', () => {
+test('saldo · entero-COP: el saldo SIEMPRE es un peso entero (residuos flotantes redondean al peso)', () => {
+    // 0.1 + 0.2 (artefacto flotante legacy) → redondea a 0 pesos, nunca fracciones
     assert.equal(computeSaldo([
         { tipo: 'factura', monto: 0.1 },
         { tipo: 'factura', monto: 0.2 },
-    ]), 0.3); // 0.1 + 0.2 === 0.30000000000000004 sin redondeo
+    ]), 0);
+    // half-up al peso completo
+    assert.equal(computeSaldo([{ tipo: 'factura', monto: 1000.6 }]), 1001);
+    // la suma de enteros queda entera
+    assert.ok(Number.isInteger(computeSaldo([
+        { tipo: 'factura', monto: 50000 },
+        { tipo: 'abono', monto: 12345 },
+    ])));
 });

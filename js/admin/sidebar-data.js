@@ -31,6 +31,7 @@ export const NAV = [
   { label: 'Sistema', items: [
     { label: 'Vendedoras',    href: 'admin-config.html#vendedoras', icon: 'users',  role: 'admin' },
     { label: 'Usuarios',      href: 'admin-usuarios.html',          icon: 'shield', role: 'owner' },
+    { label: 'Salud',         href: 'admin-salud.html',             icon: 'pulse',  role: 'owner' },
     { label: 'Configuración', href: 'admin-config.html',            icon: 'gear',   role: 'admin' },
   ]},
 ];

@@ -266,5 +266,31 @@ service cloud.firestore {
       allow create, update: if false;          // cerrado: sin writer legítimo en el código
       allow delete: if isAdmin();
     }
+
+    // ─── Salud del sistema (F6 frente D): escrita SOLO por Cloud Functions ──────
+    // `salud/backup` + `salud/reconciliacion` (singletons, pisar no apilar). El
+    // Admin SDK de las CFs NO pasa por estas reglas → write:false cierra al cliente.
+    // Acceso ADMIN deliberado (no owner-only): Kary puede operar la red de seguridad
+    // si hace falta; solo la ENTRADA del menú es owner (UI ≠ frontera de seguridad).
+    match /salud/{docId} {
+      allow read:  if isAdmin();
+      allow write: if false;
+    }
+
+    // Eventos de fallo (p.ej. recalc-saldo-error). El panel solo puede MARCARLOS
+    // como resueltos (whitelist de 3 claves + resuelto false→true UNA sola vez +
+    // sello de tiempo del SERVIDOR, espejo de anulacionValida) — el contenido del
+    // evento es testimonio inmutable, como la anulación de movimientos.
+    match /saludEventos/{eventoId} {
+      allow read: if isAdmin();
+      allow create, delete: if false;
+      allow update: if isAdmin()
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['resuelto', 'resueltoEn', 'resueltoPor'])
+          && resource.data.get('resuelto', false) == false
+          && request.resource.data.resuelto == true
+          && request.resource.data.resueltoEn == request.time
+          && request.resource.data.resueltoPor == request.auth.uid;
+    }
   }
 }

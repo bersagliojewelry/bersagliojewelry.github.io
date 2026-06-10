@@ -37,3 +37,10 @@ test('Vendedoras es visible en la nav (grupo Sistema)', () => {
   const html = renderSidebar(NAV, { role: 'admin', activePage: 'admin.html' });
   assert.match(html, /Vendedoras/);
 });
+
+test('Salud solo es visible para el owner (F6 frente D)', () => {
+  const adminHtml = renderSidebar(NAV, { role: 'admin', activePage: 'admin.html' });
+  assert.doesNotMatch(adminHtml, /href="admin-salud\.html"/);
+  const ownerHtml = renderSidebar(NAV, { role: 'owner', activePage: 'admin.html' });
+  assert.match(ownerHtml, /href="admin-salud\.html"/);
+});

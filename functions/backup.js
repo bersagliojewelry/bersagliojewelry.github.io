@@ -15,7 +15,7 @@
 'use strict';
 
 const { onSchedule } = require('firebase-functions/v2/scheduler');
-const { getFirestore } = require('firebase-admin/firestore');
+const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { getStorage } = require('firebase-admin/storage');
 const { gzipSync } = require('node:zlib');
 const { serializeValue } = require('./backup-codec');
@@ -69,6 +69,19 @@ exports.backupDiario = onSchedule({
         resumable: false,
         metadata: { metadata: { totalDocs: String(docs.length) } },
     });
+
+    // Salud del sistema (F6 frente D): deja constancia del último backup exitoso →
+    // la vista Salud alerta si lleva demasiado sin correr. Best-effort: un fallo
+    // aquí NO invalida el backup ya subido.
+    try {
+        await db.collection('salud').doc('backup').set({
+            ultimoOk: FieldValue.serverTimestamp(),
+            archivo: file.name,
+            totalDocs: docs.length,
+        });
+    } catch (err) {
+        console.error('[backupDiario] backup OK pero no se pudo escribir salud/backup:', err);
+    }
 
     // Retención: borrar copias con más de RETENTION_DIAS días.
     const [files] = await bucket.getFiles({ prefix: PREFIX });

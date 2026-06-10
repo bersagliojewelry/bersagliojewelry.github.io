@@ -15,7 +15,7 @@
 import { app, firestoreDb } from './firebase-config.js';
 import {
     collection, collectionGroup, doc, getDocs, getDoc, addDoc, setDoc, updateDoc, deleteDoc,
-    query, orderBy, limit, onSnapshot, serverTimestamp,
+    writeBatch, query, orderBy, limit, onSnapshot, serverTimestamp,
 } from 'firebase/firestore';
 
 // Tope de seguridad para listeners (doctrina S3). La cartera de fiado es acotada;
@@ -231,12 +231,47 @@ export async function registrarGestion(clienteId, g) {
     return { id: ref.id, ...payload };
 }
 
-// ⏳ PENDIENTE M2a-2 (par atómico de corrección): corregirMovimientoBatch (writeBatch:
-// anular original + crear reemplazo enlazado) requiere ENSANCHAR anulacionValida para
-// admitir 'motivoCategoria' + 'corregidoPor' (hoy su hasOnly solo permite 4 claves; esas
-// dos las añade M3). Es un cambio ADITIVO (expand) seguro, pero es regla de dinero →
-// su propio ciclo test + red-team (W-01) + deploy ANTES de construir el par. Ver
-// bóveda fase-m-m2a-design.md y ADR §72.
+/**
+ * Corrige un movimiento como PAR ATÓMICO en un writeBatch (anular el original + crear
+ * el reemplazo enlazado) — el camino auto-aprobable (admin). Cuando la corrección excede
+ * el carril (ver js/crm-correccion.js), el llamador usa `crearSolicitud` en su lugar; este
+ * batch NO se invoca. Requiere anulacionValida ensanchada (M2a-1b §73: motivoCategoria +
+ * corregidoPor). El reemplazo lleva `correccionDe` (movimientoValido lo admite — sin hasOnly
+ * hasta M3) y, por defecto, el MISMO tipo y fecha del original; en corrección de FECHA se
+ * pasa `reemplazo.fecha` nueva y motivoCategoria='CORRECCION_FECHA'.
+ * @returns {{nuevoId:string}}
+ */
+export async function corregirMovimientoBatch(clienteId, { original, reemplazo, motivoCategoria, motivoAnulacion, uid }) {
+    const movsCol = collection(firestoreDb, 'clientes', clienteId, 'movimientos');
+    const nuevoRef = doc(movsCol);   // id pre-generado para enlazar la anulación con el reemplazo
+    const FE = /^\d{4}-\d{2}-\d{2}$/;
+    const fechaReemplazo = FE.test(reemplazo.fecha || '') ? reemplazo.fecha
+        : (FE.test(original.fecha || '') ? original.fecha : null);
+
+    const batch = writeBatch(firestoreDb);
+    // (1) anular el original, enlazado al reemplazo (motivoCategoria + corregidoPor).
+    batch.update(doc(movsCol, original.id), {
+        anulado: true,
+        anuladoPor: uid,
+        anuladoEn: serverTimestamp(),
+        motivoAnulacion: (motivoAnulacion || '').trim(),
+        motivoCategoria,
+        corregidoPor: nuevoRef.id,
+    });
+    // (2) crear el reemplazo (MISMO tipo; monto entero; correccionDe → el original).
+    batch.set(nuevoRef, {
+        tipo: original.tipo,
+        monto: Math.round(Number(reemplazo.monto)),
+        ...(fechaReemplazo ? { fecha: fechaReemplazo } : {}),
+        ...(reemplazo.descripcion ? { descripcion: reemplazo.descripcion.trim() } : {}),
+        correccionDe: original.id,
+        registradoPor: uid,
+        registradoEn: serverTimestamp(),
+        anulado: false,
+    });
+    await batch.commit();   // atómico: o se aplican ambas patas, o ninguna
+    return { nuevoId: nuevoRef.id };
+}
 
 // ─── Vendedoras (entidad de datos; las gestiona Kary) ─────────────────────────
 export function onVendedorasChange(cb) {

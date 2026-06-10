@@ -143,16 +143,24 @@ service cloud.firestore {
     // Append-only: el ÚNICO update permitido sobre un movimiento es ANULARLO
     // (anulado false→true) + sellar auditoría (anuladoPor/anuladoEn + motivoAnulacion
     // obligatorio). Prohíbe reescribir tipo/monto/fecha/registradoPor/descripción del
-    // asiento (solo esas 4 claves pueden cambiar). `.get('anulado', false)` tolera
-    // movimientos legacy sin el campo.
+    // asiento. `.get('anulado', false)` tolera movimientos legacy sin el campo.
+    // M2a-1b (ADR §73): EXPAND aditivo del enlace de corrección — la anulación de la
+    // pata "anular+crear" puede portar `motivoCategoria` (de qué tipo de corrección)
+    // y `corregidoPor` (id del reemplazo). Ambos OPCIONALES aquí; M3 hará
+    // motivoCategoria obligatorio (contract) y gateará la anulación por tipo/monto.
+    // `corregidoPor` NO se verifica contra un doc real por diseño (sin cross-doc en
+    // reglas, §69; M4 audita "corrección sin enlace" de forma detectiva).
     function anulacionValida() {
       let d = request.resource.data;
       return resource.data.get('anulado', false) == false
           && d.anulado == true
           && d.anuladoPor == request.auth.uid
           && nonEmptyStr(d.motivoAnulacion)
+          && (!('motivoCategoria' in d) || nonEmptyStr(d.motivoCategoria))
+          && (!('corregidoPor' in d)    || d.corregidoPor is string)
           && d.diff(resource.data).affectedKeys()
-               .hasOnly(['anulado', 'anuladoPor', 'anuladoEn', 'motivoAnulacion']);
+               .hasOnly(['anulado', 'anuladoPor', 'anuladoEn', 'motivoAnulacion',
+                         'motivoCategoria', 'corregidoPor']);
     }
 
     // ─── S6: validación de campos (tolerante a merge/partial updates) ────────────

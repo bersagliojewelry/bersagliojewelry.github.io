@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { renderSidebar } from '../js/admin/render-sidebar.js';
-import { NAV } from '../js/admin/sidebar-data.js';
+import { NAV, APP_VERSION } from '../js/admin/sidebar-data.js';
 
 test('renderiza grupos y labels', () => {
   const html = renderSidebar(NAV, { role: 'owner', activePage: 'admin.html' });
@@ -50,4 +50,10 @@ test('Parámetros solo es visible para el owner (M0-C: Kary no gobierna sus lím
   assert.doesNotMatch(adminHtml, /href="admin-parametros\.html"/);
   const ownerHtml = renderSidebar(NAV, { role: 'owner', activePage: 'admin.html' });
   assert.match(ownerHtml, /href="admin-parametros\.html"/);
+});
+
+test('muestra el indicador de versión del panel (criterio de deploy, M2a-6)', () => {
+  const html = renderSidebar(NAV, { role: 'admin', activePage: 'admin.html' });
+  assert.ok(html.includes(APP_VERSION), 'el HTML debe incluir APP_VERSION');
+  assert.match(html, /class="adm-version"/);
 });

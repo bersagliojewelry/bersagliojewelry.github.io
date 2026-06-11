@@ -6,9 +6,9 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v10 — Fase M / M2a: UI de corrección de Kary (botón Corregir, anular con
-// categoría, abono con medio de pago, correcciones a la vista). Fuerza refresco del shell.
-const CACHE_NAME    = 'bersaglio-v10';
+// Bumped to v11 — Fase M / M2b: superficie de aprobación de Daniel en Salud (cola de
+// solicitudes pendientes, aprobar/rechazar con re-validación). Fuerza refresco del shell.
+const CACHE_NAME    = 'bersaglio-v11';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

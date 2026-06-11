@@ -65,6 +65,35 @@
                         <div class="adm-stat-label">Fallos sin resolver</div>
                     </div>
                 </div>
+                <div class="adm-stat-card">
+                    <div class="adm-stat-icon" id="stat-aprob-icon">
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="20" height="20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+                    </div>
+                    <div class="adm-stat-body">
+                        <div class="adm-stat-value" id="stat-aprob-valor">—</div>
+                        <div class="adm-stat-label">Aprobaciones pendientes</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cola de aprobación (Fase M · M2b): Kary pide, Daniel decide aquí -->
+            <div class="adm-section" id="sec-aprobaciones" style="margin-top:20px;">
+                <div class="adm-section-head" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+                    <h2>Aprobaciones pendientes</h2>
+                    <span id="aprob-banner" class="adm-pill adm-pill--gold" style="font-weight:600;">Estás aprobando como dueño</span>
+                </div>
+                <div class="adm-section-body">
+                    <p style="font-size:13px;color:var(--adm-muted);margin:0 0 12px;">
+                        Correcciones que Kary no puede aplicar sola y esperan tu decisión.
+                        El saldo de la clienta <strong>no cambia</strong> hasta que apruebes.
+                        Cada solicitud se decide por separado; al rechazar, Kary ve tu motivo en la ficha.
+                    </p>
+                    <div id="aprob-list"></div>
+                    <div id="aprob-empty" class="adm-empty" hidden>
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="48" height="48" style="opacity:0.2"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        <p>No hay solicitudes esperando tu aprobación.</p>
+                    </div>
+                </div>
             </div>
 
             <!-- Descuadres de saldo (solo si hay) -->
@@ -125,13 +154,31 @@
                     <p style="font-size:13px;color:var(--adm-muted);line-height:1.6;margin:0;">
                         1. <strong>Copia de seguridad</strong>: cada madrugada (3:00 AM) se guarda una copia completa de la base de datos.<br>
                         2. <strong>Cuadre de la cartera</strong>: cada madrugada (3:30 AM) se recalcula el saldo de todos los clientes y se compara con el guardado — como cuadrar caja.<br>
-                        3. <strong>Registro de fallos</strong>: si algún cálculo automático falla, queda anotado aquí en vez de pasar en silencio.
+                        3. <strong>Registro de fallos</strong>: si algún cálculo automático falla, queda anotado aquí en vez de pasar en silencio.<br>
+                        4. <strong>Aprobaciones pendientes</strong>: las correcciones de dinero que exceden el límite de Kary esperan aquí tu decisión — nadie más puede aprobarlas.
                     </p>
                 </div>
             </div>
 
         </div>
     </main>
+</div>
+
+<!-- Modal de rechazo (M2b): el motivo es obligatorio — Kary lo ve en la ficha -->
+<div class="adm-confirm" id="rechazo-modal" hidden>
+    <div class="adm-confirm-box">
+        <button class="adm-modal-close" id="rechazo-close" aria-label="Cerrar" style="float:right;background:none;border:none;font-size:18px;cursor:pointer;">×</button>
+        <h3>Rechazar la solicitud</h3>
+        <p style="font-size:13px;color:var(--adm-muted);">Explica brevemente por qué — Kary verá este motivo y podrá volver a corregir.</p>
+        <form id="rechazo-form">
+            <textarea id="rechazo-motivo" class="adm-input" rows="3" required
+                placeholder="Ej.: el monto no coincide con la factura física, revísalo con la clienta"></textarea>
+            <div class="adm-confirm-actions" style="margin-top:12px;">
+                <button type="button" class="adm-btn adm-btn--ghost" id="rechazo-cancel">Cancelar</button>
+                <button type="submit" class="adm-btn adm-btn--danger" id="rechazo-confirm">Rechazar</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <!-- Confirm dialog -->

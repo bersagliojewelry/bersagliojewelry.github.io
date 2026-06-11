@@ -14,6 +14,7 @@ import {
     onSaludChange, onSaludEventosChange, marcarEventoResuelto,
     reconciliarAhora, repararSaldoCliente, fmtCOP,
 } from '../crm-service.js';
+import { initAprobaciones } from './aprobaciones.js';
 
 const HORAS_BACKUP_AMBAR = 26;   // el backup corre cada 24h; >26h = se saltó una corrida
 const HORAS_BACKUP_ROJO  = 48;
@@ -29,6 +30,9 @@ async function init() {
     onSaludEventosChange((eventos) => { _eventos = eventos; renderEstado(); renderEventos(); });
 
     document.getElementById('btn-reconciliar').addEventListener('click', handleReconciliar);
+
+    // Cola de aprobación de Daniel (Fase M · M2b) — módulo propio, mismo guard owner.
+    initAprobaciones();
 }
 
 // ─── Semáforo + descuadres ─────────────────────────────────────────────────────

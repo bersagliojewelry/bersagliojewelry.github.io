@@ -41,12 +41,16 @@ export function estadoLabel(est) {
   return 'Al día';
 }
 
+/** Clase del pill de estado (compartida entre el render por string y el DOM). */
+export function estadoPillClass(est) {
+  const e = est?.estado;
+  return e === 'vencido' ? 'adm-pill--red'
+       : e === 'a-favor' ? 'adm-pill--green'
+       : (est?.sinFecha > 0) ? 'adm-pill--gold'   // deuda sin fecha → requiere atención de Kary
+       : 'adm-pill--gray';
+}
+
 /** Pill de estado de cuenta (token-based) para innerHTML. */
 export function estadoBadgeHTML(est) {
-  const e = est?.estado;
-  const cls = e === 'vencido' ? 'adm-pill--red'
-            : e === 'a-favor' ? 'adm-pill--green'
-            : (est?.sinFecha > 0) ? 'adm-pill--gold'   // deuda sin fecha → requiere atención de Kary
-            : 'adm-pill--gray';
-  return `<span class="adm-pill ${cls}">${estadoLabel(est)}</span>`;
+  return `<span class="adm-pill ${estadoPillClass(est)}">${estadoLabel(est)}</span>`;
 }

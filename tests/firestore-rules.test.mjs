@@ -19,7 +19,7 @@ import {
 } from '@firebase/rules-unit-testing';
 import {
     doc, getDoc, getDocs, setDoc, addDoc, deleteDoc, updateDoc, collection, collectionGroup, query,
-    where, serverTimestamp,
+    where, serverTimestamp, writeBatch,
 } from 'firebase/firestore';
 
 let testEnv;
@@ -64,6 +64,14 @@ before(async () => {
         await setDoc(doc(db, 'clientes/cliV/solicitudes/sol4'), { tipo: 'ajuste', monto: -70000, motivo: 'OTRO', nota: 'x', solicitadoPor: 'adminUid', creadoEn: new Date(), estado: 'pendiente' });
         await setDoc(doc(db, 'clientes/cliV/solicitudes/sol5'), { tipo: 'ajuste', monto: -50000, motivo: 'OTRO', nota: 'dedicada al test de motivoRechazo en aprobada', solicitadoPor: 'adminUid', creadoEn: new Date(), estado: 'pendiente' });
         await setDoc(doc(db, 'clientes/cliV/gestiones/g1'), { tipo: 'llamada', nota: 'no contesta', fecha: '2026-06-10', resultado: 'no_contesto', registradoPor: 'adminUid', creadoEn: new Date() });
+
+        // ─── Fase M (M2b): semillas del batch de aprobación de Daniel ────────────
+        await setDoc(doc(db, 'clientes/cliV/movimientos/mCorr'), { tipo: 'factura', monto: 500000, fecha: '2026-06-01', registradoPor: 'adminUid', anulado: false });          // original VIGENTE (corrección feliz)
+        await setDoc(doc(db, 'clientes/cliV/movimientos/mYaAnulado'), { tipo: 'factura', monto: 500000, fecha: '2026-06-01', registradoPor: 'adminUid', anulado: true, anuladoPor: 'adminUid', motivoAnulacion: 'corregido antes' }); // carrera: ya anulado
+        await setDoc(doc(db, 'clientes/cliV/solicitudes/solM2b1'), { tipo: 'correccion', monto: -420000, motivo: 'dedazo', nota: 'era 80 mil', solicitadoPor: 'adminUid', creadoEn: new Date(), estado: 'pendiente', correccionDe: 'mCorr' });
+        await setDoc(doc(db, 'clientes/cliV/solicitudes/solM2b2'), { tipo: 'correccion', monto: -420000, motivo: 'dedazo', nota: 'era 80 mil', solicitadoPor: 'adminUid', creadoEn: new Date(), estado: 'pendiente', correccionDe: 'mYaAnulado' });
+        await setDoc(doc(db, 'clientes/cliV/solicitudes/solM2b3'), { tipo: 'ajuste', monto: -90000, motivo: 'DESCUENTO_AUTORIZADO', nota: 'autorizado', solicitadoPor: 'adminUid', creadoEn: new Date(), estado: 'pendiente' });
+        await setDoc(doc(db, 'clientes/cliV/solicitudes/solM2b4'), { tipo: 'ajuste', monto: -90000, motivo: 'OTRO', nota: 'x', solicitadoPor: 'adminUid', creadoEn: new Date(), estado: 'pendiente' });
 
         // ─── F6 frente D: salud del sistema (las escriben SOLO las CFs) ──────────
         await setDoc(doc(db, 'salud/backup'), { ultimoOk: new Date(), archivo: 'backups/firestore/backup-x.json.gz', totalDocs: 700 });
@@ -589,4 +597,81 @@ test('M1 gestión · sin resultado o con resultado/tipo fuera de lista es rechaz
 test('M1 gestión · INMUTABLE: ni update ni delete (ni el owner)', async () => {
     await assertFails(updateDoc(doc(asUser('ownerUid'), 'clientes/cliV/gestiones/g1'), { nota: 'editada' }));
     await assertFails(deleteDoc(doc(asUser('ownerUid'), 'clientes/cliV/gestiones/g1')));
+});
+
+// ─── Fase M · M2b (§69 C3): el writeBatch de aprobación de Daniel ──────────────
+// Las reglas evalúan cada escritura contra el estado PRE-batch: "estaba pendiente"
+// vale por diseño, y un original ya anulado revienta el batch ENTERO (atómico).
+
+test('M2b batch · corrección aprobada por el OWNER: 3 escrituras pasan juntas', async () => {
+    const db = asUser('ownerUid');
+    const nuevoRef = doc(collection(db, 'clientes/cliV/movimientos'));
+    const batch = writeBatch(db);
+    batch.update(doc(db, 'clientes/cliV/movimientos/mCorr'), {
+        anulado: true, anuladoPor: 'ownerUid', anuladoEn: serverTimestamp(),
+        motivoAnulacion: 'era 80 mil', motivoCategoria: 'CORRECCION', corregidoPor: nuevoRef.id,
+    });
+    batch.set(nuevoRef, {
+        tipo: 'factura', monto: 80000, fecha: '2026-06-01', correccionDe: 'mCorr',
+        solicitudId: 'solM2b1', registradoPor: 'ownerUid', registradoEn: serverTimestamp(), anulado: false,
+    });
+    batch.update(doc(db, 'clientes/cliV/solicitudes/solM2b1'), {
+        estado: 'aprobada', resueltoPor: 'ownerUid', resueltoEn: serverTimestamp(),
+    });
+    await assertSucceeds(batch.commit());
+});
+
+test('M2b batch · original YA ANULADO revienta el batch ENTERO (la solicitud queda pendiente)', async () => {
+    const db = asUser('ownerUid');
+    const nuevoRef = doc(collection(db, 'clientes/cliV/movimientos'));
+    const batch = writeBatch(db);
+    batch.update(doc(db, 'clientes/cliV/movimientos/mYaAnulado'), {
+        anulado: true, anuladoPor: 'ownerUid', anuladoEn: serverTimestamp(),
+        motivoAnulacion: 'era 80 mil', motivoCategoria: 'CORRECCION', corregidoPor: nuevoRef.id,
+    });
+    batch.set(nuevoRef, {
+        tipo: 'factura', monto: 80000, correccionDe: 'mYaAnulado',
+        solicitudId: 'solM2b2', registradoPor: 'ownerUid', registradoEn: serverTimestamp(), anulado: false,
+    });
+    batch.update(doc(db, 'clientes/cliV/solicitudes/solM2b2'), {
+        estado: 'aprobada', resueltoPor: 'ownerUid', resueltoEn: serverTimestamp(),
+    });
+    await assertFails(batch.commit());   // anulacionValida: resource.anulado debe ser false
+    // ATOMICIDAD: ninguna pata se aplicó — la solicitud sigue pendiente y el
+    // reemplazo no existe (es el invariante anti-doble-reducción del plan §69).
+    const sol = await getDoc(doc(asUser('ownerUid'), 'clientes/cliV/solicitudes/solM2b2'));
+    if (sol.data().estado !== 'pendiente') throw new Error('el batch fallido dejó la solicitud transicionada');
+    const nuevo = await getDoc(doc(asUser('ownerUid'), `clientes/cliV/movimientos/${nuevoRef.id}`));
+    if (nuevo.exists()) throw new Error('el batch fallido dejó creado el reemplazo');
+});
+
+test('M2b batch · aprobación SIMPLE (ajuste) del owner: 2 escrituras pasan juntas', async () => {
+    const db = asUser('ownerUid');
+    const movRef = doc(collection(db, 'clientes/cliV/movimientos'));
+    const batch = writeBatch(db);
+    batch.set(movRef, {
+        tipo: 'ajuste', monto: -90000, fecha: '2026-06-10',
+        descripcion: 'Corrección aprobada (DESCUENTO_AUTORIZADO): autorizado',
+        solicitudId: 'solM2b3', registradoPor: 'ownerUid', registradoEn: serverTimestamp(), anulado: false,
+    });
+    batch.update(doc(db, 'clientes/cliV/solicitudes/solM2b3'), {
+        estado: 'aprobada', resueltoPor: 'ownerUid', resueltoEn: serverTimestamp(),
+    });
+    await assertSucceeds(batch.commit());
+});
+
+test('M2b batch · un ADMIN no puede ejecutar la aprobación (el batch entero falla)', async () => {
+    const db = asUser('adminUid');
+    const movRef = doc(collection(db, 'clientes/cliV/movimientos'));
+    const batch = writeBatch(db);
+    batch.set(movRef, {
+        tipo: 'ajuste', monto: -90000, solicitudId: 'solM2b4',
+        registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false,
+    });
+    batch.update(doc(db, 'clientes/cliV/solicitudes/solM2b4'), {
+        estado: 'aprobada', resueltoPor: 'adminUid', resueltoEn: serverTimestamp(),
+    });
+    await assertFails(batch.commit());   // transicionSolicitudValida exige isOwner()
+    const sol = await getDoc(doc(asUser('adminUid'), 'clientes/cliV/solicitudes/solM2b4'));
+    if (sol.data().estado !== 'pendiente') throw new Error('el batch del admin transicionó la solicitud');
 });

@@ -179,7 +179,13 @@ function renderSolicitudes(list) {
             detalle.textContent = s.nota || s.motivo || '';
         } else {
             titulo.textContent = '❌ Rechazada por Daniel';
-            detalle.textContent = s.motivoRechazo ? `Motivo: ${s.motivoRechazo}` : (s.nota || '');
+            // Rechazos AUTOMÁTICOS de M2b (códigos para auditoría M4) → texto humano para Kary.
+            const RECHAZO_AUTO = {
+                ASIENTO_YA_NO_VIGENTE: 'El movimiento ya fue corregido por otra vía — revisa el historial actual.',
+                DATOS_NO_COINCIDEN: 'Los datos ya no cuadran con el movimiento actual — vuelve a corregir desde el historial.',
+            };
+            const motivoTxt = RECHAZO_AUTO[s.motivoRechazo] || s.motivoRechazo;
+            detalle.textContent = motivoTxt ? `Motivo: ${motivoTxt}` : (s.nota || '');
         }
         info.append(titulo, detalle);
 
@@ -218,8 +224,19 @@ async function cancelarSolicitudUI(s, btn) {
 }
 
 function reSolicitar(s) {
-    const original = _movsById.get(s.correccionDe);
-    if (!original) { admToast('El movimiento original ya no está; corrígelo de nuevo desde el historial.', 'danger'); return; }
+    let original = _movsById.get(s.correccionDe);
+    // Si el original ya fue ANULADO (p. ej. rechazo automático ASIENTO_YA_NO_VIGENTE
+    // de M2b), seguir la cadena de corrección hasta el asiento VIGENTE: re-solicitar
+    // sobre un asiento muerto crearía solicitudes condenadas en bucle (verif. M2b).
+    let saltos = 0;
+    while (original && original.anulado === true && original.corregidoPor && saltos < 10) {
+        original = _movsById.get(original.corregidoPor) || null;
+        saltos++;
+    }
+    if (!original || original.anulado === true) {
+        admToast('El movimiento original ya no está vigente; corrígelo de nuevo desde el historial.', 'danger');
+        return;
+    }
     if (!_abrirCorregirMov) return;
     const r = s.datosCorreccion.reemplazo;
     _abrirCorregirMov(original, { monto: r.monto, fecha: r.fecha, motivoCategoria: s.datosCorreccion.motivoCategoria });
@@ -506,6 +523,15 @@ function wireCorregirMov() {
     document.getElementById('corregirmov-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         if (!original) return;
+        // Defensa en profundidad: corregir un asiento ANULADO crearía un par/solicitud
+        // condenado (anulacionValida lo niega; M2b lo marcaría obsoleto al instante).
+        // Se consulta la versión VIVA (el modal pudo quedar abierto mientras cambiaba).
+        const vivo = _movsById.get(original.id) || original;
+        if (vivo.anulado === true) {
+            admToast('Este movimiento ya fue anulado — corrige el vigente desde el historial.', 'danger');
+            close();
+            return;
+        }
         const motivoCategoria = motivoEl.value;
         if (!motivoCategoria) { admToast('Elige qué corriges.', 'danger'); return; }
         const nota = notaEl.value.trim();

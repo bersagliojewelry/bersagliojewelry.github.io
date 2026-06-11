@@ -15,7 +15,7 @@
 import { app, firestoreDb } from './firebase-config.js';
 import {
     collection, collectionGroup, doc, getDocs, getDoc, addDoc, setDoc, updateDoc, deleteDoc,
-    writeBatch, query, orderBy, limit, onSnapshot, serverTimestamp,
+    writeBatch, query, where, orderBy, limit, onSnapshot, serverTimestamp,
 } from 'firebase/firestore';
 
 // Tope de seguridad para listeners (doctrina S3). La cartera de fiado es acotada;
@@ -215,6 +215,101 @@ export async function cancelarSolicitud(clienteId, solId, uid) {
     await updateDoc(doc(firestoreDb, 'clientes', clienteId, 'solicitudes', solId), {
         estado: 'cancelada', canceladoPor: uid, canceladoEn: serverTimestamp(),
     });
+}
+
+// ─── Aprobación de Daniel (Fase M · M2b) — la otra mitad del sistema de control ──
+// La cola lee TODAS las pendientes cruzando clientas (collectionGroup, índice
+// COLLECTION_GROUP estado ASC + creadoEn ASC en firestore.indexes.json — sin él,
+// FAILED_PRECONDITION). La lógica de re-validación es PURA → js/crm-aprobacion.js.
+
+/** Cola de solicitudes PENDIENTES de todas las clientas, más viejas primero
+ *  (orden de atención). Cada item incluye su `clienteId` (del path del padre).
+ *  `onError` es OBLIGATORIO de facto para la UI: un error de listen en Firestore
+ *  es TERMINAL (el listener muere sin reintento) — sin callback, la cola del
+ *  owner quedaría rota EN SILENCIO (p. ej. índice aún construyéndose). */
+export function onSolicitudesPendientesChange(cb, onError) {
+    const q = query(
+        collectionGroup(firestoreDb, 'solicitudes'),
+        where('estado', '==', 'pendiente'),
+        orderBy('creadoEn', 'asc'), limit(MAX),
+    );
+    return onSnapshot(q, (snap) => {
+        detectarTruncado('Solicitudes pendientes (aprobación)', snap.size);
+        cb(snap.docs.map((d) => ({ id: d.id, clienteId: d.ref.parent.parent?.id, ...d.data() })));
+    }, (err) => {
+        console.error('[crm] cola de solicitudes pendientes:', err);
+        onError?.(err);
+    });
+}
+
+/** Movimientos de un cliente UNA VEZ (contexto de la tarjeta de aprobación:
+ *  mora + últimos movimientos + saldo re-computado al render, PR2). */
+export async function fetchMovimientos(clienteId) {
+    const snap = await getDocs(query(
+        collection(firestoreDb, 'clientes', clienteId, 'movimientos'),
+        orderBy('registradoEn', 'desc'), limit(MAX),
+    ));
+    detectarTruncado('Movimientos (aprobación)', snap.size);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+/** Re-lee UN movimiento este instante (la re-validación de M2b no confía en
+ *  snapshots: el original se verifica VIGENTE justo antes de aprobar). */
+export async function getMovimiento(clienteId, movId) {
+    const snap = await getDoc(doc(firestoreDb, 'clientes', clienteId, 'movimientos', movId));
+    return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+/** Daniel RECHAZA con motivo (one-way pendiente→rechazada; la regla exige el
+ *  motivo). Kary ve el rechazo en la ficha y puede re-solicitar (M2a). */
+export async function rechazarSolicitud(clienteId, solId, uid, motivoRechazo) {
+    await updateDoc(doc(firestoreDb, 'clientes', clienteId, 'solicitudes', solId), {
+        estado: 'rechazada', resueltoPor: uid, resueltoEn: serverTimestamp(),
+        motivoRechazo: (motivoRechazo || '').trim(),
+    });
+}
+
+/**
+ * Aprobación SIMPLE (solicitud de ajuste): DOS escrituras en UN writeBatch de
+ * Daniel — crear el asiento (con `solicitudId`) + solicitud→aprobada. Las reglas
+ * evalúan contra el estado PRE-batch ("estaba pendiente" vale por diseño, §69 C3).
+ * @param {object} movimiento payload de js/crm-aprobacion.js (planAprobacionAjuste)
+ */
+export async function aprobarSolicitudAjuste(clienteId, solId, movimiento, uid) {
+    const movRef = doc(collection(firestoreDb, 'clientes', clienteId, 'movimientos'));
+    const batch = writeBatch(firestoreDb);
+    batch.set(movRef, { ...movimiento, registradoPor: uid, registradoEn: serverTimestamp(), anulado: false });
+    batch.update(doc(firestoreDb, 'clientes', clienteId, 'solicitudes', solId), {
+        estado: 'aprobada', resueltoPor: uid, resueltoEn: serverTimestamp(),
+    });
+    await batch.commit();   // atómico: asiento y aprobación, o ninguno
+    return { nuevoId: movRef.id };
+}
+
+/**
+ * Aprobación de CORRECCIÓN (par anular+crear): TRES escrituras en UN writeBatch de
+ * Daniel — anular el original + crear el reemplazo enlazado + solicitud→aprobada.
+ * Garantía anti-doble-corrección: si el original ya fue anulado por otra vía,
+ * `anulacionValida` (resource.anulado == false, pre-batch) revienta el batch ENTERO
+ * (§69 C3) — el llamador trata ese fallo como "solicitud obsoleta".
+ * @param {object} plan { anulacion, reemplazo } de planAprobacionCorreccion (re-validado)
+ */
+export async function aprobarSolicitudCorreccion(clienteId, solId, originalId, plan, uid) {
+    const movsCol = collection(firestoreDb, 'clientes', clienteId, 'movimientos');
+    const nuevoRef = doc(movsCol);   // id pre-generado para enlazar anulación ↔ reemplazo
+    const batch = writeBatch(firestoreDb);
+    batch.update(doc(movsCol, originalId), {
+        anulado: true, anuladoPor: uid, anuladoEn: serverTimestamp(),
+        motivoAnulacion: plan.anulacion.motivoAnulacion,
+        motivoCategoria: plan.anulacion.motivoCategoria,
+        corregidoPor: nuevoRef.id,
+    });
+    batch.set(nuevoRef, { ...plan.reemplazo, registradoPor: uid, registradoEn: serverTimestamp(), anulado: false });
+    batch.update(doc(firestoreDb, 'clientes', clienteId, 'solicitudes', solId), {
+        estado: 'aprobada', resueltoPor: uid, resueltoEn: serverTimestamp(),
+    });
+    await batch.commit();   // atómico: las 3 patas o ninguna
+    return { nuevoId: nuevoRef.id };
 }
 
 /**

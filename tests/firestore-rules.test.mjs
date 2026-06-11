@@ -51,6 +51,7 @@ before(async () => {
         await setDoc(doc(db, 'vendedoras/vendA'), { nombre: 'Vendedora A', activa: true });
         await setDoc(doc(db, 'clientes/cliV'), { nombre: 'Cliente V', vendedoraId: 'vendA', saldoActual: 0 });
         await setDoc(doc(db, 'clientes/cliV/movimientos/m1'), { tipo: 'factura', monto: 100000, registradoPor: 'adminUid', anulado: false });
+        await setDoc(doc(db, 'clientes/cliV/movimientos/mLink'), { tipo: 'factura', monto: 80000, registradoPor: 'adminUid', anulado: false }); // M2a-1b: anulación con enlace de corrección
         await setDoc(doc(db, 'config/status'),  { ok: true });
         await setDoc(doc(db, 'config/negocio'), { fechaCorteMigracion: '2025-12-31' });
         await setDoc(doc(db, 'solicitudesCorreccion/s1'), { clienteId: 'cliV', estado: 'pendiente' }); // legacy: debe quedar INACCESIBLE
@@ -201,6 +202,20 @@ test('CRM mov · NADIE borra un movimiento (ni admin)', async () => {
 test('CRM mov · admin SÍ anula con motivo (anulado false→true + motivoAnulacion)', async () => {
     await assertSucceeds(updateDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m1'),
         { anulado: true, anuladoPor: 'adminUid', anuladoEn: '2026-06-07T00:00:00Z', motivoAnulacion: 'duplicado' }));
+});
+// ─── M2a-1b (ADR §73): EXPAND aditivo — anulación con enlace de corrección ─────
+test('M2a-1b · anular con enlace de corrección: campo extra y tipos inválidos fallan; enlace válido pasa', async () => {
+    const ref = doc(asUser('adminUid'), 'clientes/cliV/movimientos/mLink');
+    const base = { anulado: true, anuladoPor: 'adminUid', anuladoEn: '2026-06-10T00:00:00Z', motivoAnulacion: 'corrección' };
+    // (los assertFails NO mutan mLink → sigue anulado:false hasta el éxito final)
+    // clave fuera del whitelist (inyección) → rechazada
+    await assertFails(updateDoc(ref, { ...base, hacked: true }));
+    // motivoCategoria vacío → rechazada (nonEmptyStr)
+    await assertFails(updateDoc(ref, { ...base, motivoCategoria: '', corregidoPor: 'mNuevo' }));
+    // corregidoPor no-string → rechazada
+    await assertFails(updateDoc(ref, { ...base, motivoCategoria: 'CORRECCION', corregidoPor: 123 }));
+    // enlace VÁLIDO (motivoCategoria + corregidoPor) → pasa
+    await assertSucceeds(updateDoc(ref, { ...base, motivoCategoria: 'CORRECCION', corregidoPor: 'mNuevo' }));
 });
 
 // ─── CRM: collectionGroup de movimientos (lectura para el aging de la lista CxC, §51) ──

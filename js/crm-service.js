@@ -15,7 +15,7 @@
 import { app, firestoreDb } from './firebase-config.js';
 import {
     collection, collectionGroup, doc, getDocs, getDoc, addDoc, setDoc, updateDoc, deleteDoc,
-    query, orderBy, limit, onSnapshot, serverTimestamp,
+    writeBatch, query, orderBy, limit, onSnapshot, serverTimestamp,
 } from 'firebase/firestore';
 
 // Tope de seguridad para listeners (doctrina S3). La cartera de fiado es acotada;
@@ -116,12 +116,15 @@ export function onMovimientosChange(clienteId, cb) {
  * ADR §51). Es inmutable tras crearse (las reglas solo permiten anular). Si no se
  * envía, el movimiento queda sin fecha → la mora cae al fallback `fechaCorteMigracion`.
  */
-export async function addMovimiento(clienteId, { tipo, monto, descripcion, registradoPor, fecha }) {
+export async function addMovimiento(clienteId, { tipo, monto, descripcion, registradoPor, fecha, medioPago }) {
     const payload = {
         tipo,
         monto: Number(monto),
         ...(descripcion ? { descripcion: descripcion.trim() } : {}),
         ...(/^\d{4}-\d{2}-\d{2}$/.test(fecha || '') ? { fecha } : {}),
+        // medioPago: M2a lo escribe en abonos (lista literal); M3 lo hará obligatorio
+        // en la regla. `movimientoValido` lo admite hoy (sin hasOnly hasta M3).
+        ...(medioPago ? { medioPago } : {}),
         registradoPor,
         registradoEn: serverTimestamp(),
         anulado: false,
@@ -154,11 +157,126 @@ export function onAllMovimientosChange(cb) {
  * Anula un movimiento (NO lo borra — anular ≠ eliminar, spec §3). Solo admin/owner
  * (reglas). Dispara el recálculo del saldo (el anulado deja de contar).
  */
-export async function anularMovimiento(clienteId, movId, anuladoPor, motivo) {
+export async function anularMovimiento(clienteId, movId, anuladoPor, motivo, motivoCategoria) {
     await updateDoc(doc(firestoreDb, 'clientes', clienteId, 'movimientos', movId), {
         anulado: true, anuladoPor, anuladoEn: serverTimestamp(),
         motivoAnulacion: (motivo || '').trim(),
+        // M2a-1b (§73): la categoría hace auditable "por qué se anuló" (cierra el
+        // tramo huérfano antes de que M3 la vuelva obligatoria). Solo se envía si viene.
+        ...(motivoCategoria ? { motivoCategoria } : {}),
     });
+}
+
+// ─── Solicitudes de aprobación + gestiones de cobro (Fase M · M1 desplegado §72) ──
+// Reglas: clientes/{id}/solicitudes y clientes/{id}/gestiones (firestore.rules).
+// "El asiento nace al aprobarse": cuando una corrección excede el carril auto-aprobable
+// (js/crm-correccion.js), Kary crea una SOLICITUD pendiente; el movimiento real lo crea
+// Daniel al aprobar (M2b). Las gestiones son evidencia de cobro INMUTABLE (art. 146 ET).
+
+/** Solicitudes de UN cliente, más nuevas primero (para la ficha). */
+export function onSolicitudesChange(clienteId, cb) {
+    const q = query(
+        collection(firestoreDb, 'clientes', clienteId, 'solicitudes'),
+        orderBy('creadoEn', 'desc'), limit(MAX),
+    );
+    return onSnapshot(q, (snap) => {
+        detectarTruncado('Solicitudes del cliente', snap.size);
+        cb(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    });
+}
+
+/**
+ * Crea una solicitud de aprobación (nace 'pendiente', sellada por el reloj del
+ * SERVIDOR). Campos espejo EXACTO de solicitudValida() (firestore.rules): el `monto`
+ * va como ENTERO (COP sin centavos); los opcionales solo se incluyen si vienen.
+ * @param {object} s { tipo:'ajuste'|'correccion', monto, motivo, nota, solicitadoPor,
+ *                     fecha?, correccionDe?, datosCorreccion?, saldoAlSolicitar? }
+ */
+export async function crearSolicitud(clienteId, s) {
+    const payload = {
+        tipo: s.tipo,
+        monto: Math.round(Number(s.monto)),
+        motivo: (s.motivo || '').trim(),
+        nota: (s.nota || '').trim(),
+        solicitadoPor: s.solicitadoPor,
+        estado: 'pendiente',
+        creadoEn: serverTimestamp(),
+        ...(/^\d{4}-\d{2}-\d{2}$/.test(s.fecha || '') ? { fecha: s.fecha } : {}),
+        ...(s.correccionDe ? { correccionDe: String(s.correccionDe) } : {}),
+        ...(s.datosCorreccion && typeof s.datosCorreccion === 'object' ? { datosCorreccion: s.datosCorreccion } : {}),
+        ...(Number.isInteger(s.saldoAlSolicitar) ? { saldoAlSolicitar: s.saldoAlSolicitar } : {}),
+    };
+    const ref = await addDoc(collection(firestoreDb, 'clientes', clienteId, 'solicitudes'), payload);
+    return { id: ref.id, ...payload };
+}
+
+/** La SOLICITANTE cancela su propia solicitud pendiente (one-way; nadie cancela ajenas). */
+export async function cancelarSolicitud(clienteId, solId, uid) {
+    await updateDoc(doc(firestoreDb, 'clientes', clienteId, 'solicitudes', solId), {
+        estado: 'cancelada', canceladoPor: uid, canceladoEn: serverTimestamp(),
+    });
+}
+
+/**
+ * Registra una gestión de cobro (evidencia INMUTABLE — sin update/delete por reglas).
+ * Campos espejo de gestionValida(): tipo y resultado de listas literales; `fecha`
+ * ('YYYY-MM-DD') OBLIGATORIA; reloj del servidor.
+ * @param {object} g { tipo, resultado, fecha, registradoPor, nota?, soporte? }
+ */
+export async function registrarGestion(clienteId, g) {
+    const payload = {
+        tipo: g.tipo,
+        resultado: g.resultado,
+        fecha: g.fecha,
+        registradoPor: g.registradoPor,
+        creadoEn: serverTimestamp(),
+        ...(g.nota ? { nota: g.nota.trim() } : {}),
+        ...(g.soporte ? { soporte: String(g.soporte) } : {}),
+    };
+    const ref = await addDoc(collection(firestoreDb, 'clientes', clienteId, 'gestiones'), payload);
+    return { id: ref.id, ...payload };
+}
+
+/**
+ * Corrige un movimiento como PAR ATÓMICO en un writeBatch (anular el original + crear
+ * el reemplazo enlazado) — el camino auto-aprobable (admin). Cuando la corrección excede
+ * el carril (ver js/crm-correccion.js), el llamador usa `crearSolicitud` en su lugar; este
+ * batch NO se invoca. Requiere anulacionValida ensanchada (M2a-1b §73: motivoCategoria +
+ * corregidoPor). El reemplazo lleva `correccionDe` (movimientoValido lo admite — sin hasOnly
+ * hasta M3) y, por defecto, el MISMO tipo y fecha del original; en corrección de FECHA se
+ * pasa `reemplazo.fecha` nueva y motivoCategoria='CORRECCION_FECHA'.
+ * @returns {{nuevoId:string}}
+ */
+export async function corregirMovimientoBatch(clienteId, { original, reemplazo, motivoCategoria, motivoAnulacion, uid }) {
+    const movsCol = collection(firestoreDb, 'clientes', clienteId, 'movimientos');
+    const nuevoRef = doc(movsCol);   // id pre-generado para enlazar la anulación con el reemplazo
+    const FE = /^\d{4}-\d{2}-\d{2}$/;
+    const fechaReemplazo = FE.test(reemplazo.fecha || '') ? reemplazo.fecha
+        : (FE.test(original.fecha || '') ? original.fecha : null);
+
+    const batch = writeBatch(firestoreDb);
+    // (1) anular el original, enlazado al reemplazo (motivoCategoria + corregidoPor).
+    batch.update(doc(movsCol, original.id), {
+        anulado: true,
+        anuladoPor: uid,
+        anuladoEn: serverTimestamp(),
+        motivoAnulacion: (motivoAnulacion || '').trim(),
+        motivoCategoria,
+        corregidoPor: nuevoRef.id,
+    });
+    // (2) crear el reemplazo (MISMO tipo; monto entero; correccionDe → el original).
+    batch.set(nuevoRef, {
+        tipo: original.tipo,
+        monto: Math.round(Number(reemplazo.monto)),
+        ...(fechaReemplazo ? { fecha: fechaReemplazo } : {}),
+        ...(reemplazo.descripcion ? { descripcion: reemplazo.descripcion.trim() } : {}),
+        correccionDe: original.id,
+        registradoPor: uid,
+        registradoEn: serverTimestamp(),
+        anulado: false,
+    });
+    await batch.commit();   // atómico: o se aplican ambas patas, o ninguna
+    return { nuevoId: nuevoRef.id };
 }
 
 // ─── Vendedoras (entidad de datos; las gestiona Kary) ─────────────────────────

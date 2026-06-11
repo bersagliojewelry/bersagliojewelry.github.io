@@ -12,14 +12,17 @@ import { currentUser } from '../auth.js';
 import {
     getCliente, onClienteChange, onMovimientosChange,
     addMovimiento, anularMovimiento, updateCliente, fetchVendedoras, fmtCOP, getConfig,
-    crearSolicitud,
+    crearSolicitud, corregirMovimientoBatch, onSolicitudesChange, cancelarSolicitud,
 } from '../crm-service.js';
 import { saldoClass, saldoLabel, estadoBadgeHTML } from './saldo-format.js';
 import { estadoCuenta, hoyISO } from '../crm-estado-cuenta.js';
-import { planearCorreccionSaldo } from '../crm-correccion.js';
+import { planearCorreccionSaldo, planearCorreccionMovimiento, PREGUNTAS_CORRECCION } from '../crm-correccion.js';
 
 const CLIENTE_ID = new URLSearchParams(location.search).get('id');
 const _vendedoras = new Map();
+const _movsById = new Map();   // movimientos vivos por id (para el modal de corregir)
+let _solicitudes = [];         // solicitudes de corrección vivas (pendientes/rechazadas)
+let _abrirCorregirMov = null;  // ref al opener del modal de corregir (para re-solicitar)
 let _tipo = 'factura';   // tipo activo del modal
 let _cliente = null;     // datos vivos (para corregir saldo / editar)
 let _diasPlazo = 30;     // config/negocio.diasPlazo (mora)
@@ -119,6 +122,8 @@ function renderMovimientos(list) {
     const body = document.getElementById('mov-body');
     const empty = document.getElementById('mov-empty');
     renderEstado(list);
+    _movsById.clear();
+    list.forEach((m) => _movsById.set(m.id, m));
     if (!list.length) { empty.hidden = false; body.innerHTML = ''; return; }
     empty.hidden = true;
 
@@ -133,7 +138,8 @@ function renderMovimientos(list) {
         const fechaTxt = fmtFecha(m.fecha) || esc(fmtDateTime(m.registradoEn));
         const accion = anulado || !(m.tipo)
             ? ''
-            : `<button class="adm-btn adm-btn--ghost adm-btn--sm" data-anular="${esc(m.id)}">Anular</button>`;
+            : `<button class="adm-btn adm-btn--ghost adm-btn--sm" data-corregir="${esc(m.id)}">Corregir</button>
+               <button class="adm-btn adm-btn--ghost adm-btn--sm" data-anular="${esc(m.id)}">Anular</button>`;
         return `
             <tr${anulado ? ' style="opacity:.5"' : ''}>
                 <td title="Registrado: ${esc(fmtDateTime(m.registradoEn))}">${fechaTxt}</td>
@@ -143,6 +149,75 @@ function renderMovimientos(list) {
                 <td style="text-align:right">${accion}</td>
             </tr>`;
     }).join('');
+}
+
+// ─── Correcciones a la vista de Daniel (solicitudes pendientes/rechazadas) ──────
+function renderSolicitudes(list) {
+    _solicitudes = list || [];
+    const section = document.getElementById('solic-section');
+    const cont = document.getElementById('solic-list');
+    if (!section || !cont) return;
+    const vivas = _solicitudes.filter((s) => s.estado === 'pendiente' || s.estado === 'rechazada');
+    cont.replaceChildren();
+    if (!vivas.length) { section.hidden = true; return; }
+    section.hidden = false;
+
+    for (const s of vivas) {
+        const card = document.createElement('div');
+        card.style.cssText = 'padding:12px 14px;border-radius:14px;margin-bottom:10px;background:var(--adm-soft,#f5f3ef);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;';
+        const efecto = typeof s.monto === 'number' && s.monto !== 0
+            ? `el saldo ${s.monto > 0 ? 'sube' : 'baja'} ${fmtCOP(Math.abs(s.monto))}`
+            : 'sin efecto en el saldo';
+
+        const info = document.createElement('div');
+        info.style.fontSize = '13px';
+        const titulo = document.createElement('div'); titulo.style.fontWeight = '600';
+        const detalle = document.createElement('div'); detalle.style.color = 'var(--adm-muted)';
+        if (s.estado === 'pendiente') {
+            titulo.textContent = `⏳ Pendiente de Daniel — ${efecto}`;
+            detalle.textContent = s.nota || s.motivo || '';
+        } else {
+            titulo.textContent = '❌ Rechazada por Daniel';
+            detalle.textContent = s.motivoRechazo ? `Motivo: ${s.motivoRechazo}` : (s.nota || '');
+        }
+        info.append(titulo, detalle);
+
+        const actions = document.createElement('div');
+        if (s.estado === 'pendiente') {
+            const b = document.createElement('button');
+            b.className = 'adm-btn adm-btn--ghost adm-btn--sm'; b.textContent = 'Cancelar';
+            b.addEventListener('click', () => cancelarSolicitudUI(s, b));
+            actions.appendChild(b);
+        } else if (s.correccionDe && s.datosCorreccion && s.datosCorreccion.reemplazo) {
+            // RECHAZADA: re-solicitar precargando los datos corregidos (nunca sin botón).
+            const b = document.createElement('button');
+            b.className = 'adm-btn adm-btn--ghost adm-btn--sm'; b.textContent = 'Volver a corregir';
+            b.addEventListener('click', () => reSolicitar(s));
+            actions.appendChild(b);
+        }
+        card.append(info, actions);
+        cont.appendChild(card);
+    }
+}
+
+async function cancelarSolicitudUI(s, btn) {
+    if (btn) btn.disabled = true;
+    try {
+        await cancelarSolicitud(CLIENTE_ID, s.id, currentUser()?.user?.uid);
+        admToast('Solicitud cancelada.');
+    } catch (err) {
+        console.error('[cuenta] cancelarSolicitud:', err);
+        admToast('No se pudo cancelar.', 'danger');
+        if (btn) btn.disabled = false;
+    }
+}
+
+function reSolicitar(s) {
+    const original = _movsById.get(s.correccionDe);
+    if (!original) { admToast('El movimiento original ya no está; corrígelo de nuevo desde el historial.', 'danger'); return; }
+    if (!_abrirCorregirMov) return;
+    const r = s.datosCorreccion.reemplazo;
+    _abrirCorregirMov(original, { monto: r.monto, fecha: r.fecha, motivoCategoria: s.datosCorreccion.motivoCategoria });
 }
 
 // ─── Modal movimiento ─────────────────────────────────────────────────────────
@@ -340,6 +415,124 @@ function wireCorregir() {
     });
 }
 
+// ─── Corregir UN movimiento (par anular+crear o solicitud) — contrato §74 ──────
+function wireCorregirMov() {
+    const modal    = document.getElementById('corregirmov-modal');
+    const motivoEl = document.getElementById('corregirmov-motivo');
+    const montoEl  = document.getElementById('corregirmov-monto');
+    const fechaEl  = document.getElementById('corregirmov-fecha');
+    const notaEl   = document.getElementById('corregirmov-nota');
+    const anuncioEl = document.getElementById('corregirmov-anuncio');
+    const origEl   = document.getElementById('corregirmov-original');
+    let original = null;
+
+    // "¿Qué corriges?" desde las preguntas de mostrador (deriva el motivoCategoria).
+    motivoEl.replaceChildren();
+    const ph = document.createElement('option'); ph.value = ''; ph.textContent = 'Elige…'; motivoEl.appendChild(ph);
+    for (const q of PREGUNTAS_CORRECCION) {
+        const o = document.createElement('option'); o.value = q.motivo; o.textContent = q.pregunta; motivoEl.appendChild(o);
+    }
+
+    const plan = () => planearCorreccionMovimiento(original, {
+        montoNuevo: Number(montoEl.value), fechaNueva: fechaEl.value, motivoCategoria: motivoEl.value,
+    }, _cfgCartera);
+
+    // Anuncio EN VIVO del efecto + quién lo aplica.
+    const refrescar = () => {
+        if (!original) { anuncioEl.textContent = ''; return; }
+        const p = plan();
+        if (p.noOp) { anuncioEl.textContent = 'Cambia el monto o la fecha para corregir.'; anuncioEl.style.color = 'var(--adm-muted)'; return; }
+        const efecto = p.delta === 0 ? 'sin efecto en el saldo (cambia la fecha de mora)'
+            : `el saldo ${p.delta > 0 ? 'sube' : 'baja'} ${fmtCOP(Math.abs(p.delta))}`;
+        anuncioEl.textContent = p.requiereAprobacion
+            ? `Se anula y se crea el corregido — ${efecto}. Necesita aprobación de Daniel → se enviará como solicitud (el saldo no cambia hasta que apruebe).`
+            : `Se anula y se crea el corregido — ${efecto}. Se aplica de inmediato.`;
+        anuncioEl.style.color = p.requiereAprobacion ? '#b8860b' : 'var(--adm-muted)';
+    };
+
+    const close = () => { modal.hidden = true; original = null; };
+    // opener reutilizable (botón Corregir y re-solicitar desde una rechazada).
+    const abrir = (orig, prefill) => {
+        original = orig;
+        document.getElementById('corregirmov-form').reset();
+        origEl.textContent = `Original: ${TIPO_LABEL[original.tipo] || original.tipo} · ${fmtCOP(original.monto)}`
+            + (original.fecha ? ` · ${fmtFecha(original.fecha) || original.fecha}` : '');
+        montoEl.value = Math.round(Number(prefill?.monto ?? original.monto));
+        fechaEl.value = (prefill?.fecha || original.fecha) || '';
+        if (prefill?.motivoCategoria) motivoEl.value = prefill.motivoCategoria;
+        anuncioEl.textContent = '';
+        modal.hidden = false;
+        if (prefill) refrescar();
+        motivoEl.focus();
+    };
+    _abrirCorregirMov = abrir;
+    document.getElementById('mov-body').addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-corregir]');
+        if (!btn) return;
+        const orig = _movsById.get(btn.getAttribute('data-corregir'));
+        if (!orig) { admToast('No se encontró el movimiento.', 'danger'); return; }
+        abrir(orig);
+    });
+    document.getElementById('corregirmov-close').addEventListener('click', close);
+    document.getElementById('corregirmov-cancel').addEventListener('click', close);
+    modal.addEventListener('click', (e) => { if (e.target.id === 'corregirmov-modal') close(); });
+    motivoEl.addEventListener('change', refrescar);
+    montoEl.addEventListener('input', refrescar);
+    fechaEl.addEventListener('change', refrescar);
+
+    document.getElementById('corregirmov-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!original) return;
+        const motivoCategoria = motivoEl.value;
+        if (!motivoCategoria) { admToast('Elige qué corriges.', 'danger'); return; }
+        const nota = notaEl.value.trim();
+        if (!nota) { admToast('Escribe el detalle de la corrección.', 'danger'); return; }
+        const p = plan();
+        if (p.noOp) { admToast('No cambiaste el monto ni la fecha.', 'danger'); return; }
+        // factura/abono no pueden quedar en negativo (espejo de la regla).
+        if (['factura', 'abono'].includes(original.tipo) && p.reemplazo.monto < 0) {
+            admToast('El monto no puede ser negativo.', 'danger'); return;
+        }
+        // Bloqueo de duplicados (refinado): si ya hay una solicitud PENDIENTE sobre
+        // ESTE mismo movimiento, no se crea otra cola para lo mismo.
+        if (p.requiereAprobacion && _solicitudes.some((s) => s.estado === 'pendiente' && s.correccionDe === original.id)) {
+            admToast('Ya hay una corrección pendiente de este movimiento, esperando a Daniel.', 'danger');
+            return;
+        }
+        const uid = currentUser()?.user?.uid;
+        const preguntaLabel = (PREGUNTAS_CORRECCION.find((q) => q.motivo === motivoCategoria)?.pregunta) || motivoCategoria;
+        const actual = typeof _cliente?.saldoActual === 'number' ? _cliente.saldoActual : 0;
+        const btn = e.submitter;
+        if (btn) btn.disabled = true;
+        try {
+            if (p.requiereAprobacion) {
+                // SOLICITUD a Daniel — contrato verificado (§74): monto = delta neto, datosCorreccion con snapshot.
+                await crearSolicitud(CLIENTE_ID, {
+                    tipo: 'correccion', monto: p.delta, motivo: preguntaLabel, nota,
+                    fecha: original.fecha, solicitadoPor: uid,
+                    correccionDe: original.id, datosCorreccion: p.datosCorreccion,
+                    saldoAlSolicitar: Math.round(actual),
+                });
+                admToast('Enviado a Daniel. El saldo no cambia hasta que apruebe.');
+            } else {
+                // Dentro del carril → par atómico (anular + crear). Sin toast optimista (await commit).
+                await corregirMovimientoBatch(CLIENTE_ID, {
+                    original, reemplazo: p.reemplazo, motivoCategoria, motivoAnulacion: nota, uid,
+                });
+                admToast('Corrección aplicada. El saldo se actualizará en un momento.');
+            }
+            close();
+        } catch (err) {
+            console.error('[cuenta] corregir movimiento:', err);
+            admToast(err?.code === 'permission-denied'
+                ? 'Esta corrección necesita aprobación de Daniel.'
+                : 'No se pudo aplicar la corrección.', 'danger');
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    });
+}
+
 // ─── Editar datos del cliente (admin) ──────────────────────────────────────────
 function wireEditar() {
     const sel = document.getElementById('ed-vendedora');
@@ -429,10 +622,12 @@ async function init() {
     wireModal();
     wireAnular();
     wireCorregir();
+    wireCorregirMov();
     wireEditar();
 
     onClienteChange(CLIENTE_ID, (c) => renderHeader(c));
     onMovimientosChange(CLIENTE_ID, (list) => renderMovimientos(list));
+    onSolicitudesChange(CLIENTE_ID, (list) => renderSolicitudes(list));
 }
 
 init();

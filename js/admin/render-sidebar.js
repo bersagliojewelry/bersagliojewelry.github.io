@@ -1,4 +1,4 @@
-import { NAV_FOOTER } from './sidebar-data.js';
+import { NAV_FOOTER, APP_VERSION } from './sidebar-data.js';
 
 const ROLE_RANK = { editor: 1, admin: 2, owner: 3 };
 
@@ -70,5 +70,6 @@ export function renderSidebar(nav, { role = 'editor', activePage = 'admin.html' 
       </div>
       <div><div class="adm-brand-name">BERSAGLIO</div><div class="adm-brand-role">Panel Admin</div></div>
     </div>
-    <nav class="adm-nav">${groups}${footer}</nav>`;
+    <nav class="adm-nav">${groups}${footer}</nav>
+    <div class="adm-version" title="Versión del panel" style="padding:10px 16px;font-size:11px;letter-spacing:.04em;color:var(--adm-muted);opacity:.7;">${APP_VERSION}</div>`;
 }

@@ -121,6 +121,7 @@
 | §71 | 2026-06-10 — Preguntas 1-5 respondidas (SLA 48h grabado · delegación de experto · rol contador futuro) + M0-C panel Parámetros owner-only; tren M2/M3 desbloqueado | 1025 |
 | §72 | 2026-06-10 — M1 red-team adversarial (W-01, 22 agentes → 0 bloqueantes/0 m1-bugs) + fix contrato motivoRechazo↔estado (99/99); 4 forward-risk-m2b diferidos; deploy reglas M1 pendiente OK Daniel | 1037 |
 | §73 | 2026-06-10 — M2a-1b: ensanche aditivo de anulacionValida (motivoCategoria+corregidoPor) + par atómico corregirMovimientoBatch; red-team W-01 0 bloqueantes; 100/100; DESPLEGADO | 1055 |
+| §74 | 2026-06-10 — Contrato solicitud de corrección (workflow 5 agentes → SÓLIDO: monto=delta neto, datosCorreccion={reemplazo,snapshotOriginal,motivoCategoria}) + UI "Corregir movimiento" M2a-3 + efectoSaldo compartido (22/22) | 1073 |
 ---
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §57+ al historial,

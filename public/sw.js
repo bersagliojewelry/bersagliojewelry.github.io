@@ -6,8 +6,9 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v9 — HOTFIX prod: restaurar fallback de llaves Firebase (S1 tumbó el sitio). Fuerza refresco del shell.
-const CACHE_NAME    = 'bersaglio-v9';
+// Bumped to v10 — Fase M / M2a: UI de corrección de Kary (botón Corregir, anular con
+// categoría, abono con medio de pago, correcciones a la vista). Fuerza refresco del shell.
+const CACHE_NAME    = 'bersaglio-v10';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

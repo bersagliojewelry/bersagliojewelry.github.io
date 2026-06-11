@@ -12,7 +12,7 @@ import { currentUser } from '../auth.js';
 import {
     getCliente, onClienteChange, onMovimientosChange,
     addMovimiento, anularMovimiento, updateCliente, fetchVendedoras, fmtCOP, getConfig,
-    crearSolicitud, corregirMovimientoBatch,
+    crearSolicitud, corregirMovimientoBatch, onSolicitudesChange, cancelarSolicitud,
 } from '../crm-service.js';
 import { saldoClass, saldoLabel, estadoBadgeHTML } from './saldo-format.js';
 import { estadoCuenta, hoyISO } from '../crm-estado-cuenta.js';
@@ -21,6 +21,8 @@ import { planearCorreccionSaldo, planearCorreccionMovimiento, PREGUNTAS_CORRECCI
 const CLIENTE_ID = new URLSearchParams(location.search).get('id');
 const _vendedoras = new Map();
 const _movsById = new Map();   // movimientos vivos por id (para el modal de corregir)
+let _solicitudes = [];         // solicitudes de corrección vivas (pendientes/rechazadas)
+let _abrirCorregirMov = null;  // ref al opener del modal de corregir (para re-solicitar)
 let _tipo = 'factura';   // tipo activo del modal
 let _cliente = null;     // datos vivos (para corregir saldo / editar)
 let _diasPlazo = 30;     // config/negocio.diasPlazo (mora)
@@ -147,6 +149,75 @@ function renderMovimientos(list) {
                 <td style="text-align:right">${accion}</td>
             </tr>`;
     }).join('');
+}
+
+// ─── Correcciones a la vista de Daniel (solicitudes pendientes/rechazadas) ──────
+function renderSolicitudes(list) {
+    _solicitudes = list || [];
+    const section = document.getElementById('solic-section');
+    const cont = document.getElementById('solic-list');
+    if (!section || !cont) return;
+    const vivas = _solicitudes.filter((s) => s.estado === 'pendiente' || s.estado === 'rechazada');
+    cont.replaceChildren();
+    if (!vivas.length) { section.hidden = true; return; }
+    section.hidden = false;
+
+    for (const s of vivas) {
+        const card = document.createElement('div');
+        card.style.cssText = 'padding:12px 14px;border-radius:14px;margin-bottom:10px;background:var(--adm-soft,#f5f3ef);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;';
+        const efecto = typeof s.monto === 'number' && s.monto !== 0
+            ? `el saldo ${s.monto > 0 ? 'sube' : 'baja'} ${fmtCOP(Math.abs(s.monto))}`
+            : 'sin efecto en el saldo';
+
+        const info = document.createElement('div');
+        info.style.fontSize = '13px';
+        const titulo = document.createElement('div'); titulo.style.fontWeight = '600';
+        const detalle = document.createElement('div'); detalle.style.color = 'var(--adm-muted)';
+        if (s.estado === 'pendiente') {
+            titulo.textContent = `⏳ Pendiente de Daniel — ${efecto}`;
+            detalle.textContent = s.nota || s.motivo || '';
+        } else {
+            titulo.textContent = '❌ Rechazada por Daniel';
+            detalle.textContent = s.motivoRechazo ? `Motivo: ${s.motivoRechazo}` : (s.nota || '');
+        }
+        info.append(titulo, detalle);
+
+        const actions = document.createElement('div');
+        if (s.estado === 'pendiente') {
+            const b = document.createElement('button');
+            b.className = 'adm-btn adm-btn--ghost adm-btn--sm'; b.textContent = 'Cancelar';
+            b.addEventListener('click', () => cancelarSolicitudUI(s, b));
+            actions.appendChild(b);
+        } else if (s.correccionDe && s.datosCorreccion && s.datosCorreccion.reemplazo) {
+            // RECHAZADA: re-solicitar precargando los datos corregidos (nunca sin botón).
+            const b = document.createElement('button');
+            b.className = 'adm-btn adm-btn--ghost adm-btn--sm'; b.textContent = 'Volver a corregir';
+            b.addEventListener('click', () => reSolicitar(s));
+            actions.appendChild(b);
+        }
+        card.append(info, actions);
+        cont.appendChild(card);
+    }
+}
+
+async function cancelarSolicitudUI(s, btn) {
+    if (btn) btn.disabled = true;
+    try {
+        await cancelarSolicitud(CLIENTE_ID, s.id, currentUser()?.user?.uid);
+        admToast('Solicitud cancelada.');
+    } catch (err) {
+        console.error('[cuenta] cancelarSolicitud:', err);
+        admToast('No se pudo cancelar.', 'danger');
+        if (btn) btn.disabled = false;
+    }
+}
+
+function reSolicitar(s) {
+    const original = _movsById.get(s.correccionDe);
+    if (!original) { admToast('El movimiento original ya no está; corrígelo de nuevo desde el historial.', 'danger'); return; }
+    if (!_abrirCorregirMov) return;
+    const r = s.datosCorreccion.reemplazo;
+    _abrirCorregirMov(original, { monto: r.monto, fecha: r.fecha, motivoCategoria: s.datosCorreccion.motivoCategoria });
 }
 
 // ─── Modal movimiento ─────────────────────────────────────────────────────────
@@ -380,19 +451,27 @@ function wireCorregirMov() {
     };
 
     const close = () => { modal.hidden = true; original = null; };
-    document.getElementById('mov-body').addEventListener('click', (e) => {
-        const btn = e.target.closest('[data-corregir]');
-        if (!btn) return;
-        original = _movsById.get(btn.getAttribute('data-corregir'));
-        if (!original) { admToast('No se encontró el movimiento.', 'danger'); return; }
+    // opener reutilizable (botón Corregir y re-solicitar desde una rechazada).
+    const abrir = (orig, prefill) => {
+        original = orig;
         document.getElementById('corregirmov-form').reset();
         origEl.textContent = `Original: ${TIPO_LABEL[original.tipo] || original.tipo} · ${fmtCOP(original.monto)}`
             + (original.fecha ? ` · ${fmtFecha(original.fecha) || original.fecha}` : '');
-        montoEl.value = Math.round(Number(original.monto));
-        if (original.fecha) fechaEl.value = original.fecha;
+        montoEl.value = Math.round(Number(prefill?.monto ?? original.monto));
+        fechaEl.value = (prefill?.fecha || original.fecha) || '';
+        if (prefill?.motivoCategoria) motivoEl.value = prefill.motivoCategoria;
         anuncioEl.textContent = '';
         modal.hidden = false;
+        if (prefill) refrescar();
         motivoEl.focus();
+    };
+    _abrirCorregirMov = abrir;
+    document.getElementById('mov-body').addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-corregir]');
+        if (!btn) return;
+        const orig = _movsById.get(btn.getAttribute('data-corregir'));
+        if (!orig) { admToast('No se encontró el movimiento.', 'danger'); return; }
+        abrir(orig);
     });
     document.getElementById('corregirmov-close').addEventListener('click', close);
     document.getElementById('corregirmov-cancel').addEventListener('click', close);
@@ -413,6 +492,12 @@ function wireCorregirMov() {
         // factura/abono no pueden quedar en negativo (espejo de la regla).
         if (['factura', 'abono'].includes(original.tipo) && p.reemplazo.monto < 0) {
             admToast('El monto no puede ser negativo.', 'danger'); return;
+        }
+        // Bloqueo de duplicados (refinado): si ya hay una solicitud PENDIENTE sobre
+        // ESTE mismo movimiento, no se crea otra cola para lo mismo.
+        if (p.requiereAprobacion && _solicitudes.some((s) => s.estado === 'pendiente' && s.correccionDe === original.id)) {
+            admToast('Ya hay una corrección pendiente de este movimiento, esperando a Daniel.', 'danger');
+            return;
         }
         const uid = currentUser()?.user?.uid;
         const preguntaLabel = (PREGUNTAS_CORRECCION.find((q) => q.motivo === motivoCategoria)?.pregunta) || motivoCategoria;
@@ -542,6 +627,7 @@ async function init() {
 
     onClienteChange(CLIENTE_ID, (c) => renderHeader(c));
     onMovimientosChange(CLIENTE_ID, (list) => renderMovimientos(list));
+    onSolicitudesChange(CLIENTE_ID, (list) => renderSolicitudes(list));
 }
 
 init();

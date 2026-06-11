@@ -9,6 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
     ajusteRequiereAprobacion, anulacionRequiereAprobacion, planearCorreccionSaldo,
+    efectoSaldo, planearCorreccionMovimiento,
     PREGUNTAS_CORRECCION, MOTIVOS_NEUTROS_DEFAULT,
 } from '../js/crm-correccion.js';
 
@@ -87,6 +88,57 @@ test('planear: subir saldo (delta positivo) → admin sin tope', () => {
     const r = planearCorreccionSaldo(100000, 250000, 'OTRO', CFG);            // delta +150000
     assert.equal(r.delta, 150000);
     assert.equal(r.requiereAprobacion, false);
+});
+
+// ─── efectoSaldo (signo por tipo, fuente única) ───────────────────────────────
+test('efectoSaldo: factura/apertura/ajuste suman; abono resta; desconocido = 0', () => {
+    assert.equal(efectoSaldo('factura', 1000), 1000);
+    assert.equal(efectoSaldo('apertura', 1000), 1000);
+    assert.equal(efectoSaldo('ajuste', -1000), -1000);
+    assert.equal(efectoSaldo('abono', 1000), -1000);
+    assert.equal(efectoSaldo('raro', 1000), 0);
+});
+
+// ─── planearCorreccionMovimiento (contrato §74) ───────────────────────────────
+test('corregir factura 500k→450k: delta −50k, requiere aprobación (anular >tope)', () => {
+    const p = planearCorreccionMovimiento(
+        { id: 'm1', tipo: 'factura', monto: 500000, fecha: '2026-06-03' },
+        { montoNuevo: 450000, motivoCategoria: 'ERROR_REGISTRO' }, CFG);
+    assert.equal(p.delta, -50000);
+    assert.equal(p.requiereAprobacion, true);   // anular factura 500k > tope 50k → owner
+    assert.equal(p.noOp, false);
+    assert.equal(p.datosCorreccion.reemplazo.monto, 450000);
+    assert.equal(p.datosCorreccion.snapshotOriginal.monto, 500000);
+    assert.equal(p.datosCorreccion.snapshotOriginal.anulado, false);
+    assert.equal(p.datosCorreccion.motivoCategoria, 'ERROR_REGISTRO');
+});
+test('corregir factura pequeña 30k→20k: auto-aprobable (anular ≤ tope)', () => {
+    const p = planearCorreccionMovimiento(
+        { id: 'm2', tipo: 'factura', monto: 30000, fecha: '2026-06-03' },
+        { montoNuevo: 20000, motivoCategoria: 'ERROR_REGISTRO' }, CFG);
+    assert.equal(p.delta, -10000);
+    assert.equal(p.requiereAprobacion, false);
+});
+test('corregir abono (subir el abono baja el saldo) → siempre requiere aprobación', () => {
+    const p = planearCorreccionMovimiento(
+        { id: 'm3', tipo: 'abono', monto: 100000, fecha: '2026-06-03' },
+        { montoNuevo: 120000, motivoCategoria: 'ERROR_REGISTRO' }, CFG);
+    assert.equal(p.delta, -20000);            // abono resta: +20k de abono = −20k de saldo
+    assert.equal(p.requiereAprobacion, true); // anular un abono → owner
+});
+test('corregir solo la fecha (mismo monto): delta 0 pero NO es no-op (cambia mora)', () => {
+    const p = planearCorreccionMovimiento(
+        { id: 'm4', tipo: 'factura', monto: 50000, fecha: '2026-06-03' },
+        { montoNuevo: 50000, fechaNueva: '2026-05-01', motivoCategoria: 'CORRECCION_FECHA' }, CFG);
+    assert.equal(p.delta, 0);
+    assert.equal(p.noOp, false);
+    assert.equal(p.datosCorreccion.reemplazo.fecha, '2026-05-01');
+});
+test('corregir sin cambiar nada (mismo monto, misma fecha) → no-op', () => {
+    const p = planearCorreccionMovimiento(
+        { id: 'm5', tipo: 'factura', monto: 50000, fecha: '2026-06-03' },
+        { montoNuevo: 50000, motivoCategoria: 'ERROR_REGISTRO' }, CFG);
+    assert.equal(p.noOp, true);
 });
 
 // ─── Datos de presentación ────────────────────────────────────────────────────

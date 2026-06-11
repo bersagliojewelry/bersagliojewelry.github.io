@@ -24,10 +24,11 @@ export const MOTIVOS_NEUTROS_DEFAULT = ['ERROR_REGISTRO', 'ABONO_NO_REGISTRADO',
 // de presentación. `siempreSolicitud` se marca para los no-neutros como pista de UI
 // (el gate real lo decide ajusteRequiereAprobacion; esto es solo para el copy).
 export const PREGUNTAS_CORRECCION = [
-    { pregunta: '¿Te equivocaste al digitar?',                 motivo: 'ERROR_REGISTRO' },
-    { pregunta: '¿La clienta pagó y no se anotó?',             motivo: 'ABONO_NO_REGISTRADO' },
-    { pregunta: '¿La clienta devolvió la pieza?',              motivo: 'DEVOLUCION_PIEZA' },
-    { pregunta: '¿Daniel te autorizó un descuento?',           motivo: 'DESCUENTO_AUTORIZADO' },
+    { pregunta: 'Te equivocaste al digitar el monto',          motivo: 'ERROR_REGISTRO' },
+    { pregunta: 'La fecha del registro está mal',              motivo: 'CORRECCION_FECHA' },
+    { pregunta: 'La clienta pagó y no se anotó',               motivo: 'ABONO_NO_REGISTRADO' },
+    { pregunta: 'La clienta devolvió la pieza',                motivo: 'DEVOLUCION_PIEZA' },
+    { pregunta: 'Daniel te autorizó un descuento',             motivo: 'DESCUENTO_AUTORIZADO' },
     { pregunta: 'Otra cosa (la revisa Daniel)',                motivo: 'OTRO' },
 ];
 
@@ -99,4 +100,57 @@ export function planearCorreccionSaldo(saldoActual, saldoNuevo, motivo, cfg) {
         return { delta: 0, requiereAprobacion: false, noOp: true };
     }
     return { delta, requiereAprobacion: ajusteRequiereAprobacion(delta, motivo, cfg), noOp: false };
+}
+
+// ─── Corrección de un MOVIMIENTO (par anular+crear) — contrato verificado (ADR §74) ──
+// Efecto de un asiento sobre el saldo: factura/apertura/ajuste SUMAN; abono RESTA
+// (espejo de movimientoValido en firestore.rules). FUENTE ÚNICA del signo — la usan el
+// productor del delta (M2a) y el re-validador (M2b), para que no diverjan dos copias.
+const SIGNO_SALDO = { factura: 1, apertura: 1, ajuste: 1, abono: -1 };
+export function efectoSaldo(tipo, monto) {
+    const s = SIGNO_SALDO[tipo] || 0;
+    return s * (Number.isFinite(monto) ? monto : 0);
+}
+
+/**
+ * Planea la corrección de UN movimiento (anular el original + crear el reemplazo, MISMO
+ * tipo). El gate es la ANULACIÓN del original (la pata destructiva). Arma el contrato
+ * verificado de la solicitud cuando necesita a Daniel: `monto` = DELTA NETO firmado al
+ * saldo; `datosCorreccion` = { reemplazo, snapshotOriginal (evidencia, no autoridad),
+ * motivoCategoria }. M2b RE-LEE el original y re-valida; NUNCA confía en datosCorreccion.
+ * @param {object} original  movimiento a corregir { id, tipo, monto, fecha?, descripcion? }
+ * @param {object} cambio     { montoNuevo:int, fechaNueva?, descripcionNueva?, motivoCategoria }
+ * @param {object} cfg        config/cartera
+ * @returns {{delta:number, requiereAprobacion:boolean, noOp:boolean, reemplazo:object, datosCorreccion:object}}
+ */
+export function planearCorreccionMovimiento(original, cambio, cfg) {
+    const tipo = original.tipo;
+    const montoOriginal = Math.round(Number(original.monto));
+    const montoNuevo = Math.round(Number(cambio.montoNuevo));
+    const fechaNueva = /^\d{4}-\d{2}-\d{2}$/.test(cambio.fechaNueva || '') ? cambio.fechaNueva : original.fecha;
+    const delta = efectoSaldo(tipo, montoNuevo) - efectoSaldo(tipo, montoOriginal);
+    const cambiaFecha = (cambio.fechaNueva || '') && cambio.fechaNueva !== original.fecha;
+    // no-op: ni el monto ni la fecha cambian (nada que corregir).
+    const noOp = montoNuevo === montoOriginal && !cambiaFecha;
+
+    const reemplazo = {
+        tipo,
+        monto: montoNuevo,
+        ...(fechaNueva ? { fecha: fechaNueva } : {}),
+        ...(cambio.descripcionNueva ? { descripcion: String(cambio.descripcionNueva).trim() } : {}),
+    };
+    const snapshotOriginal = {
+        tipo,
+        monto: montoOriginal,
+        ...(original.fecha ? { fecha: original.fecha } : {}),
+        ...(original.descripcion ? { descripcion: original.descripcion } : {}),
+        anulado: false,
+    };
+    return {
+        delta,
+        requiereAprobacion: anulacionRequiereAprobacion(original, cfg),
+        noOp,
+        reemplazo,
+        datosCorreccion: { reemplazo, snapshotOriginal, motivoCategoria: cambio.motivoCategoria },
+    };
 }

@@ -22,7 +22,8 @@ const CLIENTE_ID = new URLSearchParams(location.search).get('id');
 const _vendedoras = new Map();
 const _movsById = new Map();   // movimientos vivos por id (para el modal de corregir)
 let _solicitudes = [];         // solicitudes de corrección vivas (pendientes/rechazadas)
-let _abrirCorregirMov = null;  // ref al opener del modal de corregir (para re-solicitar)
+let _abrirCorregirMov = null;  // ref al opener del modal de corregir movimiento (re-solicitar)
+let _abrirCorregirSaldo = null; // ref al opener de corregir-saldo (re-solicitar un ajuste rechazado)
 let _tipo = 'factura';   // tipo activo del modal
 let _cliente = null;     // datos vivos (para corregir saldo / editar)
 let _diasPlazo = 30;     // config/negocio.diasPlazo (mora)
@@ -183,18 +184,22 @@ function renderSolicitudes(list) {
         info.append(titulo, detalle);
 
         const actions = document.createElement('div');
+        const b = document.createElement('button');
+        b.className = 'adm-btn adm-btn--ghost adm-btn--sm';
         if (s.estado === 'pendiente') {
-            const b = document.createElement('button');
-            b.className = 'adm-btn adm-btn--ghost adm-btn--sm'; b.textContent = 'Cancelar';
+            b.textContent = 'Cancelar';
             b.addEventListener('click', () => cancelarSolicitudUI(s, b));
-            actions.appendChild(b);
         } else if (s.correccionDe && s.datosCorreccion && s.datosCorreccion.reemplazo) {
-            // RECHAZADA: re-solicitar precargando los datos corregidos (nunca sin botón).
-            const b = document.createElement('button');
-            b.className = 'adm-btn adm-btn--ghost adm-btn--sm'; b.textContent = 'Volver a corregir';
+            // RECHAZADA de un movimiento: re-solicitar precargando los datos corregidos.
+            b.textContent = 'Volver a corregir';
             b.addEventListener('click', () => reSolicitar(s));
-            actions.appendChild(b);
+        } else {
+            // RECHAZADA de un ajuste de saldo: re-abrir "Corregir saldo" precargado
+            // (el primer "no" de Daniel NUNCA deja a Kary sin botón — spec §74).
+            b.textContent = 'Volver a corregir saldo';
+            b.addEventListener('click', () => reSolicitarSaldo(s));
         }
+        actions.appendChild(b);
         card.append(info, actions);
         cont.appendChild(card);
     }
@@ -218,6 +223,15 @@ function reSolicitar(s) {
     if (!_abrirCorregirMov) return;
     const r = s.datosCorreccion.reemplazo;
     _abrirCorregirMov(original, { monto: r.monto, fecha: r.fecha, motivoCategoria: s.datosCorreccion.motivoCategoria });
+}
+
+// Re-solicitar un AJUSTE de saldo rechazado: re-abre "Corregir saldo" con el saldo
+// objetivo original (saldoAlSolicitar + delta), motivo y nota precargados.
+function reSolicitarSaldo(s) {
+    if (!_abrirCorregirSaldo) return;
+    const base = Number.isInteger(s.saldoAlSolicitar) ? s.saldoAlSolicitar
+        : (typeof _cliente?.saldoActual === 'number' ? _cliente.saldoActual : 0);
+    _abrirCorregirSaldo({ saldoObjetivo: base + (typeof s.monto === 'number' ? s.monto : 0), motivo: s.motivo, nota: s.nota });
 }
 
 // ─── Modal movimiento ─────────────────────────────────────────────────────────
@@ -357,16 +371,20 @@ function wireCorregir() {
         anuncioEl.style.color = plan.requiereAprobacion ? '#b8860b' : 'var(--adm-muted)';
     };
 
-    const open = () => {
+    const abrirSaldo = (prefill) => {
         document.getElementById('corregir-form').reset();
         document.getElementById('corregir-actual').textContent = `(actual: ${fmtCOP(saldoActual())})`;
-        saldoEl.value = saldoActual();
+        saldoEl.value = prefill?.saldoObjetivo ?? saldoActual();
+        if (prefill?.motivo) motivoEl.value = prefill.motivo;
+        if (prefill?.nota) notaEl.value = prefill.nota;
         anuncioEl.textContent = '';
         modal.hidden = false;
+        if (prefill) refrescarAnuncio();
         saldoEl.focus();
     };
+    _abrirCorregirSaldo = abrirSaldo;
     const close = () => { modal.hidden = true; };
-    document.getElementById('btn-corregir').addEventListener('click', open);
+    document.getElementById('btn-corregir').addEventListener('click', () => abrirSaldo());
     document.getElementById('corregir-close').addEventListener('click', close);
     document.getElementById('corregir-cancel').addEventListener('click', close);
     modal.addEventListener('click', (e) => { if (e.target.id === 'corregir-modal') close(); });
@@ -382,6 +400,11 @@ function wireCorregir() {
         const actual = saldoActual();
         const plan = planearCorreccionSaldo(actual, Number(saldoEl.value), motivo, _cfgCartera);
         if (plan.noOp) { admToast('El saldo ya es ese.'); close(); return; }
+        // Bloqueo de duplicados: no crear un 2º ajuste idéntico pendiente (mismo monto).
+        if (plan.requiereAprobacion && _solicitudes.some((s) => s.estado === 'pendiente' && s.tipo === 'ajuste' && s.monto === plan.delta)) {
+            admToast('Ya hay un ajuste igual pendiente, esperando a Daniel.', 'danger');
+            return;
+        }
 
         const uid = currentUser()?.user?.uid;
         const btn = e.submitter;
@@ -489,9 +512,9 @@ function wireCorregirMov() {
         if (!nota) { admToast('Escribe el detalle de la corrección.', 'danger'); return; }
         const p = plan();
         if (p.noOp) { admToast('No cambiaste el monto ni la fecha.', 'danger'); return; }
-        // factura/abono no pueden quedar en negativo (espejo de la regla).
-        if (['factura', 'abono'].includes(original.tipo) && p.reemplazo.monto < 0) {
-            admToast('El monto no puede ser negativo.', 'danger'); return;
+        // factura/abono deben quedar > 0 (un $0 silencioso corrompería el saldo; espejo de la regla).
+        if (['factura', 'abono'].includes(original.tipo) && !(p.reemplazo.monto > 0)) {
+            admToast('El monto debe ser mayor que 0.', 'danger'); return;
         }
         // Bloqueo de duplicados (refinado): si ya hay una solicitud PENDIENTE sobre
         // ESTE mismo movimiento, no se crea otra cola para lo mismo.

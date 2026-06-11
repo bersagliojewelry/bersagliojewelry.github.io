@@ -1087,3 +1087,15 @@ Con autorización explícita de Daniel ("autorizo todo").
 **74.6 DEFERIDOS (del verificador — al backlog `fase-m-plan.md` para no perder)**: (1) cuando M3 endurezca `movimientoValido()` con `hasOnly`, DEBE whitelistar `correccionDe` + `solicitudId` + `medioPago` o el SET del reemplazo (pata 2 del batch de M2b) revienta. (2) M2b genera `solicitudId` server-side (nunca del cliente). (3) M2b importa `efectoSaldo` (no copiar la fórmula).
 
 **74.7 Archivos**: `js/crm-correccion.js` · `tests/crm-correccion.test.mjs` · `admin-cuenta.html` (modal corregirmov) · `js/admin/cuenta.js` (wireCorregirMov + botón Corregir + _movsById). CRUDO → bóveda `research-archive/2026-06-10-diseno-contrato-correccion-CRUDO.json`. **Sin deploy** (la UI no va en vivo hasta M2a-6: cache bump + merge + smoke con Kary). Sin cache bump aún.
+
+## 2026-06-10 — §75: Verificación EXPERTA de la UI de M2a (reemplaza el smoke de Kary) + go-live
+
+> Daniel (enfático): *"NO necesitamos a Kary, ella no sabe nada, no es contadora, solo dueña de la empresa, y nos dio la decisión a nosotros; necesito que seas el experto en todo."* → Kary NO es verificadora; **Claude verifica como experto**. El gate "smoke con Kary" del plan Fase M se REEMPLAZA. Memoria `feedback_claude_experto_verifica`.
+
+**75.1 Verificación**: revisión adversarial multi-agente de TODA la UI de M2a (12 agentes, 3 dimensiones — conformidad con reglas desplegadas · lógica de dinero · wiring/edge-cases → verificación adversarial de cada hallazgo). **Atrapó 3 bugs reales** (2 bloqueantes de dinero) que clics de un no-técnico NO habrían visto.
+
+**75.2 Bugs corregidos**: (1) BLOQUEANTE — "Corregir saldo" no bloqueaba ajustes duplicados (2º envío idéntico → doble ajuste si Daniel aprueba ambos) → guard `mismo tipo+monto pendiente` (paridad con corregir-movimiento). (2) BLOQUEANTE — corregir un movimiento con monto vacío/0 creaba un asiento de **$0 silencioso** (corrompe el saldo) → guarda `!(monto>0)` para factura/abono + `required` en el input. (3) SPEC — un ajuste rechazado quedaba SIN botón → "Volver a corregir saldo" (`_abrirCorregirSaldo`).
+
+**75.3 Re-verificación**: agente adversarial enfocado a los 3 fixes → **3/3 CERRADOS, sin regresiones**. Build verde. **0 bloqueantes restantes**. Lección **L-39**.
+
+**75.4 Go-live**: cache `bersaglio-v10` + indicador `APP_VERSION` v10 + reglas M1/M2a-1b ya en prod → merge `Desarrollo→main` (Pages despliega M2a). Archivos: `js/admin/cuenta.js` · `admin-cuenta.html`. CRUDO → `research-archive/2026-06-10-verif-experta-ui-m2a-CRUDO.json`. Siguiente: M2b (superficie de Daniel; contrato §74).

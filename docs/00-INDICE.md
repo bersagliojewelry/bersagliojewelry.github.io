@@ -122,6 +122,7 @@
 | §72 | 2026-06-10 — M1 red-team adversarial (W-01, 22 agentes → 0 bloqueantes/0 m1-bugs) + fix contrato motivoRechazo↔estado (99/99); 4 forward-risk-m2b diferidos; deploy reglas M1 pendiente OK Daniel | 1037 |
 | §73 | 2026-06-10 — M2a-1b: ensanche aditivo de anulacionValida (motivoCategoria+corregidoPor) + par atómico corregirMovimientoBatch; red-team W-01 0 bloqueantes; 100/100; DESPLEGADO | 1055 |
 | §74 | 2026-06-10 — Contrato solicitud de corrección (workflow 5 agentes → SÓLIDO: monto=delta neto, datosCorreccion={reemplazo,snapshotOriginal,motivoCategoria}) + UI "Corregir movimiento" M2a-3 + efectoSaldo compartido (22/22) | 1073 |
+| §75 | 2026-06-10 — Verificación EXPERTA de la UI de M2a (12 agentes; reemplaza smoke de Kary) → 3 bugs de dinero (2 bloqueantes: ajuste duplicado, asiento $0) corregidos + go-live | 1091 |
 ---
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §57+ al historial,

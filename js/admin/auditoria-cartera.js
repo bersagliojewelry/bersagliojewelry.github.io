@@ -14,11 +14,14 @@ import { admToast, admConfirm, esc, fmtDateTime, currentUser } from './shared.js
 import {
     onAllMovimientosChange, onSolicitudesPendientesChange, onSolicitudesRechazadasRecientes,
     onClientesChange, onActaChange, crearActa, onUltimoCorteChange, getConfig, fmtCOP,
+    onAllAcuerdosChange,
 } from '../crm-service.js';
 import {
     mesDe, trimestreDe, pendientesFueraDeSLA, ajustesNegativosAuto, anulacionesDelMes,
     rechazadasBurladas, abonosPorMedio, muestraTrimestral, acuerdosLargos,
+    acuerdosSobreMora, acuerdosAnomalos, renegociacionesSeriales,
 } from '../crm-auditoria.js';
+import { estadoCuenta } from '../crm-estado-cuenta.js';
 
 const MEDIO_LABEL = { efectivo: 'Efectivo', transferencia: 'Transferencia', datafono: 'Datáfono', otro: 'Otro', sin_medio: 'Sin medio (antiguos)' };
 
@@ -33,6 +36,10 @@ let _ownerUid = null;
 let _actaMesAnterior = null;   // acta del mes que cerró (la que toca levantar)
 let _actaError = false;        // listener del acta muerto → no ofrecer el form
 let _mesAnterior = '';
+let _acuerdos = [];            // TODOS los acuerdos (vigilancia, spec 2026-06-12 §1.8)
+let _acuerdosActivos = false;  // config/cartera.acuerdosActivos (gate del listener)
+let _horizonteDias = 730;      // config/cartera.horizonteAcuerdoDias (P3)
+let _ultimoCorte = null;       // corte inmutable más reciente (insumo de sobreMora)
 
 function el(tag, { cls, css, text, title } = {}) {
     const n = document.createElement(tag);
@@ -137,11 +144,60 @@ function render() {
     // (4b · M6) Acuerdos de pago anormalmente largos: el acuerdo manda sobre la
     // mora — uno lejano PARQUEA la deuda fuera de vencidos/SLA/corte (detector
     // del vector que el Consejo M3 cerró en la fecha y M6 reabre en el acuerdo).
-    const largos = acuerdosLargos(_movs, { umbralDias: 120 });
+    // Las facturas cubiertas por un PLAN vigente se excluyen (su horizonte lo
+    // gobierna el acuerdo, vigilado en 4c).
+    const largos = acuerdosLargos(_movs, { umbralDias: 120, acuerdos: _acuerdos });
     const largosNodos = largos.map((m) => fila(
         `${nombre(m.clienteId)} — factura con acuerdo a ${m.diasAcuerdo} días (${m.fecha} → ${m.vencimiento})`,
         fmtCOP(Math.abs(m.monto || 0)), { ambar: true },
     ));
+
+    // (4c) VIGILANCIA DE ACUERDOS (spec 2026-06-12 §1.8): 3 señales + cartera
+    // re-programada. Solo con la bandera activa (sin reglas no hay datos).
+    const acNodos = [];
+    if (_acuerdosActivos) {
+        // Σ bajoAcuerdo: solo clientas con acuerdo vigente (subset pequeño).
+        const movsPorCliente = new Map();
+        for (const m of _movs) {
+            if (!m.clienteId) continue;
+            if (!movsPorCliente.has(m.clienteId)) movsPorCliente.set(m.clienteId, []);
+            movsPorCliente.get(m.clienteId).push(m);
+        }
+        const acsPorCliente = new Map();
+        for (const a of _acuerdos) {
+            if (a.estado !== 'vigente' || !a.clienteId) continue;
+            if (!acsPorCliente.has(a.clienteId)) acsPorCliente.set(a.clienteId, []);
+            acsPorCliente.get(a.clienteId).push(a);
+        }
+        let bajoAcuerdoTotal = 0;
+        for (const [cid, acs] of acsPorCliente) {
+            const est = estadoCuenta(movsPorCliente.get(cid) || [],
+                { diasPlazo: 30, acuerdos: acs, horizonteDias: _horizonteDias });
+            bajoAcuerdoTotal += est.bajoAcuerdo;
+        }
+        if (bajoAcuerdoTotal > 0) {
+            acNodos.push(fila('Cartera RE-PROGRAMADA por acuerdos (no es "al día" corriente)', fmtCOP(bajoAcuerdoTotal), { ambar: true }));
+        }
+        // (1) sobre mora: la línea OBLIGATORIA del acta (P2-A: visibilidad total).
+        for (const s of acuerdosSobreMora(_acuerdos, mes, _ultimoCorte)) {
+            acNodos.push(fila(
+                s.vencidoPrevio === null
+                    ? `🤝 ${nombre(s.acuerdo.clienteId)} — acuerdo nuevo (sin corte previo para comparar la mora)`
+                    : `⛔ ${nombre(s.acuerdo.clienteId)} — acuerdo pactado con ${fmtCOP(s.vencidoPrevio)} YA VENCIDOS al corte previo${s.diasMoraPrevio ? ` (${s.diasMoraPrevio}d de mora)` : ''}`,
+                '', { rojo: s.vencidoPrevio !== null, ambar: s.vencidoPrevio === null },
+            ));
+        }
+        // (2) anómalos (multi-check) — la fórmula los IGNORA; aquí se VEN.
+        const an = acuerdosAnomalos(_acuerdos, _movs, { horizonteDias: _horizonteDias });
+        for (const a of an.invalidos) acNodos.push(fila(`⛔ ${nombre(a.clienteId)} — acuerdo MALFORMADO (la mora corre SIN plan)`, '', { rojo: true }));
+        for (const a of an.huerfanos) acNodos.push(fila(`⚠️ ${nombre(a.clienteId)} — el plan quedó sin factura vigente (corregida): re-pactar`, '', { ambar: true }));
+        for (const s of an.solapados) acNodos.push(fila(`⚠️ ${nombre(s.clienteId)} — ${s.n} acuerdos VIGENTES a la vez`, '', { ambar: true }));
+        for (const a of an.largos) acNodos.push(fila(`⏳ ${nombre(a.clienteId)} — plan a ${a.diasPlan} días (más de 12 meses)`, '', { ambar: true }));
+        // (3) seriales: el escudo perpetuo se ve.
+        for (const s of renegociacionesSeriales(_acuerdos, { ahoraMs: ahora })) {
+            acNodos.push(fila(`🔁 ${nombre(s.clienteId)} — ${s.n} acuerdos en 12 meses (renegociación serial)`, '', { ambar: true }));
+        }
+    }
 
     // (5) Muestra trimestral sembrada (para cotejar contra soportes, política A.5).
     const tri = trimestreDe(new Date());
@@ -157,6 +213,8 @@ function render() {
         ...(burlNodos.length ? [bloque('🚨 Posible "no" burlado', burlNodos, { alerta: true })] : []),
         bloque('Recaudo por medio de pago (mes en curso)', recNodos, { vacio: 'Aún no hay abonos registrados este mes.' }),
         ...(largosNodos.length ? [bloque('⏳ Acuerdos de pago a más de 120 días (revisar que sean reales)', largosNodos)] : []),
+        ...(_acuerdosActivos ? [bloque('🤝 Acuerdos de pago — vigilancia del mes', acNodos,
+            { vacio: 'Sin acuerdos nuevos ni anomalías este mes.' })] : []),
         bloque(`Muestra del trimestre ${tri} para cotejar contra soportes (sorteo fijo: ${muestra.length})`, muestraNodos,
             { vacio: 'Ningún ajuste para cotejar este trimestre.' }),
     );
@@ -291,6 +349,8 @@ export async function initAuditoriaCartera() {
         const cc = await getConfig('cartera');
         if (Number(cc?.autoAprobacionMax) > 0) _cfg.topeMensual = Number(cc.autoAprobacionMax);
         if (Number.isInteger(cc?.slaRevisionDias) && cc.slaRevisionDias >= 1) _cfg.slaDias = cc.slaRevisionDias;
+        _acuerdosActivos = cc?.acuerdosActivos === true;
+        if (typeof cc?.horizonteAcuerdoDias === 'number' && cc.horizonteAcuerdoDias > 0) _horizonteDias = cc.horizonteAcuerdoDias;
     } catch (err) { console.warn('[auditoria] config cartera:', err); }
 
     // Truncado del listener de movimientos → el acta queda BLOQUEADA (totales
@@ -313,10 +373,19 @@ export async function initAuditoriaCartera() {
         () => admToast('No se pudo cargar el historial de rechazos (auditoría).', 'danger'));
     onActaChange(_mesAnterior, (acta) => { _actaMesAnterior = acta; _actaError = false; renderActa(); },
         () => { _actaError = true; renderActa(); });
-    onUltimoCorteChange((corte) => renderCorte(corte), () => {
+    onUltimoCorteChange((corte) => { _ultimoCorte = corte; renderCorte(corte); render(); }, () => {
         const elC = document.getElementById('audit-corte');
         if (elC) elC.textContent = '⚠️ No se pudo consultar los cortes mensuales — recarga la página.';
     });
+    // Vigilancia de acuerdos (gateado por la bandera: sin reglas no hay datos).
+    if (_acuerdosActivos) {
+        onAllAcuerdosChange((list) => { _acuerdos = list; render(); }, () => {
+            // Listener muerto (L-40): la vigilancia se declara CIEGA, no vacía.
+            _acuerdos = [];
+            render();
+            admToast('No se pudieron cargar los acuerdos (vigilancia). Recarga la página.', 'danger', 5000);
+        });
+    }
 
     // El SLA también cruza el umbral por puro PASO DEL TIEMPO (pestaña abierta):
     // re-evaluación periódica local (cero lecturas extra; render es idempotente).

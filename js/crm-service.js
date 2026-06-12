@@ -448,6 +448,20 @@ export function onAcuerdosChange(clienteId, cb, onError) {
     });
 }
 
+/** TODOS los acuerdos de todas las clientas (vigilancia M4: las renegociaciones
+ *  seriales y la cadena probatoria necesitan también los cerrados). Query sin
+ *  filtros = sin índice compuesto (spec §9.1). */
+export function onAllAcuerdosChange(cb, onError) {
+    const q = query(collectionGroup(firestoreDb, 'acuerdos'), limit(MAX));
+    return onSnapshot(q, (snap) => {
+        detectarTruncado('Acuerdos (vigilancia)', snap.size);
+        cb(snap.docs.map((d) => ({ id: d.id, clienteId: d.ref.parent.parent?.id, ...d.data() })));
+    }, (err) => {
+        console.error('[crm] acuerdos (vigilancia):', err);
+        onError?.(err);
+    });
+}
+
 /** Acuerdos VIGENTES de todas las clientas (lista CxC / agenda de cobro) —
  *  mismo índice CG (estado ASC, creadoEn ASC) declarado en firestore.indexes.json. */
 export function onAllAcuerdosVigentesChange(cb, onError) {

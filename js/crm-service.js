@@ -116,15 +116,19 @@ export function onMovimientosChange(clienteId, cb) {
  * ADR §51). Es inmutable tras crearse (las reglas solo permiten anular). Si no se
  * envía, el movimiento queda sin fecha → la mora cae al fallback `fechaCorteMigracion`.
  */
-export async function addMovimiento(clienteId, { tipo, monto, descripcion, registradoPor, fecha, medioPago }) {
+export async function addMovimiento(clienteId, { tipo, monto, descripcion, registradoPor, fecha, medioPago, motivo, nota }) {
     const payload = {
         tipo,
         monto: Number(monto),
         ...(descripcion ? { descripcion: descripcion.trim() } : {}),
         ...(/^\d{4}-\d{2}-\d{2}$/.test(fecha || '') ? { fecha } : {}),
-        // medioPago: M2a lo escribe en abonos (lista literal); M3 lo hará obligatorio
-        // en la regla. `movimientoValido` lo admite hoy (sin hasOnly hasta M3).
+        // medioPago: M2a lo escribe en abonos (lista literal); M3 lo hace obligatorio
+        // en la regla.
         ...(medioPago ? { medioPago } : {}),
+        // motivo/nota TOP-LEVEL del AJUSTE (forward-compat M3: el candado exige a todo
+        // ajuste motivo de lista cerrada + nota; la descripcion sigue siendo el texto humano).
+        ...(motivo ? { motivo } : {}),
+        ...(nota ? { nota: String(nota).trim() } : {}),
         registradoPor,
         registradoEn: serverTimestamp(),
         anulado: false,
@@ -365,6 +369,8 @@ export async function corregirMovimientoBatch(clienteId, { original, reemplazo, 
         monto: Math.round(Number(reemplazo.monto)),
         ...(fechaReemplazo ? { fecha: fechaReemplazo } : {}),
         ...(reemplazo.descripcion ? { descripcion: reemplazo.descripcion.trim() } : {}),
+        // Abono: medioPago obligatorio en la regla M3 (heredado/fallback, red-team M3).
+        ...(original.tipo === 'abono' ? { medioPago: reemplazo.medioPago || original.medioPago || 'otro' } : {}),
         correccionDe: original.id,
         registradoPor: uid,
         registradoEn: serverTimestamp(),

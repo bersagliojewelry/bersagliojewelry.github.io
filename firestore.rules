@@ -55,28 +55,94 @@ service cloud.firestore {
           && d.keys().hasOnly(['nombre', 'activa', 'createdAt', 'createdBy', 'updatedAt'])
           && (!('activa' in d) || d.activa is bool);
     }
-    // En CREATE: el asiento NO nace anulado y la auditoría de anulación es solo del
-    // admin (vía update). El signo lo da el `tipo` (factura/apertura/ajuste suman;
-    // abono resta). `monto`: factura/abono siempre ≥0; apertura/ajuste (solo admin)
-    // pueden ser NEGATIVOS → saldo a favor inicial / corrección a la baja (ADR §43).
-    function movimientoValido() {
+    // ─── Fase M · M3 (candado, §69 + Consejo Externo Gemini 2026-06-11) ──────────
+    // Fecha del HECHO ('YYYY-MM-DD'): formato ISO + cotas. La cota FUTURA cierra la
+    // evasión del aging que halló el Consejo (una factura fechada en 2030 nunca
+    // "vence" → deuda parqueada fuera de la mora); +2 días de tolerancia de huso.
+    // El piso grueso atrapa el dedazo de año. timestamp.date() revienta con fechas
+    // de calendario inválidas (2026-02-30) → error → DENY (falla cerrado).
+    function fechaHechoValida(f) {
+      return f is string && f.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && f >= '2015-01-01'
+          && timestamp.date(int(f.split('-')[0]), int(f.split('-')[1]), int(f.split('-')[2]))
+               <= request.time + duration.value(2, 'd');
+    }
+    // Gate del AJUSTE por su EFECTO en el saldo (política A.2/A.4): motivo de lista
+    // CERRADA + nota SIEMPRE; el negativo del admin solo con motivo NEUTRO y dentro
+    // del tope. El get() a config/cartera vive SOLO aquí, tras el cortocircuito
+    // (el owner JAMÁS depende del doc; el camino diario factura/abono JAMÁS lo lee).
+    // Sin abs() en rules (Consejo M3): el tope negativo se escribe con signo.
+    // La TAXONOMÍA de motivos es literal (contrato estable); el subconjunto NEUTRO
+    // sí se lee de config/cartera (red-team M3: el panel Parámetros owner-only lo
+    // edita y la UI enruta con él — dos fuentes de verdad = falso bloqueo latente).
+    // El get() vive SOLO en la rama del admin (mismo doc que el tope = una lectura);
+    // el owner JAMÁS lo toca (anti-lockout intacto). Default = los 3 canónicos.
+    function ajusteAutorizado(d) {
+      return d.motivo in ['ERROR_REGISTRO', 'ABONO_NO_REGISTRADO', 'RECLASIFICACION',
+                          'DEVOLUCION_PIEZA', 'DESCUENTO_AUTORIZADO', 'CASTIGO', 'OTRO']
+          && nonEmptyStr(d.nota)
+          && (isOwner()
+              || d.monto >= 0
+              || (d.motivo in get(/databases/$(database)/documents/config/cartera).data
+                    .get('motivosNeutros', ['ERROR_REGISTRO', 'ABONO_NO_REGISTRADO', 'RECLASIFICACION'])
+                  && d.monto >= -get(/databases/$(database)/documents/config/cartera).data.autoAprobacionMax));
+    }
+    // COINCIDENCIA solicitud↔asiento (enmienda M2b §76, deferido 4): un asiento que
+    // porta `solicitudId` solo lo crea el OWNER y debe coincidir con la solicitud
+    // PENDIENTE (estado PRE-batch, §69 C3) POR TIPO de solicitud: ajuste → tipo/
+    // monto/motivo idénticos; corrección → contra el REEMPLAZO embebido (el monto
+    // top-level de la solicitud es el DELTA neto, no el monto del asiento). El get()
+    // está ANCLADO al path del MISMO cliente → el hijacking cross-cliente es
+    // imposible por construcción (404 → error → deny; caso rojo del Consejo M3).
+    function asientoCoincideConSolicitud(clienteId, d) {
+      let s = get(/databases/$(database)/documents/clientes/$(clienteId)/solicitudes/$(d.solicitudId)).data;
+      return isOwner()
+          && s.estado == 'pendiente'
+          && (
+            (s.tipo == 'ajuste'
+              && d.tipo == 'ajuste' && d.monto == s.monto && d.motivo == s.motivo)
+            ||
+            (s.tipo == 'correccion'
+              && d.tipo == s.datosCorreccion.reemplazo.tipo
+              && d.monto == s.datosCorreccion.reemplazo.monto
+              && d.correccionDe == s.correccionDe)
+          );
+    }
+    // CREATE endurecido (contract M3): whitelist hasOnly cierra la inyección de
+    // claves; registradoEn == request.time = reloj del SERVIDOR (retrofechar `fecha`
+    // no evade la auditoría); fecha OBLIGATORIA en asientos nuevos (los legacy ya
+    // existentes no pasan por aquí — censo 2026-06-11: 344/344 con fecha ISO sana).
+    // El signo lo da el `tipo` (factura/apertura/ajuste suman; abono resta).
+    function movimientoValido(clienteId) {
       let d = request.resource.data;
-      return d.tipo in ['apertura', 'factura', 'abono', 'ajuste']
+      return d.keys().hasOnly(['tipo', 'monto', 'descripcion', 'fecha', 'registradoPor',
+                               'registradoEn', 'anulado', 'motivo', 'nota', 'solicitudId',
+                               'correccionDe', 'vencimiento', 'medioPago'])
+          && d.tipo in ['apertura', 'factura', 'abono', 'ajuste']
           // entero-COP (spec §5.1): pesos SIN centavos. JS envía números enteros como
           // int; un decimal llega como double y se RECHAZA en la frontera de escritura.
           && d.monto is int
           && (d.tipo in ['apertura', 'ajuste'] || d.monto >= 0)
-          // M0-H (Fase M §69): apertura NEGATIVA reduce saldo sin motivo ni tope —
-          // su único uso legítimo (saldo a favor de migración §43) ya pasó → owner-only.
-          // (El ajuste negativo conserva su régimen actual hasta el candado M3.)
+          // M0-H (§69): apertura NEGATIVA reduce saldo sin motivo ni tope → owner-only.
           && (d.tipo != 'apertura' || d.monto >= 0 || isOwner())
           && (!('descripcion' in d) || d.descripcion is string)
-          // fecha real del hecho (mora, ADR §51); inmutable. Formato ISO 'YYYY-MM-DD'
-          // validado server-side (el date-picker ya lo garantiza; defensa en profundidad).
-          && (!('fecha' in d) || (d.fecha is string && d.fecha.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
+          && fechaHechoValida(d.fecha)
+          // vencimiento (M6, opcional): SOLO facturas; puede ser futuro (es su uso) —
+          // formato + piso, sin cota futura.
+          && (!('vencimiento' in d) || (d.tipo == 'factura' && d.vencimiento is string
+                && d.vencimiento.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$') && d.vencimiento >= '2015-01-01'))
           && d.registradoPor == request.auth.uid
-          && (!('anulado' in d) || d.anulado == false)
-          && !('anuladoPor' in d) && !('anuladoEn' in d);
+          && d.registradoEn == request.time
+          && d.anulado == false
+          // abono: medioPago obligatorio de lista LITERAL (cero get en el camino diario,
+          // decisión C2 §69); en los demás tipos el campo NO viaja.
+          && (d.tipo != 'abono' || d.medioPago in ['efectivo', 'transferencia', 'datafono', 'otro'])
+          && (!('medioPago' in d) || d.tipo == 'abono')
+          && (!('motivo' in d) || nonEmptyStr(d.motivo))
+          && (!('nota' in d) || d.nota is string)
+          && (!('correccionDe' in d) || d.correccionDe is string)
+          && (d.tipo != 'ajuste' || ajusteAutorizado(d))
+          && (!('solicitudId' in d) || asientoCoincideConSolicitud(clienteId, d));
     }
     // ─── Fase M (M1 §69): validadores de solicitudes y gestiones ─────────────────
     // Solicitud de aprobación: nace 'pendiente', con autor y reloj del SERVIDOR
@@ -141,26 +207,39 @@ service cloud.firestore {
     }
 
     // Append-only: el ÚNICO update permitido sobre un movimiento es ANULARLO
-    // (anulado false→true) + sellar auditoría (anuladoPor/anuladoEn + motivoAnulacion
-    // obligatorio). Prohíbe reescribir tipo/monto/fecha/registradoPor/descripción del
-    // asiento. `.get('anulado', false)` tolera movimientos legacy sin el campo.
-    // M2a-1b (ADR §73): EXPAND aditivo del enlace de corrección — la anulación de la
-    // pata "anular+crear" puede portar `motivoCategoria` (de qué tipo de corrección)
-    // y `corregidoPor` (id del reemplazo). Ambos OPCIONALES aquí; M3 hará
-    // motivoCategoria obligatorio (contract) y gateará la anulación por tipo/monto.
-    // `corregidoPor` NO se verifica contra un doc real por diseño (sin cross-doc en
-    // reglas, §69; M4 audita "corrección sin enlace" de forma detectiva).
+    // (anulado false→true) + sellar auditoría. La validación es del DELTA
+    // (affectedKeys), NUNCA del estado resultante → los asientos legacy "sucios"
+    // siguen siendo anulables (Consejo M3). `.get('anulado', false)` tolera legacy.
+    // M3 (contract, §69-B): motivoCategoria OBLIGATORIO de lista cerrada + GATE por
+    // el EFECTO de revertir, leyendo resource.data (tipo/monto NO están en el delta):
+    //   · anular un ABONO (cualquier monto) → SOLO owner — es la herramienta del
+    //     skimming de efectivo; el "grace period" del Consejo se REFUTÓ (política A.3).
+    //   · factura/apertura/ajuste con monto > 0 y ≤ tope → admin; > tope → owner.
+    //   · monto ≤ 0 o no-entero → owner (anularlo revierte una reducción aprobada;
+    //     falla CERRADO). Cortocircuito anti-lockout: el owner JAMÁS lee config.
+    // `corregidoPor` NO se verifica contra un doc real por diseño (sin cross-doc,
+    // §69; M4 audita "corrección sin enlace" de forma detectiva).
     function anulacionValida() {
       let d = request.resource.data;
       return resource.data.get('anulado', false) == false
           && d.anulado == true
           && d.anuladoPor == request.auth.uid
+          && d.anuladoEn == request.time
           && nonEmptyStr(d.motivoAnulacion)
-          && (!('motivoCategoria' in d) || nonEmptyStr(d.motivoCategoria))
-          && (!('corregidoPor' in d)    || d.corregidoPor is string)
+          // Lista = UNIÓN de los motivos de anulación pura + los que el flujo de
+          // CORRECCIÓN deriva del mostrador (red-team M3: ABONO_NO_REGISTRADO y
+          // DESCUENTO_AUTORIZADO viajan como motivoCategoria de la pata anulada).
+          && d.motivoCategoria in ['ERROR_REGISTRO', 'DUPLICADO', 'CORRECCION',
+                                   'CORRECCION_FECHA', 'DEVOLUCION_PIEZA',
+                                   'ABONO_NO_REGISTRADO', 'DESCUENTO_AUTORIZADO', 'OTRO']
+          && (!('corregidoPor' in d) || d.corregidoPor is string)
           && d.diff(resource.data).affectedKeys()
                .hasOnly(['anulado', 'anuladoPor', 'anuladoEn', 'motivoAnulacion',
-                         'motivoCategoria', 'corregidoPor']);
+                         'motivoCategoria', 'corregidoPor'])
+          && (isOwner()
+              || (resource.data.tipo in ['factura', 'apertura', 'ajuste']
+                  && resource.data.monto is int && resource.data.monto > 0
+                  && resource.data.monto <= get(/databases/$(database)/documents/config/cartera).data.autoAprobacionMax));
     }
 
     // ─── S6: validación de campos (tolerante a merge/partial updates) ────────────
@@ -319,7 +398,7 @@ service cloud.firestore {
 
       match /movimientos/{movId} {
         allow read:   if isAdmin();
-        allow create: if isAdmin() && movimientoValido();
+        allow create: if isAdmin() && movimientoValido(clienteId);
         allow update: if isAdmin() && anulacionValida();   // append-only: SOLO anular (no editar el asiento)
         allow delete: if false;                            // libro append-only: NUNCA borrar (ni admin)
       }

@@ -81,6 +81,11 @@ export function validarAprobacionCorreccion(sol, original) {
     const montoOriginal = Math.round(Number(original.monto));
     const montoNuevo = Number(reemplazo.monto);
 
+    // Un AJUSTE no se corrige con par (M3): se anula y se registra uno nuevo con su
+    // propio motivo. M2a ya no produce estas solicitudes; esto bloquea las residuales.
+    if (original.tipo === 'ajuste') {
+        errores.push('Un ajuste no se corrige así — se anula y se registra un ajuste nuevo desde "Corregir saldo".');
+    }
     // (b) tipo coincide — el par de corrección conserva el MISMO tipo del original.
     if (reemplazo.tipo !== original.tipo) {
         errores.push('El tipo del reemplazo no coincide con el del registro actual.');
@@ -176,6 +181,9 @@ export function planAprobacionCorreccion(sol, solId, original) {
             monto: Math.round(Number(r.monto)),
             ...(fecha ? { fecha } : {}),
             ...(r.descripcion ? { descripcion: String(r.descripcion).trim() } : {}),
+            // Reemplazo de un ABONO: la regla M3 exige medioPago — se hereda del
+            // ORIGINAL re-leído (no del snapshot); fallback 'otro' (red-team M3).
+            ...(original.tipo === 'abono' ? { medioPago: original.medioPago || r.medioPago || 'otro' } : {}),
             correccionDe: sol.correccionDe,
             solicitudId: solId,
         },

@@ -93,6 +93,15 @@ test('el original real es de otro tipo que el snapshot → bloqueado', () => {
     const v = validarAprobacionCorreccion(solCorreccion(), originalVigente({ tipo: 'ajuste' }));
     assert.equal(v.ok, false);
 });
+test('corrección sobre un AJUSTE → bloqueada (M3: se anula y se registra uno nuevo)', () => {
+    const sol = solCorreccion({}, {
+        reemplazo: { tipo: 'ajuste', monto: 80000 },
+        snapshotOriginal: { tipo: 'ajuste', monto: 500000, anulado: false },
+    });
+    const v = validarAprobacionCorreccion(sol, originalVigente({ tipo: 'ajuste' }));
+    assert.equal(v.ok, false);
+    assert.equal(v.obsoleta, false);
+});
 
 // ─── (c) original mutado vs snapshot (campo de dinero) ────────────────────────
 test('monto del original distinto al que Kary vio → bloqueado', () => {

@@ -38,6 +38,9 @@ export function estadoLabel(est) {
     return `Vencido · ${d} ${d === 1 ? 'día' : 'días'} de mora`;
   }
   if (est.sinFecha > 0) return 'Falta fecha de corte';
+  // P1 (Daniel 2026-06-12): la clienta que CUMPLE su acuerdo no es morosa hoy,
+  // pero tampoco "al día corriente" — sello propio (cartera reestructurada).
+  if (est.bajoAcuerdo > 0) return 'En acuerdo de pago';
   return 'Al día';
 }
 
@@ -47,6 +50,7 @@ export function estadoPillClass(est) {
   return e === 'vencido' ? 'adm-pill--red'
        : e === 'a-favor' ? 'adm-pill--green'
        : (est?.sinFecha > 0) ? 'adm-pill--gold'   // deuda sin fecha → requiere atención de Kary
+       : (est?.bajoAcuerdo > 0) ? 'adm-pill--gold' // en acuerdo: ni roja ni verde corriente (P1)
        : 'adm-pill--gray';
 }
 

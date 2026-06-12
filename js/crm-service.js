@@ -116,8 +116,8 @@ export function onMovimientosChange(clienteId, cb) {
  * ADR §51). Es inmutable tras crearse (las reglas solo permiten anular). Si no se
  * envía, el movimiento queda sin fecha → la mora cae al fallback `fechaCorteMigracion`.
  */
-export async function addMovimiento(clienteId, { tipo, monto, descripcion, registradoPor, fecha, medioPago, motivo, nota, vencimiento }) {
-    const payload = {
+function buildMovPayload({ tipo, monto, descripcion, registradoPor, fecha, medioPago, motivo, nota, vencimiento }) {
+    return {
         tipo,
         monto: Number(monto),
         ...(descripcion ? { descripcion: descripcion.trim() } : {}),
@@ -136,6 +136,10 @@ export async function addMovimiento(clienteId, { tipo, monto, descripcion, regis
         registradoEn: serverTimestamp(),
         anulado: false,
     };
+}
+
+export async function addMovimiento(clienteId, datos) {
+    const payload = buildMovPayload(datos);
     const ref = await addDoc(collection(firestoreDb, 'clientes', clienteId, 'movimientos'), payload);
     return { id: ref.id, ...payload };
 }
@@ -421,6 +425,103 @@ export function onGestionesChange(clienteId, cb, onError) {
         console.error('[crm] gestiones del cliente:', err);
         onError?.(err);
     });
+}
+
+// ─── Acuerdos de pago (spec 2026-06-12): el plan de cuotas pactado ────────────
+// El acuerdo NO mueve dinero — re-programa la EXIGIBILIDAD (la fórmula del aging
+// lo consume vía opts.acuerdos). Evidencia art. 146: create-only + cierre one-way;
+// anular = SOLO owner (reglas). ⚠️ Las suscripciones se gatean en la UI por
+// `config/cartera.acuerdosActivos` (las reglas del match se despliegan aparte).
+
+/** Acuerdos de UN cliente EN VIVO (más nuevos primero). `onError` L-40. */
+export function onAcuerdosChange(clienteId, cb, onError) {
+    const q = query(
+        collection(firestoreDb, 'clientes', clienteId, 'acuerdos'),
+        orderBy('creadoEn', 'desc'), limit(MAX),
+    );
+    return onSnapshot(q, (snap) => {
+        detectarTruncado('Acuerdos del cliente', snap.size);
+        cb(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    }, (err) => {
+        console.error('[crm] acuerdos del cliente:', err);
+        onError?.(err);
+    });
+}
+
+/** Acuerdos VIGENTES de todas las clientas (lista CxC / agenda de cobro) —
+ *  mismo índice CG (estado ASC, creadoEn ASC) declarado en firestore.indexes.json. */
+export function onAllAcuerdosVigentesChange(cb, onError) {
+    const q = query(
+        collectionGroup(firestoreDb, 'acuerdos'),
+        where('estado', '==', 'vigente'),
+        orderBy('creadoEn', 'asc'), limit(MAX),
+    );
+    return onSnapshot(q, (snap) => {
+        detectarTruncado('Acuerdos vigentes (lista)', snap.size);
+        cb(snap.docs.map((d) => ({ id: d.id, clienteId: d.ref.parent.parent?.id, ...d.data() })));
+    }, (err) => {
+        console.error('[crm] acuerdos vigentes:', err);
+        onError?.(err);
+    });
+}
+
+// Payload espejo EXACTO de acuerdoValido() (firestore.rules).
+function buildAcuerdoPayload(a) {
+    return {
+        alcance: a.alcance,
+        ...(a.alcance === 'factura' ? { movimientoId: String(a.movimientoId) } : {}),
+        fechaPacto: a.fechaPacto,
+        cuotas: a.cuotas.map((q) => ({ fecha: q.fecha, monto: Math.round(Number(q.monto)) })),
+        ...(a.periodicidad ? { periodicidad: a.periodicidad } : {}),
+        primeraCuotaFecha: a.cuotas[0].fecha,
+        ultimaCuotaFecha: a.cuotas[a.cuotas.length - 1].fecha,
+        ...(Number.isInteger(a.saldoAlPactar) ? { saldoAlPactar: a.saldoAlPactar } : {}),
+        nota: String(a.nota || '').trim(),
+        estado: 'vigente',
+        ...(a.reemplazaA ? { reemplazaA: String(a.reemplazaA) } : {}),
+        creadoPor: a.creadoPor,
+        creadoEn: serverTimestamp(),
+        rolAlCrear: a.rolAlCrear,
+    };
+}
+
+/** Crea un acuerdo NUEVO (sin renegociar nada). */
+export async function crearAcuerdo(clienteId, a) {
+    const ref = await addDoc(collection(firestoreDb, 'clientes', clienteId, 'acuerdos'), buildAcuerdoPayload(a));
+    return { id: ref.id };
+}
+
+/**
+ * FACTURA EN CUOTAS: la factura y su acuerdo nacen en UN writeBatch (spec §1.9)
+ * — o existen ambos, o ninguno. El `vencimiento` de la factura = la ÚLTIMA cuota
+ * (la "fecha final" pactada sigue visible para toda vista sin acuerdos).
+ */
+export async function crearFacturaConPlan(clienteId, mov, acuerdo) {
+    const movRef = doc(collection(firestoreDb, 'clientes', clienteId, 'movimientos'));
+    const acRef = doc(collection(firestoreDb, 'clientes', clienteId, 'acuerdos'));
+    const ultima = acuerdo.cuotas[acuerdo.cuotas.length - 1].fecha;
+    const batch = writeBatch(firestoreDb);
+    batch.set(movRef, buildMovPayload({ ...mov, vencimiento: ultima }));
+    batch.set(acRef, buildAcuerdoPayload({ ...acuerdo, alcance: 'factura', movimientoId: movRef.id }));
+    await batch.commit();   // atómico: factura y plan, o nada
+    return { movId: movRef.id, acuerdoId: acRef.id };
+}
+
+/**
+ * RENEGOCIACIÓN atómica (spec §1.3): UN writeBatch — el acuerdo nuevo nace con
+ * `reemplazaA` y el viejo queda sellado 'reemplazado' apuntando de vuelta. Las
+ * reglas (getAfter) hacen IMPOSIBLE el create suelto o el sello sin reemplazo.
+ */
+export async function renegociarAcuerdo(clienteId, viejoId, a) {
+    const nuevoRef = doc(collection(firestoreDb, 'clientes', clienteId, 'acuerdos'));
+    const batch = writeBatch(firestoreDb);
+    batch.set(nuevoRef, buildAcuerdoPayload({ ...a, reemplazaA: viejoId }));
+    batch.update(doc(firestoreDb, 'clientes', clienteId, 'acuerdos', viejoId), {
+        estado: 'reemplazado', cerradoPor: a.creadoPor, cerradoEn: serverTimestamp(),
+        reemplazadoPor: nuevoRef.id,
+    });
+    await batch.commit();   // atómico: las dos patas o ninguna
+    return { id: nuevoRef.id };
 }
 
 /**

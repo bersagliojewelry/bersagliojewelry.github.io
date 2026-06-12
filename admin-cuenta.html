@@ -44,11 +44,13 @@
                         <div class="adm-ficha-saldo-label" id="f-saldo-label">Saldo</div>
                         <div class="adm-ficha-saldo-val" id="f-saldo">—</div>
                         <div class="adm-ficha-estado" id="f-estado" hidden></div>
+                        <div id="f-plan" hidden style="font-size:12px;color:var(--adm-muted);margin-top:4px;"></div>
                     </div>
                 </div>
                 <div class="adm-ficha-actions">
                     <button id="btn-factura" class="adm-btn adm-btn--primary">➕ Registrar factura</button>
                     <button id="btn-abono" class="adm-btn adm-btn--ghost">➕ Registrar abono</button>
+                    <button id="btn-acuerdo" class="adm-btn adm-btn--ghost" hidden>🤝 Acuerdo de pago</button>
                     <button id="btn-corregir" class="adm-btn adm-btn--ghost">⚖ Corregir saldo</button>
                     <button id="btn-editar" class="adm-btn adm-btn--ghost">✎ Editar datos</button>
                 </div>
@@ -128,6 +130,36 @@
                         <p style="color:var(--adm-muted);font-size:12px;margin:6px 0 0;">
                             Cada deuda tiene su propio acuerdo: viene sugerido con el plazo del negocio, cámbialo a lo pactado con la clienta.
                         </p>
+                    </div>
+                </div>
+                <!-- Plan de cuotas (spec acuerdos): visible solo con acuerdosActivos y sin otra deuda vencida -->
+                <div class="adm-form-row adm-col-1" id="mov-cuotas-toggle-row" hidden>
+                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                        <input type="checkbox" id="mov-encuotas"> ¿Quedó en CUOTAS? (se pacta el plan de pagos aquí mismo)
+                    </label>
+                </div>
+                <div id="mov-cuotas-box" hidden>
+                    <div class="adm-form-row">
+                        <div class="adm-field">
+                            <label for="mov-cuotas-n">¿Cuántas cuotas?</label>
+                            <input type="number" id="mov-cuotas-n" class="adm-input" min="2" max="24" step="1" value="4" inputmode="numeric">
+                        </div>
+                        <div class="adm-field">
+                            <label for="mov-cuotas-per">¿Cada cuánto?</label>
+                            <select id="mov-cuotas-per" class="adm-input">
+                                <option value="quincenal">Quincenal (día 15 y fin de mes)</option>
+                                <option value="mensual">Mensual</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="adm-form-row adm-col-1">
+                        <div class="adm-field">
+                            <label for="mov-cuotas-primera">Primera cuota</label>
+                            <input type="date" id="mov-cuotas-primera" class="adm-input">
+                        </div>
+                    </div>
+                    <div class="adm-form-row adm-col-1">
+                        <p id="mov-cuotas-preview" style="margin:0;font-size:12px;color:var(--adm-muted);min-height:16px;"></p>
                     </div>
                 </div>
                 <div class="adm-form-row adm-col-1" id="mov-mediopago-row" hidden>
@@ -314,6 +346,58 @@
             <div class="adm-modal-foot">
                 <button type="button" class="adm-btn adm-btn--ghost" id="corregirmov-cancel">Cancelar</button>
                 <button type="submit" class="adm-btn adm-btn--primary">Aplicar corrección</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: acuerdo de pago sobre la deuda (renegociación — alcance 'saldo') -->
+<div class="adm-modal" id="acuerdo-modal" hidden>
+    <div class="adm-modal-box">
+        <div class="adm-modal-head">
+            <h2>Acuerdo de pago</h2>
+            <button class="adm-modal-close" id="acuerdo-close" aria-label="Cerrar">✕</button>
+        </div>
+        <form id="acuerdo-form">
+            <div class="adm-modal-body">
+                <p style="color:var(--adm-muted);font-size:13px;margin:0 0 6px;">
+                    Re-programa las fechas de pago de TODA la deuda actual — <strong>no cambia el saldo</strong>.
+                    El acuerdo queda como evidencia; si después se pacta otro, este queda guardado como reemplazado.
+                </p>
+                <p id="acuerdo-deuda" style="font-size:13px;margin:0 0 14px;font-weight:600;"></p>
+                <div class="adm-form-row">
+                    <div class="adm-field">
+                        <label for="acuerdo-n">¿Cuántas cuotas?</label>
+                        <input type="number" id="acuerdo-n" class="adm-input" min="1" max="24" step="1" value="4" inputmode="numeric" required>
+                    </div>
+                    <div class="adm-field">
+                        <label for="acuerdo-per">¿Cada cuánto?</label>
+                        <select id="acuerdo-per" class="adm-input">
+                            <option value="quincenal">Quincenal (día 15 y fin de mes)</option>
+                            <option value="mensual">Mensual</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="adm-form-row adm-col-1">
+                    <div class="adm-field">
+                        <label for="acuerdo-primera">Primera cuota</label>
+                        <input type="date" id="acuerdo-primera" class="adm-input" required>
+                    </div>
+                </div>
+                <div class="adm-form-row adm-col-1">
+                    <div class="adm-field">
+                        <label for="acuerdo-nota">¿Qué se habló? <span class="adm-opt">(obligatorio — queda como evidencia)</span></label>
+                        <textarea id="acuerdo-nota" class="adm-input" rows="2" maxlength="500"
+                                  placeholder="Ej. vino a la tienda, quedó de pagar por quincenas desde la próxima" required></textarea>
+                    </div>
+                </div>
+                <div class="adm-form-row adm-col-1">
+                    <p id="acuerdo-preview" style="margin:0;font-size:12px;color:var(--adm-muted);min-height:16px;"></p>
+                </div>
+            </div>
+            <div class="adm-modal-foot">
+                <button type="button" class="adm-btn adm-btn--ghost" id="acuerdo-cancel">Cancelar</button>
+                <button type="submit" class="adm-btn adm-btn--primary" id="acuerdo-save">Registrar acuerdo</button>
             </div>
         </form>
     </div>

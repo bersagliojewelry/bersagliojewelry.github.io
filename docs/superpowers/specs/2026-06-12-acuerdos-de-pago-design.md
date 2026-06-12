@@ -171,7 +171,7 @@ RECHAZADOS con razón: `deudaIds[]` (inverificable) · `montoPactado` como insum
 
 - [x] Respuestas de Daniel a P1/P2/P3 registradas (2026-06-12: P1=A, P2=A, P3=B/24m — §3 arriba)
 - [ ] Consejo Externo corrido (prompt en bóveda) + síntesis integrada (adoptado/refutado con razón)
-- [ ] Slice 1: fórmula + matriz de tests (suite vieja intacta)
+- [x] Slice 1: fórmula + matriz de tests (2026-06-12: `acuerdoEsValido` + TRAMOS en `crm-estado-cuenta`; suite vieja 24/24 SIN tocar un test + `test:acuerdos` 15/15 + paridad 3/3)
 - [ ] Slice 2: reglas + índice CG + docs 20/50
 - [ ] Slice 3: corte.js (ids + acuerdos + formulaVersion)
 - [ ] Slice 4: UI Kary + cache bump

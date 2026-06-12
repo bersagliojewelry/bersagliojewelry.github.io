@@ -947,6 +947,40 @@ test('M3 redteam · motivosNeutros CONFIGURABLES: el owner amplía la lista y el
           registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false }));
 });
 
+// ─── Fase M · M4 (§69): acta de conciliación (owner one-way) + cortes (solo CF) ──
+test('M4 acta · el OWNER crea el acta mensual bien formada; one-way (sin update/delete)', async () => {
+    const acta = {
+        mes: '2026-06', totalPorMedio: { efectivo: 150000, transferencia: 200000 },
+        bancoCuadra: true, efectivoCuadra: false, diferencias: 'faltan $20.000 del 15/06',
+        creadoPor: 'ownerUid', creadoEn: serverTimestamp(),
+    };
+    await assertSucceeds(setDoc(doc(asUser('ownerUid'), 'conciliaciones/2026-06'), acta));
+    await assertFails(updateDoc(doc(asUser('ownerUid'), 'conciliaciones/2026-06'), { bancoCuadra: false }));
+    await assertFails(deleteDoc(doc(asUser('ownerUid'), 'conciliaciones/2026-06')));
+});
+test('M4 acta · admin NO crea (Kary no se arquea a sí misma); admin SÍ lee; docId/forma validados', async () => {
+    const acta = (over = {}) => ({
+        mes: '2026-07', totalPorMedio: {}, bancoCuadra: true, efectivoCuadra: true,
+        diferencias: '', creadoPor: 'adminUid', creadoEn: serverTimestamp(), ...over,
+    });
+    await assertFails(setDoc(doc(asUser('adminUid'), 'conciliaciones/2026-07'), acta()));
+    await assertSucceeds(getDoc(doc(asUser('adminUid'), 'conciliaciones/2026-06')));
+    // docId que no es 'YYYY-MM' / mes que no coincide / clave extra / reloj del cliente → rechazados
+    await assertFails(setDoc(doc(asUser('ownerUid'), 'conciliaciones/junio'), acta({ mes: 'junio', creadoPor: 'ownerUid' })));
+    await assertFails(setDoc(doc(asUser('ownerUid'), 'conciliaciones/2026-08'), acta({ mes: '2026-07', creadoPor: 'ownerUid' })));
+    await assertFails(setDoc(doc(asUser('ownerUid'), 'conciliaciones/2026-09'), acta({ mes: '2026-09', creadoPor: 'ownerUid', extra: 1 })));
+    await assertFails(setDoc(doc(asUser('ownerUid'), 'conciliaciones/2026-10'), acta({ mes: '2026-10', creadoPor: 'ownerUid', creadoEn: new Date() })));
+});
+test('M4 cortes · NADIE escribe desde el cliente (solo la CF); admin lee, editor no', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), 'cortes/2026-05'), { mes: '2026-05', clientes: 344 });
+    });
+    await assertFails(setDoc(doc(asUser('ownerUid'), 'cortes/2026-06'), { mes: '2026-06' }));
+    await assertFails(updateDoc(doc(asUser('adminUid'), 'cortes/2026-05'), { clientes: 1 }));
+    await assertSucceeds(getDoc(doc(asUser('adminUid'), 'cortes/2026-05')));
+    await assertFails(getDoc(doc(asUser('editorUid'), 'cortes/2026-05')));
+});
+
 // ─── M3 · ANTI-LOCKOUT: config/cartera ausente (SIEMPRE el último: muta config) ──
 test('M3 anti-lockout · config ausente: abono PASA, ajuste negativo admin FALLA cerrado, owner intacto', async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {

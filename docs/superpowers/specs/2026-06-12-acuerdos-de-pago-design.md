@@ -156,9 +156,12 @@ El FIFO global asigna los abonos a la deuda más vieja → las cuotas de la fact
 
 RECHAZADOS con razón: `deudaIds[]` (inverificable) · `montoPactado` como insumo (parqueo) · almacenar cumplido/incumplido (divergencia) · checkbox auto-gestión (evidencia fabricada) · contar acuerdos por `fechaPacto` (retrofechable) · `moraAlPactar` autodeclarado · par no-atómico · motor de recurrencia server-side · intereses de mora / aceleración automática / notificaciones FCM / multi-select / edición de cuotas / backfill M6 / RBAC asesor (cada uno con su razón y su momento). DECIDIDOS: anulación owner-only · UI v1 sin "fechas específicas" libres (el MODELO las soporta; la UI las difiere hasta caso real) · "quincenal" = días 15 y último del mes · validador en el archivo de paridad.
 
-## 3. PREGUNTAS CERRADAS A DANIEL
+## 3. PREGUNTAS CERRADAS A DANIEL — ✅ RESPONDIDAS (2026-06-12, mismo día)
 
-P1 (clienta cumpliendo acuerdo: ¿sale de rojos con sello "en acuerdo"? — REC: sí) · P2 (¿Kary pacta sola con visibilidad obligatoria, o tope $X con aprobación? — REC: sola+visibilidad; anular = solo Daniel) · P3 (horizonte máximo de última cuota: 12 ó 24 meses — REC: 24 con resaltado >12). Respuestas → aquí y al ADR §81.
+- **P1 = A**: la clienta que cumple su acuerdo SALE de rojos, con sello "en acuerdo de pago" y monto aparte en Salud (`bajoAcuerdo`).
+- **P2 = A**: Kary pacta SOLA; línea obligatoria del acta (`acuerdosSobreMora`); ANULAR = solo Daniel (owner-only confirmado).
+- **P3 = B**: horizonte máximo **24 meses** (`horizonteDias=730` en config, owner-only); todo acuerdo >12 meses resaltado en el acta.
+- **Directiva de cadencia (mismo mensaje)**: verificación PESADA por HITOS, no por merge — tests+build por commit se mantienen; verificación experta multi-agente al cerrar la feature completa (post-slice 4/5); prueba de plataforma completa cuando haya bloque sólido.
 
 ## 4. RIESGOS RESIDUALES DECLARADOS
 
@@ -166,7 +169,7 @@ P1 (clienta cumpliendo acuerdo: ¿sale de rojos con sello "en acuerdo"? — REC:
 
 ## Checklist
 
-- [ ] Respuestas de Daniel a P1/P2/P3 registradas (aquí + ADR §81)
+- [x] Respuestas de Daniel a P1/P2/P3 registradas (2026-06-12: P1=A, P2=A, P3=B/24m — §3 arriba)
 - [ ] Consejo Externo corrido (prompt en bóveda) + síntesis integrada (adoptado/refutado con razón)
 - [ ] Slice 1: fórmula + matriz de tests (suite vieja intacta)
 - [ ] Slice 2: reglas + índice CG + docs 20/50

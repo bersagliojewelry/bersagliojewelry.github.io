@@ -124,7 +124,8 @@
 | §74 | 2026-06-10 — Contrato solicitud de corrección (workflow 5 agentes → SÓLIDO: monto=delta neto, datosCorreccion={reemplazo,snapshotOriginal,motivoCategoria}) + UI "Corregir movimiento" M2a-3 + efectoSaldo compartido (22/22) | 1073 |
 | §75 | 2026-06-10 — Verificación EXPERTA de la UI de M2a (12 agentes; reemplaza smoke de Kary) → 3 bugs de dinero (2 bloqueantes: ajuste duplicado, asiento $0) corregidos + go-live | 1091 |
 | §76 | 2026-06-11 — M2b: superficie de aprobación de Daniel (cola en Salud, re-validación §74, batches atómicos) + SoD owner = excepción consciente + verif. experta 16 agentes (7 fixes; plan M3 enmendado) + cache v11 | 1103 |
-| §77 | 2026-06-12 — M3: el CANDADO (Consejo Externo Gemini + censo 344 docs + red-team 16 agentes → 2 bloqueos corregidos; 133/133) + forward-compat UI v12; deploy en 2 etapas pendiente de PR | 1123 |
+| §77 | 2026-06-12 — M3: el CANDADO (Consejo Externo Gemini + censo 344 docs + red-team 16 agentes → 2 bloqueos corregidos; 133/133) + forward-compat UI v12; CERRADO EN PROD mismo día (77.8: smoke 4/4) | 1123 |
+| §78 | 2026-06-12 — M4 construido COMPLETO: detectores (11/11) + acta/cortes (reglas+CF DESPLEGADAS, paridad byte-idéntica 3/3) + UI v13 + verif. experta 22 agentes (12 fixes; BLOQUEANTE rollover setMonth del acta) — cierre pendiente de PR | 1143 |
 ---
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §57+ al historial,

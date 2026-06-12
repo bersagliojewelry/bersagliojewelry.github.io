@@ -81,6 +81,18 @@ before(async () => {
         await setDoc(doc(db, 'clientes/cliV/solicitudes/sol5'), { tipo: 'ajuste', monto: -50000, motivo: 'OTRO', nota: 'dedicada al test de motivoRechazo en aprobada', solicitadoPor: 'adminUid', creadoEn: new Date(), estado: 'pendiente' });
         await setDoc(doc(db, 'clientes/cliV/gestiones/g1'), { tipo: 'llamada', nota: 'no contesta', fecha: '2026-06-10', resultado: 'no_contesto', registradoPor: 'adminUid', creadoEn: new Date() });
 
+        // ─── Acuerdos de pago (spec 2026-06-12): semillas de transiciones ────────
+        const acBase = { alcance: 'saldo', fechaPacto: '2026-06-01',
+            cuotas: [{ fecha: '2026-06-15', monto: 50000 }], periodicidad: 'mensual',
+            primeraCuotaFecha: '2026-06-15', ultimaCuotaFecha: '2026-06-15',
+            nota: 'pacto sembrado', estado: 'vigente', creadoPor: 'adminUid',
+            creadoEn: new Date(), rolAlCrear: 'admin' };
+        await setDoc(doc(db, 'clientes/cliV/acuerdos/acV'), acBase);        // renegociación atómica
+        await setDoc(doc(db, 'clientes/cliV/acuerdos/acSuelto'), acBase);   // create/sello sueltos (deben fallar)
+        await setDoc(doc(db, 'clientes/cliV/acuerdos/acAnular'), acBase);   // owner anula OK
+        await setDoc(doc(db, 'clientes/cliV/acuerdos/acAnular2'), acBase);  // admin anula FALLA
+        await setDoc(doc(db, 'clientes/cliV/acuerdos/acCerrado'), { ...acBase, estado: 'reemplazado', reemplazadoPor: 'acV' }); // no-vigente: inmutable
+
         // ─── Fase M (M2b): semillas del batch de aprobación de Daniel ────────────
         await setDoc(doc(db, 'clientes/cliV/movimientos/mCorr'), { tipo: 'factura', monto: 500000, fecha: '2026-06-01', registradoPor: 'adminUid', anulado: false });          // original VIGENTE (corrección feliz)
         await setDoc(doc(db, 'clientes/cliV/movimientos/mYaAnulado'), { tipo: 'factura', monto: 500000, fecha: '2026-06-01', registradoPor: 'adminUid', anulado: true, anuladoPor: 'adminUid', motivoAnulacion: 'corregido antes' }); // carrera: ya anulado
@@ -1002,4 +1014,103 @@ test('M3 anti-lockout · config ausente: abono PASA, ajuste negativo admin FALLA
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
         await setDoc(doc(ctx.firestore(), 'config/cartera'), { autoAprobacionMax: 50000, slaRevisionDias: 2 });
     });
+});
+
+// ─── Acuerdos de pago (spec 2026-06-12): forma + transiciones + atómica ────────
+const ACUERDO_OK = {
+    alcance: 'factura', movimientoId: 'mChico', fechaPacto: '2026-06-01',
+    cuotas: [{ fecha: '2026-06-15', monto: 20000 }, { fecha: '2026-07-15', monto: 20000 }],
+    periodicidad: 'mensual', primeraCuotaFecha: '2026-06-15', ultimaCuotaFecha: '2026-07-15',
+    saldoAlPactar: 40000, nota: 'pactado con la clienta', estado: 'vigente',
+    creadoPor: 'adminUid', rolAlCrear: 'admin',
+};
+
+test('acuerdos · admin crea válido; editor no crea ni lee; admin lee', async () => {
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/acuerdos/acNuevoOk'),
+        { ...ACUERDO_OK, creadoEn: serverTimestamp() }));
+    await assertFails(setDoc(doc(asUser('editorUid'), 'clientes/cliV/acuerdos/acEditor'),
+        { ...ACUERDO_OK, creadoEn: serverTimestamp(), creadoPor: 'editorUid', rolAlCrear: 'editor' }));
+    await assertFails(getDoc(doc(asUser('editorUid'), 'clientes/cliV/acuerdos/acSuelto')));
+    await assertSucceeds(getDoc(doc(asUser('adminUid'), 'clientes/cliV/acuerdos/acSuelto')));
+});
+
+test('acuerdos · la forma es la frontera (estado/alcance/sobre/nota/rol/reloj)', async () => {
+    const crea = (id, over) => setDoc(doc(asUser('adminUid'), `clientes/cliV/acuerdos/${id}`),
+        { ...ACUERDO_OK, creadoEn: serverTimestamp(), ...over });
+    await assertFails(crea('acEstado', { estado: 'anulado' }));            // nace 'vigente'
+    await assertFails(crea('acAlcance', { alcance: 'cliente' }));          // lista literal
+    await assertFails(crea('acSaldoConMov', { alcance: 'saldo' }));        // 'saldo' NO lleva movimientoId
+    const { movimientoId: _m, ...sinMov } = ACUERDO_OK;
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/acuerdos/acSinMov'),
+        { ...sinMov, creadoEn: serverTimestamp() }));                      // 'factura' lo exige
+    await assertFails(crea('acExtra', { campoExtra: 'x' }));               // whitelist hasOnly
+    await assertFails(crea('acNotaVacia', { nota: '' }));                  // qué se habló = evidencia
+    await assertFails(crea('acNotaLarga', { nota: 'x'.repeat(501) }));     // size() ≤ 500
+    await assertFails(crea('acSobre', { primeraCuotaFecha: '2026-05-01' })); // < fechaPacto
+    await assertFails(crea('acRol', { rolAlCrear: 'owner' }));             // investidura falsa
+    await assertFails(crea('acCuotasVacias', { cuotas: [] }));
+    await assertFails(crea('acReloj', { creadoEn: new Date() }));          // reloj del SERVIDOR
+});
+
+test('acuerdos · el owner pacta a su nombre (alcance saldo, rolAlCrear owner)', async () => {
+    const { movimientoId: _m, ...base } = ACUERDO_OK;
+    await assertSucceeds(setDoc(doc(asUser('ownerUid'), 'clientes/cliV/acuerdos/acOwnerSaldo'),
+        { ...base, alcance: 'saldo', creadoEn: serverTimestamp(), creadoPor: 'ownerUid', rolAlCrear: 'owner' }));
+});
+
+test('acuerdos · renegociación ATÓMICA: el batch pasa; el create/sello SUELTOS jamás', async () => {
+    // create con reemplazaA SIN sellar el viejo en el mismo batch → deny (getAfter)
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/acuerdos/acRenSuelto'),
+        { ...ACUERDO_OK, creadoEn: serverTimestamp(), reemplazaA: 'acSuelto' }));
+    // sello suelto apuntando a un reemplazo que NO se crea → deny
+    await assertFails(updateDoc(doc(asUser('adminUid'), 'clientes/cliV/acuerdos/acSuelto'),
+        { estado: 'reemplazado', cerradoPor: 'adminUid', cerradoEn: serverTimestamp(), reemplazadoPor: 'acNoExiste' }));
+    // el batch completo (nuevo con reemplazaA + viejo sellado de vuelta) → OK
+    const db = asUser('adminUid');
+    const b = writeBatch(db);
+    b.set(doc(db, 'clientes/cliV/acuerdos/acRen1'),
+        { ...ACUERDO_OK, creadoEn: serverTimestamp(), reemplazaA: 'acV' });
+    b.update(doc(db, 'clientes/cliV/acuerdos/acV'),
+        { estado: 'reemplazado', cerradoPor: 'adminUid', cerradoEn: serverTimestamp(), reemplazadoPor: 'acRen1' });
+    await assertSucceeds(b.commit());
+});
+
+test('acuerdos · anular = SOLO owner con motivo; cerrado inmutable; delete jamás', async () => {
+    await assertFails(updateDoc(doc(asUser('adminUid'), 'clientes/cliV/acuerdos/acAnular2'),
+        { estado: 'anulado', cerradoPor: 'adminUid', cerradoEn: serverTimestamp(), motivoCierre: 'pactado por error' }));
+    await assertFails(updateDoc(doc(asUser('ownerUid'), 'clientes/cliV/acuerdos/acAnular'),
+        { estado: 'anulado', cerradoPor: 'ownerUid', cerradoEn: serverTimestamp() })); // sin motivo
+    await assertSucceeds(updateDoc(doc(asUser('ownerUid'), 'clientes/cliV/acuerdos/acAnular'),
+        { estado: 'anulado', cerradoPor: 'ownerUid', cerradoEn: serverTimestamp(), motivoCierre: 'pactado por error' }));
+    // editar las cuotas de un vigente → deny (solo el cierre one-way muta)
+    await assertFails(updateDoc(doc(asUser('ownerUid'), 'clientes/cliV/acuerdos/acAnular2'),
+        { cuotas: [{ fecha: '2026-08-01', monto: 50000 }] }));
+    // un acuerdo cerrado es INMUTABLE (la transición solo arranca de 'vigente')
+    await assertFails(updateDoc(doc(asUser('ownerUid'), 'clientes/cliV/acuerdos/acCerrado'),
+        { estado: 'anulado', cerradoPor: 'ownerUid', cerradoEn: serverTimestamp(), motivoCierre: 'x' }));
+    await assertFails(deleteDoc(doc(asUser('ownerUid'), 'clientes/cliV/acuerdos/acCerrado')));
+});
+
+test('acuerdos · collectionGroup solo admin; asesorId viaja en el cliente (costura)', async () => {
+    await assertSucceeds(getDocs(query(collectionGroup(asUser('adminUid'), 'acuerdos'), where('estado', '==', 'vigente'))));
+    await assertFails(getDocs(query(collectionGroup(asUser('editorUid'), 'acuerdos'), where('estado', '==', 'vigente'))));
+    // update: la frontera es la WHITELIST (el tipo se valida en el CREATE, patrón vendedoraId)
+    await assertSucceeds(updateDoc(doc(asUser('adminUid'), 'clientes/cliV'), { asesorId: 'asesor-1' }));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliAsesorMal'),
+        { nombre: 'Clienta As', asesorId: 7, origen: 'kary', activo: true }));        // tipo en create
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliAsesorOk'),
+        { nombre: 'Clienta As', asesorId: 'asesor-1', origen: 'kary', activo: true }));
+});
+
+test('size() ≤500 en texto libre: gestiones/solicitudes/movimientos (deferido M5)', async () => {
+    const larga = 'x'.repeat(501);
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/gestiones/gLarga'),
+        { tipo: 'llamada', nota: larga, fecha: '2026-06-10', resultado: 'no_contesto',
+          registradoPor: 'adminUid', creadoEn: serverTimestamp() }));
+    await assertFails(addDoc(collection(asUser('adminUid'), 'clientes/cliV/solicitudes'),
+        { tipo: 'ajuste', monto: -70000, motivo: larga, nota: 'x', solicitadoPor: 'adminUid',
+          creadoEn: serverTimestamp(), estado: 'pendiente' }));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mDescLarga'),
+        { tipo: 'factura', monto: 10000, fecha: '2026-06-07', descripcion: larga,
+          registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false }));
 });

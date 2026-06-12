@@ -23,6 +23,15 @@
  * migración). Sin ninguna de las dos → cuenta en el saldo pero NO en vencido
  * (se reporta en `sinFecha` para que Kary defina la fecha de corte) — un
  * `vencimiento` sin `fecha` NO envejece (caso imposible bajo el candado M3).
+ *
+ * ACUERDOS DE PAGO (spec 2026-06-12, `opts.acuerdos`): un acuerdo vigente y
+ * VÁLIDO (acuerdoEsValido — la validación vive AQUÍ, en el archivo de paridad)
+ * re-programa la exigibilidad del pendiente que cubre en TRAMOS por cuota.
+ * Precedencia por cargo: acuerdo > mov.vencimiento (M6) > fecha+plazo. Notas:
+ * un acuerdo 'factura' cuyo movimiento fue corregido (id nuevo, M2b) queda
+ * huérfano → no cubre nada → fallback benigno (detector M4 lo lista); el
+ * `vencimiento` del movimiento queda obsoleto tras renegociar (inmutable) —
+ * irrelevante por precedencia mientras el acuerdo viva.
  */
 
 // Signo que cada tipo aporta al saldo (idéntico a functions/saldo.js).
@@ -59,6 +68,46 @@ export function hoyISO(date = new Date()) {
 }
 
 /**
+ * ¿Un ACUERDO DE PAGO es estructuralmente válido para la fórmula? (spec acuerdos
+ * 2026-06-12 §1.4). Vive AQUÍ —el archivo de PARIDAD— y no en el módulo de UI:
+ * las reglas de Firestore no pueden iterar `cuotas[]`, así que esta validación es
+ * el freno real y debe correr IDÉNTICA en el panel y en el corte mensual.
+ * Un acuerdo inválido se IGNORA (cae al fallback M6/plazo = MÁS vencido = falla
+ * conservadora). La reusa el detector `acuerdosAnomalos` (M4).
+ * @param {object} a  doc de clientes/{id}/acuerdos/{id}
+ * @param {object} [opts] { horizonteDias = 730 } — tope de la última cuota desde
+ *   el pacto (decisión Daniel P3: 24 meses; config owner-only).
+ */
+export function acuerdoEsValido(a, opts = {}) {
+  if (!a || a.estado !== 'vigente') return false;
+  if (a.alcance === 'factura') {
+    if (typeof a.movimientoId !== 'string' || !a.movimientoId) return false;
+  } else if (a.alcance === 'saldo') {
+    if (a.movimientoId !== undefined) return false;
+  } else return false;
+  if (!Array.isArray(a.cuotas) || a.cuotas.length < 1 || a.cuotas.length > 36) return false;
+  let prevDia = -Infinity;
+  for (const q of a.cuotas) {
+    if (!q || !Number.isInteger(q.monto) || q.monto <= 0) return false;
+    const d = toDayNum(q.fecha);
+    if (d == null || d <= prevDia) return false;   // ISO real, estrictamente creciente
+    prevDia = d;
+  }
+  if (a.primeraCuotaFecha !== a.cuotas[0].fecha) return false;
+  if (a.ultimaCuotaFecha !== a.cuotas[a.cuotas.length - 1].fecha) return false;
+  // Horizonte anti-parqueo: última cuota ≤ ancla + horizonte. Ancla = creadoEn del
+  // SERVIDOR; recién pactado (serverTimestamp pendiente) → fechaPacto (la regla la
+  // fuerza no-futura, así que el ancla jamás se infla).
+  const anclaNum = (a.creadoEn && typeof a.creadoEn.toMillis === 'function')
+    ? Math.floor(a.creadoEn.toMillis() / DAY_MS)
+    : toDayNum(a.fechaPacto);
+  if (anclaNum == null) return false;
+  const h = (typeof opts.horizonteDias === 'number' && isFinite(opts.horizonteDias) && opts.horizonteDias > 0)
+    ? Math.trunc(opts.horizonteDias) : 730;
+  return prevDia <= anclaNum + h;
+}
+
+/**
  * Vencimiento por DEFECTO de un cargo: fecha + díasPlazo, en ISO (M6). Es LA MISMA
  * suma que usa el fallback del aging (una fórmula, L-03): el acuerdo prellenado que
  * ve Kary y lo que el sistema asumiría sin acuerdo explícito son idénticos.
@@ -87,9 +136,15 @@ function aporte(mov) {
  * @param {string|Date} [opts.hoy] - referencia "hoy" (default: hoy local).
  * @param {number} [opts.diasPlazo=30] - días de plazo del negocio (config/negocio.diasPlazo).
  * @param {string} [opts.fechaCorte] - 'YYYY-MM-DD' fallback para movimientos sin `fecha`.
+ * @param {Array<object>} [opts.acuerdos] - acuerdos de pago del cliente (spec 2026-06-12):
+ *   re-programan la EXIGIBILIDAD del pendiente que cubren (jamás el saldo). Sin
+ *   acuerdos, la salida es IDÉNTICA a la fórmula previa (test que lo fija).
+ * @param {number} [opts.horizonteDias=730] - tope de la última cuota (P3: 24 meses).
  * @returns {{saldo:number, vencido:number, alDia:number, sinFecha:number,
  *   buckets:{d1_30:number,d31_60:number,d60plus:number}, diasMora:number,
- *   fechaVencidoMasAntigua:(string|null), estado:('sin-deuda'|'al-dia'|'vencido'|'a-favor')}}
+ *   fechaVencidoMasAntigua:(string|null), estado:('sin-deuda'|'al-dia'|'vencido'|'a-favor'),
+ *   bajoAcuerdo:number, plan:(null|{acuerdoId:(string|null), exigible:number, cubierto:number,
+ *   vencidoPlan:number, cuotasVencidas:number, proximaCuota:(null|{fecha:string,monto:number})})}}
  */
 export function estadoCuenta(movimientos, opts = {}) {
   const { hoy, fechaCorte } = opts;
@@ -104,6 +159,7 @@ export function estadoCuenta(movimientos, opts = {}) {
     saldo: 0, vencido: 0, alDia: 0, sinFecha: 0,
     buckets: { d1_30: 0, d31_60: 0, d60plus: 0 },
     diasMora: 0, fechaVencidoMasAntigua: null, estado: 'sin-deuda',
+    bajoAcuerdo: 0, plan: null,
   };
   if (!Array.isArray(movimientos)) return result;
 
@@ -118,7 +174,15 @@ export function estadoCuenta(movimientos, opts = {}) {
       // M6: acuerdo de pago POR DEUDA. toDayNum hace el round-trip → un vencimiento
       // imposible (2026-02-30 pasa la regex de la regla) devuelve null = fallback.
       const vencNum = (mov && typeof mov.vencimiento === 'string') ? toDayNum(mov.vencimiento) : null;
-      cargos.push({ dayNum: fechaISO ? toDayNum(fechaISO) : null, fechaISO, pendiente: a, vencNum });
+      cargos.push({
+        dayNum: fechaISO ? toDayNum(fechaISO) : null, fechaISO, pendiente: a, vencNum,
+        // Insumos de los ACUERDOS (spec §1.4): id ancla los de alcance 'factura';
+        // registradoEn (reloj de SERVIDOR) ancla la cobertura de 'saldo' — una
+        // factura retrofechada DESPUÉS del pacto no se desliza bajo el acuerdo.
+        id: (mov && mov.id != null) ? mov.id : null,
+        regMs: (mov && mov.registradoEn && typeof mov.registradoEn.toMillis === 'function')
+          ? mov.registradoEn.toMillis() : null,
+      });
     } else if (a < 0) {
       creditos += -a;
     }
@@ -140,8 +204,96 @@ export function estadoCuenta(movimientos, opts = {}) {
     credRestante = round2(credRestante - aplica);
   }
 
+  // ─── Acuerdos de pago (spec 2026-06-12 §1.4): re-programan la EXIGIBILIDAD ────
+  // El acuerdo NO mueve dinero: el FIFO de arriba corrió INTACTO (el abono paga la
+  // deuda más vieja → por construcción, la cuota más vieja). Aquí el pendiente
+  // CUBIERTO por un acuerdo válido se parte en TRAMOS que vencen en las fechas de
+  // sus cuotas; el resto envejece igual que siempre. Sin acuerdos → salida idéntica.
+  const acuerdosValidos = Array.isArray(opts.acuerdos)
+    ? opts.acuerdos.filter((a) => acuerdoEsValido(a, opts)) : [];
+  const tramos = [];
+  if (acuerdosValidos.length) {
+    const ms = (t) => (t && typeof t.toMillis === 'function' ? t.toMillis() : null);
+    // 'factura' cubre SU movimiento; 'saldo' cubre lo REGISTRADO (reloj de servidor)
+    // hasta el pacto. Pacto con creadoEn aún pendiente → 'saldo' no cubre nada por
+    // un instante (conservador, transitorio); 'factura' sí (ancla por id).
+    const cubre = (a, c) => (a.alcance === 'factura'
+      ? (c.id != null && a.movimientoId === c.id)
+      : (c.regMs != null && ms(a.creadoEn) != null && c.regMs <= ms(a.creadoEn)));
+    // Selección DETERMINISTA si >1 vigente cubre el mismo cargo: mayor creadoEn
+    // (pendiente del servidor = el más nuevo); desempate por id lexicográfico —
+    // panel y corte eligen SIEMPRE igual. El solape además lo lista un detector.
+    const masNuevo = (a, b) => {
+      const ma = ms(a.creadoEn) ?? Infinity, mb = ms(b.creadoEn) ?? Infinity;
+      if (ma !== mb) return ma > mb ? a : b;
+      return String(a.id || '') > String(b.id || '') ? a : b;
+    };
+    const grupos = new Map();   // acuerdo elegido → sus cargos cubiertos (orden FIFO)
+    for (const c of cargos) {
+      if (c.pendiente <= 0 || c.dayNum == null) continue;   // sinFecha: fuera del plan (conservador)
+      let elegido = null;
+      for (const a of acuerdosValidos) {
+        if (cubre(a, c)) elegido = elegido ? masNuevo(a, elegido) : a;
+      }
+      if (!elegido) continue;
+      if (!grupos.has(elegido)) grupos.set(elegido, []);
+      grupos.get(elegido).push(c);
+      c.enAcuerdo = true;
+    }
+    let plan = null;   // el plan visible de la ficha = el acuerdo aplicado más nuevo
+    for (const [a, cs] of grupos) {
+      const sumaCuotas = a.cuotas.reduce((s, q) => s + q.monto, 0);
+      const cubierto = cs.reduce((s, c) => s + c.pendiente, 0);
+      // Las cuotas se pagan DESDE EL FRENTE: lo ya pagado del plan = Σcuotas − lo
+      // que sigue pendiente (la cuota de enero no figura impaga si la plata entró).
+      let porSaltar = round2(sumaCuotas - Math.min(cubierto, sumaCuotas));
+      const slices = [];   // resto IMPAGO de cada cuota, en orden
+      for (const q of a.cuotas) {
+        const resto = round2(Math.max(0, q.monto - Math.min(porSaltar, q.monto)));
+        porSaltar = round2(Math.max(0, porSaltar - q.monto));
+        slices.push({ vencNum: toDayNum(q.fecha), fecha: q.fecha, montoCuota: q.monto, resto });
+      }
+      // Figuras del plan ANTES de consumir los slices (el reparto los muta).
+      const exigible = slices.reduce((s, q) => s + (hoyNum > q.vencNum ? q.montoCuota : 0), 0);
+      const vencidoPlan = slices.reduce((s, q) => s + (hoyNum > q.vencNum ? q.resto : 0), 0);
+      const cuotasVencidas = slices.filter((q) => hoyNum > q.vencNum && q.resto > 0).length;
+      const prox = slices.find((q) => q.resto > 0) || null;
+      const datos = {
+        acuerdoId: a.id || null,
+        exigible: round2(exigible),
+        cubierto: round2(Math.max(0, exigible - vencidoPlan)),
+        vencidoPlan: round2(vencidoPlan),
+        cuotasVencidas,
+        proximaCuota: prox ? { fecha: prox.fecha, monto: prox.resto } : null,
+      };
+      if (!plan || masNuevo(a, plan.acuerdo) === a) plan = { acuerdo: a, datos };
+      result.bajoAcuerdo = round2(result.bajoAcuerdo + Math.min(cubierto, sumaCuotas));
+      // Reparto: pendiente de cada cargo (FIFO) sobre los restos de cuota; el
+      // EXCEDENTE sobre Σcuotas conserva su vencimiento original M6/plazo (§1.2:
+      // inflar el cronograma no parquea nada — el sobrante envejece como siempre).
+      let si = 0;
+      while (si < slices.length && slices[si].resto <= 0) si++;
+      for (const c of cs) {
+        let restante = c.pendiente;
+        while (restante > 0 && si < slices.length) {
+          const s = slices[si];
+          const tramo = Math.min(s.resto, restante);
+          tramos.push({ dayNum: c.dayNum, fechaISO: c.fechaISO, pendiente: tramo, vencNum: s.vencNum });
+          s.resto = round2(s.resto - tramo);
+          restante = round2(restante - tramo);
+          if (s.resto <= 0) si++;
+        }
+        if (restante > 0) {
+          tramos.push({ dayNum: c.dayNum, fechaISO: c.fechaISO, pendiente: restante, vencNum: c.vencNum });
+        }
+      }
+    }
+    result.plan = plan ? plan.datos : null;
+  }
+  const items = tramos.length ? [...cargos.filter((c) => !c.enAcuerdo), ...tramos] : cargos;
+
   let maxMora = 0;
-  for (const c of cargos) {
+  for (const c of items) {
     if (c.pendiente <= 0) continue;
     if (c.dayNum == null) { result.sinFecha = round2(result.sinFecha + c.pendiente); continue; }
     // Vencimiento EFECTIVO (M6): el acuerdo explícito manda; sin él, fecha + plazo.

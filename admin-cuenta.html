@@ -84,6 +84,18 @@
                 </div>
             </div>
 
+            <!-- Gestiones de cobro (Fase M · M5): evidencia INMUTABLE del expediente (art. 146 ET) -->
+            <div class="adm-section" id="gest-section" hidden>
+                <div class="adm-section-head">
+                    <h2>Gestiones de cobro <span class="adm-opt" id="gest-count"></span></h2>
+                    <button id="btn-gestion" class="adm-btn adm-btn--ghost adm-btn--sm">➕ Registrar gestión</button>
+                </div>
+                <div id="gest-list"></div>
+                <div class="adm-empty" id="gest-empty" hidden>
+                    <p id="gest-empty-msg">Sin gestiones de cobro. Cada llamada, WhatsApp o visita de cobro se registra aquí como evidencia.</p>
+                </div>
+            </div>
+
         </div>
     </main>
 </div>
@@ -289,6 +301,62 @@
             <div class="adm-modal-foot">
                 <button type="button" class="adm-btn adm-btn--ghost" id="corregirmov-cancel">Cancelar</button>
                 <button type="submit" class="adm-btn adm-btn--primary">Aplicar corrección</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: registrar gestión de cobro (inmutable — sin editar ni borrar) -->
+<div class="adm-modal" id="gest-modal" hidden>
+    <div class="adm-modal-box">
+        <div class="adm-modal-head">
+            <h2>Registrar gestión de cobro</h2>
+            <button class="adm-modal-close" id="gest-close" aria-label="Cerrar">✕</button>
+        </div>
+        <form id="gest-form">
+            <div class="adm-modal-body">
+                <p style="color:var(--adm-muted);font-size:13px;margin:0 0 14px;">
+                    La gestión queda como evidencia de cobro: no se puede editar ni borrar.
+                    Si te equivocas, registra otra gestión que lo aclare.
+                </p>
+                <div class="adm-form-row">
+                    <div class="adm-field">
+                        <label for="gest-tipo">¿Cómo contactaste? <span class="adm-opt">(obligatorio)</span></label>
+                        <select id="gest-tipo" class="adm-input" required>
+                            <option value="">Elige…</option>
+                        </select>
+                    </div>
+                    <div class="adm-field">
+                        <label for="gest-fecha">Fecha <span class="adm-opt">(del contacto)</span></label>
+                        <input type="date" id="gest-fecha" class="adm-input" required>
+                    </div>
+                </div>
+                <div class="adm-form-row adm-col-1">
+                    <div class="adm-field">
+                        <label for="gest-resultado">¿Qué pasó? <span class="adm-opt">(obligatorio)</span></label>
+                        <select id="gest-resultado" class="adm-input" required>
+                            <option value="">Elige…</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="adm-form-row adm-col-1">
+                    <div class="adm-field">
+                        <label for="gest-nota">Detalle <span class="adm-opt">(recomendado)</span></label>
+                        <textarea id="gest-nota" class="adm-input" rows="2" maxlength="300"
+                                  placeholder="Ej. quedó de abonar $100.000 el viernes"></textarea>
+                    </div>
+                </div>
+                <div class="adm-form-row adm-col-1">
+                    <div class="adm-field">
+                        <label for="gest-soporte">Soporte <span class="adm-opt">(opcional: enlace o referencia)</span></label>
+                        <input type="text" id="gest-soporte" class="adm-input" maxlength="500" autocomplete="off"
+                               placeholder="Enlace al pantallazo, o una referencia (ej. recibo #423)">
+                    </div>
+                </div>
+            </div>
+            <div class="adm-modal-foot">
+                <button type="button" class="adm-btn adm-btn--ghost" id="gest-cancel">Cancelar</button>
+                <button type="submit" class="adm-btn adm-btn--primary" id="gest-save">Registrar gestión</button>
             </div>
         </form>
     </div>

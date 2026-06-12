@@ -96,7 +96,7 @@ Encabezado `## <fecha> — <título>` (convención por fecha de este cerebro) + 
 
 ### Reglas git
 
-- **Quién commitea Y despliega: Claude, por defecto** (cliente 2026-06-06). **Commits**: `git add` ESPECÍFICO (nunca `-A`/`.`), footer `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`, separados por tipo (código vs cerebro). **Deploys**: solo con build/tests VERDES, anunciando qué (incidente L-14). Prod = merge `Desarrollo→main` (Pages) + `firebase deploy --only functions,firestore:rules`.
+- **Quién commitea Y despliega: Claude, por defecto** (cliente 2026-06-06). **Commits**: `git add` ESPECÍFICO (nunca `-A`/`.`), footer `Co-Authored-By: <modelo Claude VIGENTE de la sesión> <noreply@anthropic.com>` (no copiar de commits viejos), separados por tipo (código vs cerebro). **Deploys**: solo con build/tests VERDES, anunciando qué (incidente L-14). Prod = merge `Desarrollo→main` (Pages) + `firebase deploy --only functions,firestore:rules`.
 - NUNCA `--amend`/`--no-verify`/`--no-gpg-sign` sin pedido. NUNCA commitear secretos/datos privados (`.env`, credentials, `*.pem`, `*.xlsx`, `.claude/settings.local.json`).
 - Al cerrar un pendiente, marcar su `TODO-NN` como ✅ + link al §X. Mantén este CLAUDE.md liviano.
 

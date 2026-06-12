@@ -6,9 +6,9 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v13 — Fase M / M4: auditoría detectiva en Salud (tajadas, flags,
-// recaudo, muestra, acta, corte) + aviso de SLA en el panel. Fuerza refresco.
-const CACHE_NAME    = 'bersaglio-v13';
+// Bumped to v14 — Fase M / M5: gestiones de cobro en la ficha (timeline +
+// registro inmutable — evidencia del expediente de cobranza). Fuerza refresco.
+const CACHE_NAME    = 'bersaglio-v14';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

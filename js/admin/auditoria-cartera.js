@@ -17,7 +17,7 @@ import {
 } from '../crm-service.js';
 import {
     mesDe, trimestreDe, pendientesFueraDeSLA, ajustesNegativosAuto, anulacionesDelMes,
-    rechazadasBurladas, abonosPorMedio, muestraTrimestral,
+    rechazadasBurladas, abonosPorMedio, muestraTrimestral, acuerdosLargos,
 } from '../crm-auditoria.js';
 
 const MEDIO_LABEL = { efectivo: 'Efectivo', transferencia: 'Transferencia', datafono: 'Datáfono', otro: 'Otro', sin_medio: 'Sin medio (antiguos)' };
@@ -134,6 +134,15 @@ function render() {
     if (rec.total > 0) recNodos.push(fila('TOTAL recaudado (vigente)', fmtCOP(rec.total)));
     if (rec.anuladosTotal > 0) recNodos.push(fila('⚠️ Abonos ANULADOS este mes (no suman)', fmtCOP(rec.anuladosTotal), { ambar: true }));
 
+    // (4b · M6) Acuerdos de pago anormalmente largos: el acuerdo manda sobre la
+    // mora — uno lejano PARQUEA la deuda fuera de vencidos/SLA/corte (detector
+    // del vector que el Consejo M3 cerró en la fecha y M6 reabre en el acuerdo).
+    const largos = acuerdosLargos(_movs, { umbralDias: 120 });
+    const largosNodos = largos.map((m) => fila(
+        `${nombre(m.clienteId)} — factura con acuerdo a ${m.diasAcuerdo} días (${m.fecha} → ${m.vencimiento})`,
+        fmtCOP(Math.abs(m.monto || 0)), { ambar: true },
+    ));
+
     // (5) Muestra trimestral sembrada (para cotejar contra soportes, política A.5).
     const tri = trimestreDe(new Date());
     const muestra = muestraTrimestral(_movs, tri);
@@ -147,6 +156,7 @@ function render() {
         bloque('Anulaciones y banderas', anulNodos),
         ...(burlNodos.length ? [bloque('🚨 Posible "no" burlado', burlNodos, { alerta: true })] : []),
         bloque('Recaudo por medio de pago (mes en curso)', recNodos, { vacio: 'Aún no hay abonos registrados este mes.' }),
+        ...(largosNodos.length ? [bloque('⏳ Acuerdos de pago a más de 120 días (revisar que sean reales)', largosNodos)] : []),
         bloque(`Muestra del trimestre ${tri} para cotejar contra soportes (sorteo fijo: ${muestra.length})`, muestraNodos,
             { vacio: 'Ningún ajuste para cotejar este trimestre.' }),
     );

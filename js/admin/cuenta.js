@@ -16,7 +16,7 @@ import {
     registrarGestion, onGestionesChange,
 } from '../crm-service.js';
 import { saldoClass, saldoLabel, estadoBadgeHTML } from './saldo-format.js';
-import { estadoCuenta, hoyISO } from '../crm-estado-cuenta.js';
+import { estadoCuenta, hoyISO, vencimientoDefaultISO } from '../crm-estado-cuenta.js';
 import { planearCorreccionSaldo, planearCorreccionMovimiento, PREGUNTAS_CORRECCION } from '../crm-correccion.js';
 import {
     TIPOS_GESTION, RESULTADOS_GESTION, tipoGestionLabel, resultadoGestionLabel,
@@ -151,9 +151,15 @@ function renderMovimientos(list) {
             ? ''
             : `${m.tipo !== 'ajuste' ? `<button class="adm-btn adm-btn--ghost adm-btn--sm" data-corregir="${esc(m.id)}">Corregir</button>` : ''}
                <button class="adm-btn adm-btn--ghost adm-btn--sm" data-anular="${esc(m.id)}">Anular</button>`;
+        // Acuerdo de pago visible (M6): qué se pactó con la clienta, junto a la fecha.
+        // Copy neutro "acuerdo:" — "vence" en presente sobre una deuda ya pagada se
+        // leería como alerta permanente (verif. M6).
+        const venceTxt = (m.tipo === 'factura' && !anulado && fmtFecha(m.vencimiento))
+            ? `<br><span style="color:var(--adm-muted);font-size:11px;">acuerdo: ${fmtFecha(m.vencimiento)}</span>`
+            : '';
         return `
             <tr${anulado ? ' style="opacity:.5"' : ''}>
-                <td title="Registrado: ${esc(fmtDateTime(m.registradoEn))}">${fechaTxt}</td>
+                <td title="Registrado: ${esc(fmtDateTime(m.registradoEn))}">${fechaTxt}${venceTxt}</td>
                 <td>${esc(tipoTxt)}${anulado ? ' <span class="adm-pill">anulado</span>' : ''}</td>
                 <td>${esc(m.descripcion || '—')}</td>
                 <td style="text-align:right${anulado ? ';text-decoration:line-through' : ''}">${esc(montoTxt)}</td>
@@ -266,12 +272,26 @@ function reSolicitarSaldo(s) {
 }
 
 // ─── Modal movimiento ─────────────────────────────────────────────────────────
+let _vencTocado = false;   // Kary editó el acuerdo a mano → no pisarlo al cambiar la fecha
+
 function openMovModal(tipo) {
     _tipo = tipo;
     document.getElementById('mov-form').reset();
     document.getElementById('mov-fecha').value = hoyISO();   // default: hoy (Kary puede cambiarla)
     document.getElementById('mov-modal-title').textContent = `Registrar ${TIPO_LABEL[tipo].toLowerCase()}`;
     document.getElementById('mov-save').textContent = `Registrar ${TIPO_LABEL[tipo].toLowerCase()}`;
+    // Acuerdo de pago (M6): SOLO facturas. Prellenado = fecha + plazo del negocio
+    // (el default sigue configurable en el panel); Kary lo pacta POR DEUDA.
+    const vencRow = document.getElementById('mov-vencimiento-row');
+    const vencEl = document.getElementById('mov-vencimiento');
+    _vencTocado = false;
+    if (tipo === 'factura') {
+        vencEl.value = vencimientoDefaultISO(hoyISO(), _diasPlazo);
+        vencEl.min = hoyISO();   // el acuerdo no puede ser antes de la fecha de la deuda
+        vencRow.hidden = false; vencEl.required = true;
+    } else {
+        vencRow.hidden = true; vencEl.required = false; vencEl.value = '';
+    }
     // Medio de pago: obligatorio SOLO en abonos (cómo entró la plata).
     const mpRow = document.getElementById('mov-mediopago-row');
     const mpSel = document.getElementById('mov-mediopago');
@@ -295,6 +315,21 @@ function wireModal() {
         if (e.target.id === 'mov-modal') closeMovModal();
     });
 
+    // El acuerdo sigue a la fecha del hecho MIENTRAS Kary no lo haya tocado
+    // (cambia la fecha de la deuda → el sugerido se recalcula; lo pactado a mano se
+    // respeta). El `min` se refresca SIEMPRE: la restricción real es ≥ fecha de la
+    // deuda — un min viejo bloquearía acuerdos pasados legítimos con la burbuja
+    // nativa del navegador en vez del toast (verif. M6).
+    const vencEl = document.getElementById('mov-vencimiento');
+    vencEl.addEventListener('input', () => { _vencTocado = true; });
+    document.getElementById('mov-fecha').addEventListener('change', (e) => {
+        if (_tipo !== 'factura') return;
+        const f = e.target.value;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(f)) return;
+        vencEl.min = f;
+        if (!_vencTocado) vencEl.value = vencimientoDefaultISO(f, _diasPlazo);
+    });
+
     document.getElementById('mov-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const monto = Number(document.getElementById('mov-monto').value);
@@ -309,6 +344,24 @@ function wireModal() {
             if (!medioPago) { admToast('Elige el medio de pago.', 'danger'); return; }
         }
 
+        // Factura: el ACUERDO DE PAGO es obligatorio (M6 — directiva 2026-06-12:
+        // cada deuda pacta su plazo; el default solo es una sugerencia).
+        let vencimiento;
+        if (_tipo === 'factura') {
+            vencimiento = document.getElementById('mov-vencimiento').value;
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(vencimiento)) {
+                admToast('Elige el acuerdo de pago: ¿para cuándo quedó?', 'danger'); return;
+            }
+            if (vencimiento < fecha) {
+                admToast('El acuerdo de pago no puede ser antes de la fecha de la deuda.', 'danger'); return;
+            }
+            // Anti-dedazo de AÑO (verif. M6): un acuerdo explícito manda sobre la mora;
+            // uno en 2099 parquearía la deuda fuera de vencidos/SLA/corte para siempre.
+            if (vencimiento > vencimientoDefaultISO(fecha, 365)) {
+                admToast('Ese acuerdo queda a MÁS DE UN AÑO de la deuda. Revisa el año de la fecha.', 'danger', 5000); return;
+            }
+        }
+
         const uid = currentUser()?.user?.uid;
         const btn = document.getElementById('mov-save');
         btn.disabled = true;
@@ -320,6 +373,7 @@ function wireModal() {
                 descripcion: document.getElementById('mov-desc').value,
                 registradoPor: uid,
                 ...(medioPago ? { medioPago } : {}),
+                ...(vencimiento ? { vencimiento } : {}),
             });
             admToast(`${TIPO_LABEL[_tipo]} registrada. El saldo se actualizará en un momento.`);
             closeMovModal();
@@ -493,16 +547,26 @@ function wireCorregirMov() {
         montoNuevo: Number(montoEl.value), fechaNueva: fechaEl.value, motivoCategoria: motivoEl.value,
     }, _cfgCartera);
 
-    // Anuncio EN VIVO del efecto + quién lo aplica.
+    // Anuncio EN VIVO del efecto + quién lo aplica + LA VERDAD sobre el acuerdo (M6):
+    // con acuerdo explícito la mora la manda el acuerdo, no la fecha — el copy viejo
+    // "cambia la fecha de mora" sería FALSO y le confirmaría a Kary un modelo
+    // mental equivocado (verif. M6).
     const refrescar = () => {
         if (!original) { anuncioEl.textContent = ''; return; }
         const p = plan();
         if (p.noOp) { anuncioEl.textContent = 'Cambia el monto o la fecha para corregir.'; anuncioEl.style.color = 'var(--adm-muted)'; return; }
-        const efecto = p.delta === 0 ? 'sin efecto en el saldo (cambia la fecha de mora)'
+        const conAcuerdo = original.tipo === 'factura' && !!fmtFecha(original.vencimiento);
+        const efecto = p.delta === 0
+            ? (conAcuerdo ? 'sin efecto en el saldo' : 'sin efecto en el saldo (cambia la fecha de mora)')
             : `el saldo ${p.delta > 0 ? 'sube' : 'baja'} ${fmtCOP(Math.abs(p.delta))}`;
+        const acuerdoTxt = conAcuerdo
+            ? (p.reemplazo.vencimiento
+                ? ` El acuerdo de pago (${fmtFecha(original.vencimiento)}) se mantiene.`
+                : ` La fecha nueva pasa del acuerdo (${fmtFecha(original.vencimiento)}) → quedará con el plazo del negocio.`)
+            : '';
         anuncioEl.textContent = p.requiereAprobacion
-            ? `Se anula y se crea el corregido — ${efecto}. Necesita aprobación de Daniel → se enviará como solicitud (el saldo no cambia hasta que apruebe).`
-            : `Se anula y se crea el corregido — ${efecto}. Se aplica de inmediato.`;
+            ? `Se anula y se crea el corregido — ${efecto}.${acuerdoTxt} Necesita aprobación de Daniel → se enviará como solicitud (el saldo no cambia hasta que apruebe).`
+            : `Se anula y se crea el corregido — ${efecto}.${acuerdoTxt} Se aplica de inmediato.`;
         anuncioEl.style.color = p.requiereAprobacion ? '#b8860b' : 'var(--adm-muted)';
     };
 
@@ -511,8 +575,13 @@ function wireCorregirMov() {
     const abrir = (orig, prefill) => {
         original = orig;
         document.getElementById('corregirmov-form').reset();
+        const conAcuerdo = original.tipo === 'factura' && !!fmtFecha(original.vencimiento);
         origEl.textContent = `Original: ${TIPO_LABEL[original.tipo] || original.tipo} · ${fmtCOP(original.monto)}`
-            + (original.fecha ? ` · ${fmtFecha(original.fecha) || original.fecha}` : '');
+            + (original.fecha ? ` · ${fmtFecha(original.fecha) || original.fecha}` : '')
+            + (conAcuerdo ? ` · acuerdo ${fmtFecha(original.vencimiento)}` : '');
+        // Renegociación: el camino correcto NO es este modal (verif. M6).
+        const hint = document.getElementById('corregirmov-acuerdo-hint');
+        if (hint) hint.hidden = !conAcuerdo;
         montoEl.value = Math.round(Number(prefill?.monto ?? original.monto));
         fechaEl.value = (prefill?.fecha || original.fecha) || '';
         if (prefill?.motivoCategoria) motivoEl.value = prefill.motivoCategoria;

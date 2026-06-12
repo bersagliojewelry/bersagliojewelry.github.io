@@ -190,6 +190,28 @@ function mulberry32(a) {
 }
 
 /**
+ * (6 · M6) Facturas VIVAS cuyo acuerdo de pago está anormalmente lejos de su fecha
+ * (vencimiento − fecha > umbralDias). El acuerdo explícito MANDA sobre el aging:
+ * un dedazo de año (2099) o un acuerdo malicioso PARQUEA la deuda fuera de
+ * vencidos, del aviso SLA y del corte inmutable — el mismo vector que el Consejo
+ * M3 cerró en la FECHA con la cota +2d, reabierto por el acuerdo (futuro por
+ * diseño; la regla no le pone techo porque el acuerdo largo legítimo existe).
+ * Detectivo, no preventivo: la UI bloquea >365d al crear; esto atrapa lo que
+ * entre por fuera (SDK/legacy) o lo largo-pero-permitido fuera de lo normal.
+ */
+export function acuerdosLargos(movimientos, { umbralDias = 120 } = {}) {
+    const ISO = /^\d{4}-\d{2}-\d{2}$/;
+    const out = [];
+    for (const m of movimientos || []) {
+        if (!m || m.anulado === true || m.tipo !== 'factura') continue;
+        if (!ISO.test(m.fecha || '') || !ISO.test(m.vencimiento || '')) continue;
+        const dias = Math.round((Date.parse(m.vencimiento) - Date.parse(m.fecha)) / 864e5);
+        if (dias > umbralDias) out.push({ ...m, diasAcuerdo: dias });
+    }
+    return out.sort((a, b) => b.diasAcuerdo - a.diasAcuerdo);
+}
+
+/**
  * (5) Muestra TRIMESTRAL de ajustes para cotejar contra soportes (política A.5):
  * sortea hasta `n` ajustes del trimestre con semilla = el trimestre mismo →
  * determinista (no se puede "re-sortear" hasta que salga una muestra cómoda).

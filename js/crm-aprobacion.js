@@ -184,6 +184,13 @@ export function planAprobacionCorreccion(sol, solId, original) {
             // Reemplazo de un ABONO: la regla M3 exige medioPago — se hereda del
             // ORIGINAL re-leído (no del snapshot); fallback 'otro' (red-team M3).
             ...(original.tipo === 'abono' ? { medioPago: original.medioPago || r.medioPago || 'otro' } : {}),
+            // Reemplazo de una FACTURA: hereda el acuerdo de pago del ORIGINAL
+            // re-leído (M6) SOLO si sigue coherente con la fecha del reemplazo
+            // (acuerdo >= fecha; si la corrección movió la fecha más allá del
+            // acuerdo, se suelta y la mora se re-ancla a fecha+plazo — verif. M6).
+            ...(original.tipo === 'factura' && ISO_RE.test(String(original.vencimiento || ''))
+                && (!fecha || original.vencimiento >= fecha)
+                ? { vencimiento: original.vencimiento } : {}),
             correccionDe: sol.correccionDe,
             solicitudId: solId,
         },

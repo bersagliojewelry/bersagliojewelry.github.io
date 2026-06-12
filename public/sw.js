@@ -6,9 +6,9 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v14 — Fase M / M5: gestiones de cobro en la ficha (timeline +
-// registro inmutable — evidencia del expediente de cobranza). Fuerza refresco.
-const CACHE_NAME    = 'bersaglio-v14';
+// Bumped to v15 — Fase M / M6: acuerdo de pago por deuda (vencimiento explícito
+// en facturas + aging por vencimiento efectivo). Fuerza refresco.
+const CACHE_NAME    = 'bersaglio-v15';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

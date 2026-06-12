@@ -9,13 +9,20 @@
  *
  * Modelo (FIFO): se reparten los créditos (abonos, y aperturas/ajustes negativos)
  * contra los cargos (factura/apertura/ajuste positivos) del MÁS VIEJO al más nuevo;
- * lo que queda pendiente de cada cargo envejece desde su vencimiento
- *   vencimiento = fecha del cargo + díasPlazo
+ * lo que queda pendiente de cada cargo envejece desde su vencimiento EFECTIVO
+ *   vencimiento = mov.vencimiento (acuerdo de pago POR DEUDA, M6 §69)
+ *                 ?? fecha del cargo + díasPlazo (default del negocio)
  *   mora        = hoy − vencimiento   (días pasados del vencimiento; ≤0 = al día)
+ *
+ * El ORDEN FIFO sigue siendo por `fecha` del cargo (semántica fijada en M6 para la
+ * convivencia mixta: el crédito paga la deuda MÁS VIEJA, no la que vence primero).
+ * Un `vencimiento` inválido (regex pasa pero la fecha es imposible: la regla M3 no
+ * hace round-trip) cae al fallback fecha+plazo.
  *
  * `fecha` de un cargo = `mov.fecha` ('YYYY-MM-DD') ?? `fechaCorte` (fallback de
  * migración). Sin ninguna de las dos → cuenta en el saldo pero NO en vencido
- * (se reporta en `sinFecha` para que Kary defina la fecha de corte).
+ * (se reporta en `sinFecha` para que Kary defina la fecha de corte) — un
+ * `vencimiento` sin `fecha` NO envejece (caso imposible bajo el candado M3).
  */
 
 // Signo que cada tipo aporta al saldo (idéntico a functions/saldo.js).
@@ -51,6 +58,19 @@ export function hoyISO(date = new Date()) {
   return `${y}-${m}-${d}`;
 }
 
+/**
+ * Vencimiento por DEFECTO de un cargo: fecha + díasPlazo, en ISO (M6). Es LA MISMA
+ * suma que usa el fallback del aging (una fórmula, L-03): el acuerdo prellenado que
+ * ve Kary y lo que el sistema asumiría sin acuerdo explícito son idénticos.
+ * '' si la fecha no es válida.
+ */
+export function vencimientoDefaultISO(fechaISO, diasPlazo = 30) {
+  const num = toDayNum(fechaISO);
+  if (num == null) return '';
+  const plazo = (typeof diasPlazo === 'number' && isFinite(diasPlazo) && diasPlazo >= 0) ? Math.trunc(diasPlazo) : 30;
+  return new Date((num + plazo) * DAY_MS).toISOString().slice(0, 10);
+}
+
 // Aporte con signo de un movimiento (defensivo: anulado/tipo desconocido/monto no num → 0).
 function aporte(mov) {
   if (!mov || mov.anulado === true) return 0;
@@ -73,7 +93,10 @@ function aporte(mov) {
  */
 export function estadoCuenta(movimientos, opts = {}) {
   const { hoy, fechaCorte } = opts;
-  const diasPlazo = (typeof opts.diasPlazo === 'number' && opts.diasPlazo >= 0) ? opts.diasPlazo : 30;
+  // MISMO saneo que vencimientoDefaultISO (isFinite + trunc): si divergen, el
+  // sugerido que ve Kary y el fallback del aging dejan de ser "la misma suma" (L-03).
+  const diasPlazo = (typeof opts.diasPlazo === 'number' && isFinite(opts.diasPlazo) && opts.diasPlazo >= 0)
+    ? Math.trunc(opts.diasPlazo) : 30;
   const hoyNum = toDayNum(hoy ?? hoyISO());
   const corteValido = (typeof fechaCorte === 'string' && ISO_RE.test(fechaCorte)) ? fechaCorte : null;
 
@@ -92,7 +115,10 @@ export function estadoCuenta(movimientos, opts = {}) {
     saldo += a;
     if (a > 0) {
       const fechaISO = (mov && typeof mov.fecha === 'string' && ISO_RE.test(mov.fecha)) ? mov.fecha : corteValido;
-      cargos.push({ dayNum: fechaISO ? toDayNum(fechaISO) : null, fechaISO, pendiente: a });
+      // M6: acuerdo de pago POR DEUDA. toDayNum hace el round-trip → un vencimiento
+      // imposible (2026-02-30 pasa la regex de la regla) devuelve null = fallback.
+      const vencNum = (mov && typeof mov.vencimiento === 'string') ? toDayNum(mov.vencimiento) : null;
+      cargos.push({ dayNum: fechaISO ? toDayNum(fechaISO) : null, fechaISO, pendiente: a, vencNum });
     } else if (a < 0) {
       creditos += -a;
     }
@@ -114,11 +140,12 @@ export function estadoCuenta(movimientos, opts = {}) {
     credRestante = round2(credRestante - aplica);
   }
 
-  let maxMora = 0, fechaAntiguaNum = Infinity;
+  let maxMora = 0;
   for (const c of cargos) {
     if (c.pendiente <= 0) continue;
     if (c.dayNum == null) { result.sinFecha = round2(result.sinFecha + c.pendiente); continue; }
-    const mora = hoyNum - (c.dayNum + diasPlazo);
+    // Vencimiento EFECTIVO (M6): el acuerdo explícito manda; sin él, fecha + plazo.
+    const mora = hoyNum - (c.vencNum != null ? c.vencNum : c.dayNum + diasPlazo);
     if (mora <= 0) {
       result.alDia = round2(result.alDia + c.pendiente);
     } else {
@@ -127,8 +154,10 @@ export function estadoCuenta(movimientos, opts = {}) {
       if (mora <= 30) result.buckets.d1_30 = round2(result.buckets.d1_30 + c.pendiente);
       else if (mora <= 60) result.buckets.d31_60 = round2(result.buckets.d31_60 + c.pendiente);
       else result.buckets.d60plus = round2(result.buckets.d60plus + c.pendiente);
-      if (mora > maxMora) maxMora = mora;
-      if (c.dayNum < fechaAntiguaNum) { fechaAntiguaNum = c.dayNum; result.fechaVencidoMasAntigua = c.fechaISO; }
+      // fechaVencidoMasAntigua = fecha del HECHO del cargo con PEOR mora — el MISMO
+      // cargo que define diasMora (coherentes post-M6: el acuerdo puede invertir el
+      // orden fecha↔mora; pre-M6 la mora era monótona con la fecha y esto es idéntico).
+      if (mora > maxMora) { maxMora = mora; result.fechaVencidoMasAntigua = c.fechaISO; }
     }
   }
   result.diasMora = maxMora;

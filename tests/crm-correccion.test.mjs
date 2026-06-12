@@ -153,3 +153,41 @@ test('PREGUNTAS_CORRECCION mapea preguntas a motivos válidos sin huérfanos', (
     // los 3 neutros por defecto son los del contrato
     assert.deepEqual(MOTIVOS_NEUTROS_DEFAULT, ['ERROR_REGISTRO', 'ABONO_NO_REGISTRADO', 'RECLASIFICACION']);
 });
+
+// ─── M6: el acuerdo de pago se HEREDA en el par de corrección ──────────────────
+test('M6: el reemplazo de una FACTURA hereda el vencimiento del original (y el snapshot lo porta)', () => {
+    const p = planearCorreccionMovimiento(
+        { id: 'm6', tipo: 'factura', monto: 30000, fecha: '2026-06-03', vencimiento: '2026-09-01' },
+        { montoNuevo: 25000, motivoCategoria: 'ERROR_REGISTRO' }, CFG);
+    assert.equal(p.reemplazo.vencimiento, '2026-09-01');
+    assert.equal(p.datosCorreccion.snapshotOriginal.vencimiento, '2026-09-01');
+});
+test('M6: factura SIN acuerdo / vencimiento inválido → el reemplazo no lo lleva (la regla lo permite ausente)', () => {
+    const sinAcuerdo = planearCorreccionMovimiento(
+        { id: 'm7', tipo: 'factura', monto: 30000, fecha: '2026-06-03' },
+        { montoNuevo: 25000, motivoCategoria: 'ERROR_REGISTRO' }, CFG);
+    assert.equal('vencimiento' in sinAcuerdo.reemplazo, false);
+    const invalido = planearCorreccionMovimiento(
+        { id: 'm8', tipo: 'factura', monto: 30000, fecha: '2026-06-03', vencimiento: 'pronto' },
+        { montoNuevo: 25000, motivoCategoria: 'ERROR_REGISTRO' }, CFG);
+    assert.equal('vencimiento' in invalido.reemplazo, false);
+});
+test('M6: un ABONO jamás porta vencimiento (la regla lo rechaza fuera de facturas)', () => {
+    const p = planearCorreccionMovimiento(
+        { id: 'm9', tipo: 'abono', monto: 100000, fecha: '2026-06-03', vencimiento: '2026-09-01' },
+        { montoNuevo: 90000, motivoCategoria: 'ERROR_REGISTRO' }, CFG);
+    assert.equal('vencimiento' in p.reemplazo, false);
+});
+test('M6-fix: si la fecha corregida PASA del acuerdo heredado, el acuerdo se SUELTA (jamás venc < fecha)', () => {
+    const p = planearCorreccionMovimiento(
+        { id: 'm10', tipo: 'factura', monto: 30000, fecha: '2026-06-12', vencimiento: '2026-06-20' },
+        { montoNuevo: 30000, fechaNueva: '2026-07-12', motivoCategoria: 'CORRECCION_FECHA' }, CFG);
+    assert.equal('vencimiento' in p.reemplazo, false);   // re-ancla a fecha+plazo del negocio
+    assert.equal(p.datosCorreccion.snapshotOriginal.vencimiento, '2026-06-20');  // la evidencia queda
+});
+test('M6-fix: fecha corregida DENTRO del acuerdo → el acuerdo se mantiene', () => {
+    const p = planearCorreccionMovimiento(
+        { id: 'm11', tipo: 'factura', monto: 30000, fecha: '2026-06-12', vencimiento: '2026-09-01' },
+        { montoNuevo: 30000, fechaNueva: '2026-06-15', motivoCategoria: 'CORRECCION_FECHA' }, CFG);
+    assert.equal(p.reemplazo.vencimiento, '2026-09-01');
+});

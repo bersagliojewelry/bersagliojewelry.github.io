@@ -225,3 +225,25 @@ test('motivos automáticos estables (los lee la alerta de M4 y la ficha de Kary)
     assert.equal(MOTIVO_OBSOLETA, 'ASIENTO_YA_NO_VIGENTE');
     assert.equal(MOTIVO_INCOHERENTE, 'DATOS_NO_COINCIDEN');
 });
+
+// ─── M6: el acuerdo de pago sobrevive la aprobación de una corrección ──────────
+test('M6: el reemplazo aprobado hereda el vencimiento del ORIGINAL re-leído', () => {
+    const p = planAprobacionCorreccion(solCorreccion(), 'sol-xyz',
+        originalVigente({ vencimiento: '2026-09-01' }));
+    assert.equal(p.reemplazo.vencimiento, '2026-09-01');
+});
+test('M6: original sin acuerdo (o inválido) → el reemplazo aprobado no lo lleva', () => {
+    const sin = planAprobacionCorreccion(solCorreccion(), 'sol-xyz', originalVigente());
+    assert.equal('vencimiento' in sin.reemplazo, false);
+    const inv = planAprobacionCorreccion(solCorreccion(), 'sol-xyz',
+        originalVigente({ vencimiento: 'pronto' }));
+    assert.equal('vencimiento' in inv.reemplazo, false);
+});
+test('M6-fix: aprobación con fecha nueva MÁS ALLÁ del acuerdo → el reemplazo lo suelta', () => {
+    const sol = solCorreccion({}, {
+        reemplazo: { tipo: 'factura', monto: 80000, fecha: '2026-10-01' },
+        snapshotOriginal: { tipo: 'factura', monto: 500000, fecha: '2026-06-01', anulado: false },
+    });
+    const p = planAprobacionCorreccion(sol, 'sol-xyz', originalVigente({ vencimiento: '2026-06-20' }));
+    assert.equal('vencimiento' in p.reemplazo, false);
+});

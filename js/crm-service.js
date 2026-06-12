@@ -273,6 +273,65 @@ export async function rechazarSolicitud(clienteId, solId, uid, motivoRechazo) {
     });
 }
 
+/** Solicitudes RECHAZADAS recientes (ventana en días) de todas las clientas —
+ *  insumo de la alerta "rechazada burlada" (M4). La query usa equality + rango
+ *  sobre creadoEn ASC = servida por el MISMO índice COLLECTION_GROUP de M1
+ *  (estado ASC, creadoEn ASC) — sin índice nuevo (spec §9.1). */
+export function onSolicitudesRechazadasRecientes(dias, cb, onError) {
+    const desde = new Date(Date.now() - dias * 864e5);
+    const q = query(
+        collectionGroup(firestoreDb, 'solicitudes'),
+        where('estado', '==', 'rechazada'),
+        where('creadoEn', '>=', desde),
+        orderBy('creadoEn', 'asc'), limit(MAX),
+    );
+    return onSnapshot(q, (snap) => {
+        detectarTruncado('Solicitudes rechazadas (auditoría)', snap.size);
+        cb(snap.docs.map((d) => ({ id: d.id, clienteId: d.ref.parent.parent?.id, ...d.data() })));
+    }, (err) => {
+        console.error('[crm] rechazadas recientes:', err);
+        onError?.(err);
+    });
+}
+
+// ─── Auditoría mensual (Fase M · M4): acta de conciliación + cortes ───────────
+
+/** Acta del mes ('YYYY-MM') en vivo (null si no existe aún). `onError` obligatorio
+ *  de facto: si el listener muere, la UI ofrecería CREAR un acta que ya existe. */
+export function onActaChange(mes, cb, onError) {
+    return onSnapshot(doc(firestoreDb, 'conciliaciones', mes), (snap) => {
+        cb(snap.exists() ? { id: snap.id, ...snap.data() } : null);
+    }, (err) => {
+        console.error('[crm] acta de conciliación:', err);
+        onError?.(err);
+    });
+}
+
+/** Crea el ACTA mensual (owner-only por reglas; one-way: jamás se edita).
+ *  Campos espejo EXACTO de la regla de `conciliaciones/{mes}`. */
+export async function crearActa(mes, { totalPorMedio, bancoCuadra, efectivoCuadra, diferencias, uid }) {
+    await setDoc(doc(firestoreDb, 'conciliaciones', mes), {
+        mes,
+        totalPorMedio,
+        bancoCuadra: bancoCuadra === true,
+        efectivoCuadra: efectivoCuadra === true,
+        diferencias: (diferencias || '').trim(),
+        creadoPor: uid,
+        creadoEn: serverTimestamp(),
+    });
+}
+
+/** Último corte mensual generado por la CF (la foto inmutable más reciente). */
+export function onUltimoCorteChange(cb, onError) {
+    const q = query(collection(firestoreDb, 'cortes'), orderBy('mes', 'desc'), limit(1));
+    return onSnapshot(q, (snap) => {
+        cb(snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() });
+    }, (err) => {
+        console.error('[crm] cortes mensuales:', err);
+        onError?.(err);
+    });
+}
+
 /**
  * Aprobación SIMPLE (solicitud de ajuste): DOS escrituras en UN writeBatch de
  * Daniel — crear el asiento (con `solicitudId`) + solicitud→aprobada. Las reglas

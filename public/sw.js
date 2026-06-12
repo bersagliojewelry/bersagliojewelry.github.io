@@ -6,9 +6,9 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v12 — Fase M / M3 (forward-compat del candado): ajuste directo con
-// motivo+nota, reemplazo de abono con medioPago, ajustes sin par. Fuerza refresco.
-const CACHE_NAME    = 'bersaglio-v12';
+// Bumped to v13 — Fase M / M4: auditoría detectiva en Salud (tajadas, flags,
+// recaudo, muestra, acta, corte) + aviso de SLA en el panel. Fuerza refresco.
+const CACHE_NAME    = 'bersaglio-v13';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

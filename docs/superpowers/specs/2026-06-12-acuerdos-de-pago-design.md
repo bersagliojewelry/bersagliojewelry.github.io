@@ -173,6 +173,6 @@ RECHAZADOS con razón: `deudaIds[]` (inverificable) · `montoPactado` como insum
 - [ ] Consejo Externo corrido (prompt en bóveda) + síntesis integrada (adoptado/refutado con razón)
 - [x] Slice 1: fórmula + matriz de tests (2026-06-12: `acuerdoEsValido` + TRAMOS en `crm-estado-cuenta`; suite vieja 24/24 SIN tocar un test + `test:acuerdos` 15/15 + paridad 3/3)
 - [x] Slice 2 CONSTRUIDO (2026-06-12: `acuerdoValido`+`transicionAcuerdoValida`+getAfter+CG+`asesorId`+size() M5; emulador 143/143) — **DEPLOY pendiente: tras integrar el Consejo Externo** (+ docs 20/50 con el deploy)
-- [ ] Slice 3: corte.js (ids + acuerdos + formulaVersion)
+- [x] Slice 3 CONSTRUIDO (2026-06-12: `agruparPorCliente` con ids + CG acuerdos + `formulaVersion:2` + `plan`/`bajoAcuerdo` por clienta y en totales; `test:insumos` 3/3) — deploy de functions junto al de reglas
 - [ ] Slice 4: UI Kary + cache bump
 - [ ] Slice 5: detectores + acta + Salud

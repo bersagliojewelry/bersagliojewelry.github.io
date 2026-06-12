@@ -5,11 +5,15 @@
 import adminDb from './db.js';
 import { admToast, initSidebar, requireAuth } from './shared.js';
 import { leadBadgeHTML } from './lead-format.js';
+import { initAvisoSolicitudes } from './aviso-solicitudes.js';
 
 async function init() {
     await requireAuth('editor');
     await adminDb.init();
     initSidebar();
+
+    // Solicitudes de corrección fuera de plazo → banner (Fase M · M4; solo admin/owner).
+    initAvisoSolicitudes();
 
     // Initial render
     updateStats(adminDb.getStats());

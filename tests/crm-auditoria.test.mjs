@@ -14,7 +14,7 @@ import assert from 'node:assert/strict';
 import {
     mesDe, trimestreDe, esMontoSimilar, pendientesFueraDeSLA,
     ajustesNegativosAuto, anulacionesDelMes, rechazadasBurladas,
-    abonosPorMedio, muestraTrimestral,
+    abonosPorMedio, muestraTrimestral, acuerdosLargos,
 } from '../js/crm-auditoria.js';
 
 const OWNER = 'uid-daniel';
@@ -175,4 +175,20 @@ test('muestraTrimestral: misma semilla → misma muestra; solo ajustes del trime
     assert.ok(a.every((m) => m.tipo === 'ajuste' && m.id.startsWith('q2-')));
     const c = muestraTrimestral(movs, '2026-Q3');
     assert.equal(c.length, 0);
+});
+
+// ─── (6 · M6) acuerdos de pago anormalmente largos (parqueo de mora) ───────────
+test('acuerdosLargos: atrapa el dedazo de año, ignora acuerdos normales/anulados/no-facturas', () => {
+    const movs = [
+        { id: 'f1', clienteId: 'cliA', tipo: 'factura', monto: 90000, fecha: '2026-06-01', vencimiento: '2099-06-01', anulado: false },
+        { id: 'f2', clienteId: 'cliB', tipo: 'factura', monto: 50000, fecha: '2026-06-01', vencimiento: '2026-07-01', anulado: false },
+        { id: 'f3', clienteId: 'cliC', tipo: 'factura', monto: 70000, fecha: '2026-06-01', vencimiento: '2026-11-15', anulado: false },
+        { id: 'f4', clienteId: 'cliD', tipo: 'factura', monto: 80000, fecha: '2026-06-01', vencimiento: '2099-01-01', anulado: true },
+        { id: 'a1', clienteId: 'cliE', tipo: 'ajuste', monto: -10000, fecha: '2026-06-01', vencimiento: '2099-01-01', anulado: false },
+        { id: 'f5', clienteId: 'cliF', tipo: 'factura', monto: 60000, fecha: '2026-06-01', anulado: false },
+    ];
+    const r = acuerdosLargos(movs, { umbralDias: 120 });
+    assert.deepEqual(r.map((m) => m.id), ['f1', 'f3']);   // peor primero
+    assert.ok(r[0].diasAcuerdo > 26000);                   // ~73 años
+    assert.equal(r[1].diasAcuerdo, 167);
 });

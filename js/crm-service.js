@@ -116,7 +116,7 @@ export function onMovimientosChange(clienteId, cb) {
  * ADR §51). Es inmutable tras crearse (las reglas solo permiten anular). Si no se
  * envía, el movimiento queda sin fecha → la mora cae al fallback `fechaCorteMigracion`.
  */
-export async function addMovimiento(clienteId, { tipo, monto, descripcion, registradoPor, fecha, medioPago, motivo, nota }) {
+export async function addMovimiento(clienteId, { tipo, monto, descripcion, registradoPor, fecha, medioPago, motivo, nota, vencimiento }) {
     const payload = {
         tipo,
         monto: Number(monto),
@@ -125,6 +125,9 @@ export async function addMovimiento(clienteId, { tipo, monto, descripcion, regis
         // medioPago: M2a lo escribe en abonos (lista literal); M3 lo hace obligatorio
         // en la regla.
         ...(medioPago ? { medioPago } : {}),
+        // vencimiento (M6): acuerdo de pago POR DEUDA — la regla solo lo admite en
+        // facturas; espejo aquí para no enviar un payload condenado.
+        ...(tipo === 'factura' && /^\d{4}-\d{2}-\d{2}$/.test(vencimiento || '') ? { vencimiento } : {}),
         // motivo/nota TOP-LEVEL del AJUSTE (forward-compat M3: el candado exige a todo
         // ajuste motivo de lista cerrada + nota; la descripcion sigue siendo el texto humano).
         ...(motivo ? { motivo } : {}),
@@ -455,6 +458,10 @@ export async function corregirMovimientoBatch(clienteId, { original, reemplazo, 
         ...(reemplazo.descripcion ? { descripcion: reemplazo.descripcion.trim() } : {}),
         // Abono: medioPago obligatorio en la regla M3 (heredado/fallback, red-team M3).
         ...(original.tipo === 'abono' ? { medioPago: reemplazo.medioPago || original.medioPago || 'otro' } : {}),
+        // Factura: el acuerdo viaja en el PLAN (planearCorreccionMovimiento decide la
+        // herencia condicional — UNA sola fuente, L-03); aquí solo se valida formato.
+        ...(original.tipo === 'factura' && FE.test(reemplazo.vencimiento || '')
+            ? { vencimiento: reemplazo.vencimiento } : {}),
         correccionDe: original.id,
         registradoPor: uid,
         registradoEn: serverTimestamp(),

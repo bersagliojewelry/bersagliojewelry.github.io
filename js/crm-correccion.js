@@ -141,6 +141,15 @@ export function planearCorreccionMovimiento(original, cambio, cfg) {
         // El reemplazo de un ABONO hereda el medio de pago (la regla M3 lo exige en
         // todo abono nuevo); fallback 'otro' para abonos sin el campo (red-team M3).
         ...(tipo === 'abono' ? { medioPago: original.medioPago || 'otro' } : {}),
+        // El reemplazo de una FACTURA hereda el acuerdo de pago (M6) SOLO si sigue
+        // siendo coherente con la fecha corregida (acuerdo >= fecha). Si la corrección
+        // mueve la fecha MÁS ALLÁ del acuerdo (típico: el acuerdo era el default
+        // derivado de una fecha con dedazo), el acuerdo se SUELTA y la mora se
+        // re-ancla a fecha+plazo del negocio — jamás nace vencimiento < fecha
+        // (verif. M6). Cambiar el acuerdo en sí = anular + factura nueva.
+        ...(tipo === 'factura' && /^\d{4}-\d{2}-\d{2}$/.test(original.vencimiento || '')
+            && (!fechaNueva || original.vencimiento >= fechaNueva)
+            ? { vencimiento: original.vencimiento } : {}),
     };
     const snapshotOriginal = {
         tipo,
@@ -148,6 +157,7 @@ export function planearCorreccionMovimiento(original, cambio, cfg) {
         ...(original.fecha ? { fecha: original.fecha } : {}),
         ...(original.descripcion ? { descripcion: original.descripcion } : {}),
         ...(original.medioPago ? { medioPago: original.medioPago } : {}),
+        ...(original.vencimiento ? { vencimiento: original.vencimiento } : {}),
         anulado: false,
     };
     return {

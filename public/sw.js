@@ -6,9 +6,9 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v11 — Fase M / M2b: superficie de aprobación de Daniel en Salud (cola de
-// solicitudes pendientes, aprobar/rechazar con re-validación). Fuerza refresco del shell.
-const CACHE_NAME    = 'bersaglio-v11';
+// Bumped to v12 — Fase M / M3 (forward-compat del candado): ajuste directo con
+// motivo+nota, reemplazo de abono con medioPago, ajustes sin par. Fuerza refresco.
+const CACHE_NAME    = 'bersaglio-v12';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

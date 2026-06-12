@@ -138,12 +138,16 @@ export function planearCorreccionMovimiento(original, cambio, cfg) {
         monto: montoNuevo,
         ...(fechaNueva ? { fecha: fechaNueva } : {}),
         ...(cambio.descripcionNueva ? { descripcion: String(cambio.descripcionNueva).trim() } : {}),
+        // El reemplazo de un ABONO hereda el medio de pago (la regla M3 lo exige en
+        // todo abono nuevo); fallback 'otro' para abonos sin el campo (red-team M3).
+        ...(tipo === 'abono' ? { medioPago: original.medioPago || 'otro' } : {}),
     };
     const snapshotOriginal = {
         tipo,
         monto: montoOriginal,
         ...(original.fecha ? { fecha: original.fecha } : {}),
         ...(original.descripcion ? { descripcion: original.descripcion } : {}),
+        ...(original.medioPago ? { medioPago: original.medioPago } : {}),
         anulado: false,
     };
     return {

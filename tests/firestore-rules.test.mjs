@@ -50,8 +50,24 @@ before(async () => {
         await setDoc(doc(db, 'users/objetivoUid'), { role: 'editor', email: 'o@x.co', displayName: 'Obj' }); // F6-B: víctima de los tests de escalada
         await setDoc(doc(db, 'vendedoras/vendA'), { nombre: 'Vendedora A', activa: true });
         await setDoc(doc(db, 'clientes/cliV'), { nombre: 'Cliente V', vendedoraId: 'vendA', saldoActual: 0 });
-        await setDoc(doc(db, 'clientes/cliV/movimientos/m1'), { tipo: 'factura', monto: 100000, registradoPor: 'adminUid', anulado: false });
-        await setDoc(doc(db, 'clientes/cliV/movimientos/mLink'), { tipo: 'factura', monto: 80000, registradoPor: 'adminUid', anulado: false }); // M2a-1b: anulación con enlace de corrección
+        await setDoc(doc(db, 'clientes/cliV/movimientos/m1'), { tipo: 'factura', monto: 100000, registradoPor: 'adminUid', anulado: false }); // > tope: anularla = owner (M3)
+        await setDoc(doc(db, 'clientes/cliV/movimientos/mLink'), { tipo: 'factura', monto: 40000, registradoPor: 'adminUid', anulado: false }); // ≤ tope: M2a-1b anulación admin con enlace
+        // ─── M3 (candado): semillas de la tabla de predicados de anulación + config ──
+        await setDoc(doc(db, 'config/cartera'), { autoAprobacionMax: 50000, slaRevisionDias: 2 }); // el gate la LEE (seed con reglas off)
+        await setDoc(doc(db, 'clientes/cliV/movimientos/mChico'), { tipo: 'factura', monto: 40000, fecha: '2026-06-01', registradoPor: 'adminUid', anulado: false });
+        await setDoc(doc(db, 'clientes/cliV/movimientos/mAbonoSem'), { tipo: 'abono', monto: 30000, fecha: '2026-06-01', medioPago: 'efectivo', registradoPor: 'adminUid', anulado: false });
+        await setDoc(doc(db, 'clientes/cliV/movimientos/mGrande'), { tipo: 'factura', monto: 5000000, fecha: '2026-06-01', registradoPor: 'adminUid', anulado: false });
+        await setDoc(doc(db, 'clientes/cliV/movimientos/mCero'), { tipo: 'ajuste', monto: 0, fecha: '2026-06-01', registradoPor: 'adminUid', anulado: false });
+        await setDoc(doc(db, 'clientes/cliV/movimientos/mNegSem'), { tipo: 'ajuste', monto: -20000, fecha: '2026-06-01', registradoPor: 'adminUid', anulado: false });
+        await setDoc(doc(db, 'clientes/cliV/movimientos/mLegacySucio'), { tipo: 'factura', monto: 25000, registradoPor: 'adminUid', anulado: false, campo_basura_v1: 'x' }); // sin fecha/medioPago + clave vieja: anulable igual (delta-only)
+        await setDoc(doc(db, 'clientes/cliV/movimientos/mBorde'), { tipo: 'factura', monto: 50000, fecha: '2026-06-01', registradoPor: 'adminUid', anulado: false });      // == tope exacto
+        await setDoc(doc(db, 'clientes/cliV/movimientos/mBordePlus'), { tipo: 'factura', monto: 50001, fecha: '2026-06-01', registradoPor: 'adminUid', anulado: false });  // tope + 1
+        await setDoc(doc(db, 'clientes/cliV/movimientos/mAbonoCorr'), { tipo: 'abono', monto: 100000, fecha: '2026-06-01', registradoPor: 'adminUid', anulado: false });   // abono LEGACY (sin medioPago) a corregir
+        await setDoc(doc(db, 'clientes/cliV/solicitudes/solAbonoCorr'), { tipo: 'correccion', monto: -50000, motivo: 'dedazo en el abono', nota: 'eran 150 mil', solicitadoPor: 'adminUid', creadoEn: new Date(), estado: 'pendiente', correccionDe: 'mAbonoCorr',
+            datosCorreccion: { reemplazo: { tipo: 'abono', monto: 150000, fecha: '2026-06-01', medioPago: 'otro' }, snapshotOriginal: { tipo: 'abono', monto: 100000, fecha: '2026-06-01', anulado: false }, motivoCategoria: 'ABONO_NO_REGISTRADO' } });
+        await setDoc(doc(db, 'clientes/cliW'), { nombre: 'Cliente W', saldoActual: 0 });
+        await setDoc(doc(db, 'clientes/cliW/solicitudes/solAjena'), { tipo: 'ajuste', monto: -70000, motivo: 'DESCUENTO_AUTORIZADO', nota: 'de otro cliente', solicitadoPor: 'adminUid', creadoEn: new Date(), estado: 'pendiente' });
+        await setDoc(doc(db, 'clientes/cliV/solicitudes/solAjusteOk'), { tipo: 'ajuste', monto: -70000, motivo: 'DESCUENTO_AUTORIZADO', nota: 'aprobable', solicitadoPor: 'adminUid', creadoEn: new Date(), estado: 'pendiente' });
         await setDoc(doc(db, 'config/status'),  { ok: true });
         await setDoc(doc(db, 'config/negocio'), { fechaCorteMigracion: '2025-12-31' });
         await setDoc(doc(db, 'solicitudesCorreccion/s1'), { clienteId: 'cliV', estado: 'pendiente' }); // legacy: debe quedar INACCESIBLE
@@ -68,8 +84,10 @@ before(async () => {
         // ─── Fase M (M2b): semillas del batch de aprobación de Daniel ────────────
         await setDoc(doc(db, 'clientes/cliV/movimientos/mCorr'), { tipo: 'factura', monto: 500000, fecha: '2026-06-01', registradoPor: 'adminUid', anulado: false });          // original VIGENTE (corrección feliz)
         await setDoc(doc(db, 'clientes/cliV/movimientos/mYaAnulado'), { tipo: 'factura', monto: 500000, fecha: '2026-06-01', registradoPor: 'adminUid', anulado: true, anuladoPor: 'adminUid', motivoAnulacion: 'corregido antes' }); // carrera: ya anulado
-        await setDoc(doc(db, 'clientes/cliV/solicitudes/solM2b1'), { tipo: 'correccion', monto: -420000, motivo: 'dedazo', nota: 'era 80 mil', solicitadoPor: 'adminUid', creadoEn: new Date(), estado: 'pendiente', correccionDe: 'mCorr' });
-        await setDoc(doc(db, 'clientes/cliV/solicitudes/solM2b2'), { tipo: 'correccion', monto: -420000, motivo: 'dedazo', nota: 'era 80 mil', solicitadoPor: 'adminUid', creadoEn: new Date(), estado: 'pendiente', correccionDe: 'mYaAnulado' });
+        await setDoc(doc(db, 'clientes/cliV/solicitudes/solM2b1'), { tipo: 'correccion', monto: -420000, motivo: 'dedazo', nota: 'era 80 mil', solicitadoPor: 'adminUid', creadoEn: new Date(), estado: 'pendiente', correccionDe: 'mCorr',
+            datosCorreccion: { reemplazo: { tipo: 'factura', monto: 80000, fecha: '2026-06-01' }, snapshotOriginal: { tipo: 'factura', monto: 500000, fecha: '2026-06-01', anulado: false }, motivoCategoria: 'CORRECCION' } });
+        await setDoc(doc(db, 'clientes/cliV/solicitudes/solM2b2'), { tipo: 'correccion', monto: -420000, motivo: 'dedazo', nota: 'era 80 mil', solicitadoPor: 'adminUid', creadoEn: new Date(), estado: 'pendiente', correccionDe: 'mYaAnulado',
+            datosCorreccion: { reemplazo: { tipo: 'factura', monto: 80000, fecha: '2026-06-01' }, snapshotOriginal: { tipo: 'factura', monto: 500000, fecha: '2026-06-01', anulado: false }, motivoCategoria: 'CORRECCION' } });
         await setDoc(doc(db, 'clientes/cliV/solicitudes/solM2b3'), { tipo: 'ajuste', monto: -90000, motivo: 'DESCUENTO_AUTORIZADO', nota: 'autorizado', solicitadoPor: 'adminUid', creadoEn: new Date(), estado: 'pendiente' });
         await setDoc(doc(db, 'clientes/cliV/solicitudes/solM2b4'), { tipo: 'ajuste', monto: -90000, motivo: 'OTRO', nota: 'x', solicitadoPor: 'adminUid', creadoEn: new Date(), estado: 'pendiente' });
 
@@ -184,10 +202,14 @@ test('CRM clientes · editor y sin-rol NO acceden', async () => {
 test('CRM clientes · saldoActual NO se puede sembrar (hasOnly)', async () => {
     await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliHack'), { nombre: 'H', saldoActual: 999 }));
 });
-test('CRM mov · admin crea abono y apertura positiva; tipo inválido rechazado', async () => {
-    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mA'), { tipo: 'abono', monto: 5000, registradoPor: 'adminUid', anulado: false }));
+test('CRM mov · admin crea abono y apertura positiva (contract M3); tipo inválido rechazado', async () => {
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mA'), {
+        tipo: 'abono', monto: 5000, fecha: '2026-06-07', medioPago: 'efectivo',
+        registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false }));
     // M0-H (§69): la apertura NEGATIVA pasó a owner-only (test propio abajo); la positiva sigue admin.
-    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mAp'), { tipo: 'apertura', monto: 1000, registradoPor: 'adminUid' }));
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mAp'), {
+        tipo: 'apertura', monto: 1000, fecha: '2026-06-07',
+        registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false }));
     await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mBad'), { tipo: 'regalo', monto: 1, registradoPor: 'adminUid' }));
 });
 test('CRM mov · vendedora(residual) y editor NO crean', async () => {
@@ -207,19 +229,27 @@ test('CRM mov · editar monto/tipo de un asiento es rechazado (append-only)', as
 test('CRM mov · NADIE borra un movimiento (ni admin)', async () => {
     await assertFails(deleteDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m1')));
 });
-test('CRM mov · admin SÍ anula con motivo (anulado false→true + motivoAnulacion)', async () => {
-    await assertSucceeds(updateDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m1'),
-        { anulado: true, anuladoPor: 'adminUid', anuladoEn: '2026-06-07T00:00:00Z', motivoAnulacion: 'duplicado' }));
+test('CRM mov · anular con el contract M3: admin solo ≤ tope; > tope va al owner', async () => {
+    // m1 = factura $100.000 > tope ($50.000) → el ADMIN ya no puede anularla (M3)…
+    await assertFails(updateDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m1'),
+        { anulado: true, anuladoPor: 'adminUid', anuladoEn: serverTimestamp(), motivoAnulacion: 'duplicado', motivoCategoria: 'DUPLICADO' }));
+    // …el OWNER sí.
+    await assertSucceeds(updateDoc(doc(asUser('ownerUid'), 'clientes/cliV/movimientos/m1'),
+        { anulado: true, anuladoPor: 'ownerUid', anuladoEn: serverTimestamp(), motivoAnulacion: 'duplicado', motivoCategoria: 'DUPLICADO' }));
+    // factura CHICA (≤ tope) → el admin anula con motivo + categoría + reloj de servidor.
+    await assertSucceeds(updateDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mChico'),
+        { anulado: true, anuladoPor: 'adminUid', anuladoEn: serverTimestamp(), motivoAnulacion: 'duplicado', motivoCategoria: 'DUPLICADO' }));
 });
 // ─── M2a-1b (ADR §73): EXPAND aditivo — anulación con enlace de corrección ─────
-test('M2a-1b · anular con enlace de corrección: campo extra y tipos inválidos fallan; enlace válido pasa', async () => {
-    const ref = doc(asUser('adminUid'), 'clientes/cliV/movimientos/mLink');
-    const base = { anulado: true, anuladoPor: 'adminUid', anuladoEn: '2026-06-10T00:00:00Z', motivoAnulacion: 'corrección' };
+test('M2a-1b/M3 · anular con enlace de corrección: campo extra y tipos inválidos fallan; enlace válido pasa', async () => {
+    const ref = doc(asUser('adminUid'), 'clientes/cliV/movimientos/mLink');   // factura $40.000 ≤ tope
+    const base = { anulado: true, anuladoPor: 'adminUid', anuladoEn: serverTimestamp(), motivoAnulacion: 'corrección' };
     // (los assertFails NO mutan mLink → sigue anulado:false hasta el éxito final)
     // clave fuera del whitelist (inyección) → rechazada
-    await assertFails(updateDoc(ref, { ...base, hacked: true }));
-    // motivoCategoria vacío → rechazada (nonEmptyStr)
+    await assertFails(updateDoc(ref, { ...base, hacked: true, motivoCategoria: 'CORRECCION' }));
+    // motivoCategoria vacío / fuera de lista → rechazada (M3: lista cerrada obligatoria)
     await assertFails(updateDoc(ref, { ...base, motivoCategoria: '', corregidoPor: 'mNuevo' }));
+    await assertFails(updateDoc(ref, { ...base, motivoCategoria: 'PORQUE_SI', corregidoPor: 'mNuevo' }));
     // corregidoPor no-string → rechazada
     await assertFails(updateDoc(ref, { ...base, motivoCategoria: 'CORRECCION', corregidoPor: 123 }));
     // enlace VÁLIDO (motivoCategoria + corregidoPor) → pasa
@@ -235,11 +265,11 @@ test('CRM mov · editor NO lee el collectionGroup de movimientos', async () => {
 });
 test('CRM mov · admin crea movimiento con fecha real (mora)', async () => {
     await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mFecha'),
-        { tipo: 'factura', monto: 50000, fecha: '2026-06-07', registradoPor: 'adminUid', anulado: false }));
+        { tipo: 'factura', monto: 50000, fecha: '2026-06-07', registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false }));
 });
 test('CRM mov · fecha con formato NO ISO es rechazada (validación server-side)', async () => {
     await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mBadFecha'),
-        { tipo: 'factura', monto: 1000, fecha: '2026/06/07', registradoPor: 'adminUid', anulado: false }));
+        { tipo: 'factura', monto: 1000, fecha: '2026/06/07', registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false }));
 });
 
 // ─── CRM Fase R: solicitudesCorreccion ELIMINADA (sin regla = denegado a todos) ─
@@ -345,7 +375,8 @@ test('F6 entero-COP · monto con decimales es RECHAZADO (pesos enteros)', async 
 });
 test('F6 entero-COP · monto entero SÍ pasa', async () => {
     await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mEntero'),
-        { tipo: 'abono', monto: 12345, registradoPor: 'adminUid', anulado: false }));
+        { tipo: 'abono', monto: 12345, fecha: '2026-06-07', medioPago: 'transferencia',
+          registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false }));
 });
 
 // ─── F6 frente D: salud del sistema (solo lectura admin; escribe la CF) ────────
@@ -466,13 +497,16 @@ test('M0-H · editar cliente (flujo actual del panel) SIGUE pasando', async () =
 });
 test('M0-H · apertura NEGATIVA: admin NO, owner SÍ', async () => {
     await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/apNegA'),
-        { tipo: 'apertura', monto: -50000, registradoPor: 'adminUid', anulado: false }));
+        { tipo: 'apertura', monto: -50000, fecha: '2026-06-07', registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false }));
     await assertSucceeds(setDoc(doc(asUser('ownerUid'), 'clientes/cliV/movimientos/apNegO'),
-        { tipo: 'apertura', monto: -50000, registradoPor: 'ownerUid', anulado: false }));
+        { tipo: 'apertura', monto: -50000, fecha: '2026-06-07', registradoPor: 'ownerUid', registradoEn: serverTimestamp(), anulado: false }));
 });
-test('M0-H · no-regresión: ajuste negativo de admin conserva su régimen (hasta M3)', async () => {
+test('M3 · ajuste negativo del admin: motivo NEUTRO y dentro del tope → pasa; el payload viejo (sin motivo) → falla', async () => {
     await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/ajNeg'),
-        { tipo: 'ajuste', monto: -10000, registradoPor: 'adminUid', anulado: false }));
+        { tipo: 'ajuste', monto: -10000, fecha: '2026-06-07', motivo: 'ERROR_REGISTRO', nota: 'dedazo corregido',
+          registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false }));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/ajNegViejo'),
+        { tipo: 'ajuste', monto: -10000, fecha: '2026-06-07', registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false }));
 });
 
 // ─── Fase M · M0 (§69): config/cartera = límites de la operadora → owner-only ──
@@ -630,7 +664,7 @@ test('M2b batch · original YA ANULADO revienta el batch ENTERO (la solicitud qu
         motivoAnulacion: 'era 80 mil', motivoCategoria: 'CORRECCION', corregidoPor: nuevoRef.id,
     });
     batch.set(nuevoRef, {
-        tipo: 'factura', monto: 80000, correccionDe: 'mYaAnulado',
+        tipo: 'factura', monto: 80000, fecha: '2026-06-01', correccionDe: 'mYaAnulado',
         solicitudId: 'solM2b2', registradoPor: 'ownerUid', registradoEn: serverTimestamp(), anulado: false,
     });
     batch.update(doc(db, 'clientes/cliV/solicitudes/solM2b2'), {
@@ -652,6 +686,8 @@ test('M2b batch · aprobación SIMPLE (ajuste) del owner: 2 escrituras pasan jun
     batch.set(movRef, {
         tipo: 'ajuste', monto: -90000, fecha: '2026-06-10',
         descripcion: 'Corrección aprobada (DESCUENTO_AUTORIZADO): autorizado',
+        // M3 (deferido 4 §74): motivo+nota TOP-LEVEL — la COINCIDENCIA exige motivo idéntico.
+        motivo: 'DESCUENTO_AUTORIZADO', nota: 'autorizado',
         solicitudId: 'solM2b3', registradoPor: 'ownerUid', registradoEn: serverTimestamp(), anulado: false,
     });
     batch.update(doc(db, 'clientes/cliV/solicitudes/solM2b3'), {
@@ -674,4 +710,262 @@ test('M2b batch · un ADMIN no puede ejecutar la aprobación (el batch entero fa
     await assertFails(batch.commit());   // transicionSolicitudValida exige isOwner()
     const sol = await getDoc(doc(asUser('adminUid'), 'clientes/cliV/solicitudes/solM2b4'));
     if (sol.data().estado !== 'pendiente') throw new Error('el batch del admin transicionó la solicitud');
+});
+
+// ─── Fase M · M3 (§69 + Consejo Externo Gemini): el CANDADO — suite exhaustiva ──
+// Payload VÁLIDO de referencia (contract): cualquier desviación de aquí debe tener
+// su caso rojo. Los verdes con mes/día < 10 también verifican que int('06') parsea.
+
+test('M3 create · inyección de clave extra es rechazada (hasOnly)', async () => {
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3Iny'),
+        { tipo: 'factura', monto: 1000, fecha: '2026-06-07', registradoPor: 'adminUid',
+          registradoEn: serverTimestamp(), anulado: false, saldoQueQuiero: 0 }));
+});
+test('M3 create · registradoEn que NO es el reloj del servidor es rechazado', async () => {
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3Reloj'),
+        { tipo: 'factura', monto: 1000, fecha: '2026-06-07', registradoPor: 'adminUid',
+          registradoEn: new Date(), anulado: false }));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3Reloj2'),
+        { tipo: 'factura', monto: 1000, fecha: '2026-06-07', registradoPor: 'adminUid',
+          registradoEn: '2026-06-11', anulado: false }));
+});
+test('M3 fecha · obligatoria; FUTURA (evasión del aging), prehistórica y 2026-02-30 rechazadas', async () => {
+    const base = { tipo: 'factura', monto: 1000, registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false };
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3SinFecha'), base));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3Futuro'),
+        { ...base, fecha: '2030-01-01' }));                       // factura que jamás vencería
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3Viejo'),
+        { ...base, fecha: '2010-01-01' }));                       // dedazo de año
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3Imposible'),
+        { ...base, fecha: '2026-02-30' }));                       // calendario inválido → error → deny
+});
+test('M3 abono · sin medioPago / fuera de lista / medioPago en factura → rechazados', async () => {
+    const base = { tipo: 'abono', monto: 1000, fecha: '2026-06-07', registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false };
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3SinMedio'), base));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3MedioRaro'),
+        { ...base, medioPago: 'cripto' }));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3MedioFactura'),
+        { tipo: 'factura', monto: 1000, fecha: '2026-06-07', medioPago: 'efectivo',
+          registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false }));
+});
+test('M3 ajuste · sin nota o motivo fuera de lista → rechazado (también para el OWNER)', async () => {
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3SinNota'),
+        { tipo: 'ajuste', monto: -1000, fecha: '2026-06-07', motivo: 'ERROR_REGISTRO',
+          registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false }));
+    await assertFails(setDoc(doc(asUser('ownerUid'), 'clientes/cliV/movimientos/m3MotivoRaro'),
+        { tipo: 'ajuste', monto: -1000, fecha: '2026-06-07', motivo: 'PORQUE_SI', nota: 'x',
+          registradoPor: 'ownerUid', registradoEn: serverTimestamp(), anulado: false }));
+});
+test('M3 ajuste negativo · admin: > tope y motivo NO neutro rechazados; el owner pasa ambos', async () => {
+    const base = { fecha: '2026-06-07', nota: 'caso de prueba', registradoEn: serverTimestamp(), anulado: false };
+    // > tope ($50.000) con motivo neutro → admin NO
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3TopeA'),
+        { ...base, tipo: 'ajuste', monto: -60000, motivo: 'ERROR_REGISTRO', registradoPor: 'adminUid' }));
+    // ≤ tope pero motivo NO neutro (DESCUENTO_AUTORIZADO) → admin NO
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3NoNeutro'),
+        { ...base, tipo: 'ajuste', monto: -10000, motivo: 'DESCUENTO_AUTORIZADO', registradoPor: 'adminUid' }));
+    // el OWNER pasa los dos (su carril no depende del tope)
+    await assertSucceeds(setDoc(doc(asUser('ownerUid'), 'clientes/cliV/movimientos/m3TopeO'),
+        { ...base, tipo: 'ajuste', monto: -60000, motivo: 'ERROR_REGISTRO', registradoPor: 'ownerUid' }));
+    await assertSucceeds(setDoc(doc(asUser('ownerUid'), 'clientes/cliV/movimientos/m3NoNeutroO'),
+        { ...base, tipo: 'ajuste', monto: -10000, motivo: 'DESCUENTO_AUTORIZADO', registradoPor: 'ownerUid' }));
+});
+test('M3 ajuste positivo · admin con motivo+nota: sin tope (sube saldo) → pasa', async () => {
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3Positivo'),
+        { tipo: 'ajuste', monto: 900000, fecha: '2026-06-07', motivo: 'RECLASIFICACION', nota: 'reclasificación de cargo',
+          registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false }));
+});
+test('M3 vencimiento · solo facturas y puede ser futuro; en abono se rechaza', async () => {
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3Venc'),
+        { tipo: 'factura', monto: 1000, fecha: '2026-06-07', vencimiento: '2026-09-07',
+          registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false }));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3VencAbono'),
+        { tipo: 'abono', monto: 1000, fecha: '2026-06-07', medioPago: 'efectivo', vencimiento: '2026-09-07',
+          registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false }));
+});
+
+// ─── M3 · COINCIDENCIA solicitud↔asiento ────────────────────────────────────────
+test('M3 coincidencia · un ADMIN no crea asientos con solicitudId (aunque coincidan)', async () => {
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3CoinA'),
+        { tipo: 'ajuste', monto: -70000, fecha: '2026-06-07', motivo: 'DESCUENTO_AUTORIZADO', nota: 'aprobable',
+          solicitudId: 'solAjusteOk', registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false }));
+});
+test('M3 coincidencia · monto o motivo divergente de la solicitud → rechazado (owner)', async () => {
+    const base = { tipo: 'ajuste', fecha: '2026-06-07', nota: 'aprobable', solicitudId: 'solAjusteOk',
+        registradoPor: 'ownerUid', registradoEn: serverTimestamp(), anulado: false };
+    await assertFails(setDoc(doc(asUser('ownerUid'), 'clientes/cliV/movimientos/m3CoinMonto'),
+        { ...base, monto: -7000, motivo: 'DESCUENTO_AUTORIZADO' }));     // monto ≠ -70000
+    await assertFails(setDoc(doc(asUser('ownerUid'), 'clientes/cliV/movimientos/m3CoinMotivo'),
+        { ...base, monto: -70000, motivo: 'OTRO' }));                    // motivo ≠
+});
+test('M3 coincidencia · hijacking: solicitud de OTRO cliente o de OTRO tipo → rechazado [Consejo]', async () => {
+    // solAjena vive en cliW: el get() anclado al path de cliV no la encuentra → deny.
+    await assertFails(setDoc(doc(asUser('ownerUid'), 'clientes/cliV/movimientos/m3CoinAjena'),
+        { tipo: 'ajuste', monto: -70000, fecha: '2026-06-07', motivo: 'DESCUENTO_AUTORIZADO', nota: 'x',
+          solicitudId: 'solAjena', registradoPor: 'ownerUid', registradoEn: serverTimestamp(), anulado: false }));
+    // solM2b2 es una solicitud de CORRECCIÓN pendiente: un asiento AJUSTE no coincide.
+    await assertFails(setDoc(doc(asUser('ownerUid'), 'clientes/cliV/movimientos/m3CoinTipo'),
+        { tipo: 'ajuste', monto: -420000, fecha: '2026-06-07', motivo: 'ERROR_REGISTRO', nota: 'x',
+          solicitudId: 'solM2b2', registradoPor: 'ownerUid', registradoEn: serverTimestamp(), anulado: false }));
+});
+test('M3 coincidencia · solicitud ya RESUELTA no respalda asientos nuevos (anti-replay)', async () => {
+    // solM2b3 quedó 'aprobada' en el batch de arriba → un segundo asiento con su id falla.
+    await assertFails(setDoc(doc(asUser('ownerUid'), 'clientes/cliV/movimientos/m3Replay'),
+        { tipo: 'ajuste', monto: -90000, fecha: '2026-06-07', motivo: 'DESCUENTO_AUTORIZADO', nota: 'autorizado',
+          solicitudId: 'solM2b3', registradoPor: 'ownerUid', registradoEn: serverTimestamp(), anulado: false }));
+});
+test('M3 coincidencia · VERDE: el owner aprueba un ajuste idéntico a su solicitud pendiente', async () => {
+    await assertSucceeds(setDoc(doc(asUser('ownerUid'), 'clientes/cliV/movimientos/m3CoinOk'),
+        { tipo: 'ajuste', monto: -70000, fecha: '2026-06-07', motivo: 'DESCUENTO_AUTORIZADO', nota: 'aprobable',
+          solicitudId: 'solAjusteOk', registradoPor: 'ownerUid', registradoEn: serverTimestamp(), anulado: false }));
+});
+
+// ─── M3 · ANULACIÓN: tabla de predicados ────────────────────────────────────────
+test('M3 anulación · ABONO: admin NO (herramienta del skimming), owner SÍ', async () => {
+    const patch = { anulado: true, anuladoEn: serverTimestamp(), motivoAnulacion: 'caso', motivoCategoria: 'ERROR_REGISTRO' };
+    await assertFails(updateDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mAbonoSem'),
+        { ...patch, anuladoPor: 'adminUid' }));
+    await assertSucceeds(updateDoc(doc(asUser('ownerUid'), 'clientes/cliV/movimientos/mAbonoSem'),
+        { ...patch, anuladoPor: 'ownerUid' }));
+});
+test('M3 anulación · factura $5M seca: admin NO, owner SÍ', async () => {
+    const patch = { anulado: true, anuladoEn: serverTimestamp(), motivoAnulacion: 'caso', motivoCategoria: 'DUPLICADO' };
+    await assertFails(updateDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mGrande'),
+        { ...patch, anuladoPor: 'adminUid' }));
+    await assertSucceeds(updateDoc(doc(asUser('ownerUid'), 'clientes/cliV/movimientos/mGrande'),
+        { ...patch, anuladoPor: 'ownerUid' }));
+});
+test('M3 anulación · asiento de monto 0 o NEGATIVO: admin NO (falla cerrado)', async () => {
+    const patch = { anulado: true, anuladoPor: 'adminUid', anuladoEn: serverTimestamp(), motivoAnulacion: 'caso', motivoCategoria: 'OTRO' };
+    await assertFails(updateDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mCero'), patch));
+    await assertFails(updateDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mNegSem'), patch));
+});
+test('M3 anulación · sin motivoCategoria → rechazada (lista cerrada obligatoria)', async () => {
+    await assertFails(updateDoc(doc(asUser('ownerUid'), 'clientes/cliV/movimientos/mNegSem'),
+        { anulado: true, anuladoPor: 'ownerUid', anuladoEn: serverTimestamp(), motivoAnulacion: 'caso' }));
+});
+test('M3 anulación · UPDATE MUTANTE: anular y alterar otro campo a la vez → rechazado [Consejo]', async () => {
+    await assertFails(updateDoc(doc(asUser('ownerUid'), 'clientes/cliV/movimientos/mNegSem'),
+        { anulado: true, anuladoPor: 'ownerUid', anuladoEn: serverTimestamp(), motivoAnulacion: 'caso',
+          motivoCategoria: 'OTRO', descripcion: 'reescrita', monto: 0 }));
+});
+test('M3 anulación · anuladoEn que NO es reloj del servidor → rechazada', async () => {
+    await assertFails(updateDoc(doc(asUser('ownerUid'), 'clientes/cliV/movimientos/mNegSem'),
+        { anulado: true, anuladoPor: 'ownerUid', anuladoEn: '2026-06-11T00:00:00Z',
+          motivoAnulacion: 'caso', motivoCategoria: 'OTRO' }));
+});
+test('M3 anulación · LEGACY SUCIA (clave vieja + sin medioPago/fecha): admin SÍ anula [Consejo]', async () => {
+    // La validación es del DELTA — el estado viejo del doc no la contamina.
+    await assertSucceeds(updateDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mLegacySucio'),
+        { anulado: true, anuladoPor: 'adminUid', anuladoEn: serverTimestamp(),
+          motivoAnulacion: 'asiento duplicado de la migración', motivoCategoria: 'DUPLICADO' }));
+});
+
+// ─── M3 · arreglos del red-team (W-01, 16 agentes): los 2 bloqueos + huecos ─────
+test('M3 redteam · factura/abono NEGATIVOS rechazados (condonación sin gate) — admin y owner', async () => {
+    const base = { fecha: '2026-06-07', registradoEn: serverTimestamp(), anulado: false };
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3NegFactA'),
+        { ...base, tipo: 'factura', monto: -1000000, registradoPor: 'adminUid' }));
+    await assertFails(setDoc(doc(asUser('ownerUid'), 'clientes/cliV/movimientos/m3NegFactO'),
+        { ...base, tipo: 'factura', monto: -1000000, registradoPor: 'ownerUid' }));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3NegAbono'),
+        { ...base, tipo: 'abono', monto: -50000, medioPago: 'efectivo', registradoPor: 'adminUid' }));
+});
+test('M3 redteam · autoría SUPLANTADA: registradoPor/anuladoPor ajenos rechazados', async () => {
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3SuplReg'),
+        { tipo: 'factura', monto: 1000, fecha: '2026-06-07', registradoPor: 'ownerUid',
+          registradoEn: serverTimestamp(), anulado: false }));
+    await assertFails(updateDoc(doc(asUser('ownerUid'), 'clientes/cliV/movimientos/mNegSem'),
+        { anulado: true, anuladoPor: 'adminUid', anuladoEn: serverTimestamp(),
+          motivoAnulacion: 'x', motivoCategoria: 'OTRO' }));
+});
+test('M3 redteam · rama CORRECCIÓN de la coincidencia: monto o correccionDe divergente → rechazado', async () => {
+    const base = { tipo: 'factura', fecha: '2026-06-07', solicitudId: 'solM2b2',
+        registradoPor: 'ownerUid', registradoEn: serverTimestamp(), anulado: false };
+    await assertFails(setDoc(doc(asUser('ownerUid'), 'clientes/cliV/movimientos/m3CorrMonto'),
+        { ...base, monto: 999999, correccionDe: 'mYaAnulado' }));     // monto ≠ reemplazo.monto (80000)
+    await assertFails(setDoc(doc(asUser('ownerUid'), 'clientes/cliV/movimientos/m3CorrDe'),
+        { ...base, monto: 80000, correccionDe: 'otroAsiento' }));     // correccionDe ≠ el de la solicitud
+});
+test('M3 redteam · BORDES del tope: ajuste −50000 admin pasa, −50001 no; anular 50000 admin sí, 50001 no', async () => {
+    const baseAj = { tipo: 'ajuste', fecha: '2026-06-07', motivo: 'ERROR_REGISTRO', nota: 'borde',
+        registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false };
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3BordeAj'), { ...baseAj, monto: -50000 }));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3BordeAjPlus'), { ...baseAj, monto: -50001 }));
+    const patch = { anulado: true, anuladoPor: 'adminUid', anuladoEn: serverTimestamp(), motivoAnulacion: 'borde', motivoCategoria: 'OTRO' };
+    await assertSucceeds(updateDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mBorde'), patch));
+    await assertFails(updateDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mBordePlus'), patch));
+});
+test('M3 redteam · fecha: VERDE mañana (tolerancia +2d); ROJOS mes 13/00 y día 00', async () => {
+    const base = { tipo: 'factura', monto: 1000, registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false };
+    const manana = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3Manana'), { ...base, fecha: manana }));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3Mes13'), { ...base, fecha: '2026-13-01' }));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3Mes00'), { ...base, fecha: '2026-00-15' }));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3Dia00'), { ...base, fecha: '2026-06-00' }));
+});
+test('M3 redteam · motivoCategoria del MOSTRADOR (DESCUENTO_AUTORIZADO) anula sin reventar', async () => {
+    // El flujo "Corregir movimiento" deriva estas categorías de las preguntas de Kary;
+    // la lista de la regla es la UNIÓN (el bloqueante del red-team). ABONO_NO_REGISTRADO
+    // se ejercita en el batch de corrección de abono (test de abajo).
+    await assertSucceeds(updateDoc(doc(asUser('ownerUid'), 'clientes/cliV/movimientos/mNegSem'),
+        { anulado: true, anuladoPor: 'ownerUid', anuladoEn: serverTimestamp(),
+          motivoAnulacion: 'descuento que autoricé', motivoCategoria: 'DESCUENTO_AUTORIZADO' }));
+});
+test('M3 redteam · corrección de un ABONO: el batch de aprobación del owner PASA (reemplazo con medioPago)', async () => {
+    const db = asUser('ownerUid');
+    const nuevoRef = doc(collection(db, 'clientes/cliV/movimientos'));
+    const batch = writeBatch(db);
+    batch.update(doc(db, 'clientes/cliV/movimientos/mAbonoCorr'), {
+        anulado: true, anuladoPor: 'ownerUid', anuladoEn: serverTimestamp(),
+        motivoAnulacion: 'eran 150 mil', motivoCategoria: 'ABONO_NO_REGISTRADO', corregidoPor: nuevoRef.id,
+    });
+    batch.set(nuevoRef, {
+        tipo: 'abono', monto: 150000, fecha: '2026-06-01', medioPago: 'otro',
+        correccionDe: 'mAbonoCorr', solicitudId: 'solAbonoCorr',
+        registradoPor: 'ownerUid', registradoEn: serverTimestamp(), anulado: false,
+    });
+    batch.update(doc(db, 'clientes/cliV/solicitudes/solAbonoCorr'), {
+        estado: 'aprobada', resueltoPor: 'ownerUid', resueltoEn: serverTimestamp(),
+    });
+    await assertSucceeds(batch.commit());
+});
+test('M3 redteam · motivosNeutros CONFIGURABLES: el owner amplía la lista y el carril del admin la respeta', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), 'config/cartera'),
+            { autoAprobacionMax: 50000, motivosNeutros: ['ERROR_REGISTRO', 'ABONO_NO_REGISTRADO', 'RECLASIFICACION', 'DEVOLUCION_PIEZA'] });
+    });
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3NeutroCfg'),
+        { tipo: 'ajuste', monto: -10000, fecha: '2026-06-07', motivo: 'DEVOLUCION_PIEZA', nota: 'devolvió',
+          registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false }));
+    // Restaurar el doc canónico (sin motivosNeutros → default de la regla = los 3).
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), 'config/cartera'), { autoAprobacionMax: 50000, slaRevisionDias: 2 });
+    });
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3NeutroOff'),
+        { tipo: 'ajuste', monto: -10000, fecha: '2026-06-07', motivo: 'DEVOLUCION_PIEZA', nota: 'devolvió',
+          registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false }));
+});
+
+// ─── M3 · ANTI-LOCKOUT: config/cartera ausente (SIEMPRE el último: muta config) ──
+test('M3 anti-lockout · config ausente: abono PASA, ajuste negativo admin FALLA cerrado, owner intacto', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await deleteDoc(doc(ctx.firestore(), 'config/cartera'));
+    });
+    // El camino DIARIO (abono) jamás lee config → sigue vivo.
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3LockAbono'),
+        { tipo: 'abono', monto: 2000, fecha: '2026-06-07', medioPago: 'efectivo',
+          registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false }));
+    // La rama gateada del admin FALLA CERRADA (get a doc ausente → error → deny).
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3LockAjuste'),
+        { tipo: 'ajuste', monto: -10000, fecha: '2026-06-07', motivo: 'ERROR_REGISTRO', nota: 'x',
+          registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false }));
+    // El OWNER nunca depende del doc (cortocircuito).
+    await assertSucceeds(setDoc(doc(asUser('ownerUid'), 'clientes/cliV/movimientos/m3LockOwner'),
+        { tipo: 'ajuste', monto: -10000, fecha: '2026-06-07', motivo: 'ERROR_REGISTRO', nota: 'x',
+          registradoPor: 'ownerUid', registradoEn: serverTimestamp(), anulado: false }));
+    // Restaurar para cualquier corrida posterior.
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), 'config/cartera'), { autoAprobacionMax: 50000, slaRevisionDias: 2 });
+    });
 });

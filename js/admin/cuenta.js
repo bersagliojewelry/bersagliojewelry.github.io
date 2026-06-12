@@ -137,9 +137,12 @@ function renderMovimientos(list) {
         const tipoTxt = TIPO_LABEL[m.tipo] || m.tipo || '—';
         // Fecha real del hecho (base de la mora); fallback al sello de sistema.
         const fechaTxt = fmtFecha(m.fecha) || esc(fmtDateTime(m.registradoEn));
+        // Un AJUSTE no se corrige con par (un ajuste ES una corrección): se anula y se
+        // registra uno nuevo vía "Corregir saldo" — así su motivo de lista cerrada nace
+        // bien (candado M3). Facturas/abonos/aperturas sí usan el par anular+crear.
         const accion = anulado || !(m.tipo)
             ? ''
-            : `<button class="adm-btn adm-btn--ghost adm-btn--sm" data-corregir="${esc(m.id)}">Corregir</button>
+            : `${m.tipo !== 'ajuste' ? `<button class="adm-btn adm-btn--ghost adm-btn--sm" data-corregir="${esc(m.id)}">Corregir</button>` : ''}
                <button class="adm-btn adm-btn--ghost adm-btn--sm" data-anular="${esc(m.id)}">Anular</button>`;
         return `
             <tr${anulado ? ' style="opacity:.5"' : ''}>
@@ -235,6 +238,10 @@ function reSolicitar(s) {
     }
     if (!original || original.anulado === true) {
         admToast('El movimiento original ya no está vigente; corrígelo de nuevo desde el historial.', 'danger');
+        return;
+    }
+    if (original.tipo === 'ajuste') {
+        admToast('Un ajuste se corrige anulándolo y registrando uno nuevo desde "Corregir saldo".', 'danger');
         return;
     }
     if (!_abrirCorregirMov) return;
@@ -435,10 +442,12 @@ function wireCorregir() {
                 });
                 admToast('Enviado a Daniel. El saldo no cambia hasta que apruebe.');
             } else {
-                // Dentro del límite → ajuste directo (sin toast optimista: ya esperamos el commit).
+                // Dentro del límite → ajuste directo (sin toast optimista: ya esperamos el
+                // commit). motivo/nota van TOP-LEVEL (forward-compat con el candado M3).
                 await addMovimiento(CLIENTE_ID, {
                     tipo: 'ajuste', monto: plan.delta, fecha: hoyISO(),
                     descripcion: `Corrección (${motivo}): ${nota}`,
+                    motivo, nota,
                     registradoPor: uid,
                 });
                 admToast('Corrección aplicada. El saldo se actualizará en un momento.');

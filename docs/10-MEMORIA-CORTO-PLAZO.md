@@ -10,9 +10,10 @@
 
 > 🎉 **CRM en producción** (ADR §47/§49): 344 clientes de Kary (cartera $506.510.780), `recalcSaldoCliente` viva, CRM admin-only (vendedoras = entidad de datos). **Panel v2 desplegado**: F-CHASIS-A §50 · Morosos §51 · F5 filtros §52 · F4 Bandeja §53. **Cerebro**: kernel multi-proyecto ADR §56 (v1.1 ×3, cerebros independientes); GC de este repo HECHO 2026-06-09 (comité v6 ítem H).
 >
-> **▶️ ESTADO — TREN M2a+M2b+M3+M4 COMPLETO Y EN PROD (§78.8, 2026-06-12)**: PR #232 mergeado por Daniel; v13 + sección "Cartera — mes en curso" + aviso SLA verificados VIVOS por fetch. Kary prueba TODO al final (directiva 2026-06-12).
+> **▶️ ESTADO — tren M0→M4 EN PROD (§78.8) · M5 CONSTRUIDO (§79, falta PR)**: gestiones de cobro en la ficha (UI v14; reglas vivas desde M1 sin cambios; verif. experta 13 agentes, 9 fixes). **Para cerrar M5**: PR `Desarrollo→main` (Daniel) → verificar v14 + sección por fetch → marcar §79.8. Kary prueba TODO al final (directiva 2026-06-12).
 > - **Vigilancia M4**: 1er corte real = **1 de julio 03:50 Bogotá** → verificar `cortes/2026-06` ese día (respaldo: callable `generarCorte`).
-> - **Siguiente frente (a decidir con Daniel)**: M2c/M5-M7 (diferibles) · B6 reportes/aging · TODO-19 RBAC dependencias · TODO-17 newsletter→CRM.
+> - **Deferido al PRÓXIMO deploy de reglas** (verif. M5): `size()` en `nota`/`soporte` de `gestionValida` + validadores hermanos (`solicitudValida`, `asientoValido`) — hoy sin tope server-side en docs inmutables.
+> - **Siguiente**: M6 espera respuesta de Kary (plazo 30 ó 90 días) · M7 necesita gestiones acumuladas (M5 lo destrabó) · M2c pulido · B6 reportes · TODO-19 RBAC.
 > - **Vivo aparte**: TODO-20 correo del owner (riesgo activo) · TODO-14 App Check ×7d→Enforce (Daniel, L-32) · DIAN PAUSADA · Vendedoras fuera de Configuración · pendientes Daniel/Kary en bóveda.
 >
 > **Decisiones vivas (Panel v2/morosos)**: plazo 30 días (config) · `fecha` en movimientos (migrados=CUTOFF; sin fecha→ámbar) · VENCIDO día 1 · rangos 1-30/31-60/+60. Norte: spec `2026-06-07-bersaglio-arquitectura-maestra-design.md` v3.
@@ -30,7 +31,7 @@
 | TODO-04 | (Opcional) anomalías 🔧 en `skills/` (skill-creator anidado; code-simplifier/modernization formatos no-skill) | 🔲 | baja prioridad |
 | TODO-07 | **Contenido real**: reseñas Google Maps (Nosotros), Films, feed Redes (`js/data/home-media.js`, `js/pages/nosotros.js`) | 🔲 | cliente entrega datos |
 | TODO-08 | **Fase 2 Hardening**: Tier A ✅; pendiente CSP/reglas/claims (Tier B/C) → bóveda `41-SEGURIDAD §1.5` | 🟡 | Tier B = emulador+deploy gated |
-| TODO-09 | **Fase M**: tren M0→M4 ✅ EN PROD (§78.8 — candado + auditoría detectiva operando; 1er corte real 1 jul). Restan M2c/M5-M7 (diferibles) + B6. **Directiva Daniel 2026-06-12: Kary prueba TODO al final; verificación por slice = experta de Claude** | 🟡 | decidir siguiente frente con Daniel |
+| TODO-09 | **Fase M**: tren M0→M4 ✅ EN PROD (§78.8; 1er corte real 1 jul) · **M5 construido (§79, falta PR)**. Restan M2c (pulido) · M6 (espera plazo de Kary) · M7 (necesita gestiones acumuladas) + B6. **Directiva Daniel 2026-06-12: Kary prueba TODO al final; verificación por slice = experta de Claude** | 🟡 | PR de M5 (Daniel) |
 | TODO-14 | **App Check: reparar el registro** (RCA 403 §57.3: llave SECRETA en consola) → ~100% ×7d → enforce | 🟡 | Daniel (consolas, guiado) |
 | TODO-17 | **Toda captura → CRM**: contacto→Bandeja ✅; falta newsletter (`addSubscription`→`subscriptions`) en el panel | 🔲 | tras App Check |
 | TODO-18 | **Plan operación integral §57**: semana 1 día a día · 9 decisiones de Daniel · compuerta de adopción · campaña cartera (diseño del contador ANTES del piloto) → bóveda | 🟡 | Daniel (decisiones 1-9 + contador) |
@@ -51,4 +52,5 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier A/B �
 > Podada (GC) 2026-06-12. Todo consolidado: **ADR §37-§77** — CRM/Fase R/Panel v2/morosos (§37-§56) · F6 + operación integral (§57-§68) · **Fase M completa hasta el candado: M0→M2a (§69-§75) · M2b (§76, guion 5/5 en prod) · M3 (§77, Consejo Gemini + red-team + smoke 4/4)**. Lecciones L-38/L-39/L-40. Herramientas: `seed-guion-m2b.mjs` · `censo-movimientos-m3.mjs` · `limpiar-cliente-prueba.mjs`. Detalle de cualquier § → `00-INDICE` → `99`.
 >
 > **2026-06-12 (noche) · M4 CONSTRUIDO COMPLETO** → **ADR §78** (todo el detalle ahí; CRUDO de la verif. 22-agentes en bóveda).
-> **2026-06-12 · M4 CERRADO (§78.8)**: PR #232 mergeado por Daniel; v13 + sección Cartera + aviso SLA + chunk `crm-auditoria` verificados VIVOS por fetch. Solo `b59b9e2`+este cierre (docs) quedan para el próximo PR. Vigilar 1er corte real (1 jul).
+> **2026-06-12 · M4 CERRADO (§78.8)**: PR #232 mergeado por Daniel; v13 + sección Cartera + aviso SLA + chunk `crm-auditoria` verificados VIVOS por fetch. Vigilar 1er corte real (1 jul). Oferta de `/schedule` para esa verificación: Daniel dijo "después lo vemos".
+> **2026-06-12 · M5 CONSTRUIDO** → **ADR §79** (elegido sobre M2c por time-leverage: el reloj de meses distintos de M7 solo corre con gestiones registrables). Verif. experta 13 agentes → 9 fixes aplicados + 1 deferido a reglas (CRUDO en bóveda). Tests 14/14 + suites + build verdes.

@@ -21,6 +21,7 @@
     "test:correccion": "node --test tests/crm-correccion.test.mjs",
     "test:aprobacion": "node --test tests/crm-aprobacion.test.mjs",
     "test:auditoria": "node --test tests/crm-auditoria.test.mjs",
+    "test:gestiones": "node --test tests/crm-gestiones.test.mjs",
     "test:paridad": "node --test tests/aging-paridad.test.mjs",
     "test:leads": "node --test tests/lead-format.test.mjs",
     "brain:diff": "node scripts/brain-diff.mjs"

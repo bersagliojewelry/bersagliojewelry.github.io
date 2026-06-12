@@ -396,6 +396,31 @@ export async function registrarGestion(clienteId, g) {
 }
 
 /**
+ * Gestiones de UN cliente EN VIVO (timeline de la ficha, M5). Orden por creadoEn
+ * (índice automático de un solo campo); el orden VISIBLE por fecha del hecho lo
+ * pone el helper puro `ordenarGestiones()` (js/crm-gestiones.js) — un
+ * orderBy(fecha)+orderBy(creadoEn) exigiría índice compuesto (spec §9.1).
+ * El conteo visible sale de esta MISMA lista (set completo de la clienta, ≤ MAX
+ * con detector de truncado) — cero counts extra; el aggregate count() declarado
+ * en C4 §69 queda para la lista CxC de M7 (pre-candidatas).
+ * `onError` obligatorio de facto (L-40): sin él, un fallo del listen dejaría la
+ * sección rota EN SILENCIO.
+ */
+export function onGestionesChange(clienteId, cb, onError) {
+    const q = query(
+        collection(firestoreDb, 'clientes', clienteId, 'gestiones'),
+        orderBy('creadoEn', 'desc'), limit(MAX),
+    );
+    return onSnapshot(q, (snap) => {
+        detectarTruncado('Gestiones del cliente', snap.size);
+        cb(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    }, (err) => {
+        console.error('[crm] gestiones del cliente:', err);
+        onError?.(err);
+    });
+}
+
+/**
  * Corrige un movimiento como PAR ATÓMICO en un writeBatch (anular el original + crear
  * el reemplazo enlazado) — el camino auto-aprobable (admin). Cuando la corrección excede
  * el carril (ver js/crm-correccion.js), el llamador usa `crearSolicitud` en su lugar; este

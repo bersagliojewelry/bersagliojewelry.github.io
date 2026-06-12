@@ -13,10 +13,15 @@ import {
     getCliente, onClienteChange, onMovimientosChange,
     addMovimiento, anularMovimiento, updateCliente, fetchVendedoras, fmtCOP, getConfig,
     crearSolicitud, corregirMovimientoBatch, onSolicitudesChange, cancelarSolicitud,
+    registrarGestion, onGestionesChange,
 } from '../crm-service.js';
 import { saldoClass, saldoLabel, estadoBadgeHTML } from './saldo-format.js';
 import { estadoCuenta, hoyISO } from '../crm-estado-cuenta.js';
 import { planearCorreccionSaldo, planearCorreccionMovimiento, PREGUNTAS_CORRECCION } from '../crm-correccion.js';
+import {
+    TIPOS_GESTION, RESULTADOS_GESTION, tipoGestionLabel, resultadoGestionLabel,
+    validarGestion, ordenarGestiones, esEnlaceSeguro,
+} from '../crm-gestiones.js';
 
 const CLIENTE_ID = new URLSearchParams(location.search).get('id');
 const _vendedoras = new Map();
@@ -79,6 +84,7 @@ function nombreVendedora(id) {
 function showError(msg) {
     document.getElementById('ficha-head').hidden = true;
     document.getElementById('hist-section').hidden = true;
+    document.getElementById('gest-section').hidden = true;
     document.getElementById('ficha-error-msg').textContent = msg;
     document.getElementById('ficha-error').hidden = false;
 }
@@ -103,6 +109,7 @@ function renderHeader(cli) {
 
     document.getElementById('ficha-head').hidden = false;
     document.getElementById('hist-section').hidden = false;
+    document.getElementById('gest-section').hidden = false;
 }
 
 function renderEstado(list) {
@@ -591,6 +598,133 @@ function wireCorregirMov() {
     });
 }
 
+// ─── Gestiones de cobro (Fase M · M5) — evidencia inmutable del expediente ─────
+// El timeline y el contador salen del MISMO listener (set completo de la clienta);
+// la inmutabilidad la imponen las reglas (gestionValida + update/delete false).
+function renderGestiones(list) {
+    const cont = document.getElementById('gest-list');
+    const empty = document.getElementById('gest-empty');
+    const count = document.getElementById('gest-count');
+    if (!cont || !empty) return;
+    count.textContent = list.length ? `(${list.length})` : '';
+    cont.replaceChildren();
+    if (!list.length) {
+        document.getElementById('gest-empty-msg').textContent =
+            'Sin gestiones de cobro. Cada llamada, WhatsApp o visita de cobro se registra aquí como evidencia.';
+        empty.hidden = false;
+        return;
+    }
+    empty.hidden = true;
+
+    for (const g of ordenarGestiones(list)) {
+        const card = document.createElement('div');
+        card.style.cssText = 'padding:10px 14px;border-radius:14px;margin-bottom:8px;background:var(--adm-soft,#f5f3ef);display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;';
+
+        const info = document.createElement('div');
+        info.style.fontSize = '13px';
+        const titulo = document.createElement('div');
+        titulo.style.fontWeight = '600';
+        titulo.title = `Registrada: ${fmtDateTime(g.creadoEn)}`;
+        titulo.textContent = `${fmtFecha(g.fecha) || '—'} · ${tipoGestionLabel(g.tipo)}`;
+        const detalle = document.createElement('div');
+        detalle.style.color = 'var(--adm-muted)';
+        detalle.textContent = g.nota || '';
+        info.append(titulo, detalle);
+        // Soporte: clickeable SOLO si es http(s); otro texto se muestra plano.
+        if (g.soporte) {
+            const sop = document.createElement('div');
+            sop.style.cssText = 'color:var(--adm-muted);font-size:12px;';
+            if (esEnlaceSeguro(g.soporte)) {
+                const a = document.createElement('a');
+                a.href = g.soporte.trim(); a.target = '_blank'; a.rel = 'noopener noreferrer';
+                a.textContent = 'Ver soporte ↗';
+                sop.appendChild(a);
+            } else {
+                sop.textContent = `Soporte: ${g.soporte}`;
+            }
+            info.appendChild(sop);
+        }
+        // Sello de registro VISIBLE (no solo tooltip: la ficha se usa en celular y
+        // fecha del hecho ≠ fecha de registro tiene valor probatorio — verif. M5).
+        const sello = document.createElement('div');
+        sello.style.cssText = 'color:var(--adm-muted);font-size:11px;';
+        sello.textContent = `Registrada: ${fmtDateTime(g.creadoEn)}`;
+        info.appendChild(sello);
+
+        const pill = document.createElement('span');
+        pill.className = 'adm-pill';
+        pill.textContent = resultadoGestionLabel(g.resultado);
+
+        card.append(info, pill);
+        cont.appendChild(card);
+    }
+}
+
+function wireGestiones() {
+    const modal = document.getElementById('gest-modal');
+    const tipoEl = document.getElementById('gest-tipo');
+    const resEl = document.getElementById('gest-resultado');
+    // Selects desde las listas espejo de la regla (códigos → etiquetas de mostrador).
+    fillSelect(tipoEl, TIPOS_GESTION.map((t) => t.codigo),
+        Object.fromEntries(TIPOS_GESTION.map((t) => [t.codigo, t.label])), 'Elige…');
+    fillSelect(resEl, RESULTADOS_GESTION.map((r) => r.codigo),
+        Object.fromEntries(RESULTADOS_GESTION.map((r) => [r.codigo, r.label])), 'Elige…');
+
+    const open = () => {
+        document.getElementById('gest-form').reset();
+        const fechaEl = document.getElementById('gest-fecha');
+        fechaEl.value = hoyISO();   // default: hoy
+        fechaEl.max = hoyISO();     // el picker no ofrece días futuros (validarGestion = red de seguridad)
+        modal.hidden = false;
+        tipoEl.focus();
+    };
+    const close = () => { modal.hidden = true; };
+    document.getElementById('btn-gestion').addEventListener('click', open);
+    document.getElementById('gest-close').addEventListener('click', close);
+    document.getElementById('gest-cancel').addEventListener('click', close);
+    modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+
+    document.getElementById('gest-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const g = {
+            tipo: tipoEl.value,
+            resultado: resEl.value,
+            fecha: document.getElementById('gest-fecha').value,
+            nota: document.getElementById('gest-nota').value.trim(),
+            soporte: document.getElementById('gest-soporte').value.trim(),
+        };
+        const v = validarGestion(g, hoyISO());
+        if (!v.ok) { admToast(v.errores[0], 'danger'); return; }
+
+        // Sin señal, addDoc NO falla: queda encolado y el botón se congelaría sin
+        // aviso. Mejor decirlo ANTES — un reintento a ciegas crearía una gestión
+        // DOBLE que no se puede borrar (inmutable por reglas, art. 146 ET).
+        if (navigator.onLine === false) {
+            admToast('Parece que no hay señal. Espera a tener conexión e intenta de nuevo.', 'danger', 5000);
+            return;
+        }
+
+        const btn = document.getElementById('gest-save');
+        btn.disabled = true;
+        // Si la señal se cae justo al enviar, la promesa queda pendiente: avisar
+        // con honestidad SIN re-habilitar (re-enviar = evidencia duplicada imborrable).
+        const avisoLento = setTimeout(() => {
+            admToast('Esto está tardando (¿se fue la señal?). No la registres de nuevo: se guardará sola al volver la conexión.', 'danger', 8000);
+        }, 8000);
+        try {
+            await registrarGestion(CLIENTE_ID, { ...g, registradoPor: currentUser()?.user?.uid });
+            admToast('Gestión registrada.');
+            close();
+        } catch (err) {
+            console.error('[cuenta] registrarGestion:', err);
+            admToast('No se pudo registrar la gestión. Intenta de nuevo; si sigue, avísale a Daniel.', 'danger', 5000);
+        } finally {
+            clearTimeout(avisoLento);
+            btn.disabled = false;
+        }
+    });
+}
+
 // ─── Editar datos del cliente (admin) ──────────────────────────────────────────
 function wireEditar() {
     const sel = document.getElementById('ed-vendedora');
@@ -682,10 +816,22 @@ async function init() {
     wireCorregir();
     wireCorregirMov();
     wireEditar();
+    wireGestiones();
 
     onClienteChange(CLIENTE_ID, (c) => renderHeader(c));
     onMovimientosChange(CLIENTE_ID, (list) => renderMovimientos(list));
     onSolicitudesChange(CLIENTE_ID, (list) => renderSolicitudes(list));
+    onGestionesChange(CLIENTE_ID, (list) => renderGestiones(list), () => {
+        // Estado HONESTO ante un listener muerto (L-40): jamás "sin gestiones" falso
+        // ni un contador "(N)" que ya nada respalda.
+        const empty = document.getElementById('gest-empty');
+        const count = document.getElementById('gest-count');
+        document.getElementById('gest-list')?.replaceChildren();
+        if (count) count.textContent = '';
+        document.getElementById('gest-empty-msg').textContent =
+            'No se pudieron cargar las gestiones. Recarga la página; si sigue, avísale a Daniel.';
+        if (empty) empty.hidden = false;
+    });
 }
 
 init();

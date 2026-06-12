@@ -292,6 +292,20 @@ exports.recalcSaldoCliente = onDocumentWritten('clientes/{clienteId}/movimientos
     }
 });
 
+// ─── corteMensual (Fase M · M4 §69 PR1) ──────────────────────────────────────
+// Programada (día 1, 03:50 Bogotá): foto INMUTABLE del aging del mes que cierra
+// → cortes/{YYYY-MM} (write:false al cliente). Lógica en ./corte.js.
+
+exports.corteMensual = require('./corte').corteMensual;
+
+// Callable de RESPALDO (owner-only): genera el corte del mes anterior si el
+// scheduler falló. Inmutable igual: si ya existe, NO se reescribe.
+exports.generarCorte = onCall({ region: 'us-central1', timeoutSeconds: 300 }, async (request) => {
+    await verifyRole(request.auth, 'owner');
+    const corte = require('./corte');
+    return corte.runCorte(db, corte.mesAnterior(), 'manual');
+});
+
 // ─── reconciliarCartera (F6 frente D) ────────────────────────────────────────
 // Callable: corre la reconciliación completa bajo demanda (botón "Reconciliar
 // ahora" de la vista Salud). Solo admin/owner.

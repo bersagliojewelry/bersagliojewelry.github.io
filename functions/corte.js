@@ -43,10 +43,11 @@ const FORMULA_VERSION = 3;
 
 /**
  * Agrupa docs de un collectionGroup por clienteId conservando el ID del doc.
- * Es el armado de INSUMOS de la fórmula compartida: los acuerdos de alcance
- * 'factura' anclan por `movimientoId == mov.id` — un corte que pasara los
- * movimientos SIN id rompería la paridad de INSUMOS aunque el código de la
- * fórmula sea byte-idéntico (test: tests/corte-insumos.test.mjs).
+ * Es el armado de INSUMOS de la fórmula compartida: el ESCUDO cubre por
+ * `registradoEn ≤ creadoEn` (reloj de servidor) — un corte que pasara los docs
+ * SIN ese campo rompería la paridad de INSUMOS aunque el código de la fórmula
+ * sea byte-idéntico; el `id` viaja para `acuerdoAlCorte` y la tie-break del plan
+ * (test: tests/corte-insumos.test.mjs).
  */
 function agruparPorCliente(docs) {
     const por = new Map();

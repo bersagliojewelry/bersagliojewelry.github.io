@@ -198,7 +198,7 @@ test('acuerdosLargos: atrapa el dedazo de año, ignora acuerdos normales/anulado
 const tsA = (ms) => ({ toMillis: () => ms, toDate: () => new Date(ms) });   // Timestamp real: ambos
 const T0A = Date.UTC(2026, 5, 10);
 function acuerdoFix(over = {}) {
-    return { id: over.id || 'ac-1', clienteId: 'cliA', alcance: 'saldo', estado: 'vigente',
+    return { id: over.id || 'ac-1', clienteId: 'cliA', estado: 'vigente',
         fechaPacto: '2026-06-05', cuotas: [{ fecha: '2026-06-20', monto: 50000 }],
         primeraCuotaFecha: '2026-06-20', ultimaCuotaFecha: '2026-06-20',
         nota: 'pacto', creadoEn: tsA(T0A), ...over };
@@ -221,23 +221,19 @@ test('acuerdosSobreMora: pactado sobre cuenta vencida del corte previo → rojo;
     assert.equal(acuerdosSobreMora([acuerdoFix()], '2026-06', null).length, 1);
 });
 
-test('acuerdosAnomalos: malformado, huérfano, solapados y plan >12 meses', () => {
-    const movs = [{ id: 'f-viva', clienteId: 'cliA', tipo: 'factura', monto: 1, anulado: false }];
+test('acuerdosAnomalos v2: malformado + plan >12 meses (el mutex mató solapados/huérfanos)', () => {
     const acs = [
         acuerdoFix({ id: 'ok' }),
         acuerdoFix({ id: 'malo', cuotas: [{ fecha: '2026-06-20', monto: 0 }] }),            // monto inválido
-        acuerdoFix({ id: 'huerfano', alcance: 'factura', movimientoId: 'f-muerta' }),
-        acuerdoFix({ id: 'solape', clienteId: 'cliA' }),                                     // 2º vigente de cliA... (ok+malo+solape = 3)
         acuerdoFix({ id: 'largo', fechaPacto: '2026-06-05', cuotas: [{ fecha: '2027-08-01', monto: 50000 }],
             primeraCuotaFecha: '2027-08-01', ultimaCuotaFecha: '2027-08-01' }),              // 422 días
         acuerdoFix({ id: 'cerrado', estado: 'reemplazado' }),                                // se ignora
     ];
-    const r = acuerdosAnomalos(acs, movs, { horizonteDias: 730 });
+    const r = acuerdosAnomalos(acs, { horizonteDias: 730 });
     assert.deepEqual(r.invalidos.map((a) => a.id), ['malo']);
-    assert.deepEqual(r.huerfanos.map((a) => a.id), ['huerfano']);
-    assert.equal(r.solapados.length, 1);
-    assert.equal(r.solapados[0].clienteId, 'cliA');
     assert.deepEqual(r.largos.map((a) => a.id), ['largo']);
+    assert.equal('solapados' in r, false);   // v2: ya no existe
+    assert.equal('huerfanos' in r, false);
 });
 
 test('renegociacionesSeriales: cuenta por creadoEn (reloj de servidor), no por enlaces', () => {
@@ -251,12 +247,12 @@ test('renegociacionesSeriales: cuenta por creadoEn (reloj de servidor), no por e
     assert.deepEqual(r, [{ clienteId: 'cliX', n: 2 }]);
 });
 
-test('acuerdosLargos excluye facturas CUBIERTAS por un plan vigente (M6+acuerdos)', () => {
+test('acuerdosLargos excluye facturas de una clienta CON plan vigente (v2: saldo)', () => {
     const movs = [
-        { id: 'f1', clienteId: 'cliA', tipo: 'factura', monto: 90000, fecha: '2026-06-01', vencimiento: '2026-12-01', anulado: false }, // 183d, cubierta por plan
-        { id: 'f2', clienteId: 'cliB', tipo: 'factura', monto: 70000, fecha: '2026-06-01', vencimiento: '2026-12-01', anulado: false }, // 183d, SIN plan → aparece
+        { id: 'f1', clienteId: 'cliA', tipo: 'factura', monto: 90000, fecha: '2026-06-01', vencimiento: '2026-12-01', anulado: false }, // 183d, cliA tiene plan
+        { id: 'f2', clienteId: 'cliB', tipo: 'factura', monto: 70000, fecha: '2026-06-01', vencimiento: '2026-12-01', anulado: false }, // 183d, cliB SIN plan → aparece
     ];
-    const acs = [acuerdoFix({ alcance: 'factura', movimientoId: 'f1', clienteId: 'cliA' })];
+    const acs = [acuerdoFix({ clienteId: 'cliA' })];   // v2: cubre por clienta (saldo)
     const r = acuerdosLargos(movs, { umbralDias: 120, acuerdos: acs });
     assert.deepEqual(r.map((m) => m.id), ['f2']);
 });

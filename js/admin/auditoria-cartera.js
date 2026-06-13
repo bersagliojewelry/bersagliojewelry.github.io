@@ -188,10 +188,8 @@ function render() {
             ));
         }
         // (2) anómalos (multi-check) — la fórmula los IGNORA; aquí se VEN.
-        const an = acuerdosAnomalos(_acuerdos, _movs, { horizonteDias: _horizonteDias });
+        const an = acuerdosAnomalos(_acuerdos, { horizonteDias: _horizonteDias });
         for (const a of an.invalidos) acNodos.push(fila(`⛔ ${nombre(a.clienteId)} — acuerdo MALFORMADO (la mora corre SIN plan)`, '', { rojo: true }));
-        for (const a of an.huerfanos) acNodos.push(fila(`⚠️ ${nombre(a.clienteId)} — el plan quedó sin factura vigente (corregida): re-pactar`, '', { ambar: true }));
-        for (const s of an.solapados) acNodos.push(fila(`⚠️ ${nombre(s.clienteId)} — ${s.n} acuerdos VIGENTES a la vez`, '', { ambar: true }));
         for (const a of an.largos) acNodos.push(fila(`⏳ ${nombre(a.clienteId)} — plan a ${a.diasPlan} días (más de 12 meses)`, '', { ambar: true }));
         // (3) seriales: el escudo perpetuo se ve.
         for (const s of renegociacionesSeriales(_acuerdos, { ahoraMs: ahora })) {

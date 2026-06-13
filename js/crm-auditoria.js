@@ -207,13 +207,14 @@ function mulberry32(a) {
  */
 export function acuerdosLargos(movimientos, { umbralDias = 120, acuerdos = [] } = {}) {
     const ISO = /^\d{4}-\d{2}-\d{2}$/;
-    const vigentes = (acuerdos || []).filter((a) => a && a.estado === 'vigente');
-    const porFactura = new Set(vigentes.filter((a) => a.alcance === 'factura').map((a) => a.movimientoId));
-    const saldoCubre = new Set(vigentes.filter((a) => a.alcance === 'saldo').map((a) => a.clienteId));
+    // v2: todo acuerdo es de SALDO → cubre por clienta. Las facturas de una clienta
+    // con plan vigente las gobierna el acuerdo (su horizonte ya lo vigila el detector
+    // de planes largos) → se excluyen para no inundar el acta.
+    const conPlan = new Set((acuerdos || []).filter((a) => a && a.estado === 'vigente').map((a) => a.clienteId));
     const out = [];
     for (const m of movimientos || []) {
         if (!m || m.anulado === true || m.tipo !== 'factura') continue;
-        if (porFactura.has(m.id) || saldoCubre.has(m.clienteId)) continue;
+        if (conPlan.has(m.clienteId)) continue;
         if (!ISO.test(m.fecha || '') || !ISO.test(m.vencimiento || '')) continue;
         const dias = Math.round((Date.parse(m.vencimiento) - Date.parse(m.fecha)) / 864e5);
         if (dias > umbralDias) out.push({ ...m, diasAcuerdo: dias });
@@ -247,37 +248,27 @@ export function acuerdosSobreMora(acuerdos, mes, cortePrevio) {
 }
 
 /**
- * (7b) Acuerdos ANÓMALOS — un solo detector multi-check tipado:
+ * (7b) Acuerdos ANÓMALOS — detector multi-check tipado (v2: 2 checks; el MUTEX
+ * mató `solapados` y `huerfanos` por diseño — un plan suelto o por-factura ya no
+ * existe):
  *   · invalidos: vigentes que la fórmula IGNORARÍA (acuerdoEsValido — la misma
- *     validación del aging: si aquí aparece, el plan NO está protegiendo nada);
- *   · huerfanos: alcance 'factura' cuyo movimiento ya no está vigente (típico
- *     tras una corrección M2b — el plan quedó sin ancla, re-pactar);
- *   · solapados: >1 vigente para la misma clienta (la fórmula elige determinista,
- *     pero dos planes vivos = error operativo o maniobra);
+ *     validación del aging: si aquí aparece, el plan NO protege nada; típico de un
+ *     acuerdo malformado escrito por SDK);
  *   · largos: última cuota a más de `umbralActaDias` del pacto (resaltado del
  *     acta — P3: permitido hasta el horizonte, visible siempre que pase de 12 meses).
  */
-export function acuerdosAnomalos(acuerdos, movimientos, opts = {}) {
+export function acuerdosAnomalos(acuerdos, opts = {}) {
     const umbralActaDias = (typeof opts.umbralActaDias === 'number' && opts.umbralActaDias > 0)
         ? opts.umbralActaDias : 365;
-    const vivos = new Set((movimientos || [])
-        .filter((m) => m && m.anulado !== true && m.id != null).map((m) => m.id));
-    const out = { invalidos: [], huerfanos: [], solapados: [], largos: [] };
-    const vigentesPorCliente = new Map();
+    const ISO = /^\d{4}-\d{2}-\d{2}$/;
+    const out = { invalidos: [], largos: [] };
     for (const a of acuerdos || []) {
         if (!a || a.estado !== 'vigente') continue;
         if (!acuerdoEsValido(a, opts)) out.invalidos.push(a);
-        if (a.alcance === 'factura' && a.movimientoId && !vivos.has(a.movimientoId)) out.huerfanos.push(a);
-        const k = a.clienteId || '?';
-        vigentesPorCliente.set(k, (vigentesPorCliente.get(k) || 0) + 1);
-        const ISO = /^\d{4}-\d{2}-\d{2}$/;
         if (ISO.test(a.fechaPacto || '') && ISO.test(a.ultimaCuotaFecha || '')) {
             const dias = Math.round((Date.parse(a.ultimaCuotaFecha) - Date.parse(a.fechaPacto)) / 864e5);
             if (dias > umbralActaDias) out.largos.push({ ...a, diasPlan: dias });
         }
-    }
-    for (const [clienteId, n] of vigentesPorCliente) {
-        if (n > 1) out.solapados.push({ clienteId, n });
     }
     return out;
 }

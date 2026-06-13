@@ -211,23 +211,23 @@ service cloud.firestore {
           && d.registradoPor == request.auth.uid
           && d.creadoEn == request.time;
     }
-    // ─── Acuerdos de pago (spec 2026-06-12 §1.3): re-programan la EXIGIBILIDAD ───
+    // ─── Acuerdos de pago v2 (spec 2026-06-12, Consejo Externo): MUTEX ──────────
     // El acuerdo NO mueve dinero (el libro es `movimientos`, el saldo lo escribe la
-    // CF): pacta CUÁNDO es exigible qué. Cuotas EMBEBIDAS materializadas al crear.
-    // Las reglas NO pueden iterar cuotas[]: validan el "sobre" (denormalizados) —
-    // la verdad la valida acuerdoEsValido() en el archivo de paridad del aging
-    // (inválido = IGNORADO = más vencido = falla conservadora). getUserRole() aquí
-    // no toca el camino diario (los acuerdos son infrecuentes).
+    // CF): pacta CUÁNDO es exigible TODA la deuda actual (solo SALDO — el FIFO
+    // global no atribuye por factura). Cuotas EMBEBIDAS. Las reglas NO iteran
+    // cuotas[]: validan el "sobre"; la verdad la valida acuerdoEsValido() en el
+    // archivo de paridad (inválido = IGNORADO = más vencido = conservador).
+    // CANDADO (mutex): la VERDAD de "cuál acuerdo está vigente" es el puntero
+    // `acuerdoVigenteId` en el doc del cliente. Crear un acuerdo EXIGE que, tras el
+    // batch, el cliente apunte a ESTE id → imposible el "acuerdo suelto" que ocultaba
+    // mora (vector de jineteo del Consejo). getUserRole() no toca el camino diario.
     function acuerdoValido(clienteId, acuerdoId) {
       let d = request.resource.data;
-      return d.keys().hasOnly(['alcance', 'movimientoId', 'fechaPacto', 'cuotas',
+      return d.keys().hasOnly(['fechaPacto', 'cuotas',
                                'periodicidad', 'primeraCuotaFecha', 'ultimaCuotaFecha',
                                'saldoAlPactar', 'nota', 'estado', 'reemplazaA',
                                'creadoPor', 'creadoEn', 'rolAlCrear'])
           && d.estado == 'vigente'
-          && d.alcance in ['factura', 'saldo']
-          && (d.alcance != 'factura' || nonEmptyStr(d.movimientoId))
-          && (d.alcance != 'saldo'   || !('movimientoId' in d))
           && fechaHechoValida(d.fechaPacto)
           && d.cuotas is list && d.cuotas.size() >= 1 && d.cuotas.size() <= 36
           && nonEmptyStr(d.nota) && d.nota.size() <= 500
@@ -239,36 +239,58 @@ service cloud.firestore {
           && d.ultimaCuotaFecha >= d.primeraCuotaFecha
           && d.creadoPor == request.auth.uid
           && d.creadoEn == request.time
-          // Investidura probatoria: el rol DE AQUEL MOMENTO queda sellado en la
-          // evidencia (costura del asesor futuro, spec §1.6).
+          // Investidura probatoria: el rol DE AQUEL MOMENTO sellado (costura asesor §1.6).
           && d.rolAlCrear == getUserRole()
-          // RENEGOCIACIÓN ATÓMICA (getAfter = estado POST-batch): crear con
-          // reemplazaA exige que EN EL MISMO BATCH el viejo quede sellado
-          // 'reemplazado' apuntando de vuelta — imposible el create suelto.
+          // MUTEX: el cliente DEBE apuntarme tras el batch (fuerza la actualización
+          // del puntero en la MISMA transacción → no existe el acuerdo suelto).
+          && getAfter(/databases/$(database)/documents/clientes/$(clienteId)).data.get('acuerdoVigenteId', '') == acuerdoId
+          // RENEGOCIACIÓN ATÓMICA: crear con reemplazaA exige que EN EL MISMO BATCH
+          // el viejo quede sellado 'reemplazado' apuntando de vuelta.
           && (!('reemplazaA' in d) ||
               (nonEmptyStr(d.reemplazaA)
                && getAfter(/databases/$(database)/documents/clientes/$(clienteId)/acuerdos/$(d.reemplazaA)).data.estado == 'reemplazado'
                && getAfter(/databases/$(database)/documents/clientes/$(clienteId)/acuerdos/$(d.reemplazaA)).data.reemplazadoPor == acuerdoId));
     }
-    // Cierre ONE-WAY desde 'vigente' (espejo de transicionSolicitudValida):
-    //   · vigente→reemplazado: admin, SOLO dentro del batch de renegociación (el
-    //     getAfter exige el nuevo 'vigente' apuntando de vuelta — sin sello suelto).
-    //   · vigente→anulado: SOLO OWNER con motivo — "cancelar" es la goma de borrar
-    //     del cronograma (espejo del precedente anular-abonos owner-only).
+    // Cierre ONE-WAY desde 'vigente', gobernado por el MUTEX del cliente:
+    //   · vigente→reemplazado: admin, y el puntero del cliente YA NO me apunta
+    //     (se movió al nuevo en el mismo batch — sin sello suelto).
+    //   · vigente→anulado: SOLO OWNER con motivo, y el puntero quedó en null
+    //     ("cancelar" = goma de borrar del cronograma; espejo de anular-abonos).
     function transicionAcuerdoValida(clienteId, acuerdoId) {
       let d = request.resource.data;
+      let ptr = getAfter(/databases/$(database)/documents/clientes/$(clienteId)).data.get('acuerdoVigenteId', '');
       return resource.data.estado == 'vigente'
           && d.diff(resource.data).affectedKeys()
                .hasOnly(['estado', 'cerradoPor', 'cerradoEn', 'motivoCierre', 'reemplazadoPor'])
           && d.cerradoPor == request.auth.uid
           && d.cerradoEn == request.time
           && (
-            (d.estado == 'reemplazado' && isAdmin() && nonEmptyStr(d.reemplazadoPor)
-             && getAfter(/databases/$(database)/documents/clientes/$(clienteId)/acuerdos/$(d.reemplazadoPor)).data.estado == 'vigente'
-             && getAfter(/databases/$(database)/documents/clientes/$(clienteId)/acuerdos/$(d.reemplazadoPor)).data.reemplazaA == acuerdoId)
+            (d.estado == 'reemplazado' && isAdmin() && nonEmptyStr(d.reemplazadoPor) && ptr != acuerdoId)
             ||
             (d.estado == 'anulado' && isOwner()
-             && nonEmptyStr(d.motivoCierre) && d.motivoCierre.size() <= 500)
+             && nonEmptyStr(d.motivoCierre) && d.motivoCierre.size() <= 500 && ptr == '')
+          );
+    }
+    // MUTEX en el doc del cliente: valida la transición del puntero `acuerdoVigenteId`
+    // (el resto de campos del cliente NO la disparan). null='' (ausente o vacío).
+    //   null→new : 1er acuerdo (admin)   — el nuevo queda 'vigente'.
+    //   old →new : renegociación (admin) — nuevo 'vigente' + viejo 'reemplazado'.
+    //   old →null: anulación (OWNER)     — el viejo queda 'anulado'.
+    function mutexAcuerdoValido(clienteId) {
+      let viejo = resource.data.get('acuerdoVigenteId', '');
+      let nuevo = request.resource.data.get('acuerdoVigenteId', '');
+      return viejo == nuevo
+          ? true
+          : (
+            (viejo == '' && nuevo != '' && isAdmin()
+             && getAfter(/databases/$(database)/documents/clientes/$(clienteId)/acuerdos/$(nuevo)).data.estado == 'vigente')
+            ||
+            (viejo != '' && nuevo != '' && isAdmin()
+             && getAfter(/databases/$(database)/documents/clientes/$(clienteId)/acuerdos/$(nuevo)).data.estado == 'vigente'
+             && getAfter(/databases/$(database)/documents/clientes/$(clienteId)/acuerdos/$(viejo)).data.estado == 'reemplazado')
+            ||
+            (viejo != '' && nuevo == '' && isOwner()
+             && getAfter(/databases/$(database)/documents/clientes/$(clienteId)/acuerdos/$(viejo)).data.estado == 'anulado')
           );
     }
 
@@ -461,11 +483,15 @@ service cloud.firestore {
       allow create: if isAdmin() && clienteValido();
       // M0-H (Fase M §69): whitelist en UPDATE — cierra `saldoActual` (lo escribe
       // SOLO la CF recalcSaldoCliente; antes un admin podía pisarlo a mano).
+      // `acuerdoVigenteId` (mutex de acuerdos v2): en la whitelist, pero su cambio
+      // SOLO es válido como parte de una transición de acuerdo (mutexAcuerdoValido).
       allow update: if isAdmin()
                     && request.resource.data.diff(resource.data).affectedKeys()
                          .hasOnly(['nombre', 'telefono', 'whatsapp', 'cumpleanos', 'notas',
                                    'vendedoraId', 'asesorId', 'origen', 'activo',
-                                   'createdAt', 'createdBy', 'updatedAt']);
+                                   'acuerdoVigenteId',
+                                   'createdAt', 'createdBy', 'updatedAt'])
+                    && mutexAcuerdoValido(clienteId);
       allow delete: if isAdmin();
 
       match /movimientos/{movId} {

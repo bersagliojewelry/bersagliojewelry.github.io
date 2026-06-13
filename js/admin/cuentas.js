@@ -23,6 +23,7 @@ let _fechaCorte = null;          // config/negocio.fechaCorteMigracion (fallback
 let _ultimosMovs = [];           // último snapshot de movimientos (re-derivar al cambiar acuerdos)
 const _acuerdosPorCliente = new Map();   // clienteId -> acuerdos vigentes (spec 2026-06-12)
 let _horizonteDias = 730;        // config/cartera.horizonteAcuerdoDias (P3: 24 meses)
+let _incumplidoCuotas = 2;       // config/cartera.acuerdoIncumplidoCuotas (cuotas que rompen el escudo)
 let _filter = '';                // búsqueda por nombre
 let _filterEstado = 'todos';     // todos | vencido | aldia | favor
 let _filterRango = 'todos';      // todos | d1_30 | d31_60 | d60plus
@@ -67,6 +68,7 @@ function rebuildEstados(movs) {
         _estados.set(cid, estadoCuenta(lst, {
             diasPlazo: _diasPlazo, fechaCorte: _fechaCorte,
             acuerdos: _acuerdosPorCliente.get(cid) || [], horizonteDias: _horizonteDias,
+            incumplidoCuotas: _incumplidoCuotas,
         }));
     }
 }
@@ -326,6 +328,9 @@ async function init() {
         acuerdosActivos = cc?.acuerdosActivos === true;
         if (typeof cc?.horizonteAcuerdoDias === 'number' && cc.horizonteAcuerdoDias > 0) {
             _horizonteDias = cc.horizonteAcuerdoDias;
+        }
+        if (Number.isInteger(cc?.acuerdoIncumplidoCuotas) && cc.acuerdoIncumplidoCuotas >= 1) {
+            _incumplidoCuotas = cc.acuerdoIncumplidoCuotas;
         }
     } catch (err) {
         console.warn('[cuentas] getConfig cartera:', err);

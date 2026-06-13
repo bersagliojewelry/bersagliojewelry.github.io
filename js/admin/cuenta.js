@@ -45,6 +45,8 @@ let _estCuenta = null;   // último estadoCuenta derivado (gates de UI: cuotas/r
 const acuerdosActivos = () => _cfgCartera?.acuerdosActivos === true;
 const horizonteDias = () => (typeof _cfgCartera?.horizonteAcuerdoDias === 'number'
     && _cfgCartera.horizonteAcuerdoDias > 0 ? _cfgCartera.horizonteAcuerdoDias : 730);
+const incumplidoCuotas = () => (Number.isInteger(_cfgCartera?.acuerdoIncumplidoCuotas)
+    && _cfgCartera.acuerdoIncumplidoCuotas >= 1 ? _cfgCartera.acuerdoIncumplidoCuotas : 2);
 
 // 'YYYY-MM-DD' → 'DD/MM/YYYY' (fecha real del hecho); '' si no es una fecha ISO.
 function fmtFecha(iso) {
@@ -129,7 +131,7 @@ function renderEstado(list) {
     if (!el) return;
     const est = estadoCuenta(list, {
         diasPlazo: _diasPlazo, fechaCorte: _fechaCorte,
-        acuerdos: _acuerdos, horizonteDias: horizonteDias(),
+        acuerdos: _acuerdos, horizonteDias: horizonteDias(), incumplidoCuotas: incumplidoCuotas(),
     });
     _estCuenta = est;
     renderPlanYBoton(est);

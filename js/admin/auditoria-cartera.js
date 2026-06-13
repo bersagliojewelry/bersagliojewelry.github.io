@@ -39,6 +39,7 @@ let _mesAnterior = '';
 let _acuerdos = [];            // TODOS los acuerdos (vigilancia, spec 2026-06-12 §1.8)
 let _acuerdosActivos = false;  // config/cartera.acuerdosActivos (gate del listener)
 let _horizonteDias = 730;      // config/cartera.horizonteAcuerdoDias (P3)
+let _incumplidoCuotas = 2;     // config/cartera.acuerdoIncumplidoCuotas (rompe el escudo)
 let _ultimoCorte = null;       // corte inmutable más reciente (insumo de sobreMora)
 
 function el(tag, { cls, css, text, title } = {}) {
@@ -172,7 +173,7 @@ function render() {
         let bajoAcuerdoTotal = 0;
         for (const [cid, acs] of acsPorCliente) {
             const est = estadoCuenta(movsPorCliente.get(cid) || [],
-                { diasPlazo: 30, acuerdos: acs, horizonteDias: _horizonteDias });
+                { diasPlazo: 30, acuerdos: acs, horizonteDias: _horizonteDias, incumplidoCuotas: _incumplidoCuotas });
             bajoAcuerdoTotal += est.bajoAcuerdo;
         }
         if (bajoAcuerdoTotal > 0) {
@@ -349,6 +350,7 @@ export async function initAuditoriaCartera() {
         if (Number.isInteger(cc?.slaRevisionDias) && cc.slaRevisionDias >= 1) _cfg.slaDias = cc.slaRevisionDias;
         _acuerdosActivos = cc?.acuerdosActivos === true;
         if (typeof cc?.horizonteAcuerdoDias === 'number' && cc.horizonteAcuerdoDias > 0) _horizonteDias = cc.horizonteAcuerdoDias;
+        if (Number.isInteger(cc?.acuerdoIncumplidoCuotas) && cc.acuerdoIncumplidoCuotas >= 1) _incumplidoCuotas = cc.acuerdoIncumplidoCuotas;
     } catch (err) { console.warn('[auditoria] config cartera:', err); }
 
     // Truncado del listener de movimientos → el acta queda BLOQUEADA (totales

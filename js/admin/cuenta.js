@@ -14,7 +14,7 @@ import {
     addMovimiento, anularMovimiento, updateCliente, fetchVendedoras, fmtCOP, getConfig,
     crearSolicitud, corregirMovimientoBatch, onSolicitudesChange, cancelarSolicitud,
     registrarGestion, onGestionesChange,
-    crearAcuerdo, crearFacturaConPlan, renegociarAcuerdo, onAcuerdosChange,
+    pactarAcuerdo, onAcuerdosChange,
 } from '../crm-service.js';
 import { saldoClass, saldoLabel, estadoBadgeHTML } from './saldo-format.js';
 import { estadoCuenta, hoyISO, vencimientoDefaultISO, acuerdoEsValido } from '../crm-estado-cuenta.js';
@@ -347,7 +347,11 @@ function openMovModal(tipo) {
     const ctChk = document.getElementById('mov-encuotas');
     ctChk.checked = false;
     document.getElementById('mov-cuotas-box').hidden = true;
-    ctRow.hidden = !(tipo === 'factura' && acuerdosActivos() && !(_estCuenta?.vencido > 0));
+    // "Factura en cuotas" = PRIMER acuerdo limpio: solo si NO hay deuda vencida NI
+    // un acuerdo vigente (con vigente, el camino correcto es "Acuerdo de pago" →
+    // renegocia TODO el saldo). Evita el choque del FIFO global (spec v2 §1.5).
+    const hayVigente = _acuerdos.some((a) => a.estado === 'vigente');
+    ctRow.hidden = !(tipo === 'factura' && acuerdosActivos() && !(_estCuenta?.vencido > 0) && !hayVigente);
     document.getElementById('mov-modal').hidden = false;
     document.getElementById('mov-monto').focus();
 }
@@ -446,7 +450,7 @@ function wireModal() {
             // Sanity con el MISMO validador del aging (si la fórmula lo ignoraría,
             // no se envía): tope del horizonte (P3: 24 meses) incluido.
             const probe = {
-                alcance: 'factura', movimientoId: 'probe', fechaPacto: fecha, cuotas,
+                fechaPacto: fecha, cuotas,
                 primeraCuotaFecha: cuotas[0].fecha, ultimaCuotaFecha: cuotas[cuotas.length - 1].fecha,
                 nota: 'probe', estado: 'vigente',
             };
@@ -476,15 +480,16 @@ function wireModal() {
         btn.disabled = true;
         try {
             if (enCuotas) {
-                await crearFacturaConPlan(CLIENTE_ID,
-                    { tipo: 'factura', monto, fecha, descripcion, registradoPor: uid },
-                    {
-                        fechaPacto: fecha, cuotas,
-                        periodicidad: document.getElementById('mov-cuotas-per').value,
-                        saldoAlPactar: Math.round(Number(_cliente?.saldoActual ?? 0)),
-                        nota: `Pactado al crear la factura: ${cuotas.length} cuota(s).${descripcion ? ` ${descripcion.trim()}` : ''}`,
-                        creadoPor: uid, rolAlCrear: currentRole(),
-                    });
+                // Factura en cuotas: factura + acuerdo SALDO + puntero del cliente en
+                // UN batch (mutex v2). El gate de UI garantiza que aquí no hay otra
+                // deuda vencida ni acuerdo vigente → primer acuerdo (sin vigenteId).
+                await pactarAcuerdo(CLIENTE_ID, {
+                    fechaPacto: fecha, cuotas,
+                    periodicidad: document.getElementById('mov-cuotas-per').value,
+                    saldoAlPactar: Math.round(Number(_cliente?.saldoActual ?? 0)) + monto,
+                    nota: `Pactado al crear la factura: ${cuotas.length} cuota(s).${descripcion ? ` ${descripcion.trim()}` : ''}`,
+                    creadoPor: uid, rolAlCrear: currentRole(),
+                }, { factura: { tipo: 'factura', monto, fecha, descripcion, registradoPor: uid } });
                 admToast('Factura y plan de cuotas registrados. El saldo se actualizará en un momento.');
             } else {
                 await addMovimiento(CLIENTE_ID, {
@@ -839,7 +844,7 @@ function wireAcuerdo() {
         const cuotas = cuotasForm();
         if (!cuotas) { admToast('Revisa el número de cuotas y la primera fecha.', 'danger'); return; }
         const probe = {
-            alcance: 'saldo', fechaPacto: hoyISO(), cuotas,
+            fechaPacto: hoyISO(), cuotas,
             primeraCuotaFecha: cuotas[0].fecha, ultimaCuotaFecha: cuotas[cuotas.length - 1].fecha,
             nota, estado: 'vigente',
         };
@@ -851,15 +856,15 @@ function wireAcuerdo() {
         }
         const vigente = _acuerdos.find((a) => a.estado === 'vigente') || null;
         const acuerdo = {
-            alcance: 'saldo', fechaPacto: hoyISO(), cuotas, periodicidad: perEl.value,
+            fechaPacto: hoyISO(), cuotas, periodicidad: perEl.value,
             saldoAlPactar: totalDeuda(), nota,
             creadoPor: currentUser()?.user?.uid, rolAlCrear: currentRole(),
         };
         const btn = document.getElementById('acuerdo-save');
         btn.disabled = true;
         try {
-            if (vigente) await renegociarAcuerdo(CLIENTE_ID, vigente.id, acuerdo);
-            else await crearAcuerdo(CLIENTE_ID, acuerdo);
+            // Mutex: pactarAcuerdo crea (o renegocia si hay vigente) + mueve el puntero.
+            await pactarAcuerdo(CLIENTE_ID, acuerdo, vigente ? { vigenteId: vigente.id } : {});
             admToast('Acuerdo registrado. No cambia el saldo: re-programa las fechas de pago.');
             close();
         } catch (err) {

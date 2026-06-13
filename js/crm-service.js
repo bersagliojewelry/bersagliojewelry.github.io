@@ -15,7 +15,7 @@
 import { app, firestoreDb } from './firebase-config.js';
 import {
     collection, collectionGroup, doc, getDocs, getDoc, addDoc, setDoc, updateDoc, deleteDoc,
-    writeBatch, query, where, orderBy, limit, onSnapshot, serverTimestamp,
+    writeBatch, query, where, orderBy, limit, onSnapshot, serverTimestamp, deleteField,
 } from 'firebase/firestore';
 
 // Tope de seguridad para listeners (doctrina S3). La cartera de fiado es acotada;
@@ -479,11 +479,9 @@ export function onAllAcuerdosVigentesChange(cb, onError) {
     });
 }
 
-// Payload espejo EXACTO de acuerdoValido() (firestore.rules).
+// Payload espejo EXACTO de acuerdoValido() v2 (firestore.rules): solo SALDO.
 function buildAcuerdoPayload(a) {
     return {
-        alcance: a.alcance,
-        ...(a.alcance === 'factura' ? { movimientoId: String(a.movimientoId) } : {}),
         fechaPacto: a.fechaPacto,
         cuotas: a.cuotas.map((q) => ({ fecha: q.fecha, monto: Math.round(Number(q.monto)) })),
         ...(a.periodicidad ? { periodicidad: a.periodicidad } : {}),
@@ -499,43 +497,51 @@ function buildAcuerdoPayload(a) {
     };
 }
 
-/** Crea un acuerdo NUEVO (sin renegociar nada). */
-export async function crearAcuerdo(clienteId, a) {
-    const ref = await addDoc(collection(firestoreDb, 'clientes', clienteId, 'acuerdos'), buildAcuerdoPayload(a));
-    return { id: ref.id };
-}
-
 /**
- * FACTURA EN CUOTAS: la factura y su acuerdo nacen en UN writeBatch (spec §1.9)
- * — o existen ambos, o ninguno. El `vencimiento` de la factura = la ÚLTIMA cuota
- * (la "fecha final" pactada sigue visible para toda vista sin acuerdos).
+ * Pacta un acuerdo de pago (MUTEX v2, Consejo Externo). UN writeBatch atómico:
+ *  - (opcional) crea la factura nueva (caso "factura en cuotas"; su `vencimiento`
+ *    = la última cuota, para toda vista sin acuerdos);
+ *  - crea el acuerdo (vigente; `reemplazaA` si renegocia);
+ *  - si había un vigente, lo sella 'reemplazado';
+ *  - mueve el puntero `acuerdoVigenteId` del cliente al nuevo.
+ * Las reglas (getAfter sobre el puntero) hacen IMPOSIBLE el acuerdo SUELTO (el
+ * vector de jineteo que cerró el Consejo).
+ * @param {string} clienteId
+ * @param {object} a  { cuotas, fechaPacto, periodicidad?, saldoAlPactar?, nota, creadoPor, rolAlCrear }
+ * @param {object} [opts] { vigenteId?:string — el acuerdo vigente a reemplazar; factura?:object }
+ * @returns {Promise<{acuerdoId:string, movId:(string|null)}>}
  */
-export async function crearFacturaConPlan(clienteId, mov, acuerdo) {
-    const movRef = doc(collection(firestoreDb, 'clientes', clienteId, 'movimientos'));
+export async function pactarAcuerdo(clienteId, a, { vigenteId, factura } = {}) {
     const acRef = doc(collection(firestoreDb, 'clientes', clienteId, 'acuerdos'));
-    const ultima = acuerdo.cuotas[acuerdo.cuotas.length - 1].fecha;
     const batch = writeBatch(firestoreDb);
-    batch.set(movRef, buildMovPayload({ ...mov, vencimiento: ultima }));
-    batch.set(acRef, buildAcuerdoPayload({ ...acuerdo, alcance: 'factura', movimientoId: movRef.id }));
-    await batch.commit();   // atómico: factura y plan, o nada
-    return { movId: movRef.id, acuerdoId: acRef.id };
+    let movId = null;
+    if (factura) {
+        const movRef = doc(collection(firestoreDb, 'clientes', clienteId, 'movimientos'));
+        const ultima = a.cuotas[a.cuotas.length - 1].fecha;
+        batch.set(movRef, buildMovPayload({ ...factura, vencimiento: ultima }));
+        movId = movRef.id;
+    }
+    batch.set(acRef, buildAcuerdoPayload({ ...a, ...(vigenteId ? { reemplazaA: vigenteId } : {}) }));
+    if (vigenteId) {
+        batch.update(doc(firestoreDb, 'clientes', clienteId, 'acuerdos', vigenteId), {
+            estado: 'reemplazado', cerradoPor: a.creadoPor, cerradoEn: serverTimestamp(), reemplazadoPor: acRef.id,
+        });
+    }
+    batch.update(doc(firestoreDb, 'clientes', clienteId), { acuerdoVigenteId: acRef.id });
+    await batch.commit();   // atómico: factura + acuerdo + sello + puntero, o nada
+    return { acuerdoId: acRef.id, movId };
 }
 
-/**
- * RENEGOCIACIÓN atómica (spec §1.3): UN writeBatch — el acuerdo nuevo nace con
- * `reemplazaA` y el viejo queda sellado 'reemplazado' apuntando de vuelta. Las
- * reglas (getAfter) hacen IMPOSIBLE el create suelto o el sello sin reemplazo.
- */
-export async function renegociarAcuerdo(clienteId, viejoId, a) {
-    const nuevoRef = doc(collection(firestoreDb, 'clientes', clienteId, 'acuerdos'));
+/** Anula el acuerdo vigente (OWNER por reglas): sella 'anulado' + limpia el
+ *  puntero del cliente. "Cancelar" es la goma de borrar del cronograma → solo Daniel. */
+export async function anularAcuerdo(clienteId, vigenteId, motivoCierre, uid) {
     const batch = writeBatch(firestoreDb);
-    batch.set(nuevoRef, buildAcuerdoPayload({ ...a, reemplazaA: viejoId }));
-    batch.update(doc(firestoreDb, 'clientes', clienteId, 'acuerdos', viejoId), {
-        estado: 'reemplazado', cerradoPor: a.creadoPor, cerradoEn: serverTimestamp(),
-        reemplazadoPor: nuevoRef.id,
+    batch.update(doc(firestoreDb, 'clientes', clienteId, 'acuerdos', vigenteId), {
+        estado: 'anulado', cerradoPor: uid, cerradoEn: serverTimestamp(),
+        motivoCierre: String(motivoCierre || '').trim(),
     });
-    await batch.commit();   // atómico: las dos patas o ninguna
-    return { id: nuevoRef.id };
+    batch.update(doc(firestoreDb, 'clientes', clienteId), { acuerdoVigenteId: deleteField() });
+    await batch.commit();
 }
 
 /**

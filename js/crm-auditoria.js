@@ -25,6 +25,10 @@ function aDate(v) {
     return null;
 }
 
+// UNA validación de acuerdos (la misma del aging/corte): si la fórmula lo
+// ignoraría, el detector lo lista — jamás dos criterios de "válido".
+import { acuerdoEsValido } from './crm-estado-cuenta.js';
+
 /** 'YYYY-MM' del instante (hora local). */
 export function mesDe(v) {
     const d = aDate(v);
@@ -198,17 +202,103 @@ function mulberry32(a) {
  * diseño; la regla no le pone techo porque el acuerdo largo legítimo existe).
  * Detectivo, no preventivo: la UI bloquea >365d al crear; esto atrapa lo que
  * entre por fuera (SDK/legacy) o lo largo-pero-permitido fuera de lo normal.
+ * `acuerdos`: las facturas CUBIERTAS por un plan vigente se EXCLUYEN — su
+ * horizonte lo gobierna el acuerdo (si no, todo plan legítimo inundaría el acta).
  */
-export function acuerdosLargos(movimientos, { umbralDias = 120 } = {}) {
+export function acuerdosLargos(movimientos, { umbralDias = 120, acuerdos = [] } = {}) {
     const ISO = /^\d{4}-\d{2}-\d{2}$/;
+    const vigentes = (acuerdos || []).filter((a) => a && a.estado === 'vigente');
+    const porFactura = new Set(vigentes.filter((a) => a.alcance === 'factura').map((a) => a.movimientoId));
+    const saldoCubre = new Set(vigentes.filter((a) => a.alcance === 'saldo').map((a) => a.clienteId));
     const out = [];
     for (const m of movimientos || []) {
         if (!m || m.anulado === true || m.tipo !== 'factura') continue;
+        if (porFactura.has(m.id) || saldoCubre.has(m.clienteId)) continue;
         if (!ISO.test(m.fecha || '') || !ISO.test(m.vencimiento || '')) continue;
         const dias = Math.round((Date.parse(m.vencimiento) - Date.parse(m.fecha)) / 864e5);
         if (dias > umbralDias) out.push({ ...m, diasAcuerdo: dias });
     }
     return out.sort((a, b) => b.diasAcuerdo - a.diasAcuerdo);
+}
+
+// ─── (7) Acuerdos de pago — vigilancia (spec 2026-06-12 §1.8: 3 señales) ───────
+
+/**
+ * (7a) TODO acuerdo creado este mes sobre una cuenta que YA estaba vencida según
+ * el CORTE INMUTABLE previo (jamás contra `saldoAlPactar`, que es autodeclarado).
+ * Cierra la ventana del vector dominante: pactar para esconder mora. Línea
+ * obligatoria del acta. Sin corte previo para comparar → se lista igual con
+ * `vencidoPrevio: null` (visibilidad conservadora, no silencio).
+ */
+export function acuerdosSobreMora(acuerdos, mes, cortePrevio) {
+    const out = [];
+    for (const a of acuerdos || []) {
+        if (!a || mesDe(a.creadoEn) !== mes) continue;
+        const prev = cortePrevio && cortePrevio.clientes ? cortePrevio.clientes[a.clienteId] : null;
+        const vencidoPrevio = (prev && typeof prev.vencido === 'number') ? prev.vencido : null;
+        if (vencidoPrevio === null || vencidoPrevio > 0) {
+            out.push({
+                acuerdo: a, vencidoPrevio,
+                diasMoraPrevio: (prev && typeof prev.diasMora === 'number') ? prev.diasMora : null,
+            });
+        }
+    }
+    return out.sort((x, y) => (y.vencidoPrevio || 0) - (x.vencidoPrevio || 0));
+}
+
+/**
+ * (7b) Acuerdos ANÓMALOS — un solo detector multi-check tipado:
+ *   · invalidos: vigentes que la fórmula IGNORARÍA (acuerdoEsValido — la misma
+ *     validación del aging: si aquí aparece, el plan NO está protegiendo nada);
+ *   · huerfanos: alcance 'factura' cuyo movimiento ya no está vigente (típico
+ *     tras una corrección M2b — el plan quedó sin ancla, re-pactar);
+ *   · solapados: >1 vigente para la misma clienta (la fórmula elige determinista,
+ *     pero dos planes vivos = error operativo o maniobra);
+ *   · largos: última cuota a más de `umbralActaDias` del pacto (resaltado del
+ *     acta — P3: permitido hasta el horizonte, visible siempre que pase de 12 meses).
+ */
+export function acuerdosAnomalos(acuerdos, movimientos, opts = {}) {
+    const umbralActaDias = (typeof opts.umbralActaDias === 'number' && opts.umbralActaDias > 0)
+        ? opts.umbralActaDias : 365;
+    const vivos = new Set((movimientos || [])
+        .filter((m) => m && m.anulado !== true && m.id != null).map((m) => m.id));
+    const out = { invalidos: [], huerfanos: [], solapados: [], largos: [] };
+    const vigentesPorCliente = new Map();
+    for (const a of acuerdos || []) {
+        if (!a || a.estado !== 'vigente') continue;
+        if (!acuerdoEsValido(a, opts)) out.invalidos.push(a);
+        if (a.alcance === 'factura' && a.movimientoId && !vivos.has(a.movimientoId)) out.huerfanos.push(a);
+        const k = a.clienteId || '?';
+        vigentesPorCliente.set(k, (vigentesPorCliente.get(k) || 0) + 1);
+        const ISO = /^\d{4}-\d{2}-\d{2}$/;
+        if (ISO.test(a.fechaPacto || '') && ISO.test(a.ultimaCuotaFecha || '')) {
+            const dias = Math.round((Date.parse(a.ultimaCuotaFecha) - Date.parse(a.fechaPacto)) / 864e5);
+            if (dias > umbralActaDias) out.largos.push({ ...a, diasPlan: dias });
+        }
+    }
+    for (const [clienteId, n] of vigentesPorCliente) {
+        if (n > 1) out.solapados.push({ clienteId, n });
+    }
+    return out;
+}
+
+/**
+ * (7c) Renegociaciones SERIALES: ≥`min` acuerdos en la ventana POR CLIENTA,
+ * contados por `creadoEn` (reloj de servidor — el enlace `reemplazaA` lo
+ * controla quien pacta; las fechas reales no). El escudo perpetuo se ve.
+ */
+export function renegociacionesSeriales(acuerdos, { ventanaDias = 365, min = 2, ahoraMs = 0 } = {}) {
+    const desde = ahoraMs - ventanaDias * 864e5;
+    const por = new Map();
+    for (const a of acuerdos || []) {
+        const t = a && a.creadoEn && typeof a.creadoEn.toMillis === 'function' ? a.creadoEn.toMillis() : null;
+        if (t == null || t < desde) continue;
+        const k = a.clienteId || '?';
+        por.set(k, (por.get(k) || 0) + 1);
+    }
+    return [...por.entries()].filter(([, n]) => n >= min)
+        .map(([clienteId, n]) => ({ clienteId, n }))
+        .sort((x, y) => y.n - x.n);
 }
 
 /**

@@ -10,7 +10,7 @@ import { requireAuth, initSidebar, admToast, esc } from './shared.js';
 import adminDb from './db.js';
 import {
     onClientesChange, createCliente, fetchVendedoras, onAllMovimientosChange, getConfig,
-    fmtCOP, carteraTotals, carteraPorVendedora, cumpleanosDelMes,
+    fmtCOP, carteraTotals, carteraPorVendedora, cumpleanosDelMes, onAllAcuerdosVigentesChange,
 } from '../crm-service.js';
 import { saldoCellHTML, estadoBadgeHTML } from './saldo-format.js';
 import { estadoCuenta } from '../crm-estado-cuenta.js';
@@ -20,6 +20,9 @@ const _vendedoras = new Map();   // vendedoraId -> nombre
 const _estados = new Map();      // clienteId -> estadoCuenta (mora, calculado al cargar)
 let _diasPlazo = 30;             // config/negocio.diasPlazo
 let _fechaCorte = null;          // config/negocio.fechaCorteMigracion (fallback de fecha)
+let _ultimosMovs = [];           // último snapshot de movimientos (re-derivar al cambiar acuerdos)
+const _acuerdosPorCliente = new Map();   // clienteId -> acuerdos vigentes (spec 2026-06-12)
+let _horizonteDias = 730;        // config/cartera.horizonteAcuerdoDias (P3: 24 meses)
 let _filter = '';                // búsqueda por nombre
 let _filterEstado = 'todos';     // todos | vencido | aldia | favor
 let _filterRango = 'todos';      // todos | d1_30 | d31_60 | d60plus
@@ -47,8 +50,12 @@ function pasaFiltros(c) {
     return true;
 }
 
-// Recalcula la mora por cliente desde TODOS los movimientos (en vivo).
+// Recalcula la mora por cliente desde TODOS los movimientos (en vivo). Los
+// ACUERDOS de pago (spec 2026-06-12) re-programan la exigibilidad: la clienta
+// que cumple su plan sale de los rojos también AQUÍ (decisión P1 de Daniel) —
+// el sello "En acuerdo de pago" lo pinta estadoBadgeHTML (una fuente).
 function rebuildEstados(movs) {
+    _ultimosMovs = movs;
     _estados.clear();
     const byCliente = new Map();
     for (const m of movs) {
@@ -57,7 +64,10 @@ function rebuildEstados(movs) {
         byCliente.get(m.clienteId).push(m);
     }
     for (const [cid, lst] of byCliente) {
-        _estados.set(cid, estadoCuenta(lst, { diasPlazo: _diasPlazo, fechaCorte: _fechaCorte }));
+        _estados.set(cid, estadoCuenta(lst, {
+            diasPlazo: _diasPlazo, fechaCorte: _fechaCorte,
+            acuerdos: _acuerdosPorCliente.get(cid) || [], horizonteDias: _horizonteDias,
+        }));
     }
 }
 
@@ -309,6 +319,17 @@ async function init() {
     } catch (err) {
         console.warn('[cuentas] getConfig:', err);
     }
+    // Acuerdos de pago (spec 2026-06-12): bandera + horizonte del owner.
+    let acuerdosActivos = false;
+    try {
+        const cc = await getConfig('cartera');
+        acuerdosActivos = cc?.acuerdosActivos === true;
+        if (typeof cc?.horizonteAcuerdoDias === 'number' && cc.horizonteAcuerdoDias > 0) {
+            _horizonteDias = cc.horizonteAcuerdoDias;
+        }
+    } catch (err) {
+        console.warn('[cuentas] getConfig cartera:', err);
+    }
 
     wireModal();
     wireSearch();
@@ -319,6 +340,25 @@ async function init() {
     // (los movimientos) → no se desincronizan. Recalcula y re-renderiza en cada cambio.
     onAllMovimientosChange((movs) => { rebuildEstados(movs); render(); });
     onClientesChange(list => { _clientes = list; render(); });
+    // Acuerdos vigentes (gateado por la bandera: sin reglas desplegadas no hay listener).
+    if (acuerdosActivos) {
+        onAllAcuerdosVigentesChange((list) => {
+            _acuerdosPorCliente.clear();
+            for (const a of list) {
+                if (!a.clienteId) continue;
+                if (!_acuerdosPorCliente.has(a.clienteId)) _acuerdosPorCliente.set(a.clienteId, []);
+                _acuerdosPorCliente.get(a.clienteId).push(a);
+            }
+            rebuildEstados(_ultimosMovs);
+            render();
+        }, () => {
+            // Listener muerto (L-40): sin acuerdos confiables, la mora se muestra SIN
+            // plan (conservador) — jamás un "al día" sostenido por datos muertos.
+            _acuerdosPorCliente.clear();
+            rebuildEstados(_ultimosMovs);
+            render();
+        });
+    }
 }
 
 init();

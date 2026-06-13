@@ -174,5 +174,6 @@ RECHAZADOS con razón: `deudaIds[]` (inverificable) · `montoPactado` como insum
 - [x] Slice 1: fórmula + matriz de tests (2026-06-12: `acuerdoEsValido` + TRAMOS en `crm-estado-cuenta`; suite vieja 24/24 SIN tocar un test + `test:acuerdos` 15/15 + paridad 3/3)
 - [x] Slice 2 CONSTRUIDO (2026-06-12: `acuerdoValido`+`transicionAcuerdoValida`+getAfter+CG+`asesorId`+size() M5; emulador 143/143) — **DEPLOY pendiente: tras integrar el Consejo Externo** (+ docs 20/50 con el deploy)
 - [x] Slice 3 CONSTRUIDO (2026-06-12: `agruparPorCliente` con ids + CG acuerdos + `formulaVersion:2` + `plan`/`bajoAcuerdo` por clienta y en totales; `test:insumos` 3/3) — deploy de functions junto al de reglas
-- [ ] Slice 4: UI Kary + cache bump
-- [ ] Slice 5: detectores + acta + Salud
+- [x] Slice 4 CONSTRUIDO (2026-06-12: toggle "¿en cuotas?" con gate §1.5 + renegociación 'saldo' + sello "En acuerdo de pago" en estadoBadgeHTML + próxima cuota en ficha + lista CxC con acuerdos; TODO gateado por `config/cartera.acuerdosActivos` — apagado hasta el deploy de reglas; generador 6/6 + suites verdes + build; cache v16)
+- [x] Slice 5 CONSTRUIDO (2026-06-12: `acuerdosSobreMora` (línea obligatoria, contra el corte inmutable) + `acuerdosAnomalos` multi-check (reusa `acuerdoEsValido`) + `renegociacionesSeriales` (por `creadoEn`) + `acuerdosLargos` excluye cubiertas + bloque "vigilancia" en Salud + Σ cartera re-programada; auditoría 16/16)
+- [ ] DEPLOY (tras Consejo): `firebase deploy --only firestore:rules,firestore:indexes,functions` → encender `config/cartera.acuerdosActivos=true` + `horizonteAcuerdoDias=730` → verificación experta POR HITO (cadencia Daniel) + ADR §81

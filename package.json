@@ -24,6 +24,7 @@
     "test:gestiones": "node --test tests/crm-gestiones.test.mjs",
     "test:acuerdos": "node --test tests/acuerdos-aging.test.mjs",
     "test:insumos": "node --test tests/corte-insumos.test.mjs",
+    "test:generador": "node --test tests/crm-acuerdos.test.mjs",
     "test:paridad": "node --test tests/aging-paridad.test.mjs",
     "test:leads": "node --test tests/lead-format.test.mjs",
     "brain:diff": "node scripts/brain-diff.mjs"

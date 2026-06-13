@@ -14,9 +14,12 @@ import {
     addMovimiento, anularMovimiento, updateCliente, fetchVendedoras, fmtCOP, getConfig,
     crearSolicitud, corregirMovimientoBatch, onSolicitudesChange, cancelarSolicitud,
     registrarGestion, onGestionesChange,
+    crearAcuerdo, crearFacturaConPlan, renegociarAcuerdo, onAcuerdosChange,
 } from '../crm-service.js';
 import { saldoClass, saldoLabel, estadoBadgeHTML } from './saldo-format.js';
-import { estadoCuenta, hoyISO, vencimientoDefaultISO } from '../crm-estado-cuenta.js';
+import { estadoCuenta, hoyISO, vencimientoDefaultISO, acuerdoEsValido } from '../crm-estado-cuenta.js';
+import { generarCuotas, resumenCuotas } from '../crm-acuerdos.js';
+import { currentRole } from '../auth.js';
 import { planearCorreccionSaldo, planearCorreccionMovimiento, PREGUNTAS_CORRECCION } from '../crm-correccion.js';
 import {
     TIPOS_GESTION, RESULTADOS_GESTION, tipoGestionLabel, resultadoGestionLabel,
@@ -33,6 +36,15 @@ let _tipo = 'factura';   // tipo activo del modal
 let _cliente = null;     // datos vivos (para corregir saldo / editar)
 let _diasPlazo = 30;     // config/negocio.diasPlazo (mora)
 let _fechaCorte = null;  // config/negocio.fechaCorteMigracion (fallback de fecha)
+let _movs = [];          // movimientos vivos (para re-derivar el estado al cambiar acuerdos)
+let _acuerdos = [];      // acuerdos de pago vivos del cliente (spec 2026-06-12)
+let _estCuenta = null;   // último estadoCuenta derivado (gates de UI: cuotas/renegociar)
+
+// La UI de acuerdos solo existe cuando el owner activa la bandera (las reglas
+// del match se despliegan aparte — sin la bandera, cero listeners condenados).
+const acuerdosActivos = () => _cfgCartera?.acuerdosActivos === true;
+const horizonteDias = () => (typeof _cfgCartera?.horizonteAcuerdoDias === 'number'
+    && _cfgCartera.horizonteAcuerdoDias > 0 ? _cfgCartera.horizonteAcuerdoDias : 730);
 
 // 'YYYY-MM-DD' → 'DD/MM/YYYY' (fecha real del hecho); '' si no es una fecha ISO.
 function fmtFecha(iso) {
@@ -115,7 +127,12 @@ function renderHeader(cli) {
 function renderEstado(list) {
     const el = document.getElementById('f-estado');
     if (!el) return;
-    const est = estadoCuenta(list, { diasPlazo: _diasPlazo, fechaCorte: _fechaCorte });
+    const est = estadoCuenta(list, {
+        diasPlazo: _diasPlazo, fechaCorte: _fechaCorte,
+        acuerdos: _acuerdos, horizonteDias: horizonteDias(),
+    });
+    _estCuenta = est;
+    renderPlanYBoton(est);
     // Solo mostramos el sello si hay deuda (positiva); a favor/cero ya lo dice el saldo.
     if (est.saldo > 0) {
         el.innerHTML = estadoBadgeHTML(est);
@@ -126,9 +143,31 @@ function renderEstado(list) {
     }
 }
 
+// Plan de pagos (spec acuerdos): próxima cuota + atraso, bajo el saldo; y el
+// botón de renegociar solo con la bandera activa y deuda por cobrar.
+function renderPlanYBoton(est) {
+    const planEl = document.getElementById('f-plan');
+    if (planEl) {
+        if (est.plan && est.saldo > 0) {
+            const p = est.plan;
+            planEl.textContent = p.proximaCuota
+                ? `🤝 Próxima cuota: ${fmtFecha(p.proximaCuota.fecha)} — ${fmtCOP(p.proximaCuota.monto)}`
+                  + (p.cuotasVencidas > 0 ? ` · ${p.cuotasVencidas} cuota(s) atrasada(s)` : '')
+                : '🤝 Plan al día';
+            planEl.hidden = false;
+        } else {
+            planEl.textContent = '';
+            planEl.hidden = true;
+        }
+    }
+    const btnAc = document.getElementById('btn-acuerdo');
+    if (btnAc) btnAc.hidden = !(acuerdosActivos() && est.saldo > 0);
+}
+
 function renderMovimientos(list) {
     const body = document.getElementById('mov-body');
     const empty = document.getElementById('mov-empty');
+    _movs = list;
     renderEstado(list);
     _movsById.clear();
     list.forEach((m) => _movsById.set(m.id, m));
@@ -301,10 +340,35 @@ function openMovModal(tipo) {
     } else {
         mpRow.hidden = true; mpSel.required = false; mpSel.value = '';
     }
+    // Plan de CUOTAS (spec acuerdos §1.5): solo facturas, con la bandera activa y
+    // SIN otra deuda vencida — a esa clienta el instrumento es la renegociación
+    // 'saldo' (el FIFO global haría figurar impagas las cuotas de la venta nueva).
+    const ctRow = document.getElementById('mov-cuotas-toggle-row');
+    const ctChk = document.getElementById('mov-encuotas');
+    ctChk.checked = false;
+    document.getElementById('mov-cuotas-box').hidden = true;
+    ctRow.hidden = !(tipo === 'factura' && acuerdosActivos() && !(_estCuenta?.vencido > 0));
     document.getElementById('mov-modal').hidden = false;
     document.getElementById('mov-monto').focus();
 }
 function closeMovModal() { document.getElementById('mov-modal').hidden = true; }
+
+// Cuotas del formulario de factura (null = parámetros que no dan un plan sano).
+function cuotasDelForm() {
+    return generarCuotas({
+        total: Math.round(Number(document.getElementById('mov-monto').value)),
+        n: Math.round(Number(document.getElementById('mov-cuotas-n').value)),
+        periodicidad: document.getElementById('mov-cuotas-per').value,
+        primeraFecha: document.getElementById('mov-cuotas-primera').value,
+    });
+}
+function refrescarPreviewCuotas() {
+    if (document.getElementById('mov-cuotas-box').hidden) return;
+    const cuotas = cuotasDelForm();
+    document.getElementById('mov-cuotas-preview').textContent = cuotas
+        ? resumenCuotas(cuotas, fmtCOP)
+        : 'Revisa el monto, el número de cuotas y la primera fecha.';
+}
 
 function wireModal() {
     document.getElementById('btn-factura').addEventListener('click', () => openMovModal('factura'));
@@ -328,7 +392,31 @@ function wireModal() {
         if (!/^\d{4}-\d{2}-\d{2}$/.test(f)) return;
         vencEl.min = f;
         if (!_vencTocado) vencEl.value = vencimientoDefaultISO(f, _diasPlazo);
+        const primeraEl = document.getElementById('mov-cuotas-primera');
+        if (primeraEl) primeraEl.min = f;
     });
+
+    // Toggle "¿en cuotas?": el plan reemplaza la fecha única (el vencimiento de la
+    // factura será la ÚLTIMA cuota, automático — la "fecha final" sigue existiendo).
+    const ctChk = document.getElementById('mov-encuotas');
+    ctChk.addEventListener('change', () => {
+        const on = ctChk.checked;
+        document.getElementById('mov-cuotas-box').hidden = !on;
+        document.getElementById('mov-vencimiento-row').hidden = on || _tipo !== 'factura';
+        vencEl.required = !on && _tipo === 'factura';
+        if (on) {
+            const fecha = document.getElementById('mov-fecha').value || hoyISO();
+            const primeraEl = document.getElementById('mov-cuotas-primera');
+            if (!primeraEl.value) primeraEl.value = vencimientoDefaultISO(fecha, 15);
+            primeraEl.min = fecha;
+            refrescarPreviewCuotas();
+        }
+    });
+    for (const id of ['mov-monto', 'mov-cuotas-n', 'mov-cuotas-per', 'mov-cuotas-primera']) {
+        const el = document.getElementById(id);
+        el.addEventListener('input', refrescarPreviewCuotas);
+        el.addEventListener('change', refrescarPreviewCuotas);
+    }
 
     document.getElementById('mov-form').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -344,10 +432,30 @@ function wireModal() {
             if (!medioPago) { admToast('Elige el medio de pago.', 'danger'); return; }
         }
 
-        // Factura: el ACUERDO DE PAGO es obligatorio (M6 — directiva 2026-06-12:
-        // cada deuda pacta su plazo; el default solo es una sugerencia).
+        // ¿Plan de CUOTAS? (spec acuerdos): la factura y su acuerdo nacen JUNTOS
+        // en un batch; el vencimiento de la factura = la última cuota.
+        const enCuotas = _tipo === 'factura'
+            && !document.getElementById('mov-cuotas-toggle-row').hidden
+            && document.getElementById('mov-encuotas').checked;
+        let cuotas = null;
         let vencimiento;
-        if (_tipo === 'factura') {
+        if (enCuotas) {
+            cuotas = cuotasDelForm();
+            if (!cuotas) { admToast('Revisa las cuotas: el monto, el número y la primera fecha.', 'danger'); return; }
+            if (cuotas[0].fecha < fecha) { admToast('La primera cuota no puede ser antes de la fecha de la deuda.', 'danger'); return; }
+            // Sanity con el MISMO validador del aging (si la fórmula lo ignoraría,
+            // no se envía): tope del horizonte (P3: 24 meses) incluido.
+            const probe = {
+                alcance: 'factura', movimientoId: 'probe', fechaPacto: fecha, cuotas,
+                primeraCuotaFecha: cuotas[0].fecha, ultimaCuotaFecha: cuotas[cuotas.length - 1].fecha,
+                nota: 'probe', estado: 'vigente',
+            };
+            if (!acuerdoEsValido(probe, { horizonteDias: horizonteDias() })) {
+                admToast('El plan no es válido: la última cuota pasa del máximo permitido.', 'danger', 5000); return;
+            }
+        } else if (_tipo === 'factura') {
+            // Factura simple: el ACUERDO DE PAGO (fecha final) es obligatorio (M6 —
+            // directiva 2026-06-12: cada deuda pacta su plazo; el default es sugerencia).
             vencimiento = document.getElementById('mov-vencimiento').value;
             if (!/^\d{4}-\d{2}-\d{2}$/.test(vencimiento)) {
                 admToast('Elige el acuerdo de pago: ¿para cuándo quedó?', 'danger'); return;
@@ -363,23 +471,37 @@ function wireModal() {
         }
 
         const uid = currentUser()?.user?.uid;
+        const descripcion = document.getElementById('mov-desc').value;
         const btn = document.getElementById('mov-save');
         btn.disabled = true;
         try {
-            await addMovimiento(CLIENTE_ID, {
-                tipo: _tipo,
-                monto,
-                fecha,
-                descripcion: document.getElementById('mov-desc').value,
-                registradoPor: uid,
-                ...(medioPago ? { medioPago } : {}),
-                ...(vencimiento ? { vencimiento } : {}),
-            });
-            admToast(`${TIPO_LABEL[_tipo]} registrada. El saldo se actualizará en un momento.`);
+            if (enCuotas) {
+                await crearFacturaConPlan(CLIENTE_ID,
+                    { tipo: 'factura', monto, fecha, descripcion, registradoPor: uid },
+                    {
+                        fechaPacto: fecha, cuotas,
+                        periodicidad: document.getElementById('mov-cuotas-per').value,
+                        saldoAlPactar: Math.round(Number(_cliente?.saldoActual ?? 0)),
+                        nota: `Pactado al crear la factura: ${cuotas.length} cuota(s).${descripcion ? ` ${descripcion.trim()}` : ''}`,
+                        creadoPor: uid, rolAlCrear: currentRole(),
+                    });
+                admToast('Factura y plan de cuotas registrados. El saldo se actualizará en un momento.');
+            } else {
+                await addMovimiento(CLIENTE_ID, {
+                    tipo: _tipo,
+                    monto,
+                    fecha,
+                    descripcion,
+                    registradoPor: uid,
+                    ...(medioPago ? { medioPago } : {}),
+                    ...(vencimiento ? { vencimiento } : {}),
+                });
+                admToast(`${TIPO_LABEL[_tipo]} registrada. El saldo se actualizará en un momento.`);
+            }
             closeMovModal();
         } catch (err) {
             console.error('[cuenta] addMovimiento:', err);
-            admToast('No se pudo registrar el movimiento.', 'danger');
+            admToast('No se pudo registrar. Intenta de nuevo; si sigue, avísale a Daniel.', 'danger', 5000);
         } finally {
             btn.disabled = false;
         }
@@ -667,6 +789,88 @@ function wireCorregirMov() {
     });
 }
 
+// ─── Acuerdo de pago sobre la deuda (renegociación 'saldo', spec 2026-06-12) ───
+// Re-programa las fechas de pago de TODA la deuda — JAMÁS toca el saldo. Si ya
+// hay un acuerdo vigente, se RENEGOCIA (batch atómico: el viejo queda sellado
+// 'reemplazado' como evidencia; las reglas hacen imposible el create suelto).
+function wireAcuerdo() {
+    const modal = document.getElementById('acuerdo-modal');
+    const nEl = document.getElementById('acuerdo-n');
+    const perEl = document.getElementById('acuerdo-per');
+    const primeraEl = document.getElementById('acuerdo-primera');
+    const notaEl = document.getElementById('acuerdo-nota');
+    const prevEl = document.getElementById('acuerdo-preview');
+
+    const totalDeuda = () => Math.round(Number(_estCuenta && _estCuenta.saldo > 0 ? _estCuenta.saldo : 0));
+    const cuotasForm = () => generarCuotas({
+        total: totalDeuda(), n: Math.round(Number(nEl.value)),
+        periodicidad: perEl.value, primeraFecha: primeraEl.value,
+    });
+    const refrescar = () => {
+        const cuotas = cuotasForm();
+        prevEl.textContent = cuotas ? resumenCuotas(cuotas, fmtCOP)
+            : 'Revisa el número de cuotas y la primera fecha.';
+    };
+
+    const open = () => {
+        document.getElementById('acuerdo-form').reset();
+        document.getElementById('acuerdo-deuda').textContent = `Deuda actual: ${fmtCOP(totalDeuda())}`;
+        primeraEl.value = vencimientoDefaultISO(hoyISO(), 15);
+        primeraEl.min = hoyISO();
+        refrescar();
+        modal.hidden = false;
+        nEl.focus();
+    };
+    const close = () => { modal.hidden = true; };
+    document.getElementById('btn-acuerdo').addEventListener('click', open);
+    document.getElementById('acuerdo-close').addEventListener('click', close);
+    document.getElementById('acuerdo-cancel').addEventListener('click', close);
+    modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+    for (const el of [nEl, perEl, primeraEl]) {
+        el.addEventListener('input', refrescar);
+        el.addEventListener('change', refrescar);
+    }
+
+    document.getElementById('acuerdo-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const nota = notaEl.value.trim();
+        if (!nota) { admToast('Escribe qué se habló con la clienta: es la evidencia del pacto.', 'danger'); return; }
+        if (!(totalDeuda() > 0)) { admToast('Esta cuenta no tiene deuda por cobrar.', 'danger'); return; }
+        const cuotas = cuotasForm();
+        if (!cuotas) { admToast('Revisa el número de cuotas y la primera fecha.', 'danger'); return; }
+        const probe = {
+            alcance: 'saldo', fechaPacto: hoyISO(), cuotas,
+            primeraCuotaFecha: cuotas[0].fecha, ultimaCuotaFecha: cuotas[cuotas.length - 1].fecha,
+            nota, estado: 'vigente',
+        };
+        if (!acuerdoEsValido(probe, { horizonteDias: horizonteDias() })) {
+            admToast('El plan no es válido: la última cuota pasa del máximo permitido.', 'danger', 5000); return;
+        }
+        if (navigator.onLine === false) {
+            admToast('Parece que no hay señal. Espera a tener conexión e intenta de nuevo.', 'danger', 5000); return;
+        }
+        const vigente = _acuerdos.find((a) => a.estado === 'vigente') || null;
+        const acuerdo = {
+            alcance: 'saldo', fechaPacto: hoyISO(), cuotas, periodicidad: perEl.value,
+            saldoAlPactar: totalDeuda(), nota,
+            creadoPor: currentUser()?.user?.uid, rolAlCrear: currentRole(),
+        };
+        const btn = document.getElementById('acuerdo-save');
+        btn.disabled = true;
+        try {
+            if (vigente) await renegociarAcuerdo(CLIENTE_ID, vigente.id, acuerdo);
+            else await crearAcuerdo(CLIENTE_ID, acuerdo);
+            admToast('Acuerdo registrado. No cambia el saldo: re-programa las fechas de pago.');
+            close();
+        } catch (err) {
+            console.error('[cuenta] acuerdo de pago:', err);
+            admToast('No se pudo registrar el acuerdo. Intenta de nuevo; si sigue, avísale a Daniel.', 'danger', 5000);
+        } finally {
+            btn.disabled = false;
+        }
+    });
+}
+
 // ─── Gestiones de cobro (Fase M · M5) — evidencia inmutable del expediente ─────
 // El timeline y el contador salen del MISMO listener (set completo de la clienta);
 // la inmutabilidad la imponen las reglas (gestionValida + update/delete false).
@@ -886,10 +1090,22 @@ async function init() {
     wireCorregirMov();
     wireEditar();
     wireGestiones();
+    wireAcuerdo();
 
     onClienteChange(CLIENTE_ID, (c) => renderHeader(c));
     onMovimientosChange(CLIENTE_ID, (list) => renderMovimientos(list));
     onSolicitudesChange(CLIENTE_ID, (list) => renderSolicitudes(list));
+    // Acuerdos de pago: SOLO con la bandera activa (sin ella, las reglas del match
+    // pueden no estar desplegadas → cero listeners condenados a error).
+    if (acuerdosActivos()) {
+        onAcuerdosChange(CLIENTE_ID, (list) => { _acuerdos = list; renderEstado(_movs); }, () => {
+            // Listener muerto (L-40): sin acuerdos confiables la mora se muestra SIN
+            // plan (fallback conservador = más vencido) y se avisa con honestidad.
+            _acuerdos = [];
+            renderEstado(_movs);
+            admToast('No se pudieron cargar los acuerdos de pago. Recarga la página.', 'danger', 5000);
+        });
+    }
     onGestionesChange(CLIENTE_ID, (list) => renderGestiones(list), () => {
         // Estado HONESTO ante un listener muerto (L-40): jamás "sin gestiones" falso
         // ni un contador "(N)" que ya nada respalda.

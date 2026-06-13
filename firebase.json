@@ -59,7 +59,8 @@
         "*.test.mjs",
         "seed-*.mjs",
         "cargar-*.mjs",
-        "backfill-*.mjs"
+        "backfill-*.mjs",
+        "encender-*.mjs"
       ]
     }
   ],

@@ -147,7 +147,7 @@ P1=A (cumple acuerdo → sale de rojos con sello "En acuerdo de pago") · P2=A (
 - [x] Consejo Externo corrido + síntesis adopto/refuto integrada (`research-archive/2026-06-12-consejo-externo-acuerdos-respuesta.md`; §0 de esta spec)
 - [x] Respuestas P1/P2/P3 de Daniel (2026-06-12; §2 de esta spec)
 - [x] R1: fórmula ESCUDO + matriz de tests (2026-06-12 Opus: tramos eliminados; `acuerdoEsValido` sin alcance; escudo de 2 estados con corte de frontera anti-sub-programación; `test:acuerdos` 15/15 + `test:insumos` 3/3 + paridad 3/3 + suite vieja 24/24 intacta)
-- [ ] R2: reglas MUTEX `acuerdoVigenteId` + saldo-only + índice CG
+- [x] R2: reglas MUTEX `acuerdoVigenteId` + saldo-only (2026-06-12 Opus: `acuerdoValido` sin alcance + `mutexAcuerdoValido` en el doc del cliente con getAfter; create suelto y jineteo denegados; renegociar/anular = batch con puntero; emulador 144/144). Índice CG ya estaba (R2 v1)
 - [ ] R3: corte.js (ids + acuerdos + formulaVersion + estadoAlCorte cristalizado)
 - [ ] R4: UI saldo-only con el mutex
 - [ ] R5: detectores (sin solapados) + acta + Salud

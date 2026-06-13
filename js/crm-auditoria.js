@@ -202,19 +202,35 @@ function mulberry32(a) {
  * diseño; la regla no le pone techo porque el acuerdo largo legítimo existe).
  * Detectivo, no preventivo: la UI bloquea >365d al crear; esto atrapa lo que
  * entre por fuera (SDK/legacy) o lo largo-pero-permitido fuera de lo normal.
- * `acuerdos`: las facturas CUBIERTAS por un plan vigente se EXCLUYEN — su
- * horizonte lo gobierna el acuerdo (si no, todo plan legítimo inundaría el acta).
+ * `acuerdos`: SOLO las facturas CUBIERTAS por un plan vigente (registradas hasta el
+ * pacto, reloj de servidor) se EXCLUYEN — su horizonte lo gobierna el acuerdo. Una
+ * factura POST-pacto (registrada DESPUÉS de creadoEn) NO está bajo el escudo → SÍ se
+ * vigila: el hueco era excluir la clienta ENTERA y dejar parquear deuda nueva en 2099.
  */
 export function acuerdosLargos(movimientos, { umbralDias = 120, acuerdos = [] } = {}) {
     const ISO = /^\d{4}-\d{2}-\d{2}$/;
-    // v2: todo acuerdo es de SALDO → cubre por clienta. Las facturas de una clienta
-    // con plan vigente las gobierna el acuerdo (su horizonte ya lo vigila el detector
-    // de planes largos) → se excluyen para no inundar el acta.
-    const conPlan = new Set((acuerdos || []).filter((a) => a && a.estado === 'vigente').map((a) => a.clienteId));
+    const ms = (t) => (t && typeof t.toMillis === 'function' ? t.toMillis() : null);
+    // Ancla de cobertura por clienta = creadoEn del acuerdo vigente (varios legacy →
+    // el más nuevo, espejo de la fórmula). Sin reloj → no excluye nada (conservador:
+    // un acuerdo sin creadoEn es anómalo, mejor vigilar sus facturas que esconderlas).
+    const anclaPorCliente = new Map();
+    for (const a of acuerdos || []) {
+        if (!a || a.estado !== 'vigente' || !a.clienteId) continue;
+        const anc = ms(a.creadoEn);
+        if (anc == null) continue;
+        const cur = anclaPorCliente.get(a.clienteId);
+        anclaPorCliente.set(a.clienteId, cur == null ? anc : Math.max(cur, anc));
+    }
     const out = [];
     for (const m of movimientos || []) {
         if (!m || m.anulado === true || m.tipo !== 'factura') continue;
-        if (conPlan.has(m.clienteId)) continue;
+        const ancla = anclaPorCliente.get(m.clienteId);
+        if (ancla != null) {
+            // CUBIERTA (registrada hasta el pacto) → la gobierna el acuerdo. Sin
+            // registradoEn → NO cubierta (conservador) → se vigila igual.
+            const reg = ms(m.registradoEn);
+            if (reg != null && reg <= ancla) continue;
+        }
         if (!ISO.test(m.fecha || '') || !ISO.test(m.vencimiento || '')) continue;
         const dias = Math.round((Date.parse(m.vencimiento) - Date.parse(m.fecha)) / 864e5);
         if (dias > umbralDias) out.push({ ...m, diasAcuerdo: dias });

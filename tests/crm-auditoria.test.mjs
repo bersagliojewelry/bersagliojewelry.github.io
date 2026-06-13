@@ -247,12 +247,18 @@ test('renegociacionesSeriales: cuenta por creadoEn (reloj de servidor), no por e
     assert.deepEqual(r, [{ clienteId: 'cliX', n: 2 }]);
 });
 
-test('acuerdosLargos excluye facturas de una clienta CON plan vigente (v2: saldo)', () => {
+test('acuerdosLargos excluye SOLO las facturas CUBIERTAS por el plan (registradoEn ≤ pacto), no la clienta entera', () => {
     const movs = [
-        { id: 'f1', clienteId: 'cliA', tipo: 'factura', monto: 90000, fecha: '2026-06-01', vencimiento: '2026-12-01', anulado: false }, // 183d, cliA tiene plan
-        { id: 'f2', clienteId: 'cliB', tipo: 'factura', monto: 70000, fecha: '2026-06-01', vencimiento: '2026-12-01', anulado: false }, // 183d, cliB SIN plan → aparece
+        // cliA CUBIERTA (registrada antes del pacto T0A) → la gobierna el plan → EXCLUIDA
+        { id: 'cubierta', clienteId: 'cliA', tipo: 'factura', monto: 90000, fecha: '2026-06-01', vencimiento: '2026-12-01', anulado: false, registradoEn: tsA(T0A - 5 * 864e5) },
+        // cliA POST-PACTO parqueada en 2099 (registrada DESPUÉS del pacto) → NO cubierta → VIGILADA (el hueco que se cierra)
+        { id: 'parqueada', clienteId: 'cliA', tipo: 'factura', monto: 50000, fecha: '2026-06-20', vencimiento: '2099-01-01', anulado: false, registradoEn: tsA(T0A + 10 * 864e5) },
+        // cliB SIN plan → aparece
+        { id: 'f2', clienteId: 'cliB', tipo: 'factura', monto: 70000, fecha: '2026-06-01', vencimiento: '2026-12-01', anulado: false },
     ];
-    const acs = [acuerdoFix({ clienteId: 'cliA' })];   // v2: cubre por clienta (saldo)
-    const r = acuerdosLargos(movs, { umbralDias: 120, acuerdos: acs });
-    assert.deepEqual(r.map((m) => m.id), ['f2']);
+    const acs = [acuerdoFix({ clienteId: 'cliA', creadoEn: tsA(T0A) })];
+    const ids = acuerdosLargos(movs, { umbralDias: 120, acuerdos: acs }).map((m) => m.id);
+    assert.ok(ids.includes('parqueada'), 'la factura POST-pacto parqueada NO debe esconderse tras el plan');
+    assert.ok(ids.includes('f2'), 'la factura de una clienta sin plan aparece');
+    assert.ok(!ids.includes('cubierta'), 'la factura cubierta por el plan se excluye (la gobierna el acuerdo)');
 });

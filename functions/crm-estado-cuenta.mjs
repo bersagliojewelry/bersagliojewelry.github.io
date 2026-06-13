@@ -24,14 +24,14 @@
  * (se reporta en `sinFecha` para que Kary defina la fecha de corte) — un
  * `vencimiento` sin `fecha` NO envejece (caso imposible bajo el candado M3).
  *
- * ACUERDOS DE PAGO (spec 2026-06-12, `opts.acuerdos`): un acuerdo vigente y
- * VÁLIDO (acuerdoEsValido — la validación vive AQUÍ, en el archivo de paridad)
- * re-programa la exigibilidad del pendiente que cubre en TRAMOS por cuota.
- * Precedencia por cargo: acuerdo > mov.vencimiento (M6) > fecha+plazo. Notas:
- * un acuerdo 'factura' cuyo movimiento fue corregido (id nuevo, M2b) queda
- * huérfano → no cubre nada → fallback benigno (detector M4 lo lista); el
- * `vencimiento` del movimiento queda obsoleto tras renegociar (inmutable) —
- * irrelevante por precedencia mientras el acuerdo viva.
+ * ACUERDOS DE PAGO (spec v2 2026-06-12 §1.4, Consejo Externo; `opts.acuerdos`): un
+ * acuerdo vigente y VÁLIDO (acuerdoEsValido — la validación vive AQUÍ, el archivo de
+ * paridad) NO mueve dinero: re-programa la EXIGIBILIDAD de la deuda que cubre como un
+ * ESCUDO de 2 estados (sin tramos). Cobertura por reloj de SERVIDOR (registradoEn ≤
+ * creadoEn). AL DÍA → la deuda cubierta se rige por el cronograma; ROTO (≥N cuotas
+ * vencidas impagas) → el escudo CAE y la deuda revive su vencimiento ORIGINAL (mora
+ * histórica para el castigo M7). Solo SALDO (sin `alcance`); por el mutex hay a lo
+ * sumo UN vigente. Sin acuerdos → salida IDÉNTICA a la fórmula previa (test que lo fija).
  */
 
 // Signo que cada tipo aporta al saldo (idéntico a functions/saldo.js).
@@ -174,7 +174,7 @@ export function estadoCuenta(movimientos, opts = {}) {
       // imposible (2026-02-30 pasa la regex de la regla) devuelve null = fallback.
       const vencNum = (mov && typeof mov.vencimiento === 'string') ? toDayNum(mov.vencimiento) : null;
       cargos.push({
-        dayNum: fechaISO ? toDayNum(fechaISO) : null, fechaISO, pendiente: a, vencNum,
+        dayNum: fechaISO ? toDayNum(fechaISO) : null, fechaISO, pendiente: a, orig: a, vencNum,
         // Insumos de los ACUERDOS (spec §1.4): id ancla los de alcance 'factura';
         // registradoEn (reloj de SERVIDOR) ancla la cobertura de 'saldo' — una
         // factura retrofechada DESPUÉS del pacto no se desliza bajo el acuerdo.
@@ -232,18 +232,23 @@ export function estadoCuenta(movimientos, opts = {}) {
     // (recién pactado) → ancla = +∞ ⇒ cubre toda la deuda actual (semántica "pacté
     // hoy sobre lo que debe"). Cargo sin regMs (legacy) → fuera (conservador).
     const anclaMs = ms(acuerdo.creadoEn) ?? Infinity;
-    const cubiertos = cargos.filter((c) => c.pendiente > 0 && c.dayNum != null
-      && c.regMs != null && c.regMs <= anclaMs);
+    const esCubierto = (c) => c.dayNum != null && c.regMs != null && c.regMs <= anclaMs;
+    const cubiertos = cargos.filter((c) => c.pendiente > 0 && esCubierto(c));
     const deudaCubierta = round2(cubiertos.reduce((s, c) => s + c.pendiente, 0));
+    // Reducción FIFO realmente PROBADA sobre la deuda cubierta (Σ orig−pendiente del
+    // libro append-only, incl. cargos ya saldados): verdad de servidor infalsificable
+    // que acota `pagado` para que inflar Σcuotas no fabrique abonos fantasma.
+    const pagadoReal = round2(cargos.filter(esCubierto).reduce((s, c) => s + (c.orig - c.pendiente), 0));
     const sumaCuotas = acuerdo.cuotas.reduce((s, q) => s + q.monto, 0);
     // Deuda cubierta totalmente pagada (o nada que cubrir) → el plan ya no aplica
     // (no mostrar "próxima cuota" a quien no debe). El acuerdo sigue 'vigente' en la
     // BD (no se sella solo); el panel deja de pintarlo cuando no hay deuda.
     if (deudaCubierta <= 0) { /* plan = null, bajoAcuerdo = 0 (defaults) */ }
     else {
-    // Pagado del plan = lo que el FIFO ya redujo de la deuda cubierta (clamp a Σcuotas:
-    // inflar el cronograma no parquea nada — las cuotas extra nunca se alcanzan).
-    let pagado = Math.min(Math.max(0, round2(sumaCuotas - deudaCubierta)), sumaCuotas);
+    // Pagado del plan = lo que el FIFO ya redujo de la deuda cubierta, ACOTADO por la
+    // reducción realmente probada (pagadoReal): inflar Σcuotas por encima de la deuda
+    // NO fabrica un "pagado" fantasma que esconda cuotas vencidas (HIGH del comité).
+    let pagado = Math.max(0, Math.min(round2(sumaCuotas - deudaCubierta), pagadoReal));
     let exigible = 0, vencidoPlan = 0, cuotasVenc = 0;
     let proxima = null;
     for (const q of acuerdo.cuotas) {

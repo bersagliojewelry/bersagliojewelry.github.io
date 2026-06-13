@@ -142,6 +142,22 @@ test('EXCESO sobre Σcuotas (sub-programación) envejece por su vencimiento ORIG
     assert.equal(r.bajoAcuerdo, 300000);      // el exceso NO se etiqueta como pactado
 });
 
+test('cuotas INFLADAS sobre la deuda cubierta NO fabrican pagado fantasma (mora real expuesta)', () => {
+    // Deuda cubierta REAL = 100k (una factura, sin abonos). Acuerdo INFLADO por SDK:
+    // 3 cuotas de 100k (Σ=300k = 3× la deuda), DOS ya vencidas. El clamp viejo hacía
+    // pagado = Σcuotas − deudaCubierta = 200k FANTASMA (nadie pagó) → marcaba las 2
+    // cuotas vencidas como pagadas → al-día FALSO. El fix acota `pagado` por la
+    // reducción FIFO realmente probada (Σ orig−pendiente del libro inmutable) = 0.
+    const movs = [mov('factura', 100000, hace(40), { id: 'f1' })];
+    const cuotas = [{ fecha: hace(10), monto: 100000 }, { fecha: hace(5), monto: 100000 }, { fecha: en(20), monto: 100000 }];
+    const r = estadoCuenta(movs, { ...OPTS, acuerdos: [acuerdo({ cuotas })] });
+    assert.equal(r.saldo, 100000);
+    assert.equal(r.plan.roto, true);          // 2 cuotas vencidas impagas (no fantasma) → escudo CAE
+    assert.equal(r.vencido, 100000);          // la mora real NO se esconde
+    assert.equal(r.bajoAcuerdo, 0);
+    assert.notEqual(r.estado, 'al-dia');
+});
+
 test('cobertura por reloj de SERVIDOR: factura registrada DESPUÉS del pacto queda fuera', () => {
     const movs = [
         mov('factura', 100000, hace(60), { id: 'vieja', registradoEn: ts(T0 - 60 * DAY) }),

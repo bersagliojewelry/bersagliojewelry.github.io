@@ -37,8 +37,9 @@ function mesAnterior(ahora = new Date()) {
 // Versión de la FÓRMULA del aging que fotografía este corte. El mes del
 // despliegue de acuerdos, "vencido" cambia por FÓRMULA, no por cobranza — sin
 // este marcador, una comparativa mes-a-mes leería una mejora/empeora ficticia.
-//   v1 = fecha+plazo / vencimiento M6 · v2 = + acuerdos de pago (tramos por cuota)
-const FORMULA_VERSION = 2;
+//   v1 = fecha+plazo / vencimiento M6 · v2 = acuerdos por TRAMOS (descartada) ·
+//   v3 = acuerdos como ESCUDO de 2 estados (Consejo Externo; saldo + mutex)
+const FORMULA_VERSION = 3;
 
 /**
  * Agrupa docs de un collectionGroup por clienteId conservando el ID del doc.
@@ -56,6 +57,21 @@ function agruparPorCliente(docs) {
         por.get(clienteId).push({ id: d.id, ...d.data() });
     }
     return por;
+}
+
+/**
+ * Cristaliza el estado del acuerdo para el corte inmutable (evidencia DIAN art.
+ * 146). Estados: 'al-dia' (cumple), 'en-mora' (atrasado pero el escudo aguanta),
+ * 'incumplido' (roto/perforado). PURO → testeable sin emulador.
+ * @param {object} plan  est.plan de estadoCuenta ({acuerdoId, roto, vencidoPlan, cuotasVencidas})
+ */
+function acuerdoAlCorte(plan) {
+    return {
+        id: plan.acuerdoId,
+        estadoAlCorte: plan.roto ? 'incumplido' : (plan.vencidoPlan > 0 ? 'en-mora' : 'al-dia'),
+        cuotasVencidas: plan.cuotasVencidas,
+        vencidoPlan: plan.vencidoPlan,
+    };
 }
 
 /**
@@ -105,10 +121,13 @@ async function runCorte(db, mes, origen) {
             sinFecha: est.sinFecha, diasMora: est.diasMora, buckets: est.buckets,
             estado: est.estado,
             // Cartera reestructurada ≠ vigente: la foto distingue al-día-genuino de
-            // al-día-por-pacto (compacto: el calendario probatorio vive en el doc
-            // inmutable del acuerdo, no se duplica aquí — límite de 1 MiB).
+            // al-día-por-pacto. `bajoAcuerdo` = monto reestructurado.
             ...(est.bajoAcuerdo > 0 ? { bajoAcuerdo: est.bajoAcuerdo } : {}),
-            ...(est.plan ? { plan: est.plan } : {}),
+            // CRISTALIZACIÓN del estado del acuerdo (Consejo Externo, evidencia DIAN
+            // art. 146): el estado DERIVADO se congela firmado por el reloj del
+            // servidor — reconstruirlo al vuelo en 2 años es indefendible. Compacto
+            // (el calendario probatorio vive en el doc inmutable del acuerdo).
+            ...(est.plan ? { acuerdoAlCorte: acuerdoAlCorte(est.plan) } : {}),
         };
         totales.saldo += est.saldo;
         totales.vencido += est.vencido;
@@ -148,3 +167,4 @@ exports.corteMensual = onSchedule({
 exports.runCorte = runCorte;
 exports.mesAnterior = mesAnterior;
 exports.agruparPorCliente = agruparPorCliente;
+exports.acuerdoAlCorte = acuerdoAlCorte;

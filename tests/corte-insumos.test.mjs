@@ -16,7 +16,7 @@ import { createRequire } from 'node:module';
 import { estadoCuenta } from '../js/crm-estado-cuenta.js';
 
 const require = createRequire(import.meta.url);
-const { agruparPorCliente } = require('../functions/corte.js');
+const { agruparPorCliente, acuerdoAlCorte } = require('../functions/corte.js');
 
 const HOY = '2026-06-07';
 const DAY = 86400000;
@@ -89,4 +89,17 @@ test('insumos: docs sin clienteId (path roto) se descartan sin reventar', () => 
     const suelto = { id: 'x', data: () => ({}), ref: { parent: { parent: null } } };
     const por = agruparPorCliente([suelto]);
     assert.equal(por.size, 0);
+});
+
+// ─── R3: cristalización del estado del acuerdo (evidencia DIAN art. 146) ───────
+test('acuerdoAlCorte: roto→incumplido; atrasado→en-mora; al día→al-dia', () => {
+    assert.deepEqual(
+        acuerdoAlCorte({ acuerdoId: 'a1', roto: true, vencidoPlan: 300000, cuotasVencidas: 3 }),
+        { id: 'a1', estadoAlCorte: 'incumplido', cuotasVencidas: 3, vencidoPlan: 300000 });
+    assert.deepEqual(
+        acuerdoAlCorte({ acuerdoId: 'a2', roto: false, vencidoPlan: 40000, cuotasVencidas: 1 }),
+        { id: 'a2', estadoAlCorte: 'en-mora', cuotasVencidas: 1, vencidoPlan: 40000 });
+    assert.deepEqual(
+        acuerdoAlCorte({ acuerdoId: 'a3', roto: false, vencidoPlan: 0, cuotasVencidas: 0 }),
+        { id: 'a3', estadoAlCorte: 'al-dia', cuotasVencidas: 0, vencidoPlan: 0 });
 });

@@ -130,5 +130,7 @@
 | §80 | 2026-06-12 — M6 acuerdo de pago POR DEUDA (directiva Daniel; resuelve pregunta 1): vencimiento efectivo en aging (paridad 3/3) + herencia condicional en correcciones + UI v15 + detector acuerdosLargos + verif. experta 16 agentes (12 fixes); CERRADO mismo día (80.8: PR #234 + v15 vivo; directiva asesores → 50 §5) | 1183 |
 ---
 
+| §81 | 2026-06-12 — ACUERDOS de pago / plan de cuotas: diseño v2 (Consejo Externo Gemini demolió la v1) + build R1-R5 [OPUS-4.8 interino]: mutex `acuerdoVigenteId` (cierra jineteo) · solo saldo · escudo de 2 estados · `acuerdoAlCorte` cristalizado; GATEADO/inerte (`acuerdosActivos` off); rules 144/144; PENDIENTE R6 (deploy + bandera + verif. por hito) | 1203 |
+
 > Mantener este índice sincronizado: cuando se agregue un ADR §57+ al historial,
 > añadir su fila aquí con la línea de inicio (`Select-String` o `grep`).

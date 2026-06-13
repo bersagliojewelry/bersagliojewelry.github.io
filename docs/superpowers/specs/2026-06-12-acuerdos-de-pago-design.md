@@ -1,179 +1,158 @@
-# Acuerdos de pago / Plan de cuotas — Diseño (síntesis del comité)
+# Acuerdos de pago / Plan de cuotas — Diseño **v2** (Consejo Externo integrado)
 
-> **Estado**: POSTURA SELLADA del comité (2026-06-12) — pendiente: (1) respuestas de Daniel a las 3 preguntas cerradas (§3), (2) crítica adversarial del Consejo Externo (prompt en bóveda `research-archive/2026-06-12-consejo-externo-acuerdos-prompt.md`). NO construir antes de integrar ambas.
-> **Origen**: directivas de Daniel 2026-06-12 (ADR §80 + `50-ARQUITECTURA §5`): fiado pactado como plan (fecha final, cuotas, periodicidad, fechas pactadas; vencido = fecha pactada sin recaudo) · seguimiento a morosos con acuerdos de pago · a futuro los pacta un ASESOR ASIGNADO — pensar para empresa grande.
-> **Deliberación**: comité 7 agentes (3 propuestas: contador/arquitecto/operación + red-team de fraude c/u + síntesis presidencial). CRUDO: bóveda `research-archive/2026-06-12-comite-acuerdos-cuotas-CRUDO.json`.
+> **⚠️ [OPUS-4.8 interino — revisar cuando vuelva Fable]** La v1 (comité de 7 agentes de Fable) fue **revisada por el Consejo Externo (Gemini 3.1 Pro)**, que encontró un hueco de fraude real + sobre-ingeniería. Esta v2 integra el dictamen (síntesis adopto/refuto en bóveda `research-archive/2026-06-12-consejo-externo-acuerdos-respuesta.md`). La **implementación v1 (slices 1-5) quedó SUPERSEDED** — está en el árbol pero **GATEADA por `config/cartera.acuerdosActivos` (apagada en prod = inerte y segura)**; debe REHACERSE contra esta v2 antes de encender la bandera.
+> **Estado**: diseño v2 sellado · P1=A·P2=A·P3=B/24m (Daniel) · Consejo integrado. **Pendiente: rework de los 5 slices + verificación POR HITO + ADR §81.**
+> **Origen**: directivas de Daniel 2026-06-12 (fiado como plan; seguimiento a morosos con acuerdos; pensar en grande — asesor asignado futuro).
 
 ---
 
-## 1. DISEÑO UNIFICADO
+## 0. QUÉ CAMBIÓ DE v1 A v2 (el dictamen del Consejo)
 
-### 1.1 Principio rector (invariante del slice)
+| v1 (comité Fable) | v2 (Consejo integrado) | Por qué |
+|---|---|---|
+| `alcance: 'factura' | 'saldo'` | **SOLO `'saldo'`** (sin `alcance` ni `movimientoId`) | El FIFO global ciego no puede atribuir un abono a la cuota de UNA factura → estados falsos ("incumplió" con recibo en mano). Si el recaudo es FIFO global, el acuerdo NO puede ser atómico por factura. |
+| Renegociar = batch `getAfter` (create+sello) | **Mutex `acuerdoVigenteId` en el doc del cliente** | El `getAfter` solo cerraba el camino honesto. Las reglas NO iteran colecciones → no sabían si ya había un vigente. Kary inyectaba un acuerdo SUELTO (la fórmula honra el `creadoEn` mayor) → **vector de jineteo**: oculta una mora skimmeada bajo una "renegociación" a 23 meses. El puntero en el doc maestro lo cierra a nivel criptográfico. |
+| Aging por **TRAMOS** (`min(restoCuota, restoCargo)`) | **Escudo de 2 estados** (al-día / perforado) | Conciliar cuotas con facturas línea por línea es sobre-ingeniería. El plan es un ESCUDO: al día → mora = Σcuotas pasadas − abonos; roto → el escudo cae y revive los vencimientos ORIGINALES (mora histórica 360+ para la DIAN). |
+| Corte guarda `plan`/`bajoAcuerdo` | + **`estadoAlCorte` cristalizado por acuerdo** | Derivar al vuelo la historia de hace 2 años es indefendible ante la DIAN (art. 146). El snapshot inmutable debe guardar `{id, estadoAlCorte, cuotasVencidas}` firmado por el reloj del servidor. |
+| `acuerdoMaxSinAprobacion` reservado en config | **Fuera del modelo (YAGNI)** | Solo `rolAlCrear` + `creadoPor`. El tope del asesor se diseña con el RBAC (TODO-19), no hoy. |
+| Detector `solapados` | **Innecesario** (el mutex hace el solape imposible por diseño de BD) | Un script menos que mantener. |
 
-**El acuerdo NO mueve dinero: re-programa la EXIGIBILIDAD.** El libro (`movimientos`, append-only, candado M3) y `saldoActual` (solo CF) quedan intactos. El acuerdo solo decide *cuándo está vencido qué*. Y como en este sistema **la visibilidad ES el control** (lección de la anulación de abonos owner-only), todo lo que un acuerdo pueda esconder se expone obligatoriamente en el acta mensual.
+---
+
+## 1. DISEÑO UNIFICADO v2
+
+### 1.1 Principio rector
+
+**El acuerdo NO mueve dinero: re-programa la EXIGIBILIDAD de TODA la deuda actual.** El libro (`movimientos`, append-only, candado M3) y `saldoActual` (solo CF) quedan intactos. **La visibilidad ES el control**: todo lo que un acuerdo pueda esconder se expone en el acta mensual + se cristaliza en el corte inmutable.
 
 ### 1.2 Modelo de datos
 
-`clientes/{clienteId}/acuerdos/{acuerdoId}` — subcolección del cliente (patrón solicitudes/gestiones), cuotas **embebidas** (1 lectura = plan completo), **jamás** subcolección de cuotas ni plan embebido en la factura (renegociar exigiría anular la factura, destruyendo el FIFO).
+**`clientes/{clienteId}`** (doc maestro): **+ `acuerdoVigenteId: string|null`** — el **MUTEX**. ES la fuente de verdad de "cuál acuerdo está activo"; los docs `/acuerdos` son evidencia, el puntero es autoridad. La CF del saldo escribe con `tx.set(...,{merge:true})` (functions/index.js:261) → jamás lo pisa. En la whitelist de update del cliente, con transición validada (§1.3).
 
+**`clientes/{clienteId}/acuerdos/{acuerdoId}`** (cuotas embebidas):
 ```
 {
-  alcance: 'factura' | 'saldo',
-  movimientoId?: string,            // solo alcance 'factura' (UN cargo); prohibido en 'saldo'
-  fechaPacto: 'YYYY-MM-DD',         // fecha del HECHO (fechaHechoValida) — EVIDENCIA, jamás insumo de cobertura
-  cuotas: [{fecha:'YYYY-MM-DD', monto:int}],   // 1..36 (UI genera ≤24), ascendentes, entero COP
-  periodicidad: 'quincenal'|'mensual'|'fechas',// metadato del generador (informativo)
-  primeraCuotaFecha, ultimaCuotaFecha: string, // denormalizadas para el "sobre" de las reglas
-  saldoAlPactar: int,               // foto-evidencia (espejo saldoAlSolicitar). NUNCA insumo de la fórmula
-  nota: string,                     // obligatoria: qué se habló (evidencia)
-  estado: 'vigente'|'reemplazado'|'anulado',   // SOLO ciclo de vida; cumplido/incumplido SE DERIVAN
+  fechaPacto: 'YYYY-MM-DD',          // fecha del hecho (fechaHechoValida) — evidencia
+  cuotas: [{fecha:'YYYY-MM-DD', monto:int>0}],  // 1..36, fechas ESTRICTAMENTE crecientes
+  periodicidad: 'quincenal'|'mensual'|'fechas',  // informativo (generador)
+  primeraCuotaFecha, ultimaCuotaFecha,           // sobre denormalizado (reglas)
+  saldoAlPactar: int,                // EVIDENCIA (deuda exigible congelada). NUNCA insumo de la fórmula
+  nota: string,                      // obligatoria (qué se habló) ≤500
+  estado: 'vigente'|'reemplazado'|'anulado',     // CICLO DE VIDA; cumplido/incumplido se DERIVAN
   reemplazaA?: acuerdoId,
-  creadoPor: uid, creadoEn: serverTime, rolAlCrear: string,  // == getUserRole() — evidencia con investidura
-  // cierre one-way: cerradoPor/cerradoEn/motivoCierre/reemplazadoPor
+  creadoPor, creadoEn(serverTime), rolAlCrear,   // investidura probatoria (costura asesor)
+  // cierre one-way: cerradoPor/cerradoEn/motivoCierre?/reemplazadoPor?
 }
 ```
+**Quitado de v1:** `alcance`, `movimientoId`. **No** hay `acuerdoMaxSinAprobacion`.
 
-**Decisiones de choque resueltas:**
+### 1.3 Reglas — el MUTEX (lo nuevo y crítico)
 
-- **`alcance 'factura'|'saldo'` y NO `deudaIds[]`**: el red-team demostró que `deudaIds` es inverificable en reglas (duplicados, solapes, ids inexistentes = superficie de manipulación silenciosa) y los dos casos reales del mostrador son "esta venta en cuotas" y "todo lo de la morosa". El multi-select no tiene caso de uso.
-- **Cobertura de 'saldo' anclada a `registradoEn ≤ acuerdo.creadoEn` (reloj de SERVIDOR), NO a `fecha`**: cierra el ataque verificado — `fechaHechoValida` acepta cualquier fecha ≥2015, así que una factura retrofechada se deslizaría bajo el acuerdo. Con el reloj de servidor (doctrina M4) retrofechar no esconde nada.
-- **SIN `montoPactado`/`saldoBase` como insumo de la fórmula** (el red-team encontró el agujero dos veces: saldoPactado inflado = cuotas "pagadas" al nacer / sub-alcance = parqueo del excedente). **El cronograma es la única verdad**; el pendiente cubierto se mapea contra las cuotas y **el excedente sobre Σcuotas conserva su vencimiento original M6/plazo** (determinista, conservador). `saldoAlPactar` queda como evidencia comparable contra el corte inmutable — nunca alimenta nada.
+Verdad = `cliente.acuerdoVigenteId`. Tres transiciones, TODAS batch atómico enforce-able por `getAfter` (estado POST-batch):
 
-### 1.3 Reglas (pseudocódigo — frontera sin get() en el camino diario)
+1. **Primer acuerdo** (puntero null→new): crear `acuerdos/{new}` vigente **+** `cliente.acuerdoVigenteId = new`.
+2. **Renegociación** (old→new, admin): crear `acuerdos/{new}` (vigente, `reemplazaA=old`) **+** sellar `acuerdos/{old}` (reemplazado, `reemplazadoPor=new`) **+** `cliente.acuerdoVigenteId = new`.
+3. **Anulación** (old→null, **OWNER**): sellar `acuerdos/{old}` (anulado, `motivoCierre`) **+** `cliente.acuerdoVigenteId = null`.
 
 ```
-function acuerdoValido(d) {
-  return d.keys().hasOnly([...whitelist §1.2...])
-    && d.estado == 'vigente'
-    && d.alcance in ['factura','saldo']
-    && (d.alcance != 'factura' || nonEmptyStr(d.movimientoId))
-    && (d.alcance != 'saldo'   || !('movimientoId' in d))
-    && fechaHechoValida(d.fechaPacto)
-    && d.cuotas is list && d.cuotas.size() >= 1 && d.cuotas.size() <= 36
-    && nonEmptyStr(d.nota)
-    && d.primeraCuotaFecha is string && d.ultimaCuotaFecha is string
-    && d.primeraCuotaFecha >= d.fechaPacto                      // sobre, no verdad (§1.4)
-    && d.creadoPor == request.auth.uid && d.creadoEn == request.time
-    && d.rolAlCrear == getUserRole()
-    // RENEGOCIACIÓN ATÓMICA (getAfter, patrón pre-batch §69 C3):
-    && (!('reemplazaA' in d) ||
-        (getAfter(/...clientes/$(cid)/acuerdos/$(d.reemplazaA)).data.estado == 'reemplazado'
-         && getAfter(...$(d.reemplazaA)).data.reemplazadoPor == acuerdoId));
-}
-function transicionAcuerdoValida() {     // one-way desde 'vigente'
-  return resource.data.estado == 'vigente'
-    && d.diff(resource.data).affectedKeys()
-         .hasOnly(['estado','cerradoPor','cerradoEn','motivoCierre','reemplazadoPor'])
-    && d.cerradoPor == request.auth.uid && d.cerradoEn == request.time
-    && ( (d.estado == 'reemplazado' && isAdmin() && nonEmptyStr(d.reemplazadoPor)
-          && getAfter(...$(d.reemplazadoPor)).data.estado == 'vigente'
-          && getAfter(...$(d.reemplazadoPor)).data.reemplazaA == acuerdoId)
-       ||(d.estado == 'anulado' && isOwner() && nonEmptyStr(d.motivoCierre)) );   // ⬅ owner-only
-}
-match /clientes/{cid}/acuerdos/{id} {
-  allow read: if isAdmin();
-  allow create: if isAdmin() && acuerdoValido();
-  allow update: if transicionAcuerdoValida();
-  allow delete: if false;                                  // evidencia art. 146: jamás
-}
-match /{path=**}/acuerdos/{id} { allow read: if isAdmin(); }   // + índice COLLECTION_GROUP (estado ASC)
+// CREATE de un acuerdo: el cliente DEBE apuntarme tras el batch (fuerza el puntero
+// en la misma transacción → imposible el acuerdo SUELTO del vector de jineteo).
+allow create: if isAdmin() && acuerdoValido()
+  && getAfter(/clientes/$(cid)).data.acuerdoVigenteId == acuerdoId
+  && (!('reemplazaA' in d) ||
+      (getAfter(.../acuerdos/$(d.reemplazaA)).data.estado == 'reemplazado'
+       && getAfter(.../acuerdos/$(d.reemplazaA)).data.reemplazadoPor == acuerdoId));
+
+// UPDATE (cierre one-way desde 'vigente'):
+allow update: if resource.data.estado == 'vigente'
+  && affectedKeys ⊆ [estado,cerradoPor,cerradoEn,motivoCierre,reemplazadoPor]
+  && cerradoPor==uid && cerradoEn==request.time
+  && ( (estado=='reemplazado' && isAdmin() && getAfter(client).acuerdoVigenteId != acuerdoId)
+     || (estado=='anulado'    && isOwner() && nonEmptyStr(motivoCierre)
+                              && getAfter(client).acuerdoVigenteId == null) );
+
+allow delete: if false;   // evidencia art. 146
+
+// CLIENTE update del puntero (en la whitelist; transición validada):
+//   null → new : getAfter(new).estado=='vigente'                          (admin, 1er acuerdo)
+//   old  → new : getAfter(new).vigente && getAfter(old).reemplazado       (admin, renegociar)
+//   old  → null: getAfter(old).anulado && isOwner()                       (owner, anular)
 ```
+`match /{path=**}/acuerdos/{id} { allow read: if isAdmin(); }` + índice CG (estado, creadoEn).
 
-**Decisión presidencial — la ANULACIÓN de un acuerdo es OWNER-only** (mata 3 vectores: la goma de borrar que fragmenta la cadena probatoria, el parqueo por cancelación de un acuerdo cuyo flujo dejó `vencimiento` lejano, y la invisibilidad ante detectores por enlace). Espejo exacto del precedente "anular abonos → owner-only". Kary renegocia libremente (reemplazo atómico encadenado); **borrar un cronograma solo lo hace Daniel**.
+### 1.4 Semántica de vencido — ESCUDO de 2 estados (sin tramos)
 
-**Renegociación** = UN `writeBatch` (id nuevo pre-commit): crear nuevo con `reemplazaA` + sellar viejo `vigente→reemplazado`. Los `getAfter` de ambos lados hacen IMPOSIBLE el create suelto o el sello sin reemplazo. Renegociación de morosa = acuerdo nuevo `alcance:'saldo'`; el viejo + gestiones M5 + cortes que fotografiaron la mora = expediente art. 146 completo.
+`estadoCuenta(movimientos, opts)` con `opts.acuerdo` (el ÚNICO vigente, del puntero) + `opts.horizonteDias`:
 
-**Límite honesto declarado**: las reglas no iteran `cuotas[]`. La verdad NO está en el "sobre" denormalizado: está en §1.4 — la fórmula valida la lista real e IGNORA el acuerdo inválido (falla conservadora), y esa validación vive en el archivo de PARIDAD, no en el módulo de UI.
+1. **FIFO corre INTACTO** (como hoy) → `pendiente` por cargo + `vencido` por vencimiento original. Cada cargo marca `cubierto = registradoEn <= acuerdo.creadoEn` (reloj de SERVIDOR — una factura retrofechada DESPUÉS del pacto no se cuela bajo el escudo).
+2. Si hay acuerdo estructuralmente válido (`acuerdoEsValido`) — **NO TRAMOS**, se computa el plan directo:
+   - `deudaCubiertaRestante` = Σ `pendiente` de los cargos cubiertos (lo que queda del plan tras el FIFO).
+   - `pagadoDelPlan = clamp(Σcuotas − deudaCubiertaRestante, 0, Σcuotas)`; se camina cuota-a-cuota desde el frente → `restoCuota` impago de cada una.
+   - `vencidoPlan = Σ restoCuota[cuota.fecha < hoy]`; `cuotasVencidasImpagas` = #cuotas pasadas con resto>0; `diasMoraPlan` = mora de la cuota impaga más vieja.
+   - **`roto = cuotasVencidasImpagas >= N`** (knob `config/cartera.acuerdoIncumplidoCuotas`, default 2, owner-only). Estado DERIVADO, jamás almacenado.
+3. **ESCUDO (no roto)**: el vencido de los cargos CUBIERTOS se REEMPLAZA por `vencidoPlan` (en el bucket de `diasMoraPlan`); los cargos NO cubiertos (deuda post-pacto) envejecen normal. `bajoAcuerdo = deudaCubiertaRestante`. Estado: `vencido` si hay vencido (plan+post), si no `en-acuerdo` (sello P1), si no `al-dia`.
+4. **PERFORADO (roto)**: se IGNORA el acuerdo → la fórmula es EXACTA al camino sin-acuerdo (los cargos cubiertos reviven su vencimiento original → mora histórica 360+ para M7). `bajoAcuerdo=0`; `plan` se reporta a la UI como INCUMPLIDO pero el aging es el histórico.
+5. **Precedencia / legacy**: sin acuerdo → salida byte-igual a hoy (cero migración). `acuerdoEsValido` vive en el archivo de PARIDAD (panel y corte validan idéntico); inválido → ignorado → fallback conservador.
 
-### 1.4 Semántica de vencido — integrada al aging (UNA fórmula, L-03)
+**Salida ADITIVA**: `+ bajoAcuerdo:int + plan:{acuerdoId, exigible, vencidoPlan, cuotasVencidas, proximaCuota, roto}|null`.
 
-**VENCIDO = EXIGIBLE ACUMULADO impago** (unánime; decidido, no se pregunta): Σ de cuotas con `hoy > cuota.fecha` menos lo cubierto. Ni solo la última cuota (subestima provisión art. 145), ni todo el saldo (cláusula aceleratoria que el fiado no pacta).
+### 1.5 Corte mensual — cristaliza la evidencia (F4 del Consejo)
 
-Mecánica dentro de `estadoCuenta(movimientos, opts)` con `opts.acuerdos = []` opcional (técnica de **TRAMOS**):
+`corte.js`: + `id` del movimiento + `collectionGroup('acuerdos')` (solo vigentes por cliente) + `formulaVersion` + por clienta: `plan` + `bajoAcuerdo` + **`acuerdoAlCorte: {id, estadoAlCorte:'al-dia'|'incumplido', cuotasVencidas}`** (prueba pre-constituida, firmada por el reloj del servidor — defendible ante la DIAN).
 
-1. El FIFO corre EXACTAMENTE como hoy → `pendiente` por cargo (créditos al cargo más viejo — doctrina M6 intacta, cero matching manual: el abono paga la cuota más vieja por construcción).
-2. **Validación interna** `acuerdoEsValido(a, opts)` — EN el archivo de paridad: fechas ISO crecientes y parseables (round-trip `toDayNum`), montos `int > 0`, tamaño 1..36, `primera/ultimaCuotaFecha` == cuotas reales, `ultimaCuota ≤ creadoEn + horizonteDias` (knob de config, P3). Inválido → **acuerdo IGNORADO** → fallback M6/plazo (más vencido = conservador).
-3. **Selección determinista**: por cargo, el acuerdo `vigente` válido que lo cubre con **mayor `creadoEn` (desempate: acuerdoId lexicográfico mayor)** — panel y corte idénticos siempre; dos vigentes solapados además disparan detector.
-4. El pendiente cubierto se parte en **tramos**: `tramo = min(restanteCuota, restanteCargo)`, con `vencNum` = fecha de la cuota y `fechaISO` = fecha del hecho del cargo real. **Excedente sobre Σcuotas → conserva vencimiento original.** El bucle de buckets corre SIN CAMBIOS sobre tramos + cargos no cubiertos; cuotas futuras → `alDia`.
-5. **Precedencia por cargo**: acuerdo vigente válido > `mov.vencimiento` (M6) > `fecha+diasPlazo`. Con `acuerdos=[]` la salida es **byte-igual a hoy** (test que lo fija) — 344 clientas legacy y todo M6: cero cambio, cero migración.
+### 1.6 Costuras de escala / asesor (sin RBAC — TODO-19)
 
-**Salida ADITIVA**: mismos `saldo/vencido/alDia/buckets/diasMora/estado` + `plan: {acuerdoId, exigible, cubierto, vencidoPlan, cuotasVencidas, proximaCuota}|null` + **`bajoAcuerdo: int`** (monto re-etiquetado por acuerdo — Salud y el corte distinguen *al-día-genuino* de *al-día-por-pacto*: cartera reestructurada ≠ vigente).
+`asesorId` opcional en `clienteValido` (espejo `vendedoraId`, sin UI) + `rolAlCrear` sellado en el acuerdo + `creadoPor`. **NO** `acuerdoMaxSinAprobacion` (YAGNI — el RBAC del asesor lo añade). El SoD del asesor (sobre tope → cola de solicitudes) se diseña en ese slice.
 
-**Paridad y sus insumos:**
-- TODA la aritmética nueva se **inlinea en `js/crm-estado-cuenta.js`** → copia byte-idéntica a functions. `js/crm-acuerdos.js` es panel-only (generador/labels) y la fórmula **no lo importa**.
-- `corte.js`: +`id: mov.id` (hoy va pelado — verificado), +1 `collectionGroup('acuerdos')` mensual, +**`formulaVersion` en el doc del corte** (el mes del despliegue "vencido" cambia por fórmula, no por cobranza), +resumen `plan`+`bajoAcuerdo` por clienta. Cortes históricos: intocables.
-- Tests: paridad byte + **test de insumos** (panel y corte sobre el mismo fixture CON ids y acuerdos) + matriz de cuotas (abono anticipado, excedente, acuerdo inválido ignorado, dos vigentes, anulación retroactiva, CORRECCION_FECHA). **El slice de tests es el costo principal, no la UI.**
+### 1.7 Interacción M7 (spec del slice M7)
 
-**Acuerdo huérfano tras corrección M2b** (verificado: la corrección crea doc con id NUEVO): la fórmula lo trata como "no cubre ningún cargo" → fallback M6 (el reemplazo PRESERVA `vencimiento`) = degradación benigna; detector `acuerdosAnomalos` lo lista; Kary re-pacta.
+Acuerdo como gestión por UNIÓN temporal con reloj de servidor (no `fechaPacto`, anti-retrofecha). Plan al día no es castigable (vencidoPlan=0). **Acuerdo roto = el escudo cae → la fórmula ya da la mora histórica** (perforado §1.4-4); la cadena de acuerdos rotos (por `creadoEn`) + los cortes inmutables (mora previa cristalizada) = expediente art. 146. `renegociacionesSeriales` por `creadoEn`.
 
-### 1.5 Acuerdo 'factura' con deuda vieja abierta (la mina que los 3 red-teams encontraron)
+### 1.8 Detectores (acta) — 2, no 3 (el mutex mató `solapados`)
 
-El FIFO global asigna los abonos a la deuda más vieja → las cuotas de la factura nueva figuran impagas aunque la clienta pague puntual → 🔴 falso. **Resolución en dos capas**: (a) **gate de UI**: el toggle "¿en cuotas?" solo se ofrece si la clienta no tiene OTRA deuda vencida — a esa clienta el instrumento es la renegociación 'saldo'; (b) la fórmula sigue determinista para lo que entre por fuera y `acuerdosAnomalos` lo marca. El derivado 'incumplido' de ese caso NO alimenta M7 — la evidencia fiscal jamás se fabrica por orden de imputación.
-
-### 1.6 Costuras de escala / asesor (sin construir RBAC — TODO-19 aparte)
-
-1. **Autoría probatoria**: `creadoPor` + `creadoEn` (reloj servidor) + `rolAlCrear == getUserRole()` (snapshot de investidura: la evidencia necesita el rol *de aquel momento*).
-2. **`asesorId` (string opcional) en la whitelist de `clienteValido()`** — espejo exacto de `vendedoraId`; viaja en el MISMO deploy de reglas; cero UI hoy.
-3. **SoD parametrizada**: clave `acuerdoMaxSinAprobacion` reservada en `config/cartera` (write owner-only). Con rol asesor futuro: por encima del tope → solicitud M2 `tipo:'acuerdo'`. La respuesta de Daniel a P2 fija la plantilla.
-4. **Anti-deuda-arqueológica**: las costuras se documentan en `20-ESPACIAL` + `50-ARQUITECTURA` en el mismo PR.
-5. Escala: a 10k clientas la materialización por CF es la costura conocida — no se construye hoy (344 = cálculo vivo gratis).
-
-### 1.7 Interacción M7 (spec para el slice M7)
-
-1. **'cumplido'/'incumplido' JAMÁS se almacenan** — derivados; el corte mensual los fotografía.
-2. **¿Gestión válida?** Sí, sin doble escritura ni retrofechado: "gestiones en ≥3 meses DISTINTOS" cuenta la UNIÓN gestiones∪acuerdos **por `registradoEn`/`creadoEn`** (reloj de servidor), nunca por `fechaPacto`. Crear 3 acuerdos hoy = 1 mes. RECHAZADO el checkbox auto-gestión (evidencia fabricada).
-3. **¿Cumplido resetea?** Solo por sus propios medios: plan al día ⇒ vencido=0; abonos materiales resetean `sinAbonos`. Cero lógica especial.
-4. **¿Incumplido acelera?** No ataja umbrales, pero **perfora el escudo**: con ≥N cuotas vencidas impagas (knob `criteriosCastigo.acuerdoIncumplidoCuotas`, default 2, owner-only), M7 evalúa la mora **con los vencimientos originales**. La mora pre-acuerdo se acredita con **cortes inmutables** (NO con `saldoAlPactar` autodeclarado). "Pactó y rompió N acuerdos documentados" = evidencia estrella de incobrabilidad.
-5. **Anti-escudo-perpetuo**: detector `renegociacionesSeriales` por cliente y `creadoEn` reales (no por `reemplazaA`, que el defraudador controla).
-
-### 1.8 Detectores y acta (3 señales, anti-fatiga)
-
-1. **`acuerdosSobreMora`** — línea OBLIGATORIA del acta + contador en Salud: TODO acuerdo creado sobre cuenta con `vencido > 0`, con la mora del corte previo al lado (cierra la ventana 30-179 días del vector dominante).
-2. **`acuerdosAnomalos`** — multi-check tipado: Σcuotas/fechas malformadas, huérfanos post-corrección, dos vigentes solapados, sobregiro, última cuota > umbral del acta (12 meses).
-3. **`renegociacionesSeriales`** — ≥2 acuerdos en 12 meses por cliente, por `creadoEn`.
-
-`acuerdosLargos` (M6) gana el parámetro `acuerdos` y **excluye facturas cubiertas por acuerdo vigente**. El guard UI de 365d no aplica en el camino con-cuotas (lo gobierna el horizonte del acuerdo).
+`acuerdosSobreMora` (línea obligatoria: acuerdo del mes sobre cuenta vencida según el corte previo) + `acuerdosAnomalos` (malformados via `acuerdoEsValido`, horizonte >12m). `acuerdosLargos` (M6) excluye cubiertos. `renegociacionesSeriales` (≥2 en 12m por `creadoEn`).
 
 ### 1.9 Flujo de Kary (celular) y migración
 
-- **CONVIVENCIA, NO MIGRACIÓN** (unánime): el `vencimiento` M6 ES el acuerdo degenerado de 1 cuota; la precedencia lo implementa — cero backfill, 344 docs intactos, cortes históricos intactos.
-- Fiado simple: el modal M6 actual, sin cambios.
-- Factura en cuotas: toggle "¿en cuotas?" → n/periodicidad/primera fecha → preview generado (v1 sin edición por celda: regenerar con otros parámetros) → UN batch: factura (`vencimiento` = fecha de la ÚLTIMA cuota — la "fecha final" de Daniel visible en toda vista M6-only) + acuerdo 'factura'. Reparto entero COP: cuotas iguales, residuo a la última.
-- Renegociación: botón "Acuerdo de pago" en la ficha de la morosa → alcance 'saldo' → mismo generador.
-- Estado de cuenta: "próxima cuota: fecha — $monto" + badge "en acuerdo"; lista CxC ordenable por próxima cuota.
+- **CONVIVENCIA, NO MIGRACIÓN**: sin acuerdo, todo igual; el `vencimiento` M6 sigue siendo la fecha final de la factura simple.
+- **Factura en cuotas**: toggle "¿en cuotas?" → genera el plan → batch (factura + acuerdo `saldo` + puntero del cliente). Cliente limpio → cubre esa factura; con deuda previa → la UI ADVIERTE "esto reprograma TODA la deuda de la clienta".
+- **Renegociar moroso**: botón "Acuerdo de pago" → genera plan sobre el saldo → batch (mutex). Si ya hay vigente → renegociación atómica.
+- Estado de cuenta: "próxima cuota" + sello "En acuerdo de pago" (P1).
 
-### 1.10 Plan de slices
+### 1.10 Plan de slices del REWORK
 
-| # | Slice | Gate | Riesgo si se atrasa |
-|---|---|---|---|
-| 1 | Fórmula extendida inline + copia byte + **matriz de tests** | suite existente pasa SIN tocar un test + casos nuevos verdes | ninguno (inerte) |
-| 2 | Reglas (match acuerdos + getAfter + `asesorId` + el `size()` M5 deferido) + índice CG + docs 20/50 | deploy + emulador | ninguno (inerte sin UI) |
-| 3 | `corte.js`: ids + acuerdos + `formulaVersion` + `plan`/`bajoAcuerdo` | test de insumos panel↔corte | benigno (1 mes sin foto de planes) |
-| 4 | UI Kary (toggle cuotas, renegociar, timeline, próxima cuota) + cache bump | verificación móvil | n/a |
-| 5 | Detectores §1.8 + acta + Salud | acta del mes siguiente | ventana detectiva 1 mes |
+| # | Slice | Gate |
+|---|---|---|
+| R1 | Fórmula ESCUDO (matar tramos) + `acuerdoEsValido` (sin alcance) + matriz tests | suite vieja intacta + nuevos verdes + paridad |
+| R2 | Reglas: MUTEX `acuerdoVigenteId` + saldo-only + cliente whitelist + size() M5 + índice | emulador |
+| R3 | `corte.js`: ids + acuerdos + `formulaVersion` + `acuerdoAlCorte` cristalizado | insumos panel↔corte |
+| R4 | UI saldo-only (toggle cuotas + renegociar + sello) usando el mutex (batch con puntero) | — |
+| R5 | Detectores (sin `solapados`) + acta + Salud | — |
+| R6 | DEPLOY (reglas+functions+índices) → encender bandera → **verificación POR HITO** + ADR §81 |
 
-## 2. DECISIONES Y RECHAZOS (resumen — detalle en el CRUDO)
+## 2. PREGUNTAS DE DANIEL (RESPONDIDAS)
 
-RECHAZADOS con razón: `deudaIds[]` (inverificable) · `montoPactado` como insumo (parqueo) · almacenar cumplido/incumplido (divergencia) · checkbox auto-gestión (evidencia fabricada) · contar acuerdos por `fechaPacto` (retrofechable) · `moraAlPactar` autodeclarado · par no-atómico · motor de recurrencia server-side · intereses de mora / aceleración automática / notificaciones FCM / multi-select / edición de cuotas / backfill M6 / RBAC asesor (cada uno con su razón y su momento). DECIDIDOS: anulación owner-only · UI v1 sin "fechas específicas" libres (el MODELO las soporta; la UI las difiere hasta caso real) · "quincenal" = días 15 y último del mes · validador en el archivo de paridad.
+P1=A (cumple acuerdo → sale de rojos con sello "En acuerdo de pago") · P2=A (Kary pacta sola + línea obligatoria en el acta + anular=solo owner) · P3=B (horizonte 24 meses, resaltar >12).
 
-## 3. PREGUNTAS CERRADAS A DANIEL — ✅ RESPONDIDAS (2026-06-12, mismo día)
+## 3. RIESGOS RESIDUALES v2
 
-- **P1 = A**: la clienta que cumple su acuerdo SALE de rojos, con sello "en acuerdo de pago" y monto aparte en Salud (`bajoAcuerdo`).
-- **P2 = A**: Kary pacta SOLA; línea obligatoria del acta (`acuerdosSobreMora`); ANULAR = solo Daniel (owner-only confirmado).
-- **P3 = B**: horizonte máximo **24 meses** (`horizonteDias=730` en config, owner-only); todo acuerdo >12 meses resaltado en el acta.
-- **Directiva de cadencia (mismo mensaje)**: verificación PESADA por HITOS, no por merge — tests+build por commit se mantienen; verificación experta multi-agente al cerrar la feature completa (post-slice 4/5); prueba de plataforma completa cuando haya bloque sólido.
+1. Escritura por SDK de un admin con acuerdo malformado → la fórmula lo IGNORA (conservador) + `acuerdosAnomalos`.
+2. El mutex acopla el doc del cliente a la transacción del acuerdo — patrón "aggregate root con el lock" (estándar); la CF del saldo no interfiere (`merge:true`).
+3. Paridad de INSUMOS (ids + acuerdos): test del slice R3.
+4. Archivo de paridad crece — costo aceptado por UNA fórmula.
+5. Discontinuidad del corte el mes del despliegue → `formulaVersion` + línea fija en el acta.
 
-## 4. RIESGOS RESIDUALES DECLARADOS
+## Checklist (REWORK v2 — la implementación v1 está SUPERSEDED, gateada/inerte)
 
-(1) SDK de un admin puede crear acuerdos malformados — la fórmula los ignora (conservador) + detector; (2) si P2=A, ventana de parqueo ≤ ~30 días hasta el acta (control detectivo); (3) acuerdo 'factura' con deuda vieja por SDK distorsiona la vista (neutralizado para M7, visible en detector); (4) paridad de INSUMOS = invariante nueva que `corte.js` debe respetar (test); (5) archivo de paridad crece (~350+ líneas) — costo estructural aceptado por UNA fórmula; (6) discontinuidad estadística del corte el mes del despliegue — `formulaVersion` + línea fija en el acta.
+- [x] Consejo Externo corrido + síntesis adopto/refuto integrada (`research-archive/2026-06-12-consejo-externo-acuerdos-respuesta.md`; §0 de esta spec)
+- [x] Respuestas P1/P2/P3 de Daniel (2026-06-12; §2 de esta spec)
+- [x] R1: fórmula ESCUDO + matriz de tests (2026-06-12 Opus: tramos eliminados; `acuerdoEsValido` sin alcance; escudo de 2 estados con corte de frontera anti-sub-programación; `test:acuerdos` 15/15 + `test:insumos` 3/3 + paridad 3/3 + suite vieja 24/24 intacta)
+- [ ] R2: reglas MUTEX `acuerdoVigenteId` + saldo-only + índice CG
+- [ ] R3: corte.js (ids + acuerdos + formulaVersion + estadoAlCorte cristalizado)
+- [ ] R4: UI saldo-only con el mutex
+- [ ] R5: detectores (sin solapados) + acta + Salud
+- [ ] R6: deploy + encender bandera + verificación POR HITO + ADR §81 + CRUDOs
 
-## Checklist
+## Anexo — v1 (comité Fable, SUPERSEDED por el Consejo)
 
-- [x] Respuestas de Daniel a P1/P2/P3 registradas (2026-06-12: P1=A, P2=A, P3=B/24m — §3 arriba)
-- [ ] Consejo Externo corrido (prompt en bóveda) + síntesis integrada (adoptado/refutado con razón)
-- [x] Slice 1: fórmula + matriz de tests (2026-06-12: `acuerdoEsValido` + TRAMOS en `crm-estado-cuenta`; suite vieja 24/24 SIN tocar un test + `test:acuerdos` 15/15 + paridad 3/3)
-- [x] Slice 2 CONSTRUIDO (2026-06-12: `acuerdoValido`+`transicionAcuerdoValida`+getAfter+CG+`asesorId`+size() M5; emulador 143/143) — **DEPLOY pendiente: tras integrar el Consejo Externo** (+ docs 20/50 con el deploy)
-- [x] Slice 3 CONSTRUIDO (2026-06-12: `agruparPorCliente` con ids + CG acuerdos + `formulaVersion:2` + `plan`/`bajoAcuerdo` por clienta y en totales; `test:insumos` 3/3) — deploy de functions junto al de reglas
-- [x] Slice 4 CONSTRUIDO (2026-06-12: toggle "¿en cuotas?" con gate §1.5 + renegociación 'saldo' + sello "En acuerdo de pago" en estadoBadgeHTML + próxima cuota en ficha + lista CxC con acuerdos; TODO gateado por `config/cartera.acuerdosActivos` — apagado hasta el deploy de reglas; generador 6/6 + suites verdes + build; cache v16)
-- [x] Slice 5 CONSTRUIDO (2026-06-12: `acuerdosSobreMora` (línea obligatoria, contra el corte inmutable) + `acuerdosAnomalos` multi-check (reusa `acuerdoEsValido`) + `renegociacionesSeriales` (por `creadoEn`) + `acuerdosLargos` excluye cubiertas + bloque "vigilancia" en Salud + Σ cartera re-programada; auditoría 16/16)
-- [ ] DEPLOY (tras Consejo): `firebase deploy --only firestore:rules,firestore:indexes,functions` → encender `config/cartera.acuerdosActivos=true` + `horizonteAcuerdoDias=730` → verificación experta POR HITO (cadencia Daniel) + ADR §81
+El diseño v1 (entidad `acuerdos/`, `alcance:'factura'|'saldo'`, TRAMOS, renegociación por `getAfter` sin mutex, detector `solapados`) y su comité de 7 agentes están en el CRUDO `research-archive/2026-06-12-comite-acuerdos-cuotas-CRUDO.json`. Se conserva como historia del razonamiento; **no construir contra él** — la v2 manda.

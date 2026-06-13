@@ -1,13 +1,12 @@
 /**
  * PARIDAD DE INSUMOS panel↔corte (spec acuerdos 2026-06-12 §1.4, slice 3).
  *
- * La paridad BYTE de la fórmula no basta: si el corte arma los movimientos SIN
- * `id` (como hacía hasta M4) o sin los acuerdos, un acuerdo 'factura' jamás
- * ancla en la foto mensual aunque el código sea idéntico — el panel diría
- * "al día por pacto" y el corte inmutable fotografiaría "vencido". Este test
- * alimenta la MISMA fórmula con los insumos armados COMO EL CORTE
- * (agruparPorCliente sobre docs crudos) y COMO EL PANEL (listener mapeado), y
- * exige salida idéntica.
+ * v2 (escudo): la paridad BYTE de la fórmula no basta. El acuerdo de SALDO cubre
+ * por `registradoEn` (reloj de servidor); si el corte arma los movimientos SIN ese
+ * campo (o sin los acuerdos), el escudo no protege y la foto mensual fotografiaría
+ * "vencido" donde el panel dice "en acuerdo". Este test alimenta la MISMA fórmula
+ * con los insumos armados COMO EL CORTE (agruparPorCliente sobre docs crudos) y
+ * COMO EL PANEL (listener mapeado), y exige salida idéntica.
  *
  *   npm run test:insumos
  */
@@ -38,7 +37,7 @@ const MOVS = [
 ];
 const ACUERDOS = [
     ['cliA', 'ac1', {
-        alcance: 'factura', movimientoId: 'f1', fechaPacto: hace(28), estado: 'vigente',
+        fechaPacto: hace(28), estado: 'vigente',
         cuotas: [{ fecha: hace(10), monto: 100000 }, { fecha: en(5), monto: 100000 }, { fecha: en(20), monto: 100000 }],
         periodicidad: 'mensual', primeraCuotaFecha: hace(10), ultimaCuotaFecha: en(20),
         nota: 'pacto', creadoPor: 'u', creadoEn: ts(T0 - 28 * DAY), rolAlCrear: 'admin',
@@ -70,20 +69,20 @@ test('insumos: la fórmula recibe LO MISMO armado como el corte y como el panel'
     }
 });
 
-test('insumos: el acuerdo de factura ANCLA en el camino del corte (el id viaja)', () => {
+test('insumos: el escudo ANCLA en el corte por registradoEn (el reloj de servidor viaja)', () => {
     const movs = agruparPorCliente(MOVS.map(([c, id, d]) => fakeDoc(c, id, d)));
     const acs = agruparPorCliente(ACUERDOS.map(([c, id, d]) => fakeDoc(c, id, d)));
     const r = estadoCuenta(movs.get('cliA'), { hoy: HOY, diasPlazo: 30, acuerdos: acs.get('cliA'), horizonteDias: 730 });
-    // 300k − 100k abono = 200k pendiente; el abono pagó la cuota vencida → al día.
+    // 300k − 100k abono = 200k pendiente; el abono pagó la cuota vencida → al día por pacto.
     assert.equal(r.saldo, 200000);
     assert.equal(r.vencido, 0);
     assert.equal(r.bajoAcuerdo, 200000);
     assert.equal(r.plan.acuerdoId, 'ac1');
-    // Sin el id (insumo roto, el corte pre-slice-3) el acuerdo NO anclaría:
-    const sinId = (movs.get('cliA') || []).map(({ id, ...resto }) => resto);
-    const roto = estadoCuenta(sinId, { hoy: HOY, diasPlazo: 30, acuerdos: acs.get('cliA'), horizonteDias: 730 });
+    // Sin registradoEn (insumo roto), el escudo NO cubre → fotografiaría "vencido":
+    const sinReg = (movs.get('cliA') || []).map(({ registradoEn, ...resto }) => resto);
+    const roto = estadoCuenta(sinReg, { hoy: HOY, diasPlazo: 30, acuerdos: acs.get('cliA'), horizonteDias: 730 });
     assert.equal(roto.plan, null);
-    assert.equal(roto.vencido > 0, true);   // fotografiaría "vencido" — la mentira que este test impide
+    assert.equal(roto.vencido > 0, true);   // la mentira que este test impide
 });
 
 test('insumos: docs sin clienteId (path roto) se descartan sin reventar', () => {

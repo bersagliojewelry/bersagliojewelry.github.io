@@ -69,22 +69,17 @@ export function hoyISO(date = new Date()) {
 
 /**
  * ¿Un ACUERDO DE PAGO es estructuralmente válido para la fórmula? (spec acuerdos
- * 2026-06-12 §1.4). Vive AQUÍ —el archivo de PARIDAD— y no en el módulo de UI:
- * las reglas de Firestore no pueden iterar `cuotas[]`, así que esta validación es
- * el freno real y debe correr IDÉNTICA en el panel y en el corte mensual.
- * Un acuerdo inválido se IGNORA (cae al fallback M6/plazo = MÁS vencido = falla
- * conservadora). La reusa el detector `acuerdosAnomalos` (M4).
+ * **v2** 2026-06-12 §1.4 — Consejo Externo). Todo acuerdo es de SALDO (sin
+ * `alcance`). Vive AQUÍ —el archivo de PARIDAD— y no en el módulo de UI: las
+ * reglas de Firestore no pueden iterar `cuotas[]`, así que esta validación es el
+ * freno real y corre IDÉNTICA en el panel y en el corte mensual. Un acuerdo
+ * inválido se IGNORA (cae al fallback = MÁS vencido = falla conservadora).
  * @param {object} a  doc de clientes/{id}/acuerdos/{id}
  * @param {object} [opts] { horizonteDias = 730 } — tope de la última cuota desde
  *   el pacto (decisión Daniel P3: 24 meses; config owner-only).
  */
 export function acuerdoEsValido(a, opts = {}) {
   if (!a || a.estado !== 'vigente') return false;
-  if (a.alcance === 'factura') {
-    if (typeof a.movimientoId !== 'string' || !a.movimientoId) return false;
-  } else if (a.alcance === 'saldo') {
-    if (a.movimientoId !== undefined) return false;
-  } else return false;
   if (!Array.isArray(a.cuotas) || a.cuotas.length < 1 || a.cuotas.length > 36) return false;
   let prevDia = -Infinity;
   for (const q of a.cuotas) {
@@ -136,15 +131,19 @@ function aporte(mov) {
  * @param {string|Date} [opts.hoy] - referencia "hoy" (default: hoy local).
  * @param {number} [opts.diasPlazo=30] - días de plazo del negocio (config/negocio.diasPlazo).
  * @param {string} [opts.fechaCorte] - 'YYYY-MM-DD' fallback para movimientos sin `fecha`.
- * @param {Array<object>} [opts.acuerdos] - acuerdos de pago del cliente (spec 2026-06-12):
- *   re-programan la EXIGIBILIDAD del pendiente que cubren (jamás el saldo). Sin
- *   acuerdos, la salida es IDÉNTICA a la fórmula previa (test que lo fija).
+ * @param {Array<object>} [opts.acuerdos] - acuerdos de pago vigentes del cliente
+ *   (spec v2 2026-06-12; por el mutex hay a lo sumo UNO). ESCUDO: re-programan la
+ *   EXIGIBILIDAD de la deuda que cubren (jamás el saldo). Sin acuerdos, la salida
+ *   es IDÉNTICA a la fórmula previa (test que lo fija).
  * @param {number} [opts.horizonteDias=730] - tope de la última cuota (P3: 24 meses).
+ * @param {number} [opts.incumplidoCuotas=2] - cuotas vencidas impagas que ROMPEN el
+ *   escudo (knob owner-only); roto → la deuda revive su vencimiento original.
  * @returns {{saldo:number, vencido:number, alDia:number, sinFecha:number,
  *   buckets:{d1_30:number,d31_60:number,d60plus:number}, diasMora:number,
  *   fechaVencidoMasAntigua:(string|null), estado:('sin-deuda'|'al-dia'|'vencido'|'a-favor'),
- *   bajoAcuerdo:number, plan:(null|{acuerdoId:(string|null), exigible:number, cubierto:number,
- *   vencidoPlan:number, cuotasVencidas:number, proximaCuota:(null|{fecha:string,monto:number})})}}
+ *   bajoAcuerdo:number, plan:(null|{acuerdoId:(string|null), exigible:number,
+ *   vencidoPlan:number, cuotasVencidas:number, proximaCuota:(null|{fecha:string,monto:number}),
+ *   roto:boolean})}}
  */
 export function estadoCuenta(movimientos, opts = {}) {
   const { hoy, fechaCorte } = opts;
@@ -204,119 +203,129 @@ export function estadoCuenta(movimientos, opts = {}) {
     credRestante = round2(credRestante - aplica);
   }
 
-  // ─── Acuerdos de pago (spec 2026-06-12 §1.4): re-programan la EXIGIBILIDAD ────
-  // El acuerdo NO mueve dinero: el FIFO de arriba corrió INTACTO (el abono paga la
-  // deuda más vieja → por construcción, la cuota más vieja). Aquí el pendiente
-  // CUBIERTO por un acuerdo válido se parte en TRAMOS que vencen en las fechas de
-  // sus cuotas; el resto envejece igual que siempre. Sin acuerdos → salida idéntica.
+  // ─── Acuerdos de pago — ESCUDO de 2 estados (spec v2 §1.4, Consejo Externo) ───
+  // El acuerdo NO mueve dinero: re-programa la EXIGIBILIDAD de la deuda que cubre.
+  // NO hay tramos (el Consejo los mató): el plan es un ESCUDO. AL DÍA → la deuda
+  // cubierta deja de envejecer por sus vencimientos y pasa a regirse por el
+  // cronograma. ROTO (≥N cuotas vencidas impagas) → el escudo CAE: la deuda
+  // cubierta revive su vencimiento original (mora histórica para el castigo, M7).
+  // Mutex `acuerdoVigenteId` ⇒ a lo sumo UN vigente; si llegaran varios (legacy),
+  // se elige el más nuevo de forma determinista. `id` ausente (UI) → se trata como
+  // el único.
+  const ms = (t) => (t && typeof t.toMillis === 'function' ? t.toMillis() : null);
   const acuerdosValidos = Array.isArray(opts.acuerdos)
     ? opts.acuerdos.filter((a) => acuerdoEsValido(a, opts)) : [];
-  const tramos = [];
-  if (acuerdosValidos.length) {
-    const ms = (t) => (t && typeof t.toMillis === 'function' ? t.toMillis() : null);
-    // 'factura' cubre SU movimiento; 'saldo' cubre lo REGISTRADO (reloj de servidor)
-    // hasta el pacto. Pacto con creadoEn aún pendiente → 'saldo' no cubre nada por
-    // un instante (conservador, transitorio); 'factura' sí (ancla por id).
-    const cubre = (a, c) => (a.alcance === 'factura'
-      ? (c.id != null && a.movimientoId === c.id)
-      : (c.regMs != null && ms(a.creadoEn) != null && c.regMs <= ms(a.creadoEn)));
-    // Selección DETERMINISTA si >1 vigente cubre el mismo cargo: mayor creadoEn
-    // (pendiente del servidor = el más nuevo); desempate por id lexicográfico —
-    // panel y corte eligen SIEMPRE igual. El solape además lo lista un detector.
-    const masNuevo = (a, b) => {
-      const ma = ms(a.creadoEn) ?? Infinity, mb = ms(b.creadoEn) ?? Infinity;
-      if (ma !== mb) return ma > mb ? a : b;
-      return String(a.id || '') > String(b.id || '') ? a : b;
-    };
-    const grupos = new Map();   // acuerdo elegido → sus cargos cubiertos (orden FIFO)
-    for (const c of cargos) {
-      if (c.pendiente <= 0 || c.dayNum == null) continue;   // sinFecha: fuera del plan (conservador)
-      let elegido = null;
-      for (const a of acuerdosValidos) {
-        if (cubre(a, c)) elegido = elegido ? masNuevo(a, elegido) : a;
-      }
-      if (!elegido) continue;
-      if (!grupos.has(elegido)) grupos.set(elegido, []);
-      grupos.get(elegido).push(c);
-      c.enAcuerdo = true;
-    }
-    let plan = null;   // el plan visible de la ficha = el acuerdo aplicado más nuevo
-    for (const [a, cs] of grupos) {
-      const sumaCuotas = a.cuotas.reduce((s, q) => s + q.monto, 0);
-      const cubierto = cs.reduce((s, c) => s + c.pendiente, 0);
-      // Las cuotas se pagan DESDE EL FRENTE: lo ya pagado del plan = Σcuotas − lo
-      // que sigue pendiente (la cuota de enero no figura impaga si la plata entró).
-      let porSaltar = round2(sumaCuotas - Math.min(cubierto, sumaCuotas));
-      const slices = [];   // resto IMPAGO de cada cuota, en orden
-      for (const q of a.cuotas) {
-        const resto = round2(Math.max(0, q.monto - Math.min(porSaltar, q.monto)));
-        porSaltar = round2(Math.max(0, porSaltar - q.monto));
-        slices.push({ vencNum: toDayNum(q.fecha), fecha: q.fecha, montoCuota: q.monto, resto });
-      }
-      // Figuras del plan ANTES de consumir los slices (el reparto los muta).
-      const exigible = slices.reduce((s, q) => s + (hoyNum > q.vencNum ? q.montoCuota : 0), 0);
-      const vencidoPlan = slices.reduce((s, q) => s + (hoyNum > q.vencNum ? q.resto : 0), 0);
-      const cuotasVencidas = slices.filter((q) => hoyNum > q.vencNum && q.resto > 0).length;
-      const prox = slices.find((q) => q.resto > 0) || null;
-      const datos = {
-        acuerdoId: a.id || null,
-        exigible: round2(exigible),
-        cubierto: round2(Math.max(0, exigible - vencidoPlan)),
-        vencidoPlan: round2(vencidoPlan),
-        cuotasVencidas,
-        proximaCuota: prox ? { fecha: prox.fecha, monto: prox.resto } : null,
-      };
-      if (!plan || masNuevo(a, plan.acuerdo) === a) plan = { acuerdo: a, datos };
-      result.bajoAcuerdo = round2(result.bajoAcuerdo + Math.min(cubierto, sumaCuotas));
-      // Reparto: pendiente de cada cargo (FIFO) sobre los restos de cuota; el
-      // EXCEDENTE sobre Σcuotas conserva su vencimiento original M6/plazo (§1.2:
-      // inflar el cronograma no parquea nada — el sobrante envejece como siempre).
-      let si = 0;
-      while (si < slices.length && slices[si].resto <= 0) si++;
-      for (const c of cs) {
-        let restante = c.pendiente;
-        while (restante > 0 && si < slices.length) {
-          const s = slices[si];
-          const tramo = Math.min(s.resto, restante);
-          tramos.push({ dayNum: c.dayNum, fechaISO: c.fechaISO, pendiente: tramo, vencNum: s.vencNum });
-          s.resto = round2(s.resto - tramo);
-          restante = round2(restante - tramo);
-          if (s.resto <= 0) si++;
-        }
-        if (restante > 0) {
-          tramos.push({ dayNum: c.dayNum, fechaISO: c.fechaISO, pendiente: restante, vencNum: c.vencNum });
-        }
-      }
-    }
-    result.plan = plan ? plan.datos : null;
+  let acuerdo = null;
+  for (const a of acuerdosValidos) {
+    if (!acuerdo) { acuerdo = a; continue; }
+    const ma = ms(a.creadoEn) ?? Infinity, mc = ms(acuerdo.creadoEn) ?? Infinity;
+    if (ma > mc || (ma === mc && String(a.id || '') > String(acuerdo.id || ''))) acuerdo = a;
   }
-  const items = tramos.length ? [...cargos.filter((c) => !c.enAcuerdo), ...tramos] : cargos;
+
+  const incumplidoCuotas = (Number.isInteger(opts.incumplidoCuotas) && opts.incumplidoCuotas >= 1)
+    ? opts.incumplidoCuotas : 2;
+  let planVencido = 0, planAlDia = 0, planDiasMora = 0, planFechaAntigua = null;
+
+  if (acuerdo) {
+    // Cobertura: cargos REGISTRADOS hasta el pacto (reloj de SERVIDOR — una factura
+    // retrofechada DESPUÉS del pacto no se cuela bajo el escudo). creadoEn pendiente
+    // (recién pactado) → ancla = +∞ ⇒ cubre toda la deuda actual (semántica "pacté
+    // hoy sobre lo que debe"). Cargo sin regMs (legacy) → fuera (conservador).
+    const anclaMs = ms(acuerdo.creadoEn) ?? Infinity;
+    const cubiertos = cargos.filter((c) => c.pendiente > 0 && c.dayNum != null
+      && c.regMs != null && c.regMs <= anclaMs);
+    const deudaCubierta = round2(cubiertos.reduce((s, c) => s + c.pendiente, 0));
+    const sumaCuotas = acuerdo.cuotas.reduce((s, q) => s + q.monto, 0);
+    // Deuda cubierta totalmente pagada (o nada que cubrir) → el plan ya no aplica
+    // (no mostrar "próxima cuota" a quien no debe). El acuerdo sigue 'vigente' en la
+    // BD (no se sella solo); el panel deja de pintarlo cuando no hay deuda.
+    if (deudaCubierta <= 0) { /* plan = null, bajoAcuerdo = 0 (defaults) */ }
+    else {
+    // Pagado del plan = lo que el FIFO ya redujo de la deuda cubierta (clamp a Σcuotas:
+    // inflar el cronograma no parquea nada — las cuotas extra nunca se alcanzan).
+    let pagado = Math.min(Math.max(0, round2(sumaCuotas - deudaCubierta)), sumaCuotas);
+    let exigible = 0, vencidoPlan = 0, cuotasVenc = 0;
+    let proxima = null;
+    for (const q of acuerdo.cuotas) {
+      const resto = round2(Math.max(0, q.monto - Math.min(pagado, q.monto)));
+      pagado = round2(Math.max(0, pagado - q.monto));
+      const qDay = toDayNum(q.fecha);
+      const pasada = qDay != null && hoyNum > qDay;        // estricto: el día exacto = al día
+      if (pasada) {
+        exigible = round2(exigible + q.monto);
+        if (resto > 0) {
+          vencidoPlan = round2(vencidoPlan + resto);
+          cuotasVenc += 1;
+          const mora = hoyNum - qDay;                       // cuota más vieja impaga = peor mora del plan
+          if (mora > planDiasMora) { planDiasMora = mora; planFechaAntigua = q.fecha; }
+        }
+      }
+      if (resto > 0 && !proxima) proxima = { fecha: q.fecha, monto: resto };
+    }
+    const roto = cuotasVenc >= incumplidoCuotas;
+    result.plan = {
+      acuerdoId: acuerdo.id || null,
+      exigible, vencidoPlan, cuotasVencidas: cuotasVenc,
+      proximaCuota: proxima, roto,
+    };
+    if (!roto) {
+      // ESCUDO: protege hasta Σcuotas de la deuda cubierta (la más vieja primero).
+      // El EXCESO (deuda cubierta > Σcuotas, p.ej. una sub-programación por SDK)
+      // NO se esconde: su remanente envejece por su vencimiento original. Es UN
+      // corte de frontera, no tramos (el Consejo mató los tramos).
+      let cap = sumaCuotas, shielded = 0;
+      for (const c of cubiertos) {                 // ya en orden FIFO (más viejo primero)
+        if (cap <= 0) break;
+        const bajo = Math.min(c.pendiente, cap);
+        shielded = round2(shielded + bajo);
+        cap = round2(cap - bajo);
+        if (bajo >= c.pendiente) c.enAcuerdo = true;          // cubierto entero → fuera del aging
+        else c.pendiente = round2(c.pendiente - bajo);        // parcial → el resto envejece normal
+      }
+      result.bajoAcuerdo = shielded;
+      planVencido = vencidoPlan;
+      planAlDia = round2(Math.max(0, shielded - vencidoPlan));
+    }
+    // ROTO: no se marca enAcuerdo → la deuda cubierta envejece por su vencimiento
+    // original (la mora histórica que el castigo necesita). bajoAcuerdo queda 0.
+    }
+  }
 
   let maxMora = 0;
-  for (const c of items) {
-    if (c.pendiente <= 0) continue;
+  for (const c of cargos) {
+    if (c.pendiente <= 0 || c.enAcuerdo) continue;          // los cubiertos por el escudo: aparte
     if (c.dayNum == null) { result.sinFecha = round2(result.sinFecha + c.pendiente); continue; }
-    // Vencimiento EFECTIVO (M6): el acuerdo explícito manda; sin él, fecha + plazo.
+    // Vencimiento EFECTIVO (M6): el acuerdo de fecha final manda; sin él, fecha + plazo.
     const mora = hoyNum - (c.vencNum != null ? c.vencNum : c.dayNum + diasPlazo);
     if (mora <= 0) {
       result.alDia = round2(result.alDia + c.pendiente);
     } else {
-      // Rangos por días ENTEROS de mora pasados del vencimiento: [1,30] · [31,60] · [61,∞).
       result.vencido = round2(result.vencido + c.pendiente);
       if (mora <= 30) result.buckets.d1_30 = round2(result.buckets.d1_30 + c.pendiente);
       else if (mora <= 60) result.buckets.d31_60 = round2(result.buckets.d31_60 + c.pendiente);
       else result.buckets.d60plus = round2(result.buckets.d60plus + c.pendiente);
-      // fechaVencidoMasAntigua = fecha del HECHO del cargo con PEOR mora — el MISMO
-      // cargo que define diasMora (coherentes post-M6: el acuerdo puede invertir el
-      // orden fecha↔mora; pre-M6 la mora era monótona con la fecha y esto es idéntico).
       if (mora > maxMora) { maxMora = mora; result.fechaVencidoMasAntigua = c.fechaISO; }
     }
+  }
+
+  // Fold del ESCUDO: el atraso del plan se agrega como un bloque, fechado por la
+  // cuota impaga más vieja; lo no-vencido del plan cuenta como al-día por pacto.
+  result.alDia = round2(result.alDia + planAlDia);
+  if (planVencido > 0) {
+    result.vencido = round2(result.vencido + planVencido);
+    if (planDiasMora <= 30) result.buckets.d1_30 = round2(result.buckets.d1_30 + planVencido);
+    else if (planDiasMora <= 60) result.buckets.d31_60 = round2(result.buckets.d31_60 + planVencido);
+    else result.buckets.d60plus = round2(result.buckets.d60plus + planVencido);
+    if (planDiasMora > maxMora) { maxMora = planDiasMora; result.fechaVencidoMasAntigua = planFechaAntigua; }
   }
   result.diasMora = maxMora;
 
   if (result.saldo < 0) result.estado = 'a-favor';
   else if (result.saldo === 0) result.estado = 'sin-deuda';
   else result.estado = result.vencido > 0 ? 'vencido' : 'al-dia';
+  // El sello "En acuerdo de pago" (P1 de Daniel) NO es un estado nuevo: se DERIVA
+  // de `bajoAcuerdo>0` en `estadoBadgeHTML` (ni roja ni verde corriente) — así
+  // ningún consumidor que conmute sobre `estado` se rompe (queda 'al-dia').
 
   return result;
 }

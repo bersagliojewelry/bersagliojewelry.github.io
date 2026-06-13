@@ -101,20 +101,29 @@ async function runCorte(db, mes, origen) {
     const cfg = negocioSnap.exists ? negocioSnap.data() : {};
     const diasPlazo = (typeof cfg.diasPlazo === 'number' && cfg.diasPlazo >= 0) ? cfg.diasPlazo : 30;
     const fechaCorte = typeof cfg.fechaCorteMigracion === 'string' ? cfg.fechaCorteMigracion : undefined;
-    // Horizonte del acuerdo (P3 de Daniel: 24 meses; owner-only en config/cartera).
     const cart = carteraSnap.exists ? carteraSnap.data() : {};
+    // GATE: el corte aplica el escudo SOLO si la feature está encendida — el MISMO
+    // flag que gatea el panel (cuenta.js). Con OFF la foto es byte-idéntica a la
+    // fórmula sin acuerdos. El corte corre con Admin SDK (salta las reglas del mutex),
+    // así que el gate DEBE vivir aquí: sin él, un acuerdo metido por consola con la
+    // bandera apagada contaminaría la evidencia DIAN inmutable (blocker comité R6).
+    const acuerdosOn = cart.acuerdosActivos === true;
+    // Horizonte del acuerdo (P3 de Daniel: 24 meses; owner-only en config/cartera).
     const horizonteDias = (typeof cart.horizonteAcuerdoDias === 'number' && cart.horizonteAcuerdoDias > 0)
         ? cart.horizonteAcuerdoDias : 730;
+    // Knob owner-only: cuántas cuotas vencidas impagas ROMPEN el escudo (default 2).
+    const incumplidoCuotas = (Number.isInteger(cart.acuerdoIncumplidoCuotas) && cart.acuerdoIncumplidoCuotas >= 1)
+        ? cart.acuerdoIncumplidoCuotas : 2;
 
     const movimientosPorCliente = agruparPorCliente(movsSnap.docs);
-    const acuerdosPorCliente = agruparPorCliente(acuerdosSnap.docs);
+    const acuerdosPorCliente = acuerdosOn ? agruparPorCliente(acuerdosSnap.docs) : new Map();
 
     const clientes = {};
     const totales = { saldo: 0, vencido: 0, alDia: 0, sinFecha: 0, bajoAcuerdo: 0 };
     for (const doc of clientesSnap.docs) {
         const est = estadoCuenta(movimientosPorCliente.get(doc.id) || [], {
             diasPlazo, fechaCorte,
-            acuerdos: acuerdosPorCliente.get(doc.id) || [], horizonteDias,
+            acuerdos: acuerdosPorCliente.get(doc.id) || [], horizonteDias, incumplidoCuotas,
         });
         clientes[doc.id] = {
             nombre: doc.data().nombre || '',

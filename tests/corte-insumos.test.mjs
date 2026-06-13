@@ -16,7 +16,7 @@ import { createRequire } from 'node:module';
 import { estadoCuenta } from '../js/crm-estado-cuenta.js';
 
 const require = createRequire(import.meta.url);
-const { agruparPorCliente, acuerdoAlCorte } = require('../functions/corte.js');
+const { agruparPorCliente, acuerdoAlCorte, runCorte } = require('../functions/corte.js');
 
 const HOY = '2026-06-07';
 const DAY = 86400000;
@@ -102,4 +102,50 @@ test('acuerdoAlCorte: roto→incumplido; atrasado→en-mora; al día→al-dia', 
     assert.deepEqual(
         acuerdoAlCorte({ acuerdoId: 'a3', roto: false, vencidoPlan: 0, cuotasVencidas: 0 }),
         { id: 'a3', estadoAlCorte: 'al-dia', cuotasVencidas: 0, vencidoPlan: 0 });
+});
+
+// ─── R6: GATE del corte por config/cartera.acuerdosActivos (BLOCKER comité) ───────
+// runCorte recibe `db` por inyección → testeable con un doble sin emulador. El panel
+// ya gateaba; el corte (Admin SDK, salta las reglas del mutex) ahora también: con la
+// bandera OFF la foto DIAN es inerte (sin escudo) aunque exista un acuerdo 'vigente'.
+function fakeDb({ cartera }) {
+    let written = null;
+    const snap = (docs) => ({ docs, size: docs.length });
+    const docSnap = (data) => ({ exists: data != null, data: () => data });
+    const clientes = [{ id: 'cliA', data: () => ({ nombre: 'Ana' }) }];
+    const movs = MOVS.map(([c, id, d]) => fakeDoc(c, id, d));
+    const acs = ACUERDOS.map(([c, id, d]) => fakeDoc(c, id, d));
+    return {
+        written: () => written,
+        collection: (name) => ({
+            doc: (id) => ({
+                get: async () => docSnap(name === 'cortes' ? null
+                    : (name === 'config' && id === 'cartera') ? cartera
+                    : name === 'config' ? {} : null),
+                set: async (obj) => { written = obj; },
+            }),
+            get: async () => snap(name === 'clientes' ? clientes : []),
+        }),
+        collectionGroup: (name) => ({
+            get: async () => snap(name === 'movimientos' ? movs : name === 'acuerdos' ? acs : []),
+        }),
+    };
+}
+
+test('R6 GATE: acuerdosActivos=false → el corte IGNORA /acuerdos (foto sin escudo, evidencia inerte)', async () => {
+    const db = fakeDb({ cartera: { acuerdosActivos: false } });
+    await runCorte(db, '2026-05', 'test');
+    const w = db.written();
+    assert.equal(w.clientes.cliA.bajoAcuerdo, undefined);      // sin escudo
+    assert.equal(w.clientes.cliA.acuerdoAlCorte, undefined);   // sin cristalización DIAN
+    assert.equal(w.totales.bajoAcuerdo, 0);
+});
+
+test('R6 GATE: acuerdosActivos=true → el corte SÍ aplica el escudo y cristaliza acuerdoAlCorte', async () => {
+    const db = fakeDb({ cartera: { acuerdosActivos: true } });
+    await runCorte(db, '2026-05', 'test');
+    const w = db.written();
+    assert.equal(w.clientes.cliA.bajoAcuerdo, 200000);         // escudo aplicado (300k − 100k abono)
+    assert.equal(w.clientes.cliA.acuerdoAlCorte.id, 'ac1');    // cristalizado para la DIAN
+    assert.equal(w.totales.bajoAcuerdo, 200000);
 });

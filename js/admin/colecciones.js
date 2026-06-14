@@ -37,7 +37,7 @@ function renderTable() {
     const pieces = adminDb.getAllPieces();
 
     tbody.innerHTML = _collections.map(c => {
-        const pCount = pieces.filter(p => p.collection === c.id).length;
+        const pCount = pieces.filter(p => p.collection === c.slug || p.collection === c.id).length;
         return `
         <tr>
             <td style="font-weight:500;">${esc(c.name)}</td>

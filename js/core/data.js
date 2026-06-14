@@ -20,6 +20,7 @@
  */
 
 import { onPiecesChange, onCollectionsChange } from '../firestore-service.js';
+import { piecesOfCollection, collectionOfPiece } from './collection-match.js';
 
 class PublicData {
     constructor() {
@@ -99,15 +100,20 @@ class PublicData {
     }
 
     getByCollection(slug) {
-        return this._pieces.filter(p => p.collection === slug);
+        return piecesOfCollection(this._pieces, this._collections, slug);
     }
 
     getBySlug(slug) {
         return this._pieces.find(p => p.slug === slug || p.id === slug) || null;
     }
 
+    /** Colección (doc) a la que pertenece una pieza — tolerante a slug O id. */
+    collectionOf(piece) {
+        return collectionOfPiece(piece, this._collections);
+    }
+
     countByCollection(slug) {
-        return this._pieces.filter(p => p.collection === slug).length;
+        return this.getByCollection(slug).length;
     }
 
     getJournal() { return [...this._journal]; }

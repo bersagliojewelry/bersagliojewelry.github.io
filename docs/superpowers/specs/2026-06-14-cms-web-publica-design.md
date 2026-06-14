@@ -88,8 +88,9 @@
 - [x] Comité de validación del modelo de datos + skill (6 lentes, REFINAR) → §5 (`wrpym7h3p`)
 - [x] safeUrl() cimiento de seguridad (BLOQUEANTE #1) → `39983f2`
 - [ ] Factorizar motor CRUD genérico (BLOQUEANTE #2) + grupo UX `Contenido web` (#3)
+- [x] P1.1 categorías dinámicas (Home dock deriva de `collections`) → `d4caaf6`
 - [ ] Skill `cms-dinamico` + agente content-section-builder creados
-- [ ] P1.1 categorías dinámicas
+- [ ] Factorizar motor CRUD genérico (BLOQUEANTE #2) + grupo UX `Contenido web` (#3)
 - [ ] P1.2 siteContent/home + admin
 - [ ] P1.3 journal dinámico
 - [ ] P2.x nosotros/reviews, films/social, footer/sitemap

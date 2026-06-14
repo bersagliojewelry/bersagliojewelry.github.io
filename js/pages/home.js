@@ -17,11 +17,11 @@ import { renderCategories, refreshCategories } from '../home/categories.js';
 import { renderFeatured, refreshFeatured } from '../home/featured.js';
 import { renderEditorial, refreshEditorial } from '../home/editorial.js';
 import { renderServices } from '../home/services.js';
-import { renderAtelier } from '../home/atelier.js';
+import { renderAtelier, refreshAtelier } from '../home/atelier.js';
 import { renderJournalPreview, refreshJournalPreview, initJournalNewsletter } from '../home/journal-preview.js';
 import { renderFilms, initFilms } from '../home/films.js';
 import { renderSocial, initSocial } from '../home/social.js';
-import { renderCTA } from '../home/cta.js';
+import { renderCTA, refreshCTA } from '../home/cta.js';
 
 function renderAll() {
     return [
@@ -48,7 +48,7 @@ export async function init() {
     data.loadJournal();   // B4: el Home muestra journal-preview → opt-in al listener
     // CMS P1: textos de hero/editorial. getDoc one-shot; re-pinta UNA vez al resolver
     // (no en cada data.onChange → sin flash del LCP por cambios de piezas/journal).
-    data.loadSiteContent('home').then(() => { refreshHero(); refreshEditorial(); });
+    data.loadSiteContent('home').then(() => { refreshHero(); refreshEditorial(); refreshAtelier(); refreshCTA(); });
 
     // Initial paint
     main.innerHTML = renderAll();

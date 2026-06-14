@@ -36,6 +36,27 @@ export const HOME_DEFAULTS = {
         stat2Num:   '800+', stat2Lab: 'Piezas únicas',
         stat3Num:   'JA',   stat3Lab: 'Certificado',
     },
+    atelier: {
+        chip:       'Atelier Bersaglio',
+        title1:     'El viaje de creación de',
+        title2:     'una pieza de culto',
+        lead:       'Un recorrido artesanal meticuloso que transforma una visión en un objeto eterno.',
+        step1Title: 'El Diseño y Concepto',      step1Desc: 'Concebimos la joya desde el boceto inicial sobre papel, seleccionando metales nobles y gemas con carácter propio.',
+        step2Title: 'Asesoría Confidencial',     step2Desc: 'Te acompañamos en cada etapa de la elección. Un diálogo íntimo y pausado para dar con la pieza exacta que refleje tu legado.',
+        step3Title: 'Garantía y Certificación',  step3Desc: 'Respaldamos la autenticidad y excelencia de cada piedra con reportes internacionales de la GIA y origen de mina.',
+        step4Title: 'Custodia de por vida',      step4Desc: 'Nuestras piezas nacen con vocación de eternidad. Ofrecemos mantenimiento, pulido y restauración vitalicia sin límites.',
+        ctaLabel:   'Iniciar mi pieza',
+        ctaHref:    '/contacto.html',
+    },
+    cta: {
+        eyebrow:   'Visita nuestro Atelier privado',
+        title1:    'Nuestra Maison',
+        title2:    'Cartagena de Indias',
+        lead:      'Te invitamos a cruzar el umbral de nuestra Maison en el Centro Histórico de Cartagena de Indias. Con la calma de un buen café, conversaremos sin prisa sobre la pieza que habitará en tu linaje familiar.',
+        cta1Label: 'Agendar cita privada',  cta1Href: '/contacto.html',
+        cta2Label: 'Explorar colecciones',  cta2Href: '/colecciones.html',
+        address:   'Calle 36 # 6-32 · San Agustín Chiquita / Centro Histórico · Bolívar, Colombia',
+    },
 };
 
 /** merge(DEFAULTS, doc) por sub-mapa de sección. Robusto a doc null/parcial. */
@@ -44,5 +65,7 @@ export function mergeHome(doc) {
     return {
         hero:      { ...HOME_DEFAULTS.hero,      ...(d.hero || {}) },
         editorial: { ...HOME_DEFAULTS.editorial, ...(d.editorial || {}) },
+        atelier:   { ...HOME_DEFAULTS.atelier,   ...(d.atelier || {}) },
+        cta:       { ...HOME_DEFAULTS.cta,        ...(d.cta || {}) },
     };
 }

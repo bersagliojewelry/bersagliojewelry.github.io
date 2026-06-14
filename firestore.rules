@@ -404,6 +404,25 @@ service cloud.firestore {
           && (!('published' in d)  || d.published is bool);
     }
 
+    // SiteContent (CMS · textos de página, SINGLETONS): doc por página con sub-mapas
+    // por sección. hasOnly del set de sub-mapas conocidos + auditoría (anti-inyección
+    // L-15); cada sub-mapa es `map` (validación PROFUNDA hoja-por-hoja = cliente +
+    // renderer esc/safeUrl + CSP, gran plan §2.D — las reglas no recursan). El cap de
+    // tamaño del doc lo impone la lógica de guardado (cliente). Whitelist = sub-mapas
+    // del HOME hoy; se amplía por página (nosotros/contacto/global) en P2.
+    function siteContentValid() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['hero', 'editorial', 'atelier', 'cta', 'marquee',
+                               '_version', '_published',
+                               'createdAt', 'createdBy', 'updatedAt', 'updatedBy'])
+          && (!('hero' in d)       || d.hero is map)
+          && (!('editorial' in d)  || d.editorial is map)
+          && (!('atelier' in d)    || d.atelier is map)
+          && (!('cta' in d)        || d.cta is map)
+          && (!('marquee' in d)    || d.marquee is map)
+          && (!('_published' in d) || d._published is bool);
+    }
+
     // ─── F6 frenos de gasto: forms públicos con forma EXACTA (anti spam / denial-of-wallet) ──
     // Whitelist de claves + tipos + tamaños máximos + serverTimestamp obligatorio
     // (`createdAt == request.time` ⇒ solo pasa serverTimestamp(), nunca fechas del cliente).
@@ -470,6 +489,14 @@ service cloud.firestore {
       allow create: if isEditor() && journalValid();
       allow update: if isEditor() && journalValid();
       allow delete: if isAdmin();
+    }
+
+    // ─── CMS · SiteContent (textos de página, singletons) ──────────────────────
+    // read público (copy de marketing). write `editor` con validador hasOnly. Sin
+    // delete (los singletons se vacían/despublican, no se borran). El id = la página.
+    match /siteContent/{page} {
+      allow read:  if true;
+      allow write: if isEditor() && siteContentValid();
     }
 
     // ─── Reviews ───────────────────────────────────────────────────────────────

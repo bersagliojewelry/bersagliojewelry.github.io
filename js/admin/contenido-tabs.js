@@ -8,6 +8,8 @@
  * usarán otro scaffold (form→setDoc) cuando aterricen — se registran aquí igual.
  */
 import { createResourceAdmin } from './resource-admin.js';
+import { createSingletonAdmin } from './singleton-admin.js';
+import { HOME_DEFAULTS } from '../home/siteContent-defaults.js';
 
 // ─── Descriptor: Journal (entradas editoriales) ─────────────────────────────────
 // El esquema del doc (campos) coincide con el contrato que consumen las páginas
@@ -61,12 +63,80 @@ const journalDescriptor = {
     },
 };
 
+// ─── Descriptor: Textos del Home (SINGLETON siteContent/home) ───────────────────
+// P1 del gran plan: textos de hero/editorial editables por formulario. Los DEFAULTS
+// (texto actual horneado) pre-rellenan el form; el render público hace merge(DEFAULTS,
+// doc). Estructura/imágenes = estandarizadas (no editables aquí). stats = campos planos.
+const homeTextsDescriptor = {
+    page:  'home',
+    title: 'Textos del Home',
+    help:  'Edita los textos del inicio (portada y sección editorial) y guarda. Se ven en la web al recargar.',
+    defaults: HOME_DEFAULTS,
+    sections: [
+        { key: 'hero', label: 'Portada (Hero)', fields: [
+            { name: 'locator',          label: 'Ubicación (línea superior)',  type: 'text' },
+            { name: 'eyebrow',          label: 'Eyebrow (línea pequeña)',     type: 'text' },
+            { name: 'headline1',        label: 'Titular — línea 1',           type: 'text' },
+            { name: 'headline2',        label: 'Titular — línea 2 (cursiva)', type: 'text' },
+            { name: 'manifesto',        label: 'Manifiesto (párrafo)',        type: 'textarea', rows: 5 },
+            { name: 'ctaLabel',         label: 'Botón — texto',               type: 'text' },
+            { name: 'ctaHref',          label: 'Botón — enlace',              type: 'text', hint: 'Ruta interna, ej. /colecciones.html' },
+            { name: 'signatureEyebrow', label: 'Firma — antetítulo',          type: 'text' },
+            { name: 'signatureName',    label: 'Firma — nombre',              type: 'text' },
+        ]},
+        { key: 'editorial', label: 'Editorial (filosofía)', fields: [
+            { name: 'chip',       label: 'Chip de la imagen',           type: 'text' },
+            { name: 'imageTitle', label: 'Imagen — título',             type: 'text' },
+            { name: 'imageSub',   label: 'Imagen — subtítulo',          type: 'text' },
+            { name: 'eyebrow',    label: 'Eyebrow',                     type: 'text' },
+            { name: 'title1',     label: 'Título — línea 1',            type: 'text' },
+            { name: 'title2',     label: 'Título — línea 2 (cursiva)',  type: 'text' },
+            { name: 'lead',       label: 'Párrafo principal',           type: 'textarea', rows: 4 },
+            { name: 'quote',      label: 'Cita',                        type: 'textarea', rows: 3 },
+            { name: 'stat1Num',   label: 'Dato 1 — número',             type: 'text' },
+            { name: 'stat1Lab',   label: 'Dato 1 — etiqueta',           type: 'text' },
+            { name: 'stat2Num',   label: 'Dato 2 — número',             type: 'text' },
+            { name: 'stat2Lab',   label: 'Dato 2 — etiqueta',           type: 'text' },
+            { name: 'stat3Num',   label: 'Dato 3 — número',             type: 'text' },
+            { name: 'stat3Lab',   label: 'Dato 3 — etiqueta',           type: 'text' },
+        ]},
+        { key: 'atelier', label: 'Atelier (el viaje de creación)', fields: [
+            { name: 'chip',       label: 'Chip',                        type: 'text' },
+            { name: 'title1',     label: 'Título — línea 1',            type: 'text' },
+            { name: 'title2',     label: 'Título — línea 2 (cursiva)',  type: 'text' },
+            { name: 'lead',       label: 'Bajada',                      type: 'textarea', rows: 2 },
+            { name: 'step1Title', label: 'Paso 1 — título',             type: 'text' },
+            { name: 'step1Desc',  label: 'Paso 1 — descripción',        type: 'textarea', rows: 2 },
+            { name: 'step2Title', label: 'Paso 2 — título',             type: 'text' },
+            { name: 'step2Desc',  label: 'Paso 2 — descripción',        type: 'textarea', rows: 2 },
+            { name: 'step3Title', label: 'Paso 3 — título',             type: 'text' },
+            { name: 'step3Desc',  label: 'Paso 3 — descripción',        type: 'textarea', rows: 2 },
+            { name: 'step4Title', label: 'Paso 4 — título',             type: 'text' },
+            { name: 'step4Desc',  label: 'Paso 4 — descripción',        type: 'textarea', rows: 2 },
+            { name: 'ctaLabel',   label: 'Botón — texto',               type: 'text' },
+            { name: 'ctaHref',    label: 'Botón — enlace',              type: 'text', hint: 'Ruta interna, ej. /contacto.html' },
+        ]},
+        { key: 'cta', label: 'Cierre (Nuestra Maison · Cartagena)', fields: [
+            { name: 'eyebrow',   label: 'Eyebrow',                     type: 'text' },
+            { name: 'title1',    label: 'Título — línea 1',            type: 'text' },
+            { name: 'title2',    label: 'Título — línea 2 (cursiva)',  type: 'text' },
+            { name: 'lead',      label: 'Párrafo',                     type: 'textarea', rows: 3 },
+            { name: 'cta1Label', label: 'Botón 1 — texto',            type: 'text' },
+            { name: 'cta1Href',  label: 'Botón 1 — enlace',           type: 'text', hint: 'Ruta interna, ej. /contacto.html' },
+            { name: 'cta2Label', label: 'Botón 2 — texto',            type: 'text' },
+            { name: 'cta2Href',  label: 'Botón 2 — enlace',           type: 'text', hint: 'Ruta interna, ej. /colecciones.html' },
+            { name: 'address',   label: 'Dirección',                  type: 'text' },
+        ]},
+    ],
+};
+
 // ─── Registro de pestañas ───────────────────────────────────────────────────────
 // id = ancla en la URL (#journal). create() devuelve un controlador fresco por
 // activación (el shell hace destroy() al cambiar de pestaña → sin listeners zombi).
 export const TABS = [
-    { id: 'journal', label: 'Journal', create: () => createResourceAdmin(journalDescriptor) },
-    // Próximas (cuando aterricen): home (singleton), nosotros, films, social, footer.
+    { id: 'journal', label: 'Journal',         create: () => createResourceAdmin(journalDescriptor) },
+    { id: 'home',    label: 'Textos del Home', create: () => createSingletonAdmin(homeTextsDescriptor) },
+    // Próximas (cuando aterricen): nosotros, contacto, films, social, footer.
 ];
 
 export default TABS;

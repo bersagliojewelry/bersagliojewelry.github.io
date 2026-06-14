@@ -91,7 +91,7 @@
 - [x] P1.1 categorías dinámicas (Home dock deriva de `collections`) → `d4caaf6`
 - [x] Skill `cms-dinamico` creada (user-global, catalogada en skills-inventory) · [ ] agente content-section-builder (pendiente)
 - [x] P1.3 journal dinámico — admin (`67fc21e`; reglas journal en emulador 151/151) + público lectura con fallback baked + fix bug "eager" (`66dfd04`)
-- [ ] P1.2 siteContent/home + admin (PRÓXIMO — 1er singleton; scaffold form→setDoc(merge))
+- [x] P1.2 siteContent/home + admin — scaffold singleton (form→setDoc merge) + textos hero/editorial editables (`c98f77d` base + `905330c` UI). Resto de singletons (nosotros/contacto/global) = P2; UNDO = P2.
 - [ ] P2.x nosotros/reviews, films/social, footer/sitemap
 - [ ] Transversal SEO/UX + (gated) flip de indexación
 - [ ] Deploy del milestone: merge Desarrollo→main (Daniel, L-26) + `firebase deploy --only firestore:rules` + cache bump v16→v17 + APP_VERSION

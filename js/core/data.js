@@ -19,7 +19,7 @@
  * snapshot updates triggers UN SOLO render cycle.
  */
 
-import { onPiecesChange, onCollectionsChange, onJournalChange } from '../firestore-service.js';
+import { onPiecesChange, onCollectionsChange, onJournalChange, getSiteContent as fetchSiteContent } from '../firestore-service.js';
 import { piecesOfCollection, collectionOfPiece } from './collection-match.js';
 
 class PublicData {
@@ -27,6 +27,7 @@ class PublicData {
         this._pieces = [];
         this._collections = [];
         this._journal = [];          // CMS: entradas del journal (live Firestore)
+        this._siteContent = {};      // CMS: textos de página (singletons, getDoc cacheado)
         this._listeners = new Set();
         this._loaded = false;
         this._loadPromise = null;
@@ -103,6 +104,26 @@ class PublicData {
             this._notify();
         });
     }
+
+    /**
+     * Carga el contenido de una página (singleton) — getDoc ONE-SHOT (NO listener:
+     * decisión de costo §2.B). Notifica una vez al resolver → las secciones que ya
+     * pintaron con DEFAULTS se re-renderizan con el override. Idempotente por página.
+     */
+    async loadSiteContent(page) {
+        try {
+            const doc = await fetchSiteContent(page);
+            this._siteContent[page] = doc || {};
+            this._notify();
+            return this._siteContent[page];
+        } catch (err) {
+            console.warn('[data] siteContent load failed:', err);
+            return {};
+        }
+    }
+
+    /** Doc de contenido de una página (raw, sin merge); null si no cargado. */
+    getSiteContent(page) { return this._siteContent[page] || null; }
 
     // ─── Getters ───────────────────────────────────────────────────────────
 

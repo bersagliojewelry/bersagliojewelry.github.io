@@ -1,30 +1,29 @@
 /**
- * Home · Sección 7 — Atelier (escena rediseñada).
- * Joya `gema.png` flotante al centro + halo dorado-verde + anillo punteado girando
- * (atSpin) + líneas .at-flow conectando hacia el centro. 4 tarjetas acercadas con
- * dot (sin números grandes de paso).
+ * Home · Sección 7 — Atelier ("El viaje de creación de una pieza de culto"). DINÁMICO
+ * (CMS P2): textos de merge(HOME_DEFAULTS, siteContent/home).atelier, editables desde
+ * el panel (Textos del Home → Atelier). Estructura (joya/halo/anillo/líneas) + posición
+ * de las 4 tarjetas (corner por índice) = ESTANDARIZADO. Texto por escape(), href por safeUrl().
  */
-import { html, escape } from '../core/html.js';
+import { html, escape, mount } from '../core/html.js';
+import { data } from '../core/data.js';
+import { safeUrl } from '../core/safe-url.js';
+import { mergeHome } from './siteContent-defaults.js';
 
-const ATELIER_STEPS = [
-    { t: 'El Diseño y Concepto', d: 'Concebimos la joya desde el boceto inicial sobre papel, seleccionando metales nobles y gemas con carácter propio.', corner: 0 },
-    { t: 'Asesoría Confidencial', d: 'Te acompañamos en cada etapa de la elección. Un diálogo íntimo y pausado para dar con la pieza exacta que refleje tu legado.', corner: 1 },
-    { t: 'Garantía y Certificación', d: 'Respaldamos la autenticidad y excelencia de cada piedra con reportes internacionales de la GIA y origen de mina.', corner: 2 },
-    { t: 'Custodia de por vida', d: 'Nuestras piezas nacen con vocación de eternidad. Ofrecemos mantenimiento, pulido y restauración vitalicia sin límites.', corner: 3 },
-];
-
-export function renderAtelier() {
+function atelierInner(c) {
+    const steps = [
+        { t: c.step1Title, d: c.step1Desc, corner: 0 },
+        { t: c.step2Title, d: c.step2Desc, corner: 1 },
+        { t: c.step3Title, d: c.step3Desc, corner: 2 },
+        { t: c.step4Title, d: c.step4Desc, corner: 3 },
+    ];
     return html`
-        <section class="home-atelier">
             <div class="container">
                 <div class="home-atelier-header">
-                    <div class="chip"><span class="chip-dot"></span>Atelier Bersaglio</div>
+                    <div class="chip"><span class="chip-dot"></span>${escape(c.chip)}</div>
                     <h2 class="home-atelier-title">
-                        El viaje de creación de <span class="italic emerald-text">una pieza de culto</span>
+                        ${escape(c.title1)} <span class="italic emerald-text">${escape(c.title2)}</span>
                     </h2>
-                    <p class="home-atelier-lead">
-                        Un recorrido artesanal meticuloso que transforma una visión en un objeto eterno.
-                    </p>
+                    <p class="home-atelier-lead">${escape(c.lead)}</p>
                 </div>
 
                 <div class="glass glass-iridescent at-stage">
@@ -50,21 +49,31 @@ export function renderAtelier() {
                         <img src="/img/gema.png" alt="Esmeralda Bersaglio engastada en oro 18K" class="at-jewel-img" loading="lazy" decoding="async">
                     </div>
 
-                    ${ATELIER_STEPS.map(s => html`
+                    ${steps.map(s => html`
                         <div class="at-card at-card--corner-${s.corner}">
                             <div class="at-card-title"><span class="at-card-dot" aria-hidden="true"></span>${escape(s.t)}</div>
                             <p class="at-card-desc">${escape(s.d)}</p>
                         </div>`)}
 
                     <div class="at-cta">
-                        <a href="/contacto.html" class="btn-aqua btn-aqua-emerald">
-                            Iniciar mi pieza
+                        <a href="${escape(safeUrl(c.ctaHref, '/contacto.html'))}" class="btn-aqua btn-aqua-emerald">
+                            ${escape(c.ctaLabel)}
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
                         </a>
                     </div>
                 </div>
-            </div>
-        </section>`;
+            </div>`;
 }
 
-export default { renderAtelier };
+export function renderAtelier() {
+    return html`<section class="home-atelier">${atelierInner(mergeHome(data.getSiteContent('home')).atelier)}</section>`;
+}
+
+/** Re-pinta el atelier cuando llega el override de siteContent (desde home.js). */
+export function refreshAtelier() {
+    const sec = document.querySelector('.home-atelier');
+    if (!sec) return;
+    mount(sec, atelierInner(mergeHome(data.getSiteContent('home')).atelier));
+}
+
+export default { renderAtelier, refreshAtelier };

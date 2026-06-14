@@ -171,6 +171,7 @@
 | `claude-automation-recommender` | Analiza el repo y recomienda automatizaciones de Claude Code (hooks/subagentes/skills/plugins/MCP). Read-only. | ✅ user-level |
 | `claude-md-improver` | Audita y mejora archivos CLAUDE.md contra plantillas. | ✅ user-level |
 | `session-report` | Genera reporte HTML de uso de sesiones Claude Code (tokens/cache/subagentes). | ✅ user-level |
+| `cms-dinamico` (2026-06-14) | Patrones para hacer contenido público administrable sin tocar código (Firebase): singleton vs colección, reglas público-read/`editor`-write con `hasOnly`, cableado live-sync (firestore-service→data→onChange), scaffold de CRUD admin, núcleo puro testeable, fallback elegante, SEO de contenido dinámico. PORTABLE. | ✅ user-level |
 
 ---
 

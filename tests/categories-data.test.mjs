@@ -1,17 +1,17 @@
 /**
  * Categorías del Home dinámicas — mapeo colecciones→tarjetas (js/home/categories-data.js).
- * Fija el comportamiento CMS: derivar de las colecciones reales + fallback baked.
+ * Fija el comportamiento CMS: derivar de las colecciones reales; NO-DEMO si no hay.
  *
  *   node --test tests/categories-data.test.mjs
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cardsFrom, BAKED } from '../js/home/categories-data.js';
+import { cardsFrom } from '../js/home/categories-data.js';
 
-test('sin colecciones → fallback BAKED (bootstrap, cero downtime)', () => {
-    assert.equal(cardsFrom([]), BAKED);
-    assert.equal(cardsFrom(null), BAKED);
-    assert.equal(cardsFrom(undefined), BAKED);
+test('sin colecciones → [] (NO-DEMO: la sección se oculta, no muestra demo)', () => {
+    assert.deepEqual(cardsFrom([]), []);
+    assert.deepEqual(cardsFrom(null), []);
+    assert.deepEqual(cardsFrom(undefined), []);
 });
 
 test('deriva de las colecciones reales (name/slug/bannerUrl)', () => {

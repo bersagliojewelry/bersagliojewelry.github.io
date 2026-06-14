@@ -37,6 +37,7 @@ const COLLECTIONS = {
     pieces:        'pieces',
     collections:   'collections',
     journal:       'journal',
+    siteContent:   'siteContent',
     reviews:       'reviews',
     subscriptions: 'subscriptions',
     inquiries:     'inquiries',
@@ -407,6 +408,42 @@ export const deleteCollection = (colId) =>
 /** Subscribe to real-time journal updates (público). @returns unsubscribe. */
 export const onJournalChange = (callback) =>
     onCollectionChange(COLLECTIONS.journal, callback, { limit: 100, truncationLabel: 'Journal' });
+
+// ─── SiteContent (CMS · textos de página, SINGLETONS) ────────────────────────
+// Singletons de baja escritura (siteContent/{home,nosotros,contacto,global}) con
+// sub-mapas por sección. Decisión de COSTO del gran plan §2.B: getDoc ONE-SHOT,
+// NO onSnapshot (a 6+ páginas un listener permanente por página revienta Spark).
+
+/** Lee el doc de contenido de una página (one-shot). null si no existe aún. */
+export async function getSiteContent(page) {
+    const snap = await getDoc(doc(firestoreDb, COLLECTIONS.siteContent, page));
+    return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+/**
+ * Upsert de un singleton de contenido (crea o fusiona). merge:true preserva los
+ * sub-mapas no tocados; _version se incrementa atómicamente; audit log + señal de
+ * cache como el motor genérico. Sin expectedVersion (editor único — Kary); el
+ * bloqueo optimista se añade si entran varios editores.
+ */
+export async function saveSiteContent(page, data) {
+    const ref = doc(firestoreDb, COLLECTIONS.siteContent, page);
+    let nextVersion = 1;
+    await withRetry(() => runTransaction(firestoreDb, async tx => {
+        const snap = await tx.get(ref);
+        nextVersion = (snap.exists() ? (snap.data()._version || 0) : 0) + 1;
+        tx.set(ref, {
+            ...data,
+            _version:  nextVersion,
+            updatedAt: serverTimestamp(),
+            updatedBy: _authContext.uid || null,
+            ...(snap.exists() ? {} : { createdAt: serverTimestamp(), createdBy: _authContext.uid || null }),
+        }, { merge: true });
+    }));
+    writeAuditLog(COLLECTIONS.siteContent, page, { action: 'upsert', version: nextVersion, snapshot: data });
+    signalCacheInvalidation();
+    return { version: nextVersion };
+}
 
 // ─── Reviews ─────────────────────────────────────────────────────────────────
 

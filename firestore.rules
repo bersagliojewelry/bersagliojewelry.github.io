@@ -404,6 +404,25 @@ service cloud.firestore {
           && (!('published' in d)  || d.published is bool);
     }
 
+    // SiteContent (CMS · textos de página, SINGLETONS): doc por página con sub-mapas
+    // por sección. hasOnly del set de sub-mapas conocidos + auditoría (anti-inyección
+    // L-15); cada sub-mapa es `map` (validación PROFUNDA hoja-por-hoja = cliente +
+    // renderer esc/safeUrl + CSP, gran plan §2.D — las reglas no recursan). El cap de
+    // tamaño del doc lo impone la lógica de guardado (cliente). Whitelist = sub-mapas
+    // del HOME hoy; se amplía por página (nosotros/contacto/global) en P2.
+    function siteContentValid() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['hero', 'editorial', 'atelier', 'cta', 'marquee',
+                               '_version', '_published',
+                               'createdAt', 'createdBy', 'updatedAt', 'updatedBy'])
+          && (!('hero' in d)       || d.hero is map)
+          && (!('editorial' in d)  || d.editorial is map)
+          && (!('atelier' in d)    || d.atelier is map)
+          && (!('cta' in d)        || d.cta is map)
+          && (!('marquee' in d)    || d.marquee is map)
+          && (!('_published' in d) || d._published is bool);
+    }
+
     // ─── F6 frenos de gasto: forms públicos con forma EXACTA (anti spam / denial-of-wallet) ──
     // Whitelist de claves + tipos + tamaños máximos + serverTimestamp obligatorio
     // (`createdAt == request.time` ⇒ solo pasa serverTimestamp(), nunca fechas del cliente).
@@ -470,6 +489,14 @@ service cloud.firestore {
       allow create: if isEditor() && journalValid();
       allow update: if isEditor() && journalValid();
       allow delete: if isAdmin();
+    }
+
+    // ─── CMS · SiteContent (textos de página, singletons) ──────────────────────
+    // read público (copy de marketing). write `editor` con validador hasOnly. Sin
+    // delete (los singletons se vacían/despublican, no se borran). El id = la página.
+    match /siteContent/{page} {
+      allow read:  if true;
+      allow write: if isEditor() && siteContentValid();
     }
 
     // ─── Reviews ───────────────────────────────────────────────────────────────
@@ -626,6 +653,21 @@ service cloud.firestore {
       // write OWNER-ONLY: quien opera bajo los límites no puede reescribirlos.
       allow read:  if docId == 'status' || isAdmin();
       allow write: if docId == 'cartera' ? isOwner() : isAdmin();
+    }
+
+    // ─── CMS · System/meta (señal de frescura de cache) ─────────────────────────
+    // B1 (comité 2026-06-14): `signalCacheInvalidation` (firestore-service.js) escribe
+    // system/meta en CADA save del CMS para que las páginas públicas detecten cambios.
+    // FALTABA el match → cada escritura era DENEGADA en silencio (el catch la tragaba).
+    // read público (es solo un timestamp, no dato sensible; lo leerá el modelo de
+    // frescura/pre-render SSG). write `editor` con whitelist: el campo legacy
+    // `lastDataUpdate` + las claves por-página del modelo de cache-bust (§2.C del spec
+    // del gran plan); cualquier otra clave = inyección → DENY (L-15).
+    match /system/{docId} {
+      allow read:  if true;
+      allow write: if isEditor()
+                   && request.resource.data.keys().hasOnly(
+                        ['lastDataUpdate', 'home', 'nosotros', 'contacto', 'global', 'lists']);
     }
 
     // ─── Push Tokens ───────────────────────────────────────────────────────────

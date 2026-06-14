@@ -19,6 +19,9 @@ export function renderJournalPreview() {
 // estado baked para siempre) — para reflejar las entradas de Firestore al llegar.
 function journalInner() {
     const feat = getFeatured();
+    // B2 (comité): sin entradas (y sin fallback baked) getFeatured() = null → no montar
+    // la sección en vez de romper en cover.excerpt.charAt(0). El no-demo de §4 la oculta.
+    if (!feat) return '';
     const cover = {
         issue: JOURNAL_ISSUE.number,
         date: feat.dateLong,

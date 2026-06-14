@@ -41,7 +41,7 @@
 - [x] **P0 — Sincronización pieza↔colección** (el bug real): matcher tolerante + admin guarda slug. `47b07b8`. ✅
 - [ ] **P1.1 — Categorías del Home dinámicas**: `js/home/categories.js` deriva de `data.getCollections()` (kill array hardcoded); editable vía el admin de colecciones que YA existe. (media)
 - [ ] **P1.2 — `siteContent/home`**: textos de hero/editorial/services/atelier/cta → doc singleton + admin (nueva página `admin-contenido.html` o sección) + render con fallback. (media)
-- [ ] **P1.3 — Journal dinámico**: colección `journal` + reglas + admin CRUD + `data.getJournal()` real (hoy `_journal=[]`) + `journal-preview`/`journal.html`. (alta)
+- [x] **P1.3 — Journal dinámico**: colección `journal` + reglas (journalValid+publicContentValid) + admin CRUD (motor genérico) + `data.getJournal()` real + `journal-preview`/`journal.html`/`entrada.html` con fallback baked + fix eager. `67fc21e`+`66dfd04`. ✅
 - [ ] **P2.1 — Nosotros** (`siteContent/nosotros`) + **reviews** admin UI (colección ya existe). (alta)
 - [ ] **P2.2 — Films + Social**: colecciones `films`/`socialPosts` + admin + render; datos curados. (alta)
 - [ ] **P2.3 — Footer/Contacto** (`siteContent/global`) + **sitemap dinámico** (de pieces/collections/journal). (media)
@@ -87,11 +87,11 @@
 - [x] Diseño de arquitectura validado por comité → §5 (`wrpym7h3p`)
 - [x] Comité de validación del modelo de datos + skill (6 lentes, REFINAR) → §5 (`wrpym7h3p`)
 - [x] safeUrl() cimiento de seguridad (BLOQUEANTE #1) → `39983f2`
-- [ ] Factorizar motor CRUD genérico (BLOQUEANTE #2) + grupo UX `Contenido web` (#3)
+- [x] Factorizar motor CRUD genérico (BLOQUEANTE #2) + grupo UX `Contenido web` (#3) → `8b507cb` (servicio: createTypedDoc) + `67fc21e` (UI: createResourceAdmin + admin-contenido + grupo sidebar)
 - [x] P1.1 categorías dinámicas (Home dock deriva de `collections`) → `d4caaf6`
-- [ ] Skill `cms-dinamico` + agente content-section-builder creados
-- [ ] Factorizar motor CRUD genérico (BLOQUEANTE #2) + grupo UX `Contenido web` (#3)
-- [ ] P1.2 siteContent/home + admin
-- [ ] P1.3 journal dinámico
+- [x] Skill `cms-dinamico` creada (user-global, catalogada en skills-inventory) · [ ] agente content-section-builder (pendiente)
+- [x] P1.3 journal dinámico — admin (`67fc21e`; reglas journal en emulador 151/151) + público lectura con fallback baked + fix bug "eager" (`66dfd04`)
+- [ ] P1.2 siteContent/home + admin (PRÓXIMO — 1er singleton; scaffold form→setDoc(merge))
 - [ ] P2.x nosotros/reviews, films/social, footer/sitemap
 - [ ] Transversal SEO/UX + (gated) flip de indexación
+- [ ] Deploy del milestone: merge Desarrollo→main (Daniel, L-26) + `firebase deploy --only firestore:rules` + cache bump v16→v17 + APP_VERSION

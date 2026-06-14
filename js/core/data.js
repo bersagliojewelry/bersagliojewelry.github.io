@@ -64,12 +64,10 @@ class PublicData {
                     maybeResolve();
                 });
 
-                // Journal: NO gatea el first-paint (§5-comité) — el Home pinta con
-                // el contenido baked y se actualiza si llegan entradas publicadas.
-                this._unsubJournal = onJournalChange(entries => {
-                    this._journal = entries;
-                    this._notify();
-                });
+                // Journal: NO va aquí. B4 (comité): suscribirlo en load() lo activaba
+                // en CADA página pública (catálogo/pieza/carrito…) que no lo usa →
+                // listener inútil que quema lecturas de Spark. Ahora es lazy/opt-in:
+                // solo home/journal/entrada llaman data.loadJournal() (abajo).
 
                 // Safety: 4s timeout to unblock first paint even if Firestore is slow.
                 await Promise.race([
@@ -91,6 +89,20 @@ class PublicData {
     }
 
     isReady() { return this._loaded; }
+
+    /**
+     * Suscribe el listener de journal — LAZY/opt-in (B4): solo lo llaman las páginas
+     * que muestran journal (home/journal/entrada), no toda página pública. Idempotente.
+     * NO gatea el first-paint: el contenido baked pinta ya y se actualiza al llegar
+     * las entradas publicadas.
+     */
+    loadJournal() {
+        if (this._unsubJournal) return;
+        this._unsubJournal = onJournalChange(entries => {
+            this._journal = entries;
+            this._notify();
+        });
+    }
 
     // ─── Getters ───────────────────────────────────────────────────────────
 

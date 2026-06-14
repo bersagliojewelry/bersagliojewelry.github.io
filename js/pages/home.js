@@ -45,6 +45,7 @@ export async function init() {
 
     // Kick off Firestore data load (non-blocking — first paint uses skeleton)
     data.load().catch(() => {});
+    data.loadJournal();   // B4: el Home muestra journal-preview → opt-in al listener
 
     // Initial paint
     main.innerHTML = renderAll();

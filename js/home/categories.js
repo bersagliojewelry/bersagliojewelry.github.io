@@ -41,6 +41,9 @@ function tile(c) {
 }
 
 export function renderCategories() {
+    // NO-DEMO (B3 §4): sin colecciones, la sección no se monta (cero demo). Reaparece
+    // al recargar cuando Kary cree la primera colección (bootstrap puntual).
+    if (!cards().length) return '';
     return html`
         <section class="home-cats">
             <div class="container">
@@ -62,12 +65,15 @@ export function renderCategories() {
 }
 
 export function refreshCategories() {
-    const dock = document.querySelector('[data-categories]');
-    if (!dock) return;
-    // Las categorías AHORA son las colecciones (live): re-render completo al cambiar
-    // el set o los conteos. mount() centraliza el innerHTML en html.js (patrón del
-    // codebase); todo valor dinámico va por escape()/safeUrl().
-    mount(dock, cards().map(tile).join(''));
+    const cs = cards();
+    const sec = document.querySelector('.home-cats');
+    // NO-DEMO: si se quedó sin colecciones (Kary las borró), retirar la sección.
+    if (!cs.length) { if (sec) sec.remove(); return; }
+    const dock = sec?.querySelector('[data-categories]');
+    if (!dock) return;   // cargó vacía (sin sección); aparecerá al recargar
+    // Re-render completo al cambiar el set o los conteos. mount() centraliza el
+    // innerHTML en html.js; todo valor dinámico va por escape()/safeUrl().
+    mount(dock, cs.map(tile).join(''));
 }
 
 export default { renderCategories, refreshCategories };

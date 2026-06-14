@@ -204,6 +204,43 @@ test('journal · editor NO borra; admin SÍ', async () => {
     await assertSucceeds(deleteDoc(doc(asUser('adminUid'), 'journal/j1')));
 });
 
+// ─── CMS · B1: system/meta (señal de frescura) — write editor + hasOnly ──────
+test('system/meta · editor escribe la señal de cache (lastDataUpdate)', async () => {
+    await assertSucceeds(setDoc(doc(asUser('editorUid'), 'system/meta'),
+        { lastDataUpdate: serverTimestamp() }, { merge: true }));
+});
+test('system/meta · lectura pública (la web detecta cambios)', async () => {
+    await assertSucceeds(getDoc(doc(anon(), 'system/meta')));
+});
+test('system/meta · anónimo NO escribe', async () => {
+    await assertFails(setDoc(doc(anon(), 'system/meta'), { lastDataUpdate: serverTimestamp() }));
+});
+test('system/meta · hasOnly RECHAZA clave fuera del whitelist', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'system/meta'),
+        { lastDataUpdate: serverTimestamp(), hacker: 'x' }, { merge: true }));
+});
+
+// ─── CMS · P1: siteContent (singletons de texto) — write editor + hasOnly + maps ─
+test('siteContent · editor escribe contenido de home (sub-mapas)', async () => {
+    await assertSucceeds(setDoc(doc(asUser('editorUid'), 'siteContent/home'), {
+        hero: { h1a: 'Alta', h1b: 'joyería', manifiesto: 'x' },
+        editorial: { titulo: 'T', lead: 'L' },
+        _published: true,
+    }));
+});
+test('siteContent · lectura pública', async () => {
+    await assertSucceeds(getDoc(doc(anon(), 'siteContent/home')));
+});
+test('siteContent · anónimo NO escribe', async () => {
+    await assertFails(setDoc(doc(anon(), 'siteContent/home'), { hero: { h1a: 'x' } }));
+});
+test('siteContent · hasOnly RECHAZA sub-mapa no previsto', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'siteContent/home'), { hacker: { x: 1 } }));
+});
+test('siteContent · RECHAZA sub-mapa que no es map', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'siteContent/home'), { hero: 'no-soy-map' }));
+});
+
 // ─── CRM Fase R: vendedoras = entidad de datos (solo admin/owner) ─────────────
 test('CRM vend · admin lee y crea vendedoras', async () => {
     await assertSucceeds(getDoc(doc(asUser('adminUid'), 'vendedoras/vendA')));

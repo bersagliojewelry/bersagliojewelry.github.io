@@ -371,6 +371,39 @@ service cloud.firestore {
           && (!('featured' in d) || d.featured is bool);
     }
 
+    // ─── CMS · Contenido público (journal/films/social…) — validador genérico ────
+    // Whitelist hasOnly OBLIGATORIA (L-15, repo público): cada recurso declara solo
+    // sus claves de CONTENIDO; este helper añade automáticamente los campos de
+    // auditoría que estampa el motor de servicio (createTypedDoc/updateTypedDoc:
+    // _version + createdAt/updatedAt + createdBy/updatedBy). Cualquier clave fuera
+    // de esa unión = inyección → DENY. NO valida tipos (eso lo hace cada recurso).
+    function publicContentValid(d, contentKeys) {
+      return d.keys().hasOnly(contentKeys.concat(
+          ['_version', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy']));
+    }
+    // Journal (entradas editoriales). El id del doc = slug (URL SEO). Idioms de
+    // opcionales: `!('x' in d) || d.x is tipo` (acceder a campo ausente LANZA).
+    // size-cap en todo string (L-15); `date` ISO opcional; `body` hasta 20k.
+    function journalValid() {
+      let d = request.resource.data;
+      return publicContentValid(d, ['title', 'slug', 'section', 'kicker', 'excerpt',
+                                    'body', 'date', 'read', 'author', 'authorRole',
+                                    'image', 'featured', 'published'])
+          && d.title is string && d.title.size() > 0 && d.title.size() <= 200
+          && (!('slug' in d)       || (d.slug is string       && d.slug.size() <= 200))
+          && (!('section' in d)    || (d.section is string    && d.section.size() <= 80))
+          && (!('kicker' in d)     || (d.kicker is string     && d.kicker.size() <= 200))
+          && (!('excerpt' in d)    || (d.excerpt is string    && d.excerpt.size() <= 2000))
+          && (!('body' in d)       || (d.body is string       && d.body.size() <= 20000))
+          && (!('date' in d)       || (d.date is string       && d.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
+          && (!('read' in d)       || (d.read is string       && d.read.size() <= 40))
+          && (!('author' in d)     || (d.author is string     && d.author.size() <= 120))
+          && (!('authorRole' in d) || (d.authorRole is string && d.authorRole.size() <= 120))
+          && (!('image' in d)      || (d.image is string      && d.image.size() <= 1000))
+          && (!('featured' in d)   || d.featured is bool)
+          && (!('published' in d)  || d.published is bool);
+    }
+
     // ─── F6 frenos de gasto: forms públicos con forma EXACTA (anti spam / denial-of-wallet) ──
     // Whitelist de claves + tipos + tamaños máximos + serverTimestamp obligatorio
     // (`createdAt == request.time` ⇒ solo pasa serverTimestamp(), nunca fechas del cliente).
@@ -425,6 +458,18 @@ service cloud.firestore {
       allow create: if isEditor() && colCreateValid();     // S6
       allow update: if isEditor() && colTypesValid();      // S6: tolerante a merge/partial
       allow delete: if isAdmin();                          // Admin+
+    }
+
+    // ─── CMS · Journal (entradas editoriales) ──────────────────────────────────
+    // Contenido público por diseño (read:true; el flag `published` gobierna la
+    // VISUALIZACIÓN en el sitio, no el acceso — es copy de marketing, no dato
+    // sensible). Escritura rol `editor` con validador tipado + hasOnly. El motor
+    // genérico (createTypedDoc) sella la auditoría; el id del doc = slug.
+    match /journal/{entryId} {
+      allow read:   if true;
+      allow create: if isEditor() && journalValid();
+      allow update: if isEditor() && journalValid();
+      allow delete: if isAdmin();
     }
 
     // ─── Reviews ───────────────────────────────────────────────────────────────

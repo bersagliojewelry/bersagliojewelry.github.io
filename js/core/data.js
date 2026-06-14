@@ -19,19 +19,20 @@
  * snapshot updates triggers UN SOLO render cycle.
  */
 
-import { onPiecesChange, onCollectionsChange } from '../firestore-service.js';
+import { onPiecesChange, onCollectionsChange, onJournalChange } from '../firestore-service.js';
 import { piecesOfCollection, collectionOfPiece } from './collection-match.js';
 
 class PublicData {
     constructor() {
         this._pieces = [];
         this._collections = [];
-        this._journal = [];          // futuro — fase 2 con admin-journal
+        this._journal = [];          // CMS: entradas del journal (live Firestore)
         this._listeners = new Set();
         this._loaded = false;
         this._loadPromise = null;
         this._unsubPieces = null;
         this._unsubCols = null;
+        this._unsubJournal = null;
         this._notifyScheduled = false;
         this._initialPieces = false;
         this._initialCols = false;
@@ -61,6 +62,13 @@ class PublicData {
                     this._initialCols = true;
                     this._notify();
                     maybeResolve();
+                });
+
+                // Journal: NO gatea el first-paint (§5-comité) — el Home pinta con
+                // el contenido baked y se actualiza si llegan entradas publicadas.
+                this._unsubJournal = onJournalChange(entries => {
+                    this._journal = entries;
+                    this._notify();
                 });
 
                 // Safety: 4s timeout to unblock first paint even if Firestore is slow.
@@ -116,9 +124,10 @@ class PublicData {
         return this.getByCollection(slug).length;
     }
 
-    getJournal() { return [...this._journal]; }
+    /** Entradas del journal PUBLICADAS (los borradores no salen al público). */
+    getJournal() { return this._journal.filter(e => e.published === true); }
     getEntryBySlug(slug) {
-        return this._journal.find(e => e.slug === slug) || null;
+        return this.getJournal().find(e => e.slug === slug || e.id === slug) || null;
     }
 
     // ─── Realtime ──────────────────────────────────────────────────────────

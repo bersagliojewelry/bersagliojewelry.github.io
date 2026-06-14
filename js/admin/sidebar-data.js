@@ -25,6 +25,13 @@ export const NAV = [
     { label: 'Colecciones', href: 'admin-colecciones.html', icon: 'layers', role: 'editor' },
     { label: 'Inventario',  href: '#', icon: 'box', role: 'admin', soon: true },
   ]},
+  // CMS de la web pública (decisión UX #3 del comité): UNA página de pestañas
+  // (admin-contenido.html), no 6 admin-*.html sueltos. Rol mínimo: editor.
+  { label: 'Contenido web', items: [
+    { label: 'Journal',  href: 'admin-contenido.html#journal', icon: 'invoice', role: 'editor' },
+    { label: 'Textos / Home', href: '#', icon: 'home',  role: 'editor', soon: true },
+    { label: 'Films y Redes', href: '#', icon: 'chart', role: 'editor', soon: true },
+  ]},
   { label: 'Reportes', items: [
     { label: 'Reportes / KPIs', href: '#', icon: 'chart', role: 'admin', soon: true },
   ]},

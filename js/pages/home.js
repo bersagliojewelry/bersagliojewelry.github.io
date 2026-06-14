@@ -18,7 +18,7 @@ import { renderFeatured, refreshFeatured } from '../home/featured.js';
 import { renderEditorial } from '../home/editorial.js';
 import { renderServices } from '../home/services.js';
 import { renderAtelier } from '../home/atelier.js';
-import { renderJournalPreview, initJournalNewsletter } from '../home/journal-preview.js';
+import { renderJournalPreview, refreshJournalPreview, initJournalNewsletter } from '../home/journal-preview.js';
 import { renderFilms, initFilms } from '../home/films.js';
 import { renderSocial, initSocial } from '../home/social.js';
 import { renderCTA } from '../home/cta.js';
@@ -65,6 +65,7 @@ export async function init() {
     data.onChange(() => {
         refreshFeatured();
         refreshCategories();
+        refreshJournalPreview();
     });
 }
 

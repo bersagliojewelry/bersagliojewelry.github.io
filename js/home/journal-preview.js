@@ -2,21 +2,25 @@
  * Home · Sección 8 — Journal preview (masthead estilo NYT: cover + sidebar + trio).
  * Datos compartidos con las páginas journal/entrada (js/data/journal.js).
  */
-import { html, escape } from '../core/html.js';
+import { html, escape, mount } from '../core/html.js';
 import {
-    JOURNAL_ENTRIES as JOURNAL_DATA_ALL,
-    JOURNAL_ISSUE   as JOURNAL_DATA_ISSUE,
+    JOURNAL_ISSUE,
     JOURNAL_TICKER,
-    getFeatured     as journalGetFeatured,
+    getFeatured,
+    getNonFeatured,
 } from '../data/journal.js';
 
-const JOURNAL_DATA_FEATURED = journalGetFeatured();
-
 export function renderJournalPreview() {
-    // Build cover/side/trio from the shared journal data module.
-    const feat = JOURNAL_DATA_FEATURED;
+    return html`<section class="home-journal">${journalInner()}</section>`;
+}
+
+// Contenido interno (re-renderizable en vivo): lee getFeatured()/getNonFeatured()
+// EN TIEMPO DE RENDER — no en import (bug "eager" del consumo previo: capturaba el
+// estado baked para siempre) — para reflejar las entradas de Firestore al llegar.
+function journalInner() {
+    const feat = getFeatured();
     const cover = {
-        issue: JOURNAL_DATA_ISSUE.number,
+        issue: JOURNAL_ISSUE.number,
         date: feat.dateLong,
         section: feat.section,
         read: feat.read,
@@ -27,7 +31,7 @@ export function renderJournalPreview() {
         img: feat.image,
         slug: feat.slug,
     };
-    const nonFeatured = JOURNAL_DATA_ALL.filter(e => e.slug !== feat.slug);
+    const nonFeatured = getNonFeatured();
     const JOURNAL_SIDE = nonFeatured.slice(0, 4).map(e => ({
         sec: e.section, date: e.date, title: e.title, read: e.read, slug: e.slug,
     }));
@@ -37,7 +41,6 @@ export function renderJournalPreview() {
     const ticker = JOURNAL_TICKER;
     const tickerDoubled = [...ticker, ...ticker];
     return html`
-        <section class="home-journal">
             <div class="container">
                 <div class="hj-masthead">
                     <div class="hj-masthead-brand">
@@ -157,8 +160,16 @@ export function renderJournalPreview() {
                             </a>
                         </article>`)}
                 </div>
-            </div>
-        </section>`;
+            </div>`;
+}
+
+// Re-render en vivo del bloque journal del Home (data.onChange) — espejo de
+// refreshFeatured/refreshCategories. Re-cabla el form de newsletter del bloque.
+export function refreshJournalPreview() {
+    const sec = document.querySelector('.home-journal');
+    if (!sec) return;
+    mount(sec, journalInner());
+    initJournalNewsletter();
 }
 
 export function initJournalNewsletter() {
@@ -174,4 +185,4 @@ export function initJournalNewsletter() {
     });
 }
 
-export default { renderJournalPreview, initJournalNewsletter };
+export default { renderJournalPreview, refreshJournalPreview, initJournalNewsletter };

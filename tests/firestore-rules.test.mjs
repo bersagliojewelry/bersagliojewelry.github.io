@@ -42,6 +42,7 @@ before(async () => {
         await setDoc(doc(db, 'reviews/approvedRev'), { approved: true,  pieceSlug: 'x', rating: 5 });
         await setDoc(doc(db, 'reviews/pendingRev'),  { approved: false, pieceSlug: 'x', rating: 5 });
         await setDoc(doc(db, 'pieces/p1'), { name: 'Anillo', slug: 'anillo' });
+        await setDoc(doc(db, 'journal/j1'), { title: 'Esmeraldas', published: true }); // CMS: lectura pública + borrado admin
 
         // ─── CRM Fase R: vendedoras (entidad), cliente (vendedoraId), config, pendientes ──
         await setDoc(doc(db, 'users/ownerUid'), { role: 'owner' });
@@ -174,6 +175,33 @@ test('S6 · colección: editor crea con name', async () => {
 });
 test('S6 · colección: NO crea sin name', async () => {
     await assertFails(setDoc(doc(asUser('editorUid'), 'collections/c2'), { subtitle: 'x' }));
+});
+
+// ─── CMS · Journal: lectura pública, escritura editor con hasOnly tipado ──────
+test('journal · lectura pública', async () => {
+    await assertSucceeds(getDoc(doc(anon(), 'journal/j1')));
+});
+test('journal · editor crea entrada bien formada', async () => {
+    await assertSucceeds(setDoc(doc(asUser('editorUid'), 'journal/e1'), {
+        title: 'El alma verde', section: 'Reportaje', excerpt: 'x',
+        date: '2026-06-14', image: '/img/x.webp', featured: false, published: true,
+    }));
+});
+test('journal · NO crea sin title', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'journal/e2'), { excerpt: 'sin titulo' }));
+});
+test('journal · hasOnly RECHAZA campo inyectado fuera del whitelist', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'journal/e3'), { title: 'X', hacker: 'evil' }));
+});
+test('journal · RECHAZA date con formato inválido', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'journal/e4'), { title: 'X', date: '14/06/2026' }));
+});
+test('journal · cliente SIN rol NO escribe', async () => {
+    await assertFails(setDoc(doc(asUser('customerUid'), 'journal/e5'), { title: 'X' }));
+});
+test('journal · editor NO borra; admin SÍ', async () => {
+    await assertFails(deleteDoc(doc(asUser('editorUid'), 'journal/j1')));
+    await assertSucceeds(deleteDoc(doc(asUser('adminUid'), 'journal/j1')));
 });
 
 // ─── CRM Fase R: vendedoras = entidad de datos (solo admin/owner) ─────────────

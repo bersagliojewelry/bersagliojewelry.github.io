@@ -36,6 +36,7 @@ import {
 const COLLECTIONS = {
     pieces:        'pieces',
     collections:   'collections',
+    journal:       'journal',
     reviews:       'reviews',
     subscriptions: 'subscriptions',
     inquiries:     'inquiries',
@@ -133,6 +134,144 @@ function diffShallow(before, after) {
     return out;
 }
 
+// ─── Motor genérico de documentos tipados (CMS · BLOQUEANTE #2 del comité) ──────
+//
+// pieces y collections tenían create/update/delete/onChange IDÉNTICOS salvo el
+// nombre de colección. Factorizados aquí: una sola implementación del "envelope"
+// (transacción + guarda de id-collision + _version + serverTimestamp + audit log +
+// señal de cache) que TODO contenido público del CMS (journal/films/socialPosts…)
+// reutiliza con ~1 línea de wrapper. Cero page-builder genérico: cada recurso es un
+// doc tipado, este motor solo abstrae la mecánica de escritura segura compartida.
+//
+// Las firmas históricas (createPiece/onPiecesChange/…) se conservan como wrappers
+// para no romper a sus consumidores (js/admin/db.js, js/core/data.js) — §3.2.
+
+/**
+ * Crea un doc tipado dentro de una transacción.
+ * - FALLA con code 'id-collision' si ya existe un doc con ese id.
+ * - Sella _version=1, createdBy/updatedBy y createdAt/updatedAt server-side.
+ * - Best-effort: escribe entrada de auditoría y bumpea la señal de cache.
+ */
+export async function createTypedDoc(collName, docId, data) {
+    const ref = doc(firestoreDb, collName, docId);
+
+    await withRetry(() => runTransaction(firestoreDb, async tx => {
+        const snap = await tx.get(ref);
+        if (snap.exists()) {
+            const err = new Error(`Doc "${docId}" already exists in ${collName}`);
+            err.code  = 'id-collision';
+            throw err;
+        }
+        tx.set(ref, {
+            ...data,
+            _version:  1,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            createdBy: _authContext.uid || null,
+            updatedBy: _authContext.uid || null,
+        });
+    }));
+
+    writeAuditLog(collName, docId, { action: 'create', version: 1, snapshot: data });
+    signalCacheInvalidation();
+}
+
+/**
+ * Actualiza un doc tipado dentro de una transacción con bloqueo optimista.
+ * @param {object} [opts]
+ * @param {number} [opts.expectedVersion] Si se pasa, la transacción aborta con
+ *        code 'version-conflict' cuando el _version almacenado difiere (otra
+ *        persona escribió el mismo doc). null/undefined = saltar el chequeo
+ *        (p.ej. patches parciales de imágenes). Usa merge:true.
+ * @returns {{version:number}}
+ */
+export async function updateTypedDoc(collName, docId, data, opts = {}) {
+    const ref = doc(firestoreDb, collName, docId);
+    const expectedVersion = opts.expectedVersion ?? null;
+
+    let beforeData  = null;
+    let nextVersion = 1;
+
+    await withRetry(() => runTransaction(firestoreDb, async tx => {
+        const snap = await tx.get(ref);
+        if (!snap.exists()) {
+            const err = new Error(`Doc "${docId}" does not exist in ${collName}`);
+            err.code  = 'not-found';
+            throw err;
+        }
+        beforeData = snap.data();
+        const currentVersion = beforeData._version || 1;
+        if (expectedVersion != null && expectedVersion !== currentVersion) {
+            const err = new Error(`Version conflict on ${collName}/"${docId}" (expected ${expectedVersion}, got ${currentVersion}). Otra persona lo modificó antes que tú.`);
+            err.code           = 'version-conflict';
+            err.currentVersion = currentVersion;
+            err.lastEditor     = beforeData.updatedBy || null;
+            throw err;
+        }
+        nextVersion = currentVersion + 1;
+        tx.set(ref, {
+            ...data,
+            _version:  nextVersion,
+            updatedAt: serverTimestamp(),
+            updatedBy: _authContext.uid || null,
+        }, { merge: true });
+    }));
+
+    writeAuditLog(collName, docId, {
+        action:  'update',
+        version: nextVersion,
+        changes: diffShallow(beforeData, { ...beforeData, ...data }),
+    });
+    signalCacheInvalidation();
+    return { version: nextVersion };
+}
+
+/**
+ * Elimina un doc tipado — captura un snapshot para el audit log ANTES de borrar
+ * (así queda registro aun cuando el documento desaparece) y señala la cache.
+ */
+export async function deleteTypedDoc(collName, docId) {
+    let snapshot = null;
+    try {
+        const snap = await getDoc(doc(firestoreDb, collName, docId));
+        if (snap.exists()) snapshot = snap.data();
+    } catch { /* best-effort */ }
+
+    await withRetry(() => deleteDoc(doc(firestoreDb, collName, docId)));
+
+    writeAuditLog(collName, docId, {
+        action:  'delete',
+        version: snapshot?._version || null,
+        snapshot,
+    });
+    signalCacheInvalidation();
+}
+
+/**
+ * Suscripción en tiempo real a una colección tipada.
+ * @param {object} [opts]
+ * @param {number} [opts.limit] Cota del listener (S3: escalabilidad). Sin límite
+ *        = devuelve todo (colecciones chicas como `collections`).
+ * @param {string} [opts.truncationLabel] Si se pasa Y el snapshot alcanza el
+ *        límite, emite el evento `bj:truncado` (banner visible en el panel,
+ *        spec §9.1 — el truncado NUNCA es mudo). Sin label = sin banner.
+ * @returns {Function} unsubscribe
+ */
+export function onCollectionChange(collName, callback, { limit: lim, truncationLabel } = {}) {
+    const base = collection(firestoreDb, collName);
+    const ref  = lim ? query(base, limit(lim)) : base;
+    return onSnapshot(ref,
+        snap => {
+            if (truncationLabel && lim && snap.size >= lim) {
+                console.warn(`[Firestore] ${truncationLabel} truncado en ${lim} (S3).`);
+                try { document.dispatchEvent(new CustomEvent('bj:truncado', { detail: { origen: truncationLabel, limite: lim } })); } catch { /* sin DOM */ }
+            }
+            callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        },
+        err => console.warn(`[Firestore] ${collName} listener error:`, err)
+    );
+}
+
 // ─── Pieces ──────────────────────────────────────────────────────────────────
 
 /**
@@ -169,113 +308,27 @@ export async function fetchPieceBySlug(slug) {
 }
 
 /**
- * Subscribe to real-time pieces updates
+ * Subscribe to real-time pieces updates.
+ * S3: cota de 500 (con <500 piezas devuelve TODO; solo limita a escala).
  * @param {Function} callback - receives array of pieces on each change
  * @returns {Function} unsubscribe function
  */
-export function onPiecesChange(callback) {
-    // S3: cota de escalabilidad. Con <500 piezas devuelve TODO (sin cambio de
-    // comportamiento); solo limita a escala. Futuro: orderBy + cursor (startAfter).
-    return onSnapshot(
-        query(collection(firestoreDb, COLLECTIONS.pieces), limit(500)),
-        snap => {
-            const pieces = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            callback(pieces);
-        },
-        err => console.warn('[Firestore] pieces listener error:', err)
-    );
-}
+export const onPiecesChange = (callback) =>
+    onCollectionChange(COLLECTIONS.pieces, callback, { limit: 500 });
 
 /**
- * Create a new piece (admin) inside a Firestore transaction.
- * - FAILS with code 'id-collision' if a document with the same ID exists.
- * - Stamps _version=1, createdBy and createdAt server-side.
- * - Best-effort writes an audit log entry and bumps the cache signal.
+ * Create a new piece (admin). Wrapper del motor genérico createTypedDoc:
+ * transacción + guarda id-collision + _version + audit + señal de cache.
  */
-export async function createPiece(pieceId, data) {
-    const ref = doc(firestoreDb, COLLECTIONS.pieces, pieceId);
-
-    await withRetry(() => runTransaction(firestoreDb, async tx => {
-        const snap = await tx.get(ref);
-        if (snap.exists()) {
-            const err = new Error(`Piece id "${pieceId}" already exists`);
-            err.code  = 'id-collision';
-            throw err;
-        }
-        tx.set(ref, {
-            ...data,
-            _version:  1,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-            createdBy: _authContext.uid || null,
-            updatedBy: _authContext.uid || null,
-        });
-    }));
-
-    writeAuditLog(COLLECTIONS.pieces, pieceId, {
-        action:  'create',
-        version: 1,
-        snapshot: data,
-    });
-    signalCacheInvalidation();
-}
+export const createPiece = (pieceId, data) =>
+    createTypedDoc(COLLECTIONS.pieces, pieceId, data);
 
 /**
- * Update an existing piece (admin) inside a Firestore transaction with
- * optimistic locking.
- *
- * @param {string} pieceId
- * @param {object} data
- * @param {object} [opts]
- * @param {number} [opts.expectedVersion]  If provided, the transaction
- *        aborts with code 'version-conflict' when the stored _version is
- *        different — meaning another admin saved the same piece in the
- *        meantime. Pass null/undefined to skip the check (e.g. for
- *        partial image-only patches).
- *
- * Uses setDoc({merge:true}) so untouched fields stay intact, increments
- * _version atomically, and writes an audit log entry with the diff.
+ * Update an existing piece (admin) con bloqueo optimista (opts.expectedVersion).
+ * Wrapper del motor genérico updateTypedDoc (merge:true). @returns {{version}}.
  */
-export async function updatePiece(pieceId, data, opts = {}) {
-    const ref = doc(firestoreDb, COLLECTIONS.pieces, pieceId);
-    const expectedVersion = opts.expectedVersion ?? null;
-
-    let beforeData = null;
-    let nextVersion = 1;
-
-    await withRetry(() => runTransaction(firestoreDb, async tx => {
-        const snap = await tx.get(ref);
-        if (!snap.exists()) {
-            const err = new Error(`Piece id "${pieceId}" does not exist`);
-            err.code  = 'not-found';
-            throw err;
-        }
-        beforeData = snap.data();
-        const currentVersion = beforeData._version || 1;
-        if (expectedVersion != null && expectedVersion !== currentVersion) {
-            const err = new Error(`Version conflict on piece "${pieceId}" (expected ${expectedVersion}, got ${currentVersion}). Otra persona modificó la pieza antes que tú.`);
-            err.code = 'version-conflict';
-            err.currentVersion  = currentVersion;
-            err.lastEditor      = beforeData.updatedBy || null;
-            throw err;
-        }
-        nextVersion = currentVersion + 1;
-        tx.set(ref, {
-            ...data,
-            _version:  nextVersion,
-            updatedAt: serverTimestamp(),
-            updatedBy: _authContext.uid || null,
-        }, { merge: true });
-    }));
-
-    writeAuditLog(COLLECTIONS.pieces, pieceId, {
-        action:  'update',
-        version: nextVersion,
-        changes: diffShallow(beforeData, { ...beforeData, ...data }),
-    });
-    signalCacheInvalidation();
-    return { version: nextVersion };
-}
+export const updatePiece = (pieceId, data, opts) =>
+    updateTypedDoc(COLLECTIONS.pieces, pieceId, data, opts);
 
 /**
  * Save or update a piece (admin). DEPRECATED: use createPiece / updatePiece.
@@ -291,25 +344,11 @@ export async function savePiece(pieceId, data) {
 }
 
 /**
- * Delete a piece (admin) — writes an audit log entry first so we keep a
- * record even after the document disappears.
+ * Delete a piece (admin) — wrapper del motor genérico deleteTypedDoc (snapshot
+ * para el audit log antes de borrar + señal de cache).
  */
-export async function deletePiece(pieceId) {
-    let snapshot = null;
-    try {
-        const snap = await getDoc(doc(firestoreDb, COLLECTIONS.pieces, pieceId));
-        if (snap.exists()) snapshot = snap.data();
-    } catch { /* best-effort */ }
-
-    await withRetry(() => deleteDoc(doc(firestoreDb, COLLECTIONS.pieces, pieceId)));
-
-    writeAuditLog(COLLECTIONS.pieces, pieceId, {
-        action:  'delete',
-        version: snapshot?._version || null,
-        snapshot,
-    });
-    signalCacheInvalidation();
-}
+export const deletePiece = (pieceId) =>
+    deleteTypedDoc(COLLECTIONS.pieces, pieceId);
 
 // ─── Collections ─────────────────────────────────────────────────────────────
 
@@ -322,95 +361,24 @@ export async function fetchCollections() {
 }
 
 /**
- * Subscribe to real-time collections updates
+ * Subscribe to real-time collections updates. Sin límite: `collections` es un
+ * set chico (categorías) — devuelve todas.
  */
-export function onCollectionsChange(callback) {
-    return onSnapshot(
-        collection(firestoreDb, COLLECTIONS.collections),
-        snap => {
-            const cols = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            callback(cols);
-        },
-        err => console.warn('[Firestore] collections listener error:', err)
-    );
-}
+export const onCollectionsChange = (callback) =>
+    onCollectionChange(COLLECTIONS.collections, callback);
 
 /**
- * Create a new collection (admin) — transactional, with audit log and
- * cache invalidation. See createPiece for the full pattern.
+ * Create a new collection (admin) — wrapper del motor genérico createTypedDoc.
  */
-export async function createCollection(colId, data) {
-    const ref = doc(firestoreDb, COLLECTIONS.collections, colId);
-
-    await withRetry(() => runTransaction(firestoreDb, async tx => {
-        const snap = await tx.get(ref);
-        if (snap.exists()) {
-            const err = new Error(`Collection id "${colId}" already exists`);
-            err.code  = 'id-collision';
-            throw err;
-        }
-        tx.set(ref, {
-            ...data,
-            _version:  1,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-            createdBy: _authContext.uid || null,
-            updatedBy: _authContext.uid || null,
-        });
-    }));
-
-    writeAuditLog(COLLECTIONS.collections, colId, {
-        action:  'create',
-        version: 1,
-        snapshot: data,
-    });
-    signalCacheInvalidation();
-}
+export const createCollection = (colId, data) =>
+    createTypedDoc(COLLECTIONS.collections, colId, data);
 
 /**
- * Update an existing collection (admin) with optimistic locking.
- * @param {object} [opts] - {expectedVersion} same semantics as updatePiece.
+ * Update an existing collection (admin) con bloqueo optimista
+ * (opts.expectedVersion). Wrapper del motor genérico updateTypedDoc.
  */
-export async function updateCollection(colId, data, opts = {}) {
-    const ref = doc(firestoreDb, COLLECTIONS.collections, colId);
-    const expectedVersion = opts.expectedVersion ?? null;
-
-    let beforeData  = null;
-    let nextVersion = 1;
-
-    await withRetry(() => runTransaction(firestoreDb, async tx => {
-        const snap = await tx.get(ref);
-        if (!snap.exists()) {
-            const err = new Error(`Collection id "${colId}" does not exist`);
-            err.code  = 'not-found';
-            throw err;
-        }
-        beforeData = snap.data();
-        const currentVersion = beforeData._version || 1;
-        if (expectedVersion != null && expectedVersion !== currentVersion) {
-            const err = new Error(`Version conflict on collection "${colId}" (expected ${expectedVersion}, got ${currentVersion}). Otra persona modificó la colección antes que tú.`);
-            err.code = 'version-conflict';
-            err.currentVersion = currentVersion;
-            err.lastEditor     = beforeData.updatedBy || null;
-            throw err;
-        }
-        nextVersion = currentVersion + 1;
-        tx.set(ref, {
-            ...data,
-            _version:  nextVersion,
-            updatedAt: serverTimestamp(),
-            updatedBy: _authContext.uid || null,
-        }, { merge: true });
-    }));
-
-    writeAuditLog(COLLECTIONS.collections, colId, {
-        action:  'update',
-        version: nextVersion,
-        changes: diffShallow(beforeData, { ...beforeData, ...data }),
-    });
-    signalCacheInvalidation();
-    return { version: nextVersion };
-}
+export const updateCollection = (colId, data, opts) =>
+    updateTypedDoc(COLLECTIONS.collections, colId, data, opts);
 
 /**
  * Save or update a collection (admin). DEPRECATED: use
@@ -426,25 +394,19 @@ export async function saveCollection(colId, data) {
 }
 
 /**
- * Delete a collection (admin) — captures a snapshot for the audit log
- * before deletion and signals cache invalidation afterwards.
+ * Delete a collection (admin) — wrapper del motor genérico deleteTypedDoc.
  */
-export async function deleteCollection(colId) {
-    let snapshot = null;
-    try {
-        const snap = await getDoc(doc(firestoreDb, COLLECTIONS.collections, colId));
-        if (snap.exists()) snapshot = snap.data();
-    } catch { /* best-effort */ }
+export const deleteCollection = (colId) =>
+    deleteTypedDoc(COLLECTIONS.collections, colId);
 
-    await withRetry(() => deleteDoc(doc(firestoreDb, COLLECTIONS.collections, colId)));
+// ─── Journal (CMS · entradas editoriales) ────────────────────────────────────
+// El CRUD admin lo maneja el motor genérico createResourceAdmin directamente
+// (createTypedDoc/updateTypedDoc/deleteTypedDoc con collection='journal'); aquí
+// solo el READ en vivo para las páginas públicas (data.js). Cota 100 + banner.
 
-    writeAuditLog(COLLECTIONS.collections, colId, {
-        action:  'delete',
-        version: snapshot?._version || null,
-        snapshot,
-    });
-    signalCacheInvalidation();
-}
+/** Subscribe to real-time journal updates (público). @returns unsubscribe. */
+export const onJournalChange = (callback) =>
+    onCollectionChange(COLLECTIONS.journal, callback, { limit: 100, truncationLabel: 'Journal' });
 
 // ─── Reviews ─────────────────────────────────────────────────────────────────
 

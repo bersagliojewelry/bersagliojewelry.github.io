@@ -20,6 +20,7 @@
  */
 
 import { html, escape } from '../core/html.js';
+import { data } from '../core/data.js';
 import { getEntryBySlug, getRelated } from '../data/journal.js';
 
 let _slug = '';
@@ -290,7 +291,9 @@ export async function init() {
     if (!main) return;
 
     _slug = getSlugFromURL();
-    refresh();
+    data.load().catch(() => {});   // arranca/asegura los listeners live
+    refresh();                     // pinta ya (baked si aún no hay entradas live)
+    data.onChange(refresh);        // re-resuelve la entrada cuando lleguen las publicadas
     main.addEventListener('click', onMainClick);
 
     window.addEventListener('popstate', () => {

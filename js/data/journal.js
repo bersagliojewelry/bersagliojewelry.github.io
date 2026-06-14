@@ -1,10 +1,12 @@
 /**
  * Bersaglio Jewelry — Journal entries (data layer).
  *
- * Fuente única de verdad para el contenido del journal. Inicialmente
- * hardcoded con los 8 entries literales del bundle BERSAGLIO NOVO.
- * Cuando admin tenga journal authoring, esta fuente se reemplaza por
- * data.getJournal() (Firestore) sin cambios en los consumers.
+ * Contenido del journal. Los accessors (getFeatured/getNonFeatured/getAll/
+ * getEntryBySlug/getRelated) PREFIEREN las entradas publicadas en Firestore
+ * (data.getJournal(), administradas desde el panel Contenido web) y caen al
+ * array baked de abajo cuando aún no hay ninguna (bootstrap, cero downtime).
+ * normalizeEntry() mapea el doc Firestore (fecha ISO) a la forma de display
+ * (date 'DD·MM·YY' + dateLong 'Marzo 2026') que esperan las páginas.
  *
  * Cada entry:
  *   - slug         identificador URL único
@@ -22,6 +24,13 @@
  *   - featured     bool — destacar como cover
  */
 
+import { data } from '../core/data.js';
+import { isoToDisplay, normalizeEntry } from './journal-normalize.js';
+
+// Re-export de los puros (un solo punto de import para los consumers/tests).
+export { isoToDisplay, normalizeEntry };
+
+// Array BAKED = fallback de arranque (cuando Firestore aún no tiene entradas).
 export const JOURNAL_ENTRIES = [
     {
         slug: 'esmeraldas-historia-oculta',
@@ -215,29 +224,43 @@ export const JOURNAL_TICKER = [
     'Atelier abierto · Cartagena · Cita previa',
 ];
 
+/** Entradas vivas (Firestore, normalizadas) o, si no hay, el array baked. */
+function entries() {
+    const live = data.getJournal();
+    return Array.isArray(live) && live.length ? live.map(normalizeEntry) : JOURNAL_ENTRIES;
+}
+
+/** Todas las entradas visibles (live o baked). */
+export function getAll() {
+    return entries();
+}
+
 /** Returns the featured (cover) entry, or first if none flagged. */
 export function getFeatured() {
-    return JOURNAL_ENTRIES.find(e => e.featured) || JOURNAL_ENTRIES[0];
+    const all = entries();
+    return all.find(e => e.featured) || all[0] || null;
 }
 
 /** Returns all entries except the featured one. */
 export function getNonFeatured() {
+    const all  = entries();
     const feat = getFeatured();
-    return JOURNAL_ENTRIES.filter(e => e.slug !== feat.slug);
+    return feat ? all.filter(e => e.slug !== feat.slug) : all;
 }
 
 /** Find a single entry by slug. */
 export function getEntryBySlug(slug) {
-    return JOURNAL_ENTRIES.find(e => e.slug === slug) || null;
+    return entries().find(e => e.slug === slug) || null;
 }
 
 /** Returns up to N entries from the same section, excluding the given slug. */
 export function getRelated(slug, n = 3) {
-    const entry = getEntryBySlug(slug);
+    const all   = entries();
+    const entry = all.find(e => e.slug === slug);
     if (!entry) return [];
-    let related = JOURNAL_ENTRIES.filter(e => e.section === entry.section && e.slug !== slug);
+    let related = all.filter(e => e.section === entry.section && e.slug !== slug);
     if (related.length < n) {
-        const fillers = JOURNAL_ENTRIES.filter(e => e.slug !== slug && !related.includes(e));
+        const fillers = all.filter(e => e.slug !== slug && !related.includes(e));
         related = [...related, ...fillers];
     }
     return related.slice(0, n);

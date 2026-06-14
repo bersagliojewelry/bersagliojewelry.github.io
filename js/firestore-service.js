@@ -36,6 +36,7 @@ import {
 const COLLECTIONS = {
     pieces:        'pieces',
     collections:   'collections',
+    journal:       'journal',
     reviews:       'reviews',
     subscriptions: 'subscriptions',
     inquiries:     'inquiries',
@@ -397,6 +398,15 @@ export async function saveCollection(colId, data) {
  */
 export const deleteCollection = (colId) =>
     deleteTypedDoc(COLLECTIONS.collections, colId);
+
+// ─── Journal (CMS · entradas editoriales) ────────────────────────────────────
+// El CRUD admin lo maneja el motor genérico createResourceAdmin directamente
+// (createTypedDoc/updateTypedDoc/deleteTypedDoc con collection='journal'); aquí
+// solo el READ en vivo para las páginas públicas (data.js). Cota 100 + banner.
+
+/** Subscribe to real-time journal updates (público). @returns unsubscribe. */
+export const onJournalChange = (callback) =>
+    onCollectionChange(COLLECTIONS.journal, callback, { limit: 100, truncationLabel: 'Journal' });
 
 // ─── Reviews ─────────────────────────────────────────────────────────────────
 

@@ -13,9 +13,9 @@
  * Datos: js/data/journal.js (hardcoded, mismo origen que el home).
  */
 
-import { html, escape } from '../core/html.js';
+import { html, escape, mount } from '../core/html.js';
+import { data } from '../core/data.js';
 import {
-    JOURNAL_ENTRIES,
     JOURNAL_ISSUE,
     JOURNAL_TICKER,
     getFeatured,
@@ -251,11 +251,19 @@ function initNewsletter() {
     });
 }
 
+function refresh() {
+    const main = document.getElementById('main-content');
+    if (!main) return;
+    mount(main, renderAll());
+    requestAnimationFrame(initNewsletter);
+}
+
 export async function init() {
     const main = document.getElementById('main-content');
     if (!main) return;
-    main.innerHTML = renderAll();
-    requestAnimationFrame(initNewsletter);
+    data.load().catch(() => {});   // arranca/asegura los listeners live
+    refresh();                     // pinta ya (baked si aún no hay entradas)
+    data.onChange(refresh);        // re-render cuando lleguen entradas publicadas
 }
 
 export default { init };

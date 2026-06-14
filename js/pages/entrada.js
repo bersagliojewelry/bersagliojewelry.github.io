@@ -291,7 +291,7 @@ export async function init() {
     if (!main) return;
 
     _slug = getSlugFromURL();
-    data.load().catch(() => {});   // arranca/asegura los listeners live
+    data.loadJournal();            // B4: solo el listener de journal (no piezas/cols)
     refresh();                     // pinta ya (baked si aún no hay entradas live)
     data.onChange(refresh);        // re-resuelve la entrada cuando lleguen las publicadas
     main.addEventListener('click', onMainClick);

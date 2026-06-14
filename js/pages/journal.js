@@ -261,7 +261,7 @@ function refresh() {
 export async function init() {
     const main = document.getElementById('main-content');
     if (!main) return;
-    data.load().catch(() => {});   // arranca/asegura los listeners live
+    data.loadJournal();            // B4: solo el listener de journal (no piezas/cols)
     refresh();                     // pinta ya (baked si aún no hay entradas)
     data.onChange(refresh);        // re-render cuando lleguen entradas publicadas
 }

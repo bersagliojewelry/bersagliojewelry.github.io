@@ -2,33 +2,44 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
 
+    // ─── Helpers (B5 · comité 2026-06-14 + consejo externo Gemini) ──────────────
+    // Solo roles de contenido suben (no cualquier autenticado). El claim `role` lo
+    // espeja syncRoleClaim (§65); el backfill garantiza que admin/editor lo tengan.
+    function isContentRole() {
+      return request.auth != null
+          && request.auth.token.role in ['owner', 'admin', 'editor'];
+    }
+    // contentType allowlist EXPLÍCITA: `image/(png|jpeg|webp)` EXCLUYE image/svg+xml
+    // (SVG ejecutable = stored-XSS) y formatos pesados; + cota de tamaño (anti
+    // denial-of-wallet por egress en Spark: 1 GB/día). La app sube WebP optimizado.
+    function validImage(maxBytes) {
+      return request.resource.size < maxBytes
+          && request.resource.contentType.matches('image/(png|jpeg|webp)');
+    }
+
     // ─── Piece images ─────────────────────────────────────────────────────────
     // Path: pieces/{pieceId}/{filename}
     match /pieces/{pieceId}/{allPaths=**} {
-      allow read: if true;                     // Public: images are shown on site
-      allow create, update: if request.auth != null
-                   && request.resource.size < 10 * 1024 * 1024   // Max 10 MB
-                   && request.resource.contentType.matches('image/.*');
-      allow delete: if request.auth != null;   // Authenticated admins can delete
+      allow read:          if true;                       // Public: shown on site
+      allow create, update: if isContentRole() && validImage(10 * 1024 * 1024);
+      allow delete:        if isContentRole();
     }
 
     // ─── Collection banners ───────────────────────────────────────────────────
     // Path: collections/{colId}/{filename}
     match /collections/{colId}/{allPaths=**} {
-      allow read: if true;
-      allow create, update: if request.auth != null
-                   && request.resource.size < 10 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
-      allow delete: if request.auth != null;
+      allow read:          if true;
+      allow create, update: if isContentRole() && validImage(10 * 1024 * 1024);
+      allow delete:        if isContentRole();
     }
 
-    // ─── General site assets ──────────────────────────────────────────────────
-    // Path: assets/{filename}
+    // ─── General site assets (CMS: portadas de journal/films/social) ───────────
+    // Path: assets/{filename}. Cota más estricta (5 MB) — son imágenes de contenido
+    // optimizadas; P3.5 añadirá compresión client-side (canvas→webp, <300 KB).
     match /assets/{allPaths=**} {
-      allow read: if true;
-      allow create, update: if request.auth != null
-                   && request.resource.size < 15 * 1024 * 1024;
-      allow delete: if request.auth != null;
+      allow read:          if true;
+      allow create, update: if isContentRole() && validImage(5 * 1024 * 1024);
+      allow delete:        if isContentRole();
     }
 
     // Deny everything else by default

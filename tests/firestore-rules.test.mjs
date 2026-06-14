@@ -204,6 +204,22 @@ test('journal · editor NO borra; admin SÍ', async () => {
     await assertSucceeds(deleteDoc(doc(asUser('adminUid'), 'journal/j1')));
 });
 
+// ─── CMS · B1: system/meta (señal de frescura) — write editor + hasOnly ──────
+test('system/meta · editor escribe la señal de cache (lastDataUpdate)', async () => {
+    await assertSucceeds(setDoc(doc(asUser('editorUid'), 'system/meta'),
+        { lastDataUpdate: serverTimestamp() }, { merge: true }));
+});
+test('system/meta · lectura pública (la web detecta cambios)', async () => {
+    await assertSucceeds(getDoc(doc(anon(), 'system/meta')));
+});
+test('system/meta · anónimo NO escribe', async () => {
+    await assertFails(setDoc(doc(anon(), 'system/meta'), { lastDataUpdate: serverTimestamp() }));
+});
+test('system/meta · hasOnly RECHAZA clave fuera del whitelist', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'system/meta'),
+        { lastDataUpdate: serverTimestamp(), hacker: 'x' }, { merge: true }));
+});
+
 // ─── CRM Fase R: vendedoras = entidad de datos (solo admin/owner) ─────────────
 test('CRM vend · admin lee y crea vendedoras', async () => {
     await assertSucceeds(getDoc(doc(asUser('adminUid'), 'vendedoras/vendA')));

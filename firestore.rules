@@ -628,6 +628,21 @@ service cloud.firestore {
       allow write: if docId == 'cartera' ? isOwner() : isAdmin();
     }
 
+    // ─── CMS · System/meta (señal de frescura de cache) ─────────────────────────
+    // B1 (comité 2026-06-14): `signalCacheInvalidation` (firestore-service.js) escribe
+    // system/meta en CADA save del CMS para que las páginas públicas detecten cambios.
+    // FALTABA el match → cada escritura era DENEGADA en silencio (el catch la tragaba).
+    // read público (es solo un timestamp, no dato sensible; lo leerá el modelo de
+    // frescura/pre-render SSG). write `editor` con whitelist: el campo legacy
+    // `lastDataUpdate` + las claves por-página del modelo de cache-bust (§2.C del spec
+    // del gran plan); cualquier otra clave = inyección → DENY (L-15).
+    match /system/{docId} {
+      allow read:  if true;
+      allow write: if isEditor()
+                   && request.resource.data.keys().hasOnly(
+                        ['lastDataUpdate', 'home', 'nosotros', 'contacto', 'global', 'lists']);
+    }
+
     // ─── Push Tokens ───────────────────────────────────────────────────────────
 
     // F6 frenos de gasto: NINGÚN código escribe push_tokens hoy (verificado por grep

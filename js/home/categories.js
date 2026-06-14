@@ -1,18 +1,44 @@
 /**
- * Home · Sección 3 — Categorías (dock iOS). El conteo por colección es DINÁMICO
- * (data.countByCollection). refreshCategories() actualiza solo el texto del conteo.
+ * Home · Sección 3 — Categorías (dock iOS). DINÁMICO: las tarjetas derivan de las
+ * COLECCIONES de Firestore (`data.getCollections()`), administrables desde el panel
+ * (CMS). Fallback "baked" solo si aún no hay colecciones (bootstrap, cero downtime).
+ * Imágenes vía `<img src=safeUrl>` (NO background-image: el contexto CSS url()
+ * permite breakouts que escape() no cubre). refreshCategories() re-renderiza al
+ * cambiar las colecciones/conteos (imágenes cacheadas → flash mínimo).
  */
-import { html, escape } from '../core/html.js';
+import { html, escape, mount } from '../core/html.js';
 import { data } from '../core/data.js';
+import { safeUrl } from '../core/safe-url.js';
+import { cardsFrom } from './categories-data.js';
 
-const CATEGORIES = [
-    { name: 'Anillos',   slug: 'anillos',         img: '/img/ring-sapphire-800.webp',        hue: 200, pos: 'center' },
-    { name: 'Topos',     slug: 'topos-aretes',    img: '/img/earrings-travertino-800.webp',  hue: 30,  pos: 'center' },
-    { name: 'Argollas',  slug: 'argollas',        img: '/img/earrings-emerald-800.webp',     hue: 155, pos: 'center' },
-    { name: 'Dijes',     slug: 'dijes-colgantes', img: '/img/model-emerald-800.webp',        hue: 155, pos: 'center top' },
-    { name: 'Pulseras',  slug: 'pulseras',        img: '/img/banner-hero-800.webp',          hue: 90,  pos: 'center' },
-    { name: 'Editorial', slug: 'editorial',       img: '/img/model-emerald-800.webp',        hue: 155, pos: 'center' },
-];
+const FALLBACK_IMG = '/img/banner-hero-800.webp';
+// object-position permitido (anti CSS-injection si 'pos' se vuelve editable).
+const POS_RE = /^(left|right|center|top|bottom|\d{1,3}%|\s)+$/i;
+const safePos = (p) => (typeof p === 'string' && POS_RE.test(p.trim()) ? p.trim() : 'center');
+
+// Tarjetas a renderizar: las colecciones reales o, si no hay ninguna, el bootstrap.
+const cards = () => cardsFrom(data.getCollections());
+
+function tile(c) {
+    const count = data.countByCollection(c.slug);
+    const img = escape(safeUrl(c.img, FALLBACK_IMG));
+    return html`
+        <a class="glass cat-tile"
+           href="/colecciones.html?col=${escape(c.slug)}"
+           style="--cat-hue:${escape(String(c.hue))}">
+            <div class="cat-tile-inner">
+                <div class="cat-tile-img">
+                    <img src="${img}" alt="${escape(c.name)}" loading="lazy" decoding="async"
+                         style="width:100%;height:100%;object-fit:cover;object-position:${escape(safePos(c.pos))};display:block;">
+                </div>
+                <div class="cat-tile-overlay"></div>
+                <div class="cat-tile-content">
+                    <div class="cat-tile-name">${escape(c.name)}</div>
+                    <div class="mono cat-tile-count">${count > 0 ? `${count} piezas` : 'Próximamente'}</div>
+                </div>
+            </div>
+        </a>`;
+}
 
 export function renderCategories() {
     return html`
@@ -29,22 +55,7 @@ export function renderCategories() {
                 </div>
 
                 <div class="cat-dock" data-categories>
-                    ${CATEGORIES.map(c => {
-                        const count = data.countByCollection(c.slug);
-                        return html`
-                            <a class="glass cat-tile"
-                               href="/colecciones.html?col=${escape(c.slug)}"
-                               style="--cat-hue:${c.hue}">
-                                <div class="cat-tile-inner">
-                                    <div class="cat-tile-img" style="background:url('${escape(c.img)}') ${escape(c.pos)}/cover"></div>
-                                    <div class="cat-tile-overlay"></div>
-                                    <div class="cat-tile-content">
-                                        <div class="cat-tile-name">${escape(c.name)}</div>
-                                        <div class="mono cat-tile-count">${count > 0 ? `${count} piezas` : 'Próximamente'}</div>
-                                    </div>
-                                </div>
-                            </a>`;
-                    })}
+                    ${cards().map(tile)}
                 </div>
             </div>
         </section>`;
@@ -53,15 +64,10 @@ export function renderCategories() {
 export function refreshCategories() {
     const dock = document.querySelector('[data-categories]');
     if (!dock) return;
-    // Update only the count text, leave the rest alone (avoids image flash)
-    const tiles = dock.querySelectorAll('.cat-tile');
-    tiles.forEach((tile, idx) => {
-        const c = CATEGORIES[idx];
-        if (!c) return;
-        const count = data.countByCollection(c.slug);
-        const countEl = tile.querySelector('.cat-tile-count');
-        if (countEl) countEl.textContent = count > 0 ? `${count} piezas` : 'Próximamente';
-    });
+    // Las categorías AHORA son las colecciones (live): re-render completo al cambiar
+    // el set o los conteos. mount() centraliza el innerHTML en html.js (patrón del
+    // codebase); todo valor dinámico va por escape()/safeUrl().
+    mount(dock, cards().map(tile).join(''));
 }
 
 export default { renderCategories, refreshCategories };

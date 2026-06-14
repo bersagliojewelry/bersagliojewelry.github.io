@@ -1,15 +1,20 @@
 /**
- * Home · Sección 1 — Hero cinematográfico.
+ * Home · Sección 1 — Hero cinematográfico. DINÁMICO (CMS P1): los textos vienen de
+ * merge(HOME_DEFAULTS, siteContent/home).hero — editables desde el panel (Contenido
+ * web → Textos del Home). Primer paint con DEFAULTS (LCP instantáneo, sin esperar
+ * Firestore); refreshHero() re-pinta una vez si llega un override (home.js).
+ * Todo texto editable va por escape(); el href del CTA por safeUrl() (anti stored-XSS,
+ * repo público L-15). El banner/estructura es ESTANDARIZADO (no editable en el piloto).
  *
- * Parallax 3D DESACTIVADO por decisión del cliente: no hay handler pointermove
- * y el atributo data-tilt se retira. Se conservan los efectos de cristal y la
- * animación de entrada (CSS).
+ * Parallax 3D DESACTIVADO (decisión del cliente): sin pointermove, sin data-tilt.
  */
-import { html } from '../core/html.js';
+import { html, escape, mount } from '../core/html.js';
+import { data } from '../core/data.js';
+import { safeUrl } from '../core/safe-url.js';
+import { mergeHome } from './siteContent-defaults.js';
 
-export function renderHero() {
+function heroInner(c) {
     return html`
-        <section class="home-hero" data-hero>
             <div aria-hidden="true" class="home-hero-bg">
                 <div class="home-hero-blob home-hero-blob--em"></div>
                 <div class="home-hero-blob home-hero-blob--gold"></div>
@@ -32,30 +37,28 @@ export function renderHero() {
                                         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
                                         <circle cx="12" cy="10" r="2.5"/>
                                     </svg>
-                                    Cartagena de Indias · Colombia
+                                    ${escape(c.locator)}
                                 </div>
                             </div>
 
                             <div class="home-hero-body">
                                 <div class="home-hero-eyebrow-row">
                                     <span class="home-hero-eyebrow-line"></span>
-                                    <span class="mono home-hero-eyebrow">Alta Joyería Personalizada y de Confianza</span>
+                                    <span class="mono home-hero-eyebrow">${escape(c.eyebrow)}</span>
                                 </div>
 
                                 <h1 class="home-hero-headline">
-                                    El arte de escuchar tu historia,<br>
-                                    <span class="home-hero-headline-italic">tallado en una joya única.</span>
+                                    ${escape(c.headline1)}<br>
+                                    <span class="home-hero-headline-italic">${escape(c.headline2)}</span>
                                 </h1>
 
-                                <p class="home-hero-manifesto">
-                                    Nacimos visitando a nuestros clientes de puerta en puerta, cimentando una relación de cercanía y confianza duradera. En nuestro atelier privado del Centro Histórico de Cartagena, no diseñamos simples accesorios: nos tomamos el tiempo para asesorarte y dar vida a piezas irrepetibles de oro de 18 quilates y esmeraldas colombianas éticas. Una inversión emocional y material destinada a custodiar tu esencia para siempre.
-                                </p>
+                                <p class="home-hero-manifesto">${escape(c.manifesto)}</p>
 
                                 <div class="home-hero-actions">
-                                    <a href="/colecciones.html" class="btn-hero">
+                                    <a href="${escape(safeUrl(c.ctaHref, '/colecciones.html'))}" class="btn-hero">
                                         <span class="btn-hero-bg" aria-hidden="true"></span>
                                         <span class="btn-hero-shimmer" aria-hidden="true"></span>
-                                        <span class="btn-hero-label">Descubrir la colección</span>
+                                        <span class="btn-hero-label">${escape(c.ctaLabel)}</span>
                                         <span class="btn-hero-arrow" aria-hidden="true">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                 <path d="M5 12h14M13 5l7 7-7 7"/>
@@ -67,14 +70,25 @@ export function renderHero() {
                         </div>
 
                         <div class="home-hero-signature">
-                            <span class="mono home-hero-signature-eyebrow">Una creación de</span>
+                            <span class="mono home-hero-signature-eyebrow">${escape(c.signatureEyebrow)}</span>
                             <span class="home-hero-signature-line"></span>
-                            <span class="home-hero-signature-name">Kary Mendoza</span>
+                            <span class="home-hero-signature-name">${escape(c.signatureName)}</span>
                         </div>
                     </div>
                 </div>
-            </div>
-        </section>`;
+            </div>`;
 }
 
-export default { renderHero };
+export function renderHero() {
+    const c = mergeHome(data.getSiteContent('home')).hero;
+    return html`<section class="home-hero" data-hero>${heroInner(c)}</section>`;
+}
+
+/** Re-pinta el hero cuando llega el override de siteContent (una vez, desde home.js). */
+export function refreshHero() {
+    const sec = document.querySelector('.home-hero');
+    if (!sec) return;
+    mount(sec, heroInner(mergeHome(data.getSiteContent('home')).hero));
+}
+
+export default { renderHero, refreshHero };

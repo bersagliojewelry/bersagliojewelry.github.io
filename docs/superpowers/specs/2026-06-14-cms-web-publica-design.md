@@ -60,11 +60,34 @@
 - Films/Social feed real = alto costo → arrancar curado.
 - **Catálogo vacío en prod (0 piezas)**: cargar el catálogo real (migración o Kary) es tarea aparte, prerequisito del flip SEO.
 
+## 5. Comité de diseño (`wrpym7h3p`, 6 lentes) — veredicto: **REFINAR** (diseño sólido, 0 rediseños)
+
+**Refinamientos ADOPTADOS** (verificados contra código):
+- **A. Seguridad (BLOQUEANTE #1)** ✅ HECHO: `safeUrl()` (`js/core/safe-url.js`, `39983f2`) — `escape()` es contexto-HTML, NO cubre `javascript:`/`data:`/CSS-`url()`. Usar en TODO campo editable→href/src; migrar `background-image:url()` a `<img src=safeUrl()>`.
+- **B. Costo Spark**: el claim "1 lectura/página" es FALSO — cada `onSnapshot` es un listener persistente. **Textos de baja escritura (`siteContent/*`) → `getDoc` one-shot, NO listener**; `onSnapshot` solo para lo que cambia seguido (pieces).
+- **C. Anti-monolito (BLOQUEANTE #2)**: clonar el CRUD ×6 = ~2400 líneas. **Factorizar un motor `createResourceAdmin(descriptor)` + `createTypedDoc/updateTypedDoc` (firestore-service) + validador `publicContentValid(d, allowedKeys)` (rules)** usando pieces/collections como cobayas en refactor VERDE. Cada sección = ~30 líneas de descriptor.
+- **D/UX (BLOQUEANTE #3)**: UN grupo `Contenido web` (role:editor) en `sidebar-data.js` + UNA `admin-contenido.html` de pestañas, NO 6 admin-*.html sueltos (anti "menú plano").
+- **E. Dos scaffolds**: SINGLETON-FORM (siteContent: form→`setDoc(merge)`+_version) vs COLLECTION-LIST (journal/films/social: el motor).
+- **F. Caps**: `limit(N)`+truncado en colecciones nuevas; journal separa LISTADO (onSnapshot) del `body` (getDoc en `entrada.html?slug=X`).
+- **G. Fallback por modo**: singleton=`merge({...DEFAULTS,...doc})`; colección=`docs.length?docs:BAKED`. Mantener safety-timeout de first paint.
+- **H. Reutilizar**: enganchar cada escritura a `signalCacheInvalidation()` (system/meta); `siteContent/home` en sub-mapas `{hero:{},editorial:{}}`.
+- **Reglas idioms (gotchas)**: campo opcional → `!('x' in d) || d.x is tipo` (acceder a campo ausente LANZA → falla-cerrado); server-clock → `d.createdAt == request.time`; `hasOnly` OBLIGATORIO + size-cap en todo string (L-15).
+
+**Bloqueantes restantes**: #2 factor CRUD (antes de features) · #3 grupo UX/admin-contenido · #5 endurecer `storage.rules` (hoy `assets/` acepta CUALQUIER contentType auth!=null; svg ejecutable → restringir a `image/*` sin svg; videos `content/` con cap+contentType) · #6 reconciliar `reviews` `pieceId`(índice)↔`pieceSlug`(query) antes de su UI · `delete:isAdmin()` para journal/films/social/siteContent · tests de reglas por colección (emulador).
+
+**Modelo de datos final**: `siteContent/{home,nosotros,global}` singletons (getDoc); `journal/{slug}` (LISTADO + body separado), `films/{id}`, `socialPosts/{id}` colecciones (onSnapshot+limit); `collections` +hue/pos/img (aditivo, categorías dinámicas); `reviews` (reconciliar); `system/meta` (reusar cache-signal).
+
+**SEO**: **pre-render HÍBRIDO** (SSG snapshot en CI tras build + hidratación live), NO client-side puro (crawler recibe HTML vacío, og:image roto, `?p=` colapsa a 1 canónica, `robots.txt` Disallow `/dist/` puede bloquear el JS). DISEÑADO ahora, EJECUTADO en el flip (prod vacío hoy). Gate del flip (Decisión Fuerte + Consejo): rutas-path `/pieza/<slug>/`, pre-render con meta/JSON-LD reales, robots corregido + GSC piloto, sitemap dinámico, contenido con profundidad. Auto-rebuild = CF onWrite debounced→`repository_dispatch`. **Todo P1-P2 se construye bajo el `noindex` actual sin tocar la palanca.**
+
+**Orden de build (corregido)**: P1.1 categorías (mínimo riesgo, sin colección/regla/listener nuevos — solo +hue/pos/img a collections) → JOURNAL (valida el motor+agente, antes que el singleton sin precedente; incluir fix del consumo eager `journal-preview.js:13` + cablear los 3 consumidores en el MISMO commit) → siteContent/home (primer singleton). Pre-commit: `onJournalChange`/`onSiteContentChange` SIN gatear el first-paint + getters con fallback.
+
 ## Checklist
 - [x] Auditoría multi-agente del estado actual (escaneo `whppptwso`)
 - [x] Diagnóstico de causa raíz del sync + fix P0 (`47b07b8`, test 5/5)
-- [ ] Diseño de arquitectura (DRAFT en §1; pendiente validación del comité)
-- [ ] Comité de validación del modelo de datos + skill (Decisión Fuerte)
+- [x] Diseño de arquitectura validado por comité → §5 (`wrpym7h3p`)
+- [x] Comité de validación del modelo de datos + skill (6 lentes, REFINAR) → §5 (`wrpym7h3p`)
+- [x] safeUrl() cimiento de seguridad (BLOQUEANTE #1) → `39983f2`
+- [ ] Factorizar motor CRUD genérico (BLOQUEANTE #2) + grupo UX `Contenido web` (#3)
 - [ ] Skill `cms-dinamico` + agente content-section-builder creados
 - [ ] P1.1 categorías dinámicas
 - [ ] P1.2 siteContent/home + admin

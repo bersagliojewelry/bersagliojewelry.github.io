@@ -38,6 +38,34 @@ test('aging: ambas copias calculan IDÉNTICO sobre el mismo fixture (sanity cond
     assert.deepEqual(delCorte(movs, opts), delPanel(movs, opts));
 });
 
+test('aging: ambas copias calculan IDÉNTICO en el camino CON acuerdo (escudo y perforado)', async () => {
+    const { estadoCuenta: delPanel } = await import('../js/crm-estado-cuenta.js');
+    const { estadoCuenta: delCorte } = await import('../functions/crm-estado-cuenta.mjs');
+    const DAY = 86400000;
+    const T0 = Date.UTC(2026, 5, 7);
+    const ts = (ms) => ({ toMillis: () => ms });
+    const iso = (n) => new Date(T0 + n * DAY).toISOString().slice(0, 10);
+    const base = { hoy: iso(0), diasPlazo: 30, horizonteDias: 730 };
+    // ESCUDO (no roto): factura cubierta, 1 cuota vencida + 2 futuras.
+    const escudo = {
+        movs: [{ id: 'f1', tipo: 'factura', monto: 300000, fecha: iso(-30), anulado: false, registradoEn: ts(T0 - 30 * DAY) }],
+        acuerdos: [{ id: 'ac1', estado: 'vigente', fechaPacto: iso(-30), creadoEn: ts(T0 - 30 * DAY),
+            cuotas: [{ fecha: iso(-10), monto: 100000 }, { fecha: iso(5), monto: 100000 }, { fecha: iso(20), monto: 100000 }],
+            primeraCuotaFecha: iso(-10), ultimaCuotaFecha: iso(20) }],
+    };
+    // PERFORADO (roto): factura MUY vieja, 3 cuotas todas vencidas e impagas → escudo cae.
+    const perforado = {
+        movs: [{ id: 'f1', tipo: 'factura', monto: 300000, fecha: iso(-400), anulado: false, registradoEn: ts(T0 - 400 * DAY) }],
+        acuerdos: [{ id: 'ac2', estado: 'vigente', fechaPacto: iso(-70), creadoEn: ts(T0 - 70 * DAY),
+            cuotas: [{ fecha: iso(-60), monto: 100000 }, { fecha: iso(-40), monto: 100000 }, { fecha: iso(-20), monto: 100000 }],
+            primeraCuotaFecha: iso(-60), ultimaCuotaFecha: iso(-20) }],
+    };
+    for (const c of [escudo, perforado]) {
+        const o = { ...base, acuerdos: c.acuerdos };
+        assert.deepEqual(delCorte(c.movs, o), delPanel(c.movs, o));
+    }
+});
+
 test('mesAnterior: etiqueta del mes que cierra, en hora de Bogotá (UTC-5), con rollover de enero', () => {
     const { mesAnterior } = require('../functions/corte.js');
     // Corrida típica: 1 de julio 03:50 Bogotá = 08:50 UTC → corte de JUNIO.

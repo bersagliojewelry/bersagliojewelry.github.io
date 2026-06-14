@@ -14,7 +14,7 @@ import {
     addMovimiento, anularMovimiento, updateCliente, fetchVendedoras, fmtCOP, getConfig,
     crearSolicitud, corregirMovimientoBatch, onSolicitudesChange, cancelarSolicitud,
     registrarGestion, onGestionesChange,
-    pactarAcuerdo, onAcuerdosChange,
+    pactarAcuerdo, anularAcuerdo, onAcuerdosChange,
 } from '../crm-service.js';
 import { saldoClass, saldoLabel, estadoBadgeHTML } from './saldo-format.js';
 import { estadoCuenta, hoyISO, vencimientoDefaultISO, acuerdoEsValido } from '../crm-estado-cuenta.js';
@@ -476,6 +476,14 @@ function wireModal() {
             }
         }
 
+        // Sin señal, addDoc/writeBatch NO falla: queda encolado y, al reintentar,
+        // crearía una factura (o factura+acuerdo) DUPLICADA. Avisar ANTES — igual que
+        // wireAcuerdo/wireGestiones (una factura duplicada es anulable, pero molesta;
+        // el batch del mutex en cuotas es lo más costoso de deshacer).
+        if (navigator.onLine === false) {
+            admToast('Parece que no hay señal. Espera a tener conexión e intenta de nuevo.', 'danger', 5000); return;
+        }
+
         const uid = currentUser()?.user?.uid;
         const descripcion = document.getElementById('mov-desc').value;
         const btn = document.getElementById('mov-save');
@@ -825,6 +833,12 @@ function wireAcuerdo() {
         primeraEl.value = vencimientoDefaultISO(hoyISO(), 15);
         primeraEl.min = hoyISO();
         refrescar();
+        // "Cancelar acuerdo vigente" (3a transición del mutex, old→null): SOLO owner
+        // y solo si hay un vigente. Única forma de limpiar un acuerdo erróneo desde el
+        // panel (sin esto habría que ir por SDK/consola).
+        const vig = _acuerdos.find((a) => a.estado === 'vigente') || null;
+        const btnAnular = document.getElementById('acuerdo-anular');
+        if (btnAnular) btnAnular.hidden = !(vig && currentRole() === 'owner');
         modal.hidden = false;
         nEl.focus();
     };
@@ -874,6 +888,32 @@ function wireAcuerdo() {
             admToast('No se pudo registrar el acuerdo. Intenta de nuevo; si sigue, avísale a Daniel.', 'danger', 5000);
         } finally {
             btn.disabled = false;
+        }
+    });
+
+    // Cancelar (anular) el acuerdo vigente — 3a transición del mutex (OWNER, old→null).
+    // El motivo se toma del campo "¿Qué se habló?" (evidencia del cierre).
+    const btnAnular = document.getElementById('acuerdo-anular');
+    if (btnAnular) btnAnular.addEventListener('click', async () => {
+        const vigente = _acuerdos.find((a) => a.estado === 'vigente') || null;
+        if (!vigente) { admToast('No hay un acuerdo vigente que cancelar.', 'danger'); return; }
+        if (currentRole() !== 'owner') { admToast('Cancelar un acuerdo es solo de Daniel (owner).', 'danger'); return; }
+        const motivo = notaEl.value.trim();
+        if (!motivo) { admToast('Escribe el motivo de la cancelación en "¿Qué se habló?": queda como evidencia.', 'danger', 5000); return; }
+        if (navigator.onLine === false) {
+            admToast('Parece que no hay señal. Espera a tener conexión e intenta de nuevo.', 'danger', 5000); return;
+        }
+        if (!confirm('¿Cancelar el acuerdo vigente? La deuda vuelve a regirse por sus fechas ORIGINALES. Queda registrado como evidencia.')) return;
+        btnAnular.disabled = true;
+        try {
+            await anularAcuerdo(CLIENTE_ID, vigente.id, motivo, currentUser()?.user?.uid);
+            admToast('Acuerdo cancelado. La deuda vuelve a sus fechas originales.');
+            close();
+        } catch (err) {
+            console.error('[cuenta] anular acuerdo:', err);
+            admToast('No se pudo cancelar. Intenta de nuevo; si sigue, avísale a Daniel.', 'danger', 5000);
+        } finally {
+            btnAnular.disabled = false;
         }
     });
 }

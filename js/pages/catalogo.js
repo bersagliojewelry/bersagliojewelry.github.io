@@ -115,7 +115,7 @@ function renderCard(p) {
     const img = p.images?.[0] || p.image || '';
     const tag = p.tag || (p.featured ? 'Destacada' : null);
     const stones = p.specs?.stones || p.specs?.stone || '';
-    const collection = data.getCollections().find(c => c.slug === p.collection);
+    const collection = data.collectionOf(p);
     const catLabel = collection?.name || p.collection || '';
     const price = Number(p.price || 0);
     return html`

@@ -63,7 +63,7 @@ function buildSpecs(piece) {
 }
 
 function getCategoryLabel(piece) {
-    const collection = data.getCollections().find(c => c.slug === piece.collection);
+    const collection = data.collectionOf(piece);
     return collection?.name || piece.collection || 'Pieza';
 }
 
@@ -170,8 +170,9 @@ function renderInfo(piece) {
 function renderRelated(piece) {
     const all = data.getAll();
     const slug = piece.slug || piece.id;
-    let related = all
-        .filter(p => p.collection === piece.collection && (p.slug || p.id) !== slug);
+    const col = data.collectionOf(piece);
+    let related = (col ? data.getByCollection(col.slug) : all.filter(p => p.collection === piece.collection))
+        .filter(p => (p.slug || p.id) !== slug);
     if (related.length < 4) {
         const fillers = all.filter(p => (p.slug || p.id) !== slug && !related.includes(p));
         related = [...related, ...fillers].slice(0, 4);

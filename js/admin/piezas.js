@@ -149,7 +149,7 @@ function populateCollectionFilters() {
     }
 
     cols.forEach(c => {
-        const opt = `<option value="${c.id}">${esc(c.name)}</option>`;
+        const opt = `<option value="${esc(c.slug || c.id)}">${esc(c.name)}</option>`;
         if (selectFilter) selectFilter.insertAdjacentHTML('beforeend', opt);
         if (selectForm)   selectForm.insertAdjacentHTML('beforeend', opt);
     });

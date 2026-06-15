@@ -28,9 +28,10 @@ export const NAV = [
   // CMS de la web pública (decisión UX #3 del comité): UNA página de pestañas
   // (admin-contenido.html), no 6 admin-*.html sueltos. Rol mínimo: editor.
   { label: 'Contenido web', items: [
-    { label: 'Journal',       href: 'admin-contenido.html#journal', icon: 'invoice', role: 'editor' },
-    { label: 'Textos / Home', href: 'admin-contenido.html#home',    icon: 'home',    role: 'editor' },
-    { label: 'Films y Redes', href: '#', icon: 'chart', role: 'editor', soon: true },
+    { label: 'Journal',           href: 'admin-contenido.html#journal',  icon: 'invoice', role: 'editor' },
+    { label: 'Textos / Home',     href: 'admin-contenido.html#home',     icon: 'home',    role: 'editor' },
+    { label: 'Textos / Contacto', href: 'admin-contenido.html#contacto', icon: 'inbox',   role: 'editor' },
+    { label: 'Films y Redes',     href: '#', icon: 'chart', role: 'editor', soon: true },
   ]},
   { label: 'Reportes', items: [
     { label: 'Reportes / KPIs', href: '#', icon: 'chart', role: 'admin', soon: true },

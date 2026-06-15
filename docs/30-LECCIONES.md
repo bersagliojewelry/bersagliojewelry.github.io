@@ -2,7 +2,7 @@
 
 > **Nodo neuronal: Memoria Procedimental.** Se consulta on-demand ante el **Trigger de Experiencia (`CLAUDE.md §G.2`)** ANTES de realizar refactorizaciones CSS, editar el Service Worker o depurar comportamientos de renderizado.
 >
-> **Mantenimiento (Reflejo de Frescura §G.4)**: registrar aquí cada causa raíz confirmada de un bug complejo resuelto o doctrina visual aprobada. **Tope ~350 líneas (§G.5)**.
+> **Mantenimiento (Reflejo de Frescura §G.4)**: registrar aquí cada causa raíz confirmada de un bug complejo resuelto o doctrina visual aprobada. **Tope ~350 líneas (§G.5)**. ⚠️ **Sobre cap de chars → plan de shard `31-LECCIONES-FIRESTORE` (L-12..L-17/L-29/L-34..L-40); aún NO creado** (auditoría §82 / H-17).
 
 ---
 
@@ -81,7 +81,7 @@ Cada shell HTML duplica tokens en su `<style>` critical inline (radii, colores, 
 
 ### L-12: Testear Firestore rules sin Java local — vía CI (zero-budget)
 El emulador Firestore necesita un JDK; si la máquina del dev no lo tiene, NO se pueden testear reglas localmente. Patrón zero-budget: `@firebase/rules-unit-testing` + tests con `node:test` (cero deps extra) + workflow GitHub Actions con `actions/setup-java` (Temurin, gratis en runners) que corre `firebase emulators:exec --only firestore --project demo-<x> "node --test tests/..."`. Se verifica en cada push que toque `firestore.rules`/`tests/**`, **antes** de que `firebase-deploy.yml` despliegue. Los roles que las reglas leen de `users/{uid}` se siembran con `testEnv.withSecurityRulesDisabled()`. El prefijo `--project demo-` evita necesitar credenciales reales.
-> ✅ **ACTUALIZACIÓN (2026-06-06)**: el JDK **YA está instalado** local — `C:\Program Files\Eclipse Adoptium\jdk-25.0.3.9-hotspot` (Temurin 25 LTS), solo faltaba enlazarlo. Para correr la suite local (PowerShell): `$env:JAVA_HOME="C:\Program Files\Eclipse Adoptium\jdk-25.0.3.9-hotspot"; $env:PATH="$env:JAVA_HOME\bin;$env:PATH"; npm run test:rules`. La 1ª corrida descarga el emulador (`cloud-firestore-emulator-v*.jar`). `firebase-tools` disponible vía npx (15.x). El "no hay Java local" del cerebro era **stale**.
+> ✅ **ACTUALIZACIÓN (2026-06-06)**: el JDK YA está local (Temurin 25, `C:\Program Files\Eclipse Adoptium\jdk-25.0.3.9-hotspot`); correr `npm run test:rules` con `$env:JAVA_HOME` apuntando ahí (1ª corrida baja el emulador). El "no hay Java local" era **stale**.
 
 ### L-13: Reglas `validate` tolerantes a merge updates (Firestore)
 En un `update`, `request.resource.data` es el estado **resultante completo** del doc (merge ya aplicado), NO solo el delta. Por eso: exige obligatorios SOLO en `create` (`d.name is string && d.name.size()>0`); en `update` valida **tipos solo-si-presente** — pero con el idiom CORRECTO `!('x' in d) || d.x is T` (ver ⚠️ abajo). Así un patch parcial (p.ej. solo `images`) y los docs legacy NO se rompen.
@@ -188,3 +188,21 @@ Para actualizar un major de una dep que corre en prod (functions con dinero real
 
 ### L-24: Verificar SIEMPRE los datos tras una migración (la fila "TOTAL" del Excel se cuela)
 La hoja de Kary traía una fila **"TOTAL"** (suma de la columna de saldos) que el extractor metió como un cliente más → la cartera salió **al doble** ($1.012M vs $506M real); la fila TOTAL aparecía como el saldo #1. Receta: tras migrar, **leer cartera total + top-N saldos + conteos**; una fila de totales se delata porque su saldo ≈ la suma de los demás. Filtro defensivo en el extractor (`NON_CLIENT_RE`, anclado al inicio para no tocar nombres reales). **Y testear el regex con casos**: el primer intento `totales?` exigía "totale" y NO matcheaba "TOTAL" (lo correcto: `total(es)?`) — un regex sin probar es una suposición (§3.3). Caso: ADR §47 (se borró la fila de prod).
+
+---
+
+## 🧠 Meta-lecciones del cerebro/proceso (M-NN) — detalle → ADR §82
+
+> Cómo opera/falla el cerebro mismo (Reflejo de Autocrítica §G.4). 1ª auditoría semántica con artefacto = ADR §82.
+
+### M-01: No imprimir un campo de estado del manifest como "hecho realizado" sin gate que verifique su artefacto
+**Disparador**: un linter/boot anuncia "X: \<fecha\>". `brain:check` anunciaba "auditoría semántica: 2026-06-09" desde `deepAudit.last` sin que existiera tabla de hallazgos (fachada) → aplica la Regla de ADMISIÓN al PROPIO linter.
+
+### M-02: Una lección sobre estado verificable-por-comando debe volverse GATE, no quedar en prosa [HONOR]
+**Disparador**: un error reincide pese a existir la lección. `05` repitió "==main" falso porque NINGÚN gate lee git (L-26 vivía en prosa) → mecanízala (TODO-22).
+
+### M-03: Un campo `last` de tracking nace null/baseline, nunca con fecha que finja una ejecución
+**Disparador**: instalar un mecanismo de tracking/auditoría. §56 selló `deepAudit.last=2026-06-09` (fecha de instalación) sin corrida → fachada (relacionada M-01).
+
+### M-04: La memoria del harness deriva en silencio (vive FUERA de `docs/`, el linter no la cubre)
+**Disparador**: rutas/reglas citadas en `~/.claude/.../memory/`. Una mudanza dejó 1 de 3 repos con ruta stale; una memoria de 72d ordenaba escribir historial en CLAUDE.md (contra §2). Necesita su propio repaso de frescura.

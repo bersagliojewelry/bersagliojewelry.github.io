@@ -45,9 +45,6 @@
     "scripts/brain-check.mjs",
     "scripts/brain-diff.mjs"
   ],
-  "ignoreDirs": [
-    "bersaglio-design"
-  ],
   "orphanAllowlist": [],
   "peers": [
     "../altorracars.github.io",

@@ -10,6 +10,7 @@
 import { createResourceAdmin } from './resource-admin.js';
 import { createSingletonAdmin } from './singleton-admin.js';
 import { HOME_DEFAULTS } from '../home/siteContent-defaults.js';
+import { CONTACTO_DEFAULTS } from '../pages/contacto-defaults.js';
 
 // ─── Descriptor: Journal (entradas editoriales) ─────────────────────────────────
 // El esquema del doc (campos) coincide con el contrato que consumen las páginas
@@ -130,13 +131,59 @@ const homeTextsDescriptor = {
     ],
 };
 
+// ─── Descriptor: Textos de Contacto (SINGLETON siteContent/contacto) ────────────
+// Solo el COPY (hero/proceso/faq); formulario, canales y horarios = estandarizados.
+const contactoTextsDescriptor = {
+    page:  'contacto',
+    title: 'Textos de Contacto',
+    help:  'Edita los textos de la página de contacto (encabezado, "qué esperar" y preguntas frecuentes). El formulario y los datos de contacto se gestionan aparte.',
+    defaults: CONTACTO_DEFAULTS,
+    sections: [
+        { key: 'hero', label: 'Encabezado', fields: [
+            { name: 'eyebrow',    label: 'Eyebrow',                     type: 'text' },
+            { name: 'titleLine1', label: 'Título — línea 1',            type: 'text' },
+            { name: 'titleEm',    label: 'Título — parte en cursiva',   type: 'text' },
+            { name: 'titleTail',  label: 'Título — cierre',             type: 'text' },
+            { name: 'lead',       label: 'Bajada',                      type: 'textarea', rows: 3 },
+        ]},
+        { key: 'proceso', label: 'Qué esperar (proceso)', fields: [
+            { name: 'eyebrow',    label: 'Eyebrow',                     type: 'text' },
+            { name: 'title1',     label: 'Título',                      type: 'text' },
+            { name: 'title2',     label: 'Título — cursiva',            type: 'text' },
+            { name: 'step1Title', label: 'Paso 1 — título',             type: 'text' },
+            { name: 'step1Desc',  label: 'Paso 1 — descripción',        type: 'textarea', rows: 2 },
+            { name: 'step1Time',  label: 'Paso 1 — tiempo',             type: 'text' },
+            { name: 'step2Title', label: 'Paso 2 — título',             type: 'text' },
+            { name: 'step2Desc',  label: 'Paso 2 — descripción',        type: 'textarea', rows: 2 },
+            { name: 'step2Time',  label: 'Paso 2 — tiempo',             type: 'text' },
+            { name: 'step3Title', label: 'Paso 3 — título',             type: 'text' },
+            { name: 'step3Desc',  label: 'Paso 3 — descripción',        type: 'textarea', rows: 2 },
+            { name: 'step3Time',  label: 'Paso 3 — tiempo',             type: 'text' },
+            { name: 'step4Title', label: 'Paso 4 — título',             type: 'text' },
+            { name: 'step4Desc',  label: 'Paso 4 — descripción',        type: 'textarea', rows: 2 },
+            { name: 'step4Time',  label: 'Paso 4 — tiempo',             type: 'text' },
+        ]},
+        { key: 'faq', label: 'Preguntas frecuentes', fields: [
+            { name: 'eyebrow', label: 'Eyebrow',            type: 'text' },
+            { name: 'title1',  label: 'Título',             type: 'text' },
+            { name: 'title2',  label: 'Título — cursiva',   type: 'text' },
+            { name: 'lead',    label: 'Bajada',             type: 'textarea', rows: 2 },
+            { name: 'q1', label: 'Pregunta 1', type: 'text' },     { name: 'a1', label: 'Respuesta 1', type: 'textarea', rows: 2 },
+            { name: 'q2', label: 'Pregunta 2', type: 'text' },     { name: 'a2', label: 'Respuesta 2', type: 'textarea', rows: 2 },
+            { name: 'q3', label: 'Pregunta 3', type: 'text' },     { name: 'a3', label: 'Respuesta 3', type: 'textarea', rows: 2 },
+            { name: 'q4', label: 'Pregunta 4', type: 'text' },     { name: 'a4', label: 'Respuesta 4', type: 'textarea', rows: 2 },
+        ]},
+    ],
+};
+
 // ─── Registro de pestañas ───────────────────────────────────────────────────────
 // id = ancla en la URL (#journal). create() devuelve un controlador fresco por
 // activación (el shell hace destroy() al cambiar de pestaña → sin listeners zombi).
 export const TABS = [
-    { id: 'journal', label: 'Journal',         create: () => createResourceAdmin(journalDescriptor) },
-    { id: 'home',    label: 'Textos del Home', create: () => createSingletonAdmin(homeTextsDescriptor) },
-    // Próximas (cuando aterricen): nosotros, contacto, films, social, footer.
+    { id: 'journal',  label: 'Journal',            create: () => createResourceAdmin(journalDescriptor) },
+    { id: 'home',     label: 'Textos del Home',    create: () => createSingletonAdmin(homeTextsDescriptor) },
+    { id: 'contacto', label: 'Textos de Contacto', create: () => createSingletonAdmin(contactoTextsDescriptor) },
+    // Próximas (cuando aterricen): nosotros, films, social, footer.
 ];
 
 export default TABS;

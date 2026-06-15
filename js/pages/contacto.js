@@ -31,7 +31,9 @@
  *   - sessionStorage 'bj-contact-form' guarda en background
  */
 
-import { html, escape } from '../core/html.js';
+import { html, escape, fragment } from '../core/html.js';
+import { data } from '../core/data.js';
+import { mergeContacto } from './contacto-defaults.js';
 import { saveInquiry } from '../firestore-service.js';
 import { track } from '../analytics.js';
 
@@ -81,13 +83,6 @@ const HORARIOS = [
     { d: 'Domingo',   h: 'Solo con cita previa',   abierto: false },
 ];
 
-const FAQS_RAPIDO = [
-    { q: '¿Necesito cita previa?',         a: 'No es obligatoria: puedes acercarte directamente o reservar una cita para una atención más dedicada. Ambas son bienvenidas.' },
-    { q: '¿Hay parqueadero?',              a: 'En el Centro Histórico encuentras varios parqueaderos privados y seguros a pocos pasos del atelier.' },
-    { q: '¿Puedo llevar acompañantes?',    a: 'Hasta tres personas. Indícalo al agendar para preparar el espacio.' },
-    { q: '¿Atienden en otro idioma?',      a: 'Español e inglés. Francés e italiano con cita previa, informándolo al agendar.' },
-];
-
 const MOTIVOS = [
     { k: 'asesoria',    t: 'Asesoría general',     d: 'Quiero conocer las colecciones' },
     { k: 'pieza',       t: 'Pieza a medida',       d: 'Tengo una idea o una historia' },
@@ -114,13 +109,6 @@ const URGENCIAS = [
     ['normal',  'Sin prisa'],
     ['semana',  'Esta semana'],
     ['urgente', 'Hoy mismo'],
-];
-
-const PROCESO = [
-    { n: '01', t: 'Lectura Personal',   d: 'Tu mensaje es leído directamente por Kary Mendoza y su equipo. Prescindimos de respuestas automáticas o chatbots; valoramos el contacto humano desde el primer segundo.', tiempo: 'En el día' },
-    { n: '02', t: 'Primer Diálogo',  d: 'Nos pondremos en contacto para entender mejor el contexto de tu joya: la historia detrás del encargo, el tipo de gema preferida y las expectativas de entrega.', tiempo: '< 24 horas' },
-    { n: '03', t: 'Encuentro Pausado',       d: 'Agendamos una llamada de voz, chat directo o un café en nuestra Maison en el centro histórico de Cartagena. Una conversación íntima, sin presiones comerciales de ningún tipo.', tiempo: 'A tu ritmo' },
-    { n: '04', t: 'Manos a la Obra', d: 'Si decides que Bersaglio sea el custodio de tu legado, damos vida a tu pieza paso a paso: del primer boceto a mano alzada hasta la creación final en nuestro taller, siempre con tu aprobación.', tiempo: 'A medida' },
 ];
 
 function getMinDate() {
@@ -160,16 +148,15 @@ function readRefFromURL() {
 // ═══════════════════════════════════════════════════════════════════
 
 function renderHero() {
+    const c = mergeContacto(data.getSiteContent('contacto')).hero;
     return html`
         <section class="ct-hero">
-            <div class="mono ct-hero-eyebrow">CONSERJERÍA PRIVADA</div>
+            <div class="mono ct-hero-eyebrow">${escape(c.eyebrow)}</div>
             <h1 class="ct-hero-title">
-                Un encuentro pausado,<br>
-                <span class="italic emerald-text ct-hero-title-em">una esmeralda única,</span> un legado eterno.
+                ${escape(c.titleLine1)}<br>
+                <span class="italic emerald-text ct-hero-title-em">${escape(c.titleEm)}</span> ${escape(c.titleTail)}
             </h1>
-            <p class="ct-hero-lead">
-                Te invitamos a dar el primer paso. Elige la vía de comunicación que te resulte más cómoda; cada mensaje es atendido de manera directa y confidencial por Kary Mendoza y su equipo.
-            </p>
+            <p class="ct-hero-lead">${escape(c.lead)}</p>
         </section>`;
 }
 
@@ -508,14 +495,21 @@ function renderSidebar() {
 }
 
 function renderProceso() {
+    const c = mergeContacto(data.getSiteContent('contacto')).proceso;
+    const pasos = [
+        { n: '01', t: c.step1Title, d: c.step1Desc, tiempo: c.step1Time },
+        { n: '02', t: c.step2Title, d: c.step2Desc, tiempo: c.step2Time },
+        { n: '03', t: c.step3Title, d: c.step3Desc, tiempo: c.step3Time },
+        { n: '04', t: c.step4Title, d: c.step4Desc, tiempo: c.step4Time },
+    ];
     return html`
         <section class="glass ct-proceso">
             <div class="ct-proceso-header">
-                <div class="mono ct-proceso-eyebrow">QUÉ ESPERAR DE NOSOTROS</div>
-                <h2 class="ct-proceso-title">Después de que <span class="italic emerald-text">nos escribes</span></h2>
+                <div class="mono ct-proceso-eyebrow">${escape(c.eyebrow)}</div>
+                <h2 class="ct-proceso-title">${escape(c.title1)} <span class="italic emerald-text">${escape(c.title2)}</span></h2>
             </div>
             <div class="ct-proceso-grid proc-grid">
-                ${PROCESO.map(p => html`
+                ${pasos.map(p => html`
                     <div class="ct-proceso-step">
                         <div class="ct-proceso-num">${escape(p.n)}</div>
                         <div class="ct-proceso-stepname">${escape(p.t)}</div>
@@ -527,21 +521,23 @@ function renderProceso() {
 }
 
 function renderFAQRapido() {
+    const c = mergeContacto(data.getSiteContent('contacto')).faq;
+    const faqs = [
+        { q: c.q1, a: c.a1 }, { q: c.q2, a: c.a2 }, { q: c.q3, a: c.a3 }, { q: c.q4, a: c.a4 },
+    ];
     return html`
         <section class="ct-faq-section">
             <div class="ct-faq-header">
-                <div class="mono ct-faq-eyebrow">ANTES DE TU VISITA</div>
-                <h3 class="ct-faq-title">Lo que necesitas <span class="italic emerald-text">saber</span></h3>
-                <p class="ct-faq-lead">
-                    Cuatro respuestas rápidas para que llegues con todo claro. Si te queda alguna duda, escríbenos por WhatsApp.
-                </p>
+                <div class="mono ct-faq-eyebrow">${escape(c.eyebrow)}</div>
+                <h3 class="ct-faq-title">${escape(c.title1)} <span class="italic emerald-text">${escape(c.title2)}</span></h3>
+                <p class="ct-faq-lead">${escape(c.lead)}</p>
                 <a href="https://wa.me/573013752592" target="_blank" rel="noopener" class="btn-aqua btn-aqua-emerald ct-faq-cta">
                     Preguntar por WhatsApp
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
                 </a>
             </div>
             <div class="ct-faq-grid">
-                ${FAQS_RAPIDO.map(f => html`
+                ${faqs.map(f => html`
                     <div class="glass glass-iridescent ct-faq-card">
                         <div class="ct-faq-q">${escape(f.q)}</div>
                         <p class="ct-faq-a">${escape(f.a)}</p>
@@ -747,6 +743,23 @@ export async function init() {
     main.addEventListener('input', onMainInput);
     main.addEventListener('change', onMainInput);
     main.addEventListener('submit', onMainSubmit);
+
+    // CMS P2: copy editable (hero/proceso/faq). Pinta con DEFAULTS ya; re-pinta SOLO
+    // esas secciones al resolver el getDoc (NO toca el formulario ni su estado).
+    data.loadSiteContent('contacto').then(refreshCopy);
+}
+
+function refreshCopy() {
+    replaceSection('.ct-hero', renderHero());
+    replaceSection('.ct-proceso', renderProceso());
+    replaceSection('.ct-faq-section', renderFAQRapido());
+}
+
+function replaceSection(sel, htmlStr) {
+    const el = document.querySelector(sel);
+    if (!el) return;
+    const next = fragment(htmlStr).firstElementChild;
+    if (next) el.replaceWith(next);
 }
 
 export default { init };

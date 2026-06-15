@@ -410,16 +410,37 @@ service cloud.firestore {
     // renderer esc/safeUrl + CSP, gran plan §2.D — las reglas no recursan). El cap de
     // tamaño del doc lo impone la lógica de guardado (cliente). Whitelist = sub-mapas
     // del HOME hoy; se amplía por página (nosotros/contacto/global) en P2.
-    function siteContentValid() {
+    // Sub-mapas permitidos POR PÁGINA (anti-inyección hasOnly, L-15). Definidos de una
+    // vez para home/contacto/nosotros/global → no re-editar reglas por cada página.
+    function siteContentKeys(page) {
+      return page == 'home'     ? ['hero', 'editorial', 'atelier', 'cta', 'marquee']
+           : page == 'contacto' ? ['hero', 'proceso', 'faq']
+           : page == 'nosotros' ? ['hero', 'maison', 'cartagena', 'timeline', 'equipo', 'valores', 'manifiesto', 'cierre']
+           : page == 'global'   ? ['contacto', 'footer', 'redes']
+           : [];
+    }
+    function siteContentValid(page) {
       let d = request.resource.data;
-      return d.keys().hasOnly(['hero', 'editorial', 'atelier', 'cta', 'marquee',
-                               '_version', '_published',
-                               'createdAt', 'createdBy', 'updatedAt', 'updatedBy'])
+      let allowed = siteContentKeys(page);
+      return allowed.size() > 0                       // página conocida (rechaza ids raros)
+          && d.keys().hasOnly(allowed.concat(['_version', '_published', 'createdAt', 'createdBy', 'updatedAt', 'updatedBy']))
           && (!('hero' in d)       || d.hero is map)
           && (!('editorial' in d)  || d.editorial is map)
           && (!('atelier' in d)    || d.atelier is map)
           && (!('cta' in d)        || d.cta is map)
           && (!('marquee' in d)    || d.marquee is map)
+          && (!('proceso' in d)    || d.proceso is map)
+          && (!('faq' in d)        || d.faq is map)
+          && (!('maison' in d)     || d.maison is map)
+          && (!('cartagena' in d)  || d.cartagena is map)
+          && (!('timeline' in d)   || d.timeline is map)
+          && (!('equipo' in d)     || d.equipo is map)
+          && (!('valores' in d)    || d.valores is map)
+          && (!('manifiesto' in d) || d.manifiesto is map)
+          && (!('cierre' in d)     || d.cierre is map)
+          && (!('contacto' in d)   || d.contacto is map)
+          && (!('footer' in d)     || d.footer is map)
+          && (!('redes' in d)      || d.redes is map)
           && (!('_published' in d) || d._published is bool);
     }
 
@@ -496,7 +517,7 @@ service cloud.firestore {
     // delete (los singletons se vacían/despublican, no se borran). El id = la página.
     match /siteContent/{page} {
       allow read:  if true;
-      allow write: if isEditor() && siteContentValid();
+      allow write: if isEditor() && siteContentValid(page);
     }
 
     // ─── Reviews ───────────────────────────────────────────────────────────────

@@ -240,6 +240,18 @@ test('siteContent · hasOnly RECHAZA sub-mapa no previsto', async () => {
 test('siteContent · RECHAZA sub-mapa que no es map', async () => {
     await assertFails(setDoc(doc(asUser('editorUid'), 'siteContent/home'), { hero: 'no-soy-map' }));
 });
+test('siteContent · editor escribe contacto (hero/proceso/faq)', async () => {
+    await assertSucceeds(setDoc(doc(asUser('editorUid'), 'siteContent/contacto'), {
+        hero: { eyebrow: 'x' }, proceso: { title1: 'y' }, faq: { q1: 'z' },
+    }));
+});
+test('siteContent · per-página: RECHAZA sub-mapa de OTRA página', async () => {
+    // 'editorial' es de home, no de contacto → hasOnly por-página lo rechaza
+    await assertFails(setDoc(doc(asUser('editorUid'), 'siteContent/contacto'), { editorial: { x: 1 } }));
+});
+test('siteContent · RECHAZA página desconocida (id raro)', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'siteContent/hackerpage'), { hero: { x: 1 } }));
+});
 
 // ─── CRM Fase R: vendedoras = entidad de datos (solo admin/owner) ─────────────
 test('CRM vend · admin lee y crea vendedoras', async () => {

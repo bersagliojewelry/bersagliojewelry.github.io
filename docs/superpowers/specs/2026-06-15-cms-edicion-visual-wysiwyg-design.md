@@ -48,7 +48,7 @@ El motor ya tiene las dos mitades correctas:
 - **Costo**: reusa renderers/filtros existentes, sin doble fuente de verdad, sin librerías → el ingeniero no hereda un motor.
 - **⚠️ "Ver en móvil" puede ser humo**: el responsive mira el ancho de la *pantalla*, no del `<div>`. Cambiar el ancho de un div puede NO disparar el modo móvil real → fase posterior (iframe o container-queries), NO en el MVP.
 
-**Nota técnica (anti-sobreingeniería)**: montar el preview en un **`<div>` namespaceado** (`.cms-preview`; los selectores ya son `home-*`, no chocan con `adm-*`), **NO** iframe `srcdoc`/postMessage en el MVP (el iframe no hereda el CSS hasheado por Vite y reintroduce fricción de build). El iframe solo si aparece colisión real de estilos.
+**Nota técnica** ⚠️ **REVISADA 2026-06-15 (ver Adenda al pie)**: el MVP usa **iframe `srcdoc`**, NO `<div>`. La premisa original (abajo) —«panel y web comparten CSS»— resultó **FALSA**: `admin-contenido.html` solo carga `admin.css`, así que un `<div>` exigiría inyectar el CSS público en el panel = **bleed inverso** que contamina el panel de trabajo. *Nota original (superada): montar el preview en un `<div>` namespaceado, NO iframe en el MVP (el iframe no hereda el CSS hasheado por Vite); el iframe solo si aparece colisión real de estilos.*
 
 ## 4 · Faseo (cada fase entrega valor sola)
 
@@ -64,7 +64,7 @@ El motor ya tiene las dos mitades correctas:
 ## 5 · Qué NO hacer (descartado por el comité)
 - Lienzo libre / drag-drop de bloques (reabre el monstruo vetado 10×).
 - `contentEditable` (inyección desproporcionada en repo público).
-- iframe + postMessage (resuelve un problema que aquí no existe — panel y web comparten código).
+- ~~iframe + postMessage~~ → **REVERTIDO 2026-06-15 (ver Adenda)**: SÍ se adopta iframe-`srcdoc` en F1 (la página del preview NO carga el CSS público; fidelidad pixel + "ver en móvil" lo justifican).
 - Prometer F1-F2 para TODAS las páginas hoy: **solo Home está instrumentado**; cada sección necesita preparar su renderer igual primero → es trabajo por sección, no "gratis una vez". (Decirlo para no crear expectativa falsa.)
 
 ---
@@ -78,3 +78,31 @@ El motor ya tiene las dos mitades correctas:
 ---
 
 **Síntesis ejecutable**: Daniel obtiene su "Photoshop" honesto (ver + tocar lo correcto + deshacer, sobre su render con su marca); Kary edita sin miedo y sin poder romper nada; el repo público conserva intacta su única defensa anti-XSS; el ingeniero no hereda ningún motor. El comité anterior tenía razón en cerrar el lienzo — **esto no lo reabre, lo vuelve innecesario.** Encaja como evolución de P1/P2 (singleton-admin ya construido); el preview reusa los renderers públicos por sección.
+
+---
+
+## ADENDA 2026-06-15 — Consejo externo Gemini integrado + reversión a iframe
+
+> Síntesis completa + CRUDO → bóveda `2026-06-15-consejo-gemini-wysiwyg-SINTESIS.md` (workflow `wf_85aa13c5-a27`, 6 ag. grounded en código). Peer review §15: adopté lo correcto, refuté con razón. **[OPUS-4.8]**.
+
+**Gemini CONFIRMA la dirección** (split + clic-para-editar, sin lienzo/`contentEditable`). De sus 6 críticas: **2 ya resueltas** en código (escapado por-contexto: `safe-url.js`), **3 adoptadas**, **1 (iframe) revierte mi veredicto**.
+
+### Cambio de decisión: **iframe-`srcdoc` desde F1** (antes: `<div>`)
+Hechos VERIFICADOS que tumbaron el "div" del comité previo:
+1. `admin-contenido.html` carga **solo `admin.css`** (NO `home.css`/`components.css`) → un `<div>` obliga a inyectar el CSS público en el panel = **bleed inverso** (contamina el panel CRM/Panel v2) + reset de aislamiento frágil.
+2. iframe-`srcdoc` da documento limpio; referencia el MISMO CSS público por `<link>` (como `index.html`) → sin fricción de Vite-hash.
+3. El preview **no necesita JS público** (parallax off; animaciones de entrada no aplican) → iframe limpio, sin bootstrappear GSAP/Lenis.
+4. **Fidelidad = propósito del MVP** (Daniel valida "esto es mi Photoshop"); corrimientos cosméticos en SU hero corromperían la validación.
+5. **F4 "ver en móvil"** exige viewport real → el `<div>` era callejón.
+Confianza ~65-70%, **reversible** (si hay FOUC por `<link>`s en cada repintado o el hero dependiera de JS público → volver a `<div>`). **Refuto el "Game Over" de Gemini**: el iframe se adopta por fidelidad/costo, NO por seguridad (editor único de confianza; el vector real estaba FUERA del preview ↓).
+
+### Otros puntos de Gemini adoptados
+- **Límites de caracteres** por campo + contador visual (calibrar a dónde rompe cada layout) → F1/F3. *Tipografía de lujo: el aire es parte del diseño.*
+- **DOM-trashing** (innerHTML en cada tecla): NO aplica a F1 (foco en el form, preview pasivo); en **F2** sí (listeners en el preview) → **delegación de eventos** + **debounce** del repintado.
+- **Presets**: solo si el **schema de datos es idéntico** entre variantes (tema/orden); si añaden/quitan campos → bloques distintos, no "variante mágica" → regla para F4.
+
+### Hallazgo de seguridad (auditoría) — **ARREGLADO**
+`js/admin/colecciones.js:53`: `bannerUrl` editable iba a `<a href="${esc(...)}">` con solo `esc()`, **sin `safeUrl()`** → stored-XSS de contexto admin al clic "Ver banner" (la web pública sí lo saneaba). Fix: `esc(safeUrl(...))` + `rel="noopener noreferrer"` (href L53 + img L180). **Deuda latente**: `categories.js:28,32` interpola `--cat-hue`/`object-position` en `style=` (contexto CSS sin cobertura) — inocuo hoy (hue/pos no editables); validar numérico/allow-list antes de exponerlos.
+
+### F1 — definición actualizada
+Split: form (izq) + **iframe-`srcdoc`** (der) que re-pinta la sección Home/hero al teclear (debounce), con `<link>` al CSS público; botón Descartar; límites de caracteres. Sigue siendo **días**. Validación obligatoria con Daniel antes de F2+.

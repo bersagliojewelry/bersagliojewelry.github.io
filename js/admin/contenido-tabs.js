@@ -11,6 +11,7 @@ import { createResourceAdmin } from './resource-admin.js';
 import { createSingletonAdmin } from './singleton-admin.js';
 import { HOME_DEFAULTS } from '../home/siteContent-defaults.js';
 import { CONTACTO_DEFAULTS } from '../pages/contacto-defaults.js';
+import { renderHomePreview } from './home-preview.js';
 
 // ─── Descriptor: Journal (entradas editoriales) ─────────────────────────────────
 // El esquema del doc (campos) coincide con el contrato que consumen las páginas
@@ -71,8 +72,9 @@ const journalDescriptor = {
 const homeTextsDescriptor = {
     page:  'home',
     title: 'Textos del Home',
-    help:  'Edita los textos del inicio (portada y sección editorial) y guarda. Se ven en la web al recargar.',
+    help:  'Edita los textos del inicio y míralos al instante en la vista previa de la derecha. Guarda para publicarlos.',
     defaults: HOME_DEFAULTS,
+    preview: { render: renderHomePreview },
     sections: [
         { key: 'hero', label: 'Portada (Hero)', fields: [
             { name: 'locator',          label: 'Ubicación (línea superior)',  type: 'text' },

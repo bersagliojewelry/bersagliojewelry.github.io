@@ -8,7 +8,7 @@ import { html, escape, mount } from '../core/html.js';
 import { data } from '../core/data.js';
 import { mergeHome } from './siteContent-defaults.js';
 
-function editorialInner(c) {
+export function editorialInner(c) {
     const stats = [
         { num: c.stat1Num, lab: c.stat1Lab },
         { num: c.stat2Num, lab: c.stat2Lab },

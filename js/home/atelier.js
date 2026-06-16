@@ -9,7 +9,7 @@ import { data } from '../core/data.js';
 import { safeUrl } from '../core/safe-url.js';
 import { mergeHome } from './siteContent-defaults.js';
 
-function atelierInner(c) {
+export function atelierInner(c) {
     const steps = [
         { t: c.step1Title, d: c.step1Desc, corner: 0 },
         { t: c.step2Title, d: c.step2Desc, corner: 1 },

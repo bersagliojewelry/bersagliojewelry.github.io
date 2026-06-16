@@ -8,7 +8,7 @@ import { data } from '../core/data.js';
 import { safeUrl } from '../core/safe-url.js';
 import { mergeHome } from './siteContent-defaults.js';
 
-function ctaInner(c) {
+export function ctaInner(c) {
     return html`
             <div class="container">
                 <div class="glass glass-iridescent home-cta-card">

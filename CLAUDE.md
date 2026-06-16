@@ -211,7 +211,7 @@ El cerebro se mantiene y CRECE solo — pero **nunca sin ti**. Tú, el construct
 - **Reflejo de Sugerencia de Skills (§40)**: si aprendes una capacidad/framework REUSABLE y PORTABLE (sirve en cualquier proyecto, NO específica de ESTE proyecto → eso va al cerebro), SUGIERE crear una skill vía `skill-creator`; el cliente decide. **Skill = capacidad general; neurona/lóbulo = conocimiento del proyecto.** Flujo + registro en `40-LOBULOS`.
 - **Reflejo de Catalogación de Skills (auto-detección + documentación)**: si aparece una skill NUEVA en `skills/` o instalada en `~/.claude/skills/` (la añadió el cliente, la instalaste tú, o llegó con el entorno), DEBES auto-detectarla y documentarla en `docs/skills-inventory.md` (name + propósito + Disp. ✅/⚠️/🔧) en el MISMO cambio, **sin que el cliente lo pida**. **Backstop determinista**: `npm run brain:check` (check #6) marca toda carpeta de `skills/` ausente del inventario.
 
-**Regla de ADMISIÓN (anti-teatro)**: toda regla/reflejo nuevo declara su gate mecánico (check del linter) o lleva la etiqueta `[HONOR]` explícita — prohibido fingir cobertura.
+**Regla de ADMISIÓN (anti-teatro)**: cada regla/reflejo cita su gate (linter) o es `[HONOR]` — el linter solo mecaniza caps/huérfanas/desync/skills/archiveDir; el resto de §G.4 es honor. No fingir mecanización.
 
 **🛡️ Límite de guardián (cuidado ante todo)**: los reflejos ENRIQUECEN, nunca borran a la ligera. Eliminar o reescribir conocimiento histórico exige certeza verificada (§3.3). Ante la duda: **apendar, no sobrescribir; cuarentenar en `_legacy/`, no borrar.** Proteger la red es prioritario sobre alimentarla.
 

@@ -5,6 +5,7 @@
 
 import adminDb from './db.js';
 import { admToast, admConfirm, initSidebar, esc, requireAuth } from './shared.js';
+import { safeUrl } from '../core/safe-url.js';
 
 let _collections = [];
 let _bannerUrl = '';
@@ -50,7 +51,7 @@ function renderTable() {
                 </span>
             </td>
             <td class="adm-td-muted" style="font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;">
-                ${c.bannerUrl ? `<a href="${esc(c.bannerUrl)}" target="_blank" style="color:var(--adm-accent);">Ver banner</a>` : '<em>Sin banner</em>'}
+                ${c.bannerUrl ? `<a href="${esc(safeUrl(c.bannerUrl))}" target="_blank" rel="noopener noreferrer" style="color:var(--adm-accent);">Ver banner</a>` : '<em>Sin banner</em>'}
             </td>
             <td>
                 <div class="adm-table-actions">
@@ -177,7 +178,7 @@ function renderBannerPreview(url) {
 
     container.innerHTML = `
         <div style="position:relative;border-radius:var(--adm-radius);overflow:hidden;max-height:160px;">
-            <img src="${esc(url)}" alt="Banner preview" style="width:100%;height:160px;object-fit:cover;display:block;">
+            <img src="${esc(safeUrl(url))}" alt="Banner preview" style="width:100%;height:160px;object-fit:cover;display:block;">
             <button type="button" id="cf-banner-remove" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.7);color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:14px;line-height:1;">&times;</button>
         </div>
     `;

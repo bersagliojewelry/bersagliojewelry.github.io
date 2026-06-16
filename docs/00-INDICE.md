@@ -30,6 +30,7 @@
 | Conflicto al fusionar / cache / service worker | 🧪 `30-LECCIONES` L-02 + `CLAUDE.md §4` |
 | Errores conocidos y gotchas de estilo (CSS modular por página) | 🧪 `30-LECCIONES` |
 | ¿Qué hay pendiente? estado del sprint | ⚡ `10-CORTO-PLAZO` (TODOs) |
+| ¿Cómo/dónde se calcula la mora / aging / cartera vencida / a quién cobrar? | `js/crm-estado-cuenta.js` (helper PURO `estadoCuenta`, FIFO en vivo) + ADR §51 |
 | 🔵 Audita SEGURIDAD / Firebase rules | 🎯 `40-LOBULOS-DOMINIO` → 41-SEGURIDAD (on-demand) |
 | 🔵 Audita UX / interfaz / componentes | 🎯 `40-LOBULOS-DOMINIO` → 43-UX |
 | 🔵 Audita PERFORMANCE / LCP / Vite | 🎯 `40-LOBULOS-DOMINIO` → 45-PERFORMANCE |
@@ -131,6 +132,7 @@
 ---
 
 | §81 | 2026-06-12 — ACUERDOS de pago / plan de cuotas: diseño v2 (Consejo Externo Gemini demolió la v1) + build R1-R5 [OPUS-4.8 interino]: mutex `acuerdoVigenteId` (cierra jineteo) · solo saldo · escudo de 2 estados · `acuerdoAlCorte` cristalizado; GATEADO/inerte (`acuerdosActivos` off); rules 144/144; PENDIENTE R6 (deploy + bandera + verif. por hito) | 1203 |
+| §82 | 2026-06-15 — AUTO-AUDITORÍA semántica Nivel-2 del cerebro (1ª con artefacto): 8 sondas + verificación adversarial → 20 hallazgos (H-01 `05`=="main" FALSO, cazado ×5 sondas · H-06 gate SSoT inerte/ningún gate lee git · H-11/H-12 memoria stale); GC de 05/10, `ssotFacts` vivo, memorias corregidas, deepAudit re-sellado [OPUS-4.8] | 1223 |
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §57+ al historial,
 > añadir su fila aquí con la línea de inicio (`Select-String` o `grep`).

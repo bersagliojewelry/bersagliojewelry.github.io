@@ -45,18 +45,18 @@
     "scripts/brain-check.mjs",
     "scripts/brain-diff.mjs"
   ],
-  "ignoreDirs": [
-    "bersaglio-design"
-  ],
   "orphanAllowlist": [],
   "peers": [
     "../altorracars.github.io",
     "../altorrainmobiliaria.github.io"
   ],
   "specsDir": "docs/superpowers/specs",
+  "ssotFacts": [
+    { "regex": "506\\.510\\.780", "owner": "docs/05-ESTADO-GLOBAL.md", "scan": ["docs/10-MEMORIA-CORTO-PLAZO.md"] }
+  ],
   "deepAudit": {
-    "last": "2026-06-09",
-    "coveredHeaderCount": null,
+    "last": "2026-06-15",
+    "coveredHeaderCount": 82,
     "maxAdrGap": 12,
     "maxDays": 30
   }

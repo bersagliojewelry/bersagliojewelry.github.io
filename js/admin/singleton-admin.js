@@ -44,12 +44,12 @@ export function createSingletonAdmin(d) {
         loaded = mergeSections(d.defaults, doc, d.sections);
         fillForm(loaded);
 
+        $('[data-form]').addEventListener('input', onInput);   // delegado (sobrevive a re-fill): contadores + preview
         if (hasPreview) {
             preview = createLivePreview();
             await preview.mount($('[data-preview]'));
             if (!host) { preview.destroy(); preview = null; return; }
             refreshPreview();
-            $('[data-form]').addEventListener('input', onInput);   // delegado: sobrevive a re-fill
         }
     }
 
@@ -98,9 +98,22 @@ export function createSingletonAdmin(d) {
         }
     }
 
-    function onInput() {
+    function onInput(e) {
+        updateCounter(e.target);
+        if (!hasPreview) return;
         clearTimeout(debounceT);
         debounceT = setTimeout(refreshPreview, 180);
+    }
+
+    /** Actualiza el contador N/max del campo y lo marca cuando llega al tope. */
+    function updateCounter(el) {
+        if (!el || typeof el.matches !== 'function' || !el.matches('[data-sf][maxlength]')) return;
+        const max = el.getAttribute('maxlength');
+        const c = el.closest('.adm-field')?.querySelector('[data-sf-count]');
+        if (!c) return;
+        const n = el.value.length;
+        c.textContent = `${n}/${max}`;
+        c.classList.toggle('sf-count--full', n >= Number(max));
     }
 
     function discard() {

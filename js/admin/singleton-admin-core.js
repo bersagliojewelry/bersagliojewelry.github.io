@@ -14,10 +14,14 @@ function fieldHTML(sectionKey, f, value) {
     const ph   = f.placeholder ? ` placeholder="${escape(f.placeholder)}"` : '';
     const hint = f.hint ? `<small style="color:var(--adm-muted);font-size:11px;margin-top:2px;display:block;">${escape(f.hint)}</small>` : '';
     const sf   = `data-sf="${escape(sectionKey)}.${escape(f.name)}"`;
+    // Límite de caracteres (F1, consejo Gemini): tipografía de lujo se rompe con texto largo.
+    // maxlength corta en el navegador; el contador da feedback en vivo (lo actualiza singleton-admin).
+    const max   = f.max ? ` maxlength="${f.max}"` : '';
+    const count = f.max ? `<small class="sf-count" data-sf-count>${String(value ?? '').length}/${f.max}</small>` : '';
     const control = f.type === 'textarea'
-        ? `<textarea class="adm-input" ${sf} rows="${f.rows || 3}"${ph}>${escape(value)}</textarea>`
-        : `<input class="adm-input" type="text" ${sf} value="${escape(value)}"${ph}>`;
-    return `<div class="adm-field"><label>${escape(f.label)}</label>${control}${hint}</div>`;
+        ? `<textarea class="adm-input" ${sf} rows="${f.rows || 3}"${max}${ph}>${escape(value)}</textarea>`
+        : `<input class="adm-input" type="text" ${sf} value="${escape(value)}"${max}${ph}>`;
+    return `<div class="adm-field"><label>${escape(f.label)}${count}</label>${control}${hint}</div>`;
 }
 
 /**

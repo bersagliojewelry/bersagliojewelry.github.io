@@ -75,7 +75,7 @@ const homeTextsDescriptor = {
     title: 'Textos del Home',
     help:  'Edita los textos del inicio y míralos al instante en la vista previa de la derecha. Guarda para publicarlos.',
     defaults: HOME_DEFAULTS,
-    preview: { render: renderHomePreview },
+    preview: { render: renderHomePreview, cssFrom: '/' },
     sections: [
         { key: 'hero', label: 'Portada (Hero)', fields: [
             { name: 'locator',          label: 'Ubicación (línea superior)',  type: 'text', max: 44 },
@@ -141,7 +141,7 @@ const contactoTextsDescriptor = {
     title: 'Textos de Contacto',
     help:  'Edita los textos de contacto (encabezado, "qué esperar" y FAQ) y míralos al instante en la vista previa. El formulario y los canales se gestionan aparte.',
     defaults: CONTACTO_DEFAULTS,
-    preview: { render: renderContactoPreview },
+    preview: { render: renderContactoPreview, cssFrom: '/contacto.html' },
     sections: [
         { key: 'hero', label: 'Encabezado', fields: [
             { name: 'eyebrow',    label: 'Eyebrow',                     type: 'text', max: 44 },

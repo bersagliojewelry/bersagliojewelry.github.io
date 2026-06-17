@@ -49,7 +49,7 @@ export function createSingletonAdmin(d) {
 
         $('[data-form]').addEventListener('input', onInput);   // delegado (sobrevive a re-fill): contadores + preview
         if (hasPreview) {
-            preview = createLivePreview();
+            preview = createLivePreview({ cssFrom: d.preview.cssFrom });
             await preview.mount($('[data-preview]'));
             if (!host) { preview.destroy(); preview = null; return; }
             refreshPreview();

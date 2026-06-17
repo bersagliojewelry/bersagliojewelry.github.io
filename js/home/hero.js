@@ -13,7 +13,7 @@ import { data } from '../core/data.js';
 import { safeUrl } from '../core/safe-url.js';
 import { mergeHome } from './siteContent-defaults.js';
 
-function heroInner(c) {
+export function heroInner(c) {
     return html`
             <div aria-hidden="true" class="home-hero-bg">
                 <div class="home-hero-blob home-hero-blob--em"></div>

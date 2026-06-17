@@ -6,8 +6,17 @@
  *    inyectarlo en el panel (bleed inverso que rompería el propio panel). El iframe trae un
  *    documento limpio donde se cargan EXACTOS los estilos de la web.
  *  - Contención: el HTML lo generan los renderers públicos (ya escapados con escape()/safeUrl());
- *    el iframe solo lo monta como fragmento, SIN ejecutar JS público. `sandbox="allow-scripts"`
- *    (sin `allow-same-origin`) = máxima contención; CSS/fuentes/imágenes cargan igual.
+ *    el iframe solo lo monta como fragmento, SIN ejecutar JS público (createContextualFragment NO
+ *    corre los <script>). La defensa XSS REAL vive en los renderers, no en el flag de sandbox.
+ *
+ * SANDBOX (bug 2026-06-17, RCA verificada con experimento controlado en Chromium): un `srcdoc`
+ * con `sandbox="allow-scripts"` SIN `allow-same-origin` queda en ORIGEN OPACO → su viewport
+ * colapsa a 0px de ancho. El CSS carga y los colores/fuentes aplican, PERO todo el layout
+ * (`.container`, `100vw`, flex/grid, media-queries) se calcula contra 0px → preview totalmente
+ * roto ("no se ve nada igual"). Por eso usamos `allow-scripts allow-same-origin`: restaura el
+ * viewport real (verificado: hero 0×0 → 810×1068). Es seguro porque el contenido ya viene
+ * escapado y el único script que corre es el render-listener de ESTE archivo (no hay código
+ * no confiable ejecutándose). Revisa §82 con esto. [OPUS-4.8 — marcar para revisión post-Fable]
  *
  * CLAVE (bug 2026-06-17): el CSS es POR PÁGINA (index.html→home.css, contacto.html→contacto.css).
  * Cada preview DEBE cargar el CSS de SU página (`cssFrom`), no siempre el del Home, o el layout
@@ -84,7 +93,9 @@ export function createLivePreview(opts = {}) {
         const head = await publicHeadLinks(cssFrom);
         iframe = document.createElement('iframe');
         iframe.className = 'sf-preview-frame';
-        iframe.setAttribute('sandbox', 'allow-scripts');
+        // allow-same-origin es OBLIGATORIO: sin él, el srcdoc queda en origen opaco y su viewport
+        // colapsa a 0px → layout roto (ver cabecera). El contenido ya viene escapado por los renderers.
+        iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
         iframe.setAttribute('title', 'Vista previa de la web pública');
         iframe.srcdoc = `<!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">

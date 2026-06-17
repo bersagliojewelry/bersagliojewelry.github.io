@@ -90,7 +90,11 @@ export function createLivePreview(opts = {}) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 ${head}
 <style>html,body{margin:0;padding:0;overflow-x:hidden}
-*{cursor:default !important}a{pointer-events:none}</style>
+*{cursor:default !important}a{pointer-events:none}
+/* El preview es ESTÁTICO: no corre js/core/reveal.js, así que los .reveal nunca
+   recibirían .in y saldrían en opacity:0 (invisibles). Forzamos el estado FINAL
+   revelado — idéntico a lo que el CSS público hace bajo prefers-reduced-motion. */
+.reveal,.reveal-soft{opacity:1 !important;transform:none !important;transition:none !important}</style>
 </head><body><div id="sf-root"></div>
 <script>
 var root=document.getElementById('sf-root');

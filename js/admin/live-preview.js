@@ -9,38 +9,63 @@
  *    el iframe solo lo monta como fragmento, SIN ejecutar JS público. `sandbox="allow-scripts"`
  *    (sin `allow-same-origin`) = máxima contención; CSS/fuentes/imágenes cargan igual.
  *
- * Puente único padre↔iframe = postMessage (no reload por tecla → sin FOUC; preserva el scroll).
+ * CLAVE (bug 2026-06-17): el CSS es POR PÁGINA (index.html→home.css, contacto.html→contacto.css).
+ * Cada preview DEBE cargar el CSS de SU página (`cssFrom`), no siempre el del Home, o el layout
+ * sale roto. Leemos los <link> de la página real (robusto dev+prod: Vite hashea los nombres).
+ * El sitio carga el CSS con preload+noscript, así que normalizamos a <link rel="stylesheet">.
  */
 
-let _headCache = null;
+const _headCache = new Map();   // cssFrom -> string de <link>s (cache por página)
 
 const FALLBACK_LINKS = [
     '<link rel="stylesheet" href="/css/liquid-glass.css">',
     '<link rel="stylesheet" href="/css/components.css">',
-    '<link rel="stylesheet" href="/css/home.css">',
 ];
 
 /**
- * Toma del <head> del sitio público (`/`) sus <link> de estilos + fuentes. Robusto en dev y
- * prod: Vite hashea los CSS, así que NO se pueden hardcodear; leerlos de la página real da el
- * href correcto en cada entorno. Cae a rutas fijas si el fetch/parse falla.
+ * Lee del <head> de la página pública indicada (`cssFrom`) sus hojas de estilo + fuentes y las
+ * normaliza a <link rel="stylesheet"> limpios (dedup). Robusto en dev y prod: NO se pueden
+ * hardcodear (Vite hashea), así que se toman de la página real. Cae a base si el fetch falla.
  */
-async function publicHeadLinks() {
-    if (_headCache) return _headCache;
+async function publicHeadLinks(cssFrom) {
+    if (_headCache.has(cssFrom)) return _headCache.get(cssFrom);
+    let out;
     try {
-        const res = await fetch('/', { credentials: 'omit' });
-        const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
-        const links = [...doc.querySelectorAll(
-            'link[rel="stylesheet"], link[rel="preconnect"], link[rel="preload"][as="font"], link[as="style"]'
-        )].map(l => l.outerHTML);
-        _headCache = links.length ? links.join('\n') : FALLBACK_LINKS.join('\n');
+        const res = await fetch(cssFrom, { credentials: 'omit' });
+        const docp = new DOMParser().parseFromString(await res.text(), 'text/html');
+        const hrefs = new Set();
+        let fontLink = '';
+        docp.querySelectorAll('link').forEach(l => {
+            const rel = (l.getAttribute('rel') || '').toLowerCase();
+            const as  = (l.getAttribute('as')  || '').toLowerCase();
+            const href = l.getAttribute('href');
+            if (!href) return;
+            const isFont = href.includes('fonts.googleapis') || href.includes('fonts.gstatic');
+            if (isFont) {
+                if (rel.includes('stylesheet')) fontLink = `<link rel="stylesheet" href="${href}">`;
+                return;
+            }
+            // Hoja de estilo declarada como stylesheet, o precargada como estilo (preload as=style).
+            if (rel.includes('stylesheet') || as === 'style') hrefs.add(href);
+        });
+        const links = [...hrefs].map(h => `<link rel="stylesheet" href="${h}">`);
+        out = links.length
+            ? (fontLink ? fontLink + '\n' : '') + links.join('\n')
+            : (fontLink ? fontLink + '\n' : '') + FALLBACK_LINKS.join('\n');
     } catch {
-        _headCache = FALLBACK_LINKS.join('\n');
+        out = FALLBACK_LINKS.join('\n');
     }
-    return _headCache;
+    _headCache.set(cssFrom, out);
+    return out;
 }
 
-export function createLivePreview() {
+/**
+ * @param {object} [opts]
+ * @param {string} [opts.cssFrom='/'] página pública cuyos estilos debe cargar el preview
+ *        (Home → '/', Contacto → '/contacto.html', …).
+ */
+export function createLivePreview(opts = {}) {
+    const cssFrom = opts.cssFrom || '/';
     let iframe = null;
     let ready = false;
     let pending = '';
@@ -56,13 +81,11 @@ export function createLivePreview() {
     }
 
     async function mountInto(hostEl) {
-        const head = await publicHeadLinks();
+        const head = await publicHeadLinks(cssFrom);
         iframe = document.createElement('iframe');
         iframe.className = 'sf-preview-frame';
         iframe.setAttribute('sandbox', 'allow-scripts');
         iframe.setAttribute('title', 'Vista previa de la web pública');
-        // El iframe monta el HTML (ya escapado por los renderers) como FRAGMENTO — sin innerHTML,
-        // sin ejecutar scripts — y preserva el scroll entre actualizaciones.
         iframe.srcdoc = `<!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 ${head}

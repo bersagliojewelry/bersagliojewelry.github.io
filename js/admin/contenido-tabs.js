@@ -12,6 +12,7 @@ import { createSingletonAdmin } from './singleton-admin.js';
 import { HOME_DEFAULTS } from '../home/siteContent-defaults.js';
 import { CONTACTO_DEFAULTS } from '../pages/contacto-defaults.js';
 import { renderHomePreview } from './home-preview.js';
+import { renderContactoPreview } from './contacto-preview.js';
 
 // ─── Descriptor: Journal (entradas editoriales) ─────────────────────────────────
 // El esquema del doc (campos) coincide con el contrato que consumen las páginas
@@ -138,8 +139,9 @@ const homeTextsDescriptor = {
 const contactoTextsDescriptor = {
     page:  'contacto',
     title: 'Textos de Contacto',
-    help:  'Edita los textos de la página de contacto (encabezado, "qué esperar" y preguntas frecuentes). El formulario y los datos de contacto se gestionan aparte.',
+    help:  'Edita los textos de contacto (encabezado, "qué esperar" y FAQ) y míralos al instante en la vista previa. El formulario y los canales se gestionan aparte.',
     defaults: CONTACTO_DEFAULTS,
+    preview: { render: renderContactoPreview },
     sections: [
         { key: 'hero', label: 'Encabezado', fields: [
             { name: 'eyebrow',    label: 'Eyebrow',                     type: 'text' },

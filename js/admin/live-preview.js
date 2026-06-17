@@ -89,7 +89,7 @@ export function createLivePreview(opts = {}) {
         iframe.srcdoc = `<!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 ${head}
-<style>html,body{margin:0;padding:0;overflow-x:hidden}body{background:var(--bj-ink-emerald,#0d1f17)}
+<style>html,body{margin:0;padding:0;overflow-x:hidden}
 *{cursor:default !important}a{pointer-events:none}</style>
 </head><body><div id="sf-root"></div>
 <script>

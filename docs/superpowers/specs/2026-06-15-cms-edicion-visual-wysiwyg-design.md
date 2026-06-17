@@ -106,3 +106,23 @@ Confianza ~65-70%, **reversible** (si hay FOUC por `<link>`s en cada repintado o
 
 ### F1 — definición actualizada
 Split: form (izq) + **iframe-`srcdoc`** (der) que re-pinta la sección Home/hero al teclear (debounce), con `<link>` al CSS público; botón Descartar; límites de caracteres. Sigue siendo **días**. Validación obligatoria con Daniel antes de F2+.
+
+---
+
+## ESTADO F1 (2026-06-17) — construido + verificado headless; PENDIENTE fidelidad visual con Daniel
+
+**Construido y verificado headless (sin login), en `Desarrollo`** — commits `909c58c`·`8e075fc`·`fdfaeb3`·`7eccf8c`·`d74ad9f`·`217f426`·`cb14c71`·`2326483`:
+- Preview en vivo **Home + Contacto** (split formulario|iframe; debounce 180ms) · **límites de caracteres** + contador (42 Home, 32 Contacto) · **Deshacer guardado** (undo 1 nivel) + **Descartar** (genéricos en singleton-admin).
+- **Mapa de archivos**: `js/admin/live-preview.js` (iframe `sandbox=allow-scripts`; lee los `<link>` de la página vía `cssFrom`; normaliza preload+noscript; monta por `createContextualFragment`+postMessage) · `home-preview.js`/`contacto-preview.js` (reusan renderers PUROS: `heroInner/editorialInner/atelierInner/ctaInner` de `js/home/*`; `contactoHeroSection/ProcesoSection/FaqSection` de `js/pages/contacto.js`) · `singleton-admin.js` (split opt-in por `descriptor.preview={render,cssFrom}` + updateCounter + undo) · `singleton-admin-core.js` (maxlength+contador) · `contenido-tabs.js` (descriptores).
+
+**Bugs de fidelidad del smoke de Daniel (2026-06-17), CORREGIDOS**:
+1. **Layout roto en Contacto** (`cb14c71`): CSS **modular por página** (`index.html`→`home.css`, `contacto.html`→`contacto.css`); el preview cargaba siempre el de `/`. Fix: `cssFrom` por descriptor (Home `/`, Contacto `/contacto.html`).
+2. **Fondo oscuro** (`2326483`): el srcdoc forzaba `body{background:--bj-ink-emerald}` que pisaba el real `body{background:--bj-pearl}` (liquid-glass.css:98). Fix: quitar el override → el CSS de la página decide.
+
+**▶️ PENDIENTE F1 — EMPEZAR AQUÍ la próxima sesión**:
+1. **Daniel: hard-refresh (Ctrl+Shift+R)** en `/admin-contenido.html` → RE-VALIDAR Home + Contacto: ¿fondo claro + layout + tipografía = idéntico a la web?
+2. **Vigilar fidelidad residual**: el iframe **NO ejecuta el JS público** (GSAP/Lenis/IntersectionObserver). Si una sección parte `opacity:0`/`transform` hasta que el JS le pone clase de "reveal", saldría atenuada → inyectar en el srcdoc `<override>{opacity:1!important;transform:none!important}` para las clases de reveal. (En el smoke del 17 el contenido SÍ se veía → quizá no aplica; confirmar.)
+3. Calibrar valores de `max` contra el layout real.
+4. Headless NO puede screenshotear dentro del iframe (no carga fuentes/imágenes externas) → la validación visual la hace Daniel.
+
+**Luego**: F2 (clic-para-editar, postMessage iframe→padre) · extender preview a más páginas · `nosotros` (necesita editor de listas P4) · `global` · deploy reglas/storage + cache bump.

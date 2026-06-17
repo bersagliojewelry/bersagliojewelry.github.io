@@ -29,3 +29,9 @@ ui-debug.log
 # `settings.json` (compartido) SÍ se versiona; `settings.local.json` NO.
 .claude/settings.local.json
 
+# Clon de REFERENCIA de un ERP de TERCEROS (github.com/fouronesys/fouronesysERP, RD/DGII),
+# quedó anidado aquí (con su propio .git) el 2026-06-12. NO es de Bersaglio. Ignorado para que
+# no ensucie git ni se commitee por accidente. Reubicar/borrar fuera del repo cuando se libere
+# el lock de GitHub Desktop (mover a ../fouronesysERP o eliminar: está sincronizado con su origin).
+/_temp_fouronesysERP/
+

@@ -147,8 +147,8 @@ function readRefFromURL() {
 // RENDERS
 // ═══════════════════════════════════════════════════════════════════
 
-function renderHero() {
-    const c = mergeContacto(data.getSiteContent('contacto')).hero;
+/** Sección hero desde el dato `c` (PURA) — reusada por el render público y por el preview del CMS (F1). */
+export function contactoHeroSection(c) {
     return html`
         <section class="ct-hero">
             <div class="mono ct-hero-eyebrow">${escape(c.eyebrow)}</div>
@@ -158,6 +158,9 @@ function renderHero() {
             </h1>
             <p class="ct-hero-lead">${escape(c.lead)}</p>
         </section>`;
+}
+function renderHero() {
+    return contactoHeroSection(mergeContacto(data.getSiteContent('contacto')).hero);
 }
 
 function renderCanales() {
@@ -494,8 +497,8 @@ function renderSidebar() {
         </aside>`;
 }
 
-function renderProceso() {
-    const c = mergeContacto(data.getSiteContent('contacto')).proceso;
+/** Sección "proceso" desde el dato `c` (PURA) — reusada por el render público y el preview del CMS. */
+export function contactoProcesoSection(c) {
     const pasos = [
         { n: '01', t: c.step1Title, d: c.step1Desc, tiempo: c.step1Time },
         { n: '02', t: c.step2Title, d: c.step2Desc, tiempo: c.step2Time },
@@ -519,9 +522,12 @@ function renderProceso() {
             </div>
         </section>`;
 }
+function renderProceso() {
+    return contactoProcesoSection(mergeContacto(data.getSiteContent('contacto')).proceso);
+}
 
-function renderFAQRapido() {
-    const c = mergeContacto(data.getSiteContent('contacto')).faq;
+/** Sección "FAQ rápido" desde el dato `c` (PURA) — reusada por el render público y el preview del CMS. */
+export function contactoFaqSection(c) {
     const faqs = [
         { q: c.q1, a: c.a1 }, { q: c.q2, a: c.a2 }, { q: c.q3, a: c.a3 }, { q: c.q4, a: c.a4 },
     ];
@@ -544,6 +550,9 @@ function renderFAQRapido() {
                     </div>`)}
             </div>
         </section>`;
+}
+function renderFAQRapido() {
+    return contactoFaqSection(mergeContacto(data.getSiteContent('contacto')).faq);
 }
 
 function renderAll() {

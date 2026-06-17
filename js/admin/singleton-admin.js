@@ -26,6 +26,7 @@ export function createSingletonAdmin(d) {
     let host = null;
     let preview = null;
     let loaded = null;        // valores guardados+merge (baseline para "Descartar")
+    let undoSnapshot = null;  // estado ANTES del último guardado (para "Deshacer")
     let debounceT = 0;
     const hasPreview = !!(d.preview && typeof d.preview.render === 'function');
     const $ = sel => host.querySelector(sel);
@@ -36,6 +37,8 @@ export function createSingletonAdmin(d) {
         $('[data-save]').addEventListener('click', save);
         const discardBtn = $('[data-discard]');
         if (discardBtn) discardBtn.addEventListener('click', discard);
+        const undoBtn = $('[data-undo]');
+        if (undoBtn) undoBtn.addEventListener('click', undo);
 
         let doc = null;
         try { doc = await getSiteContent(d.page); }
@@ -44,12 +47,12 @@ export function createSingletonAdmin(d) {
         loaded = mergeSections(d.defaults, doc, d.sections);
         fillForm(loaded);
 
+        $('[data-form]').addEventListener('input', onInput);   // delegado (sobrevive a re-fill): contadores + preview
         if (hasPreview) {
             preview = createLivePreview();
             await preview.mount($('[data-preview]'));
             if (!host) { preview.destroy(); preview = null; return; }
             refreshPreview();
-            $('[data-form]').addEventListener('input', onInput);   // delegado: sobrevive a re-fill
         }
     }
 
@@ -62,6 +65,7 @@ export function createSingletonAdmin(d) {
 
     function skeleton() {
         const actions = `<div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="adm-btn adm-btn--ghost" data-undo hidden>↩ Deshacer guardado</button>
             ${hasPreview ? '<button class="adm-btn adm-btn--ghost" data-discard>Descartar cambios</button>' : ''}
             <button class="adm-btn adm-btn--primary" data-save>Guardar cambios</button>
         </div>`;
@@ -98,9 +102,22 @@ export function createSingletonAdmin(d) {
         }
     }
 
-    function onInput() {
+    function onInput(e) {
+        updateCounter(e.target);
+        if (!hasPreview) return;
         clearTimeout(debounceT);
         debounceT = setTimeout(refreshPreview, 180);
+    }
+
+    /** Actualiza el contador N/max del campo y lo marca cuando llega al tope. */
+    function updateCounter(el) {
+        if (!el || typeof el.matches !== 'function' || !el.matches('[data-sf][maxlength]')) return;
+        const max = el.getAttribute('maxlength');
+        const c = el.closest('.adm-field')?.querySelector('[data-sf-count]');
+        if (!c) return;
+        const n = el.value.length;
+        c.textContent = `${n}/${max}`;
+        c.classList.toggle('sf-count--full', n >= Number(max));
     }
 
     function discard() {
@@ -110,13 +127,43 @@ export function createSingletonAdmin(d) {
         admToast('Cambios descartados.');
     }
 
+    function showUndo(visible) {
+        const b = $('[data-undo]');
+        if (b) b.hidden = !visible;
+    }
+
+    /** Deshacer de un nivel: re-guarda el estado que había ANTES del último guardado. */
+    async function undo() {
+        if (!undoSnapshot) return;
+        const b = $('[data-undo]');
+        if (b) b.disabled = true;
+        const restore = undoSnapshot;
+        try {
+            await saveSiteContent(d.page, restore);
+            loaded = restore;
+            fillForm(restore);
+            refreshPreview();
+            undoSnapshot = null;
+            showUndo(false);
+            admToast('Se restauró la versión anterior.');
+        } catch (err) {
+            console.error(`[singleton-admin:${d.page}] undo failed:`, err);
+            admToast(err?.message || 'No se pudo deshacer', 'danger', 5000);
+        } finally {
+            if (b) b.disabled = false;
+        }
+    }
+
     async function save() {
         const btn = $('[data-save]');
         if (btn) btn.disabled = true;
+        const preSave = loaded;   // estado ANTES de este guardado (para "Deshacer")
         try {
             const data = readForm();
             await saveSiteContent(d.page, data);
-            loaded = data;     // nuevo baseline para "Descartar"
+            loaded = data;            // nuevo baseline para "Descartar"
+            undoSnapshot = preSave;   // habilita "Deshacer guardado"
+            showUndo(true);
             admToast('Textos guardados. Se verán en la web al recargar.');
         } catch (err) {
             console.error(`[singleton-admin:${d.page}] save failed:`, err);

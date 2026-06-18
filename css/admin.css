@@ -1421,11 +1421,12 @@ select.adm-input { cursor: pointer; appearance: none; -webkit-appearance: none; 
     overflow: hidden;
     background: #0d1f17;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+    height: 72vh;            /* el alto vive aquí; el iframe (escalado por JS a viewport desktop) lo llena */
 }
 .sf-preview-frame {
     display: block;
     width: 100%;
-    height: 72vh;
+    height: 100%;           /* fallback; live-preview.js dimensiona y escala el iframe */
     border: 0;
 }
 .sf-preview-note {
@@ -1436,7 +1437,7 @@ select.adm-input { cursor: pointer; appearance: none; -webkit-appearance: none; 
 @media (max-width: 1024px) {
     .sf-split { grid-template-columns: 1fr; }
     .sf-preview { position: static; order: -1; }
-    .sf-preview-frame { height: 56vh; }
+    .sf-preview-host { height: 56vh; }
 }
 .sf-count {
     float: right;

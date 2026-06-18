@@ -13,6 +13,7 @@
 
 export const HOME_DEFAULTS = {
     hero: {
+        bgImage:          '',   // P3.5: URL de portada custom (Storage). Vacío → <picture> estático optimizado.
         locator:          'Cartagena de Indias · Colombia',
         eyebrow:          'Alta Joyería Personalizada y de Confianza',
         headline1:        'El arte de escuchar tu historia,',

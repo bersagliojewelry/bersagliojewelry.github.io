@@ -14,6 +14,26 @@ function fieldHTML(sectionKey, f, value) {
     const ph   = f.placeholder ? ` placeholder="${escape(f.placeholder)}"` : '';
     const hint = f.hint ? `<small style="color:var(--adm-muted);font-size:11px;margin-top:2px;display:block;">${escape(f.hint)}</small>` : '';
     const sf   = `data-sf="${escape(sectionKey)}.${escape(f.name)}"`;
+    // P3.5: campo IMAGEN. La URL (de Storage) vive en un <input hidden> con data-sf, así que
+    // collectSingleton la recoge como cualquier campo. El handler de subida (optimizeImage +
+    // uploadAsset) vive en singleton-admin.js (delegado por data-img-input). escape() en el src.
+    if (f.type === 'image') {
+        const url = escape(value || '');
+        const has = !!value;
+        return `<div class="adm-field sf-img-field">
+            <label>${escape(f.label)}</label>
+            <div class="sf-img" data-img-wrap>
+                <input type="hidden" ${sf} value="${url}">
+                <div class="sf-img-preview" data-img-preview>${has ? `<img src="${url}" alt="">` : '<span class="sf-img-empty">Sin imagen propia — se usa la de la web</span>'}</div>
+                <div class="sf-img-actions">
+                    <label class="adm-btn adm-btn--ghost adm-btn--sm sf-img-pick">Cambiar imagen<input type="file" accept="image/png,image/jpeg,image/webp,image/avif" data-img-input hidden></label>
+                    <button type="button" class="adm-btn adm-btn--ghost adm-btn--sm" data-img-clear${has ? '' : ' hidden'}>Quitar</button>
+                    <span class="sf-img-progress" data-img-progress hidden></span>
+                </div>
+                ${hint}
+            </div>
+        </div>`;
+    }
     // Límite de caracteres (F1, consejo Gemini): tipografía de lujo se rompe con texto largo.
     // maxlength corta en el navegador; el contador da feedback en vivo (lo actualiza singleton-admin).
     const max   = f.max ? ` maxlength="${f.max}"` : '';

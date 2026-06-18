@@ -50,6 +50,8 @@ export function createSingletonAdmin(d) {
         const formEl = $('[data-form]');
         formEl.addEventListener('input', onInput);     // delegado (sobrevive a re-fill): contadores + preview
         formEl.addEventListener('focusin', onFocusIn); // F2: foco en un campo → resalta su sección en el preview
+        formEl.addEventListener('change', onImgChange);// P3.5: subir imagen (input file → optimize + upload)
+        formEl.addEventListener('click', onImgClear);  // P3.5: quitar imagen
         if (hasPreview) {
             preview = createLivePreview({ cssFrom: d.preview.cssFrom });
             await preview.mount($('[data-preview]'));
@@ -85,6 +87,68 @@ export function createSingletonAdmin(d) {
             fs.style.boxShadow = '0 0 0 2px var(--adm-accent)';
             setTimeout(() => { fs.style.boxShadow = ''; }, 1200);
         }
+    }
+
+    /** Pinta el contenido del recuadro de preview de imagen (DOM seguro, sin innerHTML). */
+    function setImgPreview(previewE, url) {
+        previewE.textContent = '';
+        if (url) {
+            const im = document.createElement('img');
+            im.src = url; im.alt = '';
+            previewE.appendChild(im);
+        } else {
+            const sp = document.createElement('span');
+            sp.className = 'sf-img-empty';
+            sp.textContent = 'Sin imagen propia — se usa la de la web';
+            previewE.appendChild(sp);
+        }
+    }
+
+    /** P3.5: subir imagen. input[type=file] → optimizeImage → uploadAsset → URL al hidden + preview. */
+    async function onImgChange(e) {
+        const input = e.target;
+        if (!input || typeof input.matches !== 'function' || !input.matches('input[data-img-input]')) return;
+        const file = input.files && input.files[0];
+        if (!file) return;
+        const wrap = input.closest('[data-img-wrap]');
+        if (!wrap) return;
+        const hidden   = wrap.querySelector('input[type="hidden"][data-sf]');
+        const previewE = wrap.querySelector('[data-img-preview]');
+        const progress = wrap.querySelector('[data-img-progress]');
+        const clearBtn = wrap.querySelector('[data-img-clear]');
+        try {
+            progress.hidden = false; progress.textContent = 'Optimizando…';
+            const [{ optimizeImage }, { uploadAsset }] = await Promise.all([
+                import('../image-optimizer.js'),
+                import('../storage-service.js'),
+            ]);
+            const optimized = await optimizeImage(file);
+            const url = await uploadAsset(optimized, pct => { progress.textContent = `Subiendo… ${pct}%`; });
+            if (!host) return;                         // se desmontó durante la subida
+            hidden.value = url;
+            setImgPreview(previewE, url);
+            if (clearBtn) clearBtn.hidden = false;
+            refreshPreview();                          // el iframe muestra la imagen nueva al instante
+            admToast('Imagen subida. Guarda para publicarla.');
+        } catch (err) {
+            console.error(`[singleton-admin:${d.page}] image upload failed:`, err);
+            admToast(err?.message || 'No se pudo subir la imagen', 'danger', 5000);
+        } finally {
+            progress.hidden = true;
+            input.value = '';                          // permite re-elegir el mismo archivo
+        }
+    }
+
+    /** P3.5: quitar la imagen custom → vuelve a la imagen por defecto de la web. */
+    function onImgClear(e) {
+        const btn = e.target && e.target.closest && e.target.closest('[data-img-clear]');
+        if (!btn) return;
+        const wrap = btn.closest('[data-img-wrap]');
+        if (!wrap) return;
+        wrap.querySelector('input[type="hidden"][data-sf]').value = '';
+        setImgPreview(wrap.querySelector('[data-img-preview]'), '');
+        btn.hidden = true;
+        refreshPreview();
     }
 
     function destroy() {

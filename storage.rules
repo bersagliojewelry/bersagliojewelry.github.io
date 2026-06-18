@@ -9,12 +9,14 @@ service firebase.storage {
       return request.auth != null
           && request.auth.token.role in ['owner', 'admin', 'editor'];
     }
-    // contentType allowlist EXPLÍCITA: `image/(png|jpeg|webp)` EXCLUYE image/svg+xml
+    // contentType allowlist EXPLÍCITA: `image/(png|jpeg|webp|avif)` EXCLUYE image/svg+xml
     // (SVG ejecutable = stored-XSS) y formatos pesados; + cota de tamaño (anti
-    // denial-of-wallet por egress en Spark: 1 GB/día). La app sube WebP optimizado.
+    // denial-of-wallet por egress en Spark: 1 GB/día). `image-optimizer.js` exporta AVIF
+    // cuando el navegador lo soporta (canvas→avif) o WebP de fallback — ambos seguros (no
+    // ejecutables). Sin avif aquí, las subidas avif se rechazarían (bug latente en piezas).
     function validImage(maxBytes) {
       return request.resource.size < maxBytes
-          && request.resource.contentType.matches('image/(png|jpeg|webp)');
+          && request.resource.contentType.matches('image/(png|jpeg|webp|avif)');
     }
 
     // ─── Piece images ─────────────────────────────────────────────────────────

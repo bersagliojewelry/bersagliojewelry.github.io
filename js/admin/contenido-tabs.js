@@ -78,6 +78,7 @@ const homeTextsDescriptor = {
     preview: { render: renderHomePreview, cssFrom: '/' },
     sections: [
         { key: 'hero', label: 'Portada (Hero)', fields: [
+            { name: 'bgImage',          label: 'Imagen de portada',           type: 'image', hint: 'Reemplaza la foto de fondo del inicio. Se optimiza sola; vacío = la imagen actual de la web.' },
             { name: 'locator',          label: 'Ubicación (línea superior)',  type: 'text', max: 44 },
             { name: 'eyebrow',          label: 'Eyebrow (línea pequeña)',     type: 'text', max: 56 },
             { name: 'headline1',        label: 'Titular — línea 1',           type: 'text', max: 48 },

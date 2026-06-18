@@ -47,12 +47,43 @@ export function createSingletonAdmin(d) {
         loaded = mergeSections(d.defaults, doc, d.sections);
         fillForm(loaded);
 
-        $('[data-form]').addEventListener('input', onInput);   // delegado (sobrevive a re-fill): contadores + preview
+        const formEl = $('[data-form]');
+        formEl.addEventListener('input', onInput);     // delegado (sobrevive a re-fill): contadores + preview
+        formEl.addEventListener('focusin', onFocusIn); // F2: foco en un campo → resalta su sección en el preview
         if (hasPreview) {
             preview = createLivePreview({ cssFrom: d.preview.cssFrom });
             await preview.mount($('[data-preview]'));
             if (!host) { preview.destroy(); preview = null; return; }
+            preview.onSectionClick(focusSection);      // F2: clic en el preview → salta al campo de esa sección
             refreshPreview();
+        }
+    }
+
+    /** F2: key de sección a la que pertenece un campo (data-sf="seccion.campo"). */
+    function sectionOfField(el) {
+        const sf = el && el.getAttribute && el.getAttribute('data-sf');
+        return sf ? sf.split('.')[0] : '';
+    }
+
+    /** F2: foco en un campo → pide al preview resaltar la sección correspondiente. */
+    function onFocusIn(e) {
+        if (!preview) return;
+        const sec = sectionOfField(e.target);
+        if (sec) preview.highlight(sec);
+    }
+
+    /** F2: clic en una sección del preview → enfoca su primer campo y resalta su fieldset. */
+    function focusSection(section) {
+        if (!host || !section) return;
+        const field = host.querySelector(`[data-sf^="${section}."]`);
+        if (!field) return;
+        field.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        field.focus({ preventScroll: true });
+        const fs = field.closest('fieldset');
+        if (fs) {
+            fs.style.transition = 'box-shadow .2s';
+            fs.style.boxShadow = '0 0 0 2px var(--adm-accent)';
+            setTimeout(() => { fs.style.boxShadow = ''; }, 1200);
         }
     }
 
@@ -80,7 +111,7 @@ export function createSingletonAdmin(d) {
             <aside class="sf-preview">
                 <div class="sf-preview-bar"><span class="sf-preview-dot" aria-hidden="true"></span> Vista previa · así se verá en la web</div>
                 <div class="sf-preview-host" data-preview></div>
-                <p class="sf-preview-note">Secciones de texto del inicio, con la marca real. Los enlaces están desactivados aquí.</p>
+                <p class="sf-preview-note">Toca una sección en la vista previa para editar sus textos. Los enlaces están desactivados aquí.</p>
             </aside>
         </div>`;
     }

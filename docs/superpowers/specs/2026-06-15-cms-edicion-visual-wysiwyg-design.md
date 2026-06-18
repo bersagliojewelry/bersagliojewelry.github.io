@@ -126,4 +126,16 @@ Split: form (izq) + **iframe-`srcdoc`** (der) que re-pinta la sección Home/hero
 3. Calibrar valores de `max` contra el layout real.
 4. Headless NO puede screenshotear dentro del iframe (no carga fuentes/imágenes externas) → la validación visual la hace Daniel.
 
-**Luego**: F2 (clic-para-editar, postMessage iframe→padre) · extender preview a más páginas · `nosotros` (necesita editor de listas P4) · `global` · deploy reglas/storage + cache bump.
+## ESTADO F2 (2026-06-18) — clic-para-editar construido + verificado headless
+
+**`04e8769`** — bidireccional, **nivel sección** (los renderers públicos no traen marcadores por-campo):
+- **Clic en el preview → formulario**: listener de clic en el `srcdoc` → `closest('[data-sf-section]')` → `postMessage({t:'sf-click',section})` al padre → `singleton-admin` enfoca el primer campo de esa sección (`[data-sf^="key."]`) + resalta el `<fieldset>` (box-shadow 1.2s).
+- **Foco en campo → preview**: `focusin` en el form → `preview.highlight(key)` → el `srcdoc` añade `.sf-hl` (outline esmeralda) a la sección. Cursor `pointer` sobre las secciones; microcopy "Toca una sección…".
+- **Marcadores**: `data-sf-section` en `home-preview` (en los `<section>`) y `contacto-preview` (wrapper `<div>`). SOLO del preview admin → NO afecta la web pública. Keys == keys de sección del descriptor.
+- **API nueva** en `live-preview.js`: `highlight(section)` + `onSectionClick(cb)`. Sin `contentEditable`; cero superficie XSS nueva.
+
+**🐞 Bug cazado en verificación (lección reusable → `30` al shardear)**: el guard `/^[\w-]+$/` dentro del **template literal** del `srcdoc` perdía el backslash (`` `\w` `` evalúa a `"w"`), generando `/^[w-]+$/` (set `{w,-}`) → rechazaba toda sección y el resaltado nunca aplicaba. Invisible al leer; solo apareció al ejecutar. **Lección**: *al embeber un regex en un template string que se inyecta como código, escapar los backslashes (`\\w`) o evitar el regex.* Resuelto eliminando el regex: comparación directa de strings (sin interpolar la sección en el selector → además cierra inyección).
+
+**Verificado E2E headless** (módulos reales, preview server): clic en hijo profundo de cada sección → key correcta al padre; `highlight` de cada sección resalta la correcta + limpieza; Contacto marca hero/proceso/faq. Build verde; singleton-core 5/5.
+
+**PENDIENTE F2**: deploy + Daniel valida el clic-para-editar en vivo (spec §4: validar F1+F2 juntos antes de F3/F4). **Luego**: F3 (barandas: aviso al salir sin publicar; "Publicado ✓") · extender a más páginas · `nosotros` (editor de listas P4) · `global` · imágenes P3.5.

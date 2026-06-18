@@ -12,7 +12,7 @@
 >
 > **▶️ FOCO ACTIVO — CMS WEB PÚBLICA (Kary)**: contenido público editable por formulario con preview fiel. **Specs `docs/superpowers/specs/2026-06-1{4,5}-cms-*` = SSoT** (RCAs, hashes, lecciones, §ESTADO F1/F2 ahí). Decisión iframe = ADR §82 + bóveda. **EN `main`**: journal · P0 · P1+P2 (Home+Contacto editables).
 > - **F1 (preview fiel) ✅ EN PROD + VALIDADO por Daniel** (2026-06-18). Saga de fidelidad cerrada: 3 bugs, el dominante = viewport 0px por `sandbox` sin `allow-same-origin` (`f0c7911`, afloja §82 → bóveda `41 §4`).
-> - **F2 (clic-para-editar) ✅ construido + verificado E2E headless** (`04e8769`; nivel-sección bidireccional). **FALTA: deploy + Daniel valida en vivo.**
+> - **F2 (clic-para-editar) ✅ construido + verificado E2E + DESPLEGADO en prod** (`04e8769`; merge `4102e33`, bundle `admin-contenido-D-uLyOPX.js`, `data-sf-section` verificado en vivo). Nivel-sección bidireccional. **FALTA solo: Daniel valida el clic-para-editar en vivo.**
 > - **Al cerrar F2 → consolidar ADR WYSIWYG F1+F2 en `99` + fila `00` + GC.**
 > - **SIGUE**: F3 (barandas: aviso al salir sin publicar) · `global` (datos contacto, ~5 comp.) · `hideWhenEmpty` · editor de listas P4 (desbloquea `nosotros`, ~70 campos) · imágenes P3.5 (+deploy `firestore:rules,storage` + cache v16→v17) · usuarios/SPA P5.
 >

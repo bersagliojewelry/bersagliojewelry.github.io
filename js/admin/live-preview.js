@@ -79,6 +79,26 @@ export function createLivePreview(opts = {}) {
     let ready = false;
     let pending = '';
     let clickCb = null;   // F2: callback de clic-para-editar (section => void)
+    let hostRef = null;
+    let ro = null;        // ResizeObserver del host (re-escala el preview al cambiar de ancho)
+
+    // Viewport de referencia DESKTOP: el iframe se renderiza a este ancho lógico (el sitio dispara
+    // su layout desktop, el MISMO que ve el visitante) y se ESCALA con transform para caber en el
+    // panel → fidelidad pixel. Sin esto, el iframe tomaba el ancho del panel (~760px) y mostraba la
+    // versión < 920px (móvil/tablet) → "no se ve exacto". Técnica estándar de CMS (Shopify/Wix/Figma).
+    const REF_WIDTH = 1440;   // el container del sitio (max 1360) queda a su ancho real, como en desktop
+    function applyScale() {
+        if (!iframe || !hostRef) return;
+        const hostW = hostRef.clientWidth;
+        const hostH = hostRef.clientHeight;
+        if (hostW < 1 || hostH < 1) return;   // host aún sin medir (oculto / sin layout)
+        const s = hostW / REF_WIDTH;
+        iframe.style.width = REF_WIDTH + 'px';
+        iframe.style.height = Math.ceil(hostH / s) + 'px';   // tras escalar (×s) llena el alto del host
+        iframe.style.transformOrigin = '0 0';
+        iframe.style.transform = 'scale(' + s + ')';
+        iframe.style.border = '0';
+    }
 
     function onMsg(e) {
         if (!iframe || e.source !== iframe.contentWindow || !e.data) return;
@@ -105,6 +125,7 @@ export function createLivePreview(opts = {}) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 ${head}
 <style>html,body{margin:0;padding:0;overflow-x:hidden}
+html{scrollbar-width:none}html::-webkit-scrollbar{display:none}
 *{cursor:default !important}a{pointer-events:none}
 /* El preview es ESTÁTICO: no corre js/core/reveal.js, así que los .reveal nunca
    recibirían .in y saldrían en opacity:0 (invisibles). Forzamos el estado FINAL
@@ -143,7 +164,13 @@ addEventListener('click',function(e){
 parent.postMessage({t:'sf-ready'},'*');
 <\/script></body></html>`;
         window.addEventListener('message', onMsg);
+        hostRef = hostEl;
         hostEl.appendChild(iframe);
+        applyScale();
+        if (typeof ResizeObserver !== 'undefined') {
+            ro = new ResizeObserver(() => applyScale());
+            ro.observe(hostEl);
+        }
     }
 
     function update(htmlStr) {
@@ -162,8 +189,9 @@ parent.postMessage({t:'sf-ready'},'*');
 
     function destroy() {
         window.removeEventListener('message', onMsg);
+        if (ro) { ro.disconnect(); ro = null; }
         if (iframe) iframe.remove();
-        iframe = null; ready = false; pending = ''; clickCb = null;
+        iframe = null; ready = false; pending = ''; clickCb = null; hostRef = null;
     }
 
     return { mount: mountInto, update, destroy, highlight, onSectionClick };

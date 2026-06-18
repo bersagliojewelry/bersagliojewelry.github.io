@@ -78,11 +78,15 @@ export function createLivePreview(opts = {}) {
     let iframe = null;
     let ready = false;
     let pending = '';
+    let clickCb = null;   // F2: callback de clic-para-editar (section => void)
 
     function onMsg(e) {
-        if (iframe && e.source === iframe.contentWindow && e.data && e.data.t === 'sf-ready') {
+        if (!iframe || e.source !== iframe.contentWindow || !e.data) return;
+        if (e.data.t === 'sf-ready') {
             ready = true;
             if (pending) post(pending);
+        } else if (e.data.t === 'sf-click' && clickCb) {
+            clickCb(e.data.section);
         }
     }
     function post(htmlStr) {
@@ -105,16 +109,36 @@ ${head}
 /* El preview es ESTÁTICO: no corre js/core/reveal.js, así que los .reveal nunca
    recibirían .in y saldrían en opacity:0 (invisibles). Forzamos el estado FINAL
    revelado — idéntico a lo que el CSS público hace bajo prefers-reduced-motion. */
-.reveal,.reveal-soft{opacity:1 !important;transform:none !important;transition:none !important}</style>
+.reveal,.reveal-soft{opacity:1 !important;transform:none !important;transition:none !important}
+/* F2 clic-para-editar: las secciones marcadas (data-sf-section) son clicables y se
+   resaltan cuando el campo correspondiente recibe foco en el formulario. */
+[data-sf-section],[data-sf-section] *{cursor:pointer !important}
+[data-sf-section].sf-hl{outline:2px solid var(--bj-emerald-500,#3a9b6e);outline-offset:-2px}</style>
 </head><body><div id="sf-root"></div>
 <script>
 var root=document.getElementById('sf-root');
+function clearHl(){var p=root.querySelector('.sf-hl');if(p)p.classList.remove('sf-hl');}
 addEventListener('message',function(e){
-  if(!e.data||e.data.t!=='sf-render')return;
-  var y=window.scrollY;
-  var frag=document.createRange().createContextualFragment(e.data.h);
-  root.replaceChildren(frag);
-  window.scrollTo(0,y);
+  if(!e.data)return;
+  if(e.data.t==='sf-render'){
+    var y=window.scrollY;
+    root.replaceChildren(document.createRange().createContextualFragment(e.data.h));
+    window.scrollTo(0,y);
+  } else if(e.data.t==='sf-highlight'){
+    clearHl();
+    var s=e.data.section;
+    if(s){
+      // Comparación directa (sin interpolar s en el selector) → cero inyección, cero regex.
+      var all=root.querySelectorAll('[data-sf-section]');
+      for(var i=0;i<all.length;i++){
+        if(all[i].getAttribute('data-sf-section')===s){ all[i].classList.add('sf-hl'); all[i].scrollIntoView({block:'nearest'}); break; }
+      }
+    }
+  }
+});
+addEventListener('click',function(e){
+  var sec=e.target&&e.target.closest?e.target.closest('[data-sf-section]'):null;
+  if(sec)parent.postMessage({t:'sf-click',section:sec.getAttribute('data-sf-section')},'*');
 });
 parent.postMessage({t:'sf-ready'},'*');
 <\/script></body></html>`;
@@ -127,13 +151,22 @@ parent.postMessage({t:'sf-ready'},'*');
         if (ready) post(htmlStr);
     }
 
+    /** F2: resalta la sección `key` en el preview (o la limpia con '' / null). */
+    function highlight(section) {
+        try { iframe.contentWindow.postMessage({ t: 'sf-highlight', section: section || '' }, '*'); }
+        catch { /* iframe en transición */ }
+    }
+
+    /** F2: registra el callback que recibe la `key` de sección al hacer clic en el preview. */
+    function onSectionClick(cb) { clickCb = cb; }
+
     function destroy() {
         window.removeEventListener('message', onMsg);
         if (iframe) iframe.remove();
-        iframe = null; ready = false; pending = '';
+        iframe = null; ready = false; pending = ''; clickCb = null;
     }
 
-    return { mount: mountInto, update, destroy };
+    return { mount: mountInto, update, destroy, highlight, onSectionClick };
 }
 
 export default createLivePreview;

@@ -15,10 +15,12 @@ import { mergeHome } from '../home/siteContent-defaults.js';
 /** draft = { hero:{…}, editorial:{…}, atelier:{…}, cta:{…} } (de collectSingleton) → HTML del Home. */
 export function renderHomePreview(draft) {
     const c = mergeHome(draft);
-    return `<section class="home-hero" data-hero>${heroInner(c.hero)}</section>`
-        + `<section class="home-editorial">${editorialInner(c.editorial)}</section>`
-        + `<section class="home-atelier">${atelierInner(c.atelier)}</section>`
-        + `<section class="home-cta">${ctaInner(c.cta)}</section>`;
+    // data-sf-section: ancla de clic-para-editar (F2). Solo marca; NO afecta la web pública
+    // (este ensamblador es exclusivo del preview admin). La clave == key de sección del form.
+    return `<section class="home-hero" data-sf-section="hero" data-hero>${heroInner(c.hero)}</section>`
+        + `<section class="home-editorial" data-sf-section="editorial">${editorialInner(c.editorial)}</section>`
+        + `<section class="home-atelier" data-sf-section="atelier">${atelierInner(c.atelier)}</section>`
+        + `<section class="home-cta" data-sf-section="cta">${ctaInner(c.cta)}</section>`;
 }
 
 export default renderHomePreview;

@@ -138,4 +138,12 @@ Split: form (izq) + **iframe-`srcdoc`** (der) que re-pinta la sección Home/hero
 
 **Verificado E2E headless** (módulos reales, preview server): clic en hijo profundo de cada sección → key correcta al padre; `highlight` de cada sección resalta la correcta + limpieza; Contacto marca hero/proceso/faq. Build verde; singleton-core 5/5.
 
-**PENDIENTE F2**: deploy + Daniel valida el clic-para-editar en vivo (spec §4: validar F1+F2 juntos antes de F3/F4). **Luego**: F3 (barandas: aviso al salir sin publicar; "Publicado ✓") · extender a más páginas · `nosotros` (editor de listas P4) · `global` · imágenes P3.5.
+**✅ F2 DESPLEGADO en prod** (merge `4102e33`, bundle `admin-contenido-D-uLyOPX.js`).
+
+## DECISIÓN ARQ — preview a viewport desktop ESCALADO (2026-06-18, `6bb68ff`, skill `arquitecto-software`)
+
+**Síntoma (Daniel, tras validar F1/F2)**: el preview "no se ve exacto" vs la web real + una "línea verde" a la derecha ("códigos peleándose").
+**RCA (medido en el preview server, no supuesto)**: el iframe tomaba el ancho del panel (~760px), **por debajo de los breakpoints del sitio (920/1100px)** → renderizaba la versión móvil/tablet (h1 **34px**), no la desktop que ve el visitante (h1 **62px**). La "línea verde" = el **scrollbar de la marca** (esmeralda 10px, `liquid-glass.css:336`), visible por el alto del contenido — NO un conflicto de código (0 elementos desbordan; `clientW = innerW − 10px`).
+**Decisión (6 lentes)**: renderizar el iframe a un **viewport lógico desktop `REF_WIDTH=1440`** (el `.container` del sitio queda a su max 1360, como en desktop) y **escalar con `transform: scale()`** para caber en el panel (`ResizeObserver` re-escala al cambiar de ancho). **Scrollbar oculto** en el srcdoc. `admin.css`: el alto pasa al `.sf-preview-host`; el iframe lo llena escalado. Técnica estándar de CMS (Shopify/Wix/Figma). No cara de revertir (2 archivos) → sin comité; validada empíricamente.
+**Verificado E2E** (módulos reales): Home+Contacto viewport 1440, h1 62/66px, escala 0.528 → ancho visual 760 (cabe), `sinScroll=true`; **F2 sigue funcionando con el transform** (clic=atelier, highlight=cta). Build verde; núcleo 5/5.
+**FALTA**: deploy + Daniel valida la fidelidad desktop en vivo. **Luego**: F3 (barandas: aviso al salir sin publicar; "Publicado ✓") · `nosotros` (editor de listas P4) · `global` · imágenes P3.5. (Futuro: **toggle desktop/móvil = F4**.)

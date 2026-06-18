@@ -79,7 +79,12 @@ svg { display: block; flex-shrink: 0; }
 /* ─── Layout ──────────────────────────────────────────────────────────────── */
 .adm-layout {
     display: flex;
-    min-height: 100vh;
+    /* App-shell: altura FIJA del viewport para que .adm-content sea el scroller real
+       (sidebar + topbar quedan fijos, el contenido scrollea dentro). Antes era min-height:100vh
+       → el layout crecía con el contenido, el scroll caía al window y .adm-main{overflow:hidden}
+       rompía el sticky del preview del CMS (se perdía al bajar a editar). dvh = barra de URL móvil. */
+    height: 100vh;
+    height: 100dvh;
 }
 
 /* ─── Sidebar ─────────────────────────────────────────────────────────────── */

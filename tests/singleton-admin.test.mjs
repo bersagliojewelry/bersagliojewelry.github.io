@@ -4,8 +4,9 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { singletonFormHTML, collectSingleton, mergeSections } from '../js/admin/singleton-admin-core.js';
+import { singletonFormHTML, collectSingleton, mergeSections, itemTemplateHTML, reindexItemSf } from '../js/admin/singleton-admin-core.js';
 import { HOME_DEFAULTS, mergeHome } from '../js/home/siteContent-defaults.js';
+import { NOSOTROS_DEFAULTS, mergeNosotros } from '../js/pages/nosotros-defaults.js';
 
 const SECTIONS = [
     { key: 'hero', label: 'Portada', fields: [
@@ -91,4 +92,143 @@ test('collectSingleton: incluye el campo image (URL) como cualquier campo', () =
     const out = collectSingleton({ 'hero.bgImage': 'https://fs/x.webp', 'hero.locator': '  C  ' }, IMG_SECTIONS);
     assert.equal(out.hero.bgImage, 'https://fs/x.webp');
     assert.equal(out.hero.locator, 'C');                // trim del texto
+});
+
+// ─── P4: field-type LISTA ──────────────────────────────────────────────────────
+const LIST_SECTIONS = [{ key: 'valores', label: 'Valores', fields: [
+    { name: 'items', type: 'list', min: 1, max: 3, addLabel: 'Añadir valor', itemTitleFrom: 't', singular: 'Valor', itemFields: [
+        { name: 't', label: 'Título',      type: 'text',     max: 40 },
+        { name: 'd', label: 'Descripción', type: 'textarea', rows: 2, max: 200 },
+    ]},
+]}];
+
+test('singletonFormHTML: type=list → contenedor data-sf-list + tarjetas con data-sf indexado', () => {
+    const h = singletonFormHTML(LIST_SECTIONS, { valores: { items: [{ t: 'Elegancia', d: 'desc' }, { t: 'Pacto', d: 'd2' }] } });
+    assert.match(h, /data-sf-list="valores\.items"/);
+    assert.match(h, /data-list-max="3"/);
+    assert.match(h, /data-list-min="1"/);
+    assert.match(h, /<input[^>]*data-sf="valores\.items\.0\.t"[^>]*value="Elegancia"/);
+    assert.match(h, /<input[^>]*data-sf="valores\.items\.1\.t"[^>]*value="Pacto"/);
+    assert.match(h, /<textarea[^>]*data-sf="valores\.items\.0\.d"[^>]*>desc<\/textarea>/);
+    assert.match(h, /data-list-act="add"[^>]*>.*Añadir valor/);
+    assert.match(h, /data-list-act="del"/);
+    assert.match(h, /data-list-act="up"/);
+    assert.match(h, /data-list-act="down"/);
+    assert.match(h, /data-sf-list-count>2\/3/);                         // contador inicial
+    assert.match(h, /data-sf-item-title>Elegancia/);                    // título derivado de itemTitleFrom
+});
+
+test('itemTemplateHTML: ítem en blanco → data-sf en el índice dado + título placeholder', () => {
+    const t = itemTemplateHTML('valores', LIST_SECTIONS[0].fields[0], {}, 2);
+    assert.match(t, /data-sf-item/);
+    assert.match(t, /data-sf="valores\.items\.2\.t"/);
+    assert.match(t, /data-sf="valores\.items\.2\.d"/);
+    assert.match(t, /sf-item-untitled[^>]*>Valor 3/);                   // placeholder = singular + (index+1)
+});
+
+test('singletonFormHTML: escapa los valores de los ítems de lista (anti stored-XSS)', () => {
+    const h = singletonFormHTML(LIST_SECTIONS, { valores: { items: [{ t: '"><img onerror=alert(1)>', d: '' }] } });
+    assert.doesNotMatch(h, /<img onerror/);
+    assert.match(h, /&quot;&gt;&lt;img onerror/);
+});
+
+test('collectSingleton: list → array de objetos en orden, trim, SOLO sub-campos declarados', () => {
+    const raw = {
+        'valores.items.0.t': '  A  ', 'valores.items.0.d': 'da', 'valores.items.0.hacker': 'DROP',
+        'valores.items.1.t': 'B',     'valores.items.1.d': 'db',
+    };
+    const out = collectSingleton(raw, LIST_SECTIONS);
+    assert.deepEqual(out, { valores: { items: [{ t: 'A', d: 'da' }, { t: 'B', d: 'db' }] } });
+    assert.equal('hacker' in out.valores.items[0], false);
+});
+
+test('collectSingleton: list → compacta huecos (orden por índice) y recorta a max', () => {
+    const raw = {
+        'valores.items.0.t': 'A', 'valores.items.0.d': 'da',
+        'valores.items.2.t': 'C', 'valores.items.2.d': 'dc',   // hueco en 1
+        'valores.items.3.t': 'D', 'valores.items.3.d': 'dd',
+        'valores.items.5.t': 'E', 'valores.items.5.d': 'de',   // 4 ítems, max=3
+    };
+    const out = collectSingleton(raw, LIST_SECTIONS);
+    assert.deepEqual(out.valores.items, [{ t: 'A', d: 'da' }, { t: 'C', d: 'dc' }, { t: 'D', d: 'dd' }]);
+});
+
+test('collectSingleton: list vacía (sin ítems en raw) → []', () => {
+    const out = collectSingleton({}, LIST_SECTIONS);
+    assert.deepEqual(out.valores.items, []);
+});
+
+test('reindexItemSf: reescribe el índice preservando sección/lista/sub (punto frágil)', () => {
+    assert.equal(reindexItemSf('valores.items.3.t', 'valores.items', 0), 'valores.items.0.t');
+    assert.equal(reindexItemSf('valores.items.0.d', 'valores.items', 2), 'valores.items.2.d');
+    assert.equal(reindexItemSf('cartagena.stats.5.n', 'cartagena.stats', 1), 'cartagena.stats.1.n');
+    assert.equal(reindexItemSf('otro.campo', 'valores.items', 0), 'otro.campo');   // ajeno: intacto
+    assert.equal(reindexItemSf('valores.items.0', 'valores.items', 1), 'valores.items.0'); // sin sub: intacto
+});
+
+// Simula el ciclo reordenar→reindex→leer→collect: la salida sigue el ORDEN del DOM.
+test('reindex + collect: tras intercambiar dos ítems, el array sale en el nuevo orden', () => {
+    // DOM lógico = lista de tarjetas; cada tarjeta = sus data-sf actuales. Simulamos swap(0,1).
+    const cardsDom = [
+        { 't': 'B', 'd': 'db' },   // antes índice 1, ahora en posición 0 del DOM
+        { 't': 'A', 'd': 'da' },   // antes índice 0, ahora en posición 1 del DOM
+    ];
+    // reindex: a cada tarjeta en posición i se le fija el índice i en sus data-sf
+    const raw = {};
+    cardsDom.forEach((card, i) => {
+        for (const sub of Object.keys(card)) {
+            const newSf = reindexItemSf(`valores.items.999.${sub}`, 'valores.items', i);
+            raw[newSf] = card[sub];
+        }
+    });
+    const out = collectSingleton(raw, LIST_SECTIONS);
+    assert.deepEqual(out.valores.items, [{ t: 'B', d: 'db' }, { t: 'A', d: 'da' }]);  // orden del DOM
+});
+
+// Sección MIXTA (texto plano + lista) — espejo de `cartagena`. No-regresión del camino plano.
+const MIXED_SECTIONS = [{ key: 'cartagena', label: 'Cartagena', fields: [
+    { name: 'atelierTitle1', label: 'Título', type: 'text' },
+    { name: 'stats', type: 'list', max: 4, itemFields: [
+        { name: 'n', label: 'Número',  type: 'text' },
+        { name: 'l', label: 'Etiqueta', type: 'text' },
+        { name: 's', label: 'Sub',     type: 'text' },
+    ]},
+]}];
+
+test('collectSingleton: sección mixta (plano + lista) recolecta ambos correctamente', () => {
+    const raw = {
+        'cartagena.atelierTitle1': '  Hola  ',
+        'cartagena.stats.0.n': '13', 'cartagena.stats.0.l': 'años', 'cartagena.stats.0.s': '2013',
+    };
+    const out = collectSingleton(raw, MIXED_SECTIONS);
+    assert.equal(out.cartagena.atelierTitle1, 'Hola');                  // plano trim ✅
+    assert.deepEqual(out.cartagena.stats, [{ n: '13', l: 'años', s: '2013' }]);
+});
+
+// ─── P4: mergeNosotros (Fase 0) ────────────────────────────────────────────────
+test('mergeNosotros: doc null → DEFAULTS íntegros (invariante web-idéntica con doc vacío)', () => {
+    assert.deepEqual(mergeNosotros(null), NOSOTROS_DEFAULTS);
+});
+
+test('mergeNosotros: override plano + reemplazo de lista + lista vacía respetada', () => {
+    const doc = { hero: { eyebrow: 'NUEVO' }, valores: { items: [{ t: 'X', d: 'y' }] }, cierre: { faqs: [] } };
+    const m = mergeNosotros(doc);
+    assert.equal(m.hero.eyebrow, 'NUEVO');                              // doc gana
+    assert.equal(m.hero.titleL1, NOSOTROS_DEFAULTS.hero.titleL1);       // resto = default
+    assert.deepEqual(m.valores.items, [{ t: 'X', d: 'y' }]);            // lista reemplazada
+    assert.deepEqual(m.cierre.faqs, []);                               // [] explícito → hide-when-empty
+    assert.deepEqual(m.timeline.items, NOSOTROS_DEFAULTS.timeline.items); // lista ausente → default
+});
+
+test('mergeNosotros: cartagena parcial (plano + una lista vacía) no pisa el resto', () => {
+    const m = mergeNosotros({ cartagena: { atelierTitle1: 'Z', stats: [] } });
+    assert.equal(m.cartagena.atelierTitle1, 'Z');
+    assert.equal(m.cartagena.atelierP1, NOSOTROS_DEFAULTS.cartagena.atelierP1);  // flat default intacto
+    assert.deepEqual(m.cartagena.stats, []);                                     // [] respetado
+    assert.deepEqual(m.cartagena.certs, NOSOTROS_DEFAULTS.cartagena.certs);      // lista ausente → default
+});
+
+test('mergeNosotros: lista corrupta (no-array) cae al default (robustez)', () => {
+    const m = mergeNosotros({ valores: { items: 'corrupto' } });
+    assert.deepEqual(m.valores.items, NOSOTROS_DEFAULTS.valores.items);
 });

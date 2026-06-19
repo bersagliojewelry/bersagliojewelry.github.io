@@ -1,0 +1,172 @@
+/**
+ * js/pages/nosotros-defaults.js — DEFAULTS del contenido de la página Nosotros (PURO).
+ *
+ * SSoT del copy horneado (antes vivía como `const` dentro de nosotros.js). El render
+ * público hace merge(DEFAULTS, siteContent/nosotros) campo-a-campo. Patrón §5-G (espejo
+ * de contacto-defaults.js) extendido con LISTAS (P4): cada sección es un sub-mapa; las
+ * listas son arrays DENTRO de un sub-mapa ya whitelisted en firestore.rules (NUNCA un
+ * array a nivel raíz). Las 8 claves coinciden EXACTO con la whitelist de reglas:
+ *   hero · manifiesto · maison · valores · timeline · equipo · cartagena · cierre
+ *
+ * Reglas de merge:
+ *   - campos planos  → spread { ...DEFAULTS.x, ...(doc.x||{}) } (doc gana, default rellena)
+ *   - listas (items) → REEMPLAZO, no spread: una lista `[]` explícita se respeta
+ *     (hide-when-empty → la sección desaparece); una lista ausente cae al default.
+ *
+ * Decoración NO editable: el número 01..06 de `valores` y las iniciales del avatar de
+ * equipo se DERIVAN del índice/nombre; las estrellas de reseñas y los encabezados de
+ * sección son LITERALES fijos en el renderer (no se derivan del conteo de la lista).
+ */
+
+export const NOSOTROS_DEFAULTS = {
+    // 1. HERO — copy editorial de portada (texto plano)
+    hero: {
+        eyebrow:      'CAPÍTULO 00 · NUESTRA ALMA',
+        titleL1:      'Un legado',
+        titleEm:      'se susurra,',
+        titleTail:    'no se compra.',
+        lead:         'Nacimos con una visión clara: acercar piezas únicas a quienes aprecian la elegancia y el valor de una joya auténtica. Nuestro viaje comenzó desde cero, visitando a nuestros clientes en la calidez de sus hogares, construyendo relaciones basadas en la confianza y en una cercanía que hoy se mantiene como el alma del atelier.',
+        leadItalic:   'Más que vender joyas, nos apasiona asesorar. Diseñamos con la convicción de que una pieza no es un simple accesorio, sino un reflejo de tu esencia, una emoción duradera y una inversión que trasciende en el tiempo.',
+        imageEyebrow: 'ATELIER · CARTAGENA DE INDIAS',
+        quote:        'Nuestra casa es tu casa.',
+        quoteAuthor:  'KARY MENDOZA',
+    },
+
+    // 3. MANIFIESTO — frase central con énfasis en el medio (texto plano)
+    manifiesto: {
+        titlePre: 'Sostenemos que el lujo auténtico carece de estridencias.',
+        titleEm:  'Es un secreto compartido entre dos personas',
+        titleTail: ', esbozado en la calidez de nuestro atelier, donde el tiempo se detiene para dar vida a una creación que trascenderá nuestra propia existencia.',
+        foot:     'MAISON BERSAGLIO · CARTAGENA DE INDIAS',
+    },
+
+    // 4. MAISON — filosofía Misión / Visión (texto plano)
+    maison: {
+        misionTitle: 'Nuestra Promesa',
+        misionDesc:  'Concebir piezas exclusivas mediante una asesoría íntima y cercana. Acompañamos a nuestros clientes en la elección de joyas que representen su distinción y los instantes más valiosos de su vida, asegurando siempre una experiencia de confianza, calidad y emotividad perdurable.',
+        visionTitle: 'El Horizonte',
+        visionDesc:  'Ser el atelier de alta joyería personalizada de referencia en excelencia y discreción, consolidando un acompañamiento generacional que perpetúa el legado emocional de nuestros clientes a través de piezas de autor únicas que vencen al tiempo.',
+    },
+
+    // 5. VALORES — lista (el número 01..06 lo deriva el renderer del índice)
+    valores: {
+        items: [
+            { t: 'La Elegancia como Silencio', d: 'Entendemos la sofisticación no como un destello ruidoso, sino como un susurro de distinción. Una joya Bersaglio es la expresión poética de tu estilo y de tu esencia.' },
+            { t: 'El Pacto de Credibilidad',   d: 'Construimos relaciones duraderas basadas en la transparencia, la credibilidad y una confianza inquebrantable que custodia tu tranquilidad.' },
+            { t: 'La Asesoría antes del Oficio', d: 'Antes que vender, nos dedicamos a guiarte y asesorarte con paciencia, asegurando que cada cliente encuentre o co-cree la pieza idónea.' },
+            { t: 'Devoción en cada Detalle',   d: 'Cada milímetro esculpido y cada interacción con nosotros está cuidada con devoción, buscando hacer de tu experiencia un recuerdo memorable.' },
+            { t: 'Cómplices de tu Felicidad',  d: 'Nos apasiona ser parte de tus momentos más significativos. Diseñamos con el orgullo de dar forma física a tus emociones y celebraciones sagradas.' },
+            { t: 'Valor e Inversión Eterna',   d: 'Transmitimos a nuestros clientes que una joya no es un gasto efímero, sino una inversión duradera que conserva e incrementa su significado y valor en el tiempo.' },
+        ],
+    },
+
+    // 6. TIMELINE — lista de capítulos (el orden del array = orden cronológico)
+    timeline: {
+        items: [
+            { y: '2013', t: 'El Diálogo Inicial', d: 'El taller comenzó con un sueño, dedicación y visitas personalizadas directamente en los hogares de nuestros clientes. Este contacto íntimo nos enseñó que antes que una joya, el huésped busca sentirse seguro, asesorado y acompañado en su elección.' },
+            { y: '2016', t: 'La Consagración del Espacio', d: 'Gracias a esta filosofía de servicio y cercanía, crecimos paso a paso. Abrimos las puertas de nuestro primer atelier privado en el centro histórico de Cartagena, un refugio para mantener esa atención pausada e individual.' },
+            { y: '2020', t: 'Estándares y Confianza', d: 'Consolidamos nuestra reputación basándonos en la transparencia absoluta de cada gema. Cada esmeralda y diamante se entrega con trazabilidad total y certificación ética, reforzando la credibilidad y el valor real de cada inversión.' },
+            { y: '2023', t: 'Una Década de Relaciones', d: 'Cumplimos diez años de trayectoria construyendo vínculos duraderos. El acompañamiento y asesoramiento personalizado se consolidan formalmente como el corazón absoluto de Bersaglio.' },
+            { y: '2026', t: 'La Verde y la Esencia', d: 'Hoy, seguimos conservando intacta la misma esencia con la que iniciamos: ofrecer una experiencia cercana, elegante y completamente personalizada, donde cada cliente se siente especial y cada joya tiene un significado real.' },
+        ],
+    },
+
+    // 7. EQUIPO — lista (avatar = iniciales+gradiente derivado; foto opcional a futuro)
+    equipo: {
+        items: [
+            { n: 'Kary Mendoza',           r: 'Fundadora & Directora',   b: 'Diez años dedicada a escuchar con empatía las historias de nuestros clientes para traducirlas en obras de arte eternas. Su mirada sensible guía la selección de cada gema y supervisa el detalle final de cada pieza.' },
+            { n: 'Maestro Eliécer Patiño', r: 'Orfebre principal',       b: 'Treinta y dos años de maestría y devoción orfebre. Formado bajo la tradición de la filigrana en Mompox y perfeccionado en Cartagena, domina la fundición a cera perdida y el engaste pavé de alta precisión.' },
+            { n: 'Lucía Restrepo',         r: 'Gemóloga GIA',            b: 'Certificada por el prestigioso Gemological Institute of America (GIA). Es la guardiana de la excelencia gemológica de la Maison, analizando la pureza, color y procedencia de cada esmeralda y diamante.' },
+            { n: 'Andrés Beltrán',         r: 'Diseño & dibujo técnico', b: 'Traduce las conversaciones íntimas del atelier en bocetos poéticos a mano alzada, planos técnicos y modelados 3D meticulosos, sirviendo de puente entre el deseo del cliente y el crisol del orfebre.' },
+        ],
+    },
+
+    // 2/6/8/9. CARTAGENA — la casa/atelier + prueba social. Texto plano del atelier +
+    // TRES listas (stats, certs, resenas) que se pintan en sus secciones visuales.
+    cartagena: {
+        // 6. Atelier (split) — título con énfasis + 2 párrafos + ubicación/visitas (2 líneas c/u)
+        atelierTitle1: 'Donde el oficio',
+        atelierTitleEm: 'toma forma',
+        atelierP1:     'En el corazón del Centro Histórico de Cartagena tenemos nuestra casa: un espacio abierto al público donde te recibimos con calma y una atención cálida y personalizada. Aquí se conversa, se diseña y se crea — porque en Bersaglio no revendemos: fabricamos cada pieza.',
+        atelierP2:     'Kary y su equipo acompañan cada paso: desde la primera conversación y el boceto a mano alzada, hasta dar vida a la joya y entregarla firmada. Un proceso cercano, sin prisas y hecho a la medida de tu historia.',
+        ubicacionL1:   'Calle 36 # 6-32 · San Agustín Chiquita',
+        ubicacionL2:   'Centro Histórico · Cartagena de Indias',
+        visitasL1:     'Con o sin cita previa',
+        visitasL2:     'Lun–Sáb · 10:00–19:00',
+        // 2. Stats (4 columnas)
+        stats: [
+            { n: '13',     l: 'años de oficio',    s: 'desde 2013' },
+            { n: '+1.200', l: 'piezas entregadas', s: 'con libreta de origen' },
+            { n: '40',     l: 'países alcanzados', s: 'envíos asegurados' },
+            { n: '100%',   l: 'trazabilidad',      s: 'gema · oro · orfebre' },
+        ],
+        // 8. Certificaciones (4 cards)
+        certs: [
+            { t: 'Jewelers of America',           d: 'Miembro acreditado desde 2020' },
+            { t: 'GIA',                            d: 'Reportes gemológicos en cada diamante' },
+            { t: 'Muzo Origin',                    d: 'Certificación de mina en cada esmeralda' },
+            { t: 'Responsible Jewellery Council',  d: 'Trazabilidad de oro y prácticas éticas' },
+        ],
+        // 9. Reseñas (4 cards) — TODO(contenido real): Kary pega reseñas reales de Google Maps.
+        resenas: [
+            { n: 'Valentina Restrepo', t: 'Llegué sin saber muy bien qué quería y salí con la pieza de mis sueños. Kary entendió mi historia mejor que yo. El trato es de otro nivel.', loc: 'Reseña en Google Maps' },
+            { n: 'Andrés Mejía',       t: 'Mandé hacer el anillo de compromiso y superó todo lo que imaginaba. Se siente el amor por el oficio en cada detalle. Mil gracias.', loc: 'Reseña en Google Maps' },
+            { n: 'Camila Tordecilla',  t: 'Un lugar precioso en el Centro Histórico. Te reciben con un café y una paciencia que ya no se ve. La esmeralda quedó espectacular.', loc: 'Reseña en Google Maps' },
+            { n: 'Juan Pablo Vergara', t: 'Calidad real y honestidad. Me explicaron cada piedra con su certificado. Volveré sin duda para la próxima ocasión especial.', loc: 'Reseña en Google Maps' },
+        ],
+    },
+
+    // 10/11. CIERRE — FAQ (lista) + CTA final (texto plano)
+    cierre: {
+        faqs: [
+            { q: '¿Cuánto tarda una pieza a medida?',      a: 'Entre cuatro y seis semanas desde la aprobación del boceto. La primera conversación, los renders y los ajustes pueden sumar dos semanas adicionales. No aceleramos plazos: el oficio paciente no admite atajos.' },
+            { q: '¿Trabajan con piedras del cliente?',     a: 'Sí. Recibimos gemas heredadas, las evaluamos con nuestra gemóloga, y las integramos en una pieza nueva. Si la talla original tiene daños, ofrecemos retalle previo en taller especializado.' },
+            { q: '¿Hacen envíos internacionales?',         a: 'Sí, con seguro pleno declarado y entrega registrada por DHL Express o FedEx Priority. Despachamos a más de cuarenta países. Los aranceles del país destino corren por cuenta del cliente.' },
+            { q: '¿Aceptan financiación?',                 a: 'Hasta tres cuotas sin interés con tarjetas locales. Para piezas sobre $50.000.000 COP estructuramos planes a seis o doce meses con entidades aliadas.' },
+            { q: '¿Puedo visitar el atelier sin comprar?', a: 'Por supuesto. La cita previa es solo para garantizar que tengamos tiempo para ti. Recibirás un café, te mostraremos el taller, conocerás al maestro orfebre. Sin compromiso de compra.' },
+            { q: '¿Qué garantía tienen las piezas?',       a: 'Garantía de por vida en estructura y engaste. Si una piedra se afloja, la reparamos sin costo. Si una soldadura cede, la rehacemos. Mientras Bersaglio exista, tu pieza tiene casa.' },
+        ],
+        ctaEyebrow: 'EMPEZAMOS POR UNA CONVERSACIÓN',
+        ctaTitle1:  'Tu próxima joya',
+        ctaTitleEm: 'comienza con un café',
+        ctaLead:    'Agenda una visita al atelier o escríbenos. Sin compromiso, sin guion, sin prisas. Solo una conversación.',
+        ctaLabel:   'Hablemos',
+    },
+};
+
+/** Una lista válida del doc reemplaza a la default; cualquier no-array cae al default. */
+function mergeList(docVal, defVal) {
+    return Array.isArray(docVal) ? docVal : defVal;
+}
+
+/**
+ * merge(DEFAULTS, doc) — espejo de mergeContacto extendido con listas. Robusto a doc
+ * null/parcial. Campos planos por spread; listas por REEMPLAZO (una `[]` explícita se
+ * respeta → hide-when-empty). NUNCA fusiona arrays índice-por-índice.
+ */
+export function mergeNosotros(doc) {
+    const d = doc || {};
+    const D = NOSOTROS_DEFAULTS;
+    return {
+        hero:       { ...D.hero,       ...(d.hero || {}) },
+        manifiesto: { ...D.manifiesto, ...(d.manifiesto || {}) },
+        maison:     { ...D.maison,     ...(d.maison || {}) },
+        valores:    { items: mergeList(d.valores  && d.valores.items,  D.valores.items) },
+        timeline:   { items: mergeList(d.timeline && d.timeline.items, D.timeline.items) },
+        equipo:     { items: mergeList(d.equipo   && d.equipo.items,   D.equipo.items) },
+        cartagena: {
+            ...D.cartagena,
+            ...(d.cartagena || {}),
+            stats:   mergeList(d.cartagena && d.cartagena.stats,   D.cartagena.stats),
+            certs:   mergeList(d.cartagena && d.cartagena.certs,   D.cartagena.certs),
+            resenas: mergeList(d.cartagena && d.cartagena.resenas, D.cartagena.resenas),
+        },
+        cierre: {
+            ...D.cierre,
+            ...(d.cierre || {}),
+            faqs: mergeList(d.cierre && d.cierre.faqs, D.cierre.faqs),
+        },
+    };
+}
+
+export default { NOSOTROS_DEFAULTS, mergeNosotros };

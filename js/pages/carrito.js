@@ -37,6 +37,7 @@ import { html, escape } from '../core/html.js';
 import { format$ } from '../core/format.js';
 import { cart } from '../core/cart.js';
 import { data } from '../core/data.js';
+import { mergeGlobal, waHref } from '../core/global-defaults.js';
 import { saveInquiry } from '../firestore-service.js';
 import { trackBeginCheckout, trackPurchase } from '../analytics.js';
 
@@ -389,7 +390,8 @@ function goToStep(n) {
 }
 
 function buildWhatsAppCheckoutURL(rows) {
-    const phone = '573013752592';
+    // WhatsApp desde la FUENTE ÚNICA (siteContent/global.contacto); fallback = default real.
+    const waBase = waHref(mergeGlobal(data.getSiteContent('global')).contacto.whatsapp);
     const lines = rows.map(r => {
         const name = r.piece?.name || r.slug;
         const url  = `https://bersagliojewelry.co/pieza.html?p=${encodeURIComponent(r.slug)}`;
@@ -402,7 +404,7 @@ function buildWhatsAppCheckoutURL(rows) {
         : '';
     const { subtotal } = computeTotals(rows);
     const msg = `Hola Bersaglio, quiero coordinar la compra de estas piezas:\n\n${lines.join('\n\n')}\n\nSubtotal: ${format$(subtotal)}${shipInfo}`;
-    return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+    return `${waBase}?text=${encodeURIComponent(msg)}`;
 }
 
 async function confirmOrder(rows) {

@@ -35,7 +35,7 @@ import { html, escape, fragment } from '../core/html.js';
 import { data } from '../core/data.js';
 import { safeUrl } from '../core/safe-url.js';
 import { mergeContacto } from './contacto-defaults.js';
-import { mergeGlobal, waHref, igHref } from '../core/global-defaults.js';
+import { mergeGlobal, waHref, igHref, GLOBAL_DEFAULTS } from '../core/global-defaults.js';
 import { saveInquiry } from '../firestore-service.js';
 import { track } from '../analytics.js';
 
@@ -537,8 +537,11 @@ function renderProceso() {
     return contactoProcesoSection(mergeContacto(data.getSiteContent('contacto')).proceso);
 }
 
-/** Sección "FAQ rápido" desde el dato `c` (PURA) — reusada por el render público y el preview del CMS. */
-export function contactoFaqSection(c) {
+/**
+ * Sección "FAQ rápido" desde el dato `c` (PURA) — reusada por el render público y el preview del CMS.
+ * `waUrl` = enlace de WhatsApp derivado de la fuente única; default = número real (para el preview del CMS).
+ */
+export function contactoFaqSection(c, waUrl = waHref(GLOBAL_DEFAULTS.contacto.whatsapp)) {
     const faqs = [
         { q: c.q1, a: c.a1 }, { q: c.q2, a: c.a2 }, { q: c.q3, a: c.a3 }, { q: c.q4, a: c.a4 },
     ];
@@ -548,7 +551,7 @@ export function contactoFaqSection(c) {
                 <div class="mono ct-faq-eyebrow">${escape(c.eyebrow)}</div>
                 <h3 class="ct-faq-title">${escape(c.title1)} <span class="italic emerald-text">${escape(c.title2)}</span></h3>
                 <p class="ct-faq-lead">${escape(c.lead)}</p>
-                <a href="https://wa.me/573013752592" target="_blank" rel="noopener" class="btn-aqua btn-aqua-emerald ct-faq-cta">
+                <a href="${escape(safeUrl(waUrl))}" target="_blank" rel="noopener" class="btn-aqua btn-aqua-emerald ct-faq-cta">
                     Preguntar por WhatsApp
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
                 </a>
@@ -563,7 +566,9 @@ export function contactoFaqSection(c) {
         </section>`;
 }
 function renderFAQRapido() {
-    return contactoFaqSection(mergeContacto(data.getSiteContent('contacto')).faq);
+    // El CTA de WhatsApp del FAQ deriva de la fuente única (siteContent/global.contacto).
+    const waUrl = waHref(mergeGlobal(data.getSiteContent('global')).contacto.whatsapp);
+    return contactoFaqSection(mergeContacto(data.getSiteContent('contacto')).faq, waUrl);
 }
 
 function renderAll() {
@@ -779,6 +784,8 @@ function refreshCopy() {
 
 function refreshCanales() {
     replaceSection('.ct-canales', renderCanales());
+    // El FAQ CTA también deriva su WhatsApp de `global`: re-pinta al llegar el override.
+    replaceSection('.ct-faq-section', renderFAQRapido());
 }
 
 function replaceSection(sel, htmlStr) {

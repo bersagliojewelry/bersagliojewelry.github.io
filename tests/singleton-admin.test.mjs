@@ -232,3 +232,12 @@ test('mergeNosotros: lista corrupta (no-array) cae al default (robustez)', () =>
     const m = mergeNosotros({ valores: { items: 'corrupto' } });
     assert.deepEqual(m.valores.items, NOSOTROS_DEFAULTS.valores.items);
 });
+
+test('mergeNosotros: encabezado editable (B) de valores/timeline — override plano + lista intacta', () => {
+    const m = mergeNosotros({ valores: { titlePre: 'Otra cosa' }, timeline: { items: [{ y: '2030', t: 'x', d: 'z' }] } });
+    assert.equal(m.valores.titlePre, 'Otra cosa');                          // header override
+    assert.equal(m.valores.eyebrow, NOSOTROS_DEFAULTS.valores.eyebrow);     // resto del header = default
+    assert.deepEqual(m.valores.items, NOSOTROS_DEFAULTS.valores.items);     // lista ausente → default
+    assert.deepEqual(m.timeline.items, [{ y: '2030', t: 'x', d: 'z' }]);    // lista reemplazada
+    assert.equal(m.timeline.titlePre, NOSOTROS_DEFAULTS.timeline.titlePre); // header default intacto
+});

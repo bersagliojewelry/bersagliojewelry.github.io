@@ -219,12 +219,17 @@ const nosotrosTextsDescriptor = {
             { name: 'visionDesc',  label: 'Visión — texto',             type: 'textarea', rows: 4, max: 460 },
         ]},
         { key: 'valores', label: 'Valores (lista)', fields: [
+            { name: 'eyebrow',  label: 'Antetítulo',                  type: 'text', max: 44 },
+            { name: 'titlePre', label: 'Título — inicio',            type: 'text', max: 48 },
+            { name: 'titleEm',  label: 'Título — parte en cursiva',  type: 'text', max: 36 },
             { name: 'items', type: 'list', max: 12, addLabel: 'Añadir valor', singular: 'Valor', itemTitleFrom: 't', itemFields: [
                 { name: 't', label: 'Título',      type: 'text', max: 48 },
                 { name: 'd', label: 'Descripción', type: 'textarea', rows: 2, max: 240 },
             ]},
         ]},
         { key: 'timeline', label: 'Línea de tiempo (lista)', fields: [
+            { name: 'titlePre', label: 'Título — inicio',           type: 'text', max: 48 },
+            { name: 'titleEm',  label: 'Título — parte en cursiva', type: 'text', max: 36 },
             { name: 'items', type: 'list', max: 12, addLabel: 'Añadir capítulo', singular: 'Capítulo', itemTitleFrom: 't', itemFields: [
                 { name: 'y', label: 'Año',         type: 'text', max: 8 },
                 { name: 't', label: 'Título',      type: 'text', max: 60 },

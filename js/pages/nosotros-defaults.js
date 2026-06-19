@@ -48,8 +48,11 @@ export const NOSOTROS_DEFAULTS = {
         visionDesc:  'Ser el atelier de alta joyería personalizada de referencia en excelencia y discreción, consolidando un acompañamiento generacional que perpetúa el legado emocional de nuestros clientes a través de piezas de autor únicas que vencen al tiempo.',
     },
 
-    // 5. VALORES — lista (el número 01..06 lo deriva el renderer del índice)
+    // 5. VALORES — encabezado editable (B) + lista (el número 01..06 lo deriva el renderer del índice)
     valores: {
+        eyebrow:  'NUESTROS PRINCIPIOS',
+        titlePre: 'Seis cosas en las que',
+        titleEm:  'no negociamos',
         items: [
             { t: 'La Elegancia como Silencio', d: 'Entendemos la sofisticación no como un destello ruidoso, sino como un susurro de distinción. Una joya Bersaglio es la expresión poética de tu estilo y de tu esencia.' },
             { t: 'El Pacto de Credibilidad',   d: 'Construimos relaciones duraderas basadas en la transparencia, la credibilidad y una confianza inquebrantable que custodia tu tranquilidad.' },
@@ -60,8 +63,10 @@ export const NOSOTROS_DEFAULTS = {
         ],
     },
 
-    // 6. TIMELINE — lista de capítulos (el orden del array = orden cronológico)
+    // 6. TIMELINE — encabezado editable (B) + lista de capítulos (el orden del array = orden cronológico)
     timeline: {
+        titlePre: 'Trece años en',
+        titleEm:  'cinco capítulos',
         items: [
             { y: '2013', t: 'El Diálogo Inicial', d: 'El taller comenzó con un sueño, dedicación y visitas personalizadas directamente en los hogares de nuestros clientes. Este contacto íntimo nos enseñó que antes que una joya, el huésped busca sentirse seguro, asesorado y acompañado en su elección.' },
             { y: '2016', t: 'La Consagración del Espacio', d: 'Gracias a esta filosofía de servicio y cercanía, crecimos paso a paso. Abrimos las puertas de nuestro primer atelier privado en el centro histórico de Cartagena, un refugio para mantener esa atención pausada e individual.' },
@@ -151,8 +156,8 @@ export function mergeNosotros(doc) {
         hero:       { ...D.hero,       ...(d.hero || {}) },
         manifiesto: { ...D.manifiesto, ...(d.manifiesto || {}) },
         maison:     { ...D.maison,     ...(d.maison || {}) },
-        valores:    { items: mergeList(d.valores  && d.valores.items,  D.valores.items) },
-        timeline:   { items: mergeList(d.timeline && d.timeline.items, D.timeline.items) },
+        valores:    { ...D.valores,  ...(d.valores  || {}), items: mergeList(d.valores  && d.valores.items,  D.valores.items) },
+        timeline:   { ...D.timeline, ...(d.timeline || {}), items: mergeList(d.timeline && d.timeline.items, D.timeline.items) },
         equipo:     { items: mergeList(d.equipo   && d.equipo.items,   D.equipo.items) },
         cartagena: {
             ...D.cartagena,

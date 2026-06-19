@@ -67,7 +67,7 @@ function joinWishlistWithPieces() {
 }
 
 function buildShareURL(rows) {
-    const phone = '573001234567';
+    const phone = '573013752592';   // número REAL (corrige el placeholder; futuro: leer de siteContent/global)
     const lines = rows.map(r => {
         const name = r.piece?.name || r.slug;
         const url = `https://bersagliojewelry.co/pieza.html?p=${encodeURIComponent(r.slug)}`;

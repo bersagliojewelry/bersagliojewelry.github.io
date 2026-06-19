@@ -31,6 +31,7 @@
 
 import { html, escape, mount, fragment } from '../core/html.js';
 import { data } from '../core/data.js';
+import { safeUrl } from '../core/safe-url.js';
 import { mergeNosotros } from './nosotros-defaults.js';
 
 let _openFaq = 0;
@@ -61,7 +62,9 @@ export function nosotrosHeroSection(c) {
                 </div>
             </div>
             <div class="glass glass-iridescent abt-hero-image">
-                <div class="abt-hero-image-bg"></div>
+                ${c.image
+                    ? html`<img class="abt-hero-img" src="${escape(safeUrl(c.image))}" alt="" decoding="async">`
+                    : html`<div class="abt-hero-image-bg"></div>`}
                 <div class="abt-hero-image-shade"></div>
                 <div class="abt-hero-image-content">
                     <div class="mono abt-hero-image-eyebrow">${escape(c.imageEyebrow)}</div>
@@ -198,7 +201,9 @@ export function nosotrosAtelierSection(c) {
     return html`
         <section class="atl-split">
             <div class="glass glass-iridescent atl-image">
-                <div class="atl-image-bg"></div>
+                ${c.image
+                    ? html`<img class="atl-img" src="${escape(safeUrl(c.image))}" alt="" decoding="async">`
+                    : html`<div class="atl-image-bg"></div>`}
                 <div class="chip glass-pill atl-chip">El Atelier</div>
             </div>
             <div class="glass atl-text">
@@ -245,7 +250,9 @@ export function nosotrosEquipoSection(items) {
                 ${items.map((raw, i) => { const p = raw || {}; return html`
                     <div class="glass glass-iridescent team-card">
                         <div class="team-avatar" style="--ti:${i}">
-                            <span class="team-avatar-letter">${escape(avatarInitials(p.n))}</span>
+                            ${p.img
+                                ? html`<img class="team-avatar-photo" src="${escape(safeUrl(p.img))}" alt="${escape(p.n)}" decoding="async">`
+                                : html`<span class="team-avatar-letter">${escape(avatarInitials(p.n))}</span>`}
                         </div>
                         <div class="team-name">${escape(p.n)}</div>
                         <div class="mono team-role">${escape(p.r)}</div>

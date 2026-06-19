@@ -185,6 +185,27 @@ test('reindex + collect: tras intercambiar dos ítems, el array sale en el nuevo
     assert.deepEqual(out.valores.items, [{ t: 'B', d: 'db' }, { t: 'A', d: 'da' }]);  // orden del DOM
 });
 
+// Imágenes dentro de ítems de lista (equipo) — field-type image anidado (P4 + petición Daniel).
+const LIST_IMG_SECTIONS = [{ key: 'equipo', label: 'Equipo', fields: [
+    { name: 'items', type: 'list', max: 4, itemTitleFrom: 'n', itemFields: [
+        { name: 'n',   label: 'Nombre', type: 'text' },
+        { name: 'img', label: 'Foto',   type: 'image' },
+    ]},
+]}];
+
+test('list con itemField image: render del upload indexado + collect recoge la URL', () => {
+    const h = singletonFormHTML(LIST_IMG_SECTIONS, { equipo: { items: [{ n: 'Kary', img: 'https://fs/k.avif' }] } });
+    assert.match(h, /data-img-wrap/);
+    assert.match(h, /<input type="hidden"[^>]*data-sf="equipo\.items\.0\.img"[^>]*value="https:\/\/fs\/k\.avif"/);
+    const out = collectSingleton({ 'equipo.items.0.n': 'Kary', 'equipo.items.0.img': 'https://fs/k.avif' }, LIST_IMG_SECTIONS);
+    assert.deepEqual(out.equipo.items, [{ n: 'Kary', img: 'https://fs/k.avif' }]);
+});
+
+test('list con itemField image: escapa la URL de la foto (anti stored-XSS)', () => {
+    const h = singletonFormHTML(LIST_IMG_SECTIONS, { equipo: { items: [{ n: 'x', img: '"><script>alert(1)</script>' }] } });
+    assert.doesNotMatch(h, /<script>alert/);
+});
+
 // Sección MIXTA (texto plano + lista) — espejo de `cartagena`. No-regresión del camino plano.
 const MIXED_SECTIONS = [{ key: 'cartagena', label: 'Cartagena', fields: [
     { name: 'atelierTitle1', label: 'Título', type: 'text' },

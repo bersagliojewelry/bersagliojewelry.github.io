@@ -211,21 +211,22 @@ test('mergeNosotros: doc null → DEFAULTS íntegros (invariante web-idéntica c
 });
 
 test('mergeNosotros: override plano + reemplazo de lista + lista vacía respetada', () => {
-    const doc = { hero: { eyebrow: 'NUEVO' }, valores: { items: [{ t: 'X', d: 'y' }] }, cierre: { faqs: [] } };
+    const doc = { hero: { eyebrow: 'NUEVO' }, valores: { items: [{ t: 'X', d: 'y' }] }, faqs: { items: [] } };
     const m = mergeNosotros(doc);
     assert.equal(m.hero.eyebrow, 'NUEVO');                              // doc gana
     assert.equal(m.hero.titleL1, NOSOTROS_DEFAULTS.hero.titleL1);       // resto = default
     assert.deepEqual(m.valores.items, [{ t: 'X', d: 'y' }]);            // lista reemplazada
-    assert.deepEqual(m.cierre.faqs, []);                               // [] explícito → hide-when-empty
+    assert.deepEqual(m.faqs.items, []);                                // [] explícito → hide-when-empty
     assert.deepEqual(m.timeline.items, NOSOTROS_DEFAULTS.timeline.items); // lista ausente → default
 });
 
-test('mergeNosotros: cartagena parcial (plano + una lista vacía) no pisa el resto', () => {
-    const m = mergeNosotros({ cartagena: { atelierTitle1: 'Z', stats: [] } });
-    assert.equal(m.cartagena.atelierTitle1, 'Z');
-    assert.equal(m.cartagena.atelierP1, NOSOTROS_DEFAULTS.cartagena.atelierP1);  // flat default intacto
-    assert.deepEqual(m.cartagena.stats, []);                                     // [] respetado
-    assert.deepEqual(m.cartagena.certs, NOSOTROS_DEFAULTS.cartagena.certs);      // lista ausente → default
+test('mergeNosotros: modelo PLANO — sub-mapa solo-lista respeta [] y default; atelier plano intacto', () => {
+    const m = mergeNosotros({ atelier: { title1: 'Z' }, cifras: { items: [] } });
+    assert.equal(m.atelier.title1, 'Z');                                          // override plano
+    assert.equal(m.atelier.p1, NOSOTROS_DEFAULTS.atelier.p1);                     // flat default intacto
+    assert.deepEqual(m.cifras.items, []);                                         // [] respetado
+    assert.deepEqual(m.certificaciones.items, NOSOTROS_DEFAULTS.certificaciones.items); // lista ausente → default
+    assert.deepEqual(m.resenas.items, NOSOTROS_DEFAULTS.resenas.items);
 });
 
 test('mergeNosotros: lista corrupta (no-array) cae al default (robustez)', () => {

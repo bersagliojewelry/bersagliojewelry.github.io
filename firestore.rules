@@ -417,14 +417,14 @@ service cloud.firestore {
     function siteContentKeys(page) {
       return page == 'home'     ? ['hero', 'editorial', 'atelier', 'cta', 'marquee']
            : page == 'contacto' ? ['hero', 'proceso', 'faq']
-           : page == 'nosotros' ? ['hero', 'maison', 'cartagena', 'timeline', 'equipo', 'valores', 'manifiesto', 'cierre']
+           : page == 'nosotros' ? ['hero', 'manifiesto', 'maison', 'valores', 'timeline', 'equipo', 'atelier', 'cifras', 'certificaciones', 'resenas', 'faqs', 'cierre']
            : page == 'global'   ? ['contacto', 'footer', 'redes']
            : [];
     }
     // P4: cap de CARDINALIDAD de una lista dentro de un sub-mapa (techo de seguridad,
     // desacoplado del max de UX del panel). Opcional + tipada: si la clave existe debe ser
     // list y no superar `cap`. Las reglas no recursan en los ítems → el string por-hoja
-    // queda al cliente (ver comentario de cabecera). cap=60 ≫ max de UX (6-12) y ≪ 1 MiB.
+    // queda al cliente (ver comentario de cabecera). cap=24 (2× el max de UX 6-12) ≪ 1 MiB.
     function siteListOk(m, key, cap) {
       return !(key in m) || (m[key] is list && m[key].size() <= cap);
     }
@@ -440,23 +440,28 @@ service cloud.firestore {
           && (!('marquee' in d)    || d.marquee is map)
           && (!('proceso' in d)    || d.proceso is map)
           && (!('faq' in d)        || d.faq is map)
-          && (!('maison' in d)     || d.maison is map)
-          && (!('cartagena' in d)  || d.cartagena is map)
-          && (!('timeline' in d)   || d.timeline is map)
-          && (!('equipo' in d)     || d.equipo is map)
-          && (!('valores' in d)    || d.valores is map)
-          && (!('manifiesto' in d) || d.manifiesto is map)
-          && (!('cierre' in d)     || d.cierre is map)
-          && (!('contacto' in d)   || d.contacto is map)
-          && (!('footer' in d)     || d.footer is map)
-          && (!('redes' in d)      || d.redes is map)
-          // P4: cardinalidad de las listas de Nosotros (anti denial-of-wallet server-side).
-          && (!('valores' in d)    || siteListOk(d.valores, 'items', 60))
-          && (!('timeline' in d)   || siteListOk(d.timeline, 'items', 60))
-          && (!('equipo' in d)     || siteListOk(d.equipo, 'items', 60))
-          && (!('cartagena' in d)  || (siteListOk(d.cartagena, 'stats', 60) && siteListOk(d.cartagena, 'certs', 60) && siteListOk(d.cartagena, 'resenas', 60)))
-          && (!('cierre' in d)     || siteListOk(d.cierre, 'faqs', 60))
-          && (!('_published' in d) || d._published is bool);
+          && (!('maison' in d)          || d.maison is map)
+          && (!('timeline' in d)        || d.timeline is map)
+          && (!('equipo' in d)          || d.equipo is map)
+          && (!('valores' in d)         || d.valores is map)
+          && (!('manifiesto' in d)      || d.manifiesto is map)
+          && (!('cierre' in d)          || d.cierre is map)
+          && (!('cifras' in d)          || d.cifras is map)
+          && (!('certificaciones' in d) || d.certificaciones is map)
+          && (!('resenas' in d)         || d.resenas is map)
+          && (!('faqs' in d)            || d.faqs is map)
+          && (!('contacto' in d)        || d.contacto is map)
+          && (!('footer' in d)          || d.footer is map)
+          && (!('redes' in d)           || d.redes is map)
+          // P4: cardinalidad de las listas de Nosotros (anti denial-of-wallet server-side; cap 24).
+          && (!('valores' in d)         || siteListOk(d.valores, 'items', 24))
+          && (!('timeline' in d)        || siteListOk(d.timeline, 'items', 24))
+          && (!('equipo' in d)          || siteListOk(d.equipo, 'items', 24))
+          && (!('cifras' in d)          || siteListOk(d.cifras, 'items', 24))
+          && (!('certificaciones' in d) || siteListOk(d.certificaciones, 'items', 24))
+          && (!('resenas' in d)         || siteListOk(d.resenas, 'items', 24))
+          && (!('faqs' in d)            || siteListOk(d.faqs, 'items', 24))
+          && (!('_published' in d)      || d._published is bool);
     }
 
     // ─── F6 frenos de gasto: forms públicos con forma EXACTA (anti spam / denial-of-wallet) ──

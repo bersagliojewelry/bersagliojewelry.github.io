@@ -243,40 +243,48 @@ const nosotrosTextsDescriptor = {
                 { name: 'b', label: 'Biografía',   type: 'textarea', rows: 3, max: 380 },
             ]},
         ]},
-        { key: 'cartagena', label: 'Atelier, cifras, certificaciones y reseñas', fields: [
-            { name: 'atelierTitle1',  label: 'Atelier — título línea 1',         type: 'text', max: 40 },
-            { name: 'atelierTitleEm', label: 'Atelier — título línea 2 (cursiva)', type: 'text', max: 36 },
-            { name: 'atelierP1',      label: 'Atelier — párrafo 1',              type: 'textarea', rows: 3, max: 380 },
-            { name: 'atelierP2',      label: 'Atelier — párrafo 2',              type: 'textarea', rows: 3, max: 380 },
-            { name: 'ubicacionL1',    label: 'Ubicación — línea 1',              type: 'text', max: 60 },
-            { name: 'ubicacionL2',    label: 'Ubicación — línea 2',              type: 'text', max: 60 },
-            { name: 'visitasL1',      label: 'Visitas — línea 1',                type: 'text', max: 48 },
-            { name: 'visitasL2',      label: 'Visitas — línea 2',                type: 'text', max: 48 },
-            { name: 'stats', type: 'list', max: 6, addLabel: 'Añadir cifra', singular: 'Cifra', itemTitleFrom: 'l', itemFields: [
+        { key: 'atelier', label: 'Atelier (la casa)', fields: [
+            { name: 'title1',      label: 'Título — línea 1',            type: 'text', max: 40 },
+            { name: 'titleEm',     label: 'Título — línea 2 (cursiva)',  type: 'text', max: 36 },
+            { name: 'p1',          label: 'Párrafo 1',                   type: 'textarea', rows: 3, max: 380 },
+            { name: 'p2',          label: 'Párrafo 2',                   type: 'textarea', rows: 3, max: 380 },
+            { name: 'ubicacionL1', label: 'Ubicación — línea 1',         type: 'text', max: 60 },
+            { name: 'ubicacionL2', label: 'Ubicación — línea 2',         type: 'text', max: 60 },
+            { name: 'visitasL1',   label: 'Visitas — línea 1',           type: 'text', max: 48 },
+            { name: 'visitasL2',   label: 'Visitas — línea 2',           type: 'text', max: 48 },
+        ]},
+        { key: 'cifras', label: 'Cifras (lista)', fields: [
+            { name: 'items', type: 'list', max: 6, addLabel: 'Añadir cifra', singular: 'Cifra', itemTitleFrom: 'l', itemFields: [
                 { name: 'n', label: 'Número',   type: 'text', max: 12 },
                 { name: 'l', label: 'Etiqueta', type: 'text', max: 28 },
                 { name: 's', label: 'Detalle',  type: 'text', max: 40 },
             ]},
-            { name: 'certs', type: 'list', max: 8, addLabel: 'Añadir certificación', singular: 'Certificación', itemTitleFrom: 't', itemFields: [
+        ]},
+        { key: 'certificaciones', label: 'Certificaciones (lista)', fields: [
+            { name: 'items', type: 'list', max: 8, addLabel: 'Añadir certificación', singular: 'Certificación', itemTitleFrom: 't', itemFields: [
                 { name: 't', label: 'Título',      type: 'text', max: 48 },
                 { name: 'd', label: 'Descripción', type: 'text', max: 80 },
             ]},
-            { name: 'resenas', type: 'list', max: 12, addLabel: 'Añadir reseña', singular: 'Reseña', itemTitleFrom: 'n', itemFields: [
+        ]},
+        { key: 'resenas', label: 'Reseñas (lista)', fields: [
+            { name: 'items', type: 'list', max: 12, addLabel: 'Añadir reseña', singular: 'Reseña', itemTitleFrom: 'n', itemFields: [
                 { name: 'n',   label: 'Nombre',  type: 'text', max: 48 },
                 { name: 't',   label: 'Reseña',  type: 'textarea', rows: 3, max: 320 },
                 { name: 'loc', label: 'Fuente',  type: 'text', max: 40 },
             ]},
         ]},
-        { key: 'cierre', label: 'Preguntas frecuentes y cierre', fields: [
-            { name: 'faqs', type: 'list', max: 12, addLabel: 'Añadir pregunta', singular: 'Pregunta', itemTitleFrom: 'q', itemFields: [
+        { key: 'faqs', label: 'Preguntas frecuentes (lista)', fields: [
+            { name: 'items', type: 'list', max: 12, addLabel: 'Añadir pregunta', singular: 'Pregunta', itemTitleFrom: 'q', itemFields: [
                 { name: 'q', label: 'Pregunta',  type: 'text', max: 90 },
                 { name: 'a', label: 'Respuesta', type: 'textarea', rows: 3, max: 380 },
             ]},
-            { name: 'ctaEyebrow', label: 'Cierre — antetítulo',          type: 'text', max: 44 },
-            { name: 'ctaTitle1',  label: 'Cierre — título línea 1',      type: 'text', max: 28 },
-            { name: 'ctaTitleEm', label: 'Cierre — título línea 2 (cursiva)', type: 'text', max: 36 },
-            { name: 'ctaLead',    label: 'Cierre — párrafo',             type: 'textarea', rows: 3, max: 320 },
-            { name: 'ctaLabel',   label: 'Cierre — botón',              type: 'text', max: 30 },
+        ]},
+        { key: 'cierre', label: 'Cierre (botón final)', fields: [
+            { name: 'ctaEyebrow', label: 'Antetítulo',                  type: 'text', max: 44 },
+            { name: 'ctaTitle1',  label: 'Título — línea 1',            type: 'text', max: 28 },
+            { name: 'ctaTitleEm', label: 'Título — línea 2 (cursiva)',  type: 'text', max: 36 },
+            { name: 'ctaLead',    label: 'Párrafo',                     type: 'textarea', rows: 3, max: 320 },
+            { name: 'ctaLabel',   label: 'Botón',                       type: 'text', max: 30 },
         ]},
     ],
 };

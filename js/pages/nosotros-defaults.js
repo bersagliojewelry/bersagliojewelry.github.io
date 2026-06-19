@@ -1,12 +1,16 @@
 /**
  * js/pages/nosotros-defaults.js — DEFAULTS del contenido de la página Nosotros (PURO).
  *
- * SSoT del copy horneado (antes vivía como `const` dentro de nosotros.js). El render
- * público hace merge(DEFAULTS, siteContent/nosotros) campo-a-campo. Patrón §5-G (espejo
- * de contacto-defaults.js) extendido con LISTAS (P4): cada sección es un sub-mapa; las
- * listas son arrays DENTRO de un sub-mapa ya whitelisted en firestore.rules (NUNCA un
- * array a nivel raíz). Las 8 claves coinciden EXACTO con la whitelist de reglas:
- *   hero · manifiesto · maison · valores · timeline · equipo · cartagena · cierre
+ * SSoT del copy horneado. El render público hace merge(DEFAULTS, siteContent/nosotros)
+ * campo-a-campo. Patrón §5-G (espejo de contacto-defaults.js) extendido con LISTAS (P4):
+ * cada sección es un sub-mapa; las listas son arrays DENTRO de un sub-mapa (NUNCA un array
+ * a nivel raíz). Las claves coinciden EXACTO con la whitelist de firestore.rules.
+ *
+ * MODELO PLANO (síntesis consejo externo Gemini 2026-06-19): se descartó el grab-bag
+ * `cartagena` (acoplaba 4 secciones lógicas distintas) por claves LÓGICAS independientes.
+ * Hecho ANTES de que existan datos en prod → migración cero. 12 claves:
+ *   hero · manifiesto · maison · valores · timeline · equipo · atelier ·
+ *   cifras · certificaciones · resenas · faqs · cierre
  *
  * Reglas de merge:
  *   - campos planos  → spread { ...DEFAULTS.x, ...(doc.x||{}) } (doc gana, default rellena)
@@ -15,7 +19,8 @@
  *
  * Decoración NO editable: el número 01..06 de `valores` y las iniciales del avatar de
  * equipo se DERIVAN del índice/nombre; las estrellas de reseñas y los encabezados de
- * sección son LITERALES fijos en el renderer (no se derivan del conteo de la lista).
+ * sección sin conteo son LITERALES fijos en el renderer. Los renderers toleran ítems
+ * malformados (guard por-ítem) para que una escritura corrupta no blanquee la página.
  */
 
 export const NOSOTROS_DEFAULTS = {
@@ -32,7 +37,7 @@ export const NOSOTROS_DEFAULTS = {
         quoteAuthor:  'KARY MENDOZA',
     },
 
-    // 3. MANIFIESTO — frase central con énfasis en el medio (texto plano)
+    // 2. MANIFIESTO — frase central con énfasis en el medio (texto plano)
     manifiesto: {
         titlePre: 'Sostenemos que el lujo auténtico carece de estridencias.',
         titleEm:  'Es un secreto compartido entre dos personas',
@@ -40,7 +45,7 @@ export const NOSOTROS_DEFAULTS = {
         foot:     'MAISON BERSAGLIO · CARTAGENA DE INDIAS',
     },
 
-    // 4. MAISON — filosofía Misión / Visión (texto plano)
+    // 3. MAISON — filosofía Misión / Visión (texto plano)
     maison: {
         misionTitle: 'Nuestra Promesa',
         misionDesc:  'Concebir piezas exclusivas mediante una asesoría íntima y cercana. Acompañamos a nuestros clientes en la elección de joyas que representen su distinción y los instantes más valiosos de su vida, asegurando siempre una experiencia de confianza, calidad y emotividad perdurable.',
@@ -48,7 +53,7 @@ export const NOSOTROS_DEFAULTS = {
         visionDesc:  'Ser el atelier de alta joyería personalizada de referencia en excelencia y discreción, consolidando un acompañamiento generacional que perpetúa el legado emocional de nuestros clientes a través de piezas de autor únicas que vencen al tiempo.',
     },
 
-    // 5. VALORES — encabezado editable (B) + lista (el número 01..06 lo deriva el renderer del índice)
+    // 4. VALORES — encabezado editable (B) + lista (el número 01..06 lo deriva el renderer del índice)
     valores: {
         eyebrow:  'NUESTROS PRINCIPIOS',
         titlePre: 'Seis cosas en las que',
@@ -63,7 +68,7 @@ export const NOSOTROS_DEFAULTS = {
         ],
     },
 
-    // 6. TIMELINE — encabezado editable (B) + lista de capítulos (el orden del array = orden cronológico)
+    // 5. TIMELINE — encabezado editable (B) + lista de capítulos (el orden del array = orden cronológico)
     timeline: {
         titlePre: 'Trece años en',
         titleEm:  'cinco capítulos',
@@ -76,7 +81,7 @@ export const NOSOTROS_DEFAULTS = {
         ],
     },
 
-    // 7. EQUIPO — lista (avatar = iniciales+gradiente derivado; foto opcional a futuro)
+    // 6. EQUIPO — lista (avatar = iniciales+gradiente derivado; foto opcional a futuro, aditiva)
     equipo: {
         items: [
             { n: 'Kary Mendoza',           r: 'Fundadora & Directora',   b: 'Diez años dedicada a escuchar con empatía las historias de nuestros clientes para traducirlas en obras de arte eternas. Su mirada sensible guía la selección de cada gema y supervisa el detalle final de cada pieza.' },
@@ -86,34 +91,41 @@ export const NOSOTROS_DEFAULTS = {
         ],
     },
 
-    // 2/6/8/9. CARTAGENA — la casa/atelier + prueba social. Texto plano del atelier +
-    // TRES listas (stats, certs, resenas) que se pintan en sus secciones visuales.
-    cartagena: {
-        // 6. Atelier (split) — título con énfasis + 2 párrafos + ubicación/visitas (2 líneas c/u)
-        atelierTitle1: 'Donde el oficio',
-        atelierTitleEm: 'toma forma',
-        atelierP1:     'En el corazón del Centro Histórico de Cartagena tenemos nuestra casa: un espacio abierto al público donde te recibimos con calma y una atención cálida y personalizada. Aquí se conversa, se diseña y se crea — porque en Bersaglio no revendemos: fabricamos cada pieza.',
-        atelierP2:     'Kary y su equipo acompañan cada paso: desde la primera conversación y el boceto a mano alzada, hasta dar vida a la joya y entregarla firmada. Un proceso cercano, sin prisas y hecho a la medida de tu historia.',
-        ubicacionL1:   'Calle 36 # 6-32 · San Agustín Chiquita',
-        ubicacionL2:   'Centro Histórico · Cartagena de Indias',
-        visitasL1:     'Con o sin cita previa',
-        visitasL2:     'Lun–Sáb · 10:00–19:00',
-        // 2. Stats (4 columnas)
-        stats: [
+    // 7. ATELIER — la casa/atelier (texto plano): título con énfasis + 2 párrafos + ubicación/visitas (2 líneas c/u)
+    atelier: {
+        title1:      'Donde el oficio',
+        titleEm:     'toma forma',
+        p1:          'En el corazón del Centro Histórico de Cartagena tenemos nuestra casa: un espacio abierto al público donde te recibimos con calma y una atención cálida y personalizada. Aquí se conversa, se diseña y se crea — porque en Bersaglio no revendemos: fabricamos cada pieza.',
+        p2:          'Kary y su equipo acompañan cada paso: desde la primera conversación y el boceto a mano alzada, hasta dar vida a la joya y entregarla firmada. Un proceso cercano, sin prisas y hecho a la medida de tu historia.',
+        ubicacionL1: 'Calle 36 # 6-32 · San Agustín Chiquita',
+        ubicacionL2: 'Centro Histórico · Cartagena de Indias',
+        visitasL1:   'Con o sin cita previa',
+        visitasL2:   'Lun–Sáb · 10:00–19:00',
+    },
+
+    // 8. CIFRAS — lista (4 columnas de stats)
+    cifras: {
+        items: [
             { n: '13',     l: 'años de oficio',    s: 'desde 2013' },
             { n: '+1.200', l: 'piezas entregadas', s: 'con libreta de origen' },
             { n: '40',     l: 'países alcanzados', s: 'envíos asegurados' },
             { n: '100%',   l: 'trazabilidad',      s: 'gema · oro · orfebre' },
         ],
-        // 8. Certificaciones (4 cards)
-        certs: [
+    },
+
+    // 9. CERTIFICACIONES — lista (4 cards)
+    certificaciones: {
+        items: [
             { t: 'Jewelers of America',           d: 'Miembro acreditado desde 2020' },
             { t: 'GIA',                            d: 'Reportes gemológicos en cada diamante' },
             { t: 'Muzo Origin',                    d: 'Certificación de mina en cada esmeralda' },
             { t: 'Responsible Jewellery Council',  d: 'Trazabilidad de oro y prácticas éticas' },
         ],
-        // 9. Reseñas (4 cards) — TODO(contenido real): Kary pega reseñas reales de Google Maps.
-        resenas: [
+    },
+
+    // 10. RESEÑAS — lista (4 cards) — TODO(contenido real): Kary pega reseñas reales de Google Maps.
+    resenas: {
+        items: [
             { n: 'Valentina Restrepo', t: 'Llegué sin saber muy bien qué quería y salí con la pieza de mis sueños. Kary entendió mi historia mejor que yo. El trato es de otro nivel.', loc: 'Reseña en Google Maps' },
             { n: 'Andrés Mejía',       t: 'Mandé hacer el anillo de compromiso y superó todo lo que imaginaba. Se siente el amor por el oficio en cada detalle. Mil gracias.', loc: 'Reseña en Google Maps' },
             { n: 'Camila Tordecilla',  t: 'Un lugar precioso en el Centro Histórico. Te reciben con un café y una paciencia que ya no se ve. La esmeralda quedó espectacular.', loc: 'Reseña en Google Maps' },
@@ -121,9 +133,9 @@ export const NOSOTROS_DEFAULTS = {
         ],
     },
 
-    // 10/11. CIERRE — FAQ (lista) + CTA final (texto plano)
-    cierre: {
-        faqs: [
+    // 11. FAQS — lista (6 preguntas)
+    faqs: {
+        items: [
             { q: '¿Cuánto tarda una pieza a medida?',      a: 'Entre cuatro y seis semanas desde la aprobación del boceto. La primera conversación, los renders y los ajustes pueden sumar dos semanas adicionales. No aceleramos plazos: el oficio paciente no admite atajos.' },
             { q: '¿Trabajan con piedras del cliente?',     a: 'Sí. Recibimos gemas heredadas, las evaluamos con nuestra gemóloga, y las integramos en una pieza nueva. Si la talla original tiene daños, ofrecemos retalle previo en taller especializado.' },
             { q: '¿Hacen envíos internacionales?',         a: 'Sí, con seguro pleno declarado y entrega registrada por DHL Express o FedEx Priority. Despachamos a más de cuarenta países. Los aranceles del país destino corren por cuenta del cliente.' },
@@ -131,6 +143,10 @@ export const NOSOTROS_DEFAULTS = {
             { q: '¿Puedo visitar el atelier sin comprar?', a: 'Por supuesto. La cita previa es solo para garantizar que tengamos tiempo para ti. Recibirás un café, te mostraremos el taller, conocerás al maestro orfebre. Sin compromiso de compra.' },
             { q: '¿Qué garantía tienen las piezas?',       a: 'Garantía de por vida en estructura y engaste. Si una piedra se afloja, la reparamos sin costo. Si una soldadura cede, la rehacemos. Mientras Bersaglio exista, tu pieza tiene casa.' },
         ],
+    },
+
+    // 12. CIERRE — CTA final (texto plano)
+    cierre: {
         ctaEyebrow: 'EMPEZAMOS POR UNA CONVERSACIÓN',
         ctaTitle1:  'Tu próxima joya',
         ctaTitleEm: 'comienza con un café',
@@ -144,6 +160,11 @@ function mergeList(docVal, defVal) {
     return Array.isArray(docVal) ? docVal : defVal;
 }
 
+/** Atajo: sub-mapa que es SOLO una lista (items). */
+function mergeItems(docSec, defSec) {
+    return { items: mergeList(docSec && docSec.items, defSec.items) };
+}
+
 /**
  * merge(DEFAULTS, doc) — espejo de mergeContacto extendido con listas. Robusto a doc
  * null/parcial. Campos planos por spread; listas por REEMPLAZO (una `[]` explícita se
@@ -153,24 +174,18 @@ export function mergeNosotros(doc) {
     const d = doc || {};
     const D = NOSOTROS_DEFAULTS;
     return {
-        hero:       { ...D.hero,       ...(d.hero || {}) },
-        manifiesto: { ...D.manifiesto, ...(d.manifiesto || {}) },
-        maison:     { ...D.maison,     ...(d.maison || {}) },
-        valores:    { ...D.valores,  ...(d.valores  || {}), items: mergeList(d.valores  && d.valores.items,  D.valores.items) },
-        timeline:   { ...D.timeline, ...(d.timeline || {}), items: mergeList(d.timeline && d.timeline.items, D.timeline.items) },
-        equipo:     { items: mergeList(d.equipo   && d.equipo.items,   D.equipo.items) },
-        cartagena: {
-            ...D.cartagena,
-            ...(d.cartagena || {}),
-            stats:   mergeList(d.cartagena && d.cartagena.stats,   D.cartagena.stats),
-            certs:   mergeList(d.cartagena && d.cartagena.certs,   D.cartagena.certs),
-            resenas: mergeList(d.cartagena && d.cartagena.resenas, D.cartagena.resenas),
-        },
-        cierre: {
-            ...D.cierre,
-            ...(d.cierre || {}),
-            faqs: mergeList(d.cierre && d.cierre.faqs, D.cierre.faqs),
-        },
+        hero:            { ...D.hero,       ...(d.hero || {}) },
+        manifiesto:      { ...D.manifiesto, ...(d.manifiesto || {}) },
+        maison:          { ...D.maison,     ...(d.maison || {}) },
+        valores:         { ...D.valores,  ...(d.valores  || {}), items: mergeList(d.valores  && d.valores.items,  D.valores.items) },
+        timeline:        { ...D.timeline, ...(d.timeline || {}), items: mergeList(d.timeline && d.timeline.items, D.timeline.items) },
+        equipo:          mergeItems(d.equipo,          D.equipo),
+        atelier:         { ...D.atelier,   ...(d.atelier || {}) },
+        cifras:          mergeItems(d.cifras,          D.cifras),
+        certificaciones: mergeItems(d.certificaciones, D.certificaciones),
+        resenas:         mergeItems(d.resenas,         D.resenas),
+        faqs:            mergeItems(d.faqs,            D.faqs),
+        cierre:          { ...D.cierre, ...(d.cierre || {}) },
     };
 }
 

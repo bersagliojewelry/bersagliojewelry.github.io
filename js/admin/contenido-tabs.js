@@ -205,6 +205,7 @@ const nosotrosTextsDescriptor = {
             { name: 'imageEyebrow', label: 'Imagen — antetítulo',         type: 'text', max: 44 },
             { name: 'quote',        label: 'Cita (sin comillas)',         type: 'text', max: 80 },
             { name: 'quoteAuthor',  label: 'Cita — autor',                type: 'text', max: 32 },
+            { name: 'image',        label: 'Imagen de portada',           type: 'image' },
         ]},
         { key: 'manifiesto', label: 'Manifiesto', fields: [
             { name: 'titlePre',  label: 'Frase — inicio',                type: 'textarea', rows: 2, max: 120 },
@@ -238,9 +239,10 @@ const nosotrosTextsDescriptor = {
         ]},
         { key: 'equipo', label: 'Equipo (lista)', fields: [
             { name: 'items', type: 'list', max: 12, addLabel: 'Añadir persona', singular: 'Persona', itemTitleFrom: 'n', itemFields: [
-                { name: 'n', label: 'Nombre',      type: 'text', max: 48 },
-                { name: 'r', label: 'Cargo',       type: 'text', max: 48 },
-                { name: 'b', label: 'Biografía',   type: 'textarea', rows: 3, max: 380 },
+                { name: 'n',   label: 'Nombre',    type: 'text', max: 48 },
+                { name: 'r',   label: 'Cargo',     type: 'text', max: 48 },
+                { name: 'b',   label: 'Biografía', type: 'textarea', rows: 3, max: 380 },
+                { name: 'img', label: 'Foto (opcional; si la dejas vacía se usan las iniciales)', type: 'image' },
             ]},
         ]},
         { key: 'atelier', label: 'Atelier (la casa)', fields: [

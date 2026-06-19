@@ -28,12 +28,26 @@ export function createSingletonAdmin(d) {
     let loaded = null;        // valores guardados+merge (baseline para "Descartar")
     let undoSnapshot = null;  // estado ANTES del último guardado (para "Deshacer")
     let debounceT = 0;
+    let dirty = false;        // F3 (barandas): hay cambios sin publicar
     const hasPreview = !!(d.preview && typeof d.preview.render === 'function');
     const $ = sel => host.querySelector(sel);
+
+    // F3: indicador "Publicado ✓ / ● Cambios sin publicar" + estado para el guard de pestaña.
+    function setPubStatus() {
+        const el = host && host.querySelector('[data-pub-status]');
+        if (!el) return;
+        el.textContent = dirty ? '● Cambios sin publicar' : 'Publicado ✓';
+        el.classList.toggle('sf-pub-status--dirty', dirty);
+    }
+    function markDirty() { if (!dirty) { dirty = true; setPubStatus(); } }
+    function markClean() { dirty = false; setPubStatus(); }
+    /** F3: aviso del navegador al cerrar/recargar con cambios sin publicar. */
+    function onBeforeUnload(e) { if (dirty) { e.preventDefault(); e.returnValue = ''; } }
 
     async function mountInto(hostEl) {
         host = hostEl;
         mount(host, skeleton());
+        window.addEventListener('beforeunload', onBeforeUnload);   // F3: baranda de salida
         $('[data-save]').addEventListener('click', save);
         const discardBtn = $('[data-discard]');
         if (discardBtn) discardBtn.addEventListener('click', discard);
@@ -46,6 +60,7 @@ export function createSingletonAdmin(d) {
         if (!host) return;     // se desmontó mientras cargaba
         loaded = mergeSections(d.defaults, doc, d.sections);
         fillForm(loaded);
+        markClean();           // F3: baseline tras cargar = publicado
 
         const formEl = $('[data-form]');
         formEl.addEventListener('input', onInput);     // delegado (sobrevive a re-fill): contadores + título de ítem + preview
@@ -129,6 +144,7 @@ export function createSingletonAdmin(d) {
             hidden.value = url;
             setImgPreview(previewE, url);
             if (clearBtn) clearBtn.hidden = false;
+            markDirty();                               // F3: imagen subida = cambios sin publicar
             refreshPreview();                          // el iframe muestra la imagen nueva al instante
             admToast('Imagen subida. Guarda para publicarla.');
         } catch (err) {
@@ -149,6 +165,7 @@ export function createSingletonAdmin(d) {
         wrap.querySelector('input[type="hidden"][data-sf]').value = '';
         setImgPreview(wrap.querySelector('[data-img-preview]'), '');
         btn.hidden = true;
+        markDirty();                                   // F3: imagen quitada = cambios sin publicar
         refreshPreview();
     }
 
@@ -236,6 +253,7 @@ export function createSingletonAdmin(d) {
             reindexList(listEl, listKey);
             updateListCount(field, listEl, max);
             card.querySelector('[data-sf]')?.focus();
+            markDirty();
             refreshPreview();
             return;
         }
@@ -248,6 +266,7 @@ export function createSingletonAdmin(d) {
             card.remove();
             reindexList(listEl, listKey);
             updateListCount(field, listEl, max);
+            markDirty();
             refreshPreview();
             return;
         }
@@ -256,6 +275,7 @@ export function createSingletonAdmin(d) {
             if (prev && prev.matches('[data-sf-item]')) {
                 listEl.insertBefore(card, prev);
                 reindexList(listEl, listKey);
+                markDirty();
                 refreshPreview();
             }
             return;
@@ -265,6 +285,7 @@ export function createSingletonAdmin(d) {
             if (next && next.matches('[data-sf-item]')) {
                 listEl.insertBefore(next, card);
                 reindexList(listEl, listKey);
+                markDirty();
                 refreshPreview();
             }
         }
@@ -272,13 +293,15 @@ export function createSingletonAdmin(d) {
 
     function destroy() {
         clearTimeout(debounceT);
+        window.removeEventListener('beforeunload', onBeforeUnload);   // F3
         if (preview) { preview.destroy(); preview = null; }
         if (host) mount(host, '');
         host = null;
     }
 
     function skeleton() {
-        const actions = `<div style="display:flex;gap:8px;flex-wrap:wrap;">
+        const actions = `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <span class="sf-pub-status" data-pub-status></span>
             <button class="adm-btn adm-btn--ghost" data-undo hidden>↩ Deshacer guardado</button>
             ${hasPreview ? '<button class="adm-btn adm-btn--ghost" data-discard>Descartar cambios</button>' : ''}
             <button class="adm-btn adm-btn--primary" data-save>Guardar cambios</button>
@@ -317,6 +340,7 @@ export function createSingletonAdmin(d) {
     }
 
     function onInput(e) {
+        markDirty();                               // F3: cualquier edición = cambios sin publicar
         updateCounter(e.target);
         updateItemTitle(e.target);                 // P4: refleja en vivo el título de la tarjeta de lista
         if (!hasPreview) return;
@@ -339,6 +363,7 @@ export function createSingletonAdmin(d) {
         if (!loaded) return;
         fillForm(loaded);
         refreshPreview();
+        markClean();              // F3: vuelve al baseline publicado
         admToast('Cambios descartados.');
     }
 
@@ -360,6 +385,7 @@ export function createSingletonAdmin(d) {
             refreshPreview();
             undoSnapshot = null;
             showUndo(false);
+            markClean();              // F3: el estado restaurado quedó publicado
             admToast('Se restauró la versión anterior.');
         } catch (err) {
             console.error(`[singleton-admin:${d.page}] undo failed:`, err);
@@ -379,6 +405,7 @@ export function createSingletonAdmin(d) {
             loaded = data;            // nuevo baseline para "Descartar"
             undoSnapshot = preSave;   // habilita "Deshacer guardado"
             showUndo(true);
+            markClean();              // F3: publicado ✓
             admToast('Textos guardados. Se verán en la web al recargar.');
         } catch (err) {
             console.error(`[singleton-admin:${d.page}] save failed:`, err);
@@ -388,7 +415,7 @@ export function createSingletonAdmin(d) {
         }
     }
 
-    return { mount: mountInto, destroy };
+    return { mount: mountInto, destroy, isDirty: () => dirty };
 }
 
 export default createSingletonAdmin;

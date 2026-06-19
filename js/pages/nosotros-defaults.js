@@ -35,6 +35,7 @@ export const NOSOTROS_DEFAULTS = {
         imageEyebrow: 'ATELIER · CARTAGENA DE INDIAS',
         quote:        'Nuestra casa es tu casa.',
         quoteAuthor:  'KARY MENDOZA',
+        image:        '',   // imagen de portada custom (Storage); vacío → fondo CSS por defecto
     },
 
     // 2. MANIFIESTO — frase central con énfasis en el medio (texto plano)
@@ -101,6 +102,7 @@ export const NOSOTROS_DEFAULTS = {
         ubicacionL2: 'Centro Histórico · Cartagena de Indias',
         visitasL1:   'Con o sin cita previa',
         visitasL2:   'Lun–Sáb · 10:00–19:00',
+        image:       '',   // imagen del atelier custom (Storage); vacío → fondo CSS por defecto
     },
 
     // 8. CIFRAS — lista (4 columnas de stats)

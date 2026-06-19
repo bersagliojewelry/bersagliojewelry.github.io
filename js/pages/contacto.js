@@ -33,7 +33,9 @@
 
 import { html, escape, fragment } from '../core/html.js';
 import { data } from '../core/data.js';
+import { safeUrl } from '../core/safe-url.js';
 import { mergeContacto } from './contacto-defaults.js';
+import { mergeGlobal, waHref, igHref } from '../core/global-defaults.js';
 import { saveInquiry } from '../firestore-service.js';
 import { track } from '../analytics.js';
 
@@ -164,11 +166,20 @@ function renderHero() {
 }
 
 function renderCanales() {
+    // CMS global (fuente única): el valor mostrado + el href de cada canal vienen de
+    // siteContent/global.contacto (whatsapp/email/instagram); el ícono/título/desc son
+    // estructurales. href por safeUrl (anti stored-XSS). Pinta defaults si aún no cargó.
+    const g = mergeGlobal(data.getSiteContent('global')).contacto;
+    const resolve = (c) =>
+        c.k === 'whatsapp'  ? { ...c, v: g.whatsapp,  href: waHref(g.whatsapp) }
+      : c.k === 'email'     ? { ...c, v: g.email,      href: `mailto:${g.email}` }
+      : c.k === 'instagram' ? { ...c, v: g.instagram,  href: igHref(g.instagram) }
+      : c;
     return html`
         <section class="ct-canales canales-grid">
-            ${CANALES.map(c => html`
+            ${CANALES.map(resolve).map(c => html`
                 <a class="glass glass-iridescent canal-card"
-                   href="${c.href}"
+                   href="${escape(safeUrl(c.href))}"
                    ${c.k === 'instagram' || c.k === 'whatsapp' ? 'target="_blank" rel="noopener"' : ''}>
                     <div class="canal-icon canal-icon--${escape(c.k)}">
                         ${c.icon}
@@ -756,12 +767,18 @@ export async function init() {
     // CMS P2: copy editable (hero/proceso/faq). Pinta con DEFAULTS ya; re-pinta SOLO
     // esas secciones al resolver el getDoc (NO toca el formulario ni su estado).
     data.loadSiteContent('contacto').then(refreshCopy);
+    // CMS global: canales (whatsapp/email/instagram) desde siteContent/global (fuente única).
+    data.loadSiteContent('global').then(refreshCanales);
 }
 
 function refreshCopy() {
     replaceSection('.ct-hero', renderHero());
     replaceSection('.ct-proceso', renderProceso());
     replaceSection('.ct-faq-section', renderFAQRapido());
+}
+
+function refreshCanales() {
+    replaceSection('.ct-canales', renderCanales());
 }
 
 function replaceSection(sel, htmlStr) {

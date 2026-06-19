@@ -301,10 +301,13 @@ const globalDescriptor = {
     help:  'Datos compartidos en todo el sitio (aparecen en el footer de todas las páginas). Edita una vez y se actualiza en todas partes. Los enlaces de redes van completos, empezando con https://',
     defaults: GLOBAL_DEFAULTS,
     sections: [
-        { key: 'redes', label: 'Redes sociales', fields: [
-            { name: 'instagram', label: 'Instagram (enlace)',       type: 'text', max: 200 },
-            { name: 'facebook',  label: 'Facebook (enlace)',        type: 'text', max: 200 },
-            { name: 'whatsapp',  label: 'WhatsApp (enlace wa.me)',  type: 'text', max: 200 },
+        { key: 'contacto', label: 'Canales de contacto (fuente única)', fields: [
+            { name: 'whatsapp',  label: 'WhatsApp — como se muestra (ej. +57 301 375 2592)', type: 'text', max: 40 },
+            { name: 'email',     label: 'Correo',                                             type: 'text', max: 80 },
+            { name: 'instagram', label: 'Instagram — handle (ej. @bersagliojewelry)',         type: 'text', max: 40 },
+        ]},
+        { key: 'redes', label: 'Otras redes', fields: [
+            { name: 'facebook', label: 'Facebook (enlace completo)', type: 'text', max: 200 },
         ]},
         { key: 'footer', label: 'Footer', fields: [
             { name: 'tagline', label: 'Frase del footer', type: 'textarea', rows: 3, max: 220 },

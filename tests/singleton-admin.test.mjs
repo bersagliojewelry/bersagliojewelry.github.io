@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { singletonFormHTML, collectSingleton, mergeSections, itemTemplateHTML, reindexItemSf } from '../js/admin/singleton-admin-core.js';
 import { HOME_DEFAULTS, mergeHome } from '../js/home/siteContent-defaults.js';
 import { NOSOTROS_DEFAULTS, mergeNosotros } from '../js/pages/nosotros-defaults.js';
-import { GLOBAL_DEFAULTS, mergeGlobal } from '../js/core/global-defaults.js';
+import { GLOBAL_DEFAULTS, mergeGlobal, waHref, igHref } from '../js/core/global-defaults.js';
 
 const SECTIONS = [
     { key: 'hero', label: 'Portada', fields: [
@@ -256,13 +256,20 @@ test('mergeNosotros: lista corrupta (no-array) cae al default (robustez)', () =>
     assert.deepEqual(m.valores.items, NOSOTROS_DEFAULTS.valores.items);
 });
 
-// ─── CMS `global` (datos compartidos del footer) ───────────────────────────────
+// ─── CMS `global` (datos compartidos: contacto fuente única + footer) ──────────
 test('mergeGlobal: null → DEFAULTS; override por sub-mapa, resto = default', () => {
     assert.deepEqual(mergeGlobal(null), GLOBAL_DEFAULTS);
-    const m = mergeGlobal({ redes: { whatsapp: 'https://wa.me/573013752592' } });
-    assert.equal(m.redes.whatsapp, 'https://wa.me/573013752592');
-    assert.equal(m.redes.instagram, GLOBAL_DEFAULTS.redes.instagram);   // default conservado
+    const m = mergeGlobal({ contacto: { whatsapp: '+57 300 000 0000' } });
+    assert.equal(m.contacto.whatsapp, '+57 300 000 0000');
+    assert.equal(m.contacto.email, GLOBAL_DEFAULTS.contacto.email);     // default conservado
     assert.equal(m.footer.tagline, GLOBAL_DEFAULTS.footer.tagline);
+});
+
+test('waHref/igHref: derivan enlaces robustos desde el valor mostrado (fuente única)', () => {
+    assert.equal(waHref('+57 301 375 2592'), 'https://wa.me/573013752592');   // strip no-dígitos
+    assert.equal(waHref(''), 'https://wa.me/');
+    assert.equal(igHref('@bersagliojewelry'), 'https://instagram.com/bersagliojewelry'); // strip @
+    assert.equal(igHref('bersagliojewelry'),  'https://instagram.com/bersagliojewelry');
 });
 
 test('mergeNosotros: encabezado editable (B) de valores/timeline — override plano + lista intacta', () => {

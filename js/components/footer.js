@@ -17,7 +17,7 @@
 import { html, escape, mount } from '../core/html.js';
 import { data } from '../core/data.js';
 import { safeUrl } from '../core/safe-url.js';
-import { mergeGlobal } from '../core/global-defaults.js';
+import { mergeGlobal, waHref, igHref } from '../core/global-defaults.js';
 
 const COLUMNS = [
     {
@@ -85,6 +85,11 @@ function logoSVG() {
 /** HTML del footer a partir del contenido global merged (PURO). */
 function footerHTML(g) {
     const year = new Date().getFullYear();
+    // Fuente única: IG/WA se derivan de g.contacto; Facebook vive en g.redes.
+    const socialHref = (key) =>
+        key === 'instagram' ? igHref(g.contacto.instagram)
+      : key === 'whatsapp'  ? waHref(g.contacto.whatsapp)
+      : (g.redes[key] || '');
     return html`
         <footer class="bj-footer" role="contentinfo">
             <div class="container">
@@ -97,7 +102,7 @@ function footerHTML(g) {
                         <p class="bj-footer-tagline">${escape(g.footer.tagline)}</p>
                         <div class="bj-footer-social">
                             ${SOCIAL.map(s => html`
-                                <a href="${escape(safeUrl(g.redes[s.key]))}"
+                                <a href="${escape(safeUrl(socialHref(s.key)))}"
                                    class="bj-footer-social-btn"
                                    aria-label="${escape(s.label)}"
                                    target="_blank"

@@ -8,6 +8,8 @@
  * Componente GLOBAL: boot.js lo monta en todas las páginas públicas.
  */
 import { html, escape } from '../core/html.js';
+import { data } from '../core/data.js';
+import { mergeGlobal, waHref } from '../core/global-defaults.js';
 
 let _root = null;
 let _open = false;
@@ -16,9 +18,14 @@ let _drag = null;
 
 const STROKE = 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
 
+/** Enlace de WhatsApp del dock desde la FUENTE ÚNICA (siteContent/global.contacto); fallback = default real. */
+function waUrl() {
+    return waHref(mergeGlobal(data.getSiteContent('global')).contacto.whatsapp);
+}
+
 const TOOLS = [
     { label: 'Buscar', action: 'search', icon: html`<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>` },
-    { label: 'WhatsApp', cls: 'qd-tool--wa', href: 'https://wa.me/573013752592', fill: true, icon: html`<path d="M.057 24l1.687-6.163a11.867 11.867 0 0 1-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.817 11.817 0 0 1 8.413 3.488 11.824 11.824 0 0 1 3.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 0 1-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 0 0 1.515 5.26l-.999 3.648 3.973-1.607zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/>` },
+    { label: 'WhatsApp', cls: 'qd-tool--wa', wa: true, fill: true, icon: html`<path d="M.057 24l1.687-6.163a11.867 11.867 0 0 1-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.817 11.817 0 0 1 8.413 3.488 11.824 11.824 0 0 1 3.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 0 1-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 0 0 1.515 5.26l-.999 3.648 3.973-1.607zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/>` },
     { label: 'Cita', cls: 'qd-tool--gold', href: '/contacto.html', icon: html`<path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>` },
     { label: 'Favoritos', href: '/lista-deseos.html', icon: html`<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>` },
     { label: 'Arriba', action: 'top', icon: html`<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>` },
@@ -64,10 +71,12 @@ function render() {
             <div class="qd-anchor" data-qd-anchor>
                 <div class="qd-strip">
                     <div class="qd-tools">
-                        ${TOOLS.map(t => t.href
-                            ? html`<a class="qd-tool ${t.cls || ''}" href="${t.href}" ${t.href.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} data-qd-close>${toolIcon(t)}<span class="qd-tool-label">${escape(t.label)}</span></a>`
-                            : html`<button class="qd-tool ${t.cls || ''}" type="button" data-qd-action="${escape(t.action)}">${toolIcon(t)}<span class="qd-tool-label">${escape(t.label)}</span></button>`
-                        )}
+                        ${TOOLS.map(t => {
+                            const href = t.wa ? waUrl() : t.href;   // WhatsApp = fuente única
+                            return href
+                                ? html`<a class="qd-tool ${t.cls || ''}" href="${href}" ${href.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} data-qd-close>${toolIcon(t)}<span class="qd-tool-label">${escape(t.label)}</span></a>`
+                                : html`<button class="qd-tool ${t.cls || ''}" type="button" data-qd-action="${escape(t.action)}">${toolIcon(t)}<span class="qd-tool-label">${escape(t.label)}</span></button>`;
+                        })}
                     </div>
                 </div>
                 <button class="qd-island" type="button" data-qd-island aria-label="Atajos — arrastra para mover, clic para abrir" aria-expanded="false">
@@ -138,6 +147,13 @@ export function mountQuickDock() {
     wrap.innerHTML = render();
     _root = wrap.firstElementChild;
     document.body.appendChild(_root);
+
+    // CMS global: el WhatsApp del dock deriva de la fuente única. Parchea el href en sitio
+    // cuando llega el override (sin re-render → preserva posición/estado del dock).
+    data.onChange(() => {
+        const a = _root?.querySelector('.qd-tool--wa');
+        if (a) a.href = waUrl();
+    });
 
     const island = _root.querySelector('[data-qd-island]');
     island.addEventListener('pointerdown', onDown);

@@ -16,6 +16,7 @@ import { wishlist } from '../core/wishlist.js';
 import { cart } from '../core/cart.js';
 import { format$ } from '../core/format.js';
 import { data } from '../core/data.js';
+import { mergeGlobal, waHref } from '../core/global-defaults.js';
 
 let _root = null;
 let _backdrop = null;
@@ -67,14 +68,15 @@ function joinWishlistWithPieces() {
 }
 
 function buildShareURL(rows) {
-    const phone = '573013752592';   // número REAL (corrige el placeholder; futuro: leer de siteContent/global)
+    // WhatsApp desde la FUENTE ÚNICA (siteContent/global.contacto); fallback = default real.
+    const waBase = waHref(mergeGlobal(data.getSiteContent('global')).contacto.whatsapp);
     const lines = rows.map(r => {
         const name = r.piece?.name || r.slug;
         const url = `https://bersagliojewelry.co/pieza.html?p=${encodeURIComponent(r.slug)}`;
         return `• ${name}\n  ${url}`;
     });
     const message = `Hola Bersaglio, me interesan estas piezas de mi lista:\n\n${lines.join('\n\n')}`;
-    return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    return `${waBase}?text=${encodeURIComponent(message)}`;
 }
 
 function renderContents() {

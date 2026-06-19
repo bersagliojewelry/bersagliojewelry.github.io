@@ -1,19 +1,23 @@
 /**
  * Bersaglio Jewelry — Footer 4-col glass grid.
  *
- * Mirror exact de BERSAGLIO NOVO/project/js/shell.jsx (Footer L249-307):
  *   col 1 (1.3fr): logo + tagline + social icons (IG / FB / WA)
- *   col 2: Colecciones links
- *   col 3: Casa links
- *   col 4: Servicio links
- * + bottom bar: copyright + Certificado JA
+ *   col 2: Colecciones links · col 3: Casa links · col 4: Servicio links
+ * + bottom bar: copyright + legales
  *
- * Responsive:
- *   ≤820px → 2 cols
- *   ≤520px → 1 col
+ * CMS `global` (increment 1): la tagline + las URLs de redes vienen de
+ * merge(GLOBAL_DEFAULTS, siteContent/global) — editables desde el panel (Contenido web →
+ * Datos globales). Pinta con DEFAULTS al instante (sin esperar Firestore) y re-pinta una
+ * vez si llega un override. Las URLs van por safeUrl() (anti stored-XSS, repo público L-15).
+ * Los links de navegación + legales son ESTRUCTURALES (no editables).
+ *
+ * Responsive: ≤820px → 2 cols · ≤520px → 1 col
  */
 
-import { html, escape } from '../core/html.js';
+import { html, escape, mount } from '../core/html.js';
+import { data } from '../core/data.js';
+import { safeUrl } from '../core/safe-url.js';
+import { mergeGlobal } from '../core/global-defaults.js';
 
 const COLUMNS = [
     {
@@ -45,10 +49,10 @@ const COLUMNS = [
     },
 ];
 
+// El href de cada red viene de global.redes[key] (editable); svg/label fijos.
 const SOCIAL = [
     {
         key: 'instagram',
-        href: 'https://www.instagram.com/bersagliojewelry/',
         label: 'Instagram',
         svg: html`
             <rect x="3" y="3" width="18" height="18" rx="5"/>
@@ -57,13 +61,11 @@ const SOCIAL = [
     },
     {
         key: 'facebook',
-        href: 'https://www.facebook.com/bersagliojewelry',
         label: 'Facebook',
         svg: html`<path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>`,
     },
     {
         key: 'whatsapp',
-        href: 'https://wa.me/573001234567',
         label: 'WhatsApp',
         svg: html`
             <path d="M20.5 3.5A11 11 0 0 0 3.4 17l-1.4 5.1 5.2-1.4A11 11 0 1 0 20.5 3.5z"/>
@@ -80,13 +82,10 @@ function logoSVG() {
         </svg>`;
 }
 
-export function mountFooter() {
-    const root = document.getElementById('footer-mount');
-    if (!root) return;
-
+/** HTML del footer a partir del contenido global merged (PURO). */
+function footerHTML(g) {
     const year = new Date().getFullYear();
-
-    root.innerHTML = html`
+    return html`
         <footer class="bj-footer" role="contentinfo">
             <div class="container">
                 <div class="glass glass-iridescent bj-footer-grid">
@@ -95,13 +94,10 @@ export function mountFooter() {
                             ${logoSVG()}
                             <div class="bj-footer-brand-name">BERSAGLIO</div>
                         </div>
-                        <p class="bj-footer-tagline">
-                            Alta joyería con esmeraldas colombianas, diamantes certificados
-                            y oro 18K. Piezas diseñadas para trascender generaciones.
-                        </p>
+                        <p class="bj-footer-tagline">${escape(g.footer.tagline)}</p>
                         <div class="bj-footer-social">
                             ${SOCIAL.map(s => html`
-                                <a href="${s.href}"
+                                <a href="${escape(safeUrl(g.redes[s.key]))}"
                                    class="bj-footer-social-btn"
                                    aria-label="${escape(s.label)}"
                                    target="_blank"
@@ -135,6 +131,17 @@ export function mountFooter() {
                 </div>
             </div>
         </footer>`;
+}
+
+export function mountFooter() {
+    const root = document.getElementById('footer-mount');
+    if (!root) return;
+    const paint = () => mount(root, footerHTML(mergeGlobal(data.getSiteContent('global'))));
+    paint();   // DEFAULTS al instante (sin esperar Firestore)
+    // CMS global: re-pinta una vez si hay override editado desde el panel.
+    data.loadSiteContent('global')
+        .then(() => { if (document.getElementById('footer-mount')) paint(); })
+        .catch(() => { /* offline / sin doc → quedan los defaults */ });
 }
 
 export default { mountFooter };

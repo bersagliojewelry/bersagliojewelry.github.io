@@ -12,6 +12,7 @@ import { createSingletonAdmin } from './singleton-admin.js';
 import { HOME_DEFAULTS } from '../home/siteContent-defaults.js';
 import { CONTACTO_DEFAULTS } from '../pages/contacto-defaults.js';
 import { NOSOTROS_DEFAULTS } from '../pages/nosotros-defaults.js';
+import { GLOBAL_DEFAULTS } from '../core/global-defaults.js';
 import { renderHomePreview } from './home-preview.js';
 import { renderContactoPreview } from './contacto-preview.js';
 import { renderNosotrosPreview } from './nosotros-preview.js';
@@ -291,6 +292,26 @@ const nosotrosTextsDescriptor = {
     ],
 };
 
+// ─── Descriptor: Datos globales (SINGLETON siteContent/global) ──────────────────
+// CMS `global` increment 1: redes + tagline del footer (compartidos en TODO el sitio).
+// Form-only (sin preview — no es una página). Las URLs van por safeUrl en el render.
+const globalDescriptor = {
+    page:  'global',
+    title: 'Datos globales',
+    help:  'Datos compartidos en todo el sitio (aparecen en el footer de todas las páginas). Edita una vez y se actualiza en todas partes. Los enlaces de redes van completos, empezando con https://',
+    defaults: GLOBAL_DEFAULTS,
+    sections: [
+        { key: 'redes', label: 'Redes sociales', fields: [
+            { name: 'instagram', label: 'Instagram (enlace)',       type: 'text', max: 200 },
+            { name: 'facebook',  label: 'Facebook (enlace)',        type: 'text', max: 200 },
+            { name: 'whatsapp',  label: 'WhatsApp (enlace wa.me)',  type: 'text', max: 200 },
+        ]},
+        { key: 'footer', label: 'Footer', fields: [
+            { name: 'tagline', label: 'Frase del footer', type: 'textarea', rows: 3, max: 220 },
+        ]},
+    ],
+};
+
 // ─── Registro de pestañas ───────────────────────────────────────────────────────
 // id = ancla en la URL (#journal). create() devuelve un controlador fresco por
 // activación (el shell hace destroy() al cambiar de pestaña → sin listeners zombi).
@@ -299,7 +320,8 @@ export const TABS = [
     { id: 'home',     label: 'Textos del Home',    create: () => createSingletonAdmin(homeTextsDescriptor) },
     { id: 'contacto', label: 'Textos de Contacto', create: () => createSingletonAdmin(contactoTextsDescriptor) },
     { id: 'nosotros', label: 'Textos de Nosotros', create: () => createSingletonAdmin(nosotrosTextsDescriptor) },
-    // Próximas (cuando aterricen): films, social, footer.
+    { id: 'global',   label: 'Datos globales',     create: () => createSingletonAdmin(globalDescriptor) },
+    // Próximas (cuando aterricen): contacto-canales en global, films, social.
 ];
 
 export default TABS;

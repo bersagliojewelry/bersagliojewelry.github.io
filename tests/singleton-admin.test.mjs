@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import { singletonFormHTML, collectSingleton, mergeSections, itemTemplateHTML, reindexItemSf } from '../js/admin/singleton-admin-core.js';
 import { HOME_DEFAULTS, mergeHome } from '../js/home/siteContent-defaults.js';
 import { NOSOTROS_DEFAULTS, mergeNosotros } from '../js/pages/nosotros-defaults.js';
+import { GLOBAL_DEFAULTS, mergeGlobal } from '../js/core/global-defaults.js';
 
 const SECTIONS = [
     { key: 'hero', label: 'Portada', fields: [
@@ -253,6 +254,15 @@ test('mergeNosotros: modelo PLANO — sub-mapa solo-lista respeta [] y default; 
 test('mergeNosotros: lista corrupta (no-array) cae al default (robustez)', () => {
     const m = mergeNosotros({ valores: { items: 'corrupto' } });
     assert.deepEqual(m.valores.items, NOSOTROS_DEFAULTS.valores.items);
+});
+
+// ─── CMS `global` (datos compartidos del footer) ───────────────────────────────
+test('mergeGlobal: null → DEFAULTS; override por sub-mapa, resto = default', () => {
+    assert.deepEqual(mergeGlobal(null), GLOBAL_DEFAULTS);
+    const m = mergeGlobal({ redes: { whatsapp: 'https://wa.me/573013752592' } });
+    assert.equal(m.redes.whatsapp, 'https://wa.me/573013752592');
+    assert.equal(m.redes.instagram, GLOBAL_DEFAULTS.redes.instagram);   // default conservado
+    assert.equal(m.footer.tagline, GLOBAL_DEFAULTS.footer.tagline);
 });
 
 test('mergeNosotros: encabezado editable (B) de valores/timeline — override plano + lista intacta', () => {

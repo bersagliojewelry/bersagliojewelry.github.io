@@ -125,14 +125,15 @@ export function nosotrosFilosofiaSection(c) {
 // ═══════════════════════════════════════════════════════════════════
 // 5. VALORES  (← valores.items; el nº 01.. lo deriva el renderer)
 // ═══════════════════════════════════════════════════════════════════
-export function nosotrosValoresSection(items) {
+export function nosotrosValoresSection(c) {
+    const items = c && c.items;
     if (!Array.isArray(items) || !items.length) return '';
     return html`
         <section class="abt-section">
             <div class="abt-section-header">
-                <div class="mono abt-eyebrow">NUESTROS PRINCIPIOS</div>
+                <div class="mono abt-eyebrow">${escape(c.eyebrow)}</div>
                 <h2 class="abt-section-title">
-                    Seis cosas en las que <span class="italic emerald-text">no negociamos</span>
+                    ${escape(c.titlePre)} <span class="italic emerald-text">${escape(c.titleEm)}</span>
                 </h2>
             </div>
             <div class="val-grid">
@@ -152,15 +153,16 @@ export function nosotrosValoresSection(items) {
 // ═══════════════════════════════════════════════════════════════════
 // 6. TIMELINE  (← timeline.items)
 // ═══════════════════════════════════════════════════════════════════
-export function nosotrosTimelineSection(items, activeChapter = 0) {
+export function nosotrosTimelineSection(c, activeChapter = 0) {
+    const items = c && c.items;
     if (!Array.isArray(items) || !items.length) return '';
     const idx = (activeChapter >= 0 && activeChapter < items.length) ? activeChapter : 0;
-    const c = items[idx];
+    const ch0 = items[idx];
     return html`
         <section class="abt-section">
             <div class="abt-section-header">
                 <h2 class="abt-section-title">
-                    Trece años en <span class="italic emerald-text">cinco capítulos</span>
+                    ${escape(c.titlePre)} <span class="italic emerald-text">${escape(c.titleEm)}</span>
                 </h2>
             </div>
             <div class="glass abt-timeline">
@@ -175,12 +177,12 @@ export function nosotrosTimelineSection(items, activeChapter = 0) {
                 </div>
                 <div class="abt-timeline-content tl-content">
                     <div class="abt-timeline-side">
-                        <div class="display abt-timeline-year">${escape(c.y)}</div>
+                        <div class="display abt-timeline-year">${escape(ch0.y)}</div>
                         <div class="abt-timeline-divider"></div>
                     </div>
                     <div class="abt-timeline-body">
-                        <div class="abt-timeline-title">${escape(c.t)}</div>
-                        <p class="abt-timeline-desc">${escape(c.d)}</p>
+                        <div class="abt-timeline-title">${escape(ch0.t)}</div>
+                        <p class="abt-timeline-desc">${escape(ch0.d)}</p>
                     </div>
                 </div>
             </div>
@@ -376,8 +378,8 @@ function renderAll(c) {
             ${nosotrosStatsSection(c.cartagena.stats)}
             ${nosotrosManifiestoSection(c.manifiesto)}
             ${nosotrosFilosofiaSection(c.maison)}
-            ${nosotrosValoresSection(c.valores.items)}
-            ${nosotrosTimelineSection(c.timeline.items, _activeChapter)}
+            ${nosotrosValoresSection(c.valores)}
+            ${nosotrosTimelineSection(c.timeline, _activeChapter)}
             ${nosotrosAtelierSection(c.cartagena)}
             ${nosotrosEquipoSection(c.equipo.items)}
             ${nosotrosCertsSection(c.cartagena.certs)}
@@ -410,7 +412,7 @@ function refreshTimeline() {
     if (!tl) return;
     const oldSection = tl.closest('.abt-section');
     if (!oldSection) return;
-    const next = fragment(nosotrosTimelineSection(_content.timeline.items, _activeChapter)).firstElementChild;
+    const next = fragment(nosotrosTimelineSection(_content.timeline, _activeChapter)).firstElementChild;
     if (next) oldSection.replaceWith(next);
 }
 

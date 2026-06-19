@@ -32,6 +32,13 @@ function renderTabBar() {
 function activate(id) {
     const tab = tabFor(id);
     if (tab.id === currentId && current) return;   // ya activa: no remontar
+    // F3 (barandas): no abandonar una pestaña con cambios sin publicar sin confirmar.
+    if (current && typeof current.isDirty === 'function' && current.isDirty()) {
+        if (!confirm('Tienes cambios sin publicar en esta sección. Si cambias de pestaña se perderán. ¿Continuar?')) {
+            if (currentId && (location.hash || '').replace('#', '') !== currentId) location.hash = currentId;
+            return;   // el revert del hash re-dispara activate(currentId) → no-op
+        }
+    }
     document.querySelectorAll('#content-tabs [data-tab]').forEach(b =>
         b.classList.toggle('is-active', b.dataset.tab === tab.id)
     );

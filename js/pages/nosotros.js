@@ -7,19 +7,21 @@
  * El modelo (8 sub-mapas) coincide con la whitelist de firestore.rules; las listas viven
  * dentro de sus sub-mapas. Escape() por-hoja en cada string (frontera XSS, repo público).
  *
+ * Modelo PLANO (síntesis Gemini 2026-06-19): se eliminó el grab-bag `cartagena`.
  * Secciones (visual → dato):
  *   1. Hero          ← hero
- *   2. Stats         ← cartagena.stats        (hide-when-empty)
+ *   2. Cifras        ← cifras.items           (hide-when-empty)
  *   3. Manifiesto    ← manifiesto
  *   4. Filosofía     ← maison (misión/visión)
  *   5. Valores       ← valores.items          (hide-when-empty; nº 01.. derivado)
  *   6. Timeline      ← timeline.items         (hide-when-empty)
- *   7. Atelier       ← cartagena (texto)
+ *   7. Atelier       ← atelier (texto)
  *   8. Equipo        ← equipo.items           (hide-when-empty; avatar = iniciales)
- *   9. Certs         ← cartagena.certs        (hide-when-empty)
- *  10. Reseñas       ← cartagena.resenas      (hide-when-empty)
- *  11. FAQ           ← cierre.faqs            (hide-when-empty)
+ *   9. Certs         ← certificaciones.items  (hide-when-empty)
+ *  10. Reseñas       ← resenas.items          (hide-when-empty)
+ *  11. FAQ           ← faqs.items             (hide-when-empty)
  *  12. CTA           ← cierre
+ * Renderers de lista toleran ítems malformados (guard por-ítem, anti poison-pill).
  *
  * Estado interno:
  *   - _openFaq: índice del FAQ abierto (0..n o -1 si todos cerrados)
@@ -71,18 +73,18 @@ export function nosotrosHeroSection(c) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// 2. STATS  (← cartagena.stats)
+// 2. CIFRAS  (← cifras.items)
 // ═══════════════════════════════════════════════════════════════════
 export function nosotrosStatsSection(stats) {
     if (!Array.isArray(stats) || !stats.length) return '';
     return html`
         <section class="glass abt-stats">
-            ${stats.map((k, i) => html`
+            ${stats.map((raw, i) => { const k = raw || {}; return html`
                 <div class="abt-stat ${i > 0 ? 'abt-stat--bordered' : ''}">
                     <div class="display abt-stat-num">${escape(k.n)}</div>
                     <div class="abt-stat-label">${escape(k.l)}</div>
                     <div class="mono abt-stat-sub">${escape(k.s)}</div>
-                </div>`)}
+                </div>`; })}
         </section>`;
 }
 
@@ -137,7 +139,7 @@ export function nosotrosValoresSection(c) {
                 </h2>
             </div>
             <div class="val-grid">
-                ${items.map((v, i) => html`
+                ${items.map((raw, i) => { const v = raw || {}; return html`
                     <div class="glass glass-iridescent val-card">
                         <div class="val-card-num-row">
                             <div class="mono val-card-num">${escape(String(i + 1).padStart(2, '0'))}</div>
@@ -145,7 +147,7 @@ export function nosotrosValoresSection(c) {
                         </div>
                         <div class="val-card-title">${escape(v.t)}</div>
                         <p class="val-card-desc">${escape(v.d)}</p>
-                    </div>`)}
+                    </div>`; })}
             </div>
         </section>`;
 }
@@ -157,7 +159,7 @@ export function nosotrosTimelineSection(c, activeChapter = 0) {
     const items = c && c.items;
     if (!Array.isArray(items) || !items.length) return '';
     const idx = (activeChapter >= 0 && activeChapter < items.length) ? activeChapter : 0;
-    const ch0 = items[idx];
+    const ch0 = items[idx] || {};
     return html`
         <section class="abt-section">
             <div class="abt-section-header">
@@ -167,13 +169,13 @@ export function nosotrosTimelineSection(c, activeChapter = 0) {
             </div>
             <div class="glass abt-timeline">
                 <div class="abt-timeline-tabs">
-                    ${items.map((ch, i) => html`
+                    ${items.map((raw, i) => { const ch = raw || {}; return html`
                         <button type="button"
                                 class="abt-timeline-tab ${i === idx ? 'is-active' : ''}"
                                 data-action="chapter"
                                 data-idx="${i}">
                             <span class="mono abt-timeline-tab-year">${escape(ch.y)}</span>${escape(ch.t)}
-                        </button>`)}
+                        </button>`; })}
                 </div>
                 <div class="abt-timeline-content tl-content">
                     <div class="abt-timeline-side">
@@ -190,7 +192,7 @@ export function nosotrosTimelineSection(c, activeChapter = 0) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// 7. ATELIER  (← cartagena: texto)
+// 7. ATELIER  (← atelier: texto)
 // ═══════════════════════════════════════════════════════════════════
 export function nosotrosAtelierSection(c) {
     return html`
@@ -201,11 +203,11 @@ export function nosotrosAtelierSection(c) {
             </div>
             <div class="glass atl-text">
                 <h3 class="atl-text-title">
-                    ${escape(c.atelierTitle1)}<br>
-                    <span class="italic emerald-text">${escape(c.atelierTitleEm)}</span>
+                    ${escape(c.title1)}<br>
+                    <span class="italic emerald-text">${escape(c.titleEm)}</span>
                 </h3>
-                <p class="atl-text-p">${escape(c.atelierP1)}</p>
-                <p class="atl-text-p">${escape(c.atelierP2)}</p>
+                <p class="atl-text-p">${escape(c.p1)}</p>
+                <p class="atl-text-p">${escape(c.p2)}</p>
                 <div class="atl-stats">
                     <div>
                         <div class="mono atl-stat-key">UBICACIÓN</div>
@@ -240,7 +242,7 @@ export function nosotrosEquipoSection(items) {
                 </h2>
             </div>
             <div class="team-grid">
-                ${items.map((p, i) => html`
+                ${items.map((raw, i) => { const p = raw || {}; return html`
                     <div class="glass glass-iridescent team-card">
                         <div class="team-avatar" style="--ti:${i}">
                             <span class="team-avatar-letter">${escape(avatarInitials(p.n))}</span>
@@ -248,13 +250,13 @@ export function nosotrosEquipoSection(items) {
                         <div class="team-name">${escape(p.n)}</div>
                         <div class="mono team-role">${escape(p.r)}</div>
                         <p class="team-bio">${escape(p.b)}</p>
-                    </div>`)}
+                    </div>`; })}
             </div>
         </section>`;
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// 9. CERTIFICACIONES  (← cartagena.certs)
+// 9. CERTIFICACIONES  (← certificaciones.items)
 // ═══════════════════════════════════════════════════════════════════
 export function nosotrosCertsSection(certs) {
     if (!Array.isArray(certs) || !certs.length) return '';
@@ -269,18 +271,18 @@ export function nosotrosCertsSection(certs) {
                     </h3>
                 </div>
                 <div class="cert-list">
-                    ${certs.map(c => html`
+                    ${certs.map(raw => { const c = raw || {}; return html`
                         <div class="cert-card">
                             <div class="cert-card-title">${escape(c.t)}</div>
                             <div class="cert-card-desc">${escape(c.d)}</div>
-                        </div>`)}
+                        </div>`; })}
                 </div>
             </div>
         </section>`;
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// 10. RESEÑAS  (← cartagena.resenas)
+// 10. RESEÑAS  (← resenas.items)
 // ═══════════════════════════════════════════════════════════════════
 function starsSVG() {
     return [0, 1, 2, 3, 4].map(() => html`<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.9 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 7.1-1.01L12 2z"/></svg>`);
@@ -297,7 +299,7 @@ export function nosotrosResenasSection(resenas) {
                 </h2>
             </div>
             <div class="resena-grid">
-                ${resenas.map(r => html`
+                ${resenas.map(raw => { const r = raw || {}; return html`
                     <div class="glass glass-iridescent resena-card">
                         <div class="resena-stars" aria-label="5 de 5 estrellas">${starsSVG()}</div>
                         <p class="resena-quote">${escape(r.t)}</p>
@@ -305,13 +307,13 @@ export function nosotrosResenasSection(resenas) {
                             <span class="resena-name">${escape(r.n)}</span>
                             <span class="mono resena-src">${escape(r.loc)}</span>
                         </div>
-                    </div>`)}
+                    </div>`; })}
             </div>
         </section>`;
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// 11. FAQ  (← cierre.faqs)
+// 11. FAQ  (← faqs.items)
 // ═══════════════════════════════════════════════════════════════════
 export function nosotrosFaqSection(faqs, openFaq = 0) {
     if (!Array.isArray(faqs) || !faqs.length) return '';
@@ -323,7 +325,7 @@ export function nosotrosFaqSection(faqs, openFaq = 0) {
                 </h2>
             </div>
             <div class="glass faq-wrap">
-                ${faqs.map((f, i) => html`
+                ${faqs.map((raw, i) => { const f = raw || {}; return html`
                     <div class="faq-item ${i < faqs.length - 1 ? 'faq-item--bordered' : ''}">
                         <button type="button"
                                 class="faq-trigger"
@@ -339,7 +341,7 @@ export function nosotrosFaqSection(faqs, openFaq = 0) {
                             <div class="faq-answer">
                                 <p>${escape(f.a)}</p>
                             </div>` : ''}
-                    </div>`)}
+                    </div>`; })}
             </div>
         </section>`;
 }
@@ -375,16 +377,16 @@ function renderAll(c) {
     return html`
         <div class="container abt-page">
             ${nosotrosHeroSection(c.hero)}
-            ${nosotrosStatsSection(c.cartagena.stats)}
+            ${nosotrosStatsSection(c.cifras.items)}
             ${nosotrosManifiestoSection(c.manifiesto)}
             ${nosotrosFilosofiaSection(c.maison)}
             ${nosotrosValoresSection(c.valores)}
             ${nosotrosTimelineSection(c.timeline, _activeChapter)}
-            ${nosotrosAtelierSection(c.cartagena)}
+            ${nosotrosAtelierSection(c.atelier)}
             ${nosotrosEquipoSection(c.equipo.items)}
-            ${nosotrosCertsSection(c.cartagena.certs)}
-            ${nosotrosResenasSection(c.cartagena.resenas)}
-            ${nosotrosFaqSection(c.cierre.faqs, _openFaq)}
+            ${nosotrosCertsSection(c.certificaciones.items)}
+            ${nosotrosResenasSection(c.resenas.items)}
+            ${nosotrosFaqSection(c.faqs.items, _openFaq)}
             ${nosotrosCtaSection(c.cierre)}
         </div>`;
 }
@@ -393,7 +395,7 @@ function renderAll(c) {
 function clampState() {
     const tl = _content.timeline.items;
     if (_activeChapter < 0 || _activeChapter >= tl.length) _activeChapter = tl.length ? 0 : -1;
-    const fq = _content.cierre.faqs;
+    const fq = _content.faqs.items;
     if (_openFaq >= fq.length) _openFaq = fq.length ? 0 : -1;
 }
 

@@ -14,8 +14,8 @@
  */
 import { getSiteContent, saveSiteContent } from '../firestore-service.js';
 import { admToast, esc } from './shared.js';
-import { mount } from '../core/html.js';
-import { singletonFormHTML, collectSingleton, mergeSections } from './singleton-admin-core.js';
+import { mount, fragment } from '../core/html.js';
+import { singletonFormHTML, collectSingleton, mergeSections, itemTemplateHTML, reindexItemSf } from './singleton-admin-core.js';
 import createLivePreview from './live-preview.js';
 
 /**
@@ -48,10 +48,11 @@ export function createSingletonAdmin(d) {
         fillForm(loaded);
 
         const formEl = $('[data-form]');
-        formEl.addEventListener('input', onInput);     // delegado (sobrevive a re-fill): contadores + preview
+        formEl.addEventListener('input', onInput);     // delegado (sobrevive a re-fill): contadores + título de ítem + preview
         formEl.addEventListener('focusin', onFocusIn); // F2: foco en un campo → resalta su sección en el preview
         formEl.addEventListener('change', onImgChange);// P3.5: subir imagen (input file → optimize + upload)
         formEl.addEventListener('click', onImgClear);  // P3.5: quitar imagen
+        formEl.addEventListener('click', onListAct);   // P4: añadir/quitar/subir/bajar ítems de lista
         if (hasPreview) {
             preview = createLivePreview({ cssFrom: d.preview.cssFrom });
             await preview.mount($('[data-preview]'));
@@ -151,6 +152,124 @@ export function createSingletonAdmin(d) {
         refreshPreview();
     }
 
+    // ─── P4: listas repetibles (añadir/quitar/subir/bajar) ──────────────────────
+
+    /** Localiza el descriptor de campo `list` desde su clave "seccion.lista". */
+    function listFieldDescriptor(listKey) {
+        const dot = listKey.indexOf('.');
+        if (dot < 0) return null;
+        const sectionKey = listKey.slice(0, dot);
+        const fieldName = listKey.slice(dot + 1);
+        const sec = d.sections.find(s => s.key === sectionKey);
+        if (!sec) return null;
+        const f = sec.fields.find(ff => ff.name === fieldName && ff.type === 'list');
+        return f ? { sectionKey, f } : null;
+    }
+
+    /** Tarjetas de ítem (hijas DIRECTAS del contenedor — no anida listas). */
+    function itemCards(listEl) {
+        return [...listEl.querySelectorAll(':scope > [data-sf-item]')];
+    }
+
+    /** Reindexa data-sf de TODAS las tarjetas a su posición en el DOM (0..n). Punto frágil. */
+    function reindexList(listEl, listKey) {
+        itemCards(listEl).forEach((card, i) => {
+            card.querySelectorAll('[data-sf]').forEach(el => {
+                el.dataset.sf = reindexItemSf(el.dataset.sf, listKey, i);
+            });
+        });
+    }
+
+    /** Actualiza el contador N/max del pie de la lista. */
+    function updateListCount(field, listEl, max) {
+        const c = field.querySelector('[data-sf-list-count]');
+        if (!c || !Number.isFinite(max)) return;
+        c.textContent = `${itemCards(listEl).length}/${max}`;
+    }
+
+    /** Refleja en vivo el título derivado de la tarjeta (DOM-safe vía textContent). */
+    function updateItemTitle(el) {
+        if (!el || typeof el.closest !== 'function') return;
+        const card = el.closest('[data-sf-item]');
+        if (!card) return;
+        const listEl = card.closest('[data-sf-list]');
+        if (!listEl) return;
+        const desc = listFieldDescriptor(listEl.dataset.sfList);
+        if (!desc) return;
+        const titleKey = desc.f.itemTitleFrom || (desc.f.itemFields[0] && desc.f.itemFields[0].name);
+        const sf = el.getAttribute('data-sf') || '';
+        if (!titleKey || !sf.endsWith(`.${titleKey}`)) return;
+        const titleEl = card.querySelector('[data-sf-item-title]');
+        if (!titleEl) return;
+        const val = (el.value || '').trim();
+        if (val) { titleEl.textContent = val; return; }
+        // Vacío: mismo placeholder que el render inicial (índice + estilo .sf-item-untitled).
+        const i = itemCards(listEl).indexOf(card);
+        titleEl.textContent = '';
+        const span = document.createElement('span');
+        span.className = 'sf-item-untitled';
+        span.textContent = desc.f.itemTitleEmpty || `${desc.f.singular || 'Elemento'} ${i + 1}`;
+        titleEl.appendChild(span);
+    }
+
+    /** Click delegado de las acciones de lista (add en el pie; up/down/del por tarjeta). */
+    function onListAct(e) {
+        const btn = e.target && e.target.closest && e.target.closest('[data-list-act]');
+        if (!btn) return;
+        const field = btn.closest('.sf-list-field');
+        if (!field) return;
+        const listEl = field.querySelector('[data-sf-list]');
+        if (!listEl) return;
+        const listKey = listEl.dataset.sfList;
+        const max = Number(listEl.dataset.listMax) || Infinity;
+        const min = Number(listEl.dataset.listMin) || 0;
+        const act = btn.dataset.listAct;
+        const cards = itemCards(listEl);
+
+        if (act === 'add') {
+            if (cards.length >= max) { admToast(`Máximo ${max} elementos en esta lista.`, 'danger'); return; }
+            const desc = listFieldDescriptor(listKey);
+            if (!desc) return;
+            const card = fragment(itemTemplateHTML(desc.sectionKey, desc.f, {}, cards.length)).firstElementChild;
+            if (!card) return;
+            listEl.appendChild(card);
+            reindexList(listEl, listKey);
+            updateListCount(field, listEl, max);
+            card.querySelector('[data-sf]')?.focus();
+            refreshPreview();
+            return;
+        }
+
+        const card = btn.closest('[data-sf-item]');
+        if (!card) return;
+
+        if (act === 'del') {
+            if (cards.length <= min) { admToast(`Debe quedar al menos ${min} elemento${min === 1 ? '' : 's'}.`, 'danger'); return; }
+            card.remove();
+            reindexList(listEl, listKey);
+            updateListCount(field, listEl, max);
+            refreshPreview();
+            return;
+        }
+        if (act === 'up') {
+            const prev = card.previousElementSibling;
+            if (prev && prev.matches('[data-sf-item]')) {
+                listEl.insertBefore(card, prev);
+                reindexList(listEl, listKey);
+                refreshPreview();
+            }
+            return;
+        }
+        if (act === 'down') {
+            const next = card.nextElementSibling;
+            if (next && next.matches('[data-sf-item]')) {
+                listEl.insertBefore(next, card);
+                reindexList(listEl, listKey);
+                refreshPreview();
+            }
+        }
+    }
+
     function destroy() {
         clearTimeout(debounceT);
         if (preview) { preview.destroy(); preview = null; }
@@ -199,6 +318,7 @@ export function createSingletonAdmin(d) {
 
     function onInput(e) {
         updateCounter(e.target);
+        updateItemTitle(e.target);                 // P4: refleja en vivo el título de la tarjeta de lista
         if (!hasPreview) return;
         clearTimeout(debounceT);
         debounceT = setTimeout(refreshPreview, 180);

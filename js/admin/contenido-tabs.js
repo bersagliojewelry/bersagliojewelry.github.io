@@ -11,8 +11,10 @@ import { createResourceAdmin } from './resource-admin.js';
 import { createSingletonAdmin } from './singleton-admin.js';
 import { HOME_DEFAULTS } from '../home/siteContent-defaults.js';
 import { CONTACTO_DEFAULTS } from '../pages/contacto-defaults.js';
+import { NOSOTROS_DEFAULTS } from '../pages/nosotros-defaults.js';
 import { renderHomePreview } from './home-preview.js';
 import { renderContactoPreview } from './contacto-preview.js';
+import { renderNosotrosPreview } from './nosotros-preview.js';
 
 // ─── Descriptor: Journal (entradas editoriales) ─────────────────────────────────
 // El esquema del doc (campos) coincide con el contrato que consumen las páginas
@@ -181,6 +183,99 @@ const contactoTextsDescriptor = {
     ],
 };
 
+// ─── Descriptor: Textos de Nosotros (SINGLETON siteContent/nosotros) ────────────
+// P4: 8 sub-mapas = whitelist de firestore.rules. Texto plano + LISTAS repetibles
+// (valores/timeline/equipo/stats/certs/reseñas/faqs). Las listas viven dentro de su
+// sub-mapa (ya `is map`) → cero cambio de reglas. Vaciar una lista → la sección
+// desaparece (hide-when-empty). El nº 01.. de valores y el avatar de equipo se derivan.
+const nosotrosTextsDescriptor = {
+    page:  'nosotros',
+    title: 'Textos de Nosotros',
+    help:  'Edita los textos y las listas de Nosotros: añade, quita o reordena elementos con los botones de cada tarjeta. La vista previa muestra el primer capítulo y la primera pregunta abiertos (en la web funcionan al hacer clic). Si vacías una lista por completo, esa sección desaparece de la web.',
+    defaults: NOSOTROS_DEFAULTS,
+    preview: { render: renderNosotrosPreview, cssFrom: '/nosotros.html' },
+    sections: [
+        { key: 'hero', label: 'Portada (Hero)', fields: [
+            { name: 'eyebrow',      label: 'Antetítulo',                  type: 'text', max: 44 },
+            { name: 'titleL1',      label: 'Título — línea 1',            type: 'text', max: 32 },
+            { name: 'titleEm',      label: 'Título — línea 2 (cursiva)',  type: 'text', max: 32 },
+            { name: 'titleTail',    label: 'Título — línea 3',            type: 'text', max: 32 },
+            { name: 'lead',         label: 'Párrafo principal',           type: 'textarea', rows: 4, max: 480 },
+            { name: 'leadItalic',   label: 'Párrafo en cursiva',          type: 'textarea', rows: 3, max: 320 },
+            { name: 'imageEyebrow', label: 'Imagen — antetítulo',         type: 'text', max: 44 },
+            { name: 'quote',        label: 'Cita (sin comillas)',         type: 'text', max: 80 },
+            { name: 'quoteAuthor',  label: 'Cita — autor',                type: 'text', max: 32 },
+        ]},
+        { key: 'manifiesto', label: 'Manifiesto', fields: [
+            { name: 'titlePre',  label: 'Frase — inicio',                type: 'textarea', rows: 2, max: 120 },
+            { name: 'titleEm',   label: 'Frase — parte en cursiva',      type: 'text', max: 80 },
+            { name: 'titleTail', label: 'Frase — cierre',                type: 'textarea', rows: 2, max: 200 },
+            { name: 'foot',      label: 'Pie (firma)',                   type: 'text', max: 60 },
+        ]},
+        { key: 'maison', label: 'Filosofía (Misión / Visión)', fields: [
+            { name: 'misionTitle', label: 'Misión — título',            type: 'text', max: 40 },
+            { name: 'misionDesc',  label: 'Misión — texto',             type: 'textarea', rows: 4, max: 460 },
+            { name: 'visionTitle', label: 'Visión — título',            type: 'text', max: 40 },
+            { name: 'visionDesc',  label: 'Visión — texto',             type: 'textarea', rows: 4, max: 460 },
+        ]},
+        { key: 'valores', label: 'Valores (lista)', fields: [
+            { name: 'items', type: 'list', max: 12, addLabel: 'Añadir valor', singular: 'Valor', itemTitleFrom: 't', itemFields: [
+                { name: 't', label: 'Título',      type: 'text', max: 48 },
+                { name: 'd', label: 'Descripción', type: 'textarea', rows: 2, max: 240 },
+            ]},
+        ]},
+        { key: 'timeline', label: 'Línea de tiempo (lista)', fields: [
+            { name: 'items', type: 'list', max: 12, addLabel: 'Añadir capítulo', singular: 'Capítulo', itemTitleFrom: 't', itemFields: [
+                { name: 'y', label: 'Año',         type: 'text', max: 8 },
+                { name: 't', label: 'Título',      type: 'text', max: 60 },
+                { name: 'd', label: 'Descripción', type: 'textarea', rows: 3, max: 380 },
+            ]},
+        ]},
+        { key: 'equipo', label: 'Equipo (lista)', fields: [
+            { name: 'items', type: 'list', max: 12, addLabel: 'Añadir persona', singular: 'Persona', itemTitleFrom: 'n', itemFields: [
+                { name: 'n', label: 'Nombre',      type: 'text', max: 48 },
+                { name: 'r', label: 'Cargo',       type: 'text', max: 48 },
+                { name: 'b', label: 'Biografía',   type: 'textarea', rows: 3, max: 380 },
+            ]},
+        ]},
+        { key: 'cartagena', label: 'Atelier, cifras, certificaciones y reseñas', fields: [
+            { name: 'atelierTitle1',  label: 'Atelier — título línea 1',         type: 'text', max: 40 },
+            { name: 'atelierTitleEm', label: 'Atelier — título línea 2 (cursiva)', type: 'text', max: 36 },
+            { name: 'atelierP1',      label: 'Atelier — párrafo 1',              type: 'textarea', rows: 3, max: 380 },
+            { name: 'atelierP2',      label: 'Atelier — párrafo 2',              type: 'textarea', rows: 3, max: 380 },
+            { name: 'ubicacionL1',    label: 'Ubicación — línea 1',              type: 'text', max: 60 },
+            { name: 'ubicacionL2',    label: 'Ubicación — línea 2',              type: 'text', max: 60 },
+            { name: 'visitasL1',      label: 'Visitas — línea 1',                type: 'text', max: 48 },
+            { name: 'visitasL2',      label: 'Visitas — línea 2',                type: 'text', max: 48 },
+            { name: 'stats', type: 'list', max: 6, addLabel: 'Añadir cifra', singular: 'Cifra', itemTitleFrom: 'l', itemFields: [
+                { name: 'n', label: 'Número',   type: 'text', max: 12 },
+                { name: 'l', label: 'Etiqueta', type: 'text', max: 28 },
+                { name: 's', label: 'Detalle',  type: 'text', max: 40 },
+            ]},
+            { name: 'certs', type: 'list', max: 8, addLabel: 'Añadir certificación', singular: 'Certificación', itemTitleFrom: 't', itemFields: [
+                { name: 't', label: 'Título',      type: 'text', max: 48 },
+                { name: 'd', label: 'Descripción', type: 'text', max: 80 },
+            ]},
+            { name: 'resenas', type: 'list', max: 12, addLabel: 'Añadir reseña', singular: 'Reseña', itemTitleFrom: 'n', itemFields: [
+                { name: 'n',   label: 'Nombre',  type: 'text', max: 48 },
+                { name: 't',   label: 'Reseña',  type: 'textarea', rows: 3, max: 320 },
+                { name: 'loc', label: 'Fuente',  type: 'text', max: 40 },
+            ]},
+        ]},
+        { key: 'cierre', label: 'Preguntas frecuentes y cierre', fields: [
+            { name: 'faqs', type: 'list', max: 12, addLabel: 'Añadir pregunta', singular: 'Pregunta', itemTitleFrom: 'q', itemFields: [
+                { name: 'q', label: 'Pregunta',  type: 'text', max: 90 },
+                { name: 'a', label: 'Respuesta', type: 'textarea', rows: 3, max: 380 },
+            ]},
+            { name: 'ctaEyebrow', label: 'Cierre — antetítulo',          type: 'text', max: 44 },
+            { name: 'ctaTitle1',  label: 'Cierre — título línea 1',      type: 'text', max: 28 },
+            { name: 'ctaTitleEm', label: 'Cierre — título línea 2 (cursiva)', type: 'text', max: 36 },
+            { name: 'ctaLead',    label: 'Cierre — párrafo',             type: 'textarea', rows: 3, max: 320 },
+            { name: 'ctaLabel',   label: 'Cierre — botón',              type: 'text', max: 30 },
+        ]},
+    ],
+};
+
 // ─── Registro de pestañas ───────────────────────────────────────────────────────
 // id = ancla en la URL (#journal). create() devuelve un controlador fresco por
 // activación (el shell hace destroy() al cambiar de pestaña → sin listeners zombi).
@@ -188,7 +283,8 @@ export const TABS = [
     { id: 'journal',  label: 'Journal',            create: () => createResourceAdmin(journalDescriptor) },
     { id: 'home',     label: 'Textos del Home',    create: () => createSingletonAdmin(homeTextsDescriptor) },
     { id: 'contacto', label: 'Textos de Contacto', create: () => createSingletonAdmin(contactoTextsDescriptor) },
-    // Próximas (cuando aterricen): nosotros, films, social, footer.
+    { id: 'nosotros', label: 'Textos de Nosotros', create: () => createSingletonAdmin(nosotrosTextsDescriptor) },
+    // Próximas (cuando aterricen): films, social, footer.
 ];
 
 export default TABS;

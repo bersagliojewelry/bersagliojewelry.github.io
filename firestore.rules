@@ -408,8 +408,10 @@ service cloud.firestore {
     // por sección. hasOnly del set de sub-mapas conocidos + auditoría (anti-inyección
     // L-15); cada sub-mapa es `map` (validación PROFUNDA hoja-por-hoja = cliente +
     // renderer esc/safeUrl + CSP, gran plan §2.D — las reglas no recursan). El cap de
-    // tamaño del doc lo impone la lógica de guardado (cliente). Whitelist = sub-mapas
-    // del HOME hoy; se amplía por página (nosotros/contacto/global) en P2.
+    // CARDINALIDAD de las listas (P4) SÍ se valida aquí (siteListOk, anti denial-of-wallet);
+    // el cap por-STRING sigue siendo client-side por diseño (las reglas no recursan en
+    // list-of-map; el rol `editor` es de confianza y el contenido es marketing reconstruible).
+    // Whitelist = sub-mapas del HOME hoy; se amplía por página (nosotros/contacto/global) en P2.
     // Sub-mapas permitidos POR PÁGINA (anti-inyección hasOnly, L-15). Definidos de una
     // vez para home/contacto/nosotros/global → no re-editar reglas por cada página.
     function siteContentKeys(page) {
@@ -418,6 +420,13 @@ service cloud.firestore {
            : page == 'nosotros' ? ['hero', 'maison', 'cartagena', 'timeline', 'equipo', 'valores', 'manifiesto', 'cierre']
            : page == 'global'   ? ['contacto', 'footer', 'redes']
            : [];
+    }
+    // P4: cap de CARDINALIDAD de una lista dentro de un sub-mapa (techo de seguridad,
+    // desacoplado del max de UX del panel). Opcional + tipada: si la clave existe debe ser
+    // list y no superar `cap`. Las reglas no recursan en los ítems → el string por-hoja
+    // queda al cliente (ver comentario de cabecera). cap=60 ≫ max de UX (6-12) y ≪ 1 MiB.
+    function siteListOk(m, key, cap) {
+      return !(key in m) || (m[key] is list && m[key].size() <= cap);
     }
     function siteContentValid(page) {
       let d = request.resource.data;
@@ -441,6 +450,12 @@ service cloud.firestore {
           && (!('contacto' in d)   || d.contacto is map)
           && (!('footer' in d)     || d.footer is map)
           && (!('redes' in d)      || d.redes is map)
+          // P4: cardinalidad de las listas de Nosotros (anti denial-of-wallet server-side).
+          && (!('valores' in d)    || siteListOk(d.valores, 'items', 60))
+          && (!('timeline' in d)   || siteListOk(d.timeline, 'items', 60))
+          && (!('equipo' in d)     || siteListOk(d.equipo, 'items', 60))
+          && (!('cartagena' in d)  || (siteListOk(d.cartagena, 'stats', 60) && siteListOk(d.cartagena, 'certs', 60) && siteListOk(d.cartagena, 'resenas', 60)))
+          && (!('cierre' in d)     || siteListOk(d.cierre, 'faqs', 60))
           && (!('_published' in d) || d._published is bool);
     }
 

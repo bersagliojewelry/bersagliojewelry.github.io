@@ -1475,3 +1475,36 @@ select.adm-input { cursor: pointer; appearance: none; -webkit-appearance: none; 
 .sf-img-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .sf-img-pick { cursor: pointer; }
 .sf-img-progress { font-size: 12px; color: var(--adm-accent); font-family: 'Space Mono', monospace; }
+
+/* P4 — campo LISTA del CMS (tarjetas de ítem repetibles) */
+.sf-list-field { margin-top: 4px; }
+.sf-list { display: flex; flex-direction: column; gap: 10px; margin: 6px 0 8px; }
+.sf-item {
+    border: 1px solid var(--adm-border);
+    border-radius: var(--adm-radius);
+    background: rgba(255, 255, 255, 0.02);
+    padding: 10px 12px 4px;
+}
+.sf-item-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+.sf-item-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--adm-text, #e7efe9);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+.sf-item-untitled { color: var(--adm-muted); font-weight: 400; font-style: italic; }
+.sf-item-acts { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.sf-item-btn { padding: 2px 8px; line-height: 1.4; font-size: 13px; }
+.sf-item-btn--del:hover { color: #d94040; border-color: #d94040; }
+.sf-item-body { display: flex; flex-direction: column; }
+.sf-list-foot { display: flex; align-items: center; gap: 10px; }
+.sf-list-count { font-size: 11px; color: var(--adm-muted); font-family: 'Space Mono', monospace; }

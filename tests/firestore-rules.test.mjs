@@ -252,6 +252,33 @@ test('siteContent · per-página: RECHAZA sub-mapa de OTRA página', async () =>
 test('siteContent · RECHAZA página desconocida (id raro)', async () => {
     await assertFails(setDoc(doc(asUser('editorUid'), 'siteContent/hackerpage'), { hero: { x: 1 } }));
 });
+// P4: Nosotros con listas (arrays dentro de sub-mapas ya `is map`).
+test('siteContent · editor escribe nosotros con listas dentro del cap', async () => {
+    await assertSucceeds(setDoc(doc(asUser('editorUid'), 'siteContent/nosotros'), {
+        hero: { eyebrow: 'x' },
+        valores: { items: [{ t: 'a', d: 'b' }, { t: 'c', d: 'd' }] },
+        timeline: { items: [{ y: '2013', t: 'x', d: 'y' }] },
+        equipo: { items: [{ n: 'K', r: 'R', b: 'B' }] },
+        cartagena: { atelierTitle1: 'A', stats: [{ n: '13', l: 'años', s: 's' }], certs: [], resenas: [] },
+        cierre: { faqs: [{ q: 'q', a: 'a' }], ctaLabel: 'Hablemos' },
+    }));
+});
+test('siteContent · nosotros: lista vacía [] permitida (hide-when-empty)', async () => {
+    await assertSucceeds(setDoc(doc(asUser('editorUid'), 'siteContent/nosotros'), {
+        valores: { items: [] }, cierre: { faqs: [] },
+    }));
+});
+test('siteContent · nosotros: RECHAZA lista que supera el cap de cardinalidad (61 > 60)', async () => {
+    const big = Array.from({ length: 61 }, (_, i) => ({ t: 't' + i, d: 'd' + i }));
+    await assertFails(setDoc(doc(asUser('editorUid'), 'siteContent/nosotros'), { valores: { items: big } }));
+});
+test('siteContent · nosotros: RECHAZA lista en cartagena que supera el cap (61 reseñas)', async () => {
+    const big = Array.from({ length: 61 }, (_, i) => ({ n: 'n' + i, t: 't' + i, loc: 'g' }));
+    await assertFails(setDoc(doc(asUser('editorUid'), 'siteContent/nosotros'), { cartagena: { resenas: big } }));
+});
+test('siteContent · nosotros: RECHAZA campo de lista mal-tipado (items NO es list)', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'siteContent/nosotros'), { valores: { items: 'no-soy-lista' } }));
+});
 
 // ─── CRM Fase R: vendedoras = entidad de datos (solo admin/owner) ─────────────
 test('CRM vend · admin lee y crea vendedoras', async () => {

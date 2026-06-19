@@ -154,6 +154,7 @@ Sé concreto y breve.
 
 ## §6 — Límites duros
 
+- 🚦 **SOLO-LECTURA — el consejero externo NUNCA edita** (regla del dueño 2026-06-19). Gemini vía Antigravity es un IDE agéntico que *puede* editar, pero aquí solo recibe prompts de **CRÍTICA** (preguntas/hallazgos), JAMÁS tareas de implementación. El **comité interno + el consejero DEBATEN/aportan hallazgos**; quien **DELIBERA** (triaje), **DECIDE** e **IMPLEMENTA** (edita/commitea/pushea) soy **YO (Claude)**. Asesoran; yo resuelvo. **Anti-patrón**: entregar un mensaje de implementación suelto (p.ej. un mensaje de commit) que, pegado en Antigravity, le abra la puerta a editar en paralelo → colisión de dos agentes sobre el mismo repo. **Cierro el ciclo end-to-end yo mismo.**
 - El modelo externo **no ve** nuestro código/cerebro → todo contexto va en el prompt; **jamás** usarlo para verificar hechos del repo.
 - Es **insumo de juicio**, no autoridad: una crítica que esté mal **se refuta**, no se acata.
 - **Misma familia ≠ red team**: pedir 2ª opinión a otro Claude (mismo provider) NO cuenta — mismos sesgos. Solo cuenta otra familia (Gemini/GPT/Mistral/Llama/etc.) o la skill `llm-council` que ya combina varios.

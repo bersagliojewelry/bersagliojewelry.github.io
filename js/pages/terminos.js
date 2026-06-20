@@ -10,7 +10,10 @@
  *   - Anchor links (table of contents) sticky lateral
  */
 
-import { html, escape } from '../core/html.js';
+import { html, escape, mount } from '../core/html.js';
+import { data } from '../core/data.js';
+import { safeUrl } from '../core/safe-url.js';
+import { mergeGlobal, waHref } from '../core/global-defaults.js';
 
 const LAST_UPDATE = '2026-04-12';
 const SECTIONS = [
@@ -114,6 +117,8 @@ function renderSection(s) {
 }
 
 function renderAll() {
+    // Contacto del pie desde la FUENTE ÚNICA (siteContent/global.contacto); fallback = default real.
+    const c = mergeGlobal(data.getSiteContent('global')).contacto;
     return html`
         <div class="container lg-page">
             <header class="lg-pagehero">
@@ -131,7 +136,7 @@ function renderAll() {
             </div>
 
             <div class="lg-foot">
-                <p>¿Una duda específica? Escríbenos a <a href="mailto:info@bersagliojewelry.co">info@bersagliojewelry.co</a> o por <a href="https://wa.me/573013752592" target="_blank" rel="noopener">WhatsApp</a>.</p>
+                <p>¿Una duda específica? Escríbenos a <a href="${escape(safeUrl('mailto:' + c.email))}">${escape(c.email)}</a> o por <a href="${escape(safeUrl(waHref(c.whatsapp)))}" target="_blank" rel="noopener">WhatsApp</a>.</p>
                 <a href="/" class="btn-aqua lg-back-btn">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
                     Volver al inicio
@@ -143,7 +148,12 @@ function renderAll() {
 export async function init() {
     const main = document.getElementById('main-content');
     if (!main) return;
-    main.innerHTML = renderAll();
+    mount(main, renderAll());
+
+    // CMS global: re-pinta una vez si el contacto del pie tiene override (el listener vive en `main`).
+    data.loadSiteContent('global')
+        .then(() => { if (document.getElementById('main-content')) mount(main, renderAll()); })
+        .catch(() => { /* offline → quedan los defaults */ });
 
     // Smooth-scroll TOC anchors (overrides default jump)
     main.addEventListener('click', e => {

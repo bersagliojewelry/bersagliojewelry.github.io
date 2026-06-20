@@ -100,6 +100,18 @@ export function fieldHTML(f) {
                 <div class="adm-prog" data-prog="${escape(f.name)}" hidden style="margin-top:8px;background:var(--adm-border);border-radius:4px;height:4px;overflow:hidden;"><div data-progbar="${escape(f.name)}" style="height:100%;background:var(--adm-accent);width:0%;transition:width .2s;"></div></div>
                 <div data-preview="${escape(f.name)}" style="margin-top:8px;"></div>`;
             break;
+        case 'select': {
+            const opts = (f.options || []).map(o => {
+                const value = typeof o === 'string' ? o : o.value;
+                const label = typeof o === 'string' ? o : (o.label ?? o.value);
+                return `<option value="${escape(value)}">${escape(label)}</option>`;
+            }).join('');
+            // Placeholder vacío SIEMPRE primero: en obligatorio muestra "— Elige —"
+            // (el form se inicializa a ''); el guard required de save() exige una opción real.
+            const blank = `<option value="">${f.required ? '— Elige —' : ''}</option>`;
+            control = `<select class="adm-input" data-field="${escape(f.name)}">${blank}${opts}</select>`;
+            break;
+        }
         case 'date':
             control = `<input class="adm-input" type="date" data-field="${escape(f.name)}"${ph}>`;
             break;
@@ -115,4 +127,45 @@ export function fieldHTML(f) {
 /** HTML del cuerpo del formulario (un campo por fila). */
 export function formFieldsHTML(fields) {
     return fields.map(f => `<div class="adm-form-row adm-col-1" style="margin-top:12px;">${fieldHTML(f)}</div>`).join('');
+}
+
+// ─── "¿Se ve en la web?" (cero-ficción · UX Kary) ────────────────────────────────
+/**
+ * Estado de visibilidad de UN ítem en la web pública, en lenguaje de Kary (sin jerga).
+ * PURO/testeable: no toca DOM ni Firestore. Refleja EXACTAMENTE la lógica del render
+ * público (umbral + completitud, js/core/home-sections.js) y de la regla server-side.
+ *
+ * @param {object} item            doc de la lista (films/socialPosts…).
+ * @param {object} vis             { minItems, unit, isComplete(item)->{complete,missing} }.
+ * @param {number} qualifyingCount cuántos ítems de la lista ya son publicado+completo
+ *                                 (INCLUYENDO este si lo es) → decide si la sección aparece.
+ * @returns {{state:'on'|'almost'|'off', label:string, reason:string}}
+ */
+export function visibilityStatus(item, vis, qualifyingCount) {
+    if (!item || item.published !== true) {
+        return { state: 'off', label: 'No se ve todavía', reason: 'es un borrador — publícalo para que aparezca' };
+    }
+    const { complete, missing } = vis.isComplete(item);
+    if (!complete) {
+        return { state: 'off', label: 'No se ve todavía', reason: `te falta ${missing.join(' y ')}` };
+    }
+    if (qualifyingCount < vis.minItems) {
+        const faltan = vis.minItems - qualifyingCount;
+        return {
+            state: 'almost', label: 'Listo, casi',
+            reason: `te ${faltan === 1 ? 'falta' : 'faltan'} ${faltan} para que la sección aparezca en tu web`,
+        };
+    }
+    return { state: 'on', label: 'Sí se ve', reason: '' };
+}
+
+/** Celda HTML (SIEMPRE escapada) para el estado de visibilidad — píldora + mini-razón. */
+export function visibilityCell(status) {
+    const cls = status.state === 'on' ? 'adm-pill--green'
+              : status.state === 'almost' ? 'adm-pill--gold'
+              : 'adm-pill--gray';
+    const reason = status.reason
+        ? `<div class="adm-td-muted" style="font-size:11px;margin-top:3px;max-width:200px;">${escape(status.reason)}</div>`
+        : '';
+    return `<span class="adm-pill ${cls}">${escape(status.label)}</span>${reason}`;
 }

@@ -11,9 +11,14 @@
 import { html, escape, mount } from '../core/html.js';
 import { data } from '../core/data.js';
 import { safeUrl } from '../core/safe-url.js';
+import { MIN_FILMS, isFilmComplete } from '../core/home-sections.js';   // umbral + completitud (SSoT cero-ficción)
 
-const MIN_FILMS = 3;     // umbral de dignidad (Daniel): no mostrar la sección con menos
 let _filter = 'Todos';
+
+// Videos visibles = PUBLICADOS (data.getFilms) Y completos (title+thumb+href). El render
+// re-aplica la completitud para NO depender solo de la regla server-side: un doc legacy
+// publicado-incompleto jamás se pinta (defensa en profundidad, cero-ficción Fase B).
+const completeFilms = () => data.getFilms().filter(v => isFilmComplete(v).complete);
 
 function playIcon(size) {
     return html`<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>`;
@@ -42,7 +47,7 @@ function renderCards(films) {
 
 // Contenido interno (re-renderizable en vivo). Lee data.getFilms() AQUÍ, no en import.
 function filmsInner() {
-    const films = data.getFilms();
+    const films = completeFilms();
     if (films.length < MIN_FILMS) return '';      // hide-when-empty (cero-ficción §4)
     const f = featuredOf(films);
     return html`
@@ -103,7 +108,7 @@ export function initFilms() {
         _filter = filterBtn.dataset.filmFilter;
         section.querySelectorAll('[data-film-filter]').forEach(b => b.classList.toggle('on', b.dataset.filmFilter === _filter));
         const side = section.querySelector('[data-films-side]');
-        if (side) mount(side, renderCards(data.getFilms()));
+        if (side) mount(side, renderCards(completeFilms()));
     });
 }
 

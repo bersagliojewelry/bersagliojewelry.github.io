@@ -10,9 +10,11 @@ import adminDb from './db.js';
 import { requireAuth, initSidebar, esc } from './shared.js';
 import { mount } from '../core/html.js';
 import { TABS } from './contenido-tabs.js';
+import { createEstadoWeb } from './estado-web.js';
 
 let current   = null;   // controlador montado
 let currentId = null;
+let estadoWeb = null;   // tarjeta "Estado de tu web" (vive toda la página)
 
 function tabFor(id) {
     return TABS.find(t => t.id === id) || TABS[0];
@@ -55,11 +57,16 @@ async function init() {
     await requireAuth('editor');
     await adminDb.init();      // paridad de chrome: rail + badge + auth-context para auditoría
     initSidebar();
+    const estadoHost = document.getElementById('estado-web');
+    if (estadoHost) { estadoWeb = createEstadoWeb(); estadoWeb.mount(estadoHost); }
     renderTabBar();
     activate((location.hash || '').replace('#', '') || TABS[0].id);
     window.addEventListener('hashchange', () =>
         activate((location.hash || '').replace('#', '') || TABS[0].id)
     );
+    // La tarjeta "Estado de tu web" vive toda la página; suelta sus 3 listeners al salir
+    // (simetría con su destroy() — evita la fuga que marcó la revisión adversarial).
+    window.addEventListener('pagehide', () => { if (estadoWeb) { estadoWeb.destroy(); estadoWeb = null; } });
 }
 
 init();

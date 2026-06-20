@@ -19,6 +19,7 @@
 
 import { data } from '../core/data.js';
 import { isoToDisplay, normalizeEntry } from './journal-normalize.js';
+import { isJournalComplete } from '../core/home-sections.js';   // completitud (SSoT cero-ficción)
 
 // Re-export de los puros (un solo punto de import para los consumers/tests).
 export { isoToDisplay, normalizeEntry };
@@ -38,10 +39,17 @@ export const JOURNAL_TICKER = [
     'Oro 18K · Diamantes certificados',
 ];
 
-/** Entradas vivas (Firestore, PUBLICADAS, normalizadas). Sin baked: [] si no hay. */
+/**
+ * Entradas vivas (Firestore, PUBLICADAS, normalizadas y COMPLETAS). Sin baked: [] si no hay.
+ * Re-aplica isJournalComplete (title+imagen+resumen) para que una entrada legacy
+ * publicada-incompleta NO se pinte rota en el home/archivo/detalle (defensa en profundidad
+ * cero-ficción Fase B: el render no depende solo de la regla server-side).
+ */
 function entries() {
     const live = data.getJournal();
-    return Array.isArray(live) ? live.map(normalizeEntry) : [];
+    return Array.isArray(live)
+        ? live.map(normalizeEntry).filter(e => isJournalComplete(e).complete)
+        : [];
 }
 
 /** Todas las entradas visibles (publicadas). */

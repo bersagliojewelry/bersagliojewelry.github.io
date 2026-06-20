@@ -10,7 +10,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
     slugify, nextSlugId, coerceValues, cellText, fieldHTML, formFieldsHTML,
+    visibilityStatus, visibilityCell,
 } from '../js/admin/resource-admin-core.js';
+import { isFilmComplete, isSocialComplete } from '../js/core/home-sections.js';
 
 test('slugify: minúsculas, acentos y espacios → slug limpio', () => {
     assert.equal(slugify('Anillos de Compromiso'), 'anillos-de-compromiso');
@@ -76,4 +78,58 @@ test('formFieldsHTML: una fila por campo', () => {
     ]);
     assert.equal((html.match(/adm-form-row/g) || []).length, 2);
     assert.match(html, /<textarea/);
+});
+
+// ─── select (Red social) — opciones string|obj, escape, blank si opcional ────
+test('fieldHTML select: opciones, data-field, sin blank si required', () => {
+    const s = fieldHTML({ name: 'platform', label: 'Red', type: 'select', required: true, options: ['Instagram', 'TikTok'] });
+    assert.match(s, /<select[^>]*data-field="platform"/);
+    assert.match(s, /<option value="Instagram">Instagram<\/option>/);
+    assert.doesNotMatch(s, /<option value=""><\/option>/);          // required → sin opción vacía
+    const o = fieldHTML({ name: 'p', label: 'P', type: 'select', options: [{ value: 'a', label: 'A' }] });
+    assert.match(o, /<option value=""><\/option>/);                 // opcional → opción vacía
+    assert.match(o, /<option value="a">A<\/option>/);
+});
+test('fieldHTML select: escapa value/label (anti-inyección)', () => {
+    const s = fieldHTML({ name: 'p', label: 'P', type: 'select', options: [{ value: '"><script>', label: '<b>x</b>' }] });
+    assert.doesNotMatch(s, /<script>/);
+    assert.doesNotMatch(s, /<b>x<\/b>/);
+});
+
+// ─── visibilityStatus / visibilityCell — "¿Se ve en la web?" (cero-ficción) ──
+const filmVis = { minItems: 3, unit: 'videos', isComplete: isFilmComplete };
+
+test('visibilityStatus: borrador → off (es un borrador)', () => {
+    const st = visibilityStatus({ published: false, title: 'x', thumb: 't', href: 'h' }, filmVis, 5);
+    assert.equal(st.state, 'off');
+    assert.match(st.reason, /borrador/);
+});
+test('visibilityStatus: publicado pero incompleto → off + qué falta', () => {
+    const st = visibilityStatus({ published: true, title: 'x' }, filmVis, 5);
+    assert.equal(st.state, 'off');
+    assert.match(st.reason, /miniatura/);
+    assert.match(st.reason, /enlace/);
+});
+test('visibilityStatus: completo pero bajo el umbral → almost', () => {
+    const st = visibilityStatus({ published: true, title: 'x', thumb: 't', href: 'h' }, filmVis, 2);
+    assert.equal(st.state, 'almost');
+    assert.match(st.reason, /te falta 1 /);
+});
+test('visibilityStatus: completo y umbral alcanzado → on', () => {
+    const st = visibilityStatus({ published: true, title: 'x', thumb: 't', href: 'h' }, filmVis, 3);
+    assert.equal(st.state, 'on');
+    assert.equal(st.reason, '');
+});
+test('visibilityStatus social: red no soportada cuenta como incompleta', () => {
+    const vis = { minItems: 4, unit: 'publicaciones', isComplete: isSocialComplete };
+    const st = visibilityStatus({ published: true, thumb: 't', caption: 'c', platform: 'Threads' }, vis, 9);
+    assert.equal(st.state, 'off');
+    assert.match(st.reason, /red social/);
+});
+test('visibilityCell: píldora por estado + razón escapada', () => {
+    assert.match(visibilityCell({ state: 'on', label: 'Sí se ve', reason: '' }), /adm-pill--green/);
+    assert.match(visibilityCell({ state: 'almost', label: 'Listo, casi', reason: 'x' }), /adm-pill--gold/);
+    const off = visibilityCell({ state: 'off', label: 'No', reason: '<b>r</b>' });
+    assert.match(off, /adm-pill--gray/);
+    assert.doesNotMatch(off, /<b>r<\/b>/);                          // razón escapada
 });

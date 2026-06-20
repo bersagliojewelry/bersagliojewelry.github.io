@@ -203,6 +203,82 @@ test('journal · editor NO borra; admin SÍ', async () => {
     await assertFails(deleteDoc(doc(asUser('editorUid'), 'journal/j1')));
     await assertSucceeds(deleteDoc(doc(asUser('adminUid'), 'journal/j1')));
 });
+// PUERTA cero-ficción Fase B (TODO-24): publicado ⇒ image+excerpt reales. La entrada
+// completa de arriba pasa (no-regresión); una incompleta NO se puede publicar.
+test('journal · cero-ficción: NO publica sin imagen/resumen', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'journal/eIncompleta'), {
+        title: 'Solo título', published: true,
+    }));
+});
+
+// ─── CMS · Films (videos del home) — cero-ficción Fase B (TODO-24) ───────────
+test('films · editor crea video PUBLICADO completo (title+thumb+href)', async () => {
+    await assertSucceeds(setDoc(doc(asUser('editorUid'), 'films/f1'), {
+        title: 'Tallado', thumb: '/img/v.webp', href: 'https://youtu.be/x',
+        cat: 'Atelier', published: true, featured: true,
+    }));
+});
+test('films · borrador incompleto SÍ se guarda (published=false)', async () => {
+    await assertSucceeds(setDoc(doc(asUser('editorUid'), 'films/f2'), { title: 'Borrador', published: false }));
+});
+test('films · cero-ficción: NO publica sin miniatura', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'films/f3'), { title: 'X', href: 'https://youtu.be/x', published: true }));
+});
+test('films · cero-ficción: NO publica sin enlace', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'films/f4'), { title: 'X', thumb: '/img/v.webp', published: true }));
+});
+test('films · NO crea sin title (ni borrador)', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'films/f5'), { published: false, thumb: '/img/v.webp' }));
+});
+test('films · hasOnly RECHAZA campo inyectado', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'films/f6'), { title: 'X', hacker: 'evil' }));
+});
+test('films · lectura pública; editor NO borra, admin SÍ', async () => {
+    await assertSucceeds(getDoc(doc(anon(), 'films/f1')));
+    await assertFails(deleteDoc(doc(asUser('editorUid'), 'films/f1')));
+    await assertSucceeds(deleteDoc(doc(asUser('adminUid'), 'films/f1')));
+});
+
+// ─── CMS · SocialPosts (feed de redes del home, curado manual) ──────────────
+test('socialPosts · editor crea post PUBLICADO completo (thumb+caption+platform)', async () => {
+    await assertSucceeds(setDoc(doc(asUser('editorUid'), 'socialPosts/s1'), {
+        platform: 'Instagram', thumb: '/img/p.webp', caption: 'Nuevo anillo',
+        href: 'https://instagram.com/p/x', published: true,
+    }));
+});
+test('socialPosts · cero-ficción: NO publica con red no soportada', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'socialPosts/s2'), {
+        platform: 'Threads', thumb: '/img/p.webp', caption: 'x', published: true,
+    }));
+});
+test('socialPosts · cero-ficción: NO publica sin texto', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'socialPosts/s3'), {
+        platform: 'Instagram', thumb: '/img/p.webp', published: true,
+    }));
+});
+test('socialPosts · borrador incompleto SÍ se guarda', async () => {
+    await assertSucceeds(setDoc(doc(asUser('editorUid'), 'socialPosts/s4'), { platform: 'TikTok', published: false }));
+});
+test('socialPosts · cliente SIN rol NO escribe', async () => {
+    await assertFails(setDoc(doc(asUser('customerUid'), 'socialPosts/s5'), { platform: 'Instagram', published: false }));
+});
+
+// cero-ficción: campos SOLO-espacios NO cuentan como contenido real (nonEmptyStr usa .trim()).
+test('cero-ficción whitespace · films NO publica con miniatura en blanco (espacios)', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'films/fws'), {
+        title: 'X', thumb: '   ', href: 'https://y/x', published: true,
+    }));
+});
+test('cero-ficción whitespace · journal NO publica con imagen/resumen en blanco', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'journal/jws'), {
+        title: 'X', image: ' ', excerpt: '  ', published: true,
+    }));
+});
+test('cero-ficción whitespace · social NO publica con texto en blanco', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'socialPosts/sws'), {
+        platform: 'Instagram', thumb: '/img/p.webp', caption: '   ', published: true,
+    }));
+});
 
 // ─── CMS · B1: system/meta (señal de frescura) — write editor + hasOnly ──────
 test('system/meta · editor escribe la señal de cache (lastDataUpdate)', async () => {

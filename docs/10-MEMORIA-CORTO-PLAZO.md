@@ -10,19 +10,16 @@
 
 > 🎉 **CRM + Fase M (M0→M6) EN PRODUCCIÓN** (ADR §47-§82; 344 clientas, cartera→`05`; admin-only, vendedoras=dato; Panel v2). Detalle → `05` + `00-INDICE`→`99`. ⚙️ **OPUS 4.8 interino** (Fable cayó 2026-06-12; marcar todo [OPUS-4.8] · `feedback_opus_interino`).
 >
-> **▶️ FOCO — CMS WEB PÚBLICA ✅ (fase visual CERRADA, §83+§84)**: journal · P0 · Home · Contacto · **Nosotros** (P4: listas + modelo plano 12 claves + imágenes) · WYSIWYG (F1 preview fiel + F2 clic-editar) · P3.5 imagen · F3 barandas ("Publicado ✓" + aviso al salir) · `global` datos de contacto **FUENTE ÚNICA** (footer+Contacto derivan; corrige WhatsApp falso). **EN PROD; `global` inc3+inc4 (`f757b25`§85 wa.me CTAs · `26bf8f8`§86 legales [incl. responsable Ley 1581]) en `Desarrollo` pendiente merge** (inc2 ya en main PR #265; sin deploy de reglas). Specs SSoT: `docs/superpowers/specs/2026-06-1{4,5}-cms-*`; detalle → §83-§86.
-> - **SIGUE (plan)**: `home/social.js` (feed IG/FB/TikTok — otro sub-sistema) · `hideWhenEmpty` general · usuarios/SPA P5.
+> **🔴 PRIORIDAD #1 (Daniel 2026-06-20, "encima de todo") — index 100% gestionable desde el panel (TODO-24).** Auditoría hecha: ✅ YA cubierto = piezas · colecciones · journal · Home (textos+destacadas+categorías) · Contacto · Nosotros · Datos globales. ❌ **GAPS** (datos de ejemplo en `js/data/home-media.js`): **Films/videos** (`home/films.js`) · **Social/redes** (`home/social.js`) · menores Servicios+Marquee. Cierre = `createResourceAdmin` (patrón Journal) + cablear a Firestore. **Decisiones Daniel**: videos ENLACE+miniatura (NO mp4) · redes CURADO MANUAL (NO API).
 >
-> **⏸️ EN PAUSA — ACUERDOS R6** (retoma tras el CMS): NO-GO por **1 bug de dinero** (clamp, bug A8: cuotas infladas + abono parcial ocultan mora). 5/6 fixes (`6d127ba`..`e40e004`) + `be342aa` parcial (NO revertir); censo limpio; emulador 144/144. **Falta**: clamp `pagado=clamp(D0−deudaCubierta,0,Σcuotas)`, D0=deuda AL PACTO (FIFO pact-time) + fixtures (line78) → **Decisión Fuerte/Consejo** (`docs/15`). Lección→`30`: comité degradado por rate-limit=GO falso (re-correr); re-verificar fixes adversarialmente. Detalle: git-blame + CRUDOs bóveda (`w71voltb9·wh5hsk9is·wno2hr1mj`).
-> - **Vigilancia M4**: 1er corte real = **1 de julio 03:50 Bogotá** → verificar `cortes/2026-06` (respaldo: `generarCorte`).
-> - **Deferido al PRÓXIMO deploy de reglas** (verif. M5): `size()` en `nota`/`soporte` de `gestionValida` + hermanos (`solicitudValida`, `asientoValido`).
-> - **Siguiente aparte**: M7 (necesita gestiones acumuladas) · M2c pulido · B6 reportes · TODO-19 RBAC.
-> - **Vivo aparte**: TODO-20 correo del owner (riesgo activo) · TODO-14 App Check ×7d→Enforce (Daniel, L-32) · DIAN PAUSADA · Vendedoras fuera de Configuración · pendientes Daniel/Kary en bóveda.
+> **CMS web pública ✅ COMPLETO EN PROD** (§83-§86, inc1-4, PR #265-#267): WYSIWYG · Home/Contacto/Nosotros · imágenes · `global` fuente única de contacto.
 >
-> **Decisiones vivas (Panel v2/morosos)**: plazo 30 días (config) · `fecha` en movimientos (migrados=CUTOFF; sin fecha→ámbar) · VENCIDO día 1 · rangos 1-30/31-60/+60. Norte: spec `2026-06-07-bersaglio-arquitectura-maestra-design.md` v3.
-> **Pendiente operativo**: crear vendedoras reales (Daniel/Kary).
+> **🔄 RESET A CERO (Daniel 2026-06-20)**: la plataforma se vacía en cartera/clientes — **Kary recarga de cero** (mora + al día). El dato actual (344/$506M) es desechable → bajan urgencias de dinero.
 >
-> ⚠️ **Deploy (L-22 + L-26)**: reglas/functions = deploy manual mío; sitio + merge a `main` = PR que mergea Daniel (`git fetch` siempre). Admin SDK = ADC (L-23).
+> **✅ ACUERDOS R6 — bug A8 RESUELTO (§87, `55bc8ef`; red-team 0 hallazgos)**: clamp `pagado` por D0 (FIFO de SOLO créditos post-pacto). Gated/inerte; **encender = Daniel** (deploy+bandera+`encender-acuerdos.mjs`+prueba; baja urgencia por reset). Menor: complemento `Σcuotas>saldoAlPactar`.
+> - **SIGUE tras CMS**: `hideWhenEmpty` general · usuarios/SPA P5 (TODO-19 RBAC).
+> - **Aparte (menor urgencia tras el reset)**: M4 1er corte 1-jul (`cortes/2026-06`) · M5 deferido `size()` en `gestionValida`/`solicitudValida`/`asientoValido` (próximo deploy de reglas) · M7/M2c/B6 (TODO-09) · TODO-14/20 · DIAN pausada · crear vendedoras reales (Kary, post-reset).
+> - **Norte**: spec `2026-06-07-…-maestra` v3 (plazo 30d/rangos morosos = config; detalle en spec/ADRs). ⚠️ **Deploy** (L-22/L-26/L-23): reglas/functions = manual mío; sitio+merge a `main` = PR de Daniel (`git fetch` siempre); Admin SDK = ADC.
 
 ---
 
@@ -34,7 +31,7 @@
 | TODO-04 | (Opcional) anomalías 🔧 en `skills/` (skill-creator anidado; code-simplifier/modernization formatos no-skill) | 🔲 | baja prioridad |
 | TODO-07 | **Contenido real**: reseñas Google Maps (Nosotros), Films, feed Redes (`js/data/home-media.js`, `js/pages/nosotros.js`) | 🔲 | cliente entrega datos |
 | TODO-08 | **Fase 2 Hardening**: Tier A ✅; pendiente CSP/reglas/claims (Tier B/C) → bóveda `41-SEGURIDAD §1.5` | 🟡 | Tier B = emulador+deploy gated |
-| TODO-09 | **Fase M**: tren M0→M6 ✅ EN PROD (§78-§80; 1er corte real 1 jul) · **ACUERDOS de pago R1-R5 construidos (§81), GATEADO/inerte — falta R6** (deploy+bandera+verif. por hito). Restan luego: M7 (necesita gestiones acumuladas) · M2c (pulido) + B6 · ASESOR/RBAC (TODO-19). **Kary prueba TODO al final; verif. POR HITO = experta de Claude** | 🟡 | R6 de acuerdos (deploy mío) |
+| TODO-09 | **Fase M**: tren M0→M6 ✅ EN PROD (§78-§80; 1er corte real 1 jul) · **ACUERDOS R1-R5 (§81) + bug A8 RESUELTO (§87, red-team 0 hallazgos)**, GATEADO/inerte — **encender = Daniel** (deploy+bandera+`encender-acuerdos.mjs`+prueba; baja urgencia por reset-a-cero). Restan luego: M7 · M2c + B6 · ASESOR/RBAC (TODO-19) · complemento menor `Σcuotas>saldoAlPactar`. **Kary prueba TODO al final; verif. POR HITO = experta de Claude** | 🟡 | encender R6 (Daniel, baja urgencia) |
 | TODO-14 | **App Check: reparar el registro** (RCA 403 §57.3: llave SECRETA en consola) → ~100% ×7d → enforce | 🟡 | Daniel (consolas, guiado) |
 | TODO-17 | **Toda captura → CRM**: contacto→Bandeja ✅; falta newsletter (`addSubscription`→`subscriptions`) en el panel | 🔲 | tras App Check |
 | TODO-18 | **Plan operación integral §57**: semana 1 día a día · 9 decisiones de Daniel · compuerta de adopción · campaña cartera (diseño del contador ANTES del piloto) → bóveda | 🟡 | Daniel (decisiones 1-9 + contador) |
@@ -43,6 +40,7 @@
 | TODO-21 | **Revisión post-Fable de `[OPUS-4.8]`** (H-08): ledger por ADR/§ y riesgo (dinero §81 > seguridad XSS/§65/§66 > CMS §82+ > docs); 46 commits | 🔲 | Fable vuelve |
 | TODO-22 | **Gate-de-git en el linter** (H-06): que `brain:check` warne si `05` dice "==main" con commits adelante. Toca kernel ×3 → **lo origina cars-operador** (escritor único, L-31); converge con cars en la pasada Gemini ÚNICA | 🔲 | Gemini (consolida cars) |
 | TODO-23 | **Frase canónica del gate de verificación de DINERO** (H-18): Claude experto = gate; Kary = smoke POST-deploy no bloqueante. **Aporte de bersaglio a la pasada Gemini única** (cars consolida + integra) | 🔲 | Gemini (consolida cars) |
+| TODO-24 | **🔴 PRIORIDAD #1 — index 100% gestionable + CERO demo/falso** (Daniel 2026-06-20): cerrar gaps → **Films/videos** (`createResourceAdmin`, enlace+miniatura) · **Social/redes** (curado manual) + cablear `home/films.js`·`home/social.js` a Firestore; menores Servicios+Marquee. **REGLA DURA (`feedback_no_demo_en_index`)**: el index NO muestra nada ficticio → **hide-when-empty SIN fallback a ejemplos**; eliminar demo de `home-media.js`; journal solo `published` reales; auditar defaults CMS por placeholders. Decisiones Daniel: enlace+miniatura · curado manual | 🟡 EN CURSO | construir (Claude) |
 
 > ✅ Cerrados y consolidados (retirados en el GC 2026-06-09): TODO-01/02→§38 · 05→§47 · 06→`e290f83` · **10→§62** (CI reactivado; activo al subir/mergear) · 11→spec §16 · 12→§50 · 13→§51 · **15→§63 (PRE-1 CERRADO: backup+restore PROBADO+copia fuera)** · 16→§55 · settings.local→`e3d390f`.
 
@@ -57,6 +55,5 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier A/B �
 
 > Podada (GC) 2026-06-14. Todo consolidado en **ADR §37-§81** (CRM/Fase R/Panel v2/morosos §37-§56 · F6+operación §57-§68 · Fase M M0→M6 §69-§80 · acuerdos v2 R1-R5 §81). Lecciones L-38..L-40. Herramientas Fase M: `seed-guion-m2b.mjs`·`censo-movimientos-m3.mjs`·`limpiar-cliente-prueba.mjs`. Detalle de cualquier § → `00-INDICE`→`99`.
 >
-> **2026-06-15**: auto-auditoría Nivel-2 del cerebro (ADR §82; 20 hallazgos, GC de 05/10, `ssotFacts` vivo) · CMS P0/P1/P2 mergeado #243-#246 (→ ADR al cerrar F1). Entradas 13-14 jun consolidadas (§37-§82). [OPUS-4.8].
-> **2026-06-19**: CMS `global` inc3 (§85, `f757b25`) — wa.me restantes (wishlist·lista-deseos·carrito·FAQ CTA·quick-dock) a la fuente única; build+35 tests+preview verde; en `Desarrollo` pendiente merge. inc2 confirmado en main (PR #265). [OPUS-4.8].
-> **2026-06-20**: CMS `global` inc4 (§86, `26bf8f8`) — páginas legales (Términos+Privacidad, incl. responsable Ley 1581) a la fuente única vía tokens pre-escape; build+preview verde; en `Desarrollo` pendiente merge. [OPUS-4.8].
+> **2026-06-19**: CMS `global` inc3 (§85, `f757b25`) — wa.me restantes a la fuente única (wishlist·lista-deseos·carrito·FAQ·quick-dock). (Entradas ≤15-jun consolidadas en §37-§84.) [OPUS-4.8].
+> **2026-06-20**: CMS `global` inc4 (§86, `26bf8f8`) — páginas legales a la fuente única vía tokens pre-escape. inc3+inc4 mergeados a main (PR #266/#267) → CMS de contacto COMPLETO en prod. **ACUERDOS R6 bug A8 RESUELTO** (§87, `55bc8ef`; clamp D0 pact-time; red-team 6 áng. 0 hallazgos). **Daniel: reset-a-cero de cartera/clientes** (Kary recarga) + **nueva PRIORIDAD #1 = index 100% gestionable** (auditoría hecha; gaps Films/Social → TODO-24). [OPUS-4.8].

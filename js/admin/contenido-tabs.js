@@ -9,6 +9,9 @@
  */
 import { createResourceAdmin } from './resource-admin.js';
 import { createSingletonAdmin } from './singleton-admin.js';
+import {
+    MIN_FILMS, MIN_SOCIAL, SOCIAL_PLATFORMS, isFilmComplete, isSocialComplete,
+} from '../core/home-sections.js';
 import { HOME_DEFAULTS } from '../home/siteContent-defaults.js';
 import { CONTACTO_DEFAULTS } from '../pages/contacto-defaults.js';
 import { NOSOTROS_DEFAULTS } from '../pages/nosotros-defaults.js';
@@ -65,6 +68,100 @@ const journalDescriptor = {
         };
         if (v.slug) doc.slug = v.slug;     // el id ya es el slug; se guarda por trazabilidad
         if (v.date) doc.date = v.date;     // omitir vacío: '' no pasa el regex ISO de las reglas
+        return doc;
+    },
+};
+
+// ─── Descriptor: Videos del Home (LISTA films/) ─────────────────────────────────
+// CMS cero-ficción Fase B (TODO-24): el esquema coincide con el consumidor público
+// js/home/films.js (title·cat·thumb·href·dur·desc·badge·featured·published). Decisión
+// Daniel: enlace + miniatura (NO se sube el mp4). `visibility` enciende la columna
+// "¿Se ve en la web?" y los guardarraíles (umbral + completitud = SSoT home-sections.js).
+const filmsDescriptor = {
+    collection: 'films',
+    singular:   'video',
+    plural:     'videos',
+    titleKey:   'title',
+    idFrom:     'slug',
+    listLimit:  100,
+    visibility: { minItems: MIN_FILMS, unit: 'videos', isComplete: isFilmComplete },
+    emptyGuide: `Aún no tienes videos. Añade al menos ${MIN_FILMS} videos publicados (con miniatura y enlace) para que la sección "Bersaglio Films" aparezca en tu web.`,
+    columns: [
+        { key: 'title',     label: 'Título',           type: 'text'  },
+        { key: 'cat',       label: 'Categoría',        type: 'text'  },
+        { key: 'thumb',     label: 'Miniatura',        type: 'thumb' },
+        { key: '_visible',  label: '¿Se ve en la web?', type: 'visible' },
+        { key: 'published', label: 'Estado',           type: 'badge', on: 'Publicado', off: 'Borrador' },
+    ],
+    fields: [
+        { name: 'title',     label: 'Título del video',                          type: 'text',     required: true, slugSource: true, placeholder: 'El oficio de tallar una esmeralda' },
+        { name: 'slug',      label: 'Identificador (interno)',                   type: 'slug',     hint: 'Se genera del título. No se muestra en la web.' },
+        { name: 'cat',       label: 'Categoría',                                 type: 'text',     placeholder: 'Atelier · Proceso · Eventos…' },
+        { name: 'thumb',     label: 'Miniatura (portada del video)',             type: 'image' },
+        { name: 'href',      label: 'Enlace del video (YouTube, Instagram, TikTok…)', type: 'text', placeholder: 'https://youtube.com/watch?v=…', hint: 'Pega el enlace. El video abre en una pestaña nueva al hacer clic.' },
+        { name: 'dur',       label: 'Duración (opcional)',                       type: 'text',     placeholder: '2:35' },
+        { name: 'desc',      label: 'Descripción (opcional)',                    type: 'textarea', rows: 2 },
+        { name: 'badge',     label: 'Etiqueta (opcional, ej. «Nuevo»)',          type: 'text' },
+        { name: 'featured',  label: 'Destacado (es el video grande de la sección)', type: 'checkbox' },
+        { name: 'published', label: 'Publicado (visible en la web)',             type: 'checkbox' },
+    ],
+    toDoc(v) {
+        const doc = {
+            title:     v.title,
+            cat:       v.cat   || '',
+            thumb:     v.thumb || '',
+            href:      v.href  || '',
+            dur:       v.dur   || '',
+            desc:      v.desc  || '',
+            badge:     v.badge || '',
+            featured:  !!v.featured,
+            published: !!v.published,
+        };
+        if (v.slug) doc.slug = v.slug;   // el id ya es el slug; se guarda por trazabilidad
+        return doc;
+    },
+};
+
+// ─── Descriptor: Redes del Home (LISTA socialPosts/) ────────────────────────────
+// Espejo del consumidor público js/home/social.js (platform·thumb·caption·href·type·
+// published). Decisión Daniel: CURADO MANUAL por Kary (no API); cada tarjeta enlaza al
+// post real. `platform` = select (sin typos → el filtro de la web funciona). NO hay
+// métricas: un engagement inventado sería ficción.
+const socialDescriptor = {
+    collection: 'socialPosts',
+    singular:   'publicación',
+    plural:     'publicaciones',
+    titleKey:   'caption',
+    idFrom:     'slug',
+    listLimit:  100,
+    visibility: { minItems: MIN_SOCIAL, unit: 'publicaciones', isComplete: isSocialComplete },
+    emptyGuide: `Aún no tienes publicaciones. Añade al menos ${MIN_SOCIAL} (con miniatura, texto y red) para que la sección "Lo último en nuestras redes" aparezca en tu web.`,
+    columns: [
+        { key: 'caption',   label: 'Texto',             type: 'text'  },
+        { key: 'platform',  label: 'Red',               type: 'text'  },
+        { key: 'thumb',     label: 'Miniatura',         type: 'thumb' },
+        { key: '_visible',  label: '¿Se ve en la web?', type: 'visible' },
+        { key: 'published', label: 'Estado',            type: 'badge', on: 'Publicado', off: 'Borrador' },
+    ],
+    fields: [
+        { name: 'platform',  label: 'Red social',                       type: 'select',   required: true, options: SOCIAL_PLATFORMS },
+        { name: 'caption',   label: 'Texto de la publicación',          type: 'textarea', rows: 2, required: true, slugSource: true, placeholder: 'Detalle de nuestro nuevo anillo en esmeralda colombiana…' },
+        { name: 'slug',      label: 'Identificador (interno)',          type: 'slug',     hint: 'Se genera del texto. No se muestra en la web.' },
+        { name: 'thumb',     label: 'Miniatura (imagen del post)',      type: 'image' },
+        { name: 'href',      label: 'Enlace al post real',              type: 'text',     placeholder: 'https://instagram.com/p/…', hint: 'Pega el enlace de la publicación. Abre en una pestaña nueva.' },
+        { name: 'type',      label: 'Tipo (opcional, ej. «Reel»)',      type: 'text' },
+        { name: 'published', label: 'Publicado (visible en la web)',    type: 'checkbox' },
+    ],
+    toDoc(v) {
+        const doc = {
+            platform:  v.platform || '',
+            caption:   v.caption  || '',
+            thumb:     v.thumb    || '',
+            href:      v.href     || '',
+            type:      v.type     || '',
+            published: !!v.published,
+        };
+        if (v.slug) doc.slug = v.slug;
         return doc;
     },
 };
@@ -320,11 +417,12 @@ const globalDescriptor = {
 // activación (el shell hace destroy() al cambiar de pestaña → sin listeners zombi).
 export const TABS = [
     { id: 'journal',  label: 'Journal',            create: () => createResourceAdmin(journalDescriptor) },
+    { id: 'videos',   label: 'Videos',             create: () => createResourceAdmin(filmsDescriptor) },
+    { id: 'redes',    label: 'Redes',              create: () => createResourceAdmin(socialDescriptor) },
     { id: 'home',     label: 'Textos del Home',    create: () => createSingletonAdmin(homeTextsDescriptor) },
     { id: 'contacto', label: 'Textos de Contacto', create: () => createSingletonAdmin(contactoTextsDescriptor) },
     { id: 'nosotros', label: 'Textos de Nosotros', create: () => createSingletonAdmin(nosotrosTextsDescriptor) },
     { id: 'global',   label: 'Datos globales',     create: () => createSingletonAdmin(globalDescriptor) },
-    // Próximas (cuando aterricen): contacto-canales en global, films, social.
 ];
 
 export default TABS;

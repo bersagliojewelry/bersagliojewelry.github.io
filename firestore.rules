@@ -34,7 +34,10 @@ service cloud.firestore {
     }
 
     // ─── CRM (cuentas por cobrar): validadores ───────────────────────────────────
-    function nonEmptyStr(v) { return v is string && v.size() > 0; }
+    // Contenido REAL = no vacío y no solo-espacios (' '.size()==1 pasaría size()>0 →
+    // dejaría publicar campos en blanco-visual: brecha cero-ficción, red-team Fase B).
+    // .trim() ⇒ espejo del `nz` cliente (home-sections.js) que usa .trim().length>0.
+    function nonEmptyStr(v) { return v is string && v.trim().size() > 0; }
     // Optativos con el idiom seguro `!('campo' in d) || ...` (ver nota de S6: el
     // acceso a un campo ausente lanza error en reglas → presencia primero).
     // `hasOnly` = whitelist anti-inyección: bloquea saldoActual (lo escribe SOLO la
@@ -401,7 +404,50 @@ service cloud.firestore {
           && (!('authorRole' in d) || (d.authorRole is string && d.authorRole.size() <= 120))
           && (!('image' in d)      || (d.image is string      && d.image.size() <= 1000))
           && (!('featured' in d)   || d.featured is bool)
-          && (!('published' in d)  || d.published is bool);
+          && (!('published' in d)  || d.published is bool)
+          // PUERTA cero-ficción (Fase B, TODO-24): un doc PUBLICADO exige los campos
+          // reales del render (title ya exigido arriba + imagen + resumen) no vacíos.
+          // `.get(k,'')` evita el throw al acceder a campo ausente (idiom S6) → DENY limpio.
+          && (d.get('published', false) == false
+              || (nonEmptyStr(d.get('image', '')) && nonEmptyStr(d.get('excerpt', ''))));
+    }
+    // Films (videos del home). Espejo del consumidor js/home/films.js + home-sections.js.
+    // CERO-FICCIÓN (barrera #3 del comité): un doc PUBLICADO exige title+thumb+href no
+    // vacíos → imposible publicar un video a-medias (el render del home nunca ve ficción).
+    function filmValid() {
+      let d = request.resource.data;
+      return publicContentValid(d, ['title', 'slug', 'cat', 'thumb', 'href',
+                                    'dur', 'desc', 'badge', 'featured', 'published'])
+          && d.title is string && d.title.size() > 0 && d.title.size() <= 200
+          && (!('slug' in d)      || (d.slug is string  && d.slug.size() <= 200))
+          && (!('cat' in d)       || (d.cat is string   && d.cat.size() <= 80))
+          && (!('thumb' in d)     || (d.thumb is string && d.thumb.size() <= 1000))
+          && (!('href' in d)      || (d.href is string  && d.href.size() <= 1000))
+          && (!('dur' in d)       || (d.dur is string   && d.dur.size() <= 40))
+          && (!('desc' in d)      || (d.desc is string  && d.desc.size() <= 2000))
+          && (!('badge' in d)     || (d.badge is string && d.badge.size() <= 40))
+          && (!('featured' in d)  || d.featured is bool)
+          && (!('published' in d) || d.published is bool)
+          && (d.get('published', false) == false
+              || (nonEmptyStr(d.get('thumb', '')) && nonEmptyStr(d.get('href', ''))));
+    }
+    // SocialPosts (feed de redes del home, CURADO MANUAL por Kary). Espejo de
+    // js/home/social.js. PUBLICADO ⇒ thumb + caption + platform (de la lista de redes
+    // soportadas por el render: fuera de ella, el ícono/filtro no funcionan → ficción).
+    function socialValid() {
+      let d = request.resource.data;
+      return publicContentValid(d, ['platform', 'slug', 'caption', 'thumb', 'href',
+                                    'type', 'published'])
+          && (!('platform' in d)  || (d.platform is string && d.platform.size() <= 40))
+          && (!('slug' in d)      || (d.slug is string     && d.slug.size() <= 200))
+          && (!('caption' in d)   || (d.caption is string  && d.caption.size() <= 2000))
+          && (!('thumb' in d)     || (d.thumb is string    && d.thumb.size() <= 1000))
+          && (!('href' in d)      || (d.href is string     && d.href.size() <= 1000))
+          && (!('type' in d)      || (d.type is string     && d.type.size() <= 40))
+          && (!('published' in d) || d.published is bool)
+          && (d.get('published', false) == false
+              || (nonEmptyStr(d.get('thumb', '')) && nonEmptyStr(d.get('caption', ''))
+                  && d.get('platform', '') in ['Instagram', 'Facebook', 'TikTok']));
     }
 
     // SiteContent (CMS · textos de página, SINGLETONS): doc por página con sub-mapas
@@ -529,6 +575,25 @@ service cloud.firestore {
       allow read:   if true;
       allow create: if isEditor() && journalValid();
       allow update: if isEditor() && journalValid();
+      allow delete: if isAdmin();
+    }
+
+    // ─── CMS · Films (videos del home) ─────────────────────────────────────────
+    // Igual que journal: lectura pública (el flag `published` gobierna la VISUALIZACIÓN,
+    // no el acceso — es marketing). Escritura `editor` con validador tipado + hasOnly +
+    // PUERTA cero-ficción. El motor genérico (createTypedDoc) sella la auditoría; id = slug.
+    match /films/{filmId} {
+      allow read:   if true;
+      allow create: if isEditor() && filmValid();
+      allow update: if isEditor() && filmValid();
+      allow delete: if isAdmin();
+    }
+
+    // ─── CMS · SocialPosts (feed de redes del home, curado manual) ─────────────
+    match /socialPosts/{postId} {
+      allow read:   if true;
+      allow create: if isEditor() && socialValid();
+      allow update: if isEditor() && socialValid();
       allow delete: if isAdmin();
     }
 

@@ -12,11 +12,15 @@
 import { html, escape, mount } from '../core/html.js';
 import { data } from '../core/data.js';
 import { safeUrl } from '../core/safe-url.js';
+import { MIN_SOCIAL, SOCIAL_PLATFORMS, isSocialComplete } from '../core/home-sections.js';   // umbral + redes + completitud (SSoT cero-ficción)
 
-const MIN_SOCIAL = 4;     // umbral de dignidad (Daniel): no mostrar la sección con menos
 let _tab = 'Todas';
 
-const PLATFORMS = ['Todas', 'Instagram', 'Facebook', 'TikTok'];   // chrome de UI (tabs)
+// Posts visibles = PUBLICADOS (data.getSocial) Y completos (thumb+caption+red válida).
+// El render re-aplica la completitud (defensa en profundidad, cero-ficción Fase B).
+const completeSocial = () => data.getSocial().filter(p => isSocialComplete(p).complete);
+
+const PLATFORMS = ['Todas', ...SOCIAL_PLATFORMS];   // chrome de UI (tabs)
 
 const PLATFORM_PATHS = {
     Instagram: 'M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41a3.7 3.7 0 0 1-1.38-.9 3.7 3.7 0 0 1-.9-1.38c-.16-.42-.36-1.06-.41-2.23-.06-1.27-.07-1.65-.07-4.85s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41C8.42 2.17 8.8 2.16 12 2.16zm0 3.68A6.16 6.16 0 1 0 18.16 12 6.16 6.16 0 0 0 12 5.84zm0 10.16A4 4 0 1 1 16 12a4 4 0 0 1-4 4zm6.4-10.4a1.44 1.44 0 1 1-1.44-1.44 1.44 1.44 0 0 1 1.44 1.44z',
@@ -53,7 +57,7 @@ function renderCards(posts) {
 
 // Contenido interno (re-renderizable en vivo). Lee data.getSocial() AQUÍ, no en import.
 function socialInner() {
-    const posts = data.getSocial();
+    const posts = completeSocial();
     if (posts.length < MIN_SOCIAL) return '';     // hide-when-empty (cero-ficción §4)
     return html`
         <div class="container">
@@ -98,7 +102,7 @@ export function initSocial() {
         _tab = tab.dataset.socialTab;
         section.querySelectorAll('[data-social-tab]').forEach(b => b.classList.toggle('on', b.dataset.socialTab === _tab));
         const grid = section.querySelector('[data-social-grid]');
-        if (grid) mount(grid, renderCards(data.getSocial()));
+        if (grid) mount(grid, renderCards(completeSocial()));
     });
 }
 

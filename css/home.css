@@ -1393,6 +1393,13 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     .home-hero-blob { animation-duration: 36s; }
 }
 
+/* Cero-ficción (feedback_no_demo_en_index): una sección dinámica sin contenido
+   publicado suficiente rinde su inner = '' → :empty la oculta (sin hueco ni salto de
+   layout / CLS). El nodo <section> queda como ancla para el refresh en vivo. */
+.home-films:empty,
+.home-social:empty,
+.home-journal:empty { display: none; }
+
 /* ═══════════════════════════════════════════════════════════════════
    10. BERSAGLIO FILMS — galería de video (sección nueva)
    ═══════════════════════════════════════════════════════════════════ */

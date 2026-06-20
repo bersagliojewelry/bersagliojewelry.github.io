@@ -162,7 +162,8 @@ export function estadoCuenta(movimientos, opts = {}) {
   };
   if (!Array.isArray(movimientos)) return result;
 
-  const cargos = [];   // { dayNum:(number|null), fechaISO:(string|null), pendiente:number }
+  const cargos = [];   // { dayNum:(number|null), fechaISO:(string|null), pendiente:number, orig, regMs }
+  const creditList = [];   // { regMs:(number|null), monto } — para D0 (deuda al pacto), acuerdos
   let creditos = 0;
   let saldo = 0;
   for (const mov of movimientos) {
@@ -184,6 +185,11 @@ export function estadoCuenta(movimientos, opts = {}) {
       });
     } else if (a < 0) {
       creditos += -a;
+      creditList.push({
+        regMs: (mov && mov.registradoEn && typeof mov.registradoEn.toMillis === 'function')
+          ? mov.registradoEn.toMillis() : null,
+        monto: -a,
+      });
     }
   }
   result.saldo = round2(saldo);
@@ -240,15 +246,28 @@ export function estadoCuenta(movimientos, opts = {}) {
     // que acota `pagado` para que inflar Σcuotas no fabrique abonos fantasma.
     const pagadoReal = round2(cargos.filter(esCubierto).reduce((s, c) => s + (c.orig - c.pendiente), 0));
     const sumaCuotas = acuerdo.cuotas.reduce((s, q) => s + q.monto, 0);
+    // D0 = deuda cubierta AL PACTO (verdad de servidor): replay FIFO con SOLO los
+    // créditos registrados hasta el pacto, sobre los cargos que ya existían entonces
+    // (orden FIFO ya fijado arriba). Créditos sin regMs → pre-pacto (conservador).
+    let credAlPacto = round2(creditList.reduce((s, cr) =>
+      s + ((cr.regMs == null || cr.regMs <= anclaMs) ? cr.monto : 0), 0));
+    let deudaAlPacto = 0;
+    for (const c of cargos) {
+      if (c.regMs == null || c.regMs > anclaMs) continue;   // no existía al pactar
+      const aplica = Math.min(credAlPacto, c.orig);
+      credAlPacto = round2(credAlPacto - aplica);
+      if (c.dayNum != null) deudaAlPacto = round2(deudaAlPacto + round2(c.orig - aplica));
+    }
     // Deuda cubierta totalmente pagada (o nada que cubrir) → el plan ya no aplica
     // (no mostrar "próxima cuota" a quien no debe). El acuerdo sigue 'vigente' en la
     // BD (no se sella solo); el panel deja de pintarlo cuando no hay deuda.
     if (deudaCubierta <= 0) { /* plan = null, bajoAcuerdo = 0 (defaults) */ }
     else {
-    // Pagado del plan = lo que el FIFO ya redujo de la deuda cubierta, ACOTADO por la
-    // reducción realmente probada (pagadoReal): inflar Σcuotas por encima de la deuda
-    // NO fabrica un "pagado" fantasma que esconda cuotas vencidas (HIGH del comité).
-    let pagado = Math.max(0, Math.min(round2(sumaCuotas - deudaCubierta), pagadoReal));
+    // Pagado del plan = reducción de la deuda cubierta POSTERIOR al pacto
+    // (deudaAlPacto − deudaCubierta), acotada por Σcuotas y por la reducción total
+    // probada (pagadoReal, defensa §be342aa). Un abono PRE-pacto ya bajó la deuda al
+    // pactar y NO paga cuotas; inflar Σcuotas tampoco fabrica `pagado` (bug A8, comité R6).
+    let pagado = Math.max(0, Math.min(round2(deudaAlPacto - deudaCubierta), sumaCuotas, pagadoReal));
     let exigible = 0, vencidoPlan = 0, cuotasVenc = 0;
     let proxima = null;
     for (const q of acuerdo.cuotas) {

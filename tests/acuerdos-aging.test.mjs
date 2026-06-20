@@ -76,7 +76,10 @@ test('escudo: solo el EXIGIBLE acumulado impago está vencido; aged por la CUOTA
 });
 
 test('el abono paga la cuota MÁS VIEJA (desde el frente) → cuota vencida cubierta', () => {
-    const movs = [mov('factura', 300000, hace(30), { id: 'f1' }), mov('abono', 100000, hace(2), { medioPago: 'efectivo' })];
+    // El abono es POST-pacto (registradoEn > creadoEn): paga el PLAN. Un abono PRE-pacto
+    // bajaría la deuda AL PACTO (D0), no las cuotas (ver test A8). `mov()` registra por
+    // defecto pre-pacto, así que se sobreescribe explícitamente aquí.
+    const movs = [mov('factura', 300000, hace(30), { id: 'f1' }), mov('abono', 100000, hace(2), { medioPago: 'efectivo', registradoEn: ts(T0 - 1 * DAY) })];
     const r = estadoCuenta(movs, { ...OPTS, acuerdos: [acuerdo()] });
     assert.equal(r.saldo, 200000);
     assert.equal(r.vencido, 0);               // la cuota pasada quedó pagada
@@ -88,7 +91,7 @@ test('el abono paga la cuota MÁS VIEJA (desde el frente) → cuota vencida cubi
 });
 
 test('abono PARCIAL de la cuota vencida: el resto de ESA cuota sigue vencido', () => {
-    const movs = [mov('factura', 300000, hace(30), { id: 'f1' }), mov('abono', 60000, hace(2), { medioPago: 'efectivo' })];
+    const movs = [mov('factura', 300000, hace(30), { id: 'f1' }), mov('abono', 60000, hace(2), { medioPago: 'efectivo', registradoEn: ts(T0 - 1 * DAY) })];   // abono POST-pacto (paga el plan)
     const r = estadoCuenta(movs, { ...OPTS, acuerdos: [acuerdo()] });
     assert.equal(r.vencido, 40000);
     assert.equal(r.plan.vencidoPlan, 40000);
@@ -97,7 +100,7 @@ test('abono PARCIAL de la cuota vencida: el resto de ESA cuota sigue vencido', (
 });
 
 test('deuda saldada → plan null, bajoAcuerdo 0 (no se muestra plan a quien no debe)', () => {
-    const movs = [mov('factura', 300000, hace(30), { id: 'f1' }), mov('abono', 300000, hace(1), { medioPago: 'efectivo' })];
+    const movs = [mov('factura', 300000, hace(30), { id: 'f1' }), mov('abono', 300000, hace(1), { medioPago: 'efectivo', registradoEn: ts(T0 - 1 * DAY) })];   // abono POST-pacto
     const r = estadoCuenta(movs, { ...OPTS, acuerdos: [acuerdo()] });
     assert.equal(r.estado, 'sin-deuda');
     assert.equal(r.plan, null);
@@ -156,6 +159,40 @@ test('cuotas INFLADAS sobre la deuda cubierta NO fabrican pagado fantasma (mora 
     assert.equal(r.vencido, 100000);          // la mora real NO se esconde
     assert.equal(r.bajoAcuerdo, 0);
     assert.notEqual(r.estado, 'al-dia');
+});
+
+test('A8: abono PRE-PACTO no paga el plan → la mora real NO se oculta (clamp D0)', () => {
+    // Factura 200k + abono 100k ambos REGISTRADOS antes del pacto → deuda AL PACTO (D0)
+    // = 100k. Acuerdo de 2×100k (Σ=200k, inflado sobre D0), la 1ª cuota ya vencida.
+    // BUG A8 (clamp viejo): contaba el abono pre-pacto como "pagado del plan" → marcaba
+    // la cuota vieja como pagada → vencido 0 (mora OCULTA). FIX: pagado = D0 − deudaCubierta
+    // = 0 (nadie pagó DESPUÉS del pacto) → la cuota vencida queda EXPUESTA.
+    const movs = [
+        mov('factura', 200000, hace(40), { id: 'f1', registradoEn: ts(T0 - 40 * DAY) }),
+        mov('abono', 100000, hace(35), { id: 'ab1', registradoEn: ts(T0 - 35 * DAY) }),   // PRE-pacto (pacto = hace 30)
+    ];
+    const cuotas = [{ fecha: hace(10), monto: 100000 }, { fecha: en(20), monto: 100000 }];
+    const r = estadoCuenta(movs, { ...OPTS, acuerdos: [acuerdo({ cuotas })] });
+    assert.equal(r.saldo, 100000);            // 200k − 100k abono
+    assert.equal(r.vencido, 100000);          // la cuota vieja NO está pagada (abono fue pre-pacto)
+    assert.equal(r.plan.vencidoPlan, 100000);
+    assert.equal(r.plan.cuotasVencidas, 1);
+    assert.notEqual(r.estado, 'al-dia');      // no es al-día: tiene una cuota vencida real
+});
+
+test('contraste A8: el MISMO abono POST-pacto SÍ paga la cuota vieja (al-día)', () => {
+    // Idéntico al A8 pero el abono se registró DESPUÉS del pacto → es un pago del plan:
+    // la 1ª cuota queda cubierta. Demuestra que el discriminante es el reloj de servidor.
+    const movs = [
+        mov('factura', 200000, hace(40), { id: 'f1', registradoEn: ts(T0 - 40 * DAY) }),
+        mov('abono', 100000, hace(5), { id: 'ab1', registradoEn: ts(T0 - 5 * DAY) }),   // POST-pacto
+    ];
+    const cuotas = [{ fecha: hace(10), monto: 100000 }, { fecha: en(20), monto: 100000 }];
+    const r = estadoCuenta(movs, { ...OPTS, acuerdos: [acuerdo({ cuotas })] });
+    assert.equal(r.saldo, 100000);
+    assert.equal(r.vencido, 0);               // la cuota vieja quedó pagada por el abono post-pacto
+    assert.equal(r.plan.vencidoPlan, 0);
+    assert.equal(r.plan.cuotasVencidas, 0);
 });
 
 test('cobertura por reloj de SERVIDOR: factura registrada DESPUÉS del pacto queda fuera', () => {

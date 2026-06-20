@@ -10,16 +10,14 @@
 
 > 🎉 **CRM + Fase M (M0→M6) EN PRODUCCIÓN** (ADR §47-§82; 344 clientas, cartera→`05`; admin-only, vendedoras=dato; Panel v2). Detalle → `05` + `00-INDICE`→`99`. ⚙️ **OPUS 4.8 interino** (Fable cayó 2026-06-12; marcar todo [OPUS-4.8] · `feedback_opus_interino`).
 >
-> **🔴 PRIORIDAD #1 (Daniel 2026-06-20, "encima de todo") — index 100% gestionable desde el panel (TODO-24).** Auditoría hecha: ✅ YA cubierto = piezas · colecciones · journal · Home (textos+destacadas+categorías) · Contacto · Nosotros · Datos globales. ❌ **GAPS** (datos de ejemplo en `js/data/home-media.js`): **Films/videos** (`home/films.js`) · **Social/redes** (`home/social.js`) · menores Servicios+Marquee. Cierre = `createResourceAdmin` (patrón Journal) + cablear a Firestore. **Decisiones Daniel**: videos ENLACE+miniatura (NO mp4) · redes CURADO MANUAL (NO API).
+> **🔴 PRIORIDAD #1 (Daniel 2026-06-20) — index 100% gestionable + CERO ficción** (TODO-24; spec `2026-06-20-cms-cero-ficcion-design.md`; regla `feedback_no_demo_en_index`). **Fase A ✅ EN `Desarrollo`** (`4ae6c0f`, SW v17): demo borrado · Films/Redes a Firestore con hide-when-empty (≥3/≥4) · journal sin baked · gate anti-regresión. **▶️ EMPEZAR AQUÍ (próx. sesión) = Fase B (gestión)**: descriptores admin (pestañas "Videos"/"Redes", patrón Journal `createResourceAdmin`) + Firestore Rules `films`/`socialPosts` + UX Kary ("¿Se ve en la web?" + tarjeta "Estado de tu web" + confirmación al vaciar). Decisiones Daniel: enlace+miniatura · curado manual.
 >
-> **CMS web pública ✅ COMPLETO EN PROD** (§83-§86, inc1-4, PR #265-#267): WYSIWYG · Home/Contacto/Nosotros · imágenes · `global` fuente única de contacto.
+> (CMS contacto inc1-4 ✅ EN PROD §83-§86.) **🔄 RESET A CERO (Daniel 2026-06-20)**: la plataforma se vacía en cartera/clientes — **Kary recarga de cero**. El dato actual (344/$506M) es desechable → bajan urgencias de dinero.
 >
-> **🔄 RESET A CERO (Daniel 2026-06-20)**: la plataforma se vacía en cartera/clientes — **Kary recarga de cero** (mora + al día). El dato actual (344/$506M) es desechable → bajan urgencias de dinero.
->
-> **✅ ACUERDOS R6 — bug A8 RESUELTO (§87, `55bc8ef`; red-team 0 hallazgos)**: clamp `pagado` por D0 (FIFO de SOLO créditos post-pacto). Gated/inerte; **encender = Daniel** (deploy+bandera+`encender-acuerdos.mjs`+prueba; baja urgencia por reset). Menor: complemento `Σcuotas>saldoAlPactar`.
+> **✅ ACUERDOS R6 — bug A8 RESUELTO** (§87, `55bc8ef`; red-team 0 hallazgos): clamp `pagado` por D0 (FIFO solo créditos post-pacto). Gated/inerte; encender = Daniel (baja urgencia por reset). Menor: complemento `Σcuotas>saldoAlPactar`.
 > - **SIGUE tras CMS**: `hideWhenEmpty` general · usuarios/SPA P5 (TODO-19 RBAC).
-> - **Aparte (menor urgencia tras el reset)**: M4 1er corte 1-jul (`cortes/2026-06`) · M5 deferido `size()` en `gestionValida`/`solicitudValida`/`asientoValido` (próximo deploy de reglas) · M7/M2c/B6 (TODO-09) · TODO-14/20 · DIAN pausada · crear vendedoras reales (Kary, post-reset).
-> - **Norte**: spec `2026-06-07-…-maestra` v3 (plazo 30d/rangos morosos = config; detalle en spec/ADRs). ⚠️ **Deploy** (L-22/L-26/L-23): reglas/functions = manual mío; sitio+merge a `main` = PR de Daniel (`git fetch` siempre); Admin SDK = ADC.
+> - **Aparte (menor urgencia tras reset)**: M4 1er corte 1-jul · M5 deferido `size()` (gestion/solicitud/asiento, próx. deploy reglas) · M7/M2c/B6 (TODO-09) · TODO-14/20 · DIAN pausada · vendedoras reales (Kary).
+> - ⚠️ **Deploy** (L-22/L-26/L-23): reglas/functions = manual mío; sitio+merge a `main` = PR de Daniel (`git fetch` siempre); Admin SDK = ADC. Norte: spec maestra v3.
 
 ---
 

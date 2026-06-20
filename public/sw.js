@@ -6,10 +6,10 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v19 — cero-ficción: Redes EXIGE enlace al post para publicar (isSocialComplete
-// + socialValid; decisión Daniel 2026-06-20). v18 fue la gestión Videos/Redes (Fase B).
-// Bump: purga el home-sections.js previo cacheado offline.
-const CACHE_NAME    = 'bersaglio-v19';
+// Bumped to v20 — cero-ficción: Destacadas aplica umbral (MIN_FEATURED) y se OCULTA sin
+// suficientes piezas (antes mostraba el placeholder "afilando la curaduría"). v19 fue href
+// obligatorio en Redes. Bump: purga el featured.js previo cacheado offline.
+const CACHE_NAME    = 'bersaglio-v20';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

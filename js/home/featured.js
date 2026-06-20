@@ -1,39 +1,44 @@
 /**
  * Home · Sección 4 — Piezas destacadas (DINÁMICO desde Firestore).
- * refreshFeatured() re-renderiza el grid en cada data.onChange().
+ *
+ * REGLA cero-ficción (`feedback_no_demo_en_index`, spec 2026-06-20 · decisión Daniel
+ * "con mínimo"): con menos de MIN_FEATURED piezas destacadas-con-precio la sección NO se
+ * monta (hide-when-empty), SIN placeholder. El "Piso de dignidad" del index (Hero ·
+ * Marquee · Editorial · Atelier · CTA, copy real) sostiene la página el día 1.
+ * refreshFeatured() re-renderiza en cada data.onChange() — espejo de refreshFilms.
  */
-import { html, escape } from '../core/html.js';
+import { html, escape, mount } from '../core/html.js';
 import { format$ } from '../core/format.js';
 import { data } from '../core/data.js';
+import { MIN_FEATURED } from '../core/home-sections.js';   // umbral de dignidad (SSoT cero-ficción)
+
+// Piezas visibles en Destacadas = featured + con precio. Lee en TIEMPO DE RENDER (live).
+const featuredPieces = () => data.getFeatured(8).filter(p => p.price);
 
 export function renderFeatured() {
-    const pieces = data.getFeatured(8).filter(p => p.price);
-    return html`
-        <section class="home-featured">
-            <div class="container">
-                <div class="home-featured-header">
-                    <div>
-                        <div class="eyebrow">Curaduría del Atelier</div>
-                        <h2 class="home-featured-title">Piezas <span class="italic emerald-text">singulares</span></h2>
-                    </div>
-                    <a href="/colecciones.html" class="btn-aqua home-featured-cta">
-                        Explorar el catálogo entero
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-                    </a>
-                </div>
-
-                <div class="home-featured-grid" data-featured>
-                    ${pieces.length === 0 ? renderFeaturedEmpty() : pieces.slice(0, 6).map(renderFeaturedCard)}
-                </div>
-            </div>
-        </section>`;
+    return html`<section class="home-featured">${featuredInner()}</section>`;
 }
 
-function renderFeaturedEmpty() {
+// Contenido interno (re-renderizable en vivo). Sin suficientes destacadas → '' (oculto).
+function featuredInner() {
+    const pieces = featuredPieces();
+    if (pieces.length < MIN_FEATURED) return '';      // hide-when-empty (cero-ficción §4)
     return html`
-        <div class="home-featured-empty">
-            <p class="mono home-featured-empty-text">El atelier está afilando la próxima curaduría.</p>
-            <a href="/colecciones.html" class="btn-aqua btn-aqua-emerald">Explorar todas las piezas</a>
+        <div class="container">
+            <div class="home-featured-header">
+                <div>
+                    <div class="eyebrow">Curaduría del Atelier</div>
+                    <h2 class="home-featured-title">Piezas <span class="italic emerald-text">singulares</span></h2>
+                </div>
+                <a href="/colecciones.html" class="btn-aqua home-featured-cta">
+                    Explorar el catálogo entero
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                </a>
+            </div>
+
+            <div class="home-featured-grid" data-featured>
+                ${pieces.slice(0, 6).map(renderFeaturedCard)}
+            </div>
         </div>`;
 }
 
@@ -77,13 +82,10 @@ function renderFeaturedCard(p) {
         </a>`;
 }
 
+// Re-render en vivo (data.onChange) — espejo de refreshFilms/refreshSocial.
 export function refreshFeatured() {
-    const grid = document.querySelector('[data-featured]');
-    if (!grid) return;
-    const pieces = data.getFeatured(8).filter(p => p.price);
-    grid.innerHTML = pieces.length === 0
-        ? renderFeaturedEmpty()
-        : pieces.slice(0, 6).map(renderFeaturedCard).join('');
+    const sec = document.querySelector('.home-featured');
+    if (sec) mount(sec, featuredInner());
 }
 
 export default { renderFeatured, refreshFeatured };

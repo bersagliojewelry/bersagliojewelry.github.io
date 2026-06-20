@@ -8,7 +8,10 @@
  * GDPR para visitantes europeos.
  */
 
-import { html, escape } from '../core/html.js';
+import { html, escape, mount } from '../core/html.js';
+import { data } from '../core/data.js';
+import { safeUrl } from '../core/safe-url.js';
+import { mergeGlobal } from '../core/global-defaults.js';
 
 const LAST_UPDATE = '2026-04-12';
 const SECTIONS = [
@@ -26,7 +29,7 @@ Esta política explica qué datos recolectamos, por qué, cómo los protegemos y
         title: 'Responsable del tratamiento',
         body: `Bersaglio Jewelry S.A.S., NIT en proceso de actualización, con domicilio en Calle 36 # 6-32, San Agustín Chiquita, Centro Histórico, Cartagena de Indias, Bolívar, Colombia.
 
-Contacto del responsable: info@bersagliojewelry.co · WhatsApp +57 301 375 2592.`,
+Contacto del responsable: {{EMAIL}} · WhatsApp {{WA}}.`,
     },
     {
         id: 'datos-recolectados',
@@ -62,7 +65,7 @@ En el caso de autoridades judiciales o regulatorias, cumpliremos con cualquier s
         id: 'derechos',
         n: '06',
         title: 'Tus derechos',
-        body: `Tienes derecho a conocer, actualizar, rectificar y suprimir tus datos personales en cualquier momento. Para ejercer estos derechos, escribe a info@bersagliojewelry.co con asunto "Datos personales" y te responderemos en máximo 10 días hábiles.
+        body: `Tienes derecho a conocer, actualizar, rectificar y suprimir tus datos personales en cualquier momento. Para ejercer estos derechos, escribe a {{EMAIL}} con asunto "Datos personales" y te responderemos en máximo 10 días hábiles.
 
 También puedes solicitar una copia de toda la información que tenemos sobre ti, oponerte al uso de cookies analíticas, o revocar tu suscripción al newsletter desde cualquier correo que recibas. Ningún ejercicio de derechos afecta el servicio que prestamos.`,
     },
@@ -109,8 +112,12 @@ function renderTOC() {
         </aside>`;
 }
 
-function renderSection(s) {
-    const paragraphs = String(s.body).split(/\n\s*\n/).filter(Boolean);
+function renderSection(s, c) {
+    // Tokens de contacto desde la FUENTE ÚNICA (se sustituyen ANTES de escapar → XSS-safe).
+    const body = String(s.body)
+        .split('{{EMAIL}}').join(c.email)
+        .split('{{WA}}').join(c.whatsapp);
+    const paragraphs = body.split(/\n\s*\n/).filter(Boolean);
     return html`
         <section id="${escape(s.id)}" class="lg-section">
             <div class="lg-section-head">
@@ -124,6 +131,8 @@ function renderSection(s) {
 }
 
 function renderAll() {
+    // Contacto (responsable Ley 1581 + derechos + pie) desde la FUENTE ÚNICA; fallback = default real.
+    const c = mergeGlobal(data.getSiteContent('global')).contacto;
     return html`
         <div class="container lg-page">
             <header class="lg-pagehero">
@@ -136,12 +145,12 @@ function renderAll() {
             <div class="lg-layout">
                 ${renderTOC()}
                 <article class="lg-prose">
-                    ${SECTIONS.map(renderSection)}
+                    ${SECTIONS.map(s => renderSection(s, c))}
                 </article>
             </div>
 
             <div class="lg-foot">
-                <p>¿Quieres ejercer un derecho sobre tus datos? Escríbenos a <a href="mailto:info@bersagliojewelry.co">info@bersagliojewelry.co</a>.</p>
+                <p>¿Quieres ejercer un derecho sobre tus datos? Escríbenos a <a href="${escape(safeUrl('mailto:' + c.email))}">${escape(c.email)}</a>.</p>
                 <a href="/" class="btn-aqua lg-back-btn">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
                     Volver al inicio
@@ -153,7 +162,12 @@ function renderAll() {
 export async function init() {
     const main = document.getElementById('main-content');
     if (!main) return;
-    main.innerHTML = renderAll();
+    mount(main, renderAll());
+
+    // CMS global: re-pinta una vez si el contacto tiene override (el listener vive en `main`).
+    data.loadSiteContent('global')
+        .then(() => { if (document.getElementById('main-content')) mount(main, renderAll()); })
+        .catch(() => { /* offline → quedan los defaults */ });
 
     main.addEventListener('click', e => {
         const a = e.target.closest('.lg-toc-link');

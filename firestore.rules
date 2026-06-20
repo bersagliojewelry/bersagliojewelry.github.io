@@ -445,8 +445,11 @@ service cloud.firestore {
           && (!('href' in d)      || (d.href is string     && d.href.size() <= 1000))
           && (!('type' in d)      || (d.type is string     && d.type.size() <= 40))
           && (!('published' in d) || d.published is bool)
+          // href OBLIGATORIO al publicar (decisión Daniel 2026-06-20): cada tarjeta de
+          // Redes enlaza al post real → sin enlace es una tarjeta muerta = a-medias.
           && (d.get('published', false) == false
               || (nonEmptyStr(d.get('thumb', '')) && nonEmptyStr(d.get('caption', ''))
+                  && nonEmptyStr(d.get('href', ''))
                   && d.get('platform', '') in ['Instagram', 'Facebook', 'TikTok']));
     }
 

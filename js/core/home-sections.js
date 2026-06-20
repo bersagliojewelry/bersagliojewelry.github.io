@@ -38,11 +38,12 @@ export function isFilmComplete(it) {
     return { complete: missing.length === 0, missing };
 }
 
-/** Post de redes COMPLETO = miniatura + texto + red válida. Espejo de socialValid(). */
+/** Post de redes COMPLETO = miniatura + texto + enlace al post + red válida. Espejo de socialValid(). */
 export function isSocialComplete(it) {
     const missing = [];
     if (!nz(it?.thumb))   missing.push('la miniatura');
     if (!nz(it?.caption)) missing.push('el texto');
+    if (!nz(it?.href))    missing.push('el enlace al post');
     if (!SOCIAL_PLATFORMS.includes(it?.platform)) missing.push('la red social');
     return { complete: missing.length === 0, missing };
 }

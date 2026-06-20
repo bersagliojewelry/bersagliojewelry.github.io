@@ -6,10 +6,10 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v18 — CMS cero-ficción Fase B (TODO-24): films.js/social.js ahora leen
-// los umbrales de la SSoT js/core/home-sections.js (gestión Videos/Redes + Rules +
-// "¿Se ve en la web?"). Bump: purga el films.js/social.js v17 cacheado offline.
-const CACHE_NAME    = 'bersaglio-v18';
+// Bumped to v19 — cero-ficción: Redes EXIGE enlace al post para publicar (isSocialComplete
+// + socialValid; decisión Daniel 2026-06-20). v18 fue la gestión Videos/Redes (Fase B).
+// Bump: purga el home-sections.js previo cacheado offline.
+const CACHE_NAME    = 'bersaglio-v19';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

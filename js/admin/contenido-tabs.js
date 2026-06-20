@@ -135,7 +135,7 @@ const socialDescriptor = {
     idFrom:     'slug',
     listLimit:  100,
     visibility: { minItems: MIN_SOCIAL, unit: 'publicaciones', isComplete: isSocialComplete },
-    emptyGuide: `Aún no tienes publicaciones. Añade al menos ${MIN_SOCIAL} (con miniatura, texto y red) para que la sección "Lo último en nuestras redes" aparezca en tu web.`,
+    emptyGuide: `Aún no tienes publicaciones. Añade al menos ${MIN_SOCIAL} (con miniatura, texto, red y enlace al post) para que la sección "Lo último en nuestras redes" aparezca en tu web.`,
     columns: [
         { key: 'caption',   label: 'Texto',             type: 'text'  },
         { key: 'platform',  label: 'Red',               type: 'text'  },
@@ -148,7 +148,7 @@ const socialDescriptor = {
         { name: 'caption',   label: 'Texto de la publicación',          type: 'textarea', rows: 2, required: true, slugSource: true, placeholder: 'Detalle de nuestro nuevo anillo en esmeralda colombiana…' },
         { name: 'slug',      label: 'Identificador (interno)',          type: 'slug',     hint: 'Se genera del texto. No se muestra en la web.' },
         { name: 'thumb',     label: 'Miniatura (imagen del post)',      type: 'image' },
-        { name: 'href',      label: 'Enlace al post real',              type: 'text',     placeholder: 'https://instagram.com/p/…', hint: 'Pega el enlace de la publicación. Abre en una pestaña nueva.' },
+        { name: 'href',      label: 'Enlace al post real',              type: 'text',     required: true, placeholder: 'https://instagram.com/p/…', hint: 'Obligatorio: cada publicación enlaza a su post real. Abre en una pestaña nueva.' },
         { name: 'type',      label: 'Tipo (opcional, ej. «Reel»)',      type: 'text' },
         { name: 'published', label: 'Publicado (visible en la web)',    type: 'checkbox' },
     ],

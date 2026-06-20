@@ -6,10 +6,10 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v18 — CMS cero-ficción Fase B (TODO-24): films.js/social.js ahora leen
-// los umbrales de la SSoT js/core/home-sections.js (gestión Videos/Redes + Rules +
-// "¿Se ve en la web?"). Bump: purga el films.js/social.js v17 cacheado offline.
-const CACHE_NAME    = 'bersaglio-v18';
+// Bumped to v20 — cero-ficción: Destacadas aplica umbral (MIN_FEATURED) y se OCULTA sin
+// suficientes piezas (antes mostraba el placeholder "afilando la curaduría"). v19 fue href
+// obligatorio en Redes. Bump: purga el featured.js previo cacheado offline.
+const CACHE_NAME    = 'bersaglio-v20';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

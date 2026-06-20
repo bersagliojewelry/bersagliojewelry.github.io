@@ -54,6 +54,16 @@ test('cero-ficción: ningún módulo de js/home/ exporta un array no vacío (fue
     }
 });
 
+test('cero-ficción: Destacadas (featured.js) oculta bajo umbral, sin placeholder', () => {
+    const src = readFileSync(join(ROOT, 'js/home/featured.js'), 'utf8');
+    assert.ok(src.includes('MIN_FEATURED'), 'featured.js debe usar el umbral MIN_FEATURED (SSoT home-sections)');
+    assert.match(src, /<\s*MIN_FEATURED/, 'featured.js debe ocultar la sección con menos de MIN_FEATURED piezas');
+    assert.ok(
+        !/afilando la próxima curaduría|home-featured-empty/.test(src),
+        'featured.js reintrodujo un placeholder/empty-state (cero-ficción: hide-when-empty, no placeholder)',
+    );
+});
+
 test('cero-ficción: data/journal.js sin array baked de respaldo (artículos ficticios)', () => {
     const src = readFileSync(join(ROOT, 'js/data/journal.js'), 'utf8');
     assert.ok(!src.includes('JOURNAL_ENTRIES'), 'data/journal.js reintrodujo JOURNAL_ENTRIES (artículos ficticios)');

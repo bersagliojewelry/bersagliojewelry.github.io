@@ -126,6 +126,12 @@ test('visibilityStatus social: red no soportada cuenta como incompleta', () => {
     assert.equal(st.state, 'off');
     assert.match(st.reason, /red social/);
 });
+test('visibilityStatus social: sin enlace al post → off (href obligatorio)', () => {
+    const vis = { minItems: 4, unit: 'publicaciones', isComplete: isSocialComplete };
+    const st = visibilityStatus({ published: true, thumb: 't', caption: 'c', platform: 'Instagram' }, vis, 9);
+    assert.equal(st.state, 'off');
+    assert.match(st.reason, /enlace/);
+});
 test('visibilityCell: píldora por estado + razón escapada', () => {
     assert.match(visibilityCell({ state: 'on', label: 'Sí se ve', reason: '' }), /adm-pill--green/);
     assert.match(visibilityCell({ state: 'almost', label: 'Listo, casi', reason: 'x' }), /adm-pill--gold/);

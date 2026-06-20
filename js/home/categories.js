@@ -1,7 +1,8 @@
 /**
  * Home · Sección 3 — Categorías (dock iOS). DINÁMICO: las tarjetas derivan de las
  * COLECCIONES de Firestore (`data.getCollections()`), administrables desde el panel
- * (CMS). Fallback "baked" solo si aún no hay colecciones (bootstrap, cero downtime).
+ * (CMS). CERO-FICCIÓN (`feedback_no_demo_en_index`): sin colecciones `cardsFrom`
+ * devuelve [] → la sección NO se monta (hide-when-empty), JAMÁS categorías de ejemplo.
  * Imágenes vía `<img src=safeUrl>` (NO background-image: el contexto CSS url()
  * permite breakouts que escape() no cubre). refreshCategories() re-renderiza al
  * cambiar las colecciones/conteos (imágenes cacheadas → flash mínimo).

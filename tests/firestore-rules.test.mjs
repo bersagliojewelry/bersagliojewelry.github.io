@@ -262,6 +262,11 @@ test('socialPosts · borrador incompleto SÍ se guarda', async () => {
 test('socialPosts · cliente SIN rol NO escribe', async () => {
     await assertFails(setDoc(doc(asUser('customerUid'), 'socialPosts/s5'), { platform: 'Instagram', published: false }));
 });
+test('socialPosts · cero-ficción: NO publica sin enlace al post (href obligatorio)', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'socialPosts/sNoHref'), {
+        platform: 'Instagram', thumb: '/img/p.webp', caption: 'sin enlace', published: true,
+    }));
+});
 
 // cero-ficción: campos SOLO-espacios NO cuentan como contenido real (nonEmptyStr usa .trim()).
 test('cero-ficción whitespace · films NO publica con miniatura en blanco (espacios)', async () => {

@@ -6,9 +6,10 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v16 — Acuerdos de pago (plan de cuotas): factura en cuotas +
-// renegociación + sello "en acuerdo" (UI gateada por config). Fuerza refresco.
-const CACHE_NAME    = 'bersaglio-v16';
+// Bumped to v17 — CMS cero-ficción: Films/Redes a Firestore (hide-when-empty) +
+// borrado del demo (home-media.js) + journal sin baked. Bump OBLIGATORIO: purga el
+// films.js/social.js viejo cacheado con los videos/posts fantasma (spec 2026-06-20).
+const CACHE_NAME    = 'bersaglio-v17';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

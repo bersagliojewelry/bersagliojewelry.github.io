@@ -19,7 +19,7 @@
  * snapshot updates triggers UN SOLO render cycle.
  */
 
-import { onPiecesChange, onCollectionsChange, onJournalChange, getSiteContent as fetchSiteContent } from '../firestore-service.js';
+import { onPiecesChange, onCollectionsChange, onJournalChange, onCollectionChange, getSiteContent as fetchSiteContent } from '../firestore-service.js';
 import { piecesOfCollection, collectionOfPiece } from './collection-match.js';
 
 class PublicData {
@@ -27,6 +27,8 @@ class PublicData {
         this._pieces = [];
         this._collections = [];
         this._journal = [];          // CMS: entradas del journal (live Firestore)
+        this._films = [];            // CMS: videos del home (live Firestore, lazy)
+        this._social = [];           // CMS: posts de redes del home (live Firestore, lazy)
         this._siteContent = {};      // CMS: textos de página (singletons, getDoc cacheado)
         this._listeners = new Set();
         this._loaded = false;
@@ -34,6 +36,8 @@ class PublicData {
         this._unsubPieces = null;
         this._unsubCols = null;
         this._unsubJournal = null;
+        this._unsubFilms = null;
+        this._unsubSocial = null;
         this._notifyScheduled = false;
         this._initialPieces = false;
         this._initialCols = false;
@@ -106,6 +110,27 @@ class PublicData {
     }
 
     /**
+     * Videos del home (colección `films/`) — LAZY/opt-in (solo home). Idempotente.
+     * Sin entradas → la sección se oculta (regla cero-ficción; `feedback_no_demo_en_index`).
+     */
+    loadFilms() {
+        if (this._unsubFilms) return;
+        this._unsubFilms = onCollectionChange('films', list => {
+            this._films = list;
+            this._notify();
+        });
+    }
+
+    /** Posts de redes del home (colección `socialPosts/`) — LAZY/opt-in (solo home). Idempotente. */
+    loadSocial() {
+        if (this._unsubSocial) return;
+        this._unsubSocial = onCollectionChange('socialPosts', list => {
+            this._social = list;
+            this._notify();
+        });
+    }
+
+    /**
      * Carga el contenido de una página (singleton) — getDoc ONE-SHOT (NO listener:
      * decisión de costo §2.B). Notifica una vez al resolver → las secciones que ya
      * pintaron con DEFAULTS se re-renderizan con el override. Idempotente por página.
@@ -162,6 +187,11 @@ class PublicData {
     getEntryBySlug(slug) {
         return this.getJournal().find(e => e.slug === slug || e.id === slug) || null;
     }
+
+    /** Videos PUBLICADOS del home (los borradores/incompletos no salen). */
+    getFilms() { return this._films.filter(v => v.published === true); }
+    /** Posts de redes PUBLICADOS del home. */
+    getSocial() { return this._social.filter(p => p.published === true); }
 
     // ─── Realtime ──────────────────────────────────────────────────────────
 

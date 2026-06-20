@@ -19,8 +19,8 @@ import { renderEditorial, refreshEditorial } from '../home/editorial.js';
 import { renderServices } from '../home/services.js';
 import { renderAtelier, refreshAtelier } from '../home/atelier.js';
 import { renderJournalPreview, refreshJournalPreview, initJournalNewsletter } from '../home/journal-preview.js';
-import { renderFilms, initFilms } from '../home/films.js';
-import { renderSocial, initSocial } from '../home/social.js';
+import { renderFilms, refreshFilms, initFilms } from '../home/films.js';
+import { renderSocial, refreshSocial, initSocial } from '../home/social.js';
 import { renderCTA, refreshCTA } from '../home/cta.js';
 
 function renderAll() {
@@ -46,6 +46,8 @@ export async function init() {
     // Kick off Firestore data load (non-blocking — first paint uses skeleton)
     data.load().catch(() => {});
     data.loadJournal();   // B4: el Home muestra journal-preview → opt-in al listener
+    data.loadFilms();     // CMS: videos del home (films/) — hide-when-empty si no hay
+    data.loadSocial();    // CMS: redes del home (socialPosts/) — hide-when-empty si no hay
     // CMS P1: textos de hero/editorial. getDoc one-shot; re-pinta UNA vez al resolver
     // (no en cada data.onChange → sin flash del LCP por cambios de piezas/journal).
     data.loadSiteContent('home').then(() => { refreshHero(); refreshEditorial(); refreshAtelier(); refreshCTA(); });
@@ -70,6 +72,8 @@ export async function init() {
         refreshFeatured();
         refreshCategories();
         refreshJournalPreview();
+        refreshFilms();
+        refreshSocial();
     });
 }
 

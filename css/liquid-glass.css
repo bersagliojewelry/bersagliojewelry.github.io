@@ -143,6 +143,19 @@ button { font: inherit; border: none; background: none; cursor: pointer; color: 
   0%,100% { transform: translate(0,0) scale(1); }
   50% { transform: translate(80px, -60px) scale(1.15); }
 }
+/* PERF + a11y (H2 · recon+comité+Gemini 2026-06-21): la aurora animada (blur 60px + scale) vive
+   DEBAJO del header con backdrop-filter → al moverse invalida la caché de la capa del header y lo
+   obliga a re-desenfocarse CADA cuadro aun en reposo (quema GPU/batería, calienta → throttling
+   térmico = el "freeze" que empeora a los segundos). En equipos MODESTOS/móviles (.bj-lite, por
+   capacidad — boot.js §C3) la detenemos: queda un glow estático suave (look casi idéntico). En
+   equipos CAPACES sigue "respirando". `.bj-lite .bj-world::before` (0,2,1) gana por ESPECIFICIDAD
+   al bjDrift inline (0,1,1) → robusto sin depender del orden de carga ni tocar las 12 copias.
+   `animation:none` deja el fotograma de reposo (translate 0, scale 1) = determinista (no aleatorio
+   como play-state:paused). El bloque prefers-reduced-motion aplica YA (sin esperar JS) para a11y. */
+.bj-lite .bj-world::before, .bj-lite .bj-world::after { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .bj-world::before, .bj-world::after { animation: none; }
+}
 
 /* ═══════════════════════════════════════════════════════════════════
    GLASS PRIMITIVE — la base del sistema

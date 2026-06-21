@@ -374,6 +374,11 @@
     border-radius: 28px;
     overflow: hidden;
     transition: transform 0.5s cubic-bezier(.2,.9,.2,1), box-shadow 0.5s;
+    /* PERF universal (comité+Gemini 2026-06-21): omite renderizar las tarjetas del archivo
+       fuera de pantalla → menos memoria/paint (PC y móvil), look idéntico. `auto` recuerda el
+       alto real; 380px reserva el hueco off-screen (anti-CLS). Patrón probado en catálogo. */
+    content-visibility: auto;
+    contain-intrinsic-size: auto 380px;
 }
 .jr-archive-card:hover {
     transform: translateY(-6px);

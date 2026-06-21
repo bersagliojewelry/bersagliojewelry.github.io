@@ -56,6 +56,21 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 @media (prefers-reduced-motion: reduce) {
     .bj-header-pill, .bj-header-brand, .bj-header-sub, .bj-nav-pill { transition: none; }
 }
+/* PERF (H1 · recon+comité+Gemini 2026-06-21): el backdrop-filter del header FIJO se re-rasteriza
+   por cuadro al deslizar; a alta densidad (DPR 2-3) un blur(46px) cuesta ~×DPR² (≈138px efectivos)
+   → satura la GPU = jank de scroll. En equipos MODESTOS/móviles (clase .bj-lite, puesta por
+   capacidad en boot.js — ver §C3) bajamos solo el RADIO del blur (NO saturate/brightness: son
+   baratos y dan el color esmeralda/oro de marca — Gemini). En equipos CAPACES el diseño queda
+   IDÉNTICO. .bj-lite añade un ancestro → la especificidad gana al .glass base sin depender del
+   orden de carga. */
+.bj-lite .bj-header-pill:not(.is-scrolled) {
+    backdrop-filter: blur(14px) saturate(180%);
+    -webkit-backdrop-filter: blur(14px) saturate(180%);
+}
+.bj-lite .bj-header-pill.is-scrolled {
+    backdrop-filter: blur(16px) saturate(220%) brightness(103%);
+    -webkit-backdrop-filter: blur(16px) saturate(220%) brightness(103%);
+}
 
 .bj-header-logo {
     display: flex; align-items: center; gap: 10px;
@@ -875,6 +890,10 @@ a:focus-visible {
 .qd-tool--gold .qd-tool-ic { background: linear-gradient(180deg, oklch(86% 0.13 88), oklch(68% 0.15 80)); color: oklch(28% 0.08 80); border-color: oklch(86% 0.13 88 / 0.7); }
 .qd-tool-label { font-size: 10px; font-weight: 600; color: var(--bj-ink-mute); letter-spacing: 0.08em; text-transform: uppercase; }
 @media (prefers-reduced-motion: reduce) { .qd-wave, .qd-island, .qd-island-label img { animation: none; } }
+/* PERF (comité+Gemini 2026-06-21): el dock es GLOBAL (todas las páginas) y corre varias
+   animaciones infinitas (olas, flotar, brillo) = carga GPU constante de fondo en equipos modestos.
+   En .bj-lite las detenemos; el dock sigue funcionando (arrastrar/abrir), solo no se mueve solo. */
+.bj-lite .qd-wave, .bj-lite .qd-island, .bj-lite .qd-island-label img { animation: none; }
 @media (max-width: 560px) { .qd-tool { width: 54px; } }
 
 /* Carrito vacío — ilustración cart-gems (reemplaza el ícono) */

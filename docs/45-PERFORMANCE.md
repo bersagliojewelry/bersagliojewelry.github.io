@@ -32,6 +32,13 @@
 *   **Diagnóstico**: El archivo `css/style.css` mantiene más de 10,500 líneas de código estructural. Con la introducción de `css/liquid-glass.css`, la gran mayoría de los colores, tipografías y efectos visuales de las versiones anteriores (V1-V7) son anulados mediante overrides.
 *   **Problema**: Descargar un archivo CSS de más de 10k líneas que en su mayoría es código muerto incrementa el tamaño del bundle inicial que bloquea el renderizado (Render-Blocking Assets).
 *   **Solución recomendada**: Purgar progresivamente la "ZONA LEGACY" de `style.css`. La eliminación de bloques como el Hero V7 legacy o el Lookbook V7 viejo puede reducir el peso del archivo a menos de la mitad sin alterar la estructura activa.
+    > ⚠️ **STALE (2026-06-21)**: `css/style.css` YA NO EXISTE (lo eliminó el recambio NOVO; CSS modular por página, ver `30 §1`). PERF-03 obsoleto.
+
+---
+
+### PERF-04: `backdrop-filter` (cristal) en listas de N + aurora animada = RAM/scroll (recon 2026-06-21, Fase 4 de TODO-28)
+*   **Diagnóstico**: `.glass` (`liquid-glass.css:150`) lleva `backdrop-filter: blur` y se aplica a CADA tarjeta repetida (catálogo `.cat-card`, deseos, journal, tarjetas del panel) — **58 `backdrop-filter`** en 9 archivos. Además 2 orbes `.bj-world::before/::after` con `filter: blur(60px)` **animados sin parar** (`drift 28s`) detrás de toda la página → recompute continuo de un blur enorme (costo idle/RAM). Viola §3.1 ("nunca blur en listas de N").
+*   **Solución — look IDÉNTICO (directiva Daniel 2026-06-21: "se ve igual + ultra veloz")**: NO quitar el efecto. **(a) `content-visibility: auto` + `contain-intrinsic-size`** en las tarjetas de listas largas → el navegador omite renderizar (y blurear) lo que está FUERA de pantalla; look idéntico, scroll/RAM mucho mejor. **Catálogo ✅ (`a32c56d`)**; falta deseos/journal/relacionados/panel. **(b) aurora**: aligerar el costo del blur animado sin perder el glow (pendiente; trade-off motion↔idle — opción: `will-change:transform` para componer el blur una vez, o pre-blur en imagen). **(c)** reservar el `backdrop-filter` "vivo" solo para superficies estructurales (header/cajones/modales) si hace falta más. **Medición real = dispositivo** (el preview headless no mide blur, `30 §L-09`).
 
 ---
 
@@ -41,4 +48,5 @@
 |---|---|---|---|
 | **PERF-01** | Corregir View Transitions en `router.js` y mover a directiva `@view-transition` en CSS | Alta | Mejora en la fluidez visual de navegación entre shells |
 | **PERF-02** | Configurar caché Cache-First en `sw.js` para scripts con hashes en su nombre | Media-Alta | Reducción drástica del tiempo de carga en visitas recurrentes |
-| **PERF-03** | Limpieza progresiva y modularización de la Zona Legacy de `style.css` | Media | Reducción del tamaño de activos bloqueantes (~40-50KB menos de descarga) |
+| **PERF-03** | ~~Limpieza Zona Legacy de `style.css`~~ — **OBSOLETO** (`style.css` ya no existe) | — | — |
+| **PERF-04** | `content-visibility` en listas (catálogo ✅ `a32c56d`) + aligerar aurora — look idéntico, ultra veloz | **Alta** | Scroll fluido + menos RAM, cero cambio visual |

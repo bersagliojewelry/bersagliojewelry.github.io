@@ -37,6 +37,7 @@
 | 🔵 Audita ACCESIBILIDAD / skip-link / focus | 🎯 `40-LOBULOS-DOMINIO` → 48-ACCESIBILIDAD + Skill `accessibility-audit` |
 | ⚖️ Algo LEGAL: términos, privacidad, datos personales, retracto, garantía, cookies, RUCOM, IVA, lavado de activos | 🎯 `40-LOBULOS` → `42-LEGAL` + Skill `legal-colombia` (NUNCA plugins legales extranjeros) |
 | 🔁 Voy a revisar/auditar/verificar algo de forma sistemática (reglas, diseño, lo que dejó un subagente, si algo cumple) | 🔁 `docs/60-WORKFLOWS.md` (catálogo de workflows de detección reutilizables) |
+| 🐛 Voy a TOCAR o ROZAR un subsistema (render/CRUD/flujo/estado compartido) y quiero no dejar escapar un bug | 🔁 `60-WORKFLOWS` **W-10** (camino vivo desde estado-cero + escalada) + skill `caza-bugs` |
 | 🛰️ Decisión fuerte / cara de revertir / fork 50-50 → ¿2ª opinión? | 🛰️ `docs/15-CONSEJO-EXTERNO.md` (cuándo + qué tier del provider externo §0) |
 | 🏛️ Decisión de arquitectura / diseño o escalado del CRM / límites de módulo / "cero monolitos" | 🏛️ `docs/50-ARQUITECTURA.md` |
 | 🛠️ ¿Qué skill tengo para X? / mapa de skills | 🛠️ `docs/skills-inventory.md` + 🎯 `40-LOBULOS §Recursos Externos` |
@@ -140,6 +141,7 @@
 | §87 | 2026-06-20 — ACUERDOS R6 fix bug A8 (dinero): `pagado` acotado por D0 (deuda al pacto = replay FIFO de SOLO créditos post-pacto) → un abono pre-pacto ya no oculta cuotas vencidas. js/+functions byte; test A8 + fixtures. Verif: suite verde + red-team 6 áng. EJECUTADO 0 hallazgos. R6 desbloqueado (gated; encender=Daniel, baja urgencia por reset). `55bc8ef`. [OPUS-4.8] | 1316 |
 | §88 | 2026-06-20 — CMS cero-ficción Fase B (cierre TODO-24 → **índice 100% cero-ficción**): SSoT umbrales/completitud (`home-sections.js`) · panel Videos/Redes (`select`) · PUERTA reglas (filmValid/socialValid + journalValid endurecido + `nonEmptyStr.trim()`) · defensa en profundidad (render re-filtra) · UX Kary (¿Se ve?·Estado de tu web·confirmación) · barrera #5. Adendas: href Redes + Destacadas hide-when-empty. Review 4 ag. (HIGH+MED corregidos). EN PROD: v18 (PR #272) + reglas desplegadas+verificadas (censo 0); resta merge cliente. SW v20. [OPUS-4.8] | 1334 |
 | §89 | 2026-06-21 — BUG Categorías no aparecía al crear la 1ª colección: `renderCategories` devolvía '' sin datos (1er paint siempre sin datos) → sección nunca en DOM → `refreshCategories` no la creaba. Fix: render monta SIEMPRE el `<section>` + refresh `mount()` (patrón films/journal, L-42) + CSS `:empty` colapsa dinámicas vacías a 0px. Verificado en navegador. SW v21 · `6b327a0`, pendiente merge. [OPUS-4.8] | 1362 |
+| §90 | 2026-06-21 — Capacidad CAZA-BUGS (TODO-25): reflejo barato del camino vivo desde estado-cero (las 2 fronteras vacío→1 / N→vacío) + escalada calibrada 2 niveles (cita §3.7/§G.2, no redefine) + skill portátil `caza-bugs` + **gate estado-cero generalizado a las 5 secciones del home** (L-42). Panel adversarial 9 ag. recortó la sobre-ingeniería. `§G` cross-repo → cars (TODO-26); shard 30→31 → TODO-27. [OPUS-4.8] | 1380 |
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §57+ al historial,
 > añadir su fila aquí con la línea de inicio (`Select-String` o `grep`).

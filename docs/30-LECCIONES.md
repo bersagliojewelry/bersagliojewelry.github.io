@@ -214,3 +214,6 @@ La hoja de Kary traía una fila **"TOTAL"** (suma de la columna de saldos) que e
 
 ### M-04: La memoria del harness deriva en silencio (fuera de `docs/`, el linter no la cubre)
 Ruta de repo stale tras mudanza + memoria de 72d que contradecía la gobernanza → necesita repaso de frescura propio.
+
+### M-05: Edité un subsistema bajo UNA lente y lo di por bueno sin probar el camino vivo (§89)
+Di `categories.js` por OK con la lente cero-ficción sin probar el **estado-cero** del camino vivo (*"1ª categoría → ¿aparece?"*). Causa técnica [[L-42]]; meta-falla de PROCESO → reflejo CAZA-BUGS / **W-10**; gate real = test estado-cero ([HONOR]). Detalle → ADR §90.

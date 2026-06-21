@@ -58,7 +58,7 @@ Acceso a un modelo de otra familia (no-Claude) como **segunda opinión adversari
 
 **NO (no malgastar tokens):**
 - Trabajo rutinario, mecánico o **reversible** (fixes con RCA claro, edits triviales).
-- **Hechos/código de NUESTRO repo** → el modelo externo no ve el código ni el cerebro; alucina. Eso lo verifico YO leyendo código (`CLAUDE.md §3.3`). Sirve solo para **juicio/estrategia/tradeoffs**.
+- **Hechos/código de NUESTRO repo** → depende del provider §0: un IDE agéntico con acceso al repo (**Antigravity, el activo** → Gemini) **SÍ ve el código y el cerebro locales (solo-lectura)** y PUEDE verificar hechos del repo y revisar código/reglas reales; un chat sin acceso (no es el caso hoy) no los vería. El motivo de NO usarlo en lo rutinario NO es que alucine, sino que **el esfuerzo manual del dueño + los tokens no se amortizan** cuando el comité interno (automático) ya basta. Aun así **verifico YO** sus afirmaciones (`CLAUDE.md §3.3`) — insumo, no oráculo.
 - Cuando los **tokens estén bajos** → guardarlos para lo grande (§5).
 
 ### §2.2 — Decisiones de ESTE proyecto que disparan 🛰️
@@ -122,7 +122,7 @@ Regla simple: **irreversible/caro → TOP (High)** · **importante/acotado → T
 
 ## §4 — Mecánica del consejo
 
-1. **Marco la decisión** como 🛰️ "vale consejo externo" + elijo el tier (§3) + te entrego un **prompt autocontenido** (el modelo externo no tiene memoria de nuestro trabajo → todo el contexto va en el prompt).
+1. **Marco la decisión** como 🛰️ "vale consejo externo" + elijo el tier (§3) + te entrego un **prompt autocontenido** (el modelo externo no tiene memoria entre sesiones; si es un IDE agéntico como Antigravity **abre los archivos reales → el prompt apunta a rutas/archivos**; si es un chat sin acceso, el contexto va en el prompt).
 2. **Anti-anclaje**: en las decisiones TOP, **fijo MI postura primero** y la omito del prompt; así el modelo externo no me ancla y comparo después. En las ligeras, el orden no importa.
 3. Me pegas la respuesta → la trato como **peer review**: adopto lo correcto, **refuto con razones** lo erróneo, **sintetizo** una postura más fuerte, y te digo explícito **qué cambié y qué descarté**.
 4. **El resultado** (decisión final + qué aportó/cambió el modelo externo) queda en el **ADR/lección** correspondiente → el cerebro recuerda el porqué.
@@ -155,7 +155,7 @@ Sé concreto y breve.
 ## §6 — Límites duros
 
 - 🚦 **SOLO-LECTURA — el consejero externo NUNCA edita** (regla del dueño 2026-06-19). Gemini vía Antigravity es un IDE agéntico que *puede* editar, pero aquí solo recibe prompts de **CRÍTICA** (preguntas/hallazgos), JAMÁS tareas de implementación. El **comité interno + el consejero DEBATEN/aportan hallazgos**; quien **DELIBERA** (triaje), **DECIDE** e **IMPLEMENTA** (edita/commitea/pushea) soy **YO (Claude)**. Asesoran; yo resuelvo. **Anti-patrón**: entregar un mensaje de implementación suelto (p.ej. un mensaje de commit) que, pegado en Antigravity, le abra la puerta a editar en paralelo → colisión de dos agentes sobre el mismo repo. **Cierro el ciclo end-to-end yo mismo.**
-- El modelo externo **no ve** nuestro código/cerebro → todo contexto va en el prompt; **jamás** usarlo para verificar hechos del repo.
+- **Visibilidad del repo según provider §0**: vía un IDE agéntico (Antigravity, el activo) el modelo **SÍ ve** nuestro código/cerebro (solo-lectura) → PUEDE verificar hechos del repo y revisar código real; un chat sin acceso, no. **Universal: NUNCA escribe** (no edita/implementa/commitea — ver arriba).
 - Es **insumo de juicio**, no autoridad: una crítica que esté mal **se refuta**, no se acata.
 - **Misma familia ≠ red team**: pedir 2ª opinión a otro Claude (mismo provider) NO cuenta — mismos sesgos. Solo cuenta otra familia (Gemini/GPT/Mistral/Llama/etc.) o la skill `llm-council` que ya combina varios.
 - Si el protocolo lleva tiempo sin usarse y no aporta, **revisarlo** (Reflejo de Desafío Crítico `CLAUDE.md §G.4`) — un protocolo muerto es deuda.

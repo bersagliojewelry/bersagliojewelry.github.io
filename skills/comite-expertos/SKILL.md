@@ -97,8 +97,8 @@ Si una ronda no produce mejora real (el comité converge antes de la 3ª), dilo 
 Si el tema es una **Decisión Fuerte** (arquitectura/modelo de datos, seguridad/legal, operación
 irreversible, fork 50/50 — ver criterios en `docs/15-CONSEJO-EXTERNO.md §2`):
 1. Tras el comité interno, **prepara un prompt autocontenido** para el proveedor externo configurado (ver docs/15,
-   `docs/15-CONSEJO-EXTERNO.md §0` y §4) — el modelo externo no ve nuestro código ni el cerebro, todo
-   el contexto va en el prompt. Aplica **anti-anclaje** (§4.2): en decisiones TOP no incluyas tu postura.
+   `docs/15-CONSEJO-EXTERNO.md §0` y §4) — el modelo externo, vía Antigravity, SÍ ve el código y el cerebro local (solo-lectura) → el prompt
+   referencia rutas/archivos reales en vez de pegar todo el contexto a mano (recuerda: NUNCA edita/implementa). Aplica **anti-anclaje** (§4.2): en decisiones TOP no incluyas tu postura.
 2. **Pausa y entrégaselo al cliente** (humano en el medio): lo pega en el provider externo y te trae la respuesta.
 3. Integra esa respuesta como **un peer review más**: adopta lo correcto, **refuta con razones** lo que
    esté mal, y sintetiza. Nunca te subordines al modelo externo: es insumo, no oráculo.

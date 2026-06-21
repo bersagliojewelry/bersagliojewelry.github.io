@@ -25,6 +25,7 @@ export const HOME_DEFAULTS = {
         signatureName:    'Kary Mendoza',
     },
     editorial: {
+        image:      '',   // foto de la sección custom (Storage); vacía → fondo CSS por defecto
         chip:       'Editorial',
         imageTitle: 'La Verde, 2026',
         imageSub:   'Seis piezas esculpidas alrededor de la luz esmeralda colombiana.',

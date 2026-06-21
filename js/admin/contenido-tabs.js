@@ -190,6 +190,7 @@ const homeTextsDescriptor = {
             { name: 'signatureName',    label: 'Firma — nombre',              type: 'text', max: 32 },
         ]},
         { key: 'editorial', label: 'Editorial (filosofía)', fields: [
+            { name: 'image',      label: 'Foto de la sección (vacía = imagen actual de la web)', type: 'image' },
             { name: 'chip',       label: 'Chip de la imagen',           type: 'text', max: 20 },
             { name: 'imageTitle', label: 'Imagen — título',             type: 'text', max: 32 },
             { name: 'imageSub',   label: 'Imagen — subtítulo',          type: 'text', max: 90 },
@@ -344,6 +345,7 @@ const nosotrosTextsDescriptor = {
             ]},
         ]},
         { key: 'atelier', label: 'Atelier (la casa)', fields: [
+            { name: 'image',       label: 'Foto del atelier (vacía = imagen actual de la web)', type: 'image' },
             { name: 'title1',      label: 'Título — línea 1',            type: 'text', max: 40 },
             { name: 'titleEm',     label: 'Título — línea 2 (cursiva)',  type: 'text', max: 36 },
             { name: 'p1',          label: 'Párrafo 1',                   type: 'textarea', rows: 3, max: 380 },

@@ -1396,6 +1396,11 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     .home-hero-banner, .home-hero-img { transform: none; }
     .home-hero-blob { animation-duration: 36s; }
 }
+/* PERF (comité+Gemini 2026-06-21): los 2 blobs del hero (blur 40-50px animados) apilan capas de
+   desenfoque grandes = framebuffers intermedios que en gama baja agotan VRAM (riesgo de OOM/crash)
+   y suman carga GPU constante. En equipos MODESTOS/móviles (.bj-lite, por capacidad — boot.js §C3)
+   los detenemos (quedan como glow fijo, look casi idéntico); equipos capaces intactos. */
+.bj-lite .home-hero-blob { animation: none; }
 
 /* Cero-ficción (feedback_no_demo_en_index): una sección dinámica sin contenido
    publicado suficiente rinde su inner = '' → :empty la oculta (sin hueco ni salto de

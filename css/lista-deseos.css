@@ -46,6 +46,12 @@
     display: flex;
     flex-direction: column;
     transition: transform 0.5s cubic-bezier(.2,.9,.2,1), box-shadow 0.5s;
+    /* PERF universal (comité+Gemini 2026-06-21): el navegador omite renderizar las tarjetas
+       fuera de pantalla en listas largas → menos memoria/paint (PC y móvil), look idéntico.
+       `auto` recuerda el alto real tras el 1er render; 520px reserva el hueco off-screen para
+       que el scroll no salte (CLS). Mismo patrón probado en el catálogo (a32c56d). */
+    content-visibility: auto;
+    contain-intrinsic-size: auto 520px;
 }
 .wl-card:hover {
     transform: translateY(-6px);

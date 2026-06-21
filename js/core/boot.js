@@ -22,6 +22,32 @@
 import { initRouter } from './router.js';
 import { observeReveals } from './reveal.js';
 
+/**
+ * §C3 — Detección de CAPACIDAD (no de tamaño). Marca <html class="bj-lite"> en equipos
+ * modestos/móviles para que el CSS aligere los efectos de cristal (header blur, aurora, blobs,
+ * dock) SOLO ahí; en equipos capaces el diseño queda 100% idéntico (regla "no romper el diseño").
+ * Cubre el caso del portátil corriente (pantalla grande pero gráfica/RAM débil) que un media query
+ * por ancho NO atraparía. Defensivo: cualquier fallo → sin clase → diseño completo (fallback seguro).
+ * Recon+comité+Gemini 2026-06-21 (PERF-04 / TODO-28 F4).
+ */
+(function flagDeviceCapability() {
+    try {
+        const mm = typeof window.matchMedia === 'function' ? window.matchMedia : null;
+        const mem = navigator.deviceMemory;                 // GB (Chrome/Edge); puede ser undefined
+        const conn = navigator.connection;
+        const saveData = !!(conn && conn.saveData);
+        const coarse  = mm ? mm('(pointer: coarse)').matches : false;          // móvil/táctil
+        const small   = mm ? mm('(max-width: 920px)').matches : false;         // pantalla chica
+        const reduced = mm ? mm('(prefers-reduced-motion: reduce)').matches : false;
+        const weakRAM = typeof mem === 'number' && mem <= 4;                   // gama baja real
+        if (saveData || coarse || small || reduced || weakRAM) {
+            document.documentElement.classList.add('bj-lite');
+        }
+    } catch {
+        /* Sin degradación: el diseño completo es el fallback seguro. */
+    }
+})();
+
 const PAGES = {
     home:        () => import('../pages/home.js'),
     index:       () => import('../pages/home.js'),

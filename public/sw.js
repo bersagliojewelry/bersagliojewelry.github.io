@@ -6,10 +6,10 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v20 — cero-ficción: Destacadas aplica umbral (MIN_FEATURED) y se OCULTA sin
-// suficientes piezas (antes mostraba el placeholder "afilando la curaduría"). v19 fue href
-// obligatorio en Redes. Bump: purga el featured.js previo cacheado offline.
-const CACHE_NAME    = 'bersaglio-v20';
+// Bumped to v21 — fix: Categorías no aparecía al crear la 1ª colección (refresh no podía
+// CREAR la sección; ahora render monta SIEMPRE el <section> y refresh lo rellena, L-42) +
+// secciones dinámicas vacías colapsan a 0px (CSS :empty). Bump: purga categories.js viejo.
+const CACHE_NAME    = 'bersaglio-v21';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

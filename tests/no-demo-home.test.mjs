@@ -54,6 +54,25 @@ test('cero-ficción: ningún módulo de js/home/ exporta un array no vacío (fue
     }
 });
 
+test('home dinámico: categories.js monta SIEMPRE el <section> (refresh puede crear contenido en vivo, L-42)', () => {
+    const src = readFileSync(join(ROOT, 'js/home/categories.js'), 'utf8');
+    // renderCategories DEBE envolver SIEMPRE en <section class="home-cats"> (aunque el
+    // inner sea ''), o refreshCategories no puede crear la sección cuando llega una
+    // colección → no aparece ni en vivo ni al recargar (bug 2026-06-20).
+    assert.match(
+        src, /renderCategories\([^)]*\)\s*\{\s*return html`<section class="home-cats">\$\{/,
+        'renderCategories debe devolver SIEMPRE <section class="home-cats">${...} (patrón films/journal)',
+    );
+    assert.match(
+        src, /refreshCategories[\s\S]*?querySelector\('\.home-cats'\)[\s\S]*?mount\(/,
+        'refreshCategories debe mount() el inner en la sección existente (no salir si no la encuentra)',
+    );
+    assert.ok(
+        !/^\s*if\s*\(!cards\(\)\.length\)\s*return\s*'';/m.test(src.replace(/function categoriesInner[\s\S]*$/, '')),
+        'renderCategories NO debe devolver "" condicional antes del <section> (eso reintroduce el bug)',
+    );
+});
+
 test('cero-ficción: Destacadas (featured.js) oculta bajo umbral, sin placeholder', () => {
     const src = readFileSync(join(ROOT, 'js/home/featured.js'), 'utf8');
     assert.ok(src.includes('MIN_FEATURED'), 'featured.js debe usar el umbral MIN_FEATURED (SSoT home-sections)');

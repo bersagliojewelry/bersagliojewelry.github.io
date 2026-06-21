@@ -387,6 +387,10 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 /* ═══════════════════════════════════════════════════════════════════
    3. CATEGORIES — iOS dock
    ═══════════════════════════════════════════════════════════════════ */
+/* CERO-FICCIÓN (spec 2026-06-20): las secciones dinámicas se montan SIEMPRE (para que
+   el refresh en vivo pueda rellenarlas) pero se COLAPSAN a 0px cuando su inner está
+   vacío — sin dejar el hueco de los 46px de padding. "Reservar 0px, no altura fija". */
+.home-cats:empty, .home-featured:empty, .home-films:empty, .home-social:empty, .home-journal:empty { padding: 0; }
 .home-cats { padding: 46px 0; }
 .home-cats-header {
     text-align: center;

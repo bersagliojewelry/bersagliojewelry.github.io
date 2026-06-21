@@ -258,19 +258,71 @@ export async function deleteTypedDoc(collName, docId) {
  *        spec §9.1 — el truncado NUNCA es mudo). Sin label = sin banner.
  * @returns {Function} unsubscribe
  */
+/**
+ * Suscripción `onSnapshot` ROBUSTA con re-suscripción automática (recon 2026-06-21 + review
+ * adversarial). Firestore TERMINA el stream ante un error transitorio (bajón de red, deadline,
+ * refresh de token) y NO reintenta solo: el patrón viejo (callback de error que solo hacía
+ * `console.warn`) dejaba el set CONGELADO → un borrado/alta posterior no propagaba hasta
+ * recargar ("a veces no se elimina/aparece"). Aquí re-armamos con backoff exponencial (espejo
+ * de `withRetry`) + retry inmediato al recuperar la red (`online`). Lo usan TODOS los listeners
+ * live (colecciones públicas + reviews + inquiries del panel).
+ * @param {Function} makeRef  `() => Query|CollectionReference` (re-evaluado en cada intento)
+ * @param {Function} onSnap   `(snapshot) => void` (procesa el snapshot crudo)
+ * @param {string}   label    para los logs
+ * @returns {Function} cleanup (desuscribe + remueve el listener `online`)
+ */
+function subscribeWithRetry(makeRef, onSnap, label) {
+    let unsub = null;
+    let cancelled = false;
+    let attempt = 0;
+    let retryTimer = null;
+
+    const handleErr = (err) => {
+        console.warn(`[Firestore] ${label} listener error → re-suscribiendo:`, err?.code || err?.message || err);
+        if (unsub) { try { unsub(); } catch { /* noop */ } unsub = null; }
+        if (cancelled) return;
+        const wait = Math.min(30000, 1000 * Math.pow(2, attempt)) + Math.floor(Math.random() * 250);
+        attempt++;
+        retryTimer = setTimeout(subscribe, wait);
+    };
+
+    function subscribe() {
+        retryTimer = null;
+        if (cancelled) return;
+        if (unsub) { try { unsub(); } catch { /* noop */ } unsub = null; }   // idempotente: jamás 2 onSnapshot vivos
+        unsub = onSnapshot(makeRef(), (snap) => { attempt = 0; onSnap(snap); }, handleErr);
+    }
+
+    // Retry INMEDIATO al recuperar la red — SOLO si estamos caídos (con retry en cola). NO
+    // resetea `attempt`: si vuelve a fallar, el backoff sigue creciendo (no martillea). El
+    // evento `online` dispara una sola vez por reconexión (a diferencia de visibilitychange).
+    const onOnline = () => {
+        if (cancelled || !retryTimer) return;
+        clearTimeout(retryTimer); retryTimer = null;
+        subscribe();
+    };
+    try { window.addEventListener('online', onOnline); } catch { /* sin DOM */ }
+
+    subscribe();
+
+    return () => {
+        cancelled = true;
+        if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
+        if (unsub) { try { unsub(); } catch { /* noop */ } unsub = null; }
+        try { window.removeEventListener('online', onOnline); } catch { /* sin DOM */ }
+    };
+}
+
 export function onCollectionChange(collName, callback, { limit: lim, truncationLabel } = {}) {
     const base = collection(firestoreDb, collName);
-    const ref  = lim ? query(base, limit(lim)) : base;
-    return onSnapshot(ref,
-        snap => {
-            if (truncationLabel && lim && snap.size >= lim) {
-                console.warn(`[Firestore] ${truncationLabel} truncado en ${lim} (S3).`);
-                try { document.dispatchEvent(new CustomEvent('bj:truncado', { detail: { origen: truncationLabel, limite: lim } })); } catch { /* sin DOM */ }
-            }
-            callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-        },
-        err => console.warn(`[Firestore] ${collName} listener error:`, err)
-    );
+    const makeRef = () => (lim ? query(base, limit(lim)) : base);
+    return subscribeWithRetry(makeRef, (snap) => {
+        if (truncationLabel && lim && snap.size >= lim) {
+            console.warn(`[Firestore] ${truncationLabel} truncado en ${lim} (S3).`);
+            try { document.dispatchEvent(new CustomEvent('bj:truncado', { detail: { origen: truncationLabel, limite: lim } })); } catch { /* sin DOM */ }
+        }
+        callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, collName);
 }
 
 // ─── Pieces ──────────────────────────────────────────────────────────────────
@@ -510,15 +562,15 @@ export async function deleteReview(reviewId) {
  * Subscribe to real-time reviews for a piece
  */
 export function onReviewsChange(pieceSlug, callback) {
-    const q = query(
+    const makeRef = () => query(
         collection(firestoreDb, COLLECTIONS.reviews),
         where('pieceSlug', '==', pieceSlug),
         where('approved', '==', true),
         orderBy('createdAt', 'desc')
     );
-    return onSnapshot(q, snap => {
+    return subscribeWithRetry(makeRef, snap => {
         callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    });
+    }, `reviews(${pieceSlug})`);
 }
 
 /**
@@ -592,24 +644,20 @@ export async function fetchInquiries() {
  * Subscribe to real-time inquiries updates
  */
 export function onInquiriesChange(callback) {
-    const q = query(
+    const makeRef = () => query(
         collection(firestoreDb, COLLECTIONS.inquiries),
         orderBy('createdAt', 'desc'),
         limit(500)   // S3: 500 leads más recientes (cota de escalabilidad del listener admin)
     );
-    return onSnapshot(q,
-        snap => {
-            // Spec §9.1: el truncado NUNCA es mudo — banner visible en el panel
-            // (js/admin/truncado.js escucha; en el sitio público no hay listener = no-op).
-            if (snap.size >= 500) {
-                console.warn('[Firestore] inquiries truncado en 500 (S3): la Bandeja muestra solo los 500 leads más recientes.');
-                try { document.dispatchEvent(new CustomEvent('bj:truncado', { detail: { origen: 'Bandeja (leads)', limite: 500 } })); } catch { /* sin DOM */ }
-            }
-            const inquiries = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            callback(inquiries);
-        },
-        err => console.warn('[Firestore] inquiries listener error:', err)
-    );
+    return subscribeWithRetry(makeRef, snap => {
+        // Spec §9.1: el truncado NUNCA es mudo — banner visible en el panel
+        // (js/admin/truncado.js escucha; en el sitio público no hay listener = no-op).
+        if (snap.size >= 500) {
+            console.warn('[Firestore] inquiries truncado en 500 (S3): la Bandeja muestra solo los 500 leads más recientes.');
+            try { document.dispatchEvent(new CustomEvent('bj:truncado', { detail: { origen: 'Bandeja (leads)', limite: 500 } })); } catch { /* sin DOM */ }
+        }
+        callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, 'inquiries');
 }
 
 /**

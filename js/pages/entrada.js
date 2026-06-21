@@ -19,7 +19,7 @@
  * SEO: sobreescribe document.title, canonical, og:* dinámicamente
  */
 
-import { html, escape } from '../core/html.js';
+import { html, escape, mount } from '../core/html.js';
 import { data } from '../core/data.js';
 import { getEntryBySlug, getRelated } from '../data/journal.js';
 
@@ -205,6 +205,23 @@ function renderNotFound() {
         </div>`;
 }
 
+// Estado de carga (recon F1): NO mostrar el 404 duro mientras el listener de journal aún
+// no resolvió. Reusa el shell de renderNotFound con copy neutro (cero CSS nueva).
+function renderLoading() {
+    return html`
+        <div class="container en-page">
+            <nav class="en-breadcrumb">
+                <a class="en-crumb" href="/">Inicio</a>
+                <span class="en-crumb-sep" aria-hidden="true">→</span>
+                <a class="en-crumb" href="/journal.html">Journal</a>
+            </nav>
+            <div class="glass en-notfound">
+                <h1 class="en-notfound-title">Cargando la entrada…</h1>
+                <p class="en-notfound-sub">Un momento, estamos trayendo la nota del Journal.</p>
+            </div>
+        </div>`;
+}
+
 function renderAll(entry) {
     return html`
         <div class="container en-page">
@@ -224,11 +241,16 @@ function renderAll(entry) {
 // HANDLERS
 // ═══════════════════════════════════════════════════════════════════
 
+// _settled = true cuando el listener de journal ya emitió ≥1 snapshot (vía data.onChange).
+// Antes de eso, getEntryBySlug(_slug)=null puede ser "aún cargando", NO "no existe".
+let _settled = false;
+
 function refresh() {
     const main = document.getElementById('main-content');
     if (!main) return;
     const entry = getEntryBySlug(_slug);
     if (!entry) {
+        if (!_settled) { mount(main, renderLoading()); return; }   // cargando ≠ 404 (no toca title)
         main.innerHTML = renderNotFound();
         document.title = 'Entrada no encontrada · Bersaglio Jewelry';
         return;
@@ -293,7 +315,7 @@ export async function init() {
     _slug = getSlugFromURL();
     data.loadJournal();            // B4: solo el listener de journal (no piezas/cols)
     refresh();                     // pinta ya (baked si aún no hay entradas live)
-    data.onChange(refresh);        // re-resuelve la entrada cuando lleguen las publicadas
+    data.onChange(() => { _settled = true; refresh(); });   // 1er snapshot de journal = datos resueltos
     main.addEventListener('click', onMainClick);
 
     window.addEventListener('popstate', () => {

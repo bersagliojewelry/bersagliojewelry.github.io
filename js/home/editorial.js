@@ -6,6 +6,7 @@
  */
 import { html, escape, mount } from '../core/html.js';
 import { data } from '../core/data.js';
+import { safeUrl } from '../core/safe-url.js';
 import { mergeHome } from './siteContent-defaults.js';
 
 export function editorialInner(c) {
@@ -18,7 +19,9 @@ export function editorialInner(c) {
             <div class="container">
                 <div class="home-editorial-grid">
                     <div class="glass glass-iridescent home-editorial-image">
-                        <div class="home-editorial-image-bg"></div>
+                        ${c.image
+                            ? html`<img class="home-editorial-img" src="${escape(safeUrl(c.image))}" alt="" loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;">`
+                            : html`<div class="home-editorial-image-bg"></div>`}
                         <div class="home-editorial-image-shade"></div>
                         <div class="home-editorial-image-content">
                             <div class="chip home-editorial-chip">

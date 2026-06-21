@@ -172,6 +172,7 @@
 | `claude-md-improver` | Audita y mejora archivos CLAUDE.md contra plantillas. | ✅ user-level |
 | `session-report` | Genera reporte HTML de uso de sesiones Claude Code (tokens/cache/subagentes). | ✅ user-level |
 | `cms-dinamico` (2026-06-14) | Patrones para hacer contenido público administrable sin tocar código (Firebase): singleton vs colección, reglas público-read/`editor`-write con `hasOnly`, cableado live-sync (firestore-service→data→onChange), scaffold de CRUD admin, núcleo puro testeable, fallback elegante, SEO de contenido dinámico. PORTABLE. | ✅ user-level |
+| `caza-bugs` (2026-06-21) | Reflejo al TOCAR/ROZAR un subsistema: recorrer su CAMINO VIVO end-to-end desde el estado-cero (vacío→1 y N→vacío + recarga), no solo el diff; + escalada calibrada (N0 barato / N1 pesado, cita dueños) y blindaje con test estado-cero. Frontera por MOMENTO: al tocar (≠ `systematic-debugging` = bug ya visible, ≠ `verification-before-completion` = claim final). PORTABLE. Origen TODO-25/ADR §90 · receta `60-WORKFLOWS` W-10. | ✅ user-level |
 
 ---
 

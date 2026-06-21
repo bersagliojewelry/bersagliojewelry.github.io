@@ -54,24 +54,40 @@ test('cero-ficción: ningún módulo de js/home/ exporta un array no vacío (fue
     }
 });
 
-test('home dinámico: categories.js monta SIEMPRE el <section> (refresh puede crear contenido en vivo, L-42)', () => {
-    const src = readFileSync(join(ROOT, 'js/home/categories.js'), 'utf8');
-    // renderCategories DEBE envolver SIEMPRE en <section class="home-cats"> (aunque el
-    // inner sea ''), o refreshCategories no puede crear la sección cuando llega una
-    // colección → no aparece ni en vivo ni al recargar (bug 2026-06-20).
-    assert.match(
-        src, /renderCategories\([^)]*\)\s*\{\s*return html`<section class="home-cats">\$\{/,
-        'renderCategories debe devolver SIEMPRE <section class="home-cats">${...} (patrón films/journal)',
-    );
-    assert.match(
-        src, /refreshCategories[\s\S]*?querySelector\('\.home-cats'\)[\s\S]*?mount\(/,
-        'refreshCategories debe mount() el inner en la sección existente (no salir si no la encuentra)',
-    );
-    assert.ok(
-        !/^\s*if\s*\(!cards\(\)\.length\)\s*return\s*'';/m.test(src.replace(/function categoriesInner[\s\S]*$/, '')),
-        'renderCategories NO debe devolver "" condicional antes del <section> (eso reintroduce el bug)',
-    );
-});
+// GATE estado-cero (L-42 · ADR §89/§90 · TODO-25 caza-bugs), generalizado a las 5 secciones
+// DINÁMICAS del home. Invariante: renderX() monta SIEMPRE su <section class="home-X"> (con el
+// inner '' si no hay datos) y refreshX() rellena ESE contenedor con mount(). Si render devuelve
+// '' condicional sin datos, la sección nunca entra al DOM → refresh no puede CREARLA → al
+// partir de 0 ítems el contenido jamás aparece (ni en vivo ni al recargar; el 1er paint es
+// async-vacío). Es el bug de Categorías 2026-06-21; el gate ahora protege la CLASE entera (un
+// futuro §89 en films/redes/journal/destacadas también revienta el build).
+const HOME_DINAMICAS = [
+    { file: 'js/home/categories.js',      render: 'renderCategories',     refresh: 'refreshCategories',     sec: 'home-cats' },
+    { file: 'js/home/films.js',           render: 'renderFilms',          refresh: 'refreshFilms',          sec: 'home-films' },
+    { file: 'js/home/social.js',          render: 'renderSocial',         refresh: 'refreshSocial',         sec: 'home-social' },
+    { file: 'js/home/journal-preview.js', render: 'renderJournalPreview', refresh: 'refreshJournalPreview', sec: 'home-journal' },
+    { file: 'js/home/featured.js',        render: 'renderFeatured',       refresh: 'refreshFeatured',       sec: 'home-featured' },
+];
+
+for (const s of HOME_DINAMICAS) {
+    test(`home dinámico (L-42): ${s.render}() monta SIEMPRE <section class="${s.sec}"> y ${s.refresh}() la rellena en vivo`, () => {
+        const src = readFileSync(join(ROOT, s.file), 'utf8');
+        // El regex exige `{ return html`<section class="home-X">${` CONTIGUO al abrir la
+        // función: un `if (...) return '';` ANTES del <section> rompería el match (eso es
+        // justo lo que reintroduce el bug), así que esta sola aserción cubre el invariante.
+        const renderRe = new RegExp(
+            s.render + '\\([^)]*\\)\\s*\\{\\s*return html`<section class="' + s.sec + '">\\$\\{',
+        );
+        assert.match(src, renderRe,
+            `${s.render} debe devolver SIEMPRE html\`<section class="${s.sec}">\${...} (patrón L-42), sin '' condicional antes del <section>`);
+        // refresh DEBE localizar la sección existente y mount() el inner (NO re-crearla ni salir).
+        const refreshRe = new RegExp(
+            s.refresh + "[\\s\\S]*?querySelector\\('\\." + s.sec + "'\\)[\\s\\S]*?mount\\(",
+        );
+        assert.match(src, refreshRe,
+            `${s.refresh} debe querySelector('.${s.sec}') y mount() el inner en la sección ya montada`);
+    });
+}
 
 test('cero-ficción: Destacadas (featured.js) oculta bajo umbral, sin placeholder', () => {
     const src = readFileSync(join(ROOT, 'js/home/featured.js'), 'utf8');

@@ -136,6 +136,12 @@
     transition:
         transform 0.5s cubic-bezier(.2,.9,.2,1),
         box-shadow 0.5s;
+    /* PERF Fase 4 (look IDÉNTICO): el navegador omite renderizar las tarjetas fuera de
+       pantalla (incl. su efecto cristal) → scroll fluido + menos RAM en listas largas, sin
+       quitar ningún efecto. `auto` recuerda el tamaño real tras 1er render; 480px reserva el
+       hueco off-screen para que el scroll no salte. Property segura (se ignora si no se soporta). */
+    content-visibility: auto;
+    contain-intrinsic-size: auto 480px;
 }
 .cat-card:hover {
     transform: translateY(-8px);

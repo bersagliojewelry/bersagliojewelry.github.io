@@ -364,7 +364,9 @@ button { font: inherit; border: none; background: none; cursor: pointer; color: 
   transform: translateY(30px);
   transition: opacity .9s var(--ease-glass), transform .9s var(--ease-glass);
   transition-delay: var(--d, 0ms);
-  will-change: opacity, transform;
+  /* SIN will-change permanente: sobre N secciones .reveal crea una capa de composición
+     por elemento (coste de RAM). transform/opacity ya se componen en GPU durante la
+     transición sin el hint (recon performance 2026-06-21). */
 }
 .reveal.in { opacity: 1; transform: none; }
 .reveal-soft { transform: translateY(18px) scale(0.985); }

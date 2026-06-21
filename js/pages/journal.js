@@ -36,7 +36,7 @@ function renderMasthead(feat) {
                 </h1>
             </div>
             <div class="jr-masthead-meta">
-                <div class="mono jr-issue">${escape(JOURNAL_ISSUE.number)} · ${escape(feat.dateLong)}</div>
+                <div class="mono jr-issue">${escape(JOURNAL_ISSUE.number)}${feat ? ' · ' + escape(feat.dateLong) : ''}</div>
             </div>
         </div>
         <div class="jr-masthead-line"></div>`;
@@ -232,10 +232,23 @@ function renderAll() {
         <div class="container jr-page">
             ${renderMasthead(feat)}
             ${renderTicker()}
-            ${renderCover(feat, side)}
+            ${feat ? renderCover(feat, side) : renderEmpty()}
             ${renderArchiveGrid(archive)}
             ${renderCTA()}
         </div>`;
+}
+
+// Estado-cero (sin entradas publicadas): getFeatured() = null → NO crashear (clase §89/L-42:
+// el home-preview ya guardaba con `if (!feat) return ''`, pero esta página completa no lo
+// heredó). Empty-state editorial reusando clases ya estilizadas del archivo (cero CSS nueva).
+function renderEmpty() {
+    return html`
+        <section class="jr-archive">
+            <div class="jr-archive-header">
+                <div class="mono jr-archive-eyebrow">PRÓXIMAMENTE</div>
+                <h2 class="jr-archive-title">El <span class="italic emerald-text">Journal</span> está en preparación</h2>
+            </div>
+        </section>`;
 }
 
 function initNewsletter() {

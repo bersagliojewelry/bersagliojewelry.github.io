@@ -428,7 +428,7 @@ function refreshTimeline() {
 function refreshFAQ() {
     const wrap = document.querySelector('.faq-wrap');
     if (!wrap || !_content) return;
-    const next = fragment(nosotrosFaqSection(_content.cierre.faqs, _openFaq)).querySelector('.faq-wrap');
+    const next = fragment(nosotrosFaqSection(_content.faqs.items, _openFaq)).querySelector('.faq-wrap');
     if (next) wrap.replaceWith(next);
 }
 

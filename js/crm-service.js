@@ -15,8 +15,9 @@
 import { app, firestoreDb } from './firebase-config.js';
 import {
     collection, collectionGroup, doc, getDocs, getDoc, addDoc, setDoc, updateDoc, deleteDoc,
-    writeBatch, query, where, orderBy, limit, onSnapshot, serverTimestamp, deleteField,
+    writeBatch, query, where, orderBy, limit, serverTimestamp, deleteField,
 } from 'firebase/firestore';
+import { subscribeWithRetry } from './core/live-query.js';
 
 // Tope de seguridad para listeners (doctrina S3). La cartera de fiado es acotada;
 // si se llegara a este límite, hay que paginar (ver docs/41-SEGURIDAD §S3).
@@ -54,10 +55,10 @@ export async function fetchClientes() {
 
 export function onClientesChange(cb) {
     const q = query(collection(firestoreDb, 'clientes'), limit(MAX));
-    return onSnapshot(q, (snap) => {
+    return subscribeWithRetry(() => q, (snap) => {
         detectarTruncado('Clientes', snap.size);
         cb(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
+    }, 'Clientes');
 }
 
 /**
@@ -91,9 +92,9 @@ export async function getCliente(id) {
 
 /** Suscripción en vivo a UN cliente (su saldoActual cambia cuando corre la CF). */
 export function onClienteChange(id, cb) {
-    return onSnapshot(doc(firestoreDb, 'clientes', id), (snap) => {
+    return subscribeWithRetry(() => doc(firestoreDb, 'clientes', id), (snap) => {
         cb(snap.exists() ? { id: snap.id, ...snap.data() } : null);
-    });
+    }, 'Cliente');
 }
 
 // ─── Movimientos (cuenta corriente de un cliente) ─────────────────────────────
@@ -102,10 +103,10 @@ export function onMovimientosChange(clienteId, cb) {
         collection(firestoreDb, 'clientes', clienteId, 'movimientos'),
         orderBy('registradoEn', 'desc'), limit(MAX),
     );
-    return onSnapshot(q, (snap) => {
+    return subscribeWithRetry(() => q, (snap) => {
         detectarTruncado('Historial del cliente', snap.size);
         cb(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
+    }, 'Historial del cliente');
 }
 
 /**
@@ -158,10 +159,10 @@ export async function addMovimiento(clienteId, datos) {
  */
 export function onAllMovimientosChange(cb) {
     const q = query(collectionGroup(firestoreDb, 'movimientos'), limit(MAX));
-    return onSnapshot(q, (snap) => {
+    return subscribeWithRetry(() => q, (snap) => {
         detectarTruncado('Movimientos (mora de la lista)', snap.size);
         cb(snap.docs.map((d) => ({ id: d.id, clienteId: d.ref.parent.parent?.id, ...d.data() })));
-    });
+    }, 'Movimientos (mora de la lista)');
 }
 
 /**
@@ -190,10 +191,10 @@ export function onSolicitudesChange(clienteId, cb) {
         collection(firestoreDb, 'clientes', clienteId, 'solicitudes'),
         orderBy('creadoEn', 'desc'), limit(MAX),
     );
-    return onSnapshot(q, (snap) => {
+    return subscribeWithRetry(() => q, (snap) => {
         detectarTruncado('Solicitudes del cliente', snap.size);
         cb(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
+    }, 'Solicitudes del cliente');
 }
 
 /**
@@ -244,13 +245,10 @@ export function onSolicitudesPendientesChange(cb, onError) {
         where('estado', '==', 'pendiente'),
         orderBy('creadoEn', 'asc'), limit(MAX),
     );
-    return onSnapshot(q, (snap) => {
+    return subscribeWithRetry(() => q, (snap) => {
         detectarTruncado('Solicitudes pendientes (aprobación)', snap.size);
         cb(snap.docs.map((d) => ({ id: d.id, clienteId: d.ref.parent.parent?.id, ...d.data() })));
-    }, (err) => {
-        console.error('[crm] cola de solicitudes pendientes:', err);
-        onError?.(err);
-    });
+    }, 'Solicitudes pendientes (aprobación)', onError);
 }
 
 /** Movimientos de un cliente UNA VEZ (contexto de la tarjeta de aprobación:
@@ -292,13 +290,10 @@ export function onSolicitudesRechazadasRecientes(dias, cb, onError) {
         where('creadoEn', '>=', desde),
         orderBy('creadoEn', 'asc'), limit(MAX),
     );
-    return onSnapshot(q, (snap) => {
+    return subscribeWithRetry(() => q, (snap) => {
         detectarTruncado('Solicitudes rechazadas (auditoría)', snap.size);
         cb(snap.docs.map((d) => ({ id: d.id, clienteId: d.ref.parent.parent?.id, ...d.data() })));
-    }, (err) => {
-        console.error('[crm] rechazadas recientes:', err);
-        onError?.(err);
-    });
+    }, 'Solicitudes rechazadas (auditoría)', onError);
 }
 
 // ─── Auditoría mensual (Fase M · M4): acta de conciliación + cortes ───────────
@@ -306,12 +301,9 @@ export function onSolicitudesRechazadasRecientes(dias, cb, onError) {
 /** Acta del mes ('YYYY-MM') en vivo (null si no existe aún). `onError` obligatorio
  *  de facto: si el listener muere, la UI ofrecería CREAR un acta que ya existe. */
 export function onActaChange(mes, cb, onError) {
-    return onSnapshot(doc(firestoreDb, 'conciliaciones', mes), (snap) => {
+    return subscribeWithRetry(() => doc(firestoreDb, 'conciliaciones', mes), (snap) => {
         cb(snap.exists() ? { id: snap.id, ...snap.data() } : null);
-    }, (err) => {
-        console.error('[crm] acta de conciliación:', err);
-        onError?.(err);
-    });
+    }, 'Acta de conciliación', onError);
 }
 
 /** Crea el ACTA mensual (owner-only por reglas; one-way: jamás se edita).
@@ -331,12 +323,9 @@ export async function crearActa(mes, { totalPorMedio, bancoCuadra, efectivoCuadr
 /** Último corte mensual generado por la CF (la foto inmutable más reciente). */
 export function onUltimoCorteChange(cb, onError) {
     const q = query(collection(firestoreDb, 'cortes'), orderBy('mes', 'desc'), limit(1));
-    return onSnapshot(q, (snap) => {
+    return subscribeWithRetry(() => q, (snap) => {
         cb(snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() });
-    }, (err) => {
-        console.error('[crm] cortes mensuales:', err);
-        onError?.(err);
-    });
+    }, 'Cortes mensuales', onError);
 }
 
 /**
@@ -418,13 +407,10 @@ export function onGestionesChange(clienteId, cb, onError) {
         collection(firestoreDb, 'clientes', clienteId, 'gestiones'),
         orderBy('creadoEn', 'desc'), limit(MAX),
     );
-    return onSnapshot(q, (snap) => {
+    return subscribeWithRetry(() => q, (snap) => {
         detectarTruncado('Gestiones del cliente', snap.size);
         cb(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    }, (err) => {
-        console.error('[crm] gestiones del cliente:', err);
-        onError?.(err);
-    });
+    }, 'Gestiones del cliente', onError);
 }
 
 // ─── Acuerdos de pago (spec 2026-06-12): el plan de cuotas pactado ────────────
@@ -439,13 +425,10 @@ export function onAcuerdosChange(clienteId, cb, onError) {
         collection(firestoreDb, 'clientes', clienteId, 'acuerdos'),
         orderBy('creadoEn', 'desc'), limit(MAX),
     );
-    return onSnapshot(q, (snap) => {
+    return subscribeWithRetry(() => q, (snap) => {
         detectarTruncado('Acuerdos del cliente', snap.size);
         cb(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    }, (err) => {
-        console.error('[crm] acuerdos del cliente:', err);
-        onError?.(err);
-    });
+    }, 'Acuerdos del cliente', onError);
 }
 
 /** TODOS los acuerdos de todas las clientas (vigilancia M4: las renegociaciones
@@ -453,13 +436,10 @@ export function onAcuerdosChange(clienteId, cb, onError) {
  *  filtros = sin índice compuesto (spec §9.1). */
 export function onAllAcuerdosChange(cb, onError) {
     const q = query(collectionGroup(firestoreDb, 'acuerdos'), limit(MAX));
-    return onSnapshot(q, (snap) => {
+    return subscribeWithRetry(() => q, (snap) => {
         detectarTruncado('Acuerdos (vigilancia)', snap.size);
         cb(snap.docs.map((d) => ({ id: d.id, clienteId: d.ref.parent.parent?.id, ...d.data() })));
-    }, (err) => {
-        console.error('[crm] acuerdos (vigilancia):', err);
-        onError?.(err);
-    });
+    }, 'Acuerdos (vigilancia)', onError);
 }
 
 /** Acuerdos VIGENTES de todas las clientas (lista CxC / agenda de cobro) —
@@ -470,13 +450,10 @@ export function onAllAcuerdosVigentesChange(cb, onError) {
         where('estado', '==', 'vigente'),
         orderBy('creadoEn', 'asc'), limit(MAX),
     );
-    return onSnapshot(q, (snap) => {
+    return subscribeWithRetry(() => q, (snap) => {
         detectarTruncado('Acuerdos vigentes (lista)', snap.size);
         cb(snap.docs.map((d) => ({ id: d.id, clienteId: d.ref.parent.parent?.id, ...d.data() })));
-    }, (err) => {
-        console.error('[crm] acuerdos vigentes:', err);
-        onError?.(err);
-    });
+    }, 'Acuerdos vigentes (lista)', onError);
 }
 
 // Payload espejo EXACTO de acuerdoValido() v2 (firestore.rules): solo SALDO.
@@ -595,7 +572,7 @@ export async function corregirMovimientoBatch(clienteId, { original, reemplazo, 
 // ─── Vendedoras (entidad de datos; las gestiona Kary) ─────────────────────────
 export function onVendedorasChange(cb) {
     const q = query(collection(firestoreDb, 'vendedoras'), limit(MAX));
-    return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
+    return subscribeWithRetry(() => q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))), 'Vendedoras');
 }
 export async function fetchVendedoras() {
     const snap = await getDocs(query(collection(firestoreDb, 'vendedoras'), limit(MAX)));
@@ -618,7 +595,7 @@ export async function updateVendedora(id, patch) {
 // ─── Pendientes de configuración (tablero para Kary) ──────────────────────────
 export function onPendientesChange(cb) {
     const q = query(collection(firestoreDb, 'pendientes'), limit(MAX));
-    return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
+    return subscribeWithRetry(() => q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))), 'Pendientes');
 }
 export async function addPendiente({ titulo, detalle, categoria }) {
     const payload = {
@@ -683,9 +660,9 @@ export function cumpleanosDelMes(clientes, mes) {
 // escribir al owner (Daniel); el admin lee (la UI de Kary necesita los límites).
 
 export function onConfigCarteraChange(cb) {
-    return onSnapshot(doc(firestoreDb, 'config', 'cartera'), (snap) => {
+    return subscribeWithRetry(() => doc(firestoreDb, 'config', 'cartera'), (snap) => {
         cb(snap.exists() ? snap.data() : null);
-    });
+    }, 'Config cartera');
 }
 
 /** Guarda parámetros (merge). La frontera real es la regla owner-only. */
@@ -703,11 +680,11 @@ export async function updateConfigCartera(parcial, actorEmail) {
 
 /** Suscripción a los singletons de salud → cb({ backup, reconciliacion }). */
 export function onSaludChange(cb) {
-    return onSnapshot(collection(firestoreDb, 'salud'), (snap) => {
+    return subscribeWithRetry(() => collection(firestoreDb, 'salud'), (snap) => {
         const out = {};
         snap.docs.forEach((d) => { out[d.id] = d.data(); });
         cb(out);
-    });
+    }, 'Salud');
 }
 
 /** Eventos de fallo (recalc-saldo-error…), más recientes primero. orderBy de UN
@@ -716,12 +693,12 @@ export function onSaludChange(cb) {
  *  más nuevos. Sort en cliente se mantiene como defensa (timestamps pendientes). */
 export function onSaludEventosChange(cb) {
     const q = query(collection(firestoreDb, 'saludEventos'), orderBy('at', 'desc'), limit(MAX));
-    return onSnapshot(q, (snap) => {
+    return subscribeWithRetry(() => q, (snap) => {
         detectarTruncado('Registro de fallos (Salud)', snap.size);
         const eventos = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
         eventos.sort((a, b) => (b.at?.toMillis?.() || 0) - (a.at?.toMillis?.() || 0));
         cb(eventos);
-    });
+    }, 'Registro de fallos (Salud)');
 }
 
 export async function marcarEventoResuelto(id, uid) {

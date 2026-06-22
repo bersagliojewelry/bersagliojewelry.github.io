@@ -185,6 +185,10 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     .bj-header-burger { display: flex; }
     .bj-header-brand { font-size: 16px; }
     .bj-header-sub { display: none; }
+    /* En móvil el nav (que llevaba margin-left:auto) está oculto → sin él los iconos quedaban
+       pegados a la izquierda junto al logo. El logo toma margin-right:auto → empuja el grupo
+       de iconos (favoritos · carrito · menú) a la derecha; el logo queda solo a la izquierda. */
+    .bj-header-logo { margin-right: auto; }
 }
 @media (max-width: 480px) {
     .bj-header { top: 12px; }

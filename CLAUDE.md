@@ -39,7 +39,8 @@ El cerebro se divide en **nodos**. Auto-cargas SOLO `CLAUDE.md` + `05` + `10` (�
 | ⚡ **Corto Plazo (WIP)** | `docs/10-MEMORIA-CORTO-PLAZO.md` | ✅ Siempre (2ª lectura) | Sprint actual, pendientes (TODO-NN), bitácora. (El estado técnico vive en 05.) |
 | 🛰️ **Consejo Externo** | `docs/15-CONSEJO-EXTERNO.md` | ❌ on-demand | Trigger de Decisión Fuerte: antes de algo caro de revertir (arquitectura, datos, seguridad/legal, fork 50/50, op irreversible), pedir crítica adversarial al **provider externo configurado** (ver `15-CONSEJO-EXTERNO §0`). Cuándo + selección de tier ahí. |
 | 🗺️ **Espacial** | `docs/20-MEMORIA-ESPACIAL.md` | ❌ on-demand | Trigger de Desorientación: dónde vive un componente, flujos, arquitectura, layouts. |
-| 🧪 **Procedimental (experiencia)** | `docs/30-LECCIONES.md` | ❌ on-demand | Trigger de Experiencia: ANTES de una op riesgosa/repetitiva (refactor CSS, tocar caché/SW) o si un síntoma "te suena". Gotchas + recetas + doctrinas Liquid Glass. |
+| 🧪 **Procedimental (experiencia)** | `docs/30-LECCIONES.md` | ❌ on-demand | Trigger de Experiencia: ANTES de una op riesgosa/repetitiva (refactor CSS, tocar caché/SW) o si un síntoma "te suena". Gotchas + recetas + doctrinas Liquid Glass. **Hija → `31`.** |
+| 🔥 **Procedimental · Backend** (hija de `30`) | `docs/31-LECCIONES-FIRESTORE.md` | ❌ on-demand | Trigger de Experiencia, sub-tema BACKEND: ANTES de tocar `firestore.rules`, Cloud Functions, índices, custom claims o el emulador. Detalle de L-12/13/14/16/17/29/34..38 (su stub-header vive en `30`). |
 | 🗂️ **Índice sináptico** | `docs/00-INDICE.md` | ❌ on-demand | ANTES de leer el historial (offset exacto) Y para el enrutamiento semántico (síntoma → neurona). |
 | 📚 **Largo Plazo** | `docs/99-HISTORIAL-ADR.md` | ❌ on-demand | Trigger de Error / detalle histórico de un §. NUNCA completo — usa offset/limit. |
 | 🎯 **Lóbulos de Dominio** | `docs/40-LOBULOS-DOMINIO.md` | ❌ on-demand | Trigger 🔵 §G.2: registry de dominios especializados; lóbulos hijos activos (`41-SEGURIDAD`, `42-LEGAL`, `43-UX`, `45-PERFORMANCE`) + planificados (`48-ACCESIBILIDAD`, etc.) nacen on-demand con contenido real. |
@@ -226,7 +227,8 @@ Una neurona sobrecargada satura el contexto. Cada neurona tiene un TOPE BLANDO (
 | `05-ESTADO-GLOBAL` | 🔴 auto (siempre) | ~25 líneas | Es un tablero, no bitácora. Solo señales vitales actuales (pisar, no apilar). |
 | `10-CORTO-PLAZO` | 🔴 auto (siempre) | ~110 líneas | Higiene §G.4 (GC): consolidar a `99`/`30`, recortar al foco vivo. |
 | `20-ESPACIAL` | 🟡 on-demand entera | ~280 líneas | Shard: extraer sub-área a neurona hermana (ej. `21-ESPACIAL-ADMIN.md`). |
-| `30-LECCIONES` | 🟡 on-demand entera | ~350 líneas | Shard por categoría (ej. `31-LECCIONES-GIT.md`). |
+| `30-LECCIONES` | 🟡 on-demand entera | ~350 líneas | Índice de lecciones; backend (Firestore/CF/reglas) sharded a `31` (stub-header aquí, detalle allá). Más categorías → nueva hija. |
+| `31-LECCIONES-FIRESTORE` | 🟡 on-demand entera | ~16000 chars | Hija de `30`: detalle de lecciones backend. El kernel lee `### L-NN` solo de `30` → el stub-header permanece en `30`. |
 | `00-INDICE` | 🟡 on-demand | ~450 líneas | Es tabla escaneable; dividir el mapa § por rangos si molesta. |
 | `40-LOBULOS-DOMINIO` | 🟡 on-demand | ~280 líneas | Registry; shard por meta-categorías si crece. |
 | `99-HISTORIAL` | 🟢 on-demand por offset | sin tope* | *NUNCA leer entero (solo `offset/limit` vía índice). Si >50k líneas, shard en volúmenes `99a/99b` por rango de §. |

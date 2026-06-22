@@ -36,6 +36,10 @@
     "docs/40-LOBULOS-DOMINIO.md": {
       "lines": 280,
       "chars": 16000
+    },
+    "docs/31-LECCIONES-FIRESTORE.md": {
+      "lines": 90,
+      "chars": 16000
     }
   },
   "archiveDir": "../brain-private/bersaglio/research-archive",

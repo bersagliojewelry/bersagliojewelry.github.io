@@ -7,7 +7,7 @@
 >
 > **Cerebro completo**: 🧠 `CLAUDE.md` (router/identidad) · 🩺 `docs/05-ESTADO-GLOBAL.md` (signos vitales)
 > · ⚡ `docs/10-MEMORIA-CORTO-PLAZO.md` (WIP) · 🛰️ `docs/15-CONSEJO-EXTERNO.md` (red team) · 🗺️ `docs/20-MEMORIA-ESPACIAL.md` (arquitectura)
-> · 🧪 `docs/30-LECCIONES.md` (experiencia/recetas) · 🎯 `docs/40-LOBULOS-DOMINIO.md` (registry dominios) · 🏛️ `docs/50-ARQUITECTURA.md` (arquitectura/charter CRM) · 🔁 `docs/60-WORKFLOWS.md` (workflows reutilizables) · 🗂️ este (índice) · 📚 `docs/99-HISTORIAL-ADR.md` (largo plazo) · 🛠️ `docs/skills-inventory.md` (catálogo skills).
+> · 🧪 `docs/30-LECCIONES.md` (experiencia/recetas) · 🔥 `docs/31-LECCIONES-FIRESTORE.md` (backend: Firestore/CF/reglas; hija de 30) · 🎯 `docs/40-LOBULOS-DOMINIO.md` (registry dominios) · 🏛️ `docs/50-ARQUITECTURA.md` (arquitectura/charter CRM) · 🔁 `docs/60-WORKFLOWS.md` (workflows reutilizables) · 🗂️ este (índice) · 📚 `docs/99-HISTORIAL-ADR.md` (largo plazo) · 🛠️ `docs/skills-inventory.md` (catálogo skills).
 >
 > **Cómo usarlo (regla de oro anti-saturación)**:
 > 1. Busca aquí el § que necesitas y su línea de inicio.
@@ -147,6 +147,7 @@
 | §93 | 2026-06-22 — Sprint perf + UX móvil: `.bj-lite` por capacidad (header blur/aurora/blobs/dock off en equipos modestos; capaces idénticos) · carga fluida del index (RESERVAR alto NO skeleton + `isReady(sección)` real + watchdog 8s + 3 estados + cap 6 colecciones centradas) · fix del flash en catálogo/pieza/journal/lista-deseos (readiness real) · `scrollRestoration` manual · header auto-oculto + iconos a la derecha en móvil · 3 bugs móvil (franja blanca `100lvh` / espacio hero / touch dock). Comité ×3 blindado + Gemini. EN MAIN (PRs #289-292). Detalle → `45` PERF-04/05. [OPUS-4.8] | 1426 |
 | §94 | 2026-06-22 — Fuentes: Google Fonts de listas de pesos discretas → **sintaxis de rango** (`..`) = una fuente VARIABLE por familia. Cobertura de pesos IDÉNTICA (cero cambio visual), pero `@font-face` 72→25, CSS 28→10 KB, woff2 descargados ~14→6 (Cormorant 6→2, Manrope 5→1). Cierra el pendiente "fuentes" de §93.7/PERF-04/05. Verif. `document.fonts` + curl. 24 HTML (públicos+admin); SW sin bump (cross-origin). Código `f926eca`. [OPUS-4.8] | 1438 |
 | §95 | 2026-06-22 — Admin: **bloquear borrado de colección con piezas asociadas** (F5/TODO-28, decisión comité). `handleDelete` con guard de integridad referencial: si la colección tiene piezas (conteo defensivo `slug‖id`), avisa y NO borra; solo borra vacías. Botón atenuado + title cuando hay piezas. Guard en UI (reglas no cuentan cross-colección). Evita piezas huérfanas en el sitio público. Código `2de1397`. [OPUS-4.8] | 1450 |
+| §96 | 2026-06-22 — Cerebro: **shard `30-LECCIONES` → `31-LECCIONES-FIRESTORE`** (TODO-27 ✅). 11 lecciones backend (Firestore/CF/reglas) movidas al detalle en `31`; en `30` quedan stubs de 1 línea (`30`: 44k→32.6k chars). **Descubrimiento**: el kernel lee `### L-NN` solo de `30` → el stub-header DEBE quedar en `30`; multi-archivo real = cambio de kernel (cars-operador, M-06). Neurogénesis completa + brain:check sano. [OPUS-4.8] | 1462 |
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §57+ al historial,
 > añadir su fila aquí con la línea de inicio (`Select-String` o `grep`).

@@ -30,7 +30,8 @@
 │   │   ├── wishlist.js         # Manejo de lista de deseos
 │   │   ├── html.js             # Tagged templates html`` + escape() + mount()
 │   │   ├── format.js           # Formateadores numéricos y de fechas
-│   │   └── reveal.js           # Reveal-on-scroll (IntersectionObserver + fallback robusto)
+│   │   ├── reveal.js           # Reveal-on-scroll (IntersectionObserver + fallback robusto)
+│   │   └── live-query.js       # subscribeWithRetry: onSnapshot robusto que RE-SUSCRIBE (infra neutral: público + CRM, §93/§98)
 │   ├── components/             # Componentes de UI modulares
 │   │   ├── header.js           # Navbar pill flotante + mobile drawer
 │   │   ├── footer.js           # Footer modular 4 columnas

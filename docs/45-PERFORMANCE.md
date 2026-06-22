@@ -74,6 +74,21 @@
 
 ---
 
+### PERF-07: Arranque C1 — above-the-fold pre-pintado (1ª visita) · DIAGNÓSTICO (Decisión Fuerte, NO implementado) · 2026-06-22
+*   **Disparador**: el "remate" de Gemini (PERF-05) para la 1ª visita. Investigado 2026-06-22 (TODO-28, paso final del plan perf); decido NO implementarlo a ciegas (§G.2 + abajo).
+*   **Diagnóstico (verificado en código)**: el above-the-fold NO se pinta hasta que TERMINA todo el boot:
+    - `index.html:145-147`: `body { opacity:0 }` hasta `body.bj-ready` (anti-FOUC) → NADA visible (ni el skeleton de `#main-content`) hasta `.bj-ready`.
+    - `boot.js`: `.bj-ready` se añade al FINAL de `boot()` (paso 5), DESPUÉS de `await loadShell()` (header+footer+**6 drawers NO-críticos**) + lazy-import de `home.js` + `renderAll()` + `observeReveals()`.
+    - El hero (LCP) es JS-rendered (`home.js`→`hero.js renderHero()` con DEFAULTS); NO está en el HTML estático (`#main-content` solo trae un skeleton, oculto por el fade).
+    - Cadena del LCP: red(`boot.js`) → red+8 imports(`loadShell`) → red(`home.js`) → render → `bj-ready`. Los drawers no-críticos (cart/wishlist/cookie/email/search/dock) BLOQUEAN el hero (`await loadShell()` ANTES del page handler).
+*   **Opciones (trade-offs)**:
+    - **(A) Reorden de boot** (más simple/seguro): cargar el page handler (hero) en PARALELO con `loadShell` (los drawers no son above-the-fold) + añadir `.bj-ready` tras el paint del hero, no tras los drawers. Riesgo: el CSS externo debe estar listo o reaparece FOUC (hoy el `opacity:0`+retraso lo enmascara) → verificar ANTES cómo cargan las hojas (bloqueante vs async).
+    - **(B) Pre-render / SSG del hero** (ideal de Gemini): generar el HTML del hero (con DEFAULTS) en `index.html` al build → LCP sin esperar JS; `home.js` re-pinta solo si llega override de Firestore. Riesgo: DRIFT HTML↔`HOME_DEFAULTS` (clase L-10 del critical-CSS inline) → mitigar generándolo del MISMO `siteContent-defaults` al build (toca el pipeline Vite).
+    - **(C) Aligerar `body opacity:0`**: depende de que el critical-CSS inline cubra el above-the-fold sin FOUC.
+*   **Por qué NO se implementó este turno (decisión de arquitecto)**: afecta el arranque de TODO el sitio (cara de revertir, §G.2), el trade-off FOUC↔LCP es real, y **NO es medible en el preview headless** (no mide LCP, L-05/L-09) → exige medición en DISPOSITIVO real + comité blindado + 2ª opinión Gemini (Decisión Fuerte, Gemini ya recomendó B) + aprobación de Daniel. **Diagnóstico listo para arrancar ese turno enfocado.**
+
+---
+
 ## 📋 Plan de Acción y Priorización
 
 | ID | Tarea | Prioridad | Impacto estimado |

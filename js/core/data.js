@@ -81,6 +81,11 @@ class PublicData {
                 ]);
 
                 this._loaded = true;
+                // Si ganó el timeout (Firestore lento/caído, sin snapshot), notifica igual:
+                // las secciones en estado "cargando" pasan a "listo-vacío" → colapsan en
+                // silencio (red de seguridad anti-carga-eterna; comité v3 §1.1 vía el timeout
+                // existente). Si ya hubo snapshot, este notify extra es inocuo (coalescido).
+                this._notify();
                 if (typeof console !== 'undefined') {
                     console.info(`[data] live: ${this._pieces.length} piezas, ${this._collections.length} colecciones`);
                 }
@@ -93,7 +98,17 @@ class PublicData {
         return this._loadPromise;
     }
 
-    isReady() { return this._loaded; }
+    /**
+     * ¿Llegó ya el primer snapshot? Sin argumento = global (compat). Por sección permite
+     * que cada una revele independiente (colecciones a 0.5s, piezas a 4s) sin acoplarse.
+     * Tras el timeout de load() (`_loaded`), TODAS se consideran listas → las vacías colapsan
+     * (evita carga eterna si un listener nunca dispara). Comité v3 §1/§1.1.
+     */
+    isReady(section) {
+        if (section === 'cats')     return this._initialCols || this._loaded;
+        if (section === 'featured') return this._initialPieces || this._loaded;
+        return this._loaded;
+    }
 
     /**
      * Suscribe el listener de journal — LAZY/opt-in (B4): solo lo llaman las páginas

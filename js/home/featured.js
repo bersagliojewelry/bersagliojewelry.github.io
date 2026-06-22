@@ -1,16 +1,19 @@
 /**
  * Home · Sección 4 — Piezas destacadas (DINÁMICO desde Firestore).
  *
- * REGLA cero-ficción (`feedback_no_demo_en_index`, spec 2026-06-20 · decisión Daniel
- * "con mínimo"): con menos de MIN_FEATURED piezas destacadas-con-precio la sección NO se
- * monta (hide-when-empty), SIN placeholder. El "Piso de dignidad" del index (Hero ·
- * Marquee · Editorial · Atelier · CTA, copy real) sostiene la página el día 1.
- * refreshFeatured() re-renderiza en cada data.onChange() — espejo de refreshFilms.
+ * REGLA cero-ficción (`feedback_no_demo_en_index`): con menos de MIN_FEATURED piezas
+ * destacadas-con-precio la sección NO se monta (hide-when-empty), SIN placeholder.
+ *
+ * CARGA FLUIDA (comité v3 §1/§3 · 2026-06-21): mismo modelo de 3 estados que categorías
+ * para que el contenido no salte al llegar Firebase: LISTO+datos → contenido (fade-in, swap
+ * directo en .bj-lite/RM); LISTO+<umbral → '' (colapsa); CARGANDO → reserva el alto de la
+ * última carga (1ª visita sin alto → '' colapso limpio). `data.isReady('featured')` distingue.
  */
 import { html, escape, mount } from '../core/html.js';
 import { format$ } from '../core/format.js';
 import { data } from '../core/data.js';
 import { MIN_FEATURED } from '../core/home-sections.js';   // umbral de dignidad (SSoT cero-ficción)
+import { reservedHeight, rememberHeight } from '../core/section-reserve.js';
 
 // Piezas visibles en Destacadas = featured + con precio. Lee en TIEMPO DE RENDER (live).
 const featuredPieces = () => data.getFeatured(8).filter(p => p.price);
@@ -19,27 +22,47 @@ export function renderFeatured() {
     return html`<section class="home-featured">${featuredInner()}</section>`;
 }
 
-// Contenido interno (re-renderizable en vivo). Sin suficientes destacadas → '' (oculto).
-function featuredInner() {
-    const pieces = featuredPieces();
-    if (pieces.length < MIN_FEATURED) return '';      // hide-when-empty (cero-ficción §4)
+// Header de marca — COPY ESTÁTICO (ancla la sección en "cargando").
+function headerHtml() {
+    return html`
+        <div class="home-featured-header">
+            <div>
+                <div class="eyebrow">Curaduría del Atelier</div>
+                <h2 class="home-featured-title">Piezas <span class="italic emerald-text">singulares</span></h2>
+            </div>
+            <a href="/colecciones.html" class="btn-aqua home-featured-cta">
+                Explorar el catálogo entero
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            </a>
+        </div>`;
+}
+
+function contentHtml(pieces) {
     return html`
         <div class="container">
-            <div class="home-featured-header">
-                <div>
-                    <div class="eyebrow">Curaduría del Atelier</div>
-                    <h2 class="home-featured-title">Piezas <span class="italic emerald-text">singulares</span></h2>
-                </div>
-                <a href="/colecciones.html" class="btn-aqua home-featured-cta">
-                    Explorar el catálogo entero
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-                </a>
-            </div>
-
+            ${headerHtml()}
             <div class="home-featured-grid" data-featured>
                 ${pieces.slice(0, 6).map(renderFeaturedCard)}
             </div>
         </div>`;
+}
+
+// CARGANDO: header real + grilla vacía con el alto reservado de la última carga.
+function loadingHtml(rh) {
+    return html`
+        <div class="container">
+            ${headerHtml()}
+            <div class="home-featured-grid is-loading" aria-busy="true" aria-hidden="true" style="min-height:${rh}px"></div>
+        </div>`;
+}
+
+function featuredInner() {
+    const pieces = featuredPieces();
+    if (data.isReady('featured')) {
+        return pieces.length >= MIN_FEATURED ? contentHtml(pieces) : '';   // datos | bajo umbral(colapsa)
+    }
+    const rh = reservedHeight('featured');
+    return rh ? loadingHtml(rh) : '';                                       // reserva | colapso limpio (1ª visita)
 }
 
 function renderFeaturedCard(p) {
@@ -82,10 +105,16 @@ function renderFeaturedCard(p) {
         </a>`;
 }
 
-// Re-render en vivo (data.onChange) — espejo de refreshFilms/refreshSocial.
 export function refreshFeatured() {
     const sec = document.querySelector('.home-featured');
-    if (sec) mount(sec, featuredInner());
+    if (!sec) return;
+    const wasLoading = !!sec.querySelector('.is-loading');
+    mount(sec, featuredInner());
+    const grid = sec.querySelector('[data-featured]');
+    if (grid) {
+        requestAnimationFrame(() => rememberHeight('featured', grid));
+        if (wasLoading) grid.classList.add('bj-fade-in');
+    }
 }
 
 export default { renderFeatured, refreshFeatured };

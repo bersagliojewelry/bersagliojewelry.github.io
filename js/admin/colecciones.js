@@ -56,7 +56,7 @@ function renderTable() {
             <td>
                 <div class="adm-table-actions">
                     <button class="adm-btn adm-btn--ghost adm-btn--sm" data-action="edit" data-id="${c.id}">Editar</button>
-                    <button class="adm-btn adm-btn--icon adm-btn--danger" data-action="delete" data-id="${c.id}" title="Eliminar">
+                    <button class="adm-btn adm-btn--icon adm-btn--danger" data-action="delete" data-id="${c.id}"${pCount > 0 ? ' style="opacity:.4;"' : ''} title="${pCount > 0 ? `No se puede eliminar: tiene ${pCount} pieza${pCount === 1 ? '' : 's'} asociada${pCount === 1 ? '' : 's'}` : 'Eliminar'}">
                         <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
                     </button>
                 </div>
@@ -293,10 +293,34 @@ async function handleSave() {
     }
 }
 
+// Conteo DEFENSIVO de piezas asociadas (slug || id) \u2014 espejo de renderTable.
+// `getPieceCount` arriba solo compara por id; aqu\u00ed no podemos subcontar o
+// dejar\u00edamos borrar una colecci\u00f3n con piezas que la referencian por slug.
+function countPiecesIn(col) {
+    return adminDb.getAllPieces().filter(
+        p => p.collection === col.slug || p.collection === col.id
+    ).length;
+}
+
 function handleDelete(id) {
     const col = _collections.find(c => c.id === id);
+    if (!col) return;
+
+    // Guard de integridad (decisi\u00f3n comit\u00e9, F5/TODO-28): NO permitir borrar una
+    // colecci\u00f3n con piezas asociadas \u2192 evita piezas hu\u00e9rfanas en el sitio p\u00fablico
+    // (quedar\u00edan apuntando a una colecci\u00f3n inexistente). Reasignar/eliminar primero.
+    const pCount = countPiecesIn(col);
+    if (pCount > 0) {
+        admToast(
+            `No se puede eliminar "${col.name}": tiene ${pCount} pieza${pCount === 1 ? '' : 's'} asociada${pCount === 1 ? '' : 's'}. Reas\u00edgnalas o elim\u00ednalas primero.`,
+            'danger',
+            5000
+        );
+        return;
+    }
+
     admConfirm(
-        `\u00bfEliminar la colecci\u00f3n "${col?.name}"? Las piezas asociadas no ser\u00e1n eliminadas.`,
+        `\u00bfEliminar la colecci\u00f3n "${col.name}"? Esta acci\u00f3n no se puede deshacer.`,
         async () => {
             try {
                 await adminDb.deleteCollection(id);

@@ -36,6 +36,10 @@
     "docs/40-LOBULOS-DOMINIO.md": {
       "lines": 280,
       "chars": 16000
+    },
+    "docs/31-LECCIONES-FIRESTORE.md": {
+      "lines": 90,
+      "chars": 16000
     }
   },
   "archiveDir": "../brain-private/bersaglio/research-archive",
@@ -55,8 +59,8 @@
     { "regex": "506\\.510\\.780", "owner": "docs/05-ESTADO-GLOBAL.md", "scan": ["docs/10-MEMORIA-CORTO-PLAZO.md"] }
   ],
   "deepAudit": {
-    "last": "2026-06-15",
-    "coveredHeaderCount": 82,
+    "last": "2026-06-22",
+    "coveredHeaderCount": 97,
     "maxAdrGap": 12,
     "maxDays": 30
   }

@@ -298,7 +298,9 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 }
 
 @media (max-width: 920px) {
-    .home-hero { padding-top: 110px; }
+    /* Menos aire entre el header y el hero en móvil (Daniel 2026-06-22): el header mide ~72px;
+       110px dejaba demasiado hueco. 84px = header + un respiro. */
+    .home-hero { padding-top: 84px; }
     .home-hero-banner {
         aspect-ratio: 4/5;
         min-height: 600px;

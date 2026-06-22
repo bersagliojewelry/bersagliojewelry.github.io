@@ -106,7 +106,10 @@ const close = () => setOpen(false);
 
 function onMove(e) {
     if (!_drag) return;
-    if (Math.abs(e.clientX - _drag.sx) + Math.abs(e.clientY - _drag.sy) > 4) _drag.moved = true;
+    // Táctil: umbral más tolerante (12px). El dedo tiembla en un toque; con 4px un toque se
+    // contaba como "arrastre" y NO abría el dock (touch fallaba "a veces", Daniel 2026-06-22).
+    const moveTh = _drag.touch ? 12 : 4;
+    if (Math.abs(e.clientX - _drag.sx) + Math.abs(e.clientY - _drag.sy) > moveTh) _drag.moved = true;
     if (_drag.moved) {
         const x = Math.max(8, Math.min(window.innerWidth - _drag.w - 8, e.clientX - _drag.offX));
         const y = Math.max(8, Math.min(window.innerHeight - _drag.h - 8, e.clientY - _drag.offY));
@@ -127,7 +130,7 @@ function onUp() {
 function onDown(e) {
     const anchor = _root.querySelector('[data-qd-anchor]');
     const r = anchor.getBoundingClientRect();
-    _drag = { sx: e.clientX, sy: e.clientY, offX: e.clientX - r.left, offY: e.clientY - r.top, w: r.width, h: r.height, moved: false };
+    _drag = { sx: e.clientX, sy: e.clientY, offX: e.clientX - r.left, offY: e.clientY - r.top, w: r.width, h: r.height, moved: false, touch: e.pointerType === 'touch' };
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
     e.preventDefault();

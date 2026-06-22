@@ -111,7 +111,11 @@ button { font: inherit; border: none; background: none; cursor: pointer; color: 
    FONDO GLOBAL — Luz que respira, nunca negro
    ═══════════════════════════════════════════════════════════════════ */
 .bj-world {
-  position: fixed; inset: 0; z-index: -1;
+  /* Cubrir el viewport GRANDE (100lvh): en móvil, un fondo fijo con inset:0 se dimensiona al
+     viewport chico (barra del navegador visible) y deja una FRANJA BLANCA abajo cuando la barra
+     se oculta (bug iOS reportado por Daniel 2026-06-22). Anclado arriba + alto 100lvh lo evita.
+     Fallback 100vh para navegadores sin lvh. */
+  position: fixed; inset: 0 0 auto 0; height: 100vh; height: 100lvh; z-index: -1;
   background:
     radial-gradient(1200px 900px at 15% 10%, oklch(92% 0.07 150 / 0.65), transparent 60%),
     radial-gradient(1000px 800px at 90% 20%, oklch(95% 0.06 90 / 0.55), transparent 55%),

@@ -31,7 +31,7 @@
     },
     "docs/00-INDICE.md": {
       "lines": 450,
-      "chars": 16000
+      "chars": 24000
     },
     "docs/40-LOBULOS-DOMINIO.md": {
       "lines": 280,
@@ -39,7 +39,7 @@
     }
   },
   "archiveDir": "../brain-private/bersaglio/research-archive",
-  "_caps_trinquete": "ADR §56/comité v6: caps bajados al tamaño post-GC + headroom (trinquete: bajar libre; SUBIR exige ADR). bootCharsTarget 31500 = aspiracional (resta cirugía del router, gated por cuidado-de-canon).",
+  "_caps_trinquete": "ADR §56/comité v6: caps bajados al tamaño post-GC + headroom (trinquete: bajar libre; SUBIR exige ADR). bootCharsTarget 31500 = aspiracional (resta cirugía del router, gated por cuidado-de-canon). ADR §92: 00-INDICE 16k→24k (ratchet ↑ justificado — el índice es on-demand, NO se comprime con pérdida; doctrina §228 de cars §229).",
   "staleDays": 10,
   "kernelFiles": [
     "scripts/brain-check.mjs",

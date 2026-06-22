@@ -143,6 +143,7 @@
 | §89 | 2026-06-21 — BUG Categorías no aparecía al crear la 1ª colección: `renderCategories` devolvía '' sin datos (1er paint siempre sin datos) → sección nunca en DOM → `refreshCategories` no la creaba. Fix: render monta SIEMPRE el `<section>` + refresh `mount()` (patrón films/journal, L-42) + CSS `:empty` colapsa dinámicas vacías a 0px. Verificado en navegador. SW v21 · `6b327a0`, pendiente merge. [OPUS-4.8] | 1362 |
 | §90 | 2026-06-21 — Capacidad CAZA-BUGS (TODO-25): reflejo barato del camino vivo desde estado-cero (las 2 fronteras vacío→1 / N→vacío) + escalada calibrada 2 niveles (cita §3.7/§G.2, no redefine) + skill portátil `caza-bugs` + **gate estado-cero generalizado a las 5 secciones del home** (L-42). Panel adversarial 9 ag. recortó la sobre-ingeniería. `§G` cross-repo → cars (TODO-26); shard 30→31 → TODO-27. [OPUS-4.8] | 1380 |
 | §91 | 2026-06-21 — Consejo Externo: corrección factual "el modelo externo vía Antigravity SÍ ve el código (solo-lectura), como Claude Code" + skill comité Paso 5 (byte-idéntico ×4, sha `48a5e2f6`). Propagación de cars §224. Límite NUNCA-edita INTACTO. [OPUS-4.8] | 1407 |
+| §92 | 2026-06-22 — Guardián del índice (cars TODO-32) evaluado y **N/A aquí** (headers fecha-leading, sin anclaje §N → 0 reconcilia = falsa cobertura); el check #3 ya vigila el drift; tombstone = convención manual. Matriz ×4 → cars §229. [OPUS-4.8] | 1416 |
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §57+ al historial,
 > añadir su fila aquí con la línea de inicio (`Select-String` o `grep`).

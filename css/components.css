@@ -24,8 +24,11 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     z-index: 100;
     display: flex; justify-content: center;
     pointer-events: none;
-    transition: top 0.4s;
+    transition: top 0.4s, transform 0.45s var(--ease-glass);
 }
+/* Auto-ocultar al bajar / mostrar al subir (lógica en header.js onScroll). translateY arriba
+   saca el header de pantalla (cubre top:18px + el alto del pill). */
+.bj-header.is-hidden { transform: translateY(-150%); }
 .bj-header-pill {
     pointer-events: auto;
     display: flex; align-items: center; gap: 8px;
@@ -54,7 +57,7 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 .bj-header-pill.is-scrolled .bj-header-sub { opacity: 0; max-height: 0; overflow: hidden; }
 .bj-header-pill.is-scrolled .bj-nav-pill { padding-top: 6px; padding-bottom: 6px; }
 @media (prefers-reduced-motion: reduce) {
-    .bj-header-pill, .bj-header-brand, .bj-header-sub, .bj-nav-pill { transition: none; }
+    .bj-header, .bj-header-pill, .bj-header-brand, .bj-header-sub, .bj-nav-pill { transition: none; }
 }
 /* PERF (H1 · recon+comité+Gemini 2026-06-21): el backdrop-filter del header FIJO se re-rasteriza
    por cuadro al deslizar; a alta densidad (DPR 2-3) un blur(46px) cuesta ~×DPR² (≈138px efectivos)

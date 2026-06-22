@@ -129,8 +129,17 @@ Cada experto **asume que la respuesta original tiene fallos** y los busca activa
 - El presidente **puede contradecir a la mayoría** si el razonamiento de la minoría es más fuerte.
 - **Presenta el resultado en el chat con Markdown. NO generes informes HTML ni archivos** (corrige el
   bug heredado de `llm-council`: no hay "reporte visual", el usuario lo lee en la conversación).
-- Para orquestar muchas rondas/expertos sin saturar, usa un `Workflow` (paralelo + bucle ×3); para casos
-  chicos, subagentes `Agent` en paralelo basta.
+- Para casos chicos, subagentes `Agent` en paralelo basta; para muchas rondas, un `Workflow`. **En AMBOS, aplica ACOTADO (abajo)** — un fan-out grande sin tope se cuelga y derrocha.
+
+## ⚖️ ACOTADO — correr el comité sin colgarse ni derrochar (lección dura cross-repo, 2026-06-21)
+
+> Un comité/workflow de muchos agentes SIN tope se desbocó el mismo día en 2 proyectos (cuelgues de horas + millones de tokens). Causa raíz: subagentes en **background** bloqueados esperando aprobación de permiso + fan-out sin convergencia + el modo "ultracode" ("ignora el costo"). El comité ACOTADO de pocos expertos **sí** funcionó. Reglas (revisadas con comité interno + consejo externo):
+
+1. **Disparador, no capricho**: la maquinaria pesada es para **Decisión Fuerte** (`docs/15-CONSEJO-EXTERNO.md`: arquitectura/datos/seguridad/legal/irreversible) o multi-subsistema. Lo trivial/mecánico → trabajo directo. "Preferir directo" NO es excusa para saltarse el comité cuando la tarea califica (el dueño quiere varias perspectivas, no solo Claude).
+2. **Primitiva anti-cuelgue (la única que importa)**: un subagente en **background** que llama una herramienta **gateada por permiso** (`git` por Bash, `Read`/Bash FUERA del cwd) **se cuelga** esperando una aprobación que nadie da. Por eso: a los que solo RAZONAN, pásales TODO el contexto **inline** (un agentType **sin herramientas** > pedir "no uses tools", que es no-determinista); a los que SÍ exploran, **read-only dentro del cwd** o **pre-aprueba** los permisos, o **córrelos en foreground** (donde la aprobación SÍ llega). El **timeout/tope lo da el harness** (Workflow/budget), NO lo redactes como watchdog en el prompt — no construyas un planificador de SO en lenguaje natural.
+3. **Acota el tamaño**: 3-5 expertos, no 30. "Acotado" = **eficacia** (no colgar, no redundancia), NO tacañería: si el dueño activó ultracode, gasta lo necesario para la calidad — pero un fan-out de 30 que relee el SDK no es calidad, es derroche.
+4. **Anti-anclaje (R1) cuando el comité debe cazar TU sesgo**: pásale el **problema CRUDO** + las opciones descartadas, no tu conclusión ya pulida (si no, confirma tu hipótesis en vez de refutarla). Al menos un verificador debe poder leer el artefacto real.
+5. **Si se cuelga**: `TaskStop` + rescatar (best-effort) el output de los que SÍ terminaron; el arreglo real es la **prevención** (punto 2), no "seguir con los sobrevivientes" (podrían colgarse justo los que fueron al fondo).
 
 ## Cuándo NO usar esta skill
 

@@ -17,7 +17,7 @@
  * este init().
  */
 
-import { html, escape } from '../core/html.js';
+import { html, escape, mount } from '../core/html.js';
 import { format$ } from '../core/format.js';
 import { data } from '../core/data.js';
 import { injectCatalogSchema } from '../core/schema.js';
@@ -241,33 +241,72 @@ function onMainChange(e) {
     refreshGrid();
 }
 
+// ─── Carga fluida (Daniel reportó el flash 2026-06-22) ──────────────────────────────
+// No pintar el catálogo con datos vacíos (título genérico "Todas las piezas" + filtros solo
+// "Todo" + "No hay piezas" FALSO) antes de que Firestore responda. Esperamos readiness REAL de
+// piezas Y colecciones (no el timeout de 4s); mientras, estado de carga reservado SIN texto
+// equivocado. Watchdog 8s evita carga eterna (tras él se pinta el estado real, vacío si no hay).
+const catalogReady = () => data.isReady('cats') && data.isReady('featured');
+let _watchdog = null;
+let _gaveUp = false;
+function armWatchdog() {
+    if (_watchdog !== null || _gaveUp) return;
+    try {
+        _watchdog = setTimeout(() => {
+            _watchdog = null;
+            if (!catalogReady()) { _gaveUp = true; renderCatalog(); }
+        }, 8000);
+    } catch { /* sin timers → sin watchdog */ }
+}
+
+// Estado CARGANDO: eyebrow real (ancla de marca) + título y grilla reservados — sin título
+// genérico ni "no hay piezas" falso. Se reemplaza por el render real al llegar los datos.
+function renderLoading() {
+    return html`
+        <div class="container cat-page">
+            <div class="cat-page-header">
+                <div class="eyebrow cat-page-eyebrow">Catálogo · 2026</div>
+                <h1 class="cat-page-title" aria-busy="true" style="min-height:1.1em">&nbsp;</h1>
+            </div>
+            <div class="cat-grid" aria-busy="true" aria-hidden="true" style="min-height:60vh"></div>
+        </div>`;
+}
+
+// Decide el render: real cuando hay datos (o tras el watchdog); si no, cargando.
+function renderCatalog() {
+    const main = document.getElementById('main-content');
+    if (!main) return;
+    if (catalogReady() || _gaveUp) {
+        mount(main, renderAll());
+        updateSchemaMetadata();
+        if (_watchdog !== null) { clearTimeout(_watchdog); _watchdog = null; }
+    } else {
+        mount(main, renderLoading());
+    }
+}
+
 export async function init() {
     const main = document.getElementById('main-content');
     if (!main) return;
 
     _state = readURLState();
 
-    // Kick off Firestore (non-blocking — first paint can show the empty state)
+    // Kick off Firestore (non-blocking). El render espera datos reales (no pinta el estado vacío).
     data.load().catch(() => {});
+    armWatchdog();
 
-    // Initial paint
-    main.innerHTML = renderAll();
-    updateSchemaMetadata();
+    renderCatalog();   // cargando o real según readiness
 
     main.addEventListener('click', onMainClick);
     main.addEventListener('change', onMainChange);
 
-    // Real-time refresh on Firestore updates
-    data.onChange(() => {
-        refreshHeader();
-        refreshGrid();
-    });
+    // Datos en vivo: re-render (maneja la transición cargando→listo y updates posteriores).
+    data.onChange(renderCatalog);
 
-    // Sync state from popstate (back/forward navigation between filter URLs)
+    // Back/forward entre URLs de filtro.
     window.addEventListener('popstate', () => {
         _state = readURLState();
-        refreshHeader();
-        refreshGrid();
+        renderCatalog();
     });
 }
 

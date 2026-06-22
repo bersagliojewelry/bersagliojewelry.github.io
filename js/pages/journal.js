@@ -223,7 +223,34 @@ function renderCTA() {
 // ═══════════════════════════════════════════════════════════════════
 // MOUNT
 // ═══════════════════════════════════════════════════════════════════
+// Carga fluida (Daniel 2026-06-22): no mostrar "El Journal está en preparación" (vacío FALSO)
+// antes de que el listener de journal resuelva. data.isReady('journal') = 1er snapshot real;
+// watchdog 8s → tras él, si no llegó nada, mostramos el estado real (vacío). Mismo patrón que
+// entrada.js (que ya lo hacía bien con _settled).
+let _wdJournal = null;
+let _gaveUp = false;
+function armWatchdog() {
+    if (_wdJournal !== null || _gaveUp) return;
+    try {
+        _wdJournal = setTimeout(() => {
+            _wdJournal = null;
+            if (!data.isReady('journal')) { _gaveUp = true; refresh(); }
+        }, 8000);
+    } catch { /* sin timers → sin watchdog */ }
+}
+
+// CARGANDO: masthead + ticker reales (ancla de marca) + portada reservada, sin "en preparación".
+function renderLoadingJournal() {
+    return html`
+        <div class="container jr-page">
+            ${renderMasthead(null)}
+            ${renderTicker()}
+            <div class="jr-fold" aria-busy="true" aria-hidden="true" style="min-height:50vh"></div>
+        </div>`;
+}
+
 function renderAll() {
+    if (!data.isReady('journal') && !_gaveUp) return renderLoadingJournal();
     const feat = getFeatured();
     const nonFeatured = getNonFeatured();
     const side = nonFeatured.slice(0, 4);
@@ -275,7 +302,8 @@ export async function init() {
     const main = document.getElementById('main-content');
     if (!main) return;
     data.loadJournal();            // B4: solo el listener de journal (no piezas/cols)
-    refresh();                     // pinta ya (baked si aún no hay entradas)
+    armWatchdog();
+    refresh();                     // pinta ya (cargando si aún no hay entradas)
     data.onChange(refresh);        // re-render cuando lleguen entradas publicadas
 }
 

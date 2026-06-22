@@ -41,6 +41,7 @@ class PublicData {
         this._notifyScheduled = false;
         this._initialPieces = false;
         this._initialCols = false;
+        this._initialJournal = false;   // journal (lazy) — para readiness por sección
     }
 
     /** Returns a promise that resolves once first snapshot of pieces+collections arrives. */
@@ -111,6 +112,7 @@ class PublicData {
         // eterna lo cubre un watchdog en cada sección (categories.js/featured.js), no este flag.
         if (section === 'cats')     return this._initialCols;
         if (section === 'featured') return this._initialPieces;
+        if (section === 'journal')  return this._initialJournal;
         return this._loaded;
     }
 
@@ -124,6 +126,7 @@ class PublicData {
         if (this._unsubJournal) return;
         this._unsubJournal = onJournalChange(entries => {
             this._journal = entries;
+            this._initialJournal = true;   // 1er snapshot real de journal llegó
             this._notify();
         });
     }

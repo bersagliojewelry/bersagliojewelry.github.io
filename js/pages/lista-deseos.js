@@ -125,6 +125,30 @@ function renderActions(rows) {
         </div>`;
 }
 
+// Carga fluida (Daniel 2026-06-22): no mostrar "Pieza retirada" (FALSO) por cada favorito antes
+// de que carguen las piezas. La lista (count) es local e inmediata; las tarjetas esperan piezas
+// REALES (data.isReady('featured')). Watchdog 8s → tras él se muestran las tarjetas (con
+// "retirada" real solo para piezas que de verdad faltan).
+let _wdWl = null;
+let _gaveUp = false;
+function armWatchdog() {
+    if (_wdWl !== null || _gaveUp) return;
+    try {
+        _wdWl = setTimeout(() => {
+            _wdWl = null;
+            if (!data.isReady('featured')) { _gaveUp = true; refresh(); }
+        }, 8000);
+    } catch { /* sin timers → sin watchdog */ }
+}
+
+// Tarjeta reservada mientras cargan las piezas (sin "Pieza retirada" falso).
+function renderLoadingCard(row) {
+    return html`
+        <article class="glass wl-card" aria-busy="true" aria-hidden="true" data-slug="${escape(row.slug)}">
+            <div class="wl-card-imglink" style="aspect-ratio:4/5"></div>
+        </article>`;
+}
+
 function renderAll() {
     const rows = joinWishlist();
     if (rows.length === 0) {
@@ -134,13 +158,14 @@ function renderAll() {
                 ${renderEmpty()}
             </div>`;
     }
+    const loading = !data.isReady('featured') && !_gaveUp;
     return html`
         <div class="container wl-page">
             ${renderHero(rows.length)}
             <div class="wl-grid">
-                ${rows.map(renderCard)}
+                ${rows.map(r => loading ? renderLoadingCard(r) : renderCard(r))}
             </div>
-            ${renderActions(rows)}
+            ${loading ? '' : renderActions(rows)}
         </div>`;
 }
 
@@ -176,6 +201,7 @@ export async function init() {
     if (!main) return;
 
     data.load().catch(() => {});
+    armWatchdog();
 
     refresh();
     main.addEventListener('click', onMainClick);

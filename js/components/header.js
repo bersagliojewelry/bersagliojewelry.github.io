@@ -30,6 +30,7 @@ const NAV = [
 let _root = null;
 let _mobileOpen = false;
 let _scrollTop = 0;
+let _hidden = false;   // header auto-oculto (al bajar) — se preserva entre re-renders
 
 function getCurrentKey() {
     const p = location.pathname.replace(/\.html$/, '').replace(/^\//, '');
@@ -159,9 +160,13 @@ function render() {
                 </div>` : ''}
         </header>`;
 
-    // Preserva el estado "scrolled" del pill entre re-renders (cart/wishlist/ruta).
+    // Preserva el estado "scrolled" del pill y el "oculto" del header entre re-renders
+    // (cart/wishlist/ruta) para que no parpadeen al re-renderizar.
     if (window.scrollY > 30) {
         _root.querySelector('.bj-header-pill')?.classList.add('is-scrolled');
+    }
+    if (_hidden && !_mobileOpen) {
+        _root.querySelector('.bj-header')?.classList.add('is-hidden');
     }
 }
 
@@ -195,9 +200,19 @@ function onClick(e) {
 
 function onScroll() {
     if (!_root) return;
-    const y = window.scrollY;
+    const y = Math.max(0, window.scrollY);
     if ((y > 30) !== (_scrollTop > 30)) {
         _root.querySelector('.bj-header-pill')?.classList.toggle('is-scrolled', y > 30);
+    }
+    // Auto-ocultar: al BAJAR se esconde, al SUBIR reaparece (móvil y PC). Cerca del tope o con el
+    // menú móvil abierto, siempre visible. Delta de 4px evita parpadeo por inercia/micro-scroll.
+    const header = _root.querySelector('.bj-header');
+    if (header) {
+        const delta = y - _scrollTop;
+        if (y < 120 || _mobileOpen)  _hidden = false;
+        else if (delta > 4)          _hidden = true;
+        else if (delta < -4)         _hidden = false;
+        header.classList.toggle('is-hidden', _hidden);
     }
     _scrollTop = y;
 }

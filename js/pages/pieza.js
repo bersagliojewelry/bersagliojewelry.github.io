@@ -256,9 +256,24 @@ function renderLoading() {
         </div>`;
 }
 
+// Carga fluida (Daniel 2026-06-22): readiness REAL de piezas (no el timeout de 4s de data.load(),
+// que mostraba "Esta pieza descansa en otro lugar" en FALSO en redes lentas y luego aparecía la
+// pieza). Watchdog 8s → tras él, si la pieza no llegó, recién mostramos el 404.
+let _wdPieza = null;
+let _gaveUp = false;
+function armWatchdog() {
+    if (_wdPieza !== null || _gaveUp) return;
+    try {
+        _wdPieza = setTimeout(() => {
+            _wdPieza = null;
+            if (!data.isReady('featured') && !data.getBySlug(_slug)) { _gaveUp = true; refresh(); }
+        }, 8000);
+    } catch { /* sin timers → sin watchdog */ }
+}
+
 function renderPage() {
     const piece = data.getBySlug(_slug);
-    if (!data.isReady() && !piece) return renderLoading();
+    if (!piece && !data.isReady('featured') && !_gaveUp) return renderLoading();
     if (!piece) return renderNotFound();
 
     return html`
@@ -369,8 +384,9 @@ export async function init() {
     }
 
     data.load().catch(() => {});
+    armWatchdog();
+    refresh();   // paint inicial (skeleton si aún no hay datos)
 
-    main.innerHTML = renderPage();
     main.addEventListener('click', onMainClick);
 
     data.onChange(refresh);

@@ -314,7 +314,10 @@ export async function init() {
 
     _slug = getSlugFromURL();
     data.loadJournal();            // B4: solo el listener de journal (no piezas/cols)
-    refresh();                     // pinta ya (baked si aún no hay entradas live)
+    // Watchdog 8s: si el listener de journal nunca resuelve, dejamos "Cargando…" y mostramos el
+    // estado real (404 si la entrada no existe) — evita carga eterna. (Daniel 2026-06-22.)
+    try { setTimeout(() => { if (!_settled) { _settled = true; refresh(); } }, 8000); } catch {}
+    refresh();                     // pinta ya (cargando si aún no hay entradas live)
     data.onChange(() => { _settled = true; refresh(); });   // 1er snapshot de journal = datos resueltos
     main.addEventListener('click', onMainClick);
 

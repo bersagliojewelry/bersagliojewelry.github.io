@@ -23,6 +23,16 @@ import { initRouter } from './router.js';
 import { observeReveals } from './reveal.js';
 
 /**
+ * Scroll predecible en recarga. La página se arma con JS y CAMBIA DE ALTO mientras carga (más aún
+ * con la reserva de espacio de las secciones dinámicas), así que la restauración automática del
+ * navegador ('auto') caía en una posición inconsistente —a media página— en Ctrl+Shift+R (carrera
+ * restauración↔contenido). 'manual' → la recarga empieza ARRIBA y el contenido dinámico se desarrolla
+ * debajo del pliegue sin mover la vista. No afecta el scroll a anclas #id (mecanismo aparte).
+ * (Daniel 2026-06-21.)
+ */
+try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch { /* no soportado */ }
+
+/**
  * §C3 — Detección de CAPACIDAD (no de tamaño). Marca <html class="bj-lite"> en equipos
  * modestos/móviles para que el CSS aligere los efectos de cristal (header blur, aurora, blobs,
  * dock) SOLO ahí; en equipos capaces el diseño queda 100% idéntico (regla "no romper el diseño").

@@ -383,6 +383,12 @@
     100% { background-position: -200% 0; }
 }
 
+/* Apaga el shimmer del skeleton en equipos modestos (.bj-lite): el gradiente animado
+   (background-position) es intensivo en repintado y reintroduciría jank en gama baja durante
+   la carga (consejo Gemini 2026-06-21). Queda un placeholder estático tenue. */
+.bj-lite .pz-skeleton-gallery,
+.bj-lite .pz-skeleton-row { animation: none; }
+
 @media (prefers-reduced-motion: reduce) {
     .pz-skeleton-gallery,
     .pz-skeleton-row { animation: none; }

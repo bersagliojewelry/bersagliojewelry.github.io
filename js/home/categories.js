@@ -7,14 +7,15 @@
  * CUPO (Daniel 2026-06-21): el INICIO muestra MÁX 6 colecciones + "Ver todas" al resto
  * (catálogo completo en /colecciones). Menos de 6 → se CENTRAN (CSS flex, no alinear izq.).
  *
- * CARGA FLUIDA (comité v3 §1/§3 · 2026-06-21): 3 estados para que el contenido NO salte al
- * llegar Firebase (hasta ~4s):
+ * CARGA FLUIDA (comité v3 + consejo Gemini · 2026-06-21): 3 estados para que el contenido NO
+ * salte al llegar Firebase:
  *   - LISTO+datos  → contenido real (fade-in suave; swap directo en .bj-lite / movimiento reducido).
  *   - LISTO+vacío  → '' (colapsa, cero-ficción).
  *   - CARGANDO     → reserva el alto de la última carga (localStorage) para no empujar el layout;
  *                    1ª visita sin alto guardado → '' (colapso limpio, sin reservar a ciegas, §3.4).
- * `data.isReady('cats')` distingue cargando de vacío; el timeout de data.load() garantiza salir
- * de "cargando" pase lo que pase (red de seguridad, sin carga eterna).
+ * `data.isReady('cats')` mira datos REALES (NO el timeout de data.load() — Gemini: ese timeout
+ * colapsaba en red lenta y re-expandía al llegar el dato tarde). Un WATCHDOG de 8s colapsa si
+ * los datos nunca llegan (red de seguridad anti-carga-eterna).
  *
  * PATRÓN render/refresh (L-42): render() SIEMPRE devuelve el `<section>`; refresh() rellena su
  * inner en cada data.onChange().
@@ -34,6 +35,21 @@ const MAX_CATS = 6;   // cupo del inicio (Daniel 2026-06-21)
 
 // Colecciones reales (vacío → [] → sección colapsada).
 const cards = () => cardsFrom(data.getCollections());
+
+// Watchdog anti-carga-eterna: si los datos REALES nunca llegan (Firestore caído), colapsa a los
+// 8s para no dejar el espacio reservado para siempre. 8s > el timeout interno de data.load() (4s)
+// a propósito: damos margen a redes lentas para llenar la reserva SIN saltar (consejo Gemini).
+let _watchdog = null;
+let _gaveUp = false;
+function armWatchdog() {
+    if (_watchdog !== null || _gaveUp) return;
+    try {
+        _watchdog = setTimeout(() => {
+            _watchdog = null;
+            if (!data.isReady('cats')) { _gaveUp = true; refreshCategories(); }
+        }, 8000);
+    } catch { /* entorno sin timers → sin watchdog (no crítico) */ }
+}
 
 function tile(c) {
     const count = data.countByCollection(c.slug);
@@ -57,6 +73,7 @@ function tile(c) {
 }
 
 export function renderCategories() {
+    armWatchdog();   // first paint → arma la red de seguridad
     return html`<section class="home-cats">${categoriesInner()}</section>`;
 }
 
@@ -102,28 +119,31 @@ function loadingHtml(rh) {
         </div>`;
 }
 
-// Lee data.getCollections() AQUÍ (live), no en import. Resuelve el estado (§1).
+// Lee data.getCollections() AQUÍ (live), no en import. Resuelve el estado.
 function categoriesInner() {
     const all = cards();
     const list = all.slice(0, MAX_CATS);
     if (data.isReady('cats')) {
         return list.length ? contentHtml(list, all.length) : '';   // datos | vacío(colapsa)
     }
+    if (_gaveUp) return '';                                         // watchdog: datos nunca llegaron
     const rh = reservedHeight('cats');
-    return rh ? loadingHtml(rh) : '';                               // reserva | colapso limpio (1ª visita)
+    return rh ? loadingHtml(rh) : '';                              // reserva | colapso limpio (1ª visita)
 }
 
 // Re-render en vivo (data.onChange). Recuerda el alto al pintar datos (para reservar la próxima
-// vez) y hace fade-in SOLO en la transición cargando→datos.
+// vez) y hace fade-in al ENTRAR a contenido desde cualquier estado previo sin contenido
+// (cargando o colapsado) — suaviza también el dato tardío tras el watchdog.
 export function refreshCategories() {
     const sec = document.querySelector('.home-cats');
     if (!sec) return;
-    const wasLoading = !!sec.querySelector('.is-loading');
+    if (data.isReady('cats') && _watchdog !== null) { clearTimeout(_watchdog); _watchdog = null; }
+    const hadContent = !!sec.querySelector('[data-categories]');
     mount(sec, categoriesInner());
     const dock = sec.querySelector('[data-categories]');
     if (dock) {
         requestAnimationFrame(() => rememberHeight('cats', dock));
-        if (wasLoading) dock.classList.add('bj-fade-in');
+        if (!hadContent) dock.classList.add('bj-fade-in');
     }
 }
 

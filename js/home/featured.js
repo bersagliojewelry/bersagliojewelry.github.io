@@ -4,10 +4,11 @@
  * REGLA cero-ficción (`feedback_no_demo_en_index`): con menos de MIN_FEATURED piezas
  * destacadas-con-precio la sección NO se monta (hide-when-empty), SIN placeholder.
  *
- * CARGA FLUIDA (comité v3 §1/§3 · 2026-06-21): mismo modelo de 3 estados que categorías
- * para que el contenido no salte al llegar Firebase: LISTO+datos → contenido (fade-in, swap
- * directo en .bj-lite/RM); LISTO+<umbral → '' (colapsa); CARGANDO → reserva el alto de la
- * última carga (1ª visita sin alto → '' colapso limpio). `data.isReady('featured')` distingue.
+ * CARGA FLUIDA (comité v3 + consejo Gemini · 2026-06-21): mismo modelo de 3 estados que
+ * categorías para que el contenido no salte al llegar Firebase: LISTO+datos → contenido (fade-in,
+ * swap directo en .bj-lite/RM); LISTO+<umbral → '' (colapsa); CARGANDO → reserva el alto de la
+ * última carga (1ª visita sin alto → '' colapso limpio). `data.isReady('featured')` mira datos
+ * REALES (no el timeout de 4s); un watchdog de 8s colapsa si nunca llegan (anti-carga-eterna).
  */
 import { html, escape, mount } from '../core/html.js';
 import { format$ } from '../core/format.js';
@@ -18,7 +19,22 @@ import { reservedHeight, rememberHeight } from '../core/section-reserve.js';
 // Piezas visibles en Destacadas = featured + con precio. Lee en TIEMPO DE RENDER (live).
 const featuredPieces = () => data.getFeatured(8).filter(p => p.price);
 
+// Watchdog anti-carga-eterna (ver categories.js): 8s > timeout de data.load() (4s) para dar
+// margen a redes lentas a llenar la reserva sin saltar.
+let _watchdog = null;
+let _gaveUp = false;
+function armWatchdog() {
+    if (_watchdog !== null || _gaveUp) return;
+    try {
+        _watchdog = setTimeout(() => {
+            _watchdog = null;
+            if (!data.isReady('featured')) { _gaveUp = true; refreshFeatured(); }
+        }, 8000);
+    } catch { /* entorno sin timers → sin watchdog (no crítico) */ }
+}
+
 export function renderFeatured() {
+    armWatchdog();
     return html`<section class="home-featured">${featuredInner()}</section>`;
 }
 
@@ -61,6 +77,7 @@ function featuredInner() {
     if (data.isReady('featured')) {
         return pieces.length >= MIN_FEATURED ? contentHtml(pieces) : '';   // datos | bajo umbral(colapsa)
     }
+    if (_gaveUp) return '';                                                 // watchdog: datos nunca llegaron
     const rh = reservedHeight('featured');
     return rh ? loadingHtml(rh) : '';                                       // reserva | colapso limpio (1ª visita)
 }
@@ -108,12 +125,13 @@ function renderFeaturedCard(p) {
 export function refreshFeatured() {
     const sec = document.querySelector('.home-featured');
     if (!sec) return;
-    const wasLoading = !!sec.querySelector('.is-loading');
+    if (data.isReady('featured') && _watchdog !== null) { clearTimeout(_watchdog); _watchdog = null; }
+    const hadContent = !!sec.querySelector('[data-featured]');
     mount(sec, featuredInner());
     const grid = sec.querySelector('[data-featured]');
     if (grid) {
         requestAnimationFrame(() => rememberHeight('featured', grid));
-        if (wasLoading) grid.classList.add('bj-fade-in');
+        if (!hadContent) grid.classList.add('bj-fade-in');
     }
 }
 

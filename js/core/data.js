@@ -105,8 +105,12 @@ class PublicData {
      * (evita carga eterna si un listener nunca dispara). Comité v3 §1/§1.1.
      */
     isReady(section) {
-        if (section === 'cats')     return this._initialCols || this._loaded;
-        if (section === 'featured') return this._initialPieces || this._loaded;
+        // Por sección: datos REALES llegados (NO el timeout de 4s de load() — consejo Gemini
+        // 2026-06-21: fiarse del timeout colapsaba la sección antes de tiempo en redes lentas y
+        // la re-expandía al llegar el dato tarde = el salto que queremos evitar). El anti-carga-
+        // eterna lo cubre un watchdog en cada sección (categories.js/featured.js), no este flag.
+        if (section === 'cats')     return this._initialCols;
+        if (section === 'featured') return this._initialPieces;
         return this._loaded;
     }
 

@@ -28,6 +28,12 @@ ui-debug.log
 # Artefactos de verificación con Playwright MCP (capturas/snapshots locales, no versionar)
 .playwright-mcp/
 
+# Claves de cuenta de servicio Firebase/GCP (SECRETO — para migraciones; NUNCA al repo)
+*serviceAccount*.json
+*-sa-key.json
+*-adminsdk-*.json
+gcp-key*.json
+
 # Permisos LOCALES del harness de Claude Code (por máquina, no versionar; CLAUDE.md §2).
 # `settings.json` (compartido) SÍ se versiona; `settings.local.json` NO.
 .claude/settings.local.json

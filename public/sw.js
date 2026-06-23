@@ -6,10 +6,10 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v24 — §103 F1: LQIP (placeholder difuso) para imágenes del CMS (blur-up).
-// Cambia el render de fondos/imágenes de siteContent (editorial/hero/atelier/equipo) →
-// bump para que los clientes reciban el JS nuevo. (v23 = §102 carga fluida.)
-const CACHE_NAME    = 'bersaglio-v24';
+// Bumped to v25 — §105: fix "zoom/asentamiento" feo en recarga (reveal.js: lo visible en el
+// 1er paint se asienta sin animar). Cambia el comportamiento de la entrada de secciones →
+// bump para que los clientes reciban el JS nuevo. (v24 = §104 F1 LQIP, ya en prod.)
+const CACHE_NAME    = 'bersaglio-v25';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

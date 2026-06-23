@@ -1,6 +1,6 @@
 ---
 name: validacion-live-chrome
-description: Usar DESPUÉS de un merge/deploy cuando los cambios YA están EN VIVO y hace falta EVIDENCIA REAL del comportamiento (no localhost, no opinión). Genero un PROMPT autocontenido + esquema de observabilidad para la extensión "Claude in Chrome" del dueño: él abre la web y mete sus credenciales (Claude NUNCA las maneja), la extensión recorre el camino vivo y emite OBSERVABILIDAD (consola, network, DOM, respuestas literales, transiciones de estado); el dueño la pega aquí y YO actúo (diagnostico, fix, re-validar). Cubre el hueco de verificacion live (L-08: no hay E2E en localhost; el dueño verifica al final). Casos: bot logueado vs NO logueado, finalizar/iniciar/recargar conversacion, formularios, flujos con sesion. Complementa caza-bugs. Triggers: "ya se mergeo, valida en vivo", "pruebalo en la web desplegada", "lanzale un prompt a la extension de Chrome", "el bot logueado/no logueado", "evidencia real post-merge", "observabilidad del sitio live".
+description: Usar DESPUÉS de un merge/deploy cuando los cambios YA están EN VIVO y hace falta EVIDENCIA REAL del comportamiento (no localhost, no opinión). Genero un PROMPT autocontenido + esquema de observabilidad para la extensión "Claude in Chrome" del dueño: él abre la web y mete sus credenciales (Claude NUNCA las maneja), la extensión recorre el camino vivo y emite OBSERVABILIDAD (consola, network, DOM, respuestas literales, transiciones de estado); el dueño la pega aquí y YO actúo (diagnostico, fix, re-validar). Cubre el hueco de verificacion live (L-08: no hay E2E en localhost; el dueño verifica al final). Casos: bot logueado vs NO logueado, finalizar/iniciar/recargar conversacion, formularios, flujos con sesion. CRITICO ADVERSARIAL: refuta, no confirma. Complementa caza-bugs. Triggers: "ya se mergeo, valida en vivo", "pruebalo en la web desplegada", "lanzale un prompt a la extension de Chrome", "valida adversarial", "evidencia real post-merge", "observabilidad del sitio live".
 ---
 
 # 🔭 Validación Live vía extensión "Claude in Chrome" (post-merge)
@@ -11,6 +11,8 @@ description: Usar DESPUÉS de un merge/deploy cuando los cambios YA están EN VI
 > que YO interpreto. Es un APOYO para CAZAR EVIDENCIAS, no para que Claude opere credenciales ni mueva dinero.
 > PORTABLE: cero rutas de un repo concreto — leo el cerebro del proyecto activo para llenar la URL,
 > el subsistema tocado y los escenarios. Adapta al stack que sea.
+>
+> ⚔️ **Postura ADVERSARIAL (no confirmadora) — eje de la skill (dueño 2026-06-23)**: el objetivo es **ROMPER, no aprobar**. (1) La extensión NO se limita al camino feliz: prueba bordes, ciclos repetidos, entradas raras y caminos infelices, e intenta hacer fallar el cambio. (2) YO trato cada **"✅" del reporte como HIPÓTESIS a refutar**: lo cruzo contra el código, exijo evidencia para todo negativo ("sin errores" = sweep explícito, no ausencia de mención), y **nombro lo que NO se probó**. Un reporte que solo confirma el camino feliz **NO cierra nada**. (Hermana mental: `asesor-critico-honesto`.)
 
 ## 0. Cuándo aplica / cuándo NO
 - **SÍ**: tras un merge/deploy con el cambio YA en vivo, cuando el subsistema tocado tiene **estado
@@ -42,6 +44,12 @@ Contexto del cambio que valido: {QUÉ SE MERGEÓ / subsistema tocado}
 PROHIBIDO (sin que yo lo autorice explícitamente): enviar leads/formularios reales, pagos,
 borrar/editar datos, o cualquier acción irreversible. Si un paso lo requiere, DETENTE y avísame.
 
+COBERTURA DE SESIÓN (obligatoria si el cambio toca auth/sesión): haz PRIMERO los escenarios
+CON login (ya estoy logueado); LUEGO CIERRA SESIÓN (logout NO necesita credenciales) y repite
+el camino como visitante SIN login; reporta toda DIFERENCIA entre ambos estados. (Para volver a
+entrar yo reingreso la contraseña.) Busca TODAS las fallas posibles — estamos ajustando en
+iteraciones: encontrar un fallo nuevo es ÉXITO, no fracaso. NO te detengas en el primer ✅.
+
 Recorre estos escenarios y para CADA uno reporta la observabilidad de §3:
 {ESCENARIOS — p.ej.:
  A) Bot SIN login: abre el widget, manda 3 mensajes (saludo, pregunta real del negocio, algo ambiguo);
@@ -49,6 +57,12 @@ Recorre estos escenarios y para CADA uno reporta la observabilidad de §3:
  B) Bot CON login (yo ya inicié sesión): repite A; ¿cambia el comportamiento/persistencia?
  C) Finalizar conversación: ¿el historial se actualiza solo? ¿inicia una nueva? ¿exige Ctrl+Shift+R?
  D) Recargar la página a mitad de conversación: ¿se conserva el estado? ¿se pierde?}
+
+Sé ADVERSARIAL, no confirmador: tu meta es ROMPERLO. No te quedes en el camino feliz —
+prueba bordes, repite ciclos (ej. finalizar→reabrir 2-3 veces), entradas raras y caminos
+infelices. Para CADA afirmación negativa ("sin errores", "no falla") PRUÉBALA con un sweep
+explícito de consola/network (di qué patrón buscaste) — la ausencia de mención NO es prueba.
+Reporta además qué NO pudiste probar.
 
 Al terminar, entrégame UN reporte estructurado con el formato de "Observabilidad" (abajo).
 ```
@@ -61,6 +75,8 @@ Por cada escenario, exijo:
 - **Respuestas reales**: cita LITERAL de lo que dijo el bot/UI (no parafraseo) — la evidencia de oro.
 - **Transición**: qué pasó al finalizar/iniciar/recargar (¿optimista? ¿exigió refresh? ¿se perdió estado?).
 - **Veredicto del escenario**: ✅ esperado / ⚠️ raro / ❌ roto, en una línea.
+- **Prueba de negativos**: toda afirmación "sin error/sin fallo" trae el sweep que la respalda (qué patrón se buscó), NO la mera ausencia de mención.
+- **No-probado**: lista explícita de lo que NO se recorrió (ciclos, caminos infelices, bordes) — para que YO no lo dé por bueno.
 
 ## 4. Barandas de seguridad
 - **Credenciales = solo el dueño.** Nunca las pido, recibo ni pego.
@@ -71,7 +87,7 @@ Por cada escenario, exijo:
   lo distingo de un fallo real leyendo el cerebro del proyecto antes de declarar bug.
 
 ## 5. Yo tomo acciones (el relay de vuelta)
-1. Ingiero el reporte como **evidencia citada** (§3.3 del cerebro: evidencia antes de afirmar).
+1. Ingiero el reporte **ADVERSARIALMENTE** (§3.3 evidencia antes de afirmar): cada "✅" es hipótesis a refutar. (a) cruzo cada claim contra el código (¿qué función lo explica? ¿es plausible?); (b) exijo el sweep para los negativos (no acepto "se ve bien"); (c) nombro los gaps no probados; (d) **NUNCA cierro por el "✅" del reporte solo** — confirmo contra el código o pido el escenario faltante.
 2. Triage con `caza-bugs`: ¿el síntoma está en el camino vivo del estado-cero? ¿es código viejo revivido
    (`anti-codigo-muerto` — el caso testigo: botones que mandan al motor VIEJO que no entiende)?
 3. Fix → re-emito el prompt (§2) con el escenario que falló → confirmo ✅ en vivo antes de cerrar.

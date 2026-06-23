@@ -6,10 +6,10 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v25 — §105: fix "zoom/asentamiento" feo en recarga (reveal.js: lo visible en el
-// 1er paint se asienta sin animar). Cambia el comportamiento de la entrada de secciones →
-// bump para que los clientes reciban el JS nuevo. (v24 = §104 F1 LQIP, ya en prod.)
-const CACHE_NAME    = 'bersaglio-v25';
+// Bumped to v26 — §106: REVERT del render LQIP (§104 F1) — generaba un 3er estado feo
+// (neutro → borroso → nítido) porque el LQIP llega con el getDoc, no antes. Vuelve a 2 estados
+// (neutro → foto). La generación/datos del LQIP se conservan para el F2. (v25 = §105 fix recarga.)
+const CACHE_NAME    = 'bersaglio-v26';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

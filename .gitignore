@@ -25,6 +25,9 @@ ui-debug.log
 # Mockups efímeros del compañero visual de brainstorming (no versionar)
 .superpowers/
 
+# Artefactos de verificación con Playwright MCP (capturas/snapshots locales, no versionar)
+.playwright-mcp/
+
 # Permisos LOCALES del harness de Claude Code (por máquina, no versionar; CLAUDE.md §2).
 # `settings.json` (compartido) SÍ se versiona; `settings.local.json` NO.
 .claude/settings.local.json

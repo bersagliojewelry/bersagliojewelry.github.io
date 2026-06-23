@@ -166,6 +166,11 @@ function _upload(path, file, onProgress) {
         const storageRef = ref(storage, path);
         const task = uploadBytesResumable(storageRef, file, {
             contentType: file.type,
+            // §112: la downloadURL se versiona por token (cada subida = token nuevo = URL nueva),
+            // así que es seguro cachear "para siempre" → revisita = instantáneo (sin blur), y al
+            // cambiar la foto = URL nueva = se re-descarga (blur 1 vez). Antes: sin cacheControl,
+            // Storage servía `private, max-age=0` → el navegador revalidaba en CADA visita.
+            cacheControl: 'public, max-age=31536000',
             customMetadata: {
                 uploadedBy: 'admin-panel',
                 originalName: file.name

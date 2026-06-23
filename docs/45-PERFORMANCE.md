@@ -61,7 +61,7 @@
     - **journal** (`journal.js`): mostraba "El Journal está en preparación" (vacío FALSO) → ahora carga hasta `isReady('journal')` (nuevo flag `_initialJournal` en data.js).
     - **lista-deseos** (`lista-deseos.js`): mostraba "Pieza retirada" FALSO por cada favorito → ahora tarjeta reservada hasta `isReady('featured')`.
     - **entrada** (`entrada.js`): ya OK (`_settled`); + watchdog 8s.
-    - **nosotros/contacto**: NO tocados (muestran defaults reales, no equivocado/vacío). **Lección reusable**: página client-rendered → gatear el render data-dependiente en readiness REAL + watchdog; nunca pintar el default/vacío durante la carga.
+    - **nosotros/contacto**: el TEXTO default es real (OK), pero las IMÁGENES sí flasheaban (default/stale provisional → real). **Nosotros CORREGIDO** (§99, bug Daniel 2026-06-22: gate `_siteReady` que no pinta `<img>` provisional); **Contacto/Home pendientes** (mismo patrón, L-44). **Lección reusable**: página client-rendered → gatear el render data-dependiente (texto Y sobre todo IMÁGENES) en readiness REAL + watchdog; nunca pintar el default/vacío/stale durante la carga.
 *   **Pendiente**: validar en navegador REAL con datos (el sandbox/emulador no alcanza Firestore → solo verifiqué camino vacío/timeout, scroll y que no hay errores); medir CLS bajo Slow 4G + scroll (criterio <0.05; comité §9). 1ª-visita-exacta vía cupo fijo (§3.1) = refinamiento futuro. Deliberación completa + verdict Gemini → bóveda `2026-06-21-carga-fluida-index-comite-v3.md`.
 
 ---

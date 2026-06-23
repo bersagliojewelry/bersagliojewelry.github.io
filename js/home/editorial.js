@@ -20,7 +20,7 @@ export function editorialInner(c) {
                 <div class="home-editorial-grid">
                     <div class="glass glass-iridescent home-editorial-image">
                         ${c.image
-                            ? html`<img class="home-editorial-img" src="${escape(safeUrl(c.image))}" alt="" loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;">`
+                            ? html`<div class="home-editorial-image-bg" style="background-image:url('${escape(safeUrl(c.image))}')"></div>`
                             : html`<div class="home-editorial-image-bg"></div>`}
                         <div class="home-editorial-image-shade"></div>
                         <div class="home-editorial-image-content">

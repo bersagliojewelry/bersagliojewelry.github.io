@@ -75,11 +75,13 @@
     border-radius: 40px;
     overflow: hidden;
 }
-/* Estado SIN imagen CMS: superficie de marca (esmeralda), NUNCA una foto demo
-   (cero-ficción · feedback_no_demo_en_index). Con imagen del CMS se pinta <img>. */
+/* Placeholder NEUTRO casi-blanco (patrón featured.js): invisible mientras carga, NUNCA un
+   bloque de color/demo. Si hay imagen CMS, va como background-image inline ENCIMA del neutro
+   (carga sin hueco ni salto, igual que las colecciones). cero-ficción · feedback_no_demo_en_index. */
 .abt-hero-image-bg {
     position: absolute; inset: 0;
-    background: linear-gradient(160deg, oklch(58% 0.12 158), oklch(40% 0.10 162));
+    background-color: oklch(94% 0.02 150);
+    background-size: cover; background-position: center; background-repeat: no-repeat;
 }
 /* CMS P4: imagen de portada custom (Storage). object-fit:cover sobre el área 4/5. */
 .abt-hero-img {
@@ -353,10 +355,11 @@
     aspect-ratio: 4/5;
     position: relative;
 }
-/* Estado SIN imagen CMS: superficie de marca (esmeralda), NUNCA una foto demo. */
+/* Placeholder NEUTRO casi-blanco (patrón featured); imagen CMS como background-image encima. */
 .atl-image-bg {
     position: absolute; inset: 0;
-    background: linear-gradient(160deg, oklch(58% 0.12 158), oklch(40% 0.10 162));
+    background-color: oklch(94% 0.02 150);
+    background-size: cover; background-position: center; background-repeat: no-repeat;
 }
 /* CMS P4: imagen del atelier custom (Storage). */
 .atl-img {

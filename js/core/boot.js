@@ -22,6 +22,22 @@
 import { initRouter } from './router.js';
 import { observeReveals } from './reveal.js';
 
+// ─── Fix ruido de consola: rechazo BENIGNO de View Transitions cross-document (§107) ─────
+// En un reload / arranque frío, la VT declarativa (`@view-transition{navigation:auto}`,
+// liquid-glass.css) se aborta y su promesa rechaza con
+// "InvalidStateError: Transition was aborted because of invalid state". Es COSMÉTICO (la
+// página renderiza bien) pero ensucia la consola. Capturamos SOLO ese rechazo conocido
+// (por nombre + mensaje); cualquier otro se deja propagar. NO toca el cross-fade entre
+// páginas (solo silencia el rechazo del abort). Registrado lo más temprano posible.
+try {
+    addEventListener('unhandledrejection', (e) => {
+        const r = e?.reason;
+        if (r && r.name === 'InvalidStateError' && /transition was aborted/i.test(r.message || '')) {
+            e.preventDefault();
+        }
+    });
+} catch { /* entorno sin window — no-op */ }
+
 /**
  * Scroll predecible en recarga. La página se arma con JS y CAMBIA DE ALTO mientras carga (más aún
  * con la reserva de espacio de las secciones dinámicas), así que la restauración automática del

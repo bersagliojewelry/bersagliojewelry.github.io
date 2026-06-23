@@ -6,7 +6,7 @@
  */
 import { html, escape, mount } from '../core/html.js';
 import { data } from '../core/data.js';
-import { safeUrl } from '../core/safe-url.js';
+import { lqipBgStyle } from '../core/lqip.js';   // §110.2 F3: blur-up (real+LQIP; safeUrl interno)
 import { mergeHome } from './siteContent-defaults.js';
 
 export function editorialInner(c) {
@@ -20,7 +20,7 @@ export function editorialInner(c) {
                 <div class="home-editorial-grid">
                     <div class="glass glass-iridescent home-editorial-image">
                         ${c.image
-                            ? html`<div class="home-editorial-image-bg" style="background-image:url('${escape(safeUrl(c.image))}')"></div>`
+                            ? html`<div class="home-editorial-image-bg" style="${lqipBgStyle(c.image, c.imageLqip)}"></div>`
                             : html`<div class="home-editorial-image-bg"></div>`}
                         <div class="home-editorial-image-shade"></div>
                         <div class="home-editorial-image-content">

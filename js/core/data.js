@@ -19,7 +19,9 @@
  * snapshot updates triggers UN SOLO render cycle.
  */
 
-import { onPiecesChange, onCollectionsChange, onJournalChange, onCollectionChange, getSiteContent as fetchSiteContent } from '../firestore-service.js';
+import { onPiecesChange, onCollectionsChange, onJournalChange, onCollectionChange,
+         getSiteContentFromCache as fetchSiteContentFromCache,
+         getSiteContentFromServer as fetchSiteContentFromServer } from '../firestore-service.js';
 import { piecesOfCollection, collectionOfPiece } from './collection-match.js';
 
 class PublicData {
@@ -153,19 +155,46 @@ class PublicData {
     }
 
     /**
-     * Carga el contenido de una página (singleton) — getDoc ONE-SHOT (NO listener:
-     * decisión de costo §2.B). Notifica una vez al resolver → las secciones que ya
-     * pintaron con DEFAULTS se re-renderizan con el override. Idempotente por página.
+     * Carga el contenido de una página (singleton) con SWR cache-first (§110.2; patrón §108):
+     * pinta desde la CACHÉ local al instante (revisitas → sin "vacío→foto") y revalida contra el
+     * servidor; re-pinta SOLO si el doc cambió (diff-gate por `version`, que el writer bumpea en
+     * cada guardado) → cero parpadeo sin cambios, update EN VIVO cuando los hay (I1: ante duda,
+     * re-pinta). Costo idéntico al getDoc one-shot previo (§2.B): la lectura de caché es local;
+     * 1 lectura de servidor; SIN listener permanente.
+     *
+     * Por qué importa para el LQIP: el blur (campo compañero) viaja con la URL en el MISMO doc;
+     * al pintar desde caché el placeholder PRECEDE a la imagen → resuelve L-50 (en §106 el getDoc
+     * era server-first en CADA visita → el blur era un 3er estado siempre; ahora solo en carga fría).
+     *
+     * @param {string}   page      home|nosotros|contacto|global
+     * @param {Function} [onUpdate] se invoca en CADA actualización (caché y/o servidor-si-cambió).
      */
-    async loadSiteContent(page) {
+    async loadSiteContent(page, onUpdate) {
+        const apply = (docData) => {
+            this._siteContent[page] = docData || {};
+            if (typeof onUpdate === 'function') {
+                try { onUpdate(); } catch (e) { console.warn('[data] siteContent onUpdate:', e); }
+            }
+        };
+        let hadCache = false;
+        let cachedVersion;
         try {
-            const doc = await fetchSiteContent(page);
-            this._siteContent[page] = doc || {};
+            const cached = await fetchSiteContentFromCache(page);   // instantáneo; lanza si no hay caché
+            if (cached) { hadCache = true; cachedVersion = cached.version; apply(cached); }
+        } catch { /* caché vacía/no disponible → seguimos a la red */ }
+        try {
+            const fresh = await fetchSiteContentFromServer(page);   // revalida (1 lectura)
+            // diff-gate: re-pinta si NO había caché, o si la versión cambió, o ante CUALQUIER duda (I1).
+            const changed = !hadCache || (fresh ? fresh.version !== cachedVersion : true);
+            if (changed) apply(fresh);
             this._notify();
             return this._siteContent[page];
         } catch (err) {
-            console.warn('[data] siteContent load failed:', err);
-            return {};
+            // Offline/red caída: nos quedamos con lo de caché (ya pintado). Sin caché → defaults.
+            console.warn('[data] siteContent revalidate failed:', err);
+            if (!hadCache) apply({});
+            this._notify();
+            return this._siteContent[page] || {};
         }
     }
 

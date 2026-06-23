@@ -94,12 +94,18 @@ Por cada escenario, exijo:
 1. Ingiero el reporte **ADVERSARIALMENTE** (§3.3 evidencia antes de afirmar): cada "✅" es hipótesis a refutar. (a) cruzo cada claim contra el código (¿qué función lo explica? ¿es plausible?); (b) exijo el sweep para los negativos (no acepto "se ve bien"); (c) nombro los gaps no probados; (d) **NUNCA cierro por el "✅" del reporte solo** — confirmo contra el código o pido el escenario faltante.
 2. Triage con `caza-bugs`: ¿el síntoma está en el camino vivo del estado-cero? ¿es código viejo revivido
    (`anti-codigo-muerto` — el caso testigo: botones que mandan al motor VIEJO que no entiende)?
-3. Fix → re-emito el prompt (§2) con el escenario que falló → confirmo ✅ en vivo antes de cerrar.
+3. **Clasifico el hallazgo y ESCALO según haga falta** (severidad × reversibilidad × ambigüedad — gateado, no por defecto):
+   - **Claro y de bajo riesgo** (causa verificada, fix mínimo, reversible) → **fix directo** + re-validar. La mayoría cae aquí (§233/§234 lo fueron — no sobre-maquinar, L-50).
+   - **Causa ambigua / varios fixes plausibles / toca contrato o estado compartido** → **`comite-expertos` ACOTADO** (inline, pocos expertos, sin tools, razonan sobre el diagnóstico ya verificado) para elegir el fix.
+   - **Decisión Fuerte** (arquitectura, modelo de datos, seguridad/privacidad/legal, dinero, op irreversible — p.ej. pérdida de datos en la ingestión; un fix de privacidad con alcance arquitectónico) → **`proceso-decision-fuerte`** completo (verificar → comité → **consejo externo Gemini `15`** → verificar cada claim → revalidar → veredicto → impl por fase).
+   - **Dominio especializado** (legal/seguridad/UX/SEO/perf) → **skill** relevante (`legal-colombia` para datos personales/Ley 1581, etc.) + lóbulo `40`.
+   - **SIEMPRE BOUNDED** (memoria `feedback-agent-machinery-bounded`): los fan-outs grandes cuelgan en esta máquina; la maquinaria anti-fallos no puede ser fuente de fallos. Defectos de DISEÑO → al backlog del rediseño, no al fix inmediato.
+4. Fix (directo o vía la maquinaria elegida) → re-emito el prompt (§2) con el escenario que falló → confirmo ✅ en vivo antes de cerrar.
 
-## 6. Conexiones
-- `caza-bugs` (qué recorrer) · `verification-before-completion` (no cerrar sin evidencia) ·
-  `proceso-decision-fuerte` **paso 7** (gate empírico con pruebas de estado en un navegador REAL) ·
-  `anti-codigo-muerto` (validar que lo nuevo no dejó lo viejo roto EN VIVO).
+## 6. Conexiones (doble vía)
+- **Hacia mí** (qué recorrer / cómo cerrar): `caza-bugs` · `verification-before-completion` · `anti-codigo-muerto` (que lo nuevo no dejó lo viejo roto EN VIVO).
+- **Soy el gate empírico DE**: `proceso-decision-fuerte` **paso 7** (pruebas de estado en un navegador REAL cierran la decisión).
+- **Escalo HACIA** (§5.3, gateado+bounded): `comite-expertos` (fix ambiguo) · `proceso-decision-fuerte`+Consejo Externo Gemini `15` (Decisión Fuerte) · skills de dominio (`legal-colombia`/seguridad/UX) · backlog de rediseño (defectos de diseño).
 
 ## 7. Salida (veredicto citable, no "se ve bien")
 `live: {URL} · escenarios: [A✅ B⚠️ C❌ …] · evidencia: [consola/network/citas] · acción: [fix §X / re-validar / cerrado]`.

@@ -348,6 +348,20 @@ test('siteContent · editor escribe nosotros con listas dentro del cap', async (
         cierre: { ctaLabel: 'Hablemos' },
     }));
 });
+// §103 F1: el LQIP (placeholder difuso) viaja como campo INTERNO de una sección. Las reglas
+// validan la whitelist a nivel de SECCIÓN (is map), NO las claves internas → se acepta sin
+// tocar firestore.rules (verificado: siteContentValid no recursa en las claves del sub-mapa).
+test('siteContent · §103 F1: acepta imageLqip/bgImageLqip dentro de una sección (sin cambio de reglas)', async () => {
+    await assertSucceeds(setDoc(doc(asUser('editorUid'), 'siteContent/home'), {
+        hero: { bgImage: 'https://fs/x.webp', bgImageLqip: 'data:image/webp;base64,AAAA' },
+        editorial: { image: 'https://fs/e.webp', imageLqip: 'data:image/webp;base64,BBBB' },
+    }));
+    await assertSucceeds(setDoc(doc(asUser('editorUid'), 'siteContent/nosotros'), {
+        hero: { image: 'https://fs/h.webp', imageLqip: 'data:image/webp;base64,CCCC' },
+        atelier: { image: 'https://fs/a.webp', imageLqip: 'data:image/webp;base64,DDDD' },
+        equipo: { items: [{ n: 'K', r: 'R', b: 'B', img: 'https://fs/k.webp', imgLqip: 'data:image/webp;base64,EEEE' }] },
+    }));
+});
 test('siteContent · nosotros: lista vacía [] permitida (hide-when-empty)', async () => {
     await assertSucceeds(setDoc(doc(asUser('editorUid'), 'siteContent/nosotros'), {
         valores: { items: [] }, faqs: { items: [] },

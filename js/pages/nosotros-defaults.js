@@ -36,6 +36,7 @@ export const NOSOTROS_DEFAULTS = {
         quote:        'Nuestra casa es tu casa.',
         quoteAuthor:  'KARY MENDOZA',
         image:        '',   // imagen de portada custom (Storage); vacío → fondo CSS por defecto
+        imageLqip:    '',   // §103 F1: placeholder difuso (data-URI) generado al subir image.
     },
 
     // 2. MANIFIESTO — frase central con énfasis en el medio (texto plano)
@@ -103,6 +104,7 @@ export const NOSOTROS_DEFAULTS = {
         visitasL1:   'Con o sin cita previa',
         visitasL2:   'Lun–Sáb · 10:00–19:00',
         image:       '',   // imagen del atelier custom (Storage); vacío → fondo CSS por defecto
+        imageLqip:   '',   // §103 F1: placeholder difuso (data-URI) generado al subir image.
     },
 
     // 8. CIFRAS — lista (4 columnas de stats)

@@ -95,6 +95,21 @@ test('collectSingleton: incluye el campo image (URL) como cualquier campo', () =
     assert.equal(out.hero.locator, 'C');                // trim del texto
 });
 
+// ─── §103 F1: campo IMAGEN lleva un compañero `<campo>Lqip` (placeholder difuso) ──
+test('singletonFormHTML/collect: campo image lleva compañero LQIP (data-img-lqip)', () => {
+    const h = singletonFormHTML(IMG_SECTIONS, { hero: { bgImage: 'https://fs/x.webp', bgImageLqip: 'data:image/webp;base64,ZZZ', locator: 'C' } });
+    assert.match(h, /<input type="hidden" data-sf="hero\.bgImage" value="https:\/\/fs\/x\.webp">/);                      // URL intacta (no-regresión)
+    assert.match(h, /<input type="hidden" data-sf="hero\.bgImageLqip" data-img-lqip value="data:image\/webp;base64,ZZZ">/); // 2º hidden = LQIP
+    const out = collectSingleton({ 'hero.bgImage': 'https://fs/x.webp', 'hero.bgImageLqip': 'data:image/webp;base64,ZZZ', 'hero.locator': 'C' }, IMG_SECTIONS);
+    assert.equal(out.hero.bgImage, 'https://fs/x.webp');
+    assert.equal(out.hero.bgImageLqip, 'data:image/webp;base64,ZZZ');
+});
+
+test('collectSingleton: campo image sin LQIP subido → compañero vacío (string, no undefined)', () => {
+    const out = collectSingleton({ 'hero.bgImage': 'https://fs/x.webp', 'hero.locator': 'C' }, IMG_SECTIONS);
+    assert.equal(out.hero.bgImageLqip, '');
+});
+
 // ─── P4: field-type LISTA ──────────────────────────────────────────────────────
 const LIST_SECTIONS = [{ key: 'valores', label: 'Valores', fields: [
     { name: 'items', type: 'list', min: 1, max: 3, addLabel: 'Añadir valor', itemTitleFrom: 't', singular: 'Valor', itemFields: [
@@ -194,12 +209,24 @@ const LIST_IMG_SECTIONS = [{ key: 'equipo', label: 'Equipo', fields: [
     ]},
 ]}];
 
-test('list con itemField image: render del upload indexado + collect recoge la URL', () => {
-    const h = singletonFormHTML(LIST_IMG_SECTIONS, { equipo: { items: [{ n: 'Kary', img: 'https://fs/k.avif' }] } });
+test('list con itemField image: render del upload indexado + collect recoge URL + LQIP compañero', () => {
+    const h = singletonFormHTML(LIST_IMG_SECTIONS, { equipo: { items: [{ n: 'Kary', img: 'https://fs/k.avif', imgLqip: 'data:image/webp;base64,AAAA' }] } });
     assert.match(h, /data-img-wrap/);
     assert.match(h, /<input type="hidden"[^>]*data-sf="equipo\.items\.0\.img"[^>]*value="https:\/\/fs\/k\.avif"/);
+    assert.match(h, /<input type="hidden" data-sf="equipo\.items\.0\.imgLqip" data-img-lqip value="data:image\/webp;base64,AAAA">/);
+    // §103 F1: collect recoge URL + imgLqip; campo no declarado se ignora.
+    const out = collectSingleton({
+        'equipo.items.0.n': 'Kary',
+        'equipo.items.0.img': 'https://fs/k.avif',
+        'equipo.items.0.imgLqip': 'data:image/webp;base64,AAAA',
+        'equipo.items.0.hacker': 'DROP',
+    }, LIST_IMG_SECTIONS);
+    assert.deepEqual(out.equipo.items, [{ n: 'Kary', img: 'https://fs/k.avif', imgLqip: 'data:image/webp;base64,AAAA' }]);
+});
+
+test('list con itemField image: sin LQIP → cada ítem trae imgLqip vacío (forma estable)', () => {
     const out = collectSingleton({ 'equipo.items.0.n': 'Kary', 'equipo.items.0.img': 'https://fs/k.avif' }, LIST_IMG_SECTIONS);
-    assert.deepEqual(out.equipo.items, [{ n: 'Kary', img: 'https://fs/k.avif' }]);
+    assert.deepEqual(out.equipo.items, [{ n: 'Kary', img: 'https://fs/k.avif', imgLqip: '' }]);
 });
 
 test('list con itemField image: escapa la URL de la foto (anti stored-XSS)', () => {

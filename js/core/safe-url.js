@@ -41,3 +41,23 @@ export function safeUrl(raw, fallback = '') {
 export function isSafeUrl(raw) {
     return safeUrl(raw, ' ') !== ' ';
 }
+
+// ─── LQIP (placeholder difuso, §103 F1) ─────────────────────────────────────
+// Un LQIP es un data-URI de imagen base64 MINÚSCULO que generamos nosotros
+// (image-optimizer.makeLqip) y guardamos junto a la URL para pintar un fondo
+// borroso al instante (blur-up). `safeUrl` lo RECHAZA a propósito (data: no está
+// en su allow-list); este validador es su contraparte para el contexto data:image.
+//
+// Por qué es seguro en `style="background-image:url('...')"` (lo que safe-url.js
+// desaconseja para URLs editables): el regex EXIGE el alfabeto base64 puro
+// (`[A-Za-z0-9+/=]`) tras el prefijo → es IMPOSIBLE que contenga comilla, paréntesis
+// o whitespace → no hay breakout del `url()`. Más estricto aún que `safeUrl`. El cap
+// de tamaño corta un LQIP anómalo (uno legítimo de ~40px pesa ~1-3 KB).
+const LQIP_RE  = /^data:image\/(?:webp|avif|jpeg|png);base64,[A-Za-z0-9+/=]+$/;
+const LQIP_MAX = 6000;   // chars; espejo del guard en image-optimizer.makeLqip
+
+/** Devuelve el data-URI si es un LQIP válido y acotado; si no, `fallback` (''). */
+export function safeLqip(raw, fallback = '') {
+    if (typeof raw !== 'string' || raw.length > LQIP_MAX) return fallback;
+    return LQIP_RE.test(raw) ? raw : fallback;
+}

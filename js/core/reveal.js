@@ -63,21 +63,30 @@ export function observeReveals(root = document) {
         return;
     }
 
-    els.forEach(el => _tracked.add(el));
+    // Lo que YA está a la vista en este primer paint se ASIENTA sin animar (`.reveal-static`
+    // = transition:none). El reveal (slide + fade) es para lo que ENTRA al hacer scroll;
+    // reproducirlo sobre algo ya visible se ve como un "salto/asentamiento" feo en CADA
+    // recarga — y la promoción a capa GPU por el `transform` rasteriza/difumina las imágenes
+    // durante la transición (lo que el usuario percibe como "imágenes que se acomodan/zoom").
+    // Lo de abajo del pliegue se observa y SÍ anima al entrar (efecto intencional al scrollear).
+    els.forEach(el => {
+        if (inViewport(el, 0)) el.classList.add('reveal-static', 'in');
+        else _tracked.add(el);
+    });
 
-    // Primario: IntersectionObserver.
+    if (!_tracked.size) return;   // todo lo visible quedó asentado; nada que observar
+
+    // Primario: IntersectionObserver (solo para lo aún NO visible).
     if (typeof IntersectionObserver !== 'undefined') {
         if (!_io) {
             _io = new IntersectionObserver(entries => {
                 entries.forEach(e => { if (e.isIntersecting) reveal(e.target); });
             }, { rootMargin: '0px 0px -8% 0px', threshold: 0.1 });
         }
-        els.forEach(el => _io.observe(el));
+        _tracked.forEach(el => _io.observe(el));
     }
 
-    // Red de robustez: revela lo ya visible + fallback por scroll/resize (auto-removible).
-    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(sweep);
-    else sweep();
+    // Red de robustez (IO ausente en headless/embebido): fallback por scroll/resize.
     if (!_scrollBound) {
         _scrollBound = true;
         window.addEventListener('scroll', onScrollOrResize, { passive: true });

@@ -37,7 +37,6 @@ import { mergeNosotros } from './nosotros-defaults.js';
 let _openFaq = 0;
 let _activeChapter = 0;
 let _content = null;
-let _siteReady = false;          // ¿llegó ya el doc REAL de Firestore? (anti-flash de imágenes)
 
 // ═══════════════════════════════════════════════════════════════════
 // 1. HERO
@@ -407,28 +406,17 @@ function clampState() {
     if (_openFaq >= fq.length) _openFaq = fq.length ? 0 : -1;
 }
 
-/** Re-merge del doc vigente (defaults si no hay) y re-pintado completo del main. */
+/** Re-merge del doc vigente (defaults si no hay) y re-pintado completo del main.
+ *  Sin imagen del CMS, el render muestra la superficie de marca (`.*-image-bg`), NUNCA una
+ *  foto demo (cero-ficción). El flash "vieja→nueva" del bug 2026-06-22 era el `background`
+ *  CSS demo (earrings) que vivía en `.abt-hero-image-bg`; al quitarlo, no hay nada que saltar
+ *  → la maquinaria `_siteReady`/`withoutImages` del §99 (RCA errada) se eliminó (bug Daniel
+ *  2026-06-23, RCA real verificada en navegador). */
 function repaint() {
     _content = mergeNosotros(data.getSiteContent('nosotros'));
     clampState();
     const main = document.getElementById('main-content');
-    if (!main) return;
-    // Anti-flash de imágenes (§93/PERF-05 extendido a Nosotros · bug 2026-06-22): hasta que
-    // llega el doc REAL de Firestore NO pintamos una imagen provisional (default/memoria/
-    // bfcache) que luego "salta" a la real — se ve como "imagen VIEJA → nueva". El texto
-    // default es seguro; las imágenes esperan el valor del servidor y aparecen UNA sola vez.
-    mount(main, renderAll(_siteReady ? _content : withoutImages(_content)));
-}
-
-/** Copia del contenido con las imágenes CMS vaciadas → el render muestra el fondo reservado
- *  (sin `<img>`) en vez de una imagen provisional. Solo afecta el 1er paint (pre-Firestore). */
-function withoutImages(c) {
-    return {
-        ...c,
-        hero:    { ...c.hero,    image: '' },
-        atelier: { ...c.atelier, image: '' },
-        equipo:  { ...c.equipo, items: (c.equipo.items || []).map(p => ({ ...p, img: '' })) },
-    };
+    if (main) mount(main, renderAll(_content));
 }
 
 function refreshTimeline() {
@@ -476,12 +464,11 @@ export async function init() {
     const main = document.getElementById('main-content');
     if (!main) return;
 
-    repaint();                                   // texto con DEFAULTS; imágenes RESERVADAS (anti-flash)
+    repaint();                                   // 1er paint con DEFAULTS (texto + superficie de marca)
     main.addEventListener('click', onMainClick);
 
     // CMS P4: re-merge + re-pinta al resolver el getDoc one-shot de siteContent/nosotros.
-    // Al confirmar el doc REAL, recién pintamos las imágenes (una sola vez, sin flash vieja→nueva).
-    data.loadSiteContent('nosotros').then(() => { _siteReady = true; repaint(); });
+    data.loadSiteContent('nosotros').then(repaint);
 }
 
 export default { init };

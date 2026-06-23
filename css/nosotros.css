@@ -75,13 +75,11 @@
     border-radius: 40px;
     overflow: hidden;
 }
+/* Estado SIN imagen CMS: superficie de marca (esmeralda), NUNCA una foto demo
+   (cero-ficción · feedback_no_demo_en_index). Con imagen del CMS se pinta <img>. */
 .abt-hero-image-bg {
     position: absolute; inset: 0;
-    background: url('/img/earrings-travertino-1200.webp') center/cover no-repeat;
-    background: image-set(
-        url('/img/earrings-travertino-1200.avif') type('image/avif'),
-        url('/img/earrings-travertino-1200.webp') type('image/webp')
-    ) center/cover no-repeat;
+    background: linear-gradient(160deg, oklch(58% 0.12 158), oklch(40% 0.10 162));
 }
 /* CMS P4: imagen de portada custom (Storage). object-fit:cover sobre el área 4/5. */
 .abt-hero-img {
@@ -123,7 +121,10 @@
 
 @media (max-width: 980px) {
     .abt-hero { grid-template-columns: 1fr; }
-    .abt-hero-image { max-width: 540px; margin: 0 auto; }
+    /* width:100% imprescindible: el `margin:0 auto` quita el stretch del grid y, como la
+       imagen va position:absolute (sin ancho intrínseco), el marco colapsaba a ~0 → la foto
+       no se veía en móvil (bug Daniel 2026-06-23). */
+    .abt-hero-image { width: 100%; max-width: 540px; margin: 0 auto; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -352,13 +353,10 @@
     aspect-ratio: 4/5;
     position: relative;
 }
+/* Estado SIN imagen CMS: superficie de marca (esmeralda), NUNCA una foto demo. */
 .atl-image-bg {
     position: absolute; inset: 0;
-    background: url('/img/ring-sapphire-800.webp') center/cover no-repeat;
-    background: image-set(
-        url('/img/ring-sapphire-800.avif') type('image/avif'),
-        url('/img/ring-sapphire-800.webp') type('image/webp')
-    ) center/cover no-repeat;
+    background: linear-gradient(160deg, oklch(58% 0.12 158), oklch(40% 0.10 162));
 }
 /* CMS P4: imagen del atelier custom (Storage). */
 .atl-img {

@@ -9,7 +9,7 @@
 // Bumped to v21 — fix: Categorías no aparecía al crear la 1ª colección (refresh no podía
 // CREAR la sección; ahora render monta SIEMPRE el <section> y refresh lo rellena, L-42) +
 // secciones dinámicas vacías colapsan a 0px (CSS :empty). Bump: purga categories.js viejo.
-const CACHE_NAME    = 'bersaglio-v21';
+const CACHE_NAME    = 'bersaglio-v22';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

@@ -26,7 +26,6 @@ import { safeUrl } from '../core/safe-url.js';
 import { cardsFrom } from './categories-data.js';
 import { reservedHeight, rememberHeight } from '../core/section-reserve.js';
 
-const FALLBACK_IMG = '/img/banner-hero-800.webp';
 // object-position permitido (anti CSS-injection si 'pos' se vuelve editable).
 const POS_RE = /^(left|right|center|top|bottom|\d{1,3}%|\s)+$/i;
 const safePos = (p) => (typeof p === 'string' && POS_RE.test(p.trim()) ? p.trim() : 'center');
@@ -53,15 +52,18 @@ function armWatchdog() {
 
 function tile(c) {
     const count = data.countByCollection(c.slug);
-    const img = escape(safeUrl(c.img, FALLBACK_IMG));
+    // Sin imagen propia → superficie de marca (cero-ficción), NUNCA un demo de relleno.
+    const img = c.img ? escape(safeUrl(c.img)) : '';
     return html`
         <a class="glass cat-tile"
            href="/colecciones.html?col=${escape(c.slug)}"
            style="--cat-hue:${escape(String(c.hue))}">
             <div class="cat-tile-inner">
                 <div class="cat-tile-img">
-                    <img src="${img}" alt="${escape(c.name)}" loading="lazy" decoding="async"
-                         style="width:100%;height:100%;object-fit:cover;object-position:${escape(safePos(c.pos))};display:block;">
+                    ${img
+                        ? html`<img src="${img}" alt="${escape(c.name)}" loading="lazy" decoding="async"
+                         style="width:100%;height:100%;object-fit:cover;object-position:${escape(safePos(c.pos))};display:block;">`
+                        : html`<div class="cat-tile-img-bg"></div>`}
                 </div>
                 <div class="cat-tile-overlay"></div>
                 <div class="cat-tile-content">

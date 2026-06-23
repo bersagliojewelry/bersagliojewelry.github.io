@@ -6,10 +6,9 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v26 — §106: REVERT del render LQIP (§104 F1) — generaba un 3er estado feo
-// (neutro → borroso → nítido) porque el LQIP llega con el getDoc, no antes. Vuelve a 2 estados
-// (neutro → foto). La generación/datos del LQIP se conservan para el F2. (v25 = §105 fix recarga.)
-const CACHE_NAME    = 'bersaglio-v26';
+// Bumped to v27 — §107 (F2.0): View Transitions cross-document → cross-fade entre páginas en
+// vez del flash blanco (liquid-glass.css). Cambia el shell global → bump. (v26 = revert LQIP §106.)
+const CACHE_NAME    = 'bersaglio-v27';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

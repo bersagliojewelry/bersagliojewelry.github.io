@@ -428,13 +428,20 @@ async function handleSave() {
         badge:       get('badge') || null,
         featured:    form.querySelector('[name="featured"]').checked,
         priceLabel:  get('priceLabel') || 'Consultar precio',
-        price:       parseFloat(get('price')) || null,
         specs,
         images:      _uploadedImages.length ? [..._uploadedImages] : [],
         image:       _uploadedImages[0] || null,
     };
 
     if (!piece.id) delete piece.id;
+
+    // El precio es OPCIONAL. Las reglas (pieceCreateValid/pieceTypesValid en
+    // firestore.rules) exigen "ausente o número": un `price: null` (campo vacío) era
+    // RECHAZADO con "Missing or insufficient permissions" al guardar. Solo se incluye
+    // cuando es un número válido (incluido 0); vacío → se OMITE la clave → la regla pasa
+    // y la pieza se guarda con "Consultar precio". (savePiece borra undefined, no null.)
+    const priceNum = parseFloat(get('price'));
+    if (Number.isFinite(priceNum)) piece.price = priceNum;
 
     try {
         const saved = await adminDb.savePiece(piece, {

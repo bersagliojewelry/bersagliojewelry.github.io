@@ -449,8 +449,8 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     transition: transform 0.8s cubic-bezier(.2,.9,.2,1);
 }
 .cat-tile:hover .cat-tile-img { transform: scale(1.08); }
-/* Colección SIN imagen propia: superficie de marca, NUNCA un demo de relleno. */
-.cat-tile-img-bg { position: absolute; inset: 0; background: linear-gradient(160deg, oklch(58% 0.12 158), oklch(40% 0.10 162)); }
+/* Colección SIN imagen propia: placeholder NEUTRO casi-blanco (patrón featured), NUNCA un demo. */
+.cat-tile-img-bg { position: absolute; inset: 0; background-color: oklch(94% 0.02 150); }
 .cat-tile-overlay {
     position: absolute; inset: 0;
     background: linear-gradient(180deg,
@@ -642,11 +642,12 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     min-height: 500px;
     position: relative;
 }
-/* Estado SIN imagen CMS: superficie de marca (esmeralda), NUNCA una foto demo
-   (cero-ficción · feedback_no_demo_en_index). Con imagen del CMS se pinta <img>. */
+/* Placeholder NEUTRO casi-blanco (patrón featured.js): invisible mientras carga, NUNCA un
+   bloque de color/demo. Imagen CMS como background-image inline encima (carga sin hueco ni salto). */
 .home-editorial-image-bg {
     position: absolute; inset: 0;
-    background: linear-gradient(160deg, oklch(58% 0.12 158), oklch(40% 0.10 162));
+    background-color: oklch(94% 0.02 150);
+    background-size: cover; background-position: center; background-repeat: no-repeat;
 }
 .home-editorial-image-shade {
     position: absolute; inset: 0;

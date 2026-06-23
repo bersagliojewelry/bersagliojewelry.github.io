@@ -63,7 +63,7 @@ export function nosotrosHeroSection(c) {
             </div>
             <div class="glass glass-iridescent abt-hero-image">
                 ${c.image
-                    ? html`<img class="abt-hero-img" src="${escape(safeUrl(c.image))}" alt="" decoding="async">`
+                    ? html`<div class="abt-hero-image-bg" style="background-image:url('${escape(safeUrl(c.image))}')"></div>`
                     : html`<div class="abt-hero-image-bg"></div>`}
                 <div class="abt-hero-image-shade"></div>
                 <div class="abt-hero-image-content">
@@ -202,7 +202,7 @@ export function nosotrosAtelierSection(c) {
         <section class="atl-split">
             <div class="glass glass-iridescent atl-image">
                 ${c.image
-                    ? html`<img class="atl-img" src="${escape(safeUrl(c.image))}" alt="" decoding="async">`
+                    ? html`<div class="atl-image-bg" style="background-image:url('${escape(safeUrl(c.image))}')"></div>`
                     : html`<div class="atl-image-bg"></div>`}
                 <div class="chip glass-pill atl-chip">El Atelier</div>
             </div>

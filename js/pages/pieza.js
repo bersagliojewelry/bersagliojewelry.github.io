@@ -19,6 +19,7 @@
 
 import { html, escape } from '../core/html.js';
 import { format$ } from '../core/format.js';
+import { lqipBgStyle } from '../core/lqip.js';   // §110.4: blur-up de la imagen principal (idx 0)
 import { data } from '../core/data.js';
 import { cart } from '../core/cart.js';
 import { wishlist } from '../core/wishlist.js';
@@ -78,7 +79,7 @@ function renderGallery(piece) {
     return html`
         <div class="pz-gallery">
             <div class="glass glass-iridescent pz-main">
-                <div class="pz-main-img" style="background:url('${escape(main)}') center/cover"></div>
+                <div class="pz-main-img" style="${lqipBgStyle(main, idx === 0 ? piece.imageLqip : '')};background-size:cover;background-position:center"></div>
                 ${showCert ? html`
                     <div class="pz-main-chips">
                         <div class="chip pz-cert-chip">

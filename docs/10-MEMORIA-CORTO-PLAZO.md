@@ -51,7 +51,7 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier A/B �
 
 > Podada (GC) 2026-06-23. Histórico → **ADR §37-§99** (mapa `00`→detalle `99`; lecciones L-/M- en `30`/`31`).
 >
-> **▶️ RETOMA = §108 F2/F3 — GATED A CONTENIDO** (decisión experto 2026-06-23). Workflow corrió (comité×5+Gemini → 4 bloqueantes, §108.7-.12). **F1 ✅ pusheada** (`f01df68`; caché persistente SOLO-público, CRM/dev=memoria). **F2/F3 NO se construyen hasta haber contenido** (catálogo vacío por reset → tocan render, no verificables en real → no construir a ciegas: L-45/§101, L-50). Retomar con contenido (Kary o seed emulador): firma `id+_version+StorageURL`, envolver mount+`observeReveals`. **PENDIENTE Daniel**: PR `Desarrollo`→`main` (despliega F1). Leer §108.7-.12 + L-52 al retomar.
+> **▶️ RETOMA = §108 F1✅ + F3✅ (en `Desarrollo`); F2 opcional. Detalle → §108.13-.16.** HALLAZGO (extensión Chrome): la caché YA funciona — recarga normal = imágenes de caché (transfer 0), sin "vacío→foto"; el parpadeo es solo 1ª-visita-fría o **Ctrl+Shift+R** (bypassa caché → eso veía Daniel). ⇒ F3 = **LQIP** (blur 1ª carga), no cache-control. **Umbral comercial**: MIN_FEATURED 3→1 + filtro por FOTO (Daniel: index muestra ≥1, sin umbral fuerte). Todo verificado en navegador real. **PENDIENTE Daniel**: PR `Desarrollo`→`main` + **RE-SUBIR imágenes** (generan LQIP) + verificar blur. Commits 782977e/a15a02a/f1a48b0. No-bloqueantes: InvalidStateError VT §107 (task lanzada) + Firestore 503.
 >
 > **▶️ 2026-06-23 desplegado** ([OPUS-4.8]): §100-§105 EN PROD (cero-demo·carga fluida·F1 LQIP·fix recarga, #306/#307). §106 revert render LQIP + §107 F2.0 View Transitions en `Desarrollo` (v27, **pend. merge**). Detalle → **99 §100-§108** · L-45..L-52/M-07. [[feedback_no_demo_en_index]].
 >

@@ -25,6 +25,7 @@ import { data } from '../core/data.js';
 import { safeUrl } from '../core/safe-url.js';
 import { cardsFrom } from './categories-data.js';
 import { reservedHeight, rememberHeight } from '../core/section-reserve.js';
+import { lqipImgStyle } from '../core/lqip.js';   // §108 F3: blur-up del banner (degrada si no hay LQIP)
 
 // object-position permitido (anti CSS-injection si 'pos' se vuelve editable).
 const POS_RE = /^(left|right|center|top|bottom|\d{1,3}%|\s)+$/i;
@@ -62,7 +63,7 @@ function tile(c) {
                 <div class="cat-tile-img">
                     ${img
                         ? html`<img src="${img}" alt="${escape(c.name)}" loading="lazy" decoding="async"
-                         style="width:100%;height:100%;object-fit:cover;object-position:${escape(safePos(c.pos))};display:block;">`
+                         style="${lqipImgStyle(c.imgLqip)};width:100%;height:100%;object-fit:cover;object-position:${escape(safePos(c.pos))};display:block;">`
                         : html`<div class="cat-tile-img-bg"></div>`}
                 </div>
                 <div class="cat-tile-overlay"></div>

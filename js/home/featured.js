@@ -15,9 +15,12 @@ import { format$ } from '../core/format.js';
 import { data } from '../core/data.js';
 import { MIN_FEATURED } from '../core/home-sections.js';   // umbral de dignidad (SSoT cero-ficción)
 import { reservedHeight, rememberHeight } from '../core/section-reserve.js';
+import { lqipBgStyle } from '../core/lqip.js';             // §108 F3: blur-up (degrada si no hay LQIP)
 
-// Piezas visibles en Destacadas = featured + con precio. Lee en TIEMPO DE RENDER (live).
-const featuredPieces = () => data.getFeatured(8).filter(p => p.price);
+// Piezas visibles en Destacadas = featured + con FOTO (la franja es un escaparate VISUAL).
+// Daniel 2026-06-23: el precio es OPCIONAL (price-on-request → format$ pinta "Cotización"); lo
+// comercial manda, una pieza sin precio igual se muestra. Lee en TIEMPO DE RENDER (live).
+const featuredPieces = () => data.getFeatured(8).filter(p => p.images?.[0] || p.image);
 
 // Watchdog anti-carga-eterna (ver categories.js): 8s > timeout de data.load() (4s) para dar
 // margen a redes lentas a llenar la reserva sin saltar.
@@ -93,7 +96,7 @@ function renderFeaturedCard(p) {
         <a class="glass glass-iridescent home-featured-card"
            href="/pieza.html?p=${encodeURIComponent(slug)}">
             <div class="home-featured-card-imgwrap">
-                <div class="home-featured-card-img" style="background:url('${escape(img)}') center/cover"></div>
+                <div class="home-featured-card-img" style="${lqipBgStyle(img, p.imageLqip)};background-size:cover;background-position:center"></div>
                 <div class="home-featured-card-vignette" aria-hidden="true"></div>
                 ${tag ? html`
                     <div class="home-featured-card-tag">

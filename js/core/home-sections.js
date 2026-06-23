@@ -17,7 +17,7 @@
 export const MIN_FILMS   = 3;   // videos publicados+completos para mostrar "Bersaglio Films"
 export const MIN_SOCIAL  = 4;   // posts para mostrar "Lo último en nuestras redes"
 export const MIN_JOURNAL = 1;   // ≥1 entrada publicada+completa para el Journal del home
-export const MIN_FEATURED = 3;  // piezas destacadas para la franja "Destacadas"
+export const MIN_FEATURED = 1;  // piezas destacadas para "Destacadas". Daniel 2026-06-23: LO COMERCIAL MANDA — el index muestra lo que haya (aunque sea 1); cero-ficción solo OCULTA si hay 0, sin umbral de dignidad fuerte.
 
 // Redes soportadas por el render (íconos + filtro de social.js). Fuera de esta lista
 // un post no pinta su ícono ni cae en su pestaña → se considera "incompleto".

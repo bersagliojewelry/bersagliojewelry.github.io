@@ -386,6 +386,9 @@ button { font: inherit; border: none; background: none; cursor: pointer; color: 
      transición sin el hint (recon performance 2026-06-21). */
 }
 .reveal.in { opacity: 1; transform: none; }
+/* Asentado SIN animación: lo aplica reveal.js a lo que ya está a la vista en el primer paint
+   (anti "salto/zoom" feo en recarga — no se promueve a capa GPU ni se rasteriza la imagen). */
+.reveal-static { transition: none !important; }
 .reveal-soft { transform: translateY(18px) scale(0.985); }
 @media (prefers-reduced-motion: reduce) {
   .reveal, .reveal-soft { opacity: 1 !important; transform: none !important; transition: none !important; }

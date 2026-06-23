@@ -18,6 +18,7 @@ export function cardsFrom(collections) {
         name: (c && (c.name || c.slug)) || 'Colección',
         slug: (c && (c.slug || c.id)) || '',
         img: (c && (c.img || c.bannerUrl)) || '',
+        imgLqip: (c && (c.imgLqip || c.bannerLqip)) || '',   // §108 F3: blur-up (vacío → sin blur)
         hue: (c && Number.isFinite(c.hue)) ? c.hue : HUE_PALETTE[i % HUE_PALETTE.length],
         pos: (c && typeof c.pos === 'string') ? c.pos : 'center',
     }));

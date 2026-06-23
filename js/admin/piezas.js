@@ -161,6 +161,7 @@ function populateCollectionFilters() {
 // ─── Modal CRUD ───────────────────────────────────────────────────────────────
 
 let _uploadedImages = [];
+let _uploadedLqips  = [];   // §108 F3: LQIP (data-URI blur) paralelo a _uploadedImages
 
 function initModal() {
     document.getElementById('modal-close').addEventListener('click', closeModal);
@@ -212,7 +213,7 @@ async function handleFiles(files) {
 
     try {
         const { uploadPieceImage } = await import('../storage-service.js');
-        const { optimizeImage }    = await import('../image-optimizer.js');
+        const { optimizeImage, makeLqip } = await import('../image-optimizer.js');
 
         for (const file of files) {
             if (file.size > 10 * 1024 * 1024) {
@@ -224,15 +225,16 @@ async function handleFiles(files) {
                 continue;
             }
 
-            // Optimize: resize + convert to WebP before uploading
+            // Optimize: resize + convert to WebP/AVIF + genera el LQIP (blur \u00a7108 F3) en paralelo.
             admToast(`Optimizando ${file.name}\u2026`);
-            const optimized = await optimizeImage(file);
+            const [optimized, lqip] = await Promise.all([optimizeImage(file), makeLqip(file)]);
 
             const url = await uploadPieceImage(pieceId, optimized, pct => {
                 progressBar.style.width = `${pct}%`;
             });
 
             _uploadedImages.push(url);
+            _uploadedLqips.push(lqip || '');
             renderImagePreviews();
 
             const saved = optimized.size < file.size
@@ -275,8 +277,9 @@ function renderImagePreviews() {
                 admToast('No se pudo eliminar del storage, se quitará de la pieza', 'danger');
             }
 
-            // 2. Remove from local array
+            // 2. Remove from local array (+ su LQIP paralelo, §108 F3)
             _uploadedImages.splice(idx, 1);
+            _uploadedLqips.splice(idx, 1);
             renderImagePreviews();
 
             // 3. If we're editing an existing piece, persist the updated images
@@ -292,6 +295,7 @@ function renderImagePreviews() {
                     const newVersion = await adminDb.patchPiece(pieceId, {
                         images: [..._uploadedImages],
                         image:  _uploadedImages[0] || null,
+                        imageLqip: _uploadedLqips[0] || null,   // §108 F3
                     });
                     // Advance the optimistic-lock baseline to include our own
                     // patch — otherwise the next form Save would falsely
@@ -325,6 +329,7 @@ async function openModal(id = null) {
     form.querySelector('[name="id"]').value = '';
     delete slugEl.dataset.manual;
     _uploadedImages = [];
+    _uploadedLqips  = [];
     _editingVersion = null;
 
     if (id) {
@@ -346,6 +351,8 @@ async function openModal(id = null) {
                 _uploadedImages = await getPieceImages(piece.id);
             } catch { /* Storage unavailable */ }
         }
+        // §108 F3: el LQIP de la principal viaja en el doc (no se re-deriva de Storage).
+        _uploadedLqips = piece.imageLqip ? [piece.imageLqip] : [];
     } else {
         titleEl.textContent = 'Nueva pieza';
         form.querySelector('[name="priceLabel"]').value = 'Consultar precio';
@@ -442,6 +449,9 @@ async function handleSave() {
     // y la pieza se guarda con "Consultar precio". (savePiece borra undefined, no null.)
     const priceNum = parseFloat(get('price'));
     if (Number.isFinite(priceNum)) piece.price = priceNum;
+
+    // §108 F3: LQIP (blur) de la imagen principal. Solo si existe (se omite vacío, como price).
+    if (_uploadedLqips[0]) piece.imageLqip = _uploadedLqips[0];
 
     try {
         const saved = await adminDb.savePiece(piece, {

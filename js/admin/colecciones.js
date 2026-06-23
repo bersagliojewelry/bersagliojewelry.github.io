@@ -9,6 +9,7 @@ import { safeUrl } from '../core/safe-url.js';
 
 let _collections = [];
 let _bannerUrl = '';
+let _bannerLqip = '';   // §108 F3: LQIP (data-URI blur) del banner
 // _version of the collection currently loaded in the modal. Used as the
 // optimistic-lock baseline on save.
 let _editingVersion = null;
@@ -142,16 +143,17 @@ async function handleBannerFile(file) {
 
     try {
         const { uploadCollectionBanner } = await import('../storage-service.js');
-        const { optimizeImage }          = await import('../image-optimizer.js');
+        const { optimizeImage, makeLqip } = await import('../image-optimizer.js');
 
         admToast(`Optimizando banner\u2026`);
-        const optimized = await optimizeImage(file);
+        const [optimized, lqip] = await Promise.all([optimizeImage(file), makeLqip(file)]);
 
         const url = await uploadCollectionBanner(colId, optimized, pct => {
             progressBar.style.width = `${pct}%`;
         });
 
         _bannerUrl = url;
+        _bannerLqip = lqip || '';
         document.getElementById('cf-banner-url').value = url;
         renderBannerPreview(url);
 
@@ -189,6 +191,7 @@ function renderBannerPreview(url) {
             await deletePieceImage(url);
         } catch { /* ignore */ }
         _bannerUrl = '';
+        _bannerLqip = '';
         document.getElementById('cf-banner-url').value = '';
         renderBannerPreview(null);
         admToast('Banner eliminado');
@@ -211,6 +214,7 @@ function openModal(id = null) {
     // from a previously-edited collection when creating a new one.
     form.querySelector('[name="id"]').value = '';
     _bannerUrl = '';
+    _bannerLqip = '';
     _editingVersion = null;
 
     if (id) {
@@ -229,6 +233,7 @@ function openModal(id = null) {
 
         // Load existing banner
         _bannerUrl = col.bannerUrl || '';
+        _bannerLqip = col.bannerLqip || '';
         document.getElementById('cf-banner-url').value = _bannerUrl;
         renderBannerPreview(_bannerUrl);
     } else {
@@ -244,6 +249,7 @@ function openModal(id = null) {
 function closeModal() {
     document.getElementById('col-modal').hidden = true;
     _bannerUrl = '';
+    _bannerLqip = '';
     renderBannerPreview(null);
 }
 
@@ -267,6 +273,7 @@ async function handleSave() {
         pieces:      getPieceCount(existingId || slugify(name)),
         featured:    form.querySelector('[name="featured"]').checked,
         bannerUrl:   _bannerUrl || get('bannerUrl') || null,
+        bannerLqip:  _bannerLqip || null,   // §108 F3: blur-up del banner
     };
 
     try {

@@ -14,7 +14,14 @@
 
 import { initializeApp } from 'firebase/app';
 import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import {
+    getFirestore,
+    initializeFirestore,
+    persistentLocalCache,
+    persistentMultipleTabManager,
+    memoryLocalCache,
+    connectFirestoreEmulator,
+} from 'firebase/firestore';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
 
@@ -70,9 +77,50 @@ if (!isDev && recaptchaSiteKey) {
     }
 }
 
-const firestoreDb = getFirestore(app);
-const auth        = getAuth(app);
-const storage     = getStorage(app);
+// ─── Firestore + caché inteligente (§108 F1 · SWR nativo de Firestore) ───────
+// Visita repetida = INSTANTÁNEO: la copia local (IndexedDB) se sirve al instante
+// y revalida contra el servidor (onSnapshot emite cache→server). 1ª visita normal.
+//
+// PERO la caché persistente es GLOBAL a la instancia y SOBREVIVE entre sesiones
+// (doc oficial Firebase: "no se limpia sola; si manejas info sensible, no la
+// actives sin dispositivo de confianza"). Por eso SOLO se activa en el SITIO
+// PÚBLICO (catálogo, sin PII). El panel admin/CRM (dinero, PII) y dev/emulador
+// usan caché de MEMORIA: no persisten saldos en disco (invariantes I3/I6) ni
+// contaminan IndexedDB con datos del emulador. crm-service.js/auth.js comparten
+// ESTE firestoreDb, así que la decisión aquí los cubre a todos.
+//
+// Fallback robusto (comité §108 + doc oficial): la API moderna persistentLocalCache
+// NO expone un .catch() como la vieja enablePersistence — un fallo de IndexedDB
+// llega async y la instancia NO se re-inicializa. Por eso se DECIDE el tipo de
+// caché ANTES de inicializar (feature-detect), una sola vez; si igual algo lanzara
+// síncrono, getFirestore(app) (memoria) es la red de seguridad para no tumbar nada.
+const isAdminPage = /\/admin(-|\.|\/|$)/i.test(
+    typeof location !== 'undefined' ? location.pathname : ''
+);
+
+function pickLocalCache() {
+    // Admin/CRM o dev/emulador → MEMORIA (nunca persistir dinero/PII; ni mezclar emulador).
+    if (isAdminPage || isDev) return memoryLocalCache();
+    // Público + prod → persistente multi-pestaña SOLO si IndexedDB existe (Safari
+    // privado / almacenamiento bloqueado / webview capada → memoria, degrada limpio).
+    try {
+        if (typeof indexedDB === 'undefined' || indexedDB === null) return memoryLocalCache();
+        return persistentLocalCache({ tabManager: persistentMultipleTabManager() });
+    } catch {
+        return memoryLocalCache();
+    }
+}
+
+let firestoreDb;
+try {
+    firestoreDb = initializeFirestore(app, { localCache: pickLocalCache() });
+} catch (err) {
+    console.warn('[Firebase] init de caché Firestore falló, usando memoria por defecto:', err);
+    firestoreDb = getFirestore(app);
+}
+
+const auth    = getAuth(app);
+const storage = getStorage(app);
 
 if (isDev) {
     try {

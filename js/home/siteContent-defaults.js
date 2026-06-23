@@ -14,6 +14,7 @@
 export const HOME_DEFAULTS = {
     hero: {
         bgImage:          '',   // P3.5: URL de portada custom (Storage). Vacío → <picture> estático optimizado.
+        bgImageLqip:      '',   // §103 F1: placeholder difuso (data-URI) generado al subir bgImage.
         locator:          'Cartagena de Indias · Colombia',
         eyebrow:          'Alta Joyería Personalizada y de Confianza',
         headline1:        'El arte de escuchar tu historia,',
@@ -26,6 +27,7 @@ export const HOME_DEFAULTS = {
     },
     editorial: {
         image:      '',   // foto de la sección custom (Storage); vacía → fondo CSS por defecto
+        imageLqip:  '',   // §103 F1: placeholder difuso (data-URI) generado al subir image.
         chip:       'Editorial',
         imageTitle: 'La Verde, 2026',
         imageSub:   'Seis piezas esculpidas alrededor de la luz esmeralda colombiana.',

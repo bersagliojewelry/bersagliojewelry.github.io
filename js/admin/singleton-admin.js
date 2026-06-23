@@ -134,14 +134,17 @@ export function createSingletonAdmin(d) {
         const clearBtn = wrap.querySelector('[data-img-clear]');
         try {
             progress.hidden = false; progress.textContent = 'Optimizando…';
-            const [{ optimizeImage }, { uploadAsset }] = await Promise.all([
+            const [{ optimizeImage, makeLqip }, { uploadAsset }] = await Promise.all([
                 import('../image-optimizer.js'),
                 import('../storage-service.js'),
             ]);
-            const optimized = await optimizeImage(file);
+            // §103 F1: optimizar + generar el LQIP (placeholder difuso) del MISMO archivo en paralelo.
+            const [optimized, lqip] = await Promise.all([optimizeImage(file), makeLqip(file)]);
             const url = await uploadAsset(optimized, pct => { progress.textContent = `Subiendo… ${pct}%`; });
             if (!host) return;                         // se desmontó durante la subida
             hidden.value = url;
+            const lqipInput = wrap.querySelector('input[data-img-lqip]');
+            if (lqipInput) lqipInput.value = lqip || '';   // viaja junto a la URL; vacío si no se pudo generar
             setImgPreview(previewE, url);
             if (clearBtn) clearBtn.hidden = false;
             markDirty();                               // F3: imagen subida = cambios sin publicar
@@ -162,7 +165,10 @@ export function createSingletonAdmin(d) {
         if (!btn) return;
         const wrap = btn.closest('[data-img-wrap]');
         if (!wrap) return;
-        wrap.querySelector('input[type="hidden"][data-sf]').value = '';
+        const urlInput = wrap.querySelector('input[type="hidden"][data-sf]:not([data-img-lqip])');
+        if (urlInput) urlInput.value = '';
+        const lqipInput = wrap.querySelector('input[data-img-lqip]');
+        if (lqipInput) lqipInput.value = '';           // §103 F1: limpiar el LQIP compañero
         setImgPreview(wrap.querySelector('[data-img-preview]'), '');
         btn.hidden = true;
         markDirty();                                   // F3: imagen quitada = cambios sin publicar

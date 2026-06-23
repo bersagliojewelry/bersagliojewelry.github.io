@@ -6,10 +6,10 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v21 — fix: Categorías no aparecía al crear la 1ª colección (refresh no podía
-// CREAR la sección; ahora render monta SIEMPRE el <section> y refresh lo rellena, L-42) +
-// secciones dinámicas vacías colapsan a 0px (CSS :empty). Bump: purga categories.js viejo.
-const CACHE_NAME    = 'bersaglio-v23';
+// Bumped to v24 — §103 F1: LQIP (placeholder difuso) para imágenes del CMS (blur-up).
+// Cambia el render de fondos/imágenes de siteContent (editorial/hero/atelier/equipo) →
+// bump para que los clientes reciban el JS nuevo. (v23 = §102 carga fluida.)
+const CACHE_NAME    = 'bersaglio-v24';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

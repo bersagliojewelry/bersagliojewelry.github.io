@@ -17,6 +17,10 @@ import { dirname, join } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
+// Quita comentarios de bloque y de línea (preservando `https://` por el [^:]) para que las
+// aserciones de patrón no se rompan por un comentario intercalado. Usado por barrera #5 y L-42.
+const stripComments = s => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+
 test('cero-ficción: js/data/home-media.js (datos de ejemplo) NO existe', () => {
     assert.equal(
         existsSync(join(ROOT, 'js/data/home-media.js')), false,
@@ -41,7 +45,6 @@ test('cero-ficción: ningún módulo de js/home/ exporta un array no vacío (fue
     // un array "baked" de items. El contenido dinámico viene de Firestore; los módulos de
     // home/ exportan FUNCIONES de render, nunca arrays de datos.
     const dir = join(ROOT, 'js/home');
-    const stripComments = s => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
     const named = /export\s+(?:const|let|var)\s+\w+\s*=\s*\[\s*[^\]\s]/;   // export const X = [ <algo>
     const dflt  = /export\s+default\s*\[\s*[^\]\s]/;                       // export default [ <algo>
     for (const f of readdirSync(dir)) {
@@ -71,12 +74,13 @@ const HOME_DINAMICAS = [
 
 for (const s of HOME_DINAMICAS) {
     test(`home dinámico (L-42): ${s.render}() monta SIEMPRE <section class="${s.sec}"> y ${s.refresh}() la rellena en vivo`, () => {
-        const src = readFileSync(join(ROOT, s.file), 'utf8');
-        // El regex exige `{ return html`<section class="home-X">${` CONTIGUO al abrir la
-        // función: un `if (...) return '';` ANTES del <section> rompería el match (eso es
-        // justo lo que reintroduce el bug), así que esta sola aserción cubre el invariante.
+        const src = stripComments(readFileSync(join(ROOT, s.file), 'utf8'));   // sin comentarios intercalados (§102)
+        // El regex exige que renderX devuelva `html`<section class="home-X">${` montando
+        // SIEMPRE la sección. Tolera llamadas benignas previas (`armWatchdog();` del modelo
+        // 3-estados §102) con `(?:\w+(...);)*`, PERO sigue cazando el bug: un `if (...) return '';`
+        // ANTES del <section> NO encaja en ese prefijo de-solo-llamadas → rompe el match.
         const renderRe = new RegExp(
-            s.render + '\\([^)]*\\)\\s*\\{\\s*return html`<section class="' + s.sec + '">\\$\\{',
+            s.render + '\\([^)]*\\)\\s*\\{\\s*(?:\\w+\\([^)]*\\)\\s*;\\s*)*return html`<section class="' + s.sec + '">\\$\\{',
         );
         assert.match(src, renderRe,
             `${s.render} debe devolver SIEMPRE html\`<section class="${s.sec}">\${...} (patrón L-42), sin '' condicional antes del <section>`);
@@ -92,7 +96,15 @@ for (const s of HOME_DINAMICAS) {
 test('cero-ficción: Destacadas (featured.js) oculta bajo umbral, sin placeholder', () => {
     const src = readFileSync(join(ROOT, 'js/home/featured.js'), 'utf8');
     assert.ok(src.includes('MIN_FEATURED'), 'featured.js debe usar el umbral MIN_FEATURED (SSoT home-sections)');
-    assert.match(src, /<\s*MIN_FEATURED/, 'featured.js debe ocultar la sección con menos de MIN_FEATURED piezas');
+    // Acepta ambas formas EQUIVALENTes del guard de umbral (hide-when-empty):
+    //   forma clásica  `length < MIN_FEATURED ? '' : …`
+    //   forma 3-estados (§102 carga fluida) `length >= MIN_FEATURED ? contentHtml(…) : ''`
+    // Lo invariante: bajo el umbral el render es vacío (sin placeholder, ver assert siguiente).
+    assert.match(
+        src,
+        /<\s*MIN_FEATURED|>=\s*MIN_FEATURED\s*\?[\s\S]*?:\s*''/,
+        'featured.js debe ocultar la sección bajo MIN_FEATURED (umbral → render vacío, sin placeholder)',
+    );
     assert.ok(
         !/afilando la próxima curaduría|home-featured-empty/.test(src),
         'featured.js reintrodujo un placeholder/empty-state (cero-ficción: hide-when-empty, no placeholder)',

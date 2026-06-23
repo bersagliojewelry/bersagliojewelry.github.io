@@ -3,6 +3,24 @@
    iOS 26 Aqua × Alta Joyería Esmeraldas + Oro
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* ── §103 F2.0 — Transición suave entre páginas (View Transitions, cross-document) ──
+   Chrome 126+: al navegar entre páginas del MISMO origen, el navegador hace un
+   cross-fade en lugar del "flash" blanco/parpadeo. Degrada solo (navegador sin
+   soporte = navegación normal de siempre). NO es caché: cada página sigue cargando
+   fresca (esto es SOLO la transición visual; respeta "sin caché que tape cambios").
+   El router instantáneo completo (contenido en memoria) es la fase F2.1 (pendiente). */
+@view-transition { navigation: auto; }
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.34s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation: none !important; }
+}
+
 :root {
   /* ── Core Brand ─────────────────────────────────────────────────── */
   --bj-emerald-900: oklch(28% 0.08 155);

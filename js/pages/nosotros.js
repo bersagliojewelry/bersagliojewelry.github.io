@@ -32,6 +32,7 @@
 import { html, escape, mount, fragment } from '../core/html.js';
 import { data } from '../core/data.js';
 import { safeUrl } from '../core/safe-url.js';
+import { lqipBgStyle } from '../core/lqip.js';   // §110.2 F3: blur-up (degrada si no hay LQIP)
 import { mergeNosotros } from './nosotros-defaults.js';
 
 let _openFaq = 0;
@@ -63,7 +64,7 @@ export function nosotrosHeroSection(c) {
             </div>
             <div class="glass glass-iridescent abt-hero-image">
                 ${c.image
-                    ? html`<div class="abt-hero-image-bg" style="background-image:url('${escape(safeUrl(c.image))}')"></div>`
+                    ? html`<div class="abt-hero-image-bg" style="${lqipBgStyle(c.image, c.imageLqip)}"></div>`
                     : html`<div class="abt-hero-image-bg"></div>`}
                 <div class="abt-hero-image-shade"></div>
                 <div class="abt-hero-image-content">
@@ -202,7 +203,7 @@ export function nosotrosAtelierSection(c) {
         <section class="atl-split">
             <div class="glass glass-iridescent atl-image">
                 ${c.image
-                    ? html`<div class="atl-image-bg" style="background-image:url('${escape(safeUrl(c.image))}')"></div>`
+                    ? html`<div class="atl-image-bg" style="${lqipBgStyle(c.image, c.imageLqip)}"></div>`
                     : html`<div class="atl-image-bg"></div>`}
                 <div class="chip glass-pill atl-chip">El Atelier</div>
             </div>
@@ -467,8 +468,8 @@ export async function init() {
     repaint();                                   // 1er paint con DEFAULTS (texto + superficie de marca)
     main.addEventListener('click', onMainClick);
 
-    // CMS P4: re-merge + re-pinta al resolver el getDoc one-shot de siteContent/nosotros.
-    data.loadSiteContent('nosotros').then(repaint);
+    // CMS P4: SWR cache-first (§110.2) — repaint al instante desde caché y al revalidar (si cambió).
+    data.loadSiteContent('nosotros', repaint);
 }
 
 export default { init };

@@ -17,6 +17,8 @@ import {
     doc,
     getDocs,
     getDoc,
+    getDocFromCache,
+    getDocFromServer,
     addDoc,
     updateDoc,
     deleteDoc,
@@ -414,6 +416,22 @@ export const onJournalChange = (callback) =>
 /** Lee el doc de contenido de una página (one-shot). null si no existe aún. */
 export async function getSiteContent(page) {
     const snap = await getDoc(doc(firestoreDb, COLLECTIONS.siteContent, page));
+    return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+/**
+ * SWR (§110.2): lee el doc desde la CACHÉ local (instantáneo, sin red). LANZA si no está en
+ * caché (FirebaseError 'unavailable') → el caller cae a la red. En páginas públicas la caché
+ * es `persistentLocalCache` (§108 F1) → revisitas instantáneas; en admin/dev (memoria) = miss.
+ */
+export async function getSiteContentFromCache(page) {
+    const snap = await getDocFromCache(doc(firestoreDb, COLLECTIONS.siteContent, page));
+    return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+/** SWR (§110.2): revalida desde el SERVIDOR (1 lectura, igual costo que el getDoc previo §2.B). */
+export async function getSiteContentFromServer(page) {
+    const snap = await getDocFromServer(doc(firestoreDb, COLLECTIONS.siteContent, page));
     return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
 

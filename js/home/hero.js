@@ -11,6 +11,7 @@
 import { html, escape, mount } from '../core/html.js';
 import { data } from '../core/data.js';
 import { safeUrl } from '../core/safe-url.js';
+import { lqipImgStyle } from '../core/lqip.js';   // §110.2 F3: blur-up (degrada si no hay LQIP)
 import { mergeHome } from './siteContent-defaults.js';
 
 export function heroInner(c) {
@@ -18,7 +19,7 @@ export function heroInner(c) {
     // optimizada ≤1600px webp/avif por image-optimizer). Sin ella → el <picture> estático con
     // srcset responsive. safeUrl valida la URL (anti stored-XSS); safe-url.js prescribe ESTE patrón.
     const heroImg = c.bgImage
-        ? `<img src="${escape(safeUrl(c.bgImage))}" alt="" fetchpriority="high" decoding="async" class="home-hero-img home-hero-img-fallback">`
+        ? `<img src="${escape(safeUrl(c.bgImage))}" alt="" fetchpriority="high" decoding="async" class="home-hero-img home-hero-img-fallback" style="${lqipImgStyle(c.bgImageLqip)}">`
         : `<picture class="home-hero-img" data-parallax-img>
                             <source type="image/avif" srcset="/img/banner-hero-800.avif 800w, /img/banner-hero-1200.avif 1200w, /img/banner-hero-1600.avif 1600w" sizes="100vw">
                             <source type="image/webp" srcset="/img/banner-hero-800.webp 800w, /img/banner-hero-1200.webp 1200w, /img/banner-hero-1600.webp 1600w" sizes="100vw">

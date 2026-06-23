@@ -50,7 +50,7 @@ export async function init() {
     data.loadSocial();    // CMS: redes del home (socialPosts/) — hide-when-empty si no hay
     // CMS P1: textos de hero/editorial. getDoc one-shot; re-pinta UNA vez al resolver
     // (no en cada data.onChange → sin flash del LCP por cambios de piezas/journal).
-    data.loadSiteContent('home').then(() => { refreshHero(); refreshEditorial(); refreshAtelier(); refreshCTA(); });
+    data.loadSiteContent('home', () => { refreshHero(); refreshEditorial(); refreshAtelier(); refreshCTA(); });
 
     // Initial paint
     main.innerHTML = renderAll();

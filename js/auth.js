@@ -281,3 +281,20 @@ export async function deactivateUser(uid) {
     const fn = httpsCallable(getFunctions(app, 'us-central1'), 'deactivateUser');
     await fn({ uid });
 }
+
+/**
+ * Crea un usuario NUEVO (cuenta de Auth + perfil en Firestore) vía la Cloud Function
+ * `createUser` (owner-only, server-side). El panel NO puede crear la cuenta de Auth
+ * directo (requiere Admin SDK) → la CF la crea y siembra users/{uid}. Patrón espejo de
+ * deactivateUser (httpsCallable lazy). Reemplaza el flujo viejo "UID manual de la consola".
+ */
+export async function createUser({ email, password, displayName, role }) {
+    if (!hasRole('owner')) throw new Error('Solo el owner puede crear usuarios.');
+    if (!['admin', 'editor', 'catalogo'].includes(role)) throw new Error('Rol inválido.');
+    if (!password || password.length < 8) throw new Error('La contraseña debe tener al menos 8 caracteres.');
+
+    const { getFunctions, httpsCallable } = await import('firebase/functions');
+    const fn = httpsCallable(getFunctions(app, 'us-central1'), 'createUser');
+    const res = await fn({ email, password, displayName, role });
+    return res.data;
+}

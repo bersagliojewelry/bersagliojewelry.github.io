@@ -20,6 +20,7 @@ import {
     updateProfile,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { pmark } from './core/perf-probe.js';   // sonda TODO-33 (gateada; no-op si off)
 
 // ─── Role hierarchy ─────────────────────────────────────────────────────────
 
@@ -191,7 +192,9 @@ export function onAuthChange(callback) {
  * @returns {Promise<{ user, profile }>} the authenticated user
  */
 export async function requireAuth(minRole = 'editor') {
+    pmark('auth:requireAuth-start');
     await waitForAuth();
+    pmark('auth:waitForAuth-done');
 
     if (!_currentUser) {
         sessionStorage.removeItem('bj_auth');
@@ -226,6 +229,7 @@ export async function requireAuth(minRole = 'editor') {
 
     // Auth passed — show the page
     document.body.style.display = '';
+    pmark('auth:passed+show');
 
     return { user: _currentUser, profile: _userProfile };
 }

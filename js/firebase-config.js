@@ -24,6 +24,7 @@ import {
 } from 'firebase/firestore';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
+import { pmark } from './core/perf-probe.js';   // sonda TODO-33 (gateada ?perf=1; no-op si off)
 
 // Las API keys WEB de Firebase son PÚBLICAS por diseño (viajan en el bundle cliente
 // igual). El fallback hardcodeado es una RED DE SEGURIDAD: si el build no recibe los
@@ -48,6 +49,7 @@ const isDev = typeof location !== 'undefined' &&
               (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
 
 const app = initializeApp(firebaseConfig);
+pmark('cfg:initializeApp');
 
 // ─── App Check (anti-abuso, F6 §A) ───────────────────────────────────────────
 // "Sello de navegador real" (reCAPTCHA v3) que el SDK adjunta a CADA petición a
@@ -76,6 +78,7 @@ if (!isDev && recaptchaSiteKey) {
         console.warn('[Firebase] App Check no se pudo inicializar:', err);
     }
 }
+pmark('cfg:appCheck');
 
 // ─── Firestore + caché inteligente (§108 F1 · SWR nativo de Firestore) ───────
 // Visita repetida = INSTANTÁNEO: la copia local (IndexedDB) se sirve al instante
@@ -118,9 +121,11 @@ try {
     console.warn('[Firebase] init de caché Firestore falló, usando memoria por defecto:', err);
     firestoreDb = getFirestore(app);
 }
+pmark('cfg:firestore');
 
 const auth    = getAuth(app);
 const storage = getStorage(app);
+pmark('cfg:authStorage');
 
 if (isDev) {
     try {

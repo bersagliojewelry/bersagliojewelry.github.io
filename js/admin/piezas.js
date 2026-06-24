@@ -4,6 +4,7 @@
 
 import adminDb from './db.js';
 import { admToast, admConfirm, initSidebar, esc, requireAuth, hasRole } from './shared.js';
+import { pmark, psummary } from '../core/perf-probe.js';   // sonda TODO-33 (gateada; no-op si off)
 
 let _allPieces = [];
 let _query     = '';
@@ -16,14 +17,19 @@ let _editingVersion = null;
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 async function init() {
+    pmark('page:init-start');
     await requireAuth('catalogo');   // catálogo (Kary, TODO-19) + editor+ gestionan piezas
+    pmark('page:auth-done');
     await adminDb.init();
+    pmark('page:adminDb-done');
     initSidebar();
+    pmark('page:sidebar-done');
 
     _allPieces = adminDb.getAllPieces();
 
     populateCollectionFilters();
     renderTable();
+    pmark('page:first-data-render'); psummary('piezas');
 
     // Real-time: re-render when pieces change
     adminDb.on('pieces', pieces => {

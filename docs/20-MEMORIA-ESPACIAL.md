@@ -31,7 +31,8 @@
 │   │   ├── html.js             # Tagged templates html`` + escape() + mount()
 │   │   ├── format.js           # Formateadores numéricos y de fechas
 │   │   ├── reveal.js           # Reveal-on-scroll (IntersectionObserver + fallback robusto)
-│   │   └── live-query.js       # subscribeWithRetry: onSnapshot robusto que RE-SUSCRIBE (infra neutral: público + CRM, §93/§98)
+│   │   ├── live-query.js       # subscribeWithRetry: onSnapshot robusto que RE-SUSCRIBE (infra neutral: público + CRM, §93/§98)
+│   │   └── perf-probe.js       # sonda de arranque GATEADA (?perf=1) — desglose por tramo de la cascada admin (TODO-33 'medir primero'); no-op si off
 │   ├── components/             # Componentes de UI modulares
 │   │   ├── header.js           # Navbar pill flotante + mobile drawer
 │   │   ├── footer.js           # Footer modular 4 columnas

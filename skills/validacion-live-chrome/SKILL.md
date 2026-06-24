@@ -32,9 +32,13 @@ description: Usar DESPUÉS de un merge/deploy cuando los cambios YA están EN VI
 3. **Extensión Chrome** (en la sesión logueada del dueño): ejecuta + emite el **reporte de observabilidad** (§3).
 4. **Dueño**: pega el reporte aquí → **yo tomo acciones**: caza-bugs → fix → re-validar (vuelta a §2).
 
-> Dos modos: **(a) relay humano** (default — el dueño pega el prompt en la extensión y me pega la
-> respuesta; respeta credenciales + L-08); **(b) directo** vía `mcp__Claude_in_Chrome__*` SOLO si el
-> navegador del dueño está conectado Y él ya hizo login. Default = (a).
+> Dos modos: **(b) DIRECTO = DEFAULT cuando el navegador del dueño está conectado** (verificado
+> 2026-06-24: `list_connected_browsers` → conectado): **Claude maneja la extensión** vía
+> `mcp__Claude_in_Chrome__*` (navega, lee DOM/consola/red, clicks) — tras merge+~5min de deploy el dueño
+> avisa y Claude conduce la validación SOLO (es los OJOS), caza diseño/bugs/regresiones por su cuenta.
+> Login/credenciales = solo el dueño (el admin exige sesión ya iniciada); acciones irreversibles, OK
+> explícito. **(a) relay humano** (el dueño pega prompt→respuesta) = fallback si el navegador NO está
+> conectado. Para cambios LOCALES no-deployados → `preview_*` (no toca el navegador del dueño).
 
 ## 2. El PROMPT para la extensión (plantilla — yo la lleno y se la paso al dueño en el chat)
 > Regla: **autocontenido** (la extensión no ve este repo ni nuestro chat), **observar > actuar**, y

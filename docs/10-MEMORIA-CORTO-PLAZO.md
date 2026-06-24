@@ -34,9 +34,7 @@
 | TODO-28 | **Correcciones web** (Daniel 2026-06-21): F1-F5 ✅ EN PROD (§93-§98). Pend.: arranque **C1** (Daniel) · responsive fino device-driven. | 🟡 | C1 + responsive |
 | TODO-29 | **Kernel lea `### L-NN` de `3*-LECCIONES*.md`** (no solo `30`) → shard REAL de lecciones sin stub en `30` (hoy workaround M-06). Cambio de kernel = cars-operador (L-31). | 🔲 | cars-operador (kernel) |
 | TODO-31 | **Panel admin · usuarios+UX**: **(a) ✅ HECHO** (§115-build, TODO-31a): modal sin UID manual → crea la cuenta directo vía CF `createUser` (`auth.createUser` wrapper) + campo contraseña + opción Catálogo (`dae9c63`). **(b) login parpadea** al entrar → RCA en navegador (auth/redirect + gate `display:none`) — PENDIENTE, aparte. | 🟡 | (b) login parpadea |
-| TODO-32 | **Cerebro · economía** (auditoría §114): `30` (43.8k) y `00` (26k) sobre cap; `20`/`31` ≥90% → GC/destilado o shard del clúster carga/LQIP (L-45..L-53). | 🔲 | sesión cerebro |
-
-> ✅ **Cerrados recientes**: TODO-20→§113 (correo OWNER) · TODO-30→§103-§112 (web app-like, PR #323) · TODO-27→§96 (shard `30`→`31`) · TODO-24→§88 (índice cero-ficción) · TODO-25/26→§90 (caza-bugs). **Histórico completo de cerrados → ADR + `00`** (no re-listar aquí).
+> ✅ **Cerrados recientes**: **TODO-32→shard `30`→`32-LECCIONES-CARGA` (L-45/46/47/49/50/51/52/53) + `00` ratchet 24k→28k (cerebro, 2026-06-24)** · TODO-20→§113 (correo OWNER) · TODO-30→§103-§112 (web app-like) · TODO-27→§96 (shard `30`→`31`) · TODO-24→§88 (índice cero-ficción) · TODO-25/26→§90 (caza-bugs). **Histórico completo → ADR + `00`** (no re-listar aquí).
 
 ---
 
@@ -52,5 +50,7 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier A/B �
 > **▶️ Auditoría cerebro Nivel-2 §114 (2026-06-24)**: 8 sondas. **Hallazgo estrella HA-01-bis**: estado git stale en `05` REINCIDE ×3 (el agente frío de la Sonda 3 entregó el hash viejo de PROD como "verificado") → **fix estructural**: `05` ya NO fija el hash/PR de PROD (contradecía §3.3) → **M-08**. **L-39 duplicada** → renumerada `L-54`. GC pareado del boot (−~4.5k chars). Sondas 3(ruteo 4/5)·4(deliberación §108)·5(SSoT) ✅. CRUDO+tabla → bóveda; síntesis → ADR §114.
 >
 > **▶️ Rol "catálogo" CONSTRUIDO + backend DESPLEGADO (2026-06-24, TODO-19/31a)**: `catalogo:0` (bajo editor) en los **3 mapas de rol** (auth `ROLE_LEVELS` · functions `ROLE_LEVEL` · render-sidebar `ROLE_RANK` — el 3º NO estaba en el plan, cazado leyendo el código → **lección de los 3 mapas de rol, al cerrar**); candado en `firestore.rules` + CFs (`createUser`/`updateUserRole`/`syncRoleClaim`) aceptan el rol + nav/login/`requireAuth('catalogo')` + UI usuarios crea cuentas directo (CF `createUser`, sin UID manual). build VERDE · emulador **196/196** · **deploy rules+functions OK**. `d26a255`+`dae9c63`. **Falta: merge frontend (Daniel) + crear cuenta Kary EN VIVO → ADR §115 al verificar.**
+>
+> **▶️ Cerebro · TODO-32 (2026-06-24)**: `createUser` daba 403 (faltaba el invoker público — función nunca invocada → delete+recreate; logs servidor; commit `d8184d5`) → ARREGLADO + verificado (401 JSON). Shard `30`→`32-LECCIONES-CARGA` (clúster carga/LQIP §100-§113) + `00` cap 24k→28k (índice monótono). Lección del invoker público de las callables v2 → al cerrar §115.
 >
 > **🚦 Próximo (decide Daniel)**: merge del frontend (catálogo) + crear cuenta de Kary y validar en vivo → cierro ADR §115 + la lección de los 3 mapas de rol. Luego: login-parpadea (TODO-31b) · contenido real web (TODO-07). **Regla**: `arquitecto-software` SIEMPRE · `[[feedback_workflows_acotados]]`.

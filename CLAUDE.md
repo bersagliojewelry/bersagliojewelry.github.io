@@ -41,6 +41,7 @@ El cerebro se divide en **nodos**. Auto-cargas SOLO `CLAUDE.md` + `05` + `10` (�
 | 🗺️ **Espacial** | `docs/20-MEMORIA-ESPACIAL.md` | ❌ on-demand | Trigger de Desorientación: dónde vive un componente, flujos, arquitectura, layouts. |
 | 🧪 **Procedimental (experiencia)** | `docs/30-LECCIONES.md` | ❌ on-demand | Trigger de Experiencia: ANTES de una op riesgosa/repetitiva (refactor CSS, tocar caché/SW) o si un síntoma "te suena". Gotchas + recetas + doctrinas Liquid Glass. **Hija → `31`.** |
 | 🔥 **Procedimental · Backend** (hija de `30`) | `docs/31-LECCIONES-FIRESTORE.md` | ❌ on-demand | Trigger de Experiencia BACKEND: ANTES de tocar `firestore.rules`, CF, índices, claims o el emulador. Detalle de L-12/13/14/16/17/29/34..38 (stub-header en `30`). |
+| 🌫️ **Procedimental · Carga web** (hija de `30`) | `docs/32-LECCIONES-CARGA.md` | ❌ on-demand | Trigger de Experiencia: carga fluida/LQIP/View Transitions/caché SWR del sitio público. Detalle de L-45/46/47/49/50/51/52/53 (stub-header en `30`). |
 | 🗂️ **Índice sináptico** | `docs/00-INDICE.md` | ❌ on-demand | ANTES de leer el historial (offset exacto) Y para el enrutamiento semántico (síntoma → neurona). |
 | 📚 **Largo Plazo** | `docs/99-HISTORIAL-ADR.md` | ❌ on-demand | Trigger de Error / detalle histórico de un §. NUNCA completo — usa offset/limit. |
 | 🎯 **Lóbulos de Dominio** | `docs/40-LOBULOS-DOMINIO.md` | ❌ on-demand | Trigger 🔵 §G.2: registry de dominios; lóbulos hijos (`41-SEGURIDAD`/`42-LEGAL`/`43-UX`/`45-PERFORMANCE`…) nacen on-demand con contenido real. |
@@ -229,6 +230,7 @@ Una neurona sobrecargada satura el contexto. Cada neurona tiene un TOPE BLANDO (
 | `20-ESPACIAL` | 🟡 on-demand entera | ~280 líneas | Shard: extraer sub-área a neurona hermana (ej. `21-ESPACIAL-ADMIN.md`). |
 | `30-LECCIONES` | 🟡 on-demand entera | ~350 líneas | Índice de lecciones; backend (Firestore/CF/reglas) sharded a `31` (stub-header aquí, detalle allá). Más categorías → nueva hija. |
 | `31-LECCIONES-FIRESTORE` | 🟡 on-demand entera | ~16000 chars | Hija de `30`: detalle de lecciones backend. El kernel lee `### L-NN` solo de `30` → el stub-header permanece en `30`. |
+| `32-LECCIONES-CARGA` | 🟡 on-demand entera | ~12000 chars | Hija de `30`: detalle de lecciones carga/render/caché web (§100-§113). Stub-header en `30`. |
 | `00-INDICE` | 🟡 on-demand | ~450 líneas | Es tabla escaneable; dividir el mapa § por rangos si molesta. |
 | `40-LOBULOS-DOMINIO` | 🟡 on-demand | ~280 líneas | Registry; shard por meta-categorías si crece. |
 | `99-HISTORIAL` | 🟢 on-demand por offset | sin tope* | *NUNCA leer entero (solo `offset/limit` vía índice). Si >50k líneas, shard en volúmenes `99a/99b` por rango de §. |

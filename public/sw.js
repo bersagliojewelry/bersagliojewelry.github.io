@@ -6,9 +6,11 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v27 — §107 (F2.0): View Transitions cross-document → cross-fade entre páginas en
-// vez del flash blanco (liquid-glass.css). Cambia el shell global → bump. (v26 = revert LQIP §106.)
-const CACHE_NAME    = 'bersaglio-v27';
+// Bumped to v28 — fix: el admin DESACTIVA las View Transitions cross-document que heredaba de
+// liquid-glass.css (admin.css @import) — sobre el body display:none hasta requireAuth (§115/L-57)
+// abortaban (InvalidStateError) = parpadeo en cada nav del admin. Cazado en vivo 2026-06-24 (TODO-33).
+// (v27 = §107 View Transitions público; v26 = revert LQIP §106.)
+const CACHE_NAME    = 'bersaglio-v28';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

@@ -1,5 +1,13 @@
 @import url("liquid-glass.css");
 
+/* El admin DESACTIVA las View Transitions cross-document que liquid-glass activa para el
+   sitio público (§103/§107). En el admin cada navegación re-inicializa Firebase/auth/datos
+   (carga lenta) y el `<body style="display:none">` hasta requireAuth (§115/L-57) hace que la
+   transición cruce hacia un body OCULTO y ABORTE (InvalidStateError "Transition was aborted"
+   = el parpadeo que reportó Daniel). La fluidez real del admin = panel tipo app (TODO-33), no
+   un crossfade que aborta. Cazado EN VIVO 2026-06-24 (1 excepción por navegación en consola). */
+@view-transition { navigation: none; }
+
 /**
  * Bersaglio Jewelry — Admin Panel Styles
  * Diseño independiente del sitio público.

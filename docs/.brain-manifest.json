@@ -55,12 +55,11 @@
     "../altorrainmobiliaria.github.io"
   ],
   "specsDir": "docs/superpowers/specs",
-  "ssotFacts": [
-    { "regex": "506\\.510\\.780", "owner": "docs/05-ESTADO-GLOBAL.md", "scan": ["docs/10-MEMORIA-CORTO-PLAZO.md"] }
-  ],
+  "_ssotFacts_note": "Vacío desde la auditoría §114 (2026-06-24): el único ssotFact (cartera 506.510.780) se RETIRÓ porque el RESET-A-CERO (Daniel 2026-06-20) vuelve ese número desechable y se quitó de 05/10 → el gate quedaba sin owner. Re-añadir un ssotFact si emerge un hecho-vivo duplicado entre always-on.",
+  "ssotFacts": [],
   "deepAudit": {
-    "last": "2026-06-22",
-    "coveredHeaderCount": 97,
+    "last": "2026-06-24",
+    "coveredHeaderCount": 116,
     "maxAdrGap": 12,
     "maxDays": 30
   }

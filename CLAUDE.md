@@ -37,16 +37,16 @@ El cerebro se divide en **nodos**. Auto-cargas SOLO `CLAUDE.md` + `05` + `10` (�
 | 🧠 **Tronco Encefálico** | `CLAUDE.md` (este) | ✅ Siempre | Router + identidad + doctrinas + gobernanza. |
 | 🩺 **Estado Global (signos vitales)** | `docs/05-ESTADO-GLOBAL.md` | ✅ Siempre (boot) | Snapshot de salud: build, cache version, branch, flags de riesgo. "¿Dónde estoy parado?" antes de tocar nada. |
 | ⚡ **Corto Plazo (WIP)** | `docs/10-MEMORIA-CORTO-PLAZO.md` | ✅ Siempre (2ª lectura) | Sprint actual, pendientes (TODO-NN), bitácora. (El estado técnico vive en 05.) |
-| 🛰️ **Consejo Externo** | `docs/15-CONSEJO-EXTERNO.md` | ❌ on-demand | Trigger de Decisión Fuerte: antes de algo caro de revertir (arquitectura, datos, seguridad/legal, fork 50/50, op irreversible), pedir crítica adversarial al **provider externo configurado** (ver `15-CONSEJO-EXTERNO §0`). Cuándo + selección de tier ahí. |
+| 🛰️ **Consejo Externo** | `docs/15-CONSEJO-EXTERNO.md` | ❌ on-demand | Trigger de Decisión Fuerte: antes de algo caro de revertir (arquitectura, datos, seguridad/legal, fork 50/50, op irreversible), crítica adversarial del **provider externo** (cuándo + tier → `15 §0`). |
 | 🗺️ **Espacial** | `docs/20-MEMORIA-ESPACIAL.md` | ❌ on-demand | Trigger de Desorientación: dónde vive un componente, flujos, arquitectura, layouts. |
 | 🧪 **Procedimental (experiencia)** | `docs/30-LECCIONES.md` | ❌ on-demand | Trigger de Experiencia: ANTES de una op riesgosa/repetitiva (refactor CSS, tocar caché/SW) o si un síntoma "te suena". Gotchas + recetas + doctrinas Liquid Glass. **Hija → `31`.** |
-| 🔥 **Procedimental · Backend** (hija de `30`) | `docs/31-LECCIONES-FIRESTORE.md` | ❌ on-demand | Trigger de Experiencia, sub-tema BACKEND: ANTES de tocar `firestore.rules`, Cloud Functions, índices, custom claims o el emulador. Detalle de L-12/13/14/16/17/29/34..38 (su stub-header vive en `30`). |
+| 🔥 **Procedimental · Backend** (hija de `30`) | `docs/31-LECCIONES-FIRESTORE.md` | ❌ on-demand | Trigger de Experiencia BACKEND: ANTES de tocar `firestore.rules`, CF, índices, claims o el emulador. Detalle de L-12/13/14/16/17/29/34..38 (stub-header en `30`). |
 | 🗂️ **Índice sináptico** | `docs/00-INDICE.md` | ❌ on-demand | ANTES de leer el historial (offset exacto) Y para el enrutamiento semántico (síntoma → neurona). |
 | 📚 **Largo Plazo** | `docs/99-HISTORIAL-ADR.md` | ❌ on-demand | Trigger de Error / detalle histórico de un §. NUNCA completo — usa offset/limit. |
-| 🎯 **Lóbulos de Dominio** | `docs/40-LOBULOS-DOMINIO.md` | ❌ on-demand | Trigger 🔵 §G.2: registry de dominios especializados; lóbulos hijos activos (`41-SEGURIDAD`, `42-LEGAL`, `43-UX`, `45-PERFORMANCE`) + planificados (`48-ACCESIBILIDAD`, etc.) nacen on-demand con contenido real. |
-| 🏛️ **Arquitectura** | `docs/50-ARQUITECTURA.md` | ❌ on-demand | North-star técnico + **charter de reconstrucción del CRM** (Fase 3). Léelo ante Decisión Fuerte (§G.2) o al diseñar/extender módulos. Resumen always-on en §3.6. |
-| 🔁 **Workflows reutilizables** | `docs/60-WORKFLOWS.md` | ❌ on-demand | Catálogo de recetas reutilizables que detectan las MISMAS inconsistencias/errores (red-team de reglas, auditoría por dimensiones, verificación post-subagente, comité ×3, investigación grounded…). Léelo antes de una revisión/auditoría/op repetitiva. |
-| 🛠️ **Skills externas** | `skills/` + tool Skill | ❌ on-demand | Expertise de terceros. NO es neurona — recurso paralelo; consultar PRIMERO al disparar Trigger 🔵. **Catálogo → `docs/skills-inventory.md`** (la fuente; el repo no refleja las cargadas). |
+| 🎯 **Lóbulos de Dominio** | `docs/40-LOBULOS-DOMINIO.md` | ❌ on-demand | Trigger 🔵 §G.2: registry de dominios; lóbulos hijos (`41-SEGURIDAD`/`42-LEGAL`/`43-UX`/`45-PERFORMANCE`…) nacen on-demand con contenido real. |
+| 🏛️ **Arquitectura** | `docs/50-ARQUITECTURA.md` | ❌ on-demand | North-star técnico + **charter del CRM** (Fase 3). Léelo ante Decisión Fuerte o al diseñar/extender módulos. Resumen en §3.6. |
+| 🔁 **Workflows reutilizables** | `docs/60-WORKFLOWS.md` | ❌ on-demand | Catálogo de recetas que detectan las MISMAS inconsistencias/errores (red-team de reglas, auditoría por dimensiones, verif. post-subagente, comité ×3…). Léelo antes de una revisión/auditoría/op repetitiva. |
+| 🛠️ **Skills externas** | `skills/` + tool Skill | ❌ on-demand | Expertise de terceros (NO neurona; recurso paralelo). Consultar PRIMERO al disparar Trigger 🔵. **Catálogo → `docs/skills-inventory.md`**. |
 | 📖 **Manual del cerebro** | `docs/INSTALACION-CEREBRO.md` | ❌ on-demand | Protocolo de instalación + reinstalación + migración entre versiones del template. Consulta al actualizar la versión del cerebro. |
 
 **Hojas de detalle** (enlazadas desde su neurona madre, on-demand): nacen cuando hay contenido. Convención de nombre: `docs/<tema>.md`. Cada hoja queda referenciada desde la neurona madre — nada huérfano (§G.5).
@@ -130,12 +130,12 @@ Antes de CUALQUIER commit no-trivial: 5 secciones → (A) archivos a modificar, 
 - Selectores substring `[class*="x"]` son peligrosos — matchean clases hijas; excluir namespaces con `:not()`.
 
 ### 3.6 🏛️ REGLA DE ORO — Piensa como arquitecto (SIEMPRE, antes de tocar nada)
-> Directiva fuerte del cliente (2026-06-05, **reafirmada 2026-06-06**). **Tu trabajo va MÁS ALLÁ del código: tomas decisiones técnicas que impactan TODO el sistema** — cómo se conecta, escala, se mantiene, se asegura y evoluciona. *Un buen arquitecto no escribe más código: toma mejores decisiones.* **Piensa en el sistema completo, no en una sola función.**
-- **Sistema completo**: cada cambio se decide por impacto en negocio · escalabilidad · seguridad-por-diseño · costo · mantenibilidad · integración. *El código hace que funcione; la arquitectura hace que sobreviva.*
-- **Escala (miles de usuarios)**: diseña hoy para el crecimiento de mañana — desacoplar, paginar/cachear, distribuir carga, evitar cuellos de botella, sin perder rendimiento ni estabilidad. *Escalable hoy = negocio sostenible mañana.*
+> Directiva fuerte del cliente (2026-06-05, **reafirmada 2026-06-06**). **Tu trabajo va MÁS ALLÁ del código: tomas decisiones técnicas que impactan TODO el sistema** (cómo se conecta, escala, se mantiene, se asegura, evoluciona). **Piensa en el sistema completo, no en una sola función.** (Manifiesto completo con aforismos → `50 §0`.)
+- **Sistema completo**: cada cambio se decide por impacto en negocio · escalabilidad · seguridad-por-diseño · costo · mantenibilidad · integración.
+- **Escala (miles de usuarios)**: diseña hoy para el crecimiento de mañana — desacoplar, paginar/cachear, distribuir carga, evitar cuellos de botella, sin perder rendimiento ni estabilidad.
 - **Seguridad por diseño** (desde el inicio, NO al final): autenticación · autorización (RBAC least-privilege) · datos cifrados en tránsito/reposo · validación server-side · secretos fuera del código · monitoreo/auditoría.
-- **Costo = impacto técnico-financiero** (infra · rendimiento · mantenibilidad · equipo · escala). *No se trata de gastar menos, sino de invertir mejor.* "Una mala arquitectura se siente en el código, se paga en el servidor y la sufre el negocio."
-- **UX/IA como arquitectura**: el panel/producto se diseña **segmentado y ordenado** (estados, filtros, jerarquía clara), no features sueltas mezcladas. Pensar como un sistema profesional, no un menú plano.
+- **Costo = impacto técnico-financiero** (infra · rendimiento · mantenibilidad · equipo · escala): no es gastar menos, sino invertir mejor.
+- **UX/IA como arquitectura**: el panel/producto se diseña **segmentado y ordenado** (estados, filtros, jerarquía clara), no features sueltas mezcladas ni un menú plano.
 - **Cero monolitos**: módulos desacoplados, límites claros, despliegues independientes, bajo acoplamiento. **Integración** deliberada (APIs/eventos/colas/webhooks).
 - **Zero-budget/serverless (Firebase)**: escala gestionada + límites de módulo limpios + event-driven; **NO** microservicios/gRPC/k8s por moda. Manifiesto completo + charter → `docs/50-ARQUITECTURA.md §0`.
 

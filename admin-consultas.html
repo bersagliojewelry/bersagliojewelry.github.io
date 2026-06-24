@@ -12,7 +12,7 @@
     <script type="module" src="js/admin/consultas.js"></script>
 </head>
 <body style="display:none">
-<script>try{if(!sessionStorage.getItem('bj_auth'))throw 0}catch(e){location.replace('admin-login.html');document.body.style.display='none'}</script>
+<script>try{if(sessionStorage.getItem('bj_auth')){document.body.style.display=''}else{location.replace('admin-login.html')}}catch(e){location.replace('admin-login.html')}</script>
 <div class="adm-layout">
 
     <!-- Sidebar (se rellena desde datos por js/admin/shared.js → renderSidebar) -->

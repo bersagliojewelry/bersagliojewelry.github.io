@@ -1,19 +1,17 @@
 # ⚡ 10 — MEMORIA A CORTO PLAZO (WIP / Sprint activo)
 
-> **Nodo neuronal: Memoria a Corto Plazo** (auto-carga con `CLAUDE.md` + `05`). Solo lo VIVO:
-> foco, pendientes (TODO-NN = ledger único), bitácora efímera. Estado técnico → `05`.
+> **Nodo: Memoria a Corto Plazo** (auto-carga con `CLAUDE.md` + `05`). Solo lo VIVO: foco, pendientes
+> (TODO-NN = ledger único), bitácora efímera. Estado técnico → `05`.
 > **Pizarra, no archivo**: al cerrar tarea → ADR en `99` + fila en `00`, lecciones a `30`, podar (GC §G.4).
 
 ---
 
 ## 🎯 Foco actual
 
-> 🎉 **CRM + Fase M (M0→M6) EN PRODUCCIÓN** (ADR §47-§82; 344 clientas, cartera→`05`; admin-only, vendedoras=dato; Panel v2). ⚙️ **OPUS 4.8 interino** (Fable cayó 2026-06-12; marcar [OPUS-4.8] · `feedback_opus_interino`).
+> 🎉 **CRM + Fase M (M0→M6) EN PRODUCCIÓN** (§47-§82). **🔄 RESET A CERO** (Daniel 2026-06-20): Kary recarga de cero → cartera/clientes históricos DESECHABLES (bajan urgencias de dinero). ⚙️ **OPUS 4.8 interino** (marcar `[OPUS-4.8]` · `feedback_opus_interino`).
 >
-> **🔄 RESET A CERO** (Daniel 2026-06-20): Kary recarga TODO de cero; cartera/clientes se vacían (344/$506M desechable → bajan urgencias de dinero). TODO-24 índice cero-ficción ✅ (§88) en prod.
->
-> **Web "app-like" (§103-§112) CERRADO ✅** · **correo OWNER migrado ✅** (§113, `danielrome_drm@hotmail.com`; bersaglio libre para Kary). **🎯 FOCO = usuarios & permisos del panel**: (a) rol "catálogo" de Kary + candado REAL en reglas (TODO-19, Decisión Fuerte) · (b) creación automática de usuarios (cablear CF `createUser`) + fix login-parpadea (TODO-31) → luego crear cuenta de Kary (bersaglio email). Resto en tabla TODO (07/09/14/18/28 · norte mini-ERP: Fase M restante·DIAN·inventario). M4 1er corte 1-jul.
-> - ⚠️ **Deploy** (L-22/L-26/L-23): reglas/functions = manual mío; sitio+merge a `main` = PR de Daniel (`git fetch` siempre); Admin SDK = ADC. Norte: spec maestra v3.
+> **Web "app-like" §103-§113 CERRADO ✅** · correo OWNER migrado ✅ (§113). **🎯 FOCO = usuarios & permisos del panel**: (a) rol "catálogo" de Kary + candado REAL en reglas (TODO-19, Decisión Fuerte) · (b) auto-creación de usuarios (cablear CF `createUser`) + fix login-parpadea (TODO-31) → luego crear cuenta de Kary. **Plan archivo-por-archivo en `50 §5`**, listo para construir en sesión fresca con prueba en emulador (es seguridad → no apurar). Resto en tabla TODO (norte mini-ERP; M4 1er corte 1-jul).
+> - ⚠️ **Deploy** (L-22/L-26): reglas/functions = manual mío; sitio+merge a `main` = PR de Daniel (`git fetch` siempre); Admin SDK = ADC.
 
 ---
 
@@ -21,35 +19,36 @@
 
 | ID | Item | Estado | Bloqueo |
 |---|---|---|---|
-| TODO-03 | (Opcional) headers de `99` a formato numerado `## NN.` (hoy por fecha, válido) | 🔲 | baja prioridad |
-| TODO-04 | (Opcional) anomalías 🔧 en `skills/` (formatos no-skill) | 🔲 | baja prioridad |
-| TODO-07 | **Contenido real**: reseñas Google Maps (Nosotros), Films, feed Redes (`js/data/home-media.js`, `js/pages/nosotros.js`) | 🔲 | cliente entrega datos |
-| TODO-08 | **Fase 2 Hardening**: Tier A ✅; pendiente CSP/reglas/claims (Tier B/C) → bóveda `41-SEGURIDAD §1.5` | 🟡 | Tier B = emulador+deploy gated |
-| TODO-09 | **Fase M**: tren M0→M6 ✅ EN PROD (§78-§80; 1er corte real 1 jul) · **ACUERDOS R1-R5 (§81) + bug A8 RESUELTO (§87, red-team 0 hallazgos)**, GATEADO/inerte — **encender = Daniel** (deploy+bandera+`encender-acuerdos.mjs`+prueba; baja urgencia por reset-a-cero). Restan luego: M7 · M2c + B6 · ASESOR/RBAC (TODO-19) · complemento menor `Σcuotas>saldoAlPactar`. **Kary prueba TODO al final; verif. POR HITO = experta de Claude** | 🟡 | encender R6 (Daniel, baja urgencia) |
-| TODO-14 | **App Check: dejar en MONITOREO; Enforce DIFERIDO** (decisión Daniel 2026-06-23: aún no hay flujo alto de clientes → el monitoreo no es representativo; activar Enforce SOLO cuando haya tráfico alto, para que sea preciso). Registro ya reparado (§58). | ⏸️ | esperar flujo alto (Daniel decide cuándo) |
-| TODO-17 | **Toda captura → CRM**: contacto→Bandeja ✅; falta newsletter (`addSubscription`→`subscriptions`) en el panel | 🔲 | tras App Check |
-| TODO-18 | **Plan operación integral §57**: semana 1 día a día · 9 decisiones de Daniel · compuerta de adopción · campaña cartera (diseño del contador ANTES del piloto) → bóveda | 🟡 | Daniel (decisiones 1-9 + contador) |
-| TODO-19 | **RBAC roles granulares** (Daniel 2026-06-11; detalle → `50-ARQUITECTURA §5`). **CONCRETO (2026-06-23)**: rol **"catálogo"** para Kary = SOLO Piezas+Colecciones; el resto con candado. Hoy es por NIVELES (owner>admin>editor; editor ve de más) → rol bajo editor + gate NAV (`sidebar-data.js`) + **CANDADO REAL en `firestore.rules`** (denegar clientes/dinero/CMS) + `createUser`/profile al rol nuevo + tests emulador. **Decisión Fuerte** (seguridad). **DISEÑADO + plan archivo-por-archivo en `50-ARQUITECTURA §5`** (2026-06-23, código ya mapeado); listo para CONSTRUIR en sesión fresca (con prueba en emulador). | 🟡 | construir (plan en 50§5) |
-| TODO-21 | **Revisión post-Fable de `[OPUS-4.8]`** (H-08): ledger por ADR/§ y riesgo (dinero §81 > seguridad XSS/§65/§66 > CMS §82+ > docs); 46 commits | 🔲 | Fable vuelve |
-| TODO-22 | **Gate-de-git en el linter** (H-06): que `brain:check` warne si `05` dice "==main" con commits adelante. Toca kernel ×3 → **lo origina cars-operador** (escritor único, L-31); converge con cars en la pasada Gemini ÚNICA | 🔲 | Gemini (consolida cars) |
-| TODO-23 | **Frase canónica del gate de verificación de DINERO** (H-18): Claude experto = gate; Kary = smoke POST-deploy no bloqueante. **Aporte de bersaglio a la pasada Gemini única** (cars consolida + integra) | 🔲 | Gemini (consolida cars) |
-| TODO-28 | **Correcciones web** (Daniel 2026-06-21): F1-F5 ✅ EN PROD (§93-§98; recon 7 ag. en bóveda). **Pend.**: arranque **C1** (decisión Daniel) · responsive fino device-driven. | 🟡 | C1 (Daniel) + responsive |
-| TODO-29 | **Aporte a la pasada cars (kernel)** (auditoría §97/HA-02): que `brain-check.mjs` lea las definiciones `### L-NN` de `3*-LECCIONES*.md` (no solo `30`) → habilita shard REAL de lecciones sin stub-header en `30` (hoy workaround M-06/§96). Va junto a TODO-22 (gate-git) + TODO-23. Cambio de kernel = cars-operador (L-31), NO unilateral. | 🔲 | cars-operador (kernel) |
-| TODO-31 | **Panel admin · usuarios+UX** (Daniel 2026-06-23, va con TODO-19): **(a)** creación AUTOMÁTICA de usuarios — `usuarios.js` hoy pide UID manual (`createUserProfile`); la CF `createUser` (Auth+perfil, owner-only) ya existe pero no está cableada → conectar el modal a `createUser` (patrón `deactivateUser`). **(b)** login parpadea al entrar (ref Altorra) → RCA en navegador (sospecha: tiempos auth/redirect + gate `display:none` body). Owner-only creación = ✅ ya está. **(a) plan en `50 §5`** (va junto a TODO-19); (b) aparte. | 🟡 | construir |
+| TODO-03 | (Opcional) headers de `99` a formato numerado `## NN.` (hoy por fecha, válido) | 🔲 | baja |
+| TODO-04 | (Opcional) anomalías 🔧 en `skills/` (formatos no-skill) | 🔲 | baja |
+| TODO-07 | **Contenido real web**: reseñas Google Maps (Nosotros), Films, feed Redes (`js/data/home-media.js`, `js/pages/nosotros.js`) | 🔲 | cliente entrega datos |
+| TODO-08 | **Hardening Fase 2**: Tier A ✅; pend. CSP/reglas/claims (Tier B/C) → `41-SEGURIDAD §1.5` | 🟡 | Tier B = emulador+deploy gated |
+| TODO-09 | **Fase M**: M0→M6 ✅ EN PROD (§78-§80; 1er corte 1-jul); ACUERDOS R1-R5 (§81)+A8 (§87) GATEADOS/inertes — **encender = Daniel** (deploy+bandera+prueba; baja urgencia por reset). Restan: M7·M2c·ASESOR/RBAC (TODO-19). Kary prueba al final; verif. POR HITO = experta de Claude | 🟡 | encender R6 (Daniel) |
+| TODO-14 | **App Check: MONITOREO; Enforce DIFERIDO** (Daniel 2026-06-23: sin flujo alto el monitoreo no es representativo → activar SOLO con tráfico alto). Registro reparado (§58). | ⏸️ | esperar flujo alto |
+| TODO-17 | **Toda captura → CRM**: contacto→Bandeja ✅; falta newsletter (`addSubscription`→`subscriptions`) | 🔲 | tras App Check |
+| TODO-18 | **Plan operación integral §57**: semana 1 + 9 decisiones de Daniel + compuerta de adopción + campaña cartera → bóveda | 🟡 | Daniel (decisiones 1-9) |
+| TODO-19 | **RBAC rol "catálogo" de Kary** (Decisión Fuerte, seguridad): SOLO Piezas+Colecciones, resto candado. Hoy por niveles (editor ve de más) → rol bajo editor + gate NAV (`sidebar-data.js`) + **CANDADO REAL en `firestore.rules`** (denegar clientes/dinero/CMS) + `createUser`/profile al rol + tests emulador. **DISEÑADO; plan archivo-por-archivo en `50 §5`** — listo para CONSTRUIR en sesión fresca. | 🟡 | construir (plan 50§5) |
+| TODO-21 | **Revisión post-Fable de `[OPUS-4.8]`** (H-08): por riesgo (dinero §81 > seguridad §65/§66 > CMS > docs); ~50 commits | 🔲 | Fable vuelve |
+| TODO-22 | **Gate-de-git en el linter** (H-06): que `brain:check` warne si el estado de deploy declarado diverge de git. Toca kernel ×3 → **cars-operador** (L-31). *§114: mitigado en parte al dejar de fijar el hash en `05`.* | 🔲 | cars-operador (kernel) |
+| TODO-23 | **Frase canónica del gate de verificación de DINERO** (H-18): Claude experto = gate; Kary = smoke POST-deploy no bloqueante. Aporte a la pasada Gemini (cars consolida) | 🔲 | Gemini |
+| TODO-28 | **Correcciones web** (Daniel 2026-06-21): F1-F5 ✅ EN PROD (§93-§98). Pend.: arranque **C1** (Daniel) · responsive fino device-driven. | 🟡 | C1 + responsive |
+| TODO-29 | **Kernel lea `### L-NN` de `3*-LECCIONES*.md`** (no solo `30`) → shard REAL de lecciones sin stub en `30` (hoy workaround M-06). Cambio de kernel = cars-operador (L-31). | 🔲 | cars-operador (kernel) |
+| TODO-31 | **Panel admin · usuarios+UX** (con TODO-19): **(a)** auto-creación — la CF `createUser` (owner-only) ya existe pero el modal pide UID manual → cablear (patrón `deactivateUser`); plan en `50 §5`. **(b)** login parpadea al entrar → RCA en navegador (auth/redirect + gate `display:none`). | 🟡 | construir |
+| TODO-32 | **Cerebro · economía** (auditoría §114): `30` (43.8k) y `00` (26k) sobre cap; `20`/`31` ≥90% → GC/destilado o shard del clúster carga/LQIP (L-45..L-53). | 🔲 | sesión cerebro |
 
-> ✅ Cerrados y consolidados (retirados en el GC 2026-06-09): TODO-01/02→§38 · 05→§47 · 06→`e290f83` · **10→§62** (CI reactivado; activo al subir/mergear) · 11→spec §16 · 12→§50 · 13→§51 · **15→§63 (PRE-1 CERRADO: backup+restore PROBADO+copia fuera)** · 16→§55 · settings.local→`e3d390f` · **TODO-25→§90 (CAZA-BUGS: reflejo + W-10 + skill `caza-bugs` + gate L-42 ×5 secciones)** · **TODO-26→cars §G (reflejo Caza-bugs propagado byte-idéntico ×4 — verificado en cars/inmobiliaria/insema, 2026-06-21)** · **TODO-27→§96 (shard `30`→`31-LECCIONES-FIRESTORE`; descubrimiento: kernel acopla `### L-NN` a `30` → M-06)** · **TODO-24→§88 (índice 100% cero-ficción EN PROD; v21 mergeado)** · **TODO-30→§103-§112 (web "app-like" CERRADO EN PROD, PR #323: View Transitions §107 + caché inteligente SWR §108 + LQIP siteContent/catálogo/wishlist/detalle §111/111.8 + migración LQIP §110.4 + Cache-Control Storage §112; VALIDADO por Daniel + extensión Chrome)** · **TODO-20→§113 (correo OWNER migrado a `danielrome_drm@hotmail.com`, EJECUTADO+verificado; consola no edita email→Admin SDK `migrate-owner-email.mjs`; bersaglio libre para Kary)**.
+> ✅ **Cerrados recientes**: TODO-20→§113 (correo OWNER) · TODO-30→§103-§112 (web app-like, PR #323) · TODO-27→§96 (shard `30`→`31`) · TODO-24→§88 (índice cero-ficción) · TODO-25/26→§90 (caza-bugs). **Histórico completo de cerrados → ADR + `00`** (no re-listar aquí).
 
 ---
 
 ## 🔮 Contexto estratégico
-Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier A/B ✅, C pendiente) · Fase 3 CRM ✅ en prod · **Fase M: tren M0→M6 ✅ EN PROD** (candado + auditoría + gestiones + acuerdo por deuda) + **ACUERDOS de pago/cuotas R1-R5 construidos (§81), gateados** (charter `50-ARQUITECTURA`, plan `fase-m-plan.md`). SW `bersaglio-v16`. Horizonte: R6 acuerdos → M7 castigo → M2c → reportes/aging B6 → (futuro) inventario/facturación + RBAC/asesor (TODO-19).
+Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier A/B ✅, C pend.) · Fase 3 CRM ✅ en prod · **Fase M tren M0→M6 ✅ EN PROD** + ACUERDOS R1-R6 construidos/gateados (charter `50-ARQUITECTURA`, plan `fase-m-plan.md`). Horizonte: R6 acuerdos → M7 castigo → M2c → reportes/aging B6 → (futuro) inventario/facturación + RBAC/asesor (TODO-19).
 
 ---
 
 ## 📝 Bitácora (efímera)
 
-> Podada (GC) 2026-06-23. Histórico → **ADR §37-§112** (mapa `00`→detalle `99`; lecciones L-/M- en `30`/`31`).
+> Podada (GC) 2026-06-24 (auditoría §114). Histórico → **ADR §37-§114** (mapa `00`→detalle `99`; lecciones L-/M- en `30`/`31`).
 >
-> **▶️ §103-§112 web "app-like" CERRADO EN PROD ✅** (PR #323). Detalle → ADR §103-§112 (L-50EXT/L-52/L-53). Patrón reusable `scripts/migrate-*.mjs` (server-side, dry-run/idempotente, SA key). **Sesión 2026-06-23 (tarde): bloque usuarios&permisos.** ✅ §113 correo OWNER → `danielrome_drm@hotmail.com` + nombre → "Daniel Romero" (rol owner intacto; login probado por Daniel). **Rol "catálogo" de Kary DISEÑADO** (código mapeado: rules/functions/auth/sidebar/login/piezas/colecciones/usuarios + tests) → **plan archivo-por-archivo en `50-ARQUITECTURA §5`**, listo para CONSTRUIR en sesión fresca con prueba en emulador (es seguridad → no apurar en contexto saturado). Owner-only creación ✅ ya está.
+> **▶️ Auditoría cerebro Nivel-2 §114 (2026-06-24)**: 8 sondas. **Hallazgo estrella HA-01-bis**: estado git stale en `05` REINCIDE ×3 (el agente frío de la Sonda 3 entregó el hash viejo de PROD como "verificado") → **fix estructural**: `05` ya NO fija el hash/PR de PROD (contradecía §3.3) → **M-08**. **L-39 duplicada** → renumerada `L-54`. GC pareado del boot (−~4.5k chars). Sondas 3(ruteo 4/5)·4(deliberación §108)·5(SSoT) ✅. CRUDO+tabla → bóveda; síntesis → ADR §114.
 >
-> **🚦 Cola / próximo (sin sprint activo — decide Daniel)**: ver tabla TODO. Cerca: contenido real web (TODO-07) · App Check Enforce (TODO-14) · correo OWNER (TODO-20). Mantenimiento cerebro: auditoría Nivel-2 VENCIDA (16 ADRs nuevos → destilar/shard `30`) · alinear cerebro cars (sesión dedicada) · revisión post-Fable (TODO-21). **Regla**: `arquitecto-software` SIEMPRE · `[[feedback_workflows_acotados]]`.
+> **🚦 Próximo (decide Daniel)**: tabla TODO. Cerca: rol catálogo Kary (TODO-19, plan en `50 §5`) · auto-creación usuarios + fix login (TODO-31) · contenido real web (TODO-07). **Regla**: `arquitecto-software` SIEMPRE · `[[feedback_workflows_acotados]]`.

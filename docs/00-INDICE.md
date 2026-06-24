@@ -5,18 +5,9 @@
 > nodo de Largo Plazo. Se consulta on-demand (Trigger de Error/Historia, ver
 > `CLAUDE.md §G`).
 >
-> **Cerebro completo**: 🧠 `CLAUDE.md` (router/identidad) · 🩺 `docs/05-ESTADO-GLOBAL.md` (signos vitales)
-> · ⚡ `docs/10-MEMORIA-CORTO-PLAZO.md` (WIP) · 🛰️ `docs/15-CONSEJO-EXTERNO.md` (red team) · 🗺️ `docs/20-MEMORIA-ESPACIAL.md` (arquitectura)
-> · 🧪 `docs/30-LECCIONES.md` (experiencia/recetas) · 🔥 `docs/31-LECCIONES-FIRESTORE.md` (backend: Firestore/CF/reglas; hija de 30) · 🎯 `docs/40-LOBULOS-DOMINIO.md` (registry dominios) · 🏛️ `docs/50-ARQUITECTURA.md` (arquitectura/charter CRM) · 🔁 `docs/60-WORKFLOWS.md` (workflows reutilizables) · 🗂️ este (índice) · 📚 `docs/99-HISTORIAL-ADR.md` (largo plazo) · 🛠️ `docs/skills-inventory.md` (catálogo skills).
+> **Mapa de neuronas** (detalle de cada una → `CLAUDE.md §0`): `CLAUDE.md` · `05-ESTADO-GLOBAL` · `10-MEMORIA-CORTO-PLAZO` · `15-CONSEJO-EXTERNO` · `20-MEMORIA-ESPACIAL` · `30-LECCIONES` · `31-LECCIONES-FIRESTORE` (hija de 30) · `40-LOBULOS-DOMINIO` · `50-ARQUITECTURA` · `60-WORKFLOWS` · este `00-INDICE` · `99-HISTORIAL-ADR` · `skills-inventory`.
 >
-> **Cómo usarlo (regla de oro anti-saturación)**:
-> 1. Busca aquí el § que necesitas y su línea de inicio.
-> 2. Lee SOLO ese tramo: `Read docs/99-HISTORIAL-ADR.md offset=<línea> limit=~150`.
-> 3. NUNCA leas el historial completo (satura el contexto al instante).
->
-> Ejemplo: para el Lookbook §19 → línea 256 → `Read docs/99-HISTORIAL-ADR.md offset=256 limit=150`.
->
-> Grep rápido: `grep -n "^## " docs/99-HISTORIAL-ADR.md` o PowerShell `Select-String` regenera este mapa.
+> **Cómo usarlo (regla anti-saturación)**: busca aquí el § + su línea → `Read docs/99-HISTORIAL-ADR.md offset=<línea> limit=~150`. NUNCA leas el historial completo (satura al instante). Regenera el mapa: `grep -n "^## " docs/99-HISTORIAL-ADR.md` (o `Select-String`).
 
 ---
 
@@ -165,6 +156,7 @@
 | §111 | 2026-06-23 — **LQIP en `siteContent` vía SWR cache-first** (resuelve §110.2 SIN repetir §106): `data.loadSiteContent` = `getDocFromCache`→`getDocFromServer` + diff-gate por `version` (revisitas instantáneas; el blur PRECEDE a la imagen → L-50 satisfecho; costo igual §2.B, sin listener) + render LQIP en hero/editorial/nosotros (degrada solo). PR #318 (§108/§109+migración) YA en prod (corrige stale HA-01). Build+45 tests+navegador. `f6ff72e`. [OPUS-4.8] | 1655 |
 | §112 | 2026-06-23 — **Cache-Control en Storage** (blur en CADA visita): objetos sin cacheControl → `private,max-age=0` → revalida cada visita. Fix `_upload` (`max-age=31536000`; URL versionada por token) + backfill `migrate-cache-control.mjs` (18/18). F3 §108.10. `2eb71fe`. → L-53. [OPUS-4.8] | 1668 |
 | §113 | 2026-06-23 — **Correo OWNER → personal** (TODO-20 ✅): consola no edita email → Admin SDK `updateUser` (`migrate-owner-email.mjs`); owner=rol/uid no correo → 0 lockout. EJECUTADO (bersaglio→`danielrome_drm@hotmail.com`; bersaglio libre p/Kary). Cuenta Google = al final. `cc42219`. [OPUS-4.8] | 1680 |
+| §114 | 2026-06-24 — **3ª auditoría semántica Nivel-2** (skill `auditoria-cerebro`): 18 ADRs nuevos → 8 sondas + retrieval-drill frío. **HA-01 git-stale REINCIDE ×3** (el agente frío entregó PROD `282d58d` como "verificado" pero real=`89dd9ac`/PR #327) → fix estructural: `05` ya NO fija el hash (contradecía §3.3) → **M-08**. L-39 duplicada → L-54. S3/4/5 ✅. GC pareado boot −4.326c. CRUDO→bóveda. [OPUS-4.8] | 1691 |
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §57+ al historial,
 > añadir su fila aquí con la línea de inicio (`Select-String` o `grep`).

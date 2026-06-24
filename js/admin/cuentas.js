@@ -14,6 +14,9 @@ import {
 } from '../crm-service.js';
 import { saldoCellHTML, estadoBadgeHTML } from './saldo-format.js';
 import { estadoCuenta } from '../crm-estado-cuenta.js';
+import { pmark, psummary } from '../core/perf-probe.js';   // sonda TODO-33 (gateada; no-op si off)
+
+let _perfDone = false;   // one-shot: resume la cascada al primer render de clientes
 
 let _clientes = [];
 const _vendedoras = new Map();   // vendedoraId -> nombre
@@ -299,9 +302,13 @@ function wireRows() {
 
 
 async function init() {
+    pmark('page:init-start');
     await requireAuth('admin');
+    pmark('page:auth-done');
     await adminDb.init();      // mantiene el badge de consultas del sidebar
+    pmark('page:adminDb-done');
     initSidebar();
+    pmark('page:sidebar-done');
 
     try {
         (await fetchVendedoras())
@@ -336,6 +343,8 @@ async function init() {
         console.warn('[cuentas] getConfig cartera:', err);
     }
 
+    pmark('page:config-done');
+
     wireModal();
     wireSearch();
     wireFiltros();
@@ -344,7 +353,11 @@ async function init() {
     // Mora/aging EN VIVO (norte §10.2-F2): saldo y vencido salen del MISMO origen
     // (los movimientos) → no se desincronizan. Recalcula y re-renderiza en cada cambio.
     onAllMovimientosChange((movs) => { rebuildEstados(movs); render(); });
-    onClientesChange(list => { _clientes = list; render(); });
+    onClientesChange(list => {
+        _clientes = list; render();
+        // Medición TODO-33: el primer render de clientes = "página utilizable" → cierra la cascada.
+        if (!_perfDone) { _perfDone = true; pmark('page:first-data-render'); psummary('cuentas'); }
+    });
     // Acuerdos vigentes (gateado por la bandera: sin reglas desplegadas no hay listener).
     if (acuerdosActivos) {
         onAllAcuerdosVigentesChange((list) => {

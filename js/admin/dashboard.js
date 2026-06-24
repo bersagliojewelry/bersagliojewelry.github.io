@@ -6,11 +6,16 @@ import adminDb from './db.js';
 import { admToast, initSidebar, requireAuth } from './shared.js';
 import { leadBadgeHTML } from './lead-format.js';
 import { initAvisoSolicitudes } from './aviso-solicitudes.js';
+import { pmark, psummary } from '../core/perf-probe.js';   // sonda TODO-33 (gateada; no-op si off)
 
 async function init() {
+    pmark('page:init-start');
     await requireAuth('editor');
+    pmark('page:auth-done');
     await adminDb.init();
+    pmark('page:adminDb-done');
     initSidebar();
+    pmark('page:sidebar-done');
 
     // Solicitudes de corrección fuera de plazo → banner (Fase M · M4; solo admin/owner).
     initAvisoSolicitudes();
@@ -18,6 +23,7 @@ async function init() {
     // Initial render
     updateStats(adminDb.getStats());
     renderRecentInquiries(adminDb.getInquiries().slice(0, 5));
+    pmark('page:first-data-render'); psummary('dashboard');
 
     // Real-time: stats update when any data changes
     adminDb.on('stats', updateStats);

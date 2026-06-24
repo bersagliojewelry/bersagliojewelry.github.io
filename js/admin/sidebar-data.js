@@ -21,8 +21,8 @@ export const NAV = [
     { label: 'Pagos / Recibos',    href: '#', icon: 'receipt', role: 'admin', soon: true },
   ]},
   { label: 'Catálogo / Inventario', items: [
-    { label: 'Piezas',      href: 'admin-piezas.html',      icon: 'gem',    role: 'editor' },
-    { label: 'Colecciones', href: 'admin-colecciones.html', icon: 'layers', role: 'editor' },
+    { label: 'Piezas',      href: 'admin-piezas.html',      icon: 'gem',    role: 'catalogo' },
+    { label: 'Colecciones', href: 'admin-colecciones.html', icon: 'layers', role: 'catalogo' },
     { label: 'Inventario',  href: '#', icon: 'box', role: 'admin', soon: true },
   ]},
   // CMS de la web pública (decisión UX #3 del comité): UNA página de pestañas

@@ -39,6 +39,7 @@ before(async () => {
         const db = ctx.firestore();
         await setDoc(doc(db, 'users/editorUid'), { role: 'editor' });
         await setDoc(doc(db, 'users/adminUid'),  { role: 'admin'  });
+        await setDoc(doc(db, 'users/catalogoUid'), { role: 'catalogo' }); // TODO-19: gestor de catálogo (Kary)
         await setDoc(doc(db, 'reviews/approvedRev'), { approved: true,  pieceSlug: 'x', rating: 5 });
         await setDoc(doc(db, 'reviews/pendingRev'),  { approved: false, pieceSlug: 'x', rating: 5 });
         await setDoc(doc(db, 'pieces/p1'), { name: 'Anillo', slug: 'anillo' });
@@ -175,6 +176,43 @@ test('S6 · colección: editor crea con name', async () => {
 });
 test('S6 · colección: NO crea sin name', async () => {
     await assertFails(setDoc(doc(asUser('editorUid'), 'collections/c2'), { subtitle: 'x' }));
+});
+
+// ─── Rol "catálogo" (TODO-19, §114-build): CRUD en pieces/collections, CANDADO en el resto ──
+test('catálogo · crea + edita pieza', async () => {
+    await assertSucceeds(setDoc(doc(asUser('catalogoUid'), 'pieces/pCat'), { name: 'Aretes', code: 'C-CAT', slug: 'aretes' }));
+    await assertSucceeds(setDoc(doc(asUser('catalogoUid'), 'pieces/pCat'), { price: 100 }, { merge: true }));
+});
+test('catálogo · BORRA pieza (a diferencia de editor)', async () => {
+    await assertSucceeds(deleteDoc(doc(asUser('catalogoUid'), 'pieces/pCat')));
+});
+test('catálogo · crea + borra colección', async () => {
+    await assertSucceeds(setDoc(doc(asUser('catalogoUid'), 'collections/cCat'), { name: 'Aretes', slug: 'aretes' }));
+    await assertSucceeds(deleteDoc(doc(asUser('catalogoUid'), 'collections/cCat')));
+});
+test('regresión · editor NO borra pieza; admin SÍ (delete = admin||catálogo, NUNCA editor)', async () => {
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'pieces/pDel'), { name: 'X', code: 'C-DEL' }));
+    await assertFails(deleteDoc(doc(asUser('editorUid'), 'pieces/pDel')));
+    await assertSucceeds(deleteDoc(doc(asUser('adminUid'), 'pieces/pDel')));
+});
+test('catálogo · CANDADO: NO escribe journal ni siteContent (CMS = editor+)', async () => {
+    await assertFails(setDoc(doc(asUser('catalogoUid'), 'journal/jCat'), { title: 'X', excerpt: 'y', image: '/i.webp', published: true }));
+    await assertFails(setDoc(doc(asUser('catalogoUid'), 'siteContent/home'), { hero: { title: 'X' } }, { merge: true }));
+});
+test('catálogo · CANDADO: NO lee ni crea clientes (CRM = admin+)', async () => {
+    await assertFails(getDoc(doc(asUser('catalogoUid'), 'clientes/cliV')));
+    await assertFails(setDoc(doc(asUser('catalogoUid'), 'clientes/cCat'), { nombre: 'X' }));
+});
+test('catálogo · CANDADO: NO crea movimientos (dinero = admin+)', async () => {
+    await assertFails(setDoc(doc(asUser('catalogoUid'), 'clientes/cliV/movimientos/mCat'), {
+        tipo: 'factura', monto: 1000, fecha: '2026-06-01', registradoPor: 'catalogoUid', registradoEn: serverTimestamp(), anulado: false }));
+});
+test('catálogo · CANDADO: NO escribe config ni vendedoras (admin+/owner)', async () => {
+    await assertFails(setDoc(doc(asUser('catalogoUid'), 'config/negocio'), { x: 1 }, { merge: true }));
+    await assertFails(setDoc(doc(asUser('catalogoUid'), 'vendedoras/vCat'), { nombre: 'X', activa: true }));
+});
+test('catálogo · CANDADO: NO crea usuarios (users = owner-only)', async () => {
+    await assertFails(setDoc(doc(asUser('catalogoUid'), 'users/uCat'), { role: 'catalogo', email: 'x@x.co' }));
 });
 
 // ─── CMS · Journal: lectura pública, escritura editor con hasOnly tipado ──────

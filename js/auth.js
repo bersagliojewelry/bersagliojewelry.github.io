@@ -23,7 +23,9 @@ import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 // ─── Role hierarchy ─────────────────────────────────────────────────────────
 
-const ROLE_LEVELS = { owner: 3, admin: 2, editor: 1 };
+// catalogo:0 = rol "catálogo" (Kary, TODO-19) por DEBAJO de editor → solo accede a
+// páginas con requireAuth('catalogo') (Piezas/Colecciones); todo lo demás (editor+) lo bloquea.
+const ROLE_LEVELS = { owner: 3, admin: 2, editor: 1, catalogo: 0 };
 
 function hasMinRole(userRole, requiredRole) {
     return (ROLE_LEVELS[userRole] || 0) >= (ROLE_LEVELS[requiredRole] || 0);
@@ -237,7 +239,7 @@ export async function requireAuth(minRole = 'editor') {
  */
 export async function createUserProfile(uid, { email, displayName, role }) {
     if (!hasRole('owner')) throw new Error('Solo el owner puede crear usuarios.');
-    if (!['admin', 'editor'].includes(role)) throw new Error('Rol inválido.');
+    if (!['admin', 'editor', 'catalogo'].includes(role)) throw new Error('Rol inválido.');
 
     await setDoc(doc(firestoreDb, 'users', uid), {
         email,

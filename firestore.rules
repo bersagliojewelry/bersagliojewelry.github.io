@@ -33,6 +33,15 @@ service cloud.firestore {
       return isAuth() && getUserRole() in ['owner', 'admin', 'editor'];
     }
 
+    // Rol "catálogo" (TODO-19, §114-build): gestor DEDICADO de Piezas+Colecciones
+    // (Kary). NO es jerárquico (nivel 0, por DEBAJO de editor) → queda AUTO-DENEGADO
+    // en TODO lo demás (clientes/CMS/config/users/vendedoras exigen isEditor/isAdmin/
+    // isOwner, que NO lo incluyen); aquí SOLO se le ABRE pieces/collections.
+    // isCatalogo() = "quien puede gestionar el catálogo" = editor+ ∪ catálogo.
+    function isCatalogo() {
+      return isAuth() && getUserRole() in ['owner', 'admin', 'editor', 'catalogo'];
+    }
+
     // ─── CRM (cuentas por cobrar): validadores ───────────────────────────────────
     // Contenido REAL = no vacío y no solo-espacios (' '.size()==1 pasaría size()>0 →
     // dejaría publicar campos en blanco-visual: brecha cero-ficción, red-team Fase B).
@@ -555,18 +564,18 @@ service cloud.firestore {
 
     match /pieces/{pieceId} {
       allow read: if true;                                 // Public: anyone can browse
-      allow create: if isEditor() && pieceCreateValid();   // S6: editor+ con campos válidos
-      allow update: if isEditor() && pieceTypesValid();    // S6: tolerante a merge/partial
-      allow delete: if isAdmin();                          // Admin+ can delete
+      allow create: if isCatalogo() && pieceCreateValid(); // editor+/catálogo con campos válidos
+      allow update: if isCatalogo() && pieceTypesValid();  // S6: tolerante a merge/partial
+      allow delete: if isAdmin() || (isAuth() && getUserRole() == 'catalogo'); // admin+ o catálogo (editor NO borra)
     }
 
     // ─── Collections (categories) ──────────────────────────────────────────────
 
     match /collections/{colId} {
       allow read: if true;                                 // Public
-      allow create: if isEditor() && colCreateValid();     // S6
-      allow update: if isEditor() && colTypesValid();      // S6: tolerante a merge/partial
-      allow delete: if isAdmin();                          // Admin+
+      allow create: if isCatalogo() && colCreateValid();   // editor+/catálogo
+      allow update: if isCatalogo() && colTypesValid();    // S6: tolerante a merge/partial
+      allow delete: if isAdmin() || (isAuth() && getUserRole() == 'catalogo'); // admin+ o catálogo (editor NO borra)
     }
 
     // ─── CMS · Journal (entradas editoriales) ──────────────────────────────────
@@ -740,14 +749,14 @@ service cloud.firestore {
       return d.keys().hasOnly(['email', 'displayName', 'role', 'active',
                                'createdAt', 'createdBy', 'updatedAt', 'updatedBy',
                                'lastLogin', 'deactivatedAt', 'deactivatedBy'])
-          && (!('role' in d)   || d.role in ['owner', 'admin', 'editor'])
+          && (!('role' in d)   || d.role in ['owner', 'admin', 'editor', 'catalogo'])
           && (!('active' in d) || d.active is bool);
     }
 
     match /users/{userId} {
       allow read:   if isAuth() && (request.auth.uid == userId || isAdmin());
       allow create: if isOwner() && usersFieldsValidos()
-                    && request.resource.data.role in ['admin', 'editor'];
+                    && request.resource.data.role in ['admin', 'editor', 'catalogo'];
       allow update: if isOwner() && usersFieldsValidos();   // solo el owner muta usuarios
       allow delete: if isOwner();
     }

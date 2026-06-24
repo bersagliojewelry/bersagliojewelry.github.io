@@ -15,7 +15,7 @@ let _bannerLqip = '';   // §108 F3: LQIP (data-URI blur) del banner
 let _editingVersion = null;
 
 async function init() {
-    await requireAuth('editor');
+    await requireAuth('catalogo');   // catálogo (Kary, TODO-19) + editor+ gestionan colecciones
     await adminDb.init();
     initSidebar();
     _collections = adminDb.getAllCollections();

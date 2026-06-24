@@ -106,7 +106,11 @@ exports.syncRoleClaim = onDocumentWritten({ document: 'users/{uid}', retry: true
 // Callable: creates a Firebase Auth user + Firestore profile.
 // Only owner can call this.
 
-exports.createUser = onCall({ region: 'us-central1' }, async (request) => {
+// invoker:'public' = el servicio Cloud Run acepta la invocación (allUsers run.invoker);
+// la SEGURIDAD real es verifyRole(owner) DENTRO. Sin esto, Cloud Run rechaza la callable
+// con "request was not authenticated" ANTES de ejecutar el código (esta CF nunca se había
+// invocado desde la UI → su binding nunca se concedió; lo cazaron los logs §115-fix).
+exports.createUser = onCall({ region: 'us-central1', invoker: 'public' }, async (request) => {
     await verifyRole(request.auth, 'owner');
 
     const { email, password, displayName, role } = request.data;
@@ -121,11 +125,16 @@ exports.createUser = onCall({ region: 'us-central1' }, async (request) => {
         throw new HttpsError('invalid-argument', 'La contraseña debe tener al menos 8 caracteres.');
     }
 
-    const userRecord = await getAuth().createUser({
-        email,
-        password,
-        displayName,
-    });
+    let userRecord;
+    try {
+        userRecord = await getAuth().createUser({ email, password, displayName });
+    } catch (e) {
+        // Errores comunes de Auth → mensaje claro (en vez de un 'internal' opaco).
+        if (e?.code === 'auth/email-already-exists') throw new HttpsError('already-exists', 'Ya existe un usuario con ese correo.');
+        if (e?.code === 'auth/invalid-email')        throw new HttpsError('invalid-argument', 'El correo no es válido.');
+        if (e?.code === 'auth/invalid-password')     throw new HttpsError('invalid-argument', 'La contraseña no cumple los requisitos (mínimo 6 caracteres).');
+        throw new HttpsError('internal', 'No se pudo crear el usuario: ' + (e?.message || String(e)));
+    }
 
     await db.collection('users').doc(userRecord.uid).set({
         email,
@@ -142,7 +151,7 @@ exports.createUser = onCall({ region: 'us-central1' }, async (request) => {
 // ─── updateUserRole ─────────────────────────────────────────────────────────
 // Callable: updates a user's role. Only owner can call.
 
-exports.updateUserRole = onCall({ region: 'us-central1' }, async (request) => {
+exports.updateUserRole = onCall({ region: 'us-central1', invoker: 'public' }, async (request) => {
     await verifyRole(request.auth, 'owner');
 
     const { uid, newRole } = request.data;
@@ -169,7 +178,7 @@ exports.updateUserRole = onCall({ region: 'us-central1' }, async (request) => {
 // ─── deactivateUser ─────────────────────────────────────────────────────────
 // Callable: disables a user in Auth + sets active=false in Firestore.
 
-exports.deactivateUser = onCall({ region: 'us-central1' }, async (request) => {
+exports.deactivateUser = onCall({ region: 'us-central1', invoker: 'public' }, async (request) => {
     await verifyRole(request.auth, 'owner');
 
     const { uid } = request.data;

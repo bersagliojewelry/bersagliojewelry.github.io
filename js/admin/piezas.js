@@ -16,7 +16,7 @@ let _editingVersion = null;
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 async function init() {
-    await requireAuth('editor');
+    await requireAuth('catalogo');   // catálogo (Kary, TODO-19) + editor+ gestionan piezas
     await adminDb.init();
     initSidebar();
 

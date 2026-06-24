@@ -4,11 +4,12 @@
  */
 
 import { admToast, admConfirm, initSidebar, esc, requireAuth } from './shared.js';
-import { createUserProfile, updateUserRole, deactivateUser } from '../auth.js';
+import { createUser, updateUserRole, deactivateUser } from '../auth.js';
 import { firestoreDb } from '../firebase-config.js';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 
 let _users = [];
+let _editingUid = null;  // null = modo ADD (crea cuenta); uid = modo EDIT (cambia rol)
 
 async function init() {
     await requireAuth('owner');
@@ -91,21 +92,28 @@ function initModal() {
 }
 
 function openModal() {
+    _editingUid = null;
     document.getElementById('user-form').reset();
-    document.getElementById('uf-uid').disabled = false;
+    // Modo ADD: email + contraseña + nombre editables; campo contraseña visible.
+    document.getElementById('uf-email').readOnly = false;
+    document.getElementById('uf-name').readOnly = false;
+    document.getElementById('uf-password-field').hidden = false;
     document.getElementById('user-modal-title').textContent = 'Agregar usuario';
     document.getElementById('user-modal').hidden = false;
-    document.getElementById('uf-uid').focus();
+    document.getElementById('uf-email').focus();
 }
 
 function openEditModal(uid) {
     const user = _users.find(u => u.uid === uid);
     if (!user) return;
 
-    document.getElementById('uf-uid').value = uid;
-    document.getElementById('uf-uid').disabled = true;
+    _editingUid = uid;
+    // Modo EDIT: solo cambia el ROL. Email/nombre = contexto de solo-lectura; sin contraseña.
     document.getElementById('uf-email').value = user.email || '';
+    document.getElementById('uf-email').readOnly = true;
     document.getElementById('uf-name').value = user.displayName || '';
+    document.getElementById('uf-name').readOnly = true;
+    document.getElementById('uf-password-field').hidden = true;
     document.getElementById('uf-role').value = user.role || 'editor';
     document.getElementById('user-modal-title').textContent = 'Editar rol de usuario';
     document.getElementById('user-modal').hidden = false;
@@ -117,26 +125,24 @@ function closeModal() {
 
 async function handleSave() {
     const form = document.getElementById('user-form');
-    const uid  = document.getElementById('uf-uid').value.trim();
-    const email = form.querySelector('[name="email"]').value.trim();
-    const name  = form.querySelector('[name="displayName"]').value.trim();
-    const role  = form.querySelector('[name="role"]').value;
+    const role = form.querySelector('[name="role"]').value;
+    const btn  = document.getElementById('user-modal-save');
 
-    if (!uid || !email || !name || !role) {
-        admToast('Completa todos los campos', 'danger');
-        return;
-    }
-
+    btn.disabled = true;
     try {
-        const existing = _users.find(u => u.uid === uid);
-        if (existing) {
-            // Update role
-            await updateUserRole(uid, role);
-            admToast(`Rol de ${name} actualizado a "${role}"`);
+        if (_editingUid) {
+            // Modo EDIT: solo el rol (updateUserRole, owner-only server-side).
+            if (!role) { admToast('Selecciona un rol', 'danger'); return; }
+            await updateUserRole(_editingUid, role);
+            admToast(`Rol actualizado a "${role}"`);
         } else {
-            // Create new user profile
-            await createUserProfile(uid, { email, displayName: name, role });
-            admToast(`Usuario "${name}" agregado como ${role}`);
+            // Modo ADD: crea la cuenta (Auth + perfil) vía la CF createUser (owner-only).
+            const email = form.querySelector('[name="email"]').value.trim();
+            const name  = form.querySelector('[name="displayName"]').value.trim();
+            const pass  = form.querySelector('[name="password"]').value;
+            if (!email || !pass || !name || !role) { admToast('Completa todos los campos', 'danger'); return; }
+            await createUser({ email, password: pass, displayName: name, role });
+            admToast(`Usuario "${name}" creado como ${role}`);
         }
 
         await loadUsers();
@@ -144,6 +150,8 @@ async function handleSave() {
         closeModal();
     } catch (err) {
         admToast(err.message, 'danger');
+    } finally {
+        btn.disabled = false;
     }
 }
 

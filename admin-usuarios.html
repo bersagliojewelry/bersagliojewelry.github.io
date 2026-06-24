@@ -75,16 +75,16 @@
                 <p>No hay otros usuarios registrados.</p>
             </div>
 
-            <!-- Setup instructions -->
+            <!-- Cómo agregar usuarios (el panel los crea directo, sin la consola de Firebase) -->
             <div class="adm-section" style="margin-top:20px;">
                 <div class="adm-section-head"><h2>Agregar usuarios</h2></div>
                 <div class="adm-section-body">
                     <p style="font-size:13px;color:var(--adm-muted);line-height:1.6;">
-                        Para agregar un nuevo usuario:<br>
-                        1. Crea el usuario en <strong>Firebase Console → Authentication → Add user</strong><br>
-                        2. Copia el UID generado<br>
-                        3. Haz clic en "Agregar usuario" y asigna el rol<br>
-                        <br>
+                        Haz clic en <strong>"Agregar usuario"</strong>, escribe el correo, una contraseña
+                        (mínimo 8 caracteres) y el rol. El usuario queda creado y puede entrar de inmediato.<br><br>
+                        <strong>Roles:</strong> <em>Admin</em> — gestiona todo menos usuarios ·
+                        <em>Editor</em> — contenido web y catálogo (sin borrar) ·
+                        <em>Catálogo</em> — solo Piezas y Colecciones.<br>
                         <em>Solo el Owner puede agregar y gestionar usuarios.</em>
                     </p>
                 </div>
@@ -103,15 +103,15 @@
         </div>
         <div class="adm-modal-body">
             <form id="user-form" novalidate>
-                <div class="adm-field" style="margin-bottom:14px;">
-                    <label for="uf-uid">Firebase UID</label>
-                    <input class="adm-input" id="uf-uid" name="uid" required placeholder="Pega el UID de Firebase Auth">
-                </div>
-                <div class="adm-field" style="margin-bottom:14px;">
+                <div class="adm-field" style="margin-bottom:14px;" id="uf-email-field">
                     <label for="uf-email">Email</label>
                     <input class="adm-input" id="uf-email" name="email" type="email" required placeholder="usuario@email.com">
                 </div>
-                <div class="adm-field" style="margin-bottom:14px;">
+                <div class="adm-field" style="margin-bottom:14px;" id="uf-password-field">
+                    <label for="uf-password">Contraseña</label>
+                    <input class="adm-input" id="uf-password" name="password" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres">
+                </div>
+                <div class="adm-field" style="margin-bottom:14px;" id="uf-name-field">
                     <label for="uf-name">Nombre</label>
                     <input class="adm-input" id="uf-name" name="displayName" required placeholder="Nombre completo">
                 </div>
@@ -121,6 +121,7 @@
                         <option value="">— Seleccionar —</option>
                         <option value="admin">Admin</option>
                         <option value="editor">Editor</option>
+                        <option value="catalogo">Catálogo (solo Piezas y Colecciones)</option>
                     </select>
                 </div>
             </form>

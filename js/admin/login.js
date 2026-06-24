@@ -10,7 +10,8 @@ async function init() {
     await new Promise(r => setTimeout(r, 500));
     const u = currentUser();
     if (u) {
-        window.location.replace('admin.html');
+        // El rol "catálogo" (Kary) no ve admin.html (requireAuth('editor')) → directo a Piezas.
+        window.location.replace(u.profile?.role === 'catalogo' ? 'admin-piezas.html' : 'admin.html');
         return;
     }
 
@@ -46,7 +47,7 @@ async function handleLogin(e) {
 
     try {
         const { profile } = await signIn(email, pass);
-        window.location.replace('admin.html');
+        window.location.replace(profile?.role === 'catalogo' ? 'admin-piezas.html' : 'admin.html');
     } catch (err) {
         showError('login-error', err.message);
         btn.disabled    = false;

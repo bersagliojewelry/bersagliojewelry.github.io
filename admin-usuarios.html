@@ -12,7 +12,7 @@
     <script type="module" src="js/admin/usuarios.js"></script>
 </head>
 <body style="display:none">
-<script>try{if(!sessionStorage.getItem('bj_auth'))throw 0}catch(e){location.replace('admin-login.html');document.body.style.display='none'}</script>
+<script>try{if(sessionStorage.getItem('bj_auth')){document.body.style.display=''}else{location.replace('admin-login.html')}}catch(e){location.replace('admin-login.html')}</script>
 <div class="adm-layout">
 
     <!-- Sidebar (se rellena desde datos por js/admin/shared.js → renderSidebar) -->
@@ -49,7 +49,11 @@
                     </div>
                     <div>
                         <span class="adm-pill adm-pill--gray">Editor</span>
-                        <span style="font-size:12px;color:var(--adm-muted);margin-left:6px;">Crear y editar piezas/colecciones</span>
+                        <span style="font-size:12px;color:var(--adm-muted);margin-left:6px;">Contenido web y catálogo (sin borrar)</span>
+                    </div>
+                    <div>
+                        <span class="adm-pill adm-pill--gray">Catálogo</span>
+                        <span style="font-size:12px;color:var(--adm-muted);margin-left:6px;">Solo Piezas y Colecciones</span>
                     </div>
                 </div>
             </div>

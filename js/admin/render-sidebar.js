@@ -26,7 +26,9 @@ const svg = (key) =>
   `<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">${ICONS[key] || ''}</svg>`;
 
 function canSee(itemRole, role) {
-  return (ROLE_RANK[role] || 0) >= (ROLE_RANK[itemRole] || 1);
+  // `??` (NO `||`): el rango 0 del rol "catálogo" es FALSY → con `||` el ítem se coercería
+  // a 1 y 'catalogo' quedaría OCULTO incluso para catálogo (bug §115, cazado en vivo por Daniel).
+  return (ROLE_RANK[role] ?? 0) >= (ROLE_RANK[itemRole] ?? 1);
 }
 
 function linkHTML(item, activePage) {

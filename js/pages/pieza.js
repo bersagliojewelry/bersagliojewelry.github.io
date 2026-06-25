@@ -43,19 +43,26 @@ function gemSVG() {
     return html`<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="12,2 22,8.5 12,22 2,8.5"/></svg>`;
 }
 
-// Gema facetada (talla esmeralda) — firma gráfica de la "Carta Gemológica". Hereda
-// el color del contenedor (currentColor). Se usa en el héroe de la ficha y, en grande
-// y tenue, como filigrana de fondo del panel.
-function gemFacetSVG(size = 56) {
-    return html`<svg width="${size}" height="${size}" viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true">
-        <polygon points="40,6 72,24 72,56 40,74 8,56 8,24"/>
-        <line x1="8" y1="24" x2="72" y2="24"/>
-        <line x1="8" y1="56" x2="72" y2="56"/>
-        <line x1="24" y1="6" x2="8" y2="24"/>
-        <line x1="56" y1="6" x2="72" y2="24"/>
-        <line x1="24" y1="74" x2="8" y2="56"/>
-        <line x1="56" y1="74" x2="72" y2="56"/>
-        <polygon points="40,24 56,33 40,56 24,33" fill="oklch(62% 0.18 155 / 0.16)" stroke="currentColor" stroke-width="0.8"/>
+// Gema talla esmeralda (octágono facetado con lustre radial) — firma de la "Carta
+// Gemológica". Render fino portado de Claude Design (adaptado, no mirror). lustrous=true →
+// mesa interior con degradado mint→esmeralda que simula brillo (héroe); false → solo
+// contorno (filigrana de fondo). El trazo hereda currentColor (esmeralda del contenedor).
+function emeraldGemSVG(size, lustrous) {
+    const luster = lustrous
+        ? html`<defs><radialGradient id="bjGemLuster" cx="42%" cy="36%" r="68%"><stop offset="0" stop-color="#CFEBDC" stop-opacity="0.95"/><stop offset="1" stop-color="#0E5A38" stop-opacity="0.26"/></radialGradient></defs><polygon points="38,20 62,20 80,38 80,62 62,80 38,80 20,62 20,38" fill="url(#bjGemLuster)" stroke="none"/>`
+        : '';
+    return html`<svg viewBox="0 0 100 100" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+        ${luster}
+        <polygon points="30,2 70,2 98,30 98,70 70,98 30,98 2,70 2,30" stroke-opacity="0.9"/>
+        <polygon points="38,20 62,20 80,38 80,62 62,80 38,80 20,62 20,38" stroke-opacity="0.55"/>
+        <line x1="30" y1="2" x2="38" y2="20" stroke-opacity="0.4"/>
+        <line x1="70" y1="2" x2="62" y2="20" stroke-opacity="0.4"/>
+        <line x1="98" y1="30" x2="80" y2="38" stroke-opacity="0.4"/>
+        <line x1="98" y1="70" x2="80" y2="62" stroke-opacity="0.4"/>
+        <line x1="70" y1="98" x2="62" y2="80" stroke-opacity="0.4"/>
+        <line x1="30" y1="98" x2="38" y2="80" stroke-opacity="0.4"/>
+        <line x1="2" y1="70" x2="20" y2="62" stroke-opacity="0.4"/>
+        <line x1="2" y1="30" x2="20" y2="38" stroke-opacity="0.4"/>
     </svg>`;
 }
 
@@ -99,7 +106,7 @@ function buildSpecs(piece) {
         ? { name: stones, sub: [carat, color].filter(Boolean).join(' · ') }
         : null;
 
-    const row = (key, val) => ({ key, val: clean(val) });
+    const row = (key, val, pill) => ({ key, val: clean(val), pill: !!pill });
     const groups = [
         { title: 'Calidad', rows: [
             // Sin hero, quilates/color no se pierden: caen aquí.
@@ -112,14 +119,15 @@ function buildSpecs(piece) {
             row('Metal', s.metal || s.gold),
             row('Peso', s.weight),
         ] },
-        { title: 'Origen y entrega', rows: [
+        { title: 'Origen y garantía', rows: [
             row('Origen', s.origin),
             row('Entrega', s.delivery),
+            row('Certificación', s.certificate || s.gia, true),   // pastilla dorada (sello)
         ] },
     ].map(g => ({ ...g, rows: g.rows.filter(r => r.val !== '') }))
      .filter(g => g.rows.length > 0);
 
-    return { hero, groups, certificate: clean(s.certificate || s.gia) };
+    return { hero, groups };
 }
 
 function getCategoryLabel(piece) {
@@ -192,13 +200,13 @@ function renderInfo(piece) {
 
             ${desc ? html`<p class="pz-info-desc">${escape(desc)}</p>` : ''}
 
-            ${(specs.hero || specs.groups.length || specs.certificate) ? html`
+            ${(specs.hero || specs.groups.length) ? html`
                 <div class="glass glass-iridescent pz-ficha">
-                    <span class="pz-ficha-watermark" aria-hidden="true">${gemFacetSVG(180)}</span>
-                    <div class="pz-ficha-head">${gemSVG()}<span>Carta gemológica</span></div>
+                    <span class="pz-ficha-watermark" aria-hidden="true">${emeraldGemSVG(220, false)}</span>
+                    <div class="pz-ficha-head"><span class="pz-ficha-mark"></span><span class="pz-ficha-head-label">Carta gemológica</span></div>
                     ${specs.hero ? html`
                         <div class="pz-ficha-hero">
-                            <span class="pz-ficha-hero-gem" aria-hidden="true">${gemFacetSVG(56)}</span>
+                            <span class="pz-ficha-hero-gem" aria-hidden="true">${emeraldGemSVG(64, true)}</span>
                             <div class="pz-ficha-hero-text">
                                 <div class="pz-ficha-hero-label">Gema principal</div>
                                 <div class="pz-ficha-hero-name">${escape(specs.hero.name)}</div>
@@ -207,20 +215,21 @@ function renderInfo(piece) {
                         </div>` : ''}
                     ${specs.groups.map(g => html`
                         <div class="pz-ficha-group">
-                            <div class="pz-ficha-group-title">${escape(g.title)}</div>
+                            <div class="pz-ficha-group-title">
+                                <span class="pz-ficha-mark"></span>
+                                <span class="pz-ficha-group-label">${escape(g.title)}</span>
+                                <span class="pz-ficha-rule"></span>
+                            </div>
                             <div class="pz-ficha-rows">
                                 ${g.rows.map(r => html`
                                     <div class="pz-ficha-row">
                                         <span class="pz-ficha-k">${escape(r.key)}</span>
-                                        <span class="pz-ficha-v">${escape(r.val)}</span>
+                                        ${r.pill
+                                            ? html`<span class="pz-ficha-pill"><span class="pz-ficha-mark"></span>${escape(r.val)}</span>`
+                                            : html`<span class="pz-ficha-v">${escape(r.val)}</span>`}
                                     </div>`)}
                             </div>
                         </div>`)}
-                    ${specs.certificate ? html`
-                        <div class="pz-ficha-cert">
-                            <span class="pz-ficha-k">Certificación</span>
-                            <span class="pz-ficha-cert-seal">${gemSVG()}${escape(specs.certificate)}</span>
-                        </div>` : ''}
                 </div>` : ''}
 
             ${sizes.length ? html`

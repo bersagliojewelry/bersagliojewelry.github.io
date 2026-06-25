@@ -45,7 +45,10 @@
    Daniel 2026-06-25). La imagen scrollea con el contenido (no sticky). */
 @media (min-width: 921px) {
     .pz-gallery { display: flex; flex-direction: column; }
-    .pz-main { flex: 1 1 auto; aspect-ratio: auto; min-height: 520px; margin-bottom: 0; }
+    /* min-height bajo (300) → la imagen IGUALA la altura de la info por poca que sea, sin dejar
+       hueco en piezas con poca información (caso argolla, Daniel 2026-06-25). Con info abundante
+       crece (flex). Nunca rompe el "responsive inteligente". */
+    .pz-main { flex: 1 1 auto; aspect-ratio: auto; min-height: 300px; margin-bottom: 0; }
     .pz-thumbs { margin-top: 14px; }
 }
 
@@ -321,8 +324,9 @@
     font-size: 26px; font-weight: 400; font-style: italic;
     color: var(--bj-emerald-800);
 }
-/* Talla a medida (honesto, sin pills falsas) */
+/* Talla a medida (honesto, sin pills falsas) — título + explicación en 2 líneas centradas */
 .pz-talla--medida { margin-bottom: 32px; }
+.pz-talla-medida-title { margin-bottom: 8px; }
 .pz-talla-medida-note {
     font-size: 14px; line-height: 1.6;
     color: var(--bj-ink-soft);

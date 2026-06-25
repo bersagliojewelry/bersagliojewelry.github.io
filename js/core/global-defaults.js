@@ -21,11 +21,20 @@ export const GLOBAL_DEFAULTS = {
     contacto: {
         whatsapp:  '+57 301 375 2592',          // display; href = wa.me/<dígitos>
         email:     'info@bersagliojewelry.co',
-        instagram: '@bersagliojewelry',         // handle; href = instagram.com/<sin @>
+        instagram: '@bersaglio_jewelry',        // handle REAL (con guion bajo); antes '@bersagliojewelry' = link ROTO (NAP maestro · TODO-35)
+    },
+    // Dirección física — NAP maestro, idéntica a tenant_config.json + al JSON-LD horneado (TODO-35).
+    direccion: {
+        calle:   'Calle 36 # 6-32, San Agustín Chiquita',
+        sector:  'Centro Histórico',
+        ciudad:  'Cartagena de Indias',
+        pais:    'Colombia',
+        mapsUrl: 'https://share.google/dg6nfdgIHaFanKVYe',
     },
     // Redes que NO son canal de contacto (solo botón en el footer).
     redes: {
-        facebook: 'https://www.facebook.com/bersagliojewelry',
+        facebook: 'https://www.facebook.com/profile.php?id=61583793442626',   // perfil REAL (antes vanity /bersagliojewelry = roto)
+        tiktok:   'https://www.tiktok.com/@bersaglio_jewelry',
     },
     // Copy compartido del footer.
     footer: {
@@ -48,9 +57,10 @@ export function mergeGlobal(doc) {
     const d = doc || {};
     const D = GLOBAL_DEFAULTS;
     return {
-        contacto: { ...D.contacto, ...(d.contacto || {}) },
-        redes:    { ...D.redes,    ...(d.redes || {}) },
-        footer:   { ...D.footer,   ...(d.footer || {}) },
+        contacto:  { ...D.contacto,  ...(d.contacto || {}) },
+        direccion: { ...D.direccion, ...(d.direccion || {}) },
+        redes:     { ...D.redes,     ...(d.redes || {}) },
+        footer:    { ...D.footer,    ...(d.footer || {}) },
     };
 }
 

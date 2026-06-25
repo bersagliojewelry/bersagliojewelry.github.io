@@ -177,10 +177,12 @@ function buildProductSchema(p, category, desc, canonicalUrl, image) {
             itemCondition: 'https://schema.org/NewCondition',
             availability: 'https://schema.org/InStock',
             valueAddedTaxIncluded: true,
+            seller: { '@type': 'JewelryStore', '@id': `${SITE_URL}/#business`, name: BRAND },
         } : {
             '@type': 'Offer', url: canonicalUrl, priceCurrency: 'COP',
             itemCondition: 'https://schema.org/NewCondition',
             availability: 'https://schema.org/PreOrder',
+            seller: { '@type': 'JewelryStore', '@id': `${SITE_URL}/#business`, name: BRAND },
         },
     };
     return schema;
@@ -197,6 +199,77 @@ function buildBreadcrumbSchema(p, category, canonicalUrl) {
             { '@type': 'ListItem', position: 3, name: p.name || 'Pieza', item: canonicalUrl },
         ],
     };
+}
+
+// ===================== Schema de marca / negocio (Organization + Local) =====================
+
+const BUSINESS_ID = `${SITE_URL}/#business`;
+const WEBSITE_ID = `${SITE_URL}/#website`;
+
+// validateTenant (anti-contaminación por vertical, fail-fast — clave del HUB multi-proyecto).
+function readTenantConfig() {
+    const p = join(REPO_ROOT, 'tenant_config.json');
+    if (!existsSync(p)) throw new Error('[generate] Falta tenant_config.json en la raíz.');
+    let cfg;
+    try { cfg = JSON.parse(readFileSync(p, 'utf-8')); }
+    catch (e) { throw new Error('[generate] tenant_config.json no es JSON válido: ' + e.message); }
+    if (cfg.vertical !== 'JewelryStore') {
+        throw new Error(`[generate] tenant_config.vertical="${cfg.vertical}" != "JewelryStore" — vertical equivocado (anti-contaminación).`);
+    }
+    return cfg;
+}
+
+// @graph con la entidad de negocio (JewelryStore = LocalBusiness = Organization) + WebSite.
+// Schema CONDICIONAL: solo campos con dato real (cero-demo). geo/openingHours/aggregateRating
+// se OMITEN si no hay dato (no se inventan).
+function buildBusinessGraph(cfg) {
+    const nap = cfg.nap || {};
+    const business = {
+        '@type': cfg.vertical || 'JewelryStore',
+        '@id': BUSINESS_ID,
+        name: cfg.brand,
+        ...(cfg.legalName ? { legalName: cfg.legalName } : {}),
+        url: cfg.baseUrl,
+        ...(cfg.logo ? { logo: cfg.logo } : {}),
+        ...(cfg.image ? { image: cfg.image } : {}),
+        ...(cfg.description ? { description: cfg.description } : {}),
+        ...(nap.telephone ? { telephone: nap.telephone } : {}),
+        address: {
+            '@type': 'PostalAddress',
+            ...(nap.streetAddress ? { streetAddress: nap.streetAddress } : {}),
+            ...(nap.addressLocality ? { addressLocality: nap.addressLocality } : {}),
+            ...(nap.addressRegion ? { addressRegion: nap.addressRegion } : {}),
+            ...(nap.addressCountry ? { addressCountry: nap.addressCountry } : {}),
+        },
+        ...(cfg.areaServed ? { areaServed: { '@type': 'City', name: cfg.areaServed } } : {}),
+        ...(cfg.hasMap ? { hasMap: cfg.hasMap } : {}),
+        ...(cfg.geo && cfg.geo.latitude ? { geo: { '@type': 'GeoCoordinates', latitude: cfg.geo.latitude, longitude: cfg.geo.longitude } } : {}),
+        ...(Array.isArray(cfg.openingHours) && cfg.openingHours.length ? { openingHoursSpecification: cfg.openingHours } : {}),
+        ...(Array.isArray(cfg.sameAs) && cfg.sameAs.length ? { sameAs: cfg.sameAs } : {}),
+    };
+    const website = {
+        '@type': 'WebSite', '@id': WEBSITE_ID,
+        url: cfg.baseUrl, name: cfg.brand, inLanguage: 'es-CO',
+        publisher: { '@id': BUSINESS_ID },
+    };
+    return { '@context': 'https://schema.org', '@graph': [business, website] };
+}
+
+// Hornea el @graph de marca en dist/index.html (REGLA DURA: schema en el HTML del build).
+function injectBusinessIntoIndex(cfg) {
+    const indexPath = join(DIST, 'index.html');
+    if (!existsSync(indexPath)) throw new Error('[generate] No existe dist/index.html.');
+    let html = readFileSync(indexPath, 'utf-8');
+    if (!html.includes('</head>')) throw new Error('[generate] dist/index.html sin </head> (ancla de inyección).');
+    if (html.includes('id="business-jsonld"')) return; // idempotente
+    const graph = buildBusinessGraph(cfg);
+    html = html.replace('</head>',
+        `    <script type="application/ld+json" id="business-jsonld">${safeJsonLd(graph)}</script>\n</head>`);
+    if (html.length < MIN_BAKE_BYTES || !html.includes('</html>')) {
+        throw new Error('[generate] dist/index.html quedó inválido tras inyectar el schema de marca.');
+    }
+    writeFileSync(indexPath, html);
+    console.log('[generate] JSON-LD de marca (JewelryStore + WebSite) horneado en dist/index.html.');
 }
 
 // ===================== Generación de página =====================
@@ -492,6 +565,9 @@ async function main() {
     writeFileSync(join(DIST, 'sitemap.xml'), sitemap);
     console.log(`[generate] sitemap.xml regenerado (${STATIC_PAGES.length} estáticas + ${pieces.length} piezas).`);
 
+    // Schema de marca (JewelryStore + WebSite) horneado en dist/index.html desde tenant_config.json.
+    injectBusinessIntoIndex(readTenantConfig());
+
     console.log('[generate] Listo.');
     process.exit(0);
 }
@@ -550,6 +626,13 @@ function runSelfTest() {
     // sitemap válido + escapa.
     const sm = generateSitemap([mockPiece], new Map([[String(mockPiece.id), 'selftest']]), '2026-06-25');
     if (!sm.includes('</urlset>')) fails.push('sitemap sin </urlset>.');
+    // Business @graph (marca) parsea tras safeJsonLd.
+    try {
+        const cfgT = existsSync(join(REPO_ROOT, 'tenant_config.json'))
+            ? JSON.parse(readFileSync(join(REPO_ROOT, 'tenant_config.json'), 'utf-8'))
+            : { vertical: 'JewelryStore', brand: 'X', baseUrl: 'https://x', nap: {}, sameAs: ['https://x/a'] };
+        JSON.parse(safeJsonLd(buildBusinessGraph(cfgT)));
+    } catch (e) { fails.push('business @graph NO parsea: ' + e.message); }
 
     if (fails.length) {
         console.error('[SSG_SELFTEST] FALLO:');

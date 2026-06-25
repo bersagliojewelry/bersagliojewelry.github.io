@@ -65,6 +65,11 @@ const SOCIAL = [
         svg: html`<path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>`,
     },
     {
+        key: 'tiktok',
+        label: 'TikTok',
+        svg: html`<path d="M16 3c.3 2.1 1.7 3.6 3.8 3.9v2.6c-1.4.1-2.7-.3-3.8-1V14a5 5 0 1 1-5-5c.3 0 .6 0 .9.1v2.7a2.3 2.3 0 1 0 1.6 2.2V3z"/>`,
+    },
+    {
         key: 'whatsapp',
         label: 'WhatsApp',
         svg: html`

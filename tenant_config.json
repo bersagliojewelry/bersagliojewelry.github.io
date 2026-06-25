@@ -1,0 +1,26 @@
+{
+  "_comment": "Identidad de negocio CANÓNICA (SSoT NAP + sameAs) para el SSG/visibilidad (TODO-35). La lee scripts/generate-pieces.mjs para hornear el JSON-LD de marca/Local en dist/index.html. Datos REALES de Daniel (2026-06-25) — cero-demo. Mantener idéntico al display del cliente (js/core/global-defaults.js). NO se sirve (build-time only).",
+  "vertical": "JewelryStore",
+  "brand": "Bersaglio Jewelry",
+  "legalName": "Bersaglio Jewelry",
+  "baseUrl": "https://bersagliojewelry.co",
+  "logo": "https://bersagliojewelry.co/favicon-192.png",
+  "image": "https://bersagliojewelry.co/img/og-image.jpg",
+  "description": "Alta joyería en Cartagena de Indias: esmeraldas colombianas, diamantes certificados y oro 18K. Atelier en el Centro Histórico.",
+  "nap": {
+    "streetAddress": "Calle 36 # 6-32, San Agustín Chiquita, Centro Histórico",
+    "addressLocality": "Cartagena de Indias",
+    "addressRegion": "Bolívar",
+    "addressCountry": "CO",
+    "telephone": "+573013752592"
+  },
+  "areaServed": "Cartagena de Indias",
+  "hasMap": "https://share.google/dg6nfdgIHaFanKVYe",
+  "geo": null,
+  "openingHours": [],
+  "sameAs": [
+    "https://www.instagram.com/bersaglio_jewelry/",
+    "https://www.facebook.com/profile.php?id=61583793442626",
+    "https://www.tiktok.com/@bersaglio_jewelry"
+  ]
+}

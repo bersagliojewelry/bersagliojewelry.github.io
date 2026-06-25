@@ -5,9 +5,18 @@ service firebase.storage {
     // ─── Helpers (B5 · comité 2026-06-14 + consejo externo Gemini) ──────────────
     // Solo roles de contenido suben (no cualquier autenticado). El claim `role` lo
     // espeja syncRoleClaim (§65); el backfill garantiza que admin/editor lo tengan.
+    // isContentRole() = editor+ → CMS/assets (NO incluye catálogo, igual que firestore).
     function isContentRole() {
       return request.auth != null
           && request.auth.token.role in ['owner', 'admin', 'editor'];
+    }
+    // isCatalogo() = editor+ ∪ catálogo (Kary, §115). MIRROR de isCatalogo() en
+    // firestore.rules: el rol catálogo gestiona Piezas+Colecciones END-TO-END, incluidas
+    // SUS imágenes. Sin esto, Kary editaba la pieza pero Storage rechazaba la foto
+    // (storage/unauthorized → "Error al subir imagen") = desacople Firestore↔Storage.
+    function isCatalogo() {
+      return request.auth != null
+          && request.auth.token.role in ['owner', 'admin', 'editor', 'catalogo'];
     }
     // contentType allowlist EXPLÍCITA: `image/(png|jpeg|webp|avif)` EXCLUYE image/svg+xml
     // (SVG ejecutable = stored-XSS) y formatos pesados; + cota de tamaño (anti
@@ -23,16 +32,16 @@ service firebase.storage {
     // Path: pieces/{pieceId}/{filename}
     match /pieces/{pieceId}/{allPaths=**} {
       allow read:          if true;                       // Public: shown on site
-      allow create, update: if isContentRole() && validImage(10 * 1024 * 1024);
-      allow delete:        if isContentRole();
+      allow create, update: if isCatalogo() && validImage(10 * 1024 * 1024);   // catálogo (Kary) incluido
+      allow delete:        if isCatalogo();
     }
 
     // ─── Collection banners ───────────────────────────────────────────────────
     // Path: collections/{colId}/{filename}
     match /collections/{colId}/{allPaths=**} {
       allow read:          if true;
-      allow create, update: if isContentRole() && validImage(10 * 1024 * 1024);
-      allow delete:        if isContentRole();
+      allow create, update: if isCatalogo() && validImage(10 * 1024 * 1024);   // catálogo (Kary) incluido
+      allow delete:        if isCatalogo();
     }
 
     // ─── General site assets (CMS: portadas de journal/films/social) ───────────

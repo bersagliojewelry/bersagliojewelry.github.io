@@ -11,10 +11,9 @@
 > 🎉 **CRM + Fase M (M0→M6) EN PRODUCCIÓN** (§47-§82). **🔄 RESET A CERO** (Daniel 2026-06-20): Kary recarga de cero → cartera/clientes históricos DESECHABLES (bajan urgencias de dinero). ⚙️ **OPUS 4.8 interino** (marcar `[OPUS-4.8]` · `feedback_opus_interino`).
 >
 > **🚦 CERRADO EN RELEVO (2026-06-25) — 2 FRENTES ABIERTOS para la próxima sesión:**
-> **(1) TODO-35 · VISIBILIDAD** — **🟢 Fases A1 (piezas) + B (marca/Maps) EN PROD ✅** (Daniel mergeó PR #345; **verificado en vivo por curl+grep**: robots IA + `JewelryStore` schema con NAP/sameAs reales; links rotos IG/FB ARREGLADOS en prod). ⚠️ **horarios (`02ae9ec`) + último cerebro = 2 commits LOCALES sin push** → horarios AÚN NO en vivo (falta push origin/Desarrollo + merge). Catálogo prod VACÍO (Kary recarga) → 0 piezas horneadas. **Falta**: push+merge horarios · A2 colecciones+journal · C GA4(`analytics.js`)+GSC · prompt Altorra HUB. Spec→bóveda `2026-06-25-*`.
+> **(1) TODO-35 · VISIBILIDAD** — **🟢 Fases A1 (piezas) + B (marca/Maps) EN PROD ✅** (Daniel mergeó PR #345; **verificado en vivo por curl+grep**: robots IA + `JewelryStore` schema con NAP/sameAs reales; links rotos IG/FB ARREGLADOS en prod). ⚠️ **commits LOCALES sin push** (horarios + bugfixes 25-jun: maps→ficha real, iconos footer→logos marca, NAP/horarios 8–19, handles IG/FB/TikTok rotos→reales; verif. dev) → falta push+merge (como PR #345) para ir en vivo. Catálogo prod VACÍO (Kary recarga) → 0 piezas horneadas. **Falta**: push+merge (horarios+bugfixes) · A2 colecciones+journal · C GA4(`analytics.js`)+GSC · prompt Altorra HUB. Spec→bóveda `2026-06-25-*`.
 > **(2) TODO-33 · PARPADEO RESIDUAL del menú**: con A3 (v29) el menú aparece instantáneo y el parpadeo es MÍNIMO, pero AÚN parpadea en cada nav (recarga MPA) — no debería. Pendiente: matar el flash residual (re-evaluar View Transitions sin el choque con `body display:none`, o el router falso-SPA Opción B con su gate de seguridad).
-> **⚠️ Pendiente DEMO Kary**: Daniel debe **mergear `f2ec1ab` (+schema `de9dbef`)** → verifico en vivo la página de pieza (specs reales, sin datos falsos, tallas admin).
-> _Contexto previo cerrado: Web app-like §103-§113 ✅ · rol catálogo Kary §115 ✅ · TODO-34 pieza fixes demo-críticos ✅ (pend. merge)._
+> _Contexto previo cerrado: Web app-like §103-§113 ✅ · rol catálogo Kary §115 ✅ · TODO-34 pieza fixes demo-críticos ✅ (en prod vía PR #345)._
 > - ⚠️ **Deploy** (L-22/L-26): reglas/functions = manual mío; sitio+merge a `main` = PR de Daniel (`git fetch` siempre); Admin SDK = ADC.
 
 ---

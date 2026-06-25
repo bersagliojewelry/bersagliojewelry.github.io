@@ -35,19 +35,30 @@
     display: grid;
     grid-template-columns: 1.1fr 1fr;
     gap: 36px;
-    align-items: flex-start;
+    align-items: stretch;   /* columnas igualan altura → pies alineados, sin hueco bajo la imagen */
 }
 @media (max-width: 920px) {
-    .pz-layout { grid-template-columns: 1fr; gap: 32px; }
+    .pz-layout { grid-template-columns: 1fr; gap: 32px; align-items: start; }
+}
+/* Desktop: la galería llena la altura de la columna (= altura de la info) para que la imagen
+   y la ficha terminen alineadas SIN importar cuánta info haya ("responsive inteligente",
+   Daniel 2026-06-25). La imagen scrollea con el contenido (no sticky). */
+@media (min-width: 921px) {
+    .pz-gallery { display: flex; flex-direction: column; }
+    .pz-main { flex: 1 1 auto; aspect-ratio: auto; min-height: 520px; margin-bottom: 0; }
+    .pz-thumbs { margin-top: 14px; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════
    GALLERY
    ═══════════════════════════════════════════════════════════════════ */
+/* Galería: NO sticky. El sticky (top:110px) quedaba roto por `body{overflow-x:hidden}`
+   (un ancestro con overflow != visible rompe position:sticky) y desfasaba la imagen
+   respecto a la ficha al hacer scroll (Daniel 2026-06-25). Estática → ambas columnas
+   scrollean juntas y quedan SIEMPRE alineadas (delta 0). */
 .pz-gallery {
-    position: sticky; top: 110px;
+    position: static;
 }
-@media (max-width: 920px) { .pz-gallery { position: static; } }
 
 .pz-main {
     border-radius: 36px;
@@ -150,41 +161,135 @@
     margin-bottom: 32px;
 }
 
-/* Specs grid — adaptativo (1..N specs reales sin huecos; ficha técnica de alta joyería) */
-.pz-specs {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 10px;
+/* ═══════════════════════════════════════════════════════════════════
+   FICHA "CARTA GEMOLÓGICA" — un panel de cristal; la gema protagonista (TODO-34)
+   Reemplaza la grilla de cuadritos. Estructura adaptativa (hero + grupos): escala
+   de 2 a 11 specs sin huecos. Reusa .glass/.glass-iridescent (backdrop + canto).
+   ═══════════════════════════════════════════════════════════════════ */
+.pz-ficha {
+    position: relative;
+    overflow: hidden;
+    border-radius: 22px;
+    padding: 24px 24px 22px;
     margin-bottom: 32px;
+    /* Tinte esmeralda-perla sobre el backdrop-filter de .glass */
+    background: linear-gradient(180deg, oklch(99% 0.006 150 / 0.62), oklch(95% 0.025 152 / 0.46));
 }
-.pz-spec {
-    padding: 14px 16px;
-    border-radius: 16px;
+/* Filigrana: gema (octágono talla esmeralda) grande y tenue, detrás del contenido */
+.pz-ficha-watermark {
+    position: absolute;
+    top: -54px; right: -58px;
+    width: 220px; height: 220px;
+    color: var(--bj-emerald-700);
+    opacity: 0.07;
+    pointer-events: none;
 }
-.pz-spec-key {
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
+.pz-ficha .pz-ficha-watermark { z-index: 0; }   /* gana a .glass > * { z-index:2 } */
+.pz-ficha-watermark svg { width: 100%; height: 100%; display: block; }
+
+/* Marcador octágono (talla esmeralda) — viñeta de marca. Esmeralda (no oro): la web usa
+   poco dorado y en los títulos se sentía fuerte (Daniel 2026-06-25). */
+.pz-ficha-mark {
+    width: 6px; height: 6px; flex: none;
+    background: var(--bj-emerald-600);
+    clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+    display: inline-block;
+}
+
+.pz-ficha-head { display: flex; align-items: center; gap: 9px; margin-bottom: 18px; }
+.pz-ficha-head-label {
+    font-family: var(--font-mono);
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.24em; text-transform: uppercase;
+    color: var(--bj-emerald-800);
+}
+
+/* Héroe: la gema (protagonista, SIN ícono — la gema verde se quitó a pedido de Daniel;
+   queda la filigrana grabada en la esquina de la card) */
+.pz-ficha-hero {
+    padding-bottom: 22px; margin-bottom: 4px;
+    border-bottom: 1px solid oklch(45% 0.06 155 / 0.16);
+}
+.pz-ficha-hero-text { min-width: 0; }
+.pz-ficha-hero-label {
+    font-family: var(--font-mono);
+    font-size: 9.5px; font-weight: 400;
+    letter-spacing: 0.2em; text-transform: uppercase;
     color: var(--bj-ink-mute);
     margin-bottom: 4px;
 }
-.pz-spec-val {
-    font-size: 14px;
-    font-weight: 500;
+.pz-ficha-hero-name {
+    font-family: var(--font-display);
+    font-size: 28px; font-weight: 500; line-height: 1.05;
+    letter-spacing: -0.015em;
+    color: var(--bj-ink-emerald);
+    margin-bottom: 7px;
+}
+.pz-ficha-hero-sub {
+    font-family: var(--font-mono);
+    font-size: 12px; font-weight: 400; letter-spacing: 0.03em;
+    color: var(--bj-emerald-800);
+}
+
+/* Grupos de specs (2 columnas, SIN líneas — "placard de museo") */
+.pz-ficha-group { margin-top: 26px; }
+.pz-ficha-group-title { display: flex; align-items: center; gap: 9px; margin-bottom: 15px; }
+.pz-ficha-group-label {
+    font-family: var(--font-mono);
+    font-size: 9px; font-weight: 700;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--bj-emerald-800);
+    white-space: nowrap;
+}
+.pz-ficha-rule {
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, oklch(45% 0.06 155 / 0.22), transparent);
+}
+.pz-ficha-rows {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px 40px;
+}
+.pz-ficha-k {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 9px; font-weight: 400;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--bj-ink-mute);
+    margin-bottom: 6px;
+}
+.pz-ficha-v {
+    font-family: var(--font-display);
+    font-size: 22px; font-weight: 600; line-height: 1.05;
     color: var(--bj-ink-emerald);
 }
+/* Certificación: pastilla (sello) — esmeralda sutil, alineada a la marca (sin oro fuerte) */
+.pz-ficha-pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 6px 13px 6px 11px;
+    border-radius: 999px;
+    background: oklch(62% 0.16 155 / 0.10);
+    border: 1px solid oklch(55% 0.14 155 / 0.30);
+    font-family: var(--font-ui);
+    font-size: 11.5px; font-weight: 600; letter-spacing: 0.03em;
+    color: var(--bj-emerald-800);
+    white-space: nowrap;
+}
+
 @media (max-width: 480px) {
-    .pz-specs { grid-template-columns: 1fr; }
+    .pz-ficha-rows { grid-template-columns: 1fr; }
+    .pz-ficha-hero-name { font-size: 25px; }
 }
 
 /* Talla selector */
 .pz-talla {
     margin-bottom: 32px;
 }
-.pz-talla-label { margin-bottom: 12px; }
+.pz-talla-label { margin-bottom: 12px; text-align: center; }
 .pz-talla-pills {
     display: flex; gap: 8px;
     flex-wrap: wrap;
+    justify-content: center;   /* centradas: pocas pills no se ven feas alineadas a la izq (Daniel) */
 }
 .pz-talla-pill {
     min-width: 48px; height: 48px; padding: 0 14px;
@@ -223,7 +328,10 @@
     font-size: 14px; line-height: 1.6;
     color: var(--bj-ink-soft);
     max-width: 46ch;
+    margin: 0 auto;
+    text-align: center;
 }
+.pz-talla--medida { text-align: center; }
 /* Referencia discreta de la pieza */
 .pz-ref {
     margin-top: 14px;

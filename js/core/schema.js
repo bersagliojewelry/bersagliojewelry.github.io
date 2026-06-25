@@ -41,28 +41,45 @@ export function injectProductSchema(piece, getCategoryLabel, descriptionFor) {
     const desc = descriptionFor ? descriptionFor(piece) : (piece.description || '');
     const category = getCategoryLabel ? getCategoryLabel(piece) : (piece.collection || '');
 
+    const s = piece.specs || {};
+    const hasPrice = !!piece.price && Number.isFinite(Number(piece.price));
+    const metal = s.metal || s.gold || '';
+
+    // Specs ricas → additionalProperty (AEO: deja a Google/Perplexity/ChatGPT CITAR quilataje,
+    // claridad, material, certificación). SOLO campos con valor real (cero-demo).
+    const additionalProperty = [
+        ['Gema', s.stone], ['Quilates', s.carat], ['Color', s.color], ['Claridad', s.clarity],
+        ['Corte', s.cut], ['Acentos', s.accent], ['Metal', metal], ['Peso', s.weight],
+        ['Certificación', s.certificate], ['Origen', s.origin],
+    ].filter(([, v]) => v != null && String(v).trim() !== '')
+     .map(([name, value]) => ({ "@type": "PropertyValue", "name": name, "value": String(value) }));
+
     const productJson = {
         "@context": "https://schema.org/",
         "@type": "Product",
         "name": piece.name || 'Pieza',
         "image": image ? [image] : [],
-        "description": desc,
-        "sku": piece.ref || piece.id,
-        "mpn": piece.ref || piece.id,
-        "brand": {
-            "@type": "Brand",
-            "name": "Bersaglio Jewelry"
-        },
-        "offers": {
-            "@type": "Offer",
-            "url": url,
-            "priceCurrency": "COP",
-            "price": Number(piece.price || 0),
+        "description": desc || `${piece.name || 'Pieza'} — alta joyería Bersaglio.`,
+        // SKU/MPN = código real de la pieza (antes usaba `piece.ref`, campo inexistente → caía al id aleatorio).
+        "sku": piece.code || piece.id,
+        ...(piece.code ? { "mpn": piece.code } : {}),
+        "category": category,
+        "brand": { "@type": "Brand", "name": "Bersaglio Jewelry" },
+        ...(metal ? { "material": metal } : {}),
+        ...(additionalProperty.length ? { additionalProperty } : {}),
+        // Offer: NUNCA price:0 (Google lo rechaza). Con precio → InStock+precio; "Bajo consulta" → PreOrder sin price.
+        "offers": hasPrice ? {
+            "@type": "Offer", "url": url, "priceCurrency": "COP",
+            "price": Number(piece.price),
             "priceValidUntil": "2027-12-31",
             "itemCondition": "https://schema.org/NewCondition",
-            "availability": piece.price ? "https://schema.org/InStock" : "https://schema.org/PreOrder",
-            "valueAddedTaxIncluded": true
-        }
+            "availability": "https://schema.org/InStock",
+            "valueAddedTaxIncluded": true,
+        } : {
+            "@type": "Offer", "url": url, "priceCurrency": "COP",
+            "itemCondition": "https://schema.org/NewCondition",
+            "availability": "https://schema.org/PreOrder",
+        },
     };
     injectSchema('product-jsonld', productJson);
 }

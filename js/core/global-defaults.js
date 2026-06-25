@@ -29,6 +29,7 @@ export const GLOBAL_DEFAULTS = {
         sector:  'Centro Histórico',
         ciudad:  'Cartagena de Indias',
         pais:    'Colombia',
+        horario: 'Todos los días · 8:00 a.m. – 7:00 p.m.',
         mapsUrl: 'https://share.google/dg6nfdgIHaFanKVYe',
     },
     // Redes que NO son canal de contacto (solo botón en el footer).

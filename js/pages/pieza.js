@@ -25,10 +25,14 @@ import { cart } from '../core/cart.js';
 import { wishlist } from '../core/wishlist.js';
 import { injectProductSchema, injectBreadcrumbSchema } from '../core/schema.js';
 import { pieceUrl, pieceAbsUrl } from '../core/urls.js';
+import { balancedCols } from '../core/grid-balance.js';       // reparto inteligente de columnas
+import { track, trackPieceView } from '../analytics.js';      // medición GA4 (view_item / view_item_list)
 
 let _slug = '';
 let _viewIdx = 0;
 let _selectedSize = null;
+let _viewTrackedSlug = '';   // GA4 view_item: 1× por pieza (no en cada re-render)
+let _listTrackedSlug = '';   // GA4 view_item_list: 1× por pieza (impresión del riel)
 
 const TALLAS_COLLECTIONS = new Set(['anillos', 'argollas']);
 
@@ -272,33 +276,89 @@ function renderInfo(piece) {
         </div>`;
 }
 
-function renderRelated(piece) {
-    const all = data.getAll();
-    const slug = piece.slug || piece.id;
-    const col = data.collectionOf(piece);
-    let related = (col ? data.getByCollection(col.slug) : all.filter(p => p.collection === piece.collection))
-        .filter(p => (p.slug || p.id) !== slug);
-    if (related.length < 4) {
-        const fillers = all.filter(p => (p.slug || p.id) !== slug && !related.includes(p));
-        related = [...related, ...fillers].slice(0, 4);
-    } else {
-        related = related.slice(0, 4);
-    }
+// ── Recomendaciones por CONTENIDO (cero-ficción: nunca al azar bajo un título mentiroso) ──
+// Comité ×4 + consejo Gemini (TODO-36): la categoría es COMPUERTA (no peso suelto que se vuelque);
+// gema/metal/precio solo ORDENAN; precio ausente = neutro. Si faltan afines, se COMPLETA con
+// Destacadas (curaduría real, no azar) y el título cambia a uno honesto → riel completo SIN mentir.
+const _norm = s => String(s || '').toLowerCase();
+const _cap  = s => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+function stoneTokens(p) {
+    return _norm(p.specs?.stones || p.specs?.stone).split(/[^a-záéíóúñ]+/i).filter(t => t.length > 2);
+}
+function metalToken(p) {
+    return _norm(p.specs?.metal || p.specs?.gold).replace(/[^a-z0-9]+/g, ' ').trim();
+}
+function relatedScore(base, cand) {
+    const shared = stoneTokens(base).filter(t => stoneTokens(cand).includes(t)).length;
+    let score = shared * 20;
+    if (metalToken(base) && metalToken(base) === metalToken(cand)) score += 8;
+    const bp = Number(base.price), cp = Number(cand.price);   // precio ausente = NEUTRO (no penaliza)
+    if (bp > 0 && cp > 0 && Math.min(bp, cp) / Math.max(bp, cp) >= 0.6) score += 6;
+    if (cand.featured) score += 1;
+    return { score, shared };
+}
 
-    if (related.length === 0) return '';
+// Devuelve { shown[], lead, emph } o null (catálogo sin nada real que mostrar → ocultar el riel).
+function computeRelated(piece) {
+    const slug = piece.slug || piece.id;
+    const withImg = p => p.images?.[0] || p.image;
+    const others = data.getAll().filter(p => (p.slug || p.id) !== slug && withImg(p));
+    const sameCat = p => p.collection && p.collection === piece.collection;
+
+    // Afines = misma categoría (COMPUERTA) O comparten gema; ordenados: categoría primero, luego score.
+    const relevants = others
+        .map(p => ({ p, ...relatedScore(piece, p), same: sameCat(p) }))
+        .filter(x => x.same || x.shared > 0)
+        .sort((a, b) => (b.same - a.same) || (b.score - a.score))
+        .map(x => x.p);
+
+    const shown = relevants.slice(0, 4);
+    // Completar con DESTACADAS (curaduría); si aún faltan, otras piezas reales — NUNCA al azar mintiendo.
+    if (shown.length < 4) {
+        const have = new Set(shown.map(p => p.slug || p.id));
+        const pool = [...data.getFeatured(20).filter(p => withImg(p) && (p.slug || p.id) !== slug), ...others];
+        for (const p of pool) {
+            if (shown.length >= 4) break;
+            const k = p.slug || p.id;
+            if (!have.has(k)) { have.add(k); shown.push(p); }
+        }
+    }
+    if (shown.length === 0) return null;
+
+    // Título HONESTO: solo promete categoría/gema si TODO el riel es afín (sin relleno curado).
+    const onlyRelevant = shown.every(p => relevants.includes(p));
+    const mainGem = stoneTokens(piece)[0];
+    let lead, emph;
+    if (onlyRelevant && shown.every(p => p.collection === piece.collection)) {
+        lead = 'Más de';         emph = getCategoryLabel(piece);
+    } else if (onlyRelevant && mainGem && shown.every(p => stoneTokens(p).includes(mainGem))) {
+        lead = 'También en';     emph = _cap(mainGem);
+    } else {
+        lead = 'Más piezas del'; emph = 'atelier';
+    }
+    return { shown, lead, emph };
+}
+
+function renderRelated(piece) {
+    const rel = computeRelated(piece);
+    if (!rel) return '';
+    const { shown, lead, emph } = rel;
+    const cols = balancedCols(shown.length, 4);
     return html`
         <section class="pz-related">
             <div class="pz-related-header">
                 <div class="eyebrow">También podría gustarte</div>
-                <h2 class="pz-related-title">Más de <span class="italic emerald-text">${escape(getCategoryLabel(piece))}</span></h2>
+                <h2 class="pz-related-title">${escape(lead)} <span class="italic emerald-text">${escape(emph)}</span></h2>
             </div>
-            <div class="pz-related-grid">
-                ${related.map(p => {
+            <div class="pz-related-grid" style="--cols:${cols}">
+                ${shown.map((p, i) => {
                     const pSlug = p.slug || p.id;
                     const img = p.images?.[0] || p.image || '';
                     return html`
                         <a class="glass glass-iridescent pz-related-card"
-                           href="${pieceUrl(pSlug)}">
+                           href="${pieceUrl(pSlug)}"
+                           data-piece-slug="${escape(pSlug)}" data-piece-name="${escape(p.name || 'Pieza')}"
+                           data-list-id="related_pieces" data-index="${i}">
                             <div class="pz-related-imgwrap">
                                 <div class="pz-related-img" style="background:url('${escape(img)}') center/cover"></div>
                             </div>
@@ -392,6 +452,32 @@ function renderPage() {
         </div>`;
 }
 
+// GA4 view_item_list: dispara cuando el riel de relacionados ENTRA a pantalla (impresión real,
+// no solo render — consejo Gemini/comité). 1× por pieza. Lee los slugs ya pintados (sin recomputar).
+function trackRelatedImpression() {
+    if (_listTrackedSlug === _slug) return;
+    const grid = document.querySelector('.pz-related-grid');
+    if (!grid) return;
+    const cards = [...grid.querySelectorAll('[data-piece-slug]')];
+    if (!cards.length) return;
+    const fire = () => {
+        if (_listTrackedSlug === _slug) return;
+        _listTrackedSlug = _slug;
+        try {
+            track('view_item_list', {
+                item_list_id: 'related_pieces',
+                item_list_name: 'Relacionados',
+                items: cards.map((c, i) => ({ item_id: c.dataset.pieceSlug, item_name: c.dataset.pieceName, index: i })),
+            });
+        } catch { /* analítica nunca rompe el render */ }
+    };
+    if (typeof IntersectionObserver !== 'function') { fire(); return; }
+    const io = new IntersectionObserver((entries, obs) => {
+        if (entries.some(e => e.isIntersecting)) { fire(); obs.disconnect(); }
+    }, { threshold: 0.5 });
+    io.observe(grid);
+}
+
 function refresh() {
     const main = document.getElementById('main-content');
     if (!main) return;
@@ -422,6 +508,14 @@ function refresh() {
                 console.warn('[pieza] Schema injection failed:', err);
             }
         }
+
+        // ── Medición GA4 (TODO-36) — view_item 1× por pieza (NO en cada re-render) ──
+        try { sessionStorage.setItem('bj_cur_piece', _slug); } catch { /* sin storage */ }
+        if (_viewTrackedSlug !== _slug) {
+            _viewTrackedSlug = _slug;
+            try { trackPieceView(piece); } catch { /* analítica nunca rompe el render */ }
+        }
+        trackRelatedImpression();   // view_item_list cuando el riel entra a pantalla
     }
 }
 

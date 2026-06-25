@@ -395,9 +395,16 @@
     letter-spacing: -0.02em;
 }
 .pz-related-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 18px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;       /* fila incompleta centrada (sin huérfana a la izquierda) */
+    --cols: 4;                     /* JS = balancedCols (inline); CSS lo recorta en tablet/móvil */
+    --gap: 18px;
+    gap: var(--gap);
+}
+.pz-related-grid > .pz-related-card {
+    flex: 0 1 calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));
+    max-width: 340px;
 }
 .pz-related-card {
     text-decoration: none;
@@ -445,8 +452,8 @@
     font-size: 13px; font-weight: 600;
     color: var(--bj-emerald-800);
 }
-@media (max-width: 920px) { .pz-related-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 480px) { .pz-related-grid { grid-template-columns: 1fr 1fr; gap: 12px; } }
+@media (max-width: 920px) { .pz-related-grid { --cols: 2; } }
+@media (max-width: 480px) { .pz-related-grid { --cols: 2; --gap: 12px; } }
 
 /* ═══════════════════════════════════════════════════════════════════
    NOT FOUND

@@ -23,6 +23,7 @@ import { format$ } from '../core/format.js';
 import { data } from '../core/data.js';
 import { lqipBgStyle } from '../core/lqip.js';   // §110.4: blur-up de la pieza (degrada si no hay LQIP)
 import { injectCatalogSchema } from '../core/schema.js';
+import { balancedCols } from '../core/grid-balance.js';   // reparto inteligente de columnas (sin huérfanas)
 
 const SORTS = [
     { key: 'destacados', label: 'Destacados' },
@@ -122,7 +123,9 @@ function renderCard(p) {
     const price = Number(p.price || 0);
     return html`
         <a class="glass glass-iridescent cat-card"
-           href="${pieceUrl(slug)}">
+           href="${pieceUrl(slug)}"
+           data-piece-slug="${escape(slug)}" data-piece-name="${escape(p.name || 'Pieza')}"
+           data-list-id="catalogo" data-list-name="Catálogo">
             <div class="cat-card-imgwrap">
                 <div class="cat-card-img" style="${lqipBgStyle(img, p.imageLqip)};background-size:cover;background-position:center"></div>
                 <div class="cat-card-vignette" aria-hidden="true"></div>
@@ -163,8 +166,9 @@ function renderEmpty() {
 
 function renderGrid() {
     const list = applyFilters();
+    const cols = balancedCols(list.length, 4);   // reparto según cantidad (sin huérfana)
     return html`
-        <div class="cat-grid" data-grid>
+        <div class="cat-grid" data-grid style="--cols:${cols}">
             ${list.length === 0 ? renderEmpty() : list.map(renderCard)}
         </div>`;
 }
@@ -192,6 +196,7 @@ function refreshGrid() {
     const grid = document.querySelector('[data-grid]');
     if (!grid) return;
     const list = applyFilters();
+    grid.style.setProperty('--cols', balancedCols(list.length, 4));   // re-reparto al filtrar
     grid.innerHTML = list.length === 0 ? renderEmpty() : list.map(renderCard).join('');
     updateSchemaMetadata();
 }

@@ -514,10 +514,20 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 }
 
 .home-featured-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 22px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;       /* centra la fila incompleta (3+2) — sin huérfana a la izquierda */
+    --cols: 4;                     /* lo fija el JS (balancedCols) por inline style; el CSS lo recorta en móvil */
+    --gap: 22px;
+    gap: var(--gap);
 }
+.home-featured-grid > .home-featured-card {
+    /* grow 0 → la fila incompleta NO se estira; shrink 1 → sin wrap por sub-píxel. var() sí va en calc(). */
+    flex: 0 1 calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));
+    max-width: 460px;              /* tope anti-deformación en 4K / tarjeta sola (consejo front-end) */
+}
+@media (max-width: 920px) { .home-featured-grid { --cols: 2; } }
+@media (max-width: 560px) { .home-featured-grid { --cols: 1; } }
 .home-featured-card {
     padding: 0;
     border-radius: 30px;

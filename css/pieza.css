@@ -44,10 +44,13 @@
 /* ═══════════════════════════════════════════════════════════════════
    GALLERY
    ═══════════════════════════════════════════════════════════════════ */
+/* Galería: NO sticky. El sticky (top:110px) quedaba roto por `body{overflow-x:hidden}`
+   (un ancestro con overflow != visible rompe position:sticky) y desfasaba la imagen
+   respecto a la ficha al hacer scroll (Daniel 2026-06-25). Estática → ambas columnas
+   scrollean juntas y quedan SIEMPRE alineadas (delta 0). */
 .pz-gallery {
-    position: sticky; top: 110px;
+    position: static;
 }
-@media (max-width: 920px) { .pz-gallery { position: static; } }
 
 .pz-main {
     border-radius: 36px;

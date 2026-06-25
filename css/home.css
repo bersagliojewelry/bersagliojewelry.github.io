@@ -418,12 +418,14 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 .cat-dock {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: center;       /* fila incompleta centrada (7→ una línea; sin huérfana suelta) */
     gap: 18px;
+    --cols: var(--n, 6);           /* el JS escribe --n (hasta 7); el media query recorta --cols */
 }
 .cat-tile {
-    flex: 0 0 calc((100% - 90px) / 6);
-    max-width: calc((100% - 90px) / 6);
+    /* se reparte según cuántas colecciones haya (6 ó 7 en línea); shrink 1 evita wrap por sub-píxel */
+    flex: 0 1 calc((100% - (var(--cols) - 1) * 18px) / var(--cols));
+    max-width: 340px;
     position: relative;
     padding: 3px;
     border-radius: 28px;
@@ -480,10 +482,10 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     text-shadow: 0 1px 4px oklch(15% 0.05 155 / 0.6);
 }
 
-@media (max-width: 980px) { .cat-tile { flex-basis: calc((100% - 36px) / 3); max-width: calc((100% - 36px) / 3); } }
-@media (max-width: 520px) { .cat-tile { flex-basis: calc((100% - 18px) / 2); max-width: calc((100% - 18px) / 2); } }
+@media (max-width: 980px) { .cat-dock { --cols: 3; } }
+@media (max-width: 520px) { .cat-dock { --cols: 2; } }
 
-/* "Ver todas las colecciones" — aparece solo si hay más de 6 (cupo del inicio). */
+/* "Ver todas las colecciones" — aparece solo si hay más de 7 (cupo del inicio). */
 .home-cats-more { text-align: center; margin-top: 24px; }
 .home-cats-more-link {
     display: inline-flex; align-items: center; gap: 7px;
@@ -517,7 +519,7 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     display: flex;
     flex-wrap: wrap;
     justify-content: center;       /* centra la fila incompleta (3+2) — sin huérfana a la izquierda */
-    --cols: 4;                     /* lo fija el JS (balancedCols) por inline style; el CSS lo recorta en móvil */
+    --cols: var(--n, 4);           /* el JS escribe --n (ideal escritorio); el media query recorta --cols (móvil) */
     --gap: 22px;
     gap: var(--gap);
 }

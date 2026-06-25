@@ -64,7 +64,7 @@ function contentHtml(pieces) {
     return html`
         <div class="container">
             ${headerHtml()}
-            <div class="home-featured-grid" data-featured style="--cols:${cols}">
+            <div class="home-featured-grid" data-featured style="--n:${cols}">
                 ${shown.map(renderFeaturedCard)}
             </div>
         </div>`;

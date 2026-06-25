@@ -120,7 +120,7 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: center;       /* fila incompleta centrada (sin huérfana a la izquierda) */
-    --cols: 4;                     /* JS = balancedCols (inline); CSS lo recorta en móvil */
+    --cols: var(--n, 4);           /* el JS escribe --n; el media query recorta --cols en móvil */
     --gap: 22px;
     gap: var(--gap);
 }

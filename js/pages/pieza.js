@@ -350,7 +350,7 @@ function renderRelated(piece) {
                 <div class="eyebrow">También podría gustarte</div>
                 <h2 class="pz-related-title">${escape(lead)} <span class="italic emerald-text">${escape(emph)}</span></h2>
             </div>
-            <div class="pz-related-grid" style="--cols:${cols}">
+            <div class="pz-related-grid" style="--n:${cols}">
                 ${shown.map((p, i) => {
                     const pSlug = p.slug || p.id;
                     const img = p.images?.[0] || p.image || '';

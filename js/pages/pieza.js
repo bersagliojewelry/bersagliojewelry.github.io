@@ -206,7 +206,6 @@ function renderInfo(piece) {
                     <div class="pz-ficha-head"><span class="pz-ficha-mark"></span><span class="pz-ficha-head-label">Carta gemológica</span></div>
                     ${specs.hero ? html`
                         <div class="pz-ficha-hero">
-                            <div class="pz-ficha-hero-label">Gema principal</div>
                             <div class="pz-ficha-hero-name">${escape(specs.hero.name)}</div>
                             ${specs.hero.sub ? html`<div class="pz-ficha-hero-sub">${escape(specs.hero.sub)}</div>` : ''}
                         </div>` : ''}

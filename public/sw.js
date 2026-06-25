@@ -6,11 +6,11 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v30 — detalle de pieza: ficha técnica DINÁMICA (muestra todas las specs reales,
-// hide-when-empty), se eliminan datos FALSOS (Origen "Muzo"/Entrega "2-3 semanas" hardcodeados +
-// descripción inventada), tallas SOLO reales (campo admin `sizes`, sin 5-9 falsas), badge + ref +
-// CTA asesor primario sin precio. (v29 = menú admin instantáneo; v28 = admin sin VT.)
-const CACHE_NAME    = 'bersaglio-v30';
+// Bumped to v31 — REDISEÑO ficha de pieza "Carta Gemológica" (TODO-34): se reemplaza la grilla de
+// cuadritos por UN panel de cristal con la gema protagonista (hero) + specs agrupadas en 2 columnas
+// (Calidad / El metal / Origen y entrega) + sello de certificación; adaptativo y cero-demo (escala
+// 2..11 specs sin huecos). (v30 = ficha dinámica/tallas reales; v29 = menú admin instantáneo.)
+const CACHE_NAME    = 'bersaglio-v31';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

@@ -150,31 +150,133 @@
     margin-bottom: 32px;
 }
 
-/* Specs grid — adaptativo (1..N specs reales sin huecos; ficha técnica de alta joyería) */
-.pz-specs {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 10px;
+/* ═══════════════════════════════════════════════════════════════════
+   FICHA "CARTA GEMOLÓGICA" — un panel de cristal; la gema protagonista (TODO-34)
+   Reemplaza la grilla de cuadritos. Estructura adaptativa (hero + grupos): escala
+   de 2 a 11 specs sin huecos. Reusa .glass/.glass-iridescent (backdrop + canto).
+   ═══════════════════════════════════════════════════════════════════ */
+.pz-ficha {
+    position: relative;
+    overflow: hidden;
+    border-radius: 26px;
+    padding: 20px 22px 16px;
     margin-bottom: 32px;
+    /* Tinte esmeralda-perla sobre el backdrop-filter de .glass */
+    background: linear-gradient(162deg, oklch(99% 0.008 150 / 0.5), oklch(95% 0.03 152 / 0.4));
 }
-.pz-spec {
-    padding: 14px 16px;
-    border-radius: 16px;
+/* Filigrana: gema facetada grande y tenue, detrás del contenido */
+.pz-ficha-watermark {
+    position: absolute;
+    top: -28px; right: -34px;
+    width: 180px; height: 180px;
+    color: var(--bj-emerald-600);
+    opacity: 0.08;
+    transform: rotate(8deg);
+    pointer-events: none;
 }
-.pz-spec-key {
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
+.pz-ficha .pz-ficha-watermark { z-index: 0; }   /* gana a .glass > * { z-index:2 } */
+.pz-ficha-watermark svg { width: 100%; height: 100%; display: block; }
+
+.pz-ficha-head {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 16px;
+}
+.pz-ficha-head svg { color: var(--bj-emerald-700); }
+.pz-ficha-head span {
+    font-family: var(--font-mono);
+    font-size: 9px; font-weight: 700;
+    letter-spacing: 0.26em; text-transform: uppercase;
+    color: var(--bj-emerald-800);
+}
+
+/* Héroe: la gema (protagonista) */
+.pz-ficha-hero {
+    display: flex; align-items: center; gap: 16px;
+    padding-bottom: 16px; margin-bottom: 6px;
+    border-bottom: 1px solid oklch(45% 0.06 155 / 0.16);
+}
+.pz-ficha-hero-gem { flex-shrink: 0; color: var(--bj-emerald-700); line-height: 0; }
+.pz-ficha-hero-label {
+    font-family: var(--font-ui);
+    font-size: 9px; font-weight: 600;
+    letter-spacing: 0.2em; text-transform: uppercase;
     color: var(--bj-ink-mute);
-    margin-bottom: 4px;
+    margin-bottom: 3px;
 }
-.pz-spec-val {
-    font-size: 14px;
-    font-weight: 500;
+.pz-ficha-hero-name {
+    font-family: var(--font-display);
+    font-size: 27px; font-weight: 500; line-height: 1.04;
+    color: var(--bj-ink-emerald);
+    margin-bottom: 3px;
+}
+.pz-ficha-hero-sub {
+    font-family: var(--font-mono);
+    font-size: 12px; font-weight: 700; letter-spacing: 0.01em;
+    color: var(--bj-emerald-800);
+}
+
+/* Grupos de specs (2 columnas, etiqueta sobre valor) */
+.pz-ficha-group { margin-top: 14px; }
+.pz-ficha-group-title {
+    display: flex; align-items: center; gap: 7px;
+    font-family: var(--font-mono);
+    font-size: 8px; font-weight: 700;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--bj-gold-900);
+    margin-bottom: 7px;
+}
+.pz-ficha-group-title::before {
+    content: ""; width: 5px; height: 5px;
+    background: var(--bj-gold-700);
+    transform: rotate(45deg);
+    flex-shrink: 0;
+}
+.pz-ficha-rows {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 22px;
+}
+.pz-ficha-row {
+    display: flex; flex-direction: column;
+    padding: 6px 0;
+    border-bottom: 1px solid oklch(45% 0.06 155 / 0.12);
+}
+.pz-ficha-k {
+    font-family: var(--font-ui);
+    font-size: 9px; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--bj-ink-mute);
+    margin-bottom: 3px;
+}
+.pz-ficha-v {
+    font-family: var(--font-display);
+    font-size: 17px; font-weight: 500; line-height: 1.15;
     color: var(--bj-ink-emerald);
 }
+
+/* Certificación: sello dorado */
+.pz-ficha-cert {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px; padding-top: 14px;
+    border-top: 1px solid oklch(45% 0.06 155 / 0.16);
+}
+.pz-ficha-cert .pz-ficha-k { margin-bottom: 0; }
+.pz-ficha-cert-seal {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--font-ui);
+    font-size: 12px; font-weight: 600; letter-spacing: 0.03em;
+    color: var(--bj-emerald-900);
+    background: linear-gradient(180deg, oklch(97% 0.05 88 / 0.85), oklch(93% 0.07 85 / 0.7));
+    border: 1px solid oklch(80% 0.10 85 / 0.55);
+    padding: 5px 13px; border-radius: 999px;
+    box-shadow: 0 1px 0 oklch(100% 0 0 / 0.6) inset;
+}
+.pz-ficha-cert-seal svg { color: var(--bj-gold-700); }
+
 @media (max-width: 480px) {
-    .pz-specs { grid-template-columns: 1fr; }
+    .pz-ficha-rows { grid-template-columns: 1fr; }
+    .pz-ficha-hero-name { font-size: 24px; }
 }
 
 /* Talla selector */

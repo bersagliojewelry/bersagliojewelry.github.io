@@ -43,6 +43,22 @@ function gemSVG() {
     return html`<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="12,2 22,8.5 12,22 2,8.5"/></svg>`;
 }
 
+// Gema facetada (talla esmeralda) — firma gráfica de la "Carta Gemológica". Hereda
+// el color del contenedor (currentColor). Se usa en el héroe de la ficha y, en grande
+// y tenue, como filigrana de fondo del panel.
+function gemFacetSVG(size = 56) {
+    return html`<svg width="${size}" height="${size}" viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true">
+        <polygon points="40,6 72,24 72,56 40,74 8,56 8,24"/>
+        <line x1="8" y1="24" x2="72" y2="24"/>
+        <line x1="8" y1="56" x2="72" y2="56"/>
+        <line x1="24" y1="6" x2="8" y2="24"/>
+        <line x1="56" y1="6" x2="72" y2="24"/>
+        <line x1="24" y1="74" x2="8" y2="56"/>
+        <line x1="56" y1="74" x2="72" y2="56"/>
+        <polygon points="40,24 56,33 40,56 24,33" fill="oklch(62% 0.18 155 / 0.16)" stroke="currentColor" stroke-width="0.8"/>
+    </svg>`;
+}
+
 function heartSVG() {
     return html`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
 }
@@ -65,27 +81,45 @@ function priceDisplay(price) {
     return (price && Number.isFinite(Number(price))) ? format$(price) : 'Bajo consulta';
 }
 
-// Ficha técnica DINÁMICA: muestra SOLO los campos con valor REAL (hide-when-empty). Orden
-// curado de alta joyería. SIN defaults inventados (se eliminaron "Muzo, Colombia"/"2-3 semanas",
-// que el admin no controla y mentían). Origen/Entrega solo si el admin los captura (campos nuevos).
+// Ficha técnica DINÁMICA agrupada — "Carta Gemológica" (TODO-34). Estructura curada de
+// alta joyería: la GEMA es protagonista (hero) y el resto se agrupa en secciones. Cero-demo:
+// hero/grupo/fila aparecen SOLO si hay valor REAL (hide-when-empty); SIN defaults inventados.
+// Escala de 2 a 11 specs sin huecos. Si NO hay piedra, los datos gemológicos caen a un grupo
+// (no se pierde ningún dato real). Devuelve { hero|null, groups[], certificate }.
 function buildSpecs(piece) {
     const s = piece.specs || {};
-    const stones = s.stones || s.stone || '';
-    const primary = stones.includes('·') ? stones.split('·')[0].trim() : stones;
-    const candidates = [
-        { key: 'Gema principal', val: primary },
-        { key: 'Quilates',       val: s.carat },
-        { key: 'Color',          val: s.color },
-        { key: 'Claridad',       val: s.clarity },
-        { key: 'Corte',          val: s.cut },
-        { key: 'Acentos',        val: s.accent },
-        { key: 'Metal',          val: s.metal || s.gold },
-        { key: 'Peso',           val: s.weight },
-        { key: 'Origen',         val: s.origin },
-        { key: 'Entrega',        val: s.delivery },
-        { key: 'Certificación',  val: s.certificate },
-    ];
-    return candidates.filter(c => c.val != null && String(c.val).trim() !== '');
+    const clean = v => (v == null ? '' : String(v).trim());
+    const stones = clean(s.stones || s.stone);
+    const hasStone = stones !== '';
+    const carat = clean(s.carat);
+    const color = clean(s.color);
+
+    // Hero: la gema (nombre completo + quilates · color). Solo si hay piedra real.
+    const hero = hasStone
+        ? { name: stones, sub: [carat, color].filter(Boolean).join(' · ') }
+        : null;
+
+    const row = (key, val) => ({ key, val: clean(val) });
+    const groups = [
+        { title: 'Calidad', rows: [
+            // Sin hero, quilates/color no se pierden: caen aquí.
+            ...(hasStone ? [] : [row('Quilates', carat), row('Color', color)]),
+            row('Claridad', s.clarity),
+            row('Corte', s.cut),
+            row('Acentos', s.accent),
+        ] },
+        { title: 'El metal', rows: [
+            row('Metal', s.metal || s.gold),
+            row('Peso', s.weight),
+        ] },
+        { title: 'Origen y entrega', rows: [
+            row('Origen', s.origin),
+            row('Entrega', s.delivery),
+        ] },
+    ].map(g => ({ ...g, rows: g.rows.filter(r => r.val !== '') }))
+     .filter(g => g.rows.length > 0);
+
+    return { hero, groups, certificate: clean(s.certificate || s.gia) };
 }
 
 function getCategoryLabel(piece) {
@@ -158,13 +192,35 @@ function renderInfo(piece) {
 
             ${desc ? html`<p class="pz-info-desc">${escape(desc)}</p>` : ''}
 
-            ${specs.length ? html`
-                <div class="pz-specs">
-                    ${specs.map(s => html`
-                        <div class="glass pz-spec">
-                            <div class="pz-spec-key">${escape(s.key)}</div>
-                            <div class="pz-spec-val">${escape(s.val)}</div>
+            ${(specs.hero || specs.groups.length || specs.certificate) ? html`
+                <div class="glass glass-iridescent pz-ficha">
+                    <span class="pz-ficha-watermark" aria-hidden="true">${gemFacetSVG(180)}</span>
+                    <div class="pz-ficha-head">${gemSVG()}<span>Carta gemológica</span></div>
+                    ${specs.hero ? html`
+                        <div class="pz-ficha-hero">
+                            <span class="pz-ficha-hero-gem" aria-hidden="true">${gemFacetSVG(56)}</span>
+                            <div class="pz-ficha-hero-text">
+                                <div class="pz-ficha-hero-label">Gema principal</div>
+                                <div class="pz-ficha-hero-name">${escape(specs.hero.name)}</div>
+                                ${specs.hero.sub ? html`<div class="pz-ficha-hero-sub">${escape(specs.hero.sub)}</div>` : ''}
+                            </div>
+                        </div>` : ''}
+                    ${specs.groups.map(g => html`
+                        <div class="pz-ficha-group">
+                            <div class="pz-ficha-group-title">${escape(g.title)}</div>
+                            <div class="pz-ficha-rows">
+                                ${g.rows.map(r => html`
+                                    <div class="pz-ficha-row">
+                                        <span class="pz-ficha-k">${escape(r.key)}</span>
+                                        <span class="pz-ficha-v">${escape(r.val)}</span>
+                                    </div>`)}
+                            </div>
                         </div>`)}
+                    ${specs.certificate ? html`
+                        <div class="pz-ficha-cert">
+                            <span class="pz-ficha-k">Certificación</span>
+                            <span class="pz-ficha-cert-seal">${gemSVG()}${escape(specs.certificate)}</span>
+                        </div>` : ''}
                 </div>` : ''}
 
             ${sizes.length ? html`

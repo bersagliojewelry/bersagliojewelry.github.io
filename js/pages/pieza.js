@@ -241,8 +241,8 @@ function renderInfo(piece) {
                 </div>`
             : isRingLike ? html`
                 <div class="pz-talla pz-talla--medida">
-                    <div class="eyebrow pz-talla-label">Talla</div>
-                    <p class="pz-talla-medida-note">Talla a medida — su pieza se ajusta en taller. Consúltela con un asesor.</p>
+                    <div class="eyebrow pz-talla-label pz-talla-medida-title">Talla a medida</div>
+                    <p class="pz-talla-medida-note">Su pieza se ajusta en taller. Consúltela con un asesor.</p>
                 </div>` : ''}
 
             <div class="pz-actions">

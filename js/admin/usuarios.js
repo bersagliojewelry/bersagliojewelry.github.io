@@ -3,7 +3,7 @@
  * Only accessible by the Owner role.
  */
 
-import { admToast, admConfirm, initSidebar, esc, requireAuth } from './shared.js';
+import { admToast, admConfirm, initSidebar, esc, requireAuth, errorMessage } from './shared.js';
 import { createUser, updateUserRole, deactivateUser } from '../auth.js';
 import { firestoreDb } from '../firebase-config.js';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
@@ -27,7 +27,7 @@ async function loadUsers() {
         const snap = await getDocs(collection(firestoreDb, 'users'));
         _users = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
     } catch (err) {
-        admToast('Error al cargar usuarios', 'danger');
+        admToast(errorMessage(err, 'No se pudieron cargar los usuarios.'), 'danger');
         _users = [];
     }
 }
@@ -149,7 +149,7 @@ async function handleSave() {
         renderTable();
         closeModal();
     } catch (err) {
-        admToast(err.message, 'danger');
+        admToast(errorMessage(err, 'No se pudo guardar el usuario.'), 'danger');
     } finally {
         btn.disabled = false;
     }
@@ -166,7 +166,7 @@ async function handleDeactivate(uid) {
                 renderTable();
                 admToast('Usuario desactivado');
             } catch (err) {
-                admToast(err.message, 'danger');
+                admToast(errorMessage(err, 'No se pudo desactivar el usuario.'), 'danger');
             }
         }
     );

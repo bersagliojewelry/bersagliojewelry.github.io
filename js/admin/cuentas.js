@@ -6,7 +6,7 @@
  * Datos vía el módulo desacoplado `js/crm-service.js`.
  */
 
-import { requireAuth, initSidebar, admToast, esc } from './shared.js';
+import { requireAuth, initSidebar, admToast, esc, errorMessage } from './shared.js';
 import adminDb from './db.js';
 import {
     onClientesChange, createCliente, fetchVendedoras, onAllMovimientosChange, getConfig,
@@ -243,8 +243,7 @@ function wireModal() {
             closeModal();
             // La lista se refresca sola por onClientesChange.
         } catch (err) {
-            console.error('[cuentas] createCliente:', err);
-            admToast('No se pudo crear el cliente.', 'danger');
+            admToast(errorMessage(err, 'No se pudo crear el cliente.'), 'danger');
         } finally {
             btn.disabled = false;
         }

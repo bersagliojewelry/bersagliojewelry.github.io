@@ -4,7 +4,7 @@
  */
 
 import adminDb from './db.js';
-import { admToast, admConfirm, initSidebar, esc, requireAuth } from './shared.js';
+import { admToast, admConfirm, initSidebar, esc, requireAuth, errorMessage } from './shared.js';
 import { safeUrl } from '../core/safe-url.js';
 
 let _collections = [];
@@ -162,7 +162,7 @@ async function handleBannerFile(file) {
             : '';
         admToast(`Banner subido en WebP ${saved}`);
     } catch (err) {
-        admToast('Error al subir banner', 'danger');
+        admToast(errorMessage(err, 'No se pudo subir el banner.'), 'danger');
     } finally {
         progressWrap.hidden = true;
         progressBar.style.width = '0%';
@@ -296,7 +296,7 @@ async function handleSave() {
             admToast('La colección fue eliminada por otra persona.', 'danger', 5000);
             return;
         }
-        admToast(err?.message || 'Error al guardar colecci\u00f3n', 'danger');
+        admToast(errorMessage(err, 'No se pudo guardar la colecci\u00f3n.'), 'danger');
     }
 }
 
@@ -333,7 +333,7 @@ function handleDelete(id) {
                 await adminDb.deleteCollection(id);
                 admToast('Colecci\u00f3n eliminada', 'danger');
             } catch (err) {
-                admToast('Error al eliminar', 'danger');
+                admToast(errorMessage(err, 'No se pudo eliminar la colecci\u00f3n.'), 'danger');
             }
         }
     );

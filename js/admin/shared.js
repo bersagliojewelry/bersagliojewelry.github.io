@@ -180,6 +180,50 @@ export function admToast(msg, type = 'success', ms = 2500) {
     }, ms);
 }
 
+// ─── Traductor de errores → mensaje CORRESPONDIENTE ───────────────────────────
+// Un error de PERMISOS no debe mostrarse como "conexión" (caso real §117: subida de
+// imagen rechazada por rol → toast decía "Verifica tu conexión"). Mapea el `code` REAL
+// de Firebase (Auth/Firestore/Storage) a un mensaje claro Y SIEMPRE loguea el code para
+// diagnóstico. Úsalo en TODO catch de operación backend:
+//   admToast(errorMessage(err, 'No se pudo subir la imagen.'), 'danger');
+const ERROR_MESSAGES = {
+    // Permisos / sesión
+    'permission-denied':            'No tienes permiso para esta acción.',
+    'storage/unauthorized':         'No tienes permiso para subir o borrar esta imagen.',
+    'unauthenticated':              'Tu sesión expiró. Cierra sesión y vuelve a entrar.',
+    'storage/unauthenticated':      'Tu sesión expiró. Cierra sesión y vuelve a entrar.',
+    // Conexión / red / tiempo
+    'unavailable':                  'Sin conexión con el servidor. Revisa tu internet y reintenta.',
+    'deadline-exceeded':            'La operación tardó demasiado. Revisa tu conexión y reintenta.',
+    'storage/retry-limit-exceeded': 'Problema de conexión al subir. Reintenta.',
+    'storage/canceled':             'Subida cancelada.',
+    'storage/unknown':              'No se pudo subir (conexión o configuración). Reintenta.',
+    // Cuota / límites
+    'storage/quota-exceeded':       'El almacenamiento está lleno. Avisa al administrador.',
+    'resource-exhausted':           'Se alcanzó un límite del servicio. Intenta más tarde.',
+    // Datos / concurrencia
+    'not-found':                    'El elemento ya no existe (lo borró otra persona).',
+    'storage/object-not-found':     'La imagen ya no existe.',
+    'already-exists':               'Ya existe un elemento con ese identificador.',
+    'id-collision':                 'Ya existe un elemento con ese identificador.',
+    'failed-precondition':          'No se pudo completar: el estado cambió. Recarga e intenta.',
+    'aborted':                      'Otra persona lo modificó al mismo tiempo. Recarga e intenta.',
+    'version-conflict':             'Otra persona lo modificó mientras editabas. Recarga para ver los cambios.',
+    'invalid-argument':             'Hay un dato inválido. Revisa el formulario.',
+};
+
+/**
+ * Traduce un error a su mensaje CORRESPONDIENTE (por `code`) y loguea el code real.
+ * @param {*} err error capturado (Firebase u otro)
+ * @param {string} [fallback] mensaje si el code no está mapeado
+ * @returns {string} mensaje claro para el toast
+ */
+export function errorMessage(err, fallback = 'Ocurrió un error. Reintenta.') {
+    const code = (err && (err.code || err.name)) || '';
+    console.error('[admin] error:', code || '(sin code)', err?.message || err);   // SIEMPRE el code real
+    return ERROR_MESSAGES[code] || fallback;
+}
+
 // ─── Confirm dialog ───────────────────────────────────────────────────────────
 
 /**

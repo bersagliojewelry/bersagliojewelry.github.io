@@ -130,6 +130,7 @@ async function loadShell() {
         import('../components/cart-drawer.js').then(m => m.initCartDrawer?.()),
         import('../components/wishlist-drawer.js').then(m => m.initWishlistDrawer?.()),
         import('../components/cookie-banner.js').then(m => m.initCookieBanner?.()),
+        import('../analytics.js').then(m => m.initAnalytics?.()),   // GA4 + Consent Mode v2 (TODO-35 Fase C)
         import('../components/email-modal.js').then(m => m.initEmailModal?.()),
         import('../components/search-overlay.js').then(m => m.initSearchOverlay?.()),
         import('../components/quick-dock.js').then(m => m.mountQuickDock?.()),

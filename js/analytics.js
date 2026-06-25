@@ -11,7 +11,9 @@
  * ──────────────────────────────────────────────────
  */
 
-const GA4_ID      = 'G-HS26X60DK3';
+// Flujo "Bersaglio Jewelry Web" (URL bersagliojewelry.co) — verificado en GA 2026-06-25.
+// Override por env (VITE_GA_MEASUREMENT_ID) si algún día cambia; el fallback es el real.
+const GA4_ID      = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_GA_MEASUREMENT_ID) || 'G-HS26X60DK3';
 const FB_PIXEL_ID = 'PIXEL_ID_PLACEHOLDER'; // ← Reemplazar con ID real del Pixel de Facebook
 const HOTJAR_ID   = 0;                     // ← Reemplazar con Site ID real (0 = deshabilitado)
 
@@ -29,6 +31,19 @@ function loadGA4() {
 
     window.dataLayer = window.dataLayer || [];
     window.gtag = function() { window.dataLayer.push(arguments); };
+
+    // Consent Mode v2 (Ley 1581 / cookies): TODO denegado por defecto ANTES del config.
+    // GA corre en modo cookieless (pings anonimizados, sin cookies/PII) hasta que el
+    // visitante ACEPTA en el banner (cookie-banner.js → grantConsent). Cumplimiento +
+    // medición modelada desde el inicio.
+    window.gtag('consent', 'default', {
+        ad_storage:         'denied',
+        ad_user_data:       'denied',
+        ad_personalization: 'denied',
+        analytics_storage:  'denied',
+        wait_for_update:    500,
+    });
+
     window.gtag('js', new Date());
     window.gtag('config', GA4_ID, {
         page_path:       window.location.pathname + window.location.search,
@@ -37,6 +52,23 @@ function loadGA4() {
     });
 
     gaReady = true;
+
+    // Revisita que ya aceptó antes → conceder de inmediato.
+    try {
+        if (localStorage.getItem('bj-cookie-consent') === 'accepted') grantConsent();
+    } catch { /* sin localStorage → permanece en modo denegado */ }
+}
+
+// Consent Mode v2: el banner dispara 'bj:cookie-consent' con detail 'accept'/'decline'.
+// 'accept' → concede analytics + ads; 'decline' → permanece denegado (cookieless, cumple).
+function grantConsent() {
+    if (typeof window.gtag !== 'function') return;
+    window.gtag('consent', 'update', {
+        ad_storage:         'granted',
+        ad_user_data:       'granted',
+        ad_personalization: 'granted',
+        analytics_storage:  'granted',
+    });
 }
 
 /* ─── Facebook Meta Pixel ────────────────────────────────────── */
@@ -236,6 +268,11 @@ function bindDelegatedEvents() {
             lead_type: 'newsletter',
             email: e.detail
         });
+    });
+
+    // Consent Mode v2: conceder cuando el visitante ACEPTA en el banner de cookies.
+    document.addEventListener('bj:cookie-consent', e => {
+        if (e.detail === 'accept') grantConsent();
     });
 }
 

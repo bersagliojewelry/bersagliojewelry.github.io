@@ -272,6 +272,60 @@ function injectBusinessIntoIndex(cfg) {
     console.log('[generate] JSON-LD de marca (JewelryStore + WebSite) horneado en dist/index.html.');
 }
 
+// Hornea una PÁGINA DE LISTADO (catálogo o journal): flip noindex→index + canonical +
+// og:url + JSON-LD (CollectionPage/Blog con ItemList) + <noscript> con los enlaces, en
+// el dist/<filename>. items = [{name,url}]. (TODO-35 Fase A2.) Las páginas POR-ítem
+// (/coleccion/<slug>, /entrada baked) son A2b — cuando haya contenido.
+function injectListingPage(filename, mainAnchor, opts) {
+    const p = join(DIST, filename);
+    if (!existsSync(p)) { console.warn(`[generate] dist/${filename} no existe — salto listado.`); return; }
+    let html = readFileSync(p, 'utf-8');
+    if (html.includes('id="listing-jsonld"')) return; // idempotente
+    if (!html.includes('</head>') || !html.includes(mainAnchor)) {
+        throw new Error(`[generate] dist/${filename}: falta </head> o el ancla del <main> (${mainAnchor}).`);
+    }
+    const canonical = `${SITE_URL}/${filename}`;
+    // robots: noindex → index (página de listado real e indexable).
+    html = html.replace('<meta name="robots" content="noindex, nofollow">', '<meta name="robots" content="index, follow">');
+    // og:url del template apunta a "/" (home) — corregir a la página.
+    html = html.replace(`<meta property="og:url" content="${SITE_URL}/">`, `<meta property="og:url" content="${escapeAttr(canonical)}">`);
+
+    const schema = {
+        '@context': 'https://schema.org',
+        '@type': opts.schemaType,
+        name: opts.name,
+        description: opts.description,
+        url: canonical,
+        isPartOf: { '@id': WEBSITE_ID },
+        mainEntity: {
+            '@type': 'ItemList',
+            numberOfItems: opts.items.length,
+            itemListElement: opts.items.map((it, i) => ({ '@type': 'ListItem', position: i + 1, url: it.url, name: it.name })),
+        },
+    };
+    html = html.replace('</head>',
+        `    <script type="application/ld+json" id="listing-jsonld">${safeJsonLd(schema)}</script>\n</head>`);
+
+    const items = opts.items.map(it =>
+        `                <li><a href="${escapeAttr(it.url)}">${escapeHtml(it.name)}</a></li>`).join('\n');
+    const noscript = `
+    <noscript>
+        <div style="max-width:1100px;margin:96px auto;padding:24px;font-family:Manrope,system-ui,sans-serif">
+            <h1>${escapeHtml(opts.name)}</h1>
+            <p>${escapeHtml(opts.description)}</p>
+            ${items ? `<ul style="list-style:none;padding:0;line-height:2">\n${items}\n            </ul>` : ''}
+            <p><a href="${SITE_URL}/contacto.html">Hablar con un asesor</a></p>
+        </div>
+    </noscript>`;
+    html = html.replace(mainAnchor, mainAnchor + noscript);
+
+    if (html.length < MIN_BAKE_BYTES || !html.includes('</html>')) {
+        throw new Error(`[generate] dist/${filename} quedó inválido tras inyectar el listado.`);
+    }
+    writeFileSync(p, html);
+    console.log(`[generate] Listado horneado en dist/${filename} (${opts.items.length} ítems, index,follow).`);
+}
+
 // ===================== Generación de página =====================
 
 // Guard anti-regresión: el generador hace .replace() por string literal y FALLA EN
@@ -403,9 +457,11 @@ function generatePage(template, p, slug, collectionsById) {
 // Estáticas indexables (index,follow). lastmod FIJO — Google ignora el lastmod si
 // TODAS las páginas dicen "hoy". Colecciones/journal entran cuando se horneen (Fase A2).
 const STATIC_PAGES = [
-    { loc: '/',              freq: 'weekly',  prio: '1.0', lastmod: '2026-06-25' },
-    { loc: '/nosotros.html', freq: 'monthly', prio: '0.8', lastmod: '2026-06-25' },
-    { loc: '/contacto.html', freq: 'monthly', prio: '0.8', lastmod: '2026-06-25' },
+    { loc: '/',                 freq: 'weekly',  prio: '1.0', lastmod: '2026-06-25' },
+    { loc: '/colecciones.html', freq: 'weekly',  prio: '0.9', lastmod: '2026-06-25' },
+    { loc: '/journal.html',     freq: 'weekly',  prio: '0.6', lastmod: '2026-06-25' },
+    { loc: '/nosotros.html',    freq: 'monthly', prio: '0.8', lastmod: '2026-06-25' },
+    { loc: '/contacto.html',    freq: 'monthly', prio: '0.8', lastmod: '2026-06-25' },
 ];
 
 function isoDate(ts) {
@@ -503,12 +559,15 @@ async function main() {
     console.log('[generate] Conectando a Firestore…');
     const handle = await connectDb();
 
-    const [piecesSnap, colsSnap] = await Promise.all([
+    const [piecesSnap, colsSnap, journalSnap] = await Promise.all([
         fetchCollection(handle, 'pieces'),
         fetchCollection(handle, 'collections'),
+        fetchCollection(handle, 'journal'),
     ]);
     const allPieces = piecesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
     const collections = colsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const journalEntries = journalSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .filter(e => e.published === true);
     const collectionsById = new Map();
     for (const c of collections) {
         collectionsById.set(c.slug || c.id, c);
@@ -567,6 +626,20 @@ async function main() {
 
     // Schema de marca (JewelryStore + WebSite) horneado en dist/index.html desde tenant_config.json.
     injectBusinessIntoIndex(readTenantConfig());
+
+    // Páginas de listado indexables (catálogo + journal) — A2a. Por-categoría/por-artículo = A2b.
+    injectListingPage('colecciones.html', '<main id="main-content" data-screen-label="colecciones">', {
+        schemaType: 'CollectionPage',
+        name: 'Catálogo · Bersaglio Jewelry',
+        description: 'Anillos, aretes, collares y argollas de alta joyería: esmeralda colombiana, diamantes certificados y oro 18K.',
+        items: pieces.map(p => ({ name: p.name, url: `${SITE_URL}/pieza/${slugMap.get(String(p.id))}.html` })),
+    });
+    injectListingPage('journal.html', '<main id="main-content" data-screen-label="journal">', {
+        schemaType: 'Blog',
+        name: 'Journal · Bersaglio Jewelry',
+        description: 'Historias de alta joyería, esmeraldas colombianas y el oficio detrás de cada pieza.',
+        items: journalEntries.map(e => ({ name: e.title || e.name || e.slug || 'Entrada', url: `${SITE_URL}/entrada.html?e=${encodeURIComponent(e.slug || e.id)}` })),
+    });
 
     console.log('[generate] Listo.');
     process.exit(0);

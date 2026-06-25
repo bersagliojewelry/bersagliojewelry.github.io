@@ -24,6 +24,7 @@ import { html, escape } from '../core/html.js';
 import { cart } from '../core/cart.js';
 import { format$ } from '../core/format.js';
 import { data } from '../core/data.js';
+import { pieceUrl } from '../core/urls.js';
 
 let _root = null;
 let _backdrop = null;
@@ -164,12 +165,12 @@ function renderRow(row) {
     return html`
         <article class="bj-cart-row" data-slug="${escape(slug)}">
             <a class="bj-cart-row-img"
-               href="/pieza.html?p=${encodeURIComponent(piece.slug || slug)}"
+               href="${pieceUrl(piece.slug || slug)}"
                style="background-image:url('${escape(img)}')"
                aria-label="Ver ${escape(piece.name || '')}"></a>
             <div class="bj-cart-row-body">
                 <a class="bj-cart-row-name"
-                   href="/pieza.html?p=${encodeURIComponent(piece.slug || slug)}">${escape(piece.name || 'Pieza')}</a>
+                   href="${pieceUrl(piece.slug || slug)}">${escape(piece.name || 'Pieza')}</a>
                 <div class="bj-cart-row-meta mono">${escape(format$(price))}</div>
                 <div class="bj-cart-row-controls">
                     <div class="bj-cart-qty">

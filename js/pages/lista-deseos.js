@@ -20,6 +20,7 @@ import { html, escape } from '../core/html.js';
 import { format$ } from '../core/format.js';
 import { lqipBgStyle } from '../core/lqip.js';   // §110.4: blur-up de la pieza (degrada si no hay LQIP)
 import { data } from '../core/data.js';
+import { pieceUrl, pieceAbsUrl } from '../core/urls.js';
 import { cart } from '../core/cart.js';
 import { wishlist } from '../core/wishlist.js';
 import { mergeGlobal, waHref } from '../core/global-defaults.js';
@@ -33,7 +34,7 @@ function buildShareURL(rows) {
     const waBase = waHref(mergeGlobal(data.getSiteContent('global')).contacto.whatsapp);
     const lines = rows.map(r => {
         const name = r.piece?.name || r.slug;
-        const url  = `https://bersagliojewelry.co/pieza.html?p=${encodeURIComponent(r.slug)}`;
+        const url  = `${pieceAbsUrl(r.slug)}`;
         return `• ${name}\n  ${url}`;
     });
     const message = `Hola Bersaglio, me interesan estas piezas de mi lista:\n\n${lines.join('\n\n')}`;
@@ -89,12 +90,12 @@ function renderCard(row) {
     const inCart = cart.has(slug);
     return html`
         <article class="glass glass-iridescent wl-card" data-slug="${escape(slug)}">
-            <a class="wl-card-imglink" href="/pieza.html?p=${encodeURIComponent(piece.slug || slug)}">
+            <a class="wl-card-imglink" href="${pieceUrl(piece.slug || slug)}">
                 <div class="wl-card-img" style="${lqipBgStyle(img, piece.imageLqip)};background-size:cover;background-position:center"></div>
                 <div class="wl-card-vignette" aria-hidden="true"></div>
             </a>
             <div class="wl-card-body">
-                <a class="wl-card-name" href="/pieza.html?p=${encodeURIComponent(piece.slug || slug)}">${escape(piece.name || 'Pieza')}</a>
+                <a class="wl-card-name" href="${pieceUrl(piece.slug || slug)}">${escape(piece.name || 'Pieza')}</a>
                 <div class="mono wl-card-price">${escape(format$(piece.price))}</div>
                 <div class="wl-card-actions">
                     <button type="button"

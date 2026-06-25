@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
+    "generate": "node scripts/generate-pieces.mjs",
     "preview": "vite preview --host",
     "brain:check": "node scripts/brain-check.mjs",
     "test:rules": "firebase emulators:exec --only firestore --project demo-bersaglio \"node --test tests/firestore-rules.test.mjs\"",

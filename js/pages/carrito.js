@@ -37,6 +37,7 @@ import { html, escape } from '../core/html.js';
 import { format$ } from '../core/format.js';
 import { cart } from '../core/cart.js';
 import { data } from '../core/data.js';
+import { pieceUrl, pieceAbsUrl } from '../core/urls.js';
 import { mergeGlobal, waHref } from '../core/global-defaults.js';
 import { saveInquiry } from '../firestore-service.js';
 import { trackBeginCheckout, trackPurchase } from '../analytics.js';
@@ -141,11 +142,11 @@ function renderItemRow(row) {
     const img = piece.images?.[0] || piece.image || '';
     return html`
         <article class="ck-item" data-slug="${escape(slug)}">
-            <a class="ck-item-img" href="/pieza.html?p=${encodeURIComponent(piece.slug || slug)}"
+            <a class="ck-item-img" href="${pieceUrl(piece.slug || slug)}"
                style="background:url('${escape(img)}') center/cover"
                aria-label="Ver ${escape(piece.name || '')}"></a>
             <div class="ck-item-body">
-                <a class="ck-item-name" href="/pieza.html?p=${encodeURIComponent(piece.slug || slug)}">${escape(piece.name || 'Pieza')}</a>
+                <a class="ck-item-name" href="${pieceUrl(piece.slug || slug)}">${escape(piece.name || 'Pieza')}</a>
                 <div class="mono ck-item-price">${escape(format$(piece.price))}</div>
                 <div class="ck-item-controls">
                     <div class="ck-qty">
@@ -394,7 +395,7 @@ function buildWhatsAppCheckoutURL(rows) {
     const waBase = waHref(mergeGlobal(data.getSiteContent('global')).contacto.whatsapp);
     const lines = rows.map(r => {
         const name = r.piece?.name || r.slug;
-        const url  = `https://bersagliojewelry.co/pieza.html?p=${encodeURIComponent(r.slug)}`;
+        const url  = `${pieceAbsUrl(r.slug)}`;
         const px   = format$(r.piece?.price);
         return `• ${name} × ${r.qty}\n  ${px}\n  ${url}`;
     });

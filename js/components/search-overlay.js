@@ -26,6 +26,7 @@
 import { html, escape } from '../core/html.js';
 import { format$, debounce } from '../core/format.js';
 import { data } from '../core/data.js';
+import { pieceUrl } from '../core/urls.js';
 
 let _root = null;
 let _open = false;
@@ -146,8 +147,8 @@ function renderResults() {
                id="bj-search-result-${idx}"
                role="option"
                aria-selected="${idx === _activeIdx}"
-               href="/pieza.html?p=${encodeURIComponent(slug)}"
-               data-href="/pieza.html?p=${encodeURIComponent(slug)}">
+               href="${pieceUrl(slug)}"
+               data-href="${pieceUrl(slug)}">
                 <div class="bj-search-result-img" style="background-image:url('${escape(img)}')" aria-hidden="true"></div>
                 <div class="bj-search-result-body">
                     <div class="bj-search-result-name">${escape(p.name || 'Pieza')}</div>
@@ -178,7 +179,7 @@ function onInputKey(e) {
         e.preventDefault();
         const target = _results[_activeIdx];
         if (!target) return;
-        location.href = `/pieza.html?p=${encodeURIComponent(target.slug || target.id)}`;
+        location.href = pieceUrl(target.slug || target.id);
     }
 }
 

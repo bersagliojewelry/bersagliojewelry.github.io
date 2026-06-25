@@ -17,6 +17,7 @@ import { cart } from '../core/cart.js';
 import { format$ } from '../core/format.js';
 import { data } from '../core/data.js';
 import { mergeGlobal, waHref } from '../core/global-defaults.js';
+import { pieceUrl, pieceAbsUrl } from '../core/urls.js';
 
 let _root = null;
 let _backdrop = null;
@@ -72,7 +73,7 @@ function buildShareURL(rows) {
     const waBase = waHref(mergeGlobal(data.getSiteContent('global')).contacto.whatsapp);
     const lines = rows.map(r => {
         const name = r.piece?.name || r.slug;
-        const url = `https://bersagliojewelry.co/pieza.html?p=${encodeURIComponent(r.slug)}`;
+        const url = `${pieceAbsUrl(r.slug)}`;
         return `• ${name}\n  ${url}`;
     });
     const message = `Hola Bersaglio, me interesan estas piezas de mi lista:\n\n${lines.join('\n\n')}`;
@@ -164,12 +165,12 @@ function renderRow(row) {
     return html`
         <article class="bj-cart-row" data-slug="${escape(slug)}">
             <a class="bj-cart-row-img"
-               href="/pieza.html?p=${encodeURIComponent(piece.slug || slug)}"
+               href="${pieceUrl(piece.slug || slug)}"
                style="background-image:url('${escape(img)}')"
                aria-label="Ver ${escape(piece.name || '')}"></a>
             <div class="bj-cart-row-body">
                 <a class="bj-cart-row-name"
-                   href="/pieza.html?p=${encodeURIComponent(piece.slug || slug)}">${escape(piece.name || 'Pieza')}</a>
+                   href="${pieceUrl(piece.slug || slug)}">${escape(piece.name || 'Pieza')}</a>
                 <div class="bj-cart-row-meta mono">${escape(format$(piece.price))}</div>
                 <div class="bj-cart-row-controls">
                     <button type="button"

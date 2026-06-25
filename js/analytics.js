@@ -241,13 +241,28 @@ function bindDelegatedEvents() {
             if (name) track('view_item_list', { item_list_name: name });
         }
 
-        // view piece card
-        const pieceCard = e.target.closest('.piece-card');
+        // select_item: clic en CUALQUIER tarjeta de pieza (destacadas / catálogo / relacionados).
+        // Antes apuntaba a `.piece-card` (clase inexistente → evento MUERTO, cazado por Gemini).
+        const pieceCard = e.target.closest('[data-piece-slug]');
         if (pieceCard) {
-            const slug = pieceCard.querySelector('[data-cart-slug]')?.dataset.cartSlug ||
-                         pieceCard.querySelector('[data-wishlist-slug]')?.dataset.wishlistSlug;
-            const name = pieceCard.querySelector('.piece-name')?.textContent?.trim();
-            if (slug) track('select_item', { items: [{ item_id: slug, item_name: name }] });
+            const slug   = pieceCard.dataset.pieceSlug;
+            const listId = pieceCard.dataset.listId || '';
+            const idx    = pieceCard.dataset.index;
+            if (slug) {
+                track('select_item', {
+                    item_list_id: listId,
+                    items: [{
+                        item_id:   slug,
+                        item_name: pieceCard.dataset.pieceName,
+                        index:     idx != null ? Number(idx) : undefined,
+                    }],
+                });
+                // Semilla de co-vistas: si el clic viene del riel de recomendados, recuerda DESDE qué
+                // pieza, para que la próxima view_item lleve source_piece_slug (atribución de la reco).
+                if (listId === 'related_pieces') {
+                    try { sessionStorage.setItem('bj_rec_src', sessionStorage.getItem('bj_cur_piece') || ''); } catch { /* sin storage */ }
+                }
+            }
         }
     });
 
@@ -289,9 +304,17 @@ export function initAnalytics() {
  * @param {{ slug: string, name: string, collection: string, price: number }} piece
  */
 export function trackPieceView(piece) {
+    // Atribución de co-vista (reco → vista): si la pieza previa dejó su slug al hacer clic en el
+    // riel, lo adjuntamos UNA vez. La matriz base de co-vistas la reconstruye BigQuery por sesión.
+    let source = '';
+    try {
+        source = sessionStorage.getItem('bj_rec_src') || '';
+        if (source) sessionStorage.removeItem('bj_rec_src');
+    } catch { /* sin storage */ }
     track('view_item', {
         currency: 'COP',
         value: piece.price || 0,
+        ...(source ? { source_piece_slug: source } : {}),
         items: [{
             item_id:       piece.slug,
             item_name:     piece.name,

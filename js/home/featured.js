@@ -17,6 +17,7 @@ import { MIN_FEATURED } from '../core/home-sections.js';   // umbral de dignidad
 import { reservedHeight, rememberHeight } from '../core/section-reserve.js';
 import { lqipBgStyle } from '../core/lqip.js';             // §108 F3: blur-up (degrada si no hay LQIP)
 import { pieceUrl } from '../core/urls.js';               // SSoT URL pieza horneada (/pieza/<slug>.html)
+import { balancedCols } from '../core/grid-balance.js';   // reparto inteligente de columnas (sin huérfanas)
 
 // Piezas visibles en Destacadas = featured + con FOTO (la franja es un escaparate VISUAL).
 // Daniel 2026-06-23: el precio es OPCIONAL (price-on-request → format$ pinta "Cotización"); lo
@@ -58,11 +59,13 @@ function headerHtml() {
 }
 
 function contentHtml(pieces) {
+    const shown = pieces.slice(0, 6);
+    const cols = balancedCols(shown.length, 4);   // columnas según cuántas hay (sin huérfana)
     return html`
         <div class="container">
             ${headerHtml()}
-            <div class="home-featured-grid" data-featured>
-                ${pieces.slice(0, 6).map(renderFeaturedCard)}
+            <div class="home-featured-grid" data-featured style="--cols:${cols}">
+                ${shown.map(renderFeaturedCard)}
             </div>
         </div>`;
 }
@@ -95,7 +98,9 @@ function renderFeaturedCard(p) {
     const cat = p.collection || '';
     return html`
         <a class="glass glass-iridescent home-featured-card"
-           href="${pieceUrl(slug)}">
+           href="${pieceUrl(slug)}"
+           data-piece-slug="${escape(slug)}" data-piece-name="${escape(p.name || 'Pieza')}"
+           data-list-id="featured" data-list-name="Piezas destacadas">
             <div class="home-featured-card-imgwrap">
                 <div class="home-featured-card-img" style="${lqipBgStyle(img, p.imageLqip)};background-size:cover;background-position:center"></div>
                 <div class="home-featured-card-vignette" aria-hidden="true"></div>

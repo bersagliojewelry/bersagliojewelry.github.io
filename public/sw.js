@@ -6,11 +6,10 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v32 — ficha "Carta Gemológica" REFINADA (TODO-34, guía Claude Design handoff): gema =
-// octágono talla-esmeralda con lustre radial (antes hexágono plano que no parecía gema) + specs SIN
-// líneas (placard de museo) + valores Cormorant 22px + marcadores octágono dorado + certificación
-// como pastilla. (v31 = rediseño ficha base; v30 = ficha dinámica/tallas reales.)
-const CACHE_NAME    = 'bersaglio-v32';
+// Bumped to v33 — TODO-36: grilla inteligente (Flexbox que se acomoda a la cantidad, sin huérfana)
+// en destacadas/catálogo/relacionados + recomendaciones por CONTENIDO (sin relleno al azar, título
+// honesto) + medición GA4 real (view_item/view_item_list/select_item). (v32 = ficha "Carta Gemológica".)
+const CACHE_NAME    = 'bersaglio-v33';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

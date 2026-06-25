@@ -26,12 +26,13 @@ import { safeUrl } from '../core/safe-url.js';
 import { cardsFrom } from './categories-data.js';
 import { reservedHeight, rememberHeight } from '../core/section-reserve.js';
 import { lqipImgStyle } from '../core/lqip.js';   // §108 F3: blur-up del banner (degrada si no hay LQIP)
+import { balancedCols } from '../core/grid-balance.js';   // reparto inteligente (6 ó 7 colecciones, sin huérfana)
 
 // object-position permitido (anti CSS-injection si 'pos' se vuelve editable).
 const POS_RE = /^(left|right|center|top|bottom|\d{1,3}%|\s)+$/i;
 const safePos = (p) => (typeof p === 'string' && POS_RE.test(p.trim()) ? p.trim() : 'center');
 
-const MAX_CATS = 6;   // cupo del inicio (Daniel 2026-06-21)
+const MAX_CATS = 7;   // cupo del inicio: hasta 7 colecciones destacadas en línea (Daniel 2026-06-25)
 
 // Colecciones reales (vacío → [] → sección colapsada).
 const cards = () => cardsFrom(data.getCollections());
@@ -99,7 +100,7 @@ function contentHtml(list, total) {
     return html`
         <div class="container">
             ${headerHtml()}
-            <div class="cat-dock" data-categories>
+            <div class="cat-dock" data-categories style="--n:${balancedCols(list.length, MAX_CATS)}">
                 ${list.map(tile)}
             </div>
             ${total > MAX_CATS ? html`

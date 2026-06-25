@@ -398,7 +398,7 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: center;       /* fila incompleta centrada (sin huérfana a la izquierda) */
-    --cols: 4;                     /* JS = balancedCols (inline); CSS lo recorta en tablet/móvil */
+    --cols: var(--n, 4);           /* el JS escribe --n; el media query recorta --cols en tablet/móvil */
     --gap: 18px;
     gap: var(--gap);
 }

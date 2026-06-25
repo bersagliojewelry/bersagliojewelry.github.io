@@ -168,7 +168,7 @@ function renderGrid() {
     const list = applyFilters();
     const cols = balancedCols(list.length, 4);   // reparto según cantidad (sin huérfana)
     return html`
-        <div class="cat-grid" data-grid style="--cols:${cols}">
+        <div class="cat-grid" data-grid style="--n:${cols}">
             ${list.length === 0 ? renderEmpty() : list.map(renderCard)}
         </div>`;
 }
@@ -196,7 +196,7 @@ function refreshGrid() {
     const grid = document.querySelector('[data-grid]');
     if (!grid) return;
     const list = applyFilters();
-    grid.style.setProperty('--cols', balancedCols(list.length, 4));   // re-reparto al filtrar
+    grid.style.setProperty('--n', balancedCols(list.length, 4));   // re-reparto al filtrar
     grid.innerHTML = list.length === 0 ? renderEmpty() : list.map(renderCard).join('');
     updateSchemaMetadata();
 }

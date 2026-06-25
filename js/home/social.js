@@ -30,9 +30,9 @@ const PLATFORM_PATHS = {
 
 // Perfiles REALES de marca (identidad estática, no ficción) — botones "Síguenos".
 const FOLLOW = {
-    Instagram: 'https://www.instagram.com/bersagliojewelry/',
-    Facebook: 'https://www.facebook.com/bersagliojewelry',
-    TikTok: 'https://www.tiktok.com/@bersagliojewelry',
+    Instagram: 'https://www.instagram.com/bersaglio_jewelry/',
+    Facebook: 'https://www.facebook.com/profile.php?id=61583793442626',
+    TikTok: 'https://www.tiktok.com/@bersaglio_jewelry',
 };
 
 function platformIcon(name, size) {
@@ -76,7 +76,7 @@ function socialInner() {
             </div>
 
             <div class="social-follow">
-                <a class="btn-aqua" href="${FOLLOW.Instagram}" target="_blank" rel="noopener noreferrer">${platformIcon('Instagram', 15)} @bersagliojewelry</a>
+                <a class="btn-aqua" href="${FOLLOW.Instagram}" target="_blank" rel="noopener noreferrer">${platformIcon('Instagram', 15)} @bersaglio_jewelry</a>
                 <a class="btn-aqua" href="${FOLLOW.TikTok}" target="_blank" rel="noopener noreferrer">${platformIcon('TikTok', 14)} TikTok</a>
                 <a class="btn-aqua" href="${FOLLOW.Facebook}" target="_blank" rel="noopener noreferrer">${platformIcon('Facebook', 15)} Facebook</a>
             </div>

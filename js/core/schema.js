@@ -3,6 +3,8 @@
  * Dynamically generates and injects schema.org metadata.
  */
 
+import { pieceAbsUrl } from './urls.js';
+
 /**
  * Helper to inject or update a JSON-LD script tag by ID.
  * @param {string} id - The script tag ID
@@ -36,7 +38,7 @@ export function removeSchema(id) {
  */
 export function injectProductSchema(piece, getCategoryLabel, descriptionFor) {
     if (!piece) return;
-    const url = `https://bersagliojewelry.co/pieza.html?p=${encodeURIComponent(piece.slug || piece.id)}`;
+    const url = pieceAbsUrl(piece);
     const image = piece.images?.[0] || piece.image || '';
     const desc = descriptionFor ? descriptionFor(piece) : (piece.description || '');
     const category = getCategoryLabel ? getCategoryLabel(piece) : (piece.collection || '');
@@ -139,7 +141,7 @@ export function injectCatalogSchema(collection, list) {
             "itemListElement": list.map((p, idx) => ({
                 "@type": "ListItem",
                 "position": idx + 1,
-                "url": `https://bersagliojewelry.co/pieza.html?p=${encodeURIComponent(p.slug || p.id)}`
+                "url": pieceAbsUrl(p)
             }))
         }
     };

@@ -18,6 +18,7 @@
  */
 
 import { html, escape, mount } from '../core/html.js';
+import { pieceUrl } from '../core/urls.js';
 import { format$ } from '../core/format.js';
 import { data } from '../core/data.js';
 import { lqipBgStyle } from '../core/lqip.js';   // §110.4: blur-up de la pieza (degrada si no hay LQIP)
@@ -121,7 +122,7 @@ function renderCard(p) {
     const price = Number(p.price || 0);
     return html`
         <a class="glass glass-iridescent cat-card"
-           href="/pieza.html?p=${encodeURIComponent(slug)}">
+           href="${pieceUrl(slug)}">
             <div class="cat-card-imgwrap">
                 <div class="cat-card-img" style="${lqipBgStyle(img, p.imageLqip)};background-size:cover;background-position:center"></div>
                 <div class="cat-card-vignette" aria-hidden="true"></div>

@@ -24,6 +24,7 @@ import { data } from '../core/data.js';
 import { cart } from '../core/cart.js';
 import { wishlist } from '../core/wishlist.js';
 import { injectProductSchema, injectBreadcrumbSchema } from '../core/schema.js';
+import { pieceUrl, pieceAbsUrl } from '../core/urls.js';
 
 let _slug = '';
 let _viewIdx = 0;
@@ -32,6 +33,9 @@ let _selectedSize = null;
 const TALLAS_COLLECTIONS = new Set(['anillos', 'argollas']);
 
 function getSlugFromURL() {
+    // Página HORNEADA (/pieza/<slug>.html) → window.PRERENDERED_PIECE_SLUG (sin ?p=, lo
+    // inyecta el SSG). Shell legacy /pieza.html?p=<slug> → query param. (TODO-35.)
+    if (typeof window !== 'undefined' && window.PRERENDERED_PIECE_SLUG) return window.PRERENDERED_PIECE_SLUG;
     return new URL(location.href).searchParams.get('p') || '';
 }
 
@@ -233,7 +237,7 @@ function renderRelated(piece) {
                     const img = p.images?.[0] || p.image || '';
                     return html`
                         <a class="glass glass-iridescent pz-related-card"
-                           href="/pieza.html?p=${encodeURIComponent(pSlug)}">
+                           href="${pieceUrl(pSlug)}">
                             <div class="pz-related-imgwrap">
                                 <div class="pz-related-img" style="background:url('${escape(img)}') center/cover"></div>
                             </div>
@@ -336,9 +340,9 @@ function refresh() {
     if (piece) {
         document.title = `${piece.name} · Bersaglio Jewelry`;
         const canonical = document.querySelector('link[rel="canonical"]');
-        if (canonical) canonical.setAttribute('href', `https://bersagliojewelry.co/pieza.html?p=${encodeURIComponent(_slug)}`);
+        if (canonical) canonical.setAttribute('href', pieceAbsUrl(_slug));
         const ogUrl = document.querySelector('meta[property="og:url"]');
-        if (ogUrl) ogUrl.setAttribute('content', `https://bersagliojewelry.co/pieza.html?p=${encodeURIComponent(_slug)}`);
+        if (ogUrl) ogUrl.setAttribute('content', pieceAbsUrl(_slug));
         const ogTitle = document.querySelector('meta[property="og:title"]');
         if (ogTitle) ogTitle.setAttribute('content', `${piece.name} · Bersaglio Jewelry`);
         const ogImg = document.querySelector('meta[property="og:image"]');
@@ -346,12 +350,16 @@ function refresh() {
             ogImg.setAttribute('content', piece.images?.[0] || piece.image);
         }
 
-        // Inject dynamic JSON-LD schemas for GSC and SEO optimization
-        try {
-            injectProductSchema(piece, getCategoryLabel, descriptionFor);
-            injectBreadcrumbSchema(piece, getCategoryLabel);
-        } catch (err) {
-            console.warn('[pieza] Schema injection failed:', err);
+        // Schema JSON-LD: en la página HORNEADA (SSG) ya viene en el <head> verificable
+        // por crawlers sin JS. Solo se inyecta en el shell legacy ?p= (sin schema baked)
+        // para no DUPLICARlo. (TODO-35.)
+        if (!(typeof window !== 'undefined' && window.PRERENDERED_PIECE_SLUG)) {
+            try {
+                injectProductSchema(piece, getCategoryLabel, descriptionFor);
+                injectBreadcrumbSchema(piece, getCategoryLabel);
+            } catch (err) {
+                console.warn('[pieza] Schema injection failed:', err);
+            }
         }
     }
 }

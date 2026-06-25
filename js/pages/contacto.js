@@ -52,7 +52,7 @@ const CANALES = [
         k: 'whatsapp',
         t: 'WhatsApp',
         v: '+57 301 375 2592',
-        d: 'Respuesta inmediata · 09:00–20:00',
+        d: 'Respuesta inmediata · 08:00–19:00',
         href: 'https://wa.me/573013752592',
         icon: html`<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 0 1-1.587-5.945C.16 5.335 5.495 0 12.05 0a11.817 11.817 0 0 1 8.413 3.488 11.824 11.824 0 0 1 3.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 0 1-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 0 0 1.51 5.26l-.999 3.648 3.737-.979zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>`,
     },
@@ -67,22 +67,24 @@ const CANALES = [
     {
         k: 'instagram',
         t: 'Instagram',
-        v: '@bersagliojewelry',
+        v: '@bersaglio_jewelry',
         d: 'Mensaje directo',
-        href: 'https://instagram.com/bersagliojewelry',
+        href: 'https://instagram.com/bersaglio_jewelry',
         icon: html`<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41a3.7 3.7 0 0 1-1.38-.9 3.7 3.7 0 0 1-.9-1.38c-.16-.42-.36-1.06-.41-2.23C2.17 15.58 2.16 15.2 2.16 12s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41C8.42 2.17 8.8 2.16 12 2.16zm0 3.68A6.16 6.16 0 1 0 18.16 12 6.16 6.16 0 0 0 12 5.84zm0 10.16A4 4 0 1 1 16 12a4 4 0 0 1-4 4zm6.4-10.4a1.44 1.44 0 1 1-1.44-1.44 1.44 1.44 0 0 1 1.44 1.44z"/></svg>`,
     },
 ];
 
 const HORAS  = ['10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+// Horario real (Daniel 2026-06-25): todos los días 8:00 a.m.–7:00 p.m. Idéntico al
+// openingHoursSpecification del schema (tenant_config.json) y a global-defaults.direccion.horario.
 const HORARIOS = [
-    { d: 'Lunes',     h: '10:00 – 19:00',          abierto: true },
-    { d: 'Martes',    h: '10:00 – 19:00',          abierto: true },
-    { d: 'Miércoles', h: '10:00 – 19:00',          abierto: true },
-    { d: 'Jueves',    h: '10:00 – 19:00',          abierto: true },
-    { d: 'Viernes',   h: '10:00 – 20:00',          abierto: true },
-    { d: 'Sábado',    h: '10:00 – 18:00',          abierto: true },
-    { d: 'Domingo',   h: 'Solo con cita previa',   abierto: false },
+    { d: 'Lunes',     h: '08:00 – 19:00', abierto: true },
+    { d: 'Martes',    h: '08:00 – 19:00', abierto: true },
+    { d: 'Miércoles', h: '08:00 – 19:00', abierto: true },
+    { d: 'Jueves',    h: '08:00 – 19:00', abierto: true },
+    { d: 'Viernes',   h: '08:00 – 19:00', abierto: true },
+    { d: 'Sábado',    h: '08:00 – 19:00', abierto: true },
+    { d: 'Domingo',   h: '08:00 – 19:00', abierto: true },
 ];
 
 const MOTIVOS = [
@@ -477,7 +479,7 @@ function renderSidebar() {
                         San Agustín Chiquita · Centro Histórico<br>
                         Bolívar, Colombia
                     </p>
-                    <a href="https://maps.google.com/?q=Cartagena+Centro+Hist%C3%B3rico" target="_blank" rel="noopener" class="ct-atelier-mapbtn">
+                    <a href="${escape(safeUrl(GLOBAL_DEFAULTS.direccion.mapsUrl))}" target="_blank" rel="noopener" class="ct-atelier-mapbtn">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                         Abrir en mapas
                     </a>

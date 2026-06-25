@@ -397,6 +397,9 @@ function populateForm(form, piece) {
     form.querySelector('[name="specs.color"]').value       = specs.color || '';
     form.querySelector('[name="specs.clarity"]').value     = specs.clarity || '';
     form.querySelector('[name="specs.weight"]').value      = specs.weight || '';
+    form.querySelector('[name="specs.origin"]').value      = specs.origin || '';
+    form.querySelector('[name="specs.delivery"]').value    = specs.delivery || '';
+    form.querySelector('[name="sizes"]').value = Array.isArray(piece.sizes) ? piece.sizes.join(', ') : '';
 }
 
 async function handleSave() {
@@ -426,10 +429,13 @@ async function handleSave() {
     }
 
     const specs = {};
-    ['stone','carat','metal','accent','certificate','cut','color','clarity','weight'].forEach(k => {
+    ['stone','carat','metal','accent','certificate','cut','color','clarity','weight','origin','delivery'].forEach(k => {
         const v = get(`specs.${k}`);
         if (v) specs[k] = v;
     });
+
+    // Tallas disponibles (bug-1): array que controla Kary. Vacío → la pieza muestra "a medida".
+    const sizes = get('sizes').split(',').map(s => s.trim()).filter(Boolean);
 
     const piece = {
         id:          get('id') || null,
@@ -442,6 +448,7 @@ async function handleSave() {
         featured:    form.querySelector('[name="featured"]').checked,
         priceLabel:  get('priceLabel') || 'Consultar precio',
         specs,
+        sizes,       // array (posiblemente vacío) — vacío = "a medida" en el detalle
         images:      _uploadedImages.length ? [..._uploadedImages] : [],
         image:       _uploadedImages[0] || null,
     };

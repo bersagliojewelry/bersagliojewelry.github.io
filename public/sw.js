@@ -6,11 +6,11 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v29 — A3 §TODO-33: el menú admin se pinta AL INSTANTE desde el rol cacheado
-// (sessionStorage `bj_role`) al importar shared.js, sin esperar la cascada de auth (~900ms) →
-// el rail ya no "desaparece y demora en aparecer" en cada navegación. (v28 = admin sin VT
-// heredadas; v27 = §107 VT público.)
-const CACHE_NAME    = 'bersaglio-v29';
+// Bumped to v30 — detalle de pieza: ficha técnica DINÁMICA (muestra todas las specs reales,
+// hide-when-empty), se eliminan datos FALSOS (Origen "Muzo"/Entrega "2-3 semanas" hardcodeados +
+// descripción inventada), tallas SOLO reales (campo admin `sizes`, sin 5-9 falsas), badge + ref +
+// CTA asesor primario sin precio. (v29 = menú admin instantáneo; v28 = admin sin VT.)
+const CACHE_NAME    = 'bersaglio-v30';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

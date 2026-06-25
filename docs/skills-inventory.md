@@ -38,6 +38,7 @@
 | Skill (name) | Para qué | Disp. |
 |---|---|---|
 | `brainstorming` | Explorar intención/requisitos ANTES de construir | ✅ |
+| `spec-kit` | **Spec-Driven Development** (método GitHub spec-kit, MIT): idea→spec→clarify→plan→tasks→analyze→implement con [NEEDS CLARIFICATION]+constitución+test-first. Plantillas en `references/` + subagentes `spec-analyze`/`plan-auditor`. Para features NUEVAS no triviales. Global+repo (2026-06-25). | ✅ |
 | `writing-plans` | Escribir plan de implementación multi-paso | ✅ |
 | `executing-plans` | Ejecutar un plan con checkpoints de revisión | ✅ |
 | `subagent-driven-development` | Ejecutar plan con subagentes en la sesión | ✅ |

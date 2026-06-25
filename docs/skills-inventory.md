@@ -31,12 +31,24 @@
 
 ---
 
-## 🌐 Paquete de Visibilidad (propagado por el HUB Altorra Cars · TODO-35, 2026-06-25)
-> Skills PORTABLES (vertical JewelryStore/AutoDealer/RealEstateAgent vía `tenant_config.json`) que **Altorra Cars (HUB)
-> construye y propaga** a los proyectos. Spec → bóveda `2026-06-25-antigravity-visibilidad-RESPUESTA-integrada.md`.
-> Llegando en vivo (catalogar c/u al USARLAS en la sesión de implementación): `ssg-static-prerender` ✅ ·
-> `semantic-schema-aeo` ✅ · `ga4-lead-tracking` ✅ · (pend.) `search-console-setup-y-diagnostico` · `maps-gbp-local` ·
-> `product-feeds` · `image-pipeline`. Disp. ✅ (vía tool `Skill`).
+## 🌐 Paquete de Visibilidad (propagado por el HUB Altorra Cars · ADR §244 cars · 2026-06-25)
+> 7 skills PORTABLES (vertical JewelryStore/AutoDealer/RealEstateAgent vía `tenant_config.json`) + agente
+> `seo-auditor` (read-only), propagadas **byte-idénticas** desde el HUB (Altorra Cars). Arquitectura HUB
+> **IoC + core-funciones-puras + D′ vendored**. La IMPLEMENTACIÓN en este sitio (tenant_config + templates +
+> `visibility-core` + wiring) la hace la sesión de ESTE proyecto, con datos REALES del dueño (cero-demo).
+> Onboarding/checklist → `skills/ssg-static-prerender/references/onboarding-nuevo-proyecto-al-hub.md`.
+> Reglas: schema-en-HTML-del-build · cero-demo · status:published · slug inmutable · NAP maestro · Consent Mode v2.
+
+| Skill (name) | Para qué | Disp. |
+|---|---|---|
+| `ssg-static-prerender` | Hornear HTML real por ítem en el build (la BASE; lleva la arquitectura HUB + `tenant_config` + contrato IoC del core en `references/`). | ✅ |
+| `semantic-schema-aeo` | Structured data por tipo de página + AEO (ser citado por IA; 20% código/80% off-page). FUSIÓN schema+answer-engine. | ✅ |
+| `ga4-lead-tracking` | GA4 por LEAD (no purchase) + Consent Mode v2 (Ley 1581) + links WhatsApp trazables (dark-social). | ✅ |
+| `maps-gbp-local` | Local pack #1 / GBP: 3 ejes + NAP maestro + LocalBusiness schema + reseñas reales + inventario en GBP. | ✅ |
+| `search-console-setup-y-diagnostico` | Alta GSC + árbol de diagnóstico "no salgo en Google" + bucle mensual + API histórico. | ✅ |
+| `product-feeds` | Feeds en el build por vertical (Merchant/Vehicle+Local Inventory/FincaRaíz-Metrocuadrado) — empujar catálogo. | ✅ |
+| `image-pipeline` | WebP/AVIF + srcset + `width/height` (CWV) + `ImageObject` + alt real + EXIF geo opcional. NUNCA upscaling. | ✅ |
+| `seo-auditor` *(agente)* | Auditor read-only de visibilidad: verifica el HTML del build vs las reglas (schema-en-HTML, cero-demo, noindex, NAP, CWV). | ✅ agente |
 
 ## 🧬 Proceso / Desarrollo (superpowers + dev)
 

@@ -31,6 +31,13 @@
 
 ---
 
+## 🌐 Paquete de Visibilidad (propagado por el HUB Altorra Cars · TODO-35, 2026-06-25)
+> Skills PORTABLES (vertical JewelryStore/AutoDealer/RealEstateAgent vía `tenant_config.json`) que **Altorra Cars (HUB)
+> construye y propaga** a los proyectos. Spec → bóveda `2026-06-25-antigravity-visibilidad-RESPUESTA-integrada.md`.
+> Llegando en vivo (catalogar c/u al USARLAS en la sesión de implementación): `ssg-static-prerender` ✅ ·
+> `semantic-schema-aeo` ✅ · `ga4-lead-tracking` ✅ · (pend.) `search-console-setup-y-diagnostico` · `maps-gbp-local` ·
+> `product-feeds` · `image-pipeline`. Disp. ✅ (vía tool `Skill`).
+
 ## 🧬 Proceso / Desarrollo (superpowers + dev)
 
 > Las skills de `superpowers` están **doble-disponibles** (`superpowers:` y `anthropic-skills:`).

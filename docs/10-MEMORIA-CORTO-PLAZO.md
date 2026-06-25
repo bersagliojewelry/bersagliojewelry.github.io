@@ -10,7 +10,11 @@
 
 > 🎉 **CRM + Fase M (M0→M6) EN PRODUCCIÓN** (§47-§82). **🔄 RESET A CERO** (Daniel 2026-06-20): Kary recarga de cero → cartera/clientes históricos DESECHABLES (bajan urgencias de dinero). ⚙️ **OPUS 4.8 interino** (marcar `[OPUS-4.8]` · `feedback_opus_interino`).
 >
-> **Web "app-like" §103-§113 CERRADO ✅** · correo OWNER migrado ✅ (§113). **🎯 Rol "catálogo" de Kary CERRADO EN PROD ✅** (§115, TODO-19/31a: candado 196/196 + **Kary verificada EN VIVO** — ve/maneja SOLO Piezas+Colecciones; 4 fixes cazados en vivo). **🎯 EN CURSO (Decisión Fuerte)**: **panel admin "tipo app"** (TODO-33) — **DISEÑADO** (comité ×4, veredicto en `50 §5`): Opción C faseada REORDENADA (medir → Fase 0 barata: A3+skeletons→A2→prefetch→VT al final; router falso-SPA CONGELADO salvo gate seguridad). **Pendiente**: Gemini (prompt listo) + medición. Resto en tabla TODO (norte mini-ERP; M4 1er corte 1-jul).
+> **🚦 CERRADO EN RELEVO (2026-06-25) — 2 FRENTES ABIERTOS para la próxima sesión:**
+> **(1) TODO-35 · VISIBILIDAD SITE-WIDE** (publicar web + SEO·AEO·GA4·Search Console·Google Maps): **Altorra Cars (HUB) está construyendo + propagando** el paquete de 7 skills (ya llegó `ssg-static-prerender`). Próxima sesión = implementar en Bersaglio: portar el **SSG** a piezas/colecciones/journal + GA4 + GSC + Maps + `product-feeds` + quitar `noindex` gated por flag `status` + publicar. **ARRANCA con el trigger de Daniel: "ALTORRA CARS YA TERMINO CONTINUA".** Pediré datos reales (redes/NAP/cuentas GA4-GSC-GBP). Spec/prompts/research → bóveda `2026-06-25-*`.
+> **(2) TODO-33 · PARPADEO RESIDUAL del menú**: con A3 (v29) el menú aparece instantáneo y el parpadeo es MÍNIMO, pero AÚN parpadea en cada nav (recarga MPA) — no debería. Pendiente: matar el flash residual (re-evaluar View Transitions sin el choque con `body display:none`, o el router falso-SPA Opción B con su gate de seguridad).
+> **⚠️ Pendiente DEMO Kary**: Daniel debe **mergear `f2ec1ab` (+schema `de9dbef`)** → verifico en vivo la página de pieza (specs reales, sin datos falsos, tallas admin).
+> _Contexto previo cerrado: Web app-like §103-§113 ✅ · rol catálogo Kary §115 ✅ · TODO-34 pieza fixes demo-críticos ✅ (pend. merge)._
 > - ⚠️ **Deploy** (L-22/L-26): reglas/functions = manual mío; sitio+merge a `main` = PR de Daniel (`git fetch` siempre); Admin SDK = ADC.
 
 ---
@@ -46,12 +50,8 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier A/B �
 
 ## 📝 Bitácora (efímera)
 
-> Podada (GC) 2026-06-24 (auditoría §114). Histórico → **ADR §37-§114** (mapa `00`→detalle `99`; lecciones L-/M- en `30`/`31`).
+> Podada (GC) 2026-06-25. Histórico → ADR §37-§115 + bóveda `2026-06-*`. Lecciones → `30`/`31`/`32`.
 >
-> **▶️ §114/§115 — CERRADOS**: catálogo Kary EN PROD; L-55/56/57. Detalle → ADR + bóveda.
+> **▶️ Hitos recientes (detalle en bóveda / `50 §5` / ADR)**: §114/§115 catálogo Kary ✅ · TODO-33 panel app-like DISEÑADO (comité×4+Gemini) + Fase 0 parcial (VT fix v28, A3 menú instantáneo v29) · TODO-34 página de pieza fixes demo-críticos ✅ (`f2ec1ab`+`de9dbef`, SW v30, **pend. merge**) · **TODO-35 programa visibilidad**: research interna 5 frentes + Gemini ×2 + minería SSG Altorra → paquete **7 skills + arquitectura HUB tenant_config**; **Altorra Cars (HUB) construyendo/propagando** (ya llegaron `ssg-static-prerender` + `semantic-schema-aeo`).
 >
-> **▶️ TODO-33 panel "tipo app" — DISEÑADO (comité ×4+Gemini) + Fase 0 parcial EN PROD**: fix VT v28 ✅ (parpadeo viejo) + A3 menú instantáneo v29 (`655556d`). Veredicto/baseline/detalle → `50 §5` + bóveda. **PAUSADO** por TODO-34.
->
-> **▶️ TODO-34 página de PIEZA (2026-06-25, demo Kary) — fixes demo-críticos HECHOS** (`f2ec1ab`, SW v30): ficha técnica dinámica cero-demo (fuera Origen/Entrega/descripción falsos) · tallas reales por admin (`sizes`) · badge/ref/CTA asesor. Verificado en vivo (Chrome+Firestore) + revisión 6 dimensiones (→bóveda). **🆕 Decisión Daniel 2026-06-25: el sitio VA PÚBLICO/INDEXABLE en Google** → paquete SEO/AEO: quitar `noindex` de pieza/colecciones/journal/entrada (+legales); fix `schema.js` (sku=`code` no `ref`; Offer sin `price:0`; specs ricas via additionalProperty); FAQPage + Organization/JewelryStore + sameAs reales; sitemap dinámico (hoy solo 3 URLs); robots `Disallow:/admin` prefijo. Ground-truth reunido.
->
-> **🚦 Próximo**: esperar respuesta Antigravity/Gemini (modelo tallas · SEO go-live/noindex · slug estable · prerender/SSG estático por pieza · JSON-LD/AEO) → VERIFICAR contra código → implementar paquete SEO/AEO + verificar en vivo. Pend. merge Daniel (`f2ec1ab` pieza + A3). Reanudar Fase 0 TODO-33 tras demo. **Regla**: `arquitecto-software` SIEMPRE · `[[feedback_workflows_acotados]]`.
+> **🚦 Próximo (sesión NUEVA)**: ver Foco — (1) **TODO-35** implementar visibilidad en Bersaglio al trigger **"ALTORRA CARS YA TERMINO CONTINUA"**; (2) **TODO-33** matar el parpadeo residual del menú. Pend. merge Daniel. **Regla**: `arquitecto-software` SIEMPRE · `[[feedback_workflows_acotados]]`.

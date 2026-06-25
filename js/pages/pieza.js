@@ -46,21 +46,42 @@ function heartSolidSVG() {
     return html`<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
 }
 
+// Cero-demo (feedback_no_demo_en_index): NUNCA inventar copy. Si no hay descripción real
+// (o es dato de prueba "PRUEBA n"), no se muestra nada (hide-when-empty). El fallback viejo
+// afirmaba "esmeralda de Cartagena" en piezas que no lo son → mentira verificable.
 function descriptionFor(piece) {
-    if (piece.description) return piece.description;
-    const stones = (piece.specs?.stones || piece.specs?.stone || 'esmeralda colombiana').toLowerCase();
-    return `Una pieza de alta joyería esculpida a mano en oro de 18 quilates, concebida alrededor del fuego interior de una ${stones}. Acabado pulido y perfeccionado pacientemente por los maestros orfebres de nuestro atelier en Cartagena de Indias.`;
+    const d = (piece.description || '').trim();
+    if (!d || /^prueba\b/i.test(d)) return '';
+    return d;
 }
 
+// Precio unificado: "Bajo consulta" cuando no hay precio (alta joyería = mayoría sin precio público).
+// Una sola etiqueta de marca en detalle Y relacionados (antes el related decía "Cotización").
+function priceDisplay(price) {
+    return (price && Number.isFinite(Number(price))) ? format$(price) : 'Bajo consulta';
+}
+
+// Ficha técnica DINÁMICA: muestra SOLO los campos con valor REAL (hide-when-empty). Orden
+// curado de alta joyería. SIN defaults inventados (se eliminaron "Muzo, Colombia"/"2-3 semanas",
+// que el admin no controla y mentían). Origen/Entrega solo si el admin los captura (campos nuevos).
 function buildSpecs(piece) {
-    const stones = piece.specs?.stones || piece.specs?.stone || '';
+    const s = piece.specs || {};
+    const stones = s.stones || s.stone || '';
     const primary = stones.includes('·') ? stones.split('·')[0].trim() : stones;
-    return [
-        { key: 'Gema principal', val: primary || 'Esmeralda' },
-        { key: 'Metal',          val: piece.specs?.metal || piece.specs?.gold || 'Oro 18K' },
-        { key: 'Origen',         val: piece.specs?.origin || 'Muzo, Colombia' },
-        { key: 'Entrega',        val: piece.specs?.delivery || '2-3 semanas' },
+    const candidates = [
+        { key: 'Gema principal', val: primary },
+        { key: 'Quilates',       val: s.carat },
+        { key: 'Color',          val: s.color },
+        { key: 'Claridad',       val: s.clarity },
+        { key: 'Corte',          val: s.cut },
+        { key: 'Acentos',        val: s.accent },
+        { key: 'Metal',          val: s.metal || s.gold },
+        { key: 'Peso',           val: s.weight },
+        { key: 'Origen',         val: s.origin },
+        { key: 'Entrega',        val: s.delivery },
+        { key: 'Certificación',  val: s.certificate },
     ];
+    return candidates.filter(c => c.val != null && String(c.val).trim() !== '');
 }
 
 function getCategoryLabel(piece) {
@@ -83,8 +104,7 @@ function renderGallery(piece) {
                 ${showCert ? html`
                     <div class="pz-main-chips">
                         <div class="chip pz-cert-chip">
-                            ${gemSVG()}
-                            ${escape(piece.specs?.certificate ? `${piece.specs.certificate} Certificado` : 'GIA Certificado')}
+                            ${gemSVG()}Certificado
                         </div>
                     </div>` : ''}
             </div>
@@ -105,53 +125,70 @@ function renderGallery(piece) {
 
 function renderInfo(piece) {
     const cat = getCategoryLabel(piece);
-    const price = Number(piece.price || 0);
+    const hasPrice = !!piece.price && Number.isFinite(Number(piece.price));
     const inWishlist = wishlist.has(piece.slug || piece.id);
     const inCart = cart.has(piece.slug || piece.id);
-    const showTalla = TALLAS_COLLECTIONS.has(piece.collection);
+    const desc = descriptionFor(piece);
+    const specs = buildSpecs(piece);
+
+    // Tallas SOLO desde datos reales de la pieza (piece.sizes, array que controla Kary en el admin).
+    // Sin stock falso 5-9. Si no hay tallas pero es anillo/argolla → "a medida" honesto. Si no, se oculta.
+    const sizes = Array.isArray(piece.sizes) ? piece.sizes.map(s => String(s).trim()).filter(Boolean) : [];
+    const isRingLike = TALLAS_COLLECTIONS.has(piece.collection);
+
+    const asesorHref = `/contacto.html?ref=${encodeURIComponent(piece.slug || piece.id)}`
+        + (piece.code ? `&code=${encodeURIComponent(piece.code)}` : '');
 
     return html`
         <div class="pz-info">
-            <div class="eyebrow pz-info-eyebrow">${escape(cat)} · Bersaglio 2026</div>
+            <div class="pz-info-top">
+                <span class="eyebrow pz-info-eyebrow">${escape(cat)} · Alta Joyería</span>
+                ${piece.badge ? html`<span class="chip pz-badge">${escape(piece.badge)}</span>` : ''}
+            </div>
             <h1 class="pz-info-name">${escape(piece.name || 'Pieza')}</h1>
 
             <div class="pz-price-row">
-                <div class="mono pz-price">${escape(price ? format$(price) : 'Bajo consulta')}</div>
-                ${price ? html`<div class="pz-iva">IVA incluido</div>` : ''}
+                <div class="${hasPrice ? 'mono pz-price' : 'pz-price pz-price--consulta'}">${escape(priceDisplay(piece.price))}</div>
+                ${hasPrice ? html`<div class="pz-iva">IVA incluido</div>` : ''}
             </div>
 
-            <p class="pz-info-desc">${escape(descriptionFor(piece))}</p>
+            ${desc ? html`<p class="pz-info-desc">${escape(desc)}</p>` : ''}
 
-            <div class="pz-specs">
-                ${buildSpecs(piece).map(s => html`
-                    <div class="glass pz-spec">
-                        <div class="pz-spec-key">${escape(s.key)}</div>
-                        <div class="pz-spec-val">${escape(s.val)}</div>
-                    </div>`)}
-            </div>
+            ${specs.length ? html`
+                <div class="pz-specs">
+                    ${specs.map(s => html`
+                        <div class="glass pz-spec">
+                            <div class="pz-spec-key">${escape(s.key)}</div>
+                            <div class="pz-spec-val">${escape(s.val)}</div>
+                        </div>`)}
+                </div>` : ''}
 
-            ${showTalla ? html`
+            ${sizes.length ? html`
                 <div class="pz-talla">
                     <div class="eyebrow pz-talla-label">Talla</div>
-                    <div class="pz-talla-pills">
-                        ${[5, 6, 7, 8, 9].map(s => html`
+                    <div class="pz-talla-pills" role="group" aria-label="Talla disponible">
+                        ${sizes.map(s => html`
                             <button type="button"
-                                    class="glass pz-talla-pill ${_selectedSize === s ? 'is-active' : ''}"
-                                    data-action="size"
-                                    data-size="${s}">${s}</button>`)}
-                        <button type="button"
-                                class="glass pz-talla-pill pz-talla-custom ${_selectedSize === 'custom' ? 'is-active' : ''}"
-                                data-action="size"
-                                data-size="custom">A medida</button>
+                                    class="glass pz-talla-pill ${String(_selectedSize) === s ? 'is-active' : ''}"
+                                    data-action="size" data-size="${escape(s)}"
+                                    aria-pressed="${String(_selectedSize) === s ? 'true' : 'false'}">${escape(s)}</button>`)}
                     </div>
+                </div>`
+            : isRingLike ? html`
+                <div class="pz-talla pz-talla--medida">
+                    <div class="eyebrow pz-talla-label">Talla</div>
+                    <p class="pz-talla-medida-note">Talla a medida — su pieza se ajusta en taller. Consúltela con un asesor.</p>
                 </div>` : ''}
 
             <div class="pz-actions">
-                <button type="button"
-                        class="btn-aqua btn-aqua-emerald pz-cart-btn"
-                        data-action="cart">
-                    ${inCart ? 'Ver carrito' : 'Agregar al carrito'}
-                </button>
+                ${hasPrice ? html`
+                    <button type="button" class="btn-aqua btn-aqua-emerald pz-cart-btn" data-action="cart">
+                        ${inCart ? 'Ver carrito' : 'Agregar al carrito'}
+                    </button>`
+                : html`
+                    <a href="${asesorHref}" class="btn-aqua btn-aqua-emerald pz-cart-btn pz-asesor-primary">
+                        Consultar esta pieza
+                    </a>`}
                 <button type="button"
                         class="btn-aqua pz-wish-btn ${inWishlist ? 'is-saved' : ''}"
                         data-action="wishlist"
@@ -161,10 +198,12 @@ function renderInfo(piece) {
                 </button>
             </div>
 
-            <a href="/contacto.html?ref=${encodeURIComponent(piece.slug || piece.id)}"
-               class="btn-aqua btn-aqua-gold pz-asesor-btn">
-                Consultar con un asesor
-            </a>
+            ${hasPrice ? html`
+                <a href="${asesorHref}" class="btn-aqua btn-aqua-gold pz-asesor-btn">
+                    Consultar con un asesor
+                </a>` : ''}
+
+            ${piece.code ? html`<div class="pz-ref mono">Ref. ${escape(piece.code)}</div>` : ''}
         </div>`;
 }
 
@@ -200,7 +239,7 @@ function renderRelated(piece) {
                             </div>
                             <div class="pz-related-body">
                                 <div class="pz-related-name">${escape(p.name || 'Pieza')}</div>
-                                <div class="mono pz-related-price">${escape(format$(p.price))}</div>
+                                <div class="${p.price ? 'mono pz-related-price' : 'pz-related-price pz-related-price--consulta'}">${escape(priceDisplay(p.price))}</div>
                             </div>
                         </a>`;
                 })}
@@ -342,11 +381,12 @@ function onMainClick(e) {
 
     if (action === 'size') {
         e.preventDefault();
-        const newSize = btn.dataset.size === 'custom' ? 'custom' : Number(btn.dataset.size);
-        _selectedSize = newSize === _selectedSize ? null : newSize;
+        const sz = btn.dataset.size;
+        _selectedSize = (sz === _selectedSize) ? null : sz;
         document.querySelectorAll('.pz-talla-pill').forEach(el => {
-            const isThis = el.dataset.size === btn.dataset.size && _selectedSize !== null;
-            el.classList.toggle('is-active', isThis);
+            const on = el.dataset.size === _selectedSize;
+            el.classList.toggle('is-active', on);
+            el.setAttribute('aria-pressed', on ? 'true' : 'false');
         });
         return;
     }

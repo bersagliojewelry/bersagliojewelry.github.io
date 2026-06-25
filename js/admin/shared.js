@@ -22,6 +22,30 @@ export { requireAuth, currentUser, currentRole, hasRole, signOut };
 
 // ─── Sidebar: monta el rail desde datos, marca el link activo, badge, user ───
 
+// Pinta el rail (marca + nav + versión) desde un rol. Idempotente: limpia el rail previo
+// (reconciliación) y deja `data-role` para detectar staleness. NO toca `.adm-user-info`.
+function paintRail(sidebar, role, page) {
+    sidebar.querySelectorAll('.adm-brand, .adm-nav, .adm-version').forEach(el => el.remove());
+    sidebar.insertAdjacentHTML('afterbegin', renderSidebar(NAV, { role, activePage: page }));
+    sidebar.dataset.role = role;
+    wireSidebarToggle(sidebar);
+}
+
+/**
+ * Pinta el menú AL INSTANTE desde el rol cacheado en sessionStorage (A3 §TODO-33), sin esperar
+ * la cascada de auth (~900ms) — el menú reaparece ~al instante en cada navegación en vez de
+ * "desaparecer y demorar". Se llama al importar shared.js (los módulos son `defer` → el DOM ya
+ * está parseado). El rol cacheado SOLO PINTA; el candado real es server-side (reglas). initSidebar()
+ * reconcilia tras auth si el rol real difiere. No-op si no hay rail (login) o ya está pintado.
+ */
+export function renderSidebarShell() {
+    const sidebar = document.querySelector('.adm-sidebar');
+    if (!sidebar || sidebar.querySelector('.adm-nav')) return;
+    let role = 'editor';
+    try { role = sessionStorage.getItem('bj_role') || 'editor'; } catch { /* storage off */ }
+    paintRail(sidebar, role, location.pathname.split('/').pop() || 'admin.html');
+}
+
 export function initSidebar() {
     const sidebar = document.querySelector('.adm-sidebar');
     const page = location.pathname.split('/').pop() || 'admin.html';
@@ -30,11 +54,16 @@ export function initSidebar() {
     // "datos incompletos" de las capas de datos. Idempotente (se cablea 1 vez).
     initTruncadoBanner();
 
-    // Montar el rail desde datos (si el <aside> está vacío).
-    if (sidebar && !sidebar.querySelector('.adm-nav')) {
-        const role = currentRole() || 'editor';
-        sidebar.insertAdjacentHTML('afterbegin', renderSidebar(NAV, { role, activePage: page }));
-        wireSidebarToggle(sidebar);
+    // El rail ya suele estar pintado por renderSidebarShell() (rol cacheado). Aquí, con el rol
+    // REAL ya resuelto: si no se pintó (sin caché) lo pintamos; si el cacheado estaba STALE,
+    // reconciliamos (A2 — el rol cacheado nunca autoriza, solo pinta; el server es el candado).
+    if (sidebar) {
+        const realRole = currentRole();
+        if (!sidebar.querySelector('.adm-nav')) {
+            paintRail(sidebar, realRole || 'editor', page);
+        } else if (realRole && sidebar.dataset.role !== realRole) {
+            paintRail(sidebar, realRole, page);
+        }
     }
 
     // Marca el link activo (segunda pasada defensiva tras el montaje).
@@ -65,10 +94,12 @@ export function initSidebar() {
 }
 
 // Cablea la hamburguesa (antes vivía como <script> inline en cada HTML).
+// Idempotente: paintRail puede llamarse 2× (shell instantáneo + reconcile) → bind UNA vez.
 function wireSidebarToggle(sidebar) {
     const btn = document.getElementById('hamburger-btn');
     const backdrop = document.getElementById('sidebar-backdrop');
-    if (!btn || !backdrop) return;
+    if (!btn || !backdrop || wireSidebarToggle._done) return;
+    wireSidebarToggle._done = true;
     const toggle = () => { sidebar.classList.toggle('is-open'); backdrop.classList.toggle('is-visible'); };
     btn.addEventListener('click', toggle);
     backdrop.addEventListener('click', toggle);
@@ -197,3 +228,7 @@ export function fmtDateTime(val) {
         day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
     });
 }
+
+// A3 \u00a7TODO-33: pinta el men\u00fa AL INSTANTE al importar shared.js (m\u00f3dulos `defer` \u2192 DOM listo),
+// ANTES de la cascada de auth de init(). As\u00ed el rail no "desaparece y demora" en cada navegaci\u00f3n.
+renderSidebarShell();

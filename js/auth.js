@@ -39,6 +39,21 @@ let _userProfile = null;
 let _authReady   = false;
 const _listeners = [];
 
+// Pistas de sesión para PINTAR rápido (NO autorizan nada — el candado real es server-side:
+// reglas Firestore + claims). `bj_auth` = hay sesión (lo lee el inline anti-flash de cada
+// admin*.html, §115/L-57). `bj_role` = rol para pintar el menú AL INSTANTE en cada navegación
+// (A3 §TODO-33), sin esperar la cascada de auth (~900ms); shared.js reconcilia tras auth si difiere.
+// sessionStorage (no localStorage): solo rol+flags, jamás PII/dinero (invariante del comité).
+function cacheAuthHints(role) {
+    try {
+        sessionStorage.setItem('bj_auth', '1');
+        if (role) sessionStorage.setItem('bj_role', role);
+    } catch { /* storage bloqueado → degrada a menú tardío */ }
+}
+function clearAuthHints() {
+    try { sessionStorage.removeItem('bj_auth'); sessionStorage.removeItem('bj_role'); } catch { /* noop */ }
+}
+
 /**
  * Returns a promise that resolves when auth state is determined.
  */
@@ -62,13 +77,13 @@ onAuthStateChanged(auth, async (user) => {
         try {
             const snap = await getDoc(doc(firestoreDb, 'users', user.uid));
             _userProfile = snap.exists() ? snap.data() : null;
-            if (_userProfile) sessionStorage.setItem('bj_auth', '1');
+            if (_userProfile) cacheAuthHints(_userProfile.role);
         } catch {
             _userProfile = null;
         }
     } else {
         _userProfile = null;
-        sessionStorage.removeItem('bj_auth');
+        clearAuthHints();
     }
 
     _listeners.forEach(cb => cb({ user: _currentUser, profile: _userProfile }));
@@ -100,6 +115,7 @@ export async function signIn(email, password) {
         }
 
         _userProfile = snap.data();
+        cacheAuthHints(_userProfile.role);   // pinta el menú al instante en la 1ª página tras login
 
         // Update last login — best-effort: las reglas de `users` solo dejan que
         // owner/admin actualicen docs de usuario; si el rol no puede, NO debe
@@ -131,7 +147,7 @@ export async function signIn(email, password) {
  * Sign out the current user.
  */
 export async function signOut() {
-    sessionStorage.removeItem('bj_auth');
+    clearAuthHints();
     await firebaseSignOut(auth);
     _currentUser = null;
     _userProfile = null;
@@ -197,7 +213,7 @@ export async function requireAuth(minRole = 'editor') {
     pmark('auth:waitForAuth-done');
 
     if (!_currentUser) {
-        sessionStorage.removeItem('bj_auth');
+        clearAuthHints();
         window.location.replace('admin-login.html');
         throw new Error('Not authenticated');
     }
@@ -213,7 +229,7 @@ export async function requireAuth(minRole = 'editor') {
     }
 
     if (!_userProfile || !hasMinRole(_userProfile.role, minRole)) {
-        sessionStorage.removeItem('bj_auth');
+        clearAuthHints();
         window.location.replace('admin-login.html?error=forbidden');
         throw new Error('Insufficient role');
     }
@@ -221,7 +237,7 @@ export async function requireAuth(minRole = 'editor') {
     // Cuenta desactivada → fuera (cada página admin es una carga fresca → el perfil
     // se re-lee, así que esto cierra la ventana de una sesión abierta tras desactivar).
     if (_userProfile.active === false) {
-        sessionStorage.removeItem('bj_auth');
+        clearAuthHints();
         await firebaseSignOut(auth);
         window.location.replace('admin-login.html?error=disabled');
         throw new Error('Account disabled');

@@ -357,6 +357,7 @@ service cloud.firestore {
           && (!('price' in d)    || d.price is number)
           && (!('featured' in d) || d.featured is bool)
           && (!('images' in d)   || d.images is list)
+          && (!('sizes' in d)    || d.sizes is list)
           && (!('specs' in d)    || d.specs is map);
     }
     function pieceTypesValid() {
@@ -368,6 +369,7 @@ service cloud.firestore {
           && (!('featured' in d)   || d.featured is bool)
           && (!('price' in d)      || d.price is number)
           && (!('images' in d)     || d.images is list)
+          && (!('sizes' in d)      || d.sizes is list)
           && (!('specs' in d)      || d.specs is map);
     }
     function colCreateValid() {

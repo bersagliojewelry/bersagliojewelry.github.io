@@ -6,11 +6,11 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v28 — fix: el admin DESACTIVA las View Transitions cross-document que heredaba de
-// liquid-glass.css (admin.css @import) — sobre el body display:none hasta requireAuth (§115/L-57)
-// abortaban (InvalidStateError) = parpadeo en cada nav del admin. Cazado en vivo 2026-06-24 (TODO-33).
-// (v27 = §107 View Transitions público; v26 = revert LQIP §106.)
-const CACHE_NAME    = 'bersaglio-v28';
+// Bumped to v30 — detalle de pieza: ficha técnica DINÁMICA (muestra todas las specs reales,
+// hide-when-empty), se eliminan datos FALSOS (Origen "Muzo"/Entrega "2-3 semanas" hardcodeados +
+// descripción inventada), tallas SOLO reales (campo admin `sizes`, sin 5-9 falsas), badge + ref +
+// CTA asesor primario sin precio. (v29 = menú admin instantáneo; v28 = admin sin VT.)
+const CACHE_NAME    = 'bersaglio-v30';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

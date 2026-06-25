@@ -196,11 +196,17 @@
     display: inline-block;
 }
 
-.pz-ficha-head { display: flex; align-items: center; gap: 9px; margin-bottom: 18px; }
+/* Título de la card (jerarquía superior): encabezado con línea divisoria que enmarca
+   todo lo de abajo como "su" contenido — distinto de las subsecciones (Daniel 2026-06-25). */
+.pz-ficha-head {
+    margin-bottom: 20px;
+    padding-bottom: 13px;
+    border-bottom: 1px solid oklch(45% 0.06 155 / 0.18);
+}
 .pz-ficha-head-label {
     font-family: var(--font-mono);
-    font-size: 10px; font-weight: 700;
-    letter-spacing: 0.24em; text-transform: uppercase;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.3em; text-transform: uppercase;
     color: var(--bj-emerald-800);
 }
 
@@ -229,9 +235,9 @@
 .pz-ficha-group-title { display: flex; align-items: center; gap: 9px; margin-bottom: 15px; }
 .pz-ficha-group-label {
     font-family: var(--font-mono);
-    font-size: 9px; font-weight: 700;
-    letter-spacing: 0.22em; text-transform: uppercase;
-    color: var(--bj-emerald-800);
+    font-size: 8px; font-weight: 700;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--bj-ink-mute);   /* subordinadas: más pequeñas y apagadas vs el título */
     white-space: nowrap;
 }
 .pz-ficha-rule {

@@ -203,7 +203,7 @@ function renderInfo(piece) {
             ${(specs.hero || specs.groups.length) ? html`
                 <div class="glass glass-iridescent pz-ficha">
                     <span class="pz-ficha-watermark" aria-hidden="true">${emeraldGemSVG(220, false)}</span>
-                    <div class="pz-ficha-head"><span class="pz-ficha-mark"></span><span class="pz-ficha-head-label">Carta gemológica</span></div>
+                    <div class="pz-ficha-head"><span class="pz-ficha-head-label">Carta gemológica</span></div>
                     ${specs.hero ? html`
                         <div class="pz-ficha-hero">
                             <div class="pz-ficha-hero-name">${escape(specs.hero.name)}</div>

@@ -24,6 +24,34 @@
 | **W-08** | **Investigación profunda (grounded)** | Antes de afirmar hechos externos (legal, normativo, mercado) | Datos inventados o desactualizados | Agentes que verifican en **fuentes oficiales/primarias** + marcar lo no verificado `[a verificar]` | Usado 2026-06-08 (legal `42-LEGAL`) · skills `legal-colombia`, `deep-research` |
 | **W-09** | **brain:check (linter del cerebro)** | Al arrancar/cerrar sesión o tras tocar el cerebro | Neuronas huérfanas, caps excedidos, índice desincronizado, refs colgantes, skills sin catalogar | `npm run brain:check` | `CLAUDE §G.4` |
 | **W-10** | **Caza-bugs: verificación del camino vivo end-to-end (+ escalado calibrado)** | Al **TOCAR o ROZAR** un subsistema con estado observable (render · `onSnapshot` · CRUD · flujo de pasos) | Bugs que solo emergen en el camino COMPLETO desde estado-cero (sección no montada, lista vacía, primer/último ítem) que el diff puntual NO ve | (1) BARATO siempre-on: recorre las **2 fronteras del estado-cero** (crear 1er ítem → ¿aparece en vivo Y tras recarga? / borrar el último → ¿colapsa limpio?); (2) ESCALA a maquinaria pesada SOLO si es no-trivial/caro de revertir (criterio = `CLAUDE §3.7`), NUNCA en lo trivial. Skill portátil `caza-bugs` | `30 §L-42` · §Meta M-05 · ADR §90 |
+| **W-11** | **🛡️ FLUJO FUERTE COMPLETO (SSoT del flujo del dueño)** | Decisión Fuerte (arquitectura/datos/seguridad/legal/irreversible/fork/multi-subsistema) **o** Diseño/UI no trivial | Que el flujo se aplique **A MEDIAS** (faltó el mockup, el prompt de consejo externo, el prompt de Chrome, o no se usaron los plugins) — la falla que reportó Daniel 2026-06-25 | Checklist CERRADO de 10 capas (↓ "W-11 en detalle"). **Regla dura: cuando dispara, se aplica COMPLETO o NO se aplicó.** 3 artefactos visibles al dueño SON obligatorios: mockup (si UI) · prompt de consejo (Gemini) · prompt de Chrome. | Daniel 2026-06-25 (flujo parcial = falla del cerebro) · skill `proceso-decision-fuerte` · `[[feedback_flujo_completo_nunca_parcial]]` |
+
+---
+
+## 🛡️ W-11 en detalle — el FLUJO FUERTE COMPLETO (ninguna capa es opcional cuando dispara)
+
+> **Por qué existe:** el flujo del dueño (comité + consejo + extensión/Chrome + skills + agentes + **plugins** + **mockup**)
+> vivía PARTIDO en varios nodos sin un checklist único → se aplicó a medias (sin prompt de Chrome, sin plugins, sin
+> mockup). Este W-11 es la **SSoT**: si la tarea dispara el GATE, se recorren las 10 capas; saltarse una sin justificar = flujo roto.
+
+**GATE (¿califica?)** — Decisión Fuerte (`15 §2`) **o** Diseño/UI no trivial. Trivial/reversible/mecánico → trabajo directo (`caza-bugs` si hay estado). Si dispara → COMPLETO.
+
+1. **VERIFICAR** ground-truth: leer código/estado REAL (§3.3). Sin esto las capas opinan sobre el aire.
+2. **SKILLS** — invocar TODAS las relevantes: dominio (`ecommerce`/`legal-colombia`/`crm-architect`/`cms-dinamico`…) + proceso (`arquitecto-software`, `caza-bugs`) + **`frontend-design` si es UI** + medición (`ga4-lead-tracking`/`analytics-tracking`) si toca datos.
+3. **ARQUITECTO** (6 lentes) → diseño candidato CONCRETO (+ "lo que NO verifiqué"). Separa PROPONER de CRITICAR.
+4. **PLUGINS / MOCKUP** (la capa que faltaba) — según el tipo:
+   • **DISEÑO/UI → MOCKUP** vía un plugin de diseño: `visualize`/`show_widget` (rápido, inline, ideal para reglas de layout) · Stitch · Canva · Figma. "Muéstrame cómo debe quedar" → yo **verifico/delibero** (no acato). `[[feedback_flujo_diseno_mockup]]`.
+   • **RESEARCH/EVIDENCIA → `deep-research`** + firecrawl/exa (estándares, precedentes, "cómo lo hacen los expertos").
+   • Otros plugins MCP según el tema (el ecosistema disponible es enorme — usarlo, no ignorarlo).
+5. **COMITÉ ×3 ACOTADO** (`comite-expertos`, **agentes** en paralelo, inline+schema, sin tools) — ≥1 escéptico + ≥1 ejecutor (L-50: acotado, no 30).
+6. **CONSEJO EXTERNO** (`15`, Gemini/Antigravity, **read-only**) — prompt autocontenido CRUDO (anti-anclaje R1). Humano en el medio; verifico cada afirmación (no oráculo).
+7. **VEREDICTO** — yo delibero y decido; criterio de éxito definido ANTES de codear (`verification-before-completion`).
+8. **IMPLEMENTAR.**
+9. **EXTENSIÓN / CHROME — validación LIVE en navegador REAL** (`validacion-live-chrome` + plugins `chrome-devtools`/`playwright`/Claude-in-Chrome; NO preview headless, L-05). ⭐ **ENTREGABLE OBLIGATORIO: el "PROMPT DE CHROME"** = lista CERRADA de caminos estado-cero + borde que `caza-bugs` recorre uno a uno, reportando QUÉ recorrió (no "pasó").
+10. **CIERRE** (ADR `99` + fila `00` + lecciones `30` + cache `§4` si aplica + `brain:check`).
+
+**🔒 Los 3 artefactos visibles al dueño (si falta uno, el flujo está INCOMPLETO):**
+(a) **Mockup** del diseño (cuando es UI) · (b) **prompt de consejo externo** (Gemini, para que el dueño lo corra) · (c) **prompt de Chrome** (validación live). Entregarlos SIEMPRE, sin que el dueño los pida.
 
 ---
 

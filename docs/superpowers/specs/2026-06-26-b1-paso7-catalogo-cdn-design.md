@@ -190,9 +190,20 @@ stock, hunde conversión). **Hueco PRE-EXISTENTE**: el catálogo público hoy NO
 **Fix (antes de lanzar el paso 7)**: el SSG lee `estado`; si `vendida` → emite `availability: https://schema.org/OutOfStock`
 + oculta el precio en el `<noscript>` + CTA "vendida · ver similares". El mismo `estado` alimenta `available` en el
 `catalogo.json` y un badge en la grilla.
-> 🔵 **Decisión de NEGOCIO para Daniel**: una pieza ÚNICA vendida, ¿(a) sale del listado activo pero su página vive
-> con "Vendida · ver similares" (recomendado: bueno para SEO, no rompe links, alimenta deseo/escasez), (b) se queda
-> en el listado con sello "Vendida", o (c) desaparece del todo (NO recomendado: 404 + pierde SEO)?
+> 🔵 **Decisión de NEGOCIO — RESUELTA (Daniel 2026-06-26)**: opción **(a)** — la pieza vendida **sale del listado
+> activo** pero **su página vive** con "Vendida · ver similares" (bueno SEO, no rompe links, alimenta deseo).
+>
+> **Implicaciones técnicas resueltas (contrato/SSG):**
+> - `catalogo.json` incluye **TODAS** las publicables (incl. vendidas) con `available` (= `(estado||'disponible')!=='vendida'`).
+>   La **grilla** (`catalogo.js`, 7b) filtra `available`; la **ficha** (`pieza.js`, 7c) muestra la vendida con sello.
+>   (Así la ficha hidrata por JS aunque la pieza esté vendida — si la excluyéramos del JSON, la ficha JS no la encontraría.)
+> - **SSG hornea** la página de la vendida (`OutOfStock` + sin precio + sello), pero la **EXCLUYE del listado horneado**
+>   (`injectListingPage` colecciones) y del catálogo activo de la grilla.
+> - **Fechas** (`createdAt`/`updatedAt`): serializar como `{ seconds: <num> }` (el cliente usa `.seconds`,
+>   `catalogo.js:65`) → no se toca el consumidor. El shape del doc es `{ id, ...data }` (`firestore-service.js:271`).
+> - **Test del contrato**: cobertura de CLAVES (el JSON ⊇ claves que el cliente lee: `id,slug,name,code,collection,
+>   price,images,featured,sizes,specs,description,createdAt/updatedAt,available`), NO deepEqual byte-a-byte (los
+>   Timestamps difieren entre objeto Firestore y `{seconds}`).
 
 ### 10.2 Contrato incompleto — VERIFICADO, corrige §5
 Mi whitelist §5 OMITÍA campos que el cliente SÍ consume: `description` (`pieza.js:85`), `sizes` (`pieza.js:204`),

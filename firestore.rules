@@ -621,6 +621,13 @@ service cloud.firestore {
       allow create: if isCatalogo() && pieceCreateValid(); // editor+/catálogo con campos válidos
       allow update: if isCatalogo() && pieceTypesValid();  // S6: tolerante a merge/partial
       allow delete: if isAdmin() || (isAuth() && getUserRole() == 'catalogo'); // admin+ o catálogo (editor NO borra)
+      // TODO-40 v3 · LEDGER de movimientos de stock (C4): lo escribe SOLO la CF (Admin SDK, ignora estas
+      // reglas) — venta/anulación/ajuste/reabasto; el staff de catálogo lo LEE para auditar ("¿por qué
+      // dice 3 y no 4?"). Append-only: el cliente nunca escribe.
+      match /movimientos/{movId} {
+        allow read:  if isCatalogo();
+        allow write: if false;
+      }
     }
 
     // ─── Pedidos (ventas — B1 paso 3) ──────────────────────────────────────────

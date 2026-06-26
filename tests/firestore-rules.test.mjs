@@ -45,6 +45,7 @@ before(async () => {
         await setDoc(doc(db, 'pieces/p1'), { name: 'Anillo', slug: 'anillo', stockType: 'finito', cantidad: 1, visibilidad: 'publica' }); // v3 (post-migración)
         await setDoc(doc(db, 'pieces/pPriv'), { name: 'VIP', slug: 'vip', stockType: 'finito', cantidad: 1, visibilidad: 'privada' }); // D5: NO legible por público
         await setDoc(doc(db, 'pieces/pLegacy'), { name: 'Legacy', slug: 'legacy' }); // sin visibilidad → fail-closed (NO legible por anon hasta migrar)
+        await setDoc(doc(db, 'pieces/p1/movimientos/mov1'), { delta: -1, motivo: 'venta', pedidoId: 'x', cantidadResultante: 0 }); // ledger (C4)
         await setDoc(doc(db, 'journal/j1'), { title: 'Esmeraldas', published: true }); // CMS: lectura pública + borrado admin
 
         // ─── CRM Fase R: vendedoras (entidad), cliente (vendedoraId), config, pendientes ──
@@ -218,6 +219,11 @@ test('v3 · BLINDAJE VIP: público NO lee pieza privada (D5) ni legacy-sin-visib
 test('v3 · staff de catálogo SÍ lee piezas privadas (las gestiona)', async () => {
     await assertSucceeds(getDoc(doc(asUser('catalogoUid'), 'pieces/pPriv')));
     await assertSucceeds(getDoc(doc(asUser('adminUid'),    'pieces/pPriv')));
+});
+test('v3 · ledger movimientos: staff lee, público NO, cliente NO escribe (CF-only)', async () => {
+    await assertSucceeds(getDoc(doc(asUser('catalogoUid'), 'pieces/p1/movimientos/mov1')));
+    await assertFails(getDoc(doc(anon(), 'pieces/p1/movimientos/mov1')));                                  // stock no es público
+    await assertFails(setDoc(doc(asUser('catalogoUid'), 'pieces/p1/movimientos/mov2'), { delta: 5 }));     // append-only, CF-only
 });
 
 // ─── B1 paso 3: candado de stock (estado/reserva = CF-only) + pedidos ─────────

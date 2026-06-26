@@ -130,6 +130,7 @@ async function seedPieces() {
             code: p.code, name: p.name, slug: p.slug, collection: p.collection,
             description: p.description, badge: p.badge ?? null,
             featured: true, priceLabel: 'Consultar precio',
+            stockType: 'finito', cantidad: 1,   // B1 paso 1: inventario (pieza física única)
             specs: p.specs, sizes: p.sizes,
             images: p.images, image: p.images[0] || null,
             version: 1, createdAt: now, updatedAt: now,

@@ -387,6 +387,11 @@ function populateForm(form, piece) {
     form.querySelector('[name="priceLabel"]').value  = piece.priceLabel || 'Consultar precio';
     form.querySelector('[name="price"]').value       = piece.price ?? '';
 
+    // B1 paso 1: inventario/clasificación (default tolerante a piezas legacy sin estos campos).
+    form.querySelector('[name="stockType"]').value   = piece.stockType || 'finito';
+    form.querySelector('[name="cantidad"]').value    = (piece.cantidad ?? 1);
+    form.querySelector('[name="gender"]').value      = piece.gender || '';
+
     const specs = piece.specs || {};
     form.querySelector('[name="specs.stone"]').value       = specs.stone || '';
     form.querySelector('[name="specs.carat"]').value       = specs.carat || '';
@@ -428,6 +433,19 @@ async function handleSave() {
         return;
     }
 
+    // Tope de 9 destacadas (Daniel 2026-06-26): la home muestra hasta 9. Al intentar
+    // destacar una 10ª, se bloquea con mensaje (no permite, hay que quitar una primero).
+    // Solo aplica si ESTA pieza pasa a destacada y aún no contaba como tal.
+    const wantsFeatured = form.querySelector('[name="featured"]').checked;
+    if (wantsFeatured) {
+        const featuredCount = _allPieces.filter(p => p.featured && p.id !== editing).length;
+        if (featuredCount >= 9) {
+            admToast('Ya hay 9 piezas destacadas (el máximo). Quita una destacada antes de agregar otra.', 'danger', 5000);
+            form.querySelector('[name="featured"]').focus();
+            return;
+        }
+    }
+
     const specs = {};
     ['stone','carat','metal','accent','certificate','cut','color','clarity','weight','origin','delivery'].forEach(k => {
         const v = get(`specs.${k}`);
@@ -436,6 +454,13 @@ async function handleSave() {
 
     // Tallas disponibles (bug-1): array que controla Kary. Vacío → la pieza muestra "a medida".
     const sizes = get('sizes').split(',').map(s => s.trim()).filter(Boolean);
+
+    // B1 paso 1: inventario. stockType = enum del select (default finito). cantidad = int>=0
+    // (default 1; la regla exige int). gender = OPCIONAL (se OMITE vacío: '' no está en el enum
+    // → la regla lo rechazaría, como con price).
+    const stockType = get('stockType') || 'finito';
+    const cantidadNum = parseInt(get('cantidad'), 10);
+    const cantidad = (Number.isInteger(cantidadNum) && cantidadNum >= 0) ? cantidadNum : 1;
 
     const piece = {
         id:          get('id') || null,
@@ -446,12 +471,17 @@ async function handleSave() {
         description: get('description'),
         badge:       get('badge') || null,
         featured:    form.querySelector('[name="featured"]').checked,
+        stockType,
+        cantidad,
         priceLabel:  get('priceLabel') || 'Consultar precio',
         specs,
         sizes,       // array (posiblemente vacío) — vacío = "a medida" en el detalle
         images:      _uploadedImages.length ? [..._uploadedImages] : [],
         image:       _uploadedImages[0] || null,
     };
+
+    const genderVal = get('gender');
+    if (genderVal) piece.gender = genderVal;
 
     if (!piece.id) delete piece.id;
 

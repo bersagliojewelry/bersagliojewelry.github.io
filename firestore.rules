@@ -350,6 +350,16 @@ service cloud.firestore {
     // NOTA (reglas Firestore): acceder a un campo AUSENTE lanza error de evaluación
     // ("Property X is undefined on object") → NO usar `d.campo == null` para opcionales.
     // Idiom correcto: `!('campo' in d) || d.campo is <tipo>` (presencia primero).
+    // B1 paso 1 (TODO-37): inventario/clasificación que controla Kary.
+    //   stockType ∈ {finito,encargo} · cantidad int≥0 · gender ∈ {mujer,hombre,unisex}.
+    // NOTA seguridad: estado/reservaId/reservaExpira (stock TRANSACCIONAL) NO se validan ni
+    // permiten aquí a propósito — los escribe SOLO la Cloud Function del pedido (Admin SDK,
+    // que ignora estas reglas); su candado CF-only se diseña en el paso del pedido (design §1.1/§5).
+    function pieceClassValid(d) {
+      return (!('stockType' in d) || (d.stockType is string && d.stockType in ['finito', 'encargo']))
+          && (!('cantidad' in d)  || (d.cantidad is int && d.cantidad >= 0))
+          && (!('gender' in d)    || (d.gender is string && d.gender in ['mujer', 'hombre', 'unisex']));
+    }
     function pieceCreateValid() {
       let d = request.resource.data;
       return d.name is string && d.name.size() > 0
@@ -358,7 +368,8 @@ service cloud.firestore {
           && (!('featured' in d) || d.featured is bool)
           && (!('images' in d)   || d.images is list)
           && (!('sizes' in d)    || d.sizes is list)
-          && (!('specs' in d)    || d.specs is map);
+          && (!('specs' in d)    || d.specs is map)
+          && pieceClassValid(d);
     }
     function pieceTypesValid() {
       let d = request.resource.data;
@@ -370,7 +381,8 @@ service cloud.firestore {
           && (!('price' in d)      || d.price is number)
           && (!('images' in d)     || d.images is list)
           && (!('sizes' in d)      || d.sizes is list)
-          && (!('specs' in d)      || d.specs is map);
+          && (!('specs' in d)      || d.specs is map)
+          && pieceClassValid(d);
     }
     function colCreateValid() {
       let d = request.resource.data;

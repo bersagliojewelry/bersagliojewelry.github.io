@@ -574,14 +574,16 @@ function renderFAQRapido() {
 }
 
 function renderAll() {
+    // Daniel 2026-06-26: lo PRIMERO es el formulario; los 3 canales (WhatsApp/correo/IG)
+    // van DEBAJO (antes encima → competían con el lead). Form arriba, canales después.
     return html`
         <div class="container ct-page">
             ${renderHero()}
-            ${renderCanales()}
             <section class="contact-grid ct-mainrow">
                 ${renderFormCard()}
                 ${renderSidebar()}
             </section>
+            ${renderCanales()}
             ${renderProceso()}
             ${renderFAQRapido()}
         </div>`;

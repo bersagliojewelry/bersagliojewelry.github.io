@@ -22,7 +22,7 @@ import { balancedCols } from '../core/grid-balance.js';   // reparto inteligente
 // Piezas visibles en Destacadas = featured + con FOTO (la franja es un escaparate VISUAL).
 // Daniel 2026-06-23: el precio es OPCIONAL (price-on-request → format$ pinta "Cotización"); lo
 // comercial manda, una pieza sin precio igual se muestra. Lee en TIEMPO DE RENDER (live).
-const featuredPieces = () => data.getFeatured(8).filter(p => p.images?.[0] || p.image);
+const featuredPieces = () => data.getFeatured(9).filter(p => p.images?.[0] || p.image);
 
 // Watchdog anti-carga-eterna (ver categories.js): 8s > timeout de data.load() (4s) para dar
 // margen a redes lentas a llenar la reserva sin saltar.
@@ -59,7 +59,7 @@ function headerHtml() {
 }
 
 function contentHtml(pieces) {
-    const shown = pieces.slice(0, 6);
+    const shown = pieces.slice(0, 9);   // Daniel 2026-06-26: hasta 9 destacadas (el admin capa en 9)
     const cols = balancedCols(shown.length, 4);   // columnas según cuántas hay (sin huérfana)
     return html`
         <div class="container">

@@ -171,6 +171,28 @@ test('S6 · patch parcial (solo images, merge) en pieza existente SÍ pasa', asy
     // Flujo crítico del admin (patchPiece con merge) — NO debe romperse.
     await assertSucceeds(setDoc(doc(asUser('editorUid'), 'pieces/p1'), { images: ['a.webp'], image: 'a.webp' }, { merge: true }));
 });
+
+// ─── B1 paso 1: inventario/clasificación (stockType/cantidad/gender) ──────────
+test('B1 · crea pieza con stockType/cantidad/gender válidos', async () => {
+    await assertSucceeds(setDoc(doc(asUser('catalogoUid'), 'pieces/pInv'), {
+        name: 'Anillo', code: 'C-INV', stockType: 'finito', cantidad: 1, gender: 'mujer',
+    }));
+});
+test('B1 · stockType fuera del enum → DENY', async () => {
+    await assertFails(setDoc(doc(asUser('catalogoUid'), 'pieces/pInvBad1'), {
+        name: 'X', code: 'C-IB1', stockType: 'infinito',
+    }));
+});
+test('B1 · cantidad negativa o no-int → DENY', async () => {
+    await assertFails(setDoc(doc(asUser('catalogoUid'), 'pieces/pInvBad2'), { name: 'X', code: 'C-IB2', cantidad: -1 }));
+    await assertFails(setDoc(doc(asUser('catalogoUid'), 'pieces/pInvBad3'), { name: 'X', code: 'C-IB3', cantidad: 'dos' }));
+});
+test('B1 · gender fuera del enum → DENY', async () => {
+    await assertFails(setDoc(doc(asUser('catalogoUid'), 'pieces/pInvBad4'), { name: 'X', code: 'C-IB4', gender: 'otro' }));
+});
+test('B1 · patch merge con cantidad válida en pieza existente SÍ pasa', async () => {
+    await assertSucceeds(setDoc(doc(asUser('catalogoUid'), 'pieces/p1'), { cantidad: 2, stockType: 'encargo' }, { merge: true }));
+});
 test('S6 · colección: editor crea con name', async () => {
     await assertSucceeds(setDoc(doc(asUser('editorUid'), 'collections/c1'), { name: 'Anillos', slug: 'anillos' }));
 });

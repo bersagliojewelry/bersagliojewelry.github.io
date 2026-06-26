@@ -90,3 +90,56 @@ test('confirmarPago: idempotente (re-confirmar un pagado → yaEstaba, no rompe)
 test('confirmarPago: pedido inexistente → rechaza', async () => {
     await assert.rejects(confirmarPagoCore(db, { pedidoId: 'noexiste', autor: 'kary' }), /no existe/i);
 });
+
+const { anularPedidoCore, cierreCajaCore } = core;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+test('anularPedido: marca anulado + REINTEGRA la pieza al catálogo', async () => {
+    await db.doc('pieces/pAnular').set({ name: 'Anulable', slug: 'anulable', price: 800000, stockType: 'finito' });
+    await crearPedidoCore(db, { pedidoId: 'pedAnular', pieceId: 'pAnular', medio: 'efectivo', autor: 'u1' });
+    assert.equal((await db.doc('pieces/pAnular').get()).data().estado, 'vendida');
+
+    const r = await anularPedidoCore(db, { pedidoId: 'pedAnular', motivo: 'cliente se arrepintió', autor: 'kary' });
+    assert.equal(r.ok, true);
+    assert.equal(r.piezaReintegrada, true);
+    const ped = (await db.doc('pedidos/pedAnular').get()).data();
+    assert.equal(ped.estado, 'anulado');
+    assert.equal(ped.motivoAnulacion, 'cliente se arrepintió');
+    assert.equal((await db.doc('pieces/pAnular').get()).data().estado, 'disponible');   // reintegrada
+});
+
+test('anularPedido: idempotente (re-anular → yaAnulado, no rompe)', async () => {
+    const r = await anularPedidoCore(db, { pedidoId: 'pedAnular', autor: 'kary' });
+    assert.equal(r.yaAnulado, true);
+});
+
+test('anularPedido: pedido inexistente → rechaza', async () => {
+    await assert.rejects(anularPedidoCore(db, { pedidoId: 'noexiste', autor: 'kary' }), /no existe/i);
+});
+
+test('cierreCaja: efectivo esperado = ventas pagadas en efectivo del turno; descuadre 0 si cuadra', async () => {
+    await cierreCajaCore(db, { arqueoId: 'arqBase', declaradoEfectivo: 0, autor: 'kary' });   // baseline: consume lo previo
+    await sleep(15);
+    await db.doc('pieces/pCaja1').set({ name: 'Caja1', slug: 'caja1', price: 1000000, stockType: 'finito' });
+    await crearPedidoCore(db, { pedidoId: 'pedCaja1', pieceId: 'pCaja1', medio: 'efectivo', autor: 'u1' });   // efectivo pagado
+    await sleep(15);
+    const r = await cierreCajaCore(db, { arqueoId: 'arq1', declaradoEfectivo: 1000000, autor: 'kary' });
+    assert.equal(r.esperadoEfectivo, 1000000);
+    assert.equal(r.descuadre, 0);
+});
+
+test('cierreCaja: descuadre negativo cuando falta efectivo', async () => {
+    await sleep(15);
+    await db.doc('pieces/pCaja2').set({ name: 'Caja2', slug: 'caja2', price: 500000, stockType: 'finito' });
+    await crearPedidoCore(db, { pedidoId: 'pedCaja2', pieceId: 'pCaja2', medio: 'efectivo', autor: 'u1' });
+    await sleep(15);
+    const r = await cierreCajaCore(db, { arqueoId: 'arq2', declaradoEfectivo: 400000, autor: 'kary' });
+    assert.equal(r.esperadoEfectivo, 500000);
+    assert.equal(r.descuadre, -100000);
+});
+
+test('cierreCaja: idempotente (mismo arqueoId → yaExistia, no recalcula)', async () => {
+    const r = await cierreCajaCore(db, { arqueoId: 'arq2', declaradoEfectivo: 999999, autor: 'kary' });
+    assert.equal(r.yaExistia, true);
+    assert.equal(r.descuadre, -100000);   // el ORIGINAL, no el nuevo declarado
+});

@@ -6,11 +6,10 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v39 — B1 paso 4a: confirmar pago ("vi la plata"). En el Mostrador, las ventas
-// "por verificar" (transferencia/Wompi) traen botón "Confirmar pago" → CF confirmarPago
-// (pago_por_verificar → pagado; regla SoD, solo la CF flipea el estado). (v38 = todo en COP;
-// v37 = POS Mostrador §126.)
-const CACHE_NAME    = 'bersaglio-v39';
+// Bumped to v40 — B1 paso 5: anular venta (VOID, reintegra la pieza) + cierre de caja (arqueo Z,
+// conteo a ciegas → descuadre). Botones "Anular" en Ventas recientes + "Cerrar caja" en la topbar
+// del Mostrador (CFs anularPedido/cierreCaja). (v39 = confirmar pago §128; v38 = todo en COP §127.)
+const CACHE_NAME    = 'bersaglio-v40';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

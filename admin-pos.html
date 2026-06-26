@@ -26,7 +26,9 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="22" height="22"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
             </button>
             <h1>Mostrador</h1>
-            <div class="adm-topbar-actions"></div>
+            <div class="adm-topbar-actions">
+                <button class="adm-btn adm-btn--ghost" id="btn-cierre">🧾 Cerrar caja</button>
+            </div>
         </header>
 
         <div class="adm-content">
@@ -141,6 +143,32 @@
         <div class="adm-confirm-actions">
             <button class="adm-btn adm-btn--ghost" id="confirm-cancel">Cancelar</button>
             <button class="adm-btn adm-btn--primary" id="confirm-ok">Registrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Cierre de caja (arqueo · B1 paso 5) -->
+<div class="adm-modal" id="cierre-modal" hidden>
+    <div class="adm-modal-box adm-modal-box--sm">
+        <div class="adm-modal-head">
+            <h2>Cerrar caja</h2>
+            <button class="adm-modal-close" id="cierre-close" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="adm-modal-body">
+            <p class="pos-hint">Cuenta el efectivo físico de la caja y escríbelo. El sistema te dirá si cuadra — no te muestra el esperado antes, para que el conteo sea real.</p>
+            <div class="adm-field" id="cierre-input-wrap">
+                <label for="cierre-efectivo">Efectivo contado (COP)</label>
+                <input class="adm-input" id="cierre-efectivo" type="number" min="0" inputmode="numeric" placeholder="Ej. 1500000">
+            </div>
+            <div class="adm-calc-result pos-cierre-result" id="cierre-result" hidden>
+                <div class="adm-calc-line"><span>Esperado en efectivo</span><strong id="cierre-esperado">$0</strong></div>
+                <div class="adm-calc-line"><span>Contaste</span><strong id="cierre-contado">$0</strong></div>
+                <div class="adm-calc-line adm-calc-total"><span id="cierre-descuadre-label">Descuadre</span><strong id="cierre-descuadre">$0</strong></div>
+            </div>
+        </div>
+        <div class="adm-modal-foot">
+            <button class="adm-btn adm-btn--ghost" id="cierre-cancel">Cancelar</button>
+            <button class="adm-btn adm-btn--primary" id="cierre-submit">Cerrar caja</button>
         </div>
     </div>
 </div>

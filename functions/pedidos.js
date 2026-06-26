@@ -11,7 +11,7 @@
  */
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { getFirestore } = require('firebase-admin/firestore');
-const { crearPedidoCore, confirmarPagoCore, PedidoError } = require('./pedidos-core');
+const { crearPedidoCore, confirmarPagoCore, anularPedidoCore, cierreCajaCore, PedidoError } = require('./pedidos-core');
 
 const VENTAS = ['owner', 'admin', 'catalogo'];
 
@@ -50,4 +50,30 @@ const confirmarPago = onCall({ region: 'us-central1', invoker: 'public' }, async
     }
 });
 
-module.exports = { crearPedido, confirmarPago };
+// anularPedido (paso 5 · VOID): marca anulado + reintegra la pieza al catálogo.
+const anularPedido = onCall({ region: 'us-central1', invoker: 'public' }, async (request) => {
+    const db = getFirestore();
+    await rolDeVentas(db, request.auth);
+    try {
+        const d = request.data || {};
+        return await anularPedidoCore(db, { pedidoId: d.pedidoId, motivo: d.motivo, autor: request.auth.uid });
+    } catch (e) {
+        if (e instanceof PedidoError) throw new HttpsError(e.code, e.message);
+        throw e;
+    }
+});
+
+// cierreCaja (paso 5 · Cierre Z): arqueo del turno (esperado vs efectivo declarado → descuadre).
+const cierreCaja = onCall({ region: 'us-central1', invoker: 'public' }, async (request) => {
+    const db = getFirestore();
+    await rolDeVentas(db, request.auth);
+    try {
+        const d = request.data || {};
+        return await cierreCajaCore(db, { arqueoId: d.arqueoId, declaradoEfectivo: d.declaradoEfectivo, autor: request.auth.uid });
+    } catch (e) {
+        if (e instanceof PedidoError) throw new HttpsError(e.code, e.message);
+        throw e;
+    }
+});
+
+module.exports = { crearPedido, confirmarPago, anularPedido, cierreCaja };

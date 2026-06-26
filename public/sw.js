@@ -6,10 +6,11 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v36 — B1 paso 2: calculadora de precio por peso en el panel Piezas (modal en la
-// topbar): Kary ingresa valor del gramo (varía) + peso + mano de obra → total = peso×gramo+mano.
-// (v35 = form flotante en ficha + 9 destacadas + orden contacto; v34 = WhatsApp directo.)
-const CACHE_NAME    = 'bersaglio-v36';
+// Bumped to v37 — B1 paso 3: Mostrador (POS). Página admin-pos.html donde Kary registra una
+// venta (elige pieza → precio fijo o por peso → medio de pago → confirma) llamando a la CF
+// crearPedido (stock atómico, total recalculado server-side). (v36 = calculadora de precio
+// por peso; v35 = form flotante + 9 destacadas; v34 = WhatsApp directo.)
+const CACHE_NAME    = 'bersaglio-v37';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

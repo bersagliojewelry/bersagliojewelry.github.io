@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mostrador — Bersaglio Admin</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..500&family=Cormorant+Garamond:ital,wght@0,300..600;1,300..400&family=Manrope:wght@300..700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/admin.css">
+    <script type="module" src="js/admin/pos.js"></script>
+</head>
+<body style="display:none">
+<script>try{if(sessionStorage.getItem('bj_auth')){document.body.style.display=''}else{location.replace('admin-login.html')}}catch(e){location.replace('admin-login.html')}</script>
+<div class="adm-layout">
+
+    <!-- Sidebar (se rellena desde datos por js/admin/shared.js → renderSidebar) -->
+    <aside class="adm-sidebar"></aside>
+    <div class="adm-sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <!-- Main -->
+    <main class="adm-main">
+        <header class="adm-topbar">
+            <button class="adm-hamburger" id="hamburger-btn" aria-label="Menú">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="22" height="22"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <h1>Mostrador</h1>
+            <div class="adm-topbar-actions"></div>
+        </header>
+
+        <div class="adm-content">
+            <div class="pos-grid">
+
+                <!-- ── Registrar venta ─────────────────────────────────── -->
+                <section class="pos-card">
+                    <h2 class="pos-card-title">Registrar venta</h2>
+
+                    <!-- Paso 1: elegir pieza -->
+                    <div class="pos-step">
+                        <label class="pos-label" for="pos-search">1 · Elige la pieza</label>
+
+                        <!-- Buscador (visible mientras no hay pieza elegida) -->
+                        <div id="pos-picker">
+                            <div class="adm-search pos-search">
+                                <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
+                                <input type="search" id="pos-search" placeholder="Buscar por nombre o código…" autocomplete="off">
+                            </div>
+                            <ul class="pos-results" id="pos-results"></ul>
+                            <p class="pos-hint" id="pos-picker-hint">Escribe para buscar entre las piezas disponibles.</p>
+                        </div>
+
+                        <!-- Pieza elegida -->
+                        <div class="pos-selected" id="pos-selected" hidden>
+                            <div class="pos-selected-info">
+                                <strong id="pos-sel-name">—</strong>
+                                <span class="pos-sel-code" id="pos-sel-code"></span>
+                            </div>
+                            <button class="adm-btn adm-btn--ghost adm-btn--sm" id="pos-change" type="button">Cambiar</button>
+                        </div>
+                    </div>
+
+                    <!-- Paso 2 + 3: precio y pago (aparecen tras elegir pieza) -->
+                    <div id="pos-sale" hidden>
+
+                        <!-- Precio fijo (la pieza ya trae precio) -->
+                        <div class="pos-step" id="pos-price-fijo" hidden>
+                            <span class="pos-label">2 · Precio</span>
+                            <div class="pos-fijo">
+                                <span>Precio fijo de la pieza</span>
+                                <strong id="pos-fijo-val">$0</strong>
+                            </div>
+                            <p class="pos-hint" id="pos-fijo-hint" hidden></p>
+                        </div>
+
+                        <!-- Precio por peso (la pieza no trae precio) -->
+                        <div class="pos-step" id="pos-price-peso" hidden>
+                            <span class="pos-label">2 · Precio por peso</span>
+                            <p class="pos-hint">El oro varía: ingresa el valor del gramo de hoy, el peso y la mano de obra.</p>
+                            <div class="adm-form-row">
+                                <div class="adm-field">
+                                    <label for="pos-gramo">Valor del gramo (COP)</label>
+                                    <input class="adm-input" id="pos-gramo" type="number" min="0" inputmode="numeric" placeholder="Ej. 350000">
+                                </div>
+                                <div class="adm-field">
+                                    <label for="pos-peso">Peso (gramos)</label>
+                                    <input class="adm-input" id="pos-peso" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Ej. 5.2">
+                                </div>
+                            </div>
+                            <div class="adm-form-row" style="margin-top:12px;">
+                                <div class="adm-field">
+                                    <label for="pos-mano">Mano de obra (COP)</label>
+                                    <input class="adm-input" id="pos-mano" type="number" min="0" inputmode="numeric" placeholder="Ej. 200000">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Medio de pago -->
+                        <div class="pos-step">
+                            <label class="pos-label" for="pos-medio">3 · Medio de pago</label>
+                            <select class="adm-input" id="pos-medio">
+                                <option value="efectivo">Efectivo</option>
+                                <option value="transferencia">Transferencia</option>
+                                <option value="wompi">Wompi (pasarela)</option>
+                            </select>
+                            <p class="pos-hint" id="pos-medio-hint"></p>
+                        </div>
+
+                        <!-- Total + acción -->
+                        <div class="pos-total-bar">
+                            <span>Total</span>
+                            <strong id="pos-total">$0</strong>
+                        </div>
+                        <button class="adm-btn adm-btn--primary pos-submit" id="pos-submit" type="button" disabled>
+                            Registrar venta
+                        </button>
+                        <p class="pos-hint pos-hint--center">La venta se registra una sola vez: si tocas el botón dos veces, no se duplica.</p>
+                    </div>
+                </section>
+
+                <!-- ── Ventas recientes ────────────────────────────────── -->
+                <section class="pos-card">
+                    <h2 class="pos-card-title">Ventas recientes</h2>
+                    <ul class="pos-ventas" id="pos-ventas"></ul>
+                    <div class="adm-empty pos-ventas-empty" id="pos-ventas-empty" hidden>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="40" height="40"><path d="M3 3h2l.4 2M7 13h10l3-8H6.4M7 13L5.4 5M7 13l-2 4h12"/><circle cx="8" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
+                        <p>Aún no hay ventas registradas.</p>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Confirm (lo usa admConfirm de shared.js) -->
+<div class="adm-confirm" id="confirm-dialog" hidden>
+    <div class="adm-confirm-box">
+        <h3>Confirmar venta</h3>
+        <p id="confirm-msg">—</p>
+        <div class="adm-confirm-actions">
+            <button class="adm-btn adm-btn--ghost" id="confirm-cancel">Cancelar</button>
+            <button class="adm-btn adm-btn--primary" id="confirm-ok">Registrar</button>
+        </div>
+    </div>
+</div>
+
+<div class="adm-toast-wrap" id="toast-wrap"></div>
+</body>
+</html>

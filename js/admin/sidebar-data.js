@@ -13,8 +13,10 @@ export const NAV = [
     { label: 'Bandeja',   href: 'admin-consultas.html', icon: 'inbox',  role: 'editor', badgeId: 'inq-badge' },
   ]},
   { label: 'Ventas', items: [
-    { label: 'Ventas',   href: '#', icon: 'cart',    role: 'admin', soon: true },
-    { label: 'Facturas', href: '#', icon: 'invoice', role: 'admin', soon: true },
+    // Mostrador (POS, B1 §126): role 'catalogo' → Kary lo ve (espeja a quién autoriza la CF crearPedido).
+    { label: 'Mostrador', href: 'admin-pos.html', icon: 'cart',    role: 'catalogo' },
+    { label: 'Ventas',    href: '#', icon: 'receipt', role: 'admin', soon: true },
+    { label: 'Facturas',  href: '#', icon: 'invoice', role: 'admin', soon: true },
   ]},
   { label: 'Cobranza', items: [
     { label: 'Cuentas por cobrar', href: '#', icon: 'card',    role: 'admin', soon: true },
@@ -51,4 +53,4 @@ export const NAV_FOOTER = { label: 'Ver sitio', href: 'index.html', icon: 'exter
 // Versión visible del panel (criterio de deploy para no-técnicos, spec §9.1): Kary
 // confirma que está en la versión nueva tras un despliegue. Se bumpea JUNTO al
 // CACHE_NAME del Service Worker (`public/sw.js`) en cada cambio del shell admin.
-export const APP_VERSION = 'v21 · 2026-06-26';
+export const APP_VERSION = 'v22 · 2026-06-26';

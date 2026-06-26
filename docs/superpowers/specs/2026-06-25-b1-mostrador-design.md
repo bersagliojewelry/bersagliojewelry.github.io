@@ -137,14 +137,21 @@ Encaja con el SSG (§116) + SWR (§108/§111). Republish-on-change (segundos); l
 7. **`catalogo.json` a CDN** (desacople costo/tiempo-real).
 > Cada paso se prueba con `functions/seed-piezas.mjs` en emulador (L-58) + node:tests de CF (patrón saldo/reconciliacion).
 
-## 8. Decisiones que requieren a Daniel / W-11 (NO las decido solo)
-- 🔲 **ADDI/Sistecrédito** integrar (palanca de conversión; Kary vincula). — decisión del dueño.
-- 🔲 **Persona Jurídica vs ampliar cupo Wompi** (sube tope $10M/$80M) — evaluar con contador.
-- 🔲 **Parámetros de retención** (ReteFuente/ReteICA) — los da el contador.
-- 🟡 **Ventana exacta de reserva TTL** y umbral de doble-VB de Daniel — decido como arquitecto (reversible),
-  pero confirmo el umbral $ con Daniel.
-- 🛰️ Si al detallar el esquema de `pedidos`/`pagos` aparece un fork caro-de-revertir NO cubierto por la
-  arquitectura convergida → **W-11** (comité + consejo externo) ANTES de codear (§3.7).
+## 8. Decisiones del dueño (FIJADAS por Daniel 2026-06-26)
+- ❄️ **ADDI/Sistecrédito = CONGELADO**: NO integrar todavía — Bersaglio aún no está registrado en ADDI;
+  **Kary debe hacer el proceso de vinculación**. Queda inerte hasta que **Daniel avise**. (No diseñar para ADDI ahora.)
+- ❌ **Persona Jurídica = NO**: la cuenta es de **Kary (Persona Natural)**; se trabaja con **su cuenta Wompi**
+  tal cual, con sus topes ($2.5M/transacción, $10M/día). **A las 20 transacciones** se solicita aumento de cupo;
+  **Daniel avisará cuando lo aumenten** para que Claude ajuste los gates server-side. Por ahora, los topes PN del plan.
+- 🔲 **Parámetros de retención** (ReteFuente/ReteICA) — los da el contador (cuando lleguemos a bruto/neto).
+- 🟡 **Ventana exacta de reserva TTL** y umbral de doble-VB — decido como arquitecto (reversible);
+  confirmo el umbral $ con Daniel al llegar.
+- 🧪 **Pruebas en la WEB REAL** (Daniel 2026-06-26): fase pre-lanzamiento, pocos clientes → TODAS las pruebas
+  se hacen en prod (no emulador); es la única garantía. Las 9 piezas de prueba (`seedDemo:true`) viven en prod
+  hasta que Kary cargue el catálogo real (limpieza: borrar `pieces` con `seedDemo==true`). Excepción explícita
+  a "nada demo en prod" SOLO durante esta fase. → ADR §121.
+- 🛰️ Si al detallar `pedidos`/`pagos` aparece un fork caro-de-revertir NO cubierto por la arquitectura
+  convergida → **W-11** (comité + consejo externo) ANTES de codear (§3.7).
 
 ## Checklist (evidencia al ejecutar)
 - [ ] `pieces` extendido (aditivo, build+tests verdes, sin romper lectura pública)

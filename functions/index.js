@@ -243,6 +243,7 @@ exports.onInquiryCreated = onDocumentCreated('inquiries/{inquiryId}', async (eve
 // Programada 3:00 AM Bogotá: dump completo de Firestore → Storage (backups/firestore/)
 // + retención 30 días. Lógica y diseño en ./backup.js; codec puro en ./backup-codec.js.
 
+exports.crearPedido = require('./pedidos').crearPedido;   // B1 paso 3: el único escritor de `pedidos`
 exports.backupDiario = require('./backup').backupDiario;
 
 // ─── reconciliacionDiaria (F6 frente D) ──────────────────────────────────────

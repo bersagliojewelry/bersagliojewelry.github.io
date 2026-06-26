@@ -3,7 +3,7 @@
 // 🧠 brain-check v1.2 — Linter de integridad del cerebro neuronal (CANÓNICO · portable)
 // ===========================================================
 // KERNEL del cerebro multi-proyecto (ADR §170/§171/§173). Este archivo es IDÉNTICO
-// en los 3 repos (cars/bersaglio/inmobiliaria) — canon = bersaglio (single-writer).
+// en los 4 repos (cars/bersaglio/inmobiliaria/insemastereo) — coordinador/escritor único = operador-cars (§207.9).
 // Los DATOS (topes/budgets/rutas/peers) son INSTANCE: viven en docs/.brain-manifest.json.
 // ⚠️ La SEVERIDAD de cada gate está HARDCODEADA aquí (anti green-tuning, ADR §173):
 // el manifest NUNCA puede degradar un warn; solo aporta datos. Campo `downgrades`
@@ -24,6 +24,7 @@
 //   (6) Skills↔inventario [warn, --full]                (13) Specs: checklist sin evidencia [warn] / sin checklist [info, --full]
 //                                                       (14) deepAudit Nivel-2 vencida [info nudge]
 //                                                       (15) Schema del manifest: clave desconocida [warn]
+//                                                       (16) Fiabilidad M-22: `verificado-vivo` stale [info, --full] (§257/TODO-44)
 // ===========================================================
 import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
@@ -64,7 +65,7 @@ if (existsSync(MANIFEST_PATH)) {
 const KNOWN_KEYS = new Set([
   'brainTemplateVersion', 'repo', 'bootCharsTarget', 'alwaysOn', 'caps', 'archiveDir',
   'deepAudit', 'peers', 'kernelFiles', 'ssotFacts', 'specsDir', 'staleDays', 'ignoreDirs',
-  'downgrades', 'orphanAllowlist',
+  'downgrades', 'orphanAllowlist', 'verifiedLiveStaleDays', 'verifiedLiveScan',
 ]);
 for (const k of Object.keys(manifest)) {
   if (!k.startsWith('_') && !KNOWN_KEYS.has(k)) warn(`manifest: clave desconocida "${k}" (¿typo? un typo apaga gates en silencio) — schema v1.2`);
@@ -442,6 +443,30 @@ else {
     }
     if (due) info(`🔬 auditoría Nivel-2 VENCIDA: última ${da.last}, ${due} → correr skill auditoria-cerebro (§173)`);
   } else info('manifest sin deepAudit — la auditoría Nivel-2 no tiene disparador (declararlo, §173)');
+}
+
+// 16) Fiabilidad (M-22 §257/TODO-44): marcadores `verificado-vivo:` stale [info, --full]
+//     Cura del hueco "documentado ✅ ≠ real": una afirmación sobre realidad externa
+//     (desplegado/live/datos) lleva `verificado-vivo: YYYY-MM-DD`; este gate avisa cuando se
+//     vuelve stale. Opt-in: 0 marcadores → 0 hallazgos → no rompe ningún repo (mecaniza M-22).
+head('\n16) Fiabilidad (M-22): claims `verificado-vivo` vs realidad:');
+if (BOOT) head('  ⏭️  omitido en --boot');
+else {
+  const vlStaleDays = manifest.verifiedLiveStaleDays || 30;
+  const vlScan = manifest.verifiedLiveScan || ['docs/05-ESTADO-GLOBAL.md', 'docs/10-MEMORIA-CORTO-PLAZO.md'];
+  const today = new Date();
+  let total = 0, stale = 0;
+  for (const rel of vlScan) {
+    const p = join(ROOT, rel);
+    if (!existsSync(p)) continue;
+    for (const m of read(p).matchAll(/verificado-vivo:\s*(\d{4}-\d{2}-\d{2})/gi)) {
+      total++;
+      const days = Math.floor((today - new Date(m[1])) / 86400000);
+      if (days > vlStaleDays) { info(`claim "verificado-vivo: ${m[1]}" en ${rel} tiene ${days}d (> ${vlStaleDays}) → re-verificar contra realidad o retirar la afirmación (M-22)`); stale++; }
+    }
+  }
+  if (total && !stale) ok(`${total} claim(s) \`verificado-vivo\` vigentes (≤ ${vlStaleDays}d)`);
+  else if (!total) ok('check de fiabilidad activo (sin marcadores `verificado-vivo:` aún — opt-in M-22/§257)');
 }
 
 // ---- salida (presupuesto de stdout en --boot) ----

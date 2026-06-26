@@ -193,6 +193,28 @@ test('B1 · gender fuera del enum → DENY', async () => {
 test('B1 · patch merge con cantidad válida en pieza existente SÍ pasa', async () => {
     await assertSucceeds(setDoc(doc(asUser('catalogoUid'), 'pieces/p1'), { cantidad: 2, stockType: 'encargo' }, { merge: true }));
 });
+
+// ─── B1 paso 3: candado de stock (estado/reserva = CF-only) + pedidos ─────────
+test('B1 · cliente NO escribe estado/reserva en pieza (CF-only) → DENY', async () => {
+    await assertFails(setDoc(doc(asUser('catalogoUid'), 'pieces/p1'), { estado: 'disponible' }, { merge: true }));
+    await assertFails(setDoc(doc(asUser('adminUid'),    'pieces/p1'), { reservaId: 'x' }, { merge: true }));
+});
+test('B1 · pieza SIN estado en el payload (merge normal de Kary) SÍ pasa', async () => {
+    await assertSucceeds(setDoc(doc(asUser('catalogoUid'), 'pieces/p1'), { price: 500 }, { merge: true }));
+});
+test('B1 · pedidos: el cliente NUNCA crea (create:false, solo la CF) → DENY', async () => {
+    await assertFails(setDoc(doc(asUser('catalogoUid'), 'pedidos/x1'), { total: 100 }));
+    await assertFails(setDoc(doc(asUser('adminUid'),    'pedidos/x2'), { total: 100 }));
+});
+test('B1 · pedidos: read solo staff de ventas (catálogo SÍ; cliente/anon NO)', async () => {
+    await assertFails(getDoc(doc(anon(), 'pedidos/x1')));
+    await assertFails(getDoc(doc(asUser('customerUid'), 'pedidos/x1')));
+    await assertSucceeds(getDoc(doc(asUser('catalogoUid'), 'pedidos/x1')));
+});
+test('B1 · contadores: deny-all al cliente (CF-only)', async () => {
+    await assertFails(getDoc(doc(asUser('adminUid'), 'contadores/pedidos')));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'contadores/pedidos'), { valor: 1 }));
+});
 test('S6 · colección: editor crea con name', async () => {
     await assertSucceeds(setDoc(doc(asUser('editorUid'), 'collections/c1'), { name: 'Anillos', slug: 'anillos' }));
 });

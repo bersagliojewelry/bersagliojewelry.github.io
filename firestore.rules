@@ -360,6 +360,14 @@ service cloud.firestore {
           && (!('cantidad' in d)  || (d.cantidad is int && d.cantidad >= 0))
           && (!('gender' in d)    || (d.gender is string && d.gender in ['mujer', 'hombre', 'unisex']));
     }
+    // B1 paso 3 (candado de stock): estado/reservaId/reservaExpira son STOCK TRANSACCIONAL →
+    // los escribe SOLO la Cloud Function del pedido (Admin SDK, ignora estas reglas). El cliente
+    // (admin/catálogo) NUNCA puede mandarlos: deben estar AUSENTES en su payload. Como el admin
+    // guarda con merge:true, el valor que pone la CF se PRESERVA en cada edición de Kary. Un
+    // cliente que intente inyectar/cambiar el estado de venta = DENY (no puede des-vender a mano).
+    function pieceStockLocked(d) {
+      return !('estado' in d) && !('reservaId' in d) && !('reservaExpira' in d);
+    }
     function pieceCreateValid() {
       let d = request.resource.data;
       return d.name is string && d.name.size() > 0
@@ -369,7 +377,8 @@ service cloud.firestore {
           && (!('images' in d)   || d.images is list)
           && (!('sizes' in d)    || d.sizes is list)
           && (!('specs' in d)    || d.specs is map)
-          && pieceClassValid(d);
+          && pieceClassValid(d)
+          && pieceStockLocked(d);
     }
     function pieceTypesValid() {
       let d = request.resource.data;
@@ -382,7 +391,8 @@ service cloud.firestore {
           && (!('images' in d)     || d.images is list)
           && (!('sizes' in d)      || d.sizes is list)
           && (!('specs' in d)      || d.specs is map)
-          && pieceClassValid(d);
+          && pieceClassValid(d)
+          && pieceStockLocked(d);
     }
     function colCreateValid() {
       let d = request.resource.data;
@@ -581,6 +591,26 @@ service cloud.firestore {
       allow create: if isCatalogo() && pieceCreateValid(); // editor+/catálogo con campos válidos
       allow update: if isCatalogo() && pieceTypesValid();  // S6: tolerante a merge/partial
       allow delete: if isAdmin() || (isAuth() && getUserRole() == 'catalogo'); // admin+ o catálogo (editor NO borra)
+    }
+
+    // ─── Pedidos (ventas — B1 paso 3) ──────────────────────────────────────────
+    // El pedido lo crea/muta SOLO la Cloud Function `crearPedido` (Admin SDK, que IGNORA estas
+    // reglas) → único escritor server-side: total recalculado + snapshot inmutable. El cliente
+    // NUNCA escribe (ni Kary): así nadie manipula precio/estado por fuera de la CF. Read = staff
+    // de ventas (owner/admin/catálogo = Kary); NO público (lleva PII + dinero).
+    function isVentas() { return isAuth() && getUserRole() in ['owner', 'admin', 'catalogo']; }
+    match /pedidos/{pedidoId} {
+      allow read: if isVentas();
+      allow create, update, delete: if false;     // SOLO Admin SDK (la CF)
+      match /{sub=**} {                            // pagos 1..N (futuro) — igual CF-only
+        allow read:  if isVentas();
+        allow write: if false;
+      }
+    }
+    // Contador correlativo de pedidos — colección DEDICADA, deny-all al cliente; la CF la
+    // gestiona con Admin SDK (lee+incrementa dentro de la misma transacción del pedido).
+    match /contadores/{docId} {
+      allow read, write: if false;
     }
 
     // ─── Collections (categories) ──────────────────────────────────────────────

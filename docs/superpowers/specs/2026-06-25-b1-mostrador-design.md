@@ -166,7 +166,8 @@ Encaja con el SSG (§116) + SWR (§108/§111). Republish-on-change (segundos); l
 - [x] `crearPedido` CF con stock atómico + test de doble-venta (runTransaction) — §125: `pedidos-core.js` (núcleo testeable) + wrapper onCall; 6 tests integración (doble-venta bloqueada, idempotencia, dinero). **CF DESPLEGADA a prod (§126)**
 - [x] `pedidos` reglas (`create:false`) + `pieceStockLocked` (estado CF-only) + test rules — §125: 206/206; DESPLEGADAS a prod
 - [x] **POS UI "Mostrador"** (`admin-pos.html` + `js/admin/pos.js` + `js/pedidos-service.js`) que llama `crearPedido` — §126: UI ESPEJA a la CF (precio fijo o por peso, `calcularPrecio` reusado); menú `role:catalogo`; "Ventas recientes"; v37; commit `02ab6a7`. Pend: verif. en vivo tras merge de Daniel
-- [ ] `registrarPago` 1..N + comprobante por-verificar
+- [x] **paso 4a — `confirmarPago`** (por_verificar→pagado, "vi la plata", SoD) — §128: CF `confirmarPagoCore` + botón "Confirmar pago" en Ventas recientes; 9/9 integración; **DESPLEGADA a prod** (`ba6da22`)
+- [ ] **paso 4b — `registrarPago` 1..N abonos/apartados** — PEND DECISIÓN (§128.4 / TODO-39): si el mostrador aparta piezas (anticipo+saldo), el saldo = CARTERA existente → reusar, NO pagos-en-pedido paralelos. Preguntar a Daniel + link pedido↔cliente
 - [ ] `anularPedido` (VOID reintegra pieza) + `cierreCaja` (arqueo)
 - [ ] bruto/neto + export contador
 - [ ] `catalogo.json` a CDN

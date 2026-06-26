@@ -11,7 +11,7 @@
  */
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { getFirestore } = require('firebase-admin/firestore');
-const { crearPedidoCore, PedidoError } = require('./pedidos-core');
+const { crearPedidoCore, confirmarPagoCore, PedidoError } = require('./pedidos-core');
 
 const VENTAS = ['owner', 'admin', 'catalogo'];
 
@@ -38,4 +38,16 @@ const crearPedido = onCall({ region: 'us-central1', invoker: 'public' }, async (
     }
 });
 
-module.exports = { crearPedido };
+// confirmarPago (paso 4): Kary confirma "ya vi la plata" → por_verificar → pagado.
+const confirmarPago = onCall({ region: 'us-central1', invoker: 'public' }, async (request) => {
+    const db = getFirestore();
+    await rolDeVentas(db, request.auth);
+    try {
+        return await confirmarPagoCore(db, { pedidoId: (request.data || {}).pedidoId, autor: request.auth.uid });
+    } catch (e) {
+        if (e instanceof PedidoError) throw new HttpsError(e.code, e.message);
+        throw e;
+    }
+});
+
+module.exports = { crearPedido, confirmarPago };

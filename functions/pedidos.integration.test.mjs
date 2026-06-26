@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import core from './pedidos-core.js';
-const { crearPedidoCore } = core;
+const { crearPedidoCore, confirmarPagoCore } = core;
 
 initializeApp({ projectId: 'demo-bersaglio' });
 const db = getFirestore();
@@ -70,4 +70,23 @@ test('transferencia → estado pago_por_verificar (no pagado)', async () => {
     const r = await crearPedidoCore(db, { pedidoId: 'ped5', pieceId: 'pInt4', medio: 'transferencia', autor: 'u1' });
     assert.equal(r.total, 1000000);
     assert.equal((await db.doc('pedidos/ped5').get()).data().estado, 'pago_por_verificar');
+});
+
+test('confirmarPago: "vi la plata" → por_verificar pasa a pagado', async () => {
+    const r = await confirmarPagoCore(db, { pedidoId: 'ped5', autor: 'kary' });
+    assert.equal(r.estado, 'pagado');
+    assert.equal(r.yaEstaba, false);
+    const ped = (await db.doc('pedidos/ped5').get()).data();
+    assert.equal(ped.estado, 'pagado');
+    assert.equal(ped.confirmadoPor, 'kary');
+});
+
+test('confirmarPago: idempotente (re-confirmar un pagado → yaEstaba, no rompe)', async () => {
+    const r = await confirmarPagoCore(db, { pedidoId: 'ped5', autor: 'kary' });
+    assert.equal(r.yaEstaba, true);
+    assert.equal(r.estado, 'pagado');
+});
+
+test('confirmarPago: pedido inexistente → rechaza', async () => {
+    await assert.rejects(confirmarPagoCore(db, { pedidoId: 'noexiste', autor: 'kary' }), /no existe/i);
 });

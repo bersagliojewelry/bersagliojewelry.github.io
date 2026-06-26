@@ -6,11 +6,11 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v38 — TODO en COP: el rótulo del precio en Piezas decía "Precio USD" (engañoso);
-// ahora "Precio en pesos (COP)" + nota "nunca dólares". El cobro SIEMPRE fue en pesos (format$
-// es-CO + CF + POS); solo el cartel estaba mal. (v37 = POS Mostrador §126; v36 = calculadora
-// de precio por peso §124.)
-const CACHE_NAME    = 'bersaglio-v38';
+// Bumped to v39 — B1 paso 4a: confirmar pago ("vi la plata"). En el Mostrador, las ventas
+// "por verificar" (transferencia/Wompi) traen botón "Confirmar pago" → CF confirmarPago
+// (pago_por_verificar → pagado; regla SoD, solo la CF flipea el estado). (v38 = todo en COP;
+// v37 = POS Mostrador §126.)
+const CACHE_NAME    = 'bersaglio-v39';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

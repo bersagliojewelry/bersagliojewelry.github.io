@@ -84,4 +84,34 @@ async function crearPedidoCore(db, input = {}) {
     });
 }
 
-module.exports = { crearPedidoCore, entero, calcOro, PedidoError };
+/**
+ * confirmarPago (B1 paso 4) — Kary confirma "ya vi la plata" → pasa el pedido de
+ * `pago_por_verificar` a `pagado`. La regla SoD ("no se despacha sin ver el dinero"): el
+ * estado de pago SOLO lo flipea la CF, nunca el cliente. Idempotente (re-confirmar = no-op).
+ * @param db Firestore (admin). @param input { pedidoId, autor }
+ */
+async function confirmarPagoCore(db, input = {}) {
+    const pedidoId = String(input.pedidoId || '').trim();
+    const autor    = input.autor || null;
+    if (!pedidoId) throw new PedidoError('invalid-argument', 'pedidoId es obligatorio.');
+
+    return db.runTransaction(async (tx) => {
+        const ref = db.doc(`pedidos/${pedidoId}`);
+        const snap = await tx.get(ref);
+        if (!snap.exists) throw new PedidoError('not-found', 'El pedido no existe.');
+        const ped = snap.data();
+        if (ped.estado === 'pagado') return { pedidoId, estado: 'pagado', yaEstaba: true };   // idempotente
+        if (ped.estado !== 'pago_por_verificar') {
+            throw new PedidoError('failed-precondition', `Solo se confirma un pago "por verificar" (este está "${ped.estado}").`);
+        }
+        tx.update(ref, {
+            estado: 'pagado',
+            confirmadoPor: autor,
+            confirmadoEn: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+        });
+        return { pedidoId, estado: 'pagado', yaEstaba: false };
+    });
+}
+
+module.exports = { crearPedidoCore, confirmarPagoCore, entero, calcOro, PedidoError };

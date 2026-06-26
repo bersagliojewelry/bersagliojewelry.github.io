@@ -154,7 +154,7 @@ Encaja con el SSG (§116) + SWR (§108/§111). Republish-on-change (segundos); l
   convergida → **W-11** (comité + consejo externo) ANTES de codear (§3.7).
 
 ## Checklist (evidencia al ejecutar)
-- [ ] `pieces` extendido (aditivo, build+tests verdes, sin romper lectura pública)
+- [x] `pieces` extendido (stockType/cantidad/gender, aditivo) — ADR §122; `pieceClassValid` DESPLEGADA a prod (read-back OK); 201 tests rules + build verdes; `estado/reserva*` diferidos al CF
 - [ ] `cotizacionRapida` CF + test (no muta BD)
 - [ ] `crearPedido` CF con stock atómico + test de doble-venta (runTransaction)
 - [ ] `pedidos` reglas (`create:false`) + test rules

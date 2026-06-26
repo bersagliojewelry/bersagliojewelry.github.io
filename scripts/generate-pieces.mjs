@@ -156,6 +156,15 @@ function buildProductSchema(p, category, desc, canonicalUrl, image) {
     const hasPrice = !!p.price && Number.isFinite(Number(p.price));
     const additionalProperty = buildAdditionalProperty(s);
 
+    // STOCK-AWARE (consejo externo Gemini, paso 7 §10.1): una pieza ÚNICA vendida NUNCA debe declararse
+    // InStock — Google/Merchant la indexarían como activa. vendida → OutOfStock + sin precio. Si no:
+    // con precio → InStock; "bajo consulta" (alta joyería) → PreOrder. NUNCA price:0 (Google lo rechaza).
+    const vendida = isVendida(p);
+    const availability = vendida ? 'https://schema.org/OutOfStock'
+                       : hasPrice ? 'https://schema.org/InStock'
+                       : 'https://schema.org/PreOrder';
+    const showPrice = hasPrice && !vendida;
+
     const schema = {
         '@context': 'https://schema.org/',
         '@type': 'Product',
@@ -169,19 +178,11 @@ function buildProductSchema(p, category, desc, canonicalUrl, image) {
         brand: { '@type': 'Brand', name: BRAND },
         ...(metal ? { material: metal } : {}),
         ...(additionalProperty.length ? { additionalProperty } : {}),
-        // Offer: NUNCA price:0 (Google lo rechaza). Con precio → InStock+precio;
-        // "bajo consulta" (alta joyería) → PreOrder sin price.
-        offers: hasPrice ? {
+        offers: {
             '@type': 'Offer', url: canonicalUrl, priceCurrency: 'COP',
-            price: Number(p.price), priceValidUntil: '2027-12-31',
+            ...(showPrice ? { price: Number(p.price), priceValidUntil: '2027-12-31', valueAddedTaxIncluded: true } : {}),
             itemCondition: 'https://schema.org/NewCondition',
-            availability: 'https://schema.org/InStock',
-            valueAddedTaxIncluded: true,
-            seller: { '@type': 'JewelryStore', '@id': `${SITE_URL}/#business`, name: BRAND },
-        } : {
-            '@type': 'Offer', url: canonicalUrl, priceCurrency: 'COP',
-            itemCondition: 'https://schema.org/NewCondition',
-            availability: 'https://schema.org/PreOrder',
+            availability,
             seller: { '@type': 'JewelryStore', '@id': `${SITE_URL}/#business`, name: BRAND },
         },
     };
@@ -428,10 +429,17 @@ function generatePage(template, p, slug, collectionsById) {
     );
 
     // 8. <noscript> SEO: contenido clave para crawlers sin JS.
-    const priceText = (p.price && Number.isFinite(Number(p.price))) ? formatPriceCOP(p.price) : 'Bajo consulta';
+    // STOCK-AWARE (§10.1): vendida → oculta el precio ("Vendida") + CTA "ver similares" (la página vive
+    // para SEO/links, pero no se ofrece a la venta). NUNCA mostrar precio de una pieza ya vendida.
+    const vendidaPieza = isVendida(p);
+    const priceText = vendidaPieza ? 'Vendida'
+                    : (p.price && Number.isFinite(Number(p.price))) ? formatPriceCOP(p.price) : 'Bajo consulta';
     const specRows = buildAdditionalProperty(p.specs).map(x =>
         `                <li><strong>${escapeHtml(x.name)}:</strong> ${escapeHtml(x.value)}</li>`
     ).join('\n');
+    const ctaNoscript = vendidaPieza
+        ? `<p>Esta pieza fue <strong>vendida</strong>. <a href="${SITE_URL}/colecciones.html">Ver piezas similares</a> · <a href="${SITE_URL}/contacto.html">Hablar con un asesor</a></p>`
+        : `<p><a href="${SITE_URL}/contacto.html">Consultar esta pieza con un asesor</a> · <a href="${SITE_URL}/colecciones.html">Ver el catálogo</a></p>`;
     const noscript = `
     <noscript>
         <div style="max-width:1100px;margin:96px auto;padding:24px;font-family:Manrope,system-ui,sans-serif">
@@ -441,7 +449,7 @@ function generatePage(template, p, slug, collectionsById) {
             <p style="font-size:22px;font-weight:700;margin:16px 0">${escapeHtml(priceText)}</p>
             ${realDesc ? `<p>${escapeHtml(realDesc)}</p>` : ''}
             ${specRows ? `<ul style="list-style:none;padding:0;line-height:2">\n${specRows}\n            </ul>` : ''}
-            <p><a href="${SITE_URL}/contacto.html">Consultar esta pieza con un asesor</a> · <a href="${SITE_URL}/colecciones.html">Ver el catálogo</a></p>
+            ${ctaNoscript}
         </div>
     </noscript>`;
     html = html.replace(
@@ -544,6 +552,93 @@ function isPublishable(p) {
     return hasImage;
 }
 
+// ===================== catalogo.json — catálogo PÚBLICO estático (B1 paso 7 · fuga #8) =====================
+// El público lee este JSON desde la CDN de Pages (cero Firestore reads); Firestore live queda para
+// admin/POS/checkout. Contrato verificado contra los consumidores (catalogo.js/pieza.js/data.js):
+// incluye TODO lo que el cliente renderiza/ordena; EXCLUYE internos (costo, peso-taller, notas).
+
+// Estado de venta: el POS marca estado='vendida' (default tolerante 'disponible', js/admin/pos.js:77).
+function isVendida(p) {
+    return (p.estado || 'disponible') === 'vendida';
+}
+
+// Timestamp Firestore (Admin SDK o cliente) → { seconds }. El cliente ordena por `.seconds`
+// (catalogo.js:65) → NO tocar el consumidor. Admin SDK serializa con `_seconds`; el cliente con `seconds`.
+function tsSeconds(ts) {
+    if (ts == null) return null;
+    if (typeof ts.seconds === 'number')   return { seconds: ts.seconds };
+    if (typeof ts._seconds === 'number')  return { seconds: ts._seconds };
+    if (typeof ts.toMillis === 'function') return { seconds: Math.floor(ts.toMillis() / 1000) };
+    if (typeof ts === 'number')           return { seconds: Math.floor(ts / 1000) };
+    const t = new Date(ts).getTime();
+    return Number.isFinite(t) ? { seconds: Math.floor(t / 1000) } : null;
+}
+
+// specs PÚBLICOS (whitelist AEO) — NUNCA volcar specs crudo (puede traer notas internas).
+const PUBLIC_SPEC_KEYS = ['stone', 'stones', 'carat', 'color', 'clarity', 'cut', 'accent',
+    'metal', 'gold', 'weight', 'certificate', 'gia', 'origin'];
+function publicSpecs(specs) {
+    const s = specs || {};
+    const out = {};
+    for (const k of PUBLIC_SPEC_KEYS) {
+        if (s[k] != null && String(s[k]).trim() !== '') out[k] = s[k];
+    }
+    return out;
+}
+
+// Proyección pública de una colección (categoría — sin datos sensibles).
+function publicCollection(c) {
+    return {
+        id: c.id,
+        slug: c.slug || c.id,
+        name: c.name || '',
+        description: c.description || '',
+        subtitle: c.subtitle || '',
+        featured: c.featured === true,
+        order: Number.isFinite(Number(c.order)) ? Number(c.order) : null,
+        bannerUrl: c.bannerUrl || '',
+        bannerLqip: c.bannerLqip || '',
+    };
+}
+
+// Proyección pública de una pieza. Whitelist verificada contra catalogo.js (grilla: slug/id/images/
+// image/tag/featured/specs/collection/price/name/imageLqip) + pieza.js (ficha: description/sizes/code/
+// specs) + orden por createdAt/updatedAt. `available` = la grilla la filtra; la ficha muestra "Vendida".
+function publicPiece(p, slug) {
+    const price = (p.price != null && Number.isFinite(Number(p.price))) ? Number(p.price) : null;
+    const images = Array.isArray(p.images) ? p.images.filter(Boolean)
+                 : (p.image ? [p.image] : []);
+    return {
+        id: p.id,
+        slug,
+        name: p.name || '',
+        code: p.code || '',
+        collection: p.collection || '',
+        price,
+        images,
+        imageLqip: p.imageLqip || '',
+        tag: p.tag || '',
+        featured: p.featured === true,
+        sizes: Array.isArray(p.sizes) ? p.sizes : [],
+        specs: publicSpecs(p.specs),
+        description: descriptionFor(p),         // cero-demo: "" si "PRUEBA"/vacío
+        available: !isVendida(p),
+        createdAt: tsSeconds(p.createdAt),
+        updatedAt: tsSeconds(p.updatedAt),
+    };
+}
+
+// catalogo.json completo. `pieces` incluye TODAS las publicables (incl. vendidas con available:false →
+// la grilla las filtra, la ficha las muestra con sello). `slugMap`: id→slug (contrato único con urls.js).
+function buildCatalogJson(pieces, collections, slugMap, generatedAtIso) {
+    return {
+        version: 1,
+        generatedAt: generatedAtIso,
+        collections: collections.map(publicCollection),
+        pieces: pieces.map(p => publicPiece(p, slugMap.get(String(p.id)) || pieceSlug(p))),
+    };
+}
+
 // ===================== Main =====================
 
 async function main() {
@@ -618,6 +713,22 @@ async function main() {
     mkdirSync(dataDir, { recursive: true });
     writeFileSync(join(dataDir, 'piece-slugs.json'), JSON.stringify(Object.fromEntries(slugMap), null, 2));
 
+    // catalogo.json — catálogo PÚBLICO estático para la CDN de Pages (B1 paso 7 · fuga #8). El cliente lo
+    // lee en vez de abrir onSnapshot en CADA visita (cero Firestore reads). Incluye TODAS las publicables
+    // (vendidas con available:false → la grilla las filtra, la ficha las muestra con sello). Guard
+    // anti-catálogo-menguado: la proyección NO debe perder piezas ni vaciarse con datos presentes.
+    const generatedAtIso = new Date().toISOString();
+    const catalogo = buildCatalogJson(pieces, collections, slugMap, generatedAtIso);
+    if (catalogo.pieces.length !== pieces.length) {
+        throw new Error(`[generate] catalogo.json INCOMPLETO: ${catalogo.pieces.length} de ${pieces.length} publicables — la proyección perdió piezas (abortado).`);
+    }
+    if (allPieces.length > 0 && catalogo.pieces.length === 0) {
+        throw new Error('[generate] catalogo.json VACÍO pese a haber piezas en Firestore — probable bug de datos/filtro (abortado).');
+    }
+    writeFileSync(join(dataDir, 'catalogo.json'), JSON.stringify(catalogo));
+    const vendidasCount = pieces.filter(isVendida).length;
+    console.log(`[generate] catalogo.json: ${catalogo.pieces.length} piezas (${vendidasCount} vendidas, available:false) + ${catalogo.collections.length} colecciones.`);
+
     // Sitemap (sobrescribe el estático copiado por Vite desde public/).
     const today = isoDate(Date.now()) || '2026-06-25';
     const sitemap = generateSitemap(pieces, slugMap, today);
@@ -632,7 +743,8 @@ async function main() {
         schemaType: 'CollectionPage',
         name: 'Catálogo · Bersaglio Jewelry',
         description: 'Anillos, aretes, collares y argollas de alta joyería: esmeralda colombiana, diamantes certificados y oro 18K.',
-        items: pieces.map(p => ({ name: p.name, url: `${SITE_URL}/pieza/${slugMap.get(String(p.id))}.html` })),
+        // Vendidas FUERA del listado (§10.1): salen de la grilla; su página vive con "Vendida·ver similares".
+        items: pieces.filter(p => !isVendida(p)).map(p => ({ name: p.name, url: `${SITE_URL}/pieza/${slugMap.get(String(p.id))}.html` })),
     });
     injectListingPage('journal.html', '<main id="main-content" data-screen-label="journal">', {
         schemaType: 'Blog',
@@ -706,6 +818,38 @@ function runSelfTest() {
             : { vertical: 'JewelryStore', brand: 'X', baseUrl: 'https://x', nap: {}, sameAs: ['https://x/a'] };
         JSON.parse(safeJsonLd(buildBusinessGraph(cfgT)));
     } catch (e) { fails.push('business @graph NO parsea: ' + e.message); }
+
+    // STOCK-AWARE (§10.1): vendida → OutOfStock + sin precio + "Vendida" en el HTML; no rebrota InStock.
+    const soldPiece = { ...mockPiece, estado: 'vendida' };
+    const soldSchema = buildProductSchema(soldPiece, 'Anillos', 'x', `${SITE_URL}/pieza/sold.html`, 'https://x/y.jpg');
+    if (soldSchema.offers.availability !== 'https://schema.org/OutOfStock') fails.push('vendida: availability != OutOfStock.');
+    if ('price' in soldSchema.offers) fails.push('vendida: el offer NO debe llevar price.');
+    const soldHtml = generatePage(template, soldPiece, 'sold', mockCols);
+    if (!soldHtml.includes('Vendida')) fails.push('vendida: el HTML no muestra "Vendida".');
+    if (soldHtml.includes('schema.org/InStock')) fails.push('vendida: el schema aún declara InStock.');
+    const liveSchema = buildProductSchema({ ...mockPiece, estado: 'disponible' }, 'Anillos', 'x', `${SITE_URL}/pieza/x.html`, 'https://x/y.jpg');
+    if (liveSchema.offers.availability !== 'https://schema.org/InStock') fails.push('disponible+precio: availability != InStock.');
+    if (liveSchema.offers.price !== 12000000) fails.push('disponible+precio: falta price en el offer.');
+
+    // catalogo.json: contrato COMPLETO (claves que el cliente usa) + available + NO filtra internos + parsea.
+    const REQUIRED_PIECE_KEYS = ['id', 'slug', 'name', 'code', 'collection', 'price', 'images', 'imageLqip',
+        'tag', 'featured', 'sizes', 'specs', 'description', 'available', 'createdAt', 'updatedAt'];
+    const cat = buildCatalogJson(
+        [{ ...mockPiece, id: 'p1', estado: 'disponible', costoInterno: 999, pesoTaller: 4.9, sizes: ['6'], tag: 'Nueva', imageLqip: 'data:x', updatedAt: { seconds: 100 } },
+         { ...mockPiece, id: 'p2', estado: 'vendida' }],
+        [{ id: 'anillos', slug: 'anillos', name: 'Anillos', description: 'd', secretoInterno: 'X' }],
+        new Map([['p1', 'p1'], ['p2', 'p2']]),
+        '2026-06-26T00:00:00.000Z',
+    );
+    try { JSON.parse(JSON.stringify(cat)); } catch (e) { fails.push('catalogo.json NO serializa/parsea: ' + e.message); }
+    const pj = cat.pieces[0];
+    for (const k of REQUIRED_PIECE_KEYS) if (!(k in pj)) fails.push(`catalogo.json: falta la clave "${k}" del contrato.`);
+    if ('costoInterno' in pj || 'pesoTaller' in pj) fails.push('catalogo.json: FILTRA campo interno (costoInterno/pesoTaller) — fuga.');
+    if (pj.available !== true) fails.push('catalogo.json: pieza disponible debe tener available:true.');
+    if (cat.pieces[1].available !== false) fails.push('catalogo.json: pieza vendida debe tener available:false.');
+    if (pj.updatedAt?.seconds !== 100) fails.push('catalogo.json: updatedAt no normalizado a {seconds}.');
+    if ('secretoInterno' in cat.collections[0]) fails.push('catalogo.json: colección NO respeta whitelist (fuga de campo).');
+    if (!('stone' in pj.specs)) fails.push('catalogo.json: specs whitelist perdió "stone".');
 
     if (fails.length) {
         console.error('[SSG_SELFTEST] FALLO:');

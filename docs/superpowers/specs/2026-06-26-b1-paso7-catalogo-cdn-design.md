@@ -171,3 +171,62 @@ síntesis del presidente abajo. **Ganó su sueldo: el diseño v1 (B puro) tenía
 3. **7c** Frescura on-demand: `repository_dispatch` disparado desde las CF de venta (`crearPedido`/`anularPedido`)
    → rebuild del catálogo. (Decisión 8.1: automático vs botón manual.)
 4. **7d** Confirmar que el checkout (`crearPedido`) es la única verdad de stock (ya lo es) — sin revalidación por-ficha.
+
+---
+
+## 10. Integración del Consejo Externo (Gemini 3.1 Pro · 2026-06-26) — DISEÑO v3
+
+Daniel corrió el prompt; Gemini confirmó **C como ganadora** ("A muere aquí": A solo actualizaba el JSON, dejaba el
+HTML horneado con schema obsoleto hasta el cron — C unifica HTML+JSON vía `repository_dispatch`). Pero cazó 3 huecos
+graves de la C redactada en §9. Peer review verificado contra el código (no acatado) → crudo+análisis en bóveda
+`2026-06-26-consejo-externo-b1-paso7-RESPUESTA.md`. **3 correcciones adoptadas, 1 refutada.**
+
+### 10.1 BUG LETAL SEO (el hallazgo que ni el comité ni Claude vimos) — P0 BLOQUEANTE
+`scripts/generate-pieces.mjs:174-186` hornea `availability: InStock` (o `PreOrder` sin precio) **sin mirar nunca
+`estado`**; `isPublishable` solo filtra nombre+imagen. El estado de venta real es `estado==='vendida'`
+(`pos.js:77`, default tolerante `'disponible'`). → al regenerar tras una venta, el HTML `/pieza/<slug>.html` dice
+InStock + muestra precio en `<noscript>` → Google/Merchant indexan piezas **vendidas como activas** (discrepancia de
+stock, hunde conversión). **Hueco PRE-EXISTENTE**: el catálogo público hoy NO es stock-aware.
+**Fix (antes de lanzar el paso 7)**: el SSG lee `estado`; si `vendida` → emite `availability: https://schema.org/OutOfStock`
++ oculta el precio en el `<noscript>` + CTA "vendida · ver similares". El mismo `estado` alimenta `available` en el
+`catalogo.json` y un badge en la grilla.
+> 🔵 **Decisión de NEGOCIO para Daniel**: una pieza ÚNICA vendida, ¿(a) sale del listado activo pero su página vive
+> con "Vendida · ver similares" (recomendado: bueno para SEO, no rompe links, alimenta deseo/escasez), (b) se queda
+> en el listado con sello "Vendida", o (c) desaparece del todo (NO recomendado: 404 + pierde SEO)?
+
+### 10.2 Contrato incompleto — VERIFICADO, corrige §5
+Mi whitelist §5 OMITÍA campos que el cliente SÍ consume: `description` (`pieza.js:85`), `sizes` (`pieza.js:204`),
+`createdAt`/`updatedAt` (orden del catálogo, `catalogo.js:64-66`), specs completos (similares, `pieza.js:311`).
+**Principio corregido del contrato**: incluir **TODO campo que el cliente renderiza/ordena**; excluir **solo**
+internos (costo, peso-taller, notas). El test `deepEqual(jsonShape, getAll()[0])` (§9.2) lo garantiza.
+
+### 10.3 Revalidación en ficha — RESTAURADA (Gemini refuta al FinOps del comité)
+El §9.1.3 (eliminar la revalidación por-ficha) era sobre-optimización de costo a expensas de la reputación: en lujo
+1-de-1, un VIP que se entera AL FINAL de que la pieza no existe es tóxico. **Verificado**: el tráfico de fichas <<
+listados (a ~5k vistas/día = 5k reads; free 50k/día) → el costo es asumible. **Fix**: restaurar el **read optimista
+no-bloqueante en `pieza.js`** (pinta del JSON al instante; en background 1 `getDoc` → botón "Agotado" si vendida).
+SOLO en la ficha, no en grilla/home (respeta §108 solo-público). El listado tolera ~2 min de staleness; la ficha no.
+
+### 10.4 Blindar `repository_dispatch` — ADOPTADO (aterrizado al stack)
+`deploy.yml:18-20` tiene `concurrency: group:pages, cancel-in-progress:true` → ráfaga de ventas = coalescencia
+(builds se cancelan entre sí): bueno anti-rate-limit, pero extiende la ventana de stock-fantasma (la cubre 10.3).
+**Fallo silencioso**: si el PAT expira / Actions cae, el JSON no se reconstruye y Kary no se entera. **Fix**: el
+request a la API de GitHub desde la CF (`crearPedido`/`anularPedido`) en **try/catch que NO interrumpe la venta** +
+alerta a **`saludEventos`/`salud`** (mismo patrón del blindaje del recálculo de saldo §64; NO Sentry/Slack — no
+cableados). **PAT en Secret Manager, scope mínimo** (`workflow`/`repository_dispatch`).
+
+### 10.5 Refutado
+- **A no es necesaria** (Gemini mismo concluye que muere): el read-en-ficha (10.3) cubre la concurrencia/hype-drop;
+  la verdad atómica ya está en `crearPedido`. Para alta joyería "500 a la misma pieza única en 2 min" es marginal.
+- Gemini asumió **Spark**; el proyecto ya es **Blaze** (tiene CFs) — no cambia ninguna conclusión.
+
+### 10.6 Plan v3 (reemplaza §9.4) — orden por riesgo
+1. **7a-SSG-stock** (P0): `generate-pieces.mjs` stock-aware (`OutOfStock` + sin precio si vendida) + `buildCatalogJson`
+   puro con contrato COMPLETO (10.2) + guard monotonicidad + `SSG_SELFTEST` + test `deepEqual` que congela el contrato.
+2. **7b-cliente**: `data.js` fetch SWR de `catalogo.json` (URL versionada, fallback a stale, flag `source`) + SW
+   stale-while-revalidate fuera del shell + cache bump.
+3. **7c-ficha**: read optimista no-bloqueante en `pieza.js` (badge "Agotado" pre-checkout, solo-público).
+4. **7d-frescura**: `repository_dispatch` blindado desde las CF de venta (try/catch + `saludEventos` + PAT scope-mín).
+   (Decisión 8.1 automático vs botón manual sigue abierta; recomiendo automático.)
+> **Flujo fuerte COMPLETO** ✅: arquitecto + comité ×4 + consejo externo (Gemini) integrado. Listo para implementar
+> tras luz verde de Daniel + la decisión de negocio 10.1.

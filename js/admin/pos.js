@@ -16,6 +16,7 @@
 import adminDb from './db.js';
 import { admToast, admConfirm, initSidebar, esc, requireAuth, errorMessage, fmtDateTime } from './shared.js';
 import { calcularPrecio } from './calculadora.js';
+import { calcularNeto } from './fiscal.js';
 import { crearPedido, confirmarPago, anularPedido, cierreCaja, ultimasVentas } from '../pedidos-service.js';
 
 const cop = n => '$' + Math.round(Math.max(0, Number(n) || 0)).toLocaleString('es-CO');
@@ -64,6 +65,8 @@ async function init() {
     document.getElementById('cierre-submit').addEventListener('click', handleCierre);
     document.getElementById('cierre-modal').addEventListener('click', e => { if (e.target.id === 'cierre-modal') closeCierre(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !document.getElementById('cierre-modal').hidden) closeCierre(); });
+
+    document.getElementById('btn-export-contador').addEventListener('click', exportarContador);
 
     updateMedioHint();
     loadVentas();
@@ -366,6 +369,40 @@ async function handleCierre() {
         submit.textContent = 'Cerrar caja';
         submit.disabled = false;
     }
+}
+
+// ─── Export al contador (paso 6 · bruto/neto) ─────────────────────────────────
+const ESTADO_LBL = { pagado: 'Pagado', pago_por_verificar: 'Por verificar', anulado: 'Anulada' };
+const csvCell = v => { const s = String(v ?? ''); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+
+// Descarga un CSV de las ventas con bruto/comisión/retenciones/neto para el contador.
+// Bruto = exacto (server). Neto usa tasas DEFAULT (Wompi/retenciones) hasta que el contador
+// confirme las reales (calcularNeto, §fiscal.js). Anuladas = neto 0 (no son ingreso).
+async function exportarContador() {
+    let ventas;
+    try { ventas = await ultimasVentas(500); }
+    catch (err) { admToast(errorMessage(err, 'No se pudieron cargar las ventas.'), 'danger'); return; }
+    if (!ventas.length) { admToast('No hay ventas para exportar.', 'default'); return; }
+
+    const head = ['Número', 'Fecha', 'Pieza', 'Medio', 'Estado', 'Bruto', 'Comisión Wompi', 'ReteFuente', 'ReteICA', 'Neto'];
+    const rows = ventas.map(v => {
+        const f = (v.estado === 'anulado')
+            ? { bruto: entero(v.total), comisionWompi: 0, reteFuente: 0, reteIca: 0, neto: 0 }
+            : calcularNeto({ bruto: v.total, medio: v.medio });
+        return [
+            v.numero ?? '', fmtDateTime(v.createdAt), v.pieceName || 'Pieza', v.medio || '',
+            ESTADO_LBL[v.estado] || v.estado || '',
+            f.bruto, f.comisionWompi, f.reteFuente, f.reteIca, f.neto,
+        ].map(csvCell).join(',');
+    });
+    const csv = '﻿' + [head.map(csvCell).join(','), ...rows].join('\r\n');   // BOM → Excel respeta acentos
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'ventas-contador.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    admToast('Descargando ventas-contador.csv…');
 }
 
 init();

@@ -6,10 +6,11 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v40 — B1 paso 5: anular venta (VOID, reintegra la pieza) + cierre de caja (arqueo Z,
-// conteo a ciegas → descuadre). Botones "Anular" en Ventas recientes + "Cerrar caja" en la topbar
-// del Mostrador (CFs anularPedido/cierreCaja). (v39 = confirmar pago §128; v38 = todo en COP §127.)
-const CACHE_NAME    = 'bersaglio-v40';
+// Bumped to v41 — B1 paso 6: bruto/neto + export al contador. Botón "Exportar contador" en el
+// Mostrador descarga un CSV de las ventas (bruto exacto + comisión Wompi + retenciones + neto;
+// tasas param-driven, default "verificar" hasta el contador; calcularNeto puro). Anuladas = neto 0.
+// (v40 = anular + cierre de caja §129; v39 = confirmar pago §128.)
+const CACHE_NAME    = 'bersaglio-v41';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

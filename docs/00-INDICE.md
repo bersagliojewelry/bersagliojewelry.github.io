@@ -166,6 +166,7 @@
 | §121 | 2026-06-26 — **Catálogo de prueba EN PROD + decisiones del dueño**: 9 piezas prueba (`seedDemo:true`) vía Firebase MCP, verificadas en vivo. DECISIONES (no re-preguntar): pruebas en web real (excepción no-demo) · Wompi=cuenta Kary Persona Natural (NO PJ; aumento a 20 tx) · ADDI congelado. [OPUS-4.8] | 1775 |
 | §122 | 2026-06-26 — **B1 paso 1: inventario en `pieces` EN PROD**: `stockType`/`cantidad`/`gender` vía `pieceClassValid` (type+enum); `estado`/`reserva*` diferidos al CF (seguridad). Reglas desplegadas · 201 tests. [OPUS-4.8] | 1787 |
 | §123 | 2026-06-26 — **3 correcciones de Daniel**: form flotante en ficha (lead sin navegar) + 9 destacadas (guard máx 9) + canales debajo del form en contacto. v35. Gotcha dev: carrera `data.load`↔`onChange` (L-58). [OPUS-4.8] | 1799 |
+| §124 | 2026-06-26 — **B1 paso 2: calculadora de precio por peso**: valor-gramo = INPUT de Kary (VARÍA, no config) → cotización CLIENT-SIDE (`calcularPrecio` puro + modal en Piezas). Recompute server-side → paso 3. 6 tests + build. v36. [OPUS-4.8] | 1810 |
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §57+ al historial,
 > añadir su fila aquí con la línea de inicio (`Select-String` o `grep`).

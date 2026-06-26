@@ -6,11 +6,10 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v35 — correcciones Daniel 2026-06-26: (1) "Prefiero dejar mis datos" abre un FORM
-// FLOTANTE en la ficha (modal con la pieza enlazada → guarda lead sin navegar a contacto, no se
-// pierde); (2) home muestra hasta 9 destacadas (antes 6); (3) contacto: canales DEBAJO del form.
-// (v34 = WhatsApp directo en la ficha + GA4 whatsapp_click.)
-const CACHE_NAME    = 'bersaglio-v35';
+// Bumped to v36 — B1 paso 2: calculadora de precio por peso en el panel Piezas (modal en la
+// topbar): Kary ingresa valor del gramo (varía) + peso + mano de obra → total = peso×gramo+mano.
+// (v35 = form flotante en ficha + 9 destacadas + orden contacto; v34 = WhatsApp directo.)
+const CACHE_NAME    = 'bersaglio-v36';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

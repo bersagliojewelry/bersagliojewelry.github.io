@@ -5,6 +5,7 @@
 import adminDb from './db.js';
 import { admToast, admConfirm, initSidebar, esc, requireAuth, hasRole, errorMessage } from './shared.js';
 import { pmark, psummary } from '../core/perf-probe.js';   // sonda TODO-33 (gateada; no-op si off)
+import { initCalculadora } from './calculadora.js';        // B1 paso 2: calculadora de precio por peso
 
 let _allPieces = [];
 let _query     = '';
@@ -62,6 +63,7 @@ async function init() {
         adminDb.exportPiecesCSV();
         admToast('Descargando piezas.csv\u2026');
     });
+    initCalculadora();   // B1 paso 2: calculadora de precio por peso (modal en la topbar)
 
     // Open modal directly if ?new=1
     if (new URLSearchParams(location.search).get('new') === '1') {

@@ -27,6 +27,7 @@
             </button>
             <h1>Piezas</h1>
             <div class="adm-topbar-actions">
+                <button class="adm-btn adm-btn--ghost" id="btn-calc">🧮 Calculadora</button>
                 <button class="adm-btn adm-btn--ghost" id="btn-export-csv">↓ Exportar CSV</button>
                 <button class="adm-btn adm-btn--primary" id="btn-new-piece">
                     <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
@@ -285,6 +286,44 @@
         <div class="adm-confirm-actions">
             <button class="adm-btn adm-btn--ghost" id="confirm-cancel">Cancelar</button>
             <button class="adm-btn adm-btn--danger" id="confirm-ok">Eliminar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Calculadora de precio (B1 paso 2) -->
+<div class="adm-modal" id="calc-modal" hidden>
+    <div class="adm-modal-box adm-modal-box--sm">
+        <div class="adm-modal-head">
+            <h2>Calculadora de precio</h2>
+            <button class="adm-modal-close" id="calc-close" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="adm-modal-body">
+            <p class="adm-calc-hint">El precio del oro varía: ingresa el <strong>valor del gramo de hoy</strong>, el <strong>peso</strong> de la pieza y la <strong>mano de obra</strong>.</p>
+            <div class="adm-form-row">
+                <div class="adm-field">
+                    <label for="calc-gramo">Valor del gramo (COP)</label>
+                    <input class="adm-input" id="calc-gramo" type="number" min="0" inputmode="numeric" placeholder="Ej. 350000">
+                </div>
+                <div class="adm-field">
+                    <label for="calc-peso">Peso (gramos)</label>
+                    <input class="adm-input" id="calc-peso" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Ej. 5.2">
+                </div>
+            </div>
+            <div class="adm-form-row" style="margin-top:12px;">
+                <div class="adm-field">
+                    <label for="calc-mano">Mano de obra (COP)</label>
+                    <input class="adm-input" id="calc-mano" type="number" min="0" inputmode="numeric" placeholder="Ej. 200000">
+                </div>
+            </div>
+            <div class="adm-calc-result">
+                <div class="adm-calc-line"><span>Oro (peso × gramo)</span><strong id="calc-oro">$0</strong></div>
+                <div class="adm-calc-line"><span>Mano de obra</span><strong id="calc-manoout">$0</strong></div>
+                <div class="adm-calc-line adm-calc-total"><span>Total</span><strong id="calc-total">$0</strong></div>
+            </div>
+        </div>
+        <div class="adm-modal-foot">
+            <button class="adm-btn adm-btn--ghost" id="calc-copy">Copiar total</button>
+            <button class="adm-btn adm-btn--primary" id="calc-close2">Listo</button>
         </div>
     </div>
 </div>

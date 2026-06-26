@@ -248,4 +248,8 @@ async function cierreCajaCore(db, input = {}) {
     return { arqueoId, esperadoPorMedio: esperado, esperadoEfectivo: esperado.efectivo, declaradoEfectivo: declarado, descuadre, yaExistia: false };
 }
 
-module.exports = { crearPedidoCore, confirmarPagoCore, anularPedidoCore, cierreCajaCore, entero, calcOro, PedidoError };
+module.exports = {
+    crearPedidoCore, confirmarPagoCore, anularPedidoCore, cierreCajaCore,
+    entero, calcOro, PedidoError,
+    derivarEstado, normStockType, STOCK_TYPES,   // modelo v3 (reusado por inventario-core.js)
+};

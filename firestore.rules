@@ -355,10 +355,16 @@ service cloud.firestore {
     // NOTA seguridad: estado/reservaId/reservaExpira (stock TRANSACCIONAL) NO se validan ni
     // permiten aquí a propósito — los escribe SOLO la Cloud Function del pedido (Admin SDK,
     // que ignora estas reglas); su candado CF-only se diseña en el paso del pedido (design §1.1/§5).
+    // TODO-40 v3: clasificación que controla Kary (admin). `cantidad` NO va aquí — es STOCK
+    // TRANSACCIONAL (ver pieceCantidad* abajo): permitida al CREAR, INMUTABLE en UPDATE (CF-only).
+    //   stockType ∈ {finito, finito_refabricable, encargo} (enum 3 — reemplaza el bool `refabricable`;
+    //               cierra combos imposibles, comité+Gemini) · visibilidad ∈ {publica, privada}
+    //               (privada = facturable FUERA del catálogo; el `read` de /pieces la blinda) ·
+    //               gender ∈ {mujer, hombre, unisex}.
     function pieceClassValid(d) {
-      return (!('stockType' in d) || (d.stockType is string && d.stockType in ['finito', 'encargo']))
-          && (!('cantidad' in d)  || (d.cantidad is int && d.cantidad >= 0))
-          && (!('gender' in d)    || (d.gender is string && d.gender in ['mujer', 'hombre', 'unisex']));
+      return (!('stockType' in d)   || (d.stockType is string && d.stockType in ['finito', 'finito_refabricable', 'encargo']))
+          && (!('visibilidad' in d) || (d.visibilidad is string && d.visibilidad in ['publica', 'privada']))
+          && (!('gender' in d)      || (d.gender is string && d.gender in ['mujer', 'hombre', 'unisex']));
     }
     // B1 paso 3 (candado de stock): estado/reservaId/reservaExpira son STOCK TRANSACCIONAL →
     // los escribe SOLO la Cloud Function del pedido (Admin SDK, ignora estas reglas). El cliente
@@ -367,6 +373,20 @@ service cloud.firestore {
     // cliente que intente inyectar/cambiar el estado de venta = DENY (no puede des-vender a mano).
     function pieceStockLocked(d) {
       return !('estado' in d) && !('reservaId' in d) && !('reservaExpira' in d);
+    }
+    // TODO-40 v3 · `cantidad` = STOCK TRANSACCIONAL (cierra el TOCTOU, Gemini claim 3).
+    //  · CREATE: el admin fija la cantidad INICIAL (int≥0) — alta legítima (un create solo nace en doc
+    //    NUEVO → sin venta concurrente; el ledger `pieces/{id}/movimientos` registra el alta, B3).
+    //    `encargo` → cantidad AUSENTE (no aplica).
+    //  · UPDATE: cantidad INMUTABLE para el cliente (la mueve SOLO la CF: vender/reabastecer/ajustar/
+    //    cambiar-tipo). Por IGUALDAD (no "ausencia", ambigua con merge:true): un update que la cambie =
+    //    DENY → el merge del form de edición (que ya NO la envía, B4) no puede resucitar una unidad vendida.
+    function pieceCantidadCreateOk(d) {
+      return !('cantidad' in d) || (d.cantidad is int && d.cantidad >= 0);
+    }
+    function pieceCantidadUnchanged() {
+      return !('cantidad' in request.resource.data)
+          || (('cantidad' in resource.data) && request.resource.data.cantidad == resource.data.cantidad);
     }
     function pieceCreateValid() {
       let d = request.resource.data;
@@ -378,7 +398,8 @@ service cloud.firestore {
           && (!('sizes' in d)    || d.sizes is list)
           && (!('specs' in d)    || d.specs is map)
           && pieceClassValid(d)
-          && pieceStockLocked(d);
+          && pieceStockLocked(d)
+          && pieceCantidadCreateOk(d);
     }
     function pieceTypesValid() {
       let d = request.resource.data;
@@ -392,7 +413,8 @@ service cloud.firestore {
           && (!('sizes' in d)      || d.sizes is list)
           && (!('specs' in d)      || d.specs is map)
           && pieceClassValid(d)
-          && pieceStockLocked(d);
+          && pieceStockLocked(d)
+          && pieceCantidadUnchanged();
     }
     function colCreateValid() {
       let d = request.resource.data;
@@ -587,10 +609,25 @@ service cloud.firestore {
     // ─── Pieces (products) ─────────────────────────────────────────────────────
 
     match /pieces/{pieceId} {
-      allow read: if true;                                 // Public: anyone can browse
+      // TODO-40 v3 · D5 BLINDAJE VIP (fail-CLOSED): el público lee SOLO piezas con visibilidad
+      // EXPLÍCITA y NO 'privada'; el staff de catálogo (quien las gestiona) lee todo. Una pieza
+      // 'privada' (a-medida/VIP, facturable fuera del catálogo) NUNCA es legible por el público,
+      // aunque conozca el id. El SSG además la excluye (defensa en profundidad) — pero la BARRERA real
+      // es esta regla (el SSG es oscuridad, no seguridad — Gemini). ⚠️ GATE DE DEPLOY: correr
+      // `migrate-inventario-v3.mjs --apply` (backfill visibilidad='publica' a todo legacy) Y que la
+      // query pública filtre `where('visibilidad','==','publica')` (B5) ANTES de desplegar esta regla;
+      // si no, el catálogo público se oculta (Firestore RECHAZA una query mixta, no la filtra sola).
+      allow read: if (('visibilidad' in resource.data) && resource.data.visibilidad != 'privada') || isCatalogo();
       allow create: if isCatalogo() && pieceCreateValid(); // editor+/catálogo con campos válidos
       allow update: if isCatalogo() && pieceTypesValid();  // S6: tolerante a merge/partial
       allow delete: if isAdmin() || (isAuth() && getUserRole() == 'catalogo'); // admin+ o catálogo (editor NO borra)
+      // TODO-40 v3 · LEDGER de movimientos de stock (C4): lo escribe SOLO la CF (Admin SDK, ignora estas
+      // reglas) — venta/anulación/ajuste/reabasto; el staff de catálogo lo LEE para auditar ("¿por qué
+      // dice 3 y no 4?"). Append-only: el cliente nunca escribe.
+      match /movimientos/{movId} {
+        allow read:  if isCatalogo();
+        allow write: if false;
+      }
     }
 
     // ─── Pedidos (ventas — B1 paso 3) ──────────────────────────────────────────

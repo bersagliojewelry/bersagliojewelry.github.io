@@ -16,6 +16,18 @@ const CANALES = ['pos', 'web', 'whatsapp'];
 const entero = n => Math.round(Math.max(0, Number(n) || 0));
 const calcOro = (valorGramo, peso) => Math.round(Math.max(0, Number(valorGramo) || 0) * Math.max(0, Number(peso) || 0));
 
+// ── Modelo de inventario v3 (TODO-40) ─────────────────────────────────────────
+// ESPEJO de js/admin/inventario-model.js `derivarEstado` (frontera ESM↔CJS; la SSoT del
+// comportamiento vive allá, testeada). estado = DERIVADO de (stockType, cantidad); SSoT = cantidad.
+const STOCK_TYPES = ['finito', 'finito_refabricable', 'encargo'];
+const normStockType = st => STOCK_TYPES.includes(st) ? st : 'finito';   // legacy → finito
+function derivarEstado(stockType, cantidad) {
+    if (stockType === 'encargo') return 'disponible';
+    const n = Number.isInteger(cantidad) ? cantidad : 0;
+    if (n > 0) return 'disponible';
+    return stockType === 'finito_refabricable' ? 'bajo_pedido' : 'agotada';
+}
+
 class PedidoError extends Error {
     constructor(code, message) { super(message); this.code = code; this.name = 'PedidoError'; }
 }
@@ -44,8 +56,15 @@ async function crearPedidoCore(db, input = {}) {
         const pieceSnap = await tx.get(pieceRef);
         if (!pieceSnap.exists) throw new PedidoError('not-found', 'La pieza no existe.');
         const piece = pieceSnap.data();
-        if (piece.estado === 'vendida') throw new PedidoError('failed-precondition', 'Esa pieza ya fue vendida.');
-        // (Una pieza 'reservada' sin pago SÍ se vende en mostrador: "mostrador gana", plan §2.1.)
+        // TODO-40 v3: disponibilidad por stockType + cantidad (SSoT). 'vendida' legacy = pieza migrada a cantidad 0.
+        const stockType = normStockType(piece.stockType);
+        const cantidadActual = (stockType === 'encargo') ? null
+            : (Number.isInteger(piece.cantidad) ? piece.cantidad : 1);   // legacy ??1
+        // Agotada = finito SIN stock (o legacy estado='vendida'). encargo y refabricable-en-0 (bajo pedido) = vendibles (se fabrican).
+        const agotada = (piece.estado === 'vendida') || (stockType === 'finito' && cantidadActual <= 0);
+        if (agotada) throw new PedidoError('failed-precondition', 'Esa pieza está agotada.');
+        // ¿Esta venta consume una unidad física? finito*/cantidad>0 sí; encargo y refabricable-en-0 no (se fabrica).
+        const consumeUnidad = (stockType !== 'encargo') && (cantidadActual > 0);
 
         // Total server-side: precio fijo si la pieza lo tiene; si no, por peso (peso×gramo+mano).
         const precioFijo = typeof piece.price === 'number' && isFinite(piece.price);
@@ -71,12 +90,23 @@ async function crearPedidoCore(db, input = {}) {
             estado: medio === 'efectivo' ? 'pagado' : 'pago_por_verificar',
             total,
             desglose,                                   // SNAPSHOT inmutable (la CF nunca lo edita)
+            consumioStock: consumeUnidad,               // v3: ¿bajó una unidad física? → anular la repone
             autor,
             createdAt: FieldValue.serverTimestamp(),
         });
-        // Solo las piezas ÚNICAS (finito) se marcan vendidas; 'encargo' se fabrica (no consume unidad).
-        if ((piece.stockType || 'finito') !== 'encargo') {
-            tx.update(pieceRef, { estado: 'vendida', updatedAt: FieldValue.serverTimestamp() });
+        // TODO-40 v3: decrementar `cantidad` (NO marcar 'vendida') + estado DERIVADO + ledger.
+        if (consumeUnidad) {
+            const nuevaCantidad = cantidadActual - 1;
+            tx.update(pieceRef, {
+                cantidad: FieldValue.increment(-1),
+                estado: derivarEstado(stockType, nuevaCantidad),
+                updatedAt: FieldValue.serverTimestamp(),
+            });
+            // Ledger append-only (C4); movId = pedidoId → idempotente con el pedido (un reintento no re-asienta).
+            tx.set(db.doc(`pieces/${pieceId}/movimientos/${pedidoId}`), {
+                delta: -1, motivo: 'venta', pedidoId, cantidadResultante: nuevaCantidad,
+                actor: autor, at: FieldValue.serverTimestamp(),
+            });
         }
         tx.set(contRef, { valor: numero });
 
@@ -134,14 +164,33 @@ async function anularPedidoCore(db, input = {}) {
         const ped = snap.data();
         if (ped.estado === 'anulado') return { pedidoId, ok: true, yaAnulado: true };
 
-        // Reintegrar la pieza SOLO si este pedido la dejó vendida (finito). [reads antes de writes]
+        // TODO-40 v3: reponer la unidad si este pedido consumió stock. [reads antes de writes]
+        // El gate de transición (ped.estado==='anulado' arriba) garantiza UNA sola reposición (idempotente).
         let reintegrada = false;
         if (ped.pieceId) {
             const pieceRef = db.doc(`pieces/${ped.pieceId}`);
             const pieceSnap = await tx.get(pieceRef);
-            if (pieceSnap.exists && pieceSnap.data().estado === 'vendida') {
-                tx.update(pieceRef, { estado: 'disponible', reservaId: null, updatedAt: FieldValue.serverTimestamp() });
-                reintegrada = true;
+            if (pieceSnap.exists) {
+                const p = pieceSnap.data();
+                if (ped.consumioStock === true) {
+                    // v3: el pedido bajó una unidad → increment(+1) + estado DERIVADO + ledger.
+                    const st = normStockType(p.stockType);
+                    const nuevaCantidad = (Number.isInteger(p.cantidad) ? p.cantidad : 0) + 1;
+                    tx.update(pieceRef, {
+                        cantidad: FieldValue.increment(1),
+                        estado: derivarEstado(st, nuevaCantidad),
+                        updatedAt: FieldValue.serverTimestamp(),
+                    });
+                    tx.set(db.doc(`pieces/${ped.pieceId}/movimientos/anul-${pedidoId}`), {
+                        delta: 1, motivo: 'anulacion', pedidoId, cantidadResultante: nuevaCantidad,
+                        actor: autor, at: FieldValue.serverTimestamp(),
+                    });
+                    reintegrada = true;
+                } else if (p.estado === 'vendida') {
+                    // LEGACY (pedido pre-v3): la pieza quedó 'vendida' → volver a disponible (modelo viejo).
+                    tx.update(pieceRef, { estado: 'disponible', reservaId: null, updatedAt: FieldValue.serverTimestamp() });
+                    reintegrada = true;
+                }
             }
         }
         tx.update(pedidoRef, {
@@ -199,4 +248,8 @@ async function cierreCajaCore(db, input = {}) {
     return { arqueoId, esperadoPorMedio: esperado, esperadoEfectivo: esperado.efectivo, declaradoEfectivo: declarado, descuadre, yaExistia: false };
 }
 
-module.exports = { crearPedidoCore, confirmarPagoCore, anularPedidoCore, cierreCajaCore, entero, calcOro, PedidoError };
+module.exports = {
+    crearPedidoCore, confirmarPagoCore, anularPedidoCore, cierreCajaCore,
+    entero, calcOro, PedidoError,
+    derivarEstado, normStockType, STOCK_TYPES,   // modelo v3 (reusado por inventario-core.js)
+};

@@ -42,7 +42,10 @@ before(async () => {
         await setDoc(doc(db, 'users/catalogoUid'), { role: 'catalogo' }); // TODO-19: gestor de catálogo (Kary)
         await setDoc(doc(db, 'reviews/approvedRev'), { approved: true,  pieceSlug: 'x', rating: 5 });
         await setDoc(doc(db, 'reviews/pendingRev'),  { approved: false, pieceSlug: 'x', rating: 5 });
-        await setDoc(doc(db, 'pieces/p1'), { name: 'Anillo', slug: 'anillo' });
+        await setDoc(doc(db, 'pieces/p1'), { name: 'Anillo', slug: 'anillo', stockType: 'finito', cantidad: 1, visibilidad: 'publica' }); // v3 (post-migración)
+        await setDoc(doc(db, 'pieces/pPriv'), { name: 'VIP', slug: 'vip', stockType: 'finito', cantidad: 1, visibilidad: 'privada' }); // D5: NO legible por público
+        await setDoc(doc(db, 'pieces/pLegacy'), { name: 'Legacy', slug: 'legacy' }); // sin visibilidad → fail-closed (NO legible por anon hasta migrar)
+        await setDoc(doc(db, 'pieces/p1/movimientos/mov1'), { delta: -1, motivo: 'venta', pedidoId: 'x', cantidadResultante: 0 }); // ledger (C4)
         await setDoc(doc(db, 'journal/j1'), { title: 'Esmeraldas', published: true }); // CMS: lectura pública + borrado admin
 
         // ─── CRM Fase R: vendedoras (entidad), cliente (vendedoraId), config, pendientes ──
@@ -190,8 +193,37 @@ test('B1 · cantidad negativa o no-int → DENY', async () => {
 test('B1 · gender fuera del enum → DENY', async () => {
     await assertFails(setDoc(doc(asUser('catalogoUid'), 'pieces/pInvBad4'), { name: 'X', code: 'C-IB4', gender: 'otro' }));
 });
-test('B1 · patch merge con cantidad válida en pieza existente SÍ pasa', async () => {
-    await assertSucceeds(setDoc(doc(asUser('catalogoUid'), 'pieces/p1'), { cantidad: 2, stockType: 'encargo' }, { merge: true }));
+// ─── TODO-40 v3: enum stockType 3, visibilidad, cantidad CF-only (TOCTOU), blindaje VIP ───
+test('v3 · stockType finito_refabricable (enum 3) → SÍ crea', async () => {
+    await assertSucceeds(setDoc(doc(asUser('catalogoUid'), 'pieces/pRef'), {
+        name: 'Refab', code: 'C-REF', stockType: 'finito_refabricable', cantidad: 0, visibilidad: 'publica',
+    }));
+});
+test('v3 · visibilidad fuera del enum → DENY', async () => {
+    await assertFails(setDoc(doc(asUser('catalogoUid'), 'pieces/pVisBad'), { name: 'X', code: 'C-VB', visibilidad: 'oculta' }));
+});
+test('v3 · cantidad INMUTABLE en update (TOCTOU): cambiarla por merge → DENY', async () => {
+    // El bug de Gemini: el merge del form resucitaba la unidad vendida. Ahora la cantidad solo la mueve la CF.
+    await assertFails(setDoc(doc(asUser('catalogoUid'), 'pieces/p1'), { cantidad: 2 }, { merge: true }));
+    await assertFails(setDoc(doc(asUser('adminUid'),    'pieces/p1'), { cantidad: 99 }, { merge: true }));
+});
+test('v3 · update que NO cambia cantidad (igual o ausente) SÍ pasa', async () => {
+    await assertSucceeds(setDoc(doc(asUser('catalogoUid'), 'pieces/p1'), { cantidad: 1 }, { merge: true })); // igual a la actual
+    await assertSucceeds(setDoc(doc(asUser('catalogoUid'), 'pieces/p1'), { name: 'Anillo 2' }, { merge: true })); // sin tocar cantidad
+});
+test('v3 · BLINDAJE VIP: público NO lee pieza privada (D5) ni legacy-sin-visibilidad (fail-closed)', async () => {
+    await assertFails(getDoc(doc(anon(), 'pieces/pPriv')));    // privada → DENY público
+    await assertFails(getDoc(doc(anon(), 'pieces/pLegacy')));  // sin campo → fail-closed → DENY público
+    await assertSucceeds(getDoc(doc(anon(), 'pieces/p1')));    // publica → SÍ
+});
+test('v3 · staff de catálogo SÍ lee piezas privadas (las gestiona)', async () => {
+    await assertSucceeds(getDoc(doc(asUser('catalogoUid'), 'pieces/pPriv')));
+    await assertSucceeds(getDoc(doc(asUser('adminUid'),    'pieces/pPriv')));
+});
+test('v3 · ledger movimientos: staff lee, público NO, cliente NO escribe (CF-only)', async () => {
+    await assertSucceeds(getDoc(doc(asUser('catalogoUid'), 'pieces/p1/movimientos/mov1')));
+    await assertFails(getDoc(doc(anon(), 'pieces/p1/movimientos/mov1')));                                  // stock no es público
+    await assertFails(setDoc(doc(asUser('catalogoUid'), 'pieces/p1/movimientos/mov2'), { delta: 5 }));     // append-only, CF-only
 });
 
 // ─── B1 paso 3: candado de stock (estado/reserva = CF-only) + pedidos ─────────

@@ -19,9 +19,9 @@ const db = getFirestore();
 
 before(async () => {
     await db.doc('contadores/pedidos').delete().catch(() => {});
-    await db.doc('pieces/pInt1').set({ name: 'Anillo Test', slug: 'anillo-test', stockType: 'finito' });          // por peso
-    await db.doc('pieces/pInt2').set({ name: 'Aretes Test', slug: 'aretes-test', price: 5000000, stockType: 'finito' }); // precio fijo
-    await db.doc('pieces/pInt3').set({ name: 'Sin datos', slug: 'sin-datos', stockType: 'finito' });               // sin precio ni peso
+    await db.doc('pieces/pInt1').set({ name: 'Anillo Test', slug: 'anillo-test', stockType: 'finito', cantidad: 1 });          // por peso, única
+    await db.doc('pieces/pInt2').set({ name: 'Aretes Test', slug: 'aretes-test', price: 5000000, stockType: 'finito', cantidad: 1 }); // precio fijo
+    await db.doc('pieces/pInt3').set({ name: 'Sin datos', slug: 'sin-datos', stockType: 'finito', cantidad: 1 });               // sin precio ni peso
 });
 
 test('venta por peso: total = peso×gramo+mano, pieza vendida, numero 1', async () => {
@@ -34,13 +34,17 @@ test('venta por peso: total = peso×gramo+mano, pieza vendida, numero 1', async 
     assert.equal(ped.estado, 'pagado');           // efectivo = pagado al registrar
     assert.equal(ped.desglose.tipo, 'por_peso');
     assert.equal(ped.desglose.oro, 1750000);
-    assert.equal((await db.doc('pieces/pInt1').get()).data().estado, 'vendida');
+    assert.equal(ped.consumioStock, true);                                  // v3: bajó una unidad
+    const pz = (await db.doc('pieces/pInt1').get()).data();
+    assert.equal(pz.cantidad, 0);                                           // v3: decrementó (no marca 'vendida')
+    assert.equal(pz.estado, 'agotada');                                     // estado DERIVADO de cantidad
+    assert.equal((await db.doc('pieces/pInt1/movimientos/ped1').get()).data().delta, -1);  // ledger
 });
 
-test('DOBLE VENTA: la misma pieza ya vendida no se vende otra vez → rechaza', async () => {
+test('DOBLE VENTA: la misma pieza ya agotada no se vende otra vez → rechaza', async () => {
     await assert.rejects(
         crearPedidoCore(db, { pedidoId: 'ped2', pieceId: 'pInt1', valorGramo: 350000, peso: 5, autor: 'u1' }),
-        /vendida/i,
+        /agotada/i,
     );
 });
 
@@ -94,10 +98,10 @@ test('confirmarPago: pedido inexistente → rechaza', async () => {
 const { anularPedidoCore, cierreCajaCore } = core;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-test('anularPedido: marca anulado + REINTEGRA la pieza al catálogo', async () => {
-    await db.doc('pieces/pAnular').set({ name: 'Anulable', slug: 'anulable', price: 800000, stockType: 'finito' });
+test('anularPedido: marca anulado + REPONE la unidad (v3: cantidad + estado derivado + ledger)', async () => {
+    await db.doc('pieces/pAnular').set({ name: 'Anulable', slug: 'anulable', price: 800000, stockType: 'finito', cantidad: 1 });
     await crearPedidoCore(db, { pedidoId: 'pedAnular', pieceId: 'pAnular', medio: 'efectivo', autor: 'u1' });
-    assert.equal((await db.doc('pieces/pAnular').get()).data().estado, 'vendida');
+    assert.equal((await db.doc('pieces/pAnular').get()).data().cantidad, 0);   // vendió → 0 (agotada)
 
     const r = await anularPedidoCore(db, { pedidoId: 'pedAnular', motivo: 'cliente se arrepintió', autor: 'kary' });
     assert.equal(r.ok, true);
@@ -105,7 +109,10 @@ test('anularPedido: marca anulado + REINTEGRA la pieza al catálogo', async () =
     const ped = (await db.doc('pedidos/pedAnular').get()).data();
     assert.equal(ped.estado, 'anulado');
     assert.equal(ped.motivoAnulacion, 'cliente se arrepintió');
-    assert.equal((await db.doc('pieces/pAnular').get()).data().estado, 'disponible');   // reintegrada
+    const pz = (await db.doc('pieces/pAnular').get()).data();
+    assert.equal(pz.cantidad, 1);                                             // repuesta
+    assert.equal(pz.estado, 'disponible');                                    // derivado
+    assert.equal((await db.doc('pieces/pAnular/movimientos/anul-pedAnular').get()).data().delta, 1);  // ledger
 });
 
 test('anularPedido: idempotente (re-anular → yaAnulado, no rompe)', async () => {
@@ -142,4 +149,45 @@ test('cierreCaja: idempotente (mismo arqueoId → yaExistia, no recalcula)', asy
     const r = await cierreCajaCore(db, { arqueoId: 'arq2', declaradoEfectivo: 999999, autor: 'kary' });
     assert.equal(r.yaExistia, true);
     assert.equal(r.descuadre, -100000);   // el ORIGINAL, no el nuevo declarado
+});
+
+// ─── TODO-40 v3: tipos de stock (lote / encargo / refabricable) — AL FINAL para no alterar el correlativo ───
+test('v3 LOTE (cantidad 3): cada venta decrementa; a 0 → agotada + ledger por venta', async () => {
+    await db.doc('pieces/pLote').set({ name: 'Lote', slug: 'lote', price: 100000, stockType: 'finito', cantidad: 3 });
+    for (const [n, restante, estado] of [[1, 2, 'disponible'], [2, 1, 'disponible'], [3, 0, 'agotada']]) {
+        await crearPedidoCore(db, { pedidoId: `pedLote${n}`, pieceId: 'pLote', medio: 'efectivo', autor: 'u1' });
+        const pz = (await db.doc('pieces/pLote').get()).data();
+        assert.equal(pz.cantidad, restante, `tras venta ${n}`);
+        assert.equal(pz.estado, estado);
+        assert.equal((await db.doc(`pieces/pLote/movimientos/pedLote${n}`).get()).data().cantidadResultante, restante);
+    }
+    await assert.rejects(crearPedidoCore(db, { pedidoId: 'pedLote4', pieceId: 'pLote', medio: 'efectivo', autor: 'u1' }), /agotada/i);
+});
+
+test('v3 ENCARGO: vende SIN decrementar (se fabrica); cero ledger, consumioStock false', async () => {
+    await db.doc('pieces/pEnc').set({ name: 'Encargo', slug: 'encargo', price: 200000, stockType: 'encargo' });
+    await crearPedidoCore(db, { pedidoId: 'pedEnc1', pieceId: 'pEnc', medio: 'efectivo', autor: 'u1' });
+    const pz = (await db.doc('pieces/pEnc').get()).data();
+    assert.equal(pz.cantidad ?? null, null);                                   // no aplica (no se tocó)
+    assert.equal((await db.doc('pedidos/pedEnc1').get()).data().consumioStock, false);
+    assert.equal((await db.doc('pieces/pEnc/movimientos/pedEnc1').get()).exists, false);   // sin asiento
+    await crearPedidoCore(db, { pedidoId: 'pedEnc2', pieceId: 'pEnc', medio: 'efectivo', autor: 'u1' });   // vendible otra vez
+    assert.equal((await db.doc('pedidos/pedEnc2').get()).data().estado, 'pagado');
+});
+
+test('v3 REFABRICABLE agotado (cantidad 0): vende bajo-pedido SIN decrementar (no -1)', async () => {
+    await db.doc('pieces/pRef0').set({ name: 'Refab0', slug: 'refab0', price: 300000, stockType: 'finito_refabricable', cantidad: 0 });
+    await crearPedidoCore(db, { pedidoId: 'pedRef1', pieceId: 'pRef0', medio: 'efectivo', autor: 'u1' });
+    assert.equal((await db.doc('pieces/pRef0').get()).data().cantidad, 0);     // NO bajó a -1
+    assert.equal((await db.doc('pedidos/pedRef1').get()).data().consumioStock, false);
+});
+
+test('v3 REFABRICABLE con stock (cantidad 1): vende → 0 → bajo_pedido (NO agotada, sigue pedible)', async () => {
+    await db.doc('pieces/pRef1').set({ name: 'Refab1', slug: 'refab1', price: 300000, stockType: 'finito_refabricable', cantidad: 1 });
+    await crearPedidoCore(db, { pedidoId: 'pedRef2', pieceId: 'pRef1', medio: 'efectivo', autor: 'u1' });
+    const pz = (await db.doc('pieces/pRef1').get()).data();
+    assert.equal(pz.cantidad, 0);
+    assert.equal(pz.estado, 'bajo_pedido');                                    // refabricable agotado sigue vendible
+    await crearPedidoCore(db, { pedidoId: 'pedRef3', pieceId: 'pRef1', medio: 'efectivo', autor: 'u1' });   // se sigue vendiendo
+    assert.equal((await db.doc('pieces/pRef1').get()).data().cantidad, 0);     // no baja de 0
 });

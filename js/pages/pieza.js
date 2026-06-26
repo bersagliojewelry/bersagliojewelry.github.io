@@ -27,6 +27,7 @@ import { injectProductSchema, injectBreadcrumbSchema } from '../core/schema.js';
 import { pieceUrl, pieceAbsUrl } from '../core/urls.js';
 import { balancedCols } from '../core/grid-balance.js';       // reparto inteligente de columnas
 import { track, trackPieceView } from '../analytics.js';      // medición GA4 (view_item / view_item_list)
+import { mergeGlobal, waLink } from '../core/global-defaults.js';  // WhatsApp directo (fuente única del número)
 
 let _slug = '';
 let _viewIdx = 0;
@@ -137,6 +138,22 @@ function buildSpecs(piece) {
 function getCategoryLabel(piece) {
     const collection = data.collectionOf(piece);
     return collection?.name || piece.collection || 'Pieza';
+}
+
+// ── WhatsApp directo (TODO-37 B0.5 · "frena la fuga") ──────────────────────────
+// Alta joyería = mayoría "bajo consulta": antes el CTA caía a /contacto.html (formulario
+// largo que pierde en móvil = fuga de leads, dx del Plan Maestro §1/§2). Ahora abre WhatsApp
+// con la pieza YA escrita (nombre + Ref. + URL) para que Kary responda con contexto. El número
+// sale de la FUENTE ÚNICA (siteContent/global.contacto → fallback al real); nunca href vacío.
+function asesorWaText(piece) {
+    if (!piece) return 'Hola Bersaglio, quisiera información sobre una pieza.';
+    const ref = piece.code ? ` (Ref. ${piece.code})` : '';
+    const url = pieceAbsUrl(piece.slug || piece.id);
+    return `Hola Bersaglio, me interesa esta pieza: ${piece.name || 'Pieza'}${ref}. ${url}`;
+}
+function asesorWaHref(piece) {
+    const wa = mergeGlobal(data.getSiteContent('global')).contacto.whatsapp;
+    return waLink(wa, asesorWaText(piece));
 }
 
 function renderGallery(piece) {
@@ -255,8 +272,11 @@ function renderInfo(piece) {
                         ${inCart ? 'Ver carrito' : 'Agregar al carrito'}
                     </button>`
                 : html`
-                    <a href="${asesorHref}" class="btn-aqua btn-aqua-emerald pz-cart-btn pz-asesor-primary">
-                        Consultar esta pieza
+                    <a href="${asesorWaHref(piece)}" target="_blank" rel="noopener"
+                       class="btn-aqua btn-aqua-emerald pz-cart-btn pz-asesor-primary"
+                       data-wa-click="pieza" data-wa-piece="${escape(piece.slug || piece.id)}"
+                       data-wa-name="${escape(piece.name || 'Pieza')}" data-wa-cat="${escape(cat)}">
+                        Consultar por WhatsApp
                     </a>`}
                 <button type="button"
                         class="btn-aqua pz-wish-btn ${inWishlist ? 'is-saved' : ''}"
@@ -268,9 +288,16 @@ function renderInfo(piece) {
             </div>
 
             ${hasPrice ? html`
-                <a href="${asesorHref}" class="btn-aqua btn-aqua-gold pz-asesor-btn">
-                    Consultar con un asesor
-                </a>` : ''}
+                <a href="${asesorWaHref(piece)}" target="_blank" rel="noopener"
+                   class="btn-aqua btn-aqua-gold pz-asesor-btn"
+                   data-wa-click="pieza" data-wa-piece="${escape(piece.slug || piece.id)}"
+                   data-wa-name="${escape(piece.name || 'Pieza')}" data-wa-cat="${escape(cat)}">
+                    Consultar por WhatsApp
+                </a>`
+            : html`
+                <a href="${asesorHref}" class="btn-aqua btn-aqua-gold pz-asesor-btn pz-asesor-secondary">
+                    Prefiero dejar mis datos
+                </a>`}
 
             ${piece.code ? html`<div class="pz-ref mono">Ref. ${escape(piece.code)}</div>` : ''}
         </div>`;
@@ -400,7 +427,7 @@ function renderNotFound() {
                 <p class="pz-notfound-sub">La pieza solicitada no se encuentra disponible actualmente en nuestro atelier. Es posible que haya sido adquirida o que el enlace sea incorrecto.</p>
                 <div class="pz-notfound-actions">
                     <a href="/colecciones.html" class="btn-aqua btn-aqua-emerald">Ver el catálogo</a>
-                    <a href="/contacto.html" class="btn-aqua">Hablar con un asesor</a>
+                    <a href="${asesorWaHref(null)}" target="_blank" rel="noopener" class="btn-aqua" data-wa-click="pieza-404">Hablar por WhatsApp</a>
                 </div>
             </div>
         </div>`;

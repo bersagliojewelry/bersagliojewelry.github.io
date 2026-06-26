@@ -28,6 +28,17 @@ export async function crearPedido(input) {
 }
 
 /**
+ * Confirma que llegó el pago de un pedido ("vi la plata"): `pago_por_verificar` → `pagado`.
+ * Solo la CF flipea el estado (regla SoD). Idempotente.
+ * @param {string} pedidoId
+ * @returns {Promise<{ pedidoId:string, estado:string, yaEstaba:boolean }>}
+ */
+export async function confirmarPago(pedidoId) {
+    const fn = await _callable('confirmarPago');
+    return (await fn({ pedidoId })).data;
+}
+
+/**
  * Últimas ventas registradas (lectura permitida a staff de ventas: owner/admin/catálogo).
  * @param {number} [max=15]
  * @returns {Promise<Array>} pedidos (más reciente primero)
@@ -38,4 +49,4 @@ export async function ultimasVentas(max = 15) {
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-export default { crearPedido, ultimasVentas };
+export default { crearPedido, confirmarPago, ultimasVentas };

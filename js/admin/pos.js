@@ -16,7 +16,7 @@
 import adminDb from './db.js';
 import { admToast, admConfirm, initSidebar, esc, requireAuth, errorMessage, fmtDateTime } from './shared.js';
 import { calcularPrecio } from './calculadora.js';
-import { crearPedido, ultimasVentas } from '../pedidos-service.js';
+import { crearPedido, confirmarPago, ultimasVentas } from '../pedidos-service.js';
 
 const cop = n => '$' + Math.round(Math.max(0, Number(n) || 0)).toLocaleString('es-CO');
 const entero = n => Math.round(Math.max(0, Number(n) || 0));
@@ -252,6 +252,9 @@ async function loadVentas() {
         const pagado = v.estado === 'pagado';
         const estadoLabel = pagado ? 'Pagado' : 'Por verificar';
         const estadoCls   = pagado ? 'adm-pill--green' : 'adm-pill--gold';
+        // Solo las ventas "por verificar" (transferencia/Wompi) ofrecen confirmar "vi la plata".
+        const confirmBtn = pagado ? '' :
+            `<button class="adm-btn adm-btn--ghost adm-btn--sm pos-venta-confirm" data-id="${esc(v.id)}">Confirmar pago</button>`;
         return `
         <li class="pos-venta">
             <div class="pos-venta-main">
@@ -262,9 +265,29 @@ async function loadVentas() {
                 <strong>${esc(cop(v.total))}</strong>
                 <span class="adm-pill ${estadoCls}">${esc(estadoLabel)}</span>
                 <span class="pos-venta-time">${esc(fmtDateTime(v.createdAt))}</span>
+                ${confirmBtn}
             </div>
         </li>`;
     }).join('');
+
+    ul.querySelectorAll('.pos-venta-confirm').forEach(btn =>
+        btn.addEventListener('click', () => confirmarVenta(btn.dataset.id)));
+}
+
+// "Vi la plata": confirma el pago de una venta por verificar (transferencia/Wompi) → pagado.
+function confirmarVenta(pedidoId) {
+    admConfirm('¿Confirmas que ya viste el pago de esta venta? Quedará como pagada.', async () => {
+        try {
+            await confirmarPago(pedidoId);
+            admToast('✓ Pago confirmado', 'success');
+            loadVentas();
+        } catch (err) {
+            const msg = (BUSINESS_ERR.includes(err?.code) && err?.message)
+                ? err.message
+                : errorMessage(err, 'No se pudo confirmar el pago.');
+            admToast(msg, 'danger', 4000);
+        }
+    });
 }
 
 init();

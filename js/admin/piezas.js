@@ -186,7 +186,22 @@ function initModal() {
         e.target.dataset.manual = e.target.value ? '1' : '';
     });
 
+    // B1 paso 1: "Por encargo (se fabrica)" no tiene stock finito → la cantidad no aplica (se deshabilita).
+    document.getElementById('f-stocktype').addEventListener('change', syncStockFields);
+
     initImageUpload();
+}
+
+// Refleja el tipo de stock en la casilla Cantidad: "por encargo" → deshabilitada y vacía (se fabrica,
+// no hay unidades en inventario); "finito" → habilitada (≥1). Se llama al abrir el modal y al cambiar el select.
+function syncStockFields() {
+    const stockType = document.getElementById('f-stocktype');
+    const cantidad  = document.getElementById('f-cantidad');
+    if (!stockType || !cantidad) return;
+    const esEncargo = stockType.value === 'encargo';
+    cantidad.disabled = esEncargo;
+    if (esEncargo) cantidad.value = '';
+    else if (!cantidad.value) cantidad.value = '1';
 }
 
 function initImageUpload() {
@@ -367,6 +382,7 @@ async function openModal(id = null) {
     }
 
     renderImagePreviews();
+    syncStockFields();   // estado inicial de la casilla Cantidad según el tipo de stock (crear o editar).
     modal.hidden = false;
     form.querySelector('input:not([type=hidden])').focus();
 }

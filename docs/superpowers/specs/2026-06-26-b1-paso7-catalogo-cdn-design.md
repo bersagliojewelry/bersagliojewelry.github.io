@@ -241,3 +241,50 @@ cableados). **PAT en Secret Manager, scope mínimo** (`workflow`/`repository_dis
    (Decisión 8.1 automático vs botón manual sigue abierta; recomiendo automático.)
 > **Flujo fuerte COMPLETO** ✅: arquitecto + comité ×4 + consejo externo (Gemini) integrado. Listo para implementar
 > tras luz verde de Daniel + la decisión de negocio 10.1.
+
+---
+
+## 11. Principio de escasez / exclusividad (Daniel 2026-06-26) — diseño + copy
+
+**Validación (verificada en código)**: el sitio público **NO maneja escasez hoy** (cero menciones de
+stock/unidades/queda en `js/pages|components|home`). El contrato del `catalogo.json` (§10.2) ya expone
+`stockType`/`available`/`cantidad` → base lista para construirlo.
+
+**Restricción de honestidad (cero-demo + precisión, `feedback_no_demo_en_index`)**: el POS
+(`pedidos-core.js:78`) **NO decrementa `cantidad`** — al vender una pieza finita marca TODA la pieza
+`estado='vendida'` (cantidad efectiva → 0). Es decir, el modelo actual trata cada pieza como **ÚNICA**
+(las 9 reales son `finito`/`cantidad:1`). **"Quedan N unidades" con N>1 NO sería honesto** hasta que el
+modelo soporte inventario multi-unidad real (el POS decrementaría cantidad en vez de marcar vendida toda
+la pieza) — eso es una mejora de fondo (inventario, B3 del plan maestro), no este paso.
+
+**Reglas de escasez (derivadas de `stockType` + `cantidad` + `available`):**
+| Caso | Condición | Badge (copy) | ¿Honesto hoy? |
+|---|---|---|---|
+| Pieza única | `finito` · `available` · `cantidad===1` | **"Pieza única"** | ✅ (todas las piezas actuales) |
+| Penúltimas | `finito` · `cantidad===2` | **"Solo quedan 2"** | ⏳ requiere multi-unidad real |
+| Última | `finito` · `cantidad===1` (tras haber tenido más) | **"¡Última unidad!"** | ⏳ requiere multi-unidad real |
+| Pocas | `finito` · `cantidad ≤ 3` | **"Pocas unidades"** | ⏳ requiere multi-unidad real |
+| Por encargo | `stockType==='encargo'` | **"Hecho por encargo"** (sin urgencia) | ✅ |
+| Vendida | `!available` | fuera del listado · ficha "Vendida·ver similares" (§10.1) | ✅ (paso 7) |
+
+**REALIDAD del negocio (Daniel 2026-06-26)** — NO todo es único; hay **4 modos de disponibilidad** reales + mucho
+inventario por cargar a la web. ⇒ el modelo de stock necesita **multi-unidad real ANTES de la carga masiva** (si no,
+habría que recargar todo). Tipos:
+1. **Lote / serie**: `finito`, `cantidad>1`; el POS **DECREMENTA** al vender → "Solo quedan N" honesto.
+2. **Única / a medida / exclusiva**: `finito`, `cantidad:1` → "Pieza única".
+3. **Por encargo**: `encargo`, se fabrica bajo pedido → "Hecho por encargo" (ya en el modelo).
+4. **Agotada pero RE-FABRICABLE** (Daniel: "se fabrica una vez, pero si la solicitan se le fabrica"): `finito`
+   que llega a 0 PERO se puede pedir → "Agotado · se fabrica bajo pedido" (NO desaparece como una única vendida).
+   ← **caso NUEVO, no cubierto hoy** (hoy `finito` vendida = fuera; `encargo` = infinito; falta el híbrido).
+
+**Dirección ELEGIDA (la mejor opción dado el negocio)**: construir el **modelo de inventario multi-tipo** — NO
+quedarse en "pieza única". Implica:
+- El POS (`crearPedido`) **decrementa `cantidad`** en vez de marcar vendida TODA la pieza; `estado='vendida'`/agotado
+  solo cuando `cantidad` llega a 0. (anular/`anularPedido` re-incrementa.)
+- Un modo/flag para el tipo 4 (re-fabricable): al agotarse, la pieza ofrece "bajo pedido" en vez de desaparecer.
+- Escasez honesta derivada: "Solo quedan N" / "¡Última unidad!" / "Pieza única" / "Hecho por encargo" / "Agotado·bajo pedido".
+
+> ⚠️ Es **Decisión Fuerte** (modelo de datos + toca el POS ya en prod, `crearPedido`/`anularPedido`/reglas; cara de
+> revertir) → merece **diseño dedicado con el flujo** (arquitecto + comité), NO improvisar. **Idealmente PRECEDE a la
+> carga masiva de inventario** (para no recargar). → **TODO-40 (elevado a iniciativa)**. El paso 7 (`catalogo.json`)
+> sigue válido y ya expone `stockType`/`cantidad`/`available` → el modelo nuevo se refleja ahí **sin rehacer el contrato**.

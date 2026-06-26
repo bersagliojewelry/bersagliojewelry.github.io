@@ -186,3 +186,158 @@ factura** (existe en Firestore para la venta/factura, fuera del SSG/`catalogo.js
 - **Derivado nuevo**: **TODO-41 facturación multi-línea** (pieza + modificación/servicio con códigos) — separado, toca POS/factura.
 - **Pendiente**: 2ª opinión externa (Gemini) sobre el modelo refinado → implementar (tests en rojo primero). El modelo
   PRECEDE la carga masiva de inventario.
+
+---
+
+## 11. Modelo v2 — post-Gemini + visión "pensar en grande" (Daniel 2026-06-26)
+
+> **Gemini RECHAZÓ el §10.** Claude verificó sus 13 claims contra el código (crudo+tabla → bóveda
+> `2026-06-26-gemini-inventario-multitipo-CRUDO.md`). 2 innegociables reales + 1 cambio de visión de Daniel
+> que reactiva el reaper. Este §11 es el modelo que se implementa (reemplaza §10.1 donde difiere).
+
+### 11.0 Cambio de visión que lo gobierna todo (Daniel)
+> *"El pago por web se genera AUTOMÁTICO (Wompi/PSE) para piezas con stock; lo presencial es lo único manual.
+> Más adelante más pasarelas. La idea es que esto sea como Mercado Libre. Pensar en grande."*
+
+⇒ La web **transaccionará** (cobra sola) ⇒ habrá **concurrencia real web↔mostrador** sobre la misma `cantidad`
+⇒ el **reaper/reserva del comité §9.1 SÍ es necesario** (no era YAGNI). Y aparece una regla nueva: con pago
+**automático**, *"mostrador gana"* solo aplica sobre reservas web **NO pagadas**; jamás sobre una venta web **pagada**.
+
+### 11.1 Decisiones de arquitectura (resueltas con evidencia)
+
+**D1 · enum, no bool (resuelve la inconsistencia §9.1↔§10.1; comité+Gemini coinciden).**
+Se EXTIENDE el enum existente `stockType` (aditivo, NO rename — §3.2) a **3 valores**, y se ELIMINA el bool `refabricable`:
+| `stockType` | cantidad | Cubre | `estado` derivado |
+|---|---|---|---|
+| `finito` | int≥0 | Lote/serie (N) · Única/a-medida (1) | `cantidad<=0 → agotada` (fuera del listado) |
+| `finito_refabricable` | int≥0 | Agotada pero re-fabricable | `cantidad<=0 → bajo_pedido` (sigue pedible, PreOrder) |
+| `encargo` | n/a (null) | Por encargo (se fabrica) | siempre disponible |
+Cierra los combos imposibles por definición (no existe "encargo+refabricable"). `cantidad` solo aplica a `finito*`.
+
+**D2 · `cantidad` = stock TRANSACCIONAL (cierra el TOCTOU, Gemini claim 3 — INNEGOCIABLE).**
+Hoy `cantidad` la pisa el merge del form (`piezas.js:480-493`) y NO está en `pieceStockLocked` (`rules:368`). Al pasar a
+ser decrementada por la CF, eso resucita inventario fantasma. Fix:
+- El form de edición del admin **NO envía `cantidad`** (blind update) → no la pisa.
+- `cantidad` inicial se fija solo al **CREAR** la pieza; reabastecer = acción dedicada **`reabastecerStock(pieceId, +N)`**
+  (CF, `FieldValue.increment`, nunca `set` absoluto — comité §9.1).
+- Reglas: en `update`, `cantidad` ausente del payload del cliente (se suma a la familia `pieceStockLocked`); la CF la gestiona.
+
+**D3 · Reserva multi-canal + reaper (comité §9.1, ahora REFORZADO por la web transaccional).**
+Candado atómico = doc de la pieza (`runTransaction`), uniforme para web y mostrador:
+- **Crear pedido** → `cantidad = increment(-1)` + pedido nace `pago_pendiente`(web)/`pago_por_verificar`(pos). 
+- **`reservaExpira` (TTL)** en pedidos no pagados + **reaper** (Cloud Scheduler) → vencido: `increment(+1)` + pedido `expirado`.
+- **`confirmarPago`** (mostrador) / **webhook Wompi** (web) → `pagado`; NO toca stock (ya decrementado).
+- **`anularPedido`** → `increment(+1)` idempotente (gateado por transición de estado del pedido).
+
+**D4 · "Mostrador gana" con candado de pago (Gemini claim 2, refinado para pago automático).**
+`forcePosOverride` (POS) roba la unidad SOLO si la reserva en conflicto es **no pagada** (`pago_pendiente`/`por_verificar`):
+cancela ese pedido (→`cancelado`) y procede. **NUNCA** sobre un pedido web **`pagado`** (sería reembolso): ahí el POS ve
+"agotada" y no fuerza. Regla de negocio nueva, crítica del modelo automático.
+
+**D5 · Blindaje VIP (`visibilidad:privada`) — Gemini claim 5 — INNEGOCIABLE, va ANTES del campo.**
+`firestore.rules /pieces:590` hoy = `allow read: if true`. Antes de introducir `visibilidad`:
+`allow read: if !('visibilidad' in resource.data && resource.data.visibilidad == 'privada') || isVentas();`
+(público lee solo no-privadas; staff lee todo). El SSG excluye privadas = defensa en profundidad (oscuridad), pero la
+**regla** es la barrera real. La web pública/checkout solo lee piezas públicas (las privadas se facturan vía mostrador/CRM).
+
+**D6 · Transición de tipo purga campos (Gemini claim 6).** Al cambiar `stockType`→`encargo`, `cantidad`=null (admin/CF
+limpian el campo del tipo anterior; sin basura que rompa la escasez).
+
+### 11.2 Modelo final v2 (campos de la pieza)
+| Campo | Escribe | Valores | Nota |
+|---|---|---|---|
+| `stockType` | Kary (admin) | `finito`·`finito_refabricable`·`encargo` | **enum 3 (D1)**; reemplaza stockType-2 + refabricable |
+| `cantidad` | **CF-only** (crear+increment+reabastecer) | int≥0 / null(encargo) | **stock transaccional (D2)**; el form NO la pisa |
+| `visibilidad` | Kary | `publica`·`privada` | **NUEVO**; privada = facturable fuera del catálogo (D5 blinda la regla) |
+| `sizes` | Kary | array | tallas ajustables, sin stock por talla (§10 A) |
+| `price` | Kary | number fijo | por ficha; modificación = línea facturable aparte (TODO-41) |
+| `estado` | **CF-only** | derivado de cantidad+stockType | `agotada`/`bajo_pedido`/disponible (D1) |
+| `reservaExpira` | **CF-only** | ts / null | TTL de la reserva no pagada (D3) |
+
+### 11.3 6 lentes (arquitecto)
+- **Negocio**: refleja la operación real (lote/única/encargo/refabricable) + venta web automática + privadas VIP.
+- **Escala (Mercado Libre)**: candado per-doc (Firestore serializa por pieza; joyería = baja contención por pieza, sin
+  cuello de botella). El modelo separa STOCK (cantidad/reserva) de PAGO (medio/pasarela/webhook) → sumar pasarela = nuevo
+  `medio` + su webhook, **sin tocar el candado de stock**. Diseñado para crecer sin retrabajo.
+- **Seguridad**: `cantidad`/`estado`/`reservaExpira` CF-only (validación server-side); regla `/pieces` blinda privadas (D5).
+- **Costo**: cero infra nueva en Fase 1; reaper = 1 Cloud Scheduler (Fase 2) — barato. Catálogo público sigue estático (SSG).
+- **Mantenibilidad**: enum aditivo, defaults tolerantes (legacy `finito`/`cantidad??1`/`publica`); módulos desacoplados.
+- **Integración**: `catalogo.json` (paso 7) = punto único de lectura pública; webhooks de pasarela (Wompi→Fase 2) =
+  evento que dispara `confirmarPago`; el POS llama la CF (request-response). Cada canal entra por el mismo candado.
+
+### 11.4 Fases (pensar en grande SIN sobre-construir)
+- **FASE 1 (AHORA · precede la carga masiva · solo mostrador)**: enum `stockType` (D1) + `visibilidad` (D5 con regla
+  blindada) + `cantidad` transaccional bajo CF (D2) + `reabastecerStock` + transición purga (D6) + SSG filtra privadas +
+  CF `crearPedido` decrementa `cantidad` con candado (mostrador, sin reaper: Kary presente, `anular` repone). Tests en rojo
+  primero. **Desbloquea la carga de inventario.**
+- **FASE 2 (cuando se conecte el checkout web Wompi)**: reserva web al crear + `reservaExpira` + reaper (Cloud Scheduler) +
+  webhook Wompi→`confirmarPago` + `forcePosOverride` con candado de pago (D4).
+- **FASE 3 (Mercado Libre)**: multi-pasarela (PSE/otras), cada una = `medio`+webhook sobre el mismo candado.
+
+### 11.5 IAP v2 (delta sobre §5)
+- **(A) Modificar**: `firestore.rules` (enum stockType 3, `visibilidad` validado, regla read blindada D5, `cantidad` a
+  stockLocked en update) · `functions/pedidos-core.js` (decrementa cantidad + estado derivado; + `reabastecerStock`; Fase 2:
+  reserva/reaper/override) · `functions/` nueva CF `reabastecerStock` · `js/admin/piezas.js`+`admin-piezas.html` (select de 3
+  + checkbox/`visibilidad`; QUITAR `cantidad` del save de edición; botón Reabastecer) · `scripts/generate-pieces.mjs`
+  (filtra `visibilidad:privada`; PreOrder para `finito_refabricable`). **Deploy reglas+functions = MANUAL (L-22).**
+- **(B) INTACTOS**: contrato base `catalogo.json` (aditivo: +visibilidad-filter, +estado bajo_pedido) · `confirmarPago`/
+  `cierreCaja`/CRM · carrito web (sigue lead-gen hasta Fase 2).
+- **(C) Código muerto**: el bool `refabricable` NO se introduce (se evita); `estado='vendida'` directo → reemplazado por
+  derivación de `cantidad`.
+- **(D) Refactor scope**: medio-alto (reglas + núcleo CF de ventas en prod + admin + SSG). Fase 1 acotada.
+- **(E) Riesgos+rollback+tests**: P0 = tocar `crearPedido` (prod, dinero/stock) → tests de integración por tipo EN ROJO
+  antes; candado atómico ya existe; rollback = revertir CF (1 deploy). Migración legacy = defaults tolerantes. Pruebas en
+  vivo DIFERIDAS (§130.4).
+
+---
+
+## 12. Modelo v3 — consolidación del Comité adversarial v2 (2026-06-26)
+
+> Comité acotado ×5 (`wf_3b6fd939-9ee`, crudo+síntesis → bóveda `2026-06-26-comite-inventario-v2-SINTESIS.md`).
+> **Veredicto unánime: `aprobado_con_cambios`** (modelo base correcto; refinamientos críticos). Convergencias fuertes
+> (C1-C5) = varios lentes coinciden. Este §12 manda sobre §11 donde refina.
+
+### 12.1 Cambios INNEGOCIABLES adoptados (sobre v2)
+- **C1 · Migración = EL entregable de F1.** Script idempotente legacy `{estado, refabricable}` → `{stockType, cantidad,
+  visibilidad}` ANTES de activar la CF de decremento. `refabricable:true→finito_refabricable`; `vendida→cantidad:0`;
+  `visibilidad:'publica'` a todo. Invariante post: ¬`(estado=='vendida' && cantidad>0)` ∧ ¬`(finito* && cantidad==null)`.
+  Gate de deploy: 0 piezas finito* sin cantidad. (Sin esto: `increment(-1)` sobre cantidad ausente → -1 → pieza desaparece.)
+- **C2 · `cantidad` CF-only por IGUALDAD** (no "ausencia", ambigua con merge:true): regla `req.resource.data.cantidad ==
+  resource.data.cantidad` en update de cliente + **blindar también CREATE**. `cantidad`/`estado`/`reservaExpira` → familia
+  stockLocked. Único escritor = CF.
+- **D5 fail-CLOSED** (corrige v2): el default "ausente=pública" es fail-open (VIP sin campo se filtra). Backfill `'publica'`
+  a todo legacy + criterio unificado en regla+SSG+queries como **`visibilidad != 'privada'`** (NO igualdad a 'publica', que
+  borraría legacy del catálogo).
+- **C4 · Ledger append-only** `pieces/{id}/movimientos` `{delta, motivo, pedidoId, actor, ts}` — auditoría de cada cambio
+  de stock (lujo: cuadrar inventario, devoluciones, mermas). Toda CF de stock escribe aquí.
+- **Negocio F1:** CF **`ajustarStock(pieceId, delta, motivo)`** (MERMA/daño/robo/corrección — delta firmado, no-negativo,
+  auditado). Sin esto Kary no opera inventario físico real. + vista admin "pedidos por_verificar antiguos" (F1 sin reaper).
+- **Datos:** `crearPedidoCore` **gate por stockType** (no `increment(-1)` ciego sobre encargo/null). Transición D6 (→encargo
+  purga cantidad) vía CF **`cambiarTipoPieza`** (cantidad CF-only; el form no la setea).
+
+### 12.2 Adoptado para F2/F3 (DOCUMENTADO ahora, NO se implementa en F1)
+- **C3 · Contrato webhook Wompi (escrito ya):** verificar firma HMAC (else 401) + idempotencia por `transactionId` +
+  re-consultar API de Wompi (source of truth) + validar `monto==total` server-side + máquina de estados (APPROVED solo
+  desde pendiente; VOIDED/DECLINED tardío → `disputa/a_revisar`, NO repone auto). "pagado intocable" (D4) solo vale si no se falsifica.
+- **C5 · Invariante STOCK-ONLY:** doc pieza = SOLO `{cantidad, reservaId, reservaExpira}`; el PAGO vive 100% en `/pedidos`;
+  ninguna pasarela toca `/pieces` salvo reservar/liberar por `reservaId`. (multi-pasarela sin regresión del candado).
+- **Reaper:** CAS dentro de `runTransaction` + estado intermedio **`pagado_sin_stock`/`a_revisar`** (webhook tardío sobre
+  reserva ya liberada NUNCA revende auto) + colchón **GRACE** (2-3 min). Fn única **`liberarReserva(pedido)`** compartida por
+  reaper+anular (evita doble +1). `forcePosOverride` atómico (releer estado del pedido en la tx; abortar si ya pagó).
+- **Máquina de estados del pedido EXPLÍCITA (SSoT):** matriz (estado×evento → ¿legal? ¿toca stock?). Invariante:
+  `cantidad_fisica == inicial - reservas_activas - vendidas_confirmadas`.
+- **Negocio F2:** estado **`apartado`/abono parcial** EXCLUIDO del reaper (= TODO-39); transición **`devuelto`** (reingreso
+  idempotente, post-entrega); validar `price` contra doc VIVO (no `catalogo.json` horneado) en cobro auto.
+- **Escala F2:** disponibilidad para COMPRAR se lee de Firestore en vivo (SSG = hint SEO; el JSON horneado queda stale).
+  Hot-doc: líneas `cantidad>1` virales → reservas como sub-docs (umbral); piezas únicas → candado per-doc. Multi-vendedor =
+  gancho `ownerId` futuro (candado per-doc sobrevive).
+
+### 12.3 PLAN F1 (orden de implementación — precede la carga masiva)
+1. **Backfill legacy** (C1) idempotente + invariantes + gate. **PRIMERO.**
+2. **Reglas** (C2 + D5 fail-closed + enum 3 + `visibilidad`): deploy MANUAL, aditivas primero (L-22).
+3. **CFs:** `crearPedidoCore` (decrementa, gate stockType, estado derivado) · `ajustarStock` · `reabastecerStock` ·
+   `cambiarTipoPieza` — todas → ledger `movimientos` (C4).
+4. **Admin** (`piezas.js`/`.html`): select enum 3 + `visibilidad`; QUITAR `cantidad` del save de edición; botones Reabastecer/Ajustar.
+5. **SSG** (`generate-pieces.mjs`): filtra `!= publica`; PreOrder `finito_refabricable`; excluye privadas del sitemap.
+6. **Tests integración EN ROJO primero** (lote→agota, refabricable→bajo_pedido, encargo no decrementa, merma, anular repone,
+   migración invariantes). Pruebas en vivo DIFERIDAS (§130.4).

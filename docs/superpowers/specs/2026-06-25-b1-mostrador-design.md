@@ -54,9 +54,14 @@ pedidos/{id}:
 ### 1.3 `pedidos/{id}/pagos/{pid}` (NUEVO — 1..N, reusa movimientos de cartera CRM)
 Un pedido puede tener anticipo + abonos + saldo. Cada pago: `{ medio, monto, fecha, comprobanteRef?, tipo:'anticipo'|'abono'|'saldo', autor }`. **El export separa recibos de caja (anticipos) de la venta final** (IVA causado sobre lo facturado/entregado, no sobre el anticipo) — Gemini §10.6.
 
-### 1.4 `config/precios` (NUEVO — valor-gramo, owner-only)
-`{ valorGramo: { <metal-quilataje>: number }, updatedBy, updatedAt, anterior }`. `read` NO pública
-(no exponer margen). `write` solo owner/admin. Cada cambio auditado (autor+timestamp+valor previo).
+### 1.4 Valor del gramo — INPUT, NO config almacenada (CORREGIDO Daniel 2026-06-26)
+El precio del oro **VARÍA** → el valor del gramo **NO se guarda fijo**; es un **INPUT que Kary ingresa
+al momento** de calcular/facturar (campo en la calculadora, junto al peso). → **NO existe `config/precios`
+con valor-gramo almacenado.** [Futuro opcional: guardar el ÚLTIMO valor usado como conveniencia de
+auto-llenado, NUNCA como árbitro.] Implicación de seguridad: ya no hay "margen oculto server-side" que
+proteger — la cotización es client-side (calculadora); la integridad del dinero se garantiza al CREAR el
+pedido (paso 3), donde la CF RE-CALCULA `peso × valor_gramo + mano` con los insumos de Kary y lo congela
+como snapshot inmutable (§1.5).
 
 ### 1.5 `desglose` — snapshot inmutable (utilidad real)
 Congela en el pedido: `pesoCobrado` (g), `valorGramoUsado` (número), `manoObra`, `costoDelDia`
@@ -94,9 +99,11 @@ Ventana corta (~10-15 min). El TTL nativo de Firestore solo limpia basura, jamá
 > de estas CF escribe. El cliente/POS manda SOLO insumos; la CF valida claim (owner/admin/catálogo según
 > acción), recalcula server-side y persiste. Firmas (a refinar al codear, verificar APIs CRM reusadas):
 
-- **`cotizacionRapida({ pieceId, peso?, manoObra? })` → `{ total, desglose }`** (Gemini §10.3):
-  preview server-side (lee `valor-gramo`, calcula) SIN crear pedido ni mutar BD. Kary cotiza varias
-  piezas en mostrador sin borradores. (El navegador NUNCA lee el valor-gramo crudo.)
+- **Cotización rápida = CLIENT-SIDE** (CORREGIDO Daniel 2026-06-26, §1.4): como Kary INGRESA el valor del
+  gramo, no hay secreto server-side → la calculadora es client-side (`js/admin/calculadora.js`, función PURA
+  `calcularPrecio({valorGramo,peso,manoObra})` = `peso×gramo+mano`, enteros COP). **NO necesita CF.** ✅ PASO 2
+  HECHO (§124): modal en la topbar de Piezas. La recomputación server-side se mantiene en `crearPedido`
+  (paso 3) para el snapshot inmutable + integridad.
 - **`crearPedido({ items, canal, medio, peso?, manoObra?, entrega, clienteRef?, aMedida? })` → `{ pedidoId, numero }`**:
   `runTransaction` → valida stock de cada item, marca `reservada`/`vendida`, lee valor-gramo, recalcula
   total, persiste pedido + desglose inmutable + 1er pago si aplica. Si valor-gramo cambió vs el preview
@@ -129,7 +136,7 @@ Encaja con el SSG (§116) + SWR (§108/§111). Republish-on-change (segundos); l
 
 ## 7. Secuencia de construcción (cada paso: ventana de prueba en EMULADOR + bugfix)
 1. **`pieces` extensión** (estado/reserva/stockType/cantidad/clasificación) — aditivo, reglas + admin form.
-2. **`cotizacionRapida` CF** (preview, sin mutar) + UI de cotización en el POS.
+2. **Calculadora client-side** ✅ §124 (`calcularPrecio` puro + modal en Piezas; valor-gramo = input de Kary, §1.4; NO CF). [Recomputación server-side → paso 3.]
 3. **`crearPedido` CF** (stock atómico + desglose inmutable) + UI mostrador + `pedidos` reglas.
 4. **`registrarPago` + pagos 1..N** (reusa movimientos cartera CRM) + comprobante "por verificar"≠"pagado".
 5. **`anularPedido` (VOID)** + **`cierreCaja`/arqueo** (Cierre Z).
@@ -155,7 +162,7 @@ Encaja con el SSG (§116) + SWR (§108/§111). Republish-on-change (segundos); l
 
 ## Checklist (evidencia al ejecutar)
 - [x] `pieces` extendido (stockType/cantidad/gender, aditivo) — ADR §122; `pieceClassValid` DESPLEGADA a prod (read-back OK); 201 tests rules + build verdes; `estado/reserva*` diferidos al CF
-- [ ] `cotizacionRapida` CF + test (no muta BD)
+- [x] Calculadora de precio (client) — §124: `calcularPrecio` puro (`peso×gramo+mano`) + modal en Piezas; 6 tests + build verdes; valor-gramo = input de Kary (§1.4, varía)
 - [ ] `crearPedido` CF con stock atómico + test de doble-venta (runTransaction)
 - [ ] `pedidos` reglas (`create:false`) + test rules
 - [ ] `registrarPago` 1..N + comprobante por-verificar

@@ -6,11 +6,11 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v37 — B1 paso 3: Mostrador (POS). Página admin-pos.html donde Kary registra una
-// venta (elige pieza → precio fijo o por peso → medio de pago → confirma) llamando a la CF
-// crearPedido (stock atómico, total recalculado server-side). (v36 = calculadora de precio
-// por peso; v35 = form flotante + 9 destacadas; v34 = WhatsApp directo.)
-const CACHE_NAME    = 'bersaglio-v37';
+// Bumped to v38 — TODO en COP: el rótulo del precio en Piezas decía "Precio USD" (engañoso);
+// ahora "Precio en pesos (COP)" + nota "nunca dólares". El cobro SIEMPRE fue en pesos (format$
+// es-CO + CF + POS); solo el cartel estaba mal. (v37 = POS Mostrador §126; v36 = calculadora
+// de precio por peso §124.)
+const CACHE_NAME    = 'bersaglio-v38';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

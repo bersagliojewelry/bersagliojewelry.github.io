@@ -10,7 +10,7 @@
 
 > 🎉 **CRM + Fase M (M0→M6) EN PRODUCCIÓN** (§47-§82). **🔄 RESET A CERO** (Daniel 2026-06-20): Kary recarga de cero → cartera/clientes históricos DESECHABLES (bajan urgencias de dinero). ⚙️ **OPUS 4.8 interino** (marcar `[OPUS-4.8]` · `feedback_opus_interino`).
 >
-> **🚦 Frentes abiertos:** **TODO-36** (responsive inteligente + recomendaciones + medición — EN FLUJO COMPLETO W-11, pend. respuesta Gemini) · **TODO-33** (parpadeo residual del menú en cada nav MPA) · **TODO-35** cola (A2b/eventos/HUB; lo demás EN PROD). _Previo cerrado: web app-like §103-§113 ✅ · rol catálogo Kary §115 ✅ · TODO-34 ficha pieza ✅ (pend. merge)._
+> **🚦 Frentes abiertos:** **TODO-36** (grilla inteligente + recos + medición + dock-7 + traductor de errores del panel — **IMPLEMENTADO+VERIFICADO** build/tests/CSS-live; **pend. MERGE Daniel** + validación con datos + BigQuery + ADR) · **TODO-33** (parpadeo residual del menú) · **TODO-35** cola (A2b/eventos/HUB). _Previo cerrado: **§117 Storage rol catálogo EN PROD** (subida Kary, auditoría permisos 4 capas ✅) · §115 rol catálogo ✅ · TODO-34 ficha pieza (pend. merge)._
 > - ⚠️ **Deploy** (L-22/L-26): reglas/functions = manual mío; sitio+merge a `main` = PR de Daniel (`git fetch` siempre); Admin SDK = ADC.
 
 ---

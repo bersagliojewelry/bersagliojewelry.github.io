@@ -267,13 +267,24 @@ la pieza) — eso es una mejora de fondo (inventario, B3 del plan maestro), no e
 | Por encargo | `stockType==='encargo'` | **"Hecho por encargo"** (sin urgencia) | ✅ |
 | Vendida | `!available` | fuera del listado · ficha "Vendida·ver similares" (§10.1) | ✅ (paso 7) |
 
-**Recomendación (2 fases):**
-- **Fase A (ahora, honesta, cubre el 100% real)**: badge **"Pieza única"** (exclusividad de lujo, no presión
-  barata) para `finito`/`cantidad:1` + **"Hecho por encargo"** para `encargo`. Se implementa en el cliente
-  (grilla `catalogo.js` + ficha `pieza.js`) junto con 7b/7c (cuando el cliente lea el `catalogo.json`).
-- **Fase B (futuro)**: inventario multi-unidad real (POS decrementa `cantidad`) → habilita "Solo quedan N" /
-  "¡Última unidad!" honestos. → TODO-40.
+**REALIDAD del negocio (Daniel 2026-06-26)** — NO todo es único; hay **4 modos de disponibilidad** reales + mucho
+inventario por cargar a la web. ⇒ el modelo de stock necesita **multi-unidad real ANTES de la carga masiva** (si no,
+habría que recargar todo). Tipos:
+1. **Lote / serie**: `finito`, `cantidad>1`; el POS **DECREMENTA** al vender → "Solo quedan N" honesto.
+2. **Única / a medida / exclusiva**: `finito`, `cantidad:1` → "Pieza única".
+3. **Por encargo**: `encargo`, se fabrica bajo pedido → "Hecho por encargo" (ya en el modelo).
+4. **Agotada pero RE-FABRICABLE** (Daniel: "se fabrica una vez, pero si la solicitan se le fabrica"): `finito`
+   que llega a 0 PERO se puede pedir → "Agotado · se fabrica bajo pedido" (NO desaparece como una única vendida).
+   ← **caso NUEVO, no cubierto hoy** (hoy `finito` vendida = fuera; `encargo` = infinito; falta el híbrido).
 
-> 🔵 **Decisión de producto para Daniel**: ¿Fase A ya ("Pieza única" + "Hecho por encargo", honesto para el
-> catálogo actual) y Fase B cuando haya piezas en serie? ¿O el negocio ya tiene piezas multi-unidad reales que
-> justifiquen construir el inventario por unidad antes?
+**Dirección ELEGIDA (la mejor opción dado el negocio)**: construir el **modelo de inventario multi-tipo** — NO
+quedarse en "pieza única". Implica:
+- El POS (`crearPedido`) **decrementa `cantidad`** en vez de marcar vendida TODA la pieza; `estado='vendida'`/agotado
+  solo cuando `cantidad` llega a 0. (anular/`anularPedido` re-incrementa.)
+- Un modo/flag para el tipo 4 (re-fabricable): al agotarse, la pieza ofrece "bajo pedido" en vez de desaparecer.
+- Escasez honesta derivada: "Solo quedan N" / "¡Última unidad!" / "Pieza única" / "Hecho por encargo" / "Agotado·bajo pedido".
+
+> ⚠️ Es **Decisión Fuerte** (modelo de datos + toca el POS ya en prod, `crearPedido`/`anularPedido`/reglas; cara de
+> revertir) → merece **diseño dedicado con el flujo** (arquitecto + comité), NO improvisar. **Idealmente PRECEDE a la
+> carga masiva de inventario** (para no recargar). → **TODO-40 (elevado a iniciativa)**. El paso 7 (`catalogo.json`)
+> sigue válido y ya expone `stockType`/`cantidad`/`available` → el modelo nuevo se refleja ahí **sin rehacer el contrato**.

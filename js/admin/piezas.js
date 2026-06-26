@@ -3,7 +3,7 @@
  */
 
 import adminDb from './db.js';
-import { admToast, admConfirm, initSidebar, esc, requireAuth, hasRole } from './shared.js';
+import { admToast, admConfirm, initSidebar, esc, requireAuth, hasRole, errorMessage } from './shared.js';
 import { pmark, psummary } from '../core/perf-probe.js';   // sonda TODO-33 (gateada; no-op si off)
 
 let _allPieces = [];
@@ -249,7 +249,7 @@ async function handleFiles(files) {
             admToast(`${file.name} \u2192 WebP subida ${saved}`);
         }
     } catch (err) {
-        admToast('Error al subir imagen. Verifica tu conexi\u00f3n.', 'danger');
+        admToast(errorMessage(err, 'No se pudo subir la imagen.'), 'danger');
     } finally {
         progressWrap.hidden = true;
         progressBar.style.width = '0%';
@@ -486,7 +486,7 @@ async function handleSave() {
             admToast('La pieza fue eliminada por otra persona.', 'danger', 5000);
             return;
         }
-        admToast(err?.message || 'Error al guardar pieza', 'danger');
+        admToast(errorMessage(err, 'No se pudo guardar la pieza.'), 'danger');
     }
 }
 
@@ -507,7 +507,7 @@ function handleDelete(id) {
                 await adminDb.deletePiece(id);
                 admToast('Pieza e im\u00e1genes eliminadas', 'danger');
             } catch (err) {
-                admToast('Error al eliminar', 'danger');
+                admToast(errorMessage(err, 'No se pudo eliminar la pieza.'), 'danger');
             }
         }
     );

@@ -13,7 +13,7 @@
  * (debounce) reusando los renderers públicos. Decisión iframe: auditoría §82 + consejo Gemini.
  */
 import { getSiteContent, saveSiteContent } from '../firestore-service.js';
-import { admToast, esc } from './shared.js';
+import { admToast, esc, errorMessage } from './shared.js';
 import { mount, fragment } from '../core/html.js';
 import { singletonFormHTML, collectSingleton, mergeSections, itemTemplateHTML, reindexItemSf } from './singleton-admin-core.js';
 import createLivePreview from './live-preview.js';
@@ -152,7 +152,7 @@ export function createSingletonAdmin(d) {
             admToast('Imagen subida. Guarda para publicarla.');
         } catch (err) {
             console.error(`[singleton-admin:${d.page}] image upload failed:`, err);
-            admToast(err?.message || 'No se pudo subir la imagen', 'danger', 5000);
+            admToast(errorMessage(err, 'No se pudo subir la imagen.'), 'danger', 5000);
         } finally {
             progress.hidden = true;
             input.value = '';                          // permite re-elegir el mismo archivo
@@ -395,7 +395,7 @@ export function createSingletonAdmin(d) {
             admToast('Se restauró la versión anterior.');
         } catch (err) {
             console.error(`[singleton-admin:${d.page}] undo failed:`, err);
-            admToast(err?.message || 'No se pudo deshacer', 'danger', 5000);
+            admToast(errorMessage(err, 'No se pudo deshacer.'), 'danger', 5000);
         } finally {
             if (b) b.disabled = false;
         }
@@ -415,7 +415,7 @@ export function createSingletonAdmin(d) {
             admToast('Textos guardados. Se verán en la web al recargar.');
         } catch (err) {
             console.error(`[singleton-admin:${d.page}] save failed:`, err);
-            admToast(err?.message || 'Error al guardar', 'danger', 5000);
+            admToast(errorMessage(err, 'No se pudo guardar.'), 'danger', 5000);
         } finally {
             if (btn) btn.disabled = false;
         }

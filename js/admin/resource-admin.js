@@ -22,7 +22,7 @@
 import {
     onCollectionChange, createTypedDoc, updateTypedDoc, deleteTypedDoc,
 } from '../firestore-service.js';
-import { admToast, admConfirm, esc } from './shared.js';
+import { admToast, admConfirm, esc, errorMessage } from './shared.js';
 import { safeUrl } from '../core/safe-url.js';
 import { mount } from '../core/html.js';
 import {
@@ -191,8 +191,8 @@ export function createResourceAdmin(d) {
             $(`[data-field="${name}"]`).value = url;
             renderPreview(name, url);
             admToast('Imagen subida');
-        } catch {
-            admToast('Error al subir la imagen', 'danger');
+        } catch (err) {
+            admToast(errorMessage(err, 'No se pudo subir la imagen.'), 'danger');
         } finally {
             if (prog) prog.hidden = true;
             if (bar)  bar.style.width = '0%';
@@ -297,7 +297,7 @@ export function createResourceAdmin(d) {
             if (err?.code === 'version-conflict') { admToast('Otra persona lo modificó mientras editabas. Recarga para ver los cambios.', 'danger', 5000); return; }
             if (err?.code === 'not-found')        { admToast('El elemento fue eliminado por otra persona.', 'danger', 5000); return; }
             if (err?.code === 'id-collision')     { admToast('Ya existe un elemento con ese identificador.', 'danger'); return; }
-            admToast(err?.message || 'Error al guardar', 'danger');
+            admToast(errorMessage(err, 'No se pudo guardar.'), 'danger');
         }
     }
 
@@ -313,8 +313,8 @@ export function createResourceAdmin(d) {
             try {
                 await deleteTypedDoc(d.collection, id);
                 admToast('Se eliminó', 'danger');
-            } catch {
-                admToast('Error al eliminar', 'danger');
+            } catch (err) {
+                admToast(errorMessage(err, 'No se pudo eliminar.'), 'danger');
             }
         });
     }

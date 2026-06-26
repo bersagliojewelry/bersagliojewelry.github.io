@@ -169,6 +169,6 @@ Encaja con el SSG (§116) + SWR (§108/§111). Republish-on-change (segundos); l
 - [x] **paso 4a — `confirmarPago`** (por_verificar→pagado, "vi la plata", SoD) — §128: CF `confirmarPagoCore` + botón "Confirmar pago" en Ventas recientes; 9/9 integración; **DESPLEGADA a prod** (`ba6da22`)
 - [ ] **paso 4b — `registrarPago` 1..N abonos/apartados** — PEND DECISIÓN (§128.4 / TODO-39): si el mostrador aparta piezas (anticipo+saldo), el saldo = CARTERA existente → reusar, NO pagos-en-pedido paralelos. Preguntar a Daniel + link pedido↔cliente
 - [x] **paso 5 — `anularPedido` (VOID reintegra pieza) + `cierreCaja` (arqueo Z)** — §129: anular append-only + reintegra `vendida`→`disponible`; cierre a ciegas → descuadre (anulados excluidos); colección `arqueo` CF-only. UI: 3 estados + botón Anular + modal Cerrar caja. 15/15 integración + 207/207 reglas; **DESPLEGADO a prod** (`1362a32`)
-- [ ] bruto/neto + export contador
+- [x] **paso 6 — bruto/neto + export al contador** — §130: `calcularNeto` PURO (`js/admin/fiscal.js`) bruto − comisión Wompi − retenciones (tasas PARAM-DRIVEN default "verificar", no fabricar impuestos) + botón "Exportar contador" → CSV (client-side). 5/5 tests. v41 (`f3c9060`)
 - [ ] `catalogo.json` a CDN
 - [ ] verificado en emulador (seed) + node:tests de CF

@@ -6,10 +6,10 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v33 — TODO-36: grilla inteligente (Flexbox que se acomoda a la cantidad, sin huérfana)
-// en destacadas/catálogo/relacionados + recomendaciones por CONTENIDO (sin relleno al azar, título
-// honesto) + medición GA4 real (view_item/view_item_list/select_item). (v32 = ficha "Carta Gemológica".)
-const CACHE_NAME    = 'bersaglio-v33';
+// Bumped to v34 — TODO-37 B0.5 "frena la fuga": CTAs de la ficha de pieza ahora abren WhatsApp
+// directo con la pieza ya escrita (antes caían a /contacto.html = formulario largo, fuga de leads)
+// + evento GA4 whatsapp_click con contexto de pieza. (v33 = grilla inteligente + recos por contenido.)
+const CACHE_NAME    = 'bersaglio-v34';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

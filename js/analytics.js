@@ -174,6 +174,17 @@ function mapEventToFB(eventName, params) {
                     currency: 'COP'
                 }
             };
+        case 'whatsapp_click':
+            return {
+                name: 'Lead',
+                params: {
+                    content_type: 'product',
+                    content_ids: [firstItem.item_id || ''],
+                    content_name: firstItem.item_name || params.place || 'whatsapp',
+                    value: 0,
+                    currency: 'COP'
+                }
+            };
         default:
             return null;
     }
@@ -221,9 +232,26 @@ function bindDelegatedEvents() {
             });
         }
 
-        // contact via WhatsApp
+        // contact via WhatsApp (botón flotante / nav — intención genérica)
         if (e.target.closest('#wa-nav, .wa-float, #pieza-wa-btn, #wa-contact')) {
             track('contact', { method: 'whatsapp' });
+        }
+
+        // whatsapp_click (TODO-37 B0.5): CTA de alta intención que abre WhatsApp con la pieza ya
+        // escrita. Señal de LEAD canónica (marcar como conversión en GA4). Lleva contexto de la
+        // pieza (item_id/name/category) cuando aplica → atribución por producto. Selectores
+        // DISTINTOS a la regla 'contact' de arriba → no hay doble conteo.
+        const waLead = e.target.closest('[data-wa-click]');
+        if (waLead) {
+            const slug = waLead.dataset.waPiece;
+            track('whatsapp_click', {
+                place: waLead.dataset.waClick || 'site',
+                ...(slug ? { items: [{
+                    item_id:       slug,
+                    item_name:     waLead.dataset.waName,
+                    item_category: waLead.dataset.waCat,
+                }] } : {}),
+            });
         }
 
         // search trigger

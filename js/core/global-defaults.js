@@ -48,6 +48,16 @@ export function waHref(whatsappDisplay) {
     return `https://wa.me/${String(whatsappDisplay || '').replace(/\D/g, '')}`;
 }
 
+/**
+ * Enlace wa.me con mensaje PRE-CARGADO (alta intención · TODO-37 B0.5 "frena la fuga").
+ * waLink('+57 301 375 2592', 'Hola') → 'https://wa.me/573013752592?text=Hola'.
+ * Sin texto → solo el número (idéntico a waHref). El texto se encodea (anti-roto en URL).
+ */
+export function waLink(whatsappDisplay, text) {
+    const base = waHref(whatsappDisplay);
+    return text ? `${base}?text=${encodeURIComponent(text)}` : base;
+}
+
 /** Enlace de Instagram desde un handle ("@bersagliojewelry" → instagram.com/bersagliojewelry). */
 export function igHref(handle) {
     return `https://instagram.com/${String(handle || '').replace(/^@+/, '').trim()}`;
@@ -65,4 +75,4 @@ export function mergeGlobal(doc) {
     };
 }
 
-export default { GLOBAL_DEFAULTS, mergeGlobal, waHref, igHref };
+export default { GLOBAL_DEFAULTS, mergeGlobal, waHref, waLink, igHref };

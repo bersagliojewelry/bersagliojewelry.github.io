@@ -141,3 +141,48 @@ El comité demostró que el modelo correcto depende de cómo opera Bersaglio DE 
 ### 9.3 Próximo paso
 Respuestas de Daniel (A/B/C) → refinar el modelo (¿variantes sí/no? ¿enum de disponibilidad final?) → 2ª opinión
 externa (Gemini) → implementar (tests en rojo primero). **NO cerrar el modelo ni la carga de inventario sin A/B/C.**
+
+---
+
+## 10. Modelo REFINADO — respuestas de negocio de Daniel (2026-06-26)
+
+Las 3 respuestas **resuelven los 3 agujeros del comité** y simplifican el modelo (no necesita variantes por talla):
+
+**A. Tallas → pieza ÚNICA con talla AJUSTABLE** (no stock por talla). "Una sola pieza, la talla se ajusta al
+vender/fabricar." ⇒ `sizes` sigue como array (tallas ofrecidas/ajustables), **SIN** sub-doc de variantes. El agujero #1
+del comité NO aplica. ✅
+
+**B. Precio → FIJO por ficha; variaciones = línea de factura aparte.** "Si la publicación detalla UN peso y UNAS
+características, TODAS cuestan exactamente lo mismo; a menos que se solicite una modificación al interno." ⇒ cada FICHA =
+un peso (en `specs`) = un precio → `cantidad:N` + un precio **SÍ es honesto** (el agujero #2 se cierra por convención de
+negocio: otro peso = otra ficha). **NUEVO requisito**: la facturación debe permitir **líneas de tipo "modificación/
+servicio"** (códigos facturables), no solo piezas → **TODO-41** (toca el POS/factura, no el inventario). Daniel: "el
+sistema debe ser robusto y bien pensado para una joyería SIN LIMITACIONES, SIN VACÍOS."
+
+**C. A medida → eje de VISIBILIDAD (pública | privada), independiente del stock.** Pública = se puede subir como
+ejemplo/propuesta (con autorización del cliente + sin contrato de exclusividad). Privada = **NO va al catálogo PERO sí se
+factura** (existe en Firestore para la venta/factura, fuera del SSG/`catalogo.json`). ⇒ **campo nuevo `visibilidad ∈
+{publica, privada}`**; el agujero #3 se cierra.
+
+### 10.1 Modelo final (campos de la pieza)
+| Campo | Escribe | Valores | Nota |
+|---|---|---|---|
+| `stockType` | Kary | `finito` \| `encargo` | finito = unidades; encargo = bajo pedido (ya existe) |
+| `cantidad` | Kary declara · **CF `increment`** | int ≥ 0 | unidades; la CF decrementa al vender. Talla NO la subdivide |
+| `refabricable` | Kary | bool | `finito` agotado (0) → "bajo pedido" (no desaparece) |
+| `visibilidad` | Kary | `publica` \| `privada` | **NUEVO**. privada = facturable pero fuera del catálogo/SSG |
+| `sizes` | Kary | array | tallas ofrecidas (ajustables); sin stock por talla (ya existe) |
+| `price` | Kary | number | fijo por ficha (el peso vive en `specs`); variación = modificación facturable |
+| `estado` | **CF-only** | derivado | `cantidad<=0 && !refabricable → agotada` (única verdad = `cantidad`) |
+
+- **`catalogo.json` / SSG**: solo piezas `visibilidad:'publica'` entran al catálogo público (las privadas se excluyen del
+  SSG y del JSON, pero existen para facturar). Aditivo al filtro `isPublishable`.
+- Disponibilidad/escasez derivada (§ paso-7 §11): igual, más el caso privada (no aparece).
+
+### 10.2 Lo que queda para el flujo
+- **Adoptado** (comité §9.1): decremento al CREAR + `reservaExpira` + reaper · `cantidad`=única-verdad · `increment` ·
+  idempotencia por transición · legacy `??1` · reglas-primero · tests-en-rojo.
+- **Resuelto** (Daniel §10): sin variantes por talla · precio fijo por ficha · `visibilidad` pública/privada.
+- **Derivado nuevo**: **TODO-41 facturación multi-línea** (pieza + modificación/servicio con códigos) — separado, toca POS/factura.
+- **Pendiente**: 2ª opinión externa (Gemini) sobre el modelo refinado → implementar (tests en rojo primero). El modelo
+  PRECEDE la carga masiva de inventario.

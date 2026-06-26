@@ -17,7 +17,7 @@
  *   - Related pieces grid (4 más de la misma colección)
  */
 
-import { html, escape } from '../core/html.js';
+import { html, escape, mount } from '../core/html.js';
 import { format$ } from '../core/format.js';
 import { lqipBgStyle } from '../core/lqip.js';   // §110.4: blur-up de la imagen principal (idx 0)
 import { data } from '../core/data.js';
@@ -28,6 +28,7 @@ import { pieceUrl, pieceAbsUrl } from '../core/urls.js';
 import { balancedCols } from '../core/grid-balance.js';       // reparto inteligente de columnas
 import { track, trackPieceView } from '../analytics.js';      // medición GA4 (view_item / view_item_list)
 import { mergeGlobal, waLink } from '../core/global-defaults.js';  // WhatsApp directo (fuente única del número)
+import { saveInquiry } from '../firestore-service.js';        // lead in-page (form flotante, no navega a contacto)
 
 let _slug = '';
 let _viewIdx = 0;
@@ -203,9 +204,6 @@ function renderInfo(piece) {
     const sizes = Array.isArray(piece.sizes) ? piece.sizes.map(s => String(s).trim()).filter(Boolean) : [];
     const isRingLike = TALLAS_COLLECTIONS.has(piece.collection);
 
-    const asesorHref = `/contacto.html?ref=${encodeURIComponent(piece.slug || piece.id)}`
-        + (piece.code ? `&code=${encodeURIComponent(piece.code)}` : '');
-
     return html`
         <div class="pz-info">
             <div class="pz-info-top">
@@ -295,9 +293,9 @@ function renderInfo(piece) {
                     Consultar por WhatsApp
                 </a>`
             : html`
-                <a href="${asesorHref}" class="btn-aqua btn-aqua-gold pz-asesor-btn pz-asesor-secondary">
+                <button type="button" class="btn-aqua btn-aqua-gold pz-asesor-btn pz-asesor-secondary" data-action="lead-open">
                     Prefiero dejar mis datos
-                </a>`}
+                </button>`}
 
             ${piece.code ? html`<div class="pz-ref mono">Ref. ${escape(piece.code)}</div>` : ''}
         </div>`;
@@ -399,6 +397,82 @@ function renderRelated(piece) {
         </section>`;
 }
 
+// ── Form flotante de lead (Daniel 2026-06-26) ──────────────────────────────────
+// "Prefiero dejar mis datos" abre ESTE modal en la MISMA ficha (no navega a
+// /contacto.html → el cliente no cae en una página ajena y el lead NO se pierde).
+// Guarda en la Bandeja del CRM (saveInquiry → inquiries, MISMO destino que contacto)
+// con la pieza enlazada (pieceSlug). Optimista: éxito inmediato, Firestore en background.
+function leadFormHtml(piece) {
+    return html`
+        <form class="pz-lead-form" data-lead-form novalidate>
+            <div class="eyebrow pz-lead-eyebrow">Déjanos tus datos</div>
+            <h3 class="pz-lead-title">Te contactamos por <span class="italic emerald-text">${escape(piece.name || 'esta pieza')}</span></h3>
+            <p class="pz-lead-sub">Cuéntanos cómo ubicarte y un asesor te escribe pronto.</p>
+            <input class="pz-lead-input" name="nombre" placeholder="Tu nombre" autocomplete="name" required>
+            <input class="pz-lead-input" name="tel" placeholder="WhatsApp o teléfono" autocomplete="tel" inputmode="tel" required>
+            <input class="pz-lead-input" name="email" type="email" placeholder="Correo (opcional)" autocomplete="email">
+            <textarea class="pz-lead-input pz-lead-textarea" name="mensaje" rows="2" placeholder="¿Algo que debamos saber? (opcional)"></textarea>
+            <button type="submit" class="btn-aqua btn-aqua-emerald pz-lead-submit">Enviar mis datos</button>
+        </form>`;
+}
+function leadSuccessHtml() {
+    return html`
+        <div class="pz-lead-success">
+            <div class="pz-lead-success-icon" aria-hidden="true">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 6L9 17l-5-5"/></svg>
+            </div>
+            <h3 class="pz-lead-title">¡Gracias! Te contactamos pronto.</h3>
+            <p class="pz-lead-sub">Recibimos tus datos. Un asesor de Bersaglio te escribirá sobre esta pieza.</p>
+            <button type="button" class="btn-aqua pz-lead-done" data-action="lead-close">Cerrar</button>
+        </div>`;
+}
+function renderLeadModal(piece) {
+    return html`
+        <div class="pz-lead-modal" data-lead-modal>
+            <div class="pz-lead-backdrop" data-action="lead-close"></div>
+            <div class="glass glass-iridescent pz-lead-card" role="dialog" aria-modal="true" aria-label="Déjanos tus datos">
+                <button type="button" class="pz-lead-x" data-action="lead-close" aria-label="Cerrar">&times;</button>
+                <div class="pz-lead-body" data-lead-body>${leadFormHtml(piece)}</div>
+            </div>
+        </div>`;
+}
+function openLead() {
+    const modal = document.querySelector('[data-lead-modal]');
+    const piece = data.getBySlug(_slug);
+    if (!modal || !piece) return;
+    // re-pinta el form limpio (por si quedó en estado "éxito" de un envío anterior)
+    mount(modal.querySelector('[data-lead-body]'), leadFormHtml(piece));
+    modal.classList.add('is-open');
+    try { document.body.style.overflow = 'hidden'; } catch { /* no-op */ }
+    modal.querySelector('[name="nombre"]')?.focus();
+}
+function closeLead() {
+    document.querySelector('[data-lead-modal]')?.classList.remove('is-open');
+    try { document.body.style.overflow = ''; } catch { /* no-op */ }
+}
+function onLeadSubmit(e) {
+    const form = e.target.closest('[data-lead-form]');
+    if (!form) return;
+    e.preventDefault();
+    const nombre = (form.nombre?.value || '').trim();
+    const tel    = (form.tel?.value || '').trim();
+    if (!nombre || !tel) { (!nombre ? form.nombre : form.tel)?.focus(); return; }
+    const email   = (form.email?.value || '').trim();
+    const mensaje = (form.mensaje?.value || '').trim();
+    const piece = data.getBySlug(_slug);
+    const slug      = piece?.slug || piece?.id || _slug;
+    const pieceName = piece?.name || 'Pieza';
+
+    // Optimista: muestra el éxito ya; Firestore en background (igual que contacto.js).
+    mount(form.closest('[data-lead-body]'), leadSuccessHtml());
+    try { track('generate_lead', { lead_type: 'pieza', piece_slug: slug }); } catch { /* analítica nunca rompe */ }
+    saveInquiry({
+        name: nombre, email, phone: tel,
+        message: `[Pieza] Me interesa: ${pieceName}${mensaje ? ` — ${mensaje}` : ''}`,
+        pieceSlug: slug, source: 'pieza-form',
+    }).catch(err => console.warn('[pieza] saveInquiry falló (UX no-op):', err));
+}
+
 function renderBreadcrumb(piece) {
     const cat = piece ? getCategoryLabel(piece) : 'Catálogo';
     return html`
@@ -476,6 +550,7 @@ function renderPage() {
                 ${renderInfo(piece)}
             </article>
             ${renderRelated(piece)}
+            ${renderLeadModal(piece)}
         </div>`;
 }
 
@@ -551,6 +626,9 @@ function onMainClick(e) {
     if (!btn) return;
     const action = btn.dataset.action;
 
+    if (action === 'lead-open')  { e.preventDefault(); openLead();  return; }
+    if (action === 'lead-close') { e.preventDefault(); closeLead(); return; }
+
     if (action === 'thumb') {
         e.preventDefault();
         _viewIdx = Number(btn.dataset.idx) || 0;
@@ -619,6 +697,8 @@ export async function init() {
     refresh();   // paint inicial (skeleton si aún no hay datos)
 
     main.addEventListener('click', onMainClick);
+    main.addEventListener('submit', onLeadSubmit);   // form flotante de lead
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLead(); });
 
     data.onChange(refresh);
     cart.onChange(refresh);

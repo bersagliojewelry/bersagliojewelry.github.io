@@ -548,3 +548,25 @@
     .pz-talla-pill:hover,
     .pz-main:hover .pz-main-img { transform: none; }
 }
+
+/* ── Form flotante de lead (Daniel 2026-06-26): "Prefiero dejar mis datos" ──
+   Modal en la MISMA ficha (no navega a contacto). Reusa .glass para el cristal. */
+.pz-lead-modal { position: fixed; inset: 0; z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; }
+.pz-lead-modal.is-open { display: flex; }
+.pz-lead-backdrop { position: absolute; inset: 0; background: oklch(22% 0.03 160 / 0.46); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+.pz-lead-card { position: relative; z-index: 1; width: 100%; max-width: 440px; padding: 30px 26px 26px; border-radius: 24px; max-height: calc(100vh - 40px); overflow-y: auto; }
+.pz-lead-x { position: absolute; top: 12px; right: 14px; width: 34px; height: 34px; border: none; background: transparent; font-size: 26px; line-height: 1; color: var(--bj-ink-mute); cursor: pointer; border-radius: 999px; transition: color .15s, background .15s; }
+.pz-lead-x:hover { color: var(--bj-emerald-800); background: oklch(94% 0.02 150 / 0.6); }
+.pz-lead-eyebrow { margin-bottom: 6px; }
+.pz-lead-title { font-family: var(--font-display); font-size: 1.35rem; line-height: 1.2; color: var(--bj-ink-emerald); margin: 0 0 6px; }
+.pz-lead-sub { font-size: 0.9rem; color: var(--bj-ink-soft); margin: 0 0 16px; }
+.pz-lead-form { display: flex; flex-direction: column; gap: 10px; }
+.pz-lead-input { box-sizing: border-box; width: 100%; padding: 12px 14px; border-radius: 14px; border: 1px solid oklch(85% 0.02 150); background: oklch(100% 0 0 / 0.72); font-family: inherit; font-size: 0.95rem; color: var(--bj-ink-emerald); transition: border-color .15s; }
+.pz-lead-input::placeholder { color: var(--bj-ink-mute); }
+.pz-lead-input:focus { outline: none; border-color: var(--bj-emerald-600); }
+.pz-lead-textarea { resize: vertical; min-height: 56px; }
+.pz-lead-submit { margin-top: 6px; }
+.pz-lead-success { text-align: center; padding: 10px 0 4px; }
+.pz-lead-success-icon { width: 64px; height: 64px; margin: 0 auto 14px; display: grid; place-items: center; border-radius: 999px; color: var(--bj-emerald-700); background: oklch(94% 0.04 150 / 0.7); }
+.pz-lead-done { margin-top: 16px; }
+@media (prefers-reduced-motion: reduce) { .pz-lead-x, .pz-lead-input { transition: none; } }

@@ -6,10 +6,11 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v34 — TODO-37 B0.5 "frena la fuga": CTAs de la ficha de pieza ahora abren WhatsApp
-// directo con la pieza ya escrita (antes caían a /contacto.html = formulario largo, fuga de leads)
-// + evento GA4 whatsapp_click con contexto de pieza. (v33 = grilla inteligente + recos por contenido.)
-const CACHE_NAME    = 'bersaglio-v34';
+// Bumped to v35 — correcciones Daniel 2026-06-26: (1) "Prefiero dejar mis datos" abre un FORM
+// FLOTANTE en la ficha (modal con la pieza enlazada → guarda lead sin navegar a contacto, no se
+// pierde); (2) home muestra hasta 9 destacadas (antes 6); (3) contacto: canales DEBAJO del form.
+// (v34 = WhatsApp directo en la ficha + GA4 whatsapp_click.)
+const CACHE_NAME    = 'bersaglio-v35';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

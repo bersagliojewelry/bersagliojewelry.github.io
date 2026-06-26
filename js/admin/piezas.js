@@ -433,6 +433,19 @@ async function handleSave() {
         return;
     }
 
+    // Tope de 9 destacadas (Daniel 2026-06-26): la home muestra hasta 9. Al intentar
+    // destacar una 10ª, se bloquea con mensaje (no permite, hay que quitar una primero).
+    // Solo aplica si ESTA pieza pasa a destacada y aún no contaba como tal.
+    const wantsFeatured = form.querySelector('[name="featured"]').checked;
+    if (wantsFeatured) {
+        const featuredCount = _allPieces.filter(p => p.featured && p.id !== editing).length;
+        if (featuredCount >= 9) {
+            admToast('Ya hay 9 piezas destacadas (el máximo). Quita una destacada antes de agregar otra.', 'danger', 5000);
+            form.querySelector('[name="featured"]').focus();
+            return;
+        }
+    }
+
     const specs = {};
     ['stone','carat','metal','accent','certificate','cut','color','clarity','weight','origin','delivery'].forEach(k => {
         const v = get(`specs.${k}`);

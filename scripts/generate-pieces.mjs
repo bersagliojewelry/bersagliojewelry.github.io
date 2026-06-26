@@ -622,7 +622,15 @@ function publicPiece(p, slug) {
         sizes: Array.isArray(p.sizes) ? p.sizes : [],
         specs: publicSpecs(p.specs),
         description: descriptionFor(p),         // cero-demo: "" si "PRUEBA"/vacío
-        available: !isVendida(p),
+        // Stock (B1 paso 1): 'encargo' se fabrica → SIEMPRE disponible (no consume unidad, pedidos-core.js:78).
+        // 'finito' = única; el POS marca estado='vendida' al venderla (no decrementa cantidad).
+        stockType: p.stockType === 'encargo' ? 'encargo' : 'finito',
+        available: p.stockType === 'encargo' ? true : !isVendida(p),
+        // Cantidad EFECTIVA disponible: encargo → null (no aplica); finito vendida → 0; finito libre → declarada
+        // (default 1). Honesto: el POS no decrementa, pero al vender una única su estado pasa a 'vendida' → 0.
+        cantidad: p.stockType === 'encargo' ? null
+                : isVendida(p) ? 0
+                : (Number.isInteger(p.cantidad) ? p.cantidad : 1),
         createdAt: tsSeconds(p.createdAt),
         updatedAt: tsSeconds(p.updatedAt),
     };
@@ -833,20 +841,22 @@ function runSelfTest() {
 
     // catalogo.json: contrato COMPLETO (claves que el cliente usa) + available + NO filtra internos + parsea.
     const REQUIRED_PIECE_KEYS = ['id', 'slug', 'name', 'code', 'collection', 'price', 'images', 'imageLqip',
-        'tag', 'featured', 'sizes', 'specs', 'description', 'available', 'createdAt', 'updatedAt'];
+        'tag', 'featured', 'sizes', 'specs', 'description', 'available', 'stockType', 'cantidad', 'createdAt', 'updatedAt'];
     const cat = buildCatalogJson(
-        [{ ...mockPiece, id: 'p1', estado: 'disponible', costoInterno: 999, pesoTaller: 4.9, sizes: ['6'], tag: 'Nueva', imageLqip: 'data:x', updatedAt: { seconds: 100 } },
-         { ...mockPiece, id: 'p2', estado: 'vendida' }],
+        [{ ...mockPiece, id: 'p1', stockType: 'finito', estado: 'disponible', cantidad: 2, costoInterno: 999, pesoTaller: 4.9, sizes: ['6'], tag: 'Nueva', imageLqip: 'data:x', updatedAt: { seconds: 100 } },
+         { ...mockPiece, id: 'p2', stockType: 'finito', estado: 'vendida' },
+         { ...mockPiece, id: 'p3', stockType: 'encargo', estado: 'vendida' }],
         [{ id: 'anillos', slug: 'anillos', name: 'Anillos', description: 'd', secretoInterno: 'X' }],
-        new Map([['p1', 'p1'], ['p2', 'p2']]),
+        new Map([['p1', 'p1'], ['p2', 'p2'], ['p3', 'p3']]),
         '2026-06-26T00:00:00.000Z',
     );
     try { JSON.parse(JSON.stringify(cat)); } catch (e) { fails.push('catalogo.json NO serializa/parsea: ' + e.message); }
-    const pj = cat.pieces[0];
+    const pj = cat.pieces[0], vendida = cat.pieces[1], encargo = cat.pieces[2];
     for (const k of REQUIRED_PIECE_KEYS) if (!(k in pj)) fails.push(`catalogo.json: falta la clave "${k}" del contrato.`);
     if ('costoInterno' in pj || 'pesoTaller' in pj) fails.push('catalogo.json: FILTRA campo interno (costoInterno/pesoTaller) — fuga.');
-    if (pj.available !== true) fails.push('catalogo.json: pieza disponible debe tener available:true.');
-    if (cat.pieces[1].available !== false) fails.push('catalogo.json: pieza vendida debe tener available:false.');
+    if (pj.available !== true || pj.cantidad !== 2 || pj.stockType !== 'finito') fails.push('catalogo.json: finito disponible debe ser available:true, cantidad:2, finito.');
+    if (vendida.available !== false || vendida.cantidad !== 0) fails.push('catalogo.json: finito vendida debe ser available:false, cantidad:0.');
+    if (encargo.available !== true || encargo.cantidad !== null || encargo.stockType !== 'encargo') fails.push('catalogo.json: encargo debe ser SIEMPRE available:true, cantidad:null (ignora estado vendida).');
     if (pj.updatedAt?.seconds !== 100) fails.push('catalogo.json: updatedAt no normalizado a {seconds}.');
     if ('secretoInterno' in cat.collections[0]) fails.push('catalogo.json: colección NO respeta whitelist (fuga de campo).');
     if (!('stone' in pj.specs)) fails.push('catalogo.json: specs whitelist perdió "stone".');

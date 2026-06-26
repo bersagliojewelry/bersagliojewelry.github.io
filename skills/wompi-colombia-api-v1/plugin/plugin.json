@@ -1,0 +1,14 @@
+{
+  "name": "wompi-colombia-api",
+  "description": "Herramientas especializadas, Skills y Subagentes para gestionar integraciones Fintech de alta complejidad con la API v1 de Wompi Colombia.",
+  "version": "1.0.0",
+  "author": "Antigravity AI Agent",
+  "skills": [
+    "wompi-api-core",
+    "wompi-webhooks-validator"
+  ],
+  "agents": [
+    "wompi_support_agent",
+    "wompi_qa_agent"
+  ]
+}

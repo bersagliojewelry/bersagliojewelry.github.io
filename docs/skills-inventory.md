@@ -216,3 +216,17 @@ Disponibles vía tool `Skill` pero SIN carpeta en `skills/` (vienen del bundle `
 **Mantenimiento (Reflejo de Catalogación de Skills · `CLAUDE.md §G.4` — auto-detección)**: TODA skill nueva en `skills/` (o instalada en `~/.claude/skills/`) DEBE auto-detectarse y catalogarse aquí en el MISMO cambio, **sin que el cliente lo pida** — con su `name:`, 1 línea de propósito y marca de Disp. (✅ instalada · ⚠️ repo-only · 🔧 anomalía). **Backstop determinista**: `brain:check` (check #6) marca cualquier carpeta de `skills/` ausente de este inventario como "skill sin catalogar"; al ARRANCAR, si lo reporta, catalogar ANTES de la tarea. El cliente puede ampliar `skills/` libremente (curaduría); este catálogo refleja lo que hay.
 | `auditoria-cerebro` (2026-06-09) | 🔬 Auditoría Nivel-2 del cerebro (sondas falsables: fidelidad/frescura/retrieval-drill/MEMORY.md; cierra con GC pareado + deepAudit). Nace del comité v6 (ADR §173 cars). Byte-idéntica ×3. |
 | `meta-ads-diagnostico` (2026-06-23) | 📊 Diagnóstico/optimización de campañas Meta Ads (framework 3 preguntas: qué pasó / por qué / qué hacer; ecommerce · WhatsApp · leads). Comunidad v1.0.0. ⚠️ repo-only (la añadió el cliente). |
+
+---
+
+## 💳 Wompi Colombia API v1 — paquete externo (instalado 2026-06-26)
+
+Paquete desarrollado por el dueño (Antigravity) para integraciones de pago Wompi Colombia API v1. Auditado por workflow de 63 agentes (KB de 30 módulos). Instalado global (`~/.claude/skills/` + `~/.claude/agents/`) y versionado en `skills/wompi-colombia-api-v1/` (paquete completo: `plugin/` + agentes + `WAKB/` 30 módulos + `references/`). Uso futuro: **suscripciones en Altorra Cars**; en uso en Bersaglio.
+
+| Skill / Agente | Tipo | Qué hace |
+|---|---|---|
+| `wompi-colombia-api-v1` | skill maestro | Integración completa API v1 (tarjetas, PSE, Nequi, efectivo) |
+| `wompi-api-core` | skill | Núcleo transaccional (transacciones, fuentes de pago, tokens) |
+| `wompi-webhooks-validator` | skill | Validación criptográfica (SHA-256) + idempotencia de webhooks |
+| `wompi_support_agent` | agente | Diagnóstico errores HTTP/transaccionales (401/404/422, DECLINED, webhooks) |
+| `wompi_qa_agent` | agente | Planes de prueba + edge cases (idempotencia, doble-gasto, firma falsa) |

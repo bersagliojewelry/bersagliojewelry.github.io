@@ -10,10 +10,10 @@
 
 > 🎉 **CRM + Fase M (M0→M6) EN PRODUCCIÓN** (§47-§82). **🔄 RESET A CERO** (Daniel 2026-06-20): Kary recarga de cero → cartera/clientes históricos DESECHABLES (bajan urgencias de dinero). ⚙️ **OPUS 4.8 interino** (marcar `[OPUS-4.8]` · `feedback_opus_interino`).
 >
-> **🚦 Frente activo: TODO-37 PLAN MAESTRO DE COMERCIO — B1 (el mostrador) EN CONSTRUCCIÓN** (diseño `2026-06-25-b1-mostrador-design.md`). **EN PROD ✅**: B0+B0.5 WhatsApp directo (§120, PR #359). **🌱 Banco de pruebas EN PROD**: 9 piezas `seedDemo:true` (§121; **pruebas en la WEB REAL** = decisión Daniel, excepción pre-lanzamiento a no-demo).
+> **🚦 Frente activo: TODO-37 PLAN MAESTRO DE COMERCIO — B1 (el mostrador) EN CONSTRUCCIÓN** (diseño `2026-06-25-b1-mostrador-design.md`). **EN MAIN/PROD ✅** (hasta PR #363, cache **v36**): B0.5 WhatsApp §120 + paso 1 inventario §122 + paso 2 calculadora §124 + 3 correcciones web §123. **🌱 Banco de pruebas EN PROD**: 9 piezas `seedDemo:true` (§121; **pruebas en la WEB REAL** = decisión Daniel, excepción pre-lanzamiento a no-demo).
 > **🔒 Decisiones FIJADAS (§121, NO re-preguntar)**: Wompi = cuenta de Kary Persona Natural (NO PJ; topes $2.5M/$10M; aumento a 20 tx → Daniel avisa) · ADDI ❄️ congelado (Kary vincula).
 > **Avance B1**: paso 1 inventario §122 (reglas desplegadas) · paso 2 calculadora §124 (valor-gramo = INPUT, VARÍA) · **paso 3 BACKEND §125** — `crearPedido` CF (candado atómico = doc pieza → imposible doble venta; recompute server-side; snapshot inmutable; idempotente; núcleo `pedidos-core.js` testeable; 206 rules + 6 integración; **reglas DESPLEGADAS**; **CF RETENIDA sin desplegar** = inerte sin UI). **➡️ SIGUIENTE: POS UI** (Kary registra venta → llama `crearPedido`) + deploy CF + verif. en vivo.
-> _Tail (no-prod, pend. merge Daniel): §123 3 correcciones web (form flotante ficha / 9 destacadas / orden contacto, v35) · gotcha dev L-58 (forzar refresh en emulador para verificar)._ Cola: TODO-33 · TODO-35.
+> _**PEND. MERGE Daniel**: SOLO paso 3 CF §125 (`e6ab0a1` — código en `Desarrollo`, NO en main; además la CF está SIN desplegar = `firebase deploy --only functions`, se sube con el POS). Gotcha dev L-58: forzar refresh en emulador para verificar render dinámico._ Cola: TODO-33 · TODO-35.
 > - ⚠️ **Deploy** (L-22/L-26): reglas/functions = manual mío; sitio+merge a `main` = PR de Daniel (`git fetch` siempre); Admin SDK = ADC.
 
 ---

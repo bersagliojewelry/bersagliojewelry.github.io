@@ -153,6 +153,35 @@
                     </div>
                 </div>
 
+                <!-- Inventario y clasificación (B1 paso 1) -->
+                <div class="adm-form-section">
+                    <h3>Inventario y clasificación</h3>
+                    <div class="adm-form-row">
+                        <div class="adm-field">
+                            <label for="f-stocktype">Tipo de stock</label>
+                            <select class="adm-input" id="f-stocktype" name="stockType">
+                                <option value="finito">Pieza física (stock finito)</option>
+                                <option value="encargo">Por encargo (se fabrica)</option>
+                            </select>
+                        </div>
+                        <div class="adm-field">
+                            <label for="f-cantidad">Cantidad disponible</label>
+                            <input class="adm-input" id="f-cantidad" name="cantidad" type="number" min="0" step="1" placeholder="1">
+                        </div>
+                    </div>
+                    <div class="adm-form-row" style="margin-top:12px;">
+                        <div class="adm-field">
+                            <label for="f-gender">Género <span class="adm-opt">(opcional)</span></label>
+                            <select class="adm-input" id="f-gender" name="gender">
+                                <option value="">— Sin especificar —</option>
+                                <option value="mujer">Mujer</option>
+                                <option value="hombre">Hombre</option>
+                                <option value="unisex">Unisex</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Especificaciones -->
                 <div class="adm-form-section">
                     <h3>Especificaciones de gema y metal</h3>

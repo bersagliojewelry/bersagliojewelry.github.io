@@ -241,3 +241,39 @@ cableados). **PAT en Secret Manager, scope mínimo** (`workflow`/`repository_dis
    (Decisión 8.1 automático vs botón manual sigue abierta; recomiendo automático.)
 > **Flujo fuerte COMPLETO** ✅: arquitecto + comité ×4 + consejo externo (Gemini) integrado. Listo para implementar
 > tras luz verde de Daniel + la decisión de negocio 10.1.
+
+---
+
+## 11. Principio de escasez / exclusividad (Daniel 2026-06-26) — diseño + copy
+
+**Validación (verificada en código)**: el sitio público **NO maneja escasez hoy** (cero menciones de
+stock/unidades/queda en `js/pages|components|home`). El contrato del `catalogo.json` (§10.2) ya expone
+`stockType`/`available`/`cantidad` → base lista para construirlo.
+
+**Restricción de honestidad (cero-demo + precisión, `feedback_no_demo_en_index`)**: el POS
+(`pedidos-core.js:78`) **NO decrementa `cantidad`** — al vender una pieza finita marca TODA la pieza
+`estado='vendida'` (cantidad efectiva → 0). Es decir, el modelo actual trata cada pieza como **ÚNICA**
+(las 9 reales son `finito`/`cantidad:1`). **"Quedan N unidades" con N>1 NO sería honesto** hasta que el
+modelo soporte inventario multi-unidad real (el POS decrementaría cantidad en vez de marcar vendida toda
+la pieza) — eso es una mejora de fondo (inventario, B3 del plan maestro), no este paso.
+
+**Reglas de escasez (derivadas de `stockType` + `cantidad` + `available`):**
+| Caso | Condición | Badge (copy) | ¿Honesto hoy? |
+|---|---|---|---|
+| Pieza única | `finito` · `available` · `cantidad===1` | **"Pieza única"** | ✅ (todas las piezas actuales) |
+| Penúltimas | `finito` · `cantidad===2` | **"Solo quedan 2"** | ⏳ requiere multi-unidad real |
+| Última | `finito` · `cantidad===1` (tras haber tenido más) | **"¡Última unidad!"** | ⏳ requiere multi-unidad real |
+| Pocas | `finito` · `cantidad ≤ 3` | **"Pocas unidades"** | ⏳ requiere multi-unidad real |
+| Por encargo | `stockType==='encargo'` | **"Hecho por encargo"** (sin urgencia) | ✅ |
+| Vendida | `!available` | fuera del listado · ficha "Vendida·ver similares" (§10.1) | ✅ (paso 7) |
+
+**Recomendación (2 fases):**
+- **Fase A (ahora, honesta, cubre el 100% real)**: badge **"Pieza única"** (exclusividad de lujo, no presión
+  barata) para `finito`/`cantidad:1` + **"Hecho por encargo"** para `encargo`. Se implementa en el cliente
+  (grilla `catalogo.js` + ficha `pieza.js`) junto con 7b/7c (cuando el cliente lea el `catalogo.json`).
+- **Fase B (futuro)**: inventario multi-unidad real (POS decrementa `cantidad`) → habilita "Solo quedan N" /
+  "¡Última unidad!" honestos. → TODO-40.
+
+> 🔵 **Decisión de producto para Daniel**: ¿Fase A ya ("Pieza única" + "Hecho por encargo", honesto para el
+> catálogo actual) y Fase B cuando haya piezas en serie? ¿O el negocio ya tiene piezas multi-unidad reales que
+> justifiquen construir el inventario por unidad antes?

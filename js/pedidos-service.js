@@ -39,6 +39,26 @@ export async function confirmarPago(pedidoId) {
 }
 
 /**
+ * Anula un pedido (VOID): lo marca `anulado` y reintegra la pieza al catálogo. Idempotente.
+ * @param {string} pedidoId @param {string} [motivo]
+ * @returns {Promise<{ ok:boolean, yaAnulado:boolean, piezaReintegrada?:boolean }>}
+ */
+export async function anularPedido(pedidoId, motivo) {
+    const fn = await _callable('anularPedido');
+    return (await fn({ pedidoId, motivo })).data;
+}
+
+/**
+ * Cierre de caja (arqueo): declara el efectivo contado → devuelve esperado y descuadre. Idempotente por arqueoId.
+ * @param {{ arqueoId:string, declaradoEfectivo:number|string }} input
+ * @returns {Promise<{ esperadoEfectivo:number, esperadoPorMedio:object, declaradoEfectivo:number, descuadre:number, yaExistia:boolean }>}
+ */
+export async function cierreCaja(input) {
+    const fn = await _callable('cierreCaja');
+    return (await fn(input)).data;
+}
+
+/**
  * Últimas ventas registradas (lectura permitida a staff de ventas: owner/admin/catálogo).
  * @param {number} [max=15]
  * @returns {Promise<Array>} pedidos (más reciente primero)
@@ -49,4 +69,4 @@ export async function ultimasVentas(max = 15) {
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-export default { crearPedido, confirmarPago, ultimasVentas };
+export default { crearPedido, confirmarPago, anularPedido, cierreCaja, ultimasVentas };

@@ -1576,4 +1576,7 @@ select.adm-input { cursor: pointer; appearance: none; -webkit-appearance: none; 
 .pos-venta-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .pos-venta-meta strong { font-family: 'Space Mono', monospace; font-variant-numeric: tabular-nums; color: var(--adm-text); }
 .pos-venta-time { font-size: 11px; color: var(--adm-muted); margin-left: auto; }
+.pos-venta--anulada { opacity: 0.6; }
+.pos-venta--anulada .pos-venta-name { text-decoration: line-through; }
 .pos-ventas-empty { padding: 30px 16px; }
+.pos-cierre-result { margin-top: 16px; }

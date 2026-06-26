@@ -16,7 +16,7 @@
 import adminDb from './db.js';
 import { admToast, admConfirm, initSidebar, esc, requireAuth, errorMessage, fmtDateTime } from './shared.js';
 import { calcularPrecio } from './calculadora.js';
-import { crearPedido, confirmarPago, ultimasVentas } from '../pedidos-service.js';
+import { crearPedido, confirmarPago, anularPedido, cierreCaja, ultimasVentas } from '../pedidos-service.js';
 
 const cop = n => '$' + Math.round(Math.max(0, Number(n) || 0)).toLocaleString('es-CO');
 const entero = n => Math.round(Math.max(0, Number(n) || 0));
@@ -32,6 +32,8 @@ let _selected  = null;    // pieza elegida
 let _pedidoId  = null;    // UUID de la venta en curso (idempotencia)
 let _query     = '';
 let _submitting = false;
+let _arqueoId  = null;    // UUID del cierre de caja en curso (idempotencia)
+let _cierreDone = false;  // ya se calculó el arqueo (el botón pasa a "Listo")
 
 // ─── Init ───────────────────────────────────────────────────────────────────────
 async function init() {
@@ -54,6 +56,14 @@ async function init() {
     ['pos-gramo', 'pos-peso', 'pos-mano'].forEach(id =>
         document.getElementById(id).addEventListener('input', recalcTotal));
     document.getElementById('pos-submit').addEventListener('click', handleSubmit);
+
+    // Cierre de caja (arqueo · paso 5)
+    document.getElementById('btn-cierre').addEventListener('click', openCierre);
+    document.getElementById('cierre-close').addEventListener('click', closeCierre);
+    document.getElementById('cierre-cancel').addEventListener('click', closeCierre);
+    document.getElementById('cierre-submit').addEventListener('click', handleCierre);
+    document.getElementById('cierre-modal').addEventListener('click', e => { if (e.target.id === 'cierre-modal') closeCierre(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !document.getElementById('cierre-modal').hidden) closeCierre(); });
 
     updateMedioHint();
     loadVentas();
@@ -249,14 +259,17 @@ async function loadVentas() {
     if (!ventas.length) { ul.innerHTML = ''; return; }
 
     ul.innerHTML = ventas.map(v => {
-        const pagado = v.estado === 'pagado';
-        const estadoLabel = pagado ? 'Pagado' : 'Por verificar';
-        const estadoCls   = pagado ? 'adm-pill--green' : 'adm-pill--gold';
-        // Solo las ventas "por verificar" (transferencia/Wompi) ofrecen confirmar "vi la plata".
-        const confirmBtn = pagado ? '' :
-            `<button class="adm-btn adm-btn--ghost adm-btn--sm pos-venta-confirm" data-id="${esc(v.id)}">Confirmar pago</button>`;
+        const anulado = v.estado === 'anulado';
+        const pagado  = v.estado === 'pagado';
+        const estadoLabel = anulado ? 'Anulada' : pagado ? 'Pagado' : 'Por verificar';
+        const estadoCls   = anulado ? 'adm-pill--gray' : pagado ? 'adm-pill--green' : 'adm-pill--gold';
+        // "Confirmar pago" solo en por-verificar (transferencia/Wompi); "Anular" en toda venta viva.
+        const confirmBtn = (!anulado && !pagado)
+            ? `<button class="adm-btn adm-btn--ghost adm-btn--sm pos-venta-confirm" data-id="${esc(v.id)}">Confirmar pago</button>` : '';
+        const anularBtn = anulado ? '' :
+            `<button class="adm-btn adm-btn--ghost adm-btn--sm pos-venta-anular" data-id="${esc(v.id)}">Anular</button>`;
         return `
-        <li class="pos-venta">
+        <li class="pos-venta${anulado ? ' pos-venta--anulada' : ''}">
             <div class="pos-venta-main">
                 <span class="pos-venta-num">#${esc(v.numero ?? '—')}</span>
                 <span class="pos-venta-name">${esc(v.pieceName || 'Pieza')}</span>
@@ -265,13 +278,15 @@ async function loadVentas() {
                 <strong>${esc(cop(v.total))}</strong>
                 <span class="adm-pill ${estadoCls}">${esc(estadoLabel)}</span>
                 <span class="pos-venta-time">${esc(fmtDateTime(v.createdAt))}</span>
-                ${confirmBtn}
+                ${confirmBtn}${anularBtn}
             </div>
         </li>`;
     }).join('');
 
     ul.querySelectorAll('.pos-venta-confirm').forEach(btn =>
         btn.addEventListener('click', () => confirmarVenta(btn.dataset.id)));
+    ul.querySelectorAll('.pos-venta-anular').forEach(btn =>
+        btn.addEventListener('click', () => anularVenta(btn.dataset.id)));
 }
 
 // "Vi la plata": confirma el pago de una venta por verificar (transferencia/Wompi) → pagado.
@@ -288,6 +303,69 @@ function confirmarVenta(pedidoId) {
             admToast(msg, 'danger', 4000);
         }
     });
+}
+
+// Anula una venta (VOID): la pieza vuelve al catálogo. Append-only (queda como anulada, con traza).
+function anularVenta(pedidoId) {
+    admConfirm('¿Anular esta venta? La pieza vuelve al catálogo como disponible y la venta queda registrada como anulada.', async () => {
+        try {
+            const r = await anularPedido(pedidoId);
+            admToast(r.piezaReintegrada ? '✓ Venta anulada · la pieza volvió al catálogo' : '✓ Venta anulada', 'success', 4000);
+            loadVentas();   // la pieza reintegrada reaparece en el buscador vía el listener de adminDb('pieces')
+        } catch (err) {
+            const msg = (BUSINESS_ERR.includes(err?.code) && err?.message)
+                ? err.message
+                : errorMessage(err, 'No se pudo anular la venta.');
+            admToast(msg, 'danger', 4000);
+        }
+    });
+}
+
+// ─── Cierre de caja (arqueo · paso 5) ─────────────────────────────────────────
+function openCierre() {
+    _arqueoId   = uid();
+    _cierreDone = false;
+    document.getElementById('cierre-efectivo').value = '';
+    document.getElementById('cierre-input-wrap').hidden = false;
+    document.getElementById('cierre-result').hidden = true;
+    const submit = document.getElementById('cierre-submit');
+    submit.textContent = 'Cerrar caja';
+    submit.disabled = false;
+    document.getElementById('cierre-modal').hidden = false;
+    document.getElementById('cierre-efectivo').focus();
+}
+
+function closeCierre() { document.getElementById('cierre-modal').hidden = true; }
+
+async function handleCierre() {
+    if (_cierreDone) { closeCierre(); return; }   // 2º clic tras el resultado = "Listo"
+    const raw = document.getElementById('cierre-efectivo').value;
+    if (raw === '' || !(Number(raw) >= 0)) { admToast('Escribe el efectivo contado.', 'danger'); return; }
+
+    const submit = document.getElementById('cierre-submit');
+    submit.disabled = true;
+    submit.textContent = 'Calculando…';
+    try {
+        const r = await cierreCaja({ arqueoId: _arqueoId, declaradoEfectivo: raw });
+        // Conteo a ciegas: el esperado se revela AHORA, no antes.
+        document.getElementById('cierre-esperado').textContent = cop(r.esperadoEfectivo);
+        document.getElementById('cierre-contado').textContent  = cop(r.declaradoEfectivo);
+        const d     = Number(r.descuadre) || 0;
+        const label = document.getElementById('cierre-descuadre-label');
+        const val   = document.getElementById('cierre-descuadre');
+        if (d === 0)    { label.textContent = 'Cuadra ✓'; val.textContent = cop(0);  val.style.color = 'var(--adm-success)'; }
+        else if (d > 0) { label.textContent = 'Sobra';     val.textContent = cop(d);  val.style.color = 'var(--adm-accent)'; }
+        else            { label.textContent = 'Falta';     val.textContent = cop(-d); val.style.color = 'var(--adm-danger)'; }
+        document.getElementById('cierre-input-wrap').hidden = true;
+        document.getElementById('cierre-result').hidden = false;
+        _cierreDone = true;
+        submit.textContent = 'Listo';
+        submit.disabled = false;
+    } catch (err) {
+        admToast(errorMessage(err, 'No se pudo cerrar la caja.'), 'danger', 4000);
+        submit.textContent = 'Cerrar caja';
+        submit.disabled = false;
+    }
 }
 
 init();

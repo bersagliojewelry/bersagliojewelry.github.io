@@ -10,9 +10,9 @@
 
 > 🎉 **CRM + Fase M (M0→M6) EN PROD** (§47-§82). **🔄 RESET A CERO** (Daniel 2026-06-20): cartera/clientes históricos DESECHABLES. ⚙️ **OPUS 4.8 interino** (marcar `[OPUS-4.8]` · `feedback_opus_interino`).
 >
-> **🔴🚦 FRENTE VIVO: TODO-40 INVENTARIO v3 — ACTIVÁNDOSE** (detalle+3 pasos → fila TODO-40 ↓). Código en `main` (#378); 9 piezas de PRUEBA BORRADAS (clean slate, 0 piezas); reglas VIEJAS aún vivas (prod intacto). Falta: `ba0b456`→main (Pages re-deploy) · `firebase deploy` reglas/functions (mío) · carga REAL con el panel v3 (el admin viejo no manda `visibilidad`/enum3 → la carga real va DESPUÉS del re-deploy).
+> **🟢 TODO-40 INVENTARIO v3 — DESPLEGADO a prod ✅** (§131, #379): reglas v3 + functions (`crearPedido` decremento + `ajustarStock`/`cambiarTipoPieza` nuevas) + Pages re-deploy (catálogo vacío). 9 piezas de PRUEBA BORRADAS → **0 piezas (prod sin demo, clean slate)**. **SIGUIENTE = Daniel carga el inventario REAL con el panel v3** (operativo, no-dev). Luego **F2** (checkout web Wompi: reserva+reaper+webhook) + **TODO-41** facturación multi-línea.
 > _Frente previo **TODO-37 paso 7** (catalogo.json) PAUSADO; mostrador EN PROD (§122-§130). Pagos §121 → `[[project_comercio_pagos]]`._
-> ⚠️ **Pruebas en vivo DIFERIDAS** (§130.4; build+tests por commit). **Deploy** (L-22): reglas/functions = manual mío; merge a `main` = Daniel (`git fetch`). Cola: TODO-39 · TODO-33 · TODO-35.
+> ⚠️ **Pruebas en vivo DIFERIDAS** (§130.4; build+tests por commit). **Deploy** (L-22): reglas/functions = manual mío (hecho §131); merge a `main` = Daniel. Cola: TODO-39 · TODO-33 · TODO-35.
 
 ---
 
@@ -37,9 +37,9 @@
 | TODO-35 | **Visibilidad SITE-WIDE** (SEO·AEO·GA4·GSC·Maps·SSG). **🟢 EN PROD ✅** (PR#345; detalle→commits/bóveda `2026-06-25-*`). **Falta**: A2b por-cat/artículo+migrar `?col=` (necesita contenido) · eventos `generate_lead`/`contact`+excluir tráfico interno · consolidar 2º flujo GA · prompt HUB · tail §118/§119 (recos data-driven + BigQuery export + microbugs ficha) — esperan catálogo de Kary. 🔑 Google `bersagliojewelry@gmail.com` authuser=3. ⚠️ App Check Enforce→`FIREBASE_SA_KEY`. | 🟢 | A2b · catálogo |
 | TODO-39 | **B1 paso 4b — apartados/abonos** (decisión, §128.4): ¿el mostrador necesita apartar piezas (anticipo + saldo) ahora? Si sí, el saldo = CARTERA (ya existe `clientes/{id}.saldoActual` vía factura/abono) → **reusar cartera, NO** un sistema de pagos paralelo en el pedido; requiere link pedido↔cliente CRM. Fork caro de revertir (§8 spec) → preguntar a Daniel. | 🟡 | decisión Daniel |
 | TODO-37 | **PLAN MAESTRO DE COMERCIO** (Daniel 2026-06-25, ACTIVO): roadmap físico+digital. SSoT → `docs/superpowers/specs/2026-06-25-plan-maestro-comercio-v3.md` (Gemini v4 integrado). **B0/B0.5 EN PROD ✅ §120**; **B1 mostrador**: pasos 1-6 EN PROD, paso 7 `catalogo.json` a CDN DISEÑADO v3 (ver Foco). Decisiones abiertas dueño: ADDI · Persona Jurídica. `[OPUS-4.8]` | 🟢 | ejecutar B1 |
-| TODO-40 | **MODELO INVENTARIO MULTI-TIPO** (Decisión Fuerte; diseño v3 → `docs/superpowers/specs/2026-06-26-modelo-inventario-multitipo-design.md §12`). **CÓDIGO-COMPLETO** (commits): B1 `a45d44a` · B2 `f255141` · B3 `e45ef00`/`78c6ffe` · B4 `98220b1` · B5 `3545065` · guard-vacío `ba0b456`. **B4+B5 en main (#378)**; `ba0b456` local. **Activación 2026-06-27**: el merge abortó el Pages deploy (guard viejo) → prod intacto, **reglas VIEJAS vivas**; las 9 piezas de PRUEBA (`seedDemo`) → **BORRADAS** (Daniel: desechables; clean slate, 0 piezas; NO migración, recarga real). **FALTA (orden seguro con 0 piezas)**: (1) `ba0b456`→main → Pages re-deploy (admin/cliente v3) · (2) `firebase deploy --only firestore:rules,functions` (mío) · (3) carga REAL con panel v3. Al cerrar → ADR `99` + lección L-NN (query pública = set legible de regla row-level; guard vacío/estado-cero; MCP prod) + distilar `30`/`31`. | 🟡 | DEPLOY (3 pasos) |
-| TODO-41 | **Facturación multi-línea** (Daniel 2026-06-26): la factura/POS debe cobrar **modificaciones/servicios** por código, no solo piezas (variación de peso/ajuste = línea aparte). Toca POS/factura. Spec `modelo-inventario §10`. | 🔲 | tras modelo inventario |
-> ✅ **Cerrados recientes**: histórico → ADRs §88-§130 + `00`/`99` (últimos: §128-§130). **Fix suelto**: bug admin "Cantidad" habilitada en stock "Por encargo" → `49fe96a` (deshabilitada en encargo).
+| TODO-41 | **Facturación multi-línea** (Daniel 2026-06-26): la factura/POS debe cobrar **modificaciones/servicios** por código, no solo piezas (variación de peso/ajuste = línea aparte). Toca POS/factura. Spec `modelo-inventario §10`. | 🔲 | tras carga inventario |
+| TODO-42 | **Inventario v3 — F2** (futuro, cuando se conecte el checkout web Wompi): reserva web al crear + `reservaExpira` + reaper (Cloud Scheduler) + webhook Wompi→`confirmarPago` + `forcePosOverride` con candado de pago. Diseño → `…modelo-inventario-multitipo-design.md §11.4/§12.2`. | 🔲 | checkout web Wompi |
+> ✅ **Cerrados recientes**: histórico → ADRs §88-§131 + `00`/`99`. **TODO-40 INVENTARIO v3 ✅ DESPLEGADO** (§131, #379: reglas+functions+Pages; 9 piezas prueba borradas → 0; L-59); pruebas en vivo DIFERIDAS (§130.4) + carga REAL = operativa de Daniel. (§128-§130 mostrador; fix `49fe96a`.)
 
 ---
 
@@ -52,6 +52,5 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier A/B �
 
 > Podada (GC) 2026-06-26. Histórico → ADR §37-§130 + bóveda `2026-06-*`. Lecciones → `30`/`31`/`32`.
 >
-> **▶️ Vivo**: TODO-40 v3 activándose (fila ↑). Crudo+síntesis → bóveda `2026-06-26-*inventario*`.
-> **⚠️ Lección MCP Firebase** (a `30`/`31` al cerrar): el clasificador BLOQUEA writes/deletes de datos prod sin consentimiento EXPLÍCITO (no basta "continua"); ADC local = PERMISSION_DENIED (cuenta sin rol Firestore), el MCP (bersagliojewelry@gmail.com) sí escribe → para migrar/borrar prod: OK explícito o runner testeado con ADC correcto.
+> **▶️ Vivo**: TODO-40 inventario v3 ✅ DESPLEGADO a prod (§131; reglas+functions+Pages; 0 piezas). **Siguiente: Daniel carga el inventario REAL con el panel v3** (operativo). Lecciones del deploy → L-59 (30). Crudo+síntesis del diseño → bóveda `2026-06-26-*inventario*`.
 > **🚦 Reglas vivas**: `arquitecto-software` SIEMPRE · Bersaglio = 100% COP (§127) · pruebas en vivo SOLO al final (§130.4) · W-11 en decisión cara · `[[feedback_workflows_acotados]]` · `[[feedback_reintentar_agentes_no_saltar_flujo]]`. Cola: TODO-37 paso 7 (pausado) · TODO-39 · TODO-33 · TODO-35.

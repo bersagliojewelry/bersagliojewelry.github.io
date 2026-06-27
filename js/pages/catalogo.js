@@ -116,7 +116,7 @@ function renderFilters() {
 function renderCard(p) {
     const slug = p.slug || p.id;
     const img = p.images?.[0] || p.image || '';
-    const tag = p.tag || (p.featured ? 'Destacada' : null);
+    const tag = p.tag || p.badge || (p.featured ? 'Destacada' : null);   // §134: el badge por pieza también se ve en la tarjeta
     const stones = p.specs?.stones || p.specs?.stone || '';
     const collection = data.collectionOf(p);
     const catLabel = collection?.name || p.collection || '';

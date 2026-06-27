@@ -123,6 +123,7 @@
 
 | Skill (name) | Para qué | Disp. |
 |---|---|---|
+| `catalogo-voz-bersaglio` 🟢**propia** | **Skill PROPIA del proyecto (§134)**: mejorar piezas/colecciones cargadas en voz Bersaglio — analizar datos + imagen → nombre/badge/descripción; + elegir 9 destacadas con variedad entre colecciones. En `skills/` (repo) + copiada a `~/.claude/skills/` (invocable). | ✅ |
 | `copywriting` | Copy de páginas (hero, pricing, CTAs) | ✅ |
 | `copy-editing` | Editar/pulir copy existente | ✅ |
 | `ad-creative` | Creatividades/variaciones de anuncios | ✅ |

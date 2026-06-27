@@ -71,7 +71,7 @@ function contentHtml(pieces) {
             </div>
             <div class="home-featured-foot">
                 <a href="/colecciones.html" class="btn-aqua home-featured-cta">
-                    Explorar el catálogo entero
+                    Ver más piezas
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
                 </a>
             </div>

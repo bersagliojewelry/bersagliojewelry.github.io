@@ -10,10 +10,11 @@ const COP_FORMATTER = new Intl.NumberFormat('es-CO', {
 });
 
 /**
- * Etiqueta ÚNICA de precio-bajo-consulta (Daniel §138): consolida "Cotización" + "Consultar precio"
- * en UN solo rótulo claro para el cliente. SSoT — cambiar aquí cambia index/catálogo/ficha a la vez.
+ * Etiqueta ÚNICA de precio-bajo-consulta (Daniel §138; texto §139): consolida "Cotización" +
+ * "Precio a consultar" en UN rótulo claro e INVITADOR para la TARJETA. SSoT. (§139: la FICHA ya
+ * NO lo muestra — sin precio, ese espacio bajo el nombre se elimina; el precio solo sale si existe.)
  */
-export const PRICE_ON_REQUEST = 'Precio a consultar';
+export const PRICE_ON_REQUEST = 'Consultar precio';
 
 /** Format number as Colombian peso. Returns PRICE_ON_REQUEST for falsy / 0. */
 export function formatCOP(amount) {

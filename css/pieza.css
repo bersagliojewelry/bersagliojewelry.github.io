@@ -318,12 +318,7 @@
     font-size: 12px;
     color: var(--bj-ink-soft);
 }
-/* "Bajo consulta": es TEXTO, no número → fuente display, no mono */
-.pz-price--consulta {
-    font-family: var(--font-display);
-    font-size: 26px; font-weight: 400; font-style: italic;
-    color: var(--bj-emerald-800);
-}
+/* (§139: .pz-price--consulta eliminado — la ficha sin precio ya no muestra texto en ese espacio.) */
 /* Talla a medida (honesto, sin pills falsas) — título + explicación en 2 líneas centradas */
 .pz-talla--medida { margin-bottom: 32px; }
 .pz-talla-medida-title { margin-bottom: 8px; }

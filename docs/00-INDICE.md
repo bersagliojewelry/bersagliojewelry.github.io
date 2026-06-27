@@ -172,15 +172,16 @@
 | §127 | 2026-06-26 — **Todo en COP (cero dólares)**: el cobro siempre fue en pesos (`format$`+CF+POS); solo el RÓTULO del form decía "Precio USD" → "Precio en pesos (COP)". Bersaglio = 100% COP. Cierra TODO-38. v38. [OPUS-4.8] | 1844 |
 | §128 | 2026-06-26 — **B1 paso 4a: confirmar pago ("vi la plata")**: CF `confirmarPago` (núcleo testeable) `por_verificar`→`pagado`; idempotente; solo la CF flipea (SoD). Botón en POS. 9/9 integr.; DESPLEGADA. v39. PEND 4b apartados→cartera (TODO-39). [OPUS-4.8] | 1853 |
 | §129 | 2026-06-26 — **B1 paso 5: anular venta (VOID) + cierre de caja (arqueo Z)**: `anularPedido` (anulado append-only + REINTEGRA pieza→disponible; idempotente) + `cierreCaja` (conteo a ciegas → descuadre; anulados excluidos; `arqueo` CF-only). UI: 3 estados + Anular + Cerrar caja. 15/15 + 207 reglas; DESPLEGADO. v40. [OPUS-4.8] | 1863 |
-| §130 | 2026-06-26 — **B1 paso 6: bruto/neto + export al contador**: "Exportar contador" → CSV (bruto·comisión Wompi·ReteFuente·ReteICA·neto). `calcularNeto` PURO, tasas PARAM-DRIVEN default "verificar". Client-side. 5/5 tests. v41. Pruebas en vivo DIFERIDAS. [OPUS-4.8] | 1874 |
+| §130 | 2026-06-26 — **B1 paso 6: bruto/neto + export contador**: CSV (bruto·comisión·retenciones·neto); `calcularNeto` puro, tasas param-driven. 5/5 tests. v41. [OPUS-4.8] | 1874 |
 | §131 | 2026-06-27 — **Inventario v3 (TODO-40 F1) DESPLEGADO**: B4 admin (enum3+visibilidad+cantidad CF-only) + B5 SSG/cliente + B6; reglas v3 + functions DESPLEGADAS (Daniel #378/#379). 213/213 reglas. L-59. [OPUS-4.8] | 1884 |
 | §132 | 2026-06-27 — **Carga masiva: 32 piezas reales (TrueLab)**: QR→scrape SPA (Chrome MCP)→clasif. por foto→carga MCP. Código=Nº reporte, Oro 18k, imágenes del cert. 32/32 EN VIVO. L-60. [OPUS-4.8] | 1895 |
-| §133 | 2026-06-27 — **Eval integral de marca**: comité 5 lentes → arreglos seguros (reseñas falsas · footer · "sin precio"→`priceLabel` · slug = TODO-45 ✅) + backlog TODO-47-51 (SIC). v42. [OPUS-4.8] | 1906 |
+| §133 | 2026-06-27 — **Eval integral de marca**: comité 5 lentes → arreglos seguros (reseñas · footer · slug = TODO-45 ✅) + backlog TODO-47-51 (SIC). v42. [OPUS-4.8] | 1906 |
 | §134 | 2026-06-27 — **Voz de marca catálogo** (TODO-44 ✅): 32 piezas (nombre/desc/badge) + 9 destacadas + 7 colecciones + skill `catalogo-voz-bersaglio`. Badge en tarjeta, v43. [OPUS-4.8] | 1918 |
-| §135 | 2026-06-27 — **Copy DEFINITIVO 32** (Gemini, verificado): descripciones cálidas + nombres a 2 palabras (Velo de Medianoche…) + Topos→Aretes. Claude verificó las reglas e implementó. TODO-52 ✅. [OPUS-4.8] | 1932 |
+| §135 | 2026-06-27 — **Copy DEFINITIVO 32** (Gemini, verif): descripciones cálidas + nombres a 2 palabras + Topos→Aretes. TODO-52 ✅. [OPUS-4.8] | 1932 |
 | §136 | 2026-06-27 — **Auditoría copy↔tipo 32** (TODO-53/54 ✅): 27/32 coherente; 5 corregidas vía Gemini+verif (Manantial Secreto cadena→dije + 4 anillos); origen honesto cierra TODO-51. [OPUS-4.8] | 1943 |
-| §137 | 2026-06-27 — **Repaso de SIGNIFICADO de las 32** (Daniel): principio "el alma/historia" → skill `catalogo-voz §3`; las 32 reescritas (Gemini, verif: tipo §136 intacto + origen honesto), EN VIVO. 3 capas = voz Bersaglio. [OPUS-4.8] | 1955 |
-| §138 | 2026-06-27 — **Ajustes web** (Daniel): 9→16 destacadas (col. de 4) + botón al final · isla solo en index (verif. live) · etiqueta única "Precio a consultar" (`priceDisplay` SSoT, elimina "Cotización"/"Consultar precio"; 32 migradas). SW v45. [OPUS-4.8] | 1967 |
+| §137 | 2026-06-27 — **Repaso de SIGNIFICADO de las 32** (Daniel): principio del alma → skill `catalogo-voz §3`; las 32 reescritas (Gemini+verif: tipo §136 intacto + origen honesto), EN VIVO. 3 capas = voz Bersaglio. [OPUS-4.8] | 1955 |
+| §138 | 2026-06-27 — **Ajustes web** (Daniel): 9→16 destacadas (col. de 4) + botón al final · isla solo en index (verif. live) · etiqueta `priceDisplay` SSoT (elimina "Cotización"; 32 migradas). SW v45. [OPUS-4.8] | 1967 |
+| §139 | 2026-06-27 — **Refinamiento copy** (Daniel): CTA inferior → "Ver más piezas" · etiqueta tarjeta → "Consultar precio" · **ficha sin precio: sin rótulo** (Daniel: "única/certificada" no encajan); CSS muerto removido. SW v46. [OPUS-4.8] | 1979 |
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §57+ al historial,
 > añadir su fila aquí con la línea de inicio (`Select-String` o `grep`).

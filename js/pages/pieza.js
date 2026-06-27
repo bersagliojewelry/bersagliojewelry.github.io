@@ -210,10 +210,11 @@ function renderInfo(piece) {
             </div>
             <h1 class="pz-info-name">${escape(piece.name || 'Pieza')}</h1>
 
+            ${hasPrice ? html`
             <div class="pz-price-row">
-                <div class="${hasPrice ? 'mono pz-price' : 'pz-price pz-price--consulta'}">${escape(priceDisplay(piece))}</div>
-                ${hasPrice ? html`<div class="pz-iva">IVA incluido</div>` : ''}
-            </div>
+                <div class="mono pz-price">${escape(priceDisplay(piece))}</div>
+                <div class="pz-iva">IVA incluido</div>
+            </div>` : ''}
 
             ${desc ? html`<p class="pz-info-desc">${escape(desc)}</p>` : ''}
 

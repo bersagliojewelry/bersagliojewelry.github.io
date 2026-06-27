@@ -10,9 +10,9 @@
 
 > 🎉 **CRM + Fase M (M0→M6) EN PROD** (§47-§82). **🔄 RESET A CERO** (Daniel 2026-06-20): cartera/clientes históricos DESECHABLES. ⚙️ **OPUS 4.8 interino** (marcar `[OPUS-4.8]` · `feedback_opus_interino`).
 >
-> **🟢 TODO-40 INVENTARIO v3 — DESPLEGADO a prod ✅** (§131, #379): reglas v3 + functions (`crearPedido` decremento + `ajustarStock`/`cambiarTipoPieza` nuevas) + Pages re-deploy (catálogo vacío). 9 piezas de PRUEBA BORRADAS → **0 piezas (prod sin demo, clean slate)**. **SIGUIENTE = Daniel carga el inventario REAL con el panel v3** (operativo, no-dev). Luego **F2** (checkout web Wompi: reserva+reaper+webhook) + **TODO-41** facturación multi-línea.
-> _Frente previo **TODO-37 paso 7** (catalogo.json) PAUSADO; mostrador EN PROD (§122-§130). Pagos §121 → `[[project_comercio_pagos]]`._
-> ⚠️ **Pruebas en vivo DIFERIDAS** (§130.4; build+tests por commit). **Deploy** (L-22): reglas/functions = manual mío (hecho §131); merge a `main` = Daniel. Cola: TODO-39 · TODO-33 · TODO-35.
+> **🔚 SESIÓN CERRADA por contexto (970k/1M · 2026-06-27).** Hecho hoy: F1 inventario v3 DESPLEGADO (§131) + **32 piezas reales de TrueLab cargadas y EN VIVO** (§132).
+> **🔜 PRÓXIMA SESIÓN — Daniel pide un FLUJO ACOTADO de EVALUACIÓN INTEGRAL** (diseño · frontend · backend · copywriting · marca · estructura): cazar y eliminar lo GENÉRICO, apropiar TODO a la voz de Bersaglio (leer **Nosotros** + index + journal + `siteContent`). Daniel: "hay muchas cosas que no he notado". Flujo ACOTADO `[[feedback_workflows_acotados]]` + W-11 si es Decisión/Diseño. Hallazgos concretos de Daniel → **TODO-44/45/46**. `[[feedback_voz_de_marca_no_generico]]`.
+> _Mostrador EN PROD (§122-§130). Pagos §121 → `[[project_comercio_pagos]]`. Pruebas en vivo DIFERIDAS (§130.4). Deploy: reglas/functions = manual mío; merge a main = Daniel. **MCP Firebase = escritura prod** (gcloud sin cuenta · ADC sin permiso). Cola post-eval: F2 Wompi · TODO-41 · TODO-39 · TODO-33 · TODO-35._
 
 ---
 
@@ -39,7 +39,10 @@
 | TODO-37 | **PLAN MAESTRO DE COMERCIO** (Daniel 2026-06-25, ACTIVO): roadmap físico+digital. SSoT → `docs/superpowers/specs/2026-06-25-plan-maestro-comercio-v3.md` (Gemini v4 integrado). **B0/B0.5 EN PROD ✅ §120**; **B1 mostrador**: pasos 1-6 EN PROD, paso 7 `catalogo.json` a CDN DISEÑADO v3 (ver Foco). Decisiones abiertas dueño: ADDI · Persona Jurídica. `[OPUS-4.8]` | 🟢 | ejecutar B1 |
 | TODO-41 | **Facturación multi-línea** (Daniel 2026-06-26): la factura/POS debe cobrar **modificaciones/servicios** por código, no solo piezas (variación de peso/ajuste = línea aparte). Toca POS/factura. Spec `modelo-inventario §10`. | 🔲 | tras carga inventario |
 | TODO-42 | **Inventario v3 — F2** (futuro, cuando se conecte el checkout web Wompi): reserva web al crear + `reservaExpira` + reaper (Cloud Scheduler) + webhook Wompi→`confirmarPago` + `forcePosOverride` con candado de pago. Diseño → `…modelo-inventario-multitipo-design.md §11.4/§12.2`. | 🔲 | checkout web Wompi |
-> ✅ **Cerrados recientes**: histórico → ADRs §88-§131 + `00`/`99`. **TODO-40 INVENTARIO v3 ✅ DESPLEGADO** (§131, #379: reglas+functions+Pages; 9 piezas prueba borradas → 0; L-59); pruebas en vivo DIFERIDAS (§130.4) + carga REAL = operativa de Daniel. (§128-§130 mostrador; fix `49fe96a`.)
+| TODO-44 | **Voz de marca en las 32 piezas** (Daniel 2026-06-27, §132): nombres PROPIOS de Bersaglio (no el literal del certificado) que diferencien; descripciones PROFUNDAS que transmitan la marca SIN repetir specs (que ya están en la ficha); **badges únicos por pieza** (no el mismo genérico). + (operativo) precios + imágenes IA. `[[feedback_voz_de_marca_no_generico]]` | 🔲 | próxima sesión (eval) |
+| TODO-45 | **Limpieza UI piezas** (Daniel 2026-06-27): (a) quitar el campo **`slug`** del modal `admin-piezas.html` (se autogenera → info invisible, no debe verse al agregar); (b) quitar el badge genérico **"— Editorial —"** de las cards del catálogo público (`js/components/piece-card.js`). | 🔲 | próxima sesión |
+| TODO-46 | **Escaneo INTEGRAL de diseño + marca** (Daniel 2026-06-27, **FLUJO ACOTADO**): evaluar TODO (frontend·backend·copywriting·marca·estructura), cazar lo genérico, apropiar a la voz de Bersaglio (leer Nosotros/index/journal/`siteContent`). Daniel intuye más cosas sin notar → barrido exhaustivo. `[[feedback_workflows_acotados]]` | 🔲 | próxima sesión |
+> ✅ **Cerrados recientes**: histórico → ADRs §88-§132 + `00`/`99`. **TODO-40 INVENTARIO v3 ✅ DESPLEGADO** (§131) + **32 piezas reales CARGADAS de TrueLab** (§132, L-60). Pend operativo de Daniel: precios + imágenes IA (panel v3); deploy para hornear fichas/sitemap (SEO). (§128-§130 mostrador.)
 
 ---
 
@@ -52,5 +55,5 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier A/B �
 
 > Podada (GC) 2026-06-26. Histórico → ADR §37-§130 + bóveda `2026-06-*`. Lecciones → `30`/`31`/`32`.
 >
-> **▶️ Vivo**: TODO-40 inventario v3 ✅ DESPLEGADO a prod (§131; reglas+functions+Pages; 0 piezas). **Siguiente: Daniel carga el inventario REAL con el panel v3** (operativo). Lecciones del deploy → L-59 (30). Crudo+síntesis del diseño → bóveda `2026-06-26-*inventario*`.
+> **▶️ Cerrado por contexto** (ver Foco ↑). Hoy: §131 deploy v3 + §132 carga 32 piezas TrueLab (L-60). Próxima: eval integral de marca/diseño (TODO-44/45/46).
 > **🚦 Reglas vivas**: `arquitecto-software` SIEMPRE · Bersaglio = 100% COP (§127) · pruebas en vivo SOLO al final (§130.4) · W-11 en decisión cara · `[[feedback_workflows_acotados]]` · `[[feedback_reintentar_agentes_no_saltar_flujo]]`. Cola: TODO-37 paso 7 (pausado) · TODO-39 · TODO-33 · TODO-35.

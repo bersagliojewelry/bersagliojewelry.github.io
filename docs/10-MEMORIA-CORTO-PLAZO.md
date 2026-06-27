@@ -11,9 +11,9 @@
 > 🎉 **CRM + Fase M EN PROD** (§47-§82). ⚙️ **OPUS 4.8 interino** (marcar `[OPUS-4.8]` · `feedback_opus_interino`).
 >
 > **🔬 §133 EVAL INTEGRAL DE MARCA (esta sesión).** Barrido exhaustivo (12 págs + 8 comps + 32 piezas + contenido en vivo por MCP) + comité acotado de 5 lentes (raw → bóveda `2026-06-27-eval-marca-comite`). Diagnóstico ENTREGADO; **4 decisiones de Daniel** (↓ bitácora). Detalle completo → **ADR §133**. `[[feedback_voz_de_marca_no_generico]]` · `[[feedback_workflows_acotados]]`.
-> **✅ Aplicado ya**: reseñas inventadas ELIMINADAS del doc vivo (`siteContent/nosotros.resenas=[]`); fixes de código (footer + "sin precio"→`priceLabel` + slug oculto, §133) en Desarrollo `51c5655`, cache **v42**. **PEND. merge a main = Daniel** (Pages).
+> **✅ Aplicado ya**: reseñas inventadas ELIMINADAS del doc vivo (`siteContent/nosotros.resenas=[]`); fixes de código (footer + "sin precio"→`priceLabel` + slug oculto, §133) **MERGEADOS a main (#382, `51c5655`)** → desplegando en Pages. Cache **v42**.
 > **🔜 Próximo**: **TODO-44** (32 nombres) + backlog **TODO-47..51**. Cola previa: F2 Wompi · TODO-41/39/37/33/35 · `[[project_comercio_pagos]]`.
-> _Mostrador EN PROD (§122-§130). Pruebas en vivo DIFERIDAS (§130.4). **MCP Firebase = escritura prod**. merge a main = Daniel._
+> _Mostrador EN PROD (§122-§130). Pruebas en vivo DIFERIDAS (§130.4). **MCP Firebase = escritura prod**. merge a main = Claude (autoriz. 2026-06-27)._
 
 ---
 

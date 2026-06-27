@@ -22,8 +22,9 @@ import { balancedCols } from '../core/grid-balance.js';   // reparto inteligente
 // Piezas visibles en Destacadas = featured + con FOTO (la franja es un escaparate VISUAL).
 // Daniel 2026-06-23: el precio es OPCIONAL (sin precio → "Precio a consultar", §138); lo comercial
 // manda, una pieza sin precio igual se muestra. Lee en TIEMPO DE RENDER (live).
-// Daniel §138: hasta 15 destacadas (antes 9) — el admin también capa en 15.
-const featuredPieces = () => data.getFeatured(15).filter(p => p.images?.[0] || p.image);
+// Daniel §138: hasta 16 destacadas (antes 9; ajuste de 15→16 para 4 columnas exactas, sin
+// última fila huérfana) — el admin también capa en 16.
+const featuredPieces = () => data.getFeatured(16).filter(p => p.images?.[0] || p.image);
 
 // Watchdog anti-carga-eterna (ver categories.js): 8s > timeout de data.load() (4s) para dar
 // margen a redes lentas a llenar la reserva sin saltar.
@@ -60,7 +61,7 @@ function headerHtml() {
 }
 
 function contentHtml(pieces) {
-    const shown = pieces.slice(0, 15);   // Daniel §138: hasta 15 destacadas (el admin capa en 15)
+    const shown = pieces.slice(0, 16);   // Daniel §138: hasta 16 destacadas (4 columnas exactas; el admin capa en 16)
     const cols = balancedCols(shown.length, 4);   // columnas según cuántas hay (sin huérfana)
     return html`
         <div class="container">

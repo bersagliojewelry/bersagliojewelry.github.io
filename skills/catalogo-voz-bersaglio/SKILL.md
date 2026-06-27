@@ -33,7 +33,7 @@ Aforismos de la casa: *"un legado se susurra, no se compra" · "nuestra casa es 
 - Colecciones: `firestore_query_collection` sobre `collections`.
 
 ## 2. NOMBRE de pieza — fórmula
-`[palabra evocadora, propia] ` — **un sustantivo o imagen** del mundo Bersaglio que case con la pieza.
+Preferible **DOS palabras** (micro-poema: sustantivo + adjetivo/complemento) — una sola palabra puede sonar telegráfica (§135, lección de Gemini). Evocador, propio, del mundo Bersaglio, que case con la pieza. Ej.: *Velo de Medianoche · Verde Manglar · Primer Latido · Ecos de Bóvedas · Fina Escarcha.*
 - **PROHIBIDO**: la nomenclatura del certificado (`"<Tipo> de <Piedra> Natural"`), la palabra
   "Natural", el Nº de reporte, el "<tipo> de <gema>" genérico. Eso vive en la ficha, no en el título.
 - **Distinto pieza a pieza** (si hay 4 esmeraldas-anillo, 4 nombres distintos), cohesivo por gema.

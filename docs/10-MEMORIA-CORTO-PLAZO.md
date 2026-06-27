@@ -45,8 +45,7 @@
 | TODO-49 | **Legal e-commerce** — consentimiento habeas data en forms + verificar privacidad/terminos (retracto). Skill `legal-colombia`. Prereq Wompi. | 🔲 | pre-Wompi |
 | TODO-50 | **Catálogo de lujo** — imagen real (no certificado) + filtros gema/tipo + taxonomía canónica + badges por gema. Detalle → §133.2(B/C). | 🔲 | tras TODO-44 |
 | TODO-51 | **Origen honesto de gemas** no-colombianas (rubí/zafiro/diamante; el sitio sugiere todo Muzo/Chivor). | 🔲 | con TODO-44 |
-| TODO-52 | **Elevar el copy de las 32** (§134, feedback Daniel "cavernícola"): reescribir descripciones con profundidad/fluidez/calidez (no staccato ni cierre formulaico) + evaluar nombres de 2 palabras en piezas estrella. Apoyo de Gemini (prompt → bóveda `2026-06-27-PROMPT-gemini-copy-piezas`). `[[feedback_copy_marca_profundidad]]` | 🔲 | Gemini + sesión fresca |
-> ✅ **Cerrados recientes**: **TODO-44 voz de marca catálogo (§134)** · **TODO-45/46 (§133)** · TODO-40 + 32 piezas TrueLab (§131/§132). Histórico → ADRs §88-§134 + `00`/`99`. Pend operativo Daniel: precios + imágenes IA (panel v3).
+> ✅ **Cerrados recientes**: **TODO-52 copy definitivo Gemini (§135)** · **TODO-44 voz de marca (§134)** · TODO-45/46 (§133) · TODO-40 + 32 piezas (§131/§132). Histórico → ADRs §88-§135 + `00`/`99`. Pend operativo Daniel: precios + imágenes IA (panel v3).
 
 ---
 
@@ -61,4 +60,5 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño · Fase 2 hardening (Tier C pend.) 
 >
 > **▶️ §133 EVAL INTEGRAL DE MARCA (2026-06-27).** Diagnóstico → Daniel; **4 decisiones**: (1) eliminar lo inventado (reseñas ✅; equipo/certs → Kary = TODO-47) + reseñas reales desde admin (TODO-48); (2) sin precios aún; (3) Claude propone 32 nombres, Daniel aprueba (TODO-44); (4) fixes seguros ✅. Todo el detalle → **ADR §133** + bóveda.
 > **▶️ §134 (mismo día):** Daniel aprobó TODO → 32 piezas + 7 colecciones en voz + 9 destacadas variadas (MCP, en vivo) + **skill `catalogo-voz-bersaglio`** (invocable). Badge en tarjeta, v43. ADR §134. **merge a main = Claude** ahora.
+> **▶️ §135 (mismo día):** copy "cavernícola" → elevado con **Gemini** (consejo externo: yo verifiqué reglas duras e implementé). 32 descripciones cálidas/fluidas + nombres a DOS palabras (Velo de Medianoche, Verde Manglar…) + Topos fusionada en Aretes. En vivo (MCP). ADR §135 + bóveda PROMPT/RESPUESTA. `[[feedback_copy_marca_profundidad]]`
 > **🚦 Reglas vivas**: `arquitecto-software` SIEMPRE · Bersaglio = 100% COP (§127) · NO inventado/no-verificable (`[[feedback_no_demo_en_index]]`) · la voz solo se presta a lo verificable · pruebas en vivo SOLO al final (§130.4) · W-11/mockup en decisión-diseño · `[[feedback_workflows_acotados]]` · `[[feedback_reintentar_agentes_no_saltar_flujo]]`. Cola: TODO-47..51 · F2 Wompi · TODO-37/39/33/35.

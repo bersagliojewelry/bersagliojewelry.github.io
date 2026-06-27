@@ -703,11 +703,13 @@ async function main() {
         collectionsById.set(c.id, c);
     }
 
-    // Guard anti-catálogo-vacío (NO silencioso): la query `!= privada` excluye legacy SIN visibilidad
-    // (= pre-migración). Si vuelve 0, NO horneamos un catálogo vacío → abortamos y prod queda en el
-    // último build bueno. Bersaglio SIEMPRE tiene piezas: 0 = migración pendiente / reglas / red.
+    // Catálogo vacío = estado LEGÍTIMO del ciclo de vida (pre-lanzamiento · tras borrar la carga de prueba
+    // antes de subir la real · Kary borra la última pieza). NO abortamos por 0 piezas — eso bloquearía el
+    // deploy del sitio en un estado válido (frontera de estado-cero). Solo avisamos. El guard REAL contra
+    // el fallo silencioso peligroso sigue siendo `catalogo.pieces.length !== pieces.length` (abajo): detecta
+    // "se leyeron piezas pero la proyección las perdió".
     if (allPieces.length === 0) {
-        throw new Error('[generate] 0 piezas públicas leídas de Firestore — ¿migración v3 pendiente (--apply), reglas o conectividad? Abortado (prod queda en el último build bueno).');
+        console.warn('[generate] ⚠️ 0 piezas en Firestore → catálogo VACÍO (estado válido pre-carga). Horneando el sitio sin piezas.');
     }
     // isPublishable (calidad/cero-demo) + esPublica (defensa en profundidad sobre el filtro de la query).
     const pieces = allPieces.filter(isPublishable).filter(esPublica);

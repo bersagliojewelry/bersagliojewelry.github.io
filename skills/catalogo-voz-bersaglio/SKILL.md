@@ -44,12 +44,12 @@ Aforismos de la casa: *"un legado se susurra, no se compra" · "nuestra casa es 
   - **Diamante** (luz, color H): alba/luz/escarcha. *Albor, Escarcha, Destello, Aurora, Centella.*
   - El nombre puede guiñar al rasgo real (gota→Rocío/Cascada; corazón→Latido; baguette grande→Medianoche; topos→Chispa/Luceros/Centella).
 
-## 3. DESCRIPCIÓN de pieza — 3 movimientos (texto plano, sin asteriscos)
-Una sola frase fluida por movimiento, **sin listar specs** (el ct/corte/reporte ya están en la ficha):
-1. **Gesto / emoción** — conecta la pieza con quien la lleva (*"Para quien lleva el verde por dentro."*).
-2. **Materia con orgullo** — el oro 18k + la gema, envuelta en lenguaje, no como ficha (*"El verde más hondo de Colombia, engastado en oro de 18 quilates."*).
-3. **Confianza / legado** — única + certificada + para heredar (*"Pieza única y certificada, para custodiar hoy y heredar mañana."*).
-- ⚠️ La descripción NO puede empezar con "prueba" (el render la oculta) ni repetir el spec crudo.
+## 3. DESCRIPCIÓN de pieza — PROSA CÁLIDA QUE RESPIRA (no un checklist)
+⚠️ **Lección §134 (Daniel, `feedback_copy_marca_profundidad`)**: la fórmula de "3 movimientos cortos" produce copy STACCATO / "cavernícola" — frases telegráficas + el MISMO cierre formulaico en cada pieza. La voz de Bersaglio (Nosotros) FLUYE: frases largas, cálidas, sensoriales. El copy de producto debe respirar igual.
+- Escribe **2-4 frases que fluyen** (texto plano, sin asteriscos), NO viñetas disimuladas. Teje de forma NATURAL: una **imagen/emoción** que sitúe la pieza en el mundo Bersaglio · la **materia con orgullo** (oro 18k + la gema, envuelta en lenguaje, jamás como ficha) · la **confianza/legado** (único, certificado, para heredar) — integrados en la prosa, no listados.
+- ❌ **PROHIBIDO el cierre formulaico repetido** ("Pieza única y certificada, hecha para X") en cada pieza: que lo único/certificado se sienta tejido, no estampado.
+- **Sin listar specs** (ct/corte/reporte ya están en la ficha). NO empezar con "prueba" (el render la oculta).
+- Apóyate en **Gemini** (consejo externo) para elevar el registro — da copy "brutal" (`[[feedback_consejo_externo_readonly]]`).
 
 ## 4. BADGE de pieza — gema + carácter (único, no genérico)
 `<gema> [· <rasgo>]`. Ej.: `Esmeralda colombiana`, `Esmeralda · pieza mayor` (gemas grandes ≥ ~2 ct

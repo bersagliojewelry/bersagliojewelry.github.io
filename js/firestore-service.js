@@ -260,9 +260,13 @@ export async function deleteTypedDoc(collName, docId) {
  *        spec §9.1 — el truncado NUNCA es mudo). Sin label = sin banner.
  * @returns {Function} unsubscribe
  */
-export function onCollectionChange(collName, callback, { limit: lim, truncationLabel } = {}) {
+export function onCollectionChange(collName, callback, { limit: lim, truncationLabel, constraints = [] } = {}) {
     const base = collection(firestoreDb, collName);
-    const makeRef = () => (lim ? query(base, limit(lim)) : base);
+    const makeRef = () => {
+        const parts = [...constraints];
+        if (lim) parts.push(limit(lim));
+        return parts.length ? query(base, ...parts) : base;
+    };
     return subscribeWithRetry(makeRef, (snap) => {
         if (truncationLabel && lim && snap.size >= lim) {
             console.warn(`[Firestore] ${truncationLabel} truncado en ${lim} (S3).`);
@@ -310,11 +314,18 @@ export async function fetchPieceBySlug(slug) {
 /**
  * Subscribe to real-time pieces updates.
  * S3: cota de 500 (con <500 piezas devuelve TODO; solo limita a escala).
+ * TODO-40 v3 (D5): por defecto excluye las piezas `visibilidad:'privada'` — el público (anónimo)
+ * NO las puede leer (regla read v3) y una query SIN filtro fallaría ENTERA si existe una privada.
+ * El panel admin pasa `{ includePrivate:true }` (las gestiona; las lee vía isCatalogo en la regla).
  * @param {Function} callback - receives array of pieces on each change
+ * @param {object} [opts] @param {boolean} [opts.includePrivate=false] admin = ve todas (incl. privadas)
  * @returns {Function} unsubscribe function
  */
-export const onPiecesChange = (callback) =>
-    onCollectionChange(COLLECTIONS.pieces, callback, { limit: 500 });
+export const onPiecesChange = (callback, { includePrivate = false } = {}) =>
+    onCollectionChange(COLLECTIONS.pieces, callback, {
+        limit: 500,
+        constraints: includePrivate ? [] : [where('visibilidad', '!=', 'privada')],
+    });
 
 /**
  * Create a new piece (admin). Wrapper del motor genérico createTypedDoc:

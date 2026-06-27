@@ -22,7 +22,8 @@
 // ===========================================================
 
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
+import { derivarEstado, esDisponible, STOCK_TYPES } from '../js/admin/inventario-model.js';   // SSoT modelo v3
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, unlinkSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -153,17 +154,12 @@ function buildAdditionalProperty(specs) {
 function buildProductSchema(p, category, desc, canonicalUrl, image) {
     const s = p.specs || {};
     const metal = s.metal || s.gold || '';
-    const hasPrice = !!p.price && Number.isFinite(Number(p.price));
     const additionalProperty = buildAdditionalProperty(s);
 
-    // STOCK-AWARE (consejo externo Gemini, paso 7 §10.1): una pieza ÚNICA vendida NUNCA debe declararse
-    // InStock — Google/Merchant la indexarían como activa. vendida → OutOfStock + sin precio. Si no:
-    // con precio → InStock; "bajo consulta" (alta joyería) → PreOrder. NUNCA price:0 (Google lo rechaza).
-    const vendida = isVendida(p);
-    const availability = vendida ? 'https://schema.org/OutOfStock'
-                       : hasPrice ? 'https://schema.org/InStock'
-                       : 'https://schema.org/PreOrder';
-    const showPrice = hasPrice && !vendida;
+    // STOCK-AWARE v3 (TODO-40): availability + precio se derivan de stockType+cantidad (stockInfo, SSoT).
+    // agotada → OutOfStock sin precio (Google no la indexa como activa); encargo/bajo_pedido (refabricable
+    // en 0) → PreOrder; disponible → InStock (con precio) / PreOrder ("bajo consulta"). NUNCA price:0.
+    const { availability, showPrice } = stockInfo(p);
 
     const schema = {
         '@context': 'https://schema.org/',
@@ -429,15 +425,19 @@ function generatePage(template, p, slug, collectionsById) {
     );
 
     // 8. <noscript> SEO: contenido clave para crawlers sin JS.
-    // STOCK-AWARE (§10.1): vendida → oculta el precio ("Vendida") + CTA "ver similares" (la página vive
-    // para SEO/links, pero no se ofrece a la venta). NUNCA mostrar precio de una pieza ya vendida.
-    const vendidaPieza = isVendida(p);
-    const priceText = vendidaPieza ? 'Vendida'
-                    : (p.price && Number.isFinite(Number(p.price))) ? formatPriceCOP(p.price) : 'Bajo consulta';
+    // STOCK-AWARE v3 (§10.1): agotada → "Vendida" sin precio + CTA "ver similares" (la página vive para
+    // SEO/links, pero no se ofrece). encargo / bajo_pedido (refabricable en 0) → "Por encargo".
+    // disponible → precio real o "Bajo consulta". NUNCA mostrar precio de una pieza agotada.
+    const si = stockInfo(p);
+    const agotada = si.estado === 'agotada';
+    const priceText = agotada ? 'Vendida'
+                    : si.showPrice ? formatPriceCOP(p.price)
+                    : (si.stockType === 'encargo' || si.estado === 'bajo_pedido') ? 'Por encargo'
+                    : 'Bajo consulta';
     const specRows = buildAdditionalProperty(p.specs).map(x =>
         `                <li><strong>${escapeHtml(x.name)}:</strong> ${escapeHtml(x.value)}</li>`
     ).join('\n');
-    const ctaNoscript = vendidaPieza
+    const ctaNoscript = agotada
         ? `<p>Esta pieza fue <strong>vendida</strong>. <a href="${SITE_URL}/colecciones.html">Ver piezas similares</a> · <a href="${SITE_URL}/contacto.html">Hablar con un asesor</a></p>`
         : `<p><a href="${SITE_URL}/contacto.html">Consultar esta pieza con un asesor</a> · <a href="${SITE_URL}/colecciones.html">Ver el catálogo</a></p>`;
     const noscript = `
@@ -537,9 +537,16 @@ async function connectDb() {
     return { mode: 'client', db: getFirestore(clientApp) };
 }
 
-async function fetchCollection(handle, name) {
-    if (handle.mode === 'admin') return await handle.db.collection(name).get();
-    return await getDocs(collection(handle.db, name));
+async function fetchCollection(handle, name, opts = {}) {
+    // excludePrivate (TODO-40 v3 · D5): solo en `pieces`. El SSG corre en modo CLIENTE anónimo en CI
+    // (deploy.yml SIN FIREBASE_SA_KEY) → bajo la regla read v3 una lectura SIN filtro FALLARÍA entera si
+    // existe una privada. `!= privada` pide solo docs legibles (= la regla) y excluye privadas del catálogo.
+    if (handle.mode === 'admin') {
+        const ref = handle.db.collection(name);
+        return await (opts.excludePrivate ? ref.where('visibilidad', '!=', 'privada') : ref).get();
+    }
+    const base = collection(handle.db, name);
+    return await getDocs(opts.excludePrivate ? query(base, where('visibilidad', '!=', 'privada')) : base);
 }
 
 // Pieza "horneable": real e indexable (cero-demo). Tiene nombre + imagen + no es "PRUEBA".
@@ -557,10 +564,31 @@ function isPublishable(p) {
 // admin/POS/checkout. Contrato verificado contra los consumidores (catalogo.js/pieza.js/data.js):
 // incluye TODO lo que el cliente renderiza/ordena; EXCLUYE internos (costo, peso-taller, notas).
 
-// Estado de venta: el POS marca estado='vendida' (default tolerante 'disponible', js/admin/pos.js:77).
-function isVendida(p) {
-    return (p.estado || 'disponible') === 'vendida';
+// ── Modelo de inventario v3 (TODO-40) — derivación de stock para el SSG. SSoT = inventario-model.js.
+// Tolerante a legacy: `estado:'vendida'` (pre-migración) → cantidad 0; cantidad ausente → 1 (finito*).
+function normStockType(st) { return STOCK_TYPES.includes(st) ? st : 'finito'; }
+
+function stockInfo(p) {
+    const stockType = normStockType(p.stockType);
+    const cantidad = stockType === 'encargo' ? null
+        : (p.estado === 'vendida' ? 0 : (Number.isInteger(p.cantidad) ? p.cantidad : 1));
+    const estado = derivarEstado(stockType, cantidad);     // disponible | bajo_pedido | agotada
+    const orderable = esDisponible(stockType, cantidad);   // agotada → false; resto → true
+    const hasPrice = !!p.price && Number.isFinite(Number(p.price));
+    // availability schema.org (consejo Gemini §10.1, extendido a enum3):
+    //  · agotada (finito sin stock)            → OutOfStock, sin precio (no se ofrece)
+    //  · encargo / bajo_pedido (refabricable 0)→ PreOrder (se fabrica; precio si lo hay)
+    //  · disponible                            → InStock (con precio) / PreOrder ("bajo consulta")
+    let availability, showPrice;
+    if (estado === 'agotada') { availability = 'https://schema.org/OutOfStock'; showPrice = false; }
+    else if (stockType === 'encargo' || estado === 'bajo_pedido') { availability = 'https://schema.org/PreOrder'; showPrice = hasPrice; }
+    else { availability = hasPrice ? 'https://schema.org/InStock' : 'https://schema.org/PreOrder'; showPrice = hasPrice; }
+    return { stockType, cantidad, estado, orderable, hasPrice, availability, showPrice };
 }
+
+// ¿Pública? (D5 fail-closed): privada = facturable FUERA del catálogo. La barrera real es la regla
+// read v3 + la query `!= privada`; esto es defensa en profundidad en el horneado (L-41).
+function esPublica(p) { return p.visibilidad !== 'privada'; }
 
 // Timestamp Firestore (Admin SDK o cliente) → { seconds }. El cliente ordena por `.seconds`
 // (catalogo.js:65) → NO tocar el consumidor. Admin SDK serializa con `_seconds`; el cliente con `seconds`.
@@ -608,6 +636,7 @@ function publicPiece(p, slug) {
     const price = (p.price != null && Number.isFinite(Number(p.price))) ? Number(p.price) : null;
     const images = Array.isArray(p.images) ? p.images.filter(Boolean)
                  : (p.image ? [p.image] : []);
+    const { stockType, cantidad, orderable } = stockInfo(p);   // v3: enum3 + cantidad + disponibilidad
     return {
         id: p.id,
         slug,
@@ -622,15 +651,12 @@ function publicPiece(p, slug) {
         sizes: Array.isArray(p.sizes) ? p.sizes : [],
         specs: publicSpecs(p.specs),
         description: descriptionFor(p),         // cero-demo: "" si "PRUEBA"/vacío
-        // Stock (B1 paso 1): 'encargo' se fabrica → SIEMPRE disponible (no consume unidad, pedidos-core.js:78).
-        // 'finito' = única; el POS marca estado='vendida' al venderla (no decrementa cantidad).
-        stockType: p.stockType === 'encargo' ? 'encargo' : 'finito',
-        available: p.stockType === 'encargo' ? true : !isVendida(p),
-        // Cantidad EFECTIVA disponible: encargo → null (no aplica); finito vendida → 0; finito libre → declarada
-        // (default 1). Honesto: el POS no decrementa, pero al vender una única su estado pasa a 'vendida' → 0.
-        cantidad: p.stockType === 'encargo' ? null
-                : isVendida(p) ? 0
-                : (Number.isInteger(p.cantidad) ? p.cantidad : 1),
+        // Stock v3 (TODO-40, SSoT = stockInfo): stockType enum3 + cantidad (CF-only) + available derivado.
+        //  · encargo → siempre pedible, cantidad null · finito_refabricable → pedible aun en 0 (bajo pedido)
+        //  · finito agotada (cantidad 0) → available:false (la grilla la filtra; la ficha muestra "Vendida").
+        stockType,
+        available: orderable,
+        cantidad,
         createdAt: tsSeconds(p.createdAt),
         updatedAt: tsSeconds(p.updatedAt),
     };
@@ -663,7 +689,7 @@ async function main() {
     const handle = await connectDb();
 
     const [piecesSnap, colsSnap, journalSnap] = await Promise.all([
-        fetchCollection(handle, 'pieces'),
+        fetchCollection(handle, 'pieces', { excludePrivate: true }),   // v3 D5: privadas FUERA del catálogo
         fetchCollection(handle, 'collections'),
         fetchCollection(handle, 'journal'),
     ]);
@@ -677,9 +703,16 @@ async function main() {
         collectionsById.set(c.id, c);
     }
 
-    const pieces = allPieces.filter(isPublishable);
+    // Guard anti-catálogo-vacío (NO silencioso): la query `!= privada` excluye legacy SIN visibilidad
+    // (= pre-migración). Si vuelve 0, NO horneamos un catálogo vacío → abortamos y prod queda en el
+    // último build bueno. Bersaglio SIEMPRE tiene piezas: 0 = migración pendiente / reglas / red.
+    if (allPieces.length === 0) {
+        throw new Error('[generate] 0 piezas públicas leídas de Firestore — ¿migración v3 pendiente (--apply), reglas o conectividad? Abortado (prod queda en el último build bueno).');
+    }
+    // isPublishable (calidad/cero-demo) + esPublica (defensa en profundidad sobre el filtro de la query).
+    const pieces = allPieces.filter(isPublishable).filter(esPublica);
     const skipped = allPieces.length - pieces.length;
-    console.log(`[generate] ${allPieces.length} piezas totales · ${pieces.length} horneables · ${skipped} saltadas (sin nombre/imagen o "PRUEBA").`);
+    console.log(`[generate] ${allPieces.length} piezas públicas · ${pieces.length} horneables · ${skipped} saltadas (sin nombre/imagen o "PRUEBA").`);
 
     // Slug map + guard de unicidad (slug duplicado = bug de datos → fail-loud, no mangle).
     const slugMap = new Map();
@@ -734,8 +767,8 @@ async function main() {
         throw new Error('[generate] catalogo.json VACÍO pese a haber piezas en Firestore — probable bug de datos/filtro (abortado).');
     }
     writeFileSync(join(dataDir, 'catalogo.json'), JSON.stringify(catalogo));
-    const vendidasCount = pieces.filter(isVendida).length;
-    console.log(`[generate] catalogo.json: ${catalogo.pieces.length} piezas (${vendidasCount} vendidas, available:false) + ${catalogo.collections.length} colecciones.`);
+    const agotadasCount = pieces.filter(p => stockInfo(p).estado === 'agotada').length;
+    console.log(`[generate] catalogo.json: ${catalogo.pieces.length} piezas (${agotadasCount} agotadas, available:false) + ${catalogo.collections.length} colecciones.`);
 
     // Sitemap (sobrescribe el estático copiado por Vite desde public/).
     const today = isoDate(Date.now()) || '2026-06-25';
@@ -751,8 +784,9 @@ async function main() {
         schemaType: 'CollectionPage',
         name: 'Catálogo · Bersaglio Jewelry',
         description: 'Anillos, aretes, collares y argollas de alta joyería: esmeralda colombiana, diamantes certificados y oro 18K.',
-        // Vendidas FUERA del listado (§10.1): salen de la grilla; su página vive con "Vendida·ver similares".
-        items: pieces.filter(p => !isVendida(p)).map(p => ({ name: p.name, url: `${SITE_URL}/pieza/${slugMap.get(String(p.id))}.html` })),
+        // Agotadas FUERA del listado (§10.1 v3): salen de la grilla; su página vive con "Vendida·ver similares".
+        // encargo y bajo_pedido (refabricable en 0) SÍ entran (son pedibles). orderable = !agotada.
+        items: pieces.filter(p => stockInfo(p).orderable).map(p => ({ name: p.name, url: `${SITE_URL}/pieza/${slugMap.get(String(p.id))}.html` })),
     });
     injectListingPage('journal.html', '<main id="main-content" data-screen-label="journal">', {
         schemaType: 'Blog',
@@ -839,24 +873,42 @@ function runSelfTest() {
     if (liveSchema.offers.availability !== 'https://schema.org/InStock') fails.push('disponible+precio: availability != InStock.');
     if (liveSchema.offers.price !== 12000000) fails.push('disponible+precio: falta price en el offer.');
 
+    // v3 enum3: finito_refabricable agotado (cantidad 0) SIGUE pedible → PreOrder, NO OutOfStock; el HTML no dice "Vendida".
+    const refabPiece = { ...mockPiece, stockType: 'finito_refabricable', cantidad: 0 };
+    const refabSchema = buildProductSchema(refabPiece, 'Anillos', 'x', `${SITE_URL}/pieza/r.html`, 'https://x/y.jpg');
+    if (refabSchema.offers.availability !== 'https://schema.org/PreOrder') fails.push('refabricable 0: availability != PreOrder.');
+    const refabHtml = generatePage(template, refabPiece, 'refab', mockCols);
+    if (refabHtml.includes('schema.org/OutOfStock')) fails.push('refabricable 0: NO debe ser OutOfStock (sigue pedible).');
+    if (refabHtml.includes('>Vendida<') || /font-weight:700[^>]*>Vendida/.test(refabHtml)) fails.push('refabricable 0: el HTML no debe decir "Vendida" (es bajo pedido).');
+    // v3: encargo → PreOrder (se fabrica), nunca OutOfStock aunque traiga estado legacy 'vendida'.
+    const encSchema = buildProductSchema({ ...mockPiece, stockType: 'encargo', estado: 'vendida' }, 'Anillos', 'x', `${SITE_URL}/pieza/e.html`, 'https://x/y.jpg');
+    if (encSchema.offers.availability !== 'https://schema.org/PreOrder') fails.push('encargo: availability != PreOrder.');
+
+    // D5 esPublica: privada se excluye del catálogo; publica y legacy (sin campo) entran (la regla+query son la barrera real).
+    if (esPublica({ visibilidad: 'privada' }) !== false) fails.push('esPublica: privada debe ser false.');
+    if (esPublica({ visibilidad: 'publica' }) !== true) fails.push('esPublica: publica debe ser true.');
+    if (esPublica({}) !== true) fails.push('esPublica: legacy sin visibilidad debe ser true.');
+
     // catalogo.json: contrato COMPLETO (claves que el cliente usa) + available + NO filtra internos + parsea.
     const REQUIRED_PIECE_KEYS = ['id', 'slug', 'name', 'code', 'collection', 'price', 'images', 'imageLqip',
         'tag', 'featured', 'sizes', 'specs', 'description', 'available', 'stockType', 'cantidad', 'createdAt', 'updatedAt'];
     const cat = buildCatalogJson(
         [{ ...mockPiece, id: 'p1', stockType: 'finito', estado: 'disponible', cantidad: 2, costoInterno: 999, pesoTaller: 4.9, sizes: ['6'], tag: 'Nueva', imageLqip: 'data:x', updatedAt: { seconds: 100 } },
          { ...mockPiece, id: 'p2', stockType: 'finito', estado: 'vendida' },
-         { ...mockPiece, id: 'p3', stockType: 'encargo', estado: 'vendida' }],
+         { ...mockPiece, id: 'p3', stockType: 'encargo', estado: 'vendida' },
+         { ...mockPiece, id: 'p4', stockType: 'finito_refabricable', cantidad: 0 }],
         [{ id: 'anillos', slug: 'anillos', name: 'Anillos', description: 'd', secretoInterno: 'X' }],
-        new Map([['p1', 'p1'], ['p2', 'p2'], ['p3', 'p3']]),
+        new Map([['p1', 'p1'], ['p2', 'p2'], ['p3', 'p3'], ['p4', 'p4']]),
         '2026-06-26T00:00:00.000Z',
     );
     try { JSON.parse(JSON.stringify(cat)); } catch (e) { fails.push('catalogo.json NO serializa/parsea: ' + e.message); }
-    const pj = cat.pieces[0], vendida = cat.pieces[1], encargo = cat.pieces[2];
+    const pj = cat.pieces[0], vendida = cat.pieces[1], encargo = cat.pieces[2], refab = cat.pieces[3];
     for (const k of REQUIRED_PIECE_KEYS) if (!(k in pj)) fails.push(`catalogo.json: falta la clave "${k}" del contrato.`);
     if ('costoInterno' in pj || 'pesoTaller' in pj) fails.push('catalogo.json: FILTRA campo interno (costoInterno/pesoTaller) — fuga.');
     if (pj.available !== true || pj.cantidad !== 2 || pj.stockType !== 'finito') fails.push('catalogo.json: finito disponible debe ser available:true, cantidad:2, finito.');
     if (vendida.available !== false || vendida.cantidad !== 0) fails.push('catalogo.json: finito vendida debe ser available:false, cantidad:0.');
     if (encargo.available !== true || encargo.cantidad !== null || encargo.stockType !== 'encargo') fails.push('catalogo.json: encargo debe ser SIEMPRE available:true, cantidad:null (ignora estado vendida).');
+    if (refab.available !== true || refab.cantidad !== 0 || refab.stockType !== 'finito_refabricable') fails.push('catalogo.json: finito_refabricable en 0 debe ser available:true (bajo pedido), cantidad:0, finito_refabricable.');
     if (pj.updatedAt?.seconds !== 100) fails.push('catalogo.json: updatedAt no normalizado a {seconds}.');
     if ('secretoInterno' in cat.collections[0]) fails.push('catalogo.json: colección NO respeta whitelist (fuga de campo).');
     if (!('stone' in pj.specs)) fails.push('catalogo.json: specs whitelist perdió "stone".');

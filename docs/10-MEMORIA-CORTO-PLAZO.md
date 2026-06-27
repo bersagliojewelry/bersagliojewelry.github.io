@@ -10,8 +10,8 @@
 
 > 🎉 **CRM + Fase M EN PROD** (§47-§82). ⚙️ **OPUS 4.8 interino** (marcar `[OPUS-4.8]` · `feedback_opus_interino`).
 >
-> **▶️ SESIÓN (2026-06-27 · tarde) — §136**: cerradas las 2 anotaciones de §135.
-> **TODO-53 ✅ (§136)**: auditoría copy↔tipo verificada (3 revisores) → 5 textos corregidos por Gemini (Manantial Secreto = cadena + 4 anillos genéricos), verificados por Claude y **EN VIVO** (Firestore). **TODO-54 ✅** (campo origen = no-bug, data-driven). Origen honesto cierra **TODO-51**. ⚠️ Prerender SSG (SEO) hornea los 5 en el próximo deploy de `main` — no urgente.
+> **▶️ SESIÓN (2026-06-27 · tarde) — §136 + §137**: cerradas las 2 anotaciones de §135 + repaso de SIGNIFICADO.
+> **TODO-53/54 ✅ (§136)** (auditoría copy↔tipo + campo origen; cierra TODO-51). Luego **§137**: Daniel pidió la capa del SIGNIFICADO ("cada joya tiene una historia") → principio grabado en skill `catalogo-voz-bersaglio §3` + **las 32 reescritas con Gemini** (significado→materia+tipo→herencia), verificadas (coherencia-tipo §136 intacta + origen honesto) y **EN VIVO** (Firestore). Catálogo = **3 capas** (tipo+cálido+significado). ⚠️ Auto-crítica: cierres uniformes "heredar/legado" — variar a futuro si se desea. ⚠️ Prerender SSG (SEO) hornea las 32 en el próximo deploy de `main`.
 > **🔜 Próximo**: **TODO-47** (verdad de marca con Kary, legal = + urgente) · operativo Daniel (precios + fotos). Backlog TODO-48..51. Cola: F2 Wompi · TODO-41/39/37/33/35.
 > _**MCP Firebase = escritura prod**. merge a main = Claude. Gemini asesora, Claude implementa (`[[feedback_consejo_externo_readonly]]`). Pruebas en vivo DIFERIDAS (§130.4)._
 
@@ -55,8 +55,7 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño · Fase 2 hardening (Tier C pend.) 
 
 ## 📝 Bitácora (efímera)
 
-> Podada (GC) 2026-06-26. Histórico → ADR §37-§130 + bóveda `2026-06-*`. Lecciones → `30`/`31`/`32`.
+> Podada (GC) 2026-06-27. Histórico → ADR §37-§130 + bóveda. Lecciones → `30`/`31`/`32`.
 >
-> **Sesión §133-§135 (2026-06-27):** voz de marca de las 32 + 7 colecciones + 9 destacadas (Gemini) + Topos→Aretes; skill `catalogo-voz-bersaglio`. Detalle → ADRs §133/§134/§135 + bóveda. `[[feedback_copy_marca_profundidad]]`
-> **▶️ Sesión TODO-53/54 (2026-06-27 tarde):** auditoría copy↔tipo de las 32 (3 revisores, bóveda) → 1 corrección (Manantial Secreto) + 4 pulidos; Gemini pulió → Claude verificó → **5 EN VIVO** (§136); TODO-54 resuelto (campo origen = no-bug, data-driven). Lección Workflow: datos grandes EMBEBIDOS en el script, NO por `args` (falla `pieces.map is not a function`). Crudo → `research-archive/2026-06-27-audit-copy-tipo-workflow-w0sv0p09p.json`.
+> **Sesiones §133-§137 (2026-06-27) — VOZ DE MARCA del catálogo:** nombre/desc/badge (§134) → cálido (§135) → tipo-coherente (§136, TODO-53/54 ✅, cierra TODO-51) → SIGNIFICADO (§137). 32 piezas + 7 colecciones + 9 destacadas, vía Gemini + verif Claude, EN VIVO; 3 capas de voz. Lección Workflow: datos grandes EMBEBIDOS, no por `args`. Detalle → ADRs §133-§137 + bóveda. `[[feedback_copy_marca_profundidad]]`
 > **🚦 Reglas vivas**: `arquitecto-software` SIEMPRE · Bersaglio = 100% COP (§127) · NO inventado/no-verificable (`[[feedback_no_demo_en_index]]`) · la voz solo se presta a lo verificable · pruebas en vivo SOLO al final (§130.4) · W-11/mockup en decisión-diseño · `[[feedback_workflows_acotados]]` · `[[feedback_reintentar_agentes_no_saltar_flujo]]`. Cola: TODO-47..51 · F2 Wompi · TODO-37/39/33/35.

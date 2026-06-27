@@ -155,23 +155,33 @@
                     </div>
                 </div>
 
-                <!-- Inventario y clasificación (B1 paso 1) -->
+                <!-- Inventario y clasificación (TODO-40 v3) -->
                 <div class="adm-form-section">
                     <h3>Inventario y clasificación</h3>
                     <div class="adm-form-row">
                         <div class="adm-field">
                             <label for="f-stocktype">Tipo de stock</label>
                             <select class="adm-input" id="f-stocktype" name="stockType">
-                                <option value="finito">Pieza física (stock finito)</option>
-                                <option value="encargo">Por encargo (se fabrica)</option>
+                                <option value="finito">Pieza física (stock limitado)</option>
+                                <option value="finito_refabricable">Física re-fabricable (si se agota, se vuelve a fabricar)</option>
+                                <option value="encargo">Por encargo (se fabrica al pedir)</option>
                             </select>
                         </div>
                         <div class="adm-field">
-                            <label for="f-cantidad">Cantidad disponible</label>
-                            <input class="adm-input" id="f-cantidad" name="cantidad" type="number" min="0" step="1" placeholder="1">
+                            <label for="f-visibilidad">Visibilidad</label>
+                            <select class="adm-input" id="f-visibilidad" name="visibilidad">
+                                <option value="publica">Pública (aparece en el catálogo web)</option>
+                                <option value="privada">Privada (solo para facturar, fuera del catálogo)</option>
+                            </select>
+                            <small style="color:var(--adm-muted);font-size:11px;margin-top:2px;">Una pieza privada existe para vender/facturar pero NO se publica en la web (ej. a medida con cliente).</small>
                         </div>
                     </div>
                     <div class="adm-form-row" style="margin-top:12px;">
+                        <div class="adm-field">
+                            <label for="f-cantidad">Cantidad disponible</label>
+                            <input class="adm-input" id="f-cantidad" name="cantidad" type="number" min="0" step="1" placeholder="1">
+                            <small id="f-cantidad-hint" style="color:var(--adm-muted);font-size:11px;margin-top:2px;"></small>
+                        </div>
                         <div class="adm-field">
                             <label for="f-gender">Género <span class="adm-opt">(opcional)</span></label>
                             <select class="adm-input" id="f-gender" name="gender">
@@ -181,6 +191,32 @@
                                 <option value="unisex">Unisex</option>
                             </select>
                         </div>
+                    </div>
+
+                    <!-- Ajuste de stock (solo edición de pieza física ya guardada). La cantidad NO se edita
+                         a mano: se mueve por la Cloud Function (queda auditada en el historial). -->
+                    <div id="stock-adjust" class="adm-stock-adjust" hidden style="margin-top:14px;padding:12px;border:1px solid var(--adm-border);border-radius:8px;background:rgba(201,169,110,0.04);">
+                        <strong style="display:block;font-size:13px;margin-bottom:8px;">Mover el stock <span style="font-weight:400;color:var(--adm-muted);">(reabastecer, merma, corrección…)</span></strong>
+                        <div class="adm-form-row adm-col-3" style="align-items:end;">
+                            <div class="adm-field">
+                                <label for="f-ajuste-delta">Cambio en unidades</label>
+                                <input class="adm-input" id="f-ajuste-delta" type="number" step="1" placeholder="Ej. +2 o -1">
+                            </div>
+                            <div class="adm-field">
+                                <label for="f-ajuste-motivo">Motivo</label>
+                                <select class="adm-input" id="f-ajuste-motivo">
+                                    <option value="reabasto">Reabastecer (entraron unidades)</option>
+                                    <option value="merma">Merma / pérdida</option>
+                                    <option value="dano">Daño</option>
+                                    <option value="robo">Robo</option>
+                                    <option value="correccion">Corrección de conteo</option>
+                                </select>
+                            </div>
+                            <div class="adm-field">
+                                <button type="button" class="adm-btn adm-btn--ghost" id="btn-ajustar-stock">Aplicar movimiento</button>
+                            </div>
+                        </div>
+                        <small style="color:var(--adm-muted);font-size:11px;margin-top:6px;display:block;">Positivo suma, negativo resta. Cada movimiento queda registrado con su motivo. La cantidad nunca queda negativa.</small>
                     </div>
                 </div>
 

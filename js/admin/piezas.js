@@ -6,6 +6,7 @@ import adminDb from './db.js';
 import { admToast, admConfirm, initSidebar, esc, requireAuth, hasRole, errorMessage } from './shared.js';
 import { pmark, psummary } from '../core/perf-probe.js';   // sonda TODO-33 (gateada; no-op si off)
 import { initCalculadora } from './calculadora.js';        // B1 paso 2: calculadora de precio por peso
+import invService from '../inventario-service.js';         // TODO-40 v3: stock CF-only (ajustar / cambiar tipo)
 
 let _allPieces = [];
 let _query     = '';
@@ -14,6 +15,9 @@ let _filterFeatured = '';
 // _version of the piece currently loaded in the modal. Null for new pieces.
 // Used as the optimistic-lock baseline on save.
 let _editingVersion = null;
+// stockType the modal loaded with (TODO-40 v3). handleSave compares against the select to detect
+// a type change in EDIT mode → routes it to the CF cambiarTipoPieza (the form never mutates cantidad/estado).
+let _editingStockType = null;
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
@@ -186,22 +190,78 @@ function initModal() {
         e.target.dataset.manual = e.target.value ? '1' : '';
     });
 
-    // B1 paso 1: "Por encargo (se fabrica)" no tiene stock finito → la cantidad no aplica (se deshabilita).
+    // TODO-40 v3: el tipo de stock condiciona la casilla Cantidad y el control de "mover stock".
     document.getElementById('f-stocktype').addEventListener('change', syncStockFields);
+    // Ajuste de stock (reabasto/merma/…) → CF ajustarStock (la cantidad es CF-only).
+    document.getElementById('btn-ajustar-stock')?.addEventListener('click', handleAjusteStock);
 
     initImageUpload();
 }
 
-// Refleja el tipo de stock en la casilla Cantidad: "por encargo" → deshabilitada y vacía (se fabrica,
-// no hay unidades en inventario); "finito" → habilitada (≥1). Se llama al abrir el modal y al cambiar el select.
+// Refleja el tipo de stock (enum 3) en la casilla Cantidad y muestra/oculta el control de mover stock.
+// Reglas (modelo v3): `encargo` no tiene unidades; `cantidad` es STOCK TRANSACCIONAL (CF-only) → en
+// EDICIÓN se muestra de solo lectura y se mueve con la CF; en CREACIÓN es la cantidad INICIAL editable.
+// Se llama al abrir el modal y al cambiar el select.
 function syncStockFields() {
-    const stockType = document.getElementById('f-stocktype');
-    const cantidad  = document.getElementById('f-cantidad');
-    if (!stockType || !cantidad) return;
-    const esEncargo = stockType.value === 'encargo';
-    cantidad.disabled = esEncargo;
-    if (esEncargo) cantidad.value = '';
-    else if (!cantidad.value) cantidad.value = '1';
+    const stockTypeEl = document.getElementById('f-stocktype');
+    const cantidadEl  = document.getElementById('f-cantidad');
+    const hintEl      = document.getElementById('f-cantidad-hint');
+    const adjustEl    = document.getElementById('stock-adjust');
+    const idEl        = document.querySelector('#piece-form [name="id"]');
+    if (!stockTypeEl || !cantidadEl) return;
+
+    const isEdit    = !!(idEl && idEl.value);
+    const esEncargo = stockTypeEl.value === 'encargo';
+
+    if (esEncargo) {
+        cantidadEl.disabled = true;
+        cantidadEl.value = '';
+        if (hintEl) hintEl.textContent = 'Por encargo: no hay unidades en inventario (se fabrica al pedir).';
+    } else if (isEdit) {
+        // finito*: en edición la cantidad es CF-only → solo lectura; se cambia con "Mover el stock".
+        cantidadEl.disabled = true;
+        if (hintEl) hintEl.textContent = 'La cantidad se cambia con "Mover el stock" (abajo), no a mano.';
+    } else {
+        // finito* al crear: cantidad inicial editable.
+        cantidadEl.disabled = false;
+        if (!cantidadEl.value) cantidadEl.value = '1';
+        if (hintEl) hintEl.textContent = 'Cantidad inicial de la pieza (luego se ajusta desde aquí).';
+    }
+
+    // El control de mover stock solo aplica a una pieza física YA guardada (necesita su id para la CF).
+    if (adjustEl) adjustEl.hidden = !(isEdit && !esEncargo);
+}
+
+// Mueve el stock de una pieza física por la CF (delta firmado + motivo, auditado en el ledger). La
+// cantidad NUNCA la edita el cliente a mano (las reglas la bloquean): esta es la vía legítima.
+async function handleAjusteStock() {
+    const form    = document.getElementById('piece-form');
+    const pieceId = form.querySelector('[name="id"]')?.value;
+    if (!pieceId) return;   // solo piezas ya guardadas
+
+    const deltaEl  = document.getElementById('f-ajuste-delta');
+    const motivoEl = document.getElementById('f-ajuste-motivo');
+    const btn      = document.getElementById('btn-ajustar-stock');
+    const delta    = parseInt(deltaEl?.value, 10);
+    if (!Number.isInteger(delta) || delta === 0) {
+        admToast('Indica cuántas unidades sumar (+) o restar (−).', 'danger');
+        deltaEl?.focus();
+        return;
+    }
+
+    btn.disabled = true;
+    try {
+        const res = await invService.ajustarStock({ pieceId, delta, motivo: motivoEl.value });
+        const cantidadEl = document.getElementById('f-cantidad');
+        if (cantidadEl) cantidadEl.value = res.cantidad;   // refleja la nueva cantidad (solo lectura)
+        if (deltaEl) deltaEl.value = '';
+        admToast(`Stock actualizado: ${res.cantidad} unidad${res.cantidad === 1 ? '' : 'es'}.`);
+    } catch (err) {
+        console.error('[Admin] ajustarStock failed:', err);
+        admToast(errorMessage(err, 'No se pudo ajustar el stock.'), 'danger');
+    } finally {
+        btn.disabled = false;
+    }
 }
 
 function initImageUpload() {
@@ -354,6 +414,7 @@ async function openModal(id = null) {
     _uploadedImages = [];
     _uploadedLqips  = [];
     _editingVersion = null;
+    _editingStockType = null;
 
     if (id) {
         const piece = _allPieces.find(p => p.id === id);
@@ -365,6 +426,8 @@ async function openModal(id = null) {
         // send this back as opts.expectedVersion so the transaction can abort
         // if another admin wrote to the same piece in the meantime.
         _editingVersion = typeof piece._version === 'number' ? piece._version : null;
+        // Baseline del tipo de stock (TODO-40 v3): si cambia al guardar, handleSave lo enruta a la CF.
+        _editingStockType = piece.stockType || 'finito';
 
         if (piece.images?.length) {
             _uploadedImages = [...piece.images];
@@ -405,9 +468,11 @@ function populateForm(form, piece) {
     form.querySelector('[name="priceLabel"]').value  = piece.priceLabel || 'Consultar precio';
     form.querySelector('[name="price"]').value       = piece.price ?? '';
 
-    // B1 paso 1: inventario/clasificación (default tolerante a piezas legacy sin estos campos).
+    // TODO-40 v3: inventario/clasificación (default tolerante a piezas legacy sin estos campos).
+    // cantidad puede ser 0 (mostrar el real) o null (encargo → syncStockFields la vacía).
     form.querySelector('[name="stockType"]').value   = piece.stockType || 'finito';
-    form.querySelector('[name="cantidad"]').value    = (piece.cantidad ?? 1);
+    form.querySelector('[name="visibilidad"]').value = piece.visibilidad || 'publica';
+    form.querySelector('[name="cantidad"]').value    = (piece.cantidad ?? '');
     form.querySelector('[name="gender"]').value      = piece.gender || '';
 
     const specs = piece.specs || {};
@@ -473,15 +538,17 @@ async function handleSave() {
     // Tallas disponibles (bug-1): array que controla Kary. Vacío → la pieza muestra "a medida".
     const sizes = get('sizes').split(',').map(s => s.trim()).filter(Boolean);
 
-    // B1 paso 1: inventario. stockType = enum del select (default finito). cantidad = int>=0
-    // (default 1; la regla exige int). gender = OPCIONAL (se OMITE vacío: '' no está en el enum
-    // → la regla lo rechazaría, como con price).
-    const stockType = get('stockType') || 'finito';
-    const cantidadNum = parseInt(get('cantidad'), 10);
-    const cantidad = (Number.isInteger(cantidadNum) && cantidadNum >= 0) ? cantidadNum : 1;
+    // TODO-40 v3: inventario/clasificación. stockType (enum 3) y cantidad son STOCK TRANSACCIONAL.
+    //  · CREATE: el admin fija tipo + cantidad inicial (pieceCreateValid los acepta; encargo → sin cantidad).
+    //  · UPDATE: NO se envían — cantidad/estado son CF-only; el merge preserva cantidad (pieceCantidadUnchanged)
+    //    y el cambio de tipo se enruta a la CF cambiarTipoPieza (purga D6 + estado derivado). visibilidad
+    //    (publica/privada) la controla Kary en ambos casos. gender = OPCIONAL (se OMITE vacío).
+    const isNew       = !editing;                  // `editing` (= get('id')) ya viene de los checks de arriba
+    const stockType   = get('stockType') || 'finito';
+    const visibilidad = get('visibilidad') || 'publica';
 
     const piece = {
-        id:          get('id') || null,
+        id:          editing || null,
         code,
         name,
         slug:        get('slug'),
@@ -489,8 +556,7 @@ async function handleSave() {
         description: get('description'),
         badge:       get('badge') || null,
         featured:    form.querySelector('[name="featured"]').checked,
-        stockType,
-        cantidad,
+        visibilidad,
         priceLabel:  get('priceLabel') || 'Consultar precio',
         specs,
         sizes,       // array (posiblemente vacío) — vacío = "a medida" en el detalle
@@ -500,6 +566,15 @@ async function handleSave() {
 
     const genderVal = get('gender');
     if (genderVal) piece.gender = genderVal;
+
+    if (isNew) {
+        piece.stockType = stockType;
+        // encargo → cantidad AUSENTE (la regla lo exige); finito* → cantidad inicial int≥0 (default 1).
+        if (stockType !== 'encargo') {
+            const cantidadNum = parseInt(get('cantidad'), 10);
+            piece.cantidad = (Number.isInteger(cantidadNum) && cantidadNum >= 0) ? cantidadNum : 1;
+        }
+    }
 
     if (!piece.id) delete piece.id;
 
@@ -516,8 +591,19 @@ async function handleSave() {
 
     try {
         const saved = await adminDb.savePiece(piece, {
-            expectedVersion: piece.id ? _editingVersion : undefined,
+            expectedVersion: isNew ? undefined : _editingVersion,
         });
+        // UPDATE: si Kary cambió el tipo de stock, la transición (purga cantidad / estado derivado) la
+        // hace SOLO la CF (cantidad es CF-only). savePiece va primero (candado optimista); la CF después.
+        if (!isNew && stockType !== _editingStockType) {
+            try {
+                await invService.cambiarTipoPieza({ pieceId: editing, nuevoStockType: stockType });
+            } catch (err) {
+                console.error('[Admin] cambiarTipoPieza failed:', err);
+                admToast(errorMessage(err, 'Se guardaron los datos, pero no se pudo cambiar el tipo de stock. Reintenta el cambio de tipo.'), 'danger', 6000);
+                return;   // no cerramos: Kary ve el error y reintenta solo el cambio de tipo
+            }
+        }
         closeModal();
         admToast(`"${saved.name}" guardada correctamente`);
     } catch (err) {

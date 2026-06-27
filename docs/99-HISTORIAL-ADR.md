@@ -1928,3 +1928,14 @@ Gate opcional para el kernel (lo decide cars): un check trivial "toda L-NN cuyo 
 - **134.5 Código**: `catalogo.js` la TARJETA ahora muestra el badge por pieza (`p.tag || p.badge`, antes solo la ficha). Cache v42→v43. `vite build` VERDE.
 - **134.6 No-regresión**: updateMask por campo → preserva todo lo no tocado; 32 piezas + 7 colecciones verificadas en la respuesta del MCP; build verde; `brain:check` sano.
 - **134.7 Doctrina**: la voz solo a lo verificable; rubí/zafiro/diamante NO son colombianos → cero claim de origen (solo esmeralda lleva `origin:Colombia`); cero-demo; SSoT (badge en un campo, render con fallback). Daniel = autoridad de gusto de marca (no comité para nombres). PEND: precios + imágenes IA (operativo Daniel). [OPUS-4.8] [HONOR]
+
+## 2026-06-27 — §135 Copy definitivo de las 32 piezas (consejo externo Gemini, verificado e implementado)
+
+> Daniel: el copy de §134 salió "cavernícola" (staccato + cierre formulaico). "Apóyate en Gemini que da textos brutales."
+
+- **135.1 Problema**: la fórmula de "3 movimientos cortos" (§134) produjo copy TELEGRÁFICO + cierre repetido en cada pieza. Faltaba profundidad/fluidez/calidez (`[[feedback_copy_marca_profundidad]]`). Daniel también intuyó que los nombres de una palabra podían sonar escuetos.
+- **135.2 Flujo (consejo externo)**: prompt a Gemini (`[[feedback_consejo_externo_readonly]]`: asesora, NO edita) → bóveda `2026-06-27-PROMPT-gemini-copy-piezas` + `…-RESPUESTA`. Gemini elevó las 32 descripciones (prosa cálida de 2-4 frases, sin cierre formulaico) + evolucionó los nombres a **DOS palabras** (micro-poema: Velo de Medianoche, Verde Manglar, Primer Latido, Ecos de Bóvedas, Fina Escarcha…).
+- **135.3 VERIFICACIÓN (Claude, no tragar a ciegas)**: cero "Natural"; SOLO esmeralda = colombiana (rubí/zafiro/diamante sin claim de origen; "Caribe/Cartagena" en zafiros = metáfora de color, no de mina); certificación tejida natural (32 cierres distintos, no formulaicos); quilates envueltos en lenguaje ("casi cinco quilates", no spec crudo); gema/talla/tipo correctos por pieza; COP. **PASA**.
+- **135.4 Implementación**: 32 piezas `name`+`description` reescritas vía MCP `firestore_update_document` (updateMask → preserva specs/badge/featured/imágenes). EN VIVO. **Slugs INTACTOS** (las URLs no cambian; el `name` es solo display).
+- **135.5 No-regresión**: badge/featured/specs/imágenes intactos; data-only (sin código, sin deploy). Skill `catalogo-voz-bersaglio` corregida (§2 nombres = 2 palabras; §3 ya corregida a prosa cálida).
+- **135.6 Doctrina**: Gemini da copy "brutal" PERO Claude VERIFICA contra las reglas duras antes de aplicar (consejo externo asesora; Claude decide/implementa). Daniel = autoridad de gusto de marca (aprobó la evolución a 2 palabras — era su propia intuición). [OPUS-4.8] [HONOR]

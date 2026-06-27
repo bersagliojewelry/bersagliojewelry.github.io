@@ -6,11 +6,11 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v41 — B1 paso 6: bruto/neto + export al contador. Botón "Exportar contador" en el
-// Mostrador descarga un CSV de las ventas (bruto exacto + comisión Wompi + retenciones + neto;
-// tasas param-driven, default "verificar" hasta el contador; calcularNeto puro). Anuladas = neto 0.
-// (v40 = anular + cierre de caja §129; v39 = confirmar pago §128.)
-const CACHE_NAME    = 'bersaglio-v41';
+// Bumped to v42 — Eval marca (§133): footer con enlaces de colección VÁLIDOS (3 estaban rotos:
+// topos-aretes/dijes-colgantes/argollas → aretes/dijes/argollas-de-matrimonio), etiqueta de "sin
+// precio" UNIFICADA (catálogo/ficha/relacionados leen piece.priceLabel; muere "— Editorial —" y
+// "Bajo consulta"), y campo slug OCULTO en el panel de piezas (TODO-45a). (v41 = bruto/neto + export.)
+const CACHE_NAME    = 'bersaglio-v42';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

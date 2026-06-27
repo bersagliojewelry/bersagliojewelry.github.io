@@ -10,10 +10,10 @@
 
 > 🎉 **CRM + Fase M EN PROD** (§47-§82). ⚙️ **OPUS 4.8 interino** (marcar `[OPUS-4.8]` · `feedback_opus_interino`).
 >
-> **🔚 SESIÓN CERRADA (2026-06-27).** **Catálogo con VOZ DE MARCA EN VIVO**: eval integral §133 → 32 piezas + 9 destacadas + 7 colecciones §134 → copy elevado con **Gemini** (nombres 2 palabras + descripciones cálidas) + Topos→Aretes §135. Todo MERGEADO a main (v43). Detalle → ADRs §133/§134/§135 + bóveda.
-> **⚠️ 2 ANOTACIONES de cierre → TODO-53** (el copy de Gemini NO valida el TIPO de pieza; barrido pendiente) **y TODO-54** (campo Origen del panel: verificar visibilidad). ↓ detalle.
-> **🔜 Próximo (sesión fresca)**: **TODO-53** (copy por tipo) · **TODO-54** (origen panel) · **TODO-47** (verdad de marca con Kary = + urgente, legal) · operativo Daniel (precios + fotos reales). Backlog TODO-48..51. Cola: F2 Wompi · TODO-41/39/37/33/35 · `[[project_comercio_pagos]]`.
-> _**MCP Firebase = escritura prod**. merge a main = Claude (autoriz. 2026-06-27). Pruebas en vivo DIFERIDAS (§130.4)._
+> **▶️ SESIÓN (2026-06-27 · tarde) — §136**: cerradas las 2 anotaciones de §135.
+> **TODO-53 ✅ (§136)**: auditoría copy↔tipo verificada (3 revisores) → 5 textos corregidos por Gemini (Manantial Secreto = cadena + 4 anillos genéricos), verificados por Claude y **EN VIVO** (Firestore). **TODO-54 ✅** (campo origen = no-bug, data-driven). Origen honesto cierra **TODO-51**. ⚠️ Prerender SSG (SEO) hornea los 5 en el próximo deploy de `main` — no urgente.
+> **🔜 Próximo**: **TODO-47** (verdad de marca con Kary, legal = + urgente) · operativo Daniel (precios + fotos). Backlog TODO-48..51. Cola: F2 Wompi · TODO-41/39/37/33/35.
+> _**MCP Firebase = escritura prod**. merge a main = Claude. Gemini asesora, Claude implementa (`[[feedback_consejo_externo_readonly]]`). Pruebas en vivo DIFERIDAS (§130.4)._
 
 ---
 
@@ -21,8 +21,7 @@
 
 | ID | Item | Estado | Bloqueo |
 |---|---|---|---|
-| TODO-03 | (Opcional) headers de `99` a formato numerado `## NN.` (hoy por fecha, válido) | 🔲 | baja |
-| TODO-04 | (Opcional) anomalías 🔧 en `skills/` (formatos no-skill) | 🔲 | baja |
+| TODO-03/04 | (Opcional, baja) headers `99` → `## NN.` (hoy por fecha) · anomalías 🔧 en `skills/` (formatos no-skill) | 🔲 | baja |
 | TODO-07 | **Contenido real web**: reseñas Google Maps (Nosotros), Films, feed Redes (`js/data/home-media.js`, `js/pages/nosotros.js`) | 🔲 | cliente entrega datos |
 | TODO-08 | **Hardening Fase 2**: Tier A ✅; pend. CSP/reglas/claims (Tier B/C) → `41-SEGURIDAD §1.5` | 🟡 | Tier B = emulador+deploy gated |
 | TODO-09 | **Fase M** M0→M6 ✅ EN PROD (§78-§80); ACUERDOS R1-R5+A8 GATEADOS/inertes — encender=Daniel. Restan: M7·M2c·ASESOR/RBAC (TODO-19). | 🟡 | encender R6 (Daniel) |
@@ -45,9 +44,7 @@
 | TODO-49 | **Legal e-commerce** — consentimiento habeas data en forms + verificar privacidad/terminos (retracto). Skill `legal-colombia`. Prereq Wompi. | 🔲 | pre-Wompi |
 | TODO-50 | **Catálogo de lujo** — imagen real (no certificado) + filtros gema/tipo + taxonomía canónica + badges por gema. Detalle → §133.2(B/C). | 🔲 | tras TODO-44 |
 | TODO-51 | **Origen honesto de gemas** no-colombianas (rubí/zafiro/diamante; el sitio sugiere todo Muzo/Chivor). | 🔲 | con TODO-44 |
-| TODO-53 | **Barrido DETALLADO del copy de las 32** (§135, Daniel): el copy de Gemini es cálido pero NO valida el TIPO de cada pieza ("Manantial Secreto" es CADENA, suena a dije). Revisar specs+tipo+imagen pieza por pieza y pulir el lenguaje propio de cada una. `[[feedback_copy_marca_profundidad]]` | 🔲 | sesión fresca |
-| TODO-54 | **Visibilidad del campo Origen en el panel** (§135, Daniel): "Origen: Colombia" sale en la pieza pero Daniel no halla dónde editarlo. El campo SÍ existe (`admin-piezas.html:277`, "Origen (opcional)", `specs.origin`) → verificar live por qué no se ve (¿abajo del fold? label?) y hacerlo más visible. NO es campo faltante. | 🔲 | verificar live |
-> ✅ **Cerrados recientes**: **TODO-52 copy definitivo Gemini (§135)** · **TODO-44 voz de marca (§134)** · TODO-45/46 (§133) · TODO-40 + 32 piezas (§131/§132). Histórico → ADRs §88-§135 + `00`/`99`. Pend operativo Daniel: precios + imágenes IA (panel v3).
+> ✅ **Cerrados recientes**: **TODO-53 copy por tipo (§136)** (auditoría verificada → 5 corregidas vía Gemini, EN VIVO) · **TODO-54 campo Origen (§136)** (no era bug: data-driven `admin-piezas.html:276`→`pieza.js:133`/`:137`; Daniel lo deja al fondo de "Especificaciones") · **TODO-52 (§135)** · **TODO-44 (§134)** · TODO-45/46 (§133) · TODO-40 + 32 piezas (§131/§132). Histórico → ADRs §88-§136 + `00`/`99`. Pend operativo Daniel: precios + imágenes IA.
 
 ---
 
@@ -60,5 +57,6 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño · Fase 2 hardening (Tier C pend.) 
 
 > Podada (GC) 2026-06-26. Histórico → ADR §37-§130 + bóveda `2026-06-*`. Lecciones → `30`/`31`/`32`.
 >
-> **▶️ Sesión §133-§135 (2026-06-27):** eval integral de marca (comité 5 lentes) → 32 piezas + 7 colecciones con voz de marca + 9 destacadas + copy elevado con **Gemini** (nombres 2 palabras + descripciones cálidas, verificadas por Claude) + Topos→Aretes. Skill `catalogo-voz-bersaglio` creada/corregida. Decisiones + detalle → foco ↑ + ADRs §133/§134/§135 + bóveda. Cierre: 2 anotaciones → TODO-53 (copy por tipo) / TODO-54 (origen panel). `[[feedback_copy_marca_profundidad]]`
+> **Sesión §133-§135 (2026-06-27):** voz de marca de las 32 + 7 colecciones + 9 destacadas (Gemini) + Topos→Aretes; skill `catalogo-voz-bersaglio`. Detalle → ADRs §133/§134/§135 + bóveda. `[[feedback_copy_marca_profundidad]]`
+> **▶️ Sesión TODO-53/54 (2026-06-27 tarde):** auditoría copy↔tipo de las 32 (3 revisores, bóveda) → 1 corrección (Manantial Secreto) + 4 pulidos; Gemini pulió → Claude verificó → **5 EN VIVO** (§136); TODO-54 resuelto (campo origen = no-bug, data-driven). Lección Workflow: datos grandes EMBEBIDOS en el script, NO por `args` (falla `pieces.map is not a function`). Crudo → `research-archive/2026-06-27-audit-copy-tipo-workflow-w0sv0p09p.json`.
 > **🚦 Reglas vivas**: `arquitecto-software` SIEMPRE · Bersaglio = 100% COP (§127) · NO inventado/no-verificable (`[[feedback_no_demo_en_index]]`) · la voz solo se presta a lo verificable · pruebas en vivo SOLO al final (§130.4) · W-11/mockup en decisión-diseño · `[[feedback_workflows_acotados]]` · `[[feedback_reintentar_agentes_no_saltar_flujo]]`. Cola: TODO-47..51 · F2 Wompi · TODO-37/39/33/35.

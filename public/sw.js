@@ -6,11 +6,10 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v42 — Eval marca (§133): footer con enlaces de colección VÁLIDOS (3 estaban rotos:
-// topos-aretes/dijes-colgantes/argollas → aretes/dijes/argollas-de-matrimonio), etiqueta de "sin
-// precio" UNIFICADA (catálogo/ficha/relacionados leen piece.priceLabel; muere "— Editorial —" y
-// "Bajo consulta"), y campo slug OCULTO en el panel de piezas (TODO-45a). (v41 = bruto/neto + export.)
-const CACHE_NAME    = 'bersaglio-v42';
+// Bumped to v43 — §134: voz de marca de las 32 piezas (nombre evocador + descripción de 3
+// movimientos + badge por gema, escritos a Firestore) + el badge por pieza ahora se ve en la
+// TARJETA del catálogo (p.tag || p.badge). (v42 = footer/precio/slug §133.)
+const CACHE_NAME    = 'bersaglio-v43';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

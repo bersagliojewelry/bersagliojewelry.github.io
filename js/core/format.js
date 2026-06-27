@@ -9,16 +9,33 @@ const COP_FORMATTER = new Intl.NumberFormat('es-CO', {
     maximumFractionDigits: 0,
 });
 
-/** Format number as Colombian peso. Returns "Cotización" for falsy / 0. */
+/**
+ * Etiqueta ÚNICA de precio-bajo-consulta (Daniel §138): consolida "Cotización" + "Consultar precio"
+ * en UN solo rótulo claro para el cliente. SSoT — cambiar aquí cambia index/catálogo/ficha a la vez.
+ */
+export const PRICE_ON_REQUEST = 'Precio a consultar';
+
+/** Format number as Colombian peso. Returns PRICE_ON_REQUEST for falsy / 0. */
 export function formatCOP(amount) {
-    if (!amount || !Number.isFinite(Number(amount))) return 'Cotización';
+    if (!amount || !Number.isFinite(Number(amount))) return PRICE_ON_REQUEST;
     return COP_FORMATTER.format(Number(amount));
 }
 
 /** Short version: "$ 12.400.000" without the "COP" suffix. */
 export function format$(amount) {
-    if (!amount || !Number.isFinite(Number(amount))) return 'Cotización';
+    if (!amount || !Number.isFinite(Number(amount))) return PRICE_ON_REQUEST;
     return '$ ' + Number(amount).toLocaleString('es-CO');
+}
+
+/**
+ * Precio a mostrar de una pieza (SSoT § index/catálogo/ficha leen LO MISMO, §138):
+ * precio real → "$ …"; sin precio → la etiqueta del DATO (priceLabel) o el rótulo único.
+ */
+export function priceDisplay(piece) {
+    const price = piece && piece.price;
+    if (price && Number.isFinite(Number(price))) return format$(price);
+    const lbl = piece && piece.priceLabel && String(piece.priceLabel).trim();
+    return lbl || PRICE_ON_REQUEST;
 }
 
 /** Convert "Anillo Trinity Esmeralda" → "anillo-trinity-esmeralda". */

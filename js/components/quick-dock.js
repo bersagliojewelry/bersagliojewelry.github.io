@@ -5,7 +5,7 @@
  * abre una franja glass de herramientas (Buscar · WhatsApp · Cita · Favoritos · Arriba).
  * Cierra al hacer clic afuera o con Escape. Port vanilla de Overlays.jsx (QuickDock).
  *
- * Componente GLOBAL: boot.js lo monta en todas las páginas públicas.
+ * Componente del INDEX: boot.js lo monta SOLO en el index (Daniel §138; antes era global).
  */
 import { html, escape } from '../core/html.js';
 import { data } from '../core/data.js';

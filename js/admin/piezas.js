@@ -441,7 +441,7 @@ async function openModal(id = null) {
         _uploadedLqips = piece.imageLqip ? [piece.imageLqip] : [];
     } else {
         titleEl.textContent = 'Nueva pieza';
-        form.querySelector('[name="priceLabel"]').value = 'Consultar precio';
+        form.querySelector('[name="priceLabel"]').value = '';   // §138: vacío → rótulo único "Precio a consultar"
     }
 
     renderImagePreviews();
@@ -465,7 +465,7 @@ function populateForm(form, piece) {
     form.querySelector('[name="description"]').value = piece.description || '';
     form.querySelector('[name="badge"]').value       = piece.badge || '';
     form.querySelector('[name="featured"]').checked  = !!piece.featured;
-    form.querySelector('[name="priceLabel"]').value  = piece.priceLabel || 'Consultar precio';
+    form.querySelector('[name="priceLabel"]').value  = piece.priceLabel || '';   // §138: vacío → rótulo único
     form.querySelector('[name="price"]').value       = piece.price ?? '';
 
     // TODO-40 v3: inventario/clasificación (default tolerante a piezas legacy sin estos campos).
@@ -516,14 +516,14 @@ async function handleSave() {
         return;
     }
 
-    // Tope de 9 destacadas (Daniel 2026-06-26): la home muestra hasta 9. Al intentar
-    // destacar una 10ª, se bloquea con mensaje (no permite, hay que quitar una primero).
+    // Tope de 15 destacadas (Daniel §138): la home muestra hasta 15. Al intentar
+    // destacar una 16ª, se bloquea con mensaje (no permite, hay que quitar una primero).
     // Solo aplica si ESTA pieza pasa a destacada y aún no contaba como tal.
     const wantsFeatured = form.querySelector('[name="featured"]').checked;
     if (wantsFeatured) {
         const featuredCount = _allPieces.filter(p => p.featured && p.id !== editing).length;
-        if (featuredCount >= 9) {
-            admToast('Ya hay 9 piezas destacadas (el máximo). Quita una destacada antes de agregar otra.', 'danger', 5000);
+        if (featuredCount >= 15) {
+            admToast('Ya hay 15 piezas destacadas (el máximo). Quita una destacada antes de agregar otra.', 'danger', 5000);
             form.querySelector('[name="featured"]').focus();
             return;
         }
@@ -557,7 +557,7 @@ async function handleSave() {
         badge:       get('badge') || null,
         featured:    form.querySelector('[name="featured"]').checked,
         visibilidad,
-        priceLabel:  get('priceLabel') || 'Consultar precio',
+        priceLabel:  get('priceLabel') || '',   // §138: vacío → la web muestra el rótulo único "Precio a consultar"
         specs,
         sizes,       // array (posiblemente vacío) — vacío = "a medida" en el detalle
         images:      _uploadedImages.length ? [..._uploadedImages] : [],
@@ -582,7 +582,7 @@ async function handleSave() {
     // firestore.rules) exigen "ausente o número": un `price: null` (campo vacío) era
     // RECHAZADO con "Missing or insufficient permissions" al guardar. Solo se incluye
     // cuando es un número válido (incluido 0); vacío → se OMITE la clave → la regla pasa
-    // y la pieza se guarda con "Consultar precio". (savePiece borra undefined, no null.)
+    // y la pieza se guarda con priceLabel vacío → la web muestra el rótulo único "Precio a consultar" (§138).
     const priceNum = parseFloat(get('price'));
     if (Number.isFinite(priceNum)) piece.price = priceNum;
 

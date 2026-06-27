@@ -133,8 +133,12 @@ async function loadShell() {
         import('../analytics.js').then(m => m.initAnalytics?.()),   // GA4 + Consent Mode v2 (TODO-35 Fase C)
         import('../components/email-modal.js').then(m => m.initEmailModal?.()),
         import('../components/search-overlay.js').then(m => m.initSearchOverlay?.()),
-        import('../components/quick-dock.js').then(m => m.mountQuickDock?.()),
     ];
+    // La isla "Atajos" (quick-dock) SOLO en el index (Daniel §138): en el resto de páginas no se
+    // monta para no saturar. El index es data-page="home" (o sin atributo → fallback 'home').
+    if ((document.body.dataset.page || 'home') === 'home') {
+        tasks.push(import('../components/quick-dock.js').then(m => m.mountQuickDock?.()));
+    }
     await Promise.allSettled(tasks);
 }
 

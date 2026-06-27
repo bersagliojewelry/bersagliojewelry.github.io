@@ -11,7 +11,7 @@
  * REALES (no el timeout de 4s); un watchdog de 8s colapsa si nunca llegan (anti-carga-eterna).
  */
 import { html, escape, mount } from '../core/html.js';
-import { format$ } from '../core/format.js';
+import { priceDisplay } from '../core/format.js';
 import { data } from '../core/data.js';
 import { MIN_FEATURED } from '../core/home-sections.js';   // umbral de dignidad (SSoT cero-ficción)
 import { reservedHeight, rememberHeight } from '../core/section-reserve.js';
@@ -20,9 +20,10 @@ import { pieceUrl } from '../core/urls.js';               // SSoT URL pieza horn
 import { balancedCols } from '../core/grid-balance.js';   // reparto inteligente de columnas (sin huérfanas)
 
 // Piezas visibles en Destacadas = featured + con FOTO (la franja es un escaparate VISUAL).
-// Daniel 2026-06-23: el precio es OPCIONAL (price-on-request → format$ pinta "Cotización"); lo
-// comercial manda, una pieza sin precio igual se muestra. Lee en TIEMPO DE RENDER (live).
-const featuredPieces = () => data.getFeatured(9).filter(p => p.images?.[0] || p.image);
+// Daniel 2026-06-23: el precio es OPCIONAL (sin precio → "Precio a consultar", §138); lo comercial
+// manda, una pieza sin precio igual se muestra. Lee en TIEMPO DE RENDER (live).
+// Daniel §138: hasta 15 destacadas (antes 9) — el admin también capa en 15.
+const featuredPieces = () => data.getFeatured(15).filter(p => p.images?.[0] || p.image);
 
 // Watchdog anti-carga-eterna (ver categories.js): 8s > timeout de data.load() (4s) para dar
 // margen a redes lentas a llenar la reserva sin saltar.
@@ -59,13 +60,19 @@ function headerHtml() {
 }
 
 function contentHtml(pieces) {
-    const shown = pieces.slice(0, 9);   // Daniel 2026-06-26: hasta 9 destacadas (el admin capa en 9)
+    const shown = pieces.slice(0, 15);   // Daniel §138: hasta 15 destacadas (el admin capa en 15)
     const cols = balancedCols(shown.length, 4);   // columnas según cuántas hay (sin huérfana)
     return html`
         <div class="container">
             ${headerHtml()}
             <div class="home-featured-grid" data-featured style="--n:${cols}">
                 ${shown.map(renderFeaturedCard)}
+            </div>
+            <div class="home-featured-foot">
+                <a href="/colecciones.html" class="btn-aqua home-featured-cta">
+                    Explorar el catálogo entero
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                </a>
             </div>
         </div>`;
 }
@@ -121,7 +128,7 @@ function renderFeaturedCard(p) {
                 <div class="home-featured-card-name">${escape(p.name || 'Pieza')}</div>
                 <div class="home-featured-card-meta">${escape([stones, metal].filter(Boolean).join(' · '))}</div>
                 <div class="home-featured-card-foot">
-                    <div class="mono home-featured-card-price">${escape(format$(p.price))}</div>
+                    <div class="mono home-featured-card-price">${escape(priceDisplay(p))}</div>
                     <div class="home-featured-card-arrow">
                         Ver pieza
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>

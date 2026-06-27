@@ -10,10 +10,10 @@
 
 > 🎉 **CRM + Fase M EN PROD** (§47-§82). ⚙️ **OPUS 4.8 interino** (marcar `[OPUS-4.8]` · `feedback_opus_interino`).
 >
-> **🔬 §133 EVAL INTEGRAL DE MARCA (esta sesión).** Barrido exhaustivo (12 págs + 8 comps + 32 piezas + contenido en vivo por MCP) + comité acotado de 5 lentes (raw → bóveda `2026-06-27-eval-marca-comite`). Diagnóstico ENTREGADO; **4 decisiones de Daniel** (↓ bitácora). Detalle completo → **ADR §133**. `[[feedback_voz_de_marca_no_generico]]` · `[[feedback_workflows_acotados]]`.
-> **✅ Aplicado ya**: reseñas inventadas ELIMINADAS del doc vivo (`siteContent/nosotros.resenas=[]`); fixes de código (footer + "sin precio"→`priceLabel` + slug oculto, §133) **MERGEADOS a main (#382, `51c5655`)** → desplegando en Pages. Cache **v42**.
-> **🔜 Próximo**: backlog de marca **TODO-47..51** (verdad/SIC · reseñas reales · legal · catálogo de lujo · origen gemas). Cola: F2 Wompi · TODO-41/39/37/33/35 · `[[project_comercio_pagos]]`.
-> _Mostrador EN PROD (§122-§130). Pruebas en vivo DIFERIDAS (§130.4). **MCP Firebase = escritura prod**. merge a main = Claude (autoriz. 2026-06-27)._
+> **🔚 SESIÓN CERRADA (2026-06-27).** **Catálogo con VOZ DE MARCA EN VIVO**: eval integral §133 → 32 piezas + 9 destacadas + 7 colecciones §134 → copy elevado con **Gemini** (nombres 2 palabras + descripciones cálidas) + Topos→Aretes §135. Todo MERGEADO a main (v43). Detalle → ADRs §133/§134/§135 + bóveda.
+> **⚠️ 2 ANOTACIONES de cierre → TODO-53** (el copy de Gemini NO valida el TIPO de pieza; barrido pendiente) **y TODO-54** (campo Origen del panel: verificar visibilidad). ↓ detalle.
+> **🔜 Próximo (sesión fresca)**: **TODO-53** (copy por tipo) · **TODO-54** (origen panel) · **TODO-47** (verdad de marca con Kary = + urgente, legal) · operativo Daniel (precios + fotos reales). Backlog TODO-48..51. Cola: F2 Wompi · TODO-41/39/37/33/35 · `[[project_comercio_pagos]]`.
+> _**MCP Firebase = escritura prod**. merge a main = Claude (autoriz. 2026-06-27). Pruebas en vivo DIFERIDAS (§130.4)._
 
 ---
 
@@ -29,7 +29,7 @@
 | TODO-14 | **App Check: MONITOREO; Enforce DIFERIDO** (Daniel 2026-06-23: sin flujo alto el monitoreo no es representativo → activar SOLO con tráfico alto). Registro reparado (§58). | ⏸️ | esperar flujo alto |
 | TODO-17 | **Toda captura → CRM**: contacto→Bandeja ✅; falta newsletter (`addSubscription`→`subscriptions`) | 🔲 | tras App Check |
 | TODO-18 | **Plan operación integral §57**: semana 1 + 9 decisiones de Daniel + compuerta de adopción + campaña cartera → bóveda | 🟡 | Daniel (decisiones 1-9) |
-| TODO-33 | **Panel admin "tipo app" (fluidez)** (Decisión Fuerte). DISEÑADO (comité ×4+Gemini, veredicto `50 §5`; CRUDO→bóveda). Fase 0: **A3 menú instantáneo ✅** (`655556d`, v29) + fix VT v28 ✅ EN VIVO; pend. esqueletos/paralelizar/prefetch-asset/self-host fonts/VT-al-final. Router falso-SPA CONGELADO salvo 🟥 gate seguridad (revalidar rol/ruta) + no-leak IoC. **PAUSADO por TODO-34 (urgente).** | 🟡 | reanudar tras demo |
+| TODO-33 | **Panel admin "tipo app" (fluidez)** (Decisión Fuerte). DISEÑADO (comité ×4+Gemini, `50 §5`). A3 menú ✅ + VT ✅ (v29); pend. esqueletos/prefetch/self-host fonts/VT-al-final. Router falso-SPA CONGELADO salvo gate seguridad + IoC. PAUSADO. | 🟡 | reanudar tras demo |
 | TODO-21 | **Revisión post-Fable de `[OPUS-4.8]`** (H-08): por riesgo (dinero §81 > seguridad §65/§66 > CMS > docs); ~50 commits | 🔲 | Fable vuelve |
 | TODO-22 | **Gate-de-git en el linter** (H-06): que `brain:check` warne si el estado de deploy declarado diverge de git. Toca kernel ×3 → **cars-operador** (L-31). *§114: mitigado en parte al dejar de fijar el hash en `05`.* | 🔲 | cars-operador (kernel) |
 | TODO-23 | **Frase canónica del gate de verificación de DINERO** (H-18): Claude experto = gate; Kary = smoke POST-deploy no bloqueante. Aporte a la pasada Gemini (cars consolida) | 🔲 | Gemini |
@@ -45,6 +45,8 @@
 | TODO-49 | **Legal e-commerce** — consentimiento habeas data en forms + verificar privacidad/terminos (retracto). Skill `legal-colombia`. Prereq Wompi. | 🔲 | pre-Wompi |
 | TODO-50 | **Catálogo de lujo** — imagen real (no certificado) + filtros gema/tipo + taxonomía canónica + badges por gema. Detalle → §133.2(B/C). | 🔲 | tras TODO-44 |
 | TODO-51 | **Origen honesto de gemas** no-colombianas (rubí/zafiro/diamante; el sitio sugiere todo Muzo/Chivor). | 🔲 | con TODO-44 |
+| TODO-53 | **Barrido DETALLADO del copy de las 32** (§135, Daniel): el copy de Gemini es cálido pero NO valida el TIPO de cada pieza ("Manantial Secreto" es CADENA, suena a dije). Revisar specs+tipo+imagen pieza por pieza y pulir el lenguaje propio de cada una. `[[feedback_copy_marca_profundidad]]` | 🔲 | sesión fresca |
+| TODO-54 | **Visibilidad del campo Origen en el panel** (§135, Daniel): "Origen: Colombia" sale en la pieza pero Daniel no halla dónde editarlo. El campo SÍ existe (`admin-piezas.html:277`, "Origen (opcional)", `specs.origin`) → verificar live por qué no se ve (¿abajo del fold? label?) y hacerlo más visible. NO es campo faltante. | 🔲 | verificar live |
 > ✅ **Cerrados recientes**: **TODO-52 copy definitivo Gemini (§135)** · **TODO-44 voz de marca (§134)** · TODO-45/46 (§133) · TODO-40 + 32 piezas (§131/§132). Histórico → ADRs §88-§135 + `00`/`99`. Pend operativo Daniel: precios + imágenes IA (panel v3).
 
 ---
@@ -58,7 +60,5 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño · Fase 2 hardening (Tier C pend.) 
 
 > Podada (GC) 2026-06-26. Histórico → ADR §37-§130 + bóveda `2026-06-*`. Lecciones → `30`/`31`/`32`.
 >
-> **▶️ §133 EVAL INTEGRAL DE MARCA (2026-06-27).** Diagnóstico → Daniel; **4 decisiones**: (1) eliminar lo inventado (reseñas ✅; equipo/certs → Kary = TODO-47) + reseñas reales desde admin (TODO-48); (2) sin precios aún; (3) Claude propone 32 nombres, Daniel aprueba (TODO-44); (4) fixes seguros ✅. Todo el detalle → **ADR §133** + bóveda.
-> **▶️ §134 (mismo día):** Daniel aprobó TODO → 32 piezas + 7 colecciones en voz + 9 destacadas variadas (MCP, en vivo) + **skill `catalogo-voz-bersaglio`** (invocable). Badge en tarjeta, v43. ADR §134. **merge a main = Claude** ahora.
-> **▶️ §135 (mismo día):** copy "cavernícola" → elevado con **Gemini** (consejo externo: yo verifiqué reglas duras e implementé). 32 descripciones cálidas/fluidas + nombres a DOS palabras (Velo de Medianoche, Verde Manglar…) + Topos fusionada en Aretes. En vivo (MCP). ADR §135 + bóveda PROMPT/RESPUESTA. `[[feedback_copy_marca_profundidad]]`
+> **▶️ Sesión §133-§135 (2026-06-27):** eval integral de marca (comité 5 lentes) → 32 piezas + 7 colecciones con voz de marca + 9 destacadas + copy elevado con **Gemini** (nombres 2 palabras + descripciones cálidas, verificadas por Claude) + Topos→Aretes. Skill `catalogo-voz-bersaglio` creada/corregida. Decisiones + detalle → foco ↑ + ADRs §133/§134/§135 + bóveda. Cierre: 2 anotaciones → TODO-53 (copy por tipo) / TODO-54 (origen panel). `[[feedback_copy_marca_profundidad]]`
 > **🚦 Reglas vivas**: `arquitecto-software` SIEMPRE · Bersaglio = 100% COP (§127) · NO inventado/no-verificable (`[[feedback_no_demo_en_index]]`) · la voz solo se presta a lo verificable · pruebas en vivo SOLO al final (§130.4) · W-11/mockup en decisión-diseño · `[[feedback_workflows_acotados]]` · `[[feedback_reintentar_agentes_no_saltar_flujo]]`. Cola: TODO-47..51 · F2 Wompi · TODO-37/39/33/35.

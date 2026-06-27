@@ -30,6 +30,7 @@ Aforismos de la casa: *"un legado se susurra, no se compra" · "nuestra casa es 
 - **MIRA LA IMAGEN de cada pieza** (es lo que pidió el dueño): el `images[0]`. Si es un escaneo de
   certificado (no una foto real de la joya), NO lo uses como gancho visual y déjalo anotado para
   reemplazo (TODO imágenes IA); la foto real es del dueño.
+- ⚠️ **VALIDA EL TIPO de cada pieza (lección §135, Daniel)**: el copy DEBE reflejar la naturaleza real de SU pieza — una **cadena** se cuenta como cadena (la caída, el eslabón, lo que sostiene), un **dije** como dije, y así anillo/aretes/pulsera/topos. Revisa specs + tipo + imagen a DETALLE **pieza por pieza**; verificar las reglas duras NO basta, el texto tiene que ENCAJAR con la pieza. Nunca copy genérico aplicado igual a todas.
 - Colecciones: `firestore_query_collection` sobre `collections`.
 
 ## 2. NOMBRE de pieza — fórmula
@@ -83,6 +84,8 @@ La home muestra hasta **9** (tope duro, `admin/piezas.js`). Al elegir:
 ADR en `99` + fila en `00` + lección en `30` si aplica + actualizar `10`/`05`. Capturar qué se cambió.
 
 ## Anti-patterns (no hacer)
+- ❌ **Copy genérico-cálido cross-type** (que una CADENA se describa como dije): el texto debe encajar con el TIPO real de la pieza, revisada a detalle (§135).
+- ❌ **Copy staccato/telegráfico** o con cierre formulaico repetido — debe fluir cálido (§134).
 - ❌ Dejar el rótulo del laboratorio o la palabra "Natural" en nombre/descripción.
 - ❌ Repetir en la descripción los specs que ya están en la ficha gemológica.
 - ❌ Lujo-genérico/cliché ("obra de arte", "elegancia atemporal", "diseñados para cautivar").

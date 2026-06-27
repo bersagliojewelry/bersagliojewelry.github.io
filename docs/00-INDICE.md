@@ -180,7 +180,7 @@
 | §135 | 2026-06-27 — **Copy DEFINITIVO 32** (Gemini, verificado): descripciones cálidas + nombres a 2 palabras (Velo de Medianoche…) + Topos→Aretes. Claude verificó las reglas e implementó. TODO-52 ✅. [OPUS-4.8] | 1932 |
 | §136 | 2026-06-27 — **Auditoría copy↔tipo 32** (TODO-53/54 ✅): 27/32 coherente; 5 corregidas vía Gemini+verif (Manantial Secreto cadena→dije + 4 anillos); origen honesto cierra TODO-51. [OPUS-4.8] | 1943 |
 | §137 | 2026-06-27 — **Repaso de SIGNIFICADO de las 32** (Daniel): principio "el alma/historia" → skill `catalogo-voz §3`; las 32 reescritas (Gemini, verif: tipo §136 intacto + origen honesto), EN VIVO. 3 capas = voz Bersaglio. [OPUS-4.8] | 1955 |
-| §138 | 2026-06-27 — **Ajustes web** (Daniel): 9→15 destacadas + botón al final · isla solo en index (verif. live) · etiqueta única "Precio a consultar" (`priceDisplay` SSoT, elimina "Cotización"/"Consultar precio"; 32 migradas). SW v44. [OPUS-4.8] | 1967 |
+| §138 | 2026-06-27 — **Ajustes web** (Daniel): 9→16 destacadas (col. de 4) + botón al final · isla solo en index (verif. live) · etiqueta única "Precio a consultar" (`priceDisplay` SSoT, elimina "Cotización"/"Consultar precio"; 32 migradas). SW v45. [OPUS-4.8] | 1967 |
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §57+ al historial,
 > añadir su fila aquí con la línea de inicio (`Select-String` o `grep`).

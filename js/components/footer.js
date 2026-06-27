@@ -24,9 +24,9 @@ const COLUMNS = [
         title: 'Colecciones',
         links: [
             { label: 'Anillos',  href: '/colecciones.html?col=anillos' },
-            { label: 'Aretes',   href: '/colecciones.html?col=topos-aretes' },
-            { label: 'Collares', href: '/colecciones.html?col=dijes-colgantes' },
-            { label: 'Argollas', href: '/colecciones.html?col=argollas' },
+            { label: 'Aretes',   href: '/colecciones.html?col=aretes' },
+            { label: 'Dijes',    href: '/colecciones.html?col=dijes' },
+            { label: 'Argollas', href: '/colecciones.html?col=argollas-de-matrimonio' },
         ],
     },
     {

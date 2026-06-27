@@ -88,10 +88,14 @@ function descriptionFor(piece) {
     return d;
 }
 
-// Precio unificado: "Bajo consulta" cuando no hay precio (alta joyería = mayoría sin precio público).
-// Una sola etiqueta de marca en detalle Y relacionados (antes el related decía "Cotización").
-function priceDisplay(price) {
-    return (price && Number.isFinite(Number(price))) ? format$(price) : 'Bajo consulta';
+// Precio unificado (§133): cuando no hay precio, se muestra la etiqueta del DATO (piece.priceLabel,
+// que la dueña edita en el panel = SSoT), no un string hardcodeado. Antes divergían "— Editorial —"
+// (catálogo) vs "Bajo consulta" (ficha); ahora catálogo, ficha y relacionados leen la MISMA fuente.
+function priceDisplay(piece) {
+    const price = piece && piece.price;
+    return (price && Number.isFinite(Number(price)))
+        ? format$(price)
+        : ((piece && piece.priceLabel) || 'Consultar precio');
 }
 
 // Ficha técnica DINÁMICA agrupada — "Carta Gemológica" (TODO-34). Estructura curada de
@@ -213,7 +217,7 @@ function renderInfo(piece) {
             <h1 class="pz-info-name">${escape(piece.name || 'Pieza')}</h1>
 
             <div class="pz-price-row">
-                <div class="${hasPrice ? 'mono pz-price' : 'pz-price pz-price--consulta'}">${escape(priceDisplay(piece.price))}</div>
+                <div class="${hasPrice ? 'mono pz-price' : 'pz-price pz-price--consulta'}">${escape(priceDisplay(piece))}</div>
                 ${hasPrice ? html`<div class="pz-iva">IVA incluido</div>` : ''}
             </div>
 
@@ -389,7 +393,7 @@ function renderRelated(piece) {
                             </div>
                             <div class="pz-related-body">
                                 <div class="pz-related-name">${escape(p.name || 'Pieza')}</div>
-                                <div class="${p.price ? 'mono pz-related-price' : 'pz-related-price pz-related-price--consulta'}">${escape(priceDisplay(p.price))}</div>
+                                <div class="${p.price ? 'mono pz-related-price' : 'pz-related-price pz-related-price--consulta'}">${escape(priceDisplay(p))}</div>
                             </div>
                         </a>`;
                 })}

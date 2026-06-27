@@ -107,10 +107,14 @@
                             <input class="adm-input" id="f-name" name="name" required placeholder="Ej. Anillo Muzo Imperial">
                         </div>
                     </div>
-                    <div class="adm-form-row" style="margin-top:12px;">
+                    <!-- Slug URL: se AUTOGENERA del nombre (piezas.js) y se preserva al editar. Oculto a
+                         Kary (TODO-45a): editarlo a mano generaba slugs que no concuerdan con la categoría
+                         y rompía enlaces del catálogo. El input permanece en el DOM para que el
+                         autogenerado lo siga poblando; no es editable a mano. -->
+                    <div class="adm-form-row" style="margin-top:12px;" hidden>
                         <div class="adm-field">
-                            <label for="f-slug">Slug URL <span style="color:var(--adm-danger)">*</span></label>
-                            <input class="adm-input" id="f-slug" name="slug" required placeholder="anillo-muzo-imperial">
+                            <label for="f-slug">Slug URL</label>
+                            <input class="adm-input" id="f-slug" name="slug" placeholder="anillo-muzo-imperial">
                         </div>
                     </div>
                     <div class="adm-form-row" style="margin-top:12px;">

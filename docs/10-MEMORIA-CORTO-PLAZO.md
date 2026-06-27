@@ -10,8 +10,7 @@
 
 > 🎉 **CRM + Fase M EN PROD** (§47-§82). ⚙️ **OPUS 4.8 interino** (marcar `[OPUS-4.8]` · `feedback_opus_interino`).
 >
-> **▶️ SESIÓN (2026-06-27 · tarde) — §136 + §137**: cerradas las 2 anotaciones de §135 + repaso de SIGNIFICADO.
-> **TODO-53/54 ✅ (§136)** (auditoría copy↔tipo + campo origen; cierra TODO-51). Luego **§137**: Daniel pidió la capa del SIGNIFICADO ("cada joya tiene una historia") → principio grabado en skill `catalogo-voz-bersaglio §3` + **las 32 reescritas con Gemini** (significado→materia+tipo→herencia), verificadas (coherencia-tipo §136 intacta + origen honesto) y **EN VIVO** (Firestore). Catálogo = **3 capas** (tipo+cálido+significado). ⚠️ Auto-crítica: cierres uniformes "heredar/legado" — variar a futuro si se desea. ⚠️ Prerender SSG (SEO) hornea las 32 en el próximo deploy de `main`.
+> **▶️ SESIÓN (2026-06-27) — web §134-§139 cerrado + cerebro §140**: catálogo voz/significado + ajustes web DESPLEGADO (3 capas de voz; SW v46; detalle → ADRs §134-§139). **Hoy: §140 = mantenimiento del cerebro** (range-shard del índice `00`→`00a`; ver bitácora). ⚠️ Prerender SSG hornea las 32 piezas en el próximo deploy de `main`.
 > **🔜 Próximo**: **TODO-47** (verdad de marca con Kary, legal = + urgente) · operativo Daniel (precios + fotos). Backlog TODO-48..51. Cola: F2 Wompi · TODO-41/39/37/33/35.
 > _**MCP Firebase = escritura prod**. merge a main = Claude. Gemini asesora, Claude implementa (`[[feedback_consejo_externo_readonly]]`). Pruebas en vivo DIFERIDAS (§130.4)._
 
@@ -44,6 +43,7 @@
 | TODO-49 | **Legal e-commerce** — consentimiento habeas data en forms + verificar privacidad/terminos (retracto). Skill `legal-colombia`. Prereq Wompi. | 🔲 | pre-Wompi |
 | TODO-50 | **Catálogo de lujo** — imagen real (no certificado) + filtros gema/tipo + taxonomía canónica + badges por gema. Detalle → §133.2(B/C). | 🔲 | tras TODO-44 |
 | TODO-51 | **Origen honesto de gemas** no-colombianas (rubí/zafiro/diamante; el sitio sugiere todo Muzo/Chivor). | 🔲 | con TODO-44 |
+| TODO-55 | **Kernel: check #3 → globear `00*-INDICE*.md`** (hoy hardcodea `00-INDICE.md`; tras el range-shard §140 las filas §≤115 en `00a` no se desync-validan; riesgo bajo = offsets congelados). Cambio de kernel = cars-operador (L-31, byte-idéntico ×3). | 🔲 | cars-operador (kernel) |
 > ✅ **Cerrados recientes**: **TODO-53 copy por tipo (§136)** (auditoría verificada → 5 corregidas vía Gemini, EN VIVO) · **TODO-54 campo Origen (§136)** (no era bug: data-driven `admin-piezas.html:276`→`pieza.js:133`/`:137`; Daniel lo deja al fondo de "Especificaciones") · **TODO-52 (§135)** · **TODO-44 (§134)** · TODO-45/46 (§133) · TODO-40 + 32 piezas (§131/§132). Histórico → ADRs §88-§136 + `00`/`99`. Pend operativo Daniel: precios + imágenes IA.
 
 ---
@@ -55,8 +55,8 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño · Fase 2 hardening (Tier C pend.) 
 
 ## 📝 Bitácora (efímera)
 
-> Podada (GC) 2026-06-27. Histórico → ADR §37-§130 + bóveda. Lecciones → `30`/`31`/`32`.
+> Podada (GC) 2026-06-27 (§140). Histórico → ADR §37-§139 + bóveda. Lecciones → `30`/`31`/`32`.
 >
-> **Sesiones §133-§137 (2026-06-27) — VOZ DE MARCA del catálogo:** nombre/desc/badge (§134) → cálido (§135) → tipo-coherente (§136, TODO-53/54 ✅, cierra TODO-51) → SIGNIFICADO (§137). 32 piezas + 7 colecciones + 9 destacadas, vía Gemini + verif Claude, EN VIVO; 3 capas de voz. Lección Workflow: datos grandes EMBEBIDOS, no por `args`. Detalle → ADRs §133-§137 + bóveda. `[[feedback_copy_marca_profundidad]]`
-> **Sesiones §138-§139 (2026-06-27) — AJUSTES WEB, DESPLEGADO:** index 16 destacadas (col. de 4) + botón "Ver más piezas" al final · isla "Atajos" SOLO en index (verif. live) · etiqueta de tarjeta "Consultar precio" (`priceDisplay` SSoT; "Cotización" eliminado) · **ficha sin precio = sin rótulo** (Daniel: "única/certificada" no encajan; CSS muerto removido). Build+tests verdes. SW v46 · APP_VERSION v29. Detalle → ADRs §138/§139.
+> **Web §133-§139 (2026-06-27) — VOZ DE MARCA + AJUSTES, DESPLEGADO:** catálogo (32 piezas/7 colecciones/destacadas) en 3 capas de voz (tipo+cálido+significado, Gemini+verif, EN VIVO) + ajustes index (16 destacadas · botón "Ver más piezas" · isla solo-index · etiqueta `priceDisplay` SSoT "Consultar precio" · ficha sin precio = sin rótulo). SW v46 · APP_VERSION v29. Lección Workflow: datos grandes EMBEBIDOS, no por `args`. Detalle → ADRs §133-§139. `[[feedback_copy_marca_profundidad]]` `[[feedback_voz_de_marca_no_generico]]`
+> **Cerebro §140 (2026-06-27) — range-shard del índice:** `00-INDICE` cruzaba el tope ~5× en §134-§139 → §1–§115 movidos a hija `00a-INDICE-HIST` (frozen); `00` conserva §116+ + enrutamiento (30.8k→10k). Kernel intacto (TODO-55 = extender check #3). brain:check SANO. Detalle → ADR §140.
 > **🚦 Reglas vivas**: `arquitecto-software` SIEMPRE · Bersaglio = 100% COP (§127) · NO inventado/no-verificable (`[[feedback_no_demo_en_index]]`) · la voz solo se presta a lo verificable · pruebas en vivo SOLO al final (§130.4) · W-11/mockup en decisión-diseño · `[[feedback_workflows_acotados]]` · `[[feedback_reintentar_agentes_no_saltar_flujo]]`. Cola: TODO-47..51 · F2 Wompi · TODO-37/39/33/35.

@@ -33,6 +33,10 @@
       "lines": 450,
       "chars": 28000
     },
+    "docs/00a-INDICE-HIST.md": {
+      "lines": 200,
+      "chars": 28000
+    },
     "docs/40-LOBULOS-DOMINIO.md": {
       "lines": 280,
       "chars": 16000
@@ -47,7 +51,7 @@
     }
   },
   "archiveDir": "../brain-private/bersaglio/research-archive",
-  "_caps_trinquete": "ADR §56/comité v6: caps bajados al tamaño post-GC + headroom (trinquete: bajar libre; SUBIR exige ADR). bootCharsTarget 31500 = aspiracional (resta cirugía del router, gated por cuidado-de-canon). ADR §92: 00-INDICE 16k→24k (ratchet ↑ justificado — el índice es on-demand, NO se comprime con pérdida; doctrina §228 de cars §229). TODO-32 (2026-06-24): 00-INDICE 24k→28k (mismo motivo — creció a §115; range-shard 00a/00b = futuro a ~28k). 30-LECCIONES NO se ratchetea: shardeó el clúster carga/render → 32-LECCIONES-CARGA (las lecciones SE SHARDEAN).",
+  "_caps_trinquete": "ADR §56/comité v6: caps bajados al tamaño post-GC + headroom (trinquete: bajar libre; SUBIR exige ADR). bootCharsTarget 31500 = aspiracional (resta cirugía del router, gated por cuidado-de-canon). ADR §92: 00-INDICE 16k→24k (ratchet ↑ justificado — el índice es on-demand, NO se comprime con pérdida; doctrina §228 de cars §229). TODO-32 (2026-06-24): 00-INDICE 24k→28k (parche; creció a §115). §140 (2026-06-27): range-shard EJECUTADO — §1–§115 → 00a-INDICE-HIST (frozen, cap 28k); 00 conserva §116+ + enrutamiento semántico (cae a ~9k, runway largo). Próximo 00b cuando 00a se acerque al tope. Kernel intacto (TODO-55: check #3 hardcodea 00-INDICE → las filas en 00a no se desync-validan; bajo riesgo, offsets congelados). 30-LECCIONES NO se ratchetea: shardeó el clúster carga/render → 32-LECCIONES-CARGA (las lecciones SE SHARDEAN).",
   "staleDays": 10,
   "kernelFiles": [
     "scripts/brain-check.mjs",

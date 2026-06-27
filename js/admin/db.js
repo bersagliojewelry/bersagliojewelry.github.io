@@ -73,12 +73,14 @@ class AdminDatabase {
 
     _startListeners() {
         this._unsubs.push(
+            // TODO-40 v3: el admin gestiona TODO el inventario, incl. piezas privadas (fuera del
+            // catálogo público) → includePrivate. El público las excluye (firestore-service §onPiecesChange).
             onPiecesChange(pieces => {
                 this._pieces = pieces;
                 this._cacheSet(CACHE.pieces, pieces);
                 this._emit('pieces', pieces);
                 this._emit('stats', this.getStats());
-            }),
+            }, { includePrivate: true }),
             onCollectionsChange(collections => {
                 this._collections = collections;
                 this._cacheSet(CACHE.collections, collections);

@@ -15,6 +15,7 @@
 
 import adminDb from './db.js';
 import { admToast, admConfirm, initSidebar, esc, requireAuth, errorMessage, fmtDateTime } from './shared.js';
+import { esDisponible, STOCK_TYPES } from './inventario-model.js';   // TODO-40 v3: vendibles espeja el gate de la CF
 import { calcularPrecio } from './calculadora.js';
 import { calcularNeto } from './fiscal.js';
 import { crearPedido, confirmarPago, anularPedido, cierreCaja, ultimasVentas } from '../pedidos-service.js';
@@ -74,8 +75,15 @@ async function init() {
 
 // ─── Paso 1: elegir pieza ─────────────────────────────────────────────────────
 function availablePieces() {
-    // Vendibles = todo lo que no esté 'vendida' (legacy sin estado = disponible, default tolerante).
-    return _allPieces.filter(p => (p.estado || 'disponible') !== 'vendida');
+    // Vendibles v3 (TODO-40) — ESPEJA el gate de crearPedidoCore: excluye agotadas (finito en 0) y el
+    // legacy 'vendida'; encargo y refabricable-en-0 (bajo pedido) SÍ se venden (se fabrican). Las privadas
+    // se incluyen a propósito: existen para facturarse en el mostrador (fuera del catálogo público, D5).
+    return _allPieces.filter(p => {
+        if ((p.estado || '') === 'vendida') return false;       // legacy pre-v3 (estado, no cantidad)
+        const st   = STOCK_TYPES.includes(p.stockType) ? p.stockType : 'finito';
+        const cant = st === 'encargo' ? null : (Number.isInteger(p.cantidad) ? p.cantidad : 1);
+        return esDisponible(st, cant);                          // agotada → false; resto → true
+    });
 }
 
 function priceHint(p) {

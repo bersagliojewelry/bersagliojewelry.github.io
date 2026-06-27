@@ -514,6 +514,12 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     padding: 14px 22px;
     font-size: 13px;
 }
+/* §138: CTA al final de la franja — centrado, para volver al catálogo sin tener que subir. */
+.home-featured-foot {
+    display: flex;
+    justify-content: center;
+    margin-top: 36px;
+}
 
 .home-featured-grid {
     display: flex;

@@ -19,7 +19,7 @@
 
 import { html, escape, mount } from '../core/html.js';
 import { pieceUrl } from '../core/urls.js';
-import { format$ } from '../core/format.js';
+import { priceDisplay } from '../core/format.js';
 import { data } from '../core/data.js';
 import { lqipBgStyle } from '../core/lqip.js';   // §110.4: blur-up de la pieza (degrada si no hay LQIP)
 import { injectCatalogSchema } from '../core/schema.js';
@@ -120,7 +120,6 @@ function renderCard(p) {
     const stones = p.specs?.stones || p.specs?.stone || '';
     const collection = data.collectionOf(p);
     const catLabel = collection?.name || p.collection || '';
-    const price = Number(p.price || 0);
     return html`
         <a class="glass glass-iridescent cat-card"
            href="${pieceUrl(slug)}"
@@ -139,7 +138,7 @@ function renderCard(p) {
                 <div class="cat-card-name">${escape(p.name || 'Pieza')}</div>
                 <div class="cat-card-meta">${escape(stones)}</div>
                 <div class="cat-card-foot">
-                    <div class="mono cat-card-price">${price ? escape(format$(price)) : escape(p.priceLabel || 'Consultar precio')}</div>
+                    <div class="mono cat-card-price">${escape(priceDisplay(p))}</div>
                     <div class="cat-card-arrow">
                         Ver
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>

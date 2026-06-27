@@ -18,7 +18,7 @@
  */
 
 import { html, escape, mount } from '../core/html.js';
-import { format$ } from '../core/format.js';
+import { priceDisplay } from '../core/format.js';
 import { lqipBgStyle } from '../core/lqip.js';   // §110.4: blur-up de la imagen principal (idx 0)
 import { data } from '../core/data.js';
 import { cart } from '../core/cart.js';
@@ -88,15 +88,9 @@ function descriptionFor(piece) {
     return d;
 }
 
-// Precio unificado (§133): cuando no hay precio, se muestra la etiqueta del DATO (piece.priceLabel,
-// que la dueña edita en el panel = SSoT), no un string hardcodeado. Antes divergían "— Editorial —"
-// (catálogo) vs "Bajo consulta" (ficha); ahora catálogo, ficha y relacionados leen la MISMA fuente.
-function priceDisplay(piece) {
-    const price = piece && piece.price;
-    return (price && Number.isFinite(Number(price)))
-        ? format$(price)
-        : ((piece && piece.priceLabel) || 'Consultar precio');
-}
+// Precio unificado (§133 → §138): index, catálogo y ficha leen el MISMO helper `priceDisplay`
+// (core/format.js). Sin precio → la etiqueta ÚNICA "Precio a consultar". (Antes la ficha caía a
+// 'Consultar precio' y el index a 'Cotización'; consolidado en §138.)
 
 // Ficha técnica DINÁMICA agrupada — "Carta Gemológica" (TODO-34). Estructura curada de
 // alta joyería: la GEMA es protagonista (hero) y el resto se agrupa en secciones. Cero-demo:

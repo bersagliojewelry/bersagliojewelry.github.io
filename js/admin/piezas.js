@@ -516,14 +516,14 @@ async function handleSave() {
         return;
     }
 
-    // Tope de 15 destacadas (Daniel §138): la home muestra hasta 15. Al intentar
-    // destacar una 16ª, se bloquea con mensaje (no permite, hay que quitar una primero).
+    // Tope de 16 destacadas (Daniel §138): la home muestra hasta 16 (4 columnas exactas). Al
+    // intentar destacar una 17ª, se bloquea con mensaje (no permite, hay que quitar una primero).
     // Solo aplica si ESTA pieza pasa a destacada y aún no contaba como tal.
     const wantsFeatured = form.querySelector('[name="featured"]').checked;
     if (wantsFeatured) {
         const featuredCount = _allPieces.filter(p => p.featured && p.id !== editing).length;
-        if (featuredCount >= 15) {
-            admToast('Ya hay 15 piezas destacadas (el máximo). Quita una destacada antes de agregar otra.', 'danger', 5000);
+        if (featuredCount >= 16) {
+            admToast('Ya hay 16 piezas destacadas (el máximo). Quita una destacada antes de agregar otra.', 'danger', 5000);
             form.querySelector('[name="featured"]').focus();
             return;
         }

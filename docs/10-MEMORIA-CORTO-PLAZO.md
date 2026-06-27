@@ -10,9 +10,9 @@
 
 > 🎉 **CRM + Fase M (M0→M6) EN PROD** (§47-§82). **🔄 RESET A CERO** (Daniel 2026-06-20): cartera/clientes históricos DESECHABLES. ⚙️ **OPUS 4.8 interino** (marcar `[OPUS-4.8]` · `feedback_opus_interino`).
 >
-> **🟢 TODO-40 INVENTARIO v3 — DESPLEGADO a prod ✅** (§131, #379): reglas v3 + functions (`crearPedido` decremento + `ajustarStock`/`cambiarTipoPieza` nuevas) + Pages re-deploy (catálogo vacío). 9 piezas de PRUEBA BORRADAS → **0 piezas (prod sin demo, clean slate)**. **SIGUIENTE = Daniel carga el inventario REAL con el panel v3** (operativo, no-dev). Luego **F2** (checkout web Wompi: reserva+reaper+webhook) + **TODO-41** facturación multi-línea.
+> **🟢 TODO-40 INVENTARIO v3 DESPLEGADO + 32 PIEZAS REALES CARGADAS ✅.** Modelo v3 en prod (§131: reglas+functions+Pages). **32 piezas reales importadas de certificados TrueLab** (§132: QR→scrape SPA (Chrome)→clasifico tipo por foto→carga vía MCP; código=Nº de reporte, metal Oro 18k, "Consultar precio", imágenes temporales del cert). **EN VIVO** (grilla + ficha + WhatsApp ok, vía fallback SPA). **Pend (operativo de Daniel)**: poner precios + reemplazar imágenes (IA) desde el panel v3; un deploy horneará fichas/sitemap (SEO — ya funcionan por fallback). Luego **F2** (checkout web Wompi) + **TODO-41** facturación multi-línea.
 > _Frente previo **TODO-37 paso 7** (catalogo.json) PAUSADO; mostrador EN PROD (§122-§130). Pagos §121 → `[[project_comercio_pagos]]`._
-> ⚠️ **Pruebas en vivo DIFERIDAS** (§130.4; build+tests por commit). **Deploy** (L-22): reglas/functions = manual mío (hecho §131); merge a `main` = Daniel. Cola: TODO-39 · TODO-33 · TODO-35.
+> ⚠️ **Pruebas en vivo DIFERIDAS** (§130.4). **Deploy** (L-22): reglas/functions = manual mío; merge a `main` = Daniel. **MCP Firebase = mi vía de escritura a prod** (gcloud sin cuenta; ADC sin permiso). Cola: TODO-39 · TODO-33 · TODO-35.
 
 ---
 
@@ -39,7 +39,7 @@
 | TODO-37 | **PLAN MAESTRO DE COMERCIO** (Daniel 2026-06-25, ACTIVO): roadmap físico+digital. SSoT → `docs/superpowers/specs/2026-06-25-plan-maestro-comercio-v3.md` (Gemini v4 integrado). **B0/B0.5 EN PROD ✅ §120**; **B1 mostrador**: pasos 1-6 EN PROD, paso 7 `catalogo.json` a CDN DISEÑADO v3 (ver Foco). Decisiones abiertas dueño: ADDI · Persona Jurídica. `[OPUS-4.8]` | 🟢 | ejecutar B1 |
 | TODO-41 | **Facturación multi-línea** (Daniel 2026-06-26): la factura/POS debe cobrar **modificaciones/servicios** por código, no solo piezas (variación de peso/ajuste = línea aparte). Toca POS/factura. Spec `modelo-inventario §10`. | 🔲 | tras carga inventario |
 | TODO-42 | **Inventario v3 — F2** (futuro, cuando se conecte el checkout web Wompi): reserva web al crear + `reservaExpira` + reaper (Cloud Scheduler) + webhook Wompi→`confirmarPago` + `forcePosOverride` con candado de pago. Diseño → `…modelo-inventario-multitipo-design.md §11.4/§12.2`. | 🔲 | checkout web Wompi |
-> ✅ **Cerrados recientes**: histórico → ADRs §88-§131 + `00`/`99`. **TODO-40 INVENTARIO v3 ✅ DESPLEGADO** (§131, #379: reglas+functions+Pages; 9 piezas prueba borradas → 0; L-59); pruebas en vivo DIFERIDAS (§130.4) + carga REAL = operativa de Daniel. (§128-§130 mostrador; fix `49fe96a`.)
+> ✅ **Cerrados recientes**: histórico → ADRs §88-§132 + `00`/`99`. **TODO-40 INVENTARIO v3 ✅ DESPLEGADO** (§131) + **32 piezas reales CARGADAS de TrueLab** (§132, L-60). Pend operativo de Daniel: precios + imágenes IA (panel v3); deploy para hornear fichas/sitemap (SEO). (§128-§130 mostrador.)
 
 ---
 
@@ -52,5 +52,5 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier A/B �
 
 > Podada (GC) 2026-06-26. Histórico → ADR §37-§130 + bóveda `2026-06-*`. Lecciones → `30`/`31`/`32`.
 >
-> **▶️ Vivo**: TODO-40 inventario v3 ✅ DESPLEGADO a prod (§131; reglas+functions+Pages; 0 piezas). **Siguiente: Daniel carga el inventario REAL con el panel v3** (operativo). Lecciones del deploy → L-59 (30). Crudo+síntesis del diseño → bóveda `2026-06-26-*inventario*`.
+> **▶️ Vivo**: TODO-40 v3 desplegado (§131) + **32 piezas reales cargadas de TrueLab y EN VIVO** (§132). Pend operativo de Daniel: precios + imágenes. Pipeline import reusable → L-60. Artefactos en scratchpad de sesión (certs-ids/gem-b*/mcp-docs.json; efímeros). Crudo diseño → bóveda `2026-06-26-*inventario*`.
 > **🚦 Reglas vivas**: `arquitecto-software` SIEMPRE · Bersaglio = 100% COP (§127) · pruebas en vivo SOLO al final (§130.4) · W-11 en decisión cara · `[[feedback_workflows_acotados]]` · `[[feedback_reintentar_agentes_no_saltar_flujo]]`. Cola: TODO-37 paso 7 (pausado) · TODO-39 · TODO-33 · TODO-35.

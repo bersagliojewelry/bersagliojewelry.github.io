@@ -90,6 +90,14 @@ const histPath = join(DOCS, '99-HISTORIAL-ADR.md');
 const lobeRegistryPath = join(DOCS, '40-LOBULOS-DOMINIO.md');
 const lobeRegistry = existsSync(lobeRegistryPath) ? read(lobeRegistryPath) : '';
 
+// Índice posiblemente RANGE-SHARDED (ADR): 00-INDICE.md + hermanas 00[a-z]-INDICE*.md
+// (descubrimiento por PATRÓN → byte-idéntico ×repos, cero config; repos sin shard ⇒ solo 00).
+// Los checks que leen el ÍNDICE como fuente (#3 desync, #5a refs-ADR, #9 consolidado) lo tratan
+// como UNO vía readIndex() — así mover filas viejas a 00a NO dispara falsos "ADR sin fila en 00".
+const indexNames = readdirSync(DOCS).filter((f) => /^00[a-z]?-INDICE.*\.md$/.test(f)).sort();
+const indexPaths = indexNames.map((f) => join(DOCS, f));
+const readIndex = () => indexPaths.map((p) => read(p)).join('\n');
+
 // 1) Neuronas huérfanas (registro directo)
 head('1) Neuronas huérfanas (registradas en CLAUDE.md / 40-LOBULOS):');
 const neurons = readdirSync(DOCS).filter((f) => /^\d{2}-.*\.md$/.test(f));
@@ -139,8 +147,8 @@ if (BOOT_CHARS_TARGET) {
 // 3) Desync índice → 99 [--full]
 head('\n3) Desync índice 00-INDICE → 99-HISTORIAL:');
 if (BOOT) { head('  ⏭️  omitido en --boot'); }
-else if (existsSync(indicePath) && existsSync(histPath)) {
-  const indice = read(indicePath).split('\n');
+else if (indexPaths.length && existsSync(histPath)) {
+  const indice = readIndex().split('\n');
   const hist = read(histPath).split('\n');
   const numberedConvention = hist.some((l) => /^##\s+\d+\.\s/.test(l));
   let checked = 0, desync = 0;
@@ -200,9 +208,9 @@ if (BOOT && swFile) say('  ✅ cache verificada (SW↔manager↔05)');
 
 // 5) Referencias cruzadas
 head('\n5) Referencias cruzadas (huecos en el cerebro):');
-if (!BOOT && existsSync(histPath) && existsSync(indicePath)) {
+if (!BOOT && existsSync(histPath) && indexPaths.length) {
   const histText = read(histPath);
-  const indiceText = read(indicePath);
+  const indiceText = readIndex();
   const adrNums = new Set([...histText.matchAll(/^##\s+(\d+)\./gm)].map((m) => m[1]));
   const idxNums = new Set([...indiceText.matchAll(/^\|\s*§(\d+)\b/gm)].map((m) => m[1]));
   const missingIdx = [...adrNums].filter((n) => !idxNums.has(n)).sort((a, b) => +a - +b);
@@ -217,7 +225,7 @@ if (!BOOT && existsSync(leccionesPath)) {
   const espacialPath = join(DOCS, '20-MEMORIA-ESPACIAL.md');
   const estadoPath = join(DOCS, '05-ESTADO-GLOBAL.md');
   const histText = existsSync(histPath) ? read(histPath) : '';
-  const indiceText = existsSync(indicePath) ? read(indicePath) : '';
+  const indiceText = indexPaths.length ? readIndex() : '';
   const defined = new Set([...leccionesText.matchAll(/^###\s+([LM]-\d{2})\b/gm)].map((m) => m[1]));
   const allBrain = [claude, indiceText, existsSync(estadoPath) ? read(estadoPath) : '', leccionesText, histText,
     existsSync(cortoPath) ? read(cortoPath) : '', existsSync(espacialPath) ? read(espacialPath) : ''].join('\n');
@@ -332,8 +340,8 @@ else {
 head('\n9) Consolidado-aún-en-10 (GC pendiente):');
 const cortoP = join(DOCS, '10-MEMORIA-CORTO-PLAZO.md');
 if (BOOT) head('  ⏭️  omitido en --boot');
-else if (existsSync(cortoP) && existsSync(indicePath)) {
-  const idxNums = new Set([...read(indicePath).matchAll(/^\|\s*§(\d+)\b/gm)].map((m) => m[1]));
+else if (existsSync(cortoP) && indexPaths.length) {
+  const idxNums = new Set([...readIndex().matchAll(/^\|\s*§(\d+)\b/gm)].map((m) => m[1]));
   let flagged = 0;
   for (const l of read(cortoP).split('\n')) {
     if (!l.trim().startsWith('|')) continue; // solo filas de tabla (TODO ledger)

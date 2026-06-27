@@ -33,6 +33,10 @@
       "lines": 450,
       "chars": 28000
     },
+    "docs/00a-INDICE-HIST.md": {
+      "lines": 450,
+      "chars": 28000
+    },
     "docs/40-LOBULOS-DOMINIO.md": {
       "lines": 280,
       "chars": 16000
@@ -47,7 +51,7 @@
     }
   },
   "archiveDir": "../brain-private/bersaglio/research-archive",
-  "_caps_trinquete": "ADR §56/comité v6: caps bajados al tamaño post-GC + headroom (trinquete: bajar libre; SUBIR exige ADR). bootCharsTarget 31500 = aspiracional (resta cirugía del router, gated por cuidado-de-canon). ADR §92: 00-INDICE 16k→24k (ratchet ↑ justificado — el índice es on-demand, NO se comprime con pérdida; doctrina §228 de cars §229). TODO-32 (2026-06-24): 00-INDICE 24k→28k (mismo motivo — creció a §115; range-shard 00a/00b = futuro a ~28k). 30-LECCIONES NO se ratchetea: shardeó el clúster carga/render → 32-LECCIONES-CARGA (las lecciones SE SHARDEAN).",
+  "_caps_trinquete": "ADR §56/comité v6: caps bajados al tamaño post-GC + headroom (trinquete: bajar libre; SUBIR exige ADR). bootCharsTarget 31500 = aspiracional (resta cirugía del router, gated por cuidado-de-canon). ADR §92: 00-INDICE 16k→24k (ratchet ↑ justificado — el índice es on-demand, NO se comprime con pérdida; doctrina §228 de cars §229). TODO-32 (2026-06-24): 00-INDICE 24k→28k (mismo motivo — creció a §115; range-shard 00a/00b = futuro a ~28k). EJECUTADO 2026-06-27 (ADR §140, kernel-change cars-operador): range-shard §1–§115 → 00a-INDICE-HIST (00 a ~9.3k); el kernel lee el índice como SET (00 + 00[a-z]-INDICE*) — byte-idéntico ×4 peers. 30-LECCIONES NO se ratchetea: shardeó el clúster carga/render → 32-LECCIONES-CARGA (las lecciones SE SHARDEAN).",
   "staleDays": 10,
   "kernelFiles": [
     "scripts/brain-check.mjs",

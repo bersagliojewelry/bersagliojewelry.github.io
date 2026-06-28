@@ -10,8 +10,8 @@
 
 > 🎉 **CRM + Fase M EN PROD** (§47-§82). ⚙️ **OPUS 4.8 interino** (marcar `[OPUS-4.8]` · `feedback_opus_interino`).
 >
-> **▶️ SESIÓN (2026-06-28) — §143 ficha: flechas sutiles + VISOR DE ZOOM** (2 mejoras de diseño premium de Daniel): flechas del carrusel translúcidas/al-borde (no tapan el producto) + lightbox de inspección (zoom/pan/navegar, fondo perla limpio §142). Flujo proporcionado (mockup `show_widget` → implementar → verif. live). **Verificado en Chrome real** + cerrada la verif. pendiente de §141/§142 (técnica nueva → L-58). SW v49. → ADR §143.
-> _(prev) §136/§137 (voz+significado de las 32, 3 capas, EN VIVO) ✅. ⚠️ Auto-crítica §143: las imágenes webp de las piezas en `/data/catalogo.json` (snapshot SSG) están DESALINEADAS con la data viva (ej. "Puro Albor": JSON 6 imgs, Firestore 1) → regenerar el JSON en el próximo deploy de `main`; el operativo de fotos sigue pendiente (Daniel)._
+> **▶️ SESIÓN (2026-06-28) — §143 ficha: flechas sutiles + VISOR DE ZOOM** (TODO-55 ✅, 2 mejoras de diseño premium de Daniel): flechas del carrusel translúcidas/al-borde (no tapan el producto) + lightbox de inspección (zoom/pan/navegar, fondo perla limpio §142). Flujo proporcionado (mockup `show_widget` → implementar → verif. live). **Verificado en Chrome real** + cerrada la verif. pendiente de §141/§142 (técnica nueva → L-58). SW v49. → ADR §143.
+> _⚠️ Auto-crítica §143: las imágenes webp de las piezas en `/data/catalogo.json` (snapshot SSG) están DESALINEADAS con la data viva (ej. "Puro Albor": JSON 6 imgs, Firestore 1) → regenerar el JSON en el próximo deploy de `main`; el operativo de fotos sigue pendiente (Daniel)._
 > **🔜 Próximo**: **TODO-47** (verdad de marca con Kary, legal = + urgente) · operativo Daniel (precios + fotos). Backlog TODO-48..51. Cola: F2 Wompi · TODO-41/39/37/33/35.
 > _**MCP Firebase = escritura prod**. merge a main = Claude. Gemini asesora, Claude implementa (`[[feedback_consejo_externo_readonly]]`). Pruebas en vivo DIFERIDAS (§130.4)._
 
@@ -43,8 +43,7 @@
 | TODO-48 | **Reseñas reales** — conectar `reviews` (aprobadas) → Nosotros + gestión admin (las falsas ya se quitaron; 1 huérfana de prueba en `reviews`). | 🔲 | feature |
 | TODO-49 | **Legal e-commerce** — consentimiento habeas data en forms + verificar privacidad/terminos (retracto). Skill `legal-colombia`. Prereq Wompi. | 🔲 | pre-Wompi |
 | TODO-50 | **Catálogo de lujo** — imagen real (no certificado) + filtros gema/tipo + taxonomía canónica + badges por gema. Detalle → §133.2(B/C). | 🔲 | tras TODO-44 |
-| TODO-51 | **Origen honesto de gemas** no-colombianas (rubí/zafiro/diamante; el sitio sugiere todo Muzo/Chivor). | 🔲 | con TODO-44 |
-> ✅ **Cerrados recientes**: **TODO-53 copy por tipo (§136)** (auditoría verificada → 5 corregidas vía Gemini, EN VIVO) · **TODO-54 campo Origen (§136)** (no era bug: data-driven `admin-piezas.html:276`→`pieza.js:133`/`:137`; Daniel lo deja al fondo de "Especificaciones") · **TODO-52 (§135)** · **TODO-44 (§134)** · TODO-45/46 (§133) · TODO-40 + 32 piezas (§131/§132). Histórico → ADRs §88-§136 + `00`/`99`. Pend operativo Daniel: precios + imágenes IA.
+> ✅ **Cerrados recientes**: **TODO-55 galería premium (§143)** (flechas sutiles + visor de zoom; verif. live Chrome cierra §141/§142) · **TODO-51 origen honesto (§136)** · **TODO-53/54 copy+origen (§136)** · **TODO-52 (§135)** · **TODO-44 (§134)** · TODO-45/46 (§133) · TODO-40+32 piezas (§131/§132). Histórico → ADRs §88-§143 + `00`/`99`. Pend operativo Daniel: precios + imágenes IA.
 
 ---
 
@@ -57,6 +56,6 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño · Fase 2 hardening (Tier C pend.) 
 
 > Podada (GC) 2026-06-27. Histórico → ADR §37-§130 + bóveda. Lecciones → `30`/`31`/`32`.
 >
-> **§133-§142 (2026-06-27) — CATÁLOGO + WEB + ficha, DESPLEGADO** (consolidado en ADRs): voz de marca de las 32 (3 capas; TODO-53/54/51 ✅) + ajustes web §138/§139 + §140 range-shard del índice (00+00a) + §141 carrusel de ficha + §142 fix LQIP transparentes. → ADRs §133-§142. `[[feedback_copy_marca_profundidad]]`
+> **Sesión §133-§142 (2026-06-27) — CATÁLOGO + WEB, DESPLEGADO:** voz+significado de las 32 (§134-§137, 3 capas; TODO-53/54/51 ✅) · ajustes web (§138/§139) · índice shardeado (§140, cars) · carrusel de ficha (§141) · fix LQIP transparentes (§142). SW v48. Lección: datos grandes EMBEBIDOS en Workflow, no por `args`. → ADRs §133-§142 + bóveda. `[[feedback_copy_marca_profundidad]]`
 > **§143 (2026-06-28) — Flechas sutiles + VISOR DE ZOOM, DESPLEGADO:** ficha — flechas del carrusel translúcidas/al-borde (opacity 0 en reposo desktop → no tapan el producto) + lightbox premium (clic en foto → zoom rueda/pinch + pan + flechas/Esc, fondo perla LIMPIO §142, montado en `<body>`). SW v49. **✅ Verif. LIVE Chrome** (cierra §141/§142): §142 OK en prod; §141+§143 OK en dev inyectando pieza real (→ L-58). → ADR §143.
 > **🚦 Reglas vivas**: `arquitecto-software` SIEMPRE · Bersaglio = 100% COP (§127) · NO inventado/no-verificable (`[[feedback_no_demo_en_index]]`) · la voz solo se presta a lo verificable · pruebas en vivo SOLO al final (§130.4) · W-11/mockup en decisión-diseño · `[[feedback_workflows_acotados]]` · `[[feedback_reintentar_agentes_no_saltar_flujo]]`. Cola: TODO-47..51 · F2 Wompi · TODO-37/39/33/35.

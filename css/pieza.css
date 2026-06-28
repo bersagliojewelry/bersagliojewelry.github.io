@@ -90,24 +90,33 @@
 }
 .pz-cert-chip svg { color: var(--bj-emerald-700); }
 
-/* Carrusel: flechas izq/der sobre la imagen (Daniel) — glass, solo con >1 imagen. */
+/* Carrusel: flechas izq/der — TRANSLÚCIDAS y AL BORDE para no taparle protagonismo al
+   producto (Daniel §143). En escritorio (hover real) viven casi invisibles y se vuelven
+   nítidas al pasar el cursor por la foto o al enfocar con teclado; en táctil quedan
+   discretas pero siempre visibles. */
 .pz-nav {
     position: absolute; top: 50%; transform: translateY(-50%);
     z-index: 3;
-    width: 44px; height: 44px;
+    width: 42px; height: 42px;
     display: flex; align-items: center; justify-content: center;
     border-radius: 50%;
-    background: oklch(100% 0 0 / 0.72);
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    border: 1px solid oklch(100% 0 0 / 0.6);
+    background: oklch(100% 0 0 / 0.30);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border: 1px solid oklch(100% 0 0 / 0.42);
     color: var(--bj-emerald-700);
     cursor: pointer;
-    transition: background 0.25s, transform 0.2s;
+    opacity: 0.5;   /* discreto por defecto (táctil) */
+    transition: background 0.25s, opacity 0.3s, transform 0.2s;
 }
-.pz-nav-prev { left: 14px; }
-.pz-nav-next { right: 14px; }
-.pz-nav:hover { background: oklch(100% 0 0 / 0.95); }
-.pz-nav:active { transform: translateY(-50%) scale(0.93); }
+.pz-nav-prev { left: 8px; }
+.pz-nav-next { right: 8px; }
+.pz-nav:active { transform: translateY(-50%) scale(0.92); }
+@media (hover: hover) {
+    .pz-nav { opacity: 0; }                       /* en reposo no le quitan visibilidad a la foto */
+    .pz-main:hover .pz-nav,
+    .pz-nav:focus-visible { opacity: 1; }         /* nítidas al pasar el cursor / enfocar (a11y) */
+    .pz-nav:hover { background: oklch(100% 0 0 / 0.6); }
+}
 
 /* Carrusel: contador "n / total" (esquina superior izq — no choca con el sello cert top-right). */
 .pz-counter {
@@ -115,10 +124,31 @@
     z-index: 3;
     font-size: 12px; font-variant-numeric: tabular-nums;
     color: var(--bj-emerald-700);
-    background: oklch(100% 0 0 / 0.7);
+    background: oklch(100% 0 0 / 0.55);
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    border: 1px solid oklch(100% 0 0 / 0.5);
+    border: 1px solid oklch(100% 0 0 / 0.45);
     border-radius: 20px; padding: 3px 11px;
+}
+
+/* Affordancia "Ampliar" (lupa) — discreta abajo-derecha; en escritorio aparece al pasar el
+   cursor por la foto, señalando que la imagen abre el visor de zoom. pointer-events:none
+   para que el clic atraviese a la imagen (data-action="zoom-open"). */
+.pz-zoom-cue {
+    position: absolute; bottom: 16px; right: 16px; z-index: 3;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; letter-spacing: 0.06em;
+    color: var(--bj-emerald-800);
+    background: oklch(100% 0 0 / 0.55);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid oklch(100% 0 0 / 0.5);
+    border-radius: 20px; padding: 5px 11px;
+    opacity: 0.62;
+    pointer-events: none;
+    transition: opacity 0.25s;
+}
+@media (hover: hover) {
+    .pz-zoom-cue { opacity: 0; }
+    .pz-main:hover .pz-zoom-cue { opacity: 0.9; }
 }
 
 /* Carrusel: puntos de navegación (reemplazan la tira de miniaturas, Daniel §141). */
@@ -136,6 +166,107 @@
 }
 .pz-dot:hover { opacity: 0.55; }
 .pz-dot.is-active { opacity: 1; width: 22px; border-radius: 5px; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   VISOR DE ZOOM (lightbox) — clic en la foto abre la pieza a pantalla
+   completa para inspección: zoom (rueda/pinch/doble-clic), arrastrar para
+   mover, flechas para cambiar de imagen, ✕/Esc/clic-al-fondo para cerrar.
+   Fondo LIMPIO luminoso perla→esmeralda (NO oscuro, NO blur): las fotos de
+   producto son transparentes (§142) → sobre fondo limpio se ven nítidas;
+   oscuro/borroso las haría "sangrar". Controles = cristal claro (Liquid Glass).
+   ═══════════════════════════════════════════════════════════════════ */
+.pz-zoom {
+    position: fixed; inset: 0; z-index: 1200;
+    display: none;
+    background:
+        radial-gradient(120% 90% at 50% 16%,
+            oklch(99% 0.006 150) 0%,
+            oklch(96% 0.018 150) 46%,
+            oklch(93% 0.03 152) 100%);
+    touch-action: none;
+    overscroll-behavior: contain;
+    cursor: grab;
+}
+.pz-zoom.is-open { display: block; }
+.pz-zoom.is-grabbing { cursor: grabbing; }
+.pz-zoom[data-single] .pz-zoom-nav { display: none; }   /* 1 sola imagen → sin flechas */
+
+/* Capa de la imagen: se mueve/escala SOLO con transform (§3.1). */
+.pz-zoom-stage {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    transform-origin: center center;
+    will-change: transform;
+}
+.pz-zoom-img {
+    max-width: 92vw; max-height: 84vh;
+    width: auto; height: auto;
+    object-fit: contain;
+    user-select: none; -webkit-user-select: none; -webkit-user-drag: none;
+    /* sombra suave: despega la pieza del fondo perla sin un marco duro (la sombra calca
+       la silueta real de la joya transparente, §142) */
+    filter: drop-shadow(0 24px 48px oklch(34% 0.11 155 / 0.18));
+    pointer-events: none;   /* los clics caen al fondo → arrastrar / cerrar */
+}
+
+/* Controles del visor — cristal claro sobre el fondo perla. */
+.pz-zoom-btn {
+    position: absolute; z-index: 2;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: oklch(100% 0 0 / 0.6);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border: 1px solid oklch(100% 0 0 / 0.55);
+    color: var(--bj-emerald-800);
+    cursor: pointer;
+    box-shadow: 0 6px 20px -8px oklch(34% 0.11 155 / 0.3);
+    transition: background 0.2s, transform 0.18s;
+}
+.pz-zoom-btn:hover { background: oklch(100% 0 0 / 0.85); }
+.pz-zoom-btn:active { transform: scale(0.93); }
+.pz-zoom-close { top: 22px; right: 22px; width: 50px; height: 50px; }
+.pz-zoom-nav {
+    top: 50%; transform: translateY(-50%);
+    width: 52px; height: 52px;
+    color: var(--bj-emerald-700);
+}
+.pz-zoom-nav:active { transform: translateY(-50%) scale(0.93); }
+.pz-zoom-prev { left: 22px; }
+.pz-zoom-next { right: 22px; }
+
+.pz-zoom-counter {
+    position: absolute; top: 28px; left: 24px; z-index: 2;
+    font-family: var(--font-mono);
+    font-size: 13px; letter-spacing: 0.05em; font-variant-numeric: tabular-nums;
+    color: var(--bj-emerald-800);
+    background: oklch(100% 0 0 / 0.55);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid oklch(100% 0 0 / 0.5);
+    border-radius: 22px; padding: 6px 14px;
+}
+
+/* Hint de marca abajo (se desvanece al hacer zoom — lo apaga el JS). */
+.pz-zoom-hint {
+    position: absolute; left: 0; right: 0; bottom: 24px; z-index: 2;
+    text-align: center;
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--bj-ink-mute);
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+@media (max-width: 680px) {
+    .pz-zoom-close { top: 14px; right: 14px; width: 44px; height: 44px; }
+    .pz-zoom-nav { width: 44px; height: 44px; }
+    .pz-zoom-prev { left: 10px; }
+    .pz-zoom-next { right: 10px; }
+    .pz-zoom-counter { top: 18px; left: 14px; }
+    .pz-zoom-img { max-width: 94vw; max-height: 78vh; }
+    .pz-zoom-hint { bottom: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .pz-zoom-btn, .pz-zoom-hint { transition: none; }
+}
 
 /* ═══════════════════════════════════════════════════════════════════
    INFO COLUMN

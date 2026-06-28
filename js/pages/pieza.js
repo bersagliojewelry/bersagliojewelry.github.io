@@ -78,6 +78,10 @@ function heartSVG() {
 function heartSolidSVG() {
     return html`<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
 }
+// Lupa: affordancia "Ampliar" sobre la foto principal (señala que abre el visor de zoom, §143).
+function zoomCueSVG() {
+    return html`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35M11 8v6M8 11h6"/></svg>`;
+}
 
 // Cero-demo (feedback_no_demo_en_index): NUNCA inventar copy. Si no hay descripción real
 // (o es dato de prueba "PRUEBA n"), no se muestra nada (hide-when-empty). El fallback viejo
@@ -164,11 +168,14 @@ function renderGallery(piece) {
     const showCert = piece.specs?.certificate || piece.specs?.gia;
 
     const multi = images.length > 1;   // Carrusel (flechas + puntos) SOLO con >1 imagen (Daniel)
+    const hasImg = !!main;             // §143: visor de zoom solo si hay imagen real (no placeholder)
 
     return html`
         <div class="pz-gallery">
             <div class="glass glass-iridescent pz-main">
-                <div class="pz-main-img" style="${lqipBgStyle(main, '')};background-size:cover;background-position:center"></div>
+                <div class="pz-main-img"
+                     style="${lqipBgStyle(main, '')};background-size:cover;background-position:center${hasImg ? ';cursor:zoom-in' : ''}"
+                     ${hasImg ? 'data-action="zoom-open" role="button" tabindex="0" aria-label="Ampliar imagen"' : ''}></div>
                 ${showCert ? html`
                     <div class="pz-main-chips">
                         <div class="chip pz-cert-chip">
@@ -183,6 +190,8 @@ function renderGallery(piece) {
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
                     </button>
                     <div class="pz-counter">${idx + 1} / ${images.length}</div>` : ''}
+                ${hasImg ? html`
+                    <div class="pz-zoom-cue" aria-hidden="true">${zoomCueSVG()}<span>Ampliar</span></div>` : ''}
             </div>
             ${multi ? html`
                 <div class="pz-dots" role="tablist" aria-label="Imágenes de la pieza">
@@ -651,6 +660,175 @@ function setGalleryIdx(images, newIdx) {
     });
 }
 
+// ── Visor de zoom (lightbox premium) ─────────────────────────────────────────────
+// Clic en la foto → pantalla completa para inspeccionar la pieza de cerca: zoom
+// (rueda/pinch/doble-clic), arrastrar para mover, flechas para cambiar de imagen, Esc/✕
+// para cerrar. Fondo perla LIMPIO (no oscuro, sin blur): las fotos de producto son
+// transparentes (§142) → sobre fondo limpio se ven nítidas; oscuro/borroso las "sangraría".
+let _zoomOpen = false;
+let _zoomIdx = 0;
+const _zoom = { scale: 1, x: 0, y: 0 };
+let _zoomBaseW = 0, _zoomBaseH = 0;   // tamaño de la imagen a escala 1 → acota el paneo
+
+function zoomViewerHtml() {
+    return html`
+        <div class="pz-zoom" data-zoom role="dialog" aria-modal="true" aria-label="Visor de la pieza">
+            <div class="pz-zoom-counter" data-zoom-counter></div>
+            <button type="button" class="pz-zoom-btn pz-zoom-close" data-action="zoom-close" aria-label="Cerrar visor">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+            <div class="pz-zoom-stage" data-zoom-stage>
+                <img class="pz-zoom-img" data-zoom-img alt="" draggable="false">
+            </div>
+            <button type="button" class="pz-zoom-btn pz-zoom-nav pz-zoom-prev" data-action="zoom-prev" aria-label="Imagen anterior">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <button type="button" class="pz-zoom-btn pz-zoom-nav pz-zoom-next" data-action="zoom-next" aria-label="Imagen siguiente">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+            <div class="pz-zoom-hint" data-zoom-hint>Rueda o pellizca para acercar · arrastra para mover</div>
+        </div>`;
+}
+
+function applyZoom() {
+    const stage = document.querySelector('[data-zoom-stage]');
+    if (stage) stage.style.transform = `translate(${Math.round(_zoom.x)}px, ${Math.round(_zoom.y)}px) scale(${_zoom.scale})`;
+    const hint = document.querySelector('[data-zoom-hint]');
+    if (hint) hint.style.opacity = _zoom.scale > 1.01 ? '0' : '';
+}
+function resetZoom() { _zoom.scale = 1; _zoom.x = 0; _zoom.y = 0; applyZoom(); }
+function measureZoomImg() {
+    const img = document.querySelector('[data-zoom-img]');
+    if (img) { _zoomBaseW = img.clientWidth || img.naturalWidth; _zoomBaseH = img.clientHeight || img.naturalHeight; }
+}
+function clampPan() {
+    const mx = Math.max(0, (_zoomBaseW * _zoom.scale - window.innerWidth) / 2 + 40);
+    const my = Math.max(0, (_zoomBaseH * _zoom.scale - window.innerHeight) / 2 + 40);
+    _zoom.x = Math.max(-mx, Math.min(mx, _zoom.x));
+    _zoom.y = Math.max(-my, Math.min(my, _zoom.y));
+}
+// Zoom anclado a un punto (cursor/pinch): el punto bajo el dedo/cursor queda fijo.
+function zoomAtPoint(clientX, clientY, factor) {
+    const prev = _zoom.scale;
+    const next = Math.max(1, Math.min(4, prev * factor));
+    if (next === prev) return;
+    const px = clientX - window.innerWidth / 2;    // punto relativo al centro (origin del stage)
+    const py = clientY - window.innerHeight / 2;
+    const ratio = next / prev;
+    _zoom.x = px - (px - _zoom.x) * ratio;
+    _zoom.y = py - (py - _zoom.y) * ratio;
+    _zoom.scale = next;
+    if (next <= 1.001) { _zoom.x = 0; _zoom.y = 0; } else clampPan();
+    applyZoom();
+}
+function setZoomImage(images) {
+    const img = document.querySelector('[data-zoom-img]');
+    const counter = document.querySelector('[data-zoom-counter]');
+    if (!img) return;
+    img.src = images[_zoomIdx] || '';
+    if (counter) counter.textContent = `${_zoomIdx + 1} / ${images.length}`;
+    resetZoom();
+    if (img.complete && img.naturalWidth) measureZoomImg();
+    else img.onload = measureZoomImg;
+}
+function openZoom(startIdx) {
+    const piece = data.getBySlug(_slug);
+    if (!piece) return;
+    const images = galleryImages(piece);
+    if (!images.length) return;
+    _zoomIdx = Math.min(Math.max(0, startIdx || 0), images.length - 1);
+    const el = document.querySelector('[data-zoom]');
+    if (!el) return;
+    el.toggleAttribute('data-single', images.length <= 1);   // 1 sola imagen → oculta flechas
+    setZoomImage(images);
+    el.classList.add('is-open');
+    _zoomOpen = true;
+    try { document.body.style.overflow = 'hidden'; } catch { /* no-op */ }
+}
+function closeZoom() {
+    const el = document.querySelector('[data-zoom]');
+    if (el) el.classList.remove('is-open');
+    _zoomOpen = false;
+    try { document.body.style.overflow = ''; } catch { /* no-op */ }
+}
+function zoomNav(dir) {
+    const piece = data.getBySlug(_slug);
+    if (!piece) return;
+    const images = galleryImages(piece);
+    if (images.length <= 1) return;
+    _zoomIdx = ((_zoomIdx + dir) % images.length + images.length) % images.length;
+    setZoomImage(images);
+    setGalleryIdx(images, _zoomIdx);   // mantiene el carrusel de fondo en sync (al cerrar, misma imagen)
+}
+
+function bindZoomViewer(el) {
+    let moved = false, clickTimer = null;
+    el.addEventListener('wheel', e => {
+        e.preventDefault();
+        zoomAtPoint(e.clientX, e.clientY, e.deltaY < 0 ? 1.18 : 1 / 1.18);
+    }, { passive: false });
+
+    let dragging = false, sx = 0, sy = 0, bx = 0, by = 0;
+    el.addEventListener('pointerdown', e => {
+        if (e.target.closest('button')) return;
+        dragging = true; moved = false;
+        sx = e.clientX; sy = e.clientY; bx = _zoom.x; by = _zoom.y;
+        el.classList.add('is-grabbing');
+        try { el.setPointerCapture(e.pointerId); } catch { /* no-op */ }
+    });
+    el.addEventListener('pointermove', e => {
+        if (!dragging) return;
+        const dx = e.clientX - sx, dy = e.clientY - sy;
+        if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moved = true;
+        if (_zoom.scale <= 1.01) return;   // sin zoom no hay paneo (deja libre el tap-para-cerrar)
+        _zoom.x = bx + dx; _zoom.y = by + dy;
+        clampPan(); applyZoom();
+    });
+    const endDrag = e => {
+        if (!dragging) return;
+        dragging = false;
+        el.classList.remove('is-grabbing');
+        try { el.releasePointerCapture(e.pointerId); } catch { /* no-op */ }
+    };
+    el.addEventListener('pointerup', endDrag);
+    el.addEventListener('pointercancel', endDrag);
+
+    el.addEventListener('click', e => {
+        const btn = e.target.closest('[data-action]');
+        if (btn) {
+            e.preventDefault();
+            const a = btn.dataset.action;
+            if (a === 'zoom-close') closeZoom();
+            else if (a === 'zoom-prev') zoomNav(-1);
+            else if (a === 'zoom-next') zoomNav(1);
+            return;
+        }
+        // Clic en el fondo limpio (la imagen es pointer-events:none) → cerrar, salvo que
+        // sea arrastre o esté con zoom (ahí el tap inspecciona). Demora para no pisar el dblclick.
+        if (moved || _zoom.scale > 1.01) return;
+        clearTimeout(clickTimer);
+        clickTimer = setTimeout(closeZoom, 260);
+    });
+
+    el.addEventListener('dblclick', e => {
+        clearTimeout(clickTimer);
+        if (e.target.closest('button')) return;
+        if (_zoom.scale > 1.01) resetZoom();
+        else zoomAtPoint(e.clientX, e.clientY, 2.4);
+    });
+
+    let pinch = 0;
+    el.addEventListener('touchmove', e => {
+        if (e.touches.length !== 2) return;
+        e.preventDefault();
+        const a = e.touches[0], b = e.touches[1];
+        const dist = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+        if (pinch) zoomAtPoint((a.clientX + b.clientX) / 2, (a.clientY + b.clientY) / 2, dist / pinch);
+        pinch = dist;
+    }, { passive: false });
+    el.addEventListener('touchend', e => { if (e.touches.length < 2) pinch = 0; });
+}
+
 function onMainClick(e) {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
@@ -658,6 +836,7 @@ function onMainClick(e) {
 
     if (action === 'lead-open')  { e.preventDefault(); openLead();  return; }
     if (action === 'lead-close') { e.preventDefault(); closeLead(); return; }
+    if (action === 'zoom-open')  { e.preventDefault(); openZoom(_viewIdx); return; }
 
     if (action === 'gallery-prev' || action === 'gallery-next' || action === 'dot') {
         e.preventDefault();
@@ -723,7 +902,29 @@ export async function init() {
 
     main.addEventListener('click', onMainClick);
     main.addEventListener('submit', onLeadSubmit);   // form flotante de lead
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLead(); });
+
+    // Visor de zoom: se monta UNA vez en <body>, fuera de #main-content, para que
+    // refresh() (re-render por data.onChange) no lo borre ni pierda el estado de zoom.
+    const zoomHost = document.createElement('div');
+    document.body.appendChild(zoomHost);
+    mount(zoomHost, zoomViewerHtml());
+    const zoomEl = document.querySelector('[data-zoom]');
+    if (zoomEl) bindZoomViewer(zoomEl);
+    // Activación por teclado de la foto (role="button"): Enter/Espacio abre el visor (a11y).
+    main.addEventListener('keydown', e => {
+        if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('[data-action="zoom-open"]')) {
+            e.preventDefault(); openZoom(_viewIdx);
+        }
+    });
+
+    document.addEventListener('keydown', e => {
+        if (_zoomOpen) {
+            if (e.key === 'Escape')     { closeZoom(); return; }
+            if (e.key === 'ArrowRight') { zoomNav(1);  return; }
+            if (e.key === 'ArrowLeft')  { zoomNav(-1); return; }
+        }
+        if (e.key === 'Escape') closeLead();
+    });
 
     // Carrusel: swipe táctil en la galería (móvil) → siguiente/anterior imagen.
     let _touchX = null;

@@ -6,10 +6,10 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v43 — §134: voz de marca de las 32 piezas (nombre evocador + descripción de 3
-// movimientos + badge por gema, escritos a Firestore) + el badge por pieza ahora se ve en la
-// TARJETA del catálogo (p.tag || p.badge). (v42 = footer/precio/slug §133.)
-const CACHE_NAME    = 'bersaglio-v48';
+// Bumped to v49 — §143: ficha de pieza — flechas del carrusel translúcidas/al-borde
+// (revelado en hover desktop) + VISOR DE ZOOM (lightbox premium: clic en la foto → pantalla
+// completa con zoom rueda/pinch + pan + flechas, fondo perla limpio §142). (v48 = fix LQIP §142.)
+const CACHE_NAME    = 'bersaglio-v49';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

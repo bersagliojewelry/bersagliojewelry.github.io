@@ -49,7 +49,7 @@
        hueco en piezas con poca información (caso argolla, Daniel 2026-06-25). Con info abundante
        crece (flex). Nunca rompe el "responsive inteligente". */
     .pz-main { flex: 1 1 auto; aspect-ratio: auto; min-height: 300px; margin-bottom: 0; }
-    .pz-thumbs { margin-top: 14px; }
+    .pz-dots { margin-top: 16px; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -90,31 +90,52 @@
 }
 .pz-cert-chip svg { color: var(--bj-emerald-700); }
 
-.pz-thumbs {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-}
-.pz-thumb {
-    aspect-ratio: 1;
-    border-radius: 18px;
-    overflow: hidden;
-    padding: 0;
-    border: 1px solid oklch(100% 0 0 / 0.5);
+/* Carrusel: flechas izq/der sobre la imagen (Daniel) — glass, solo con >1 imagen. */
+.pz-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    z-index: 3;
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: oklch(100% 0 0 / 0.72);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid oklch(100% 0 0 / 0.6);
+    color: var(--bj-emerald-700);
     cursor: pointer;
-    transition: border-color 0.25s, transform 0.25s;
+    transition: background 0.25s, transform 0.2s;
 }
-.pz-thumb-img {
-    width: 100%; height: 100%;
-    background: oklch(94% 0.02 150) center/cover;
-    transition: transform 0.4s;
+.pz-nav-prev { left: 14px; }
+.pz-nav-next { right: 14px; }
+.pz-nav:hover { background: oklch(100% 0 0 / 0.95); }
+.pz-nav:active { transform: translateY(-50%) scale(0.93); }
+
+/* Carrusel: contador "n / total" (esquina superior izq — no choca con el sello cert top-right). */
+.pz-counter {
+    position: absolute; top: 20px; left: 20px;
+    z-index: 3;
+    font-size: 12px; font-variant-numeric: tabular-nums;
+    color: var(--bj-emerald-700);
+    background: oklch(100% 0 0 / 0.7);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid oklch(100% 0 0 / 0.5);
+    border-radius: 20px; padding: 3px 11px;
 }
-.pz-thumb:hover { transform: translateY(-2px); }
-.pz-thumb:hover .pz-thumb-img { transform: scale(1.06); }
-.pz-thumb.is-active {
-    border: 2px solid var(--bj-emerald-600);
-    box-shadow: 0 0 0 3px oklch(62% 0.18 155 / 0.18);
+
+/* Carrusel: puntos de navegación (reemplazan la tira de miniaturas, Daniel §141). */
+.pz-dots {
+    display: flex; justify-content: center; align-items: center;
+    gap: 8px; margin-top: 16px;
+    flex-wrap: wrap;
 }
+.pz-dot {
+    width: 8px; height: 8px; padding: 0;
+    border: none; border-radius: 50%;
+    background: var(--bj-emerald-700);
+    opacity: 0.28; cursor: pointer;
+    transition: opacity 0.25s, width 0.25s, border-radius 0.25s;
+}
+.pz-dot:hover { opacity: 0.55; }
+.pz-dot.is-active { opacity: 1; width: 22px; border-radius: 5px; }
 
 /* ═══════════════════════════════════════════════════════════════════
    INFO COLUMN

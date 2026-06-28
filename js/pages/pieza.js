@@ -163,6 +163,8 @@ function renderGallery(piece) {
     const main = images[idx];
     const showCert = piece.specs?.certificate || piece.specs?.gia;
 
+    const multi = images.length > 1;   // Carrusel (flechas + puntos) SOLO con >1 imagen (Daniel)
+
     return html`
         <div class="pz-gallery">
             <div class="glass glass-iridescent pz-main">
@@ -173,18 +175,23 @@ function renderGallery(piece) {
                             ${gemSVG()}Certificado
                         </div>
                     </div>` : ''}
+                ${multi ? html`
+                    <button type="button" class="pz-nav pz-nav-prev" data-action="gallery-prev" aria-label="Imagen anterior">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+                    <button type="button" class="pz-nav pz-nav-next" data-action="gallery-next" aria-label="Imagen siguiente">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </button>
+                    <div class="pz-counter">${idx + 1} / ${images.length}</div>` : ''}
             </div>
-            ${images.length > 1 ? html`
-                <div class="pz-thumbs">
-                    ${images.slice(0, 6).map((src, i) => html`
+            ${multi ? html`
+                <div class="pz-dots" role="tablist" aria-label="Imágenes de la pieza">
+                    ${images.map((_, i) => html`
                         <button type="button"
-                                class="glass pz-thumb ${i === idx ? 'is-active' : ''}"
-                                data-action="thumb"
-                                data-idx="${i}"
+                                class="pz-dot ${i === idx ? 'is-active' : ''}"
+                                data-action="dot" data-idx="${i}"
                                 aria-label="Ver imagen ${i + 1}"
-                                ${i === idx ? 'aria-current="true"' : ''}>
-                            <div class="pz-thumb-img" style="background:url('${escape(src)}') center/cover"></div>
-                        </button>`)}
+                                ${i === idx ? 'aria-current="true"' : ''}></button>`)}
                 </div>` : ''}
         </div>`;
 }
@@ -620,6 +627,30 @@ function refresh() {
     }
 }
 
+// Carrusel: lista de imágenes reales de la pieza (con fallback a image legacy).
+function galleryImages(piece) {
+    const images = (piece.images || []).filter(Boolean);
+    if (images.length === 0 && piece.image) images.push(piece.image);
+    return images;
+}
+
+// Carrusel: muestra la imagen `newIdx` (con wrap-around) — swap DIRECTO del fondo +
+// actualiza contador y puntos, SIN re-render (mismo patrón liviano que la antigua miniatura).
+function setGalleryIdx(images, newIdx) {
+    const n = images.length;
+    if (n <= 1) return;
+    _viewIdx = ((newIdx % n) + n) % n;
+    const mainEl = document.querySelector('.pz-main-img');
+    if (mainEl) mainEl.style.background = `url('${images[_viewIdx]}') center/cover`;
+    const counter = document.querySelector('.pz-counter');
+    if (counter) counter.textContent = `${_viewIdx + 1} / ${n}`;
+    document.querySelectorAll('.pz-dot').forEach((el, i) => {
+        const on = i === _viewIdx;
+        el.classList.toggle('is-active', on);
+        if (on) el.setAttribute('aria-current', 'true'); else el.removeAttribute('aria-current');
+    });
+}
+
 function onMainClick(e) {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
@@ -628,21 +659,16 @@ function onMainClick(e) {
     if (action === 'lead-open')  { e.preventDefault(); openLead();  return; }
     if (action === 'lead-close') { e.preventDefault(); closeLead(); return; }
 
-    if (action === 'thumb') {
+    if (action === 'gallery-prev' || action === 'gallery-next' || action === 'dot') {
         e.preventDefault();
-        _viewIdx = Number(btn.dataset.idx) || 0;
         const piece = data.getBySlug(_slug);
         if (!piece) return;
-        const images = (piece.images || []).filter(Boolean);
-        if (images.length === 0 && piece.image) images.push(piece.image);
-        const main = images[_viewIdx];
-        const mainEl = document.querySelector('.pz-main-img');
-        if (mainEl) mainEl.style.background = `url('${main}') center/cover`;
-        document.querySelectorAll('.pz-thumb').forEach((el, i) => {
-            el.classList.toggle('is-active', i === _viewIdx);
-            if (i === _viewIdx) el.setAttribute('aria-current', 'true');
-            else el.removeAttribute('aria-current');
-        });
+        const images = galleryImages(piece);
+        if (images.length <= 1) return;
+        const next = action === 'dot'
+            ? (Number(btn.dataset.idx) || 0)
+            : _viewIdx + (action === 'gallery-next' ? 1 : -1);
+        setGalleryIdx(images, next);
         return;
     }
 
@@ -698,6 +724,23 @@ export async function init() {
     main.addEventListener('click', onMainClick);
     main.addEventListener('submit', onLeadSubmit);   // form flotante de lead
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLead(); });
+
+    // Carrusel: swipe táctil en la galería (móvil) → siguiente/anterior imagen.
+    let _touchX = null;
+    main.addEventListener('touchstart', e => {
+        _touchX = e.target.closest('.pz-main') ? e.changedTouches[0].clientX : null;
+    }, { passive: true });
+    main.addEventListener('touchend', e => {
+        if (_touchX === null) return;
+        const dx = e.changedTouches[0].clientX - _touchX;
+        _touchX = null;
+        if (Math.abs(dx) < 40) return;   // umbral: ignora toques/scroll vertical
+        const piece = data.getBySlug(_slug);
+        if (!piece) return;
+        const images = galleryImages(piece);
+        if (images.length <= 1) return;
+        setGalleryIdx(images, _viewIdx + (dx < 0 ? 1 : -1));   // swipe izq → siguiente
+    }, { passive: true });
 
     data.onChange(refresh);
     cart.onChange(refresh);

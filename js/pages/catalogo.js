@@ -126,7 +126,7 @@ function renderCard(p) {
            data-piece-slug="${escape(slug)}" data-piece-name="${escape(p.name || 'Pieza')}"
            data-list-id="catalogo" data-list-name="Catálogo">
             <div class="cat-card-imgwrap">
-                <div class="cat-card-img" style="${lqipBgStyle(img, p.imageLqip)};background-size:cover;background-position:center"></div>
+                <div class="cat-card-img" style="${lqipBgStyle(img, '')};background-size:cover;background-position:center"></div>
                 <div class="cat-card-vignette" aria-hidden="true"></div>
                 ${tag ? html`
                     <div class="cat-card-tag">

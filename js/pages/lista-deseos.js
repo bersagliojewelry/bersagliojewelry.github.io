@@ -91,7 +91,7 @@ function renderCard(row) {
     return html`
         <article class="glass glass-iridescent wl-card" data-slug="${escape(slug)}">
             <a class="wl-card-imglink" href="${pieceUrl(piece.slug || slug)}">
-                <div class="wl-card-img" style="${lqipBgStyle(img, piece.imageLqip)};background-size:cover;background-position:center"></div>
+                <div class="wl-card-img" style="${lqipBgStyle(img, '')};background-size:cover;background-position:center"></div>
                 <div class="wl-card-vignette" aria-hidden="true"></div>
             </a>
             <div class="wl-card-body">

@@ -110,7 +110,7 @@ function renderFeaturedCard(p) {
            data-piece-slug="${escape(slug)}" data-piece-name="${escape(p.name || 'Pieza')}"
            data-list-id="featured" data-list-name="Piezas destacadas">
             <div class="home-featured-card-imgwrap">
-                <div class="home-featured-card-img" style="${lqipBgStyle(img, p.imageLqip)};background-size:cover;background-position:center"></div>
+                <div class="home-featured-card-img" style="${lqipBgStyle(img, '')};background-size:cover;background-position:center"></div>
                 <div class="home-featured-card-vignette" aria-hidden="true"></div>
                 ${tag ? html`
                     <div class="home-featured-card-tag">

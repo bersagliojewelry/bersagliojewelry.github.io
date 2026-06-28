@@ -9,7 +9,7 @@
 // Bumped to v43 — §134: voz de marca de las 32 piezas (nombre evocador + descripción de 3
 // movimientos + badge por gema, escritos a Firestore) + el badge por pieza ahora se ve en la
 // TARJETA del catálogo (p.tag || p.badge). (v42 = footer/precio/slug §133.)
-const CACHE_NAME    = 'bersaglio-v46';
+const CACHE_NAME    = 'bersaglio-v47';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

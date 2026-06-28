@@ -6,11 +6,11 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v51 — §145: arreglo de gestos del visor de zoom (ficha) — el PINCH (2 dedos) y el
-// ARRASTRAR-para-mover ahora funcionan. Manejo UNIFICADO con pointer events (antes pointer+touch+
-// click se peleaban en táctil: el pinch caía en "cerrar" y el pan no se activaba). (v50 = candado
-// §144; v49 = visor §143; v48 = LQIP §142.)
-const CACHE_NAME    = 'bersaglio-v51';
+// Bumped to v52 — §146: modelo de TOQUE del visor de zoom intuitivo — tocar la JOYA ACERCA
+// (antes cualquier toque cerraba, y como la imagen es pointer-events:none tocar la joya la
+// cerraba); tocar el MARGEN oscuro cierra; arrastrar mueve; pellizca/rueda zoom; X/Esc cierran.
+// (v51 = unificación pointer events §145; v50 = candado §144; v49 = visor §143.)
+const CACHE_NAME    = 'bersaglio-v52';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

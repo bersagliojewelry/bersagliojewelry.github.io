@@ -10,9 +10,9 @@
 
 > 🎉 **CRM + Fase M EN PROD** (§47-§82). ⚙️ **OPUS 4.8 interino** (marcar `[OPUS-4.8]` · `feedback_opus_interino`).
 >
-> **▶️ SESIÓN (2026-06-27 · tarde) — §136 + §137**: cerradas las 2 anotaciones de §135 + repaso de SIGNIFICADO.
-> **TODO-53/54 ✅ (§136)** (auditoría copy↔tipo + campo origen; cierra TODO-51). Luego **§137**: Daniel pidió la capa del SIGNIFICADO ("cada joya tiene una historia") → principio grabado en skill `catalogo-voz-bersaglio §3` + **las 32 reescritas con Gemini** (significado→materia+tipo→herencia), verificadas (coherencia-tipo §136 intacta + origen honesto) y **EN VIVO** (Firestore). Catálogo = **3 capas** (tipo+cálido+significado). ⚠️ Auto-crítica: cierres uniformes "heredar/legado" — variar a futuro si se desea. ⚠️ Prerender SSG (SEO) hornea las 32 en el próximo deploy de `main`.
-> **🔜 Próximo**: **TODO-47** (verdad de marca con Kary, legal = + urgente) · operativo Daniel (precios + fotos). Backlog TODO-48..51. Cola: F2 Wompi · TODO-41/39/37/33/35.
+> **🔚 SESIÓN CERRADA (2026-06-27).** Largo día: catálogo con VOZ + SIGNIFICADO (§134-§137, 3 capas: tipo+cálido+significado; TODO-53/54/51 ✅) + ajustes web (§138/§139: 16 destacadas, "Ver más piezas", isla solo index, etiqueta "Consultar precio", ficha sin precio sin rótulo) + **carrusel de ficha** (§141: flechas+contador+puntos+swipe) + **fix LQIP** (§142: el blur-up sangraba en fotos transparentes → desactivado en producto). Índice shardeado (§140, cars-operador, TODO-32 ✅). **Todo DESPLEGADO** (SW v48). Detalle → ADRs §134-§142.
+> **⚠️ Verif. live PENDIENTE de §141/§142** (carrusel + LQIP): headless no pinta Firestore → Daniel/Chrome en una pieza con VARIAS fotos transparentes.
+> **🔜 Próximo (sesión fresca)**: **TODO-55 galería premium** (Daniel, chip ↑): flechas más sutiles/al borde + **zoom-inspección** al clic (lightbox premium). Luego **TODO-47** (verdad de marca con Kary, legal) · operativo Daniel (precios + fotos). Backlog TODO-48..51. Cola: F2 Wompi · TODO-41/39/37/33/35.
 > _**MCP Firebase = escritura prod**. merge a main = Claude. Gemini asesora, Claude implementa (`[[feedback_consejo_externo_readonly]]`). Pruebas en vivo DIFERIDAS (§130.4)._
 
 ---
@@ -43,8 +43,8 @@
 | TODO-48 | **Reseñas reales** — conectar `reviews` (aprobadas) → Nosotros + gestión admin (las falsas ya se quitaron; 1 huérfana de prueba en `reviews`). | 🔲 | feature |
 | TODO-49 | **Legal e-commerce** — consentimiento habeas data en forms + verificar privacidad/terminos (retracto). Skill `legal-colombia`. Prereq Wompi. | 🔲 | pre-Wompi |
 | TODO-50 | **Catálogo de lujo** — imagen real (no certificado) + filtros gema/tipo + taxonomía canónica + badges por gema. Detalle → §133.2(B/C). | 🔲 | tras TODO-44 |
-| TODO-51 | **Origen honesto de gemas** no-colombianas (rubí/zafiro/diamante; el sitio sugiere todo Muzo/Chivor). | 🔲 | con TODO-44 |
-> ✅ **Cerrados recientes**: **TODO-53 copy por tipo (§136)** (auditoría verificada → 5 corregidas vía Gemini, EN VIVO) · **TODO-54 campo Origen (§136)** (no era bug: data-driven `admin-piezas.html:276`→`pieza.js:133`/`:137`; Daniel lo deja al fondo de "Especificaciones") · **TODO-52 (§135)** · **TODO-44 (§134)** · TODO-45/46 (§133) · TODO-40 + 32 piezas (§131/§132). Histórico → ADRs §88-§136 + `00`/`99`. Pend operativo Daniel: precios + imágenes IA.
+| TODO-55 | **Galería premium** (Daniel, chip ↑): (a) flechas del carrusel `.pz-nav` más translúcidas + al borde (hoy tapan la imagen) · (b) **zoom/inspección** al clic en la foto (lightbox premium: zoom/pan/navegar). Flujo de diseño (mockup). ⚠️ aprovechar para cerrar la verif. live de §141/§142. | 🔲 | sesión fresca |
+> ✅ **Cerrados recientes**: **TODO-51 origen honesto (§136)** (las 14 "Colombia" = todas esmeraldas; sin claim falso) · **TODO-53/54 copy+origen (§136)** · **TODO-52 (§135)** · **TODO-44 (§134)** · TODO-45/46 (§133) · TODO-40+32 piezas (§131/§132). Histórico → ADRs §88-§142 + `00`/`99`. Pend operativo Daniel: precios + imágenes IA.
 
 ---
 
@@ -57,6 +57,5 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño · Fase 2 hardening (Tier C pend.) 
 
 > Podada (GC) 2026-06-27. Histórico → ADR §37-§130 + bóveda. Lecciones → `30`/`31`/`32`.
 >
-> **Sesiones §133-§139 (2026-06-27) — CATÁLOGO + WEB, DESPLEGADO:** voz de marca de las 32 (§134-§137: nombre→cálido→tipo→significado, 3 capas, TODO-53/54/51 ✅) + ajustes web §138/§139 (16 destacadas + botón "Ver más piezas" + isla solo index + etiqueta "Consultar precio" + ficha sin precio sin rótulo). Lección: datos grandes EMBEBIDOS en Workflow, no por `args`. → ADRs §133-§139 + bóveda. `[[feedback_copy_marca_profundidad]]`
-> **§140 (cars) + §141 + §142 (2026-06-27):** §140 range-shard del índice (00→00+00a, kernel shard-aware ×4) ✅. §141 galería de ficha = **carrusel** (flechas+contador+puntos+swipe; reemplaza miniaturas). §142 **fix LQIP**: el blur-up sangraba un fondo borroso tras fotos de producto SIN fondo (transparentes) → desactivado en los 4 contextos de producto (editorial lo conserva); `imageLqip` queda ignorado para producto. Build verde, SW v48, DESPLEGADO. ⚠️ verif. live pendiente. → ADRs §140-§142.
+> **Sesión §133-§142 (2026-06-27) — CATÁLOGO + WEB, DESPLEGADO:** voz+significado de las 32 (§134-§137, 3 capas; TODO-53/54/51 ✅) · ajustes web (§138/§139) · índice shardeado (§140, cars) · carrusel de ficha (§141) · fix LQIP transparentes (§142). SW v48. Lección: datos grandes EMBEBIDOS en Workflow, no por `args`. → ADRs §133-§142 + bóveda. `[[feedback_copy_marca_profundidad]]`
 > **🚦 Reglas vivas**: `arquitecto-software` SIEMPRE · Bersaglio = 100% COP (§127) · NO inventado/no-verificable (`[[feedback_no_demo_en_index]]`) · la voz solo se presta a lo verificable · pruebas en vivo SOLO al final (§130.4) · W-11/mockup en decisión-diseño · `[[feedback_workflows_acotados]]` · `[[feedback_reintentar_agentes_no_saltar_flujo]]`. Cola: TODO-47..51 · F2 Wompi · TODO-37/39/33/35.

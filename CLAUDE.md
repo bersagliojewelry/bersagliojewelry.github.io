@@ -42,7 +42,8 @@ El cerebro se divide en **nodos**. Auto-cargas SOLO `CLAUDE.md` + `05` + `10` (�
 | 🧪 **Procedimental (experiencia)** | `docs/30-LECCIONES.md` | ❌ on-demand | Trigger de Experiencia: ANTES de una op riesgosa/repetitiva (refactor CSS, tocar caché/SW) o si un síntoma "te suena". Gotchas + recetas + doctrinas Liquid Glass. **Hija → `31`.** |
 | 🔥 **Procedimental · Backend** (hija de `30`) | `docs/31-LECCIONES-FIRESTORE.md` | ❌ on-demand | Trigger de Experiencia BACKEND: ANTES de tocar `firestore.rules`, CF, índices, claims o el emulador. Detalle de L-12/13/14/16/17/29/34..38 (stub-header en `30`). |
 | 🌫️ **Procedimental · Carga web** (hija de `30`) | `docs/32-LECCIONES-CARGA.md` | ❌ on-demand | Trigger de Experiencia: carga fluida/LQIP/View Transitions/caché SWR del sitio público. Detalle de L-45/46/47/49/50/51/52/53 (stub-header en `30`). |
-| 🗂️ **Índice sináptico** | `docs/00-INDICE.md` | ❌ on-demand | ANTES de leer el historial (offset exacto) Y para el enrutamiento semántico (síntoma → neurona). |
+| 🗂️ **Índice sináptico** | `docs/00-INDICE.md` | ❌ on-demand | ANTES de leer el historial (offset exacto) Y para el enrutamiento semántico (síntoma → neurona). Mapa § → línea de **§116+** + ruteo. |
+| 🗂️ **Índice histórico** (hija de `00`) | `docs/00a-INDICE-HIST.md` | ❌ on-demand | Range-shard del índice (ADR §140): mapa § → línea de los ADRs **§1–§115**. La madre `00` apunta aquí. |
 | 📚 **Largo Plazo** | `docs/99-HISTORIAL-ADR.md` | ❌ on-demand | Trigger de Error / detalle histórico de un §. NUNCA completo — usa offset/limit. |
 | 🎯 **Lóbulos de Dominio** | `docs/40-LOBULOS-DOMINIO.md` | ❌ on-demand | Trigger 🔵 §G.2: registry de dominios; lóbulos hijos (`41-SEGURIDAD`/`42-LEGAL`/`43-UX`/`45-PERFORMANCE`…) nacen on-demand con contenido real. |
 | 🏛️ **Arquitectura** | `docs/50-ARQUITECTURA.md` | ❌ on-demand | North-star técnico + **charter del CRM** (Fase 3). Léelo ante Decisión Fuerte o al diseñar/extender módulos. Resumen en §3.6. |
@@ -231,7 +232,8 @@ Una neurona sobrecargada satura el contexto. Cada neurona tiene un TOPE BLANDO (
 | `30-LECCIONES` | 🟡 on-demand entera | ~350 líneas | Índice de lecciones; backend (Firestore/CF/reglas) sharded a `31` (stub-header aquí, detalle allá). Más categorías → nueva hija. |
 | `31-LECCIONES-FIRESTORE` | 🟡 on-demand entera | ~16000 chars | Hija de `30`: detalle de lecciones backend. El kernel lee `### L-NN` solo de `30` → el stub-header permanece en `30`. |
 | `32-LECCIONES-CARGA` | 🟡 on-demand entera | ~12000 chars | Hija de `30`: detalle de lecciones carga/render/caché web (§100-§113). Stub-header en `30`. |
-| `00-INDICE` | 🟡 on-demand | ~450 líneas | Es tabla escaneable; dividir el mapa § por rangos si molesta. |
+| `00-INDICE` | 🟡 on-demand | ~28000 chars | Es tabla escaneable; al crecer se hace **range-shard** (rangos viejos → `00a/00b`). Mantiene ruteo + §116+. |
+| `00a-INDICE-HIST` (hija de `00`) | 🟡 on-demand | ~28000 chars | Shard de rango §1–§115 (ADR §140). Al llenarse → `00b`. El kernel lee el índice como SET (`00` + `00[a-z]-INDICE*`). |
 | `40-LOBULOS-DOMINIO` | 🟡 on-demand | ~280 líneas | Registry; shard por meta-categorías si crece. |
 | `99-HISTORIAL` | 🟢 on-demand por offset | sin tope* | *NUNCA leer entero (solo `offset/limit` vía índice). Si >50k líneas, shard en volúmenes `99a/99b` por rango de §. |
 | hojas de detalle | 🟡 on-demand | ~300 c/u | Shard. |

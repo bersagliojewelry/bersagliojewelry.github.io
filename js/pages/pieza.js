@@ -687,7 +687,7 @@ function zoomViewerHtml() {
             <button type="button" class="pz-zoom-btn pz-zoom-nav pz-zoom-next" data-action="zoom-next" aria-label="Imagen siguiente">
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
             </button>
-            <div class="pz-zoom-hint" data-zoom-hint>Rueda o pellizca para acercar · arrastra para mover</div>
+            <div class="pz-zoom-hint" data-zoom-hint>Toca o pellizca para acercar · arrastra para mover · toca el borde para cerrar</div>
         </div>`;
 }
 
@@ -779,11 +779,13 @@ function bindZoomViewer(el) {
     // Antes se mezclaban pointer (arrastrar) + touch (pinch) + click (cerrar) y se PELEABAN en
     // táctil: el pinch de 2 dedos se corrompía (la lógica de arrastre de 1 dedo lo pisaba) y el
     // gesto caía en "cerrar"; el pan no se activaba (dependía de un zoom que el pinch no fijaba).
-    // Ahora un mapa de punteros decide: 1 puntero = pan (con zoom) o tap-para-cerrar · 2 = pinch.
+    // Mapa de punteros decide: 1 puntero = pan (con zoom) o TAP · 2 = pinch.
+    // §146 — TAP intuitivo: tocar la JOYA acerca/aleja; tocar el MARGEN oscuro cierra (antes
+    // cualquier toque cerraba y, como la imagen es pointer-events:none, tocar la joya la cerraba).
     const pts = new Map();            // pointerId → {x,y} de cada dedo/puntero activo
     let startX = 0, startY = 0, baseX = 0, baseY = 0;   // estado del pan (1 puntero)
     let pinchDist = 0;                // distancia entre 2 dedos (baseline del pinch)
-    let moved = false, gestured = false, closeTimer = null;
+    let moved = false, gestured = false;
 
     const vals  = () => [...pts.values()];
     const dist2 = () => { const [a, b] = vals(); return Math.hypot(b.x - a.x, b.y - a.y); };
@@ -796,7 +798,6 @@ function bindZoomViewer(el) {
 
     el.addEventListener('pointerdown', e => {
         if (e.target.closest('button')) return;        // los botones llevan su propio click
-        clearTimeout(closeTimer);                      // un nuevo toque cancela un cierre pendiente
         pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
         try { el.setPointerCapture(e.pointerId); } catch { /* no-op */ }
         if (pts.size === 1) {
@@ -836,12 +837,15 @@ function bindZoomViewer(el) {
         }
         if (pts.size > 0) return;
         el.classList.remove('is-grabbing');
-        // último puntero levantado: tap LIMPIO en el fondo (sin mover, sin pinch, sin zoom) → cerrar.
-        // Demora para no pisar el doble-clic/doble-tap de acercar; un nuevo pointerdown lo cancela.
-        if (!moved && !gestured && _zoom.scale <= 1.01 && !e.target.closest('[data-action]')) {
-            clearTimeout(closeTimer);
-            closeTimer = setTimeout(closeZoom, 240);
-        }
+        // último puntero levantado. §146 — TAP LIMPIO (sin mover, sin pinch):
+        if (moved || gestured) return;                      // arrastre o pinch → ni zoom ni cerrar
+        if (e.target.closest('[data-action]')) return;      // botón → lo maneja su click
+        if (_zoom.scale > 1.01) { resetZoom(); return; }    // ya ampliado → alejar
+        const zimg = el.querySelector('.pz-zoom-img');      // ¿el toque cayó sobre la joya o el margen?
+        const r = zimg && zimg.getBoundingClientRect();
+        const onImg = !!r && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+        if (onImg) zoomAtPoint(e.clientX, e.clientY, 2.4);  // tocar la JOYA → ACERCAR
+        else closeZoom();                                   // tocar el MARGEN oscuro → cerrar
     };
     el.addEventListener('pointerup', onUp);
     el.addEventListener('pointercancel', onUp);
@@ -854,13 +858,6 @@ function bindZoomViewer(el) {
         if (a === 'zoom-close') closeZoom();
         else if (a === 'zoom-prev') zoomNav(-1);
         else if (a === 'zoom-next') zoomNav(1);
-    });
-
-    el.addEventListener('dblclick', e => {         // doble-clic/doble-tap → acercar/alejar
-        clearTimeout(closeTimer);
-        if (e.target.closest('button')) return;
-        if (_zoom.scale > 1.01) resetZoom();
-        else zoomAtPoint(e.clientX, e.clientY, 2.4);
     });
 }
 

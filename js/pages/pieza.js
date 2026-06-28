@@ -168,7 +168,7 @@ function renderGallery(piece) {
     return html`
         <div class="pz-gallery">
             <div class="glass glass-iridescent pz-main">
-                <div class="pz-main-img" style="${lqipBgStyle(main, idx === 0 ? piece.imageLqip : '')};background-size:cover;background-position:center"></div>
+                <div class="pz-main-img" style="${lqipBgStyle(main, '')};background-size:cover;background-position:center"></div>
                 ${showCert ? html`
                     <div class="pz-main-chips">
                         <div class="chip pz-cert-chip">
@@ -641,7 +641,7 @@ function setGalleryIdx(images, newIdx) {
     if (n <= 1) return;
     _viewIdx = ((newIdx % n) + n) % n;
     const mainEl = document.querySelector('.pz-main-img');
-    if (mainEl) mainEl.style.background = `url('${images[_viewIdx]}') center/cover`;
+    if (mainEl) mainEl.style.backgroundImage = `url('${images[_viewIdx]}')`;   // solo la imagen (conserva el color de fondo limpio del CSS para transparentes)
     const counter = document.querySelector('.pz-counter');
     if (counter) counter.textContent = `${_viewIdx + 1} / ${n}`;
     document.querySelectorAll('.pz-dot').forEach((el, i) => {

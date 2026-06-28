@@ -6,10 +6,11 @@
  *   • Cross-origin: pass-through (no caching)
  */
 
-// Bumped to v49 — §143: ficha de pieza — flechas del carrusel translúcidas/al-borde
-// (revelado en hover desktop) + VISOR DE ZOOM (lightbox premium: clic en la foto → pantalla
-// completa con zoom rueda/pinch + pan + flechas, fondo perla limpio §142). (v48 = fix LQIP §142.)
-const CACHE_NAME    = 'bersaglio-v49';
+// Bumped to v50 — §144: CANDADO DE CALIDAD en el visor de zoom — el zoom nunca supera el tamaño
+// REAL de la foto (no pixelar las fotos temporales de baja resolución §132; zoom completo con las
+// finales). Tope = naturalWidth/anchoMostrado (≤4×); oculta el hint si la foto no admite zoom.
+// (v49 = §143 visor de zoom + flechas; v48 = fix LQIP §142.)
+const CACHE_NAME    = 'bersaglio-v50';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

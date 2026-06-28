@@ -669,6 +669,7 @@ let _zoomOpen = false;
 let _zoomIdx = 0;
 const _zoom = { scale: 1, x: 0, y: 0 };
 let _zoomBaseW = 0, _zoomBaseH = 0;   // tamaño de la imagen a escala 1 → acota el paneo
+let _zoomMax = 4;   // §144 candado de calidad: tope de zoom = no superar el tamaño REAL de la foto (no pixelar)
 
 function zoomViewerHtml() {
     return html`
@@ -699,7 +700,19 @@ function applyZoom() {
 function resetZoom() { _zoom.scale = 1; _zoom.x = 0; _zoom.y = 0; applyZoom(); }
 function measureZoomImg() {
     const img = document.querySelector('[data-zoom-img]');
-    if (img) { _zoomBaseW = img.clientWidth || img.naturalWidth; _zoomBaseH = img.clientHeight || img.naturalHeight; }
+    if (!img) return;
+    _zoomBaseW = img.clientWidth || img.naturalWidth;
+    _zoomBaseH = img.clientHeight || img.naturalHeight;
+    // §144 CANDADO DE CALIDAD (consejo Gemini que el §143 no aplicó): el zoom NUNCA supera el
+    // tamaño REAL de la foto (1 px de origen ≤ 1 px en pantalla). En fotos de baja resolución
+    // (temporales §132) el tope ≈ 1× → no se amplía y NO pixela; con fotos finales de alta
+    // resolución permite el zoom de inspección completo (tope sano 4×). El CSS ya evita el
+    // upscale de la vista base (width:auto + max-w/h); esto cierra el hueco del zoom.
+    _zoomMax = (img.naturalWidth && _zoomBaseW)
+        ? Math.max(1, Math.min(4, img.naturalWidth / _zoomBaseW))
+        : 4;
+    const hint = document.querySelector('[data-zoom-hint]');
+    if (hint) hint.style.display = _zoomMax > 1.01 ? '' : 'none';   // no prometer un zoom que la foto no admite
 }
 function clampPan() {
     const mx = Math.max(0, (_zoomBaseW * _zoom.scale - window.innerWidth) / 2 + 40);
@@ -710,7 +723,7 @@ function clampPan() {
 // Zoom anclado a un punto (cursor/pinch): el punto bajo el dedo/cursor queda fijo.
 function zoomAtPoint(clientX, clientY, factor) {
     const prev = _zoom.scale;
-    const next = Math.max(1, Math.min(4, prev * factor));
+    const next = Math.max(1, Math.min(_zoomMax, prev * factor));   // §144: tope = candado de calidad
     if (next === prev) return;
     const px = clientX - window.innerWidth / 2;    // punto relativo al centro (origin del stage)
     const py = clientY - window.innerHeight / 2;
@@ -740,8 +753,8 @@ function openZoom(startIdx) {
     const el = document.querySelector('[data-zoom]');
     if (!el) return;
     el.toggleAttribute('data-single', images.length <= 1);   // 1 sola imagen → oculta flechas
+    el.classList.add('is-open');   // §144: visible ANTES de medir → clientWidth real (candado + paneo correctos)
     setZoomImage(images);
-    el.classList.add('is-open');
     _zoomOpen = true;
     try { document.body.style.overflow = 'hidden'; } catch { /* no-op */ }
 }

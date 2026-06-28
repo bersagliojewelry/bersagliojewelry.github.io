@@ -10,9 +10,9 @@
 
 > 🎉 **CRM + Fase M EN PROD** (§47-§82). ⚙️ **OPUS 4.8 interino** (marcar `[OPUS-4.8]` · `feedback_opus_interino`).
 >
-> **▶️ SESIÓN (2026-06-28) — §143 ficha: flechas sutiles + VISOR DE ZOOM** (TODO-55 ✅, 2 mejoras de diseño premium de Daniel): flechas del carrusel translúcidas/al-borde (no tapan el producto) + lightbox de inspección (zoom/pan/navegar, fondo perla limpio §142). Flujo proporcionado (mockup `show_widget` → implementar → verif. live). **Verificado en Chrome real** + cerrada la verif. pendiente de §141/§142 (técnica nueva → L-58). SW v49. → ADR §143.
-> _⚠️ Auto-crítica §143: las imágenes webp de las piezas en `/data/catalogo.json` (snapshot SSG) están DESALINEADAS con la data viva (ej. "Puro Albor": JSON 6 imgs, Firestore 1) → regenerar el JSON en el próximo deploy de `main`; el operativo de fotos sigue pendiente (Daniel)._
-> **§144 (2026-06-28) [OPUS-4.8]:** candado de calidad en el visor de zoom (no supera el tamaño real → no pixela las fotos temporales §132). Build verde → deploy. **⚠️ Post-mortem: re-hice §143 entero porque la `Desarrollo` LOCAL estaba stale y NO hice `git fetch` al arrancar (sesión paralela ya lo había desplegado); el fetch pre-deploy lo cazó sin daño. Lección → §144.7 + TODO-22.** → ADR §144.
+> **▶️ SESIÓN 2026-06-28 — ficha: visor de zoom (§143-§145) [OPUS-4.8]:** §143 visor+flechas sutiles (otra sesión; TODO-55 ✅, cierra §141/§142) · §144 candado de calidad (no pixela las temporales §132) · §145 fix gestos táctiles (pinch + arrastrar-para-mover; `bindZoomViewer` unificado a pointer events) + quitada casilla "Etiqueta de precio" del admin (rótulo estándar §138). SW v51 · APP_VERSION v30. Build verde + sidebar 9/9 → deploy + verif. live (Playwright pointer sintético + Daniel dispositivo). → ADRs §143/§144/§145.
+> _⚠️ Auto-crítica: `/data/catalogo.json` (snapshot SSG) puede estar desalineado con la data viva (ej. "Puro Albor": JSON 6 imgs/Firestore 1) → el deploy de `main` regenera el JSON; operativo de fotos pendiente (Daniel)._
+> _Post-mortem §144.7: re-trabajo por `Desarrollo` local stale + sin `git fetch` al arrancar → refuerza TODO-22 (git-gate al arrancar)._
 > **🔜 Próximo**: **TODO-47** (verdad de marca con Kary, legal = + urgente) · operativo Daniel (precios + fotos). Backlog TODO-48..51. Cola: F2 Wompi · TODO-41/39/37/33/35.
 > _**MCP Firebase = escritura prod**. merge a main = Claude. Gemini asesora, Claude implementa (`[[feedback_consejo_externo_readonly]]`). Pruebas en vivo DIFERIDAS (§130.4)._
 
@@ -58,5 +58,5 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño · Fase 2 hardening (Tier C pend.) 
 > Podada (GC) 2026-06-27. Histórico → ADR §37-§130 + bóveda. Lecciones → `30`/`31`/`32`.
 >
 > **Sesión §133-§142 (2026-06-27):** catálogo voz+significado + web, desplegado (SW v48). Lección: datos grandes EMBEBIDOS en Workflow, no por `args`. → ADRs §133-§142. `[[feedback_copy_marca_profundidad]]`
-> **§143/§144 (2026-06-28):** ficha — flechas sutiles + visor de zoom (§143, otra sesión; verif. live Chrome cierra §141/§142) + candado de calidad no-upscale (§144, build verde → deploy). SW v50. Post-mortem: re-trabajo por local stale → §144.7 / TODO-22. → ADRs §143/§144.
+> **§143-§145 (2026-06-28):** ficha — visor de zoom (§143 otra sesión, cierra §141/§142) + candado no-upscale (§144) + fix gestos táctiles pinch/pan unificando pointer events (§145) + quitada casilla precio del admin (§145). SW v51. Post-mortem: re-trabajo por local stale → §144.7/TODO-22. → ADRs §143-§145.
 > **🚦 Reglas vivas**: `arquitecto-software` SIEMPRE · Bersaglio = 100% COP (§127) · NO inventado/no-verificable (`[[feedback_no_demo_en_index]]`) · la voz solo se presta a lo verificable · pruebas en vivo SOLO al final (§130.4) · W-11/mockup en decisión-diseño · `[[feedback_workflows_acotados]]` · `[[feedback_reintentar_agentes_no_saltar_flujo]]`. Cola: TODO-47..51 · F2 Wompi · TODO-37/39/33/35.

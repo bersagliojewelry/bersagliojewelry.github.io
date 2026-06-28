@@ -775,71 +775,93 @@ function zoomNav(dir) {
 }
 
 function bindZoomViewer(el) {
-    let moved = false, clickTimer = null;
+    // §145 — Manejo UNIFICADO de gestos con POINTER EVENTS (mouse + táctil en UN solo modelo).
+    // Antes se mezclaban pointer (arrastrar) + touch (pinch) + click (cerrar) y se PELEABAN en
+    // táctil: el pinch de 2 dedos se corrompía (la lógica de arrastre de 1 dedo lo pisaba) y el
+    // gesto caía en "cerrar"; el pan no se activaba (dependía de un zoom que el pinch no fijaba).
+    // Ahora un mapa de punteros decide: 1 puntero = pan (con zoom) o tap-para-cerrar · 2 = pinch.
+    const pts = new Map();            // pointerId → {x,y} de cada dedo/puntero activo
+    let startX = 0, startY = 0, baseX = 0, baseY = 0;   // estado del pan (1 puntero)
+    let pinchDist = 0;                // distancia entre 2 dedos (baseline del pinch)
+    let moved = false, gestured = false, closeTimer = null;
+
+    const vals  = () => [...pts.values()];
+    const dist2 = () => { const [a, b] = vals(); return Math.hypot(b.x - a.x, b.y - a.y); };
+    const mid2  = () => { const [a, b] = vals(); return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; };
+
     el.addEventListener('wheel', e => {
         e.preventDefault();
         zoomAtPoint(e.clientX, e.clientY, e.deltaY < 0 ? 1.18 : 1 / 1.18);
     }, { passive: false });
 
-    let dragging = false, sx = 0, sy = 0, bx = 0, by = 0;
     el.addEventListener('pointerdown', e => {
-        if (e.target.closest('button')) return;
-        dragging = true; moved = false;
-        sx = e.clientX; sy = e.clientY; bx = _zoom.x; by = _zoom.y;
-        el.classList.add('is-grabbing');
+        if (e.target.closest('button')) return;        // los botones llevan su propio click
+        clearTimeout(closeTimer);                      // un nuevo toque cancela un cierre pendiente
+        pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
         try { el.setPointerCapture(e.pointerId); } catch { /* no-op */ }
+        if (pts.size === 1) {
+            moved = false; gestured = false;
+            startX = e.clientX; startY = e.clientY; baseX = _zoom.x; baseY = _zoom.y;
+            el.classList.add('is-grabbing');
+        } else if (pts.size === 2) {
+            pinchDist = dist2();        // calibra el pinch (sin zoom todavía)
+            gestured = true;            // hubo gesto multi-touch → NUNCA cerrar al soltar
+        }
     });
-    el.addEventListener('pointermove', e => {
-        if (!dragging) return;
-        const dx = e.clientX - sx, dy = e.clientY - sy;
-        if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moved = true;
-        if (_zoom.scale <= 1.01) return;   // sin zoom no hay paneo (deja libre el tap-para-cerrar)
-        _zoom.x = bx + dx; _zoom.y = by + dy;
-        clampPan(); applyZoom();
-    });
-    const endDrag = e => {
-        if (!dragging) return;
-        dragging = false;
-        el.classList.remove('is-grabbing');
-        try { el.releasePointerCapture(e.pointerId); } catch { /* no-op */ }
-    };
-    el.addEventListener('pointerup', endDrag);
-    el.addEventListener('pointercancel', endDrag);
 
-    el.addEventListener('click', e => {
-        const btn = e.target.closest('[data-action]');
-        if (btn) {
-            e.preventDefault();
-            const a = btn.dataset.action;
-            if (a === 'zoom-close') closeZoom();
-            else if (a === 'zoom-prev') zoomNav(-1);
-            else if (a === 'zoom-next') zoomNav(1);
+    el.addEventListener('pointermove', e => {
+        if (!pts.has(e.pointerId)) return;
+        pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (pts.size >= 2) {           // PINCH (2 dedos): zoom anclado al punto medio
+            const d = dist2();
+            if (pinchDist) { const m = mid2(); zoomAtPoint(m.x, m.y, d / pinchDist); }
+            pinchDist = d; moved = true;
             return;
         }
-        // Clic en el fondo limpio (la imagen es pointer-events:none) → cerrar, salvo que
-        // sea arrastre o esté con zoom (ahí el tap inspecciona). Demora para no pisar el dblclick.
-        if (moved || _zoom.scale > 1.01) return;
-        clearTimeout(clickTimer);
-        clickTimer = setTimeout(closeZoom, 260);
+        const dx = e.clientX - startX, dy = e.clientY - startY;   // 1 puntero: PAN si hay zoom
+        if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moved = true;
+        if (_zoom.scale <= 1.01) return;   // sin zoom no hay paneo (deja libre el tap-para-cerrar)
+        _zoom.x = baseX + dx; _zoom.y = baseY + dy;
+        clampPan(); applyZoom();
     });
 
-    el.addEventListener('dblclick', e => {
-        clearTimeout(clickTimer);
+    const onUp = e => {
+        if (!pts.has(e.pointerId)) return;
+        pts.delete(e.pointerId);
+        try { el.releasePointerCapture(e.pointerId); } catch { /* no-op */ }
+        if (pts.size === 1) {          // de pinch → 1 dedo: reanuda el pan SIN salto
+            const [p] = vals();
+            startX = p.x; startY = p.y; baseX = _zoom.x; baseY = _zoom.y; pinchDist = 0;
+            return;
+        }
+        if (pts.size > 0) return;
+        el.classList.remove('is-grabbing');
+        // último puntero levantado: tap LIMPIO en el fondo (sin mover, sin pinch, sin zoom) → cerrar.
+        // Demora para no pisar el doble-clic/doble-tap de acercar; un nuevo pointerdown lo cancela.
+        if (!moved && !gestured && _zoom.scale <= 1.01 && !e.target.closest('[data-action]')) {
+            clearTimeout(closeTimer);
+            closeTimer = setTimeout(closeZoom, 240);
+        }
+    };
+    el.addEventListener('pointerup', onUp);
+    el.addEventListener('pointercancel', onUp);
+
+    el.addEventListener('click', e => {            // SOLO acciones de botón (cerrar/prev/next)
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        e.preventDefault();
+        const a = btn.dataset.action;
+        if (a === 'zoom-close') closeZoom();
+        else if (a === 'zoom-prev') zoomNav(-1);
+        else if (a === 'zoom-next') zoomNav(1);
+    });
+
+    el.addEventListener('dblclick', e => {         // doble-clic/doble-tap → acercar/alejar
+        clearTimeout(closeTimer);
         if (e.target.closest('button')) return;
         if (_zoom.scale > 1.01) resetZoom();
         else zoomAtPoint(e.clientX, e.clientY, 2.4);
     });
-
-    let pinch = 0;
-    el.addEventListener('touchmove', e => {
-        if (e.touches.length !== 2) return;
-        e.preventDefault();
-        const a = e.touches[0], b = e.touches[1];
-        const dist = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
-        if (pinch) zoomAtPoint((a.clientX + b.clientX) / 2, (a.clientY + b.clientY) / 2, dist / pinch);
-        pinch = dist;
-    }, { passive: false });
-    el.addEventListener('touchend', e => { if (e.touches.length < 2) pinch = 0; });
 }
 
 function onMainClick(e) {

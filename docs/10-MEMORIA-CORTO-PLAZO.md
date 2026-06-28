@@ -10,7 +10,7 @@
 
 > 🎉 **CRM + Fase M EN PROD** (§47-§82). ⚙️ **OPUS 4.8 interino** (marcar `[OPUS-4.8]` · `feedback_opus_interino`).
 >
-> **▶️ Visor de zoom de la ficha — §143-§146 DESPLEGADO + VERIFICADO (v52, TODO-55 ✅) [OPUS-4.8]:** flechas sutiles + lightbox de inspección: **tocar la joya amplía, tocar el margen cierra**, pinch/rueda zoom, arrastrar mueve, candado de calidad (no pixela las temporales §132). Verif. live Playwright. ⚠️ el SW cachea → **al probar, RECARGAR** (quizá por eso "seguían" los bugs). Detalle → ADRs §143-§146.
+> **▶️ Visor de zoom de la ficha — §143-§146 DESPLEGADO + VERIFICADO (v52, TODO-55 ✅) [OPUS-4.8]:** flechas sutiles + lightbox de inspección: **tocar la joya amplía, tocar el margen cierra**, pinch/rueda zoom, arrastrar mueve, candado de calidad (no pixela las temporales §132). **✅ CONFIRMADO por Daniel (2026-06-28).** (SW cachea → recargar para ver cambios.) Detalle → ADRs §143-§146.
 > _⚠️ Auto-crítica: `/data/catalogo.json` (snapshot SSG) puede estar desalineado con la data viva (ej. "Puro Albor": JSON 6 imgs/Firestore 1) → el deploy de `main` regenera el JSON; operativo de fotos pendiente (Daniel)._
 > _Post-mortem §144.7: re-trabajo por `Desarrollo` local stale + sin `git fetch` al arrancar → refuerza TODO-22 (git-gate al arrancar)._
 > **🔜 Próximo**: **TODO-47** (verdad de marca con Kary, legal = + urgente) · operativo Daniel (precios + fotos). Backlog TODO-48..51. Cola: F2 Wompi · TODO-41/39/37/33/35.

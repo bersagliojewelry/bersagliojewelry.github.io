@@ -72,6 +72,7 @@
 | §141 | 2026-06-27 — **Galería de ficha = carrusel** (Daniel): con >1 imagen → flechas izq/der + contador + puntos + swipe (reemplaza miniaturas; `setGalleryIdx` swap directo sin re-render). Mockup→puntos. SW v47. [OPUS-4.8] | 2003 |
 | §142 | 2026-06-27 — **Fix LQIP en transparentes** (Daniel): el blur-up sangraba un fondo borroso tras fotos de producto sin fondo (`lqip.js` capa detrás + `imageLqip` stale por desalineo en `openEdit`). Desactivado blur-up en 4 contextos de producto (`lqipBgStyle(img,'')`); editorial lo conserva. SW v48. [OPUS-4.8] | 2015 |
 | §143 | 2026-06-28 — **Flechas sutiles + VISOR DE ZOOM** (Daniel): flechas del carrusel translúcidas/al-borde (revelado en hover desktop) + lightbox premium de inspección (clic en foto → pantalla completa, zoom rueda/pinch + pan + flechas, fondo perla LIMPIO §142). Montado en `<body>`; `zoomAtPoint`/`clampPan`. Verif. live Chrome (cierra §141/§142). SW v49. [OPUS-4.8] | 2027 |
+| §144 | 2026-06-28 — **Candado de calidad** en el visor de zoom: tope = no superar el tamaño REAL de la foto (`naturalWidth/anchoMostrado`, ≤4×) → no pixela las temporales §132; zoom completo con las finales. Reorden `openZoom` (clientWidth real) + hint se oculta si no hay zoom. + post-mortem trabajo redundante (local stale re-hizo §143 → refuerza TODO-22). SW v50. [OPUS-4.8] | 2039 |
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §57+ al historial,
 > añadir su fila aquí con la línea de inicio (`Select-String` o `grep`).

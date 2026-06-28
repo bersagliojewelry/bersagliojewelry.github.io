@@ -112,7 +112,6 @@ function renderTable() {
             <td style="font-weight:500;">${esc(p.name)}</td>
             <td class="adm-td-muted">${esc(col?.name || p.collection || '\u2014')}</td>
             <td>${p.badge ? `<span class="adm-pill adm-pill--gold">${esc(p.badge)}</span>` : '<span class="adm-td-muted">\u2014</span>'}</td>
-            <td class="adm-td-muted">${esc(p.priceLabel || '\u2014')}</td>
             <td>
                 <span class="adm-pill ${p.featured ? 'adm-pill--green' : 'adm-pill--gray'}">
                     ${p.featured ? '\u2713 S\u00ed' : 'No'}
@@ -441,7 +440,6 @@ async function openModal(id = null) {
         _uploadedLqips = piece.imageLqip ? [piece.imageLqip] : [];
     } else {
         titleEl.textContent = 'Nueva pieza';
-        form.querySelector('[name="priceLabel"]').value = '';   // §138: vacío → rótulo único "Precio a consultar"
     }
 
     renderImagePreviews();
@@ -465,7 +463,6 @@ function populateForm(form, piece) {
     form.querySelector('[name="description"]').value = piece.description || '';
     form.querySelector('[name="badge"]').value       = piece.badge || '';
     form.querySelector('[name="featured"]').checked  = !!piece.featured;
-    form.querySelector('[name="priceLabel"]').value  = piece.priceLabel || '';   // §138: vacío → rótulo único
     form.querySelector('[name="price"]').value       = piece.price ?? '';
 
     // TODO-40 v3: inventario/clasificación (default tolerante a piezas legacy sin estos campos).
@@ -557,7 +554,7 @@ async function handleSave() {
         badge:       get('badge') || null,
         featured:    form.querySelector('[name="featured"]').checked,
         visibilidad,
-        priceLabel:  get('priceLabel') || '',   // §138: vacío → la web muestra el rótulo único "Precio a consultar"
+        priceLabel:  '',   // §145: casilla removida del form → SIEMPRE el rótulo estándar "Consultar precio" (§138)
         specs,
         sizes,       // array (posiblemente vacío) — vacío = "a medida" en el detalle
         images:      _uploadedImages.length ? [..._uploadedImages] : [],

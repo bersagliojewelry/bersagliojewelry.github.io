@@ -69,6 +69,7 @@
 | §138 | 2026-06-27 — **Ajustes web** (Daniel): 9→16 destacadas (col. de 4) + botón al final · isla solo en index (verif. live) · etiqueta `priceDisplay` SSoT (elimina "Cotización"; 32 migradas). SW v45. [OPUS-4.8] | 1967 |
 | §139 | 2026-06-27 — **Refinamiento copy** (Daniel): CTA inferior → "Ver más piezas" · etiqueta tarjeta → "Consultar precio" · **ficha sin precio: sin rótulo** (Daniel: "única/certificada" no encajan); CSS muerto removido. SW v46. [OPUS-4.8] | 1979 |
 | §140 | 2026-06-27 — **Range-shard del índice (00 → 00 + 00a) + kernel shard-aware** (cars-operador, TODO-32 ✅): §1–§115 → `00a-INDICE-HIST`; el kernel lee el índice como SET (`00`+`00[a-z]-INDICE*`), byte-idéntico ×4. `00` 30.8k→9.6k. [OPUS-4.8] | 1991 |
+| §141 | 2026-06-27 — **Galería de ficha = carrusel** (Daniel): con >1 imagen → flechas izq/der + contador + puntos + swipe (reemplaza miniaturas; `setGalleryIdx` swap directo sin re-render). Mockup→puntos. SW v47. [OPUS-4.8] | 2003 |
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §57+ al historial,
 > añadir su fila aquí con la línea de inicio (`Select-String` o `grep`).

@@ -10,10 +10,9 @@
 
 > 🎉 **CRM + Fase M EN PROD** (§47-§82). ⚙️ **OPUS 4.8 interino** (marcar `[OPUS-4.8]` · `feedback_opus_interino`).
 >
-> **▶️ Visor de zoom de la ficha — §143-§146 DESPLEGADO + VERIFICADO (v52, TODO-55 ✅) [OPUS-4.8]:** flechas sutiles + lightbox de inspección: **tocar la joya amplía, tocar el margen cierra**, pinch/rueda zoom, arrastrar mueve, candado de calidad (no pixela las temporales §132). **✅ CONFIRMADO por Daniel (2026-06-28).** (SW cachea → recargar para ver cambios.) Detalle → ADRs §143-§146.
-> _⚠️ Auto-crítica: `/data/catalogo.json` (snapshot SSG) puede estar desalineado con la data viva (ej. "Puro Albor": JSON 6 imgs/Firestore 1) → el deploy de `main` regenera el JSON; operativo de fotos pendiente (Daniel)._
-> _Post-mortem §144.7: re-trabajo por `Desarrollo` local stale + sin `git fetch` al arrancar → refuerza TODO-22 (git-gate al arrancar)._
-> **🔜 Próximo**: **TODO-47** (verdad de marca con Kary, legal = + urgente) · operativo Daniel (precios + fotos). Backlog TODO-48..51. Cola: F2 Wompi · TODO-41/39/37/33/35.
+> ✅ **§143-§146 visor de zoom de la ficha CERRADO** (Daniel confirmó 2026-06-28). → ADRs §143-§146. _Pend operativo Daniel: precios + fotos definitivas._
+> **🔜 ARRANCA WOMPI F2 — la web cobra sola (Decisión Fuerte · DINERO).** Enfoque (Daniel 2026-06-28): **(1)** Daniel loguea `comercios.wompi.co` → Claude explora el panel con extensión Chrome (interfaz + llaves TEST + secreto integridad + eventos/webhook + titular ¿Diana M. Niño=Kary?); **(2)** diseño W-11 (checkout + Cloud Function firma + webhook→`confirmarPago` + reserva TODO-42); **(3)** build SANDBOX (`_test_`, centavos); **(4)** precios TEMPORALES de prueba (Claude, <$2.5M, quita al cerrar); **(5)** legal TODO-49 + llaves reales (Kary) antes del cobro real. Specs `plan-maestro-comercio-v3` + `modelo-inventario §11.4/§12.2`; skills `wompi-*`. ⚠️ SECRETOS=env, nunca commit. `[[project_comercio_pagos]]`
+> **🔜 Cola** (tras/junto a Wompi): TODO-47 (verdad de marca + legal con Kary) · TODO-49 legal e-commerce · TODO-41 factura multi-línea · TODO-39/33/35. Operativo Daniel: precios + fotos definitivas.
 > _**MCP Firebase = escritura prod**. merge a main = Claude. Gemini asesora, Claude implementa (`[[feedback_consejo_externo_readonly]]`). Pruebas en vivo DIFERIDAS (§130.4)._
 
 ---
@@ -49,7 +48,7 @@
 ---
 
 ## 🔮 Contexto estratégico
-Programa "Nuevo Bersaglio": Fase 1 rediseño · Fase 2 hardening (Tier C pend.) · Fase 3 CRM ✅ · **Fase M M0→M6 ✅ EN PROD** + ACUERDOS R1-R6 gateados (charter `50-ARQUITECTURA`). Horizonte: R6 → M7 → M2c → B6 → (futuro) inventario/facturación + RBAC (TODO-19).
+Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier C pend.) · Fase 3 CRM ✅ · Fase M M0→M6 ✅ EN PROD (R1-R6 gateados). Horizonte: **Wompi F2** → R6/M7 → inventario/facturación + RBAC. Charter → `50-ARQUITECTURA`.
 
 ---
 

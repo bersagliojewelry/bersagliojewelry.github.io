@@ -41,12 +41,16 @@ import { pieceUrl, pieceAbsUrl } from '../core/urls.js';
 import { mergeGlobal, waHref } from '../core/global-defaults.js';
 import { saveInquiry } from '../firestore-service.js';
 import { trackBeginCheckout, trackPurchase } from '../analytics.js';
+import { pagarConWompi, wompiEligible } from '../pago-web.js';
 
 const SHIPPING_KEY = 'bj-shipping';
 const STEPS = ['Carrito', 'Envío', 'Pago'];
+// Wompi F2: cobro web "Comprar ahora" (1 pieza). APAGADO en prod hasta el paso 2c (sandbox/cobro real).
+const WOMPI_WEB_ENABLED = false;
 let _step = 1;
 let _shipping = { firstName: '', lastName: '', email: '', phone: '', address: '', city: '', country: 'Colombia', zip: '' };
 let _payment = 'whatsapp';
+let _habeas = false;   // F2: autorización de tratamiento de datos (Habeas Data) para el cobro web
 
 function loadShipping() {
     try {
@@ -259,8 +263,21 @@ const PAYMENT_OPTIONS = [
     },
 ];
 
+// Wompi F2: opción de cobro inmediato — solo se ofrece si hay 1 pieza elegible y el flag está ON.
+const WOMPI_OPTION = {
+    k: 'wompi',
+    t: 'Pagar ahora con tarjeta',
+    d: 'Pago inmediato y seguro con Wompi (Visa · Mastercard).',
+    icon: html`<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>`,
+    primary: true,
+};
+
 function renderStepPayment(rows) {
     const { subtotal } = computeTotals(rows);
+    // Wompi F2: ofrecer "Pagar ahora" SOLO con 1 pieza elegible y el flag ON (el server RE-VALIDA igual).
+    const elegibleWompi = WOMPI_WEB_ENABLED && rows.length === 1 && wompiEligible(rows[0].piece, subtotal);
+    const opciones = elegibleWompi ? [WOMPI_OPTION, ...PAYMENT_OPTIONS] : PAYMENT_OPTIONS;
+    const esWompi = _payment === 'wompi';
     return html`
         <div class="ck-step-body">
             <h3 class="ck-step-title">Cómo quieres avanzar</h3>
@@ -270,7 +287,7 @@ function renderStepPayment(rows) {
             </p>
 
             <div class="ck-payment-list">
-                ${PAYMENT_OPTIONS.map(opt => html`
+                ${opciones.map(opt => html`
                     <label class="glass ck-payment ${_payment === opt.k ? 'is-active' : ''}"
                            data-action="payment"
                            data-key="${escape(opt.k)}">
@@ -285,10 +302,19 @@ function renderStepPayment(rows) {
                     </label>`)}
             </div>
 
+            ${esWompi ? html`
+            <div class="ck-pay-legal">
+                <label class="ck-habeas">
+                    <input type="checkbox" data-action="habeas" ${_habeas ? 'checked' : ''}>
+                    <span>Autorizo el tratamiento de mis datos y acepto los <a href="/terminos.html">Términos</a> y la <a href="/privacidad.html">Política de privacidad</a> (derecho de retracto: 5 días hábiles).</span>
+                </label>
+                <p class="ck-pay-note">Pago seguro procesado por Wompi. El cargo aparecerá a nombre de Bersaglio (Diana M. Niño M.) en tu extracto.</p>
+            </div>` : ''}
+
             <div class="ck-step-footer">
                 <button type="button" class="btn-aqua ck-back" data-action="step-prev">← Volver</button>
                 <button type="button" class="btn-aqua btn-aqua-emerald ck-cta ck-confirm" data-action="confirm">
-                    Confirmar · ${escape(format$(subtotal))}
+                    ${esWompi ? 'Pagar ahora' : 'Confirmar'} · ${escape(format$(subtotal))}
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
                 </button>
             </div>
@@ -409,6 +435,23 @@ function buildWhatsAppCheckoutURL(rows) {
 }
 
 async function confirmOrder(rows) {
+    // Wompi F2: cobro inmediato (1 pieza). La VERDAD del pago la da el webhook → gracias.html lee el estado.
+    if (_payment === 'wompi') {
+        if (!_habeas) { alert('Para pagar en línea, primero autoriza el tratamiento de tus datos.'); return; }
+        const piece = rows[0] && rows[0].piece;
+        if (!piece || !piece.id) { alert('No pudimos identificar la pieza. Intenta de nuevo o escríbenos por WhatsApp.'); return; }
+        const btn = document.querySelector('.ck-confirm');
+        if (btn) btn.setAttribute('disabled', '');
+        try {
+            await pagarConWompi({ pieceId: piece.id, shipping: _shipping, redirectBase: location.origin });
+            // El widget redirige a gracias.html?ref=; si solo se cerró, el webhook resolverá el pago.
+        } catch (err) {
+            console.error('[carrito] wompi:', err);
+            alert((err && err.message) || 'No se pudo iniciar el pago. Intenta de nuevo o escríbenos por WhatsApp.');
+            if (btn) btn.removeAttribute('disabled');
+        }
+        return;
+    }
     const { subtotal } = computeTotals(rows);
     const ship = _shipping;
     const itemsList = rows.map(r => `${r.piece?.name || r.slug} × ${r.qty}`).join(', ');
@@ -484,13 +527,10 @@ function onMainClick(e) {
     if (action === 'payment') {
         e.preventDefault();
         _payment = btn.dataset.key;
-        document.querySelectorAll('.ck-payment').forEach(el => {
-            el.classList.toggle('is-active', el.dataset.key === _payment);
-            const input = el.querySelector('input[type="radio"]');
-            if (input) input.checked = (el.dataset.key === _payment);
-        });
+        refresh();   // re-render: muestra/oculta el bloque legal (habeas) y actualiza el CTA (Wompi F2)
         return;
     }
+    if (action === 'habeas') { _habeas = !!btn.checked; return; }   // checkbox: NO preventDefault (toggle nativo)
 
     if (action === 'confirm') {
         e.preventDefault();
@@ -501,6 +541,7 @@ function onMainClick(e) {
 }
 
 function onMainInput(e) {
+    if (e.target && e.target.dataset && e.target.dataset.action === 'habeas') { _habeas = !!e.target.checked; return; }
     const form = e.target.closest('form[data-form="shipping"]');
     if (!form) return;
     const name = e.target.name;

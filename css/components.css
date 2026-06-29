@@ -141,6 +141,32 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 .bj-header-cart:active,
 .bj-header-burger:active { transform: scale(0.95); }
 
+/* Pseudo-input de búsqueda (TODO-58 unificación · W-11): botón con apariencia de campo, GLOBAL en
+   el header (todas las páginas). Abre el overlay potente (search-overlay.js) — un solo motor, cero
+   duplicación de DOM (veredicto post-Gemini). Visible también en móvil (NO se oculta). */
+.bj-header-search {
+    display: flex; align-items: center; gap: 8px;
+    height: 40px;
+    padding: 0 16px;
+    max-width: 280px; min-width: 0;
+    border-radius: 999px;
+    background: oklch(100% 0 0 / 0.5);
+    border: 1px solid oklch(100% 0 0 / 0.6);
+    box-shadow: 0 1px 0 oklch(100% 0 0 / 0.9) inset;
+    color: var(--bj-ink-mute);
+    cursor: pointer;
+    overflow: hidden;
+    transition: background 0.2s, border-color 0.2s;
+}
+.bj-header-search:hover { background: oklch(100% 0 0 / 0.72); border-color: oklch(62% 0.18 155 / 0.4); }
+.bj-header-search:active { transform: scale(0.98); }
+.bj-header-search svg { color: var(--bj-emerald-700); flex-shrink: 0; }
+.bj-header-search-text {
+    font-family: var(--font-ui); font-size: 13px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.bj-header-search-short { display: none; }
+
 .bj-header-badge {
     position: absolute;
     top: -4px; right: -4px;
@@ -184,7 +210,11 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 @media (max-width: 820px) {
     .bj-header-pill { padding: 8px 10px 8px 16px; }
     .bj-header-nav { display: none !important; }
-    .bj-header-search { display: none; }
+    /* Móvil: el buscador SIGUE visible (compacto "Buscar"), no se oculta — es donde más entra
+       el tráfico de WhatsApp con código (veredicto W-11 / experto móvil). */
+    .bj-header-search { height: 36px; padding: 0 12px; max-width: none; }
+    .bj-header-search-full { display: none; }
+    .bj-header-search-short { display: inline; }
     .bj-header-burger { display: flex; }
     .bj-header-brand { font-size: 16px; }
     .bj-header-sub { display: none; }
@@ -197,6 +227,10 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     .bj-header { top: 12px; }
     .bj-header-pill { padding: 6px 8px 6px 12px; gap: 6px; }
     .bj-header-cart, .bj-header-burger { width: 36px; height: 36px; }
+    /* Móvil chico: el monograma B sustituye al wordmark para que el pseudo-input "Buscar" quepa
+       VISIBLE en el pill (sin recortarse). El logo sigue enlazando al inicio (TODO-58 unificación). */
+    .bj-header-brand { display: none; }
+    .bj-header-search { flex-shrink: 0; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -703,7 +737,7 @@ body.email-modal-open { overflow: hidden; }
 
 .bj-search-panel {
     width: min(640px, 100%);
-    background: oklch(98% 0.01 150 / 0.92);
+    background: oklch(98% 0.01 150 / 0.97);
     border-radius: 24px;
     padding: 8px;
     transform: translateY(-12px);

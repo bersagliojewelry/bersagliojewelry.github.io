@@ -34,6 +34,8 @@ let _initialized = false;
 let _query = '';
 let _results = [];
 let _activeIdx = 0;
+let _trigger = null;   // elemento que abrió el overlay → devolverle el foco al cerrar (a11y)
+let _scrollY = 0;      // scroll preservado para el lock iOS (L-01)
 
 function normalize(s) {
     return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -85,15 +87,17 @@ function buildDOM() {
                 <input type="search"
                        id="bj-search-input"
                        class="bj-search-input"
-                       placeholder="Buscar piezas, colecciones, esmeraldas…"
+                       placeholder="Buscar por código o nombre (ej. 0953)…"
                        autocomplete="off"
                        spellcheck="false"
-                       aria-label="Buscar"
+                       inputmode="search"
+                       enterkeyhint="search"
+                       aria-label="Buscar piezas por código o nombre"
                        aria-controls="bj-search-results"
                        aria-activedescendant="">
                 <kbd class="bj-search-kbd">Esc</kbd>
             </div>
-            <div id="bj-search-results" class="bj-search-results" role="listbox"></div>
+            <div id="bj-search-results" class="bj-search-results" role="listbox" aria-live="polite"></div>
             <div class="bj-search-hint">
                 <span><kbd>↑</kbd><kbd>↓</kbd> navegar</span>
                 <span><kbd>↵</kbd> abrir</span>
@@ -105,6 +109,18 @@ function buildDOM() {
 
     _root.addEventListener('click', e => {
         if (e.target === _root) return closeOverlay();
+    });
+
+    // Focus-trap (a11y, consejo Gemini): Tab/Shift+Tab ciclan dentro del panel; sin esto el
+    // usuario tabula hacia la página opacada detrás del modal. Los focusables se consultan en
+    // vivo (las tarjetas de resultado cambian en cada render).
+    _root.addEventListener('keydown', e => {
+        if (e.key !== 'Tab') return;
+        const f = _root.querySelectorAll('input, a[href], button');
+        if (!f.length) return;
+        const first = f[0], last = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     });
 
     const input = _root.querySelector('#bj-search-input');
@@ -211,7 +227,14 @@ function isTypingInField() {
 export function openOverlay() {
     if (!_initialized) buildDOM();
     if (_open) return;
+    _trigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     _open = true;
+    // Scroll-lock robusto iOS (L-01): position:fixed + top:-scrollY — overflow:hidden NO basta en
+    // iOS (Gemini: scroll-bleed de la página detrás del overlay).
+    _scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${_scrollY}px`;
+    document.body.style.width = '100%';
     _root.classList.add('is-open');
     document.body.classList.add('search-overlay-open');
     requestAnimationFrame(() => {
@@ -226,6 +249,12 @@ export function closeOverlay() {
     _open = false;
     _root?.classList.remove('is-open');
     document.body.classList.remove('search-overlay-open');
+    // Restaura el scroll (L-01) y devuelve el foco al disparador (a11y).
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    window.scrollTo(0, _scrollY);
+    _trigger?.focus?.();
 }
 
 export function initSearchOverlay() {

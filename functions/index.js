@@ -246,6 +246,7 @@ exports.onInquiryCreated = onDocumentCreated('inquiries/{inquiryId}', async (eve
 exports.crearPedido = require('./pedidos').crearPedido;       // B1 paso 3: el único escritor de `pedidos`
 exports.iniciarPagoWeb = require('./pedidos').iniciarPagoWeb; // Wompi F2: cliente público inicia cobro (reserva + firma)
 exports.confirmarPago = require('./pedidos').confirmarPago;   // B1 paso 4: por_verificar → pagado ("vi la plata")
+exports.confirmarPagoWompi = require('./pedidos').confirmarPagoWompi; // Wompi F2: webhook HTTP (firma+re-consulta → pagado)
 exports.anularPedido = require('./pedidos').anularPedido;     // B1 paso 5: VOID (reintegra la pieza)
 exports.cierreCaja = require('./pedidos').cierreCaja;         // B1 paso 5: Cierre Z / arqueo del turno
 exports.ajustarStock = require('./inventario').ajustarStock;         // TODO-40 F1: merma/reabasto/corrección (delta + ledger)

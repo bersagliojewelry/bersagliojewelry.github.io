@@ -8,7 +8,7 @@
  * el cliente), snapshot INMUTABLE, correlativo atómico, e IDEMPOTENTE por pedidoId.
  */
 const { FieldValue, Timestamp } = require('firebase-admin/firestore');
-const { montoEnCentavos, firmaIntegridad } = require('./wompi-core');
+const { montoEnCentavos, firmaIntegridad, verificarFirmaEvento } = require('./wompi-core');
 
 const MEDIOS  = ['efectivo', 'transferencia', 'wompi', 'addi'];
 const CANALES = ['pos', 'web', 'whatsapp'];
@@ -249,6 +249,79 @@ async function confirmarPagoCore(db, input = {}) {
 }
 
 /**
+ * confirmarPagoWompiCore (Wompi F2) — receptor del WEBHOOK de Wompi (la web cobra sola).
+ * El webhook es DISPARADOR, no verdad: (1) valida la firma del evento (secreto de Eventos);
+ * (2) RE-CONSULTA la API de Wompi (`fetchTransaction` = source of truth, no se confía en el payload);
+ * (3) valida monto/moneda/referencia vs el pedido CONGELADO (D-W11); (4) SOLO APPROVED transiciona
+ * pago_pendiente→pagado, idempotente por transactionId (webhookEvents/{txId}). DECLINED/otros NO
+ * cancelan (el cliente reintenta; el reaper libera por tiempo). APPROVED tardío sobre reserva ya
+ * liberada → pagado_sin_stock (NUNCA revende, C3). El webhook JAMÁS toca stock (ya descontado al reservar).
+ * @param event  body del webhook { data.transaction, signature{properties,checksum}, timestamp }
+ * @param opts   { eventsSecret, fetchTransaction:(txId)=>Promise<{id,status,amount_in_cents,currency,reference}> }
+ */
+async function confirmarPagoWompiCore(db, event = {}, opts = {}) {
+    const { eventsSecret, fetchTransaction } = opts;
+    if (!eventsSecret || typeof fetchTransaction !== 'function') {
+        throw new PedidoError('failed-precondition', 'Webhook mal configurado (falta secreto de eventos o consulta).');
+    }
+    // 1. Firma del evento. Inválida → 401 (no es un evento legítimo de Wompi; no se procesa).
+    if (!verificarFirmaEvento(event, eventsSecret)) return { ok: false, status: 401, reason: 'firma-invalida' };
+
+    const txEvent = event?.data?.transaction || {};
+    const txId = String(txEvent.id || '').trim();
+    const reference = String(txEvent.reference || '').trim();
+    if (!txId || !reference) return { ok: false, status: 400, reason: 'evento-incompleto' };
+
+    // 2. RE-CONSULTA a Wompi = la VERDAD (no confiar en el status/monto del payload del evento).
+    const tx = await fetchTransaction(txId);
+    if (!tx) return { ok: false, status: 502, reason: 'sin-consulta' };   // transitorio → Wompi reintenta
+
+    // 3. Idempotencia (webhookEvents/{txId}) + transición del pedido, atómico.
+    return db.runTransaction(async (t) => {
+        const evtRef = db.doc(`webhookEvents/${txId}`);
+        const pedidoRef = db.doc(`pedidos/${reference}`);
+        const evtSnap = await t.get(evtRef);
+        const pedSnap = await t.get(pedidoRef);                            // reads antes de writes
+        if (evtSnap.exists) return { ok: true, status: 200, reason: 'replay', yaProcesado: true };
+
+        const evt = { txId, reference, status: tx.status, amount_in_cents: tx.amount_in_cents, procesadoEn: FieldValue.serverTimestamp() };
+        if (!pedSnap.exists) {
+            t.set(evtRef, { ...evt, accion: 'pedido-inexistente' });
+            return { ok: true, status: 200, reason: 'pedido-inexistente' };
+        }
+        const ped = pedSnap.data();
+
+        // No-APPROVED (DECLINED/VOIDED/ERROR/PENDING): NO transiciona (el cliente reintenta; el reaper libera). Audita.
+        if (tx.status !== 'APPROVED') {
+            t.set(evtRef, { ...evt, accion: 'auditado-no-aprobado' });
+            return { ok: true, status: 200, reason: `no-aprobado:${tx.status}`, pedidoEstado: ped.estado };
+        }
+        // APPROVED: valida monto + moneda + referencia contra el pedido CONGELADO.
+        const esperado = Math.round(Number(ped.total) || 0) * 100;
+        if (tx.amount_in_cents !== esperado || (tx.currency && tx.currency !== 'COP') || tx.reference !== reference) {
+            t.set(evtRef, { ...evt, accion: 'monto-o-ref-no-coincide', esperado });
+            t.update(pedidoRef, { estado: 'a_revisar', revisarMotivo: 'monto/moneda/referencia ≠ Wompi', wompiTxId: txId, updatedAt: FieldValue.serverTimestamp() });
+            return { ok: false, status: 200, reason: 'monto-no-coincide' };
+        }
+        // Transición por estado del pedido (idempotencia de negocio). NUNCA toca stock (ya descontado).
+        if (ped.estado === 'pagado') {
+            t.set(evtRef, { ...evt, accion: 'ya-pagado' });
+            return { ok: true, status: 200, reason: 'ya-pagado', yaProcesado: true };
+        }
+        if (ped.estado === 'pago_pendiente') {
+            t.set(evtRef, { ...evt, accion: 'pagado' });
+            t.update(pedidoRef, { estado: 'pagado', confirmadoPor: 'wompi-webhook', wompiTxId: txId, confirmadoEn: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+            return { ok: true, status: 200, reason: 'pagado' };
+        }
+        // Otro estado (expirado/cancelado/anulado): la reserva ya se liberó → cobro real SIN stock.
+        // NUNCA revende auto (C3): pagado_sin_stock para revisión/reembolso manual (dueño + SLA).
+        t.set(evtRef, { ...evt, accion: 'pagado-sin-stock' });
+        t.update(pedidoRef, { estado: 'pagado_sin_stock', wompiTxId: txId, revisarMotivo: `APPROVED tardío sobre estado ${ped.estado}`, updatedAt: FieldValue.serverTimestamp() });
+        return { ok: true, status: 200, reason: 'pagado-sin-stock', pedidoEstado: ped.estado };
+    });
+}
+
+/**
  * anularPedido (B1 paso 5 · VOID) — marca el pedido como `anulado` (append-only, NO borra) y
  * REINTEGRA la pieza al catálogo (`vendida`→`disponible`) si este pedido la había tomado.
  * "Inmutable ≠ no-anulable": el desglose/total quedan como snapshot; se agrega traza
@@ -355,6 +428,7 @@ async function cierreCajaCore(db, input = {}) {
 module.exports = {
     crearPedidoCore, confirmarPagoCore, anularPedidoCore, cierreCajaCore,
     iniciarPagoWebCore,                          // Wompi F2: reserva web → pago_pendiente + firma
+    confirmarPagoWompiCore,                      // Wompi F2: webhook → valida firma+re-consulta → pagado
     entero, calcOro, PedidoError,
     derivarEstado, normStockType, STOCK_TYPES,   // modelo v3 (reusado por inventario-core.js)
     evaluarStock, aplicarConsumo,                // candado de stock compartido (reusado por iniciarPagoWeb, F2)

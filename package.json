@@ -30,6 +30,7 @@
     "test:leads": "node --test tests/lead-format.test.mjs",
     "test:wompi": "node --test functions/wompi.test.mjs",
     "test:gema": "node --test tests/gem-badge.test.mjs",
+    "test:codigo": "node --test tests/buscador-codigo.test.mjs",
     "brain:diff": "node scripts/brain-diff.mjs"
   },
   "devDependencies": {

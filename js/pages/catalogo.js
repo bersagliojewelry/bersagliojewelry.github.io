@@ -25,6 +25,7 @@ import { lqipBgStyle } from '../core/lqip.js';   // §110.4: blur-up de la pieza
 import { injectCatalogSchema } from '../core/schema.js';
 import { balancedCols } from '../core/grid-balance.js';   // reparto inteligente de columnas (sin huérfanas)
 import { esVendida } from '../core/stock.js';             // TODO-56: ocultar piezas únicas vendidas de la grilla
+import { renderBuscadorCodigo, wireBuscadorCodigo } from '../core/buscador-codigo.js';   // TODO-58: salto directo por código
 
 const SORTS = [
     { key: 'destacados', label: 'Destacados' },
@@ -181,6 +182,7 @@ function renderAll() {
         <div class="container cat-page">
             ${renderHeader()}
             ${renderFilters()}
+            ${renderBuscadorCodigo('catalogo')}
             ${renderGrid()}
         </div>`;
 }
@@ -309,6 +311,7 @@ export async function init() {
 
     main.addEventListener('click', onMainClick);
     main.addEventListener('change', onMainChange);
+    wireBuscadorCodigo(main);   // TODO-58: buscador por código (delegado → sobrevive re-renders)
 
     // Datos en vivo: re-render (maneja la transición cargando→listo y updates posteriores).
     data.onChange(renderCatalog);

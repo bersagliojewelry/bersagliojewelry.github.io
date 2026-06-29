@@ -4,6 +4,7 @@
  */
 
 import { pieceAbsUrl } from './urls.js';
+import { gemDisplayName } from './gem-badge.js';   // §151: gema canónica (badgeGem) para el JSON-LD de la ficha
 
 /**
  * Helper to inject or update a JSON-LD script tag by ID.
@@ -50,7 +51,7 @@ export function injectProductSchema(piece, getCategoryLabel, descriptionFor) {
     // Specs ricas → additionalProperty (AEO: deja a Google/Perplexity/ChatGPT CITAR quilataje,
     // claridad, material, certificación). SOLO campos con valor real (cero-demo).
     const additionalProperty = [
-        ['Gema', s.stone], ['Quilates', s.carat], ['Color', s.color], ['Claridad', s.clarity],
+        ['Gema', gemDisplayName(s)], ['Quilates', s.carat], ['Color', s.color], ['Claridad', s.clarity],
         ['Corte', s.cut], ['Acentos', s.accent], ['Metal', metal], ['Peso', s.weight],
         ['Certificación', s.certificate], ['Origen', s.origin],
     ].filter(([, v]) => v != null && String(v).trim() !== '')

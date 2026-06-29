@@ -17,20 +17,22 @@ const WA = 'https://wa.me/573013752592';
 
 /** HTML del buscador. `variant`: 'catalogo' | 'home' (estilos/copy por contexto). */
 export function renderBuscadorCodigo(variant = 'catalogo') {
-    const lead = variant === 'home'
-        ? '¿Te pasaron un código? Encuentra tu pieza al instante.'
-        : '¿Tienes el código de una pieza?';
+    const home = variant === 'home';
+    const lead = home ? '¿Te pasaron un código? Encuentra tu pieza al instante.'
+                      : 'Busca tu pieza por código o nombre.';
+    const ph   = home ? 'Ej. 0953' : 'Ej. 0953 o "Puro Albor"';
+    const btn  = home ? 'Ir a la pieza' : 'Buscar';
     return html`
         <form class="bc glass bc-${escape(variant)}" data-buscador-codigo role="search"
-              aria-label="Buscar una pieza por su código">
+              aria-label="Buscar una pieza por código o nombre">
             <span class="bc-lead">${escape(lead)}</span>
             <div class="bc-row">
                 <svg class="bc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
                     <circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.5" y2="16.5"/>
                 </svg>
-                <input class="bc-input" type="search" inputmode="numeric" autocomplete="off"
-                       name="codigo" placeholder="Ej. 0953" aria-label="Código de la pieza" maxlength="24" />
-                <button class="bc-btn" type="submit">Ir a la pieza</button>
+                <input class="bc-input" type="search" autocomplete="off"
+                       name="q" placeholder="${escape(ph)}" aria-label="Código o nombre de la pieza" maxlength="40" />
+                <button class="bc-btn" type="submit">${escape(btn)}</button>
             </div>
             <p class="bc-msg" data-bc-msg hidden aria-live="polite"></p>
         </form>`;

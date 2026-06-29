@@ -25,7 +25,8 @@ import { lqipBgStyle } from '../core/lqip.js';   // §110.4: blur-up de la pieza
 import { injectCatalogSchema } from '../core/schema.js';
 import { balancedCols } from '../core/grid-balance.js';   // reparto inteligente de columnas (sin huérfanas)
 import { esVendida } from '../core/stock.js';             // TODO-56: ocultar piezas únicas vendidas de la grilla
-import { renderBuscadorCodigo, wireBuscadorCodigo } from '../core/buscador-codigo.js';   // TODO-58: salto directo por código
+import { renderBuscadorCodigo } from '../core/buscador-codigo.js';   // TODO-58: buscador por código
+import { filtrarCatalogo } from '../core/codigo-util.js';            // TODO-60: filtro inteligente (código + nombre)
 
 const SORTS = [
     { key: 'destacados', label: 'Destacados' },
@@ -34,13 +35,14 @@ const SORTS = [
     { key: 'nombre',     label: 'Nombre A-Z' },
 ];
 
-let _state = { cat: 'all', sort: 'destacados' };
+let _state = { cat: 'all', sort: 'destacados', q: '' };   // q = búsqueda por código/nombre (TODO-60)
 
 function readURLState() {
     const u = new URL(location.href);
     return {
         cat:  u.searchParams.get('col')  || 'all',
         sort: u.searchParams.get('sort') || 'destacados',
+        q:    u.searchParams.get('q')    || '',
     };
 }
 function writeURLState(state) {
@@ -49,6 +51,8 @@ function writeURLState(state) {
     else                      u.searchParams.set('col', state.cat);
     if (state.sort === 'destacados') u.searchParams.delete('sort');
     else                              u.searchParams.set('sort', state.sort);
+    if (!state.q) u.searchParams.delete('q');
+    else           u.searchParams.set('q', state.q);
     history.replaceState({}, '', u.toString());
 }
 
@@ -58,6 +62,7 @@ function applyFilters() {
     // "Vendida". Las refabricables/encargo (pedibles) se quedan.
     let list = data.getAll().filter(p => !esVendida(p));
     if (_state.cat !== 'all') list = list.filter(p => p.collection === _state.cat);
+    if (_state.q) list = filtrarCatalogo(list, _state.q);   // TODO-60: búsqueda inteligente código/nombre
 
     if (_state.sort === 'menor')  list = [...list].sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
     else if (_state.sort === 'mayor') list = [...list].sort((a, b) => Number(b.price || 0) - Number(a.price || 0));
@@ -154,6 +159,18 @@ function renderCard(p) {
 }
 
 function renderEmpty() {
+    // Estado-cero CONSCIENTE de la búsqueda (TODO-60): si hay query, el mensaje habla del término
+    // buscado + CTA a la asesora; si no, es el "colección vacía" de siempre.
+    const buscando = !!_state.q;
+    const title = buscando
+        ? html`No encontramos piezas para «${escape(_state.q)}».`
+        : html`No hay piezas en esta colección — todavía.`;
+    const sub = buscando
+        ? 'Revisa el código o el nombre, o escríbele a tu asesora.'
+        : 'Estamos curando el próximo lote. Mientras tanto, explora otras categorías.';
+    const cta = buscando
+        ? html`<a href="https://wa.me/573013752592" target="_blank" rel="noopener" class="btn-aqua btn-aqua-emerald">Escribir por WhatsApp</a>`
+        : html`<a href="/colecciones.html" class="btn-aqua btn-aqua-emerald" data-action="reset">Ver todo el catálogo</a>`;
     return html`
         <div class="cat-empty">
             <div class="cat-empty-icon" aria-hidden="true">
@@ -162,9 +179,9 @@ function renderEmpty() {
                     <line x1="20" y1="20" x2="16.5" y2="16.5"/>
                 </svg>
             </div>
-            <p class="cat-empty-title">No hay piezas en esta colección — todavía.</p>
-            <p class="cat-empty-sub">Estamos curando el próximo lote. Mientras tanto, explora otras categorías.</p>
-            <a href="/colecciones.html" class="btn-aqua btn-aqua-emerald" data-action="reset">Ver todo el catálogo</a>
+            <p class="cat-empty-title">${title}</p>
+            <p class="cat-empty-sub">${escape(sub)}</p>
+            ${cta}
         </div>`;
 }
 
@@ -181,8 +198,8 @@ function renderAll() {
     return html`
         <div class="container cat-page">
             ${renderHeader()}
-            ${renderFilters()}
             ${renderBuscadorCodigo('catalogo')}
+            ${renderFilters()}
             ${renderGrid()}
         </div>`;
 }
@@ -253,6 +270,34 @@ function onMainChange(e) {
     refreshGrid();
 }
 
+// ─── TODO-60: búsqueda inteligente (código O nombre) con filtro en TIEMPO REAL ──────────
+// El buscador del catálogo NO navega: filtra la grilla EN VIVO mientras se teclea (debounce 160ms,
+// re-pinta solo la grilla → el input conserva foco/cursor). Enter: si queda UNA pieza, va directo a ella.
+let _searchTimer = null;
+function onSearchInput(e) {
+    const input = e.target.closest('.bc-input');
+    if (!input) return;
+    const val = input.value;
+    if (_searchTimer) clearTimeout(_searchTimer);
+    _searchTimer = setTimeout(() => {
+        _searchTimer = null;
+        if (val === _state.q) return;
+        _state.q = val;
+        writeURLState(_state);
+        refreshGrid();
+    }, 160);
+}
+function onSearchSubmit(e) {
+    const form = e.target.closest('[data-buscador-codigo]');
+    if (!form) return;
+    e.preventDefault();
+    if (_searchTimer) { clearTimeout(_searchTimer); _searchTimer = null; }
+    const input = form.querySelector('.bc-input');
+    if (input) { _state.q = input.value; writeURLState(_state); refreshGrid(); }
+    const list = applyFilters();              // ya filtrado por q (+ colección)
+    if (list.length === 1) location.assign(pieceUrl(list[0]));   // 1 resultado → directo a la pieza
+}
+
 // ─── Carga fluida (Daniel reportó el flash 2026-06-22) ──────────────────────────────
 // No pintar el catálogo con datos vacíos (título genérico "Todas las piezas" + filtros solo
 // "Todo" + "No hay piezas" FALSO) antes de que Firestore responda. Esperamos readiness REAL de
@@ -290,6 +335,8 @@ function renderCatalog() {
     if (!main) return;
     if (catalogReady() || _gaveUp) {
         mount(main, renderAll());
+        const bc = main.querySelector('.bc-input');   // restaura el query tras re-render (deep-link ?q=)
+        if (bc && _state.q) bc.value = _state.q;
         updateSchemaMetadata();
         if (_watchdog !== null) { clearTimeout(_watchdog); _watchdog = null; }
     } else {
@@ -311,7 +358,8 @@ export async function init() {
 
     main.addEventListener('click', onMainClick);
     main.addEventListener('change', onMainChange);
-    wireBuscadorCodigo(main);   // TODO-58: buscador por código (delegado → sobrevive re-renders)
+    main.addEventListener('input', onSearchInput);     // TODO-60: filtro en vivo por código/nombre
+    main.addEventListener('submit', onSearchSubmit);   // Enter → si hay 1 resultado, va a la pieza
 
     // Datos en vivo: re-render (maneja la transición cargando→listo y updates posteriores).
     data.onChange(renderCatalog);

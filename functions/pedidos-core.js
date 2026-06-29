@@ -32,6 +32,39 @@ class PedidoError extends Error {
     constructor(code, message) { super(message); this.code = code; this.name = 'PedidoError'; }
 }
 
+// ── Candado de stock COMPARTIDO (POS + reserva web F2/TODO-42) ─────────────────
+// `evaluarStock` = validación PURA de disponibilidad (sin writes → seguro llamarla temprano en la
+// transacción). `aplicarConsumo` = el WRITE (decrementa `cantidad` + estado derivado + asiento de
+// ledger), con opción `reserva` para la reserva web (setea `reservaId`/`reservaExpira` en el MISMO
+// update atómico). Reusados por `crearPedidoCore` (venta mostrador) y por `iniciarPagoWebCore` (F2).
+function evaluarStock(piece) {
+    const stockType = normStockType(piece.stockType);
+    const cantidadActual = (stockType === 'encargo') ? null
+        : (Number.isInteger(piece.cantidad) ? piece.cantidad : 1);   // legacy ??1
+    // Agotada = finito SIN stock (o legacy estado='vendida'). encargo y refabricable-en-0 = vendibles (se fabrican).
+    const agotada = (piece.estado === 'vendida') || (stockType === 'finito' && cantidadActual <= 0);
+    if (agotada) throw new PedidoError('failed-precondition', 'Esa pieza está agotada.');
+    // ¿Consume una unidad física? finito*/cantidad>0 sí; encargo y refabricable-en-0 no (se fabrica).
+    const consumeUnidad = (stockType !== 'encargo') && (cantidadActual > 0);
+    return { stockType, cantidadActual, consumeUnidad };
+}
+
+function aplicarConsumo(tx, pieceRef, { pedidoId, autor, motivo = 'venta', movId, stockType, cantidadActual, reserva = null }) {
+    const nuevaCantidad = cantidadActual - 1;
+    const update = {
+        cantidad: FieldValue.increment(-1),
+        estado: derivarEstado(stockType, nuevaCantidad),
+        updatedAt: FieldValue.serverTimestamp(),
+    };
+    if (reserva) { update.reservaId = reserva.reservaId; update.reservaExpira = reserva.reservaExpira; }
+    tx.update(pieceRef, update);
+    // Ledger append-only (C4); movId por defecto = pedidoId → idempotente con el pedido (un reintento no re-asienta).
+    tx.set(pieceRef.collection('movimientos').doc(movId || pedidoId), {
+        delta: -1, motivo, pedidoId, cantidadResultante: nuevaCantidad,
+        actor: autor, at: FieldValue.serverTimestamp(),
+    });
+}
+
 /**
  * @param db Firestore (admin) — bypassa reglas (único escritor server-side).
  * @param input { pedidoId, pieceId, valorGramo?, peso?, manoObra?, medio?, canal?, autor }
@@ -56,15 +89,9 @@ async function crearPedidoCore(db, input = {}) {
         const pieceSnap = await tx.get(pieceRef);
         if (!pieceSnap.exists) throw new PedidoError('not-found', 'La pieza no existe.');
         const piece = pieceSnap.data();
-        // TODO-40 v3: disponibilidad por stockType + cantidad (SSoT). 'vendida' legacy = pieza migrada a cantidad 0.
-        const stockType = normStockType(piece.stockType);
-        const cantidadActual = (stockType === 'encargo') ? null
-            : (Number.isInteger(piece.cantidad) ? piece.cantidad : 1);   // legacy ??1
-        // Agotada = finito SIN stock (o legacy estado='vendida'). encargo y refabricable-en-0 (bajo pedido) = vendibles (se fabrican).
-        const agotada = (piece.estado === 'vendida') || (stockType === 'finito' && cantidadActual <= 0);
-        if (agotada) throw new PedidoError('failed-precondition', 'Esa pieza está agotada.');
-        // ¿Esta venta consume una unidad física? finito*/cantidad>0 sí; encargo y refabricable-en-0 no (se fabrica).
-        const consumeUnidad = (stockType !== 'encargo') && (cantidadActual > 0);
+        // TODO-40 v3: candado de stock compartido (POS + reserva web). Valida disponibilidad (throw si
+        // agotada) y calcula si esta venta consume una unidad física. SSoT = cantidad (helper reusable).
+        const { stockType, cantidadActual, consumeUnidad } = evaluarStock(piece);
 
         // Total server-side: precio fijo si la pieza lo tiene; si no, por peso (peso×gramo+mano).
         const precioFijo = typeof piece.price === 'number' && isFinite(piece.price);
@@ -94,20 +121,8 @@ async function crearPedidoCore(db, input = {}) {
             autor,
             createdAt: FieldValue.serverTimestamp(),
         });
-        // TODO-40 v3: decrementar `cantidad` (NO marcar 'vendida') + estado DERIVADO + ledger.
-        if (consumeUnidad) {
-            const nuevaCantidad = cantidadActual - 1;
-            tx.update(pieceRef, {
-                cantidad: FieldValue.increment(-1),
-                estado: derivarEstado(stockType, nuevaCantidad),
-                updatedAt: FieldValue.serverTimestamp(),
-            });
-            // Ledger append-only (C4); movId = pedidoId → idempotente con el pedido (un reintento no re-asienta).
-            tx.set(db.doc(`pieces/${pieceId}/movimientos/${pedidoId}`), {
-                delta: -1, motivo: 'venta', pedidoId, cantidadResultante: nuevaCantidad,
-                actor: autor, at: FieldValue.serverTimestamp(),
-            });
-        }
+        // TODO-40 v3: decrementar `cantidad` (NO marcar 'vendida') + estado DERIVADO + ledger (venta mostrador).
+        if (consumeUnidad) aplicarConsumo(tx, pieceRef, { pedidoId, autor, motivo: 'venta', stockType, cantidadActual });
         tx.set(contRef, { valor: numero });
 
         return { pedidoId, numero, total, yaExistia: false };
@@ -252,4 +267,5 @@ module.exports = {
     crearPedidoCore, confirmarPagoCore, anularPedidoCore, cierreCajaCore,
     entero, calcOro, PedidoError,
     derivarEstado, normStockType, STOCK_TYPES,   // modelo v3 (reusado por inventario-core.js)
+    evaluarStock, aplicarConsumo,                // candado de stock compartido (reusado por iniciarPagoWeb, F2)
 };

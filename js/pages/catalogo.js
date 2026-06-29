@@ -25,7 +25,6 @@ import { lqipBgStyle } from '../core/lqip.js';   // §110.4: blur-up de la pieza
 import { injectCatalogSchema } from '../core/schema.js';
 import { balancedCols } from '../core/grid-balance.js';   // reparto inteligente de columnas (sin huérfanas)
 import { esVendida } from '../core/stock.js';             // TODO-56: ocultar piezas únicas vendidas de la grilla
-import { renderBuscadorCodigo } from '../core/buscador-codigo.js';   // TODO-58: buscador por código
 import { filtrarCatalogo, agregarReciente } from '../core/codigo-util.js';   // TODO-60: filtro inteligente + recientes
 
 const SORTS = [
@@ -113,12 +112,26 @@ function renderFilters() {
                 })}
             </div>
 
-            <div class="glass cat-sort">
-                <span class="cat-sort-label">Orden</span>
-                <select class="cat-sort-select" data-action="sort" aria-label="Ordenar resultados">
-                    ${SORTS.map(s => html`
-                        <option value="${escape(s.key)}" ${_state.sort === s.key ? 'selected' : ''}>${escape(s.label)}</option>`)}
-                </select>
+            <div class="cat-controls-right">
+                <!-- §156 C: buscador COMPACTO (filtro vivo de la grilla). El buscador global del
+                     header (§155) cubre el "salta a tu código"; aquí filtra EN VIVO mientras se teclea.
+                     Reusa .bc-input (hook del JS) y data-buscador-codigo (Enter → 1 resultado va a la pieza). -->
+                <form class="glass cat-search" data-buscador-codigo role="search"
+                      aria-label="Buscar una pieza por código o nombre">
+                    <svg class="cat-search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                        <circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.5" y2="16.5"/>
+                    </svg>
+                    <input class="bc-input" type="search" name="q" autocomplete="off"
+                           placeholder="Código o nombre" aria-label="Código o nombre de la pieza" maxlength="40" />
+                </form>
+
+                <div class="glass cat-sort">
+                    <span class="cat-sort-label">Orden</span>
+                    <select class="cat-sort-select" data-action="sort" aria-label="Ordenar resultados">
+                        ${SORTS.map(s => html`
+                            <option value="${escape(s.key)}" ${_state.sort === s.key ? 'selected' : ''}>${escape(s.label)}</option>`)}
+                    </select>
+                </div>
             </div>
         </div>`;
 }
@@ -198,8 +211,11 @@ function renderAll() {
     return html`
         <div class="container cat-page">
             ${renderHeader()}
-            ${renderBuscadorCodigo('catalogo')}
             ${renderFilters()}
+            <div class="cat-search-extra">
+                <p class="bc-msg" data-bc-msg hidden aria-live="polite"></p>
+                <div class="bc-recientes" data-bc-recientes hidden></div>
+            </div>
             ${renderGrid()}
         </div>`;
 }
@@ -238,6 +254,11 @@ function refreshHeader() {
     const newControls = wrap.querySelector('.cat-controls');
     oldHeader.replaceWith(newHeader);
     oldControls.replaceWith(newControls);
+
+    // §156 C: el buscador vive ahora DENTRO de .cat-controls → restaurar el query tras el
+    // re-render (filtrar por categoría no debe borrar lo que el cliente venía buscando).
+    const bc = newControls.querySelector('.bc-input');
+    if (bc && _state.q) bc.value = _state.q;
 }
 
 function onMainClick(e) {

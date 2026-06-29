@@ -3,8 +3,9 @@
    Mirror exacto de BERSAGLIO NOVO/project/js/pages.jsx (Contacto L538-968)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-.ct-page { padding-top: 132px; padding-bottom: 72px; }
-@media (max-width: 680px) { .ct-page { padding-top: 92px; } }
+/* §156 (B): top compacto — `main` ya despeja el header fijo (92px); aquí solo respiramos. */
+.ct-page { padding-top: 64px; padding-bottom: 72px; }
+@media (max-width: 680px) { .ct-page { padding-top: 40px; } }
 
 /* ═══════════════════════════════════════════════════════════════════
    1. HERO
@@ -12,7 +13,7 @@
 .ct-hero {
     text-align: center;
     max-width: 780px;
-    margin: 0 auto 72px;
+    margin: 0 auto 48px;       /* §156 (B): hero más ceñido al resto de la página */
 }
 .ct-hero-eyebrow {
     font-size: 11px;
@@ -32,8 +33,8 @@
 .ct-hero-lead {
     font-size: 16px;
     color: var(--bj-ink-soft);
-    line-height: 1.7;
-    max-width: 600px;
+    line-height: 1.6;          /* §156 (B): lead a ~2 líneas (ensancha + ciñe; copy CMS intacto) */
+    max-width: 720px;
     margin: 0 auto;
 }
 

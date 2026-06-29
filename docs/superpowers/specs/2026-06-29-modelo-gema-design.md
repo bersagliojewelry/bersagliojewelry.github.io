@@ -63,6 +63,7 @@ Recomendaciones 1-línea: **datos**=gems[] SSoT + stone descriptivo · **admin/U
 - **Riesgo #2 (slug sin color)**: gema nueva sin color → fallback neutro seguro + (a futuro) validación rules `gemPrincipal ∈ gems` y slug ∈ `gemTaxonomy`.
 - **Riesgo #3 (índice)**: declarar índice `array-contains` en `firestore.indexes.json` ANTES del filtro TODO-50.
 - INTACTOS: `specs.stone/accent/metal`, SSG, ficha, CF (verificar callsites de `specs.stone`).
+- **🧪 Lección backfill (gotcha verificada en la canaria, 2026-06-29)**: una lectura Firestore con `mask` OCULTA los campos no pedidos (las piezas tenían `carat`/`certificate`/`cut` que la máscara no mostró). Por eso un backfill de subcampo de un map DEBE escribirse con `updateMask.fieldPaths:["specs.badgeGem","specs.gemFilterIds"]` (merge por field-path) y NUNCA reconstruyendo el map `specs` completo desde una lectura enmascarada → habría borrado quilataje/certificado. Patrón para futuros backfills de inventario vía MCP.
 
 ## 6. IAP (implementación)
 - (A) MODIFICAR: `js/core/gem-badge.js` (lee gemPrincipal+taxonomía+fallback), `js/home/featured.js`/`catalogo.js` (usan gemBadge), `admin-piezas.html`+`js/admin/piezas.js` (select+acentos+rename+save), `firestore.rules` (gems/gemTaxonomy), `public/sw.js` (cache bump). NUEVO: `gemTaxonomy` (colección), script backfill `scripts/migrate-gema.mjs`, helper taxonomía cliente.

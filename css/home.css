@@ -94,7 +94,8 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 .home-hero-img-fallback {
     width: 100%; height: 100%;
     object-fit: cover;
-    object-position: center;
+    /* §156: anclar hacia ARRIBA para que NO se corte la cabeza de la modelo (la foto la tiene arriba). */
+    object-position: center 18%;
     display: block;
 }
 .home-hero-rim {
@@ -121,7 +122,10 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 }
 /* §156 rediseño hero: se OCULTAN locator/manifesto/firma (clutter); el modelo CMS queda intacto (solo no
    se pintan). Visible = eyebrow + headline + microcopy de confianza + 2 CTAs. */
-.home-hero-locator-row, .home-hero-manifesto, .home-hero-signature { display: none !important; }
+/* §156: solo el manifesto (párrafo) se oculta; el locator (📍 Cartagena de Indias) y la FIRMA (Kary
+   Mendoza) SE CONSERVAN (Daniel) — recolocados a la derecha y en color OSCURO sobre la foto clara. */
+.home-hero-manifesto { display: none !important; }
+.home-hero-locator-row { position: absolute; top: clamp(24px, 4vw, 52px); right: clamp(24px, 4vw, 52px); margin: 0; }
 .home-hero-body { max-width: 460px; }
 .home-hero-trust {
     display: inline-flex; align-items: center; gap: 7px;
@@ -147,7 +151,7 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     font-size: 10px;
     letter-spacing: 0.25em;
     text-transform: uppercase;
-    color: oklch(100% 0 0 / 0.7);
+    color: var(--bj-ink-soft);
     display: flex; align-items: center; gap: 10px;
 }
 
@@ -301,7 +305,7 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     bottom: clamp(28px, 5vw, 64px);
     z-index: 3;
     display: flex; align-items: center; gap: 10px;
-    color: oklch(100% 0 0 / 0.7);
+    color: var(--bj-ink-soft);
 }
 .home-hero-signature-eyebrow {
     font-size: 9px;
@@ -310,12 +314,12 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 }
 .home-hero-signature-line {
     width: 14px; height: 1px;
-    background: oklch(100% 0 0 / 0.4);
+    background: var(--bj-emerald-700);
 }
 .home-hero-signature-name {
     font-family: var(--font-display);
     font-size: 15px; font-style: italic; font-weight: 300;
-    color: oklch(100% 0 0 / 0.95);
+    color: var(--bj-ink-emerald);
     letter-spacing: 0.01em;
 }
 
@@ -339,13 +343,10 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     /* §156 móvil: CTAs apilados full-width (área táctil generosa, Gemini). */
     .home-hero-actions { flex-direction: column; align-items: stretch; width: 100%; }
     .home-hero-actions .btn-hero, .home-hero-actions .btn-hero-ghost { width: 100%; justify-content: center; }
+    /* §156 móvil: locator y firma OCULTOS (el retrato 4/5 los apretaría y la firma chocaría con los
+       CTAs anclados abajo). Viven en desktop, donde hay espacio a los lados. */
     .home-hero-locator { display: none; }
-    .home-hero-signature {
-        right: 20px; bottom: 20px;
-        gap: 6px;
-    }
-    .home-hero-signature-eyebrow { font-size: 8px; }
-    .home-hero-signature-name { font-size: 13px; }
+    .home-hero-signature { display: none; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════

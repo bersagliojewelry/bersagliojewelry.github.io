@@ -2139,3 +2139,15 @@ Gate opcional para el kernel (lo decide cars): un check trivial "toda L-NN cuyo 
 - **152.5 Anti-patterns evitados**: chequeo de PRESENCIA para "campo CF-only" bajo merge = falso-bloqueo (debe ser DIFF/affectedKeys, como las reglas CRM ya hacían). NO se debilitó la seguridad (cambiar estado sigue denegado).
 - **152.6 Archivos**: `firestore.rules` (+`pieceStockUnchanged`, usado en `pieceTypesValid`); `tests/firestore-rules.test.mjs` (+seed `pSold` + 3 tests). INTACTO: CFs, `pieceCreateValid`, modelo de pieza.
 - **152.7 Doctrina**: reglas = deploy MANUAL (L-22). Lección reutilizable: en reglas Firestore, "campo solo-CF/inmutable" bajo `merge:true` se valida por el DIFF (`affectedKeys().hasAny`), NUNCA por presencia (`!('x' in d)`) — la presencia siempre da falso porque el merge conserva el campo. [OPUS-4.8] [HONOR]
+
+## 2026-06-29 — §153 · Selector de color del oro (oro amarillo/blanco/rosa) — TODO-59
+
+> Daniel: "sería bueno también seleccionar qué tipo de metal es, oro blanco u oro amarillo".
+
+- **153.1 Necesidad**: el "Metal" del form era texto libre ("Oro 18k") sin distinguir el COLOR del oro (typos + no filtrable a futuro). Espeja el modelo de la gema (§151): DATO estructurado + prosa libre.
+- **153.2 Solución**: campo ESTRUCTURADO `specs.metalColor` ('amarillo'|'blanco'|'rosa') en un SELECT del admin (cero typos), aparte del `specs.metal` libre (material/quilataje). Helper PURO `js/core/metal.js` `metalConColor(specs)` combina → "Oro 18k"+blanco = "Oro blanco 18k" (no duplica si el texto ya lo dice; solo aplica a oro; sin color → tal cual). Display en ficha (`pieza.js`), JSON-LD cliente (`schema.js`) y SSG (`generate-pieces.mjs`).
+- **153.3 No-regresión**: ADITIVO, sin migración (las 32 muestran su metal tal cual hasta que Kary fije el color). Reglas `specs is map` ya lo admiten (sin cambio). El "Metal" libre intacto.
+- **153.4 Tests**: `tests/metal.test.mjs` 5/5 (inserta · no-duplica · no-oro platino/plata · sin-color). Build VERDE + SSG self-test OK.
+- **153.5 Anti-patterns evitados**: no se tocó la regla (specs map libre) ni se migró data (color opt-in). Display robusto (guarda contra doble-inserción y contra aplicar "color de oro" a no-oro).
+- **153.6 Archivos**: NUEVO `js/core/metal.js`, `tests/metal.test.mjs`. MOD `admin-piezas.html`, `js/admin/piezas.js`, `js/pages/pieza.js`, `js/core/schema.js`, `scripts/generate-pieces.mjs`, `package.json`.
+- **153.7 Doctrina**: dato estructurado + prosa (espejo §151). **Sin cache bump**: form = HTML network-first + chunk hasheado → fresco al recargar (consistente con JSON-LD/buscador de esta sesión; APP_VERSION bump opcional para forzar recarga de sesión abierta). [OPUS-4.8] [HONOR]

@@ -24,6 +24,7 @@ import { data } from '../core/data.js';
 import { lqipBgStyle } from '../core/lqip.js';   // §110.4: blur-up de la pieza (degrada si no hay LQIP)
 import { injectCatalogSchema } from '../core/schema.js';
 import { balancedCols } from '../core/grid-balance.js';   // reparto inteligente de columnas (sin huérfanas)
+import { esVendida } from '../core/stock.js';             // TODO-56: ocultar piezas únicas vendidas de la grilla
 
 const SORTS = [
     { key: 'destacados', label: 'Destacados' },
@@ -51,7 +52,10 @@ function writeURLState(state) {
 }
 
 function applyFilters() {
-    let list = data.getAll();
+    // TODO-56: la pieza única vendida (finito agotada) sale de la grilla pública (Daniel: "bajar de la
+    // web, NO borrar de inventario"). Su ficha sigue viva por enlace directo (SEO/historia) con sello
+    // "Vendida". Las refabricables/encargo (pedibles) se quedan.
+    let list = data.getAll().filter(p => !esVendida(p));
     if (_state.cat !== 'all') list = list.filter(p => p.collection === _state.cat);
 
     if (_state.sort === 'menor')  list = [...list].sort((a, b) => Number(a.price || 0) - Number(b.price || 0));

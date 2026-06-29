@@ -144,6 +144,53 @@
         }
         .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
 
+        /* Recuperación por código (TODO-58 slice 5): el cliente perdido teclea el código que le dio
+           Kary → GET nativo a /colecciones.html?q=<code> (el catálogo filtra en vivo; sin JS/bundle). */
+        .code-search { width: 100%; max-width: 420px; margin: 0 auto 36px; }
+        .code-search-label {
+            display: block;
+            font-family: 'Arial Narrow', Arial, sans-serif;
+            font-size: 10px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 12px;
+            opacity: 0.9;
+        }
+        .code-row { display: flex; gap: 10px; }
+        .code-row input {
+            flex: 1 1 auto;
+            min-width: 0;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            padding: 12px 16px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 14px;
+        }
+        .code-row input::placeholder { color: var(--muted); }
+        .code-row input:focus { outline: none; border-color: var(--gold); }
+        .code-row button {
+            flex-shrink: 0;
+            padding: 12px 22px;
+            background: var(--gold);
+            color: #0a0a0a;
+            border: 1px solid var(--gold);
+            border-radius: 2px;
+            font-family: 'Arial Narrow', Arial, sans-serif;
+            font-size: 11px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.25s ease;
+        }
+        .code-row button:hover { background: #d9b95c; }
+        @media (max-width: 480px) {
+            .code-row { flex-wrap: wrap; }
+            .code-row input, .code-row button { flex: 1 1 100%; }
+        }
+
         .footer-note {
             margin-top: 60px;
             font-size: 11px;
@@ -176,6 +223,14 @@
         La pieza que buscas no está disponible en este momento.
         Explora nuestras colecciones o vuelve al inicio.
     </p>
+
+    <form class="code-search" action="/colecciones.html" method="get" role="search" aria-label="Buscar una pieza por su código">
+        <label class="code-search-label" for="q404">¿Tienes el código de una pieza?</label>
+        <div class="code-row">
+            <input id="q404" type="search" name="q" placeholder="Ej. 0953" autocomplete="off" maxlength="40" aria-label="Código de la pieza">
+            <button type="submit">Buscar</button>
+        </div>
+    </form>
 
     <div class="actions">
         <a href="/" class="btn-primary">

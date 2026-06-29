@@ -224,6 +224,13 @@ class PublicData {
         return this._pieces.find(p => p.slug === slug || p.id === slug) || null;
     }
 
+    /** Pieza por CÓDIGO único (TODO-58 buscador por código): match exacto, tolera espacios y mayúsculas. */
+    getByCode(code) {
+        const c = String(code ?? '').trim().toLowerCase();
+        if (!c) return null;
+        return this._pieces.find(p => String(p.code ?? '').trim().toLowerCase() === c) || null;
+    }
+
     /** Colección (doc) a la que pertenece una pieza — tolerante a slug O id. */
     collectionOf(piece) {
         return collectionOfPiece(piece, this._collections);

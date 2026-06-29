@@ -20,7 +20,7 @@
 
 | ID | Item | Estado | Bloqueo |
 |---|---|---|---|
-| TODO-03/04 | (Opcional, baja) headers `99` → `## NN.` (hoy por fecha) · anomalías 🔧 en `skills/` (formatos no-skill) | 🔲 | baja |
+| TODO-03/04 | (baja) headers `99`→`## NN.` · anomalías 🔧 en `skills/` | 🔲 | baja |
 | TODO-07 | **Contenido real web**: reseñas Google Maps (Nosotros), Films, feed Redes (`js/data/home-media.js`, `js/pages/nosotros.js`) | 🔲 | cliente entrega datos |
 | TODO-08 | **Hardening Fase 2**: Tier A ✅; pend. CSP/reglas/claims (Tier B/C) → `41-SEGURIDAD §1.5` | 🟡 | Tier B = emulador+deploy gated |
 | TODO-09 | **Fase M** M0→M6 ✅ EN PROD (§78-§80); ACUERDOS R1-R5+A8 GATEADOS/inertes — encender=Daniel. Restan: M7·M2c·ASESOR/RBAC (TODO-19). | 🟡 | encender R6 (Daniel) |
@@ -29,10 +29,10 @@
 | TODO-18 | **Plan operación integral §57**: semana 1 + 9 decisiones de Daniel + compuerta de adopción + campaña cartera → bóveda | 🟡 | Daniel (decisiones 1-9) |
 | TODO-33 | **Panel admin "tipo app" (fluidez)** (Decisión Fuerte). DISEÑADO (comité ×4+Gemini, `50 §5`). A3 menú ✅ + VT ✅ (v29); pend. esqueletos/prefetch/self-host fonts/VT-al-final. Router falso-SPA CONGELADO salvo gate seguridad + IoC. PAUSADO. | 🟡 | reanudar tras demo |
 | TODO-21 | **Revisión post-Fable de `[OPUS-4.8]`** (H-08): por riesgo (dinero §81 > seguridad §65/§66 > CMS > docs); ~50 commits | 🔲 | Fable vuelve |
-| TODO-22 | **Gate-de-git en el linter** (H-06): que `brain:check` warne si el estado declarado diverge de git — **extender a AL ARRANCAR, no solo al deploy** (evidencia §144.7: local stale + sin `git fetch` → re-hice §143 que una sesión paralela ya había desplegado). Toca kernel ×3 → **cars-operador** (L-31). *§114: mitigado al no fijar hash en `05`.* | 🔲 | cars-operador (kernel) |
+| TODO-22 | **Gate-de-git en el linter** (H-06): `brain:check` warne si el estado declarado diverge de git, AL ARRANCAR (no solo deploy) — evidencia §144.7. Kernel ×3 → cars-operador (L-31). §114 mitigado (sin hash en `05`). | 🔲 | cars-operador |
 | TODO-23 | **Frase canónica del gate de verificación de DINERO** (H-18): Claude experto = gate; Kary = smoke POST-deploy no bloqueante. Aporte a la pasada Gemini (cars consolida) | 🔲 | Gemini |
 | TODO-28 | **Correcciones web** (Daniel 2026-06-21): F1-F5 ✅ EN PROD (§93-§98). Pend.: arranque **C1** (Daniel) · responsive fino device-driven. | 🟡 | C1 + responsive |
-| TODO-29 | **Kernel lea `### L-NN` de `3*-LECCIONES*.md`** (no solo `30`) → shard REAL de lecciones sin stub en `30` (hoy workaround M-06). Cambio de kernel = cars-operador (L-31). | 🔲 | cars-operador (kernel) |
+| TODO-29 | **Kernel lea `### L-NN` de `3*-LECCIONES*`** (no solo `30`) → shard real sin stub (hoy workaround M-06). Kernel → cars-operador (L-31). | 🔲 | cars-operador |
 | TODO-35 | **Visibilidad SITE-WIDE** (SEO·AEO·GA4·GSC·Maps·SSG) **🟢 EN PROD ✅** (PR#345). **Falta**: A2b por-cat + eventos `generate_lead`/`contact` + consolidar 2º flujo GA + tail §118/§119 — esperan catálogo de Kary. 🔑 Google `bersagliojewelry@gmail.com` authuser=3. ⚠️ App Check Enforce→`FIREBASE_SA_KEY`. | 🟢 | A2b · catálogo |
 | TODO-39 | **B1 paso 4b — apartados/abonos** (decisión, §128.4): ¿el mostrador necesita apartar piezas (anticipo + saldo) ahora? Si sí, el saldo = CARTERA (ya existe `clientes/{id}.saldoActual` vía factura/abono) → **reusar cartera, NO** un sistema de pagos paralelo en el pedido; requiere link pedido↔cliente CRM. Fork caro de revertir (§8 spec) → preguntar a Daniel. | 🟡 | decisión Daniel |
 | TODO-37 | **PLAN MAESTRO DE COMERCIO** (ACTIVO): roadmap físico+digital. SSoT → spec `2026-06-25-plan-maestro-comercio-v3`. B0/B0.5 EN PROD ✅; B1 mostrador pasos 1-6 EN PROD, paso 7 `catalogo.json` CDN DISEÑADO v3. Decisiones dueño: ADDI · Persona Jurídica. | 🟢 | ejecutar B1 |
@@ -43,7 +43,8 @@
 | TODO-49 | **Legal e-commerce** — consentimiento habeas data en forms + verificar privacidad/terminos (retracto). Skill `legal-colombia`. Prereq Wompi. | 🔲 | pre-Wompi |
 | TODO-50 | **Catálogo de lujo** — imagen real (no certificado) + filtros gema/tipo + taxonomía canónica + badges por gema. Detalle → §133.2(B/C). (Taxonomía de gema = TODO-57.) | 🔲 | tras TODO-44 |
 | TODO-57 | **Modelo de datos de la GEMA** (Decisión Fuerte §150 + consejo §151, modelo PLANO `badgeGem`/`gemFilterIds`). **HECHO**: fundación (`gem-taxonomy.js`+`gem-badge.js`, test 7/7) + **form admin** (select "Gema principal"+filtros+rename stone; escribe `specs.badgeGem`/`gemFilterIds`; reglas OK `specs is map`; SW v54/APP v31). **backfill 32 — APLICADO+VERIFICADO ✅ (2026-06-29, gate Daniel)**: 32/32 en prod con `badgeGem`+`gemFilterIds` (14 esm·9 rubí·5 diam·4 zaf; merge field-path MCP → resto de `specs`/`_version` intactos; respaldo scratchpad). Regex fallback se mantiene (red de seguridad). **JSON-LD canónico HECHO ✅** (gemDisplayName→SSG+ficha; test 9/9; build verifica `Gema:"Esmeralda"`; sin cache bump = chunk hasheado). **Pend**: `settings/gems`+bake catalogo.json · filtros TODO-50+índice array-contains · live form. SSoT → spec. | 🟡 | settings/gems · filtros |
-> ✅ **Cerrados recientes**: TODO-56 (§148 UX vendida/agotada) · TODO-55/51/52/53/54/44/45/46 · TODO-40+32 piezas. Histórico → ADRs+`00`/`99`. Pend operativo Daniel: precios + fotos IA.
+| TODO-58 | **Buscador por código** (Daniel: Kary da el código→cliente salta a la pieza→impulsa venta presencial + Wompi). Diseño: **buscador + link**, **catálogo + inicio** (spec `2026-06-29-buscador-codigo`). **Slice 1 HECHO ✅**: `data.getByCode` + `codigo-util.js` (puro, test 5/5) + `buscador-codigo.js` + CSS, montado en CATÁLOGO. **Pend**: link `/p/<código>` (SSG stubs OG) · acceso en inicio · `Ref.` en ficha · 404. | 🟡 | slices 2-5 |
+> ✅ **Cerrados**: TODO-56/55/51/52/53/54/44/45/46 · TODO-40+32 piezas → ADRs/`99`. Pend Daniel: precios + fotos IA.
 
 ---
 
@@ -56,6 +57,6 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier C pen
 
 > Podada (GC) 2026-06-27. Histórico → ADR §37-§130 + bóveda. Lecciones → `30`/`31`/`32`.
 >
-> **§143-§151 EN MAIN ✅ (PR #395 `5a4d426`; SW v54/APP v31):** visor zoom ficha (§143-§146) · Wompi F2 gate live pasado (§147, L-54; **código en Pages flag OFF = dormido**) · UX vendida/agotada (§148/TODO-56)+refinamientos (§149) · **modelo de gema PLANO** (§150 comité×5 + §151 consejo; fundación + form admin hechos). → ADRs §147-§151 + specs.
+> **§143-§151 EN MAIN ✅ (PR #395):** visor zoom (§143-§146) · Wompi F2 gate live (§147, L-54; código en Pages flag OFF=dormido) · UX vendida/agotada (§148) · **gema PLANA** (§150-§151). → ADRs.
 > **2026-06-29 (TODO-57 cont.):** frescura corregida (`git fetch` confirma §147-§151 en main) · caza-bugs form §151 limpio · **backfill gema APLICADO+VERIFICADO a las 32** (dry-run→gate Daniel→32 writes MCP field-path→32/32; respaldo scratchpad) · **JSON-LD canónico** (`gemDisplayName`: badgeGem→label limpio en SSG+ficha; test 9/9; build: `Gema:"Esmeralda"`). Pend: settings/gems · filtros+índice · live form.
 > **🚦 Reglas vivas**: `arquitecto-software` SIEMPRE · Bersaglio = 100% COP (§127) · NO inventado/no-verificable (`[[feedback_no_demo_en_index]]`) · la voz solo se presta a lo verificable · pruebas en vivo SOLO al final (§130.4) · W-11/mockup en decisión-diseño · `[[feedback_workflows_acotados]]` · `[[feedback_reintentar_agentes_no_saltar_flujo]]`.

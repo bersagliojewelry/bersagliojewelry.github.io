@@ -22,6 +22,7 @@ import { priceDisplay } from '../core/format.js';
 import { lqipBgStyle } from '../core/lqip.js';   // §110.4: blur-up de la imagen principal (idx 0)
 import { data } from '../core/data.js';
 import { estadoVisual, esVendida } from '../core/stock.js';   // TODO-56: estado vendida/por encargo
+import { metalConColor } from '../core/metal.js';             // TODO-59: "Oro 18k" + color → "Oro blanco 18k"
 import { cart } from '../core/cart.js';
 import { wishlist } from '../core/wishlist.js';
 import { injectProductSchema, injectBreadcrumbSchema } from '../core/schema.js';
@@ -131,7 +132,7 @@ function buildSpecs(piece) {
             row('Acentos', s.accent),
         ] },
         { title: 'El metal', rows: [
-            row('Metal', s.metal || s.gold),
+            row('Metal', metalConColor(s)),
             row('Peso', s.weight),
         ] },
         { title: 'Origen y garantía', rows: [

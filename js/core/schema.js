@@ -5,6 +5,7 @@
 
 import { pieceAbsUrl } from './urls.js';
 import { gemDisplayName } from './gem-badge.js';   // §151: gema canónica (badgeGem) para el JSON-LD de la ficha
+import { metalConColor } from './metal.js';        // TODO-59: color del oro (metalColor) en el metal mostrado
 
 /**
  * Helper to inject or update a JSON-LD script tag by ID.
@@ -46,7 +47,7 @@ export function injectProductSchema(piece, getCategoryLabel, descriptionFor) {
 
     const s = piece.specs || {};
     const hasPrice = !!piece.price && Number.isFinite(Number(piece.price));
-    const metal = s.metal || s.gold || '';
+    const metal = metalConColor(s);
 
     // Specs ricas → additionalProperty (AEO: deja a Google/Perplexity/ChatGPT CITAR quilataje,
     // claridad, material, certificación). SOLO campos con valor real (cero-demo).

@@ -31,6 +31,7 @@
     "test:wompi": "node --test functions/wompi.test.mjs",
     "test:gema": "node --test tests/gem-badge.test.mjs",
     "test:codigo": "node --test tests/buscador-codigo.test.mjs",
+    "test:metal": "node --test tests/metal.test.mjs",
     "brain:diff": "node scripts/brain-diff.mjs"
   },
   "devDependencies": {

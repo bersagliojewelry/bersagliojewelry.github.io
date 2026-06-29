@@ -463,6 +463,73 @@ function generatePage(template, p, slug, collectionsById) {
     return html;
 }
 
+// ===================== /p/<code> — link compartible (TODO-58 slice 2) =====================
+// Kary le da a un cliente el código (ej. "0953") y comparte bersagliojewelry.co/p/0953. El SSG
+// hornea dist/p/<code>.html: un STUB con OG/title/imagen REALES de la pieza (preview lindo en
+// WhatsApp/redes) + canonical al horneado + robots noindex,follow (la pieza canónica es la
+// indexable → cero contenido duplicado) + redirect instantáneo. El código es el de la pieza
+// (p.code, único); el SLUG es el destino. Páginas NUEVAS → sin cache bump (spec §4).
+
+// Código apto para nombre de archivo/URL: los códigos son numéricos ("0953"). Aceptamos
+// alfanumérico + `-` + `_` (sin barras ni puntos → sin path traversal ni `..`); lo demás se
+// salta con aviso. El buscador en memoria (data.getByCode) sigue resolviendo CUALQUIER código.
+const SAFE_CODE_RE = /^[A-Za-z0-9_-]+$/;
+function safeCodeForFile(code) {
+    const c = String(code ?? '').trim();
+    return SAFE_CODE_RE.test(c) ? c : null;
+}
+
+// Stub mínimo y válido que redirige al canónico. OG/title/desc/imagen REALES (escapados, mismo
+// criterio cero-demo que la ficha) para el preview social; canonical + noindex evitan duplicado.
+// Redirect root-relative (`/pieza/<slug>.html`) → sirve igual servido en /p/<code> o /p/<code>.html.
+function generateStub(p, slug, collectionsById) {
+    const category = categoryLabel(p, collectionsById);
+    const name = p.name || 'Pieza';
+    const title = `${name} · ${BRAND}`;
+    const canonicalUrl = `${SITE_URL}/pieza/${slug}.html`;
+    const dest = `/pieza/${slug}.html`;
+    const image = getFullImage(p);
+    const realDesc = descriptionFor(p);
+    const specsLine = buildAdditionalProperty(p.specs).slice(0, 4).map(x => x.value).join(', ');
+    const metaDesc = realDesc
+        || `${name} — ${category} en alta joyería ${BRAND}.${specsLine ? ' ' + specsLine + '.' : ''}`;
+    return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${escapeHtml(title)}</title>
+<meta name="robots" content="noindex, follow">
+<link rel="canonical" href="${escapeAttr(canonicalUrl)}">
+<meta property="og:type" content="product">
+<meta property="og:site_name" content="${escapeAttr(BRAND)}">
+<meta property="og:title" content="${escapeAttr(title)}">
+<meta property="og:description" content="${escapeAttr(metaDesc)}">
+<meta property="og:image" content="${escapeAttr(image)}">
+<meta property="og:url" content="${escapeAttr(canonicalUrl)}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${escapeAttr(title)}">
+<meta name="twitter:description" content="${escapeAttr(metaDesc)}">
+<meta name="twitter:image" content="${escapeAttr(image)}">
+<meta http-equiv="refresh" content="0; url=${escapeAttr(dest)}">
+<script>location.replace(${safeJsonLd(dest)});</script>
+</head>
+<body>
+<p>Redirigiendo a la pieza… Si no avanza, <a href="${escapeAttr(dest)}">ábrela aquí</a>.</p>
+</body>
+</html>
+`;
+}
+
+// Integridad ligera del stub (es chico ~1KB, NO aplica el MIN_BAKE_BYTES de las piezas):
+// cierre </html> + canonical presente + tamaño mínimo razonable.
+function bakeStubError(code, html) {
+    if (typeof html !== 'string' || html.length < 300) return `p/${code}.html: ${(html || '').length} bytes (vacío/truncado)`;
+    if (!html.includes('</html>')) return `p/${code}.html: falta </html>`;
+    if (!html.includes('rel="canonical"')) return `p/${code}.html: falta canonical`;
+    return null;
+}
+
 // ===================== Sitemap =====================
 
 // Estáticas indexables (index,follow). lastmod FIJO — Google ignora el lastmod si
@@ -754,6 +821,40 @@ async function main() {
         throw new Error(`[generate] ${bakeFailures.length} página(s) con horneado inválido — abortado.`);
     }
 
+    // Links compartibles /p/<code> (TODO-58 slice 2). Salida limpia: borra stubs viejos (pieza
+    // recodificada/borrada no deja un /p/ stale apuntando a un slug muerto).
+    const stubDir = join(DIST, 'p');
+    mkdirSync(stubDir, { recursive: true });
+    try {
+        for (const f of readdirSync(stubDir).filter(f => f.endsWith('.html'))) unlinkSync(join(stubDir, f));
+    } catch { /* primer run */ }
+    const stubFailures = [];
+    const seenCodes = new Map();
+    let stubCount = 0;
+    for (const p of pieces) {
+        const safe = safeCodeForFile(p.code);
+        if (!safe) {
+            if (p.code) console.warn(`[generate] ⚠️ código "${p.code}" (pieza ${p.id}) no apto para link /p/ (no alfanumérico) — salto stub.`);
+            continue;
+        }
+        if (seenCodes.has(safe)) {
+            console.warn(`[generate] ⚠️ CÓDIGO DUPLICADO "${safe}": piezas ${seenCodes.get(safe)} y ${p.id} — el link /p/${safe} se queda con la primera (revisa el código en el admin).`);
+            continue;
+        }
+        seenCodes.set(safe, p.id);
+        const html = generateStub(p, slugMap.get(String(p.id)), collectionsById);
+        const err = bakeStubError(safe, html);
+        if (err) { stubFailures.push(err); continue; }
+        writeFileSync(join(stubDir, `${safe}.html`), html);
+        stubCount++;
+    }
+    if (stubFailures.length) {
+        console.error('[generate] STUB-INTEGRITY FALLÓ — NO se publica:');
+        stubFailures.forEach(e => console.error('  x ' + e));
+        throw new Error(`[generate] ${stubFailures.length} stub(s) /p/ inválido(s) — abortado.`);
+    }
+    console.log(`[generate] ${stubCount} link(s) compartible(s) /p/<code> horneado(s) en dist/p/.`);
+
     // Slug map para hidratación/depuración cliente.
     const dataDir = join(DIST, 'data');
     mkdirSync(dataDir, { recursive: true });
@@ -917,6 +1018,22 @@ function runSelfTest() {
     if (pj.updatedAt?.seconds !== 100) fails.push('catalogo.json: updatedAt no normalizado a {seconds}.');
     if ('secretoInterno' in cat.collections[0]) fails.push('catalogo.json: colección NO respeta whitelist (fuga de campo).');
     if (!('stone' in pj.specs)) fails.push('catalogo.json: specs whitelist perdió "stone".');
+
+    // /p/<code> stub (TODO-58 slice 2): redirige al canónico, noindex,follow, OG real, sin breakout XSS.
+    const stubHtml = generateStub(mockPiece, 'selftest', mockCols);
+    if (stubHtml.indexOf('</script><script>alert(1)</script>') >= 0) fails.push('stub: BREAKOUT crudo </script><script> presente.');
+    if (stubHtml.indexOf('<link rel="canonical" href="https://bersagliojewelry.co/pieza/selftest.html">') < 0) fails.push('stub: canonical al horneado ausente.');
+    if (stubHtml.indexOf('<meta name="robots" content="noindex, follow">') < 0) fails.push('stub: robots noindex,follow ausente.');
+    if (!/location\.replace\(/.test(stubHtml) || stubHtml.indexOf('/pieza/selftest.html') < 0) fails.push('stub: redirect al canónico ausente.');
+    if (stubHtml.indexOf('property="og:image"') < 0) fails.push('stub: og:image ausente (preview social).');
+    if (bakeStubError('selftest', stubHtml)) fails.push('stub: bake-integrity de un stub válido NO debería fallar.');
+    if (!bakeStubError('tiny', '<html></html>')) fails.push('stub: bake-integrity de un stub diminuto debería fallar.');
+    // safeCodeForFile: numérico OK (trim); con barra/punto/"..", o vacío → null (anti path-traversal).
+    if (safeCodeForFile('0953') !== '0953') fails.push('safeCodeForFile: "0953" debe ser válido.');
+    if (safeCodeForFile('  0953 ') !== '0953') fails.push('safeCodeForFile: debe trimear.');
+    if (safeCodeForFile('a/b') !== null) fails.push('safeCodeForFile: con "/" debe ser null.');
+    if (safeCodeForFile('..') !== null) fails.push('safeCodeForFile: ".." debe ser null.');
+    if (safeCodeForFile('') !== null) fails.push('safeCodeForFile: vacío debe ser null.');
 
     if (fails.length) {
         console.error('[SSG_SELFTEST] FALLO:');

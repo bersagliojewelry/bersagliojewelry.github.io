@@ -250,7 +250,14 @@
                     <div class="adm-form-row" style="margin-top:12px;">
                         <div class="adm-field">
                             <label for="f-metal">Metal</label>
-                            <input class="adm-input" id="f-metal" name="specs.metal" placeholder="Oro amarillo 18k">
+                            <input class="adm-input" id="f-metal" name="specs.metal" placeholder="Oro 18k">
+                            <select class="adm-input" id="f-metal-color" name="specs.metalColor" style="margin-top:6px;">
+                                <option value="">Color del oro — (sin especificar)</option>
+                                <option value="amarillo">Oro amarillo</option>
+                                <option value="blanco">Oro blanco</option>
+                                <option value="rosa">Oro rosa</option>
+                            </select>
+                            <small style="color:var(--adm-muted);font-size:11px;margin-top:2px;">El "Metal" es el material (ej. Oro 18k); el color elige si es amarillo, blanco o rosa → se muestra "Oro blanco 18k".</small>
                         </div>
                         <div class="adm-field">
                             <label for="f-accent">Acentos</label>

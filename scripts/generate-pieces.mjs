@@ -25,6 +25,7 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
 import { derivarEstado, esDisponible, STOCK_TYPES } from '../js/admin/inventario-model.js';   // SSoT modelo v3
 import { gemDisplayName } from '../js/core/gem-badge.js';   // §151: gema canónica (badgeGem) para JSON-LD/AEO
+import { metalConColor } from '../js/core/metal.js';        // TODO-59: color del oro (metalColor) en el metal mostrado
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, unlinkSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -138,7 +139,7 @@ function categoryLabel(p, collectionsById) {
 // Misma fuente que js/core/schema.js y la ficha de pieza.js.
 function buildAdditionalProperty(specs) {
     const s = specs || {};
-    const metal = s.metal || s.gold || '';
+    const metal = metalConColor(s);
     // §151 (consejo externo): la GEMA es el DATO canónico (badgeGem→label "Esmeralda"), NO el texto
     // libre truncado por `split('·')`. gemDisplayName cae a la prosa si la pieza aún no tiene badgeGem.
     const primaryStone = gemDisplayName(s);
@@ -155,7 +156,7 @@ function buildAdditionalProperty(specs) {
 
 function buildProductSchema(p, category, desc, canonicalUrl, image) {
     const s = p.specs || {};
-    const metal = s.metal || s.gold || '';
+    const metal = metalConColor(s);
     const additionalProperty = buildAdditionalProperty(s);
 
     // STOCK-AWARE v3 (TODO-40): availability + precio se derivan de stockType+cantidad (stockInfo, SSoT).

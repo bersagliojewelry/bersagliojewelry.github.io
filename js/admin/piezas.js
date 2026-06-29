@@ -516,6 +516,9 @@ function populateForm(form, piece) {
     // §151: gema canónica. badgeGem → select; gemFilterIds → checkboxes marcados.
     const selGem = form.querySelector('[name="specs.badgeGem"]');
     if (selGem) selGem.value = specs.badgeGem || '';
+    // TODO-59: color del oro (select) ← dato estructurado
+    const selMc = form.querySelector('[name="specs.metalColor"]');
+    if (selMc) selMc.value = specs.metalColor || '';
     const filtros = new Set((Array.isArray(specs.gemFilterIds) ? specs.gemFilterIds : []).map(s => String(s).toLowerCase()));
     form.querySelectorAll('.f-gem-filter').forEach(cb => { cb.checked = filtros.has(cb.value); });
 }
@@ -560,7 +563,7 @@ async function handleSave() {
     }
 
     const specs = {};
-    ['stone','carat','metal','accent','certificate','cut','color','clarity','weight','origin','delivery'].forEach(k => {
+    ['stone','carat','metal','metalColor','accent','certificate','cut','color','clarity','weight','origin','delivery'].forEach(k => {
         const v = get(`specs.${k}`);
         if (v) specs[k] = v;
     });

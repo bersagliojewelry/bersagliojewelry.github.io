@@ -136,6 +136,7 @@ function buildSpecs(piece) {
             row('Peso', s.weight),
         ] },
         { title: 'Origen y garantía', rows: [
+            row('Referencia', piece.code),   // TODO-58: el cliente confirma la pieza y tiene el código a mano
             row('Origen', s.origin),
             row('Entrega', s.delivery),
             // Daniel §149: en el sello basta el LABORATORIO ("TrueLab Colombia"), sin el N.º de reporte.

@@ -21,6 +21,7 @@ import { html, escape, mount } from '../core/html.js';
 import { priceDisplay } from '../core/format.js';
 import { lqipBgStyle } from '../core/lqip.js';   // §110.4: blur-up de la imagen principal (idx 0)
 import { data } from '../core/data.js';
+import { estadoVisual, esVendida } from '../core/stock.js';   // TODO-56: estado vendida/por encargo
 import { cart } from '../core/cart.js';
 import { wishlist } from '../core/wishlist.js';
 import { injectProductSchema, injectBreadcrumbSchema } from '../core/schema.js';
@@ -208,6 +209,7 @@ function renderGallery(piece) {
 function renderInfo(piece) {
     const cat = getCategoryLabel(piece);
     const hasPrice = !!piece.price && Number.isFinite(Number(piece.price));
+    const { vendida, porEncargo } = estadoVisual(piece);   // TODO-56: pieza única vendida / por encargo
     const inWishlist = wishlist.has(piece.slug || piece.id);
     const inCart = cart.has(piece.slug || piece.id);
     const desc = descriptionFor(piece);
@@ -226,10 +228,19 @@ function renderInfo(piece) {
             </div>
             <h1 class="pz-info-name">${escape(piece.name || 'Pieza')}</h1>
 
-            ${hasPrice ? html`
+            ${vendida ? html`
+            <div class="glass pz-vendida" role="status">
+                <span class="eyebrow pz-vendida-label">Pieza única · vendida</span>
+                <p class="pz-vendida-note">Esta joya ya encontró a su dueño. Podemos crear una pieza con el mismo espíritu, hecha a su medida.</p>
+            </div>`
+            : hasPrice ? html`
             <div class="pz-price-row">
                 <div class="mono pz-price">${escape(priceDisplay(piece))}</div>
                 <div class="pz-iva">IVA incluido</div>
+            </div>`
+            : porEncargo ? html`
+            <div class="pz-price-row">
+                <div class="mono pz-price pz-price--encargo">Por encargo</div>
             </div>` : ''}
 
             ${desc ? html`<p class="pz-info-desc">${escape(desc)}</p>` : ''}
@@ -262,7 +273,7 @@ function renderInfo(piece) {
                         </div>`)}
                 </div>` : ''}
 
-            ${sizes.length ? html`
+            ${vendida ? '' : sizes.length ? html`
                 <div class="pz-talla">
                     <div class="eyebrow pz-talla-label">Talla</div>
                     <div class="pz-talla-pills" role="group" aria-label="Talla disponible">
@@ -279,6 +290,19 @@ function renderInfo(piece) {
                     <p class="pz-talla-medida-note">Su pieza se ajusta en taller. Consúltela con un asesor.</p>
                 </div>` : ''}
 
+            ${vendida ? html`
+            <div class="pz-actions">
+                <a href="${asesorWaHref(piece)}" target="_blank" rel="noopener"
+                   class="btn-aqua btn-aqua-emerald pz-cart-btn pz-asesor-primary"
+                   data-wa-click="pieza" data-wa-piece="${escape(piece.slug || piece.id)}"
+                   data-wa-name="${escape(piece.name || 'Pieza')}" data-wa-cat="${escape(cat)}">
+                    Hablar con un asesor
+                </a>
+                <a href="/colecciones.html${piece.collection ? '?col=' + encodeURIComponent(piece.collection) : ''}" class="btn-aqua pz-cart-btn">
+                    Ver piezas similares
+                </a>
+            </div>`
+            : html`
             <div class="pz-actions">
                 ${hasPrice ? html`
                     <button type="button" class="btn-aqua btn-aqua-emerald pz-cart-btn" data-action="cart">
@@ -310,7 +334,7 @@ function renderInfo(piece) {
             : html`
                 <button type="button" class="btn-aqua btn-aqua-gold pz-asesor-btn pz-asesor-secondary" data-action="lead-open">
                     Prefiero dejar mis datos
-                </button>`}
+                </button>`}`}
 
             ${piece.code ? html`<div class="pz-ref mono">Ref. ${escape(piece.code)}</div>` : ''}
         </div>`;
@@ -342,7 +366,7 @@ function relatedScore(base, cand) {
 function computeRelated(piece) {
     const slug = piece.slug || piece.id;
     const withImg = p => p.images?.[0] || p.image;
-    const others = data.getAll().filter(p => (p.slug || p.id) !== slug && withImg(p));
+    const others = data.getAll().filter(p => (p.slug || p.id) !== slug && withImg(p) && !esVendida(p));
     const sameCat = p => p.collection && p.collection === piece.collection;
 
     // Afines = misma categoría (COMPUERTA) O comparten gema; ordenados: categoría primero, luego score.
@@ -356,7 +380,7 @@ function computeRelated(piece) {
     // Completar con DESTACADAS (curaduría); si aún faltan, otras piezas reales — NUNCA al azar mintiendo.
     if (shown.length < 4) {
         const have = new Set(shown.map(p => p.slug || p.id));
-        const pool = [...data.getFeatured(20).filter(p => withImg(p) && (p.slug || p.id) !== slug), ...others];
+        const pool = [...data.getFeatured(20).filter(p => withImg(p) && (p.slug || p.id) !== slug && !esVendida(p)), ...others];
         for (const p of pool) {
             if (shown.length >= 4) break;
             const k = p.slug || p.id;

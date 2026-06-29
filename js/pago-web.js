@@ -12,10 +12,14 @@ const WIDGET_SRC = 'https://checkout.wompi.co/widget.js';
 const TOPE_TX_COP = 2500000;   // espeja el tope server-side (solo para no ofrecer la opción si no aplica)
 
 // Elegibilidad para "Pagar ahora" (el server RE-VALIDA; esto solo decide si MOSTRAR la opción).
-// pieza pública con precio fijo>0 y stock (available); total dentro del tope de la cuenta.
+// Disponible AHORA = hay una unidad física para reservar → espeja `consumeUnidad` del server
+// (pedidos-core: finito* con cantidad>0; encargo/cantidad null = a fabricar, NO "pagar ahora").
+// ⚠️ Se mide por `cantidad`, NO por `available`: el doc VIVO de Firestore (lo que lee data.js) y el
+// catalogo.json del SSG traen ambos `cantidad`, pero `available` SOLO lo inyecta el SSG → con datos
+// vivos el botón nunca aparecía (gap cazado en el gate live, gate empírico §11.4).
 export function wompiEligible(piece, total) {
     return !!piece
-        && piece.available === true
+        && Number.isInteger(piece.cantidad) && piece.cantidad > 0
         && typeof piece.price === 'number' && piece.price > 0
         && total > 0 && total <= TOPE_TX_COP;
 }

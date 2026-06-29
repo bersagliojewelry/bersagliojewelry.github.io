@@ -9,8 +9,10 @@
 // Bumped to v52 — §146: modelo de TOQUE del visor de zoom intuitivo — tocar la JOYA ACERCA
 // (antes cualquier toque cerraba, y como la imagen es pointer-events:none tocar la joya la
 // cerraba); tocar el MARGEN oscuro cierra; arrastrar mueve; pellizca/rueda zoom; X/Esc cierran.
-// (v51 = unificación pointer events §145; v50 = candado §144; v49 = visor §143.)
-const CACHE_NAME    = 'bersaglio-v52';
+// v53 = UX de pieza VENDIDA/agotada en el cliente vivo (§148, TODO-56): la ficha muestra sello
+// "Vendida" + CTA asesor (sin precio/carrito), la grilla oculta las vendidas; "Por encargo" para
+// refabricable/encargo. (v52 = modelo de toque del visor §146; v51 = §145; v50 = §144; v49 = §143.)
+const CACHE_NAME    = 'bersaglio-v53';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

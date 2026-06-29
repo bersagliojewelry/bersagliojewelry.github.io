@@ -26,7 +26,7 @@ import { injectCatalogSchema } from '../core/schema.js';
 import { balancedCols } from '../core/grid-balance.js';   // reparto inteligente de columnas (sin huérfanas)
 import { esVendida } from '../core/stock.js';             // TODO-56: ocultar piezas únicas vendidas de la grilla
 import { renderBuscadorCodigo } from '../core/buscador-codigo.js';   // TODO-58: buscador por código
-import { filtrarCatalogo } from '../core/codigo-util.js';            // TODO-60: filtro inteligente (código + nombre)
+import { filtrarCatalogo, agregarReciente } from '../core/codigo-util.js';   // TODO-60: filtro inteligente + recientes
 
 const SORTS = [
     { key: 'destacados', label: 'Destacados' },
@@ -221,6 +221,7 @@ function refreshGrid() {
     grid.style.setProperty('--n', balancedCols(list.length, 4));   // re-reparto al filtrar
     grid.innerHTML = list.length === 0 ? renderEmpty() : list.map(renderCard).join('');
     updateSchemaMetadata();
+    refreshSearchExtra();   // TODO-60: conteo en vivo / recientes
 }
 
 function refreshHeader() {
@@ -240,6 +241,10 @@ function refreshHeader() {
 }
 
 function onMainClick(e) {
+    const chip = e.target.closest('[data-reciente]');   // TODO-60: chip de búsqueda reciente → re-aplica
+    if (chip) { e.preventDefault(); applySearch(chip.dataset.reciente); return; }
+    const card = e.target.closest('.cat-card');           // recordar la búsqueda antes de navegar a la pieza
+    if (card && _state.q.trim()) guardarReciente(_state.q.trim());
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
     const action = btn.dataset.action;
@@ -294,8 +299,66 @@ function onSearchSubmit(e) {
     if (_searchTimer) { clearTimeout(_searchTimer); _searchTimer = null; }
     const input = form.querySelector('.bc-input');
     if (input) { _state.q = input.value; writeURLState(_state); refreshGrid(); }
+    if (_state.q.trim()) guardarReciente(_state.q.trim());   // recordar la búsqueda (idea Altorra)
     const list = applyFilters();              // ya filtrado por q (+ colección)
     if (list.length === 1) location.assign(pieceUrl(list[0]));   // 1 resultado → directo a la pieza
+}
+
+// ─── TODO-60: conteo en vivo + búsquedas recientes (ideas portadas de Altorra Cars) ─────────
+const RECIENTES_KEY = 'bj_busquedas';
+function getRecientes() {
+    try {
+        const v = JSON.parse(localStorage.getItem(RECIENTES_KEY));
+        return Array.isArray(v) ? v.filter(x => typeof x === 'string') : [];
+    } catch { return []; }
+}
+function guardarReciente(term) {
+    try { localStorage.setItem(RECIENTES_KEY, JSON.stringify(agregarReciente(getRecientes(), term))); }
+    catch { /* localStorage off → sin recientes, sin romper la búsqueda */ }
+}
+function applySearch(term) {
+    _state.q = term || '';
+    const input = document.querySelector('.bc-input');
+    if (input) input.value = _state.q;
+    writeURLState(_state);
+    refreshGrid();
+}
+// Pinta, bajo el buscador: el CONTEO de resultados (q activo) o las BÚSQUEDAS RECIENTES (q vacío).
+function refreshSearchExtra() {
+    const main = document.getElementById('main-content');
+    if (!main) return;
+    const msg = main.querySelector('[data-bc-msg]');
+    const rec = main.querySelector('[data-bc-recientes]');
+    if (_state.q.trim()) {
+        if (rec) { rec.hidden = true; rec.replaceChildren(); }
+        if (msg) {
+            const n = applyFilters().length;
+            if (n === 0) { msg.hidden = true; msg.textContent = ''; }   // el estado-cero de la grilla ya lo dice
+            else { msg.hidden = false; msg.textContent = n === 1 ? '1 pieza encontrada' : `${n} piezas encontradas`; }
+        }
+    } else {
+        if (msg) { msg.hidden = true; msg.textContent = ''; }
+        renderRecientes(rec);
+    }
+}
+function renderRecientes(rec) {
+    if (!rec) return;
+    const items = getRecientes();
+    rec.replaceChildren();   // nodos DOM (sin innerHTML) → los términos del usuario nunca se interpretan como HTML
+    if (!items.length) { rec.hidden = true; return; }
+    rec.hidden = false;
+    const label = document.createElement('span');
+    label.className = 'bc-rec-label';
+    label.textContent = 'Recientes:';
+    rec.append(label);
+    for (const t of items) {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'bc-chip';
+        chip.dataset.reciente = t;
+        chip.textContent = t;
+        rec.append(chip);
+    }
 }
 
 // ─── Carga fluida (Daniel reportó el flash 2026-06-22) ──────────────────────────────
@@ -337,6 +400,7 @@ function renderCatalog() {
         mount(main, renderAll());
         const bc = main.querySelector('.bc-input');   // restaura el query tras re-render (deep-link ?q=)
         if (bc && _state.q) bc.value = _state.q;
+        refreshSearchExtra();   // TODO-60: pinta recientes (q vacío) o conteo (q activo) tras el render
         updateSchemaMetadata();
         if (_watchdog !== null) { clearTimeout(_watchdog); _watchdog = null; }
     } else {

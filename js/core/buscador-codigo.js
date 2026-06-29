@@ -35,6 +35,7 @@ export function renderBuscadorCodigo(variant = 'catalogo') {
                 <button class="bc-btn" type="submit">${escape(btn)}</button>
             </div>
             <p class="bc-msg" data-bc-msg hidden aria-live="polite"></p>
+            <div class="bc-recientes" data-bc-recientes hidden></div>
         </form>`;
 }
 

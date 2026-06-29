@@ -1,7 +1,7 @@
 // Test puro del buscador por código (TODO-58) — sin DOM ni red. node --test.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeCodigo, resolverCodigo, normalizar, piezaMatchea, filtrarCatalogo } from '../js/core/codigo-util.js';
+import { normalizeCodigo, resolverCodigo, normalizar, piezaMatchea, filtrarCatalogo, agregarReciente } from '../js/core/codigo-util.js';
 
 const PIECES = [
   { code: '0953', slug: 'anillo-diamante-natural-0953' },
@@ -78,4 +78,13 @@ test('filtrarCatalogo: filtra por código o nombre; vacío → todas', () => {
   assert.deepEqual(filtrarCatalogo(CATALOGO, '095').map(p => p.code), ['0953', '0958']);  // código parcial
   assert.equal(filtrarCatalogo(CATALOGO, '').length, 3);
   assert.equal(filtrarCatalogo(CATALOGO, 'inexistente').length, 0);
+});
+
+test('agregarReciente: term al frente, sin duplicados (sin tildes), tope 5', () => {
+  assert.deepEqual(agregarReciente([], 'aros'), ['aros']);
+  assert.deepEqual(agregarReciente(['aros'], 'anillos'), ['anillos', 'aros']);   // nuevo al frente
+  assert.deepEqual(agregarReciente(['aros', 'anillos'], 'aros'), ['aros', 'anillos']); // sube, no duplica
+  assert.deepEqual(agregarReciente(['Rocío'], 'rocio'), ['rocio']);              // dedupe sin tildes
+  assert.deepEqual(agregarReciente(['a', 'b', 'c', 'd', 'e'], 'f').length, 5);   // tope 5
+  assert.deepEqual(agregarReciente(['a'], '  '), ['a']);                          // vacío → no agrega
 });

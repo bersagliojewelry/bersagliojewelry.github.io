@@ -10,10 +10,16 @@
  * escribe el estado de venta (nadie des-vende ni cambia precios por fuera).
  */
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
+const { defineSecret } = require('firebase-functions/params');
 const { getFirestore } = require('firebase-admin/firestore');
-const { crearPedidoCore, confirmarPagoCore, anularPedidoCore, cierreCajaCore, PedidoError } = require('./pedidos-core');
+const { crearPedidoCore, confirmarPagoCore, anularPedidoCore, cierreCajaCore, iniciarPagoWebCore, PedidoError } = require('./pedidos-core');
 
 const VENTAS = ['owner', 'admin', 'catalogo'];
+
+// Secreto de INTEGRIDAD de Wompi (Secret Manager; NUNCA en el repo). Se setea por entorno:
+//   firebase functions:secrets:set WOMPI_INTEGRITY_SECRET   (test en sandbox · prod al lanzar)
+// La llave PÚBLICA (pub_test_/pub_prod_) va por env normal WOMPI_PUBLIC_KEY (es pública por diseño).
+const WOMPI_INTEGRITY_SECRET = defineSecret('WOMPI_INTEGRITY_SECRET');
 
 async function rolDeVentas(db, auth) {
     if (!auth) throw new HttpsError('unauthenticated', 'Debes iniciar sesión.');
@@ -76,4 +82,22 @@ const cierreCaja = onCall({ region: 'us-central1', invoker: 'public' }, async (r
     }
 });
 
-module.exports = { crearPedido, confirmarPago, anularPedido, cierreCaja };
+// iniciarPagoWeb (Wompi F2): el cliente PÚBLICO (sin login) inicia el cobro de una pieza.
+// NO lleva check de rol (lo llama el comprador, no Kary); la robustez vive en el core (elegibilidad,
+// tope $2.5M, total+firma server-side). ⚠️ Anti-abuso (App Check/rate-limit) = hardening 2c (TODO-14).
+const iniciarPagoWeb = onCall({ region: 'us-central1', invoker: 'public', secrets: [WOMPI_INTEGRITY_SECRET] }, async (request) => {
+    const db = getFirestore();
+    try {
+        const d = request.data || {};
+        const res = await iniciarPagoWebCore(db, { pedidoId: d.pedidoId, pieceId: d.pieceId, shipping: d.shipping }, {
+            integritySecret: WOMPI_INTEGRITY_SECRET.value(),
+        });
+        // La llave pública (pub_test_/pub_prod_) la necesita el Widget; es pública por diseño.
+        return { ...res, publicKey: process.env.WOMPI_PUBLIC_KEY || null };
+    } catch (e) {
+        if (e instanceof PedidoError) throw new HttpsError(e.code, e.message);
+        throw e;
+    }
+});
+
+module.exports = { crearPedido, confirmarPago, anularPedido, cierreCaja, iniciarPagoWeb };

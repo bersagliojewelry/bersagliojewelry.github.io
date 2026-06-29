@@ -60,5 +60,11 @@ DISEÑO cerrado (arquitecto + gate Daniel ×2 respuestas). Implementación por s
   (PURO: `normalizeCodigo`/`resolverCodigo`, test 5/5) + `js/core/buscador-codigo.js` (render+wire delegado,
   mensaje no-match con nodos DOM = sin XSS) + CSS en `css/catalogo.css`; montado en `catalogo.js`. Verif: test
   5/5 + build VERDE + CSS/layout reales en preview (form/lead/botón OK). Flujo dato-vivo → deploy (L-05 headless).
+- **(1b) Búsqueda INTELIGENTE — filtro en vivo por código O nombre (TODO-60) — HECHO ✅** (2026-06-29, Daniel:
+  "amplía a nombre + filtra en tiempo real"): el buscador del catálogo evolucionó de "navegar por código" a
+  FILTRAR la grilla EN VIVO por código O nombre (`normalizar`/`piezaMatchea`/`filtrarCatalogo` puros, test 10/10;
+  debounce 160ms re-pinta solo la grilla; deep-link `?q=`; Enter→si hay 1 resultado va a la pieza; estado-cero
+  con CTA WhatsApp). El navigate-by-code (`wireBuscadorCodigo`/`resolverCodigo`) queda para el home/link (slices
+  2-3, Vite lo tree-shakea mientras) o se retira. Pend TODO-60: incorporar lo bueno del index de Altorra Cars (ver repo).
 - **(2) link `/p/<code>` (SSG stubs OG) + (3) acceso en INICIO + (4) `Ref.` en ficha + (5) 404 polish → PEND.**
 → ADR al cerrar TODO-58.

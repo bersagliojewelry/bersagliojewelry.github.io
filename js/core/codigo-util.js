@@ -22,3 +22,31 @@ export function resolverCodigo(raw, lookup) {
     if (piece) return { status: 'found', code, url: pieceUrl(piece) };
     return { status: 'notfound', code };
 }
+
+/** Normaliza para BUSCAR: minúsculas + sin tildes (Rocío→rocio) + espacios colapsados. */
+export function normalizar(s) {
+    return String(s ?? '')
+        .toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')   // quita tildes/diacríticos
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+/**
+ * Búsqueda INTELIGENTE (TODO-60): ¿la pieza matchea por CÓDIGO o por NOMBRE? Parcial y sin tildes.
+ * Código: el query sin espacios debe estar contenido en el código. Nombre: contención parcial.
+ */
+export function piezaMatchea(piece, query) {
+    const q = normalizar(query);
+    if (!q) return true;                              // sin texto → todas (no filtra)
+    const name = normalizar(piece?.name);
+    const code = normalizar(piece?.code);
+    return name.includes(q) || code.includes(q.replace(/ /g, ''));
+}
+
+/** Filtra el catálogo por código/nombre (búsqueda inteligente). Query vacío → todas. */
+export function filtrarCatalogo(pieces, query) {
+    const list = Array.isArray(pieces) ? pieces : [];
+    if (!normalizar(query)) return [...list];
+    return list.filter(p => piezaMatchea(p, query));
+}

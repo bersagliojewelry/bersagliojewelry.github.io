@@ -45,6 +45,7 @@ before(async () => {
         await setDoc(doc(db, 'pieces/p1'), { name: 'Anillo', slug: 'anillo', stockType: 'finito', cantidad: 1, visibilidad: 'publica' }); // v3 (post-migración)
         await setDoc(doc(db, 'pieces/pPriv'), { name: 'VIP', slug: 'vip', stockType: 'finito', cantidad: 1, visibilidad: 'privada' }); // D5: NO legible por público
         await setDoc(doc(db, 'pieces/pLegacy'), { name: 'Legacy', slug: 'legacy' }); // sin visibilidad → fail-closed (NO legible por anon hasta migrar)
+        await setDoc(doc(db, 'pieces/pSold'), { name: 'Reservada', slug: 'reservada', stockType: 'finito', cantidad: 0, visibilidad: 'publica', estado: 'disponible', reservaId: null, reservaExpira: null }); // §152: estado/reserva los puso la CF → editar por merge NO debe bloquearse
         await setDoc(doc(db, 'pieces/p1/movimientos/mov1'), { delta: -1, motivo: 'venta', pedidoId: 'x', cantidadResultante: 0 }); // ledger (C4)
         await setDoc(doc(db, 'journal/j1'), { title: 'Esmeraldas', published: true }); // CMS: lectura pública + borrado admin
 
@@ -173,6 +174,17 @@ test('S6 · NO crea pieza con price no-numérico', async () => {
 test('S6 · patch parcial (solo images, merge) en pieza existente SÍ pasa', async () => {
     // Flujo crítico del admin (patchPiece con merge) — NO debe romperse.
     await assertSucceeds(setDoc(doc(asUser('editorUid'), 'pieces/p1'), { images: ['a.webp'], image: 'a.webp' }, { merge: true }));
+});
+test('§152 · UPDATE merge de pieza CON estado/reserva (CF-set) NO se bloquea — bugfix', async () => {
+    // Regresión: una pieza ya reservada/vendida lleva estado/reservaId/reservaExpira (los pone la CF).
+    // Editarla por merge SIN tocar esos campos DEBE pasar; el chequeo de PRESENCIA los denegaba.
+    await assertSucceeds(setDoc(doc(asUser('editorUid'), 'pieces/pSold'), { name: 'Reservada v2' }, { merge: true }));
+});
+test('§152 · UPDATE que intenta CAMBIAR estado (CF-only) SÍ se deniega', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'pieces/pSold'), { estado: 'vendida' }, { merge: true }));
+});
+test('§152 · UPDATE que intenta inyectar reservaId SÍ se deniega', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'pieces/p1'), { reservaId: 'fake' }, { merge: true }));
 });
 
 // ─── B1 paso 1: inventario/clasificación (stockType/cantidad/gender) ──────────

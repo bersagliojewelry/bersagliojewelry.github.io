@@ -187,6 +187,32 @@
     font-weight: 600;
     text-decoration: underline;
 }
+/* Búsquedas recientes (idea Altorra Cars) — chips bajo el buscador cuando no hay query */
+.bc-recientes {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.bc-rec-label {
+    font-size: 12px;
+    color: var(--bj-ink-mute);
+    letter-spacing: 0.04em;
+}
+.bc-chip {
+    padding: 5px 12px;
+    font-size: 12px;
+    border: 1px solid oklch(100% 0 0 / 0.5);
+    border-radius: 999px;
+    background: oklch(100% 0 0 / 0.5);
+    color: var(--bj-ink-emerald);
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+.bc-chip:hover {
+    background: oklch(62% 0.18 155 / 0.12);
+    border-color: oklch(62% 0.18 155 / 0.4);
+}
 @media (max-width: 680px) {
     .bc-row { flex-wrap: wrap; }
     .bc-input,

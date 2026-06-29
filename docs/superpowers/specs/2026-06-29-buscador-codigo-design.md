@@ -68,3 +68,22 @@ DISEÑO cerrado (arquitecto + gate Daniel ×2 respuestas). Implementación por s
   2-3, Vite lo tree-shakea mientras) o se retira. Pend TODO-60: incorporar lo bueno del index de Altorra Cars (ver repo).
 - **(2) link `/p/<code>` (SSG stubs OG) + (3) acceso en INICIO + (4) `Ref.` en ficha + (5) 404 polish → PEND.**
 → ADR al cerrar TODO-58.
+
+## 8. Buscador inteligente — análisis de Altorra Cars (TODO-60) + estado
+
+Exploración (subagente Explore, read-only, sobre `…/altorracars.github.io`; SÍNTESIS — §G.4 captura de deliberación):
+Altorra usa un **autocomplete-dropdown** en el home (`main.js:503-860` `initHeroSearch`) + página de búsqueda con
+sidebar de filtros. Ideas portables priorizadas a un buscador de joyas:
+
+- **HECHO ✅ en Bersaglio (catálogo)**: filtro en vivo por código **O nombre** · debounce 160ms · sin tildes ·
+  deep-link `?q=` · estado-cero con CTA WhatsApp · **conteo de resultados en vivo** ("N piezas encontradas") ·
+  **búsquedas recientes** (localStorage, chips, idea Altorra) · Enter→si 1 resultado va a la pieza.
+- **PENDIENTE (plano para sesión fresca)** — de Altorra:
+  1. **Autocomplete dropdown jerárquico con conteo**: sugerencias de colecciones/gemas/nombres con "(N)" → 1 clic
+     filtra/navega (`getSuggestions()` L599-673; ranking exactas→fuzzy, marca→modelo, +cantidad). Encaja MEJOR en el
+     **HOME** (slice 3, sin grilla); en el catálogo la grilla en vivo + conteo + recientes ya cubre.
+  2. **Highlight de coincidencias** (`<mark>`) en sugerencias/tarjetas (L676-688). Bajo costo; ojo al mapeo de
+     posiciones con acentos + XSS → construir con nodos DOM, no innerHTML.
+  3. **Navegación por teclado** ↑↓/Enter/Esc en el dropdown (L804-827, estado `activeIndex`).
+  4. **Fuzzy/Levenshtein** para typos ("anilo"→"anillo") (L539-566). Costo medio (~50 líneas).
+  5. (Descartado para joyas) NLP de filtros en lenguaje natural (`inventory-search.js`) = overkill.

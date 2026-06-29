@@ -50,3 +50,15 @@ export function filtrarCatalogo(pieces, query) {
     if (!normalizar(query)) return [...list];
     return list.filter(p => piezaMatchea(p, query));
 }
+
+/**
+ * Búsquedas RECIENTES (idea de Altorra Cars): `term` al frente, sin duplicados (comparando sin tildes)
+ * y con tope `cap`. PURA (la persistencia en localStorage la hace el callsite). Vacío → no agrega.
+ */
+export function agregarReciente(lista, term, cap = 5) {
+    const base = Array.isArray(lista) ? lista : [];
+    const t = String(term ?? '').trim();
+    if (!t) return [...base];
+    const sinDup = base.filter(x => normalizar(x) !== normalizar(t));
+    return [t, ...sinDup].slice(0, Math.max(0, cap));
+}

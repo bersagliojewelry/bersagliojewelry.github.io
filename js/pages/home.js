@@ -6,13 +6,13 @@
  * secciones DINÁMICAS (destacadas + categorías) a Firestore vía data.onChange().
  *
  * Orden:
- *   1 Hero · 2 Marquee · 3 Categorías · 4 Destacadas(Firestore) · 5 Editorial
- *   6 Servicios · 7 Atelier · 8 Journal · 9 CTA
+ *   1 Hero · 2 Categorías · 3 Destacadas(Firestore) · 4 Editorial
+ *   5 Servicios · 6 Atelier · 7 Journal · 8 CTA
+ *   (§156: el marquee de credenciales se retiró — desencajaba de lo premium, Daniel)
  */
 
 import { data } from '../core/data.js';
 import { renderHero, refreshHero } from '../home/hero.js';
-import { renderMarquee } from '../home/marquee.js';
 import { renderCategories, refreshCategories } from '../home/categories.js';
 import { renderFeatured, refreshFeatured } from '../home/featured.js';
 import { renderEditorial, refreshEditorial } from '../home/editorial.js';
@@ -26,7 +26,6 @@ import { renderCTA, refreshCTA } from '../home/cta.js';
 function renderAll() {
     return [
         renderHero(),
-        renderMarquee(),
         renderCategories(),
         renderFeatured(),
         renderEditorial(),
@@ -55,7 +54,7 @@ export async function init() {
     // Initial paint
     main.innerHTML = renderAll();
 
-    // Reveal-on-scroll para secciones below-the-fold (hero + marquee quedan visibles).
+    // Reveal-on-scroll para secciones below-the-fold (el hero queda visible).
     // boot.js llama observeReveals() justo después de init(); estas clases ya estarán puestas.
     ['home-cats', 'home-featured', 'home-editorial', 'home-services', 'home-atelier', 'home-journal', 'home-cta']
         .forEach(c => main.querySelector('.' + c)?.classList.add('reveal'));

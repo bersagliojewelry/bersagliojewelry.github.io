@@ -7,6 +7,7 @@ import { admToast, admConfirm, initSidebar, esc, requireAuth, hasRole, errorMess
 import { pmark, psummary } from '../core/perf-probe.js';   // sonda TODO-33 (gateada; no-op si off)
 import { initCalculadora } from './calculadora.js';        // B1 paso 2: calculadora de precio por peso
 import invService from '../inventario-service.js';         // TODO-40 v3: stock CF-only (ajustar / cambiar tipo)
+import { allGems } from '../core/gem-taxonomy.js';         // §151: lista canónica de gemas (select + filtros)
 
 let _allPieces = [];
 let _query     = '';
@@ -174,7 +175,33 @@ function populateCollectionFilters() {
 let _uploadedImages = [];
 let _uploadedLqips  = [];   // §108 F3: LQIP (data-URI blur) paralelo a _uploadedImages
 
+// §151: puebla el <select> "Gema principal" + los checkboxes "Otras gemas (filtros)" desde la
+// taxonomía canónica (allGems = semilla + extras de Kary). Kary elige de la lista → cero typos.
+// DOM seguro (new Option/createElement/textContent), no innerHTML.
+function populateGemControls() {
+    const sel = document.getElementById('f-badge-gem');
+    const box = document.getElementById('f-gem-filters');
+    if (!sel || !box) return;
+    const gems = allGems();
+    sel.replaceChildren();
+    sel.add(new Option('— Elige la gema —', ''));
+    for (const g of gems) sel.add(new Option(g.label, g.slug));
+    sel.add(new Option('Sin piedra (solo oro)', 'oro'));
+    box.replaceChildren();
+    for (const g of gems) {
+        const label = document.createElement('label');
+        label.style.cssText = 'display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--adm-fg);cursor:pointer;';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.className = 'f-gem-filter';
+        cb.value = g.slug;
+        label.append(cb, ' ' + g.label);
+        box.appendChild(label);
+    }
+}
+
 function initModal() {
+    populateGemControls();
     document.getElementById('modal-close').addEventListener('click', closeModal);
     document.getElementById('modal-cancel').addEventListener('click', closeModal);
     document.getElementById('modal-save').addEventListener('click', handleSave);
@@ -485,6 +512,12 @@ function populateForm(form, piece) {
     form.querySelector('[name="specs.origin"]').value      = specs.origin || '';
     form.querySelector('[name="specs.delivery"]').value    = specs.delivery || '';
     form.querySelector('[name="sizes"]').value = Array.isArray(piece.sizes) ? piece.sizes.join(', ') : '';
+
+    // §151: gema canónica. badgeGem → select; gemFilterIds → checkboxes marcados.
+    const selGem = form.querySelector('[name="specs.badgeGem"]');
+    if (selGem) selGem.value = specs.badgeGem || '';
+    const filtros = new Set((Array.isArray(specs.gemFilterIds) ? specs.gemFilterIds : []).map(s => String(s).toLowerCase()));
+    form.querySelectorAll('.f-gem-filter').forEach(cb => { cb.checked = filtros.has(cb.value); });
 }
 
 async function handleSave() {
@@ -531,6 +564,15 @@ async function handleSave() {
         const v = get(`specs.${k}`);
         if (v) specs[k] = v;
     });
+
+    // §151: gema canónica (modelo plano). badgeGem (del select; 'oro'/'' = sin gema) tiñe el badge;
+    // gemFilterIds = unión de la principal + las "otras gemas" marcadas (array plano → array-contains).
+    const badgeGem = get('specs.badgeGem');
+    const filtros = new Set();
+    form.querySelectorAll('.f-gem-filter:checked').forEach(cb => filtros.add(cb.value));
+    if (badgeGem && badgeGem !== 'oro') filtros.add(badgeGem);   // la principal siempre cuenta en filtros
+    if (badgeGem) specs.badgeGem = badgeGem;                      // explícito (incl. 'oro' = sin gema)
+    specs.gemFilterIds = [...filtros];                           // [] = sin gema (filtro "solo oro" explícito)
 
     // Tallas disponibles (bug-1): array que controla Kary. Vacío → la pieza muestra "a medida".
     const sizes = get('sizes').split(',').map(s => s.trim()).filter(Boolean);

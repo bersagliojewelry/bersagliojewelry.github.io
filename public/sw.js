@@ -12,7 +12,7 @@
 // v53 = UX de pieza VENDIDA/agotada en el cliente vivo (§148, TODO-56): la ficha muestra sello
 // "Vendida" + CTA asesor (sin precio/carrito), la grilla oculta las vendidas; "Por encargo" para
 // refabricable/encargo. (v52 = modelo de toque del visor §146; v51 = §145; v50 = §144; v49 = §143.)
-const CACHE_NAME    = 'bersaglio-v53';
+const CACHE_NAME    = 'bersaglio-v54';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

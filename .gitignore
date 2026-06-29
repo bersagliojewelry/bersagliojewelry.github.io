@@ -44,3 +44,7 @@ gcp-key*.json
 # el lock de GitHub Desktop (mover a ../fouronesysERP o eliminar: está sincronizado con su origin).
 /_temp_fouronesysERP/
 
+# Modelo de OCR de Tesseract (idioma español) — herramienta LOCAL usada para leer los
+# certificados TrueLab al cargar inventario (§132). NO es del sitio (binario 3.3M). No versionar.
+*.traineddata
+

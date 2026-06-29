@@ -10,10 +10,11 @@
 
 > 🎉 **CRM + Fase M EN PROD** (§47-§82). ⚙️ **OPUS 4.8 interino** (marcar `[OPUS-4.8]` · `feedback_opus_interino`).
 >
-> ✅ **§143-§146 visor de zoom de la ficha CERRADO** (Daniel confirmó 2026-06-28). → ADRs §143-§146. _Pend operativo Daniel: precios + fotos definitivas._
-> **🔜 ARRANCA WOMPI F2 — la web cobra sola (Decisión Fuerte · DINERO).** Enfoque (Daniel 2026-06-28): **(1)** Daniel loguea `comercios.wompi.co` → Claude explora el panel con extensión Chrome (interfaz + llaves TEST + secreto integridad + eventos/webhook + titular ¿Diana M. Niño=Kary?); **(2)** diseño W-11 (checkout + Cloud Function firma + webhook→`confirmarPago` + reserva TODO-42); **(3)** build SANDBOX (`_test_`, centavos); **(4)** precios TEMPORALES de prueba (Claude, <$2.5M, quita al cerrar); **(5)** legal TODO-49 + llaves reales (Kary) antes del cobro real. Specs `plan-maestro-comercio-v3` + `modelo-inventario §11.4/§12.2`; skills `wompi-*`. ⚠️ SECRETOS=env, nunca commit. `[[project_comercio_pagos]]`
-> **🔜 Cola** (tras/junto a Wompi): TODO-47 (verdad de marca + legal con Kary) · TODO-49 legal e-commerce · TODO-41 factura multi-línea · TODO-39/33/35. Operativo Daniel: precios + fotos definitivas.
-> _**MCP Firebase = escritura prod**. merge a main = Claude. Gemini asesora, Claude implementa (`[[feedback_consejo_externo_readonly]]`). Pruebas en vivo DIFERIDAS (§130.4)._
+> ✅ §143-§146 visor de zoom CERRADO (Daniel 2026-06-28). _Pend operativo Daniel: precios + fotos._
+> **🔨 WOMPI F2 — la web cobra sola (Decisión Fuerte·DINERO·TODO-42).** SSoT → `…/specs/2026-06-28-wompi-checkout-web-design.md` (diseño + comité×5 + consejo, TODO verificado vs código; crudo = `…-comite-wompi-checkout-CRUDO.md`).
+> · **Diseño CERRADO ✅** (arquitecto+comité×5+consejo Gemini). Alcance: **"Comprar ahora" 1 pieza · sandbox · solo TARJETA**. Claves: CF nueva `iniciarPagoWeb` (NO tocar `crearPedido`) · webhook=verdad (firma evento dot-notation + idempotencia doble-llave + SOLO APPROVED; DECLINED audita) · **reaper OBLIGATORIO** (sin él la pieza única se secuestra) · monto vs congelado. Panel: Diana Niño=socia, modo pruebas ON, URL Eventos vacía, secretos→Secret Manager. `[[project_comercio_pagos]]`
+> · **BUILD 2a EN CURSO**: ✅ Paso 1 candado compartido (`evaluarStock`+`aplicarConsumo`, `pedidos-core.js`) — POS intacto, `pedidos.integration` 19/19. **SIGUIENTE**: `iniciarPagoWeb`→webhook→reaper→front(flag); tests EN ROJO primero. 2b=PSE/Nequi · 2c=legal(TODO-49)+llaves prod(Kary). Legal bloquea cobro REAL, no sandbox.
+> _MCP Firebase=escritura prod · merge a main=Claude · Gemini asesora/Claude implementa (`[[feedback_consejo_externo_readonly]]`) · pruebas vivo DIFERIDAS (§130.4). Cola: TODO-47/49/41/39/33/35; operativo Daniel: precios+fotos._
 
 ---
 
@@ -56,6 +57,6 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier C pen
 
 > Podada (GC) 2026-06-27. Histórico → ADR §37-§130 + bóveda. Lecciones → `30`/`31`/`32`.
 >
-> **Sesión §133-§142 (2026-06-27):** catálogo voz+significado + web, desplegado (SW v48). Lección: datos grandes EMBEBIDOS en Workflow, no por `args`. → ADRs §133-§142. `[[feedback_copy_marca_profundidad]]`
-> **§143-§146 (2026-06-28):** visor de zoom de la ficha (flechas sutiles + lightbox: joya=acercar/margen=cerrar/pinch/pan/candado no-upscale) + casilla precio admin removida. SW v52, verif. live Playwright. Lección: en lightbox el tap sobre el contenido NO cierra. Post-mortem §144.7 (local stale→TODO-22). → ADRs §143-§146.
+> **§143-§146 (2026-06-28):** visor de zoom ficha (lightbox joya=acercar/margen=cerrar/pinch/pan). SW v52. → ADRs §143-§146.
+> **Sesión Wompi F2 (2026-06-28):** diseño W-11 cerrado (comité×5+consejo, todo vs código) + build 2a paso 1 (candado compartido, POS 19/19). Lección: el consejo externo cazó un punto ciego del comité (reaper diferido = stock secuestrado). → spec wompi-checkout-web-design.
 > **🚦 Reglas vivas**: `arquitecto-software` SIEMPRE · Bersaglio = 100% COP (§127) · NO inventado/no-verificable (`[[feedback_no_demo_en_index]]`) · la voz solo se presta a lo verificable · pruebas en vivo SOLO al final (§130.4) · W-11/mockup en decisión-diseño · `[[feedback_workflows_acotados]]` · `[[feedback_reintentar_agentes_no_saltar_flujo]]`. Cola: TODO-47..51 · F2 Wompi · TODO-37/39/33/35.

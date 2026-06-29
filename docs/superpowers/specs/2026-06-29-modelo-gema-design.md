@@ -13,15 +13,16 @@ El badge color-por-gema (§149) deriva `specs.stone` (TEXTO LIBRE) con un regex.
 ## 3. DECISIÓN (comité unánime 5/5 = Opción 3 HÍBRIDO + gate Daniel)
 Separar **DATO canónico** (máquina) de **PROSA** (humano). El texto libre NUNCA vuelve a gobernar color/filtro.
 
-### 3.1 Modelo de datos (`pieces/{id}`) — todo ADITIVO
+### 3.1 Modelo de datos (`pieces/{id}`) — todo ADITIVO · **PLANO** (consejo externo §8, corrige al comité)
 ```
-gems: [ {type:"esmeralda", role:"principal"}, {type:"diamante", role:"acento"} ]  // NUEVO · array canónico · SSoT badge+filtro
-gemPrincipal: "esmeralda"                                                          // NUEVO · derivado (= item role:principal) · lo lee badge/filtro · índice trivial
-specs.stone: "Esmeralda colombiana talla esmeralda 2.1 ct"                         // INTACTO · prosa de la carta gemológica
-specs.accent / specs.metal / specs.color / badge / ...                            // INTACTOS
+specs.badgeGem:     "esmeralda"                 // NUEVO · string · slug de la gema PROTAGONISTA → tiñe el badge · query where(==) · 'oro'/null = sin gema
+specs.gemFilterIds: ["esmeralda","diamante"]    // NUEVO · array de STRINGS planos · TODAS las gemas presentes → filtros where(array-contains)
+specs.stone:  "Esmeralda colombiana talla esmeralda 2.1 ct"   // INTACTO · prosa de la carta gemológica (poesía/SSG/JSON-LD)
+specs.accent / specs.metal / specs.color / badge / ...        // INTACTOS
 ```
-- `type` = slug ASCII minúscula sin tildes (`esmeralda`/`rubi`/`zafiro`/`diamante`/…) — clave estable e indexable, NO el label.
-- **Exactamente UN** item `role:"principal"` (invariante → color determinista). `gems:[]` + `gemPrincipal:null` = sin gema.
+- slug = ASCII minúscula sin tildes (`esmeralda`/`rubi`/`zafiro`/`diamante`/…) — clave estable e indexable, NO el label.
+- ⚠️ **Por qué PLANO y no `gems:[{type,role}]`** (consejo §8, verificado): Firestore `array-contains` matchea elementos COMPLETOS → NO sirve sobre un array de objetos (no puedes "tiene esmeralda" sobre `[{type:'esmeralda',role:'principal'}]`). Un array de STRINGS (`gemFilterIds`) sí. El comité tenía este fallo.
+- `badgeGem='oro'`/null = sin gema (badge no se renderiza). Multi-gema: `badgeGem`=la protagonista (Kary elige); `gemFilterIds`=todas.
 
 ### 3.2 Taxonomía como DATO (no código)
 ```
@@ -69,5 +70,14 @@ Recomendaciones 1-línea: **datos**=gems[] SSoT + stone descriptivo · **admin/U
 - (C) Muerto: el regex de `gemBadge` se retira tras la transición.
 - (E) Riesgos→§5. Rollback aditivo. Tests: pura `gemBadge(gemPrincipal,taxonomy)` + backfill dry-run sobre las 32.
 
+## 8. Consejo externo INTEGRADO (2026-06-29, §151) — VERIFICADO contra el código (cero alucinaciones)
+Gemini (auditor adversarial, read-only) confirmó el HÍBRIDO y lo MEJORÓ. Cada claim verificado (regla de oro `[[feedback_consejo_externo_readonly]]`):
+- **[ADOPTADO·corrige al comité] Modelo PLANO** (`specs.badgeGem` string + `specs.gemFilterIds` array de strings) en vez de `gems:[{type,role}]`: el array de objetos NO sirve para `array-contains`. → §3.1 reescrito; fundación `gem-badge.js` ya migrada a plano (test 7/7).
+- **[ADOPTADO] Taxonomía DATA → horneada en `catalogo.json`** (como las colecciones): `settings/gems` (Kary gestiona id/nombre/color) → el SSG (`buildCatalogJson:667`, espejando `publicCollection`) la inyecta en `catalogo.json` → el cliente lee `data.getGems()` de memoria (badge instantáneo, sin lectura extra a Firestore). VERIFICADO: `buildCatalogJson` ya hornea `collections.map(publicCollection)`.
+- **[ADOPTADO·trampa real] JSON-LD frágil** (VERIFICADO `generate-pieces.mjs:142`: `stones.split('·')[0]`): tras `badgeGem`, inyectar el NOMBRE CANÓNICO de la gema en `additionalProperty` (Schema.org) → entidad limpia para LLMs (Perplexity/ChatGPT), no texto truncado.
+- **[ADOPTADO·trampa real] Optimistic lock** (VERIFICADO `js/admin/piezas.js:17/427` `_editingVersion`): los campos nuevos del form DEBEN pasar por `handleSave()` + el `_editingVersion` (no romper la concurrencia óptima).
+- **[ADOPTADO] Filtro "Solo Oro"/sin gema EXPLÍCITO**: opción que consulta `gemFilterIds == []` o token; la ausencia de gema es un estado explícito, no un "no matcheó".
+- **Confirmado correcto**: híbrido (poesía en texto libre + lógica en campo estructurado), color como dato, badge = una protagonista.
+
 ## 7. Estado
-DECISIÓN CERRADA (3 capas + gate Daniel). Pendiente: IMPLEMENTACIÓN (TODO-57). Cache bump al cambiar el badge. → ADR §150.
+DECISIÓN CERRADA (4 capas: arquitecto + comité ×5 + **consejo externo verificado §8** + gate Daniel). Modelo PLANO (`specs.badgeGem`+`specs.gemFilterIds`). Fundación de código HECHA (`gem-taxonomy.js` + `gem-badge.js` plano, test 7/7). Pend IMPLEMENTACIÓN (TODO-57): `settings/gems` + hornear en catalogo.json + backfill 32 + form admin (select+filtros+CRUD, vía `_editingVersion`) + JSON-LD canónico + rules/índice. Cache bump al cambiar el badge en vivo. → ADR §150/§151.

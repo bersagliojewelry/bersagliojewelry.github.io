@@ -45,3 +45,20 @@ export function tieneGema(piece, slug) {
     if (Array.isArray(ids)) return ids.some(x => String(x).toLowerCase() === s);
     return slugProtagonista(piece) === s;   // fallback transicional (sin gemFilterIds aún)
 }
+
+/**
+ * Nombre CANÓNICO de la gema para JSON-LD / AEO (additionalProperty "Gema") — §151, consejo externo.
+ * Reemplaza el frágil `stones.split('·')[0]` (texto libre truncado → "Esmeralda Natural") por el DATO:
+ * `specs.badgeGem` → label canónico ("Esmeralda"), entidad limpia para LLMs (Perplexity/ChatGPT/Google).
+ * Fallback transicional al texto libre mientras una pieza no tenga `badgeGem`. 'oro'/sin gema → '' (el
+ * callsite filtra los vacíos → la pieza sin gema NO expone propiedad "Gema").
+ * @param {{badgeGem?:string, stone?:string, stones?:string}} specs
+ * @returns {string} label canónico · prosa de respaldo · '' (sin gema).
+ */
+export function gemDisplayName(specs) {
+    const s = specs || {};
+    const slug = slugProtagonista({ specs: s });   // dato (badgeGem) → fallback regex sobre la prosa
+    if (!SIN_GEMA.has(slug)) return gemLabel(slug);
+    const prose = s.stones || s.stone || '';        // sin gema reconocida → cae a la prosa (o '')
+    return prose.includes('·') ? prose.split('·')[0].trim() : prose;
+}

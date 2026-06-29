@@ -32,6 +32,7 @@ const SRC_DIR = resolve(__dirname, '..', 'public', 'img');
 // Otros (banner-1200.avif etc del diseño anterior, gema, collage, logos)
 // se quedan tal cual.
 const SOURCES = [
+    'hero.jpg',          // §156: foto-héroe nueva (modelo + collar de esmeraldas) que cura Daniel/Kary
     'banner-hero.png',
     'earrings-emerald.png',
     'earrings-travertino.png',

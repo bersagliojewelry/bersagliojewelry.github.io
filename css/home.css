@@ -109,33 +109,37 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 
 .home-hero-content {
     position: absolute; inset: 0;
-    padding: clamp(24px, 4vw, 48px);
-    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: clamp(28px, 5vw, 64px);
+    display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+    text-align: left;
     z-index: 3;
-    /* §156 (W-11+Gemini) SCRIM: degradado inferior para legibilidad del texto ANCLADO ABAJO; deja la
-       joya nítida arriba — NO oscurece todo (evita el "Frankenstein" con el sitio claro). */
-    background: linear-gradient(to top, oklch(16% 0.03 155 / 0.62) 0%, oklch(16% 0.03 155 / 0.20) 32%, transparent 56%);
+    /* §156 (W-11+Gemini) — la foto-héroe es CLARA (perla, modelo + collar al centro-derecha). El texto
+       va a la IZQUIERDA en OSCURO sobre el espacio abierto; un velo BLANCO sutil desde la izquierda da
+       legibilidad sobre la seda iridiscente SIN oscurecer (mantiene la estética clara — evita el
+       "Frankenstein" que advirtió Gemini). */
+    background: linear-gradient(to right, oklch(99% 0.008 95 / 0.66) 0%, oklch(99% 0.008 95 / 0.18) 40%, transparent 62%);
 }
 /* §156 rediseño hero: se OCULTAN locator/manifesto/firma (clutter); el modelo CMS queda intacto (solo no
-   se pintan). Visible = eyebrow + headline + microcopy de confianza + 2 CTAs, anclados abajo. */
+   se pintan). Visible = eyebrow + headline + microcopy de confianza + 2 CTAs. */
 .home-hero-locator-row, .home-hero-manifesto, .home-hero-signature { display: none !important; }
+.home-hero-body { max-width: 460px; }
 .home-hero-trust {
     display: inline-flex; align-items: center; gap: 7px;
     font-family: var(--font-ui); font-size: 12px; letter-spacing: 0.04em;
-    color: oklch(100% 0 0 / 0.82);
-    margin-bottom: 18px;
+    color: var(--bj-ink-soft);
+    margin-bottom: 22px;
 }
-.home-hero-trust svg { color: oklch(82% 0.14 90); flex-shrink: 0; }
+.home-hero-trust svg { color: var(--bj-emerald-700); flex-shrink: 0; }
 .btn-hero-ghost {
     display: inline-flex; align-items: center; justify-content: center;
-    padding: 14px 26px;
+    padding: 17px 30px;
     border-radius: 999px;
-    border: 1px solid oklch(100% 0 0 / 0.42);
-    color: #fff; font-size: 14px; font-weight: 500;
-    background: oklch(100% 0 0 / 0.06);
-    transition: background 0.25s, border-color 0.25s;
+    border: 1px solid var(--bj-emerald-700);
+    color: var(--bj-emerald-800); font-size: 13px; font-weight: 500; letter-spacing: 0.06em;
+    background: oklch(100% 0 0 / 0.4);
+    transition: background 0.25s, border-color 0.25s, color 0.25s;
 }
-.btn-hero-ghost:hover { background: oklch(100% 0 0 / 0.16); border-color: oklch(100% 0 0 / 0.72); }
+.btn-hero-ghost:hover { background: var(--bj-emerald-700); color: #fff; border-color: var(--bj-emerald-700); }
 .home-hero-locator-row {
     display: flex; align-items: center; justify-content: flex-end;
 }
@@ -154,12 +158,12 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 }
 .home-hero-eyebrow-line {
     width: 36px; height: 1px;
-    background: linear-gradient(90deg, oklch(85% 0.14 85), transparent);
+    background: linear-gradient(90deg, var(--bj-gold-700), transparent);
 }
 .home-hero-eyebrow {
     font-size: 11px;
     letter-spacing: 0.32em;
-    color: oklch(92% 0.10 88);
+    color: var(--bj-gold-700);
     text-transform: uppercase;
 }
 
@@ -169,24 +173,21 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     font-weight: 300;
     letter-spacing: -0.03em;
     margin-bottom: 20px;
-    color: #fff;
-    /* §156: sombra sutil (el scrim inferior da la legibilidad; fuera las sombras "noventeras"). */
-    text-shadow: 0 2px 14px oklch(16% 0.03 155 / 0.5);
+    color: var(--bj-ink-emerald);
+    /* §156: texto OSCURO sobre la foto clara; halo blanco sutil para separarlo de la seda. */
+    text-shadow: 0 1px 1px oklch(100% 0 0 / 0.75), 0 2px 12px oklch(100% 0 0 / 0.4);
 }
 .home-hero-headline-italic {
     font-style: italic;
     font-weight: 300;
+    /* §156: gradiente OSCURO esmeralda→oro (antes claro → invisible sobre la foto perla). */
     background: linear-gradient(135deg,
-        oklch(96% 0.04 90) 0%,
-        oklch(82% 0.14 90) 22%,
-        oklch(72% 0.20 155) 50%,
-        oklch(82% 0.14 90) 78%,
-        oklch(96% 0.04 90) 100%);
+        var(--bj-emerald-800) 0%,
+        var(--bj-emerald-700) 45%,
+        var(--bj-gold-700) 100%);
     -webkit-background-clip: text; background-clip: text;
     -webkit-text-fill-color: transparent; color: transparent;
-    filter:
-        drop-shadow(0 2px 6px oklch(15% 0.04 155 / 0.5))
-        drop-shadow(0 6px 16px oklch(15% 0.04 155 / 0.35));
+    filter: drop-shadow(0 1px 1px oklch(100% 0 0 / 0.6));
 }
 
 .home-hero-manifesto {
@@ -328,7 +329,13 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
         max-height: none;
         border-radius: 28px;
     }
-    .home-hero-content { padding: 28px; }
+    .home-hero-content {
+        padding: 28px;
+        justify-content: flex-end; align-items: stretch;
+        /* §156 móvil: el retrato 4/5 recorta el espacio izquierdo → texto ABAJO sobre velo blanco inferior. */
+        background: linear-gradient(to top, oklch(99% 0.008 95 / 0.9) 0%, oklch(99% 0.008 95 / 0.42) 26%, transparent 52%);
+    }
+    .home-hero-body { max-width: none; }
     /* §156 móvil: CTAs apilados full-width (área táctil generosa, Gemini). */
     .home-hero-actions { flex-direction: column; align-items: stretch; width: 100%; }
     .home-hero-actions .btn-hero, .home-hero-actions .btn-hero-ghost { width: 100%; justify-content: center; }

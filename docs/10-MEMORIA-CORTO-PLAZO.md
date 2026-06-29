@@ -38,12 +38,12 @@
 | TODO-39 | **B1 paso 4b — apartados/abonos** (decisión, §128.4): ¿el mostrador necesita apartar piezas (anticipo + saldo) ahora? Si sí, el saldo = CARTERA (ya existe `clientes/{id}.saldoActual` vía factura/abono) → **reusar cartera, NO** un sistema de pagos paralelo en el pedido; requiere link pedido↔cliente CRM. Fork caro de revertir (§8 spec) → preguntar a Daniel. | 🟡 | decisión Daniel |
 | TODO-37 | **PLAN MAESTRO DE COMERCIO** (ACTIVO): roadmap físico+digital. SSoT → spec `2026-06-25-plan-maestro-comercio-v3`. B0/B0.5 EN PROD ✅; B1 mostrador pasos 1-6 EN PROD, paso 7 `catalogo.json` CDN DISEÑADO v3. Decisiones dueño: ADDI · Persona Jurídica. | 🟢 | ejecutar B1 |
 | TODO-41 | **Facturación multi-línea** (Daniel 2026-06-26): la factura/POS debe cobrar **modificaciones/servicios** por código, no solo piezas (variación de peso/ajuste = línea aparte). Toca POS/factura. Spec `modelo-inventario §10`. | 🔲 | tras carga inventario |
-| TODO-42 | **Inventario v3 — F2** (futuro, cuando se conecte el checkout web Wompi): reserva web al crear + `reservaExpira` + reaper (Cloud Scheduler) + webhook Wompi→`confirmarPago` + `forcePosOverride` con candado de pago. Diseño → `…modelo-inventario-multitipo-design.md §11.4/§12.2`. | 🔲 | checkout web Wompi |
+| TODO-42 | **Wompi F2 (cobro web)** — 2a CONSTRUIDA+DESPLEGADA en sandbox ✅ (backend P1-P5 + reglas + front tras flag; 54 tests; deploy+verif. live). `iniciarPagoWeb`+webhook+reaper vivos. **Falta GATE LIVE** (tarjeta de prueba) + 2c (legal+llaves prod+App Check). `forcePosOverride` D-W6 ELIMINADO (consejo). SSoT → spec `2026-06-28-wompi-checkout-web-design`. | 🟢 | gate live |
 | TODO-47 | **Verdad de marca (riesgo SIC)** — confirmar con Kary qué es REAL y retirar lo no comprobable: equipo, certificaciones, cifras/año, financiación, envíos, horario único 8-7. Detalle → §133.2(A) · `[[feedback_no_demo_en_index]]` | 🔲 | Kary |
 | TODO-48 | **Reseñas reales** — conectar `reviews` (aprobadas) → Nosotros + gestión admin (las falsas ya se quitaron; 1 huérfana de prueba en `reviews`). | 🔲 | feature |
 | TODO-49 | **Legal e-commerce** — consentimiento habeas data en forms + verificar privacidad/terminos (retracto). Skill `legal-colombia`. Prereq Wompi. | 🔲 | pre-Wompi |
 | TODO-50 | **Catálogo de lujo** — imagen real (no certificado) + filtros gema/tipo + taxonomía canónica + badges por gema. Detalle → §133.2(B/C). | 🔲 | tras TODO-44 |
-> ✅ **Cerrados recientes**: **TODO-55 galería premium (§143)** (flechas sutiles + visor de zoom; verif. live Chrome cierra §141/§142) · **TODO-51 origen honesto (§136)** · **TODO-53/54 copy+origen (§136)** · **TODO-52 (§135)** · **TODO-44 (§134)** · TODO-45/46 (§133) · TODO-40+32 piezas (§131/§132). Histórico → ADRs §88-§143 + `00`/`99`. Pend operativo Daniel: precios + imágenes IA.
+> ✅ **Cerrados recientes**: TODO-55/51/52/53/54/44/45/46 · TODO-40+32 piezas (§131-§143). Histórico → ADRs + `00`/`99`. Pend operativo Daniel: precios + imágenes IA.
 
 ---
 
@@ -57,5 +57,5 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier C pen
 > Podada (GC) 2026-06-27. Histórico → ADR §37-§130 + bóveda. Lecciones → `30`/`31`/`32`.
 >
 > **§143-§146 (2026-06-28):** visor de zoom ficha (lightbox joya=acercar/margen=cerrar/pinch/pan). SW v52. → ADRs §143-§146.
-> **Sesión Wompi F2 (2026-06-28):** diseño W-11 cerrado (comité×5+consejo, todo vs código) + build 2a paso 1 (candado compartido, POS 19/19). Lección: el consejo externo cazó un punto ciego del comité (reaper diferido = stock secuestrado). → spec wompi-checkout-web-design.
+> **Sesión Wompi F2 (2026-06-28):** de cero a **2a DESPLEGADA en sandbox**: diseño W-11 (comité×5+consejo) → backend P1-P5 (54t)+reglas(214)+front(flag off) → deploy prod-Firebase→Wompi sandbox + secretos (Daniel) + webhook URL → verif. live (401/404). Falta gate live. Lección: el consejo externo cazó un punto ciego del comité (reaper diferido = pieza única secuestrada). → spec wompi-checkout-web-design.
 > **🚦 Reglas vivas**: `arquitecto-software` SIEMPRE · Bersaglio = 100% COP (§127) · NO inventado/no-verificable (`[[feedback_no_demo_en_index]]`) · la voz solo se presta a lo verificable · pruebas en vivo SOLO al final (§130.4) · W-11/mockup en decisión-diseño · `[[feedback_workflows_acotados]]` · `[[feedback_reintentar_agentes_no_saltar_flujo]]`. Cola: TODO-47..51 · F2 Wompi · TODO-37/39/33/35.

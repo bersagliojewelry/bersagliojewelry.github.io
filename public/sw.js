@@ -12,9 +12,10 @@
 // v53 = UX de pieza VENDIDA/agotada en el cliente vivo (§148, TODO-56): la ficha muestra sello
 // "Vendida" + CTA asesor (sin precio/carrito), la grilla oculta las vendidas; "Por encargo" para
 // refabricable/encargo. (v52 = modelo de toque del visor §146; v51 = §145; v50 = §144; v49 = §143.)
-// v55 = §156 rediseño de la primera cara: nueva foto-héroe (hero-*.avif/webp) + hero limpio (texto a
-// la izquierda en oscuro sobre la foto CLARA, 2 CTAs) → cambia la imagen LCP precacheada del shell.
-const CACHE_NAME    = 'bersaglio-v55';
+// v55/v56 = §156 rediseño de la primera cara: foto-héroe (hero-*.avif/webp) + hero limpio (texto a la
+// izquierda en oscuro sobre la foto CLARA, 2 CTAs). v56: foto re-optimizada a MAYOR calidad + ancho 2200
+// (arregla borroso por upscaling) + object-position arriba (no cortar la cabeza) + locator/firma restaurados.
+const CACHE_NAME    = 'bersaglio-v56';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

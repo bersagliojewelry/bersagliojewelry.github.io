@@ -22,8 +22,8 @@ export function heroInner(c) {
     const heroImg = c.bgImage
         ? `<img src="${escape(safeUrl(c.bgImage))}" alt="" fetchpriority="high" decoding="async" class="home-hero-img home-hero-img-fallback" style="${lqipImgStyle(c.bgImageLqip)}">`
         : `<picture class="home-hero-img" data-parallax-img>
-                            <source type="image/avif" srcset="/img/hero-800.avif 800w, /img/hero-1200.avif 1200w, /img/hero-1600.avif 1600w" sizes="100vw">
-                            <source type="image/webp" srcset="/img/hero-800.webp 800w, /img/hero-1200.webp 1200w, /img/hero-1600.webp 1600w" sizes="100vw">
+                            <source type="image/avif" srcset="/img/hero-800.avif 800w, /img/hero-1200.avif 1200w, /img/hero-1600.avif 1600w, /img/hero-2200.avif 2200w" sizes="100vw">
+                            <source type="image/webp" srcset="/img/hero-800.webp 800w, /img/hero-1200.webp 1200w, /img/hero-1600.webp 1600w, /img/hero-2200.webp 2200w" sizes="100vw">
                             <img src="/img/hero-1200.webp" alt="" fetchpriority="high" decoding="async" class="home-hero-img-fallback">
                         </picture>`;
     return html`

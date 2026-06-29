@@ -14,6 +14,17 @@
         var m = location.pathname.match(/^\/pieza\/(.+?)\.html?$/i);
         if (m && m[1]) {
             location.replace('/pieza.html?p=' + encodeURIComponent(decodeURIComponent(m[1])));
+            return;
+        }
+        /* Link compartible /p/<code> (TODO-58 slice 2): el SSG hornea /p/<code>.html (stub con OG
+           que redirige a la pieza). Si Pages no sirvió la versión sin extensión, reintenta con
+           .html; si el stub tampoco existe (código inexistente/no horneado aún), recupera al
+           catálogo con el código en el buscador (filtra en vivo desde catalogo.json). Sin bucle:
+           el reintento .html cae a la rama de catálogo, no de vuelta a /p/. */
+        var pm = location.pathname.match(/^\/p\/([^\/]+?)(\.html?)?$/i);
+        if (pm && pm[1]) {
+            var code = encodeURIComponent(decodeURIComponent(pm[1]));
+            location.replace(pm[2] ? ('/colecciones.html?q=' + code) : ('/p/' + code + '.html'));
         }
     })();
     </script>

@@ -11,8 +11,10 @@
  */
 
 import { data } from '../core/data.js';
+import { wireBuscadorCodigo } from '../core/buscador-codigo.js';
 import { renderHero, refreshHero } from '../home/hero.js';
 import { renderMarquee } from '../home/marquee.js';
+import { renderCodigo } from '../home/codigo.js';
 import { renderCategories, refreshCategories } from '../home/categories.js';
 import { renderFeatured, refreshFeatured } from '../home/featured.js';
 import { renderEditorial, refreshEditorial } from '../home/editorial.js';
@@ -27,6 +29,7 @@ function renderAll() {
     return [
         renderHero(),
         renderMarquee(),
+        renderCodigo(),
         renderCategories(),
         renderFeatured(),
         renderEditorial(),
@@ -65,6 +68,10 @@ export async function init() {
         initJournalNewsletter();
         initFilms();
         initSocial();
+        // Buscador por código (TODO-58 slice 3): delegación sobre #main-content. stubFallback=true →
+        // si el cliente teclea antes de cargar el catálogo, cae al stub /p/<code> (slice 2) en vez de
+        // un "no existe" falso.
+        wireBuscadorCodigo(main, { stubFallback: true });
     });
 
     // Real-time refresh of dynamic sections only (avoids hero re-render)

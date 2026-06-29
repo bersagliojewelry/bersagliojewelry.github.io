@@ -66,7 +66,28 @@ DISEÑO cerrado (arquitecto + gate Daniel ×2 respuestas). Implementación por s
   debounce 160ms re-pinta solo la grilla; deep-link `?q=`; Enter→si hay 1 resultado va a la pieza; estado-cero
   con CTA WhatsApp). El navigate-by-code (`wireBuscadorCodigo`/`resolverCodigo`) queda para el home/link (slices
   2-3, Vite lo tree-shakea mientras) o se retira. Pend TODO-60: incorporar lo bueno del index de Altorra Cars (ver repo).
-- **(2) link `/p/<code>` (SSG stubs OG) + (3) acceso en INICIO + (4) `Ref.` en ficha + (5) 404 polish → PEND.**
+- **(4) `Ref. <code>` en la FICHA — HECHO ✅** (2026-06-29): etiqueta sobria "Referencia: <código>" en
+  el template SSG + cliente `pieza.js` (el cliente confirma la pieza y obtiene el código para referenciar).
+- **(2) link compartible `/p/<code>` (SSG stubs OG) — HECHO ✅** (2026-06-29): el SSG hornea
+  `dist/p/<code>.html` (uno por pieza con `code`) = stub con OG/title/imagen REALES de la pieza (preview
+  social) + `<link canonical>` al horneado + `robots noindex,follow` + redirect instantáneo (meta refresh +
+  `location.replace`, root-relative). Helpers puros `safeCodeForFile` (anti path-traversal: solo
+  `[A-Za-z0-9_-]`) + `generateStub` + `bakeStubError`; código duplicado→warn+skip (1ª gana), no apto→skip.
+  `404.html` rutea `/p/<code>` (sin-ext→`.html`; inexistente→`/colecciones.html?q=<code>`, deep-link vivo).
+  Verif: `SSG_SELFTEST` (stub+safeCode) + build+generate (32 stubs) + **redirect probado en navegador con
+  `vite preview` sobre `dist/`** (`/p/0581.html`→`/pieza/topos-zafiro-natural-0581.html`, title correcto).
+  Sin cache bump (páginas nuevas). Commit `feat(web) … slice 2`.
+- **(3) acceso en el INICIO — HECHO ✅** (2026-06-29): monta el componente compartido
+  `renderBuscadorCodigo('home')` en una banda glass discreta tras el marquee (sección nueva
+  `js/home/codigo.js`; orden hero→marquee→codigo→cats); wire con `stubFallback:true` → si los datos
+  aún no cargan, cae al stub `/p/<code>` (slice 2). Estilos base `.bc*` MOVIDOS `catalogo.css`→
+  `components.css` (carga global): el buscador es componente COMPARTIDO → antes salía sin estilo fuera
+  del catálogo (bug latente corregido, DRY/L-03); variante home en `home.css` (`.bc-home`/`.home-codigo`).
+  Verif: build + test:codigo 11/11 + home pinta en orden con copy/placeholder OK + submit intercepta +
+  recuperación WhatsApp (probado en navegador). Sin cache bump. **Causa raíz capturada → [[L-05]]**: el
+  `rAF` (donde vive el wire, como los `init*` del home) NO dispara en preview oculto → se probó con wire
+  manual; en navegador visible (prod) sí. Commit `feat(web) … slice 3`.
+- **(5) 404 polish (rediseño de la página de error) → PEND.**
 → ADR al cerrar TODO-58.
 
 ## 8. Buscador inteligente — análisis de Altorra Cars (TODO-60) + estado

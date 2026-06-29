@@ -1451,6 +1451,26 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 .home-cta-actions .btn-aqua { padding: 16px 30px; }
 
 /* ═══════════════════════════════════════════════════════════════════
+   BUSCADOR POR CÓDIGO — variante HOME (TODO-58 slice 3)
+   Banda discreta tras el marquee: glass centrado y angosto, no compite con el hero.
+   Estilos base `.bc*` → components.css (componente compartido).
+   ═══════════════════════════════════════════════════════════════════ */
+.home-codigo { padding: 12px 0 6px; }
+.home-codigo .container { display: flex; justify-content: center; }
+.bc-home {
+    margin: 0;
+    width: 100%;
+    max-width: 540px;
+    text-align: center;
+    align-items: center;
+}
+.bc-home .bc-lead { letter-spacing: 0.08em; }
+.bc-home .bc-row { width: 100%; }
+@media (max-width: 680px) {
+    .home-codigo { padding: 8px 0 4px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
    PERFORMANCE & A11Y — touch + reduced-motion overrides
    ═══════════════════════════════════════════════════════════════════ */
 @media (prefers-reduced-motion: reduce) {

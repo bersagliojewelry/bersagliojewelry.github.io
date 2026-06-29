@@ -11,8 +11,7 @@
 > 🎉 **CRM + Fase M EN PROD** (§47-§82). ⚙️ **OPUS 4.8 interino** (marcar `[OPUS-4.8]` · `feedback_opus_interino`).
 >
 > **🔨 WOMPI F2 — la web cobra sola (Decisión Fuerte·DINERO·TODO-42).** SSoT diseño+veredicto → `…/specs/2026-06-28-wompi-checkout-web-design.md` (§11.4=plan 2a; crudo=`…-comite-wompi-checkout-CRUDO.md`). Alcance: "Comprar ahora" 1 pieza · sandbox · solo TARJETA. `[[project_comercio_pagos]]`
-> · **2a desplegada en sandbox ✅**: CFs (iniciarPagoWeb+webhook+reaper) vivas prod→Wompi sandbox; secretos en Secret Manager; flag off; webhook URL configurada. Detalle → spec / ADRs prev.
-> · **GATE LIVE PASADO ✅ (§147, 2026-06-28)** — e2e real sandbox: Widget Wompi→`4242` **APPROVED**→pedido **`pagado`** por webhook (+idempotencia+reaper+by-ref). Bug `wompiEligible` arreglado (`available`→`cantidad`). Wompi exige redirect HTTPS (gate=preview channel, no localhost). Prod restaurado. **2c**=legal(TODO-49)+llaves prod(Kary)+App Check+quitar precios temp+flag. Detalle → §147/L-54. **UX pieza vendida/agotada → TODO-56 §148 ✅ (SW v53).**
+> · **GATE LIVE PASADO ✅ (§147)**: e2e real sandbox (Widget→`4242`→pedido `pagado` por webhook); CFs vivas prod→Wompi sandbox, flag off, prod restaurado. **2c pend** = legal(TODO-49)+llaves prod(Kary)+App Check+quitar precios temp+flag. UX vendida/agotada → TODO-56 §148 ✅. Detalle → §147/L-54.
 > _MCP Firebase=escritura prod · merge a main=Claude · Gemini asesora/Claude implementa (`[[feedback_consejo_externo_readonly]]`) · pruebas vivo DIFERIDAS (§130.4). Cola: TODO-47/49/41/39/33/35; operativo Daniel: precios+fotos._
 
 ---
@@ -42,7 +41,8 @@
 | TODO-47 | **Verdad de marca (riesgo SIC)** — confirmar con Kary qué es REAL y retirar lo no comprobable: equipo, certificaciones, cifras/año, financiación, envíos, horario único 8-7. Detalle → §133.2(A) · `[[feedback_no_demo_en_index]]` | 🔲 | Kary |
 | TODO-48 | **Reseñas reales** — conectar `reviews` (aprobadas) → Nosotros + gestión admin (las falsas ya se quitaron; 1 huérfana de prueba en `reviews`). | 🔲 | feature |
 | TODO-49 | **Legal e-commerce** — consentimiento habeas data en forms + verificar privacidad/terminos (retracto). Skill `legal-colombia`. Prereq Wompi. | 🔲 | pre-Wompi |
-| TODO-50 | **Catálogo de lujo** — imagen real (no certificado) + filtros gema/tipo + taxonomía canónica + badges por gema. Detalle → §133.2(B/C). | 🔲 | tras TODO-44 |
+| TODO-50 | **Catálogo de lujo** — imagen real (no certificado) + filtros gema/tipo + taxonomía canónica + badges por gema. Detalle → §133.2(B/C). (Taxonomía de gema = TODO-57.) | 🔲 | tras TODO-44 |
+| TODO-57 | **Modelo de datos de la GEMA** (Decisión Fuerte CERRADA §150). **Fundación hecha** (`gem-taxonomy.js`+`gem-badge.js` canónico+fallback, test 7/7). **Pend impl**: seed `gemTaxonomy` + backfill 32 (MCP, dry-run limpio) + form admin (select gema+acentos+rename stone+CRUD gema) + rules/índice + retirar fallback+cache bump. SSoT → spec `2026-06-29-modelo-gema-design`. | 🟡 | seed+migración (auth) + form |
 > ✅ **Cerrados recientes**: **TODO-56 (§148, UX pieza vendida/agotada — sello+CTA asesor, grilla oculta vendidas, `js/core/stock.js`)** · TODO-55/51/52/53/54/44/45/46 · TODO-40+32 piezas. Histórico → ADRs + `00`/`99`. Pend operativo Daniel: precios + imágenes IA.
 
 ---
@@ -56,7 +56,6 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier C pen
 
 > Podada (GC) 2026-06-27. Histórico → ADR §37-§130 + bóveda. Lecciones → `30`/`31`/`32`.
 >
-> **§143-§146 (2026-06-28):** visor de zoom ficha (lightbox joya=acercar/margen=cerrar/pinch/pan). SW v52. → ADRs §143-§146.
-> **Wompi F2 (2026-06-28, §147):** 2a (diseño W-11 comité×5+consejo → backend P1-P5+reglas+front, deploy sandbox; el consejo cazó el reaper-obligatorio) → **GATE LIVE PASADO** (Playwright→Widget→`4242` APPROVED→`pagado` por webhook+idempotencia+reaper+by-ref). Cazó bug `wompiEligible` (`available`→`cantidad`) + "Wompi exige redirect HTTPS". Prod restaurado; abre TODO-56. → ADR §147, L-54.
-> **Web UX (2026-06-29, §148-§149):** TODO-56 (ficha vendida + grilla oculta vendidas, helper `js/core/stock.js`) → Daniel pidió más diseño: aviso vendida con presencia (banda+sello), badge certificado = chulo zafiro (fuera el diamante), cert text "TrueLab Colombia" (sin reporte), badge index = gema por color (`gemBadge`, fuera "Destacada"). Verif. live. SW v53, en `Desarrollo`. → §148-§149.
+> **§143-§146 (2026-06-28):** visor de zoom ficha. SW v52. → ADRs.
+> **Sesión 2026-06-28/29 (§147-§150, en `Desarrollo` SIN desplegar; SW v53):** Wompi F2 **GATE LIVE PASADO** (§147: Widget→`4242`→`pagado` por webhook; bug `wompiEligible` `available`→`cantidad`; Wompi exige redirect HTTPS; L-54) · UX pieza **vendida/agotada** (§148, TODO-56) + refinamientos diseño (§149: aviso vendida con presencia, badge cert chulo zafiro, cert sin reporte, badge gema por color) · **modelo de gema** Decisión Fuerte (§150, comité ×5 unánime → `gems[]`/`gemPrincipal`/`gemTaxonomy`; fundación hecha, TODO-57 pend impl). Verif. live (Playwright). → ADRs §147-§150 + specs.
 > **🚦 Reglas vivas**: `arquitecto-software` SIEMPRE · Bersaglio = 100% COP (§127) · NO inventado/no-verificable (`[[feedback_no_demo_en_index]]`) · la voz solo se presta a lo verificable · pruebas en vivo SOLO al final (§130.4) · W-11/mockup en decisión-diseño · `[[feedback_workflows_acotados]]` · `[[feedback_reintentar_agentes_no_saltar_flujo]]`. Cola: TODO-47..51 · F2 Wompi · TODO-37/39/33/35.

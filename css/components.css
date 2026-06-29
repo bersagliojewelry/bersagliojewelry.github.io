@@ -941,34 +941,12 @@ a:focus-visible {
 .bj-cart-empty-illus { width: 140px; height: auto; margin: 0 auto 6px; filter: drop-shadow(0 12px 28px oklch(50% 0.15 155 / 0.35)); }
 
 /* ═══════════════════════════════════════════════════════════════════
-   BUSCADOR POR CÓDIGO (TODO-58) — componente COMPARTIDO (catálogo + home).
-   Base aquí (components.css = carga global); variante home en home.css (.bc-home).
-   Movido desde catalogo.css en slice 3 (el componente se usa fuera del catálogo).
+   CAMPOS DE BÚSQUEDA — base `.bc-input`/`.bc-msg`/`.bc-recientes`/`.bc-chip`,
+   reusados por el buscador COMPACTO del catálogo (`css/catalogo.css .cat-search`).
+   La "banda" `.bc`/`.bc-lead`/`.bc-row`/`.bc-ico`/`.bc-btn` + `js/core/buscador-codigo.js`
+   se RETIRARON (§156, anti-codigo-muerto): el buscador quedó unificado en el header (§155)
+   y compacto en colecciones (§156 C) → el componente de banda quedó huérfano.
    ═══════════════════════════════════════════════════════════════════ */
-.bc {
-    margin: 0 0 26px;
-    padding: 14px 16px;
-    border-radius: 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 9px;
-}
-.bc-lead {
-    font-size: 12px;
-    letter-spacing: 0.06em;
-    color: var(--bj-ink-mute);
-}
-.bc-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-.bc-ico {
-    width: 18px;
-    height: 18px;
-    color: oklch(62% 0.18 155);
-    flex-shrink: 0;
-}
 .bc-input {
     flex: 1 1 auto;
     min-width: 0;
@@ -988,24 +966,6 @@ a:focus-visible {
     border-color: oklch(62% 0.18 155 / 0.5);
     box-shadow: 0 0 0 3px oklch(62% 0.18 155 / 0.18);
 }
-.bc-btn {
-    flex-shrink: 0;
-    padding: 11px 22px;
-    font-size: 13px;
-    font-weight: 600;
-    border: none;
-    border-radius: 999px;
-    color: #fff;
-    background: linear-gradient(180deg, oklch(62% 0.18 155), oklch(42% 0.14 155));
-    box-shadow:
-        0 1px 0 oklch(100% 0 0 / 0.5) inset,
-        0 4px 12px -4px oklch(42% 0.14 155 / 0.45);
-    cursor: pointer;
-    transition: filter 0.2s, transform 0.2s;
-    white-space: nowrap;
-}
-.bc-btn:hover { filter: brightness(1.06); }
-.bc-btn:active { transform: translateY(1px); }
 .bc-msg {
     margin: 0;
     font-size: 13px;
@@ -1043,7 +1003,5 @@ a:focus-visible {
     border-color: oklch(62% 0.18 155 / 0.4);
 }
 @media (max-width: 680px) {
-    .bc-row { flex-wrap: wrap; }
-    .bc-input,
-    .bc-btn { flex: 1 1 100%; }
+    .bc-input { flex: 1 1 100%; }
 }

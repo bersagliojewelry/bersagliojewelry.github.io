@@ -87,8 +87,11 @@ DISEÑO cerrado (arquitecto + gate Daniel ×2 respuestas). Implementación por s
   recuperación WhatsApp (probado en navegador). Sin cache bump. **Causa raíz capturada → [[L-05]]**: el
   `rAF` (donde vive el wire, como los `init*` del home) NO dispara en preview oculto → se probó con wire
   manual; en navegador visible (prod) sí. Commit `feat(web) … slice 3`.
-- **(5) 404 polish (rediseño de la página de error) → PEND.**
-→ ADR al cerrar TODO-58.
+- **(5) 404 — recuperación por código — HECHO ✅** (2026-06-29): el 404 ofrece un mini-buscador (form
+  nativo, sin JS, estética oscura existente) → GET a `/colecciones.html?q=<code>` (el catálogo filtra en
+  vivo). Cierra el callejón del slice 2 (código sin stub / `/p/<code>` inexistente). Verif: estructura del
+  form + submit→`/colecciones.html?q=0953` en navegador. Sin cache bump (404 estático).
+→ **TODO-58 CERRADO → ADR §154** (`99`). TODO-60 (buscador inteligente: autocomplete/highlight/teclado/fuzzy) sigue abierto.
 
 ## 8. Buscador inteligente — análisis de Altorra Cars (TODO-60) + estado
 

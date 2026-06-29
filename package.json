@@ -28,6 +28,7 @@
     "test:generador": "node --test tests/crm-acuerdos.test.mjs",
     "test:paridad": "node --test tests/aging-paridad.test.mjs",
     "test:leads": "node --test tests/lead-format.test.mjs",
+    "test:wompi": "node --test functions/wompi.test.mjs",
     "brain:diff": "node scripts/brain-diff.mjs"
   },
   "devDependencies": {

@@ -7,7 +7,8 @@
  * pieza (runTransaction → imposible doble venta), total RECALCULADO server-side (no se confía en
  * el cliente), snapshot INMUTABLE, correlativo atómico, e IDEMPOTENTE por pedidoId.
  */
-const { FieldValue } = require('firebase-admin/firestore');
+const { FieldValue, Timestamp } = require('firebase-admin/firestore');
+const { montoEnCentavos, firmaIntegridad } = require('./wompi-core');
 
 const MEDIOS  = ['efectivo', 'transferencia', 'wompi', 'addi'];
 const CANALES = ['pos', 'web', 'whatsapp'];
@@ -127,6 +128,94 @@ async function crearPedidoCore(db, input = {}) {
 
         return { pedidoId, numero, total, yaExistia: false };
     });
+}
+
+// ── Wompi F2 (TODO-42): reserva web → pedido pago_pendiente + firma de integridad ─────────────
+const TOPE_TX_COP = 2500000;            // tope Persona Natural por transacción (server-side, §11)
+const RESERVA_TTL_MS = 15 * 60 * 1000;  // 15 min (MVP tarjeta; PSE/Nequi en 2b ata al expiry de Wompi)
+
+// Whitelist de envío (el cliente público no graba datos arbitrarios). null si viene vacío.
+function sanitizeShipping(s) {
+    if (!s || typeof s !== 'object') return null;
+    const str = k => (typeof s[k] === 'string' ? s[k].trim().slice(0, 200) : '');
+    const out = {
+        firstName: str('firstName'), lastName: str('lastName'), email: str('email'),
+        phone: str('phone'), address: str('address'), city: str('city'),
+        country: str('country') || 'Colombia', zip: str('zip'),
+    };
+    return Object.values(out).some(v => v && v !== 'Colombia') ? out : null;
+}
+
+/**
+ * iniciarPagoWebCore (Wompi F2) — el cliente PÚBLICO (sin login) inicia el cobro de UNA pieza:
+ * reserva atómica (decrementa `cantidad` + ledger 'reserva-web'), crea pedido `pago_pendiente`
+ * (canal:web/medio:wompi) con `reservaExpira` (la VERDAD de la reserva vive en el PEDIDO → la lee
+ * el reaper; lote-safe), total RECALCULADO server-side y firma de integridad server-side.
+ * Idempotente por pedidoId. Elegibilidad (spec §6): pública + precio fijo>0 + stock físico + ≤$2.5M.
+ * @param opts { integritySecret, ttlMs?, nowMs? } (secreto e inyecciones para test determinista)
+ */
+async function iniciarPagoWebCore(db, input = {}, opts = {}) {
+    const pedidoId = String(input.pedidoId || '').trim();
+    const pieceId  = String(input.pieceId  || '').trim();
+    if (!pedidoId || !pieceId) throw new PedidoError('invalid-argument', 'pedidoId y pieceId son obligatorios.');
+    const integritySecret = opts.integritySecret;
+    if (!integritySecret) throw new PedidoError('failed-precondition', 'Falta el secreto de integridad de Wompi.');
+    const ttlMs = Number.isFinite(opts.ttlMs) ? opts.ttlMs : RESERVA_TTL_MS;
+    const nowMs = Number.isFinite(opts.nowMs) ? opts.nowMs : Date.now();
+    const shipping = sanitizeShipping(input.shipping);
+
+    const result = await db.runTransaction(async (tx) => {
+        const pedidoRef = db.doc(`pedidos/${pedidoId}`);
+        const existing = await tx.get(pedidoRef);
+        if (existing.exists) {                          // IDEMPOTENTE: reintento → mismo pedido
+            const e = existing.data();
+            return { pedidoId, numero: e.numero, total: e.total, estado: e.estado, yaExistia: true };
+        }
+        const pieceRef = db.doc(`pieces/${pieceId}`);
+        const pieceSnap = await tx.get(pieceRef);
+        if (!pieceSnap.exists) throw new PedidoError('not-found', 'La pieza no existe.');
+        const piece = pieceSnap.data();
+        // Elegibilidad web. Privada = nunca en línea (se factura por mostrador/CRM, D5).
+        if (piece.visibilidad === 'privada') throw new PedidoError('failed-precondition', 'Esta pieza no está disponible para compra en línea.');
+        const { stockType, cantidadActual, consumeUnidad } = evaluarStock(piece);   // throw si agotada
+        if (!consumeUnidad) throw new PedidoError('failed-precondition', 'Esta pieza se cotiza con un asesor (no es compra inmediata).');
+        const precioFijo = typeof piece.price === 'number' && isFinite(piece.price) && piece.price > 0;
+        if (!precioFijo) throw new PedidoError('failed-precondition', 'Esta pieza se cotiza con un asesor (precio bajo consulta).');
+        const total = entero(piece.price);
+        if (total > TOPE_TX_COP) throw new PedidoError('failed-precondition', `El pago en línea admite hasta $${TOPE_TX_COP.toLocaleString('es-CO')}. Coordina con un asesor.`);
+
+        const contRef = db.doc('contadores/pedidos');
+        const contSnap = await tx.get(contRef);
+        const numero = ((contSnap.exists && Number(contSnap.data().valor)) || 0) + 1;
+        const reservaExpira = Timestamp.fromMillis(nowMs + ttlMs);
+
+        tx.set(pedidoRef, {
+            numero, pieceId,
+            pieceSlug: piece.slug || pieceId,
+            pieceName: piece.name || 'Pieza',
+            canal: 'web', medio: 'wompi',
+            estado: 'pago_pendiente',
+            total,
+            desglose: { tipo: 'precio_fijo', total },   // SNAPSHOT inmutable (el webhook valida vs este total)
+            consumioStock: true,
+            reservaExpira,                              // verdad de la reserva (el reaper la lee)
+            shipping: shipping || null,
+            autor: null,                               // cliente público sin login
+            createdAt: FieldValue.serverTimestamp(),
+        });
+        // Reserva: decrementa cantidad + estado derivado + reservaId/reservaExpira (C5) + ledger.
+        aplicarConsumo(tx, pieceRef, {
+            pedidoId, autor: null, motivo: 'reserva-web', stockType, cantidadActual,
+            reserva: { reservaId: pedidoId, reservaExpira },
+        });
+        tx.set(contRef, { valor: numero });
+        return { pedidoId, numero, total, estado: 'pago_pendiente', yaExistia: false };
+    });
+
+    // Firma de integridad (datos ya fijos; fuera de la tx). reference = pedidoId.
+    const amountInCents = montoEnCentavos(result.total);
+    const signature = firmaIntegridad({ reference: pedidoId, amountInCents, currency: 'COP', integritySecret });
+    return { ...result, reference: pedidoId, amountInCents, currency: 'COP', signature };
 }
 
 /**
@@ -265,6 +354,7 @@ async function cierreCajaCore(db, input = {}) {
 
 module.exports = {
     crearPedidoCore, confirmarPagoCore, anularPedidoCore, cierreCajaCore,
+    iniciarPagoWebCore,                          // Wompi F2: reserva web → pago_pendiente + firma
     entero, calcOro, PedidoError,
     derivarEstado, normStockType, STOCK_TYPES,   // modelo v3 (reusado por inventario-core.js)
     evaluarStock, aplicarConsumo,                // candado de stock compartido (reusado por iniciarPagoWeb, F2)

@@ -134,10 +134,11 @@ async function loadShell() {
         import('../components/email-modal.js').then(m => m.initEmailModal?.()),
         import('../components/search-overlay.js').then(m => m.initSearchOverlay?.()),
     ];
-    // La isla "Atajos" (quick-dock) SOLO en el index (Daniel §138): en el resto de páginas no se
-    // monta para no saturar. El index es data-page="home" (o sin atributo → fallback 'home').
+    // Acceso flotante "Asesoría" SOLO en el index (Daniel §138): persiste en el scroll de la home.
+    // §156: reemplazó al quick-dock "isla de agua" (veredicto del flujo W-11). El index es
+    // data-page="home" (o sin atributo → fallback 'home').
     if ((document.body.dataset.page || 'home') === 'home') {
-        tasks.push(import('../components/quick-dock.js').then(m => m.mountQuickDock?.()));
+        tasks.push(import('../components/asesoria-fab.js').then(m => m.mountAsesoriaFab?.()));
     }
     await Promise.allSettled(tasks);
 }

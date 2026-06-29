@@ -9,10 +9,10 @@
  * Seguridad: reglas `pedidos` create:false + `pieces.estado/reserva*` cliente-DENY → SOLO esta CF
  * escribe el estado de venta (nadie des-vende ni cambia precios por fuera).
  */
-const { onCall, HttpsError } = require('firebase-functions/v2/https');
+const { onCall, onRequest, HttpsError } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
 const { getFirestore } = require('firebase-admin/firestore');
-const { crearPedidoCore, confirmarPagoCore, anularPedidoCore, cierreCajaCore, iniciarPagoWebCore, PedidoError } = require('./pedidos-core');
+const { crearPedidoCore, confirmarPagoCore, anularPedidoCore, cierreCajaCore, iniciarPagoWebCore, confirmarPagoWompiCore, PedidoError } = require('./pedidos-core');
 
 const VENTAS = ['owner', 'admin', 'catalogo'];
 
@@ -20,6 +20,11 @@ const VENTAS = ['owner', 'admin', 'catalogo'];
 //   firebase functions:secrets:set WOMPI_INTEGRITY_SECRET   (test en sandbox · prod al lanzar)
 // La llave PÚBLICA (pub_test_/pub_prod_) va por env normal WOMPI_PUBLIC_KEY (es pública por diseño).
 const WOMPI_INTEGRITY_SECRET = defineSecret('WOMPI_INTEGRITY_SECRET');
+// Secreto de EVENTOS (valida la firma del webhook) + llave PRIVADA (re-consulta la API = verdad).
+const WOMPI_EVENTS_SECRET = defineSecret('WOMPI_EVENTS_SECRET');
+const WOMPI_PRIVATE_KEY = defineSecret('WOMPI_PRIVATE_KEY');
+// Base de la API por ENTORNO (NO por flag): sandbox para pruebas, production al lanzar (paso 2c).
+const WOMPI_API_BASE = process.env.WOMPI_API_BASE || 'https://sandbox.wompi.co/v1';
 
 async function rolDeVentas(db, auth) {
     if (!auth) throw new HttpsError('unauthenticated', 'Debes iniciar sesión.');
@@ -100,4 +105,31 @@ const iniciarPagoWeb = onCall({ region: 'us-central1', invoker: 'public', secret
     }
 });
 
-module.exports = { crearPedido, confirmarPago, anularPedido, cierreCaja, iniciarPagoWeb };
+// confirmarPagoWompi (Wompi F2): WEBHOOK HTTP (server-to-server, Wompi → CF). Público por diseño —
+// la "auth" es la FIRMA del evento (no IAM). Solo POST. Re-consulta la API de Wompi (verdad) con la
+// llave privada. Responde 200 si la firma es válida (aunque ignore el evento) para no provocar
+// tormenta de reintentos; 401 firma inválida; 5xx transitorio → Wompi reintenta. ⚠️ rate-limit/IP-allowlist = 2c.
+const confirmarPagoWompi = onRequest(
+    { region: 'us-central1', secrets: [WOMPI_EVENTS_SECRET, WOMPI_PRIVATE_KEY] },
+    async (req, res) => {
+        if (req.method !== 'POST') { res.status(405).send('Method Not Allowed'); return; }
+        const db = getFirestore();
+        const fetchTransaction = async (txId) => {
+            const r = await fetch(`${WOMPI_API_BASE}/transactions/${encodeURIComponent(txId)}`, {
+                headers: { Authorization: `Bearer ${WOMPI_PRIVATE_KEY.value()}` },
+            });
+            if (!r.ok) return null;                         // 4xx/5xx → null → 502 → Wompi reintenta
+            const d = (await r.json())?.data;
+            return d ? { id: d.id, status: d.status, amount_in_cents: d.amount_in_cents, currency: d.currency, reference: d.reference } : null;
+        };
+        try {
+            const out = await confirmarPagoWompiCore(db, req.body || {}, { eventsSecret: WOMPI_EVENTS_SECRET.value(), fetchTransaction });
+            res.status(out.status || 200).json({ ok: out.ok, reason: out.reason });
+        } catch (e) {
+            console.error('[confirmarPagoWompi] error:', e);
+            res.status(500).json({ ok: false });           // transitorio → Wompi reintenta
+        }
+    },
+);
+
+module.exports = { crearPedido, confirmarPago, anularPedido, cierreCaja, iniciarPagoWeb, confirmarPagoWompi };

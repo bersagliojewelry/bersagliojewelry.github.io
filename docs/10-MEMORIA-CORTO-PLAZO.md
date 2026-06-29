@@ -56,5 +56,6 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier C pen
 
 > Podada (GC) 2026-06-27. Histórico → ADR §37-§130 + bóveda. Lecciones → `30`/`31`/`32`.
 >
+> **2026-06-29 (§156.9 retoques hero · `2049a05` DESPLEGADO):** Daniel pidió 2 cosas sobre el hero ya en prod → hecho+verificado en navegador real: (1) hero **más bajo** (banner ~599→511px: aspect 21/8 + max-height 70vh; recorta el pie, cabeza intacta); (2) **quitado el marquee** de credenciales (desencajaba de lo premium; `marquee.js` eliminado; alivia TODO-47 parcial). Sin bump. Detalle → ADR §156.9.
 > **2026-06-29 (§156 rediseño primera cara — CERRADO/TODO-61):** hero inmersivo (v56) + B tops compactos + C buscador compacto en `.cat-controls`/dedupe. Verif. navegador REAL; B/C `e093ba8` SIN bump (chunks hasheados). Detalle + causa raíz (doble-padding) → ADR §156.5. Dead code (`renderBuscadorCodigo`/banda `.bc`) → task limpieza.
 > **🚦 Reglas vivas**: arquitecto SIEMPRE · 100% COP (§127) · NO inventado (`[[feedback_no_demo_en_index]]`) · pruebas vivo solo al final (§130.4) · W-11 en decisión-diseño · `[[feedback_workflows_acotados]]`.

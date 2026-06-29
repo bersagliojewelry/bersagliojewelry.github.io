@@ -77,7 +77,17 @@ DISEÑO cerrado (arquitecto + gate Daniel ×2 respuestas). Implementación por s
   Verif: `SSG_SELFTEST` (stub+safeCode) + build+generate (32 stubs) + **redirect probado en navegador con
   `vite preview` sobre `dist/`** (`/p/0581.html`→`/pieza/topos-zafiro-natural-0581.html`, title correcto).
   Sin cache bump (páginas nuevas). Commit `feat(web) … slice 2`.
-- **(3) acceso en INICIO + (5) 404 polish (rediseño) → PEND.**
+- **(3) acceso en el INICIO — HECHO ✅** (2026-06-29): monta el componente compartido
+  `renderBuscadorCodigo('home')` en una banda glass discreta tras el marquee (sección nueva
+  `js/home/codigo.js`; orden hero→marquee→codigo→cats); wire con `stubFallback:true` → si los datos
+  aún no cargan, cae al stub `/p/<code>` (slice 2). Estilos base `.bc*` MOVIDOS `catalogo.css`→
+  `components.css` (carga global): el buscador es componente COMPARTIDO → antes salía sin estilo fuera
+  del catálogo (bug latente corregido, DRY/L-03); variante home en `home.css` (`.bc-home`/`.home-codigo`).
+  Verif: build + test:codigo 11/11 + home pinta en orden con copy/placeholder OK + submit intercepta +
+  recuperación WhatsApp (probado en navegador). Sin cache bump. **Causa raíz capturada → [[L-05]]**: el
+  `rAF` (donde vive el wire, como los `init*` del home) NO dispara en preview oculto → se probó con wire
+  manual; en navegador visible (prod) sí. Commit `feat(web) … slice 3`.
+- **(5) 404 polish (rediseño de la página de error) → PEND.**
 → ADR al cerrar TODO-58.
 
 ## 8. Buscador inteligente — análisis de Altorra Cars (TODO-60) + estado

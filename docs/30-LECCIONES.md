@@ -2,7 +2,7 @@
 
 > **Nodo neuronal: Memoria Procedimental.** Se consulta on-demand ante el **Trigger de Experiencia (`CLAUDE.md §G.2`)** ANTES de realizar refactorizaciones CSS, editar el Service Worker o depurar comportamientos de renderizado.
 >
-> **Mantenimiento (Reflejo de Frescura §G.4)**: registrar aquí cada causa raíz confirmada de un bug complejo resuelto o doctrina visual aprobada. **Tope ~350 líneas (§G.5)**. 🔗 **Sub-lóbulo hijo [`31-LECCIONES-FIRESTORE`](31-LECCIONES-FIRESTORE.md)** (Firestore/CF/reglas/backend Firebase): L-12/13/14/16/17/29/34/35/36/37/38 viven allí en DETALLE; aquí queda su **stub de 1 línea** (el kernel `brain-check.mjs` lee las definiciones `### L-NN` SOLO de `30`, L-31 → el stub-header DEBE permanecer aquí). **Nuevas lecciones de backend → a `31` + stub aquí.** 🔗 **Sub-lóbulo hijo [`32-LECCIONES-CARGA`](32-LECCIONES-CARGA.md)** (carga fluida/LQIP/View Transitions/caché SWR del sitio público): L-45/46/47/49/50/51/52/53 en DETALLE; stub de 1 línea aquí. **Nuevas lecciones de carga web → a `32` + stub aquí.**
+> **Mantenimiento (Frescura §G.4)**: registra aquí cada causa raíz de bug complejo o doctrina visual. **Tope ~350 líneas (§G.5)**. 🔗 **Hija [`31-LECCIONES-FIRESTORE`](31-LECCIONES-FIRESTORE.md)** (Firestore/CF/reglas/backend): L-12/13/14/16/17/29/34/35/36/37/38 en DETALLE allá (el kernel lee las defs `### L-NN` SOLO de `30`, L-31 → el **stub de 1 línea DEBE quedar aquí**). 🔗 **Hija [`32-LECCIONES-CARGA`](32-LECCIONES-CARGA.md)** (carga/LQIP/View Transitions/caché SWR público): L-45/46/47/49/50/51/52/53/61 en DETALLE; stub aquí. **Nuevas lecciones backend→`31`, carga→`32`, + stub aquí.**
 
 ---
 
@@ -57,6 +57,8 @@ window.scrollTo(0, scrollY);
 ### L-04: Contrato del Header Flotante
 *   El header pill flotante tiene `position: fixed; pointer-events: none` para no bloquear los clicks debajo de su área transparente lateral. El elemento interno `.header-aqua-pill` tiene `pointer-events: auto` para que el menú sí sea clickable.
 *   Si se altera esta estructura, se pueden bloquear clicks en toda la parte superior del sitio web.
+
+### L-61: Artefactos del SSG (`dist/pieza/*`, `/p/<code>.html`, `catalogo.json`) → verificar con `vite preview`, NO el dev server. → `32-LECCIONES-CARGA`
 
 ### L-05: Preview headless (Claude Preview MCP) no recalcula estilos dinámicos
 Síntoma: tras añadir clases por JS, `getComputedStyle` devuelve el valor del snapshot inicial (incluso un `style.opacity` inline lee "0"); IntersectionObserver NO dispara; `preview_screenshot` hace timeout en páginas con mucho `backdrop-filter`. Causa: el renderer del sandbox hace UN pase de estilo inicial, sin recalc/paint en vivo. **Receta**: verificar lo dinámico (reveals, hover, scroll, IO) por CÓDIGO + estructura DOM (`preview_eval` de DOM/text/estilos-de-parse), NO por screenshot ni estilos-post-mutación. Lo visual real, en `npm run dev`/deploy.

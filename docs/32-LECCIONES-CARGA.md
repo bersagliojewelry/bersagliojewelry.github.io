@@ -12,6 +12,9 @@
 
 ---
 
+### L-61: Los artefactos del SSG viven SOLO en `dist/` — verifícalos con `vite preview`, NO con el dev server
+**Disparador**: probar en navegador algo que produce el SSG. **Lección**: el SSG hornea `dist/pieza/*`, `dist/p/<code>.html` (links compartibles TODO-58), `catalogo.json`, `sitemap.xml` tras `vite build`. `npm run dev` sirve la FUENTE → ahí dan 404. Verifícalos con `vite build && npm run generate && npm run preview` (:4173 sirve `dist/`). Con [[L-05]] (el preview headless no pinta lo dinámico de Firestore → el `<title>`/markup horneado es la prueba, no el `h1` hidratado). **Stub compartible `/p/<code>`**: `noindex,follow` + `canonical` + redirect doble (meta refresh + `location.replace`) → los bots leen los `og:*` sin redirigir (preview), el humano salta; código→archivo con whitelist `[A-Za-z0-9_-]` (anti path-traversal); sin cache bump.
+
 ### L-53: Firebase Storage SIN `cacheControl` → servido `private, max-age=0` = re-fetch por visita (ADR §112)
 **Disparador**: blur-up/caché de imagen del CMS que se ve en CADA visita, no solo la 1ª. **Lección**: sin `cacheControl`, Storage sirve `private, max-age=0` → el navegador revalida siempre → nunca instantáneo de caché. Fix: `cacheControl:'public, max-age=31536000'` en la subida (`_upload`) + backfill `setMetadata` (`migrate-cache-control.mjs`, no re-subir). Seguro cachear largo: la downloadURL se versiona por TOKEN. **Mídelo** (`curl -I`), no asumas que "ya cachea". [[L-47]]/[[L-52]].
 

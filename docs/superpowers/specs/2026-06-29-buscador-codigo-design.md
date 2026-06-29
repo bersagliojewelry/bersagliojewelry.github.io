@@ -66,7 +66,18 @@ DISEÑO cerrado (arquitecto + gate Daniel ×2 respuestas). Implementación por s
   debounce 160ms re-pinta solo la grilla; deep-link `?q=`; Enter→si hay 1 resultado va a la pieza; estado-cero
   con CTA WhatsApp). El navigate-by-code (`wireBuscadorCodigo`/`resolverCodigo`) queda para el home/link (slices
   2-3, Vite lo tree-shakea mientras) o se retira. Pend TODO-60: incorporar lo bueno del index de Altorra Cars (ver repo).
-- **(2) link `/p/<code>` (SSG stubs OG) + (3) acceso en INICIO + (4) `Ref.` en ficha + (5) 404 polish → PEND.**
+- **(4) `Ref. <code>` en la FICHA — HECHO ✅** (2026-06-29): etiqueta sobria "Referencia: <código>" en
+  el template SSG + cliente `pieza.js` (el cliente confirma la pieza y obtiene el código para referenciar).
+- **(2) link compartible `/p/<code>` (SSG stubs OG) — HECHO ✅** (2026-06-29): el SSG hornea
+  `dist/p/<code>.html` (uno por pieza con `code`) = stub con OG/title/imagen REALES de la pieza (preview
+  social) + `<link canonical>` al horneado + `robots noindex,follow` + redirect instantáneo (meta refresh +
+  `location.replace`, root-relative). Helpers puros `safeCodeForFile` (anti path-traversal: solo
+  `[A-Za-z0-9_-]`) + `generateStub` + `bakeStubError`; código duplicado→warn+skip (1ª gana), no apto→skip.
+  `404.html` rutea `/p/<code>` (sin-ext→`.html`; inexistente→`/colecciones.html?q=<code>`, deep-link vivo).
+  Verif: `SSG_SELFTEST` (stub+safeCode) + build+generate (32 stubs) + **redirect probado en navegador con
+  `vite preview` sobre `dist/`** (`/p/0581.html`→`/pieza/topos-zafiro-natural-0581.html`, title correcto).
+  Sin cache bump (páginas nuevas). Commit `feat(web) … slice 2`.
+- **(3) acceso en INICIO + (5) 404 polish (rediseño) → PEND.**
 → ADR al cerrar TODO-58.
 
 ## 8. Buscador inteligente — análisis de Altorra Cars (TODO-60) + estado

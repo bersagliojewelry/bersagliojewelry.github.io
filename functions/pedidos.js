@@ -10,9 +10,10 @@
  * escribe el estado de venta (nadie des-vende ni cambia precios por fuera).
  */
 const { onCall, onRequest, HttpsError } = require('firebase-functions/v2/https');
+const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { defineSecret } = require('firebase-functions/params');
 const { getFirestore } = require('firebase-admin/firestore');
-const { crearPedidoCore, confirmarPagoCore, anularPedidoCore, cierreCajaCore, iniciarPagoWebCore, confirmarPagoWompiCore, PedidoError } = require('./pedidos-core');
+const { crearPedidoCore, confirmarPagoCore, anularPedidoCore, cierreCajaCore, iniciarPagoWebCore, confirmarPagoWompiCore, liberarReservasVencidasCore, PedidoError } = require('./pedidos-core');
 
 const VENTAS = ['owner', 'admin', 'catalogo'];
 
@@ -132,4 +133,27 @@ const confirmarPagoWompi = onRequest(
     },
 );
 
-module.exports = { crearPedido, confirmarPago, anularPedido, cierreCaja, iniciarPagoWeb, confirmarPagoWompi };
+// liberarReservasVencidas (Wompi F2): REAPER programado (Cloud Scheduler, cada 2 min). Libera
+// reservas web vencidas y NO pagadas; re-consulta Wompi por referencia ANTES de soltar (nunca a
+// ciegas). APPROVED→a_revisar · PENDING/fallo→espera · NONE→repone unidad + pedido expirado.
+const liberarReservasVencidas = onSchedule(
+    { schedule: 'every 2 minutes', region: 'us-central1', secrets: [WOMPI_PRIVATE_KEY] },
+    async () => {
+        const db = getFirestore();
+        const verificarPago = async (_ped, pedidoId) => {
+            // Wompi por referencia (= pedidoId). ⚠️ confirmar el endpoint exacto en sandbox (gate live).
+            const r = await fetch(`${WOMPI_API_BASE}/transactions?reference=${encodeURIComponent(pedidoId)}`, {
+                headers: { Authorization: `Bearer ${WOMPI_PRIVATE_KEY.value()}` },
+            });
+            if (!r.ok) throw new Error(`wompi ${r.status}`);           // → skip (no libera a ciegas)
+            const list = (await r.json())?.data || [];
+            if (list.some(t => t.status === 'APPROVED')) return 'APPROVED';
+            if (list.some(t => t.status === 'PENDING')) return 'PENDING';
+            return 'NONE';
+        };
+        const out = await liberarReservasVencidasCore(db, { verificarPago });
+        console.log('[reaper]', JSON.stringify({ revisados: out.revisados, liberados: out.liberados }));
+    },
+);
+
+module.exports = { crearPedido, confirmarPago, anularPedido, cierreCaja, iniciarPagoWeb, confirmarPagoWompi, liberarReservasVencidas };

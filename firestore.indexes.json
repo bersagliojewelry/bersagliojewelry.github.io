@@ -32,6 +32,14 @@
         { "fieldPath": "estado", "order": "ASCENDING" },
         { "fieldPath": "creadoEn", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "pedidos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "estado", "order": "ASCENDING" },
+        { "fieldPath": "reservaExpira", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

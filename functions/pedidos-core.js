@@ -321,6 +321,75 @@ async function confirmarPagoWompiCore(db, event = {}, opts = {}) {
     });
 }
 
+// ── Reaper (Wompi F2): libera reservas web vencidas y NO pagadas ──────────────────────────────
+const GRACE_MS = 3 * 60 * 1000;   // colchón tras vencer (no cortar un webhook en vuelo).
+
+/**
+ * liberarReservaCore — libera UNA reserva web no pagada (idempotente por transición de estado).
+ * NUNCA a ciegas (consejo §11): re-consulta el pago (verificarPago) ANTES de soltar.
+ *   APPROVED → a_revisar (pagó sin webhook; no perder la venta) · PENDING/null/throw → NO libera ·
+ *   NONE → repone unidad (+1) + estado derivado + ledger 'reserva-expirada' + pedido `expirado`.
+ * @param verificarPago (pedido)=>Promise<'APPROVED'|'PENDING'|'NONE'> (null/throw = no se pudo → skip)
+ */
+async function liberarReservaCore(db, pedidoId, opts = {}) {
+    const { verificarPago } = opts;
+    const pedidoRef = db.doc(`pedidos/${pedidoId}`);
+    const snap0 = await pedidoRef.get();
+    if (!snap0.exists) return { pedidoId, accion: 'inexistente' };
+    if (snap0.data().estado !== 'pago_pendiente') return { pedidoId, accion: 'no-pendiente', estado: snap0.data().estado };
+
+    // Re-consulta el pago ANTES de liberar (I/O fuera de la tx). Falla → NO libera (reintenta luego).
+    let estadoPago = 'NONE';
+    if (typeof verificarPago === 'function') {
+        try { estadoPago = await verificarPago(snap0.data(), pedidoId); }   // pedidoId = reference Wompi
+        catch { return { pedidoId, accion: 'consulta-fallo-skip' }; }
+        if (estadoPago == null) return { pedidoId, accion: 'consulta-fallo-skip' };
+    }
+    if (estadoPago === 'PENDING') return { pedidoId, accion: 'pendiente-skip' };
+
+    return db.runTransaction(async (t) => {
+        const snap = await t.get(pedidoRef);
+        const ped = snap.exists ? snap.data() : null;
+        if (!ped || ped.estado !== 'pago_pendiente') return { pedidoId, accion: 'ya-resuelto', estado: ped && ped.estado };
+
+        if (estadoPago === 'APPROVED') {
+            t.update(pedidoRef, { estado: 'a_revisar', revisarMotivo: 'reaper halló pago APPROVED sin webhook', updatedAt: FieldValue.serverTimestamp() });
+            return { pedidoId, accion: 'a_revisar-aprobado' };
+        }
+        // NONE → liberar: repone la unidad si este pedido la consumió (espeja anularPedido).
+        if (ped.consumioStock === true && ped.pieceId) {
+            const pieceRef = db.doc(`pieces/${ped.pieceId}`);
+            const pieceSnap = await t.get(pieceRef);
+            if (pieceSnap.exists) {
+                const p = pieceSnap.data();
+                const st = normStockType(p.stockType);
+                const nuevaCantidad = (Number.isInteger(p.cantidad) ? p.cantidad : 0) + 1;
+                t.update(pieceRef, { cantidad: FieldValue.increment(1), estado: derivarEstado(st, nuevaCantidad), reservaId: null, reservaExpira: null, updatedAt: FieldValue.serverTimestamp() });
+                t.set(pieceRef.collection('movimientos').doc(`exp-${pedidoId}`), { delta: 1, motivo: 'reserva-expirada', pedidoId, cantidadResultante: nuevaCantidad, actor: 'reaper', at: FieldValue.serverTimestamp() });
+            }
+        }
+        t.update(pedidoRef, { estado: 'expirado', expiradoEn: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+        return { pedidoId, accion: 'liberado' };
+    });
+}
+
+/**
+ * liberarReservasVencidasCore — barrido (reaper, Cloud Scheduler): pedidos `pago_pendiente` con
+ * `reservaExpira` ≤ (now − GRACE). Requiere índice pedidos(estado,reservaExpira). Secuencial
+ * (lujo = bajo volumen). Pasa `opts` (verificarPago) a cada `liberarReservaCore`.
+ */
+async function liberarReservasVencidasCore(db, opts = {}) {
+    const nowMs = Number.isFinite(opts.nowMs) ? opts.nowMs : Date.now();
+    const graceMs = Number.isFinite(opts.graceMs) ? opts.graceMs : GRACE_MS;
+    const max = Number.isFinite(opts.limit) ? opts.limit : 50;
+    const cutoff = Timestamp.fromMillis(nowMs - graceMs);
+    const snap = await db.collection('pedidos')
+        .where('estado', '==', 'pago_pendiente').where('reservaExpira', '<=', cutoff).limit(max).get();
+    const resultados = [];
+    for (const doc of snap.docs) resultados.push(await liberarReservaCore(db, doc.id, opts));
+    return { revisados: snap.size, liberados: resultados.filter(r => r.accion === 'liberado').length, resultados };
+}
+
 /**
  * anularPedido (B1 paso 5 · VOID) — marca el pedido como `anulado` (append-only, NO borra) y
  * REINTEGRA la pieza al catálogo (`vendida`→`disponible`) si este pedido la había tomado.
@@ -429,6 +498,7 @@ module.exports = {
     crearPedidoCore, confirmarPagoCore, anularPedidoCore, cierreCajaCore,
     iniciarPagoWebCore,                          // Wompi F2: reserva web → pago_pendiente + firma
     confirmarPagoWompiCore,                      // Wompi F2: webhook → valida firma+re-consulta → pagado
+    liberarReservaCore, liberarReservasVencidasCore,   // Wompi F2: reaper (libera reservas vencidas no pagadas)
     entero, calcOro, PedidoError,
     derivarEstado, normStockType, STOCK_TYPES,   // modelo v3 (reusado por inventario-core.js)
     evaluarStock, aplicarConsumo,                // candado de stock compartido (reusado por iniciarPagoWeb, F2)

@@ -655,6 +655,13 @@ service cloud.firestore {
       allow read: if isVentas();
       allow create, update, delete: if false;
     }
+    // Idempotencia del webhook de Wompi (Wompi F2) — lo ESCRIBE solo la CF `confirmarPagoWompi`
+    // (Admin SDK), 1 doc por transactionId. El staff de ventas LEE para auditoría; nadie escribe por
+    // fuera (un cliente no puede falsificar un "evento procesado" para forzar un pago).
+    match /webhookEvents/{txId} {
+      allow read: if isVentas();
+      allow create, update, delete: if false;
+    }
 
     // ─── Collections (categories) ──────────────────────────────────────────────
 

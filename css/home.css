@@ -74,8 +74,8 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     position: relative;
     width: 100%;
     aspect-ratio: 21/9;
-    min-height: 620px;
-    max-height: 84vh;
+    min-height: 540px;
+    max-height: 82vh;
     border-radius: 40px;
     overflow: hidden;
     transform-style: preserve-3d;
@@ -110,9 +110,32 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 .home-hero-content {
     position: absolute; inset: 0;
     padding: clamp(24px, 4vw, 48px);
-    display: flex; flex-direction: column; justify-content: space-between;
+    display: flex; flex-direction: column; justify-content: flex-end;
     z-index: 3;
+    /* §156 (W-11+Gemini) SCRIM: degradado inferior para legibilidad del texto ANCLADO ABAJO; deja la
+       joya nítida arriba — NO oscurece todo (evita el "Frankenstein" con el sitio claro). */
+    background: linear-gradient(to top, oklch(16% 0.03 155 / 0.62) 0%, oklch(16% 0.03 155 / 0.20) 32%, transparent 56%);
 }
+/* §156 rediseño hero: se OCULTAN locator/manifesto/firma (clutter); el modelo CMS queda intacto (solo no
+   se pintan). Visible = eyebrow + headline + microcopy de confianza + 2 CTAs, anclados abajo. */
+.home-hero-locator-row, .home-hero-manifesto, .home-hero-signature { display: none !important; }
+.home-hero-trust {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--font-ui); font-size: 12px; letter-spacing: 0.04em;
+    color: oklch(100% 0 0 / 0.82);
+    margin-bottom: 18px;
+}
+.home-hero-trust svg { color: oklch(82% 0.14 90); flex-shrink: 0; }
+.btn-hero-ghost {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 14px 26px;
+    border-radius: 999px;
+    border: 1px solid oklch(100% 0 0 / 0.42);
+    color: #fff; font-size: 14px; font-weight: 500;
+    background: oklch(100% 0 0 / 0.06);
+    transition: background 0.25s, border-color 0.25s;
+}
+.btn-hero-ghost:hover { background: oklch(100% 0 0 / 0.16); border-color: oklch(100% 0 0 / 0.72); }
 .home-hero-locator-row {
     display: flex; align-items: center; justify-content: flex-end;
 }
@@ -147,10 +170,8 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     letter-spacing: -0.03em;
     margin-bottom: 20px;
     color: #fff;
-    text-shadow:
-        0 1px 2px oklch(15% 0.04 155 / 0.6),
-        0 4px 16px oklch(15% 0.04 155 / 0.55),
-        0 12px 40px oklch(0% 0 0 / 0.35);
+    /* §156: sombra sutil (el scrim inferior da la legibilidad; fuera las sombras "noventeras"). */
+    text-shadow: 0 2px 14px oklch(16% 0.03 155 / 0.5);
 }
 .home-hero-headline-italic {
     font-style: italic;
@@ -303,11 +324,14 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     .home-hero { padding-top: 84px; }
     .home-hero-banner {
         aspect-ratio: 4/5;
-        min-height: 600px;
+        min-height: 500px;
         max-height: none;
         border-radius: 28px;
     }
     .home-hero-content { padding: 28px; }
+    /* §156 móvil: CTAs apilados full-width (área táctil generosa, Gemini). */
+    .home-hero-actions { flex-direction: column; align-items: stretch; width: 100%; }
+    .home-hero-actions .btn-hero, .home-hero-actions .btn-hero-ghost { width: 100%; justify-content: center; }
     .home-hero-locator { display: none; }
     .home-hero-signature {
         right: 20px; bottom: 20px;

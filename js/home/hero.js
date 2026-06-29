@@ -13,6 +13,7 @@ import { data } from '../core/data.js';
 import { safeUrl } from '../core/safe-url.js';
 import { lqipImgStyle } from '../core/lqip.js';   // §110.2 F3: blur-up (degrada si no hay LQIP)
 import { mergeHome } from './siteContent-defaults.js';
+import { mergeGlobal, waHref } from '../core/global-defaults.js';   // §156: 2º CTA "Asesoría privada" (WhatsApp del CMS global)
 
 export function heroInner(c) {
     // P3.5: portada editable. Con imagen custom (URL de Storage) → <img> simple (ya viene
@@ -61,6 +62,11 @@ export function heroInner(c) {
 
                                 <p class="home-hero-manifesto">${escape(c.manifesto)}</p>
 
+                                <div class="home-hero-trust">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                                    Certificación de origen · Oro de ley 750
+                                </div>
+
                                 <div class="home-hero-actions">
                                     <a href="${escape(safeUrl(c.ctaHref, '/colecciones.html'))}" class="btn-hero">
                                         <span class="btn-hero-bg" aria-hidden="true"></span>
@@ -72,6 +78,7 @@ export function heroInner(c) {
                                             </svg>
                                         </span>
                                     </a>
+                                    <a href="${escape(safeUrl(waHref(mergeGlobal(data.getSiteContent('global')).contacto.whatsapp)))}" class="btn-hero-ghost" target="_blank" rel="noopener">Asesoría privada</a>
                                 </div>
                             </div>
                         </div>

@@ -12,8 +12,8 @@
 >
 > ✅ §143-§146 visor de zoom CERRADO (Daniel 2026-06-28). _Pend operativo Daniel: precios + fotos._
 > **🔨 WOMPI F2 — la web cobra sola (Decisión Fuerte·DINERO·TODO-42).** SSoT → `…/specs/2026-06-28-wompi-checkout-web-design.md` (diseño + comité×5 + consejo, TODO verificado vs código; crudo = `…-comite-wompi-checkout-CRUDO.md`).
-> · **Diseño CERRADO ✅** (arquitecto+comité×5+consejo Gemini). Alcance: **"Comprar ahora" 1 pieza · sandbox · solo TARJETA**. Claves: CF nueva `iniciarPagoWeb` (NO tocar `crearPedido`) · webhook=verdad (firma evento dot-notation + idempotencia doble-llave + SOLO APPROVED; DECLINED audita) · **reaper OBLIGATORIO** (sin él la pieza única se secuestra) · monto vs congelado. Panel: Diana Niño=socia, modo pruebas ON, URL Eventos vacía, secretos→Secret Manager. `[[project_comercio_pagos]]`
-> · **BUILD 2a EN CURSO**: ✅ Paso 1 candado compartido (`evaluarStock`+`aplicarConsumo`, `pedidos-core.js`) — POS intacto, `pedidos.integration` 19/19. **SIGUIENTE**: `iniciarPagoWeb`→webhook→reaper→front(flag); tests EN ROJO primero. 2b=PSE/Nequi · 2c=legal(TODO-49)+llaves prod(Kary). Legal bloquea cobro REAL, no sandbox.
+> · **Diseño CERRADO ✅** (arquitecto+comité×5+consejo; todo el detalle en la spec). Alcance: **"Comprar ahora" 1 pieza · sandbox · solo TARJETA**. Reglas duras: CF nueva `iniciarPagoWeb` (no tocar `crearPedido`) · webhook=verdad (solo APPROVED; DECLINED audita) · **reaper OBLIGATORIO** · monto vs congelado. Panel: Diana=socia, pruebas ON, secretos→Secret Manager. `[[project_comercio_pagos]]`
+> · **BUILD 2a** (Desarrollo; main 1 merge atrás): ✅ P1 candado compartido (POS 19/19) · ✅ P2 cripto `wompi-core` (firmas, 11/11). **SIGUIENTE**: `iniciarPagoWebCore` (reserva→`pago_pendiente`+firma)+test → webhook → reaper → front(flag); tests EN ROJO 1º. ⚠️ iniciarPagoWeb=callable PÚBLICA→App Check=hardening 2c. Legal bloquea cobro REAL, no sandbox.
 > _MCP Firebase=escritura prod · merge a main=Claude · Gemini asesora/Claude implementa (`[[feedback_consejo_externo_readonly]]`) · pruebas vivo DIFERIDAS (§130.4). Cola: TODO-47/49/41/39/33/35; operativo Daniel: precios+fotos._
 
 ---

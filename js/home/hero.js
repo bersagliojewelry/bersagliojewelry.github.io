@@ -13,6 +13,7 @@ import { data } from '../core/data.js';
 import { safeUrl } from '../core/safe-url.js';
 import { lqipImgStyle } from '../core/lqip.js';   // §110.2 F3: blur-up (degrada si no hay LQIP)
 import { mergeHome } from './siteContent-defaults.js';
+import { mergeGlobal, waHref } from '../core/global-defaults.js';   // §156: 2º CTA "Asesoría privada" (WhatsApp del CMS global)
 
 export function heroInner(c) {
     // P3.5: portada editable. Con imagen custom (URL de Storage) → <img> simple (ya viene
@@ -21,9 +22,9 @@ export function heroInner(c) {
     const heroImg = c.bgImage
         ? `<img src="${escape(safeUrl(c.bgImage))}" alt="" fetchpriority="high" decoding="async" class="home-hero-img home-hero-img-fallback" style="${lqipImgStyle(c.bgImageLqip)}">`
         : `<picture class="home-hero-img" data-parallax-img>
-                            <source type="image/avif" srcset="/img/banner-hero-800.avif 800w, /img/banner-hero-1200.avif 1200w, /img/banner-hero-1600.avif 1600w" sizes="100vw">
-                            <source type="image/webp" srcset="/img/banner-hero-800.webp 800w, /img/banner-hero-1200.webp 1200w, /img/banner-hero-1600.webp 1600w" sizes="100vw">
-                            <img src="/img/banner-hero-1200.webp" alt="" fetchpriority="high" decoding="async" class="home-hero-img-fallback">
+                            <source type="image/avif" srcset="/img/hero-800.avif 800w, /img/hero-1200.avif 1200w, /img/hero-1600.avif 1600w" sizes="100vw">
+                            <source type="image/webp" srcset="/img/hero-800.webp 800w, /img/hero-1200.webp 1200w, /img/hero-1600.webp 1600w" sizes="100vw">
+                            <img src="/img/hero-1200.webp" alt="" fetchpriority="high" decoding="async" class="home-hero-img-fallback">
                         </picture>`;
     return html`
             <div aria-hidden="true" class="home-hero-bg">
@@ -61,6 +62,11 @@ export function heroInner(c) {
 
                                 <p class="home-hero-manifesto">${escape(c.manifesto)}</p>
 
+                                <div class="home-hero-trust">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                                    Certificación de origen · Oro de ley 750
+                                </div>
+
                                 <div class="home-hero-actions">
                                     <a href="${escape(safeUrl(c.ctaHref, '/colecciones.html'))}" class="btn-hero">
                                         <span class="btn-hero-bg" aria-hidden="true"></span>
@@ -72,6 +78,7 @@ export function heroInner(c) {
                                             </svg>
                                         </span>
                                     </a>
+                                    <a href="${escape(safeUrl(waHref(mergeGlobal(data.getSiteContent('global')).contacto.whatsapp)))}" class="btn-hero-ghost" target="_blank" rel="noopener">Asesoría privada</a>
                                 </div>
                             </div>
                         </div>

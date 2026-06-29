@@ -46,8 +46,14 @@ function getSlugFromURL() {
     return new URL(location.href).searchParams.get('p') || '';
 }
 
-function gemSVG() {
-    return html`<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="12,2 22,8.5 12,22 2,8.5"/></svg>`;
+// Sello de VERIFICACIÓN propio (TODO §149, Daniel): rosetón facetado (guiño a la talla de gema) en
+// zafiro + chulo blanco — estilo "verificado" pero de joyería, no el diamante genérico. Dos tonos
+// fijos (azul sello + check blanco) para que lea sobre el cristal claro del badge.
+function verifiedSVG() {
+    return html`<svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 2l2.4 1.8 3 .2.9 2.9 2.4 1.8-.9 2.9.9 2.9-2.4 1.8-.9 2.9-3 .2L12 22l-2.4-1.8-3-.2-.9-2.9L3.3 15.4l.9-2.9-.9-2.9 2.4-1.8.9-2.9 3-.2z" fill="#1E63B0"/>
+        <path d="M8.4 12.3l2.4 2.4 4.7-4.9" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`;
 }
 
 // Gema talla esmeralda (octágono facetado con lustre radial) — firma de la "Carta
@@ -131,7 +137,8 @@ function buildSpecs(piece) {
         { title: 'Origen y garantía', rows: [
             row('Origen', s.origin),
             row('Entrega', s.delivery),
-            row('Certificación', s.certificate || s.gia, true),   // pastilla dorada (sello)
+            // Daniel §149: en el sello basta el LABORATORIO ("TrueLab Colombia"), sin el N.º de reporte.
+            row('Certificación', String(s.certificate || s.gia || '').replace(/\s*·\s*reporte\b.*$/i, '').trim(), true),
         ] },
     ].map(g => ({ ...g, rows: g.rows.filter(r => r.val !== '') }))
      .filter(g => g.rows.length > 0);
@@ -180,7 +187,7 @@ function renderGallery(piece) {
                 ${showCert ? html`
                     <div class="pz-main-chips">
                         <div class="chip pz-cert-chip">
-                            ${gemSVG()}Certificado
+                            ${verifiedSVG()}Certificado
                         </div>
                     </div>` : ''}
                 ${multi ? html`
@@ -229,9 +236,14 @@ function renderInfo(piece) {
             <h1 class="pz-info-name">${escape(piece.name || 'Pieza')}</h1>
 
             ${vendida ? html`
-            <div class="glass pz-vendida" role="status">
-                <span class="eyebrow pz-vendida-label">Pieza única · vendida</span>
-                <p class="pz-vendida-note">Esta joya ya encontró a su dueño. Podemos crear una pieza con el mismo espíritu, hecha a su medida.</p>
+            <div class="pz-vendida" role="status">
+                <span class="pz-vendida-seal" aria-hidden="true">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>
+                </span>
+                <div class="pz-vendida-body">
+                    <span class="pz-vendida-label">Pieza vendida<span class="pz-vendida-tag">única</span></span>
+                    <p class="pz-vendida-note">Esta joya ya encontró a su dueño. Podemos crear una pieza igual de irrepetible, pensada solo para usted.</p>
+                </div>
             </div>`
             : hasPrice ? html`
             <div class="pz-price-row">

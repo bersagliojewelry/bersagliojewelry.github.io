@@ -309,16 +309,54 @@
     text-transform: uppercase;
 }
 
-/* TODO-56: pieza única VENDIDA — sello sobrio (no precio, no carrito) + invitación a asesor. */
+/* TODO-56 + §149 (Daniel): pieza única VENDIDA — banda esmeralda con sello, CLARA pero elegante
+   (antes pasaba desapercibida). No precio/carrito; invita a asesor (botones aparte). */
 .pz-vendida {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
     padding: 18px 20px;
     margin-bottom: 28px;
+    background: var(--bj-emerald-100);
+    border: 1px solid var(--bj-emerald-300);
+    border-left: 3px solid var(--bj-emerald-600);
     border-radius: 16px;
 }
+.pz-vendida-seal {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    margin-top: 1px;
+    border-radius: 50%;
+    background: var(--bj-emerald-700);
+    color: var(--bj-pearl);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.pz-vendida-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
 .pz-vendida-label {
-    display: block;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
     color: var(--bj-emerald-800);
-    margin-bottom: 8px;
+}
+.pz-vendida-tag {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--bj-emerald-700);
+    border: 1px solid var(--bj-emerald-400);
+    border-radius: 999px;
+    padding: 2px 9px;
 }
 .pz-vendida-note {
     font-size: 14px;

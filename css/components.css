@@ -905,3 +905,111 @@ a:focus-visible {
 
 /* Carrito vacío — ilustración cart-gems (reemplaza el ícono) */
 .bj-cart-empty-illus { width: 140px; height: auto; margin: 0 auto 6px; filter: drop-shadow(0 12px 28px oklch(50% 0.15 155 / 0.35)); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   BUSCADOR POR CÓDIGO (TODO-58) — componente COMPARTIDO (catálogo + home).
+   Base aquí (components.css = carga global); variante home en home.css (.bc-home).
+   Movido desde catalogo.css en slice 3 (el componente se usa fuera del catálogo).
+   ═══════════════════════════════════════════════════════════════════ */
+.bc {
+    margin: 0 0 26px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+.bc-lead {
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--bj-ink-mute);
+}
+.bc-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.bc-ico {
+    width: 18px;
+    height: 18px;
+    color: oklch(62% 0.18 155);
+    flex-shrink: 0;
+}
+.bc-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    background: oklch(100% 0 0 / 0.6);
+    border: 1px solid oklch(100% 0 0 / 0.5);
+    border-radius: 999px;
+    padding: 11px 16px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--bj-ink-emerald);
+    appearance: none;
+    -webkit-appearance: none;
+}
+.bc-input::placeholder { color: var(--bj-ink-mute); }
+.bc-input:focus {
+    outline: none;
+    border-color: oklch(62% 0.18 155 / 0.5);
+    box-shadow: 0 0 0 3px oklch(62% 0.18 155 / 0.18);
+}
+.bc-btn {
+    flex-shrink: 0;
+    padding: 11px 22px;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    border-radius: 999px;
+    color: #fff;
+    background: linear-gradient(180deg, oklch(62% 0.18 155), oklch(42% 0.14 155));
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 0.5) inset,
+        0 4px 12px -4px oklch(42% 0.14 155 / 0.45);
+    cursor: pointer;
+    transition: filter 0.2s, transform 0.2s;
+    white-space: nowrap;
+}
+.bc-btn:hover { filter: brightness(1.06); }
+.bc-btn:active { transform: translateY(1px); }
+.bc-msg {
+    margin: 0;
+    font-size: 13px;
+    color: var(--bj-ink-soft);
+}
+.bc-msg a {
+    color: oklch(52% 0.16 155);
+    font-weight: 600;
+    text-decoration: underline;
+}
+/* Búsquedas recientes (idea Altorra Cars) — chips bajo el buscador cuando no hay query */
+.bc-recientes {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.bc-rec-label {
+    font-size: 12px;
+    color: var(--bj-ink-mute);
+    letter-spacing: 0.04em;
+}
+.bc-chip {
+    padding: 5px 12px;
+    font-size: 12px;
+    border: 1px solid oklch(100% 0 0 / 0.5);
+    border-radius: 999px;
+    background: oklch(100% 0 0 / 0.5);
+    color: var(--bj-ink-emerald);
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+.bc-chip:hover {
+    background: oklch(62% 0.18 155 / 0.12);
+    border-color: oklch(62% 0.18 155 / 0.4);
+}
+@media (max-width: 680px) {
+    .bc-row { flex-wrap: wrap; }
+    .bc-input,
+    .bc-btn { flex: 1 1 100%; }
+}

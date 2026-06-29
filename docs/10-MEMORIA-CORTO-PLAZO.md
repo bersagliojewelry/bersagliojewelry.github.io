@@ -12,7 +12,7 @@
 >
 > **🔨 WOMPI F2 — la web cobra sola (Decisión Fuerte·DINERO·TODO-42).** SSoT diseño+veredicto → `…/specs/2026-06-28-wompi-checkout-web-design.md` (§11.4=plan 2a; crudo=`…-comite-wompi-checkout-CRUDO.md`). Alcance: "Comprar ahora" 1 pieza · sandbox · solo TARJETA. `[[project_comercio_pagos]]`
 > · **2a desplegada en sandbox ✅**: CFs (iniciarPagoWeb+webhook+reaper) vivas prod→Wompi sandbox; secretos en Secret Manager; flag off; webhook URL configurada. Detalle → spec / ADRs prev.
-> · **GATE LIVE PASADO ✅ (§147, 2026-06-28)** — e2e real sandbox: Widget Wompi→`4242` **APPROVED**→pedido **`pagado`** por webhook (+idempotencia+reaper+by-ref). Bug `wompiEligible` arreglado (`available`→`cantidad`). Wompi exige redirect HTTPS (gate=preview channel, no localhost). Prod restaurado. **2c**=legal(TODO-49)+llaves prod(Kary)+App Check+quitar precios temp+flag. Detalle → §147/L-54. **Pend: UX agotado (TODO-56).**
+> · **GATE LIVE PASADO ✅ (§147, 2026-06-28)** — e2e real sandbox: Widget Wompi→`4242` **APPROVED**→pedido **`pagado`** por webhook (+idempotencia+reaper+by-ref). Bug `wompiEligible` arreglado (`available`→`cantidad`). Wompi exige redirect HTTPS (gate=preview channel, no localhost). Prod restaurado. **2c**=legal(TODO-49)+llaves prod(Kary)+App Check+quitar precios temp+flag. Detalle → §147/L-54. **UX pieza vendida/agotada → TODO-56 §148 ✅ (SW v53).**
 > _MCP Firebase=escritura prod · merge a main=Claude · Gemini asesora/Claude implementa (`[[feedback_consejo_externo_readonly]]`) · pruebas vivo DIFERIDAS (§130.4). Cola: TODO-47/49/41/39/33/35; operativo Daniel: precios+fotos._
 
 ---
@@ -43,8 +43,7 @@
 | TODO-48 | **Reseñas reales** — conectar `reviews` (aprobadas) → Nosotros + gestión admin (las falsas ya se quitaron; 1 huérfana de prueba en `reviews`). | 🔲 | feature |
 | TODO-49 | **Legal e-commerce** — consentimiento habeas data en forms + verificar privacidad/terminos (retracto). Skill `legal-colombia`. Prereq Wompi. | 🔲 | pre-Wompi |
 | TODO-50 | **Catálogo de lujo** — imagen real (no certificado) + filtros gema/tipo + taxonomía canónica + badges por gema. Detalle → §133.2(B/C). | 🔲 | tras TODO-44 |
-| TODO-56 | **UX de pieza AGOTADA/limitada** (Daniel 2026-06-28): la ficha NO marca cuando una pieza única se vendió (Mercado Libre sí) → sello "Vendida/Agotada" + invitar a asesor (o `finito_refabricable`→bajo_pedido); limitado vendido = **bajar de web pública, NO borrar de inventario** (puede reabastecerse). ⚠️ Sospecha mismo gap `available` SSG-only que `wompiEligible` (verificar `pieza.js`/grilla vs `derivarEstado`). Diseñar (W-11 si no trivial). | 🔲 | diseño |
-> ✅ **Cerrados recientes**: TODO-55/51/52/53/54/44/45/46 · TODO-40+32 piezas (§131-§143). Histórico → ADRs + `00`/`99`. Pend operativo Daniel: precios + imágenes IA.
+> ✅ **Cerrados recientes**: **TODO-56 (§148, UX pieza vendida/agotada — sello+CTA asesor, grilla oculta vendidas, `js/core/stock.js`)** · TODO-55/51/52/53/54/44/45/46 · TODO-40+32 piezas. Histórico → ADRs + `00`/`99`. Pend operativo Daniel: precios + imágenes IA.
 
 ---
 

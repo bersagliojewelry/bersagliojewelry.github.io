@@ -116,11 +116,13 @@ function render() {
                     })}
                 </nav>
 
-                <button class="bj-header-cart bj-header-search"
+                <button class="bj-header-search"
                         type="button"
                         data-action="open-search"
-                        aria-label="Buscar (Ctrl+K)">
+                        aria-label="Buscar piezas por código o nombre">
                     ${searchIconSVG()}
+                    <span class="bj-header-search-text bj-header-search-full">Buscar por código o nombre…</span>
+                    <span class="bj-header-search-text bj-header-search-short">Buscar</span>
                 </button>
 
                 <a class="bj-header-cart bj-header-fav"

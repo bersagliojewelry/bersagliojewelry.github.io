@@ -3,8 +3,10 @@
    Mirror exacto de BERSAGLIO NOVO/project/js/pages.jsx (Catalogo L7-93)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-.cat-page { padding-top: 116px; padding-bottom: 40px; }
-@media (max-width: 680px) { .cat-page { padding-top: 100px; } }
+/* §156 (B): el top era 116px SOBRE los 92px de `main` (despeje del header fijo) = ~208px → "contenido
+   muy abajo". `main` ya despeja el header; aquí solo respiramos (≈156px al eyebrow, airy sin exceso). */
+.cat-page { padding-top: 64px; padding-bottom: 40px; }
+@media (max-width: 680px) { .cat-page { padding-top: 40px; } }
 
 /* ═══════════════════════════════════════════════════════════════════
    HEADER — eyebrow + display title + lead
@@ -23,8 +25,8 @@
 .cat-page-lead {
     font-size: 16px;
     color: var(--bj-ink-soft);
-    max-width: 540px;
-    margin: 20px auto 0;
+    max-width: 560px;          /* §156 (B): lead a ~2 líneas, ceñido bajo el h1 */
+    margin: 14px auto 0;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -113,8 +115,52 @@
     box-shadow: 0 0 0 3px oklch(62% 0.18 155 / 0.18);
 }
 
-/* BUSCADOR POR CÓDIGO (TODO-58): los estilos base `.bc*` se movieron a components.css
-   (componente COMPARTIDO catálogo + home, slice 3 — DRY/L-03). La variante home: home.css `.bc-home`. */
+/* ═══════════════════════════════════════════════════════════════════
+   BUSCADOR COMPACTO (§156 C) — el filtro vivo vive AHORA dentro de
+   `.cat-controls` (campo compacto, pill de cristal como el sort). Se quitó
+   la "banda" suelta: duplicaba el buscador global del header (§155). Los
+   `.bc*` base (input/msg/recientes/chip) siguen en components.css (DRY/L-03);
+   aquí solo el contenedor compacto + la tira de mensajes/recientes.
+   ═══════════════════════════════════════════════════════════════════ */
+.cat-controls-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.cat-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 16px;
+    border-radius: 999px;
+    min-width: 230px;
+    transition: box-shadow 0.3s;
+}
+.cat-search:focus-within { box-shadow: 0 0 0 3px oklch(62% 0.18 155 / 0.18); }
+.cat-search-ico {
+    width: 16px; height: 16px;
+    color: oklch(62% 0.18 155);
+    flex-shrink: 0;
+}
+/* Reusa la clase `.bc-input` (hook del JS: filtro en vivo + Enter) pero, dentro
+   del pill de cristal, sin borde/fondo/anillo propios — el pill ya ES la superficie. */
+.cat-search .bc-input {
+    border: none;
+    background: transparent;
+    border-radius: 0;
+    padding: 9px 2px;
+    font-size: 13px;
+}
+.cat-search .bc-input:focus { box-shadow: none; }
+/* Tira fina bajo los controles: conteo en vivo (q activo) o recientes (q vacío). */
+.cat-search-extra {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.cat-search-extra .bc-msg { margin: 0; }
 
 /* ═══════════════════════════════════════════════════════════════════
    GRID — auto-fit cards
@@ -273,6 +319,8 @@
     .cat-sort {
         align-self: flex-end;
     }
+    .cat-controls-right { width: 100%; }
+    .cat-search { flex: 1 1 auto; min-width: 0; }
     .cat-grid {
         --cols: 2;
         --gap: 14px;

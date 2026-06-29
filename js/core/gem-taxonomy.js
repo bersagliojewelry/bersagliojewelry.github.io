@@ -29,20 +29,45 @@ export const GEM_SEED = [
 
 const BY_SLUG = new Map(GEM_SEED.map(g => [g.slug, g]));
 
-/** Color de una gema por slug (semilla; fallback neutro si no existe/no tiene color). */
-export function gemColor(slug) {
-    return BY_SLUG.get(String(slug || '').toLowerCase())?.color || GEM_NEUTRAL;
+// Gemas AÑADIDAS por Kary/Daniel (colección/doc `settings/gems`), inyectadas por `data.js` (live) o
+// por el SSG (horneadas en catalogo.json). Tienen prioridad sobre la semilla (Kary ajusta el color).
+let _extra = new Map();
+
+/**
+ * Carga el catálogo de gemas editable (settings/gems) → el badge público y el select del admin lo usan.
+ * @param {Array<{slug:string,label?:string,color?:string}>} list
+ */
+export function setGemCatalog(list) {
+    _extra = new Map();
+    for (const g of (Array.isArray(list) ? list : [])) {
+        const slug = String(g?.slug || '').toLowerCase().trim();
+        if (slug) _extra.set(slug, { slug, label: g.label || '', color: g.color || '' });
+    }
 }
 
-/** Label visible de una gema por slug (capitaliza el slug si no está en la semilla). */
+/** Color de una gema por slug: extras (Kary) → semilla → neutro (nunca rompe el badge). */
+export function gemColor(slug) {
+    const s = String(slug || '').toLowerCase();
+    return _extra.get(s)?.color || BY_SLUG.get(s)?.color || GEM_NEUTRAL;
+}
+
+/** Label visible de una gema por slug (extras → semilla → capitaliza el slug). */
 export function gemLabel(slug) {
     const s = String(slug || '').toLowerCase();
-    return BY_SLUG.get(s)?.label || (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
+    return _extra.get(s)?.label || BY_SLUG.get(s)?.label || (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
 }
 
-/** ¿La gema existe en la semilla canónica? (para validar/decidir si pinta color real o neutro). */
+/** ¿La gema existe (semilla o extras)? */
 export function gemKnown(slug) {
-    return BY_SLUG.has(String(slug || '').toLowerCase());
+    const s = String(slug || '').toLowerCase();
+    return BY_SLUG.has(s) || _extra.has(s);
+}
+
+/** Lista completa de gemas (semilla + extras de Kary) para poblar el SELECT del admin. Ordenada por label. */
+export function allGems() {
+    const m = new Map(GEM_SEED.map(g => [g.slug, { slug: g.slug, label: g.label, color: g.color }]));
+    for (const [s, g] of _extra) m.set(s, { slug: s, label: g.label || gemLabel(s), color: g.color || GEM_NEUTRAL });
+    return [...m.values()].sort((a, b) => a.label.localeCompare(b.label, 'es'));
 }
 
 /**

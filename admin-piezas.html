@@ -224,12 +224,27 @@
                     <h3>Especificaciones de gema y metal</h3>
                     <div class="adm-form-row">
                         <div class="adm-field">
-                            <label for="f-stone">Piedra principal</label>
-                            <input class="adm-input" id="f-stone" name="specs.stone" placeholder="Esmeralda colombiana">
+                            <label for="f-badge-gem">Gema principal <span class="adm-opt">(pinta el color del badge)</span></label>
+                            <select class="adm-input" id="f-badge-gem" name="specs.badgeGem"></select>
+                            <small style="color:var(--adm-muted);font-size:11px;margin-top:2px;">Elige de la lista (cero typos). Define el color del badge y el filtro principal.</small>
                         </div>
                         <div class="adm-field">
                             <label for="f-carat">Quilates</label>
                             <input class="adm-input" id="f-carat" name="specs.carat" placeholder="3.2 ct">
+                        </div>
+                    </div>
+                    <div class="adm-form-row" style="margin-top:12px;">
+                        <div class="adm-field" style="grid-column:1 / -1;">
+                            <label>Otras gemas presentes <span class="adm-opt">(para filtros · opcional)</span></label>
+                            <div id="f-gem-filters" class="adm-gem-filters" style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:4px;"></div>
+                            <small style="color:var(--adm-muted);font-size:11px;margin-top:2px;">Marca todas las gemas que lleva la pieza (además de la principal). El cliente podrá filtrar por cualquiera.</small>
+                        </div>
+                    </div>
+                    <div class="adm-form-row" style="margin-top:12px;">
+                        <div class="adm-field" style="grid-column:1 / -1;">
+                            <label for="f-stone">Descripción de la piedra <span class="adm-opt">(carta · texto libre)</span></label>
+                            <input class="adm-input" id="f-stone" name="specs.stone" placeholder="Esmeralda colombiana talla esmeralda 2.1 ct">
+                            <small style="color:var(--adm-muted);font-size:11px;margin-top:2px;">Describe la piedra para la ficha. NO pinta el color (eso lo hace "Gema principal").</small>
                         </div>
                     </div>
                     <div class="adm-form-row" style="margin-top:12px;">

@@ -81,7 +81,10 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     max-height: 70vh;
     border-radius: 40px;
     overflow: hidden;
-    transform-style: preserve-3d;
+    /* §156 móvil: SIN transform-style:preserve-3d (el parallax 3D está desactivado) — ese contexto 3D
+       rompía en iOS/Safari el recorte border-radius+overflow → las puntas de la imagen se salían del
+       glass. isolation:isolate da un contexto de recorte limpio sin reintroducir el bug. */
+    isolation: isolate;
     box-shadow:
         inset 0 2px 0 oklch(100% 0 0 / 0.7),
         inset 0 1px 12px oklch(100% 0 0 / 0.15),
@@ -93,6 +96,7 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     display: block;
     transform: none;
     overflow: hidden;
+    border-radius: inherit;   /* §156: hereda el redondeo del banner → la imagen se recorta a las esquinas (iOS) */
 }
 .home-hero-img-fallback {
     width: 100%; height: 100%;
@@ -339,9 +343,17 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     .home-hero-content {
         padding: 28px;
         justify-content: flex-end; align-items: stretch;
-        /* §156 móvil: el retrato 4/5 recorta el espacio izquierdo → texto ABAJO sobre velo blanco inferior. */
-        background: linear-gradient(to top, oklch(99% 0.008 95 / 0.9) 0%, oklch(99% 0.008 95 / 0.42) 26%, transparent 52%);
+        /* §156 móvil: el retrato 4/5 pone el texto ABAJO sobre un velo blanco inferior. Velo más ALTO y
+           opaco (Daniel: el eyebrow dorado quedaba ilegible sobre la seda) — cubre TODO el bloque de
+           texto, eyebrow incluido, sin tapar el rostro/cabeza (top ~30% libre). */
+        background: linear-gradient(to top,
+            oklch(99% 0.008 95 / 0.94) 0%,
+            oklch(99% 0.008 95 / 0.86) 34%,
+            oklch(99% 0.008 95 / 0.52) 56%,
+            transparent 72%);
     }
+    /* §156 móvil: halo blanco al eyebrow dorado para despegarlo de la seda iridiscente (legibilidad). */
+    .home-hero-eyebrow { text-shadow: 0 1px 2px oklch(100% 0 0 / 0.9), 0 0 10px oklch(100% 0 0 / 0.7); }
     .home-hero-body { max-width: none; }
     /* §156 móvil: CTAs apilados full-width (área táctil generosa, Gemini). */
     .home-hero-actions { flex-direction: column; align-items: stretch; width: 100%; }

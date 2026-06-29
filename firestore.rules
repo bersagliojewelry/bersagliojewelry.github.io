@@ -374,6 +374,14 @@ service cloud.firestore {
     function pieceStockLocked(d) {
       return !('estado' in d) && !('reservaId' in d) && !('reservaExpira' in d);
     }
+    // UPDATE (bugfix §152): con merge:true el doc RESULTANTE conserva estado/reservaId/reservaExpira que
+    // puso la CF → un chequeo de PRESENCIA (pieceStockLocked) los DENEGABA (toda pieza ya reservada/vendida
+    // quedaba ineditable). Lo correcto es validar el DELTA: el cliente (admin/catálogo) no puede AÑADIR/
+    // CAMBIAR/QUITAR ninguno; la CF sí (Admin SDK ignora estas reglas). Si no cambian, no aparecen en el diff.
+    function pieceStockUnchanged() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+                .hasAny(['estado', 'reservaId', 'reservaExpira']);
+    }
     // TODO-40 v3 · `cantidad` = STOCK TRANSACCIONAL (cierra el TOCTOU, Gemini claim 3).
     //  · CREATE: el admin fija la cantidad INICIAL (int≥0) — alta legítima (un create solo nace en doc
     //    NUEVO → sin venta concurrente; el ledger `pieces/{id}/movimientos` registra el alta, B3).
@@ -413,7 +421,7 @@ service cloud.firestore {
           && (!('sizes' in d)      || d.sizes is list)
           && (!('specs' in d)      || d.specs is map)
           && pieceClassValid(d)
-          && pieceStockLocked(d)
+          && pieceStockUnchanged()
           && pieceCantidadUnchanged();
     }
     function colCreateValid() {

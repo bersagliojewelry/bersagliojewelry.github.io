@@ -254,6 +254,13 @@ test('B1 · arqueo (cierre Z): cliente NUNCA escribe (CF-only) → DENY; read so
     await assertFails(getDoc(doc(asUser('customerUid'), 'arqueo/t1')));
     await assertSucceeds(getDoc(doc(asUser('catalogoUid'), 'arqueo/t1')));
 });
+test('Wompi F2 · webhookEvents: cliente NUNCA escribe (CF-only) → DENY; read solo staff de ventas', async () => {
+    await assertFails(setDoc(doc(asUser('catalogoUid'), 'webhookEvents/tx1'), { accion: 'pagado' }));
+    await assertFails(setDoc(doc(asUser('adminUid'),    'webhookEvents/tx2'), { accion: 'pagado' }));
+    await assertFails(getDoc(doc(anon(), 'webhookEvents/tx1')));
+    await assertFails(getDoc(doc(asUser('customerUid'), 'webhookEvents/tx1')));
+    await assertSucceeds(getDoc(doc(asUser('catalogoUid'), 'webhookEvents/tx1')));
+});
 test('S6 · colección: editor crea con name', async () => {
     await assertSucceeds(setDoc(doc(asUser('editorUid'), 'collections/c1'), { name: 'Anillos', slug: 'anillos' }));
 });

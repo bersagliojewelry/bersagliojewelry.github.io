@@ -28,6 +28,17 @@ export async function crearPedido(input) {
 }
 
 /**
+ * Wompi F2 — el cliente PÚBLICO inicia el cobro web de UNA pieza. La CF `iniciarPagoWeb` reserva
+ * la pieza (candado atómico), crea el pedido `pago_pendiente`, recalcula el total y FIRMA server-side.
+ * @param {{ pedidoId:string, pieceId:string, shipping?:object }} input  (pedidoId = UUID del cliente, idempotencia)
+ * @returns {Promise<{ reference:string, amountInCents:number, currency:string, signature:string, publicKey:string, estado:string }>}
+ */
+export async function iniciarPagoWeb(input) {
+    const fn = await _callable('iniciarPagoWeb');
+    return (await fn(input)).data;
+}
+
+/**
  * Confirma que llegó el pago de un pedido ("vi la plata"): `pago_por_verificar` → `pagado`.
  * Solo la CF flipea el estado (regla SoD). Idempotente.
  * @param {string} pedidoId
@@ -69,4 +80,4 @@ export async function ultimasVentas(max = 15) {
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-export default { crearPedido, confirmarPago, anularPedido, cierreCaja, ultimasVentas };
+export default { crearPedido, iniciarPagoWeb, confirmarPago, anularPedido, cierreCaja, ultimasVentas };

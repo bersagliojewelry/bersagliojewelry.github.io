@@ -17,6 +17,7 @@ import { MIN_FEATURED } from '../core/home-sections.js';   // umbral de dignidad
 import { reservedHeight, rememberHeight } from '../core/section-reserve.js';
 import { lqipBgStyle } from '../core/lqip.js';             // §108 F3: blur-up (degrada si no hay LQIP)
 import { pieceUrl } from '../core/urls.js';               // SSoT URL pieza horneada (/pieza/<slug>.html)
+import { gemBadge } from '../core/gem-badge.js';          // §149: badge de gema por color (reemplaza "Destacada")
 import { balancedCols } from '../core/grid-balance.js';   // reparto inteligente de columnas (sin huérfanas)
 
 // Piezas visibles en Destacadas = featured + con FOTO (la franja es un escaparate VISUAL).
@@ -100,7 +101,10 @@ function featuredInner() {
 function renderFeaturedCard(p) {
     const slug = p.slug || p.id;
     const img = p.images?.[0] || p.image || '';
-    const tag = p.tag || (p.featured ? 'Destacada' : null);
+    // §149 (Daniel): el index ya ES "destacadas" → fuera ese badge redundante. En su lugar, la GEMA
+    // por color (distintiva). Si no se reconoce la piedra, cae al tag manual; nunca "Destacada".
+    const gem = gemBadge(p);
+    const tag = gem ? null : (p.tag || null);
     const stones = p.specs?.stones || p.specs?.stone || '';
     const metal  = p.specs?.metal  || p.specs?.gold  || '';
     const cat = p.collection || '';
@@ -112,7 +116,11 @@ function renderFeaturedCard(p) {
             <div class="home-featured-card-imgwrap">
                 <div class="home-featured-card-img" style="${lqipBgStyle(img, '')};background-size:cover;background-position:center"></div>
                 <div class="home-featured-card-vignette" aria-hidden="true"></div>
-                ${tag ? html`
+                ${gem ? html`
+                    <div class="home-featured-card-gem" style="--gem:${gem.color}">
+                        <span class="home-featured-card-gem-stone" aria-hidden="true"></span>${escape(gem.name)}
+                    </div>`
+                : tag ? html`
                     <div class="home-featured-card-tag">
                         <div class="chip">
                             <span class="chip-dot"></span>${escape(tag)}

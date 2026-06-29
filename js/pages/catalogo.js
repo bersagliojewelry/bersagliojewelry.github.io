@@ -120,7 +120,7 @@ function renderFilters() {
 function renderCard(p) {
     const slug = p.slug || p.id;
     const img = p.images?.[0] || p.image || '';
-    const tag = p.tag || p.badge || (p.featured ? 'Destacada' : null);   // §134: el badge por pieza también se ve en la tarjeta
+    const tag = p.tag || p.badge || null;   // §149 (Daniel): sin "Destacada" redundante; el badge por pieza ya se ve
     const stones = p.specs?.stones || p.specs?.stone || '';
     const collection = data.collectionOf(p);
     const catLabel = collection?.name || p.collection || '';

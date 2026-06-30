@@ -45,8 +45,9 @@ import { pagarConWompi, wompiEligible } from '../pago-web.js';
 
 const SHIPPING_KEY = 'bj-shipping';
 const STEPS = ['Carrito', 'Envío', 'Pago'];
-// Wompi F2: cobro web "Comprar ahora" (1 pieza). APAGADO en prod hasta el paso 2c (sandbox/cobro real).
-const WOMPI_WEB_ENABLED = false;
+// Wompi F2: cobro web "Comprar ahora" (1 pieza). ENCENDIDO en prod 2026-06-30 (§157.x, llaves prod + secretos en Secret Manager).
+// El botón "Pagar ahora" solo aparece en piezas ELEGIBLES (precio>0 + stock + ≤ tope $2.5M); con productos sin precio queda oculto.
+const WOMPI_WEB_ENABLED = true;
 let _step = 1;
 let _shipping = { firstName: '', lastName: '', email: '', phone: '', address: '', city: '', country: 'Colombia', zip: '' };
 let _payment = 'whatsapp';

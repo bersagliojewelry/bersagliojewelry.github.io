@@ -184,6 +184,14 @@ async function iniciarPagoWebCore(db, input = {}, opts = {}) {
         const total = entero(piece.price);
         if (total > TOPE_TX_COP) throw new PedidoError('failed-precondition', `El pago en línea admite hasta $${TOPE_TX_COP.toLocaleString('es-CO')}. Coordina con un asesor.`);
 
+        // Habeas Data (Ley 1581 / Decreto 1377 art.5): el consentimiento es OBLIGATORIO para crear el
+        // pedido con datos del comprador y se PERSISTE como prueba (no se confía solo en el front). Se
+        // exige SOLO al CREAR (el reintento idempotente ya salió arriba con su consentimiento original).
+        const habeas = input.habeas;
+        const habeasAceptado = habeas === true || !!(habeas && habeas.aceptado === true);
+        if (!habeasAceptado) throw new PedidoError('failed-precondition', 'Falta la autorización de tratamiento de datos (Habeas Data).');
+        const habeasVersion = (habeas && typeof habeas.version === 'string') ? habeas.version : null;
+
         const contRef = db.doc('contadores/pedidos');
         const contSnap = await tx.get(contRef);
         const numero = ((contSnap.exists && Number(contSnap.data().valor)) || 0) + 1;
@@ -200,6 +208,7 @@ async function iniciarPagoWebCore(db, input = {}, opts = {}) {
             consumioStock: true,
             reservaExpira,                              // verdad de la reserva (el reaper la lee)
             shipping: shipping || null,
+            habeasData: { aceptado: true, version: habeasVersion, fecha: FieldValue.serverTimestamp() },  // prueba del consentimiento (Dto.1377 art.5)
             autor: null,                               // cliente público sin login
             createdAt: FieldValue.serverTimestamp(),
         });

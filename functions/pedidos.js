@@ -95,7 +95,7 @@ const iniciarPagoWeb = onCall({ region: 'us-central1', invoker: 'public', secret
     const db = getFirestore();
     try {
         const d = request.data || {};
-        const res = await iniciarPagoWebCore(db, { pedidoId: d.pedidoId, pieceId: d.pieceId, shipping: d.shipping }, {
+        const res = await iniciarPagoWebCore(db, { pedidoId: d.pedidoId, pieceId: d.pieceId, shipping: d.shipping, habeas: d.habeas }, {
             integritySecret: WOMPI_INTEGRITY_SECRET.value(),
         });
         // La llave pública (pub_test_/pub_prod_) la necesita el Widget; es pública por diseño.

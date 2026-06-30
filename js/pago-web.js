@@ -47,12 +47,12 @@ function nuevoPedidoId() {
 /**
  * Inicia y abre el cobro de UNA pieza. Resuelve cuando el widget se cierra (con o sin pago);
  * la confirmación REAL la hace el webhook → `gracias.html?ref=` lee el estado.
- * @param {{ pieceId:string, shipping?:object, redirectBase?:string }} args
+ * @param {{ pieceId:string, shipping?:object, habeas?:object, redirectBase?:string }} args
  * @returns {Promise<{ reference:string, transaction?:object }>}
  */
-export async function pagarConWompi({ pieceId, shipping, redirectBase }) {
+export async function pagarConWompi({ pieceId, shipping, habeas, redirectBase }) {
     if (!pieceId) throw new Error('Falta la pieza.');
-    const res = await iniciarPagoWeb({ pedidoId: nuevoPedidoId(), pieceId, shipping });
+    const res = await iniciarPagoWeb({ pedidoId: nuevoPedidoId(), pieceId, shipping, habeas });
     if (!res?.signature || !res?.publicKey || !res?.amountInCents) {
         throw new Error('No se pudo iniciar el pago.');
     }

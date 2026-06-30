@@ -71,8 +71,15 @@
 
 ## §4 — Páginas legales mínimas del sitio (qué debe tener cada una)
 
-> ⏳ **ESTADO: a auditar.** Falta revisar qué páginas legales tiene HOY el sitio (`*.html` legales)
-> y si su contenido cumple. → **LEGAL-01** abajo.
+> ✅ **AUDITADO 2026-06-30 (LEGAL-01, vía skill `legal-colombia`).** Resultado por página:
+> - **`privacidad.html`** (`js/pages/privacidad.js`): Política de Tratamiento de Datos **sólida** (Ley 1581 — responsable, datos, finalidad, terceros incl. Wompi, derechos, cookies, seguridad, menores). ⚠️ NIT "en proceso de actualización" (falta el real).
+> - **`terminos.html`** (`js/pages/terminos.js`): cubre IVA 19% ✅, envíos, garantía comercial, propiedad intelectual, jurisdicción. **GAPS para encender Wompi**:
+>   1. §03 "Cierre de compra" dice *"No procesamos pagos automáticos directos en el sitio web"* → **CONTRADICE** el cobro web Wompi; reescribir al encender.
+>   2. **Retracto mal redactado** (§06): hoy ofrece solo *cambio, no reembolso* en 15 días; la venta ONLINE exige **retracto real Art. 47** (5 días hábiles + devolución total en 30 días calendario), EXCEPTO piezas a la medida (advertir). 
+>   3. **Reversión del pago (Art. 51 / Decreto 587/2016)**: ausente; agregar (pago con tarjeta online).
+>   4. **Art. 50**: falta **NIT real** + **enlace visible a la SIC**.
+> - **Banner de cookies**: rechazo real ✅ (Res. SIC). **Checkout** (`carrito.js:307`): checkbox Habeas Data obligatorio (gateado a Wompi) ✅; **falta** aviso *vendedor≠cobrador* (el cargo aparece a nombre del titular de la cuenta).
+> - **Bloqueado por datos de Kary**: NIT/razón social real · confirmar titular de la cuenta Wompi (¿Diana M. Niño Mendoza = Kary?). → **LEGAL-07/08**.
 
 1. **Términos y Condiciones** *(obligatoria — Art. 50)*: identidad + NIT, proceso de compra, precios e impuestos, medios de pago, tiempos de entrega, formación del contrato. Consultable/descargable.
 2. **Política de Tratamiento de Datos** *(obligatoria — Ley 1581 + Decreto 1377)*: responsable, finalidades (compras, contacto, newsletter, wishlist), derechos del titular y canal para ejercerlos, vigencia.
@@ -88,7 +95,9 @@
 
 | ID | Item | Estado |
 |---|---|---|
-| **LEGAL-01** | Auditar las páginas legales ACTUALES del sitio vs §4 (¿existen? ¿cumplen?). | 🔲 Abierto |
+| **LEGAL-01** | Auditar las páginas legales ACTUALES del sitio vs §4. | ✅ 2026-06-30 (resultado en §4) |
+| **LEGAL-07** | **Legal pre-Wompi** (Decisión Fuerte; comité ×3 + fuentes oficiales). **HECHO + DESPLEGADO (§157)**: retracto Art.47 correcto (5 días+reembolso total ≤30 días, excepto a-medida) + reversión Art.51 + garantía legal + enlace SIC + §03 puente honesto en `terminos.js`; consultas10/reclamos15 + retención + Encargado en `privacidad.js`. **RESTA (al encender Wompi)**: reescribir §03 a "la web cobra online"; aviso *vendedor≠cobrador* en el paso de pago + soft-descriptor; guardar prueba del consentimiento (timestamp+versión+casilla) con el pedido. Disclaimer abogado antes de cobrar. | 🟡 Parcial → resta Wompi |
+| **LEGAL-08** | **Datos reales de Kary** (bloquean LEGAL-07): NIT/razón social (¿S.A.S. o Persona Natural?) + confirmar titular de la cuenta Wompi (nombre que verá el cliente en el cargo). | 🔲 Espera Kary |
 | **LEGAL-02** | Verificar en norma oficial: umbral SAGRILAFT (30.000 SMMLV sector / 3.000-5.000 medidas mínimas) + si Bersaglio lo cruza hoy. | 🔲 Abierto |
 | **LEGAL-03** | Confirmar umbral/plazos del RNBD (100.000 UVT) y si Bersaglio debe inscribirse. | 🔲 Abierto |
 | **LEGAL-04** | Régimen específico de comercialización de **esmeraldas** (más allá del RUCOM general). | 🔲 Abierto |

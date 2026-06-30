@@ -13,7 +13,7 @@ import { data } from '../core/data.js';
 import { safeUrl } from '../core/safe-url.js';
 import { mergeGlobal } from '../core/global-defaults.js';
 
-const LAST_UPDATE = '2026-04-12';
+const LAST_UPDATE = '2026-06-30';
 const SECTIONS = [
     {
         id: 'compromiso',
@@ -57,7 +57,7 @@ Mejorar nuestro servicio: analizamos datos agregados de navegación para entende
         title: 'Con quién compartimos tus datos',
         body: `Nunca vendemos ni cedemos tus datos a terceros con fines comerciales.
 
-Compartimos información estrictamente necesaria con: empresas de mensajería (DHL, FedEx, Servientrega) para coordinar envíos; pasarelas de pago (Wompi, link de pago bancario) cuando realizas una compra; servicios técnicos (Firebase de Google, Brevo para correo transaccional) que alojan o procesan datos bajo acuerdos de confidencialidad y conformidad con regulación de protección de datos.
+Compartimos información estrictamente necesaria con: empresas de mensajería (DHL, FedEx, Servientrega) para coordinar envíos; pasarelas de pago (Wompi, link de pago bancario) cuando realizas una compra; servicios técnicos (Firebase de Google, Brevo para correo transaccional) que alojan o procesan datos. Estos proveedores actúan como Encargados del tratamiento: tratan tus datos por cuenta nuestra, siguiendo nuestras instrucciones, bajo acuerdos de confidencialidad y en conformidad con la regulación de protección de datos.
 
 En el caso de autoridades judiciales o regulatorias, cumpliremos con cualquier solicitud formal y debidamente notificada por estos canales.`,
     },
@@ -65,9 +65,11 @@ En el caso de autoridades judiciales o regulatorias, cumpliremos con cualquier s
         id: 'derechos',
         n: '06',
         title: 'Tus derechos',
-        body: `Tienes derecho a conocer, actualizar, rectificar y suprimir tus datos personales en cualquier momento. Para ejercer estos derechos, escribe a {{EMAIL}} con asunto "Datos personales" y te responderemos en máximo 10 días hábiles.
+        body: `Tienes derecho a conocer, actualizar, rectificar y suprimir tus datos personales, y a revocar la autorización, en cualquier momento. Para ejercerlos, escribe a {{EMAIL}} con asunto "Datos personales". Atendemos tus consultas en máximo diez (10) días hábiles y tus reclamos en máximo quince (15) días hábiles, prorrogables por ocho (8) días hábiles más informándote el motivo (Ley 1581 de 2012, artículos 14 y 15).
 
-También puedes solicitar una copia de toda la información que tenemos sobre ti, oponerte al uso de cookies analíticas, o revocar tu suscripción al newsletter desde cualquier correo que recibas. Ningún ejercicio de derechos afecta el servicio que prestamos.`,
+También puedes solicitar una copia de toda la información que tenemos sobre ti, oponerte al uso de cookies analíticas, o revocar tu suscripción al newsletter desde cualquier correo que recibas. Ningún ejercicio de derechos afecta el servicio que prestamos.
+
+Conservamos tus datos mientras dure nuestra relación contigo y durante los plazos que exijan las normas contables y tributarias; cumplidos esos plazos, los eliminamos o anonimizamos.`,
     },
     {
         id: 'cookies',

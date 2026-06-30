@@ -58,6 +58,8 @@ window.scrollTo(0, scrollY);
 *   El header pill flotante tiene `position: fixed; pointer-events: none` para no bloquear los clicks debajo de su área transparente lateral. El elemento interno `.header-aqua-pill` tiene `pointer-events: auto` para que el menú sí sea clickable.
 *   Si se altera esta estructura, se pueden bloquear clicks en toda la parte superior del sitio web.
 
+### L-62: iOS pinch-zoom + `backdrop-filter` = pantallazo BLANCO; fix = quitar backdrop-filter en móvil (fondo sólido), no bajar el blur → ADR §156.17
+
 ### L-61: Artefactos del SSG (`dist/`) → verificar con `vite preview`, NO el dev server (sirve la fuente). → `32-LECCIONES-CARGA`
 
 ### L-05: Preview headless (Claude Preview MCP) no recalcula estilos dinámicos
@@ -166,7 +168,7 @@ El §99 creyó que el flash "vieja→nueva" era doble-paint defaults→Firestore
 ### L-39: La UI de dinero se verifica con revisión ADVERSARIAL experta, no con clics de un no-técnico (ADR §75)
 **Disparador**: verificar una UI que ESCRIBE dinero (correcciones de saldo/movimientos) antes de publicarla. **Lección**: el gate correcto NO es "el operador no-técnico hace 5 clics" (Kary es dueña no-experta; no detecta un asiento de $0 ni un doble-ajuste). Es una **revisión adversarial multi-agente por dimensiones** (conformidad con reglas DESPLEGADAS · lógica de dinero/signo · wiring/edge-cases) que TRAZA cada escritura contra las reglas reales. En M2a atrapó 2 bugs de dinero BLOQUEANTES (ajustes duplicados sin guard → doble ajuste; corregir con monto vacío → asiento de $0 silencioso) + 1 del spec (rechazo sin botón) que clics manuales jamás verían. **Patrón**: las pruebas (módulo + reglas) cubren la LÓGICA; la revisión adversarial cubre el WIRING y los caminos que producen un dato incorrecto SIN error. Claude es el experto que verifica → [[feedback_claude_experto_verifica]].
 
-### L-54: CMS con LISTAS repetibles (`list` en singleton) → patrones, fragilidad del reindex (`reindexItemSf` PURO), cap server-side (`siteListOk`), MODELO PLANO (1 clave lógica por sección, NO agrupar por maqueta; aplanar ANTES de tener datos en prod = migración cero — consejo Gemini §P4) y guard por-ítem anti poison-pill en spec §P4. *(renumerada de L-39 duplicada — auditoría §114)*
+### L-54: CMS con LISTAS repetibles (`list` en singleton): reindex PURO (`reindexItemSf`), cap server-side (`siteListOk`), MODELO PLANO (aplanar ANTES de prod = migración cero), guard anti poison-pill. → spec §P4. *(renum. de L-39 dup, §114)*
 
 ### L-38: Reglas Firestore — guard `(A || B)` + `hasOnly` que whitelista B = estado contradictorio; atar campo↔estado por PRESENCIA. → `31-LECCIONES-FIRESTORE`
 

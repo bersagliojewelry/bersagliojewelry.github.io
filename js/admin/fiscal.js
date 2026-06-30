@@ -9,11 +9,13 @@
  * sobrescriben con `config/fiscal` cuando lleguen los reales — sin tocar código. Enteros COP.
  */
 
-// Defaults — VERIFICAR con Wompi (cuenta de Kary, Persona Natural) y el contador.
+// Comisión Wompi VERIFICADA 2026-06-30 (plan activo de la cuenta vinculada, pantallazo Daniel):
+// 2,65% + $700 + IVA por transacción exitosa (tarjetas/Nequi/PSE/Daviplata/QR/Bancolombia). Las
+// retenciones (ReteFuente/ReteICA) siguen pendientes del contador. Enteros COP.
 export const FISCAL_DEFAULT = {
-    wompiPct:     0.0265,   // 2,65% sobre el bruto (tarjetas Wompi) — VERIFICAR
-    wompiFijo:    700,      // + $700 fijo por transacción — VERIFICAR
-    wompiIvaPct:  0.19,     // IVA 19% sobre la comisión
+    wompiPct:     0.0265,   // 2,65% sobre el bruto ✅ verif. plan Wompi 2026-06-30
+    wompiFijo:    700,      // + $700 fijo por transacción ✅ verif. plan Wompi 2026-06-30
+    wompiIvaPct:  0.19,     // IVA 19% sobre la comisión ✅
     reteFuentePct: 0,       // ReteFuente (fracción del bruto) — lo define el contador
     reteIcaXMil:   0,       // ReteICA en ‰ (por mil) del bruto — lo define el contador
 };

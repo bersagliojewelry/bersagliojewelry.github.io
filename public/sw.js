@@ -21,11 +21,10 @@
 // v58 = §156.19: el aviso de cookies (z-90) quedaba DEBAJO del FAB "Asesoría privada" (z-200) y el
 // toque de "Aceptar" caía en el FAB (móvil). Fix: banner a z-210 + el FAB se aparta mientras el
 // banner está presente (bandera body.bj-cookie-active desde cookie-banner.js). Bump = CSS/JS fresco.
-// v61 = consistencia con Términos (Wompi go-live): quitar "IVA incluido" (No responsable de IVA) en
-// carrito/ficha/cart-drawer + nota de envío real (sin "cierre con Kary"/DHL-FedEx) + FAQ Nosotros +
-// botón "Pagar ahora" con estado "Procesando…" (anti doble-clic).
-// v60 = Wompi F2 ENCENDIDO (flag WOMPI_WEB_ENABLED=true + §3 Términos). v59 = §157.14 foto-héroe.
-const CACHE_NAME    = 'bersaglio-v61';
+// v62 = FAQ Nosotros: financiación real (Wompi 4 cuotas 0%, sin "$50M/entidades aliadas" demo).
+// v61 = consistencia Términos (sin "IVA incluido"; nota de envío real; botón "Procesando…").
+// v60 = Wompi F2 ENCENDIDO (flag ON + §3 Términos). v59 = §157.14 foto-héroe.
+const CACHE_NAME    = 'bersaglio-v62';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

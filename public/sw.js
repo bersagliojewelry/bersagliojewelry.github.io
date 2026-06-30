@@ -21,7 +21,10 @@
 // v58 = §156.19: el aviso de cookies (z-90) quedaba DEBAJO del FAB "Asesoría privada" (z-200) y el
 // toque de "Aceptar" caía en el FAB (móvil). Fix: banner a z-210 + el FAB se aparta mientras el
 // banner está presente (bandera body.bj-cookie-active desde cookie-banner.js). Bump = CSS/JS fresco.
-const CACHE_NAME    = 'bersaglio-v58';
+// v59 = §157.14 (Daniel): quitar el verde sobre la foto-héroe (blob esmeralda eliminado + marco
+// saturate 160→112 + banner neutro) y RE-ENCODE del hero a mayor calidad (AVIF q80/WebP q90). Bump
+// OBLIGATORIO: hero-1200.webp está en SHELL_ASSETS (precache) y las imágenes del hero cambiaron.
+const CACHE_NAME    = 'bersaglio-v59';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

@@ -349,19 +349,19 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     .home-hero-content {
         padding: 28px;
         justify-content: flex-end; align-items: stretch;
-        /* §156 móvil: el retrato 4/5 pone el texto ABAJO sobre un velo blanco inferior. Velo más ALTO y
-           opaco (Daniel: el eyebrow dorado quedaba ilegible sobre la seda) — cubre TODO el bloque de
-           texto, eyebrow incluido, sin tapar el rostro/cabeza (top ~30% libre). */
+        /* §156.14 móvil: velo blanco inferior LIGERO. Antes lo subí mucho (para el eyebrow) y la neblina
+           LAVABA "tallado en una joya única" (Daniel). Como el eyebrow ya se oculta en móvil, vuelve a un
+           velo suave: respalda los CTAs/confianza abajo SIN tapar el headline dorado (que tiene su propio
+           halo). El rostro arriba queda limpio. */
         background: linear-gradient(to top,
-            oklch(99% 0.008 95 / 0.94) 0%,
-            oklch(99% 0.008 95 / 0.86) 34%,
-            oklch(99% 0.008 95 / 0.52) 56%,
-            transparent 72%);
+            oklch(99% 0.008 95 / 0.82) 0%,
+            oklch(99% 0.008 95 / 0.4) 24%,
+            transparent 48%);
     }
-    /* §156.13 móvil: el eyebrow DORADO sobre la foto clara se lavaba (gold + halo blanco = invisible,
-       reportado por Daniel). En móvil va en TINTA oscura + halo blanco (estilo subtítulo) = legible
-       sobre cualquier zona (clara u oscura) de la imagen. El dorado se mantiene solo en desktop. */
-    .home-hero-eyebrow { color: var(--bj-ink-emerald); text-shadow: 0 0 5px oklch(100% 0 0 / 0.95), 0 1px 3px oklch(100% 0 0 / 0.9); }
+    /* §156.14 móvil: el eyebrow "Alta Joyería…" sobre la foto era difícil de leer en cualquier color
+       (Daniel) → se OCULTA en móvil (es decorativo; el headline + la línea de confianza cargan el
+       mensaje). En desktop se conserva (hay espacio + velo blanco a la izquierda). */
+    .home-hero-eyebrow-row { display: none; }
     .home-hero-body { max-width: none; }
     /* §156 móvil: CTAs apilados full-width (área táctil generosa, Gemini). */
     .home-hero-actions { flex-direction: column; align-items: stretch; width: 100%; }

@@ -43,7 +43,6 @@ function logoSVG() {
     return html`
         <svg width="28" height="29" viewBox="0 0 80 84" fill="none" aria-hidden="true" style="display:block">
             <circle cx="40" cy="42" r="28" stroke="var(--bj-emerald-800)" stroke-width="1.2" opacity="0.85" fill="none"/>
-            <line x1="40" y1="4" x2="40" y2="80" stroke="var(--bj-emerald-800)" stroke-width="0.8" opacity="0.5"/>
             <text x="40" y="54" text-anchor="middle" font-family="Fraunces, serif" font-weight="600" font-size="32" fill="var(--bj-emerald-800)">B</text>
         </svg>`;
 }

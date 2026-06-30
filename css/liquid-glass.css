@@ -174,53 +174,16 @@ button { font: inherit; border: none; background: none; cursor: pointer; color: 
 @media (prefers-reduced-motion: reduce) {
   .bj-world::before, .bj-world::after { animation: none; }
 }
-/* §156.10/.13/.14 → §156.17 (TODO-62) — ESTABILIDAD de pinch-zoom en iOS (Daniel, iPhone 13 Pro Max).
-   Linaje del síntoma: §156.13 mitigó el CRASH ("No se puede abrir esta página"); §156.14 lo bajó más;
-   pero al hacer zoom AMPLIO y REGRESAR (zoom-out) seguían apareciendo PANTALLAZOS BLANCOS / frames
-   cargando. CAUSA RAÍZ (verificada §3.3 + comportamiento WebKit confirmado): cada `backdrop-filter` es
-   una capa de composición que iOS RE-RASTERIZA al asentar el zoom — mientras se rehace, la capa se pinta
-   en BLANCO; además en Safari 18 la combinación `background + backdrop-filter` puede renderizarse como
-   bloque BLANCO. Bajar el RADIO del blur (3 rondas) NO bastó: la capa y su re-raster siguen existiendo.
-   FIX ESTRUCTURAL (no más whack-a-mole): en móvil se ELIMINA el `backdrop-filter` del sitio público y el
-   glass pasa a fondo SÓLIDO translúcido (look casi idéntico en un teléfono, pero SIN capas que
-   re-rasterizar → sin pantallazo). Sólo ≤680px: el desktop conserva el Liquid Glass intacto. El
-   `!important` es un MURO determinista: gana sobre las ~36 reglas `backdrop-filter` dispersas (ninguna
-   usa `!important`) sin depender del orden de carga (preload+swap = no-determinista entre hojas). */
+/* §156.10/.13 (crash de pinch-zoom en iOS, Daniel): al ampliar fuerte, Safari/Chrome iOS RE-RASTERIZA
+   cada capa con blur al nivel de zoom y agota la memoria GPU → "No se puede abrir esta página". Bajar
+   las auroras ayudó (crashea más tarde) pero faltaban los demás blurs. En móvil: OCULTAR las 2 auroras
+   (las capas más pesadas) y BAJAR todos los blurs (header/marco/`.glass`). El look sigue glass, con
+   mucha menos presión de GPU. (legibilidad ≠ blur → el cookie banner se arregla por OPACIDAD aparte.) */
 @media (max-width: 680px) {
-  /* (1) auroras pesadas fuera (desde §156.13/.14). */
   .bj-world::before, .bj-world::after { display: none; }
-  /* (2) el fondo fijo a viewport completo se estabiliza en su propia capa GPU (bug iOS conocido: los
-     elementos `position:fixed` parpadean al hacer zoom; translateZ(0) reduce el repaint). Es un fondo
-     hermano (z-index:-1) sin descendientes `fixed` → no rompe el anclaje de nada. */
-  .bj-world { transform: translateZ(0); }
-  /* (3) el glass ya no depende del blur → tinte SÓLIDO para que header / paneles / drawers / ficha
-     sigan legibles sin `backdrop-filter`. */
-  :root {
-    --glass-blur: 0px;
-    --glass-tint: oklch(96% 0.02 150 / 0.88);
-    --glass-tint-strong: oklch(94% 0.03 150 / 0.94);
-  }
-  /* (4) MURO: cero `backdrop-filter` en TODAS las superficies del sitio público (la fuente del
-     pantallazo blanco). Si nace un glass nuevo con peso en móvil, añádelo aquí. */
-  .glass, .glass-lg,
-  .btn-aqua, .btn-aqua-ghost, .chip,
-  .bj-header-pill, .bj-header-pill.is-scrolled, .bj-header-drawer,
-  .bj-drawer-backdrop, .bj-wishlist-drawer,
-  .bj-email-modal-backdrop, .bj-search-backdrop,
-  .bj-asesoria-fab,
-  .home-hero-frame,
-  .home-featured-card-tag .chip, .home-featured-card-gem, .home-featured-card-wishlist,
-  .home-editorial-chip,
-  .pz-cert-chip,
-  .cat-card-tag .chip,
-  .ct-map-flag,
-  .atl-chip, .cert-card,
-  .jr-archive-flag {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-  /* (5) el botón fantasma dependía del blur para verse (fondo 0.18) → sin blur, subir su opacidad. */
-  .btn-aqua-ghost { background: oklch(100% 0 0 / 0.30); }
+  :root { --glass-blur: 14px; }
+  .home-hero-frame { backdrop-filter: blur(10px) saturate(140%); -webkit-backdrop-filter: blur(10px) saturate(140%); }
+  .bj-header-pill.is-scrolled { backdrop-filter: blur(16px) saturate(180%) brightness(103%); -webkit-backdrop-filter: blur(16px) saturate(180%) brightness(103%); }
 }
 
 /* ═══════════════════════════════════════════════════════════════════

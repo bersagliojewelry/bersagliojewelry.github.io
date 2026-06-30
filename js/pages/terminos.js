@@ -23,13 +23,13 @@ const SECTIONS = [
         title: 'Objeto',
         body: `Estos términos regulan la relación entre Bersaglio Jewelry (en adelante, "el Atelier") y la persona que adquiere productos o servicios a través del sitio web bersagliojewelry.co, del atelier físico en Cartagena de Indias o de cualquier canal directo (WhatsApp, correo electrónico, llamada telefónica).
 
-Al usar el sitio o iniciar una compra, aceptas estos términos en su totalidad. Si no estás de acuerdo, te pedimos cerrar la pestaña y no proceder.`,
+Al usar el sitio o iniciar una compra, aceptas estos términos en su totalidad. Si no estás de acuerdo, te pedimos cerrar la pestaña y no proceder. El tratamiento de tus datos personales se rige por nuestra Política de Privacidad.`,
     },
     {
         id: 'productos',
         n: '02',
         title: 'Productos y precios',
-        body: `Cada pieza Bersaglio es única o producida en series muy limitadas. Las fotografías son fieles; sin embargo, debido a variaciones de luz, calibración de pantalla y la naturaleza misma de las gemas naturales, el color real puede presentar diferencias mínimas respecto a la imagen.
+        body: `Cada pieza Bersaglio es única o producida en series muy limitadas. En la página de cada pieza encontrarás la descripción de sus materiales (oro 18k), su gema y sus características. La disponibilidad depende del inventario: algunas piezas se entregan de inmediato y otras se elaboran bajo pedido o a tu medida, con un tiempo de elaboración que te informamos antes de confirmar la compra. Las fotografías son fieles; sin embargo, debido a variaciones de luz, calibración de pantalla y la naturaleza misma de las gemas naturales, el color real puede presentar diferencias mínimas respecto a la imagen.
 
 Los precios se expresan en pesos colombianos (COP) y corresponden al valor final a pagar. Bersaglio opera bajo el régimen de No responsables de IVA, por lo que el precio no discrimina ni adiciona IVA. Los envíos internacionales pueden generar aranceles y trámites aduaneros del país destino que corren por cuenta del comprador. Los precios pueden variar sin previo aviso, pero una vez confirmada una compra el precio queda bloqueado.`,
     },
@@ -53,7 +53,7 @@ Tu derecho de retracto aplica a toda compra a distancia —incluidas las que coo
 
 Envíos nacionales (Colombia): el costo y el tiempo de entrega dependen de la ciudad de destino y de la transportadora; te los informamos antes de confirmar el pedido.
 
-Envíos internacionales: se cotizan caso por caso y se coordinan directamente con un asesor por WhatsApp (no se procesan con el pago en línea). El comprador asume el flete, los aranceles, impuestos y trámites aduaneros del país de destino; validamos contigo los costos totales antes de despachar. Una cotización internacional no obliga a la venta hasta confirmar su viabilidad; Bersaglio puede abstenerse de despachar a destinos con restricciones de importación. Desde la entrega a la transportadora, el riesgo de tránsito, retención o decomiso en aduana corre por cuenta del comprador, quien es responsable de cumplir las normas de importación de su país.`,
+Envíos internacionales: se cotizan caso por caso y se coordinan directamente con un asesor por WhatsApp (no se procesan con el pago en línea). El comprador asume el flete, los aranceles, impuestos y trámites aduaneros del país de destino; validamos contigo los costos totales antes de despachar. Una cotización internacional no obliga a la venta hasta confirmar su viabilidad; Bersaglio puede abstenerse de despachar a destinos con restricciones de importación. Los tributos, aranceles, impuestos y el riesgo de retención o decomiso en aduana del país de destino corren por cuenta del comprador, quien es responsable de cumplir las normas de importación de su país.`,
     },
     {
         id: 'garantia',
@@ -61,7 +61,7 @@ Envíos internacionales: se cotizan caso por caso y se coordinan directamente co
         title: 'Garantía',
         body: `Toda pieza Bersaglio cuenta con la garantía legal obligatoria que ordena la ley colombiana (Ley 1480 de 2011): calidad, idoneidad y seguridad del producto. Es gratuita, no puede excluirse ni renunciarse y rige por el término legal aplicable.
 
-De forma adicional y sin perjuicio ni limitación de la garantía legal, ofrecemos una garantía comercial de doce (12) meses por defectos de fabricación, contados desde la entrega, que cubre fallas de manufactura como soldaduras, fundición o engaste de las piedras. Para hacerla efectiva, escríbenos a {{EMAIL}} o por WhatsApp al {{WA}} y coordinamos la revisión o reparación.
+De forma adicional y sin perjuicio ni limitación de la garantía legal, ofrecemos una garantía comercial de doce (12) meses por defectos de fabricación, contados desde la entrega, que cubre fallas de manufactura como el desprendimiento de soldaduras, problemas de fundición o el aflojamiento del engaste de las piedras. Para hacerla efectiva, escríbenos a {{EMAIL}} o por WhatsApp al {{WA}}, de ser posible con fotos de la pieza; coordinamos la evaluación técnica y la reparación o solución que corresponda.
 
 Esta garantía comercial no cubre el desgaste natural por el uso, los daños por golpes o accidentes, la exposición a químicos abrasivos (cloro, amoníaco, blanqueador) ni las modificaciones realizadas por terceros ajenos al atelier; estas exclusiones no afectan tus derechos bajo la garantía legal.`,
     },
@@ -159,7 +159,7 @@ function renderAll() {
 
             <div class="lg-foot">
                 <p>¿Una duda específica? Escríbenos a <a href="${escape(safeUrl('mailto:' + c.email))}">${escape(c.email)}</a> o por <a href="${escape(safeUrl(waHref(c.whatsapp)))}" target="_blank" rel="noopener">WhatsApp</a>.</p>
-                <p class="lg-legal-id">Bersaglio Jewelry — nombre comercial del establecimiento de comercio de Diana Margarita Niño Mendoza (persona natural comerciante), NIT 32.908.305-6 · Calle 36 # 6-32, Centro Histórico, Cartagena de Indias, Bolívar, Colombia. Para peticiones, quejas o reclamos (PQR) y notificaciones, escríbenos a <a href="${escape(safeUrl('mailto:' + c.email))}">${escape(c.email)}</a> o a la dirección anterior; conservamos el soporte de cada transacción y te entregamos el comprobante de tu compra. ¿Quieres conocer tus derechos como consumidor o presentar una queja ante la autoridad? Puedes acudir a la <a href="https://www.sic.gov.co" target="_blank" rel="noopener noreferrer">Superintendencia de Industria y Comercio (SIC)</a>.</p>
+                <p class="lg-legal-id">Bersaglio Jewelry — nombre comercial del establecimiento de comercio de Diana Margarita Niño Mendoza (persona natural comerciante), NIT 32.908.305-6 · Calle 36 # 6-32, Centro Histórico, Cartagena de Indias, Bolívar, Colombia. Para peticiones, quejas o reclamos (PQR) y notificaciones, escríbenos a <a href="${escape(safeUrl('mailto:' + c.email))}">${escape(c.email)}</a> o a la dirección anterior; conservamos el soporte de cada transacción y te entregamos el comprobante de tu compra. Te atendemos de 8:00 a.m. a 7:00 p.m. y respondemos las solicitudes dentro de los plazos legales. ¿Quieres conocer tus derechos como consumidor o presentar una queja ante la autoridad? Puedes acudir a la <a href="https://www.sic.gov.co" target="_blank" rel="noopener noreferrer">Superintendencia de Industria y Comercio (SIC)</a>.</p>
                 <a href="/" class="btn-aqua lg-back-btn">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
                     Volver al inicio

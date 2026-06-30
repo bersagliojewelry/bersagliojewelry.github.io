@@ -48,17 +48,37 @@ export function mountAsesoriaFab() {
     if (!a) return;
     document.body.appendChild(a);
 
-    // Entrada RETRASADA (consejo Gemini): NO aparece al cargar (deja respirar el hero); se revela con
-    // fade + subida UNA vez tras pasar el 30% del scroll. Sin pulso ni rebote (eso es chatbot).
-    const reveal = () => {
-        const max = document.documentElement.scrollHeight - window.innerHeight;
-        if (max <= 0 || window.scrollY >= max * 0.3) {
+    // Visibilidad por ZONAS (Daniel 2026-06-30): el FAB se revela SOLO en el cuerpo de la página —
+    // NO sobre el hero (ya hay un CTA "Asesoría privada" ahí = redundante) ni sobre el footer (taparía
+    // los enlaces legales Términos/Privacidad/Cookies = mismo patrón de bloqueo que [[L-63]]). Se usa
+    // IntersectionObserver (no scroll-spam; §3.5). Entrada con fade+subida vía `.is-revealed` (CSS).
+    // El FAB se monta en boot, ANTES de que el home pinte el hero/footer → reintentar (rAF, cap) hasta
+    // que existan las zonas; si nunca aparecen, mostrarlo (no-bloqueante). Arranca OCULTO (hero a la vista).
+    const wireZones = (tries) => {
+        const hero = document.querySelector('.home-hero, [data-hero]');
+        const footer = document.querySelector('.bj-footer');
+        if (!hero && !footer) {
+            if (tries > 0) { requestAnimationFrame(() => wireZones(tries - 1)); return; }
+            a.classList.add('is-revealed'); return;   // sin zonas → muéstralo (degradación no-bloqueante)
+        }
+        let heroVis = !!hero, footVis = false;        // hero presente al cargar → arranca OCULTO
+        const apply = () => a.classList.toggle('is-revealed', !heroVis && !footVis);
+        if ('IntersectionObserver' in window) {
+            const io = new IntersectionObserver((entries) => {
+                for (const e of entries) {
+                    if (e.target === hero) heroVis = e.isIntersecting;
+                    else if (e.target === footer) footVis = e.isIntersecting;
+                }
+                apply();
+            }, { threshold: 0 });
+            if (hero) io.observe(hero);
+            if (footer) io.observe(footer);
+            apply();
+        } else {
             a.classList.add('is-revealed');
-            window.removeEventListener('scroll', reveal);
         }
     };
-    window.addEventListener('scroll', reveal, { passive: true });
-    reveal();   // página corta o ya scrolleada (deep-link con #ancla) → muestra de una
+    wireZones(30);
 
     // CMS global: si llega el override del WhatsApp, refresca el href en sitio (sin re-montar).
     data.onChange(() => {

@@ -42,6 +42,8 @@ import { mergeGlobal, waHref } from '../core/global-defaults.js';
 import { saveInquiry } from '../firestore-service.js';
 import { trackBeginCheckout, trackPurchase } from '../analytics.js';
 import { pagarConWompi, wompiEligible } from '../pago-web.js';
+import { COUNTRIES } from '../core/countries.js';
+import { getEnvioConfig, TIPOS_ENTREGA, DEFAULT_TIPO } from '../core/envio-config.js';
 
 const SHIPPING_KEY = 'bj-shipping';
 const STEPS = ['Carrito', 'Envío', 'Pago'];
@@ -49,9 +51,10 @@ const STEPS = ['Carrito', 'Envío', 'Pago'];
 // El botón "Pagar ahora" solo aparece en piezas ELEGIBLES (precio>0 + stock + ≤ tope $2.5M); con productos sin precio queda oculto.
 const WOMPI_WEB_ENABLED = true;
 let _step = 1;
-let _shipping = { firstName: '', lastName: '', email: '', phone: '', address: '', city: '', country: 'Colombia', zip: '' };
+let _tipoEntrega = DEFAULT_TIPO;   // TODO-63: tipo de entrega (rige campos del form + elegibilidad de pago online)
+let _shipping = { firstName: '', lastName: '', email: '', phone: '', address: '', city: '', country: 'Colombia', zip: '', docType: 'CC', docNumber: '', countryIso2: 'CO' };
 let _payment = 'whatsapp';
-let _habeas = false;   // F2: autorización de tratamiento de datos (Habeas Data) para el cobro web
+let _habeas = false;   // consentimiento (Habeas Data + Términos) — TODO-63: se da al FINAL del paso Entrega (Ley 1581), para todos los métodos
 const LEGAL_CONSENT_VERSION = '2026-06-30';   // versión del texto legal aceptado (Términos/Privacidad) — se guarda como prueba con el pedido
 
 function loadShipping() {
@@ -209,30 +212,92 @@ function fieldHTML({ name, label, value, type = 'text', required = false, placeh
         </label>`;
 }
 
-function renderStepShipping() {
+const DOC_TYPES = [
+    { v: 'CC',  t: 'Cédula de ciudadanía' },
+    { v: 'CE',  t: 'Cédula de extranjería' },
+    { v: 'PP',  t: 'Pasaporte' },
+    { v: 'NIT', t: 'NIT' },
+];
+
+// TODO-63: selector de TIPO DE ENTREGA — radiogroup nativo estilizado. `data-action` en el
+// <label> (mismo patrón que las tarjetas de pago); el radio interno da el estado a11y.
+function renderTipoEntrega() {
     return html`
-        <div class="ck-step-body">
-            <h3 class="ck-step-title">Información de envío</h3>
+        <fieldset class="ck-entrega-group">
+            <legend class="ck-step-title">¿Cómo quieres recibir tu pieza?</legend>
+            <div class="ck-entrega-list">
+                ${TIPOS_ENTREGA.map(t => {
+                    const c = getEnvioConfig(t);
+                    const on = _tipoEntrega === t;
+                    return html`
+                        <label class="glass ck-entrega ${on ? 'is-active' : ''}" data-action="tipo-entrega" data-tipo="${escape(t)}">
+                            <input type="radio" name="tipoEntrega" value="${escape(t)}" ${on ? 'checked' : ''} class="ck-entrega-radio">
+                            <span class="ck-entrega-body">
+                                <span class="ck-entrega-title">${escape(c.label)}</span>
+                                <span class="ck-entrega-sub">${escape(c.sub)}</span>
+                            </span>
+                        </label>`;
+                })}
+            </div>
+        </fieldset>`;
+}
+
+// TODO-63: teléfono con país (bandera + indicativo) — `<select>` nativo (a11y/typeahead gratis).
+function renderCountryPhone() {
+    return html`
+        <label class="ck-field">
+            <span class="eyebrow">Teléfono / WhatsApp<span class="ck-field-required">*</span></span>
+            <span class="ck-phone-row">
+                <select name="countryIso2" class="ck-field-input ck-phone-cc" aria-label="País (indicativo telefónico)">
+                    ${COUNTRIES.map(c => html`<option value="${escape(c.iso2)}" ${_shipping.countryIso2 === c.iso2 ? 'selected' : ''}>${c.flag} ${escape(c.nombre)} +${escape(c.code)}</option>`)}
+                </select>
+                <input type="tel" name="phone" class="ck-field-input ck-phone-num" value="${escape(_shipping.phone)}" inputmode="tel" autocomplete="tel" placeholder="Número" required>
+            </span>
+        </label>`;
+}
+
+function renderStepShipping() {
+    const cfg = getEnvioConfig(_tipoEntrega);
+    const showFact = cfg.campos.includes('address');   // tienda + nacional
+    const showZip  = cfg.campos.includes('zip');        // nacional
+    const docOpts  = DOC_TYPES.map(d => html`<option value="${escape(d.v)}" ${_shipping.docType === d.v ? 'selected' : ''}>${escape(d.t)}</option>`);
+    return html`
+        <div class="ck-step-body ck-entrega-step">
+            ${renderTipoEntrega()}
+            <p class="ck-entrega-note">${escape(cfg.nota)}</p>
             <form class="ck-shipping" data-form="shipping" novalidate>
                 <div class="ck-field-row ck-field-row--2">
                     ${fieldHTML({ name: 'firstName', label: 'Nombre',   value: _shipping.firstName, autocomplete: 'given-name',  required: true })}
-                    ${fieldHTML({ name: 'lastName',  label: 'Apellido', value: _shipping.lastName,  autocomplete: 'family-name', required: true })}
+                    ${fieldHTML({ name: 'lastName',  label: 'Apellido', value: _shipping.lastName,  autocomplete: 'family-name', required: showFact })}
                 </div>
                 <div class="ck-field-row ck-field-row--2">
-                    ${fieldHTML({ name: 'email', label: 'Email',                value: _shipping.email, type: 'email', autocomplete: 'email', required: true })}
-                    ${fieldHTML({ name: 'phone', label: 'Teléfono / WhatsApp',   value: _shipping.phone, type: 'tel',   autocomplete: 'tel',   required: true })}
+                    ${fieldHTML({ name: 'email', label: 'Email', value: _shipping.email, type: 'email', autocomplete: 'email', required: showFact })}
+                    ${renderCountryPhone()}
                 </div>
-                ${fieldHTML({ name: 'address', label: 'Dirección', value: _shipping.address, autocomplete: 'street-address', required: true })}
-                <div class="ck-field-row ck-field-row--3">
-                    ${fieldHTML({ name: 'city',    label: 'Ciudad',        value: _shipping.city,    autocomplete: 'address-level2', required: true })}
-                    ${fieldHTML({ name: 'country', label: 'País',          value: _shipping.country, autocomplete: 'country-name',   required: true })}
-                    ${fieldHTML({ name: 'zip',     label: 'Código postal', value: _shipping.zip,     autocomplete: 'postal-code' })}
-                </div>
-
+                ${showFact ? html`
+                <div class="ck-fact-block">
+                    <div class="eyebrow ck-fact-title">${escape(cfg.titulo)}</div>
+                    <div class="ck-field-row ck-field-row--2">
+                        <label class="ck-field">
+                            <span class="eyebrow">Tipo de documento<span class="ck-field-required">*</span></span>
+                            <select name="docType" class="ck-field-input" required>${docOpts}</select>
+                        </label>
+                        ${fieldHTML({ name: 'docNumber', label: 'Número de documento', value: _shipping.docNumber, required: true })}
+                    </div>
+                    ${fieldHTML({ name: 'address', label: 'Dirección', value: _shipping.address, autocomplete: 'street-address', required: true })}
+                    <div class="ck-field-row ${showZip ? 'ck-field-row--2' : ''}">
+                        ${fieldHTML({ name: 'city', label: 'Ciudad', value: _shipping.city, autocomplete: 'address-level2', required: true })}
+                        ${showZip ? fieldHTML({ name: 'zip', label: 'Código postal', value: _shipping.zip, autocomplete: 'postal-code' }) : ''}
+                    </div>
+                </div>` : ''}
+                <label class="ck-habeas ck-habeas--step2">
+                    <input type="checkbox" data-action="habeas" ${_habeas ? 'checked' : ''}>
+                    <span>Autorizo el tratamiento de mis datos y acepto los <a href="/terminos.html">Términos</a> y la <a href="/privacidad.html">Política de privacidad</a> (derecho de retracto: 5 días hábiles).</span>
+                </label>
                 <div class="ck-step-footer">
                     <button type="button" class="btn-aqua ck-back" data-action="step-prev">← Volver</button>
                     <button type="submit" class="btn-aqua btn-aqua-emerald ck-cta">
-                        Continuar al pago
+                        ${cfg.permitePagoOnline ? 'Continuar al pago' : 'Continuar'}
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
                     </button>
                 </div>
@@ -276,9 +341,15 @@ const WOMPI_OPTION = {
 
 function renderStepPayment(rows) {
     const { subtotal } = computeTotals(rows);
-    // Wompi F2: ofrecer "Pagar ahora" SOLO con 1 pieza elegible y el flag ON (el server RE-VALIDA igual).
-    const elegibleWompi = WOMPI_WEB_ENABLED && rows.length === 1 && wompiEligible(rows[0].piece, subtotal);
-    const opciones = elegibleWompi ? [WOMPI_OPTION, ...PAYMENT_OPTIONS] : PAYMENT_OPTIONS;
+    const cfg = getEnvioConfig(_tipoEntrega);
+    // Wompi F2 + TODO-63: "Pagar ahora" SOLO si el tipo de entrega permite pago online (internacional NO),
+    // 1 pieza elegible y el flag ON (el server RE-VALIDA igual).
+    const elegibleWompi = WOMPI_WEB_ENABLED && cfg.permitePagoOnline && rows.length === 1 && wompiEligible(rows[0].piece, subtotal);
+    // Internacional: el cierre es por WhatsApp (Términos) → solo esa opción.
+    const opciones = !cfg.permitePagoOnline
+        ? PAYMENT_OPTIONS.filter(o => o.k === 'whatsapp')
+        : (elegibleWompi ? [WOMPI_OPTION, ...PAYMENT_OPTIONS] : PAYMENT_OPTIONS);
+    if (!opciones.some(o => o.k === _payment)) _payment = opciones[0].k;   // método válido para este tipo
     const esWompi = _payment === 'wompi';
     return html`
         <div class="ck-step-body">
@@ -306,11 +377,7 @@ function renderStepPayment(rows) {
 
             ${esWompi ? html`
             <div class="ck-pay-legal">
-                <label class="ck-habeas">
-                    <input type="checkbox" data-action="habeas" ${_habeas ? 'checked' : ''}>
-                    <span>Autorizo el tratamiento de mis datos y acepto los <a href="/terminos.html">Términos</a> y la <a href="/privacidad.html">Política de privacidad</a> (derecho de retracto: 5 días hábiles).</span>
-                </label>
-                <p class="ck-pay-note">Pago seguro procesado por Wompi. El cargo aparecerá a nombre de Bersaglio (Diana M. Niño M.) en tu extracto.</p>
+                <p class="ck-pay-note">Pago seguro con Wompi (en su página segura). El cargo aparecerá a nombre de Bersaglio (Diana M. Niño M.) en tu extracto. El precio es el valor final en pesos colombianos; no incluye IVA. Tienes 5 días hábiles de retracto (salvo piezas a la medida).</p>
             </div>` : ''}
 
             <div class="ck-step-footer">
@@ -531,10 +598,16 @@ function onMainClick(e) {
         return;
     }
 
+    if (action === 'tipo-entrega') {
+        e.preventDefault();
+        _tipoEntrega = btn.dataset.tipo;
+        refresh();   // re-render: cambia campos del form + elegibilidad de pago (getEnvioConfig)
+        return;
+    }
     if (action === 'payment') {
         e.preventDefault();
         _payment = btn.dataset.key;
-        refresh();   // re-render: muestra/oculta el bloque legal (habeas) y actualiza el CTA (Wompi F2)
+        refresh();   // re-render: muestra/oculta el bloque legal y actualiza el CTA (Wompi F2)
         return;
     }
     if (action === 'habeas') { _habeas = !!btn.checked; return; }   // checkbox: NO preventDefault (toggle nativo)
@@ -563,6 +636,10 @@ function onMainSubmit(e) {
     e.preventDefault();
     if (!form.checkValidity()) {
         form.reportValidity();
+        return;
+    }
+    if (!_habeas) {   // TODO-63: consentimiento (Habeas Data + Términos) obligatorio al final de Entrega (Ley 1581)
+        alert('Para continuar, autoriza el tratamiento de tus datos y acepta los Términos.');
         return;
     }
     // Capture form values once more (defensive — input events may miss change in autofill)

@@ -32,6 +32,7 @@
     "test:gema": "node --test tests/gem-badge.test.mjs",
     "test:codigo": "node --test tests/buscador-codigo.test.mjs",
     "test:metal": "node --test tests/metal.test.mjs",
+    "test:checkout": "node --test tests/checkout-redesign.test.mjs",
     "brain:diff": "node scripts/brain-diff.mjs"
   },
   "devDependencies": {

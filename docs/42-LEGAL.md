@@ -96,7 +96,7 @@
 | ID | Item | Estado |
 |---|---|---|
 | **LEGAL-01** | Auditar las páginas legales ACTUALES del sitio vs §4. | ✅ 2026-06-30 (resultado en §4) |
-| **LEGAL-07** | **Encender Wompi (legal)**: reescribir Términos §03 (la web SÍ cobra online); cláusula de **retracto Art. 47** correcta (5 días hábiles + reembolso 30 días, excepto a-medida); **reversión Art. 51**; **NIT + enlace SIC** (Art. 50); aviso *vendedor≠cobrador* en checkout. Decisión Fuerte → Comité ×3 + consejo externo + disclaimer abogado. Prereq Wompi 2c (TODO-49/TODO-42). | 🔲 Abierto |
+| **LEGAL-07** | **Legal pre-Wompi** (Decisión Fuerte; comité ×3 + fuentes oficiales). **HECHO + DESPLEGADO (§157)**: retracto Art.47 correcto (5 días+reembolso total ≤30 días, excepto a-medida) + reversión Art.51 + garantía legal + enlace SIC + §03 puente honesto en `terminos.js`; consultas10/reclamos15 + retención + Encargado en `privacidad.js`. **RESTA (al encender Wompi)**: reescribir §03 a "la web cobra online"; aviso *vendedor≠cobrador* en el paso de pago + soft-descriptor; guardar prueba del consentimiento (timestamp+versión+casilla) con el pedido. Disclaimer abogado antes de cobrar. | 🟡 Parcial → resta Wompi |
 | **LEGAL-08** | **Datos reales de Kary** (bloquean LEGAL-07): NIT/razón social (¿S.A.S. o Persona Natural?) + confirmar titular de la cuenta Wompi (nombre que verá el cliente en el cargo). | 🔲 Espera Kary |
 | **LEGAL-02** | Verificar en norma oficial: umbral SAGRILAFT (30.000 SMMLV sector / 3.000-5.000 medidas mínimas) + si Bersaglio lo cruza hoy. | 🔲 Abierto |
 | **LEGAL-03** | Confirmar umbral/plazos del RNBD (100.000 UVT) y si Bersaglio debe inscribirse. | 🔲 Abierto |

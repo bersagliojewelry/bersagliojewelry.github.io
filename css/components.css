@@ -550,7 +550,9 @@ body.wishlist-drawer-open {
     position: fixed;
     bottom: 16px; left: 50%;
     transform: translateX(-50%) translateY(120%);
-    z-index: 90;
+    /* §156.19: compuerta de consentimiento POR ENCIMA del FAB de asesoría (z-200) — antes 90 quedaba
+       debajo y el toque de "Aceptar" caía en el FAB en móvil. Debajo del email-modal (z-300). */
+    z-index: 210;
     max-width: 720px;
     width: calc(100vw - 32px);
     padding: 14px 18px;
@@ -914,6 +916,14 @@ a:focus-visible {
     transition: opacity .6s ease, transform .6s var(--ease-glass), box-shadow .35s, border-color .35s;
 }
 .bj-asesoria-fab.is-revealed { opacity: 1; transform: none; pointer-events: auto; }
+/* §156.19: mientras la compuerta de cookies está presente, el FAB se aparta (se desvanece y no
+   recibe toques) para no pisar el botón "Aceptar". `.bj-cookie-active` lo pone/quita cookie-banner.js.
+   Va DESPUÉS de `.is-revealed` (misma especificidad) para ganar por orden. Vuelve al resolverse. */
+body.bj-cookie-active .bj-asesoria-fab {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(20px);
+}
 .bj-asesoria-fab:hover {
     transform: translateY(-2px);
     border-color: oklch(72% 0.13 85 / 0.78);

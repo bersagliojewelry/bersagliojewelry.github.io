@@ -18,7 +18,10 @@
 // v57 = §156.18 (TODO-62): estabilidad de memoria en pinch-zoom iOS — content-visibility en
 // secciones estáticas del home + quitar filter:blur() decorativos en móvil (NO promueve capas;
 // reemplaza al revertido §156.17). Bump para garantizar CSS fresco en el iPhone de prueba.
-const CACHE_NAME    = 'bersaglio-v57';
+// v58 = §156.19: el aviso de cookies (z-90) quedaba DEBAJO del FAB "Asesoría privada" (z-200) y el
+// toque de "Aceptar" caía en el FAB (móvil). Fix: banner a z-210 + el FAB se aparta mientras el
+// banner está presente (bandera body.bj-cookie-active desde cookie-banner.js). Bump = CSS/JS fresco.
+const CACHE_NAME    = 'bersaglio-v58';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

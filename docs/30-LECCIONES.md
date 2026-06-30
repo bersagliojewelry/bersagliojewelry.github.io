@@ -2,27 +2,13 @@
 
 > **Nodo neuronal: Memoria Procedimental.** Se consulta on-demand ante el **Trigger de Experiencia (`CLAUDE.md §G.2`)** ANTES de realizar refactorizaciones CSS, editar el Service Worker o depurar comportamientos de renderizado.
 >
-> **Mantenimiento (Frescura §G.4)**: registra aquí cada causa raíz de bug complejo o doctrina visual. **Tope ~350 líneas (§G.5)**. 🔗 **Hija [`31-LECCIONES-FIRESTORE`](31-LECCIONES-FIRESTORE.md)** (Firestore/CF/reglas/backend): L-12/13/14/16/17/29/34/35/36/37/38 en DETALLE allá (el kernel lee las defs `### L-NN` SOLO de `30`, L-31 → el **stub de 1 línea DEBE quedar aquí**). 🔗 **Hija [`32-LECCIONES-CARGA`](32-LECCIONES-CARGA.md)** (carga/LQIP/View Transitions/caché SWR público): L-45/46/47/49/50/51/52/53/61 en DETALLE; stub aquí. **Nuevas lecciones backend→`31`, carga→`32`, + stub aquí.**
+> **Mantenimiento (Frescura §G.4)**: registra aquí cada causa raíz de bug complejo o doctrina visual. **Tope ~350 líneas (§G.5)**. 🔗 **Hija [`31-LECCIONES-FIRESTORE`](31-LECCIONES-FIRESTORE.md)** (Firestore/CF/reglas/backend): L-12/13/14/16/17/29/34/35/36/37/38 en DETALLE allá (el kernel lee las defs `### L-NN` SOLO de `30`, L-31 → el **stub de 1 línea DEBE quedar aquí**). 🔗 **Hija [`32-LECCIONES-CARGA`](32-LECCIONES-CARGA.md)** (carga/LQIP/View Transitions/caché SWR público): L-45/46/47/49/50/51/52/53/61 en DETALLE; stub aquí. 🔗 **Hija [`33-DOCTRINAS-CSS`](33-DOCTRINAS-CSS.md)** (doctrinas de diseño CSS / Liquid Glass / tipografía — NO `L-NN`). **Nuevas lecciones backend→`31`, carga→`32`, + stub aquí; doctrinas de diseño→`33`.**
 
 ---
 
-## 🎨 Doctrinas CSS y Principios de Diseño "Liquid Glass"
+## 🎨 Doctrinas CSS y Diseño "Liquid Glass" → hoja [`33-DOCTRINAS-CSS`](33-DOCTRINAS-CSS.md)
 
-### 1. Arquitectura CSS (post-NOVO — actualizado 2026-06-05)
-*   **NO existe `css/style.css`** (lo eliminó el recambio NOVO). El CSS es **modular por página**: `css/liquid-glass.css` (design system: tokens OKLCH + motion `--ease-*` + primitivas de cristal + `.reveal`), `css/components.css` (header/footer/drawers/dock `.qd-*`), y un archivo por página (`home.css`, `nosotros.css`, `contacto.css`, …).
-*   **Carga por página**: critical CSS inline → `liquid-glass` → `components` → `<página>` (la de página gana por cascada).
-*   **Regla de oro (rediseño)**: editar el CSS **in-place** en el archivo de su selector. NO crear capa-sombra de override (`enhancements.css`) — una sola fuente de verdad por selector.
-
-### 2. Estética Editorial Premium
-*   **Squircles suaves** (radii 12/18/24/34/48px + pill 999) — NUNCA esquinas a 0px. Botones/chips = pill; tarjetas = 24–34; hero/footer = 40–48. (La nota previa de "0px" era de una era V7 anterior, ya obsoleta.)
-*   **Glassmorphism iOS 26**: `backdrop-filter: blur(28px) saturate(180%)` con pinlight superior (`--pinlight`) y borde iridiscente cónico (`--iridescent-rim`).
-*   **Background Unification**: El patrón exacto es `html { background: var(--bj-pearl) }`, `body { background: transparent }` y `.bj-world { z-index: -1 }`. Si se pinta background sólido en el body, la capa de auroras `.bj-world` queda invisible.
-*   **No dividers full-width**: No usar `border-top/bottom` decorativos en secciones. Si se necesitan separadores, usar `<hr>` dentro del contenedor o bordes internos de las tarjetas glass.
-
-### 3. Tipografía (post-NOVO — actualizado)
-*   **Display/Títulos**: Cormorant Garamond (`--font-display`, peso 300, itálicas) + Fraunces para el wordmark (`--font-brand`).
-*   **Body/UI**: **Manrope** (`--font-ui`) — NO Inter.
-*   **Numéricos/eyebrows**: **Space Mono** (`--font-mono`) con `tabular-nums` — NO JetBrains Mono.
+Las doctrinas de diseño/CSS (arquitectura CSS modular · estética editorial premium / glassmorphism · tipografía Cormorant/Manrope/Space Mono) se movieron a la hija **[`33-DOCTRINAS-CSS`](33-DOCTRINAS-CSS.md)** (§G.5 sharding por saturación de `30`). Consúltala ante un Trigger de Experiencia de CSS/diseño. Las lecciones `L-NN` siguen aquí abajo.
 
 ---
 
@@ -57,6 +43,8 @@ window.scrollTo(0, scrollY);
 ### L-04: Contrato del Header Flotante
 *   El header pill flotante tiene `position: fixed; pointer-events: none` para no bloquear los clicks debajo de su área transparente lateral. El elemento interno `.header-aqua-pill` tiene `pointer-events: auto` para que el menú sí sea clickable.
 *   Si se altera esta estructura, se pueden bloquear clicks en toda la parte superior del sitio web.
+
+### L-63: Dos flotantes `fixed` en la misma esquina (cookie banner ↔ FAB asesoría) se pisan → la compuerta de consentimiento manda sobre el concierge; bandera `body.bj-cookie-active` (la pone/quita `cookie-banner.js`) + el otro cede por CSS (regla DESPUÉS de `.is-revealed`, misma especificidad gana por orden) + banner z-210 > FAB z-200 (red de seguridad) → §156.19
 
 ### L-62: crash pinch-zoom iOS = MEMORIA; fix = RESTAR capas en móvil (content-visibility + quitar `filter:blur`), NUNCA promover GPU → §156.18
 

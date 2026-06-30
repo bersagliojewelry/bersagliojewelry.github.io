@@ -15,7 +15,7 @@
  * solo step 1 es clickeable.
  *
  * Summary sidebar (glass-emerald, sticky top:100):
- *   Subtotal / Envío (Cotizar) / IVA (incluido) / Total mono 24px
+ *   Subtotal / Envío (Cotizar) / Total mono 24px
  *
  * Datos:
  *   - cart.getAll() entrega items {slug, qty, addedAt}
@@ -340,10 +340,6 @@ function renderSummary(rows) {
                     <span>Envío asegurado</span>
                     <span class="mono">Cotizar</span>
                 </div>
-                <div class="ck-summary-row">
-                    <span>IVA</span>
-                    <span class="mono">incluido</span>
-                </div>
             </div>
             <div class="ck-summary-divider"></div>
             <div class="ck-summary-total">
@@ -351,8 +347,9 @@ function renderSummary(rows) {
                 <span class="mono ck-summary-total-val">${escape(format$(subtotal))}</span>
             </div>
             <div class="ck-summary-note">
-                Los precios se confirman al cierre con Kary. El envío internacional
-                se cotiza por DHL Express o FedEx Priority.
+                El precio mostrado es el valor final en pesos colombianos. El costo del
+                envío se calcula según el destino y se confirma antes de despachar; los
+                envíos internacionales se coordinan con un asesor por WhatsApp.
             </div>
         </aside>`;
 }
@@ -442,15 +439,23 @@ async function confirmOrder(rows) {
         if (!_habeas) { alert('Para pagar en línea, primero autoriza el tratamiento de tus datos.'); return; }
         const piece = rows[0] && rows[0].piece;
         if (!piece || !piece.id) { alert('No pudimos identificar la pieza. Intenta de nuevo o escríbenos por WhatsApp.'); return; }
+        // Bloqueo INMEDIATO + estado visible: el inicio (CF) + carga del Widget tardan unos segundos;
+        // sin feedback el cliente cree que no respondió y vuelve a hacer clic (doble intento).
         const btn = document.querySelector('.ck-confirm');
-        if (btn) btn.setAttribute('disabled', '');
+        if (btn) {
+            btn.setAttribute('disabled', '');
+            btn.setAttribute('aria-busy', 'true');
+            btn.classList.add('is-loading');
+            btn.textContent = 'Procesando…';
+        }
         try {
             await pagarConWompi({ pieceId: piece.id, shipping: _shipping, habeas: { aceptado: _habeas, version: LEGAL_CONSENT_VERSION }, redirectBase: location.origin });
-            // El widget redirige a gracias.html?ref=; si solo se cerró, el webhook resolverá el pago.
+            // El Widget redirige a gracias.html?ref= si pagó; si solo se cerró (canceló), restauramos el botón.
+            refresh();
         } catch (err) {
             console.error('[carrito] wompi:', err);
             alert((err && err.message) || 'No se pudo iniciar el pago. Intenta de nuevo o escríbenos por WhatsApp.');
-            if (btn) btn.removeAttribute('disabled');
+            refresh();   // re-render del paso → botón habilitado de nuevo
         }
         return;
     }

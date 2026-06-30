@@ -58,7 +58,7 @@ window.scrollTo(0, scrollY);
 *   El header pill flotante tiene `position: fixed; pointer-events: none` para no bloquear los clicks debajo de su área transparente lateral. El elemento interno `.header-aqua-pill` tiene `pointer-events: auto` para que el menú sí sea clickable.
 *   Si se altera esta estructura, se pueden bloquear clicks en toda la parte superior del sitio web.
 
-### L-62: iOS pinch-zoom + `backdrop-filter` = pantallazo BLANCO; fix = quitar backdrop-filter en móvil (fondo sólido), no bajar el blur → ADR §156.17
+### L-62: crash pinch-zoom iOS = MEMORIA; fix = RESTAR capas en móvil (content-visibility + quitar `filter:blur`), NUNCA promover GPU → §156.18
 
 ### L-61: Artefactos del SSG (`dist/`) → verificar con `vite preview`, NO el dev server (sirve la fuente). → `32-LECCIONES-CARGA`
 

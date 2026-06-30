@@ -358,8 +358,10 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
             oklch(99% 0.008 95 / 0.52) 56%,
             transparent 72%);
     }
-    /* §156 móvil: halo blanco al eyebrow dorado para despegarlo de la seda iridiscente (legibilidad). */
-    .home-hero-eyebrow { text-shadow: 0 1px 2px oklch(100% 0 0 / 0.9), 0 0 10px oklch(100% 0 0 / 0.7); }
+    /* §156.13 móvil: el eyebrow DORADO sobre la foto clara se lavaba (gold + halo blanco = invisible,
+       reportado por Daniel). En móvil va en TINTA oscura + halo blanco (estilo subtítulo) = legible
+       sobre cualquier zona (clara u oscura) de la imagen. El dorado se mantiene solo en desktop. */
+    .home-hero-eyebrow { color: var(--bj-ink-emerald); text-shadow: 0 0 5px oklch(100% 0 0 / 0.95), 0 1px 3px oklch(100% 0 0 / 0.9); }
     .home-hero-body { max-width: none; }
     /* §156 móvil: CTAs apilados full-width (área táctil generosa, Gemini). */
     .home-hero-actions { flex-direction: column; align-items: stretch; width: 100%; }

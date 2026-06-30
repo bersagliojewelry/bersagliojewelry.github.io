@@ -31,7 +31,7 @@ Al usar el sitio o iniciar una compra, aceptas estos términos en su totalidad. 
         title: 'Productos y precios',
         body: `Cada pieza Bersaglio es única o producida en series muy limitadas. Las fotografías son fieles; sin embargo, debido a variaciones de luz, calibración de pantalla y la naturaleza misma de las gemas naturales, el color real puede presentar diferencias mínimas respecto a la imagen.
 
-Los precios se expresan en pesos colombianos (COP) y ya incluyen el IVA del 19%. Los envíos internacionales pueden generar aranceles y trámites aduaneros del país destino que corren por cuenta del comprador. Los precios pueden variar sin previo aviso, pero una vez confirmada una compra el precio queda bloqueado.`,
+Los precios se expresan en pesos colombianos (COP) y corresponden al valor final a pagar. Bersaglio opera bajo el régimen de No responsables de IVA, por lo que el precio no discrimina ni adiciona IVA. Los envíos internacionales pueden generar aranceles y trámites aduaneros del país destino que corren por cuenta del comprador. Los precios pueden variar sin previo aviso, pero una vez confirmada una compra el precio queda bloqueado.`,
     },
     {
         id: 'cierre-compra',
@@ -159,7 +159,7 @@ function renderAll() {
 
             <div class="lg-foot">
                 <p>¿Una duda específica? Escríbenos a <a href="${escape(safeUrl('mailto:' + c.email))}">${escape(c.email)}</a> o por <a href="${escape(safeUrl(waHref(c.whatsapp)))}" target="_blank" rel="noopener">WhatsApp</a>.</p>
-                <p class="lg-legal-id">Bersaglio Jewelry · Calle 36 # 6-32, Centro Histórico, Cartagena de Indias, Bolívar, Colombia. ¿Quieres conocer tus derechos como consumidor o presentar una queja? Puedes acudir a la <a href="https://www.sic.gov.co" target="_blank" rel="noopener noreferrer">Superintendencia de Industria y Comercio (SIC)</a>.</p>
+                <p class="lg-legal-id">Bersaglio Jewelry — nombre comercial del establecimiento de comercio de Diana Margarita Niño Mendoza (persona natural comerciante), NIT 32.908.305-6 · Calle 36 # 6-32, Centro Histórico, Cartagena de Indias, Bolívar, Colombia. ¿Quieres conocer tus derechos como consumidor o presentar una queja? Puedes acudir a la <a href="https://www.sic.gov.co" target="_blank" rel="noopener noreferrer">Superintendencia de Industria y Comercio (SIC)</a>.</p>
                 <a href="/" class="btn-aqua lg-back-btn">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
                     Volver al inicio

@@ -54,6 +54,7 @@ let _step = 1;
 let _tipoEntrega = DEFAULT_TIPO;   // TODO-63: tipo de entrega (rige campos del form + elegibilidad de pago online)
 let _shipping = { firstName: '', lastName: '', email: '', phone: '', address: '', city: '', country: 'Colombia', zip: '', docType: 'CC', docNumber: '', countryIso2: 'CO' };
 let _payment = 'whatsapp';
+let _payFocus = false;   // TODO-63: al elegir "Pagar ahora" se enfoca ese método y se ocultan los otros (con escape)
 let _habeas = false;   // consentimiento (Habeas Data + Términos) — TODO-63: se da al FINAL del paso Entrega (Ley 1581), para todos los métodos
 const LEGAL_CONSENT_VERSION = '2026-06-30';   // versión del texto legal aceptado (Términos/Privacidad) — se guarda como prueba con el pedido
 
@@ -349,18 +350,25 @@ function renderStepPayment(rows) {
     const opciones = !cfg.permitePagoOnline
         ? PAYMENT_OPTIONS.filter(o => o.k === 'whatsapp')
         : (elegibleWompi ? [WOMPI_OPTION, ...PAYMENT_OPTIONS] : PAYMENT_OPTIONS);
-    if (!opciones.some(o => o.k === _payment)) _payment = opciones[0].k;   // método válido para este tipo
+    if (!opciones.some(o => o.k === _payment)) { _payment = opciones[0].k; _payFocus = false; }   // método válido para este tipo
     const esWompi = _payment === 'wompi';
+    const focus = _payFocus && esWompi && elegibleWompi;   // TODO-63: "Pagar ahora" enfocado → oculta los otros (con escape)
+    const visibles = focus ? opciones.filter(o => o.k === 'wompi') : opciones;
     return html`
         <div class="ck-step-body">
-            <h3 class="ck-step-title">Cómo quieres avanzar</h3>
-            <p class="ck-step-lead">
-                Las piezas Bersaglio son únicas y de alto valor: cerramos cada compra
-                en conversación. Elige cómo prefieres coordinar.
-            </p>
+            <h3 class="ck-step-title">${focus ? 'Pago seguro' : 'Cómo quieres avanzar'}</h3>
+            ${focus
+                ? html`<button type="button" class="ck-pay-change" data-action="pay-back">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+                        Cambiar método de pago
+                    </button>`
+                : html`<p class="ck-step-lead">
+                        Las piezas Bersaglio son únicas y de alto valor: cerramos cada compra
+                        en conversación. Elige cómo prefieres coordinar.
+                    </p>`}
 
             <div class="ck-payment-list">
-                ${opciones.map(opt => html`
+                ${visibles.map(opt => html`
                     <label class="glass ck-payment ${_payment === opt.k ? 'is-active' : ''}"
                            data-action="payment"
                            data-key="${escape(opt.k)}">
@@ -607,7 +615,14 @@ function onMainClick(e) {
     if (action === 'payment') {
         e.preventDefault();
         _payment = btn.dataset.key;
-        refresh();   // re-render: muestra/oculta el bloque legal y actualiza el CTA (Wompi F2)
+        _payFocus = (_payment === 'wompi');   // TODO-63: elegir "Pagar ahora" enfoca (oculta los otros métodos)
+        refresh();
+        return;
+    }
+    if (action === 'pay-back') {   // TODO-63: "Cambiar método de pago" → vuelve a mostrar todos
+        e.preventDefault();
+        _payFocus = false;
+        refresh();
         return;
     }
     if (action === 'habeas') { _habeas = !!btn.checked; return; }   // checkbox: NO preventDefault (toggle nativo)

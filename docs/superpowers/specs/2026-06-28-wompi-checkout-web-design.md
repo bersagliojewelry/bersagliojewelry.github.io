@@ -196,3 +196,35 @@ El COMITÉ optimizó "no sobre-construir" y difirió el reaper; el CONSEJO EXTER
 - **2b** (después): PSE/Nequi + estado `pago_iniciado_pasarela` + override POS. **2c**: legal (TODO-49) + llaves prod (Kary).
 
 **VEREDICTO**: diseño CERRADO y verificado por 3 capas (arquitecto + comité ×5 + consejo externo, todo contra código real). Listo para construir Fase 2a.
+
+---
+
+## 12. Estado de construcción + verificación (al 2026-06-30, OPUS-4.8)
+**Fase 2a CONSTRUIDA, en main, dormida** (flag OFF). Re-verificado este día (no de memoria):
+- **Flag**: `WOMPI_WEB_ENABLED = false` en `js/pages/carrito.js:49` (front; subirlo exige rebuild+deploy Pages+bump SW).
+- **CFs vivas (sandbox)**: `iniciarPagoWeb` (callable public, `pedidos.js:94`) · `confirmarPagoWompi` (HTTP webhook, `pedidos.js:114`) · `liberarReservasVencidas` (scheduler `every 2 minutes`, `pedidos.js:140`). Núcleo puro en `pedidos-core.js`/`wompi-core.js`.
+- **Frontend**: `js/pago-web.js` (Widget `checkout.wompi.co`; llave pública la entrega la CF, NO build var; eligibilidad mide `cantidad` no `available` — gap cazado en gate live). `carrito.js` ya trae checkbox Habeas Data (`_habeas`, `LEGAL_CONSENT_VERSION='2026-06-30'`) + aviso vendedor≠cobrador (`carrito.js:312`).
+- **Tests VERDE 36/36**: unit `functions/wompi.test.mjs` 11/11 (firma integridad + firma evento anti-forja) · integración emulador 25/25 (`wompi.integration` reserva/elegibilidad/Habeas · `wompi-webhook.integration` anti-fraude/idempotencia/solo-APPROVED · `wompi-reaper.integration` libera-NONE/respeta-PENDING/Wompi-caído).
+- **Secretos (verificados, `pedidos.js:20-28`)**: Secret Manager → `WOMPI_INTEGRITY_SECRET` (firma pago) · `WOMPI_EVENTS_SECRET` (firma webhook) · `WOMPI_PRIVATE_KEY` (re-consulta API). Env normal (`functions/.env`, gitignored ✅) → `WOMPI_PUBLIC_KEY` (pública) · `WOMPI_API_BASE` (**default sandbox**; prod = `https://production.wompi.co/v1`).
+- **Legal (§157)**: Términos §03 ya menciona Wompi; matiz pendiente = describe "te enviamos un enlace", falta el "Pagar ahora en el sitio" (Widget) → ver §14.
+
+## 13. Runbook de encendido (Fase 2c) — ejecutar EN ORDEN cuando lleguen llaves+precios
+> Pre-requisitos HUMANOS (bloqueantes): **(A)** Kary entrega las 3 llaves de PRODUCCIÓN del panel `comercios.wompi.co` (Integridad prod · Eventos prod · Privada `prv_prod_…`) + la pública `pub_prod_…`; **(B)** Daniel/Kary confirman precios reales (hoy temporales).
+
+1. **Cargar los 3 secretos prod** (Secret Manager): `firebase functions:secrets:set WOMPI_INTEGRITY_SECRET` · `…WOMPI_EVENTS_SECRET` · `…WOMPI_PRIVATE_KEY` (pegar cada valor prod).
+2. **Editar `functions/.env`**: `WOMPI_PUBLIC_KEY=pub_prod_…` y `WOMPI_API_BASE=https://production.wompi.co/v1` (el archivo ya trae el recordatorio). NO commitear (gitignored).
+3. **Deploy funciones** (L-22 manual; trae código+secretos+consentimiento, apuntando a PROD): `firebase deploy --only functions`.
+4. **Panel Wompi (prod) → URL de Eventos** = URL pública del webhook `confirmarPagoWompi` (copiar del deploy, región us-central1).
+5. **Cargar precios reales** en las piezas (panel admin / MCP Firebase) — Daniel/Kary.
+6. **Ajustar Términos §3** (matiz §14) → pasa por filtro legal → entra en el MISMO deploy de Pages que el flag.
+7. **Subir el interruptor**: `WOMPI_WEB_ENABLED = true` (`carrito.js:49`) → `npm run build` → **bump SW** (`public/sw.js` + `05`) → deploy Pages (merge a main).
+8. **Gate live en PROD**: 1 compra real (monto mínimo) → verificar `pagado` por webhook + reaper libera si se abandona. (Este ES el "final" de §130.4 — pruebas vivo aquí sí.)
+- ⚠️ **Verificar en el gate**: el endpoint del reaper `GET …/transactions?reference=` (`pedidos.js:145`) lleva nota "confirmar el endpoint exacto" — validar respuesta real de Wompi prod.
+- **Rollback**: bajar el flag (`false`) + rebuild/deploy Pages → la web deja de cobrar online en minutos; las CFs quedan inertes sin tráfico. App Check (TODO-14) = opcional.
+
+## 14. Borrador del §3 (Términos) — PENDIENTE filtro legal, NO publicado
+> Ajuste quirúrgico: el §03 actual describe Wompi solo como "te enviamos un enlace"; al encender hay además "Pagar ahora" en el sitio (Widget). Reemplazo propuesto del bullet de Wompi (a revisar por `legal-colombia`/comité antes de publicar, y desplegar junto al flag):
+>
+> *"· Pago en línea con Wompi: para piezas elegibles (con precio publicado, disponibles de inmediato y dentro del monto permitido), puedes pagar directamente en el sitio con el botón «Pagar ahora», mediante la pasarela segura Wompi. Para piezas a la medida, por encargo, de mayor valor o envíos internacionales, coordinamos el pago contigo por WhatsApp, donde también podemos enviarte un enlace de pago de Wompi."*
+>
+> (MVP on-site = TARJETA; PSE/Nequi = Fase 2b → no prometer en el sitio lo que aún no procesa.)

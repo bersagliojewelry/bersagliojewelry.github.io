@@ -41,7 +41,7 @@ Los precios se expresan en pesos colombianos (COP) y ya incluyen el IVA del 19%.
 
 Métodos de pago aceptados: transferencia bancaria (Bancolombia, Davivienda), tarjetas Visa/Mastercard procesadas presencial o vía link de pago, financiación hasta 12 meses con entidades aliadas para piezas superiores a $50.000.000 COP.
 
-Hoy acompañamos cada compra de forma personal, sin cobros automáticos en el sitio. Cuando habilitemos el pago en línea te lo indicaremos al momento de comprar, y desde ese instante aplican plenamente tus derechos de retracto y reversión descritos más abajo.`,
+Hoy acompañamos cada compra de forma personal, sin cobros automáticos en el sitio. Tu derecho de retracto aplica a toda compra a distancia —incluidas las que coordinas por WhatsApp, teléfono o correo—, sin importar cómo pagues. Cuando habilitemos el pago en línea con tarjeta te lo indicaremos al momento de comprar; a esos pagos electrónicos se suma además tu derecho de reversión (más abajo).`,
     },
     {
         id: 'envios',

@@ -893,22 +893,37 @@ a:focus-visible {
 .bj-asesoria-fab {
     position: fixed; right: 22px; bottom: 22px; z-index: 200;
     display: inline-flex; align-items: center; gap: 9px;
-    padding: 13px 20px; border-radius: 999px;
-    color: var(--bj-emerald-800);
-    font-family: var(--font-ui); font-size: 13px; font-weight: 500; letter-spacing: 0.04em;
+    padding: 12px 20px; border-radius: 999px;
+    /* §156.12 v3 (comité + consejo Gemini verificado): cristal MARFIL con CONTRASTE real (el v2 falló
+       por marfil casi invisible) + filo de ORO + borde interior blanco (hermano del header). Ícono de
+       WhatsApp esmeralda de línea fina + "Asesoría privada" en serif de marca. Cero verde, cero avatar,
+       cero punto "en línea", cero pulso = se entiende y se nota, sin abaratar. */
+    background: oklch(98.5% 0.006 90 / 0.84);
+    backdrop-filter: blur(14px) saturate(1.15);
+    -webkit-backdrop-filter: blur(14px) saturate(1.15);
+    border: 1px solid oklch(72% 0.09 85 / 0.5);
+    box-shadow: inset 0 0 0 1px oklch(100% 0 0 / 0.6), 0 10px 32px -8px oklch(30% 0.05 80 / 0.2);
+    color: var(--bj-ink-emerald);
+    font-family: var(--font-display); font-size: 15px; font-weight: 500; letter-spacing: 0.01em;
     text-decoration: none;
-    box-shadow: 0 1px 0 oklch(100% 0 0 / 0.6) inset, 0 12px 32px -10px oklch(20% 0.05 155 / 0.38);
-    transition: transform .3s var(--ease-glass), box-shadow .3s;
+    /* Entrada retrasada (consejo): oculto hasta el 30% de scroll (lo revela `is-revealed` desde el JS). */
+    opacity: 0; transform: translateY(20px); pointer-events: none;
+    transition: opacity .6s ease, transform .6s var(--ease-glass), box-shadow .35s, border-color .35s;
 }
-.bj-asesoria-fab:hover { transform: translateY(-2px); box-shadow: 0 1px 0 oklch(100% 0 0 / 0.7) inset, 0 18px 40px -12px oklch(42% 0.14 155 / 0.42); }
-.bj-asesoria-ic { display: inline-flex; color: var(--bj-emerald-700); flex-shrink: 0; }
+.bj-asesoria-fab.is-revealed { opacity: 1; transform: none; pointer-events: auto; }
+.bj-asesoria-fab:hover {
+    transform: translateY(-2px);
+    border-color: oklch(72% 0.13 85 / 0.78);
+    box-shadow: inset 0 0 0 1px oklch(100% 0 0 / 0.78), 0 16px 42px -10px oklch(30% 0.07 80 / 0.26);
+}
+.bj-asesoria-ic { display: inline-flex; color: var(--bj-emerald-800); flex-shrink: 0; }   /* WhatsApp esmeralda, línea fina */
 .bj-asesoria-ic svg { display: block; }
 @media (max-width: 680px) {
-    .bj-asesoria-fab { right: 14px; bottom: 14px; padding: 13px; }
-    .bj-asesoria-label { display: none; }
+    .bj-asesoria-fab { right: 14px; bottom: 14px; padding: 11px 17px; font-size: 14px; }
 }
 @media (prefers-reduced-motion: reduce) {
-    .bj-asesoria-fab { transition: none; }
+    .bj-asesoria-fab { transform: none; transition: opacity .3s ease; }
+    .bj-asesoria-fab.is-revealed { transform: none; }
     .bj-asesoria-fab:hover { transform: none; }
 }
 

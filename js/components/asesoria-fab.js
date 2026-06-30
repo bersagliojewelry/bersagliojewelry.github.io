@@ -22,17 +22,21 @@ function waUrl() {
     return waHref(mergeGlobal(data.getSiteContent('global')).contacto.whatsapp);
 }
 
-// Glifo de DIÁLOGO (no el logo de WhatsApp): comunica "habla con un asesor", monocromo de marca.
+// §156.12 (flujo W-11: comité + consejo Gemini, verificado): ícono de WhatsApp de LÍNEA FINA monocromo
+// en ESMERALDA (no el verde de barrio) = se entiende el canal + "Asesoría privada" (voz de marca; el
+// EQUIPO del atelier, no una persona — la dueña no siempre responde). SIN avatar, SIN punto "en línea",
+// SIN pulso (abaratan, consejo). El ícono dice CÓMO (WhatsApp), el texto dice QUÉ (asesoría, no soporte).
 function fabHTML() {
     return html`
-        <a class="glass bj-asesoria-fab" href="${escape(safeUrl(waUrl()))}" target="_blank" rel="noopener noreferrer"
+        <a class="bj-asesoria-fab" href="${escape(safeUrl(waUrl()))}" target="_blank" rel="noopener noreferrer"
            aria-label="Asesoría privada por WhatsApp">
             <span class="bj-asesoria-ic" aria-hidden="true">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                    <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9l-5.05.9"/>
+                    <path d="M9 10a.5.5 0 0 0 1 0v-1a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1"/>
                 </svg>
             </span>
-            <span class="bj-asesoria-label">Asesoría</span>
+            <span class="bj-asesoria-label">Asesoría privada</span>
         </a>`;
 }
 
@@ -43,6 +47,18 @@ export function mountAsesoriaFab() {
     const a = wrap.firstElementChild;
     if (!a) return;
     document.body.appendChild(a);
+
+    // Entrada RETRASADA (consejo Gemini): NO aparece al cargar (deja respirar el hero); se revela con
+    // fade + subida UNA vez tras pasar el 30% del scroll. Sin pulso ni rebote (eso es chatbot).
+    const reveal = () => {
+        const max = document.documentElement.scrollHeight - window.innerHeight;
+        if (max <= 0 || window.scrollY >= max * 0.3) {
+            a.classList.add('is-revealed');
+            window.removeEventListener('scroll', reveal);
+        }
+    };
+    window.addEventListener('scroll', reveal, { passive: true });
+    reveal();   // página corta o ya scrolleada (deep-link con #ancla) → muestra de una
 
     // CMS global: si llega el override del WhatsApp, refresca el href en sitio (sin re-montar).
     data.onChange(() => {

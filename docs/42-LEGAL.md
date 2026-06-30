@@ -79,7 +79,8 @@
 >   3. **Reversión del pago (Art. 51 / Decreto 587/2016)**: ausente; agregar (pago con tarjeta online).
 >   4. **Art. 50**: falta **NIT real** + **enlace visible a la SIC**.
 > - **Banner de cookies**: rechazo real ✅ (Res. SIC). **Checkout** (`carrito.js:307`): checkbox Habeas Data obligatorio (gateado a Wompi) ✅; **falta** aviso *vendedor≠cobrador* (el cargo aparece a nombre del titular de la cuenta).
-> - **Bloqueado por datos de Kary**: NIT/razón social real · confirmar titular de la cuenta Wompi (¿Diana M. Niño Mendoza = Kary?). → **LEGAL-07/08**.
+> - **Identidad del proveedor RESUELTA** (datos en bóveda `LEGALES-kary-2026-06.md`, desde 2026-06-09): la comerciante es **Kary** (= Diana M. Niño Mendoza, persona natural), **Bersaglio = su establecimiento** (matrícula mercantil, CL 36 #6-32 Centro). El **titular de la cuenta Wompi es ella misma** → "vendedor≠cobrador" es la MISMA persona (basta el aviso + soft-descriptor, no es un tercero). LEGAL-08 → ya NO bloqueado por falta de dato; lo que resta es la **DECISIÓN de Daniel** de publicar la identidad en el sitio (Art. 50 lo exige para vender online).
+> - **⚠️ Hallazgo IVA (LEGAL-09)**: el RUT la marca **No responsable de IVA (cód. 49)**, pero Términos §02 dice *"los precios ya incluyen el IVA del 19%"* → contradictorio (no puede cobrar un IVA que no recauda). Corregir a "precio final en COP, sin discriminar IVA". Confirmar con Daniel (decisiones IVA previas en bóveda).
 
 1. **Términos y Condiciones** *(obligatoria — Art. 50)*: identidad + NIT, proceso de compra, precios e impuestos, medios de pago, tiempos de entrega, formación del contrato. Consultable/descargable.
 2. **Política de Tratamiento de Datos** *(obligatoria — Ley 1581 + Decreto 1377)*: responsable, finalidades (compras, contacto, newsletter, wishlist), derechos del titular y canal para ejercerlos, vigencia.
@@ -97,7 +98,8 @@
 |---|---|---|
 | **LEGAL-01** | Auditar las páginas legales ACTUALES del sitio vs §4. | ✅ 2026-06-30 (resultado en §4) |
 | **LEGAL-07** | **Legal pre-Wompi** (Decisión Fuerte; comité ×3 + fuentes oficiales). **HECHO + DESPLEGADO (§157)**: retracto Art.47 correcto (5 días+reembolso total ≤30 días, excepto a-medida) + reversión Art.51 + garantía legal + enlace SIC + §03 puente honesto en `terminos.js`; consultas10/reclamos15 + retención + Encargado en `privacidad.js`. **RESTA (al encender Wompi)**: reescribir §03 a "la web cobra online"; aviso *vendedor≠cobrador* en el paso de pago + soft-descriptor; guardar prueba del consentimiento (timestamp+versión+casilla) con el pedido. Disclaimer abogado antes de cobrar. | 🟡 Parcial → resta Wompi |
-| **LEGAL-08** | **Datos reales de Kary** (bloquean LEGAL-07): NIT/razón social (¿S.A.S. o Persona Natural?) + confirmar titular de la cuenta Wompi (nombre que verá el cliente en el cargo). | 🔲 Espera Kary |
+| **LEGAL-08** | **Identidad del proveedor** — ✅ RESUELTA (bóveda `LEGALES-kary`): Kary = Diana M. Niño Mendoza (persona natural), Bersaglio = su establecimiento, titular Wompi = ella. RESTA: **DECISIÓN de Daniel** de publicar nombre+NIT+matrícula en el sitio (Art. 50 obliga para cobro online) + aviso "el cargo aparece a nombre de…". | 🟡 Decisión Daniel (publicar) |
+| **LEGAL-09** | **IVA en Términos §02** — el sitio dice "precios incluyen IVA 19%" pero la comerciante es **No responsable de IVA** → corregir a "precio final en COP, sin discriminar IVA". Confirmar con Daniel (decisiones IVA en bóveda). Toca `js/pages/terminos.js §02`. | 🔲 Confirmar Daniel |
 | **LEGAL-02** | Verificar en norma oficial: umbral SAGRILAFT (30.000 SMMLV sector / 3.000-5.000 medidas mínimas) + si Bersaglio lo cruza hoy. | 🔲 Abierto |
 | **LEGAL-03** | Confirmar umbral/plazos del RNBD (100.000 UVT) y si Bersaglio debe inscribirse. | 🔲 Abierto |
 | **LEGAL-04** | Régimen específico de comercialización de **esmeraldas** (más allá del RUCOM general). | 🔲 Abierto |

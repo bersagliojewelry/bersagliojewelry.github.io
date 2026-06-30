@@ -27,7 +27,7 @@ Esta política explica qué datos recolectamos, por qué, cómo los protegemos y
         id: 'responsable',
         n: '02',
         title: 'Responsable del tratamiento',
-        body: `Bersaglio Jewelry S.A.S., NIT en proceso de actualización, con domicilio en Calle 36 # 6-32, San Agustín Chiquita, Centro Histórico, Cartagena de Indias, Bolívar, Colombia.
+        body: `Bersaglio Jewelry es el nombre comercial del establecimiento de comercio de Diana Margarita Niño Mendoza (persona natural comerciante), NIT 32.908.305-6, con domicilio en Calle 36 # 6-32, Centro Histórico, Cartagena de Indias, Bolívar, Colombia.
 
 Contacto del responsable: {{EMAIL}} · WhatsApp {{WA}}.`,
     },

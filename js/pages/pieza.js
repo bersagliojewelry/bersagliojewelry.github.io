@@ -250,7 +250,7 @@ function renderInfo(piece) {
             : hasPrice ? html`
             <div class="pz-price-row">
                 <div class="mono pz-price">${escape(priceDisplay(piece))}</div>
-                <div class="pz-iva">IVA incluido</div>
+                <div class="pz-iva">Precio final</div>
             </div>`
             : porEncargo ? html`
             <div class="pz-price-row">

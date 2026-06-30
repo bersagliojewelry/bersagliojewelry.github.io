@@ -123,7 +123,7 @@ function renderContents() {
                         <path d="M5 12h14M13 5l7 7-7 7"/>
                     </svg>
                 </a>
-                <p class="bj-cart-note">Los precios incluyen IVA. El envío se confirma en checkout.</p>
+                <p class="bj-cart-note">El precio es el valor final en pesos. El envío se coordina al confirmar tu pedido.</p>
             </footer>` : ''}`;
 }
 

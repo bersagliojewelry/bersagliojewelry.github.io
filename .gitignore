@@ -48,3 +48,11 @@ gcp-key*.json
 # certificados TrueLab al cargar inventario (§132). NO es del sitio (binario 3.3M). No versionar.
 *.traineddata
 
+# 🔐 DATOS PERSONALES / LEGALES SENSIBLES — NUNCA al repo público (cédula, RUT, Cámara de
+# Comercio de la comerciante). Repo = GitHub Pages PÚBLICO → commitearlos = exposición/suplantación.
+# Carpeta dejada por Daniel 2026-06-30 (§157). El hogar correcto es la bóveda brain-private.
+LEGALES/
+legales/
+Legales/
+*.pdf
+

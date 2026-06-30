@@ -34,11 +34,13 @@
 - **Éxito post-pago**: pantalla de confirmación con voz de marca + siguiente paso según entrega (cita atelier Cartagena / coordinación envío). **La venta la confirma el WEBHOOK** (no el callback del navegador) y eso retira la pieza del catálogo.
 - **a11y**: campos no aplicables fuera del flujo + sin `required` (no trampa WCAG 3.3); foco gestionado + `aria-live` en cambios; controles operables por teclado.
 
-## 5. DECISIONES PARA DANIEL (genuinas — no las puedo decidir solo)
-- **GD-1 · Identidad del recaudador (legal, prioridad alta)**: el cargo sale "Diana M. Niño M." — ¿Diana = Kary o es otra socia? Hay que **dejar escrito en Términos** quién recauda y su relación con Bersaglio antes de subir volumen (flanco SIC).
-- **GD-2 · Cobro internacional**: ¿cómo se cobra lo internacional por WhatsApp? (recomiendo: **link de pago Wompi generado por el negocio**, y **PROHIBIR transferencias a cuentas personales de vendedoras** — rompe vendedor≠cobrador). 
-- **GD-3 · Piezas a la medida / por encargo**: el art. 47 las EXCLUYE del retracto. Si se venden por web → marcarlas "sin retracto" + checkbox de aceptación informada. ¿Confirmas?
-- (Decido yo, te informo: legal_id se añade · pickup conserva dirección de facturación · redirect en vez de modal · reserva tardía atada a sesión.)
+## 5. DECISIONES DEL DUEÑO — RESUELTAS (Daniel 2026-06-30) ✅
+- **GD-1 ✅ Recaudador**: Diana Margarita Niño Mendoza es **SOCIA de Bersaglio, autorizada por Kary**; su cuenta Wompi es la **oficial del negocio**. → Términos: dejar escrito recaudador = Diana (socia) operando la cuenta oficial de Bersaglio (coherente con `[[project_comercio_pagos]]`). Aviso "el cargo aparece como Diana M. Niño M." en checkout + correo.
+- **GD-2 ✅ Cobro internacional**: se permiten **AMBOS** — (a) **link de pago Wompi** del negocio, o (b) **transferencia a la cuenta del NEGOCIO** (nunca a cuenta personal de vendedora). → Términos: describir ambos; PROHIBIR transferencias personales. El mensaje WhatsApp NO pide datos de pago.
+- **GD-3 ✅ A-medida/encargo sin retracto**: SÍ marcarlas — aviso "esta pieza no admite retracto por ser personalizada (art. 47)" + **checkbox de aceptación informada** antes de pagar.
+- (Decidido por Claude, informado: legal_id se añade · pickup conserva dirección de facturación · redirect en vez de modal · reserva tardía atada a sesión · ocultar-métodos CON escape prominente.)
+
+**Toques legales que acompañan el build** (§157 / Términos): (1) identidad del recaudador GD-1; (2) método de cobro internacional GD-2; (3) exclusión de retracto para a-medida GD-3. Pasan por el mismo deploy del rediseño.
 
 ## 6. Riesgos al construir (R1-R10 del comité): doble fuente de elegibilidad · reserva colgada · deep link WA · redirect rompe estado 3-pasos (rehidratar de sessionStorage) · `required` oculto · cobro/candado (webhook=verdad) · tope no contemplado · cambios NO aditivos (§3.2) · info engañosa SIC (medios del Widget / "4 cuotas" / escasez falsa).
 

@@ -47,7 +47,9 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 .home-hero-stage {
     position: relative; z-index: 2;
     padding: 0 24px;
-    perspective: 1800px;
+    /* §156.10: SIN `perspective` (el parallax 3D está desactivado, no lo usa nadie). Ese contexto 3D
+       rompía en iOS/Safari el recorte `border-radius`+`overflow` del banner → las esquinas de la
+       imagen se salían del glass (reportado por Daniel en iPhone). */
 }
 .home-hero-frame {
     position: relative;
@@ -340,6 +342,10 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
         max-height: none;
         border-radius: 28px;
     }
+    /* §156.10: los radios deben CUADRAR (frame > banner por los 3px de padding; rim = banner). Antes
+       el frame quedaba en 42px y el rim en 40px sobre un banner de 28px → esquinas desalineadas. */
+    .home-hero-frame { border-radius: 31px; }
+    .home-hero-rim { border-radius: 28px; }
     .home-hero-content {
         padding: 28px;
         justify-content: flex-end; align-items: stretch;

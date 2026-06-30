@@ -174,6 +174,15 @@ button { font: inherit; border: none; background: none; cursor: pointer; color: 
 @media (prefers-reduced-motion: reduce) {
   .bj-world::before, .bj-world::after { animation: none; }
 }
+/* §156.10 (crash de zoom en iOS, reportado por Daniel): al hacer pinch-zoom, Safari/Chrome iOS
+   re-rasteriza estas auroras GIGANTES (700/600px · blur 60px · fijas · animadas) al nivel de zoom y
+   agota la memoria de la GPU → "No se puede abrir esta página" (Aw Snap). En móvil las achicamos y
+   bajamos el blur (≈¼ del área + casi mitad de blur) y detenemos el drift → mucha menos presión de
+   GPU, manteniendo el glow de marca. */
+@media (max-width: 680px) {
+  .bj-world::before { width: 360px; height: 360px; filter: blur(34px); animation: none; }
+  .bj-world::after  { width: 320px; height: 320px; filter: blur(34px); animation: none; }
+}
 
 /* ═══════════════════════════════════════════════════════════════════
    GLASS PRIMITIVE — la base del sistema

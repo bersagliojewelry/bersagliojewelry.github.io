@@ -15,7 +15,10 @@
 // v55/v56 = §156 rediseño de la primera cara: foto-héroe (hero-*.avif/webp) + hero limpio (texto a la
 // izquierda en oscuro sobre la foto CLARA, 2 CTAs). v56: foto re-optimizada a MAYOR calidad + ancho 2200
 // (arregla borroso por upscaling) + object-position arriba (no cortar la cabeza) + locator/firma restaurados.
-const CACHE_NAME    = 'bersaglio-v56';
+// v57 = §156.18 (TODO-62): estabilidad de memoria en pinch-zoom iOS — content-visibility en
+// secciones estáticas del home + quitar filter:blur() decorativos en móvil (NO promueve capas;
+// reemplaza al revertido §156.17). Bump para garantizar CSS fresco en el iPhone de prueba.
+const CACHE_NAME    = 'bersaglio-v57';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

@@ -1566,3 +1566,30 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 .social-card-meta { display: flex; justify-content: space-between; align-items: center; font-family: var(--font-mono); font-size: 10px; color: oklch(100% 0 0 / 0.85); }
 .social-card-stat { display: inline-flex; align-items: center; gap: 5px; }
 .social-follow { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   §156.18 (TODO-62) — ESTABILIDAD DE MEMORIA EN PINCH-ZOOM iOS (solo móvil)
+   El crash "No se puede abrir esta página" es ACUMULATIVO: al asentar un zoom amplio,
+   iOS re-rasteriza TODAS las capas vivas a escala² (memoria ≈ Σ área×escala²). Dos
+   palancas que SOLO ELIMINAN capas (jamás promueven GPU — eso fue el error de §156.17
+   con translateZ(0), revertido):
+   (A) content-visibility:auto en las secciones ESTÁTICAS below-fold → el navegador no
+       genera su backing-store hasta que se ven → muchas menos capas simultáneas en el
+       zoom (patrón ya probado en catalogo/journal/lista-deseos). EXCLUIDAS: el hero
+       (above-fold/LCP) y cats/featured/films/social/journal (DINÁMICAS hide-when-empty
+       con su propia reserva de alto → CV reservaría hueco cuando están vacías).
+   (B) quitar los filter:blur() decorativos GRANDES que el iPhone CAPAZ no mitiga (no
+       recibe .bj-lite, que solo aplica a equipos modestos) — neutralizados solo en
+       móvil; desktop conserva el Liquid Glass completo. */
+@media (max-width: 680px) {
+  /* (A) saca del presupuesto de zoom las secciones estáticas fuera de pantalla */
+  .home-editorial, .home-services, .home-atelier { content-visibility: auto; }
+  .home-editorial { contain-intrinsic-size: auto 900px; }
+  .home-services  { contain-intrinsic-size: auto 700px; }
+  .home-atelier   { contain-intrinsic-size: auto 900px; }
+  /* (B) elimina las capas de blur decorativas más densas (solo resta capas) */
+  .home-hero-blob--em, .home-hero-blob--gold { display: none; }
+  .at-halo { filter: none; opacity: 0.16; }
+  .at-jewel::before { filter: none; }
+  .home-cta-glow { display: none; }
+}

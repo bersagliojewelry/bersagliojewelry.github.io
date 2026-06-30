@@ -36,44 +36,44 @@ Los precios se expresan en pesos colombianos (COP) y corresponden al valor final
     {
         id: 'cierre-compra',
         n: '03',
-        title: 'Cierre de compra',
-        body: `Por la naturaleza de alta gama de cada pieza, todas las compras se cierran en conversación con un asesor: WhatsApp, correo, llamada o visita al atelier. No procesamos pagos automáticos directos en el sitio web.
+        title: 'Proceso de compra y medios de pago',
+        body: `Acompañamos cada compra de forma personal. Puedes resolver dudas y coordinar tu pedido por WhatsApp, correo, teléfono o visitando el atelier en Cartagena de Indias.
 
-Métodos de pago aceptados: transferencia bancaria (Bancolombia, Davivienda), tarjetas Visa/Mastercard procesadas presencial o vía link de pago, financiación hasta 12 meses con entidades aliadas para piezas superiores a $50.000.000 COP.
+Medios de pago:
+· Transferencia bancaria: te compartimos el número de cuenta o el código QR de la cuenta de Bersaglio por WhatsApp y confirmamos tu pedido al recibir el pago.
+· Pago electrónico con Wompi: te enviamos un enlace de pago seguro de la pasarela Wompi, con el que puedes pagar con tarjeta débito o crédito, PSE, Nequi, Bancolombia, Daviplata y los demás medios habilitados por Wompi.
 
-Hoy acompañamos cada compra de forma personal, sin cobros automáticos en el sitio. Tu derecho de retracto aplica a toda compra a distancia —incluidas las que coordinas por WhatsApp, teléfono o correo—, sin importar cómo pagues. Cuando habilitemos el pago en línea con tarjeta te lo indicaremos al momento de comprar; a esos pagos electrónicos se suma además tu derecho de reversión (más abajo).`,
+Tu derecho de retracto aplica a toda compra a distancia —incluidas las que coordinas por WhatsApp, teléfono o correo—, sin importar el medio de pago; a los pagos electrónicos se suma además tu derecho de reversión (más abajo).`,
     },
     {
         id: 'envios',
         n: '04',
         title: 'Envíos',
-        body: `Despachos nacionales (Colombia): envío gratuito con seguro pleno por Servientrega Premium, 2-5 días hábiles dependiendo de la ciudad.
+        body: `Coordinamos el envío de tu pieza con una transportadora disponible en Cartagena de Indias; Bersaglio selecciona la empresa transportadora y te comparte la guía de seguimiento. Si tienes una cuenta registrada, cargamos la información del envío a tu perfil; si no, te la enviamos por WhatsApp y al correo que nos indiques durante la compra.
 
-Despachos internacionales: DHL Express o FedEx Priority con seguro declarado por el valor total de la pieza, 5-8 días hábiles, entrega registrada con firma. Aranceles e impuestos del país destino son responsabilidad del comprador.
+Envíos nacionales (Colombia): el costo y el tiempo de entrega dependen de la ciudad de destino y de la transportadora; te los informamos antes de confirmar el pedido.
 
-Cada pieza viaja en estuche de presentación Bersaglio, con libreta de origen (mina de la gema, oficio del orfebre, certificación GIA si aplica) y certificado de garantía de por vida.`,
+Envíos internacionales: se cotizan caso por caso y se coordinan directamente con un asesor por WhatsApp (no se procesan con el pago en línea). El comprador asume el flete, los aranceles, impuestos y trámites aduaneros del país de destino; validamos contigo los costos totales antes de despachar. Una cotización internacional no obliga a la venta hasta confirmar su viabilidad; Bersaglio puede abstenerse de despachar a destinos con restricciones de importación. Desde la entrega a la transportadora, el riesgo de tránsito, retención o decomiso en aduana corre por cuenta del comprador, quien es responsable de cumplir las normas de importación de su país.`,
     },
     {
         id: 'garantia',
         n: '05',
         title: 'Garantía',
-        body: `Toda pieza Bersaglio cuenta con garantía de por vida en estructura y engaste. Esto incluye: reparación gratuita si una piedra se afloja, restauración si una soldadura cede, redimensionado de anillos hasta dos tallas arriba/abajo (un servicio por pieza), limpieza profesional y pulido (un servicio anual sin costo).
+        body: `Toda pieza Bersaglio cuenta con la garantía legal obligatoria que ordena la ley colombiana (Ley 1480 de 2011): calidad, idoneidad y seguridad del producto. Es gratuita, no puede excluirse ni renunciarse y rige por el término legal aplicable.
 
-La garantía no cubre: daño por golpe directo (caída sobre piedra), exposición prolongada a químicos abrasivos (cloro, ammonia, blanqueador), modificación realizada por terceros ajenos al Atelier, robo o pérdida.
+De forma adicional y sin perjuicio ni limitación de la garantía legal, ofrecemos una garantía comercial de doce (12) meses por defectos de fabricación, contados desde la entrega, que cubre fallas de manufactura como soldaduras, fundición o engaste de las piedras. Para hacerla efectiva, escríbenos a {{EMAIL}} o por WhatsApp al {{WA}} y coordinamos la revisión o reparación.
 
-Además de nuestra garantía comercial de por vida, toda pieza cuenta con la garantía legal obligatoria que ordena la ley colombiana (Ley 1480 de 2011): calidad, idoneidad y seguridad del producto. Esta garantía es gratuita y no puede excluirse ni renunciarse. Para hacerla efectiva, escríbenos a {{EMAIL}} o por WhatsApp al {{WA}} y coordinamos la revisión o reparación.`,
+Esta garantía comercial no cubre el desgaste natural por el uso, los daños por golpes o accidentes, la exposición a químicos abrasivos (cloro, amoníaco, blanqueador) ni las modificaciones realizadas por terceros ajenos al atelier; estas exclusiones no afectan tus derechos bajo la garantía legal.`,
     },
     {
         id: 'devoluciones',
         n: '06',
-        title: 'Cambios, devoluciones y derecho de retracto',
-        body: `Queremos que recibas tu pieza con la misma tranquilidad con la que la elegimos para ti. Por eso, además de lo que la ley te garantiza, te explicamos tus opciones con claridad.
+        title: 'Derecho de retracto y devoluciones',
+        body: `Si compraste a distancia —por el sitio web, WhatsApp, teléfono o correo— puedes ejercer el derecho de retracto dentro de los cinco (5) días hábiles siguientes a la entrega, sin necesidad de justificar tu decisión (Ley 1480 de 2011, art. 47). Te devolvemos la totalidad del dinero que pagaste, sin descuentos ni retenciones, en un plazo máximo de quince (15) días calendario desde que ejerces el retracto (plazo modificado por la Ley 2439 de 2024), por el medio de pago que prefieras. Debes devolvernos la pieza en las mismas condiciones en que la recibiste, respondiendo únicamente por el deterioro derivado de un uso distinto al necesario para examinarla; el costo del envío de devolución corre por tu cuenta.
 
-Derecho de retracto (compras a distancia). Si adquiriste tu pieza a distancia —por el sitio web, WhatsApp, teléfono o correo— tienes derecho a retractarte dentro de los cinco (5) días hábiles siguientes a la entrega, sin necesidad de justificar tu decisión (Ley 1480 de 2011, Art. 47). Te devolvemos todas las sumas que pagaste, sin descuentos ni retenciones de ningún tipo —incluido el valor del envío original, si lo hubo—, en un plazo máximo de treinta (30) días calendario. La pieza debe regresar sin señales de uso más allá de su revisión y en condiciones que permitan su devolución; te agradecemos incluir su estuche y documentos, aunque su ausencia no impide el retracto. El único costo a tu cargo es el del envío de la pieza de vuelta a nosotros.
+Excepción (piezas a la medida). Las piezas creadas o personalizadas conforme a tus especificaciones —diseños exclusivos, grabados, configuraciones hechas a tu pedido— no admiten retracto, por disposición de la misma ley. Un ajuste menor de talla sobre una pieza de catálogo no la convierte en pieza a la medida; cuando elaboramos una pieza a tu medida, te lo confirmamos por escrito antes de comenzar.
 
-Excepción (piezas a la medida). Por disposición de la misma ley, las piezas creadas o personalizadas específicamente para ti —diseños exclusivos, grabados, configuraciones hechas a tu pedido— no admiten retracto, pues se elaboran conforme a tus especificaciones. Un ajuste menor de talla sobre una pieza de catálogo no la convierte en pieza a la medida. Cuando elaboramos una pieza a tu medida, te lo confirmamos por escrito antes de comenzar.
-
-Cambios de cortesía (catálogo). Adicional a tu derecho legal de retracto —que siempre prevalece y te permite el reembolso completo— y de forma voluntaria de nuestra parte, en piezas de catálogo ofrecemos cambio (no reembolso en efectivo) dentro de los quince (15) días hábiles siguientes a la entrega, siempre que la pieza llegue impecable, con su estuche, libreta de origen (el documento que acompaña a tu pieza) y certificado. Este beneficio no limita ni reemplaza ninguno de tus derechos legales; el cliente cubre el envío del cambio.`,
+Disponibilidad y entrega. Si después de tu compra una pieza no estuviera disponible, o no se entrega en el plazo acordado (máximo treinta (30) días calendario cuando no se pacta otro), puedes terminar la compra y solicitar la devolución del dinero, que realizamos dentro de los quince (15) días calendario siguientes (Ley 2439 de 2024).`,
     },
     {
         id: 'reversion',
@@ -83,7 +83,7 @@ Cambios de cortesía (catálogo). Adicional a tu derecho legal de retracto —qu
 
 Tienes cinco (5) días hábiles para pedirla, contados desde que te enteraste del problema o desde la fecha en que debías haber recibido tu pieza. Una vez solicitada, el banco y los demás intervinientes en el pago disponen de quince (15) días hábiles para hacerla efectiva.
 
-Para iniciarla, escríbenos a {{EMAIL}} o por WhatsApp al {{WA}} y te acompañamos en el trámite ante tu banco.`,
+La reversión se solicita ante la entidad emisora de tu instrumento de pago (banco o billetera); te acompañamos en el trámite escribiéndonos a {{EMAIL}} o por WhatsApp al {{WA}}. Aplica únicamente a pagos por medios electrónicos (tarjeta, PSE, billeteras vía Wompi); los pagos por transferencia bancaria no son reversibles por este mecanismo, sin perjuicio de tu derecho de retracto y de la garantía legal.`,
     },
     {
         id: 'propiedad',
@@ -146,7 +146,7 @@ function renderAll() {
             <header class="lg-pagehero">
                 <div class="mono lg-eyebrow">DOCUMENTACIÓN LEGAL</div>
                 <h1 class="lg-pagehero-title">Términos y <span class="italic emerald-text">condiciones</span></h1>
-                <p class="lg-pagehero-sub">Cómo funcionan las compras, los envíos, la garantía y los cambios en Bersaglio Jewelry. Texto plano, sin trampas.</p>
+                <p class="lg-pagehero-sub">Cómo funcionan la compra, el pago, los envíos, la garantía y las devoluciones en Bersaglio Jewelry.</p>
                 <div class="mono lg-update">Última actualización · ${escape(LAST_UPDATE)}</div>
             </header>
 
@@ -159,7 +159,7 @@ function renderAll() {
 
             <div class="lg-foot">
                 <p>¿Una duda específica? Escríbenos a <a href="${escape(safeUrl('mailto:' + c.email))}">${escape(c.email)}</a> o por <a href="${escape(safeUrl(waHref(c.whatsapp)))}" target="_blank" rel="noopener">WhatsApp</a>.</p>
-                <p class="lg-legal-id">Bersaglio Jewelry — nombre comercial del establecimiento de comercio de Diana Margarita Niño Mendoza (persona natural comerciante), NIT 32.908.305-6 · Calle 36 # 6-32, Centro Histórico, Cartagena de Indias, Bolívar, Colombia. ¿Quieres conocer tus derechos como consumidor o presentar una queja? Puedes acudir a la <a href="https://www.sic.gov.co" target="_blank" rel="noopener noreferrer">Superintendencia de Industria y Comercio (SIC)</a>.</p>
+                <p class="lg-legal-id">Bersaglio Jewelry — nombre comercial del establecimiento de comercio de Diana Margarita Niño Mendoza (persona natural comerciante), NIT 32.908.305-6 · Calle 36 # 6-32, Centro Histórico, Cartagena de Indias, Bolívar, Colombia. Para peticiones, quejas o reclamos (PQR) y notificaciones, escríbenos a <a href="${escape(safeUrl('mailto:' + c.email))}">${escape(c.email)}</a> o a la dirección anterior; conservamos el soporte de cada transacción y te entregamos el comprobante de tu compra. ¿Quieres conocer tus derechos como consumidor o presentar una queja ante la autoridad? Puedes acudir a la <a href="https://www.sic.gov.co" target="_blank" rel="noopener noreferrer">Superintendencia de Industria y Comercio (SIC)</a>.</p>
                 <a href="/" class="btn-aqua lg-back-btn">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
                     Volver al inicio

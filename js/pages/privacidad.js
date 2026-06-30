@@ -140,7 +140,7 @@ function renderAll() {
             <header class="lg-pagehero">
                 <div class="mono lg-eyebrow">DOCUMENTACIÓN LEGAL</div>
                 <h1 class="lg-pagehero-title">Política de <span class="italic emerald-text">privacidad</span></h1>
-                <p class="lg-pagehero-sub">Cómo cuidamos tu información personal. Sin tecnicismos innecesarios. Sin trampas.</p>
+                <p class="lg-pagehero-sub">Cómo recolectamos, usamos y protegemos tu información personal, conforme a la Ley 1581 de 2012.</p>
                 <div class="mono lg-update">Última actualización · ${escape(LAST_UPDATE)}</div>
             </header>
 

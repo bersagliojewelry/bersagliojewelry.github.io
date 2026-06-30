@@ -56,7 +56,7 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier C pen
 
 > Podada (GC) 2026-06-27. Histórico → ADR §37-§130 + bóveda. Lecciones → `30`/`31`/`32`.
 >
-> **2026-06-30 (FAB asesoría por ZONAS, DESPLEGADO):** `asesoria-fab.js` reveal por IntersectionObserver (oculto sobre `.home-hero` y `.bj-footer` — no tapa enlaces legales ni duplica el CTA del hero; rAF-retry por el race de montaje). Verif. real pend. (L-05). Extiende [[L-63]].
+> **2026-06-30 (FAB asesoría por ZONAS, DESPLEGADO):** `asesoria-fab.js` reveal por IntersectionObserver (oculto sobre `.home-hero` y `.bj-footer` — no tapa enlaces legales ni duplica el CTA del hero; rAF-retry por el race de montaje). Verif. real pend. (L-05). Extiende [[L-63]]. · **§157.14**: quitado el verde sobre la foto-héroe del index (blob esmeralda + saturate marco + banner neutro; verde solo en el fondo) + re-encode hero AVIF q80/WebP q90; cache **v59**.
 > **2026-06-30 (§157 legal pre-Wompi + consejo ×2):** Términos/Privacidad reales (retracto/reversión/garantía/SIC/datos); IVA+identidad+consentimiento ✅. **EN CURSO: reescritura §03/§04/§05 con proceso real** (Ley 2439: reembolso 15 días cal; pago Wompi+transferencia; envío Bersaglio elige+guía; garantía 12m a confirmar). Pendientes → TODO-49. Detalle → ADR §157.x.
 > _(§156.x/TODO-62 consolidados en ADR + L-62/L-63. TODO vivo: botón "Hablar con el Atelier" en la ficha — ADR §156.12.)_
 > **🚦 Reglas vivas**: arquitecto SIEMPRE · 100% COP (§127) · NO inventado (`[[feedback_no_demo_en_index]]`) · pruebas vivo solo al final (§130.4) · W-11 en decisión-diseño · `[[feedback_workflows_acotados]]`.

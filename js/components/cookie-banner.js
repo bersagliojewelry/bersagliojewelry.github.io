@@ -46,6 +46,8 @@ function build() {
         const action = btn.dataset.action;
         if (action === 'accept' || action === 'decline') {
             setConsent(action === 'accept' ? 'accepted' : 'declined');
+            // La compuerta se resuelve → libera al concierge (FAB asesoría) que estaba apartado.
+            document.body.classList.remove('bj-cookie-active');
             root.classList.add('is-leaving');
             setTimeout(() => root.remove(), 350);
             // Notify listeners (analytics may want to react)
@@ -54,6 +56,10 @@ function build() {
     });
 
     document.body.appendChild(root);
+    // Compuerta de consentimiento presente → aparta el FAB de asesoría (ambos son flotantes
+    // abajo-derecha y se pisaban en móvil; el toque de "Aceptar" caía en el FAB). El FAB reacciona
+    // por CSS a esta bandera y vuelve al resolverse. (bug cookie/FAB — ver ADR §156.19.)
+    document.body.classList.add('bj-cookie-active');
     requestAnimationFrame(() => root.classList.add('is-open'));
 }
 

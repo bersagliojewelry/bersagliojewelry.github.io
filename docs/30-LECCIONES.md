@@ -44,6 +44,8 @@ window.scrollTo(0, scrollY);
 *   El header pill flotante tiene `position: fixed; pointer-events: none` para no bloquear los clicks debajo de su área transparente lateral. El elemento interno `.header-aqua-pill` tiene `pointer-events: auto` para que el menú sí sea clickable.
 *   Si se altera esta estructura, se pueden bloquear clicks en toda la parte superior del sitio web.
 
+### L-64: Si el PROVEEDOR contrata/coordina el transporte, entregar es obligación de RESULTADO → trasladar al consumidor el riesgo de TRÁNSITO (pérdida/robo del carrier) es cláusula abusiva (Ley 1480 Art. 43, se asume no escrita; Bersaglio recupera vía el seguro de la transportadora). Solo el riesgo ADUANERO (retención/decomiso/tributos del país destino) es del comprador. Y al redactar texto legal: verificar AMENDMENTS vigentes (Ley 2439/2024 bajó el reembolso del retracto de 30→15 días cal), no solo la ley base. → §157.11-13
+
 ### L-63: Dos flotantes `fixed` en la misma esquina (cookie banner ↔ FAB asesoría) se pisan → la compuerta de consentimiento manda sobre el concierge; bandera `body.bj-cookie-active` (la pone/quita `cookie-banner.js`) + el otro cede por CSS (regla DESPUÉS de `.is-revealed`, misma especificidad gana por orden) + banner z-210 > FAB z-200 (red de seguridad) → §156.19
 
 ### L-62: crash pinch-zoom iOS = MEMORIA; fix = RESTAR capas en móvil (content-visibility + quitar `filter:blur`), NUNCA promover GPU → §156.18

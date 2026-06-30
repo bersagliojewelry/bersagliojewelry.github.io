@@ -26,11 +26,11 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     border-radius: 50%;
     filter: blur(40px);
 }
+/* §157.14 (Daniel): el blob ESMERALDA teñía de verde la foto-héroe (le hacía perder calidad).
+   Eliminado — el verde queda SOLO en el fondo de auroras de la página, nunca sobre la fotografía.
+   El blob dorado (cálido) se conserva para el brillo ambiental. */
 .home-hero-blob--em {
-    width: 600px; height: 600px;
-    left: 10%; top: 20%;
-    background: radial-gradient(circle, oklch(70% 0.20 155 / 0.25), transparent 70%);
-    animation: home-float 16s ease-in-out infinite;
+    display: none;
 }
 .home-hero-blob--gold {
     width: 500px; height: 500px;
@@ -61,8 +61,10 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
         oklch(98% 0.01 95 / 0.12) 50%,
         oklch(99% 0.005 95 / 0.2) 70%,
         oklch(100% 0 0 / 0.35) 100%);
-    backdrop-filter: blur(22px) saturate(160%);
-    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    /* §157.14: saturate bajado 160%→112% — el 160% amplificaba el verde del fondo dentro del marco
+       y lo proyectaba sobre la foto. Neutro = el marco de cristal no tiñe la fotografía. */
+    backdrop-filter: blur(22px) saturate(112%);
+    -webkit-backdrop-filter: blur(22px) saturate(112%);
     box-shadow:
         inset 0 1px 0 oklch(100% 0 0 / 0.95),
         inset 0 -1px 0 oklch(95% 0.01 95 / 0.5),
@@ -90,8 +92,8 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     box-shadow:
         inset 0 2px 0 oklch(100% 0 0 / 0.7),
         inset 0 1px 12px oklch(100% 0 0 / 0.15),
-        inset 0 -1px 24px oklch(15% 0.04 155 / 0.3);
-    background: var(--bj-ink-emerald);
+        inset 0 -1px 24px oklch(15% 0 0 / 0.22);   /* §157.14: glow inferior NEUTRO (era esmeralda 155) */
+    background: oklch(20% 0.004 95);                /* §157.14: fondo neutro oscuro (era --bj-ink-emerald) — solo se ve si la foto no llena; sin verde */
 }
 .home-hero-img {
     position: absolute; inset: 0;

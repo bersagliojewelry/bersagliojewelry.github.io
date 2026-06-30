@@ -33,10 +33,13 @@ before(async () => {
     await db.doc('pieces/pwPriv').set({ name: 'Privada', slug: 'priv', price: 1000000, stockType: 'finito', cantidad: 1, visibilidad: 'privada' });
     await db.doc('pieces/pwEnc').set({ name: 'Encargo', slug: 'enc-web', price: 800000, stockType: 'encargo', visibilidad: 'publica' });
     await db.doc('pieces/pwAgot').set({ name: 'Agotada', slug: 'agot', price: 900000, stockType: 'finito', cantidad: 0, visibilidad: 'publica' });
+    await db.doc('pieces/pwHab').set({ name: 'Consentimiento', slug: 'hab', price: 700000, stockType: 'finito', cantidad: 1, visibilidad: 'publica' });
 });
 
+const HABEAS = { aceptado: true, version: '2026-06-30' };   // consentimiento (Habeas Data) — obligatorio al crear
+
 test('reserva web OK: pedido pago_pendiente + reserva atómica + firma server-side', async () => {
-    const r = await iniciarPagoWebCore(db, { pedidoId: 'wp1', pieceId: 'pw1', shipping: { firstName: 'Ana', email: 'a@x.co', address: 'Calle 1' } }, OPTS);
+    const r = await iniciarPagoWebCore(db, { pedidoId: 'wp1', pieceId: 'pw1', shipping: { firstName: 'Ana', email: 'a@x.co', address: 'Calle 1' }, habeas: HABEAS }, OPTS);
     assert.equal(r.estado, 'pago_pendiente');
     assert.equal(r.total, 2150000);
     assert.equal(r.reference, 'wp1');
@@ -55,6 +58,8 @@ test('reserva web OK: pedido pago_pendiente + reserva atómica + firma server-si
     assert.equal(ped.reservaExpira.toMillis(), NOW + TTL);   // verdad de la reserva en el PEDIDO
     assert.equal(ped.shipping.firstName, 'Ana');
     assert.equal(ped.autor, null);                            // cliente sin login
+    assert.equal(ped.habeasData.aceptado, true);              // prueba del consentimiento (Dto.1377 art.5)
+    assert.equal(ped.habeasData.version, '2026-06-30');
 
     const pz = (await db.doc('pieces/pw1').get()).data();
     assert.equal(pz.cantidad, 0);
@@ -72,7 +77,7 @@ test('reserva web idempotente: mismo pedidoId no duplica ni re-decrementa', asyn
 });
 
 test('reserva web sobre LOTE: decrementa a 1, sigue disponible', async () => {
-    const r = await iniciarPagoWebCore(db, { pedidoId: 'wpL1', pieceId: 'pwLote' }, OPTS);
+    const r = await iniciarPagoWebCore(db, { pedidoId: 'wpL1', pieceId: 'pwLote', habeas: HABEAS }, OPTS);
     assert.equal(r.estado, 'pago_pendiente');
     const pz = (await db.doc('pieces/pwLote').get()).data();
     assert.equal(pz.cantidad, 1);
@@ -98,6 +103,12 @@ test('rechaza pieza privada (no disponible en línea)', async () => {
 
 test('rechaza pieza por encargo (no es compra inmediata)', async () => {
     await assert.rejects(iniciarPagoWebCore(db, { pedidoId: 'wpE', pieceId: 'pwEnc' }, OPTS), /asesor|inmediata/i);
+});
+
+test('rechaza sin consentimiento Habeas Data (no crea pedido ni decrementa)', async () => {
+    await assert.rejects(iniciarPagoWebCore(db, { pedidoId: 'wpHab', pieceId: 'pwHab' }, OPTS), /Habeas|autoriza|tratamiento/i);
+    assert.equal((await db.doc('pieces/pwHab').get()).data().cantidad, 1);   // no la tocó (la tx abortó)
+    assert.equal((await db.doc('pedidos/wpHab').get()).exists, false);       // no creó el pedido
 });
 
 test('rechaza sin secreto de integridad', async () => {

@@ -51,6 +51,7 @@ let _step = 1;
 let _shipping = { firstName: '', lastName: '', email: '', phone: '', address: '', city: '', country: 'Colombia', zip: '' };
 let _payment = 'whatsapp';
 let _habeas = false;   // F2: autorización de tratamiento de datos (Habeas Data) para el cobro web
+const LEGAL_CONSENT_VERSION = '2026-06-30';   // versión del texto legal aceptado (Términos/Privacidad) — se guarda como prueba con el pedido
 
 function loadShipping() {
     try {
@@ -443,7 +444,7 @@ async function confirmOrder(rows) {
         const btn = document.querySelector('.ck-confirm');
         if (btn) btn.setAttribute('disabled', '');
         try {
-            await pagarConWompi({ pieceId: piece.id, shipping: _shipping, redirectBase: location.origin });
+            await pagarConWompi({ pieceId: piece.id, shipping: _shipping, habeas: { aceptado: _habeas, version: LEGAL_CONSENT_VERSION }, redirectBase: location.origin });
             // El widget redirige a gracias.html?ref=; si solo se cerró, el webhook resolverá el pago.
         } catch (err) {
             console.error('[carrito] wompi:', err);

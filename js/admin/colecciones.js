@@ -10,6 +10,10 @@ import { safeUrl } from '../core/safe-url.js';
 let _collections = [];
 let _bannerUrl = '';
 let _bannerLqip = '';   // §108 F3: LQIP (data-URI blur) del banner
+// B.1: URL del banner marcado para borrar de Storage. El borrado es DIFERIDO al guardado
+// (antes el × borraba el archivo al instante → si Kary cancelaba, el doc quedaba apuntando a
+// una imagen muerta = banner 404 en la web). Se borra SOLO tras un saveCollection exitoso.
+let _bannerToDelete = null;
 // _version of the collection currently loaded in the modal. Used as the
 // optimistic-lock baseline on save.
 let _editingVersion = null;
@@ -154,6 +158,9 @@ async function handleBannerFile(file) {
 
         _bannerUrl = url;
         _bannerLqip = lqip || '';
+        // B.1: el nuevo banner ocupa la MISMA ruta de Storage (collections/{colId}/banner.{ext}) que el
+        // que estaba marcado para borrar → cancelar ese borrado (borrarlo destruiría el archivo nuevo).
+        _bannerToDelete = null;
         document.getElementById('cf-banner-url').value = url;
         renderBannerPreview(url);
 
@@ -185,16 +192,15 @@ function renderBannerPreview(url) {
         </div>
     `;
 
-    document.getElementById('cf-banner-remove').addEventListener('click', async () => {
-        try {
-            const { deletePieceImage } = await import('../storage-service.js');
-            await deletePieceImage(url);
-        } catch { /* ignore */ }
+    document.getElementById('cf-banner-remove').addEventListener('click', () => {
+        // B.1: NO borrar el archivo ahora — solo marcarlo. Se borra al GUARDAR (si Kary cancela, el
+        // banner sigue intacto en Storage y en el doc). Evita el banner-404 del borrado inmediato.
+        if (_bannerUrl) _bannerToDelete = _bannerUrl;
         _bannerUrl = '';
         _bannerLqip = '';
         document.getElementById('cf-banner-url').value = '';
         renderBannerPreview(null);
-        admToast('Banner eliminado');
+        admToast('Banner quitado (se aplicará al guardar)');
     });
 }
 
@@ -215,6 +221,7 @@ function openModal(id = null) {
     form.querySelector('[name="id"]').value = '';
     _bannerUrl = '';
     _bannerLqip = '';
+    _bannerToDelete = null;   // B.1: cada apertura arranca sin borrado pendiente
     _editingVersion = null;
 
     if (id) {
@@ -250,6 +257,7 @@ function closeModal() {
     document.getElementById('col-modal').hidden = true;
     _bannerUrl = '';
     _bannerLqip = '';
+    _bannerToDelete = null;   // B.1: cancelar NO borra nada (el banner queda intacto)
     renderBannerPreview(null);
 }
 
@@ -280,6 +288,16 @@ async function handleSave() {
         const saved = await adminDb.saveCollection(col, {
             expectedVersion: existingId ? _editingVersion : undefined,
         });
+        // B.1: borrado DIFERIDO del banner viejo — solo AHORA (guardado exitoso). Best-effort: si el
+        // borrado del archivo falla no debe tumbar el guardado (el doc ya quedó consistente).
+        if (_bannerToDelete) {
+            const urlBorrar = _bannerToDelete;
+            _bannerToDelete = null;
+            try {
+                const { deletePieceImage } = await import('../storage-service.js');
+                await deletePieceImage(urlBorrar);
+            } catch (e) { console.warn('[colecciones] no se pudo borrar el banner viejo:', e); }
+        }
         closeModal();
         admToast(`"${saved.name}" guardada`);
     } catch (err) {

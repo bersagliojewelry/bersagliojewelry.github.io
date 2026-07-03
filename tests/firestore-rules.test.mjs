@@ -48,6 +48,7 @@ before(async () => {
         await setDoc(doc(db, 'pieces/pSold'), { name: 'Reservada', slug: 'reservada', stockType: 'finito', cantidad: 0, visibilidad: 'publica', estado: 'disponible', reservaId: null, reservaExpira: null }); // §152: estado/reserva los puso la CF → editar por merge NO debe bloquearse
         await setDoc(doc(db, 'pieces/p1/movimientos/mov1'), { delta: -1, motivo: 'venta', pedidoId: 'x', cantidadResultante: 0 }); // ledger (C4)
         await setDoc(doc(db, 'journal/j1'), { title: 'Esmeraldas', published: true }); // CMS: lectura pública + borrado admin
+        await setDoc(doc(db, 'inquiries/inq1'), { name: 'Lead', email: 'l@x.co', phone: '3001', message: 'hola', status: 'nuevo', createdAt: serverTimestamp() }); // B.3: lead para probar el update acotado
 
         // ─── CRM Fase R: vendedoras (entidad), cliente (vendedoraId), config, pendientes ──
         await setDoc(doc(db, 'users/ownerUid'), { role: 'owner' });
@@ -143,11 +144,23 @@ test('S5 · admin SÍ lee reseña pendiente', async () => {
 test('reseñas · cualquiera puede crear una reseña BIEN FORMADA (no aprobada)', async () => {
     await assertSucceeds(addDoc(collection(anon(), 'reviews'), {
         pieceSlug: 'anillo', pieceName: 'Anillo', author: 'Clienta', rating: 5,
-        comment: 'Hermosa pieza', email: 'c@x.co', approved: false, createdAt: serverTimestamp(),
+        comment: 'Hermosa pieza', approved: false, createdAt: serverTimestamp(),
+    }));
+});
+test('reseñas · B.2: rechaza `email` en el doc público (evita fuga de PII al aprobar)', async () => {
+    await assertFails(addDoc(collection(anon(), 'reviews'), {
+        pieceSlug: 'anillo', pieceName: 'Anillo', author: 'Clienta', rating: 5,
+        comment: 'Hermosa', email: 'c@x.co', approved: false, createdAt: serverTimestamp(),
     }));
 });
 test('reseñas · no-admin NO puede borrar', async () => {
     await assertFails(deleteDoc(doc(asUser('editorUid'), 'reviews/approvedRev')));
+});
+test('inquiries · B.3: editor cambia el estado del lead pero NO reescribe el contenido (PII)', async () => {
+    await assertSucceeds(updateDoc(doc(asUser('editorUid'), 'inquiries/inq1'), { status: 'trabajando' }));
+    await assertFails(updateDoc(doc(asUser('editorUid'), 'inquiries/inq1'), { message: 'reescrito' }));
+    await assertFails(updateDoc(doc(asUser('editorUid'), 'inquiries/inq1'), { email: 'hacked@x.co' }));
+    await assertFails(updateDoc(doc(asUser('editorUid'), 'inquiries/inq1'), { _counted: false }));
 });
 
 // ─── Baseline pieces: lectura pública, escritura solo editor+ ────────────────

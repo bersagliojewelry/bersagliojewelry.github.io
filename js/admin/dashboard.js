@@ -3,7 +3,7 @@
  */
 
 import adminDb from './db.js';
-import { admToast, initSidebar, requireAuth } from './shared.js';
+import { admToast, initSidebar, requireAuth, esc } from './shared.js';   // B.6: esc compartido (no redefinir)
 import { leadBadgeHTML } from './lead-format.js';
 import { initAvisoSolicitudes } from './aviso-solicitudes.js';
 import { pmark, psummary } from '../core/perf-probe.js';   // sonda TODO-33 (gateada; no-op si off)
@@ -79,8 +79,5 @@ function fmtDate(iso) {
     return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-function esc(str) {
-    return String(str ?? '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
 
 init();

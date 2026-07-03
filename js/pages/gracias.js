@@ -47,6 +47,12 @@ const MESSAGES = {
         body: 'Tu mensaje es atendido de forma confidencial y directa por Kary Mendoza o un especialista del atelier. Prescindimos de asistentes virtuales; valoramos el tiempo y el trato humano.',
         nextLabel: 'Respuesta en menos de 24 horas hábiles',
     },
+    pago: {
+        eyebrow: 'PAGO RECIBIDO',
+        title: 'Gracias. Estamos <span class="italic emerald-text">confirmando</span> tu pago.',
+        body: 'Recibimos tu pago a través de Wompi. En cuanto se confirme —normalmente en segundos— te enviaremos la confirmación y los siguientes pasos por correo y WhatsApp. Si elegiste recoger en el atelier de Cartagena, coordinaremos tu cita; si es envío, gestionamos la guía. Tu pieza queda reservada a tu nombre.',
+        nextLabel: 'Confirmación y siguientes pasos en breve',
+    },
     default: {
         eyebrow: 'CORTESÍA BERSAGLIO',
         title: 'Te <span class="italic emerald-text">escribimos</span> de manera directa.',
@@ -56,7 +62,9 @@ const MESSAGES = {
 };
 
 function getMethodFromURL() {
-    return new URL(location.href).searchParams.get('method') || 'default';
+    const p = new URL(location.href).searchParams;
+    if (p.get('ref') || p.get('id')) return 'pago';   // retorno del Web Checkout de Wompi (redirect)
+    return p.get('method') || 'default';
 }
 
 function renderAll(msg) {

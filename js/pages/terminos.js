@@ -41,7 +41,7 @@ Los precios se expresan en pesos colombianos (COP) y corresponden al valor final
 
 Medios de pago:
 · Transferencia bancaria: te compartimos el número de cuenta o el código QR de la cuenta de Bersaglio por WhatsApp y confirmamos tu pedido al recibir el pago.
-· Pago en línea con Wompi: para las piezas elegibles —con precio publicado, disponibles de inmediato y dentro del monto permitido— puedes pagar directamente en el sitio con el botón «Pagar ahora», a través de la pasarela segura de Wompi (tarjeta débito o crédito y los demás medios que Wompi tenga habilitados). El cargo aparece a nombre de Bersaglio (Diana M. Niño M.). Para piezas a la medida, por encargo, de mayor valor o para envíos internacionales, coordinamos el pago contigo por WhatsApp, donde también podemos enviarte un enlace de pago de Wompi.
+· Pago en línea con Wompi: para las piezas elegibles —con precio publicado, disponibles de inmediato y dentro del monto permitido— puedes pagar directamente en el sitio con el botón «Pagar ahora», a través de la pasarela segura de Wompi (tarjeta débito o crédito y los demás medios que Wompi tenga habilitados). El cargo aparece a nombre de Bersaglio (Diana M. Niño M.). Para piezas a la medida, por encargo, de mayor valor o para envíos internacionales, coordinamos el pago contigo por WhatsApp: te enviamos un enlace de pago seguro de Wompi o los datos de transferencia a la cuenta del establecimiento de comercio (nunca a cuentas personales de nuestro equipo).
 
 Tu derecho de retracto aplica a toda compra a distancia —incluidas las que coordinas por WhatsApp, teléfono o correo—, sin importar el medio de pago; a los pagos electrónicos se suma además tu derecho de reversión (más abajo).`,
     },

@@ -443,6 +443,16 @@
 .ck-fact-block { margin-top: 4px; }
 .ck-fact-title { display: block; margin-bottom: 10px; }
 
+/* Escape del modo "Pagar ahora" enfocado — target táctil ≥44px, visible (Antigravity #4 + comité) */
+.ck-pay-change {
+    display: inline-flex; align-items: center; gap: 8px;
+    min-height: 44px; padding: 10px 16px; margin-bottom: 14px;
+    border-radius: 10px; border: 1px solid var(--bj-emerald-700);
+    background: transparent; color: var(--bj-ink-emerald);
+    font-size: 13px; font-weight: 500; cursor: pointer;
+}
+.ck-pay-change:hover { background: oklch(96% 0.03 155 / 0.6); }
+
 .ck-habeas--step2 {
     display: flex; gap: 10px; align-items: flex-start;
     margin: 18px 0 4px; font-size: 12.5px; color: var(--bj-ink-soft); line-height: 1.5;

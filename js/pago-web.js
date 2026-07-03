@@ -1,22 +1,21 @@
 /**
- * pago-web.js — Cobro web con el Widget de Wompi (Wompi F2 · "Comprar ahora", 1 pieza).
+ * pago-web.js — Cobro web con Wompi (F2 · "Comprar ahora", 1 pieza) por REDIRECCIÓN.
  *
- * Aísla la pasarela de la vista (carrito.js): genera el `pedidoId` (idempotencia), pide a la CF
- * `iniciarPagoWeb` la reserva + el total + la FIRMA (server-side; el navegador NUNCA firma), y abre
- * el Widget de Wompi (checkout.wompi.co). La VERDAD del pago la da el webhook (no el callback ni el
- * redirect): `gracias.html` solo muestra estado. El flag de activación vive en el callsite (carrito.js).
+ * TODO-63 (comité + Antigravity #5): se usa el Web Checkout por REDIRECCIÓN a checkout.wompi.co
+ * (página segura de Wompi, responsive y robusta) en vez del Widget modal embebido — el modal fallaba
+ * en navegadores in-app (Instagram/TikTok) con 3D Secure y se veía enorme en desktop.
+ *
+ * Aísla la pasarela de la vista (carrito.js): pide a la CF `iniciarPagoWeb` la reserva + el total + la
+ * FIRMA (server-side; el navegador NUNCA firma), arma la URL de Wompi y NAVEGA. La VERDAD del pago la
+ * da el WEBHOOK (no el redirect): `gracias.html?ref=…&id=…` solo muestra el estado.
  */
 import { iniciarPagoWeb } from './pedidos-service.js';
 
-const WIDGET_SRC = 'https://checkout.wompi.co/widget.js';
+const WOMPI_CHECKOUT = 'https://checkout.wompi.co/p/';
 const TOPE_TX_COP = 2500000;   // espeja el tope server-side (solo para no ofrecer la opción si no aplica)
 
 // Elegibilidad para "Pagar ahora" (el server RE-VALIDA; esto solo decide si MOSTRAR la opción).
-// Disponible AHORA = hay una unidad física para reservar → espeja `consumeUnidad` del server
-// (pedidos-core: finito* con cantidad>0; encargo/cantidad null = a fabricar, NO "pagar ahora").
-// ⚠️ Se mide por `cantidad`, NO por `available`: el doc VIVO de Firestore (lo que lee data.js) y el
-// catalogo.json del SSG traen ambos `cantidad`, pero `available` SOLO lo inyecta el SSG → con datos
-// vivos el botón nunca aparecía (gap cazado en el gate live, gate empírico §11.4).
+// Se mide por `cantidad` (doc vivo), NO por `available` (que solo lo inyecta el SSG) — gap del gate live (§11.4).
 export function wompiEligible(piece, total) {
     return !!piece
         && Number.isInteger(piece.cantidad) && piece.cantidad > 0
@@ -24,31 +23,21 @@ export function wompiEligible(piece, total) {
         && total > 0 && total <= TOPE_TX_COP;
 }
 
-let _widget = null;
-function cargarWidget() {
-    if (_widget) return _widget;
-    _widget = new Promise((resolve, reject) => {
-        if (window.WidgetCheckout) return resolve();
-        const s = document.createElement('script');
-        s.src = WIDGET_SRC;
-        s.async = true;
-        s.onload = () => (window.WidgetCheckout ? resolve() : reject(new Error('Widget de Wompi no disponible.')));
-        s.onerror = () => reject(new Error('No se pudo cargar el pago seguro de Wompi.'));
-        document.head.appendChild(s);
-    });
-    return _widget;
-}
-
 function nuevoPedidoId() {
     try { if (window.crypto?.randomUUID) return window.crypto.randomUUID(); } catch {}
     return `web-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e9).toString(36)}`;
 }
 
+// Arma la query del Web Checkout SIN codificar los dos puntos de las claves (`signature:integrity`,
+// `customer-data:*`) — Wompi los espera literales; solo se codifican los VALORES.
+function kv(key, value) {
+    return value == null || value === '' ? null : `${key}=${encodeURIComponent(value)}`;
+}
+
 /**
- * Inicia y abre el cobro de UNA pieza. Resuelve cuando el widget se cierra (con o sin pago);
- * la confirmación REAL la hace el webhook → `gracias.html?ref=` lee el estado.
+ * Inicia (reserva + firma) y REDIRIGE a la página de pago de Wompi. No resuelve (la página navega);
+ * el webhook confirma y `gracias.html` lee el estado al volver.
  * @param {{ pieceId:string, shipping?:object, habeas?:object, redirectBase?:string }} args
- * @returns {Promise<{ reference:string, transaction?:object }>}
  */
 export async function pagarConWompi({ pieceId, shipping, habeas, redirectBase }) {
     if (!pieceId) throw new Error('Falta la pieza.');
@@ -56,19 +45,26 @@ export async function pagarConWompi({ pieceId, shipping, habeas, redirectBase })
     if (!res?.signature || !res?.publicKey || !res?.amountInCents) {
         throw new Error('No se pudo iniciar el pago.');
     }
-    await cargarWidget();
     const base = redirectBase || (typeof location !== 'undefined' ? location.origin : '');
-    const checkout = new window.WidgetCheckout({
-        currency: res.currency || 'COP',
-        amountInCents: res.amountInCents,
-        reference: res.reference,
-        publicKey: res.publicKey,
-        signature: { integrity: res.signature },
-        redirectUrl: `${base}/gracias.html?ref=${encodeURIComponent(res.reference)}`,
-    });
-    return new Promise((resolve) => {
-        checkout.open((result) => resolve({ reference: res.reference, transaction: result?.transaction }));
-    });
+    const sh = shipping || {};
+    const fullName = `${sh.firstName || ''} ${sh.lastName || ''}`.trim();
+    const parts = [
+        kv('public-key', res.publicKey),
+        kv('currency', res.currency || 'COP'),
+        kv('amount-in-cents', String(res.amountInCents)),
+        kv('reference', res.reference),
+        kv('signature:integrity', res.signature),
+        kv('redirect-url', `${base}/gracias.html?ref=${encodeURIComponent(res.reference)}`),
+        kv('expiration-time', res.expirationTime),
+        // customer-data: mejora el antifraude de Wompi; el legal_id es clave en montos altos (Antigravity A1).
+        kv('customer-data:email', sh.email),
+        kv('customer-data:full-name', fullName),
+        kv('customer-data:phone-number', sh.phone),
+        kv('customer-data:legal-id', sh.docNumber),
+        kv('customer-data:legal-id-type', sh.docType),
+    ].filter(Boolean);
+    window.location.href = `${WOMPI_CHECKOUT}?${parts.join('&')}`;
+    return new Promise(() => {});   // la navegación se va de la página; intencionalmente no resuelve
 }
 
 export default { wompiEligible, pagarConWompi };

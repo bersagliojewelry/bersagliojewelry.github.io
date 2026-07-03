@@ -95,7 +95,7 @@ test('confirmarPago: pedido inexistente → rechaza', async () => {
     await assert.rejects(confirmarPagoCore(db, { pedidoId: 'noexiste', autor: 'kary' }), /no existe/i);
 });
 
-const { anularPedidoCore, cierreCajaCore } = core;
+const { anularPedidoCore, cierreCajaCore } = core;   // confirmarPagoCore ya viene del import de arriba
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 test('anularPedido: marca anulado + REPONE la unidad (v3: cantidad + estado derivado + ledger)', async () => {
@@ -190,4 +190,38 @@ test('v3 REFABRICABLE con stock (cantidad 1): vende → 0 → bajo_pedido (NO ag
     assert.equal(pz.estado, 'bajo_pedido');                                    // refabricable agotado sigue vendible
     await crearPedidoCore(db, { pedidoId: 'pedRef3', pieceId: 'pRef1', medio: 'efectivo', autor: 'u1' });   // se sigue vendiendo
     assert.equal((await db.doc('pieces/pRef1').get()).data().cantidad, 0);     // no baja de 0
+});
+
+// ─── Bloque C del plan Fable (AL FINAL: crean pedidos → correlativo) ───
+test('C.1: anular una pieza que Kary cambió a ENCARGO no le crea cantidad (invariante)', async () => {
+    await db.doc('pieces/pC1enc').set({ name: 'C1enc', slug: 'c1enc', price: 400000, stockType: 'finito', cantidad: 1 });
+    await crearPedidoCore(db, { pedidoId: 'pedC1enc', pieceId: 'pC1enc', medio: 'efectivo', autor: 'u1' });
+    await db.doc('pieces/pC1enc').set({ name: 'C1enc', slug: 'c1enc', price: 400000, stockType: 'encargo' });   // Kary cambia el tipo
+    await anularPedidoCore(db, { pedidoId: 'pedC1enc', autor: 'kary' });
+    const pz = (await db.doc('pieces/pC1enc').get()).data();
+    assert.equal(pz.cantidad ?? null, null);        // NO se creó `cantidad` sobre un encargo
+    assert.equal(pz.estado, 'disponible');
+});
+
+test('C.1: anular un pedido web pago_pendiente limpia reservaId/reservaExpira (sin reserva fantasma)', async () => {
+    await db.doc('pieces/pC1res').set({ name: 'C1res', slug: 'c1res', price: 500000, stockType: 'finito', cantidad: 0, estado: 'agotada', reservaId: 'pedC1res', reservaExpira: null });
+    await db.doc('pedidos/pedC1res').set({ pieceId: 'pC1res', total: 500000, estado: 'pago_pendiente', consumioStock: true, canal: 'web', medio: 'wompi' });
+    await anularPedidoCore(db, { pedidoId: 'pedC1res', autor: 'kary' });
+    const pz = (await db.doc('pieces/pC1res').get()).data();
+    assert.equal(pz.cantidad, 1);            // repuesta
+    assert.equal(pz.reservaId, null);        // C.1: limpia la reserva (antes quedaba fantasma)
+    assert.equal(pz.reservaExpira, null);
+});
+
+test('C.2: venta transferencia confirmada en un turno POSTERIOR cuenta en ese turno (no se pierde)', async () => {
+    await db.doc('pieces/pC2').set({ name: 'C2', slug: 'c2', price: 700000, stockType: 'finito', cantidad: 1 });
+    await crearPedidoCore(db, { pedidoId: 'pedC2', pieceId: 'pC2', medio: 'transferencia', autor: 'u1' });   // nace pago_por_verificar
+    await sleep(15);
+    const c1 = await cierreCajaCore(db, { arqueoId: 'arqC2a', declaradoEfectivo: 0, autor: 'kary' });
+    assert.equal(c1.esperadoPorMedio.transferencia, 0);   // aún no pagada → no cuenta en el turno 1
+    await sleep(15);
+    await confirmarPagoCore(db, { pedidoId: 'pedC2', autor: 'kary' });   // confirmada en el turno 2
+    await sleep(15);
+    const c2 = await cierreCajaCore(db, { arqueoId: 'arqC2b', declaradoEfectivo: 0, autor: 'kary' });
+    assert.equal(c2.esperadoPorMedio.transferencia, 700000);   // C.2: cuenta en el turno de confirmación
 });

@@ -70,6 +70,32 @@ function aplicarConsumo(tx, pieceRef, { pedidoId, autor, motivo = 'venta', movId
 }
 
 /**
+ * reponerStock (C.1) — repone UNA unidad al reintegrar/liberar un pedido que consumió stock (VOID o
+ * reserva expirada). Centraliza lo que estaba DUPLICADO y divergente en anularPedidoCore y
+ * liberarReservaCore. Correcciones:
+ *   (a) si la pieza es AHORA `encargo` (Kary cambió el tipo tras la venta), NO incrementa `cantidad`
+ *       (encargo = sin inventario) → solo audita, evita el invariante roto "encargo con cantidad".
+ *   (b) limpia SIEMPRE `reservaId`/`reservaExpira` cuando esta reserva era la activa (reservaId===pedidoId)
+ *       → evita la "reserva fantasma" que dejaba la rama v3 de anular.
+ * Cantidad ABSOLUTA (leída en la tx, coherente con A.7). Idempotencia = el gate de transición del caller.
+ * @returns nuevaCantidad (o null si encargo).
+ */
+function reponerStock(tx, pieceRef, piece, { pedidoId, motivo, ledgerId, actor }) {
+    const st = normStockType(piece.stockType);
+    const esEncargo = st === 'encargo';
+    const nuevaCantidad = esEncargo ? null : (Number.isInteger(piece.cantidad) ? piece.cantidad : 0) + 1;
+    const update = { estado: derivarEstado(st, nuevaCantidad), updatedAt: FieldValue.serverTimestamp() };
+    if (!esEncargo) update.cantidad = nuevaCantidad;
+    if (piece.reservaId === pedidoId) { update.reservaId = null; update.reservaExpira = null; }
+    tx.update(pieceRef, update);
+    tx.set(pieceRef.collection('movimientos').doc(ledgerId), {
+        delta: esEncargo ? 0 : 1, motivo, pedidoId, cantidadResultante: nuevaCantidad,
+        actor, at: FieldValue.serverTimestamp(),
+    });
+    return nuevaCantidad;
+}
+
+/**
  * @param db Firestore (admin) — bypassa reglas (único escritor server-side).
  * @param input { pedidoId, pieceId, valorGramo?, peso?, manoObra?, medio?, canal?, autor }
  */
@@ -399,16 +425,12 @@ async function liberarReservaCore(db, pedidoId, opts = {}) {
             t.update(pedidoRef, { estado: 'a_revisar', revisarMotivo: 'reaper halló pago APPROVED sin webhook', updatedAt: FieldValue.serverTimestamp() });
             return { pedidoId, accion: 'a_revisar-aprobado' };
         }
-        // NONE → liberar: repone la unidad si este pedido la consumió (espeja anularPedido).
+        // NONE → liberar: repone la unidad si este pedido la consumió (helper compartido C.1).
         if (ped.consumioStock === true && ped.pieceId) {
             const pieceRef = db.doc(`pieces/${ped.pieceId}`);
             const pieceSnap = await t.get(pieceRef);
             if (pieceSnap.exists) {
-                const p = pieceSnap.data();
-                const st = normStockType(p.stockType);
-                const nuevaCantidad = (Number.isInteger(p.cantidad) ? p.cantidad : 0) + 1;
-                t.update(pieceRef, { cantidad: FieldValue.increment(1), estado: derivarEstado(st, nuevaCantidad), reservaId: null, reservaExpira: null, updatedAt: FieldValue.serverTimestamp() });
-                t.set(pieceRef.collection('movimientos').doc(`exp-${pedidoId}`), { delta: 1, motivo: 'reserva-expirada', pedidoId, cantidadResultante: nuevaCantidad, actor: 'reaper', at: FieldValue.serverTimestamp() });
+                reponerStock(t, pieceRef, pieceSnap.data(), { pedidoId, motivo: 'reserva-expirada', ledgerId: `exp-${pedidoId}`, actor: 'reaper' });
             }
         }
         t.update(pedidoRef, { estado: 'expirado', expiradoEn: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
@@ -462,18 +484,8 @@ async function anularPedidoCore(db, input = {}) {
             if (pieceSnap.exists) {
                 const p = pieceSnap.data();
                 if (ped.consumioStock === true) {
-                    // v3: el pedido bajó una unidad → increment(+1) + estado DERIVADO + ledger.
-                    const st = normStockType(p.stockType);
-                    const nuevaCantidad = (Number.isInteger(p.cantidad) ? p.cantidad : 0) + 1;
-                    tx.update(pieceRef, {
-                        cantidad: FieldValue.increment(1),
-                        estado: derivarEstado(st, nuevaCantidad),
-                        updatedAt: FieldValue.serverTimestamp(),
-                    });
-                    tx.set(db.doc(`pieces/${ped.pieceId}/movimientos/anul-${pedidoId}`), {
-                        delta: 1, motivo: 'anulacion', pedidoId, cantidadResultante: nuevaCantidad,
-                        actor: autor, at: FieldValue.serverTimestamp(),
-                    });
+                    // C.1: v3 → helper compartido (repone +1, respeta encargo, limpia reservaId fantasma).
+                    reponerStock(tx, pieceRef, p, { pedidoId, motivo: 'anulacion', ledgerId: `anul-${pedidoId}`, actor: autor });
                     reintegrada = true;
                 } else if (p.estado === 'vendida') {
                     // LEGACY (pedido pre-v3): la pieza quedó 'vendida' → volver a disponible (modelo viejo).
@@ -513,28 +525,48 @@ async function cierreCajaCore(db, input = {}) {
     // Ventana del turno = desde el último cierre (o desde siempre la 1ª vez).
     const lastSnap = await db.collection('arqueo').orderBy('cierreTs', 'desc').limit(1).get();
     const desde = lastSnap.empty ? null : lastSnap.docs[0].data().cierreTs;
-    // Rango sobre createdAt (campo único → sin índice compuesto); el estado se filtra en código.
-    let q = db.collection('pedidos');
-    if (desde) q = q.where('createdAt', '>', desde);
-    const peds = await q.get();
 
-    const esperado = { efectivo: 0, transferencia: 0, wompi: 0 };
-    peds.forEach(d => {
-        const p = d.data();
-        if (p.estado === 'pagado' && esperado[p.medio] != null) esperado[p.medio] += entero(p.total);
-    });
-    const descuadre = declarado - esperado.efectivo;    // + sobra, − falta
+    // C.2: el "momento del dinero" de un pedido pagado = `confirmadoEn` (transferencia/Wompi, confirmado
+    // por Kary/webhook) o `createdAt` (efectivo, nace pagado). Se suma por ESE momento, no por createdAt:
+    // una venta creada en un turno y confirmada en ESTE cuenta aquí (antes se perdía = subreporte). Como
+    // confirmadoEn≠createdAt, se recolecta por 3 vías (creados/confirmados/anulados en la ventana; dedup por id).
+    const vistos = new Map();
+    const recolectar = snap => snap.forEach(d => vistos.set(d.id, d.data()));
+    const qBase = db.collection('pedidos');
+    recolectar(await (desde ? qBase.where('createdAt', '>', desde) : qBase).get());
+    if (desde) {
+        recolectar(await qBase.where('confirmadoEn', '>', desde).get());   // confirmados tarde
+        recolectar(await qBase.where('anuladoEn', '>', desde).get());       // anulados en el turno
+    }
+    const enVentana = ts => ts && (!desde || (ts.toMillis?.() ?? 0) > desde.toMillis());
+
+    // C.4: los medios salen de MEDIOS (no un objeto fijo) → si mañana se descongela ADDI, no queda invisible.
+    const esperado = Object.fromEntries(MEDIOS.map(m => [m, 0]));
+    const ajustes  = Object.fromEntries(MEDIOS.map(m => [m, 0]));   // devoluciones por anulación de ventas de turnos PREVIOS
+    for (const p of vistos.values()) {
+        if (esperado[p.medio] == null) continue;
+        const momento = p.confirmadoEn || p.createdAt;
+        if (p.estado === 'pagado') {
+            if (enVentana(momento)) esperado[p.medio] += entero(p.total);
+        } else if (p.estado === 'anulado' && enVentana(p.anuladoEn)) {
+            // Anulada en este turno; si su dinero se contó en un cierre PREVIO (momento ≤ desde), se resta ahora.
+            if (desde && momento && (momento.toMillis?.() ?? 0) <= desde.toMillis()) ajustes[p.medio] -= entero(p.total);
+        }
+    }
+    const esperadoEfectivo = esperado.efectivo + ajustes.efectivo;   // neto: ventas del turno − devoluciones de turnos previos
+    const descuadre = declarado - esperadoEfectivo;                  // + sobra, − falta
 
     await ref.set({
         aperturaDesde: desde || null,
         cierreTs: FieldValue.serverTimestamp(),
         autor,
         esperadoPorMedio: esperado,
-        esperadoEfectivo: esperado.efectivo,
+        ajustesPorMedio: ajustes,        // C.2: devoluciones por anulación de ventas contadas en cierres previos
+        esperadoEfectivo,
         declaradoEfectivo: declarado,
         descuadre,
     });
-    return { arqueoId, esperadoPorMedio: esperado, esperadoEfectivo: esperado.efectivo, declaradoEfectivo: declarado, descuadre, yaExistia: false };
+    return { arqueoId, esperadoPorMedio: esperado, ajustesPorMedio: ajustes, esperadoEfectivo, declaradoEfectivo: declarado, descuadre, yaExistia: false };
 }
 
 module.exports = {

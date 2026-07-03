@@ -24,8 +24,12 @@
 // v64 = fixes: selector país "CO +57" (ISO mayúscula, sin nombre/bandera) · borrado de fotos
 // robusto (salta no-Storage, muestra código real; cubre piezas y colecciones) · caché SÍNCRONO
 // del CMS en localStorage → sin flash de la imagen vieja del repo (hero y toda sección).
-// v63 = rediseño checkout. v62 = FAQ financiación. v60 = Wompi ENCENDIDO.
-const CACHE_NAME    = 'bersaglio-v64';
+// v65 = fix login admin (TODO-64 / plan Fable A0): parpadeos al ingresar. sessionReady() determinista
+// reemplaza el timeout de 500ms (H1); requireAuth rutea rol insuficiente a su página en vez de rebotar
+// al login (H2, el caso de Kary/catálogo); la limpieza de ?error se movió a login.js (H3). Bump = shells
+// admin frescos (admin-login/admin/admin-piezas).
+// v64 = fixes país/borrado-fotos/caché-CMS. v63 = rediseño checkout. v62 = FAQ financiación. v60 = Wompi ON.
+const CACHE_NAME    = 'bersaglio-v65';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

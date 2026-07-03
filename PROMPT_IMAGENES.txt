@@ -1,0 +1,86 @@
+A hyper-realistic, high-end editorial product photography of the exact piece of fine jewelry shown in the reference image. The jewelry is the absolute protagonist, showcasing 18-karat gold and precious gemstones.
+
+CRITICAL INSTRUCTION: THE 80,000+ COMBINATIONS MATRIX
+You must act as a visionary High-Jewelry Art Director. You are FORCED to "roll the dice" and randomly select EXACTLY ONE element from EACH of the 4 Categories below. You must creatively fuse these 4 selected elements into a seamless, unique environment. DO NOT default to a basic background or a basic geometric pedestal.
+
+CATEGORY A: Base Surfaces (Roll 1 randomly between 1 and 20)
+1. Warm travertine marble with soft, natural golden veining.
+2. Translucent, frosted "liquid glass" with melting, organic curves.
+3. Deep emerald green velvet with sharp, theatrical architectural folds.
+4. Polished dark jade or green malachite stone slab.
+5. Rough, unpolished natural quartz or golden ore matrix.
+6. Soft, raw woven silk or heavy ivory cashmere with a luxurious drape.
+7. Ancient, weathered carved sandstone.
+8. Polished dark tropical teak wood catching warm reflections.
+9. Antique mirrored glass with a cloudy, warm golden patina.
+10. Warm terracotta clay with a perfectly smooth, glazed finish.
+11. Smooth, dark river-washed basalt stone resting organically.
+12. Deep emerald-green tinted resin block with a sleek matte finish.
+13. An out-of-focus, open vintage leather-bound book or nautical map.
+14. An ornate, antique brass tray with intricate colonial engravings.
+15. Polished alabaster stone glowing faintly with a milky translucence.
+16. A luxurious, tufted emerald leather surface (premium jewelry box interior).
+17. A piece of raw, dark volcanic pumice stone.
+18. Smooth, frosted white sea glass.
+19. A pristine, unpolished slab of solid 18k gold.
+20. A bed of fine, loose, uncut raw emeralds.
+
+CATEGORY B: Atmospheric Elements & Props (Roll 1 randomly between 21 and 40)
+21. A shallow pool of crystal-clear water with light caustics.
+22. Lush tropical palm leaf shadows draped beautifully over the background.
+23. Delicate tendrils of warm golden smoke or ethereal morning mist.
+24. Perfect water droplets or condensation on a nearby pane of frosted glass.
+25. A dusting of crushed dried jasmine flowers or scattered gold leaf flakes.
+26. Fine, delicate golden sand with subtle wind-rippled textures.
+27. A clear acrylic prism breaking the light into warm, cinematic flares.
+28. Floating sparkling dust motes (bokeh) caught beautifully in a light ray.
+29. Exotic dried botanical leaves subtly tinted with gold dust.
+30. Delicate shards of sea-tumbled emerald glass scattered softly in the bokeh.
+31. An out-of-focus vintage magnifying glass distorting the background light.
+32. Fine threads of spun gold or metallic mesh softly curving in the background.
+33. A subtle overlay of vintage 35mm film grain or light leak.
+34. Warm reflections from an unseen pool of water dancing across the background.
+35. An antique golden compass resting softly out of focus in the background.
+36. A softly blurred, vintage handwritten letter in elegant calligraphy.
+37. Floating strands of golden silk threads suspended in mid-air.
+38. A delicate, translucent silk veil blowing gently in the wind.
+39. Crushed pearls scattered organically across the scene.
+40. Nothing extra. Completely minimalist and clean, letting the surface shine.
+
+CATEGORY C: Lighting & Shadows (Roll 1 randomly between 41 and 60)
+41. Warm golden-hour sunset lighting falling diagonally across the piece.
+42. Dramatic chiaroscuro: a single sharp, intense beam piercing through darkness.
+43. "Breathing light": soft, diffused, and ethereal with almost no hard shadows.
+44. Intricate shadows cast by an antique wrought-iron balcony grille.
+45. Bounced lighting creating warm, indirect amber reflections.
+46. Theatrical spot-lighting where the edges melt into deep emerald darkness.
+47. Dappled light filtering through an unseen canopy (forest canopy light).
+48. Perfect golden rim-lighting carving out the silhouette of the jewelry.
+49. A subtle, glowing bioluminescence coming from beneath a glass base.
+50. Thick, atmospheric volumetric "God rays" piercing the scene from above.
+51. Soft, overcast "window light" filtering through sheer linen curtains (no harsh rays).
+52. Cinematic "gobo" projection of tropical ferns across the scene.
+53. Moody, low-key lighting: everything is dark emerald except a single soft pool of warm light.
+54. Silhouette lighting: the background glows brightly and the jewelry is strongly backlit.
+55. Completely flat, high-fashion editorial lighting with absolutely zero shadows.
+56. Dual-tone lighting: warm gold from the left, deep emerald ambient from the right.
+57. The soft, flickering and dancing light of an unseen nearby fireplace.
+58. Venetian blind shadows creating elegant horizontal stripes of warm sunset.
+59. A soft, glowing pearlescent ring light reflection on the gemstone.
+60. Neon-like glowing edge highlights, mimicking liquid glass reflections.
+
+CATEGORY D: Context & Composition (Roll 1 randomly between 61 and 70)
+61. Resting completely flat on the surface (Classic overhead or 45-degree angle).
+62. Levitating slightly in mid-air above the surface, defying gravity.
+63. Hanging gracefully from an unseen golden thread or thin silk ribbon.
+64. Partially submerged in a shallow layer of crystal-clear water.
+65. Emerging from within the folds of the chosen fabric/surface, partially concealed.
+66. Pressed gently between two panes of frosted translucent glass.
+67. Resting precariously on the very edge of a sharp step or precipice.
+68. Reflected perfectly on a mirror-like surface, shot from a low, dramatic angle.
+69. Sunk softly into the center of a lush, loose pile of the chosen atmospheric prop.
+70. Delicately draped over the curved edge of a large, smooth stone or object.
+
+Aesthetic Foundation: "Liquid Glass" aesthetic. Rich, saturated jewel tones. Deep emerald-tinted shadows (no pure black). The background must be an out-of-focus abstract gradient ("breathing light") complementing the rolled elements. 
+
+Negative Prompt: NO generic green blankets, NO identical repetitive layouts, NO basic transparent pyramids, NO identical pedestals, NO text, NO logos, NO pure stark white backgrounds, NO cool or blue lighting, NO mannequins.

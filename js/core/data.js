@@ -186,14 +186,20 @@ class PublicData {
         try {
             const fresh = await fetchSiteContentFromServer(page);   // revalida (1 lectura)
             // diff-gate: re-pinta si NO había caché, o si la versión cambió, o ante CUALQUIER duda (I1).
-            const changed = !hadCache || (fresh ? fresh.version !== cachedVersion : true);
+            // D.3: un doc SIN `version` (legacy) dejaba `undefined !== undefined` = false → el dato fresco
+            // nunca se aplicaba. Tratar `version` ausente como CAMBIADO (fuerza revalidación).
+            const changed = !hadCache || !fresh?.version || fresh.version !== cachedVersion;
             if (changed) apply(fresh);
             this._notify();
             return this._siteContent[page];
         } catch (err) {
             // Offline/red caída: nos quedamos con lo de caché (ya pintado). Sin caché → defaults.
+            // D.3: `hadCache` solo refleja el caché del SDK Firestore. Si getSiteContent ya hidrató este
+            // page desde localStorage (`_siteContent[page]`), un apply({}) aquí PISARÍA ese contenido bueno
+            // Y persistiría '{}' en localStorage → flash al default + caché anti-flash destruido. No degradar
+            // si ya hay contenido hidratado.
             console.warn('[data] siteContent revalidate failed:', err);
-            if (!hadCache) apply({});
+            if (!hadCache && !this._siteContent[page]) apply({});
             this._notify();
             return this._siteContent[page] || {};
         }

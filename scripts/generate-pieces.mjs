@@ -612,8 +612,11 @@ async function fetchCollection(handle, name, opts = {}) {
     // (deploy.yml SIN FIREBASE_SA_KEY) → bajo la regla read v3 una lectura SIN filtro FALLARÍA entera si
     // existe una privada. `!= privada` pide solo docs legibles (= la regla) y excluye privadas del catálogo.
     if (handle.mode === 'admin') {
-        const ref = handle.db.collection(name);
-        return await (opts.excludePrivate ? ref.where('visibilidad', '!=', 'privada') : ref).get();
+        // D.1: en modo admin (SA key) NO se filtra en la query. `where('visibilidad','!=','privada')` excluye,
+        // por semántica de Firestore, los docs SIN el campo `visibilidad` (una pieza legacy → desaparecía del
+        // catálogo/sitemap SIN error). El admin lee TODO; el filtro esPublica() en main() quita las privadas
+        // (mismo resultado para privadas) pero ya NO pierde las legacy sin visibilidad.
+        return await handle.db.collection(name).get();
     }
     const base = collection(handle.db, name);
     return await getDocs(opts.excludePrivate ? query(base, where('visibilidad', '!=', 'privada')) : base);
@@ -673,8 +676,11 @@ function tsSeconds(ts) {
 }
 
 // specs PÚBLICOS (whitelist AEO) — NUNCA volcar specs crudo (puede traer notas internas).
+// D.0: `badgeGem` (gema protagonista, tiñe el badge) y `gemFilterIds` (todas las gemas, para filtros
+// array-contains) son PÚBLICOS por diseño (§151). Sin ellos, al conmutar el cliente al catalogo.json (7b)
+// el badge caería al regex sobre prosa y los filtros por gema (TODO-50/57) no tendrían sobre qué construirse.
 const PUBLIC_SPEC_KEYS = ['stone', 'stones', 'carat', 'color', 'clarity', 'cut', 'accent',
-    'metal', 'gold', 'weight', 'certificate', 'gia', 'origin'];
+    'metal', 'gold', 'weight', 'certificate', 'gia', 'origin', 'badgeGem', 'gemFilterIds'];
 function publicSpecs(specs) {
     const s = specs || {};
     const out = {};

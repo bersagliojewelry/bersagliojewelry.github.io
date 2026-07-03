@@ -250,7 +250,7 @@ function renderCountryPhone() {
             <span class="eyebrow">Teléfono / WhatsApp<span class="ck-field-required">*</span></span>
             <span class="ck-phone-row">
                 <select name="countryIso2" class="ck-field-input ck-phone-cc" aria-label="País (indicativo telefónico)">
-                    ${COUNTRIES.map(c => html`<option value="${escape(c.iso2)}" ${_shipping.countryIso2 === c.iso2 ? 'selected' : ''}>${c.flag} ${escape(c.nombre)} +${escape(c.code)}</option>`)}
+                    ${COUNTRIES.map(c => html`<option value="${escape(c.iso2)}" ${_shipping.countryIso2 === c.iso2 ? 'selected' : ''}>${escape(c.iso2)} +${escape(c.code)}</option>`)}
                 </select>
                 <input type="tel" name="phone" class="ck-field-input ck-phone-num" value="${escape(_shipping.phone)}" inputmode="tel" autocomplete="tel" placeholder="Número" required>
             </span>

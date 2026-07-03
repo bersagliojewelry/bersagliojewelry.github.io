@@ -21,11 +21,11 @@
 // v58 = §156.19: el aviso de cookies (z-90) quedaba DEBAJO del FAB "Asesoría privada" (z-200) y el
 // toque de "Aceptar" caía en el FAB (móvil). Fix: banner a z-210 + el FAB se aparta mientras el
 // banner está presente (bandera body.bj-cookie-active desde cookie-banner.js). Bump = CSS/JS fresco.
-// v63 = TODO-63 rediseño del checkout: paso "Entrega" (tipo + país/indicativo + legal_id +
-// consentimiento al final) · enfoque de pago (ocultar otros + escape) · Wompi por REDIRECT
-// (página segura, no widget modal) · §3 Términos GD-2 · pantalla de éxito "PAGO RECIBIDO".
-// v62 = FAQ financiación real. v61 = consistencia Términos. v60 = Wompi ENCENDIDO.
-const CACHE_NAME    = 'bersaglio-v63';
+// v64 = fixes: selector país "CO +57" (ISO mayúscula, sin nombre/bandera) · borrado de fotos
+// robusto (salta no-Storage, muestra código real; cubre piezas y colecciones) · caché SÍNCRONO
+// del CMS en localStorage → sin flash de la imagen vieja del repo (hero y toda sección).
+// v63 = rediseño checkout. v62 = FAQ financiación. v60 = Wompi ENCENDIDO.
+const CACHE_NAME    = 'bersaglio-v64';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

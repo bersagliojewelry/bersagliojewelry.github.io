@@ -172,6 +172,7 @@ class PublicData {
     async loadSiteContent(page, onUpdate) {
         const apply = (docData) => {
             this._siteContent[page] = docData || {};
+            try { localStorage.setItem('bj-sc-' + page, JSON.stringify(docData || {})); } catch {}   // TODO-63: caché SÍNCRONO anti-flash del CMS
             if (typeof onUpdate === 'function') {
                 try { onUpdate(); } catch (e) { console.warn('[data] siteContent onUpdate:', e); }
             }
@@ -199,7 +200,17 @@ class PublicData {
     }
 
     /** Doc de contenido de una página (raw, sin merge); null si no cargado. */
-    getSiteContent(page) { return this._siteContent[page] || null; }
+    getSiteContent(page) {
+        if (this._siteContent[page]) return this._siteContent[page];
+        // TODO-63: hidrata SÍNCRONAMENTE del caché localStorage en el 1er paint (antes de que llegue
+        // Firestore) → el hero (y toda sección CMS) pinta ya la imagen/textos reales, sin el flash de
+        // la imagen por defecto del repo. Se refresca luego si el servidor trae algo más nuevo.
+        try {
+            const raw = localStorage.getItem('bj-sc-' + page);
+            if (raw) return (this._siteContent[page] = JSON.parse(raw) || {});
+        } catch {}
+        return null;
+    }
 
     // ─── Getters ───────────────────────────────────────────────────────────
 

@@ -73,9 +73,23 @@ export async function getPieceImages(pieceId) {
  * storage path from the URL and create a ref from that path.
  */
 export async function deletePieceImage(imageUrl) {
-    const storagePath = extractStoragePath(imageUrl);
-    const imageRef = ref(storage, storagePath);
-    await deleteObject(imageRef);
+    // Solo hay algo que borrar en Storage si la URL es de Firebase Storage. Las imágenes
+    // demo/seed o del repo (rutas /img/…, externas) NO viven en Storage → no hay basura que
+    // eliminar y `deleteObject` fallaría con un falso error. §TODO-63.
+    if (!isStorageUrl(imageUrl)) return { skipped: true };
+    try {
+        await deleteObject(ref(storage, extractStoragePath(imageUrl)));
+        return { deleted: true };
+    } catch (err) {
+        // Ya no existe = objetivo cumplido (no es error). Otros (permiso, red) sí se propagan.
+        if (err && err.code === 'storage/object-not-found') return { alreadyGone: true };
+        throw err;
+    }
+}
+
+/** ¿La URL apunta a un objeto de Firebase Storage (único caso donde hay algo que borrar)? */
+export function isStorageUrl(url) {
+    return typeof url === 'string' && /^https?:\/\/firebasestorage\.googleapis\.com\//.test(url);
 }
 
 /**

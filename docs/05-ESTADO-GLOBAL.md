@@ -18,7 +18,7 @@
 ## ⚠️ Flags de riesgo activos (→ hardening F6 · detalle `docs/41-SEGURIDAD.md`)
 - 🟠 **Deploy reglas/functions = MANUAL** (CI = Pages only, **L-22**): `firebase deploy --only firestore:rules,firestore:indexes,functions`. Functions Node 22 + ff v7 ✅ (§48).
 - 🟠 **F6**: App Check REPARADO (§58) — **TODO-14 Enforce DIFERIDO** hasta flujo alto de clientes (Daniel 2026-06-23); queda en monitoreo. 🏁 F6 técnico COMPLETO (§68): RBAC claims (§65/§66) + alerta de truncado (§68). Resto del programa: App Check Enforce + compuerta de adopción → Fase M; política cartera APROBADA → config en Fase M.
-- 🔴 **GATE PRECIOS (Fable 2026-07-03, TODO-65)**: Wompi vivo pero DORMIDO (botón oculto sin precios). **NO cargar precios hasta cerrar Bloque A** del plan `2026-07-03-auditoria-holistica-plan-fable` (3 P1 dinero). Login TODO-64 = A0 (incendio diario). Opus implementa por bloques.
+- 🔴 **GATE PRECIOS (Fable 2026-07-03, TODO-65)**: Wompi vivo pero DORMIDO (botón oculto sin precios). **NO cargar precios hasta cerrar Bloque A** del plan `2026-07-03-auditoria-holistica-plan-fable` (3 P1 dinero). **A0 login ✅ RESUELTO+verif live (§159, v65)** → siguiente = Bloque A (dinero).
 
 ## 🧩 Sub-sistemas
 Liquid Glass (Vite) ✅ · Sync en vivo Firestore ✅ · Checkout Stepper 3 pasos ✅ · Cart/Wishlist drawers ✅ · Animaciones staggered ✅

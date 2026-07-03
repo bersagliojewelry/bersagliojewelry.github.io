@@ -18,7 +18,7 @@
 ## ⚠️ Flags de riesgo activos (→ hardening F6 · detalle `docs/41-SEGURIDAD.md`)
 - 🟠 **Deploy reglas/functions = MANUAL** (CI = Pages only, **L-22**): `firebase deploy --only firestore:rules,firestore:indexes,functions`. Functions Node 22 + ff v7 ✅ (§48).
 - 🟠 **F6**: App Check REPARADO (§58) — **TODO-14 Enforce DIFERIDO** hasta flujo alto de clientes (Daniel 2026-06-23); queda en monitoreo. 🏁 F6 técnico COMPLETO (§68): RBAC claims (§65/§66) + alerta de truncado (§68). Resto del programa: App Check Enforce + compuerta de adopción → Fase M; política cartera APROBADA → config en Fase M.
-- 🔴 **GATE PRECIOS (Fable 2026-07-03, TODO-65)**: Wompi vivo pero DORMIDO (botón oculto sin precios). **NO cargar precios hasta cerrar Bloque A** del plan `2026-07-03-auditoria-holistica-plan-fable` (3 P1 dinero). **A0 login ✅ RESUELTO+verif live (§159, v65)** → siguiente = Bloque A (dinero).
+- 🔴 **GATE PRECIOS + DEPLOY PARCIAL (TODO-65, §160)**: plan Fable A-E CONSTRUIDO. **Mergeado a main (PR #406/#407) → FRONTEND ya en prod** (Pages+SW v66): admin B/C VIVO (mejoras), checkout A inerte (botón Wompi oculto sin precios). **FALTA deploy MANUAL de functions+reglas** (L-22) → el POS/Wompi corren con backend VIEJO hasta desplegar (seguro: nada roto, solo los fixes C/A-backend aún no activos). **NO cargar precios hasta**: (1) auditoría Fable sesión fresca → (2) `firebase deploy --only functions,firestore:rules`. A0 login ✅ (§159). D 7b-7d/D.5/D.6 pend prerrequisitos.
 
 ## 🧩 Sub-sistemas
 Liquid Glass (Vite) ✅ · Sync en vivo Firestore ✅ · Checkout Stepper 3 pasos ✅ · Cart/Wishlist drawers ✅ · Animaciones staggered ✅

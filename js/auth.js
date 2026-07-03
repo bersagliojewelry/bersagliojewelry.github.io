@@ -32,12 +32,32 @@ function hasMinRole(userRole, requiredRole) {
     return (ROLE_LEVELS[userRole] || 0) >= (ROLE_LEVELS[requiredRole] || 0);
 }
 
+// Página de aterrizaje segura por rol: catálogo (Kary, TODO-19) solo accede a Piezas/Colecciones/POS
+// (todas requireAuth('catalogo')); editor+ aterrizan en el dashboard (requireAuth('editor')). Se usa
+// para rutar un rol insuficiente a una página que SÍ puede ver, no al login (mata el ping-pong H2).
+function roleLanding(role) {
+    return role === 'catalogo' ? 'admin-piezas.html' : 'admin.html';
+}
+
 // ─── State ──────────────────────────────────────────────────────────────────
 
 let _currentUser = null;
 let _userProfile = null;
 let _authReady   = false;
 const _listeners = [];
+
+// sessionReady() — promesa que resuelve UNA vez, al terminar la PRIMERA resolución del estado de
+// auth (incluido el getDoc del perfil). Se resuelve DESPUÉS de escribir `bj_auth` (cacheAuthHints),
+// así login.js puede redirigir con el rol REAL sin carrera ni timeout mágico (TODO-64 H1). Reemplaza
+// el `setTimeout(500)` de login.js: determinista, no un adivina-cuánto-tarda-el-getDoc.
+let _sessionReadySettled = false;
+let _resolveSessionReady;
+const _sessionReadyPromise = new Promise(resolve => { _resolveSessionReady = resolve; });
+function settleSessionReady() {
+    if (_sessionReadySettled) return;
+    _sessionReadySettled = true;
+    _resolveSessionReady({ user: _currentUser, profile: _userProfile });
+}
 
 // Pistas de sesión para PINTAR rápido (NO autorizan nada — el candado real es server-side:
 // reglas Firestore + claims). `bj_auth` = hay sesión (lo lee el inline anti-flash de cada
@@ -86,8 +106,20 @@ onAuthStateChanged(auth, async (user) => {
         clearAuthHints();
     }
 
+    // Resuelve sessionReady() al final de la 1ª pasada (bj_auth ya escrito si había perfil).
+    settleSessionReady();
     _listeners.forEach(cb => cb({ user: _currentUser, profile: _userProfile }));
 });
+
+/**
+ * Promesa que resuelve cuando el estado de auth quedó determinado por primera vez, con `bj_auth`
+ * ya persistido si hay perfil. Úsala en la página de login para redirigir con el rol REAL sin
+ * carreras (reemplaza timeouts). Resuelve también cuando NO hay sesión (`{ user:null, profile:null }`).
+ * @returns {Promise<{ user, profile }>}
+ */
+export function sessionReady() {
+    return _sessionReadyPromise;
+}
 
 // ─── Public API ─────────────────────────────────────────────────────────────
 
@@ -139,19 +171,28 @@ export async function signIn(email, password) {
         if (err.code === 'auth/too-many-requests') {
             throw new Error('Demasiados intentos. Intenta de nuevo en unos minutos.');
         }
+        if (err.code === 'auth/network-request-failed') {
+            throw new Error('Sin conexión. Revisa tu internet e intenta de nuevo.');
+        }
+        // Cualquier otro code de Firebase (inglés técnico) → mensaje genérico en español para Kary.
+        if (typeof err?.code === 'string' && err.code.startsWith('auth/')) {
+            throw new Error('No se pudo iniciar sesión. Intenta de nuevo.');
+        }
         throw err;
     }
 }
 
 /**
  * Sign out the current user.
+ * @param {{ redirect?: boolean }} [opts] - redirect:false cierra sesión SIN navegar (para el caso
+ *   "sesión viva sin perfil válido" en login.js, que ya está en la página de login). Default: redirige.
  */
-export async function signOut() {
+export async function signOut({ redirect = true } = {}) {
     clearAuthHints();
     await firebaseSignOut(auth);
     _currentUser = null;
     _userProfile = null;
-    window.location.href = 'admin-login.html';
+    if (redirect) window.location.href = 'admin-login.html';
 }
 
 /**
@@ -228,9 +269,19 @@ export async function requireAuth(minRole = 'editor') {
         }
     }
 
-    if (!_userProfile || !hasMinRole(_userProfile.role, minRole)) {
+    // Sin perfil legible (getDoc falló) → al login: sin rol no hay a dónde rutear.
+    if (!_userProfile) {
         clearAuthHints();
-        window.location.replace('admin-login.html?error=forbidden');
+        window.location.replace('admin-login.html');
+        throw new Error('No profile');
+    }
+    // Autenticado pero rol insuficiente para ESTA página: la sesión EXISTE (no borrar bj_auth) →
+    // rutar a la página que el rol SÍ puede ver (catálogo→Piezas), no rebotar al login. Elimina el
+    // ping-pong login↔admin que veía Kary (TODO-64 H2). Guard anti-loop: si ya estamos en la landing
+    // del rol, no redirigir (defensa; con los minRoles actuales el rol siempre puede ver su landing).
+    if (!hasMinRole(_userProfile.role, minRole)) {
+        const landing = roleLanding(_userProfile.role);
+        if (!location.pathname.endsWith(landing)) window.location.replace(landing);
         throw new Error('Insufficient role');
     }
 

@@ -2,32 +2,48 @@
  * Bersaglio Admin — Login Page Controller
  */
 
-import { signIn, resetPassword, currentUser } from '../auth.js';
+import { signIn, resetPassword, sessionReady, signOut } from '../auth.js';
 
-async function init() {
-    // If already logged in, redirect by role
-    // Small delay to let auth state resolve
-    await new Promise(r => setTimeout(r, 500));
-    const u = currentUser();
-    if (u) {
-        // El rol "catálogo" (Kary) no ve admin.html (requireAuth('editor')) → directo a Piezas.
-        window.location.replace(u.profile?.role === 'catalogo' ? 'admin-piezas.html' : 'admin.html');
+function init() {
+    // 1. Cablear la UI PRIMERO (síncrono): submit/Enter vivos desde el 1er ms. Antes el sleep de
+    //    500ms los dejaba muertos medio segundo (TODO-64 P3).
+    document.getElementById('login-form').addEventListener('submit', handleLogin);
+    document.getElementById('forgot-password-btn').addEventListener('click', showResetForm);
+    document.getElementById('reset-form').addEventListener('submit', handleReset);
+    document.getElementById('back-to-login-btn').addEventListener('click', showLoginForm);
+
+    // 2. Leer el motivo de expulsión y LIMPIAR la URL AQUÍ. Antes lo borraba un inline del <head>
+    //    de admin-login.html ANTES de que este módulo lo leyera → el mensaje nunca se mostraba
+    //    (TODO-64 H3). Ahora se lee primero y se limpia después.
+    const params  = new URLSearchParams(location.search);
+    const errCode = params.get('error');
+    if (location.search) history.replaceState(null, '', location.pathname);
+
+    // 3. Redirigir si YA hay sesión — determinista, con el rol REAL, SIN timeout mágico.
+    //    `sessionReady()` resuelve tras escribir `bj_auth`, así el destino nunca rebota por falta
+    //    de la pista de sesión (TODO-64 H1/H2).
+    routeIfLoggedIn(errCode);
+}
+
+async function routeIfLoggedIn(errCode) {
+    const { user, profile } = await sessionReady();
+
+    if (user && profile) {
+        // Sesión viva + perfil válido → página del rol, UNA sola redirección (sin rebotes/flashes).
+        // Catálogo (Kary) no ve admin.html (requireAuth('editor')) → directo a Piezas.
+        window.location.replace(profile.role === 'catalogo' ? 'admin-piezas.html' : 'admin.html');
+        return;
+    }
+    if (user && !profile) {
+        // Sesión de Auth sin doc de perfil (no es staff válido) → cerrar SIN navegar y avisar.
+        await signOut({ redirect: false });
+        showError('login-error', 'Tu cuenta no tiene acceso al panel. Contacta al administrador.');
         return;
     }
 
-    // Check for error params
-    const params = new URLSearchParams(location.search);
-    if (params.get('error') === 'forbidden') {
-        showError('login-error', 'No tienes permisos suficientes para acceder.');
-    }
-
-    // Login form
-    document.getElementById('login-form').addEventListener('submit', handleLogin);
-    document.getElementById('forgot-password-btn').addEventListener('click', showResetForm);
-
-    // Reset form
-    document.getElementById('reset-form').addEventListener('submit', handleReset);
-    document.getElementById('back-to-login-btn').addEventListener('click', showLoginForm);
+    // Sin sesión → mostrar el motivo de expulsión (si lo hubo) y quedarse en el login.
+    if (errCode === 'forbidden')     showError('login-error', 'No tienes permisos suficientes para acceder.');
+    else if (errCode === 'disabled') showError('login-error', 'Tu cuenta fue desactivada. Contacta al administrador.');
 }
 
 async function handleLogin(e) {

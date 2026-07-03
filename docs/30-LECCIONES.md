@@ -44,9 +44,11 @@ window.scrollTo(0, scrollY);
 *   El header pill flotante tiene `position: fixed; pointer-events: none` para no bloquear los clicks debajo de su área transparente lateral. El elemento interno `.header-aqua-pill` tiene `pointer-events: auto` para que el menú sí sea clickable.
 *   Si se altera esta estructura, se pueden bloquear clicks en toda la parte superior del sitio web.
 
-### L-66: Redirect de login = DETERMINISTA (`sessionReady()` resuelve TRAS escribir `bj_auth`), NUNCA timeout (pierde la carrera vs getDoc y la navegación mata el fetch → loop de parpadeos). Rol insuficiente → SU landing, no al login. ESPERADO: pestaña nueva = 1 rebote (sessionStorage por-pestaña; NO migrar a localStorage). → §159
+### L-67: Fechas en negocio = reloj INYECTABLE (`opts.hoy`, default fecha real). Fixture de fechas fijas + código con reloj real = bomba de tiempo (test se pone rojo sin commit — `corte-insumos` R6 murió jun→jul). → §160.2
 
-### L-65: `firebase functions:secrets:set` y su auto-redeploy NO re-empaquetan `functions/.env` (gen2) → tras cambiar env vars no-secretos (`WOMPI_PUBLIC_KEY`/`WOMPI_API_BASE`), correr `firebase deploy --only functions` COMPLETO o quedan los del último deploy (síntoma: Widget Wompi en "modo pruebas" con `pub_prod` ya en `.env`; webhook/reaper apuntando a sandbox). → 31
+### L-66: Redirect de login = DETERMINISTA (`sessionReady()` resuelve TRAS escribir `bj_auth`), NUNCA timeout. Rol insuficiente → SU landing, no al login. Pestaña nueva = 1 rebote esperado (sessionStorage por-pestaña; NO localStorage). → §159
+
+### L-65: `firebase functions:secrets:set` (gen2) NO re-empaqueta `functions/.env` → tras cambiar env vars no-secretos (`WOMPI_PUBLIC_KEY`/`WOMPI_API_BASE`) correr `firebase deploy --only functions` COMPLETO (síntoma: Widget en "modo pruebas" con `pub_prod` ya en `.env`). → 31
 
 ### L-64: Proveedor que contrata el transporte = obligación de RESULTADO → trasladar al consumidor el riesgo de TRÁNSITO es cláusula abusiva (Ley 1480 Art.43, se asume no escrita); solo el riesgo ADUANERO es del comprador. Texto legal: verificar AMENDMENTS vigentes (Ley 2439/2024: reembolso retracto 30→15 días cal), no solo la ley base. → §157.11-13
 

@@ -20,6 +20,7 @@
 | ID | Item | Estado | Bloqueo |
 |---|---|---|---|
 | TODO-03/04 | (baja) headers `99`→`## NN.` · anomalías 🔧 en `skills/` | 🔲 | baja |
+| TODO-66 | **SHARD de `30-LECCIONES`** (§G.5): roza el tope duro (44k/40k) — cada lección nueva obliga a destilar otra. Extraer una sub-categoría coherente (p.ej. meta-lecciones M-NN + doctrinas de gobernanza) a una hija `docs/34-*` con puntero desde `30`. Deuda estructural, no urgente. | 🔲 | mantenimiento |
 | TODO-07 | **Contenido real web**: reseñas Maps (Nosotros), Films, feed Redes (`home-media.js`). | 🔲 | cliente entrega datos |
 | TODO-08 | **Hardening Fase 2**: Tier A ✅; pend. CSP/reglas/claims (Tier B/C) → `41-SEGURIDAD §1.5` | 🟡 | Tier B = emulador+deploy gated |
 | TODO-09 | **Fase M** M0→M6 ✅ EN PROD (§78-§80); ACUERDOS R1-R5+A8 GATEADOS/inertes — encender=Daniel. Restan: M7·M2c·ASESOR/RBAC (TODO-19). | 🟡 | encender R6 (Daniel) |

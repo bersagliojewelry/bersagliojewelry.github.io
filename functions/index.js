@@ -250,6 +250,7 @@ exports.confirmarPagoWompi = require('./pedidos').confirmarPagoWompi; // Wompi F
 exports.liberarReservasVencidas = require('./pedidos').liberarReservasVencidas; // Wompi F2: reaper (Scheduler, cada 2 min)
 exports.anularPedido = require('./pedidos').anularPedido;     // B1 paso 5: VOID (reintegra la pieza)
 exports.cierreCaja = require('./pedidos').cierreCaja;         // B1 paso 5: Cierre Z / arqueo del turno
+exports.alertaPedidoRevision = require('./pedidos').alertaPedidoRevision; // A.6: alerta pagado_sin_stock/a_revisar → saludEventos
 exports.ajustarStock = require('./inventario').ajustarStock;         // TODO-40 F1: merma/reabasto/corrección (delta + ledger)
 exports.cambiarTipoPieza = require('./inventario').cambiarTipoPieza; // TODO-40 F1: transición de tipo (purga cantidad, D6)
 exports.backupDiario = require('./backup').backupDiario;

@@ -11,8 +11,9 @@
  */
 const { onCall, onRequest, HttpsError } = require('firebase-functions/v2/https');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
+const { onDocumentUpdated } = require('firebase-functions/v2/firestore');
 const { defineSecret } = require('firebase-functions/params');
-const { getFirestore } = require('firebase-admin/firestore');
+const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { crearPedidoCore, confirmarPagoCore, anularPedidoCore, cierreCajaCore, iniciarPagoWebCore, confirmarPagoWompiCore, liberarReservasVencidasCore, PedidoError } = require('./pedidos-core');
 
 const VENTAS = ['owner', 'admin', 'catalogo'];
@@ -95,7 +96,7 @@ const iniciarPagoWeb = onCall({ region: 'us-central1', invoker: 'public', secret
     const db = getFirestore();
     try {
         const d = request.data || {};
-        const res = await iniciarPagoWebCore(db, { pedidoId: d.pedidoId, pieceId: d.pieceId, shipping: d.shipping, habeas: d.habeas }, {
+        const res = await iniciarPagoWebCore(db, { pedidoId: d.pedidoId, pieceId: d.pieceId, shipping: d.shipping, habeas: d.habeas, tipoEntrega: d.tipoEntrega }, {
             integritySecret: WOMPI_INTEGRITY_SECRET.value(),
         });
         // La llave pública (pub_test_/pub_prod_) la necesita el Widget; es pública por diseño.
@@ -153,7 +154,44 @@ const liberarReservasVencidas = onSchedule(
         };
         const out = await liberarReservasVencidasCore(db, { verificarPago });
         console.log('[reaper]', JSON.stringify({ revisados: out.revisados, liberados: out.liberados }));
+        // A.5: si el reaper VE reservas vencidas pero la re-consulta a Wompi FALLA en todas (endpoint mal
+        // formado / llave / Wompi caído), NINGUNA se libera nunca → fuga de stock silenciosa (pieza única
+        // "agotada" para siempre). Se registra en saludEventos para que el panel lo muestre (patrón §64).
+        const fallos = out.resultados.filter(r => r.accion === 'consulta-fallo-skip').length;
+        if (out.revisados > 0 && out.liberados === 0 && fallos === out.revisados) {
+            try {
+                await db.collection('saludEventos').doc('reaper-consulta-fallo').set({
+                    tipo: 'reaper-consulta-fallo',
+                    detalle: `El reaper revisó ${out.revisados} reserva(s) vencida(s) y la consulta a Wompi falló en todas → 0 liberadas (posible endpoint/llave). Verificar functions/pedidos.js:verificarPago.`,
+                    revisados: out.revisados, at: FieldValue.serverTimestamp(), resuelto: false,
+                });
+            } catch (e) { console.error('[reaper] no se pudo registrar saludEventos:', e); }
+        }
     },
 );
 
-module.exports = { crearPedido, confirmarPago, anularPedido, cierreCaja, iniciarPagoWeb, confirmarPagoWompi, liberarReservasVencidas };
+// A.6: ALERTA cuando un pedido entra a un estado con DINERO REAL cobrado que exige acción humana:
+//   pagado_sin_stock = cliente COBRADO sin pieza (reembolso, SLA legal de retracto corriendo)
+//   a_revisar        = venta pagada sin confirmar (monto no coincide, o pago hallado por el reaper)
+// Sin esto, ambos se escribían en silencio y dependían de que Kary abriera el panel. Se registra en
+// saludEventos (id determinista por pedido → idempotente). La cola visible en el panel = Bloque D.
+const ESTADOS_ALERTA = { pagado_sin_stock: 'Cliente cobrado SIN stock — revisar reembolso', a_revisar: 'Venta pagada por revisar (monto/pago)' };
+const alertaPedidoRevision = onDocumentUpdated({ document: 'pedidos/{pedidoId}', region: 'us-central1' }, async (event) => {
+    const antes = event.data?.before?.data();
+    const despues = event.data?.after?.data();
+    if (!despues) return;
+    const nuevo = despues.estado;
+    if (!ESTADOS_ALERTA[nuevo] || (antes && antes.estado === nuevo)) return;   // solo al ENTRAR al estado
+    const db = getFirestore();
+    try {
+        await db.collection('saludEventos').doc(`pedido-${event.params.pedidoId}`).set({
+            tipo: 'pedido-requiere-accion',
+            estado: nuevo,
+            detalle: `${ESTADOS_ALERTA[nuevo]} — pedido ${despues.numero || event.params.pedidoId} (${despues.total || '?'} COP).`,
+            pedidoId: event.params.pedidoId,
+            at: FieldValue.serverTimestamp(), resuelto: false,
+        });
+    } catch (e) { console.error('[alertaPedidoRevision] no se pudo registrar:', e); }
+});
+
+module.exports = { crearPedido, confirmarPago, anularPedido, cierreCaja, iniciarPagoWeb, confirmarPagoWompi, liberarReservasVencidas, alertaPedidoRevision };

@@ -400,7 +400,7 @@ service cloud.firestore {
       let d = request.resource.data;
       return d.name is string && d.name.size() > 0
           && d.code is string && d.code.size() > 0
-          && (!('price' in d)    || d.price is number)
+          && (!('price' in d)    || (d.price is number && d.price >= 0))   // E.6: el total del pedido nace del price
           && (!('featured' in d) || d.featured is bool)
           && (!('images' in d)   || d.images is list)
           && (!('sizes' in d)    || d.sizes is list)
@@ -416,7 +416,7 @@ service cloud.firestore {
           && (!('slug' in d)       || d.slug is string)
           && (!('collection' in d) || d.collection is string)
           && (!('featured' in d)   || d.featured is bool)
-          && (!('price' in d)      || d.price is number)
+          && (!('price' in d)      || (d.price is number && d.price >= 0))   // E.6
           && (!('images' in d)     || d.images is list)
           && (!('sizes' in d)      || d.sizes is list)
           && (!('specs' in d)      || d.specs is map)

@@ -329,6 +329,10 @@ test('catálogo · CANDADO: NO escribe config ni vendedoras (admin+/owner)', asy
 test('catálogo · CANDADO: NO crea usuarios (users = owner-only)', async () => {
     await assertFails(setDoc(doc(asUser('catalogoUid'), 'users/uCat'), { role: 'catalogo', email: 'x@x.co' }));
 });
+test('users · E.5: el owner NO puede promover a otro usuario a role:owner (ni en update)', async () => {
+    await assertFails(updateDoc(doc(asUser('ownerUid'), 'users/objetivoUid'), { role: 'owner' }));
+    await assertSucceeds(updateDoc(doc(asUser('ownerUid'), 'users/objetivoUid'), { role: 'admin' }));  // otros roles sí
+});
 
 // ─── CMS · Journal: lectura pública, escritura editor con hasOnly tipado ──────
 test('journal · lectura pública', async () => {

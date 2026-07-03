@@ -134,7 +134,7 @@ function fakeDb({ cartera }) {
 
 test('R6 GATE: acuerdosActivos=false → el corte IGNORA /acuerdos (foto sin escudo, evidencia inerte)', async () => {
     const db = fakeDb({ cartera: { acuerdosActivos: false } });
-    await runCorte(db, '2026-05', 'test');
+    await runCorte(db, '2026-05', 'test', { hoy: HOY });   // E.1: fecha fija → test determinista (no depende de la fecha real)
     const w = db.written();
     assert.equal(w.clientes.cliA.bajoAcuerdo, undefined);      // sin escudo
     assert.equal(w.clientes.cliA.acuerdoAlCorte, undefined);   // sin cristalización DIAN
@@ -143,7 +143,7 @@ test('R6 GATE: acuerdosActivos=false → el corte IGNORA /acuerdos (foto sin esc
 
 test('R6 GATE: acuerdosActivos=true → el corte SÍ aplica el escudo y cristaliza acuerdoAlCorte', async () => {
     const db = fakeDb({ cartera: { acuerdosActivos: true } });
-    await runCorte(db, '2026-05', 'test');
+    await runCorte(db, '2026-05', 'test', { hoy: HOY });   // E.1: fecha fija → test determinista (no depende de la fecha real)
     const w = db.written();
     assert.equal(w.clientes.cliA.bajoAcuerdo, 200000);         // escudo aplicado (300k − 100k abono)
     assert.equal(w.clientes.cliA.acuerdoAlCorte.id, 'ac1');    // cristalizado para la DIAN

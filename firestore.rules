@@ -866,7 +866,11 @@ service cloud.firestore {
       allow read:   if isAuth() && (request.auth.uid == userId || isAdmin());
       allow create: if isOwner() && usersFieldsValidos()
                     && request.resource.data.role in ['admin', 'editor', 'catalogo'];
-      allow update: if isOwner() && usersFieldsValidos();   // solo el owner muta usuarios
+      // E.5: el update tampoco puede acuñar role:'owner' (el create ya lo prohíbe). Mantiene el
+      // invariante "owner único, sembrado por consola" — antes el owner podía promover a otro a owner.
+      allow update: if isOwner() && usersFieldsValidos()
+                    && (!('role' in request.resource.data.diff(resource.data).affectedKeys())
+                        || request.resource.data.role in ['admin', 'editor', 'catalogo']);
       allow delete: if isOwner();
     }
 

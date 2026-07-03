@@ -80,7 +80,7 @@ function acuerdoAlCorte(plan) {
  * reconciliación (salud.js): 1 lectura de clientes + 2 collectionGroup.
  * @returns {Promise<{mes:string, existed:boolean, totalClientes?:number}>}
  */
-async function runCorte(db, mes, origen) {
+async function runCorte(db, mes, origen, opts = {}) {
     const ref = db.collection('cortes').doc(mes);
     const ya = await ref.get();
     if (ya.exists) {
@@ -122,7 +122,7 @@ async function runCorte(db, mes, origen) {
     const totales = { saldo: 0, vencido: 0, alDia: 0, sinFecha: 0, bajoAcuerdo: 0 };
     for (const doc of clientesSnap.docs) {
         const est = estadoCuenta(movimientosPorCliente.get(doc.id) || [], {
-            diasPlazo, fechaCorte,
+            diasPlazo, fechaCorte, hoy: opts.hoy,   // E.1: `hoy` inyectable (default = fecha real en prod; el test lo fija = determinista)
             acuerdos: acuerdosPorCliente.get(doc.id) || [], horizonteDias, incumplidoCuotas,
         });
         clientes[doc.id] = {

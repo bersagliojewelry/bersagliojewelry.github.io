@@ -464,7 +464,9 @@ async function openModal(id = null) {
             } catch { /* Storage unavailable */ }
         }
         // §108 F3: el LQIP de la principal viaja en el doc (no se re-deriva de Storage).
-        _uploadedLqips = piece.imageLqip ? [piece.imageLqip] : [];
+        // C.4: rellenar hasta N imágenes ([lqip, '', '', ...]) para que splice/push al reordenar fotos
+        // mantengan la correspondencia por índice (antes, borrar la portada y subir otra desalineaba el blur).
+        _uploadedLqips = _uploadedImages.map((_, i) => (i === 0 && piece.imageLqip) ? piece.imageLqip : '');
     } else {
         titleEl.textContent = 'Nueva pieza';
     }

@@ -4,6 +4,21 @@
 > exactas; **Opus 4.8 implementa**. Cada tarea trae: alcance · archivos · causa raíz (archivo:línea real) ·
 > fix concreto · riesgos · gate de verificación. **NO improvisar**: lo no listado aquí NO se toca.
 >
+> ## ✅ ESTADO DE IMPLEMENTACIÓN (Opus 4.8, 2026-07-03) — en `Desarrollo`, PEND deploy
+> - **A0 login** ✅ DESPLEGADO + verif. LIVE (§159, v65). TODO-64 cerrado.
+> - **A dinero** ✅ construido (8 fixes) — tests emulador wompi 30/30, POS 22/22. PEND deploy functions (L-22).
+> - **B fugas/robustez** ✅ construido (6 fixes) — reglas 220/220, build verde. PEND deploy rules.
+> - **C POS/fiscal** ✅ construido (4 fixes) — POS 22/22, fiscal 5/5. PEND deploy functions.
+> - **D catálogo** 🟡 PARCIAL: D.0 (gema en JSON) · D.1 (query menguado admin) · D.3 (caché CMS) ✅.
+>   **PEND 7b/7c/7d/D.5/D.6** = capa CDN completa + filtros + perf visual → requieren prerrequisitos:
+>   `settings/gems` en prod (D.5), **PAT GitHub en Secret Manager** (7d, sin acceso), y verificación en
+>   Chrome en vivo (7b/7c/D.6 = arquitectura/UI del sitio público). NO tocar el sitio en vivo a medias.
+> - **E higiene** ✅ (E.1 test frágil corregido · E.2 APP_VERSION v32 · E.3 hero LCP en SHELL_ASSETS · E.5
+>   owner). **E.4** (quitar fallback `get(users)`) NO aplicado: requiere confirmar backfill de claims 100%.
+> - **Gate de deploy**: A/B/C/E tocan functions + firestore:rules (deploy MANUAL L-22) + bump SW v66. Se
+>   despliega junto con el **encendido de precios** tras la auditoría de cierre de Fable. Frontend inerte
+>   hasta que haya precios (botón Wompi oculto). Suite total: pura 331/331 · rules 220/220 · wompi 30/30 · POS 22/22.
+>
 > **Método**: boot del cerebro + lectura de las 6 specs vivas + **auditoría multi-agente acotada** (6 áreas ×
 > scope de archivos fijo, `[[feedback_workflows_acotados]]`) + **verificación adversarial** de los P0/P1
 > (cada hallazgo grave fue re-leído por un 2º agente que intentó refutarlo). Crudo verificado →

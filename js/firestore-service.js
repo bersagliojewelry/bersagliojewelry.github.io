@@ -502,14 +502,16 @@ export async function fetchAllReviews() {
 /**
  * Submit a new review
  */
-export async function submitReview({ pieceSlug, pieceName, author, rating, comment, email }) {
+export async function submitReview({ pieceSlug, pieceName, author, rating, comment }) {
+    // B.2: el `email` NO se guarda en el doc público de la review (al aprobarla el doc completo queda
+    // legible → cosechable, fuga de PII bajo Ley 1581). Cuando TODO-48 active reviews reales, el email
+    // de contacto se capturará en un doc privado aparte (read admin-only). Las reglas ya lo rechazan.
     return addDoc(collection(firestoreDb, COLLECTIONS.reviews), {
         pieceSlug,
         pieceName,
         author,
         rating:    Number(rating),
         comment,
-        email,
         approved:  false,     // requires admin approval
         createdAt: serverTimestamp()
     });

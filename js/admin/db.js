@@ -273,6 +273,11 @@ class AdminDatabase {
 
     async deleteCollection(id) {
         await fsDeleteCollection(id);
+        // B.6: borra también el banner de Storage (best-effort; no debe tumbar el borrado del doc).
+        try {
+            const { deleteAllCollectionImages } = await import('../storage-service.js');
+            await deleteAllCollectionImages(id);
+        } catch (e) { console.warn('[db] no se pudo borrar el banner de la colección:', e); }
     }
 
     // ─── Consultas ─────────────────────────────────────────────────────────────
@@ -367,8 +372,15 @@ class AdminDatabase {
     static downloadCSV(rows, filename) {
         if (!rows.length) return;
         const headers = Object.keys(rows[0]);
+        // B.5: anti-inyección de fórmulas CSV. Nombre/Email/Mensaje vienen del formulario público; un lead
+        // con `=HYPERLINK(...)` / `+cmd|...` se ejecutaría como fórmula al abrir el CSV en Excel. Se antepone
+        // una comilla simple a las celdas que empiezan por = + - @ tab o CR (neutraliza sin alterar el dato).
+        const safeCell = v => {
+            const s = String(v ?? '');
+            return /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
+        };
         const lines   = rows.map(row =>
-            headers.map(h => `"${String(row[h] ?? '').replace(/"/g, '""')}"`).join(',')
+            headers.map(h => `"${safeCell(row[h]).replace(/"/g, '""')}"`).join(',')
         );
         const csv  = [headers.join(','), ...lines].join('\n');
         const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });

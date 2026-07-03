@@ -23,6 +23,10 @@ test('wompi: comisión = (bruto·2,65% + $700)·1,19; neto = bruto − comisión
     // (1000000*0.0265 + 700) * 1.19 = (26500 + 700) * 1.19 = 27200 * 1.19 = 32368
     assert.equal(r.comisionWompi, 32368);
     assert.equal(r.neto, 1000000 - 32368);
+    // C.4: la comisión se discrimina (base + IVA) y la suma cuadra EXACTO con el total.
+    assert.equal(r.comisionBase, 27200);              // 26500 + 700 (sin IVA)
+    assert.equal(r.comisionIva, 32368 - 27200);       // IVA descontable para el contador
+    assert.equal(r.comisionBase + r.comisionIva, r.comisionWompi);
 });
 
 test('retenciones por parámetro (contador): ReteFuente y ReteICA se restan del bruto', () => {

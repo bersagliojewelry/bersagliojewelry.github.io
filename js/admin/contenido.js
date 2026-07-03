@@ -67,6 +67,15 @@ async function init() {
     // La tarjeta "Estado de tu web" vive toda la página; suelta sus 3 listeners al salir
     // (simetría con su destroy() — evita la fuga que marcó la revisión adversarial).
     window.addEventListener('pagehide', () => { if (estadoWeb) { estadoWeb.destroy(); estadoWeb = null; } });
+    // B.4: el guard de "cambios sin publicar" solo cubría el cambio de PESTAÑA (activate). Si Kary navega
+    // por el sidebar / cierra la pestaña / hace atrás con texto editado sin publicar, lo perdía en silencio.
+    // beforeunload dispara el diálogo nativo del navegador de "¿salir sin guardar?".
+    window.addEventListener('beforeunload', (e) => {
+        if (current && typeof current.isDirty === 'function' && current.isDirty()) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
 }
 
 init();

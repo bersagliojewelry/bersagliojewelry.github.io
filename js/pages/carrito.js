@@ -344,8 +344,12 @@ function renderStepPayment(rows) {
     const { subtotal } = computeTotals(rows);
     const cfg = getEnvioConfig(_tipoEntrega);
     // Wompi F2 + TODO-63: "Pagar ahora" SOLO si el tipo de entrega permite pago online (internacional NO),
-    // 1 pieza elegible y el flag ON (el server RE-VALIDA igual).
-    const elegibleWompi = WOMPI_WEB_ENABLED && cfg.permitePagoOnline && rows.length === 1 && wompiEligible(rows[0].piece, subtotal);
+    // 1 pieza · 1 UNIDAD y el flag ON (el server RE-VALIDA igual).
+    // A.1: exige qty===1 y evalúa la elegibilidad contra el PRECIO de la pieza (lo que el server cobra),
+    // NO el subtotal (precio×qty). Con qty>1 el subtotal prometía N piezas pero el server cobra/reserva 1.
+    const unaUnidad = rows.length === 1 && (rows[0].qty || 1) === 1;
+    const elegibleWompi = WOMPI_WEB_ENABLED && cfg.permitePagoOnline && unaUnidad
+        && wompiEligible(rows[0].piece, Number(rows[0].piece?.price) || 0);
     // Internacional: el cierre es por WhatsApp (Términos) → solo esa opción.
     const opciones = !cfg.permitePagoOnline
         ? PAYMENT_OPTIONS.filter(o => o.k === 'whatsapp')
@@ -524,7 +528,7 @@ async function confirmOrder(rows) {
             btn.textContent = 'Procesando…';
         }
         try {
-            await pagarConWompi({ pieceId: piece.id, shipping: _shipping, habeas: { aceptado: _habeas, version: LEGAL_CONSENT_VERSION }, redirectBase: location.origin });
+            await pagarConWompi({ pieceId: piece.id, shipping: _shipping, tipoEntrega: _tipoEntrega, habeas: { aceptado: _habeas, version: LEGAL_CONSENT_VERSION }, redirectBase: location.origin });
             // El Widget redirige a gracias.html?ref= si pagó; si solo se cerró (canceló), restauramos el botón.
             refresh();
         } catch (err) {

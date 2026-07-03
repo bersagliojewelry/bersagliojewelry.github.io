@@ -24,18 +24,19 @@
 // v64 = fixes: selector país "CO +57" (ISO mayúscula, sin nombre/bandera) · borrado de fotos
 // robusto (salta no-Storage, muestra código real; cubre piezas y colecciones) · caché SÍNCRONO
 // del CMS en localStorage → sin flash de la imagen vieja del repo (hero y toda sección).
-// v65 = fix login admin (TODO-64 / plan Fable A0): parpadeos al ingresar. sessionReady() determinista
-// reemplaza el timeout de 500ms (H1); requireAuth rutea rol insuficiente a su página en vez de rebotar
-// al login (H2, el caso de Kary/catálogo); la limpieza de ?error se movió a login.js (H3). Bump = shells
-// admin frescos (admin-login/admin/admin-piezas).
+// v66 = plan Fable Bloques A-E: checkout hardening (qty/reintento/expiration — carrito.js/pago-web.js),
+// admin robustez (banner diferido, CSV, beforeunload, esc), POS/fiscal (comisión IVA discriminada), caché
+// CMS anti-flash. E.3: SHELL_ASSETS corrige el hero LCP → `/img/banner-hero-1200.avif` (el preload de
+// index.html; antes precacheaba `/img/hero-1200.webp` obsoleto).
+// v65 = fix login admin (TODO-64 / A0): sessionReady() determinista + ruteo por rol + limpieza ?error.
 // v64 = fixes país/borrado-fotos/caché-CMS. v63 = rediseño checkout. v62 = FAQ financiación. v60 = Wompi ON.
-const CACHE_NAME    = 'bersaglio-v65';
+const CACHE_NAME    = 'bersaglio-v66';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.
 const SHELL_ASSETS = [
     OFFLINE_URL,
-    '/img/hero-1200.webp',
+    '/img/banner-hero-1200.avif',   // E.3: el hero LCP real (preload de index.html); antes hero-1200.webp obsoleto
     '/img/logo-bersaglio.png',
     '/manifest.json',
 ];

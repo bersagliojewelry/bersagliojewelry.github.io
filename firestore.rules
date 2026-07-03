@@ -400,7 +400,7 @@ service cloud.firestore {
       let d = request.resource.data;
       return d.name is string && d.name.size() > 0
           && d.code is string && d.code.size() > 0
-          && (!('price' in d)    || d.price is number)
+          && (!('price' in d)    || (d.price is number && d.price >= 0))   // E.6: el total del pedido nace del price
           && (!('featured' in d) || d.featured is bool)
           && (!('images' in d)   || d.images is list)
           && (!('sizes' in d)    || d.sizes is list)
@@ -416,7 +416,7 @@ service cloud.firestore {
           && (!('slug' in d)       || d.slug is string)
           && (!('collection' in d) || d.collection is string)
           && (!('featured' in d)   || d.featured is bool)
-          && (!('price' in d)      || d.price is number)
+          && (!('price' in d)      || (d.price is number && d.price >= 0))   // E.6
           && (!('images' in d)     || d.images is list)
           && (!('sizes' in d)      || d.sizes is list)
           && (!('specs' in d)      || d.specs is map)
@@ -582,14 +582,16 @@ service cloud.firestore {
     // Payload espejo en js/firestore-service.js (submitReview / addSubscription / saveInquiry).
     function reviewCreateValida() {
       let d = request.resource.data;
-      return d.keys().hasOnly(['pieceSlug', 'pieceName', 'author', 'rating', 'comment', 'email', 'approved', 'createdAt'])
+      // B.2: `email` FUERA del doc público — al aprobar, el doc completo queda legible por cualquiera
+      // (las reglas no ocultan campos) → cosechable por `query(reviews, approved==true)`, fuga de PII
+      // (Ley 1581). El email de contacto del reseñador se captura aparte cuando TODO-48 active reviews.
+      return d.keys().hasOnly(['pieceSlug', 'pieceName', 'author', 'rating', 'comment', 'approved', 'createdAt'])
           && nonEmptyStr(d.author)  && d.author.size()  <= 120
           && nonEmptyStr(d.comment) && d.comment.size() <= 2000
           && d.rating is number && d.rating >= 1 && d.rating <= 5
           && d.approved == false
           && (!('pieceSlug' in d) || (d.pieceSlug is string && d.pieceSlug.size() <= 200))
           && (!('pieceName' in d) || (d.pieceName is string && d.pieceName.size() <= 200))
-          && (!('email' in d)     || (d.email is string && d.email.size() <= 254))
           && d.createdAt == request.time;
     }
     function subscriptionCreateValida() {
@@ -740,7 +742,12 @@ service cloud.firestore {
     match /inquiries/{inqId} {
       allow read: if isEditor();               // Editors+ can see leads
       allow create: if inquiryCreateValida();  // F6: forma exacta + status 'nuevo' forzado
-      allow update: if isEditor();             // Mark as read, etc.
+      // B.3: update SOLO del delta operativo (estado del lead), NO reescribir el contenido (PII del
+      // lead: name/email/phone/message) ni falsear createdAt/_counted. Whitelist de claves + tipos.
+      allow update: if isEditor()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'convertedTo', 'updatedAt'])
+          && (!('status' in request.resource.data)      || request.resource.data.status is string)
+          && (!('convertedTo' in request.resource.data) || request.resource.data.convertedTo is string);
       allow delete: if isAdmin();              // Admin cleans up
     }
 
@@ -859,7 +866,11 @@ service cloud.firestore {
       allow read:   if isAuth() && (request.auth.uid == userId || isAdmin());
       allow create: if isOwner() && usersFieldsValidos()
                     && request.resource.data.role in ['admin', 'editor', 'catalogo'];
-      allow update: if isOwner() && usersFieldsValidos();   // solo el owner muta usuarios
+      // E.5: el update tampoco puede acuñar role:'owner' (el create ya lo prohíbe). Mantiene el
+      // invariante "owner único, sembrado por consola" — antes el owner podía promover a otro a owner.
+      allow update: if isOwner() && usersFieldsValidos()
+                    && (!('role' in request.resource.data.diff(resource.data).affectedKeys())
+                        || request.resource.data.role in ['admin', 'editor', 'catalogo']);
       allow delete: if isOwner();
     }
 

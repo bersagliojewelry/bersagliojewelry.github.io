@@ -138,6 +138,18 @@ export function uploadCollectionBanner(colId, file, onProgress) {
     return _upload(path, file, onProgress);
 }
 
+// B.6: barre la carpeta de Storage de una colección (banner) al eliminarla → sin objetos huérfanos
+// (antes deleteCollection borraba solo el doc y el banner quedaba pagando en Storage). Best-effort.
+export async function deleteAllCollectionImages(colId) {
+    const folderRef = ref(storage, `collections/${colId}`);
+    try {
+        const result = await listAll(folderRef);
+        await Promise.all(result.items.map(item => deleteObject(item)));
+    } catch {
+        // Folder doesn't exist or already empty
+    }
+}
+
 /**
  * Get the banner URL for a collection.
  */

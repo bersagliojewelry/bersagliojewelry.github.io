@@ -89,7 +89,25 @@ test('DECLINED → NO cancela el pedido (el cliente puede reintentar); audita', 
     assert.equal(r.ok, true);
     assert.match(r.reason, /no-aprobado/);
     assert.equal((await db.doc('pedidos/wpDeclined').get()).data().estado, 'pago_pendiente');   // sigue vivo
-    assert.equal((await db.doc('webhookEvents/tx_decl').get()).data().accion, 'auditado-no-aprobado');
+    // A.3: el no-APPROVED se audita en la llave COMPUESTA, NUNCA en `webhookEvents/{txId}` (que bloquearía
+    // el APPROVED posterior del mismo txId como replay).
+    assert.equal((await db.doc('webhookEvents/tx_decl-DECLINED').get()).data().accion, 'auditado-no-aprobado');
+    assert.equal((await db.doc('webhookEvents/tx_decl').get()).exists, false);
+});
+
+test('A.3: PENDING y luego APPROVED del MISMO txId (PSE/Nequi) → el APPROVED procesa, no cae en replay', async () => {
+    await db.doc('pedidos/wpAsync').set({ total: 2150000, canal: 'web', medio: 'wompi', consumioStock: true, estado: 'pago_pendiente' });
+    // 1º: la re-consulta dice PENDING (asíncrono) → audita en llave compuesta, NO transiciona, NO bloquea txId.
+    const evP = signedEvent({ txId: 'tx_async', reference: 'wpAsync', status: 'PENDING' });
+    const rP = await confirmarPagoWompiCore(db, evP, { eventsSecret: EVENTS_SECRET, fetchTransaction: fetcher({ reference: 'wpAsync', status: 'PENDING' }) });
+    assert.match(rP.reason, /no-aprobado/);
+    assert.equal((await db.doc('pedidos/wpAsync').get()).data().estado, 'pago_pendiente');
+    assert.equal((await db.doc('webhookEvents/tx_async').get()).exists, false);       // llave txId libre
+    // 2º: la MISMA transacción pasa a APPROVED → DEBE procesar (antes caía en replay y el pedido colgaba).
+    const evA = signedEvent({ txId: 'tx_async', reference: 'wpAsync', status: 'APPROVED' });
+    const rA = await confirmarPagoWompiCore(db, evA, { eventsSecret: EVENTS_SECRET, fetchTransaction: fetcher({ reference: 'wpAsync', status: 'APPROVED' }) });
+    assert.equal(rA.reason, 'pagado');
+    assert.equal((await db.doc('pedidos/wpAsync').get()).data().estado, 'pagado');
 });
 
 test('APPROVED sobre pedido ya pagado → idempotente (no rompe)', async () => {

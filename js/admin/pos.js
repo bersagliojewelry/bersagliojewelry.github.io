@@ -47,7 +47,22 @@ async function init() {
     renderResults();
 
     // Real-time: si el catálogo cambia (p.ej. la pieza recién vendida desaparece), refresca.
-    adminDb.on('pieces', pieces => { _allPieces = pieces; renderResults(); });
+    adminDb.on('pieces', pieces => {
+        _allPieces = pieces;
+        // C.3: si hay una venta en curso y la pieza seleccionada cambió de precio/stock desde OTRA sesión,
+        // refresca `_selected` — si no, el diálogo mostraría el precio viejo mientras la CF cobra el nuevo
+        // (viola la doctrina "nunca mostramos un total distinto al que se cobra").
+        if (_selected) {
+            const fresca = pieces.find(p => p.id === _selected.id);
+            if (fresca && (fresca.price !== _selected.price || fresca.stockType !== _selected.stockType)) {
+                _selected = fresca;
+                setupPriceMode(fresca);
+                recalcTotal();
+                admToast('El precio o el stock de esta pieza cambió; se actualizó el total.', 'danger', 5000);
+            }
+        }
+        renderResults();
+    });
 
     document.getElementById('pos-search').addEventListener('input', e => {
         _query = e.target.value.trim().toLowerCase();
@@ -392,15 +407,16 @@ async function exportarContador() {
     catch (err) { admToast(errorMessage(err, 'No se pudieron cargar las ventas.'), 'danger'); return; }
     if (!ventas.length) { admToast('No hay ventas para exportar.', 'default'); return; }
 
-    const head = ['Número', 'Fecha', 'Pieza', 'Medio', 'Estado', 'Bruto', 'Comisión Wompi', 'ReteFuente', 'ReteICA', 'Neto'];
+    // C.4: la comisión Wompi va DISCRIMINADA (base + IVA) para que el contador tenga el IVA descontable aparte.
+    const head = ['Número', 'Fecha', 'Pieza', 'Medio', 'Estado', 'Bruto', 'Comisión base', 'IVA comisión', 'Comisión total', 'ReteFuente', 'ReteICA', 'Neto'];
     const rows = ventas.map(v => {
         const f = (v.estado === 'anulado')
-            ? { bruto: entero(v.total), comisionWompi: 0, reteFuente: 0, reteIca: 0, neto: 0 }
+            ? { bruto: entero(v.total), comisionWompi: 0, comisionBase: 0, comisionIva: 0, reteFuente: 0, reteIca: 0, neto: 0 }
             : calcularNeto({ bruto: v.total, medio: v.medio });
         return [
             v.numero ?? '', fmtDateTime(v.createdAt), v.pieceName || 'Pieza', v.medio || '',
             ESTADO_LBL[v.estado] || v.estado || '',
-            f.bruto, f.comisionWompi, f.reteFuente, f.reteIca, f.neto,
+            f.bruto, f.comisionBase, f.comisionIva, f.comisionWompi, f.reteFuente, f.reteIca, f.neto,
         ].map(csvCell).join(',');
     });
     const csv = '﻿' + [head.map(csvCell).join(','), ...rows].join('\r\n');   // BOM → Excel respeta acentos

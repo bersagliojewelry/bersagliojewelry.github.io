@@ -53,7 +53,10 @@ function evaluarStock(piece) {
 function aplicarConsumo(tx, pieceRef, { pedidoId, autor, motivo = 'venta', movId, stockType, cantidadActual, reserva = null }) {
     const nuevaCantidad = cantidadActual - 1;
     const update = {
-        cantidad: FieldValue.increment(-1),
+        // A.7: cantidad ABSOLUTA (ya leída en la tx = aislada). `increment(-1)` sobre una pieza legacy
+        // SIN campo `cantidad` la dejaba en -1 (mientras el estado se derivaba de 0) → al liberar/anular
+        // (-1+1=0) quedaba 'agotada' e invendible. El absoluto = `cantidadActual − 1` corrige el legacy.
+        cantidad: nuevaCantidad,
         estado: derivarEstado(stockType, nuevaCantidad),
         updatedAt: FieldValue.serverTimestamp(),
     };
@@ -64,6 +67,32 @@ function aplicarConsumo(tx, pieceRef, { pedidoId, autor, motivo = 'venta', movId
         delta: -1, motivo, pedidoId, cantidadResultante: nuevaCantidad,
         actor: autor, at: FieldValue.serverTimestamp(),
     });
+}
+
+/**
+ * reponerStock (C.1) — repone UNA unidad al reintegrar/liberar un pedido que consumió stock (VOID o
+ * reserva expirada). Centraliza lo que estaba DUPLICADO y divergente en anularPedidoCore y
+ * liberarReservaCore. Correcciones:
+ *   (a) si la pieza es AHORA `encargo` (Kary cambió el tipo tras la venta), NO incrementa `cantidad`
+ *       (encargo = sin inventario) → solo audita, evita el invariante roto "encargo con cantidad".
+ *   (b) limpia SIEMPRE `reservaId`/`reservaExpira` cuando esta reserva era la activa (reservaId===pedidoId)
+ *       → evita la "reserva fantasma" que dejaba la rama v3 de anular.
+ * Cantidad ABSOLUTA (leída en la tx, coherente con A.7). Idempotencia = el gate de transición del caller.
+ * @returns nuevaCantidad (o null si encargo).
+ */
+function reponerStock(tx, pieceRef, piece, { pedidoId, motivo, ledgerId, actor }) {
+    const st = normStockType(piece.stockType);
+    const esEncargo = st === 'encargo';
+    const nuevaCantidad = esEncargo ? null : (Number.isInteger(piece.cantidad) ? piece.cantidad : 0) + 1;
+    const update = { estado: derivarEstado(st, nuevaCantidad), updatedAt: FieldValue.serverTimestamp() };
+    if (!esEncargo) update.cantidad = nuevaCantidad;
+    if (piece.reservaId === pedidoId) { update.reservaId = null; update.reservaExpira = null; }
+    tx.update(pieceRef, update);
+    tx.set(pieceRef.collection('movimientos').doc(ledgerId), {
+        delta: esEncargo ? 0 : 1, motivo, pedidoId, cantidadResultante: nuevaCantidad,
+        actor, at: FieldValue.serverTimestamp(),
+    });
+    return nuevaCantidad;
 }
 
 /**
@@ -135,16 +164,28 @@ const TOPE_TX_COP = 2500000;            // tope Persona Natural por transacción
 const RESERVA_TTL_MS = 15 * 60 * 1000;  // 15 min (MVP tarjeta; PSE/Nequi en 2b ata al expiry de Wompi)
 
 // Whitelist de envío (el cliente público no graba datos arbitrarios). null si viene vacío.
+// A.8: se persisten también `docType`/`docNumber` (cédula = DIAN/guía/factura + antifraude Wompi) y
+// `countryIso2` (para reconstruir el teléfono con indicativo). Sin esto Kary recibía un pedido pagado
+// sin saber la cédula ni el país del comprador.
+const DOC_TYPES = ['CC', 'CE', 'PP', 'NIT'];
 function sanitizeShipping(s) {
     if (!s || typeof s !== 'object') return null;
     const str = k => (typeof s[k] === 'string' ? s[k].trim().slice(0, 200) : '');
+    const dt = str('docType').toUpperCase();
     const out = {
         firstName: str('firstName'), lastName: str('lastName'), email: str('email'),
         phone: str('phone'), address: str('address'), city: str('city'),
         country: str('country') || 'Colombia', zip: str('zip'),
+        docType: DOC_TYPES.includes(dt) ? dt : '', docNumber: str('docNumber'),
+        countryIso2: str('countryIso2').toUpperCase().slice(0, 2),
     };
     return Object.values(out).some(v => v && v !== 'Colombia') ? out : null;
 }
+
+// Tipo de entrega válido (server-side). Espeja `TIPOS_ENTREGA` de js/core/envio-config.js (frontera
+// ESM↔CJS). Se persiste en el pedido para que Kary sepa si es recoger-en-tienda o envío al despachar.
+const TIPOS_ENTREGA = ['nacional', 'tienda', 'internacional'];
+const normTipoEntrega = t => TIPOS_ENTREGA.includes(t) ? t : null;
 
 /**
  * iniciarPagoWebCore (Wompi F2) — el cliente PÚBLICO (sin login) inicia el cobro de UNA pieza:
@@ -163,13 +204,22 @@ async function iniciarPagoWebCore(db, input = {}, opts = {}) {
     const ttlMs = Number.isFinite(opts.ttlMs) ? opts.ttlMs : RESERVA_TTL_MS;
     const nowMs = Number.isFinite(opts.nowMs) ? opts.nowMs : Date.now();
     const shipping = sanitizeShipping(input.shipping);
+    const tipoEntrega = normTipoEntrega(input.tipoEntrega);   // A.8: recoger-en-tienda vs envío (para el despacho)
 
     const result = await db.runTransaction(async (tx) => {
         const pedidoRef = db.doc(`pedidos/${pedidoId}`);
         const existing = await tx.get(pedidoRef);
         if (existing.exists) {                          // IDEMPOTENTE: reintento → mismo pedido
             const e = existing.data();
-            return { pedidoId, numero: e.numero, total: e.total, estado: e.estado, yaExistia: true };
+            // A.2 (reintento reserva): SOLO se reusa un pedido cuya reserva sigue VIVA (`pago_pendiente`).
+            // Uno expirado/cancelado/pagado ya liberó su reserva → devolver una firma cobrable sobre él
+            // produciría `pagado_sin_stock` (cobro real sin pieza). El cliente debe regenerar el pedidoId.
+            if (e.estado !== 'pago_pendiente') {
+                throw new PedidoError('failed-precondition', 'reserva-no-vigente');
+            }
+            // Reusa la MISMA reserva (mismo `reservaExpira` → misma firma/expiration-time, sin re-decrementar).
+            return { pedidoId, numero: e.numero, total: e.total, estado: e.estado,
+                     expiraMs: e.reservaExpira?.toMillis?.() ?? (nowMs + ttlMs), yaExistia: true };
         }
         const pieceRef = db.doc(`pieces/${pieceId}`);
         const pieceSnap = await tx.get(pieceRef);
@@ -208,6 +258,7 @@ async function iniciarPagoWebCore(db, input = {}, opts = {}) {
             consumioStock: true,
             reservaExpira,                              // verdad de la reserva (el reaper la lee)
             shipping: shipping || null,
+            tipoEntrega,                                // A.8: 'tienda'|'nacional'|'internacional'|null
             habeasData: { aceptado: true, version: habeasVersion, fecha: FieldValue.serverTimestamp() },  // prueba del consentimiento (Dto.1377 art.5)
             autor: null,                               // cliente público sin login
             createdAt: FieldValue.serverTimestamp(),
@@ -218,13 +269,18 @@ async function iniciarPagoWebCore(db, input = {}, opts = {}) {
             reserva: { reservaId: pedidoId, reservaExpira },
         });
         tx.set(contRef, { valor: numero });
-        return { pedidoId, numero, total, estado: 'pago_pendiente', yaExistia: false };
+        return { pedidoId, numero, total, estado: 'pago_pendiente', expiraMs: nowMs + ttlMs, yaExistia: false };
     });
 
     // Firma de integridad (datos ya fijos; fuera de la tx). reference = pedidoId.
+    // A.4: `expiration_time` (ISO-8601 UTC) DERIVADO del `reservaExpira` REAL del pedido (nuevo o reusado)
+    // → viaja al Widget Y a la firma ("lo firmado == lo enviado", wompi-core §8). Sin esto el link de pago
+    // vivía para siempre → un APPROVED tardío tras liberar la reserva = `pagado_sin_stock` (cobro sin pieza).
     const amountInCents = montoEnCentavos(result.total);
-    const signature = firmaIntegridad({ reference: pedidoId, amountInCents, currency: 'COP', integritySecret });
-    return { ...result, reference: pedidoId, amountInCents, currency: 'COP', signature };
+    const expirationTime = new Date(result.expiraMs).toISOString();
+    const signature = firmaIntegridad({ reference: pedidoId, amountInCents, currency: 'COP', expirationTime, integritySecret });
+    const { expiraMs, ...rest } = result;
+    return { ...rest, reference: pedidoId, amountInCents, currency: 'COP', signature, expirationTime };
 }
 
 /**
@@ -300,9 +356,13 @@ async function confirmarPagoWompiCore(db, event = {}, opts = {}) {
         }
         const ped = pedSnap.data();
 
-        // No-APPROVED (DECLINED/VOIDED/ERROR/PENDING): NO transiciona (el cliente reintenta; el reaper libera). Audita.
+        // No-APPROVED (DECLINED/VOIDED/ERROR/PENDING): NO transiciona (el cliente reintenta; el reaper libera).
+        // A.3: se audita en un doc COMPUESTO `webhookEvents/{txId}-{status}`, NUNCA en `webhookEvents/{txId}`.
+        // Una misma transacción PSE/Nequi emite varios eventos (PENDING → APPROVED); si el PENDING escribiera
+        // la llave `{txId}`, el APPROVED posterior caería en el replay-guard de arriba y el pedido nunca pasaría
+        // a `pagado` (quedaría para revisión manual). Con la llave compuesta, el APPROVED del mismo txId procesa.
         if (tx.status !== 'APPROVED') {
-            t.set(evtRef, { ...evt, accion: 'auditado-no-aprobado' });
+            t.set(db.doc(`webhookEvents/${txId}-${tx.status}`), { ...evt, accion: 'auditado-no-aprobado' }, { merge: true });
             return { ok: true, status: 200, reason: `no-aprobado:${tx.status}`, pedidoEstado: ped.estado };
         }
         // APPROVED: valida monto + moneda + referencia contra el pedido CONGELADO.
@@ -365,16 +425,12 @@ async function liberarReservaCore(db, pedidoId, opts = {}) {
             t.update(pedidoRef, { estado: 'a_revisar', revisarMotivo: 'reaper halló pago APPROVED sin webhook', updatedAt: FieldValue.serverTimestamp() });
             return { pedidoId, accion: 'a_revisar-aprobado' };
         }
-        // NONE → liberar: repone la unidad si este pedido la consumió (espeja anularPedido).
+        // NONE → liberar: repone la unidad si este pedido la consumió (helper compartido C.1).
         if (ped.consumioStock === true && ped.pieceId) {
             const pieceRef = db.doc(`pieces/${ped.pieceId}`);
             const pieceSnap = await t.get(pieceRef);
             if (pieceSnap.exists) {
-                const p = pieceSnap.data();
-                const st = normStockType(p.stockType);
-                const nuevaCantidad = (Number.isInteger(p.cantidad) ? p.cantidad : 0) + 1;
-                t.update(pieceRef, { cantidad: FieldValue.increment(1), estado: derivarEstado(st, nuevaCantidad), reservaId: null, reservaExpira: null, updatedAt: FieldValue.serverTimestamp() });
-                t.set(pieceRef.collection('movimientos').doc(`exp-${pedidoId}`), { delta: 1, motivo: 'reserva-expirada', pedidoId, cantidadResultante: nuevaCantidad, actor: 'reaper', at: FieldValue.serverTimestamp() });
+                reponerStock(t, pieceRef, pieceSnap.data(), { pedidoId, motivo: 'reserva-expirada', ledgerId: `exp-${pedidoId}`, actor: 'reaper' });
             }
         }
         t.update(pedidoRef, { estado: 'expirado', expiradoEn: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
@@ -428,18 +484,8 @@ async function anularPedidoCore(db, input = {}) {
             if (pieceSnap.exists) {
                 const p = pieceSnap.data();
                 if (ped.consumioStock === true) {
-                    // v3: el pedido bajó una unidad → increment(+1) + estado DERIVADO + ledger.
-                    const st = normStockType(p.stockType);
-                    const nuevaCantidad = (Number.isInteger(p.cantidad) ? p.cantidad : 0) + 1;
-                    tx.update(pieceRef, {
-                        cantidad: FieldValue.increment(1),
-                        estado: derivarEstado(st, nuevaCantidad),
-                        updatedAt: FieldValue.serverTimestamp(),
-                    });
-                    tx.set(db.doc(`pieces/${ped.pieceId}/movimientos/anul-${pedidoId}`), {
-                        delta: 1, motivo: 'anulacion', pedidoId, cantidadResultante: nuevaCantidad,
-                        actor: autor, at: FieldValue.serverTimestamp(),
-                    });
+                    // C.1: v3 → helper compartido (repone +1, respeta encargo, limpia reservaId fantasma).
+                    reponerStock(tx, pieceRef, p, { pedidoId, motivo: 'anulacion', ledgerId: `anul-${pedidoId}`, actor: autor });
                     reintegrada = true;
                 } else if (p.estado === 'vendida') {
                     // LEGACY (pedido pre-v3): la pieza quedó 'vendida' → volver a disponible (modelo viejo).
@@ -479,28 +525,48 @@ async function cierreCajaCore(db, input = {}) {
     // Ventana del turno = desde el último cierre (o desde siempre la 1ª vez).
     const lastSnap = await db.collection('arqueo').orderBy('cierreTs', 'desc').limit(1).get();
     const desde = lastSnap.empty ? null : lastSnap.docs[0].data().cierreTs;
-    // Rango sobre createdAt (campo único → sin índice compuesto); el estado se filtra en código.
-    let q = db.collection('pedidos');
-    if (desde) q = q.where('createdAt', '>', desde);
-    const peds = await q.get();
 
-    const esperado = { efectivo: 0, transferencia: 0, wompi: 0 };
-    peds.forEach(d => {
-        const p = d.data();
-        if (p.estado === 'pagado' && esperado[p.medio] != null) esperado[p.medio] += entero(p.total);
-    });
-    const descuadre = declarado - esperado.efectivo;    // + sobra, − falta
+    // C.2: el "momento del dinero" de un pedido pagado = `confirmadoEn` (transferencia/Wompi, confirmado
+    // por Kary/webhook) o `createdAt` (efectivo, nace pagado). Se suma por ESE momento, no por createdAt:
+    // una venta creada en un turno y confirmada en ESTE cuenta aquí (antes se perdía = subreporte). Como
+    // confirmadoEn≠createdAt, se recolecta por 3 vías (creados/confirmados/anulados en la ventana; dedup por id).
+    const vistos = new Map();
+    const recolectar = snap => snap.forEach(d => vistos.set(d.id, d.data()));
+    const qBase = db.collection('pedidos');
+    recolectar(await (desde ? qBase.where('createdAt', '>', desde) : qBase).get());
+    if (desde) {
+        recolectar(await qBase.where('confirmadoEn', '>', desde).get());   // confirmados tarde
+        recolectar(await qBase.where('anuladoEn', '>', desde).get());       // anulados en el turno
+    }
+    const enVentana = ts => ts && (!desde || (ts.toMillis?.() ?? 0) > desde.toMillis());
+
+    // C.4: los medios salen de MEDIOS (no un objeto fijo) → si mañana se descongela ADDI, no queda invisible.
+    const esperado = Object.fromEntries(MEDIOS.map(m => [m, 0]));
+    const ajustes  = Object.fromEntries(MEDIOS.map(m => [m, 0]));   // devoluciones por anulación de ventas de turnos PREVIOS
+    for (const p of vistos.values()) {
+        if (esperado[p.medio] == null) continue;
+        const momento = p.confirmadoEn || p.createdAt;
+        if (p.estado === 'pagado') {
+            if (enVentana(momento)) esperado[p.medio] += entero(p.total);
+        } else if (p.estado === 'anulado' && enVentana(p.anuladoEn)) {
+            // Anulada en este turno; si su dinero se contó en un cierre PREVIO (momento ≤ desde), se resta ahora.
+            if (desde && momento && (momento.toMillis?.() ?? 0) <= desde.toMillis()) ajustes[p.medio] -= entero(p.total);
+        }
+    }
+    const esperadoEfectivo = esperado.efectivo + ajustes.efectivo;   // neto: ventas del turno − devoluciones de turnos previos
+    const descuadre = declarado - esperadoEfectivo;                  // + sobra, − falta
 
     await ref.set({
         aperturaDesde: desde || null,
         cierreTs: FieldValue.serverTimestamp(),
         autor,
         esperadoPorMedio: esperado,
-        esperadoEfectivo: esperado.efectivo,
+        ajustesPorMedio: ajustes,        // C.2: devoluciones por anulación de ventas contadas en cierres previos
+        esperadoEfectivo,
         declaradoEfectivo: declarado,
         descuadre,
     });
-    return { arqueoId, esperadoPorMedio: esperado, esperadoEfectivo: esperado.efectivo, declaradoEfectivo: declarado, descuadre, yaExistia: false };
+    return { arqueoId, esperadoPorMedio: esperado, ajustesPorMedio: ajustes, esperadoEfectivo, declaradoEfectivo: declarado, descuadre, yaExistia: false };
 }
 
 module.exports = {

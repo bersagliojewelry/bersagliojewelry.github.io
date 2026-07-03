@@ -23,6 +23,8 @@ const SECRET = 'test_integrity_xyz';
 const NOW = 1719600000000;
 const TTL = 15 * 60 * 1000;
 const OPTS = { integritySecret: SECRET, ttlMs: TTL, nowMs: NOW };
+const EXP = new Date(NOW + TTL).toISOString();   // A.4: expiration_time firmado y enviado al Widget
+const firmaCon = (reference, amountInCents) => firmaIntegridad({ reference, amountInCents, currency: 'COP', expirationTime: EXP, integritySecret: SECRET });
 
 before(async () => {
     await db.doc('contadores/pedidos').delete().catch(() => {});
@@ -46,7 +48,8 @@ test('reserva web OK: pedido pago_pendiente + reserva atómica + firma server-si
     assert.equal(r.amountInCents, 215000000);
     assert.equal(r.currency, 'COP');
     assert.equal(r.yaExistia, false);
-    assert.equal(r.signature, firmaIntegridad({ reference: 'wp1', amountInCents: 215000000, currency: 'COP', integritySecret: SECRET }));
+    assert.equal(r.expirationTime, EXP);                                   // A.4: viaja al Widget
+    assert.equal(r.signature, firmaCon('wp1', 215000000));                 // firmada CON expirationTime
 
     const ped = (await db.doc('pedidos/wp1').get()).data();
     assert.equal(ped.estado, 'pago_pendiente');
@@ -68,11 +71,12 @@ test('reserva web OK: pedido pago_pendiente + reserva atómica + firma server-si
     assert.equal((await db.doc('pieces/pw1/movimientos/wp1').get()).data().motivo, 'reserva-web');
 });
 
-test('reserva web idempotente: mismo pedidoId no duplica ni re-decrementa', async () => {
+test('reserva web idempotente: mismo pedidoId (pago_pendiente) no duplica ni re-decrementa', async () => {
     const r = await iniciarPagoWebCore(db, { pedidoId: 'wp1', pieceId: 'pw1' }, OPTS);
     assert.equal(r.yaExistia, true);
     assert.equal(r.total, 2150000);
-    assert.equal(r.signature, firmaIntegridad({ reference: 'wp1', amountInCents: 215000000, currency: 'COP', integritySecret: SECRET }));
+    assert.equal(r.expirationTime, EXP);                                   // A.2: mismo reservaExpira → mismo expiration
+    assert.equal(r.signature, firmaCon('wp1', 215000000));                 // A.2: firma cobrable estable en el reintento
     assert.equal((await db.doc('pieces/pw1').get()).data().cantidad, 0);   // no bajó a -1
 });
 
@@ -117,4 +121,42 @@ test('rechaza sin secreto de integridad', async () => {
 
 test('rechaza pedidoId/pieceId vacíos', async () => {
     await assert.rejects(iniciarPagoWebCore(db, { pieceId: 'pw1' }, OPTS), /obligatorio/i);
+});
+
+// ── Bloque A del plan Fable (piezas DEDICADAS para no contaminar el estado de los tests de arriba) ──
+test('A.2: reintento sobre un pedido NO vigente (expirado) → reserva-no-vigente (no firma cobrable)', async () => {
+    await db.doc('pieces/pwA2').set({ name: 'A2', slug: 'a2', price: 500000, stockType: 'finito', cantidad: 1, visibilidad: 'publica' });
+    // Pedido ya liberado: existe pero su estado ya no es pago_pendiente → NO debe devolver firma cobrable.
+    await db.doc('pedidos/wpExp').set({ numero: 99, total: 500000, estado: 'expirado', reservaExpira: null });
+    await assert.rejects(
+        iniciarPagoWebCore(db, { pedidoId: 'wpExp', pieceId: 'pwA2', habeas: HABEAS }, OPTS),
+        /reserva-no-vigente/,
+    );
+    assert.equal((await db.doc('pieces/pwA2').get()).data().cantidad, 1);   // no tocó la pieza
+});
+
+test('A.7: pieza legacy SIN campo cantidad → decrementa a 0 (no -1) y queda agotada', async () => {
+    await db.doc('pieces/pwLegacy').set({ name: 'Legacy', slug: 'legacy', price: 600000, stockType: 'finito', visibilidad: 'publica' });   // sin `cantidad`
+    const r = await iniciarPagoWebCore(db, { pedidoId: 'wpLeg', pieceId: 'pwLegacy', habeas: HABEAS }, OPTS);
+    assert.equal(r.estado, 'pago_pendiente');
+    const pz = (await db.doc('pieces/pwLegacy').get()).data();
+    assert.equal(pz.cantidad, 0);          // ABSOLUTO, no -1 (A.7)
+    assert.equal(pz.estado, 'agotada');
+});
+
+test('A.8: persiste docType/docNumber/countryIso2 (normalizado) + tipoEntrega', async () => {
+    await db.doc('pieces/pwA8').set({ name: 'A8', slug: 'a8', price: 700000, stockType: 'finito', cantidad: 1, visibilidad: 'publica' });
+    const shipping = { firstName: 'Ana', email: 'a@x.co', address: 'Calle 1', city: 'Cartagena', docType: 'cc', docNumber: '123', countryIso2: 'co', phone: '3001234567' };
+    await iniciarPagoWebCore(db, { pedidoId: 'wpDatos', pieceId: 'pwA8', shipping, tipoEntrega: 'tienda', habeas: HABEAS }, OPTS);
+    const ped = (await db.doc('pedidos/wpDatos').get()).data();
+    assert.equal(ped.shipping.docType, 'CC');           // normalizado a mayúscula
+    assert.equal(ped.shipping.docNumber, '123');
+    assert.equal(ped.shipping.countryIso2, 'CO');
+    assert.equal(ped.tipoEntrega, 'tienda');
+});
+
+test('A.8: tipoEntrega inválido → null (no rompe)', async () => {
+    await db.doc('pieces/pwA8b').set({ name: 'A8b', slug: 'a8b', price: 700000, stockType: 'finito', cantidad: 1, visibilidad: 'publica' });
+    await iniciarPagoWebCore(db, { pedidoId: 'wpTE', pieceId: 'pwA8b', tipoEntrega: 'hackeo', habeas: HABEAS }, OPTS);
+    assert.equal((await db.doc('pedidos/wpTE').get()).data().tipoEntrega, null);
 });

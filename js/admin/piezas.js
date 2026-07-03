@@ -380,10 +380,10 @@ function renderImagePreviews() {
             // 1. Delete from Firebase Storage
             try {
                 const { deletePieceImage } = await import('../storage-service.js');
-                await deletePieceImage(urlToDelete);
+                await deletePieceImage(urlToDelete);   // salta si no es de Storage; no lanza si ya no existe
             } catch (err) {
-                console.warn('[Admin] Storage delete failed:', err);
-                admToast('No se pudo eliminar del storage, se quitará de la pieza', 'danger');
+                console.warn('[Admin] Storage delete failed:', err && err.code, err);
+                admToast('No se pudo borrar la imagen: ' + ((err && err.code) || (err && err.message) || 'error'), 'danger');
             }
 
             // 2. Remove from local array (+ su LQIP paralelo, §108 F3)

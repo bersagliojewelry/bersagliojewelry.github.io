@@ -225,3 +225,16 @@ test('C.2: venta transferencia confirmada en un turno POSTERIOR cuenta en ese tu
     const c2 = await cierreCajaCore(db, { arqueoId: 'arqC2b', declaradoEfectivo: 0, autor: 'kary' });
     assert.equal(c2.esperadoPorMedio.transferencia, 700000);   // C.2: cuenta en el turno de confirmación
 });
+
+test('C.2 guard: anular una transferencia NUNCA pagada de un turno previo NO genera devolución (ajuste fantasma)', async () => {
+    await db.doc('pieces/pC2b').set({ name: 'C2b', slug: 'c2b', price: 900000, stockType: 'finito', cantidad: 1 });
+    await crearPedidoCore(db, { pedidoId: 'pedC2b', pieceId: 'pC2b', medio: 'transferencia', autor: 'u1' });   // nace pago_por_verificar y NUNCA se confirma
+    await sleep(15);
+    const c1 = await cierreCajaCore(db, { arqueoId: 'arqC2c', declaradoEfectivo: 0, autor: 'kary' });
+    assert.equal(c1.esperadoPorMedio.transferencia, 0);        // nunca ingresó dinero
+    await sleep(15);
+    await anularPedidoCore(db, { pedidoId: 'pedC2b', autor: 'kary' });   // anulada en el turno SIGUIENTE
+    await sleep(15);
+    const c2 = await cierreCajaCore(db, { arqueoId: 'arqC2d', declaradoEfectivo: 0, autor: 'kary' });
+    assert.equal(c2.ajustesPorMedio.transferencia, 0);         // sin confirmadoEn no hay dinero que "devolver"
+});

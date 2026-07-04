@@ -217,6 +217,13 @@ async function iniciarPagoWebCore(db, input = {}, opts = {}) {
             if (e.estado !== 'pago_pendiente') {
                 throw new PedidoError('failed-precondition', 'reserva-no-vigente');
             }
+            // A.2b: el reintento puede traer datos CORREGIDOS del comprador (canceló en Wompi, arregló
+            // dirección/cédula/entrega y volvió a pagar). Se refrescan en el pedido reusado — el total y
+            // la firma nacen de la pieza y NO cambian; sin esto el despacho/factura salían con los viejos.
+            const refresco = {};
+            if (shipping) refresco.shipping = shipping;
+            if (tipoEntrega) refresco.tipoEntrega = tipoEntrega;
+            if (Object.keys(refresco).length) tx.update(pedidoRef, refresco);
             // Reusa la MISMA reserva (mismo `reservaExpira` → misma firma/expiration-time, sin re-decrementar).
             return { pedidoId, numero: e.numero, total: e.total, estado: e.estado,
                      expiraMs: e.reservaExpira?.toMillis?.() ?? (nowMs + ttlMs), yaExistia: true };
@@ -550,7 +557,10 @@ async function cierreCajaCore(db, input = {}) {
             if (enVentana(momento)) esperado[p.medio] += entero(p.total);
         } else if (p.estado === 'anulado' && enVentana(p.anuladoEn)) {
             // Anulada en este turno; si su dinero se contó en un cierre PREVIO (momento ≤ desde), se resta ahora.
-            if (desde && momento && (momento.toMillis?.() ?? 0) <= desde.toMillis()) ajustes[p.medio] -= entero(p.total);
+            // Transferencia/wompi solo INGRESAN al confirmarse: un pedido anulado SIN `confirmadoEn` nunca
+            // recibió dinero (pago_por_verificar/pago_pendiente viejo) → no genera devolución fantasma.
+            const ingreso = p.medio === 'efectivo' || !!p.confirmadoEn;
+            if (ingreso && desde && momento && (momento.toMillis?.() ?? 0) <= desde.toMillis()) ajustes[p.medio] -= entero(p.total);
         }
     }
     const esperadoEfectivo = esperado.efectivo + ajustes.efectivo;   // neto: ventas del turno − devoluciones de turnos previos

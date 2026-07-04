@@ -80,6 +80,20 @@ test('reserva web idempotente: mismo pedidoId (pago_pendiente) no duplica ni re-
     assert.equal((await db.doc('pieces/pw1').get()).data().cantidad, 0);   // no bajó a -1
 });
 
+test('A.2b: reintento con datos corregidos refresca shipping/tipoEntrega en el pedido reusado', async () => {
+    const r = await iniciarPagoWebCore(db, {
+        pedidoId: 'wp1', pieceId: 'pw1',
+        shipping: { firstName: 'Ana', email: 'a@x.co', address: 'Carrera 9 #45', docType: 'CC', docNumber: '1017' },
+        tipoEntrega: 'tienda',
+    }, OPTS);
+    assert.equal(r.yaExistia, true);
+    assert.equal(r.signature, firmaCon('wp1', 215000000));                 // total/expira intactos → misma firma
+    const ped = (await db.doc('pedidos/wp1').get()).data();
+    assert.equal(ped.shipping.address, 'Carrera 9 #45');                   // el dato corregido NO se pierde
+    assert.equal(ped.shipping.docNumber, '1017');                          // cédula (DIAN/guía) fresca
+    assert.equal(ped.tipoEntrega, 'tienda');                               // recoger-en-tienda persistido
+});
+
 test('reserva web sobre LOTE: decrementa a 1, sigue disponible', async () => {
     const r = await iniciarPagoWebCore(db, { pedidoId: 'wpL1', pieceId: 'pwLote', habeas: HABEAS }, OPTS);
     assert.equal(r.estado, 'pago_pendiente');

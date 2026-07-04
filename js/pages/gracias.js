@@ -14,7 +14,8 @@
  * mensaje contextual + 2 CTAs (Volver a colecciones / Explorar journal).
  */
 
-import { html, escape } from '../core/html.js';
+import { html, escape, mount } from '../core/html.js';
+import { mergeGlobal, waLink } from '../core/global-defaults.js';   // §164: CTA WhatsApp (concierge, sin cuenta)
 
 const MESSAGES = {
     transferencia: {
@@ -67,24 +68,81 @@ function getMethodFromURL() {
     return p.get('method') || 'default';
 }
 
+// ─── §164: estado REAL del pago (gate A.9, hallazgo del dueño) ────────────────
+// El retorno de Wompi trae ?id=<txId>. Antes la página decía "PAGO RECIBIDO · confirmando" SIEMPRE
+// — también con el pago RECHAZADO. Ahora consulta la transacción real y habla claro. El comprador es
+// INVITADO (sin cuenta): su comprobante es el número de pedido (sessionStorage, lo dejó pago-web.js)
+// y el seguimiento es concierge (WhatsApp con Kary). Fail-open: sin respuesta → mensaje neutro actual.
+
+/** PURA (testeada): estado de la transacción → mensaje honesto. null = mantener el neutro "confirmando". */
+export function mensajePorEstadoTx(status, numero) {
+    const n = Number(numero) > 0 ? Number(numero) : null;
+    if (status === 'APPROVED') {
+        return {
+            eyebrow: 'PAGO CONFIRMADO',
+            title: 'Confirmado. Tu pieza queda <span class="italic emerald-text">reservada</span> a tu nombre.',
+            body: `Wompi confirmó tu pago${n ? ` del pedido #${n}` : ''}.${n ? ` Guarda ese número: es tu comprobante.` : ''} Te contactaremos por correo y WhatsApp para coordinar la entrega — si elegiste recoger en el atelier de Cartagena, agendamos tu cita; si es envío, gestionamos la guía asegurada.`,
+            nextLabel: n ? `Tu comprobante: pedido #${n}` : 'Pago confirmado',
+            tone: 'ok',
+            wa: `Hola, acabo de pagar en la web de Bersaglio${n ? ` (pedido #${n})` : ''} y quiero coordinar la entrega.`,
+        };
+    }
+    if (status === 'DECLINED' || status === 'ERROR' || status === 'VOIDED') {
+        return {
+            eyebrow: 'PAGO NO COMPLETADO',
+            title: 'Tu banco no aprobó el pago. <span class="italic emerald-text">Nada</span> fue debitado.',
+            body: 'La entidad emisora rechazó la transacción y no se debitó dinero de tu cuenta. Tu pieza sigue apartada unos minutos a tu nombre: puedes reintentar el pago de inmediato (con la misma u otra tarjeta) o escribirnos por WhatsApp y lo resolvemos contigo en persona.',
+            nextLabel: 'La pieza sigue apartada — puedes reintentar ya',
+            tone: 'warn',
+            retry: true,
+            wa: 'Hola, intenté pagar en la web de Bersaglio y mi banco rechazó el pago. ¿Me ayudan a completar la compra?',
+        };
+    }
+    return null;   // PENDING u otro → el neutro "estamos confirmando" es el mensaje correcto
+}
+
+function ultimoPago() {
+    try { return JSON.parse(sessionStorage.getItem('bj-ultimo-pago') || 'null') || {}; } catch { return {}; }
+}
+
+async function consultarTx(txId, env, publicKey) {
+    const base = env === 'test' ? 'https://sandbox.wompi.co/v1' : 'https://production.wompi.co/v1';
+    const intentos = publicKey
+        ? [{ headers: { Authorization: `Bearer ${publicKey}` } }, {}]
+        : [{}];
+    for (const opts of intentos) {
+        try {
+            const r = await fetch(`${base}/transactions/${encodeURIComponent(txId)}`, opts);
+            if (!r.ok) continue;
+            const j = await r.json();
+            if (j?.data?.status) return j.data.status;
+        } catch { /* red caída → fail-open */ }
+    }
+    return null;
+}
+
 function renderAll(msg) {
+    const warn = msg.tone === 'warn';
+    const wa = msg.wa ? waLink(mergeGlobal(null).contacto.whatsapp, msg.wa) : null;
     return html`
         <div class="container lg-page lg-page--gracias">
             <section class="lg-hero">
-                <div class="lg-check" aria-hidden="true">
+                <div class="lg-check" aria-hidden="true" ${warn ? 'style="background:oklch(62% 0.13 60)"' : ''}>
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
-                        <path d="M20 6L9 17l-5-5"/>
+                        ${warn ? html`<path d="M12 6v7"/><circle cx="12" cy="17.5" r="0.5" fill="#fff"/>` : html`<path d="M20 6L9 17l-5-5"/>`}
                     </svg>
                 </div>
                 <div class="mono lg-eyebrow">${escape(msg.eyebrow)}</div>
                 <h1 class="lg-title">${msg.title}</h1>
                 <p class="lg-body">${escape(msg.body)}</p>
-                <div class="lg-pill" aria-label="Tiempo estimado">
+                <div class="lg-pill" aria-label="Estado">
                     <span class="lg-pill-dot"></span>
                     ${escape(msg.nextLabel)}
                 </div>
                 <div class="lg-actions">
-                    <a href="/colecciones.html" class="btn-aqua btn-aqua-emerald">Ver colecciones</a>
+                    ${msg.retry ? html`<a href="/carrito.html" class="btn-aqua btn-aqua-emerald">Reintentar el pago</a>` : ''}
+                    ${wa ? html`<a href="${escape(wa)}" class="btn-aqua ${msg.retry ? '' : 'btn-aqua-emerald'}" target="_blank" rel="noopener">Escribir por WhatsApp</a>` : ''}
+                    ${msg.retry ? '' : html`<a href="/colecciones.html" class="btn-aqua ${wa ? '' : 'btn-aqua-emerald'}">Ver colecciones</a>`}
                     <a href="/journal.html" class="btn-aqua">Leer el Journal</a>
                 </div>
             </section>
@@ -96,7 +154,17 @@ export async function init() {
     if (!main) return;
     const method = getMethodFromURL();
     const msg = MESSAGES[method] || MESSAGES.default;
-    main.innerHTML = renderAll(msg);
+    mount(main, renderAll(msg));
+
+    // §164: al volver de Wompi (?id=…), consultar el estado REAL y re-pintar honesto (aprobado /
+    // rechazado-reintenta). Sin respuesta (red/401) se queda el neutro "confirmando" — fail-open.
+    const p = new URL(location.href).searchParams;
+    const txId = p.get('id');
+    if (method !== 'pago' || !txId) return;
+    const stash = ultimoPago();
+    const status = await consultarTx(txId, p.get('env'), stash.publicKey);
+    const real = mensajePorEstadoTx(status, stash.numero);
+    if (real) mount(main, renderAll(real));
 }
 
 export default { init };

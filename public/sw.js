@@ -40,7 +40,10 @@
 // data.js la usa de semilla (memoria > localStorage > horneado > defaults).
 // v70 = encendido A.9: el stepper del checkout ya no permite SALTAR a "03 Pago" sin pasar por la
 // validación de Entrega (píldoras futuras deshabilitadas; hallazgo del dueño durante el gate live).
-const CACHE_NAME    = 'bersaglio-v70';
+// v71 = §164 blindaje post-gate: gracias.html consulta el estado REAL de la transacción (aprobado /
+// rechazado-reintenta / confirmando), muestra el nº de pedido como comprobante del invitado + CTA
+// WhatsApp (concierge); pago-web deja el comprobante en sessionStorage.
+const CACHE_NAME    = 'bersaglio-v71';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

@@ -74,6 +74,9 @@ export async function pagarConWompi({ pieceId, shipping, tipoEntrega, habeas, re
     if (!res?.signature || !res?.publicKey || !res?.amountInCents) {
         throw new Error('No se pudo iniciar el pago.');
     }
+    // §164: el comprador es invitado (sin cuenta) → su COMPROBANTE es el número de pedido. Se deja en
+    // sessionStorage para que gracias.html lo muestre al volver de Wompi (misma pestaña).
+    try { sessionStorage.setItem('bj-ultimo-pago', JSON.stringify({ numero: res.numero, pedidoId: res.reference, publicKey: res.publicKey })); } catch {}
     const base = redirectBase || (typeof location !== 'undefined' ? location.origin : '');
     const sh = shipping || {};
     const fullName = `${sh.firstName || ''} ${sh.lastName || ''}`.trim();

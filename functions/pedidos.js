@@ -182,8 +182,22 @@ const alertaPedidoRevision = onDocumentUpdated({ document: 'pedidos/{pedidoId}',
     const despues = event.data?.after?.data();
     if (!despues) return;
     const nuevo = despues.estado;
-    if (!ESTADOS_ALERTA[nuevo] || (antes && antes.estado === nuevo)) return;   // solo al ENTRAR al estado
+    const entroA = (estado) => nuevo === estado && (!antes || antes.estado !== estado);   // solo al ENTRAR
     const db = getFirestore();
+    // §164 (gate A.9, pregunta del dueño): una VENTA WEB PAGADA normal también alerta — el comprador es
+    // invitado (sin cuenta) y el seguimiento es concierge por Kary; si nadie se entera, el pedido pagado
+    // duerme con el SLA de retracto (5 días) corriendo. Doc aparte del de problemas (id distinto).
+    if (entroA('pagado') && despues.canal === 'web') {
+        try {
+            await db.collection('saludEventos').doc(`venta-web-${event.params.pedidoId}`).set({
+                tipo: 'venta-web-pagada',
+                detalle: `💰 VENTA WEB PAGADA — pedido #${despues.numero || '?'} · ${despues.total || '?'} COP · ${despues.pieceName || ''}. Contactar al cliente (correo/WhatsApp del pedido) y coordinar ${despues.tipoEntrega === 'tienda' ? 'la cita de entrega en el atelier' : 'el envío'}.`,
+                pedidoId: event.params.pedidoId,
+                at: FieldValue.serverTimestamp(), resuelto: false,
+            });
+        } catch (e) { console.error('[alertaPedidoRevision] venta-web no registrada:', e); }
+    }
+    if (!ESTADOS_ALERTA[nuevo] || (antes && antes.estado === nuevo)) return;   // problemas: solo al ENTRAR al estado
     try {
         await db.collection('saludEventos').doc(`pedido-${event.params.pedidoId}`).set({
             tipo: 'pedido-requiere-accion',

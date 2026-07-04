@@ -164,8 +164,8 @@ cierre que pidió Daniel).
 
 | # | Decisión | Bloquea | Estado |
 |---|---|---|---|
-| D-1 | Apartados/plan separe en mostrador (TODO-39) | F2.4 (solo ese ítem) | ⏳ preguntada 2026-07-04 |
-| D-2 | Flete nacional pedido web pagado: cobrar aparte vs asumir | contrato flete F1-core | ⏳ preguntada 2026-07-04 |
+| D-1 | Apartados/plan separe en mostrador (TODO-39) | F2.4 (solo ese ítem) | ✅ **SÍ** (Daniel 2026-07-04) — abonos = cartera CRM; pieza apartada se bloquea en la web; reglas finas (anticipo mínimo/plazo) se confirman con Kary en la spec de F2.4 |
+| D-2 | Flete nacional pedido web pagado: cobrar aparte vs asumir | contrato flete F1-core | ✅ **COBRAR APARTE** (Daniel 2026-07-04, ratifica §9 del plan v3) — Kary cotiza/informa/cobra (link Wompi o transferencia); `flete{valorCOP, cobro:'cobrado', medio, estado}` en el pedido |
 | D-3 | PAT GitHub | carril D | ⏳ pedida 2026-07-04 |
 | D-4 | ADDI (Kary vincula) / Persona Jurídica (contador) | nada del plan | ❄️ congeladas (sin cambio) |
 

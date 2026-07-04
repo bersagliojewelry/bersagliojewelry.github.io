@@ -94,7 +94,10 @@ function renderStepper(rows) {
         <nav class="glass ck-stepper" role="tablist" aria-label="Pasos del checkout">
             ${STEPS.map((s, i) => {
                 const idx = i + 1;
-                const disabled = empty && idx > 1;
+                // Los pasos FUTUROS no son clicables (reporte del dueño, encendido A.9): avanzar SIEMPRE
+                // pasa por el botón validado ("Continuar" del form exige campos + consentimiento). Volver
+                // atrás sí es libre. Sin esto, saltar a "03 Pago" por la píldora esquivaba la validación.
+                const disabled = (empty && idx > 1) || idx > _step;
                 return html`
                     <button type="button"
                             class="ck-step ${_step === idx ? 'is-active' : ''} ${disabled ? 'is-disabled' : ''}"
@@ -589,10 +592,12 @@ function onMainClick(e) {
         if (Number.isNaN(n)) return;
         // Only allow forward if cart non-empty
         if (cart.count() === 0 && n > 1) return;
+        if (n > _step) return;   // futuro solo por el camino validado (espejo del disabled del render)
         goToStep(n);
         return;
     }
-    if (action === 'step-next') { e.preventDefault(); goToStep(_step + 1); return; }
+    // step-next solo existe en el paso 1 ("Continuar al envío"); 2→3 va por el submit validado del form.
+    if (action === 'step-next') { e.preventDefault(); if (_step === 1) goToStep(2); return; }
     if (action === 'step-prev') { e.preventDefault(); goToStep(_step - 1); return; }
 
     if (action === 'inc' && slug) {

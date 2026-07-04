@@ -38,7 +38,9 @@
 // v69 = §163 anti-flash CMS: el SSG hornea siteContent/{home,global} en index.html (window.__BJ_SC)
 // → la 1ª visita pinta la imagen REAL del hero (cero flash beige→verde) y el preload apunta a ella;
 // data.js la usa de semilla (memoria > localStorage > horneado > defaults).
-const CACHE_NAME    = 'bersaglio-v69';
+// v70 = encendido A.9: el stepper del checkout ya no permite SALTAR a "03 Pago" sin pasar por la
+// validación de Entrega (píldoras futuras deshabilitadas; hallazgo del dueño durante el gate live).
+const CACHE_NAME    = 'bersaglio-v70';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

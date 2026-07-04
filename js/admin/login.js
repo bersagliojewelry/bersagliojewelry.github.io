@@ -65,7 +65,9 @@ async function handleLogin(e) {
         const { profile } = await signIn(email, pass);
         window.location.replace(profile?.role === 'catalogo' ? 'admin-piezas.html' : 'admin.html');
     } catch (err) {
-        showError('login-error', err.message);
+        // signIn ya traduce todo auth/* a español (Error plano, sin `code`); un FirebaseError NO-auth
+        // (Firestore caído / regla que niega users/{uid}) llega crudo CON `code` → genérico, nunca inglés.
+        showError('login-error', err?.code ? 'No se pudo iniciar sesión. Revisa tu conexión e intenta de nuevo.' : err.message);
         btn.disabled    = false;
         btn.textContent = 'Iniciar sesión';
     }

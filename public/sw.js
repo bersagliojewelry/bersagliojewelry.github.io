@@ -26,17 +26,20 @@
 // del CMS en localStorage → sin flash de la imagen vieja del repo (hero y toda sección).
 // v66 = plan Fable Bloques A-E: checkout hardening (qty/reintento/expiration — carrito.js/pago-web.js),
 // admin robustez (banner diferido, CSV, beforeunload, esc), POS/fiscal (comisión IVA discriminada), caché
-// CMS anti-flash. E.3: SHELL_ASSETS corrige el hero LCP → `/img/banner-hero-1200.avif` (el preload de
-// index.html; antes precacheaba `/img/hero-1200.webp` obsoleto).
+// CMS anti-flash.
+// v67 = auditoría de cierre Fable: el LCP real es la familia `hero-*.avif` que pinta js/home/hero.js
+// (banner-hero-* era un preload huérfano del rediseño §156 — se descargaba con fetchpriority=high y
+// nunca se pintaba). Preload de index.html corregido + precache de `/img/hero-1200.avif` + fixes backend
+// (A.2b shipping fresco en reintento, C.2 guard ajuste fantasma) + login sin err.message crudo.
 // v65 = fix login admin (TODO-64 / A0): sessionReady() determinista + ruteo por rol + limpieza ?error.
 // v64 = fixes país/borrado-fotos/caché-CMS. v63 = rediseño checkout. v62 = FAQ financiación. v60 = Wompi ON.
-const CACHE_NAME    = 'bersaglio-v66';
+const CACHE_NAME    = 'bersaglio-v67';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.
 const SHELL_ASSETS = [
     OFFLINE_URL,
-    '/img/banner-hero-1200.avif',   // E.3: el hero LCP real (preload de index.html); antes hero-1200.webp obsoleto
+    '/img/hero-1200.avif',   // E.3 (corregido v67): el hero LCP real que pinta js/home/hero.js (banner-hero-* era un preload huérfano)
     '/img/logo-bersaglio.png',
     '/manifest.json',
 ];

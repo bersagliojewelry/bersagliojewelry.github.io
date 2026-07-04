@@ -155,10 +155,11 @@
     <link rel="preload" href="css/home.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="css/home.css"></noscript>
 
-    <!-- Preload the hero banner since it's LCP — AVIF responsive set with fallback -->
+    <!-- Preload the hero since it's LCP — la MISMA familia hero-*.avif que pinta js/home/hero.js
+         (banner-hero-* era un preload huérfano del rediseño §156: se descargaba y nunca se pintaba) -->
     <link rel="preload" as="image"
-          href="/img/banner-hero-1200.avif"
-          imagesrcset="/img/banner-hero-800.avif 800w, /img/banner-hero-1200.avif 1200w, /img/banner-hero-1600.avif 1600w"
+          href="/img/hero-1200.avif"
+          imagesrcset="/img/hero-800.avif 800w, /img/hero-1200.avif 1200w, /img/hero-1600.avif 1600w, /img/hero-2200.avif 2200w"
           imagesizes="100vw"
           type="image/avif"
           fetchpriority="high">

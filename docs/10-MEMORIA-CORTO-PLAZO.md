@@ -8,9 +8,9 @@
 
 ## 🎯 Foco actual
 
-> 🎉 **CRM + Fase M EN PROD** (§47-§82). ⚙️ **OPUS 4.8 interino** (marcar `[OPUS-4.8]` · `feedback_opus_interino`).
+> 🎉 **CRM + Fase M EN PROD** (§47-§82). ⚙️ **FABLE 5 ACTIVO de nuevo** (2026-07-03); lo [OPUS-4.8] del plan ya fue auditado (§161).
 >
-> **🔨 WOMPI F2 ENCENDIDO en prod** (vivo pero DORMIDO: botón "Pagar ahora" OCULTO sin precios) → **foco = PLAN MAESTRO AUDITORÍA (TODO-65, Fable 2026-07-03)**: Opus implementa por bloques. **A0 login (incendio diario) → A dinero (GATE: NO cargar precios hasta cerrar A) → B/C/D/E**. SSoT → `2026-07-03-auditoria-holistica-plan-fable.md`. `[[project_comercio_pagos]]`
+> **🔨 WOMPI F2**: vivo pero DORMIDO (botón oculto sin precios). **Plan Fable A-E: CONSTRUIDO + AUDITADO + BACKEND DESPLEGADO (§161)**. **Próximo foco = encendido de precios vía runbook A.9** (Daniel: URL Eventos + precios + compra mínima + Chrome) y luego **Bloque D restante** (7b-7d/D.5/D.6, prerrequisitos: settings/gems prod + PAT GitHub). SSoT → `2026-07-03-auditoria-holistica-plan-fable.md`. `[[project_comercio_pagos]]`
 > _MCP Firebase=escritura prod · merge a main=Claude · consejo externo read-only (`[[feedback_consejo_externo_readonly]]`) · Claude valida en Chrome (`[[feedback_validacion_chrome_directa]]`)._
 
 ---
@@ -20,7 +20,6 @@
 | ID | Item | Estado | Bloqueo |
 |---|---|---|---|
 | TODO-03/04 | (baja) headers `99`→`## NN.` · anomalías 🔧 en `skills/` | 🔲 | baja |
-| TODO-66 | **SHARD de `30-LECCIONES`** (§G.5): roza el tope duro (44k/40k) — cada lección nueva obliga a destilar otra. Extraer una sub-categoría coherente (p.ej. meta-lecciones M-NN + doctrinas de gobernanza) a una hija `docs/34-*` con puntero desde `30`. Deuda estructural, no urgente. | 🔲 | mantenimiento |
 | TODO-07 | **Contenido real web**: reseñas Maps (Nosotros), Films, feed Redes (`home-media.js`). | 🔲 | cliente entrega datos |
 | TODO-08 | **Hardening Fase 2**: Tier A ✅; pend. CSP/reglas/claims (Tier B/C) → `41-SEGURIDAD §1.5` | 🟡 | Tier B = emulador+deploy gated |
 | TODO-09 | **Fase M** M0→M6 ✅ EN PROD (§78-§80); ACUERDOS R1-R5+A8 GATEADOS/inertes — encender=Daniel. Restan: M7·M2c·ASESOR/RBAC (TODO-19). | 🟡 | encender R6 (Daniel) |
@@ -43,8 +42,8 @@
 | TODO-50 | **Catálogo de lujo** — imagen real + filtros gema/tipo + badges. Detalle → §133.2(B/C). (Taxonomía=TODO-57.) | 🔲 | tras TODO-44 |
 | TODO-63 | **Rediseño UX checkout — DESPLEGADO + VERIFICADO LIVE (v63/v64)** (comité×4+Antigravity+gate; entrega/país/legal_id/consentimiento · Wompi REDIRECT · §3 GD-2 · éxito · tests 12/12). Fixes v64 (país CO+57 · borrado fotos robusto · caché síncrono CMS). **PEND remanente vivo = A.2 del plan Fable** (reserva-reintento: reusar pedidoId + guard de estado server) + gate-live redirect (Daniel). Spec `2026-06-30-checkout-redesign-design`. | 🟡 | A.2 + gate-live |
 | TODO-57 | **Modelo GEMA** (§150-§151, plano `badgeGem`/`gemFilterIds`). HECHO: fundación+form+backfill 32/32+JSON-LD (test 9/9). **Pend**: `settings/gems`+bake · filtros TODO-50 · live form. **Prerequisito D.0 del plan Fable**: `badgeGem`/`gemFilterIds` NO están en `PUBLIC_SPEC_KEYS` (`generate-pieces.mjs:676`) → al conmutar 7b el badge cae al regex. Hacer con el Bloque D. SSoT → spec. | 🟡 | D.0 (whitelist gema) |
-| TODO-65 | **PLAN MAESTRO auditoría holística (Fable 5, 2026-07-03)** implementado por **Opus 4.8**. **A0 login ✅ (§159, desplegado)** · **A dinero ✅ construido** (8 fixes; wompi 30/30, POS 22/22) · **B robustez ✅** (6 fixes; reglas 220/220) · **C POS/fiscal ✅** (4 fixes) · **D catálogo 🟡 PARCIAL** (D.0/D.1/D.3 ✅; 7b/7c/7d/D.5/D.6 PEND = capa CDN + filtros + perf, requieren settings/gems prod + PAT GitHub + verif Chrome) · **E higiene ✅** (E.4 pend backfill claims). **⚠️ Mergeado a main (PR #406/#407) → FRONTEND en prod** (admin B/C vivo, checkout A inerte sin precios). **PEND deploy MANUAL** functions+reglas (L-22, CI=Pages only) con el encendido de precios, tras auditoría de cierre de Fable. SSoT → spec + estado al inicio. | 🟢 | auditoría Fable → deploy backend |
-> ✅ **Cerrados** (detalle → ADRs/`99` + lecciones): **TODO-64 (login parpadeos §159 → L-66, DESPLEGADO+verif live; confirmación natural: próximo login de Kary)** · **TODO-21 (revisión [OPUS-4.8] ejecutada como auditoría §158)** · TODO-62 (pinch-zoom iOS §156.18 → L-62) · TODO-61 (§156 primera cara + "Asesoría privada" §156.1-16) · TODO-60/59/58/56/55/54/53/52/51/46/45/44 · TODO-40+32. Pend Daniel: precios + fotos IA.
+| TODO-65 | **PLAN MAESTRO Fable — fase técnica CERRADA (§158-§161)**: A0 ✅ · A/B/C/E ✅ construidos + **auditoría de cierre Fable ✅** (3 P2 corregidos: A.2b shipping reintento · C.2-guard ajuste fantasma · E.3 LCP real, SW v67) + **deploy MANUAL functions+reglas EJECUTADO ✅ 2026-07-03** (24 CFs, nueva `alertaPedidoRevision`). Queda: **D restante** (7b/7c/7d/D.5/D.6 — prerrequisitos settings/gems prod + PAT GitHub + Chrome) · E.4 (backfill claims) · remanentes P3 §161.7 (A.5 alerta N-ticks + endpoint reaper→A.9 · A.6 push real · login rol-desconocido · D.0 gems bake). | 🟢 | encendido A.9 (Daniel) · prerreq. D |
+> ✅ **Cerrados** (detalle → ADRs/`99` + lecciones): **TODO-66 (shard de `30` → hija `34-LECCIONES-META`, con §161)** · **TODO-64 (login parpadeos §159 → L-66, DESPLEGADO+verif live; confirmación natural: próximo login de Kary)** · **TODO-21 (revisión [OPUS-4.8] ejecutada como auditoría §158)** · TODO-62 (pinch-zoom iOS §156.18 → L-62) · TODO-61 (§156 primera cara + "Asesoría privada" §156.1-16) · TODO-60/59/58/56/55/54/53/52/51/46/45/44 · TODO-40+32. Pend Daniel: precios + fotos IA.
 
 ---
 
@@ -55,8 +54,8 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier C pen
 
 ## 📝 Bitácora (efímera)
 
-> Podada (GC) 2026-07-03. Histórico Wompi/legal (2026-06-30) → ADR §157 + spec Wompi §12-§14 + [[L-63]]/[[L-65]].
+> Podada (GC) 2026-07-03. Histórico Wompi/legal → §157; auditoría holística + plan → §158; implementación A-E → §160.
 >
-> **2026-07-03 (auditoría holística Fable):** 6 áreas × verificación adversarial → **plan maestro TODO-65** para Opus (`2026-07-03-auditoria-holistica-plan-fable`). Login TODO-64 diagnosticado (A0). 3 P1 dinero = GATE pre-precios (Bloque A). Confirmado sano: seguridad backend, núcleo Wompi, inventario v3. Crudo → bóveda. Build verde; suite 330/331 (1 rojo = corte-insumos necesita emulador, no regresión → E.1).
+> **2026-07-03 (cierre Fable, §161):** auditoría de cierre (6 revisores + refutación) sobre lo de Opus → 3 P2 corregidos (TDD) → **deploy backend EJECUTADO** (reglas+índices+24 CFs). Suites: pura 370/370 · emulador todas verdes. ⚠️ Pages run `47ccfe6` falló en deploy-pages (transitorio; re-verificar con el push del cerebro). Crudo → bóveda.
 > _(TODO vivo pre-existente: botón "Hablar con el Atelier" en la ficha — ADR §156.12.)_
 > **🚦 Reglas vivas**: arquitecto SIEMPRE · 100% COP (§127) · NO inventado (`[[feedback_no_demo_en_index]]`) · pruebas vivo solo al final (§130.4) · W-11 en decisión-diseño · `[[feedback_workflows_acotados]]`.

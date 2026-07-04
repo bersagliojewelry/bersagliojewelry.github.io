@@ -4,6 +4,13 @@
 > exactas; **Opus 4.8 implementa**. Cada tarea trae: alcance · archivos · causa raíz (archivo:línea real) ·
 > fix concreto · riesgos · gate de verificación. **NO improvisar**: lo no listado aquí NO se toca.
 >
+> ## 🏁 CIERRE (Fable 5, 2026-07-03) — AUDITADO + BACKEND DESPLEGADO (§161)
+> Auditoría de cierre (6 revisores acotados + refutación adversarial): implementación de Opus SÓLIDA;
+> **3 P2 corregidos** (A.2b refresco shipping en path idempotente · C.2-guard devolución exige `confirmadoEn` ·
+> E.3 el LCP real es `hero-*.avif`, SW v67) + 1 hallazgo refutado (D.1 modo cliente = fail-closed por diseño).
+> **`firebase deploy --only firestore:rules,firestore:indexes,functions` EJECUTADO** — backend A/B/C/E EN PROD.
+> **Gate precios ahora = SOLO runbook A.9** (Daniel). Remanentes P3 → ADR §161.7. Crudo → bóveda.
+>
 > ## ✅ ESTADO DE IMPLEMENTACIÓN (Opus 4.8, 2026-07-03) — en `Desarrollo`, PEND deploy
 > - **A0 login** ✅ DESPLEGADO + verif. LIVE (§159, v65). TODO-64 cerrado.
 > - **A dinero** ✅ construido (8 fixes) — tests emulador wompi 30/30, POS 22/22. PEND deploy functions (L-22).

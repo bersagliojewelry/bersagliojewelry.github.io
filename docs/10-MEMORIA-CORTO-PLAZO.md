@@ -55,6 +55,6 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier C pen
 
 ## 📝 Bitácora (efímera)
 
-> Podada (GC) 2026-07-04. Consolidado: legal→§157 · auditoría+plan→§158 · A-E→§160 · **cierre Fable + deploy backend→§161** · **POS-0/piezas trocadas→§162** (todo verificado live). **Endpoint del reaper CONFIRMADO vs production.wompi.co** → el gate A.9 ya NO tiene incógnitas técnicas: solo precios + URL Eventos + compra mínima + Chrome (con Daniel, sesión fresca).
+> Podada (GC) 2026-07-04. Consolidado: legal→§157 · auditoría+plan→§158 · A-E→§160 · **cierre Fable + deploy backend→§161** · **POS-0/piezas trocadas→§162** · **anti-flash CMS horneado→§163 (v69, live OK)**. **Endpoint del reaper CONFIRMADO vs production.wompi.co** → el gate A.9 ya NO tiene incógnitas técnicas: solo precios + URL Eventos + compra mínima + Chrome (con Daniel, sesión fresca).
 > _(TODO vivo pre-existente: botón "Hablar con el Atelier" en la ficha — ADR §156.12.)_
 > **🚦 Reglas vivas**: arquitecto SIEMPRE · 100% COP (§127) · NO inventado (`[[feedback_no_demo_en_index]]`) · pruebas vivo solo al final (§130.4) · W-11 en decisión-diseño · `[[feedback_workflows_acotados]]`.

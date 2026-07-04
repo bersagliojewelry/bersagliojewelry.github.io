@@ -44,6 +44,8 @@ window.scrollTo(0, scrollY);
 *   El header pill flotante tiene `position: fixed; pointer-events: none` para no bloquear los clicks debajo de su área transparente lateral. El elemento interno `.header-aqua-pill` tiene `pointer-events: auto` para que el menú sí sea clickable.
 *   Si se altera esta estructura, se pueden bloquear clicks en toda la parte superior del sitio web.
 
+### L-70: Un caché local (localStorage/SDK) solo mata el flash de contenido CMS en visitas REPETIDAS — la 1ª visita de un dispositivo nuevo exige HORNEAR el contenido en el HTML del build (SSG re-hornea por push+cron); y el preload debe re-apuntarse a lo que el renderer pintará con los DATOS reales (semilla: memoria > localStorage > horneado > defaults). → §163
+
 ### L-69: El "LCP real" se verifica contra el RENDERER vivo (quién pinta qué), no contra un preload/etiqueta heredada — un preload huérfano descarga con `fetchpriority=high` algo que jamás se pinta Y compite con el LCP; precachearlo consagra el error. → §161
 
 ### L-68: Path IDEMPOTENTE que retorna el recurso reusado debe REFRESCAR el input mutable del reintento (shipping/entrega) — descartarlo en silencio pierde correcciones del usuario (pedido pagado con datos viejos). Lo derivado del recurso (total/firma) queda intacto. → §161

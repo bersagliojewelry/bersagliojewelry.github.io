@@ -55,9 +55,6 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier C pen
 
 ## 📝 Bitácora (efímera)
 
-> Podada (GC) 2026-07-03. Histórico Wompi/legal → §157; auditoría holística + plan → §158; implementación A-E → §160.
->
-> **2026-07-03 (cierre Fable, §161):** auditoría de cierre (6 revisores + refutación) sobre lo de Opus → 3 P2 corregidos (TDD) → **deploy backend EJECUTADO** (reglas+índices+24 CFs). Suites: pura 370/370 · emulador todas verdes. Pages `ec31a63` verde (el fallo de `47ccfe6` fue transitorio). Crudo → bóveda.
-> **2026-07-04 (§162, reporte Daniel):** POS precio-0 → POR PESO (TDD 24/24, deploy `crearPedido`, v68/v34) + piezas 0954/0994 des-trocadas (swap MCP aprobado por Daniel en modo Ask; barrido 32 piezas = solo ese par). PEND verificar páginas horneadas tras el rebuild de este push + TODO-67 (fotos en carpeta contraria).
+> Podada (GC) 2026-07-04. Consolidado: legal→§157 · auditoría+plan→§158 · A-E→§160 · **cierre Fable + deploy backend→§161** · **POS-0/piezas trocadas→§162** (todo verificado live). **Endpoint del reaper CONFIRMADO vs production.wompi.co** → el gate A.9 ya NO tiene incógnitas técnicas: solo precios + URL Eventos + compra mínima + Chrome (con Daniel, sesión fresca).
 > _(TODO vivo pre-existente: botón "Hablar con el Atelier" en la ficha — ADR §156.12.)_
 > **🚦 Reglas vivas**: arquitecto SIEMPRE · 100% COP (§127) · NO inventado (`[[feedback_no_demo_en_index]]`) · pruebas vivo solo al final (§130.4) · W-11 en decisión-diseño · `[[feedback_workflows_acotados]]`.

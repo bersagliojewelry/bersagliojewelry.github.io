@@ -9,6 +9,7 @@
  */
 import { app, firestoreDb } from './firebase-config.js';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { subscribeWithRetry } from './core/live-query.js';
 
 // Callable lazy (no cargamos firebase/functions hasta la 1ª venta — igual que crm-service).
 async function _callable(name) {
@@ -80,4 +81,22 @@ export async function ultimasVentas(max = 15) {
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-export default { crearPedido, iniciarPagoWeb, confirmarPago, anularPedido, cierreCaja, ultimasVentas };
+/**
+ * Pedidos EN VIVO (F1-PUENTE · TODO-68): lista reactiva para el módulo admin Pedidos.
+ * Re-suscribe sola ante errores transitorios (subscribeWithRetry, ADR §93) — un pedido web
+ * nuevo aparece sin recargar. Lectura = staff de ventas (owner/admin/catalogo, reglas).
+ * @param {Function} cb (pedidos[]) => void — más reciente primero
+ * @param {number}   [max=200] tope del listener (paginación real = F1-CORE/F6)
+ * @param {Function} [onUiError] opcional: la UI pinta un aviso mientras el helper reintenta
+ * @returns {Function} cleanup
+ */
+export function onPedidosChange(cb, max = 200, onUiError) {
+    return subscribeWithRetry(
+        () => query(collection(firestoreDb, 'pedidos'), orderBy('createdAt', 'desc'), limit(max)),
+        snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+        'pedidos',
+        onUiError
+    );
+}
+
+export default { crearPedido, iniciarPagoWeb, confirmarPago, anularPedido, cierreCaja, ultimasVentas, onPedidosChange };

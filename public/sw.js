@@ -43,7 +43,9 @@
 // v71 = §164 blindaje post-gate: gracias.html consulta el estado REAL de la transacción (aprobado /
 // rechazado-reintenta / confirmando), muestra el nº de pedido como comprobante del invitado + CTA
 // WhatsApp (concierge); pago-web deja el comprobante en sessionStorage.
-const CACHE_NAME    = 'bersaglio-v71';
+// v72 = F1-PUENTE (TODO-68): módulo admin Pedidos (admin-pedidos.html, lista+detalle read-only en
+// vivo de todos los canales); nav Ventas renombrada (Pedidos real; fuera placeholders Ventas/Facturas/CxC).
+const CACHE_NAME    = 'bersaglio-v72';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

@@ -1581,3 +1581,29 @@ select.adm-input { cursor: pointer; appearance: none; -webkit-appearance: none; 
 .pos-venta--anulada .pos-venta-name { text-decoration: line-through; }
 .pos-ventas-empty { padding: 30px 16px; }
 .pos-cierre-result { margin-top: 16px; }
+
+/* ─── Pedidos (F1-PUENTE · TODO-68): lista + detalle read-only ─────────────── */
+.ped-row { cursor: pointer; }
+.ped-count { font-size: 12px; color: var(--adm-muted); }
+.ped-conn-warn {
+    background: var(--adm-danger-light); color: var(--adm-danger);
+    border-radius: 10px; padding: 10px 14px; font-size: 13px; margin-bottom: 14px;
+}
+.ped-detail { display: grid; gap: 18px; }
+.ped-block h3 {
+    font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--adm-muted); margin: 0 0 8px;
+}
+.ped-kv { display: grid; grid-template-columns: 140px 1fr; gap: 6px 12px; font-size: 13px; margin: 0; }
+.ped-kv dt { color: var(--adm-muted); }
+.ped-kv dd { margin: 0; overflow-wrap: anywhere; }
+.ped-total { font-size: 18px; }
+.ped-alert {
+    background: var(--adm-danger-light); color: var(--adm-danger);
+    border-radius: 10px; padding: 10px 14px; font-size: 13px; font-weight: 500;
+}
+.ped-contact-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+@media (max-width: 560px) {
+    .ped-kv { grid-template-columns: 1fr; gap: 2px 0; }
+    .ped-kv dt { margin-top: 8px; }
+}

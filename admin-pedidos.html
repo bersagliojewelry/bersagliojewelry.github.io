@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedidos — Bersaglio Admin</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..500&family=Cormorant+Garamond:ital,wght@0,300..600;1,300..400&family=Manrope:wght@300..700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/admin.css">
+    <script type="module" src="js/admin/pedidos.js"></script>
+</head>
+<body style="display:none">
+<script>try{if(sessionStorage.getItem('bj_auth')){document.body.style.display=''}else{location.replace('admin-login.html')}}catch(e){location.replace('admin-login.html')}</script>
+<div class="adm-layout">
+
+    <!-- Sidebar (se rellena desde datos por js/admin/shared.js → renderSidebar) -->
+    <aside class="adm-sidebar"></aside>
+    <div class="adm-sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <!-- Main -->
+    <main class="adm-main">
+        <header class="adm-topbar">
+            <button class="adm-hamburger" id="hamburger-btn" aria-label="Menú">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="22" height="22"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <h1>Pedidos</h1>
+        </header>
+
+        <div class="adm-content">
+            <!-- Aviso de conexión (lo pinta onUiError del listener mientras re-suscribe solo) -->
+            <div class="ped-conn-warn" id="ped-conn-warn" hidden>Conexión inestable: reintentando en segundos… los datos pueden estar desactualizados.</div>
+
+            <div class="adm-section">
+                <div class="adm-section-head"><h2>Todos los canales</h2><span class="ped-count" id="ped-count"></span></div>
+                <div class="adm-table-wrap">
+                    <table class="adm-table">
+                        <thead><tr>
+                            <th>Nº</th><th>Fecha</th><th>Canal</th><th>Pieza</th><th>Cliente</th>
+                            <th style="text-align:right">Total</th><th>Medio</th><th>Estado</th>
+                        </tr></thead>
+                        <tbody id="ped-body">
+                            <tr><td colspan="8" class="adm-td-muted">Cargando pedidos…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="adm-empty" id="ped-empty" hidden>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="40" height="40"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                    <p>Aún no hay pedidos. Cuando entre una venta (web o mostrador) aparecerá aquí al instante.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Modal: detalle del pedido (read-only · F1-PUENTE) -->
+<div class="adm-modal" id="ped-modal" hidden>
+    <div class="adm-modal-box">
+        <div class="adm-modal-head">
+            <h2 id="ped-modal-title">Pedido</h2>
+            <button class="adm-modal-close" id="ped-modal-close" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="adm-modal-body">
+            <div class="ped-detail" id="ped-detail"><!-- lo pinta pedidos.js (todo con esc()) --></div>
+        </div>
+        <div class="adm-modal-foot">
+            <button class="adm-btn adm-btn--ghost" id="ped-copy-resumen">⧉ Copiar resumen</button>
+            <button class="adm-btn adm-btn--primary" id="ped-modal-ok">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<div class="adm-toast-wrap" id="toast-wrap"></div>
+</body>
+</html>

@@ -28,6 +28,14 @@ test('placeholders futuros salen deshabilitados', () => {
   assert.match(html, /aria-disabled="true"/);
 });
 
+test('Pedidos (F1-PUENTE) visible para el staff de ventas y sin placeholders retirados', () => {
+  const html = renderSidebar(NAV, { role: 'admin', activePage: 'admin.html' });
+  assert.match(html, /href="admin-pedidos\.html"/);
+  // Plan v4 §2: una-entidad-por-concepto también en la nav — estos placeholders NO deben volver.
+  assert.doesNotMatch(html, />Facturas</);
+  assert.doesNotMatch(html, /Cuentas por cobrar/);
+});
+
 test('conserva el badge de la Bandeja', () => {
   const html = renderSidebar(NAV, { role: 'admin', activePage: 'admin.html' });
   assert.match(html, /id="inq-badge"/);

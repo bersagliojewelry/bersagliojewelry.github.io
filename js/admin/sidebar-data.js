@@ -14,13 +14,14 @@ export const NAV = [
   ]},
   { label: 'Ventas', items: [
     // Mostrador (POS, B1 §126): role 'catalogo' → Kary lo ve (espeja a quién autoriza la CF crearPedido).
-    { label: 'Mostrador', href: 'admin-pos.html', icon: 'cart',    role: 'catalogo' },
-    { label: 'Ventas',    href: '#', icon: 'receipt', role: 'admin', soon: true },
-    { label: 'Facturas',  href: '#', icon: 'invoice', role: 'admin', soon: true },
+    { label: 'Mostrador', href: 'admin-pos.html',     icon: 'cart',    role: 'catalogo' },
+    // Pedidos (F1-PUENTE · TODO-68): role 'catalogo' espeja la regla de LECTURA de `pedidos`.
+    // Los placeholders "Ventas"/"Facturas"/"CxC" se retiraron (plan v4 §2): una-entidad-por-concepto
+    // también en la nav — la factura vive en el pedido; CxC vive en Clientes (cartera CRM).
+    { label: 'Pedidos',   href: 'admin-pedidos.html', icon: 'receipt', role: 'catalogo' },
   ]},
   { label: 'Cobranza', items: [
-    { label: 'Cuentas por cobrar', href: '#', icon: 'card',    role: 'admin', soon: true },
-    { label: 'Pagos / Recibos',    href: '#', icon: 'receipt', role: 'admin', soon: true },
+    { label: 'Pagos / Recibos', href: '#', icon: 'receipt', role: 'admin', soon: true },
   ]},
   { label: 'Catálogo / Inventario', items: [
     { label: 'Piezas',      href: 'admin-piezas.html',      icon: 'gem',    role: 'catalogo' },
@@ -53,4 +54,4 @@ export const NAV_FOOTER = { label: 'Ver sitio', href: 'index.html', icon: 'exter
 // Versión visible del panel (criterio de deploy para no-técnicos, spec §9.1): Kary
 // confirma que está en la versión nueva tras un despliegue. Se bumpea JUNTO al
 // CACHE_NAME del Service Worker (`public/sw.js`) en cada cambio del shell admin.
-export const APP_VERSION = 'v34 · 2026-07-03';   // POS: precio 0 = sin precio → cobra POR PESO (SW v68)
+export const APP_VERSION = 'v35 · 2026-07-04';   // F1-PUENTE: módulo Pedidos read-only (SW v72)

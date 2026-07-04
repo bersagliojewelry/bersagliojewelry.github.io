@@ -33,6 +33,7 @@
     "test:codigo": "node --test tests/buscador-codigo.test.mjs",
     "test:metal": "node --test tests/metal.test.mjs",
     "test:checkout": "node --test tests/checkout-redesign.test.mjs",
+    "test:pedidos": "node --test tests/pedidos-format.test.mjs",
     "brain:diff": "node scripts/brain-diff.mjs"
   },
   "devDependencies": {

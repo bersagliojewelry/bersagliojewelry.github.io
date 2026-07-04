@@ -215,6 +215,13 @@ class PublicData {
             const raw = localStorage.getItem('bj-sc-' + page);
             if (raw) return (this._siteContent[page] = JSON.parse(raw) || {});
         } catch {}
+        // §163: semilla HORNEADA por el SSG en el HTML (window.__BJ_SC, build por-push + cron diario).
+        // Cubre la 1ª visita de un dispositivo NUEVO (sin localStorage): el hero/CMS pinta ya el
+        // contenido real — cero flash de defaults del repo. Firestore refresca luego (diff-gate).
+        try {
+            const baked = typeof window !== 'undefined' && window.__BJ_SC && window.__BJ_SC[page];
+            if (baked) return (this._siteContent[page] = baked);
+        } catch {}
         return null;
     }
 

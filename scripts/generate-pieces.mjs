@@ -22,7 +22,7 @@
 // ===========================================================
 
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, query, where, doc as fsDoc, getDoc } from 'firebase/firestore';
 import { derivarEstado, esDisponible, STOCK_TYPES } from '../js/admin/inventario-model.js';   // SSoT modelo v3
 import { gemDisplayName } from '../js/core/gem-badge.js';   // §151: gema canónica (badgeGem) para JSON-LD/AEO
 import { metalConColor } from '../js/core/metal.js';        // TODO-59: color del oro (metalColor) en el metal mostrado
@@ -270,6 +270,61 @@ function injectBusinessIntoIndex(cfg) {
     }
     writeFileSync(indexPath, html);
     console.log('[generate] JSON-LD de marca (JewelryStore + WebSite) horneado en dist/index.html.');
+}
+
+// ===================== siteContent HORNEADO (anti-flash del CMS · §163) =====================
+// El 1er frame del hero (y toda sección CMS) sale de los DEFAULTS del repo cuando el visitante
+// nuevo aún no tiene caché local → flash "imagen vieja → imagen del CMS" (reporte del dueño).
+// Fix definitivo: hornear siteContent/{home,global} en dist/index.html en CADA build (push +
+// cron diario) como `window.__BJ_SC`; data.js lo usa de semilla del 1er paint (prioridad:
+// memoria > localStorage > horneado > defaults). Además re-apunta el preload del hero a la
+// imagen REAL del CMS (sin esto se pre-descarga con fetchpriority=high una imagen que nunca
+// se pinta cuando hay override). Fail-open: si Firestore no responde, el build queda como hoy.
+
+// PURA (cubierta por SSG_SELFTEST): html + contenido → html horneado. Idempotente.
+function bakeSiteContentHtml(html, sc) {
+    if (!sc || !html.includes('</head>') || html.includes('id="baked-sitecontent"')) return html;
+    let out = html.replace('</head>',
+        `    <script id="baked-sitecontent">window.__BJ_SC=${safeJsonLd(sc)};</script>\n</head>`);
+    const bg = sc.home && sc.home.hero && sc.home.hero.bgImage;
+    // Solo https y sin caracteres de breakout de atributo/URL (espacio, comillas, <>, backslash).
+    const urlOk = typeof bg === 'string' && /^https:\/\/[^\s"'<>\\]+$/.test(bg);
+    if (urlOk) {
+        out = out.replace(
+            /<link rel="preload" as="image"[\s\S]*?fetchpriority="high">/,
+            `<link rel="preload" as="image" href="${bg.replace(/&/g, '&amp;')}" fetchpriority="high">`,
+        );
+    }
+    return out;
+}
+
+async function injectSiteContentIntoIndex(handle) {
+    const indexPath = join(DIST, 'index.html');
+    if (!existsSync(indexPath)) throw new Error('[generate] No existe dist/index.html.');
+    const sc = {};
+    try {
+        for (const page of ['home', 'global']) {
+            if (handle.mode === 'admin') {
+                const snap = await handle.db.doc(`siteContent/${page}`).get();
+                if (snap.exists) sc[page] = snap.data();
+            } else {
+                const snap = await getDoc(fsDoc(handle.db, 'siteContent', page));
+                if (snap.exists()) sc[page] = snap.data();
+            }
+        }
+    } catch (e) {
+        console.warn('[generate] siteContent no legible — bake omitido (el sitio usa defaults + refresh):', e.message);
+        return;
+    }
+    if (!Object.keys(sc).length) { console.log('[generate] siteContent vacío — bake omitido.'); return; }
+    const html = readFileSync(indexPath, 'utf-8');
+    const out = bakeSiteContentHtml(html, sc);
+    if (out.length <= html.length || !out.includes('</html>')) {
+        throw new Error('[generate] dist/index.html quedó inválido tras hornear siteContent.');
+    }
+    writeFileSync(indexPath, out);
+    const conPreload = (sc.home && sc.home.hero && sc.home.hero.bgImage) ? ' + preload → imagen del CMS' : '';
+    console.log(`[generate] siteContent horneado en dist/index.html (${Object.keys(sc).join('+')})${conPreload}.`);
 }
 
 // Hornea una PÁGINA DE LISTADO (catálogo o journal): flip noindex→index + canonical +
@@ -891,6 +946,9 @@ async function main() {
     // Schema de marca (JewelryStore + WebSite) horneado en dist/index.html desde tenant_config.json.
     injectBusinessIntoIndex(readTenantConfig());
 
+    // siteContent del CMS horneado (anti-flash 1ª visita + preload al hero real, §163).
+    await injectSiteContentIntoIndex(handle);
+
     // Páginas de listado indexables (catálogo + journal) — A2a. Por-categoría/por-artículo = A2b.
     injectListingPage('colecciones.html', '<main id="main-content" data-screen-label="colecciones">', {
         schemaType: 'CollectionPage',
@@ -972,6 +1030,17 @@ function runSelfTest() {
             : { vertical: 'JewelryStore', brand: 'X', baseUrl: 'https://x', nap: {}, sameAs: ['https://x/a'] };
         JSON.parse(safeJsonLd(buildBusinessGraph(cfgT)));
     } catch (e) { fails.push('business @graph NO parsea: ' + e.message); }
+
+    // §163: bake de siteContent — inyección + anti-breakout + preload re-apuntado + idempotencia.
+    const FAKE_INDEX = '<html><head><link rel="preload" as="image"\n href="/img/hero-1200.avif"\n imagesrcset="/img/hero-800.avif 800w"\n fetchpriority="high"></head><body>x</body></html>' + ' '.repeat(MIN_BAKE_BYTES);
+    const bk = bakeSiteContentHtml(FAKE_INDEX, { home: { hero: { bgImage: 'https://s.co/a.webp?b=1&c=2', headline1: PAYLOAD } } });
+    if (!bk.includes('window.__BJ_SC=')) fails.push('bake-sc: no inyectó __BJ_SC.');
+    if (bk.includes('</script><script>alert')) fails.push('bake-sc: breakout </script> NO neutralizado.');
+    if (!bk.includes('href="https://s.co/a.webp?b=1&amp;c=2"')) fails.push('bake-sc: preload NO re-apuntado a la imagen del CMS.');
+    if (bk.includes('/img/hero-1200.avif')) fails.push('bake-sc: el preload estático debió ser reemplazado.');
+    const bk2 = bakeSiteContentHtml(FAKE_INDEX, { home: { hero: { bgImage: 'javascript:alert(1)' } } });
+    if (!bk2.includes('/img/hero-1200.avif')) fails.push('bake-sc: URL no-https debió conservar el preload estático.');
+    if (bakeSiteContentHtml(bk, { home: {} }) !== bk) fails.push('bake-sc: NO es idempotente.');
 
     // STOCK-AWARE (§10.1): vendida → OutOfStock + sin precio + "Vendida" en el HTML; no rebrota InStock.
     const soldPiece = { ...mockPiece, estado: 'vendida' };

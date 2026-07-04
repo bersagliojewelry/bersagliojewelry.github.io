@@ -35,7 +35,10 @@
 // v64 = fixes país/borrado-fotos/caché-CMS. v63 = rediseño checkout. v62 = FAQ financiación. v60 = Wompi ON.
 // v68 = POS: price 0/ausente = SIN precio → modo POR PESO (antes quedaba bloqueado en "fijo $0");
 // espejo cliente (pos.js) ↔ CF (pedidos-core). Regla del dueño: $0 nunca es un precio.
-const CACHE_NAME    = 'bersaglio-v68';
+// v69 = §163 anti-flash CMS: el SSG hornea siteContent/{home,global} en index.html (window.__BJ_SC)
+// → la 1ª visita pinta la imagen REAL del hero (cero flash beige→verde) y el preload apunta a ella;
+// data.js la usa de semilla (memoria > localStorage > horneado > defaults).
+const CACHE_NAME    = 'bersaglio-v69';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

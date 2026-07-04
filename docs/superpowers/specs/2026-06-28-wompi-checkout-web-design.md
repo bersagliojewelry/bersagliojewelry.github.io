@@ -1,5 +1,12 @@
 # Wompi Checkout Web (Fase 2) — DISEÑO (Decisión Fuerte · DINERO · TODO-42)
 
+> ## 🏁 CERRADO — ENCENDIDO A.9 EJECUTADO 2026-07-04 (ADR §164 · TODO-42 ✅)
+> El runbook §13 se ejecutó y verificó EN PROD con $0 (DECLINED real): URL de Eventos corregida en el
+> panel (estaba PEGADA DOS VECES = webhooks muertos) · webhook auditado `{txId}-DECLINED` · reaper
+> repuso la pieza limpia · gracias.html con estado REAL + comprobante (v71) · alerta `venta-web-pagada`
+> a Kary desplegada. **Resta SOLO lo operativo: cargar precios reales (paso 5) + monitorear la 1ª venta
+> APPROVED.** Detalle → ADR §164.
+>
 > **Estado**: DISEÑO candidato (arquitecto). Decisión Fuerte (dinero + seguridad + toca POS/stock en prod + reglas).
 > **Autor**: Claude `[OPUS-4.8]` (2026-06-28). **Pipeline W-11**: Fase A (evidencia) ✅ · Fase B (comité+consejo) PENDIENTE · mockup PENDIENTE · gate live PENDIENTE.
 > **Alcance fijado por Daniel (2026-06-28)**: cobro web = **"Comprar ahora", UNA pieza por pago** (no carrito multi-pieza).

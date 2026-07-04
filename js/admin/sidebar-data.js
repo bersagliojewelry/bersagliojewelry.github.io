@@ -53,4 +53,4 @@ export const NAV_FOOTER = { label: 'Ver sitio', href: 'index.html', icon: 'exter
 // Versión visible del panel (criterio de deploy para no-técnicos, spec §9.1): Kary
 // confirma que está en la versión nueva tras un despliegue. Se bumpea JUNTO al
 // CACHE_NAME del Service Worker (`public/sw.js`) en cada cambio del shell admin.
-export const APP_VERSION = 'v33 · 2026-07-03';   // auditoría de cierre Fable: fixes A.2b/C.2-guard/login (SW v67)
+export const APP_VERSION = 'v34 · 2026-07-03';   // POS: precio 0 = sin precio → cobra POR PESO (SW v68)

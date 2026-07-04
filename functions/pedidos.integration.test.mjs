@@ -238,3 +238,21 @@ test('C.2 guard: anular una transferencia NUNCA pagada de un turno previo NO gen
     const c2 = await cierreCajaCore(db, { arqueoId: 'arqC2d', declaradoEfectivo: 0, autor: 'kary' });
     assert.equal(c2.ajustesPorMedio.transferencia, 0);         // sin confirmadoEn no hay dinero que "devolver"
 });
+
+test('price 0 = SIN precio en sistema: el mostrador vende POR PESO (no queda bloqueado en fijo $0)', async () => {
+    await db.doc('pieces/pCero').set({ name: 'Sin Precio', slug: 'sin-precio-pos', price: 0, stockType: 'finito', cantidad: 1 });
+    const r = await crearPedidoCore(db, {
+        pedidoId: 'pedCero', pieceId: 'pCero', medio: 'efectivo', autor: 'u1',
+        valorGramo: 300000, peso: 2.5, manoObra: 50000,
+    });
+    assert.equal(r.total, 800000);                             // 300000×2.5 + 50000 (por peso, no $0 fijo)
+    const ped = (await db.doc('pedidos/pedCero').get()).data();
+    assert.equal(ped.desglose.tipo, 'por_peso');               // regla del dueño: 0 = se cobra por peso
+    assert.equal(ped.estado, 'pagado');
+    // Y sin peso/gramo sigue siendo invendible (el guard total>0 no se relajó) — pieza fresca con stock:
+    await db.doc('pieces/pCero2').set({ name: 'Sin Precio 2', slug: 'sin-precio-pos-2', price: 0, stockType: 'finito', cantidad: 1 });
+    await assert.rejects(
+        crearPedidoCore(db, { pedidoId: 'pedCero2', pieceId: 'pCero2', medio: 'efectivo', autor: 'u1' }),
+        /mayor a 0/i
+    );
+});

@@ -33,7 +33,9 @@
 // (A.2b shipping fresco en reintento, C.2 guard ajuste fantasma) + login sin err.message crudo.
 // v65 = fix login admin (TODO-64 / A0): sessionReady() determinista + ruteo por rol + limpieza ?error.
 // v64 = fixes país/borrado-fotos/caché-CMS. v63 = rediseño checkout. v62 = FAQ financiación. v60 = Wompi ON.
-const CACHE_NAME    = 'bersaglio-v67';
+// v68 = POS: price 0/ausente = SIN precio → modo POR PESO (antes quedaba bloqueado en "fijo $0");
+// espejo cliente (pos.js) ↔ CF (pedidos-core). Regla del dueño: $0 nunca es un precio.
+const CACHE_NAME    = 'bersaglio-v68';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

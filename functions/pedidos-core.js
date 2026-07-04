@@ -124,7 +124,9 @@ async function crearPedidoCore(db, input = {}) {
         const { stockType, cantidadActual, consumeUnidad } = evaluarStock(piece);
 
         // Total server-side: precio fijo si la pieza lo tiene; si no, por peso (peso×gramo+mano).
-        const precioFijo = typeof piece.price === 'number' && isFinite(piece.price);
+        // price 0 o ausente = "SIN precio en sistema" (regla del dueño): el mostrador cobra POR PESO.
+        // Sin el `> 0`, una pieza en 0 caía en modo fijo → total 0 → rechazo = mostrador bloqueado.
+        const precioFijo = typeof piece.price === 'number' && isFinite(piece.price) && piece.price > 0;
         const oro   = precioFijo ? 0 : calcOro(input.valorGramo, input.peso);
         const mano  = precioFijo ? 0 : entero(input.manoObra);
         const total = precioFijo ? entero(piece.price) : (oro + mano);

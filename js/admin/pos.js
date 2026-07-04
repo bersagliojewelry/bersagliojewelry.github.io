@@ -102,7 +102,7 @@ function availablePieces() {
 }
 
 function priceHint(p) {
-    return (typeof p.price === 'number' && isFinite(p.price)) ? cop(p.price) : 'Por peso';
+    return isPrecioFijo(p) ? cop(p.price) : 'Por peso';   // price 0/ausente → 'Por peso' (no "$0")
 }
 
 function renderResults() {
@@ -164,7 +164,9 @@ function resetSale() {
 }
 
 // ─── Paso 2: precio (espeja la CF) ────────────────────────────────────────────
-function isPrecioFijo(p) { return typeof p?.price === 'number' && isFinite(p.price); }
+// price 0 o ausente = "SIN precio en sistema" (regla del dueño) → se cobra POR PESO (gramo×peso+mano).
+// El `> 0` espeja pedidos-core.js; sin él, una pieza en 0 caía en "fijo $0" con el botón bloqueado.
+function isPrecioFijo(p) { return typeof p?.price === 'number' && isFinite(p.price) && p.price > 0; }
 
 function setupPriceMode(piece) {
     const fijoBox = document.getElementById('pos-price-fijo');
@@ -173,14 +175,7 @@ function setupPriceMode(piece) {
         fijoBox.hidden = false;
         pesoBox.hidden = true;
         document.getElementById('pos-fijo-val').textContent = cop(piece.price);
-        const fijoHint = document.getElementById('pos-fijo-hint');
-        // price = 0 → la CF rechaza (total > 0). Avisamos en vez de dejar registrar y fallar.
-        if (entero(piece.price) <= 0) {
-            fijoHint.hidden = false;
-            fijoHint.textContent = 'Esta pieza tiene precio 0. Edítala en Piezas (ponle precio) o quítale el precio para cobrar por peso.';
-        } else {
-            fijoHint.hidden = true;
-        }
+        document.getElementById('pos-fijo-hint').hidden = true;
     } else {
         fijoBox.hidden = true;
         pesoBox.hidden = false;

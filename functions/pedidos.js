@@ -142,7 +142,8 @@ const liberarReservasVencidas = onSchedule(
     async () => {
         const db = getFirestore();
         const verificarPago = async (_ped, pedidoId) => {
-            // Wompi por referencia (= pedidoId). ⚠️ confirmar el endpoint exacto en sandbox (gate live).
+            // Wompi por referencia (= pedidoId). Endpoint CONFIRMADO contra production.wompi.co
+            // (2026-07-04, llave prv_prod real): 200 {"data":[...]} — referencia inexistente → data:[].
             const r = await fetch(`${WOMPI_API_BASE}/transactions?reference=${encodeURIComponent(pedidoId)}`, {
                 headers: { Authorization: `Bearer ${WOMPI_PRIVATE_KEY.value()}` },
             });

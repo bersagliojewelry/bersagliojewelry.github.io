@@ -111,7 +111,25 @@ Orden interno corregido por el comité (2.2 es prerrequisito de apartados):
   efectivo + ingresos − egresos → descuadre calculado y sellado + observaciones;
   **(d) HISTÓRICO de turnos** con resumen (fondo/ventas por medio/gastos/esperado/real/descuadre/quién);
   **(e) SELLO UNIVERSAL**: todo evento de caja lleva fecha+hora del SERVIDOR + autor (regla §9.7) — nada con
-  hora del dispositivo. El cierre Z actual sigue operando sin cambios hasta que 2.0 lo suceda (sin ventana rota).
+  hora del dispositivo. El cierre Z actual sigue operando sin cambios hasta que 2.0 lo suceda (sin ventana rota);
+  **(f) CONTROL ANTIRROBO — LÍMITE DE CAJÓN + BÓVEDA (directiva Daniel 2026-07-04)**: el cajón RJ11 solo
+  mantiene montos chicos; el resto vive en la caja fuerte. Diseño (práctica retail estándar "cash drop"):
+  · Parámetros owner-only en config: **`fondoTrabajo`** (nivel operativo del cajón, p.ej. $1M — lo que se
+    necesita para vueltos) y **`limiteCajon`** (techo de alarma, p.ej. $2M).
+  · Entidad **BÓVEDA** (caja fuerte) con ledger propio append-only CF-only: `traslado cajón→bóveda` ·
+    `bóveda→banco (consignación)` · `bóveda→cajón (reposición de fondo)` — cada uno con monto, autor,
+    `serverTimestamp` y nota. El saldo de bóveda se lleva por ledger; conteo físico de bóveda = evento de
+    verificación aparte (al consignar o semanal), también registrado.
+  · **Regla dura del POS**: tras CADA cobro en efectivo, si el efectivo del cajón supera `limiteCajon`, el
+    sistema EXIGE registrar el traslado a bóveda ANTES de continuar operando, y el traslado sugerido deja el
+    cajón en `fondoTrabajo` (no en el límite — el límite es alarma, el fondo es el nivel operativo).
+    Ejemplos canon: venta de $30M en efectivo → va DIRECTO a bóveda en el mismo registro (el cajón nunca lo
+    contiene); cajón con $1M + venta de $5M → traslado obligatorio de $5M a bóveda (cajón queda en $1M de fondo).
+  · **Cierre de turno**: cuenta a ciegas el CAJÓN (esperado ya descuenta traslados) + muestra saldo de bóveda
+    por ledger. Alerta FCM a Daniel opcional en traslados/ventas efectivo sobre umbral.
+  · **Discreción**: los saldos de bóveda NUNCA en pantallas a la vista del público (vista admin/owner, no en
+    la pantalla de venta). La mayoría de montos altos llegan por transferencia (ya soportado); esto blinda el
+    caso efectivo. Racional antirrobo: un atraco al cajón encuentra máximo `limiteCajon`, jamás el día completo.
 - **2.1 Vínculo pedido↔cliente**: buscar/crear cliente rápido en mostrador; pedidos web sugieren match.
   **Clave canónica de identidad = legal_id normalizado** (dedup estilo ALTORRA) — el MISMO contrato que
   usará el portal (F5) para el claim. Documentar como decisión.
@@ -215,8 +233,31 @@ tiene fase dueña y algunos esperan SEÑAL real (no sobre-construir para 2 perso
 | D-1 | Apartados/plan separe en mostrador (TODO-39) | F2.4 (solo ese ítem) | ✅ **SÍ** (Daniel 2026-07-04) — abonos = cartera CRM; pieza apartada se bloquea en la web; reglas finas (anticipo mínimo/plazo) se confirman con Kary en la spec de F2.4 |
 | D-2 | Flete nacional pedido web pagado: cobrar aparte vs asumir | contrato flete F1-core | ✅ **COBRAR APARTE** (Daniel 2026-07-04, ratifica §9 del plan v3) — Kary cotiza/informa/cobra (link Wompi o transferencia); `flete{valorCOP, cobro:'cobrado', medio, estado}` en el pedido |
 | D-3 | PAT GitHub | carril D | ⏳ pedida 2026-07-04 |
-| D-5 | Inventario hardware POS (Ítem 0f: impresora térmica modelo/conexión · cajón monedero · equipo de Kary) | F2.3 impresión (solo ese ítem) | ⏳ preguntar a Kary |
+| D-5 | Inventario hardware POS | F2.3 impresión (solo ese ítem) | ✅ **RESPONDIDA** (Daniel 2026-07-04): SIN impresora ni cajón aún (se compran al llegar F2.3 — recomendación Claude: térmica 80mm USB con puerto RJ11 de cajón; si la tablet entra, modelo con Bluetooth/red). Kary opera en **Windows** hoy + quiere **tablet** → POS responsive (ya lo es) + capa de impresión por CAPACIDADES del dispositivo (v1 print CSS corre en ambos; v2 ESC/POS directo según soporte del navegador) |
 | D-4 | ADDI (Kary vincula) / Persona Jurídica (contador) | nada del plan | ❄️ congeladas (sin cambio) |
+
+## 11. Estrategia de MODELOS y cuota Fable (directiva Daniel 2026-07-04 — VINCULANTE)
+
+**Regla operativa**: en CADA paso de implementación/corrección, Claude ANUNCIA con qué modelo conviene
+hacerlo: *"hagamos esto con **Fable**"* · *"hagamos esto con **Opus 4.8**"* · *"hagamos esto con **Sonnet 5**"*
+(Sonnet = evitar al máximo). Objetivo: aprovechar Fable donde más rinde sin agotar la cuota semanal.
+
+**Asignación por naturaleza de la tarea**:
+| Modelo | Se usa para | Racional |
+|---|---|---|
+| **FABLE 5** | Arquitectura y specs · TODO lo que toque dinero/stock/reglas (máquina de estados, caja/bóveda, apartados, webhooks) · auditorías de cierre · decisiones fuertes | Donde un error cuesta caro; el patrón §158-§161 probó que hasta una buena implementación deja P2s que solo la auditoría profunda caza |
+| **OPUS 4.8** | Implementación con spec EXACTA ya escrita (UIs de módulos, print CSS, vistas read-only, tests mecánicos) | Patrón interinato probado: spec Fable → Opus ejecuta → Fable audita (§158/§161) |
+| **SONNET 5** | Evitar. Solo mecánica trivial sin juicio (correr suites, ediciones masivas de formato) | Directiva Daniel |
+
+**Ventana crítica 2026-07-04 → 2026-07-07** (cuota Fable al 50%, expira el 7): **front-load con Fable el
+trabajo de mayor palanca**, en este orden de consumo:
+1. **F1-PUENTE completo con Fable** (chico, toca datos de pedidos reales — más barato hacerlo directo que especificarlo);
+2. **F1-CORE con Fable**: spec de la máquina de estados + implementación del BACKEND (CFs de transición, tabla,
+   flete, costuras items[]/costoSnapshot/clienteId) — el corazón del dinero;
+3. **Specs exhaustivas para Opus** (combustible post-Fable): UI del módulo Pedidos sobre el backend ya hecho ·
+   F2.0 caja/bóveda · F2.4 apartados (Decisión Fuerte con comité) — para que Opus implemente con Fable agotado
+   y Fable audite al volver la cuota.
+Si la cuota muere antes de lo previsto: interinato Opus con las specs escritas (protocolo ya probado).
 
 ## Checklist (evidencia por ítem al ejecutar)
 - [ ] Ítem 0: decisiones D-1/D-2 registradas + protocolo interino entregado a Kary

@@ -35,6 +35,7 @@
 | TODO-39 | **B1 paso 4b — apartados/abonos** (decisión §128.4): ¿el mostrador aparta piezas (anticipo+saldo)? Si sí, saldo = CARTERA (reusar `clientes/{id}.saldoActual`, NO pagos paralelos; link pedido↔cliente). Fork caro → preguntar a Daniel. | 🟡 | decisión Daniel |
 | TODO-37 | **PLAN MAESTRO COMERCIO** (ACTIVO, físico+digital). SSoT → spec `plan-maestro-comercio-v3`. B0/B0.5+B1 mostrador 1-6 EN PROD; paso 7 catalogo.json CDN diseñado. | 🟢 | B1 |
 | TODO-41 | **Facturación multi-línea** (Daniel 2026-06-26): factura/POS cobra modificaciones/servicios por código (no solo piezas). Spec `modelo-inventario §10`. | 🔲 | tras carga inventario |
+| TODO-67 | **Normalizar fotos 0954/0994 en Storage** (§162.7): tras el fix del cruce, cada foto vive en la CARPETA del doc contrario (URLs funcionan; riesgo: borrar una pieza barre la foto de la otra). Re-subir cada foto desde el admin (2 min) o mover objetos. | 🔲 | menor |
 | TODO-42 | **Wompi F2 ENCENDIDO** pero DORMIDO (botón oculto sin precios). **PEND**: URL Eventos en panel + gate live (Daniel) — pero PRIMERO el **hardening Bloque A del plan Fable** (3 P1). SSoT → spec Wompi §12-§14 + plan `§3`. | 🟢 | Bloque A → gate live |
 | TODO-47 | **Verdad de marca (riesgo SIC)** — confirmar con Kary qué es REAL y retirar lo no comprobable: equipo, certificaciones, cifras/año, envíos, horario único 8-7. **Financiación ✅ RESUELTA** (Daniel 2026-06-30: NO ADDI, solo Wompi 4 cuotas 0% → FAQ corregida). Detalle → §133.2(A) · `[[feedback_no_demo_en_index]]` | 🔲 | Kary |
 | TODO-48 | **Reseñas reales** — conectar `reviews` aprobadas → Nosotros + gestión admin. | 🔲 | feature |
@@ -56,6 +57,7 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier C pen
 
 > Podada (GC) 2026-07-03. Histórico Wompi/legal → §157; auditoría holística + plan → §158; implementación A-E → §160.
 >
-> **2026-07-03 (cierre Fable, §161):** auditoría de cierre (6 revisores + refutación) sobre lo de Opus → 3 P2 corregidos (TDD) → **deploy backend EJECUTADO** (reglas+índices+24 CFs). Suites: pura 370/370 · emulador todas verdes. ⚠️ Pages run `47ccfe6` falló en deploy-pages (transitorio; re-verificar con el push del cerebro). Crudo → bóveda.
+> **2026-07-03 (cierre Fable, §161):** auditoría de cierre (6 revisores + refutación) sobre lo de Opus → 3 P2 corregidos (TDD) → **deploy backend EJECUTADO** (reglas+índices+24 CFs). Suites: pura 370/370 · emulador todas verdes. Pages `ec31a63` verde (el fallo de `47ccfe6` fue transitorio). Crudo → bóveda.
+> **2026-07-04 (§162, reporte Daniel):** POS precio-0 → POR PESO (TDD 24/24, deploy `crearPedido`, v68/v34) + piezas 0954/0994 des-trocadas (swap MCP aprobado por Daniel en modo Ask; barrido 32 piezas = solo ese par). PEND verificar páginas horneadas tras el rebuild de este push + TODO-67 (fotos en carpeta contraria).
 > _(TODO vivo pre-existente: botón "Hablar con el Atelier" en la ficha — ADR §156.12.)_
 > **🚦 Reglas vivas**: arquitecto SIEMPRE · 100% COP (§127) · NO inventado (`[[feedback_no_demo_en_index]]`) · pruebas vivo solo al final (§130.4) · W-11 en decisión-diseño · `[[feedback_workflows_acotados]]`.

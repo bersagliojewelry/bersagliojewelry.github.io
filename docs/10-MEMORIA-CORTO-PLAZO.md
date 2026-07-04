@@ -54,6 +54,7 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier C pen
 
 ## 📝 Bitácora (efímera)
 
+> 2026-07-04 (2ª sesión): **monitoreo post-encendido VERDE** — pedido DECLINED del gate quedó `expirado` (reaper OK solo, sin intervención) · 0 pedidos nuevos (esperado sin precios) · Pages re-verificado success + prod sirve v71 (flag `47ccfe6` RESUELTO, limpiado del 05) · lección MCP timestamp → L-71. Esperando: precios de Daniel/Kary.
 > Podada (GC) 2026-07-04. Consolidado: legal→§157 · auditoría+plan→§158 · A-E→§160 · cierre Fable+deploy backend→§161 · POS-0/piezas trocadas→§162 · anti-flash CMS→§163 · **ENCENDIDO A.9 EJECUTADO→§164** (URL Eventos corregida — ¡estaba duplicada! · DECLINED real → webhook+reaper verificados · 3 hallazgos de Daniel corregidos en caliente v70/v71 + alerta venta). Remanentes menores: TODO-67 fotos · FCM push de venta (iteración siguiente) · auditoría Nivel-2 del cerebro vencida (sesión de mantenimiento).
 > _(TODO vivo pre-existente: botón "Hablar con el Atelier" en la ficha — ADR §156.12.)_
 > **🚦 Reglas vivas**: arquitecto SIEMPRE · 100% COP (§127) · NO inventado (`[[feedback_no_demo_en_index]]`) · pruebas vivo solo al final (§130.4) · W-11 en decisión-diseño · `[[feedback_workflows_acotados]]`.

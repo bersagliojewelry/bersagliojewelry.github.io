@@ -108,10 +108,10 @@ Push FCM A.6 (venta-web-pagada → notificación al celular de Kary; deep-link `
 - `pedidos.integration` y `wompi.integration` existentes: deben seguir 24/24 y 16/16 (la ruta corta cambia asserts del estado POS efectivo — actualizarlos CON el cambio, es esperado; documentarlo en el commit).
 
 ## Checklist (evidencia por ítem)
-- [ ] Tabla TRANSICIONES + ESTADOS_CON_DINERO + fix arqueo (TDD) — evidencia: suites
-- [ ] avanzarPedidoCore + wrapper + historial/dayKey/flete/merma/POD (TDD) — evidencia: integración emulador
-- [ ] Ruta corta POS + requiereEnvio (crearPedido/confirmarPago) — evidencia: integración
-- [ ] Costuras items[]/costoSnapshot:null/clienteId:null — evidencia: integración asserts de doc
-- [ ] Deploy manual functions + suites verdes + SW/APP bump + 05
-- [ ] UI: filtros+totales+colas+acciones+historial — evidencia: Chrome prod
-- [ ] Gate F1: E2E de los 3 flujos de entrega EN PROD (crear venta POS de prueba → avanzar → entregar → anular al final para no ensuciar) + validación Chrome + ADR
+- [x] Tabla TRANSICIONES + ESTADOS_CON_DINERO + fix arqueo (TDD) — evidencia: `avanzar-pedido.test.mjs` 3/3 + integración arqueo (commit `994776a`, §167.4)
+- [x] avanzarPedidoCore + wrapper + historial/dayKey/flete/merma/POD (TDD) — evidencia: `avanzar-pedido.integration` verde en emulador (commit `994776a`)
+- [x] Ruta corta POS + requiereEnvio (crearPedido/confirmarPago) — evidencia: integración (`pAv1-7`) + E2E prod: venta con checkbox nace `pagado`, sin checkbox nace `entregado` (§167.4)
+- [x] Costuras items[]/costoSnapshot:null/clienteId:null — evidencia: asserts de doc en integración (commit `994776a`)
+- [x] Deploy manual functions + suites verdes + SW/APP bump + 05 — evidencia: deploy 4 CFs 2026-07-06 + SW v74/APP v37 verificados live (`caches.keys()`)
+- [x] UI: filtros+totales+colas+acciones+historial — evidencia: Chrome prod (§167.4; commits `d12be6f`+`8ff3100`)
+- [x] Gate F1: E2E de los 3 flujos de entrega EN PROD + validación Chrome + ADR — evidencia: BJ-KP4S-A6HX (nacional) · BJ-Z5W5-2MZS (local) · BJ-CBXQ-ZJ9T (retiro, rechazo sin cédula probado); 3 anulados al cierre; ADR **§167**

@@ -44,6 +44,8 @@ window.scrollTo(0, scrollY);
 *   El header pill flotante tiene `position: fixed; pointer-events: none` para no bloquear los clicks debajo de su área transparente lateral. El elemento interno `.header-aqua-pill` tiene `pointer-events: auto` para que el menú sí sea clickable.
 *   Si se altera esta estructura, se pueden bloquear clicks en toda la parte superior del sitio web.
 
+### L-72: El mapa de estados es SSoT COMPARTIDO: toda vista que pinte estados (POS, Pedidos, exports) importa `estadoPedido()` de pedidos-format — un mapping local ("trinario") se pudre en silencio cuando el backend suma estados Y ofrece acciones imposibles ("Confirmar pago" sobre un entregado/expirado). Al añadir estados: grep de quién mapea estados a mano. Cazado en el gate E2E. → §167
+
 ### L-71: MCP Firebase `firestore_query_collection` NO matchea campos timestamp con `string_value` — devuelve `[]` SIN error (falso "no hay datos": trampa en monitoreo de `pedidos`/ventas). Para consultas por fecha usar `firestore_list_documents` con `orderBy: "createdAt desc"` + mask; ante un `[]` sospechoso, re-probar con ventana amplia ANTES de concluir "0 resultados". → monitoreo post-§164
 
 ### L-70: Un caché local (localStorage/SDK) solo mata el flash de contenido CMS en visitas REPETIDAS — la 1ª visita de un dispositivo nuevo exige HORNEAR el contenido en el HTML del build (SSG re-hornea por push+cron); y el preload debe re-apuntarse a lo que el renderer pintará con los DATOS reales (semilla: memoria > localStorage > horneado > defaults). → §163

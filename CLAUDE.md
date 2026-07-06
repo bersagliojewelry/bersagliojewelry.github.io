@@ -35,13 +35,14 @@ El cerebro se divide en **nodos**. Auto-cargas SOLO `CLAUDE.md` + `05` + `10` (�
 | Nodo neuronal | Archivo | Auto-carga | Cuándo leerlo |
 |---|---|---|---|
 | 🧠 **Tronco Encefálico** | `CLAUDE.md` (este) | ✅ Siempre | Router + identidad + doctrinas + gobernanza. |
-| 🩺 **Estado Global (signos vitales)** | `docs/05-ESTADO-GLOBAL.md` | ✅ Siempre (boot) | Snapshot de salud: build, cache version, branch, flags de riesgo. "¿Dónde estoy parado?" antes de tocar nada. |
-| ⚡ **Corto Plazo (WIP)** | `docs/10-MEMORIA-CORTO-PLAZO.md` | ✅ Siempre (2ª lectura) | Sprint actual, pendientes (TODO-NN), bitácora. (El estado técnico vive en 05.) |
-| 🛰️ **Consejo Externo** | `docs/15-CONSEJO-EXTERNO.md` | ❌ on-demand | Trigger de Decisión Fuerte: antes de algo caro de revertir (arquitectura, datos, seguridad/legal, fork 50/50, op irreversible), crítica adversarial del **provider externo** (cuándo + tier → `15 §0`). |
-| 🗺️ **Espacial** | `docs/20-MEMORIA-ESPACIAL.md` | ❌ on-demand | Trigger de Desorientación: dónde vive un componente, flujos, arquitectura, layouts. |
+| 🩺 **Estado Global (signos vitales)** | `docs/05-ESTADO-GLOBAL.md` | ✅ Siempre (boot) | Snapshot de salud: build, cache, branch, flags. "¿Dónde estoy parado?" antes de tocar nada. |
+| ⚡ **Corto Plazo (WIP)** | `docs/10-MEMORIA-CORTO-PLAZO.md` | ✅ Siempre (2ª lectura) | Sprint actual, pendientes (TODO-NN), bitácora (estado técnico → `05`). |
+| 🛰️ **Consejo Externo** | `docs/15-CONSEJO-EXTERNO.md` | ❌ on-demand | Trigger de Decisión Fuerte (lista → §G.2 🛰️): crítica adversarial del **provider externo** (cuándo + tier → `15 §0`). |
+| 🗺️ **Espacial** | `docs/20-MEMORIA-ESPACIAL.md` | ❌ on-demand | Trigger de Desorientación: dónde vive un componente, flujos, arquitectura, layouts. **Hija → `21` (panel/CRM).** |
+| 🗺️ **Espacial · Admin/CRM** (hija de `20`) | `docs/21-ESPACIAL-ADMIN.md` | ❌ on-demand | Desorientación en el PANEL: `js/admin/*`, CRM/cartera, POS, Pedidos, colecciones/roles. |
 | 🧪 **Procedimental (experiencia)** | `docs/30-LECCIONES.md` | ❌ on-demand | Trigger de Experiencia: ANTES de una op riesgosa/repetitiva (refactor CSS, tocar caché/SW) o si un síntoma "te suena". Gotchas + recetas + doctrinas Liquid Glass. **Hija → `31`.** |
-| 🔥 **Procedimental · Backend** (hija de `30`) | `docs/31-LECCIONES-FIRESTORE.md` | ❌ on-demand | Trigger de Experiencia BACKEND: ANTES de tocar `firestore.rules`, CF, índices, claims o el emulador. Detalle de L-12/13/14/16/17/29/34..38 (stub-header en `30`). |
-| 🌫️ **Procedimental · Carga web** (hija de `30`) | `docs/32-LECCIONES-CARGA.md` | ❌ on-demand | Trigger de Experiencia: carga fluida/LQIP/View Transitions/caché SWR del sitio público. Detalle de L-45/46/47/49/50/51/52/53 (stub-header en `30`). |
+| 🔥 **Procedimental · Backend** (hija de `30`) | `docs/31-LECCIONES-FIRESTORE.md` | ❌ on-demand | Experiencia BACKEND: ANTES de tocar `firestore.rules`, CF, índices, claims o el emulador (stub-headers en `30`). |
+| 🌫️ **Procedimental · Carga web** (hija de `30`) | `docs/32-LECCIONES-CARGA.md` | ❌ on-demand | Experiencia: carga fluida/LQIP/View Transitions/caché SWR del sitio público (stub-headers en `30`). |
 | 🎨 **Doctrinas CSS / Diseño** (hija de `30`) | `docs/33-DOCTRINAS-CSS.md` | ❌ on-demand | Trigger de Experiencia: doctrinas de diseño CSS / Liquid Glass / tipografía. NO contiene `L-NN` (kernel los lee de `30`). |
 | 🧠 **Procedimental · Meta** (hija de `30`) | `docs/34-LECCIONES-META.md` | ❌ on-demand | Autocrítica: detalle M-NN + gobernanza ×4 (stubs en `30`). |
 | 🗂️ **Índice sináptico** | `docs/00-INDICE.md` | ❌ on-demand | ANTES de leer el historial (offset exacto) Y para el enrutamiento semántico (síntoma → neurona). Mapa § → línea de **§116+** + ruteo. |

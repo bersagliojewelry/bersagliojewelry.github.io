@@ -5,7 +5,7 @@
 > nodo de Largo Plazo. Se consulta on-demand (Trigger de Error/Historia, ver
 > `CLAUDE.md §G`).
 >
-> **Mapa de neuronas** (detalle de cada una → `CLAUDE.md §0`): `CLAUDE.md` · `05-ESTADO-GLOBAL` · `10-MEMORIA-CORTO-PLAZO` · `15-CONSEJO-EXTERNO` · `20-MEMORIA-ESPACIAL` · `30-LECCIONES` · `31-LECCIONES-FIRESTORE` (hija de 30) · `32-LECCIONES-CARGA` (hija de 30) · `33-DOCTRINAS-CSS` (hija de 30) · `34-LECCIONES-META` (hija de 30) · `40-LOBULOS-DOMINIO` · `50-ARQUITECTURA` · `60-WORKFLOWS` · este `00-INDICE` (+ hija `00a-INDICE-HIST`, §1–§115) · `99-HISTORIAL-ADR` · `skills-inventory`.
+> **Mapa de neuronas** (detalle de cada una → `CLAUDE.md §0`): `CLAUDE.md` · `05-ESTADO-GLOBAL` · `10-MEMORIA-CORTO-PLAZO` · `15-CONSEJO-EXTERNO` · `20-MEMORIA-ESPACIAL` (+ hija `21-ESPACIAL-ADMIN`: panel/CRM/POS/Pedidos) · `30-LECCIONES` · `31-LECCIONES-FIRESTORE` (hija de 30) · `32-LECCIONES-CARGA` (hija de 30) · `33-DOCTRINAS-CSS` (hija de 30) · `34-LECCIONES-META` (hija de 30) · `40-LOBULOS-DOMINIO` · `50-ARQUITECTURA` · `60-WORKFLOWS` · este `00-INDICE` (+ hija `00a-INDICE-HIST`, §1–§115) · `99-HISTORIAL-ADR` · `skills-inventory`.
 >
 > **Cómo usarlo (regla anti-saturación)**: busca aquí el § + su línea → `Read docs/99-HISTORIAL-ADR.md offset=<línea> limit=~150`. NUNCA leas el historial completo (satura al instante). Regenera el mapa: `grep -n "^## " docs/99-HISTORIAL-ADR.md` (o `Select-String`).
 
@@ -15,7 +15,7 @@
 
 | Tu situación / síntoma | Ve a |
 |---|---|
-| ¿Dónde vive un módulo / ruta / flujo / componente? | 🗺️ `20-ESPACIAL` |
+| ¿Dónde vive un módulo / ruta / flujo / componente? | 🗺️ `20-ESPACIAL` (público) · 🗺️ `21-ESPACIAL-ADMIN` (panel/CRM/POS/Pedidos) |
 | Hallazgos/presentación para Kary (histórico Kardex→plataforma) / pendientes viejos | bóveda privada → stub `docs/PENDIENTES-Y-HALLAZGOS.md` (los VIVOS = tabla TODO del `10`) |
 | Voy a mover/renombrar archivos, refactor de estructura | 🧪 `30-LECCIONES` + 🗺️ `20-ESPACIAL` |
 | Conflicto al fusionar / cache / service worker | 🧪 `30-LECCIONES` L-02 + `CLAUDE.md §4` |
@@ -94,6 +94,7 @@
 | §163 | 2026-07-04 — **Anti-flash CMS DEFINITIVO (v69)**: el hero pintaba defaults del repo y luego el CMS (flash "beige→verde" en TODO dispositivo nuevo; localStorage v64 solo cubría repetidas). Fix SSG: `injectSiteContentIntoIndex` hornea `window.__BJ_SC` (siteContent/home) en dist/index.html en cada build (push+cron) + **preload re-apuntado a la imagen real del CMS**; `data.js` semilla = memoria > localStorage > horneado > defaults; fail-open. SELFTEST extendido (anti-breakout/preload/idempotencia). Verificado navegador limpio: la imagen vieja NI SE DESCARGA; live OK. → L-70. [FABLE-5] | 2268 |
 | §164 | 2026-07-04 — **ENCENDIDO A.9 EJECUTADO: Wompi web VERIFICADO EN PROD con $0 (TODO-42 ✅)**. URL de Eventos corregida en el panel (¡estaba PEGADA 2 VECES = webhooks muertos!) y verificada persistida. Gate sin dinero: tarjeta SIN FONDOS → DECLINED real → cadena completa probada (pedido #6 con cédula/tipoEntrega/habeas ✓ · webhook auditado `{txId}-DECLINED` A.3 ✓ · reaper consultó API real y repuso la pieza limpia ✓). 3 hallazgos del dueño corregidos en caliente: stepper sin salto (v70) · gracias con estado REAL + comprobante #N + concierge WhatsApp (v71, verificada live vs la tx rechazada) · alerta `venta-web-pagada` a Kary (desplegada). **Falta solo OPERATIVO: cargar precios reales; monitorear 1ª venta APPROVED.** | 2277 |
 | §165 | 2026-07-04 — **F1-PUENTE: módulo admin Pedidos read-only EN PROD (TODO-68)**. Lista+detalle EN VIVO de todos los canales (`admin-pedidos.html`; onPedidosChange/subscribeWithRetry) — comprador/cédula/WhatsApp/entrega/copiar resumen; deep-link `?id=` (destino push A.6); helper puro `pedidos-format.js` (paridad estados con `pedidos-core`, test 7/7); nav Ventas real (fuera Ventas/Facturas/CxC). SW v72/APP v35. Validado Chrome prod (6 pedidos reales, detalle #6). Sigue F1-CORE. [FABLE-5] | 2286 |
+| §166 | 2026-07-06 — **Código público de pedido BJ-XXXX-XXXX (comité ×3)**: el correlativo `#N` revelaba volumen al cliente + `iniciarPagoWeb` lo exponía en DevTools (fuga cazada por el adversario). `codigo` crypto (alfabeto 29 sin 0/O/1/I/L/U/V), unicidad TRANSACCIONAL vía índice `codigosPedido` (deny-all) en la misma tx; `numero` queda interno; payload público sin numero; buscador tolerante; backfill 6/6 (MCP; índice primero). TDD 40 puras + 40 emulador + 221 reglas. SW v73/v36. Regla: crear pedidos SOLO por el patrón lookup+reserva. [FABLE-5] | 2295 |
 
 > Mantener este índice sincronizado: cuando se agregue un ADR §57+ al historial,
 > añadir su fila aquí con la línea de inicio (`Select-String` o `grep`).

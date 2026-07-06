@@ -19,6 +19,7 @@ import { esDisponible, STOCK_TYPES } from './inventario-model.js';   // TODO-40 
 import { calcularPrecio } from './calculadora.js';
 import { calcularNeto } from './fiscal.js';
 import { crearPedido, confirmarPago, anularPedido, cierreCaja, ultimasVentas } from '../pedidos-service.js';
+import { estadoPedido } from './pedidos-format.js';   // F1-CORE: mapa de estados compartido con Pedidos
 
 const cop = n => '$' + Math.round(Math.max(0, Number(n) || 0)).toLocaleString('es-CO');
 const entero = n => Math.round(Math.max(0, Number(n) || 0));
@@ -296,24 +297,23 @@ async function loadVentas() {
     if (!ventas.length) { ul.innerHTML = ''; return; }
 
     ul.innerHTML = ventas.map(v => {
-        const anulado = v.estado === 'anulado';
-        const pagado  = v.estado === 'pagado';
-        const estadoLabel = anulado ? 'Anulada' : pagado ? 'Pagado' : 'Por verificar';
-        const estadoCls   = anulado ? 'adm-pill--gray' : pagado ? 'adm-pill--green' : 'adm-pill--gold';
-        // "Confirmar pago" solo en por-verificar (transferencia/Wompi); "Anular" en toda venta viva.
-        const confirmBtn = (!anulado && !pagado)
+        // F1-CORE: el POS conoce TODOS los estados (mapa compartido con Pedidos — antes el trinario
+        // legacy pintaba "Por verificar" a un entregado/expirado y le ofrecía "Confirmar pago").
+        const est = estadoPedido(v.estado);
+        const muerta = ['anulado', 'cancelado', 'reembolsado', 'expirado'].includes(v.estado);
+        const confirmBtn = v.estado === 'pago_por_verificar'
             ? `<button class="adm-btn adm-btn--ghost adm-btn--sm pos-venta-confirm" data-id="${esc(v.id)}">Confirmar pago</button>` : '';
-        const anularBtn = anulado ? '' :
+        const anularBtn = muerta ? '' :
             `<button class="adm-btn adm-btn--ghost adm-btn--sm pos-venta-anular" data-id="${esc(v.id)}">Anular</button>`;
         return `
-        <li class="pos-venta${anulado ? ' pos-venta--anulada' : ''}">
+        <li class="pos-venta${muerta ? ' pos-venta--anulada' : ''}">
             <div class="pos-venta-main">
                 <span class="pos-venta-num">#${esc(v.numero ?? '—')}</span>
                 <span class="pos-venta-name">${esc(v.pieceName || 'Pieza')}</span>
             </div>
             <div class="pos-venta-meta">
                 <strong>${esc(cop(v.total))}</strong>
-                <span class="adm-pill ${estadoCls}">${esc(estadoLabel)}</span>
+                <span class="adm-pill adm-pill--${esc(est.pill)}">${esc(est.label)}</span>
                 <span class="pos-venta-time">${esc(fmtDateTime(v.createdAt))}</span>
                 ${confirmBtn}${anularBtn}
             </div>

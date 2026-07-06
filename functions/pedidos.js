@@ -14,7 +14,7 @@ const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { onDocumentUpdated } = require('firebase-functions/v2/firestore');
 const { defineSecret } = require('firebase-functions/params');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
-const { crearPedidoCore, confirmarPagoCore, anularPedidoCore, cierreCajaCore, iniciarPagoWebCore, confirmarPagoWompiCore, liberarReservasVencidasCore, PedidoError } = require('./pedidos-core');
+const { crearPedidoCore, confirmarPagoCore, anularPedidoCore, cierreCajaCore, iniciarPagoWebCore, confirmarPagoWompiCore, liberarReservasVencidasCore, avanzarPedidoCore, PedidoError } = require('./pedidos-core');
 
 const VENTAS = ['owner', 'admin', 'catalogo'];
 
@@ -57,6 +57,20 @@ const confirmarPago = onCall({ region: 'us-central1', invoker: 'public' }, async
     await rolDeVentas(db, request.auth);
     try {
         return await confirmarPagoCore(db, { pedidoId: (request.data || {}).pedidoId, autor: request.auth.uid });
+    } catch (e) {
+        if (e instanceof PedidoError) throw new HttpsError(e.code, e.message);
+        throw e;
+    }
+});
+
+// avanzarPedido (F1-CORE, spec 2026-07-06 §3): ÚNICA puerta de las transiciones post-pago —
+// tabla TRANSICIONES + historial append-only + flete aditivo + POD. La lógica vive en el core.
+const avanzarPedido = onCall({ region: 'us-central1', invoker: 'public' }, async (request) => {
+    const db = getFirestore();
+    await rolDeVentas(db, request.auth);
+    try {
+        const d = request.data || {};
+        return await avanzarPedidoCore(db, { pedidoId: d.pedidoId, a: d.a, datos: d.datos, nota: d.nota, autor: request.auth.uid });
     } catch (e) {
         if (e instanceof PedidoError) throw new HttpsError(e.code, e.message);
         throw e;
@@ -209,4 +223,4 @@ const alertaPedidoRevision = onDocumentUpdated({ document: 'pedidos/{pedidoId}',
     } catch (e) { console.error('[alertaPedidoRevision] no se pudo registrar:', e); }
 });
 
-module.exports = { crearPedido, confirmarPago, anularPedido, cierreCaja, iniciarPagoWeb, confirmarPagoWompi, liberarReservasVencidas, alertaPedidoRevision };
+module.exports = { crearPedido, confirmarPago, anularPedido, cierreCaja, iniciarPagoWeb, confirmarPagoWompi, liberarReservasVencidas, alertaPedidoRevision, avanzarPedido };

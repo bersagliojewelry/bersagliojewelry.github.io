@@ -61,6 +61,16 @@ export async function anularPedido(pedidoId, motivo) {
 }
 
 /**
+ * F1-CORE: avanza un pedido por la máquina de estados (tabla TRANSICIONES server-side).
+ * @param {{ pedidoId:string, a:string, datos?:object, nota?:string }} input
+ * @returns {Promise<{ pedidoId:string, estado:string, de?:string, yaEstaba?:boolean }>}
+ */
+export async function avanzarPedido(input) {
+    const fn = await _callable('avanzarPedido');
+    return (await fn(input)).data;
+}
+
+/**
  * Cierre de caja (arqueo): declara el efectivo contado → devuelve esperado y descuadre. Idempotente por arqueoId.
  * @param {{ arqueoId:string, declaradoEfectivo:number|string }} input
  * @returns {Promise<{ esperadoEfectivo:number, esperadoPorMedio:object, declaradoEfectivo:number, descuadre:number, yaExistia:boolean }>}
@@ -99,4 +109,4 @@ export function onPedidosChange(cb, max = 200, onUiError) {
     );
 }
 
-export default { crearPedido, iniciarPagoWeb, confirmarPago, anularPedido, cierreCaja, ultimasVentas, onPedidosChange };
+export default { crearPedido, iniciarPagoWeb, confirmarPago, anularPedido, cierreCaja, avanzarPedido, ultimasVentas, onPedidosChange };

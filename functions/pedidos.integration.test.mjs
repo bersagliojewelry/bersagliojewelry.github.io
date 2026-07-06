@@ -31,7 +31,8 @@ test('venta por peso: total = peso×gramo+mano, pieza vendida, numero 1', async 
     assert.equal(r.yaExistia, false);
     const ped = (await db.doc('pedidos/ped1').get()).data();
     assert.equal(ped.total, 1950000);
-    assert.equal(ped.estado, 'pagado');           // efectivo = pagado al registrar
+    assert.equal(ped.estado, 'entregado');        // F1-CORE ruta corta: efectivo mostrador = venta EN MANO
+    assert.equal(ped.pod.enMano, true);
     assert.equal(ped.desglose.tipo, 'por_peso');
     assert.equal(ped.desglose.oro, 1750000);
     assert.equal(ped.consumioStock, true);                                  // v3: bajó una unidad
@@ -76,19 +77,20 @@ test('transferencia → estado pago_por_verificar (no pagado)', async () => {
     assert.equal((await db.doc('pedidos/ped5').get()).data().estado, 'pago_por_verificar');
 });
 
-test('confirmarPago: "vi la plata" → por_verificar pasa a pagado', async () => {
+test('confirmarPago: "vi la plata" en POS sin envío → ruta corta a ENTREGADO (F1-CORE §3.3)', async () => {
     const r = await confirmarPagoCore(db, { pedidoId: 'ped5', autor: 'kary' });
-    assert.equal(r.estado, 'pagado');
+    assert.equal(r.estado, 'entregado');
     assert.equal(r.yaEstaba, false);
     const ped = (await db.doc('pedidos/ped5').get()).data();
-    assert.equal(ped.estado, 'pagado');
+    assert.equal(ped.estado, 'entregado');
     assert.equal(ped.confirmadoPor, 'kary');
+    assert.equal(ped.pod.enMano, true);
 });
 
-test('confirmarPago: idempotente (re-confirmar un pagado → yaEstaba, no rompe)', async () => {
+test('confirmarPago: idempotente (re-confirmar → yaEstaba, no rompe)', async () => {
     const r = await confirmarPagoCore(db, { pedidoId: 'ped5', autor: 'kary' });
     assert.equal(r.yaEstaba, true);
-    assert.equal(r.estado, 'pagado');
+    assert.equal(r.estado, 'entregado');
 });
 
 test('confirmarPago: pedido inexistente → rechaza', async () => {
@@ -172,7 +174,7 @@ test('v3 ENCARGO: vende SIN decrementar (se fabrica); cero ledger, consumioStock
     assert.equal((await db.doc('pedidos/pedEnc1').get()).data().consumioStock, false);
     assert.equal((await db.doc('pieces/pEnc/movimientos/pedEnc1').get()).exists, false);   // sin asiento
     await crearPedidoCore(db, { pedidoId: 'pedEnc2', pieceId: 'pEnc', medio: 'efectivo', autor: 'u1' });   // vendible otra vez
-    assert.equal((await db.doc('pedidos/pedEnc2').get()).data().estado, 'pagado');
+    assert.equal((await db.doc('pedidos/pedEnc2').get()).data().estado, 'entregado');   // ruta corta F1-CORE
 });
 
 test('v3 REFABRICABLE agotado (cantidad 0): vende bajo-pedido SIN decrementar (no -1)', async () => {
@@ -248,7 +250,7 @@ test('price 0 = SIN precio en sistema: el mostrador vende POR PESO (no queda blo
     assert.equal(r.total, 800000);                             // 300000×2.5 + 50000 (por peso, no $0 fijo)
     const ped = (await db.doc('pedidos/pedCero').get()).data();
     assert.equal(ped.desglose.tipo, 'por_peso');               // regla del dueño: 0 = se cobra por peso
-    assert.equal(ped.estado, 'pagado');
+    assert.equal(ped.estado, 'entregado');                     // ruta corta F1-CORE (efectivo mostrador)
     // Y sin peso/gramo sigue siendo invendible (el guard total>0 no se relajó) — pieza fresca con stock:
     await db.doc('pieces/pCero2').set({ name: 'Sin Precio 2', slug: 'sin-precio-pos-2', price: 0, stockType: 'finito', cantidad: 1 });
     await assert.rejects(

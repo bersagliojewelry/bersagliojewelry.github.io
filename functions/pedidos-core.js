@@ -68,6 +68,27 @@ class PedidoError extends Error {
     constructor(code, message) { super(message); this.code = code; this.name = 'PedidoError'; }
 }
 
+// ── F1-CORE: máquina de estados post-pago (spec 2026-07-06-f1-core §2) ─────────
+// TABLA de configuración, NO if-chains: F2 añade filas (p.ej. apartado), no reabre la CF.
+// Los estados PRE-pago (pago_pendiente/por_verificar/a_revisar/pagado_sin_stock) NO están aquí:
+// sus salidas son las CFs existentes (confirmarPago · anularPedido/VOID · webhook · reaper).
+const TRANSICIONES = {
+    pagado:            ['preparacion', 'entregado', 'cancelado'],   // 'entregado' directo = venta en mano (POS)
+    preparacion:       ['despacho_nacional', 'entrega_local', 'listo_retiro', 'cancelado'],
+    despacho_nacional: ['entregado'],
+    entrega_local:     ['entregado'],
+    listo_retiro:      ['entregado'],
+    entregado:         ['reembolsado'],                              // retracto Ley 1480 / garantía
+};
+
+// P0 del arqueo (spec §3.4): el cierre Z suma por "el dinero ENTRÓ", no por estado literal —
+// sin esto, avanzar un pedido a preparacion/entregado antes del cierre lo esfumaba del arqueo.
+// Paridad con la tabla verificada por test (avanzar-pedido.test.mjs).
+const ESTADOS_CON_DINERO = new Set(['pagado', 'preparacion', 'despacho_nacional', 'entrega_local', 'listo_retiro', 'entregado']);
+
+/** Día LOCAL Bogotá (UTC-5 fijo, sin DST) — patrón L-30: la agenda del negocio, no la del server. */
+const dayKeyBogota = (ms = Date.now()) => new Date(ms - 5 * 3600e3).toISOString().slice(0, 10);
+
 // ── Candado de stock COMPARTIDO (POS + reserva web F2/TODO-42) ─────────────────
 // `evaluarStock` = validación PURA de disponibilidad (sin writes → seguro llamarla temprano en la
 // transacción). `aplicarConsumo` = el WRITE (decrementa `cantidad` + estado derivado + asiento de
@@ -142,6 +163,7 @@ async function crearPedidoCore(db, input = {}, opts = {}) {
     if (!pedidoId || !pieceId) throw new PedidoError('invalid-argument', 'pedidoId y pieceId son obligatorios.');
     const medio = MEDIOS.includes(input.medio)  ? input.medio  : 'efectivo';
     const canal = CANALES.includes(input.canal) ? input.canal : 'pos';
+    const requiereEnvio = input.requiereEnvio === true;   // F1-CORE §3.3: mostrador con envío = flujo logístico
 
     return db.runTransaction(async (tx) => {
         const pedidoRef = db.doc(`pedidos/${pedidoId}`);
@@ -179,24 +201,42 @@ async function crearPedidoCore(db, input = {}, opts = {}) {
             ? { tipo: 'precio_fijo', total }
             : { tipo: 'por_peso', peso: Math.max(0, Number(input.peso) || 0), valorGramo: entero(input.valorGramo), manoObra: mano, oro, total };
 
-        tx.set(pedidoRef, {
+        // F1-CORE ruta corta (spec §3.3): mostrador en efectivo SIN envío = venta EN MANO → nace
+        // `entregado` (el ciclo no queda artificialmente abierto). Con envío o pago por confirmar,
+        // entra al flujo normal. El arqueo cuenta igual (ESTADOS_CON_DINERO incluye `entregado`).
+        const enMano = medio === 'efectivo' && canal === 'pos' && !requiereEnvio;
+        const estadoInicial = medio === 'efectivo' ? (enMano ? 'entregado' : 'pagado') : 'pago_por_verificar';
+        const doc = {
             numero, codigo, pieceId,
             pieceSlug: piece.slug || pieceId,
             pieceName: piece.name || 'Pieza',
             canal, medio,
-            estado: medio === 'efectivo' ? 'pagado' : 'pago_por_verificar',
+            estado: estadoInicial,
             total,
             desglose,                                   // SNAPSHOT inmutable (la CF nunca lo edita)
             consumioStock: consumeUnidad,               // v3: ¿bajó una unidad física? → anular la repone
+            requiereEnvio,                              // F1-CORE: lo respeta confirmarPago (ruta corta)
+            // Costuras F1-CORE (spec §3.5, contratos aditivos): F2.2 generaliza a N líneas; el costo
+            // se congela cuando las piezas tengan campo de costo (F3) — hoy null, NO inventarlo.
+            items: [{ pieceId, pieceName: piece.name || 'Pieza', pieceSlug: piece.slug || pieceId, cantidad: 1, precio: total, costoSnapshot: null }],
+            clienteId: null,                            // vínculo CRM = F2.1 (CF-only)
             autor,
             createdAt: FieldValue.serverTimestamp(),
-        });
+        };
+        if (enMano) { doc.entregadoEn = FieldValue.serverTimestamp(); doc.pod = { enMano: true }; }
+        tx.set(pedidoRef, doc);
+        if (enMano) {
+            tx.set(pedidoRef.collection('historial').doc(), {
+                de: 'pagado', a: 'entregado', autor, nota: 'venta en mano',
+                at: FieldValue.serverTimestamp(), dayKey: dayKeyBogota(Number.isFinite(opts.nowMs) ? opts.nowMs : Date.now()),
+            });
+        }
         // TODO-40 v3: decrementar `cantidad` (NO marcar 'vendida') + estado DERIVADO + ledger (venta mostrador).
         if (consumeUnidad) aplicarConsumo(tx, pieceRef, { pedidoId, autor, motivo: 'venta', stockType, cantidadActual });
         tx.set(contRef, { valor: numero });
         tx.set(codigoRef, { pedidoId, at: FieldValue.serverTimestamp() });   // reserva del código (misma tx = atómico)
 
-        return { pedidoId, numero, codigo, total, yaExistia: false };
+        return { pedidoId, numero, codigo, total, estado: estadoInicial, yaExistia: false };
     });
 }
 
@@ -312,6 +352,9 @@ async function iniciarPagoWebCore(db, input = {}, opts = {}) {
             shipping: shipping || null,
             tipoEntrega,                                // A.8: 'tienda'|'nacional'|'internacional'|null
             habeasData: { aceptado: true, version: habeasVersion, fecha: FieldValue.serverTimestamp() },  // prueba del consentimiento (Dto.1377 art.5)
+            // Costuras F1-CORE (spec §3.5): 1 línea hoy, F2.2 generaliza; costo se congela en F3.
+            items: [{ pieceId, pieceName: piece.name || 'Pieza', pieceSlug: piece.slug || pieceId, cantidad: 1, precio: total, costoSnapshot: null }],
+            clienteId: null,                            // vínculo CRM = F2.1 (CF-only)
             autor: null,                               // cliente público sin login
             createdAt: FieldValue.serverTimestamp(),
         });
@@ -353,17 +396,26 @@ async function confirmarPagoCore(db, input = {}) {
         const snap = await tx.get(ref);
         if (!snap.exists) throw new PedidoError('not-found', 'El pedido no existe.');
         const ped = snap.data();
-        if (ped.estado === 'pagado') return { pedidoId, estado: 'pagado', yaEstaba: true };   // idempotente
+        if (ped.estado === 'pagado' || ped.estado === 'entregado') return { pedidoId, estado: ped.estado, yaEstaba: true };   // idempotente
         if (ped.estado !== 'pago_por_verificar') {
             throw new PedidoError('failed-precondition', `Solo se confirma un pago "por verificar" (este está "${ped.estado}").`);
         }
-        tx.update(ref, {
-            estado: 'pagado',
+        // F1-CORE ruta corta (spec §3.3): venta de MOSTRADOR sin envío = entrega en mano — al confirmar
+        // el pago queda `entregado` directo (con traza doble). Si pidió envío (`requiereEnvio`), queda
+        // `pagado` y entra al flujo logístico normal (avanzarPedido).
+        const enMano = ped.canal === 'pos' && ped.requiereEnvio !== true;
+        const update = {
+            estado: enMano ? 'entregado' : 'pagado',
             confirmadoPor: autor,
             confirmadoEn: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
-        });
-        return { pedidoId, estado: 'pagado', yaEstaba: false };
+        };
+        if (enMano) { update.entregadoEn = FieldValue.serverTimestamp(); update.pod = { enMano: true }; }
+        tx.update(ref, update);
+        const base = { autor, nota: null, at: FieldValue.serverTimestamp(), dayKey: dayKeyBogota() };
+        tx.set(ref.collection('historial').doc(), { ...base, de: 'pago_por_verificar', a: 'pagado', nota: 'pago confirmado' });
+        if (enMano) tx.set(ref.collection('historial').doc(), { ...base, de: 'pagado', a: 'entregado', nota: 'venta en mano' });
+        return { pedidoId, estado: update.estado, yaEstaba: false };
     });
 }
 
@@ -557,6 +609,120 @@ async function anularPedidoCore(db, input = {}) {
 }
 
 /**
+ * avanzarPedido (F1-CORE, spec 2026-07-06 §3) — ÚNICA puerta de las transiciones post-pago.
+ * Valida contra TRANSICIONES (tabla), escribe el efecto de la transición + traza append-only en
+ * `pedidos/{id}/historial` (autor + serverTimestamp + dayKey local), todo en UNA transacción.
+ * Idempotente: estado===a → no-op. El snapshot (`total`/`desglose`) JAMÁS se toca: el flete es
+ * cargo ADITIVO (D-2: se cobra aparte). Cancelado pre-entrega repone stock (reusa reponerStock).
+ * @param db Firestore (admin). @param input { pedidoId, a, datos?, nota?, autor }
+ * @param opts { nowMs? } — dayKey determinista en tests
+ */
+async function avanzarPedidoCore(db, input = {}, opts = {}) {
+    const pedidoId = String(input.pedidoId || '').trim();
+    const a        = String(input.a || '').trim();
+    const autor    = input.autor || null;
+    const nota     = (typeof input.nota === 'string' && input.nota.trim()) ? input.nota.trim().slice(0, 500) : null;
+    const datos    = (input.datos && typeof input.datos === 'object') ? input.datos : {};
+    if (!pedidoId || !a) throw new PedidoError('invalid-argument', 'pedidoId y el estado destino (a) son obligatorios.');
+    const nowMs = Number.isFinite(opts.nowMs) ? opts.nowMs : Date.now();
+    const str = (v, max = 200) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
+
+    return db.runTransaction(async (tx) => {
+        const ref = db.doc(`pedidos/${pedidoId}`);
+        const snap = await tx.get(ref);
+        if (!snap.exists) throw new PedidoError('not-found', 'El pedido no existe.');
+        const p = snap.data();
+        if (p.estado === a) return { pedidoId, estado: a, yaEstaba: true };
+        const permitidos = TRANSICIONES[p.estado] || [];
+        if (!permitidos.includes(a)) {
+            throw new PedidoError('failed-precondition', `Transición inválida: ${p.estado} → ${a}.`);
+        }
+
+        const update = { estado: a, updatedAt: FieldValue.serverTimestamp() };
+        let merma = null;           // asiento de ledger (write diferido tras las lecturas)
+        let reponer = null;         // { pieceRef, piece } para cancelado
+
+        if (a === 'despacho_nacional') {
+            const f = (datos.flete && typeof datos.flete === 'object') ? datos.flete : null;
+            const transportadora = str(datos.transportadora);
+            const guia = str(datos.guia);
+            if (!f || !transportadora || !guia) {
+                throw new PedidoError('invalid-argument', 'Despacho nacional exige flete{valorCOP,cobro,medio}, transportadora y guía.');
+            }
+            const cobro = f.cobro === 'asumido' ? 'asumido' : 'cobrado';   // D-2: default cobrado aparte
+            update.flete = {
+                valorCOP: entero(f.valorCOP),
+                cobro,
+                medio: str(f.medio, 40) || null,
+                estado: f.estado === 'recibido' ? 'recibido' : 'pendiente',
+            };
+            update.transportadora = transportadora;
+            update.guia = guia;
+            if (datos.valorDeclarado != null) update.valorDeclarado = entero(datos.valorDeclarado);
+            if (typeof datos.asegurado === 'boolean') update.asegurado = datos.asegurado;
+            const pesoEntregado = Number(datos.pesoEntregado);
+            if (Number.isFinite(pesoEntregado) && pesoEntregado > 0) {
+                update.pesoEntregado = pesoEntregado;
+                // Merma (spec §3.2): SOLO al ledger de la pieza — una sola fuente de verdad del stock.
+                const pesoCobrado = Number(p.desglose?.peso);
+                if (p.desglose?.tipo === 'por_peso' && Number.isFinite(pesoCobrado) && pesoEntregado < pesoCobrado) {
+                    merma = {
+                        ref: db.doc(`pieces/${p.pieceId}`).collection('movimientos').doc(`merma-${pedidoId}`),
+                        data: { delta: 0, motivo: 'merma', pedidoId, gramos: pesoCobrado - pesoEntregado, actor: autor, at: FieldValue.serverTimestamp() },
+                    };
+                }
+            }
+        } else if (a === 'entrega_local') {
+            const receptor = str(datos.receptorNombre);
+            if (!receptor) throw new PedidoError('invalid-argument', 'Entrega local exige el nombre de quien recibe.');
+            update.pod = { receptorNombre: receptor };
+        } else if (a === 'entregado') {
+            update.entregadoEn = FieldValue.serverTimestamp();
+            if (p.estado === 'listo_retiro') {
+                // Retiro en atelier: Kary coteja la cédula física contra shipping.docNumber.
+                if (datos.cedulaCotejada !== true) throw new PedidoError('failed-precondition', 'Retiro: confirma que cotejaste la cédula del comprador.');
+                update.pod = { ...(p.pod || {}), cedulaCotejada: true };
+            } else if (p.estado === 'despacho_nacional') {
+                update.pod = { ...(p.pod || {}), evidencia: str(datos.evidencia, 500) || null };
+            } else if (p.estado === 'pagado') {
+                update.pod = { enMano: true };                       // venta en mano (manual)
+            }
+        } else if (a === 'cancelado') {
+            const motivo = str(datos.motivo, 500);
+            if (!motivo) throw new PedidoError('invalid-argument', 'Cancelar exige un motivo.');
+            update.canceladoEn = FieldValue.serverTimestamp();
+            update.canceladoPor = autor;
+            update.motivoCancelacion = motivo;
+            if (p.consumioStock) {
+                const pieceRef = db.doc(`pieces/${p.pieceId}`);
+                const pieceSnap = await tx.get(pieceRef);            // lectura ANTES de todo write
+                if (pieceSnap.exists) reponer = { pieceRef, piece: pieceSnap.data() };
+            }
+        } else if (a === 'reembolsado') {
+            const r = (datos.reembolso && typeof datos.reembolso === 'object') ? datos.reembolso : null;
+            if (!r || entero(r.monto) <= 0 || !str(r.medio, 40)) {
+                throw new PedidoError('invalid-argument', 'Reembolso exige medio y monto (>0).');
+            }
+            update.reembolso = { medio: str(r.medio, 40), monto: entero(r.monto), referencia: str(r.referencia) || null };
+            update.reembolsadoEn = FieldValue.serverTimestamp();
+            update.reembolsadoPor = autor;
+            // NO repone stock automático: si la pieza volvió física es un alta consciente (F3/kardex).
+        }
+
+        // ── Writes (todas las lecturas ya ocurrieron) ──
+        if (reponer) reponerStock(tx, reponer.pieceRef, reponer.piece, { pedidoId, motivo: 'cancelado', ledgerId: `cancelado-${pedidoId}`, actor: autor });
+        if (merma) tx.set(merma.ref, merma.data);
+        tx.update(ref, update);
+        tx.set(ref.collection('historial').doc(), {
+            de: p.estado, a, autor, nota,
+            at: FieldValue.serverTimestamp(),
+            dayKey: dayKeyBogota(nowMs),
+        });
+        return { pedidoId, estado: a, de: p.estado };
+    });
+}
+
+/**
  * cierreCaja (B1 paso 5 · Cierre Z / arqueo) — Kary declara el efectivo FÍSICO contado; el sistema
  * compara contra lo esperado (suma de pedidos `pagado` por medio desde el último cierre) y revela el
  * descuadre. Conteo A CIEGAS: el esperado se calcula al cerrar, no se muestra antes. Idempotente por
@@ -589,23 +755,28 @@ async function cierreCajaCore(db, input = {}) {
     const qBase = db.collection('pedidos');
     recolectar(await (desde ? qBase.where('createdAt', '>', desde) : qBase).get());
     if (desde) {
-        recolectar(await qBase.where('confirmadoEn', '>', desde).get());   // confirmados tarde
-        recolectar(await qBase.where('anuladoEn', '>', desde).get());       // anulados en el turno
+        recolectar(await qBase.where('confirmadoEn', '>', desde).get());     // confirmados tarde
+        recolectar(await qBase.where('anuladoEn', '>', desde).get());         // anulados en el turno
+        recolectar(await qBase.where('canceladoEn', '>', desde).get());       // F1-CORE: cancelados en el turno
+        recolectar(await qBase.where('reembolsadoEn', '>', desde).get());     // F1-CORE: reembolsados en el turno
     }
     const enVentana = ts => ts && (!desde || (ts.toMillis?.() ?? 0) > desde.toMillis());
 
     // C.4: los medios salen de MEDIOS (no un objeto fijo) → si mañana se descongela ADDI, no queda invisible.
+    // F1-CORE (P0, spec §3.4): el dinero se cuenta por ESTADOS_CON_DINERO (pagado y posteriores), no por
+    // estado literal 'pagado' — avanzar un pedido a preparacion/entregado antes del cierre YA NO lo esfuma.
     const esperado = Object.fromEntries(MEDIOS.map(m => [m, 0]));
-    const ajustes  = Object.fromEntries(MEDIOS.map(m => [m, 0]));   // devoluciones por anulación de ventas de turnos PREVIOS
+    const ajustes  = Object.fromEntries(MEDIOS.map(m => [m, 0]));   // devoluciones de dinero contado en cierres PREVIOS
+    const DEVUELVEN = { anulado: 'anuladoEn', cancelado: 'canceladoEn', reembolsado: 'reembolsadoEn' };
     for (const p of vistos.values()) {
         if (esperado[p.medio] == null) continue;
         const momento = p.confirmadoEn || p.createdAt;
-        if (p.estado === 'pagado') {
+        if (ESTADOS_CON_DINERO.has(p.estado)) {
             if (enVentana(momento)) esperado[p.medio] += entero(p.total);
-        } else if (p.estado === 'anulado' && enVentana(p.anuladoEn)) {
-            // Anulada en este turno; si su dinero se contó en un cierre PREVIO (momento ≤ desde), se resta ahora.
-            // Transferencia/wompi solo INGRESAN al confirmarse: un pedido anulado SIN `confirmadoEn` nunca
-            // recibió dinero (pago_por_verificar/pago_pendiente viejo) → no genera devolución fantasma.
+        } else if (DEVUELVEN[p.estado] && enVentana(p[DEVUELVEN[p.estado]])) {
+            // Devuelto en este turno; si su dinero se contó en un cierre PREVIO (momento ≤ desde), se resta ahora.
+            // Transferencia/wompi solo INGRESAN al confirmarse: sin `confirmadoEn` nunca hubo dinero
+            // (pago_por_verificar/pago_pendiente viejo) → no genera devolución fantasma.
             const ingreso = p.medio === 'efectivo' || !!p.confirmadoEn;
             if (ingreso && desde && momento && (momento.toMillis?.() ?? 0) <= desde.toMillis()) ajustes[p.medio] -= entero(p.total);
         }
@@ -628,6 +799,7 @@ async function cierreCajaCore(db, input = {}) {
 
 module.exports = {
     crearPedidoCore, confirmarPagoCore, anularPedidoCore, cierreCajaCore,
+    avanzarPedidoCore, TRANSICIONES, ESTADOS_CON_DINERO, dayKeyBogota,   // F1-CORE (spec 2026-07-06)
     iniciarPagoWebCore,                          // Wompi F2: reserva web → pago_pendiente + firma
     confirmarPagoWompiCore,                      // Wompi F2: webhook → valida firma+re-consulta → pagado
     liberarReservaCore, liberarReservasVencidasCore,   // Wompi F2: reaper (libera reservas vencidas no pagadas)

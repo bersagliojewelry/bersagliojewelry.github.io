@@ -10,7 +10,7 @@
 
 > 🎉 **CRM + Fase M EN PROD** (§47-§82). Wompi web verificado en prod (§164). ⚙️ FABLE 5 activo.
 >
-> **🧭 FOCO = PLAN ÚNICO ERP v4 (TODO-68, Daniel 2026-07-04: "un solo sistema, tú defines el orden")** — SSoT: spec `2026-07-04-plan-unico-erp-v4`. **F1-PUENTE CONSTRUIDO y mergeado a main (`0819e12`, 2026-07-04)**: módulo Pedidos read-only en vivo (admin-pedidos.html) + nav Ventas real. Pend del puente: **validación Chrome en prod** + push FCM A.6 (best-effort, no gatea). **Sigue: F1-CORE** (CF `avanzarPedido` por TABLA + flete/merma + costuras items[]/costoSnapshot/clienteId — con FABLE, §11 de la spec). Precios NO bloquean; monitorear 1ª APPROVED sigue vivo. `[[project_comercio_pagos]]`
+> **🧭 FOCO = PLAN ÚNICO ERP v4 (TODO-68, Daniel 2026-07-04: "un solo sistema, tú defines el orden")** — SSoT: spec `2026-07-04-plan-unico-erp-v4`. **F1-PUENTE ✅ EN PROD y VALIDADO en Chrome (§165, `0819e12`)**: módulo Pedidos read-only en vivo + nav Ventas real. Pend del puente: solo push FCM A.6 (best-effort, no gatea). **Sigue: F1-CORE** (CF `avanzarPedido` por TABLA + flete/merma + costuras items[]/costoSnapshot/clienteId — con FABLE, §11 de la spec). Precios NO bloquean; monitorear 1ª APPROVED sigue vivo. `[[project_comercio_pagos]]`
 > _MCP Firebase=escritura prod · merge a main=Claude · consejo externo read-only (`[[feedback_consejo_externo_readonly]]`) · Claude valida en Chrome (`[[feedback_validacion_chrome_directa]]`)._
 
 ---
@@ -51,7 +51,7 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier C pen
 
 ## 📝 Bitácora (efímera)
 
-> 2026-07-04 (3ª sesión): **F1-PUENTE IMPLEMENTADO con Fable** (spec v4 §11: front-load) — admin-pedidos.html + pedidos.js (lista+detalle read-only EN VIVO, deep-link ?id=, WhatsApp/copiar) + pedidos-format.js puro (test 7/7) + onPedidosChange (subscribeWithRetry) + nav Ventas real (fuera placeholders Ventas/Facturas/CxC) + SW v72/APP v35. Tests sidebar 10/10 · build OK · merge a main `0819e12`. Preview local = login (correcto, L-05); validación final = Chrome prod.
+> 2026-07-04 (3ª sesión): **F1-PUENTE IMPLEMENTADO con Fable** (spec v4 §11: front-load) — admin-pedidos.html + pedidos.js (lista+detalle read-only EN VIVO, deep-link ?id=, WhatsApp/copiar) + pedidos-format.js puro (test 7/7) + onPedidosChange (subscribeWithRetry) + nav Ventas real (fuera placeholders Ventas/Facturas/CxC) + SW v72/APP v35. Tests sidebar 10/10 · build OK · merge a main `0819e12` · **validado Chrome PROD** (lista 6 pedidos reales + detalle #6 con cédula/WhatsApp; URL directa OK — 1er load frío redirigió, no se repite; vigilar en A.6) → **ADR §165**.
 > 2026-07-04 (sesiones 1-2, resumen): monitoreo post-encendido VERDE (reaper solo · Pages v71 OK · L-71) + **PLAN ÚNICO ERP v4 definido y ampliado** (TODO-68; SSoT = spec, comité ×3 en bóveda, D-1/D-2/D-5 decididas). Consolidado previo (GC): §157-§164 vía `00-INDICE`. Pend menor: TODO-67 fotos · auditoría Nivel-2 del cerebro vencida (sesión de mantenimiento).
 > _(TODO vivo pre-existente: botón "Hablar con el Atelier" en la ficha — ADR §156.12.)_
 > **🚦 Reglas vivas**: arquitecto SIEMPRE · 100% COP (§127) · NO inventado (`[[feedback_no_demo_en_index]]`) · pruebas vivo solo al final (§130.4) · W-11 en decisión-diseño · `[[feedback_workflows_acotados]]`.

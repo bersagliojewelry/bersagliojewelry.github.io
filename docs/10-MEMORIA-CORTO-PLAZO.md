@@ -10,7 +10,7 @@
 
 > 🎉 **CRM + Fase M EN PROD** (§47-§82). Wompi web verificado en prod (§164). ⚙️ **OPUS 4.8 activo (INTERINATO)** — Fable sin cuota gratis (Daniel 2026-07-06); Daniel avisa el retorno. Reglas §0 spec f1-core VINCULANTES: commits `[OPUS-4.8]` + footer real + TDD estricto en `functions/` + deploy manual con suites verdes + NO tocar webhook/firma/reaper/snapshot. `[[feedback_opus_interino]]`
 >
-> **🧭 FOCO = PLAN ÚNICO ERP v4 (TODO-68, Daniel 2026-07-04: "un solo sistema, tú defines el orden")** — SSoT: spec `2026-07-04-plan-unico-erp-v4`. **F1 COMPLETO: PUENTE ✅ (§165) + CORE ✅ (§167, backend `994776a` + UI `d12be6f` + gate E2E 3 flujos EN PROD 2026-07-06)**. Restan F1-extras que NO gatean: push FCM A.6 (venta-web-pagada → celular Kary; deep-link listo) · badge sidebar. **SIGUE: F2 POS completo** (2.0 sesión de caja apertura/movimientos/cierre + 2.3 impresión térmica; spec TODO-39 apartados en paralelo) — con Fable mientras dure la cuota (Daniel avisa el corte → Opus 4.8; spec relevo f1-core queda de precedente). Precios NO bloquean; monitorear 1ª APPROVED sigue vivo. `[[project_comercio_pagos]]`
+> **🧭 FOCO = PLAN ÚNICO ERP v4 (TODO-68, Daniel 2026-07-04: "un solo sistema, tú defines el orden")** — SSoT: spec `2026-07-04-plan-unico-erp-v4`. **F1 COMPLETO: PUENTE ✅ (§165) + CORE ✅ (§167, backend `994776a` + UI `d12be6f` + gate E2E 3 flujos EN PROD 2026-07-06)**. Restan F1-extras que NO gatean: push FCM A.6 · badge sidebar. **EN CURSO: F2.0 caja/bóveda (DISEÑO, esperando gate Daniel — ver bitácora).** Precios NO bloquean; monitorear 1ª APPROVED sigue vivo. `[[project_comercio_pagos]]`
 > _MCP Firebase=escritura prod · merge a main=Claude · consejo externo read-only (`[[feedback_consejo_externo_readonly]]`) · Claude valida en Chrome (`[[feedback_validacion_chrome_directa]]`)._
 
 ---
@@ -26,11 +26,10 @@
 | TODO-14 | **App Check: MONITOREO; Enforce DIFERIDO** (Daniel 2026-06-23: sin flujo alto el monitoreo no es representativo → activar SOLO con tráfico alto). Registro reparado (§58). | ⏸️ | esperar flujo alto |
 | TODO-17 | **Toda captura → CRM**: contacto→Bandeja ✅; falta newsletter (`addSubscription`→`subscriptions`) | 🔲 | tras App Check |
 | TODO-18 | **Plan operación integral §57**: semana 1 + 9 decisiones de Daniel + compuerta de adopción + campaña cartera → bóveda | 🟡 | Daniel (decisiones 1-9) |
-| TODO-33 | **Panel admin "tipo app" (fluidez)** — DISEÑADO (`50 §5`); A3 menú+VT ✅ (v29); pend. esqueletos/prefetch/fonts/VT-al-final; router SPA CONGELADO. PAUSADO. | 🟡 | reanudar tras demo |
-| TODO-22 | **Gate-de-git en el linter** (H-06): `brain:check` warne si el estado diverge de git AL ARRANCAR. Kernel → cars-operador (L-31). | 🔲 | cars-operador |
-| TODO-23 | **Frase canónica del gate de DINERO** (H-18): Claude = gate experto; Kary = smoke post-deploy no bloqueante. → Gemini. | 🔲 | Gemini |
+| TODO-33 | **Panel admin "tipo app" (fluidez)** — DISEÑADO (`50 §5`); A3 menú+VT ✅ (v29); pend. esqueletos/prefetch/fonts/VT-al-final; router SPA CONGELADO. PAUSADO. | 🟡 | tras demo |
+| TODO-22/29 | Kernel → cars-operador (L-31): gate-de-git en linter (H-06) · kernel lea `### L-NN` de `3*-LECCIONES*` (shard sin stub, hoy M-06). | 🔲 | cars-operador |
+| TODO-23 | **Frase canónica del gate de DINERO** (H-18): Claude=gate experto; Kary=smoke no bloqueante. → Gemini. | 🔲 | Gemini |
 | TODO-28 | **Correcciones web** F1-F5 ✅ EN PROD (§93-§98). Pend: C1 (Daniel) · responsive fino. | 🟡 | C1 |
-| TODO-29 | **Kernel lea `### L-NN` de `3*-LECCIONES*`** (no solo `30`) → shard real sin stub (hoy workaround M-06). Kernel → cars-operador (L-31). | 🔲 | cars-operador |
 | TODO-35 | **Visibilidad SITE-WIDE** (SEO·AEO·GA4·GSC·Maps·SSG) 🟢 EN PROD. Falta: A2b por-cat + eventos `generate_lead`/`contact` + 2º flujo GA. 🔑 Google authuser=3. | 🟢 | A2b |
 | TODO-68 | **PLAN ÚNICO ERP v4** (SSoT: spec 2026-07-04): Ítem 0 ✅ → F1-PUENTE ✅ (§165) → **F1-CORE ✅ (§167)** → F2 POS completo (**2.0 sesión de caja apertura/movimientos/cierre + 2.3 impresión térmica+cajón**, Daniel 04-jul) → F3 inventario → carril D → F4-F6 + radar 8b. Comité ×3 ✅ (bóveda). D-1 apartados=SÍ · D-2 flete=cobrar aparte · D-5 hardware=SIN comprar aún. **F2.0f = antirrobo bóveda**. **§11 = estrategia de modelos (anunciar por paso)**. F1-extras no-gate: push A.6 · badge sidebar. | 🟢 | arrancar F2.0 (spec primero) |
 | TODO-39 | **Apartados/abonos (= F2.4 del plan v4)**: **D-1 = SÍ (Daniel 2026-07-04)** → pagos 1..N REUSANDO cartera CRM + pieza apartada bloqueada en web. Spec (Decisión Fuerte, comité+consejo) en paralelo al cierre de F1; reglas finas con Kary. D-2 flete = COBRAR APARTE (contrato en F1). | 🟢 | spec tras F1-PUENTE |
@@ -40,7 +39,7 @@
 | TODO-48 | **Reseñas reales** — conectar `reviews` aprobadas → Nosotros + gestión admin. | 🔲 | feature |
 | TODO-50 | **Catálogo de lujo** — imagen real + filtros gema/tipo + badges. Detalle → §133.2(B/C). (Taxonomía=TODO-57.) | 🔲 | tras TODO-44 |
 | TODO-57 | **Modelo GEMA** (§150-§151, plano `badgeGem`/`gemFilterIds`). HECHO: fundación+form+backfill 32/32+JSON-LD (test 9/9). **Pend**: `settings/gems`+bake · filtros TODO-50 · live form. **Prerequisito D.0 del plan Fable**: `badgeGem`/`gemFilterIds` NO están en `PUBLIC_SPEC_KEYS` (`generate-pieces.mjs:676`) → al conmutar 7b el badge cae al regex. Hacer con el Bloque D. SSoT → spec. | 🟡 | D.0 (whitelist gema) |
-> ✅ **Cerrados** (detalle → ADRs/`99` + lecciones): TODO-37 (plan v3 SUCEDIDO por v4; sus §3-§11 siguen de referencia) · TODO-65 (remanente Fable ABSORBIDO por TODO-68: carril D + F1-extras) · TODO-63 (checkout v63/v64; A.2→§161, gate-live→§164) · TODO-49 (legal §157 → `42-LEGAL`) · TODO-42 (A.9 §164) · TODO-66 (shard 30→34) · TODO-64 (login L-66) · TODO-21 (§158) · TODO-62/61/60/59/58/56/55/54/53/52/51/46/45/44 · TODO-40+32. Pend Daniel: precios + fotos IA.
+> ✅ **Cerrados** (detalle → ADRs/`99`): TODO-37/65/63/49/42/66/64/21/40/32 + 62-44 (rango). Pend Daniel: precios + fotos IA.
 
 ---
 
@@ -51,9 +50,6 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier C pen
 
 ## 📝 Bitácora (efímera)
 
-> 2026-07-06 (Opus): **Domicilio local cobrado → ADR §168** (`6dc423e`, deploy manual `avanzarPedido` + SW v75/v38): `entrega_local` traza flete{...} como envío nacional (helper `normFlete` compartido; total intacto). TDD 14/14 + gate prod (BJ-CPSE-AX89, $12.000 transferencia). 1er cambio de dinero bajo interinato Opus. **Pend Daniel #2 (explicación, no código): comportamiento "Confirmar pago"/"Anular" en Mostrador — responder** (efectivo=pagado directo; transferencia/wompi=por_verificar hasta "vi la plata"; L-72 corrigió el trinario que mostraba el botón sobre estados imposibles).
-> 2026-07-06 (cierre Fable): **F1-CORE COMPLETO → ADR §167** (backend `994776a` + UI `d12be6f` + fix POS `8ff3100` + gate E2E Chrome prod). Caza-bugs L-72. Enmiendas spec §4.2/§4.3. Pend no-gate: push A.6 · badge sidebar.
-> 2026-07-06: **§166 código público BJ-XXXX-XXXX** (comité ×3 unánime, CRUDO→bóveda; fuga DevTools cerrada; backfill 6/6; deploy completo; detalle→ADR §166) + **shard `20`→`21-ESPACIAL-ADMIN`** (§G.5, registrada en CLAUDE.md/00). ⚠️ ADC gcloud caducado en esta máquina (backfills: re-login o MCP). Pend menor: guía dictado Kary → F2.3.
-> 2026-07-04: **F1-PUENTE en prod validado Chrome** (→ ADR §165; rebote frío 1ª URL directa — vigilar en A.6) · sesiones 1-2: monitoreo verde + plan v4 definido (→ spec). Pend menor: TODO-67 fotos · auditoría Nivel-2 vencida (mantenimiento).
-> _(TODO vivo pre-existente: botón "Hablar con el Atelier" en la ficha — ADR §156.12.)_
-> **🚦 Reglas vivas**: arquitecto SIEMPRE · 100% COP (§127) · NO inventado (`[[feedback_no_demo_en_index]]`) · pruebas vivo solo al final (§130.4) · W-11 en decisión-diseño · `[[feedback_workflows_acotados]]`.
+> 2026-07-06 (Opus · **F2.0 EN DISEÑO**): comité ×3 acotado (CRUDO→bóveda) cazó 9 defectos estructurales de dinero → **diseño v2 SSoT en `docs/superpowers/specs/2026-07-06-f2-0-caja-boveda-DISENO.md §8`** + prompt consejo externo (`-PROMPT-CONSEJO-EXTERNO.md`). **NO escribir spec ejecutable hasta el GATE de Daniel** — necesito: (1) ¿cuánto efectivo en la caja fuerte HOY? (semilla bóveda) (2) `limiteCajon`/`fondoTrabajo` en COP (3) ¿Daniel hace el conteo físico periódico? (4) llevar el prompt a Gemini. L-72 residual (ESTADO_LBL) fijado en `d244d77` (deploy con F2.0).
+> **Consolidado (detalle → ADRs)**: F1 COMPLETO §165-§168 (puente→código BJ-XXXX-XXXX→CORE→domicilio local) · L-72 · shard `20`→`21`. Pend no-gate F1: push A.6 · badge sidebar. Pend menores: TODO-67 fotos · guía dictado Kary→F2.3 · auditoría Nivel-2 vencida (mantenimiento) · rebote frío 1ª URL directa (vigilar A.6) · botón "Hablar con el Atelier" en ficha (§156.12). ⚠️ ADC gcloud caducado en esta máquina (backfills: re-login o MCP).
+> **🚦 Reglas vivas**: arquitecto SIEMPRE · 100% COP (§127) · NO inventado (`[[feedback_no_demo_en_index]]`) · pruebas vivo solo al final (§130.4) · W-11 en decisión-diseño · `[[feedback_workflows_acotados]]` · **interinato Opus: dinero con comité+consejo+skills+agentes**.

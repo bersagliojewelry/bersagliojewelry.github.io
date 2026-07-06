@@ -191,7 +191,7 @@ const alertaPedidoRevision = onDocumentUpdated({ document: 'pedidos/{pedidoId}',
         try {
             await db.collection('saludEventos').doc(`venta-web-${event.params.pedidoId}`).set({
                 tipo: 'venta-web-pagada',
-                detalle: `💰 VENTA WEB PAGADA — pedido #${despues.numero || '?'} · ${despues.total || '?'} COP · ${despues.pieceName || ''}. Contactar al cliente (correo/WhatsApp del pedido) y coordinar ${despues.tipoEntrega === 'tienda' ? 'la cita de entrega en el atelier' : 'el envío'}.`,
+                detalle: `💰 VENTA WEB PAGADA — pedido ${despues.codigo || '?'} (#${despues.numero || '?'}) · ${despues.total || '?'} COP · ${despues.pieceName || ''}. Contactar al cliente (correo/WhatsApp del pedido) y coordinar ${despues.tipoEntrega === 'tienda' ? 'la cita de entrega en el atelier' : 'el envío'}.`,
                 pedidoId: event.params.pedidoId,
                 at: FieldValue.serverTimestamp(), resuelto: false,
             });
@@ -202,7 +202,7 @@ const alertaPedidoRevision = onDocumentUpdated({ document: 'pedidos/{pedidoId}',
         await db.collection('saludEventos').doc(`pedido-${event.params.pedidoId}`).set({
             tipo: 'pedido-requiere-accion',
             estado: nuevo,
-            detalle: `${ESTADOS_ALERTA[nuevo]} — pedido ${despues.numero || event.params.pedidoId} (${despues.total || '?'} COP).`,
+            detalle: `${ESTADOS_ALERTA[nuevo]} — pedido ${despues.codigo || despues.numero || event.params.pedidoId} (${despues.total || '?'} COP).`,
             pedidoId: event.params.pedidoId,
             at: FieldValue.serverTimestamp(), resuelto: false,
         });

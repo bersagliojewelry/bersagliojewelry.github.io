@@ -241,9 +241,10 @@ async function doRegister(medio, total) {
     try {
         const res = await crearPedido(payload);
         if (res.yaExistia) {
-            admToast(`Esta venta ya estaba registrada (Pedido #${res.numero}) — no se duplicó.`, 'default', 4000);
+            admToast(`Esta venta ya estaba registrada (Pedido ${res.codigo || '#' + res.numero}) — no se duplicó.`, 'default', 4000);
         } else {
-            admToast(`✓ Venta registrada · Pedido #${res.numero} · ${cop(res.total)}`, 'success', 4000);
+            // §166: Kary comunica al cliente el CÓDIGO (el # correlativo es interno).
+            admToast(`✓ Venta registrada · Pedido ${res.codigo || '#' + res.numero} · ${cop(res.total)}`, 'success', 4000);
         }
         resetSale();
         loadVentas();

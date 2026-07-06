@@ -659,6 +659,12 @@ service cloud.firestore {
     match /contadores/{docId} {
       allow read, write: if false;
     }
+    // Índice de códigos públicos de pedido (§166: BJ-XXXX-XXXX) — garantiza unicidad ETERNA:
+    // la CF lo lee+reserva DENTRO de la misma transacción que crea el pedido (Admin SDK). El
+    // código viaja en el doc pedido (el staff lo lee de ahí); nadie toca el índice por fuera.
+    match /codigosPedido/{codigo} {
+      allow read, write: if false;
+    }
     // Arqueo / Cierre Z (B1 paso 5) — lo ESCRIBE solo la CF `cierreCaja` (Admin SDK); el staff
     // de ventas LEE el histórico de cierres, nadie escribe por fuera (el descuadre no se falsea).
     match /arqueo/{turnoId} {

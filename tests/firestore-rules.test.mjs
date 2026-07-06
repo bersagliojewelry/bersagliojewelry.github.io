@@ -272,6 +272,11 @@ test('B1 · contadores: deny-all al cliente (CF-only)', async () => {
     await assertFails(getDoc(doc(asUser('adminUid'), 'contadores/pedidos')));
     await assertFails(setDoc(doc(asUser('adminUid'), 'contadores/pedidos'), { valor: 1 }));
 });
+test('§166 · codigosPedido (índice de códigos públicos): deny-all al cliente (CF-only)', async () => {
+    await assertFails(getDoc(doc(asUser('adminUid'), 'codigosPedido/BJ-2345-6789')));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'codigosPedido/BJ-2345-6789'), { pedidoId: 'x' }));
+    await assertFails(getDoc(doc(anon(), 'codigosPedido/BJ-2345-6789')));
+});
 test('B1 · arqueo (cierre Z): cliente NUNCA escribe (CF-only) → DENY; read solo staff de ventas', async () => {
     await assertFails(setDoc(doc(asUser('catalogoUid'), 'arqueo/t1'), { descuadre: 0 }));
     await assertFails(setDoc(doc(asUser('adminUid'),    'arqueo/t2'), { descuadre: 0 }));

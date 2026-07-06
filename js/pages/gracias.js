@@ -74,17 +74,21 @@ function getMethodFromURL() {
 // INVITADO (sin cuenta): su comprobante es el número de pedido (sessionStorage, lo dejó pago-web.js)
 // y el seguimiento es concierge (WhatsApp con Kary). Fail-open: sin respuesta → mensaje neutro actual.
 
-/** PURA (testeada): estado de la transacción → mensaje honesto. null = mantener el neutro "confirmando". */
-export function mensajePorEstadoTx(status, numero) {
-    const n = Number(numero) > 0 ? Number(numero) : null;
+/**
+ * PURA (testeada): estado de la transacción → mensaje honesto. null = mantener el neutro "confirmando".
+ * §166: el comprobante es el CÓDIGO público (BJ-XXXX-XXXX, string). El correlativo interno #N
+ * NUNCA se muestra (revela cuántas ventas lleva el negocio); un stash legacy numérico se ignora.
+ */
+export function mensajePorEstadoTx(status, codigo) {
+    const c = (typeof codigo === 'string' && /^BJ-/.test(codigo.trim())) ? codigo.trim() : null;
     if (status === 'APPROVED') {
         return {
             eyebrow: 'PAGO CONFIRMADO',
             title: 'Confirmado. Tu pieza queda <span class="italic emerald-text">reservada</span> a tu nombre.',
-            body: `Wompi confirmó tu pago${n ? ` del pedido #${n}` : ''}.${n ? ` Guarda ese número: es tu comprobante.` : ''} Te contactaremos por correo y WhatsApp para coordinar la entrega — si elegiste recoger en el atelier de Cartagena, agendamos tu cita; si es envío, gestionamos la guía asegurada.`,
-            nextLabel: n ? `Tu comprobante: pedido #${n}` : 'Pago confirmado',
+            body: `Wompi confirmó tu pago${c ? ` del pedido ${c}` : ''}.${c ? ` Guarda ese código: es tu comprobante.` : ''} Te contactaremos por correo y WhatsApp para coordinar la entrega — si elegiste recoger en el atelier de Cartagena, agendamos tu cita; si es envío, gestionamos la guía asegurada.`,
+            nextLabel: c ? `Tu comprobante: pedido ${c}` : 'Pago confirmado',
             tone: 'ok',
-            wa: `Hola, acabo de pagar en la web de Bersaglio${n ? ` (pedido #${n})` : ''} y quiero coordinar la entrega.`,
+            wa: `Hola, acabo de pagar en la web de Bersaglio${c ? ` (pedido ${c})` : ''} y quiero coordinar la entrega.`,
         };
     }
     if (status === 'DECLINED' || status === 'ERROR' || status === 'VOIDED') {
@@ -163,7 +167,7 @@ export async function init() {
     if (method !== 'pago' || !txId) return;
     const stash = ultimoPago();
     const status = await consultarTx(txId, p.get('env'), stash.publicKey);
-    const real = mensajePorEstadoTx(status, stash.numero);
+    const real = mensajePorEstadoTx(status, stash.codigo);
     if (real) mount(main, renderAll(real));
 }
 

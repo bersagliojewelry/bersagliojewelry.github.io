@@ -45,7 +45,9 @@
 // WhatsApp (concierge); pago-web deja el comprobante en sessionStorage.
 // v72 = F1-PUENTE (TODO-68): módulo admin Pedidos (admin-pedidos.html, lista+detalle read-only en
 // vivo de todos los canales); nav Ventas renombrada (Pedidos real; fuera placeholders Ventas/Facturas/CxC).
-const CACHE_NAME    = 'bersaglio-v72';
+// v73 = §166 código público de pedido BJ-XXXX-XXXX (comité ×3): el cliente ya NO ve el correlativo
+// (revela volumen); comprobante de gracias/WhatsApp/panel = código; buscador tolerante en Pedidos.
+const CACHE_NAME    = 'bersaglio-v73';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
     ESTADO_PEDIDO, estadoPedido, canalLabel, medioLabel, entregaLabel,
     nombreComprador, direccionTexto, resumenPedido,
+    idVisible, normalizarCodigo, pedidoCoincide,
 } from '../js/admin/pedidos-format.js';
 
 // Censo canónico del backend (functions/pedidos-core.js + webhook + reaper). Si el backend
@@ -46,13 +47,34 @@ test('direccionTexto arma la línea solo con lo que hay', () => {
     assert.equal(direccionTexto(null), '');
 });
 
-test('resumenPedido: pedido web completo (todas las líneas)', () => {
+test('§166 idVisible: código público primero; fallback legacy #interno; nunca inventa', () => {
+    assert.equal(idVisible({ codigo: 'BJ-7K4M-Q2X9', numero: 7 }), 'BJ-7K4M-Q2X9');
+    assert.equal(idVisible({ numero: 7 }), '#7');
+    assert.equal(idVisible({}), '—');
+});
+
+test('§166 normalizarCodigo: mayúsculas y sin ruido (guiones/espacios/minúsculas de WhatsApp)', () => {
+    assert.equal(normalizarCodigo(' bj-7k4m-q2x9 '), 'BJ7K4MQ2X9');
+    assert.equal(normalizarCodigo('BJ 7K4M Q2X9'), 'BJ7K4MQ2X9');
+    assert.equal(normalizarCodigo(''), '');
+});
+
+test('§166 pedidoCoincide: tolerante — código parcial/sin guiones, sufijo, #interno, pieza, cliente', () => {
+    const p = { codigo: 'BJ-7K4M-Q2X9', numero: 7, pieceName: 'Anillo Alma', shipping: { firstName: 'María', lastName: 'Pérez' } };
+    for (const q of ['bj-7k4m-q2x9', 'BJ7K4MQ2X9', '7k4m', 'q2x9', 'Q2X9 ', '#7', '7', 'alma', 'maría', 'pérez', ''])
+        assert.equal(pedidoCoincide(p, q), true, `debía coincidir: '${q}'`);
+    for (const q of ['BJ-AAAA-BBBB', 'zafiro', '99'])
+        assert.equal(pedidoCoincide(p, q), false, `NO debía coincidir: '${q}'`);
+});
+
+test('resumenPedido: pedido web completo (todas las líneas, código §166)', () => {
     const r = resumenPedido({
-        numero: 7, pieceName: 'Anillo Alma', total: 2500000, estado: 'pagado', medio: 'wompi', canal: 'web',
+        numero: 7, codigo: 'BJ-7K4M-Q2X9', pieceName: 'Anillo Alma', total: 2500000, estado: 'pagado', medio: 'wompi', canal: 'web',
         tipoEntrega: 'nacional',
         shipping: { firstName: 'María', lastName: 'Pérez', docType: 'CC', docNumber: '123', phone: '3001234567', email: 'm@x.co', address: 'Cll 1', city: 'Bogotá', country: 'Colombia', zip: '' },
     });
-    assert.match(r, /^Pedido #7 · Bersaglio$/m);
+    assert.match(r, /^Pedido BJ-7K4M-Q2X9 · Bersaglio$/m);
+    assert.ok(!/#7/.test(r), 'el resumen va al CLIENTE: jamás el correlativo interno');
     assert.match(r, /^Pieza: Anillo Alma$/m);
     assert.match(r, /^Total: \$2\.500\.000$/m);
     assert.match(r, /^Estado: Pagado · Wompi · Web$/m);
@@ -62,7 +84,7 @@ test('resumenPedido: pedido web completo (todas las líneas)', () => {
 });
 
 test('resumenPedido: venta de mostrador (sin shipping) omite líneas vacías', () => {
-    const r = resumenPedido({ numero: 3, pieceName: 'Dije Sol', total: 900000, estado: 'pagado', medio: 'efectivo', canal: 'pos' });
+    const r = resumenPedido({ numero: 3, codigo: 'BJ-AAAA-BBBB', pieceName: 'Dije Sol', total: 900000, estado: 'pagado', medio: 'efectivo', canal: 'pos' });
     assert.match(r, /^Estado: Pagado · Efectivo · Mostrador$/m);
     assert.doesNotMatch(r, /Cliente:|Tel:|Email:|Entrega:/);
 });

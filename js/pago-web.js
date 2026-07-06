@@ -74,9 +74,10 @@ export async function pagarConWompi({ pieceId, shipping, tipoEntrega, habeas, re
     if (!res?.signature || !res?.publicKey || !res?.amountInCents) {
         throw new Error('No se pudo iniciar el pago.');
     }
-    // §164: el comprador es invitado (sin cuenta) → su COMPROBANTE es el número de pedido. Se deja en
-    // sessionStorage para que gracias.html lo muestre al volver de Wompi (misma pestaña).
-    try { sessionStorage.setItem('bj-ultimo-pago', JSON.stringify({ numero: res.numero, pedidoId: res.reference, publicKey: res.publicKey })); } catch {}
+    // §164: el comprador es invitado (sin cuenta) → su COMPROBANTE se deja en sessionStorage para que
+    // gracias.html lo muestre al volver de Wompi (misma pestaña). §166: el comprobante es el CÓDIGO
+    // público BJ-XXXX-XXXX — la CF ya no expone el correlativo interno al navegador.
+    try { sessionStorage.setItem('bj-ultimo-pago', JSON.stringify({ codigo: res.codigo, pedidoId: res.reference, publicKey: res.publicKey })); } catch {}
     const base = redirectBase || (typeof location !== 'undefined' ? location.origin : '');
     const sh = shipping || {};
     const fullName = `${sh.firstName || ''} ${sh.lastName || ''}`.trim();

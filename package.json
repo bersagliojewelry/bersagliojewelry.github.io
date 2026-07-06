@@ -34,6 +34,7 @@
     "test:metal": "node --test tests/metal.test.mjs",
     "test:checkout": "node --test tests/checkout-redesign.test.mjs",
     "test:pedidos": "node --test tests/pedidos-format.test.mjs",
+    "test:codigo-pedido": "node --test functions/pedidos-codigo.test.mjs",
     "brain:diff": "node scripts/brain-diff.mjs"
   },
   "devDependencies": {

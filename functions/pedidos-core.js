@@ -8,10 +8,45 @@
  * el cliente), snapshot INMUTABLE, correlativo atómico, e IDEMPOTENTE por pedidoId.
  */
 const { FieldValue, Timestamp } = require('firebase-admin/firestore');
+const crypto = require('crypto');
 const { montoEnCentavos, firmaIntegridad, verificarFirmaEvento } = require('./wompi-core');
 
 const MEDIOS  = ['efectivo', 'transferencia', 'wompi', 'addi'];
 const CANALES = ['pos', 'web', 'whatsapp'];
+
+// ── Código PÚBLICO de pedido (§166 · comité ×3) ────────────────────────────────
+// El correlativo `numero` es INTERNO (contable, jamás al cliente: revela volumen). Lo que el
+// cliente ve es `codigo` BJ-XXXX-XXXX: 8 símbolos crypto-aleatorios de un alfabeto de 29 SIN
+// ambiguos telefónicos (0/O · 1/I/L · U · V — "be larga/ve corta"). crypto.randomInt = sin sesgo
+// modular (rejection sampling nativo). Unicidad NO probabilística: `reservarCodigo` verifica el
+// índice `codigosPedido/{codigo}` DENTRO de la transacción que crea el pedido (lecturas antes de
+// escrituras) — dos tx concurrentes con el mismo código conflictúan y una reintenta. REGLA: toda
+// creación de pedido (CF, scripts, migraciones) pasa por este patrón lookup+reserva; jamás a mano.
+const CODIGO_ALFABETO = '23456789ABCDEFGHJKMNPQRSTWXYZ';   // 29 símbolos
+const CODIGO_MAX_INTENTOS = 5;
+
+/** Genera un candidato BJ-XXXX-XXXX. `randInt(max)` inyectable para tests deterministas. */
+function generarCodigoPedido(randInt = (max) => crypto.randomInt(max)) {
+    let s = '';
+    for (let i = 0; i < 8; i++) s += CODIGO_ALFABETO[randInt(CODIGO_ALFABETO.length)];
+    return `BJ-${s.slice(0, 4)}-${s.slice(4)}`;
+}
+
+/**
+ * Reserva un código único DENTRO de la tx (solo LECTURAS aquí; el caller escribe `codigoRef`
+ * junto con el pedido). Si 5 intentos colisionan (p ≈ n/29^8 ≈ 0) ABORTA con error logueado —
+ * NUNCA degrada a escritura sin verificar (contrato del comité).
+ */
+async function reservarCodigo(db, tx, randInt) {
+    for (let i = 0; i < CODIGO_MAX_INTENTOS; i++) {
+        const codigo = generarCodigoPedido(randInt);
+        const ref = db.doc(`codigosPedido/${codigo}`);
+        const snap = await tx.get(ref);
+        if (!snap.exists) return { codigo, codigoRef: ref };
+    }
+    console.error(`[pedidos] ${CODIGO_MAX_INTENTOS} colisiones seguidas de código — improbable: revisar codigosPedido`);
+    throw new PedidoError('internal', 'No fue posible asignar un código de pedido único. Reintenta.');
+}
 
 // Enteros COP. Espejo de calcularPrecio (js/admin/calculadora.js): redondeo al final.
 const entero = n => Math.round(Math.max(0, Number(n) || 0));
@@ -98,8 +133,9 @@ function reponerStock(tx, pieceRef, piece, { pedidoId, motivo, ledgerId, actor }
 /**
  * @param db Firestore (admin) — bypassa reglas (único escritor server-side).
  * @param input { pedidoId, pieceId, valorGramo?, peso?, manoObra?, medio?, canal?, autor }
+ * @param opts  { randInt? } — inyección del rng del código (tests deterministas)
  */
-async function crearPedidoCore(db, input = {}) {
+async function crearPedidoCore(db, input = {}, opts = {}) {
     const pedidoId = String(input.pedidoId || '').trim();   // UUID del cliente (idempotencia)
     const pieceId  = String(input.pieceId  || '').trim();
     const autor    = input.autor || null;
@@ -112,7 +148,7 @@ async function crearPedidoCore(db, input = {}) {
         const existing = await tx.get(pedidoRef);
         if (existing.exists) {                          // IDEMPOTENTE: reintento → mismo pedido
             const e = existing.data();
-            return { pedidoId, numero: e.numero, total: e.total, yaExistia: true };
+            return { pedidoId, numero: e.numero, codigo: e.codigo || null, total: e.total, yaExistia: true };
         }
 
         const pieceRef = db.doc(`pieces/${pieceId}`);
@@ -136,13 +172,15 @@ async function crearPedidoCore(db, input = {}) {
         const contRef = db.doc('contadores/pedidos');
         const contSnap = await tx.get(contRef);
         const numero = ((contSnap.exists && Number(contSnap.data().valor)) || 0) + 1;
+        // Código PÚBLICO único (§166) — última LECTURA de la tx (antes de cualquier write).
+        const { codigo, codigoRef } = await reservarCodigo(db, tx, opts.randInt);
 
         const desglose = precioFijo
             ? { tipo: 'precio_fijo', total }
             : { tipo: 'por_peso', peso: Math.max(0, Number(input.peso) || 0), valorGramo: entero(input.valorGramo), manoObra: mano, oro, total };
 
         tx.set(pedidoRef, {
-            numero, pieceId,
+            numero, codigo, pieceId,
             pieceSlug: piece.slug || pieceId,
             pieceName: piece.name || 'Pieza',
             canal, medio,
@@ -156,8 +194,9 @@ async function crearPedidoCore(db, input = {}) {
         // TODO-40 v3: decrementar `cantidad` (NO marcar 'vendida') + estado DERIVADO + ledger (venta mostrador).
         if (consumeUnidad) aplicarConsumo(tx, pieceRef, { pedidoId, autor, motivo: 'venta', stockType, cantidadActual });
         tx.set(contRef, { valor: numero });
+        tx.set(codigoRef, { pedidoId, at: FieldValue.serverTimestamp() });   // reserva del código (misma tx = atómico)
 
-        return { pedidoId, numero, total, yaExistia: false };
+        return { pedidoId, numero, codigo, total, yaExistia: false };
     });
 }
 
@@ -227,7 +266,9 @@ async function iniciarPagoWebCore(db, input = {}, opts = {}) {
             if (tipoEntrega) refresco.tipoEntrega = tipoEntrega;
             if (Object.keys(refresco).length) tx.update(pedidoRef, refresco);
             // Reusa la MISMA reserva (mismo `reservaExpira` → misma firma/expiration-time, sin re-decrementar).
-            return { pedidoId, numero: e.numero, total: e.total, estado: e.estado,
+            // §166: el payload PÚBLICO lleva `codigo`, NUNCA `numero` (el correlativo revela volumen
+            // de ventas y este callable lo invoca el navegador del cliente — se veía en DevTools).
+            return { pedidoId, codigo: e.codigo || null, total: e.total, estado: e.estado,
                      expiraMs: e.reservaExpira?.toMillis?.() ?? (nowMs + ttlMs), yaExistia: true };
         }
         const pieceRef = db.doc(`pieces/${pieceId}`);
@@ -254,10 +295,12 @@ async function iniciarPagoWebCore(db, input = {}, opts = {}) {
         const contRef = db.doc('contadores/pedidos');
         const contSnap = await tx.get(contRef);
         const numero = ((contSnap.exists && Number(contSnap.data().valor)) || 0) + 1;
+        // Código PÚBLICO único (§166) — última LECTURA de la tx (antes de cualquier write).
+        const { codigo, codigoRef } = await reservarCodigo(db, tx, opts.randInt);
         const reservaExpira = Timestamp.fromMillis(nowMs + ttlMs);
 
         tx.set(pedidoRef, {
-            numero, pieceId,
+            numero, codigo, pieceId,
             pieceSlug: piece.slug || pieceId,
             pieceName: piece.name || 'Pieza',
             canal: 'web', medio: 'wompi',
@@ -278,7 +321,9 @@ async function iniciarPagoWebCore(db, input = {}, opts = {}) {
             reserva: { reservaId: pedidoId, reservaExpira },
         });
         tx.set(contRef, { valor: numero });
-        return { pedidoId, numero, total, estado: 'pago_pendiente', expiraMs: nowMs + ttlMs, yaExistia: false };
+        tx.set(codigoRef, { pedidoId, at: FieldValue.serverTimestamp() });   // reserva del código (misma tx = atómico)
+        // §166: payload público SIN `numero` (ver comentario del path idempotente).
+        return { pedidoId, codigo, total, estado: 'pago_pendiente', expiraMs: nowMs + ttlMs, yaExistia: false };
     });
 
     // Firma de integridad (datos ya fijos; fuera de la tx). reference = pedidoId.
@@ -589,4 +634,5 @@ module.exports = {
     entero, calcOro, PedidoError,
     derivarEstado, normStockType, STOCK_TYPES,   // modelo v3 (reusado por inventario-core.js)
     evaluarStock, aplicarConsumo,                // candado de stock compartido (reusado por iniciarPagoWeb, F2)
+    generarCodigoPedido, CODIGO_ALFABETO,        // §166: código público (tests + backfill)
 };

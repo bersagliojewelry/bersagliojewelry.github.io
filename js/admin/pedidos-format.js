@@ -33,6 +33,38 @@ export const entregaLabel = t => ENTREGA_LABEL[t] || '';
 
 const cop = n => '$' + Math.round(Math.max(0, Number(n) || 0)).toLocaleString('es-CO');
 
+/**
+ * §166 — Identificador VISIBLE del pedido: el código público BJ-XXXX-XXXX; fallback legacy al
+ * # interno (solo mientras exista algún pedido sin backfill). Al cliente SIEMPRE se le habla
+ * por código: el correlativo revela el volumen de ventas del negocio.
+ */
+export function idVisible(pedido) {
+    return pedido?.codigo || (pedido?.numero != null ? `#${pedido.numero}` : '—');
+}
+
+/** Normaliza lo tecleado/pegado para comparar códigos: mayúsculas, sin guiones/espacios/ruido. */
+export function normalizarCodigo(q) {
+    return String(q || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+/**
+ * Búsqueda TOLERANTE del panel (comité §166: minúsculas, sin guiones, sufijo, espacios de
+ * WhatsApp — nada de eso bloquea a Kary frente al cliente). Matchea código (parcial), # interno
+ * exacto, nombre de pieza o nombre del comprador.
+ */
+export function pedidoCoincide(pedido, query) {
+    const q = String(query || '').trim();
+    if (!q) return true;
+    const qn = normalizarCodigo(q);
+    const code = normalizarCodigo(pedido?.codigo);
+    if (qn && code && code.includes(qn)) return true;
+    const ql = q.toLowerCase();
+    if (String(pedido?.numero ?? '') === ql.replace(/^#/, '')) return true;
+    if ((pedido?.pieceName || '').toLowerCase().includes(ql)) return true;
+    if (nombreComprador(pedido).toLowerCase().includes(ql)) return true;
+    return false;
+}
+
 /** Nombre del comprador web ('' si el pedido no trae shipping — p.ej. venta de mostrador). */
 export function nombreComprador(pedido) {
     const s = pedido?.shipping;
@@ -56,7 +88,7 @@ export function resumenPedido(pedido) {
     const p = pedido || {};
     const s = p.shipping || null;
     const lineas = [
-        `Pedido #${p.numero ?? '?'} · Bersaglio`,
+        `Pedido ${idVisible(p)} · Bersaglio`,   // §166: al cliente, SIEMPRE el código
         p.pieceName ? `Pieza: ${p.pieceName}` : '',
         `Total: ${cop(p.total)}`,
         `Estado: ${estadoPedido(p.estado).label} · ${medioLabel(p.medio)} · ${canalLabel(p.canal)}`,
@@ -71,4 +103,4 @@ export function resumenPedido(pedido) {
     return lineas.filter(Boolean).join('\n');
 }
 
-export default { ESTADO_PEDIDO, estadoPedido, CANAL_LABEL, MEDIO_LABEL, ENTREGA_LABEL, canalLabel, medioLabel, entregaLabel, nombreComprador, direccionTexto, resumenPedido };
+export default { ESTADO_PEDIDO, estadoPedido, CANAL_LABEL, MEDIO_LABEL, ENTREGA_LABEL, canalLabel, medioLabel, entregaLabel, idVisible, normalizarCodigo, pedidoCoincide, nombreComprador, direccionTexto, resumenPedido };

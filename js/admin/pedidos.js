@@ -16,7 +16,7 @@
 
 import { admToast, initSidebar, esc, requireAuth, fmtDateTime } from './shared.js';
 import { onPedidosChange } from '../pedidos-service.js';
-import { estadoPedido, canalLabel, medioLabel, entregaLabel, nombreComprador, direccionTexto, resumenPedido } from './pedidos-format.js';
+import { estadoPedido, canalLabel, medioLabel, entregaLabel, nombreComprador, direccionTexto, resumenPedido, idVisible, pedidoCoincide } from './pedidos-format.js';
 import { pieceUrl } from '../core/urls.js';
 import { waPhone } from '../core/countries.js';
 
@@ -24,6 +24,7 @@ const cop = n => '$' + Math.round(Math.max(0, Number(n) || 0)).toLocaleString('e
 
 let _pedidos = [];
 let _abierto = null;    // id del pedido mostrado en el modal (para refrescarlo en vivo)
+let _query   = '';      // búsqueda tolerante (§166: código sin guiones/minúsculas/sufijo)
 
 // ─── Init ───────────────────────────────────────────────────────────────────────
 async function init() {
@@ -61,6 +62,10 @@ async function init() {
     document.getElementById('ped-modal').addEventListener('click', e => { if (e.target.id === 'ped-modal') cerrarModal(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !document.getElementById('ped-modal').hidden) cerrarModal(); });
     document.getElementById('ped-copy-resumen').addEventListener('click', copiarResumen);
+    document.getElementById('ped-search').addEventListener('input', e => {
+        _query = e.target.value;
+        renderLista();
+    });
     // Botones dinámicos del detalle (copiar dirección/tx) — delegación, el detalle se re-pinta en vivo.
     document.getElementById('ped-detail').addEventListener('click', e => {
         const btn = e.target.closest('[data-copy]');
@@ -81,15 +86,23 @@ function renderLista() {
         return;
     }
     empty.hidden = true;
-    count.textContent = `${_pedidos.length} pedido${_pedidos.length === 1 ? '' : 's'}`;
+
+    const visibles = _pedidos.filter(p => pedidoCoincide(p, _query));
+    count.textContent = _query.trim()
+        ? `${visibles.length} de ${_pedidos.length} pedidos`
+        : `${_pedidos.length} pedido${_pedidos.length === 1 ? '' : 's'}`;
+    if (!visibles.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="adm-td-muted">Nada coincide con esa búsqueda. El código no usa 0, O, 1, I, L, U ni V — revisa esos caracteres.</td></tr>';
+        return;
+    }
 
     // Filas: cada valor interpolado pasa por esc() (ver cabecera).
-    tbody.innerHTML = _pedidos.map(p => {
+    tbody.innerHTML = visibles.map(p => {
         const est = estadoPedido(p.estado);
         const cliente = nombreComprador(p) || (p.canal === 'pos' ? 'Mostrador' : '—');
         return `
-        <tr class="ped-row" data-id="${esc(p.id)}" tabindex="0" aria-label="Ver pedido ${esc(p.numero ?? '')}">
-            <td class="adm-num">#${esc(p.numero ?? '—')}</td>
+        <tr class="ped-row" data-id="${esc(p.id)}" tabindex="0" aria-label="Ver pedido ${esc(idVisible(p))}">
+            <td class="adm-num adm-nowrap">${esc(idVisible(p))}</td>
             <td class="adm-td-muted adm-nowrap">${esc(fmtDateTime(p.createdAt))}</td>
             <td>${esc(canalLabel(p.canal))}</td>
             <td class="adm-cell-main" title="${esc(p.pieceName || '')}">${esc(p.pieceName || '—')}</td>
@@ -133,7 +146,7 @@ function kv(dt, ddHtml) {
 
 function renderDetalle(p) {
     const est = estadoPedido(p.estado);
-    document.getElementById('ped-modal-title').textContent = `Pedido #${p.numero ?? '—'}`;
+    document.getElementById('ped-modal-title').textContent = `Pedido ${idVisible(p)}`;
 
     const s = p.shipping || null;
     const nombre = nombreComprador(p);
@@ -153,6 +166,7 @@ function renderDetalle(p) {
     <section class="ped-block">
         <h3>Pago</h3>
         <dl class="ped-kv">
+            ${p.codigo ? kv('Código', `<strong class="adm-num">${esc(p.codigo)}</strong> <button class="adm-btn adm-btn--ghost adm-btn--sm" data-copy="${esc(p.codigo)}" data-copy-label="Código copiado">⧉</button>`) : ''}
             ${kv('Total', `<strong class="adm-money ped-total">${esc(cop(p.total))}</strong>`)}
             ${desglosePeso}
             ${kv('Medio', esc(medioLabel(p.medio)))}
@@ -215,6 +229,7 @@ function renderDetalle(p) {
         <h3>Registro</h3>
         <dl class="ped-kv">
             ${kv('Creado', esc(fmtDateTime(p.createdAt)))}
+            ${p.numero != null ? kv('Consecutivo interno', `#${esc(p.numero)} <span class="adm-td-muted">(contable — nunca se comparte al cliente)</span>`) : ''}
             ${p.autor ? kv('Registrado por', esc(p.autor)) : ''}
             ${habeas}
         </dl>

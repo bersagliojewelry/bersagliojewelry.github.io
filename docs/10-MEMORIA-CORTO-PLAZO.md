@@ -8,7 +8,7 @@
 
 ## 🎯 Foco actual
 
-> 🎉 **CRM + Fase M EN PROD** (§47-§82). Wompi web verificado en prod (§164). ⚙️ FABLE 5 activo.
+> 🎉 **CRM + Fase M EN PROD** (§47-§82). Wompi web verificado en prod (§164). ⚙️ **OPUS 4.8 activo (INTERINATO)** — Fable sin cuota gratis (Daniel 2026-07-06); Daniel avisa el retorno. Reglas §0 spec f1-core VINCULANTES: commits `[OPUS-4.8]` + footer real + TDD estricto en `functions/` + deploy manual con suites verdes + NO tocar webhook/firma/reaper/snapshot. `[[feedback_opus_interino]]`
 >
 > **🧭 FOCO = PLAN ÚNICO ERP v4 (TODO-68, Daniel 2026-07-04: "un solo sistema, tú defines el orden")** — SSoT: spec `2026-07-04-plan-unico-erp-v4`. **F1 COMPLETO: PUENTE ✅ (§165) + CORE ✅ (§167, backend `994776a` + UI `d12be6f` + gate E2E 3 flujos EN PROD 2026-07-06)**. Restan F1-extras que NO gatean: push FCM A.6 (venta-web-pagada → celular Kary; deep-link listo) · badge sidebar. **SIGUE: F2 POS completo** (2.0 sesión de caja apertura/movimientos/cierre + 2.3 impresión térmica; spec TODO-39 apartados en paralelo) — con Fable mientras dure la cuota (Daniel avisa el corte → Opus 4.8; spec relevo f1-core queda de precedente). Precios NO bloquean; monitorear 1ª APPROVED sigue vivo. `[[project_comercio_pagos]]`
 > _MCP Firebase=escritura prod · merge a main=Claude · consejo externo read-only (`[[feedback_consejo_externo_readonly]]`) · Claude valida en Chrome (`[[feedback_validacion_chrome_directa]]`)._
@@ -51,7 +51,8 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier C pen
 
 ## 📝 Bitácora (efímera)
 
-> 2026-07-06 (cierre): **F1-CORE COMPLETO → ADR §167** (backend `994776a` + UI `d12be6f` + fix POS `8ff3100` + gate E2E Chrome prod: 3 flujos de entrega verificados, ventas de prueba anuladas, SW v74/v37 activos). Caza-bugs L-72 (POS trinario). Enmiendas spec §4.2/§4.3 aplicadas. Pend no-gate: push A.6 · badge sidebar.
+> 2026-07-06 (Opus): **Domicilio local cobrado → ADR §168** (`6dc423e`, deploy manual `avanzarPedido` + SW v75/v38): `entrega_local` traza flete{...} como envío nacional (helper `normFlete` compartido; total intacto). TDD 14/14 + gate prod (BJ-CPSE-AX89, $12.000 transferencia). 1er cambio de dinero bajo interinato Opus. **Pend Daniel #2 (explicación, no código): comportamiento "Confirmar pago"/"Anular" en Mostrador — responder** (efectivo=pagado directo; transferencia/wompi=por_verificar hasta "vi la plata"; L-72 corrigió el trinario que mostraba el botón sobre estados imposibles).
+> 2026-07-06 (cierre Fable): **F1-CORE COMPLETO → ADR §167** (backend `994776a` + UI `d12be6f` + fix POS `8ff3100` + gate E2E Chrome prod). Caza-bugs L-72. Enmiendas spec §4.2/§4.3. Pend no-gate: push A.6 · badge sidebar.
 > 2026-07-06: **§166 código público BJ-XXXX-XXXX** (comité ×3 unánime, CRUDO→bóveda; fuga DevTools cerrada; backfill 6/6; deploy completo; detalle→ADR §166) + **shard `20`→`21-ESPACIAL-ADMIN`** (§G.5, registrada en CLAUDE.md/00). ⚠️ ADC gcloud caducado en esta máquina (backfills: re-login o MCP). Pend menor: guía dictado Kary → F2.3.
 > 2026-07-04: **F1-PUENTE en prod validado Chrome** (→ ADR §165; rebote frío 1ª URL directa — vigilar en A.6) · sesiones 1-2: monitoreo verde + plan v4 definido (→ spec). Pend menor: TODO-67 fotos · auditoría Nivel-2 vencida (mantenimiento).
 > _(TODO vivo pre-existente: botón "Hablar con el Atelier" en la ficha — ADR §156.12.)_

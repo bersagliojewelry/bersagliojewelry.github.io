@@ -406,7 +406,8 @@ async function handleCierre() {
 }
 
 // ─── Export al contador (paso 6 · bruto/neto) ─────────────────────────────────
-const ESTADO_LBL = { pagado: 'Pagado', pago_por_verificar: 'Por verificar', anulado: 'Anulada' };
+// L-72: el estado se rotula con estadoPedido() compartido (no un mapa local que se pudre al
+// sumar estados — antes el CSV mostraba 'despacho_nacional' crudo en vez de "En camino").
 const csvCell = v => { const s = String(v ?? ''); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
 
 // Descarga un CSV de las ventas con bruto/comisión/retenciones/neto para el contador.
@@ -426,7 +427,7 @@ async function exportarContador() {
             : calcularNeto({ bruto: v.total, medio: v.medio });
         return [
             v.numero ?? '', fmtDateTime(v.createdAt), v.pieceName || 'Pieza', v.medio || '',
-            ESTADO_LBL[v.estado] || v.estado || '',
+            estadoPedido(v.estado).label,
             f.bruto, f.comisionBase, f.comisionIva, f.comisionWompi, f.reteFuente, f.reteIca, f.neto,
         ].map(csvCell).join(',');
     });

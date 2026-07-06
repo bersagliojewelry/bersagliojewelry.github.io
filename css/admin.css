@@ -1603,7 +1603,49 @@ select.adm-input { cursor: pointer; appearance: none; -webkit-appearance: none; 
     border-radius: 10px; padding: 10px 14px; font-size: 13px; font-weight: 500;
 }
 .ped-contact-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+
+/* ─── Pedidos F1-CORE: filtros + KPI + colas + acciones + historial ─────────── */
+.ped-fecha-label {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--adm-muted); white-space: nowrap;
+}
+.ped-fecha { max-width: 150px; padding: 6px 8px; font-size: 13px; }
+.ped-totales {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px;
+    padding: 10px 14px; margin-top: 10px; font-size: 13px;
+    background: var(--adm-accent-light); border-radius: 10px;
+}
+.ped-stat-click { cursor: pointer; }
+.ped-stat-click:focus-visible { outline: 2px solid var(--adm-accent); outline-offset: 2px; }
+.ped-stat-click.is-active { box-shadow: inset 0 0 0 2px var(--adm-accent); }
+.ped-guia { font-size: 13px; color: var(--adm-muted); margin: 0 0 8px; }
+.ped-help { margin-top: 12px; font-size: 13px; }
+.ped-help summary { cursor: pointer; color: var(--adm-muted); font-size: 12px; }
+.ped-help ol { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+.ped-hist { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font-size: 13px; }
+.ped-hist li { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.ped-hist-nota { width: 100%; color: var(--adm-muted); font-size: 12px; }
+.ped-form-wrap { margin-top: 18px; }
+.ped-form {
+    border: 1px solid var(--adm-accent); border-radius: 12px; padding: 14px 16px;
+    display: grid; gap: 10px;
+}
+.ped-form h3 { margin: 0; font-size: 14px; }
+.ped-form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.ped-form-campo { display: grid; gap: 4px; font-size: 12px; color: var(--adm-muted); }
+.ped-form-check { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; }
+.ped-form-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.ped-instructivo {
+    background: rgba(201,168,76,0.08); border-radius: 10px; padding: 10px 14px; font-size: 13px;
+}
+.ped-instructivo ol { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; }
 @media (max-width: 560px) {
     .ped-kv { grid-template-columns: 1fr; gap: 2px 0; }
     .ped-kv dt { margin-top: 8px; }
+}
+
+/* POS F1-CORE §3.3: checkbox de envío (decide en-mano vs flujo logístico) */
+.pos-envio-check {
+    display: flex; align-items: flex-start; gap: 8px;
+    margin-top: 10px; font-size: 13px; cursor: pointer;
 }

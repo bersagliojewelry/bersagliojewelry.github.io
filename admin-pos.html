@@ -106,6 +106,12 @@
                                 <option value="transferencia">Transferencia</option>
                                 <option value="wompi">Wompi (pasarela)</option>
                             </select>
+                            <!-- F1-CORE §3.3: sin envío = venta EN MANO (nace/termina entregado);
+                                 con envío entra al flujo logístico del módulo Pedidos. -->
+                            <label class="pos-envio-check">
+                                <input type="checkbox" id="pos-envio">
+                                Requiere envío o entrega (no se lleva en mano)
+                            </label>
                             <p class="pos-hint" id="pos-medio-hint"></p>
                         </div>
 

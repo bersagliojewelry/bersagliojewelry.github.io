@@ -81,6 +81,19 @@ export async function cierreCaja(input) {
 }
 
 /**
+ * F1-CORE: historial append-only del pedido (traza de transiciones que escribe `avanzarPedido`).
+ * One-shot al abrir el detalle (no listener: es una traza, no un tablero). La regla de `pedidos`
+ * ya cubre subcolecciones para staff (`match /{sub=**}`).
+ * @param {string} pedidoId @param {number} [max=100]
+ * @returns {Promise<Array>} eventos {de, a, autor, at, nota, dayKey} — más reciente primero
+ */
+export async function historialPedido(pedidoId, max = 100) {
+    const q = query(collection(firestoreDb, 'pedidos', pedidoId, 'historial'), orderBy('at', 'desc'), limit(max));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+/**
  * Últimas ventas registradas (lectura permitida a staff de ventas: owner/admin/catálogo).
  * @param {number} [max=15]
  * @returns {Promise<Array>} pedidos (más reciente primero)
@@ -109,4 +122,4 @@ export function onPedidosChange(cb, max = 200, onUiError) {
     );
 }
 
-export default { crearPedido, iniciarPagoWeb, confirmarPago, anularPedido, cierreCaja, avanzarPedido, ultimasVentas, onPedidosChange };
+export default { crearPedido, iniciarPagoWeb, confirmarPago, anularPedido, cierreCaja, avanzarPedido, historialPedido, ultimasVentas, onPedidosChange };

@@ -70,6 +70,7 @@ async function init() {
     });
     document.getElementById('pos-change').addEventListener('click', resetSale);
     document.getElementById('pos-medio').addEventListener('change', updateMedioHint);
+    document.getElementById('pos-envio').addEventListener('change', updateMedioHint);
     ['pos-gramo', 'pos-peso', 'pos-mano'].forEach(id =>
         document.getElementById(id).addEventListener('input', recalcTotal));
     document.getElementById('pos-submit').addEventListener('click', handleSubmit);
@@ -159,6 +160,8 @@ function resetSale() {
     document.getElementById('pos-selected').hidden = true;
     document.getElementById('pos-sale').hidden     = true;
     ['pos-gramo', 'pos-peso', 'pos-mano'].forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('pos-envio').checked = false;   // F1-CORE: cada venta decide su envío
+    updateMedioHint();
     renderResults();
     document.getElementById('pos-search').focus();
 }
@@ -202,12 +205,22 @@ function recalcTotal() {
 }
 
 // ─── Paso 3: medio de pago ────────────────────────────────────────────────────
+// F1-CORE §3.3 (ruta corta): mostrador SIN envío = venta EN MANO → termina `entregado` de una vez
+// (en efectivo nace así; transferencia/wompi al confirmar el pago). CON envío entra al flujo
+// logístico del módulo Pedidos. El hint le dice a Kary EXACTAMENTE qué va a pasar.
 function updateMedioHint() {
     const medio = document.getElementById('pos-medio').value;
+    const envio = document.getElementById('pos-envio').checked;
     const hint  = document.getElementById('pos-medio-hint');
-    hint.textContent = medio === 'efectivo'
-        ? 'Se marcará como PAGADO.'
-        : 'Quedará "por verificar" hasta que confirmes que llegó el dinero.';
+    if (medio === 'efectivo') {
+        hint.textContent = envio
+            ? 'Quedará PAGADA y entrará al flujo de envío (módulo Pedidos).'
+            : 'Venta en mano: quedará ENTREGADA (pagada) de una vez.';
+    } else {
+        hint.textContent = envio
+            ? 'Quedará "por verificar"; al confirmar el pago entrará al flujo de envío.'
+            : 'Quedará "por verificar"; al confirmar el pago quedará ENTREGADA (venta en mano).';
+    }
 }
 
 // ─── Confirmar y registrar ────────────────────────────────────────────────────
@@ -232,6 +245,8 @@ async function doRegister(medio, total) {
     btn.textContent = 'Registrando…';
 
     const payload = { pedidoId: _pedidoId, pieceId: _selected.id, medio, canal: 'pos' };
+    // F1-CORE §3.3: con envío el pedido NO es venta en mano → entra al flujo logístico.
+    if (document.getElementById('pos-envio').checked) payload.requiereEnvio = true;
     if (!isPrecioFijo(_selected)) {
         payload.valorGramo = document.getElementById('pos-gramo').value;
         payload.peso       = document.getElementById('pos-peso').value;

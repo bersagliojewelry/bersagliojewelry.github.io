@@ -47,7 +47,9 @@
 // vivo de todos los canales); nav Ventas renombrada (Pedidos real; fuera placeholders Ventas/Facturas/CxC).
 // v73 = §166 código público de pedido BJ-XXXX-XXXX (comité ×3): el cliente ya NO ve el correlativo
 // (revela volumen); comprobante de gracias/WhatsApp/panel = código; buscador tolerante en Pedidos.
-const CACHE_NAME    = 'bersaglio-v73';
+// v74 = F1-CORE UI (spec 2026-07-06 §4): módulo Pedidos operable — filtros/KPI/colas + acciones de
+// transición (avanzarPedido) + historial + aviso de despacho; POS con checkbox "requiere envío".
+const CACHE_NAME    = 'bersaglio-v74';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

@@ -509,6 +509,8 @@ function renderForm(p) {
             campos = `<label class="ped-form-check"><input type="checkbox" id="pf-cedula"> Cotejé la cédula del comprador contra el documento del pedido *</label>`;
         } else if (p.estado === 'despacho_nacional') {
             campos = campo('Evidencia (opcional)', '<input class="adm-input" id="pf-evidencia" placeholder="URL de foto o nota de la transportadora">');
+        } else if (p.estado === 'entrega_local') {
+            aviso = `Confirma que el mensajero entregó${p.pod?.receptorNombre ? ' a ' + p.pod.receptorNombre : ''}.`;
         } else {
             aviso = 'Venta en mano: el pedido queda entregado sin pasos de logística.';
         }

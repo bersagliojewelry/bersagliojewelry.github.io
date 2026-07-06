@@ -131,13 +131,31 @@ test('retiro: entregado exige cédula cotejada (POD)', async () => {
     assert.equal((await db.doc('pedidos/pAv4').get()).data().pod.cedulaCotejada, true);
 });
 
-test('entrega_local exige nombre del receptor', async () => {
+test('entrega_local exige nombre del receptor; SIN domicilio no escribe flete', async () => {
     await db.doc('pieces/av5').set({ name: 'Local', slug: 'local-t', price: 100000, stockType: 'finito', cantidad: 1 });
     await crearPedidoCore(db, { pedidoId: 'pAv5', pieceId: 'av5', medio: 'efectivo', autor: 'kary', requiereEnvio: true });
     await avanzarPedidoCore(db, { pedidoId: 'pAv5', a: 'preparacion', autor: 'kary' });
     await assert.rejects(avanzarPedidoCore(db, { pedidoId: 'pAv5', a: 'entrega_local', autor: 'kary' }), /recibe/i);
     await avanzarPedidoCore(db, { pedidoId: 'pAv5', a: 'entrega_local', autor: 'kary', datos: { receptorNombre: 'Marta Díaz' } });
-    assert.equal((await db.doc('pedidos/pAv5').get()).data().pod.receptorNombre, 'Marta Díaz');
+    const p = (await db.doc('pedidos/pAv5').get()).data();
+    assert.equal(p.pod.receptorNombre, 'Marta Díaz');
+    assert.equal(p.flete, undefined);   // domicilio gratis = sin rastro de flete
+});
+
+// Daniel 2026-07-06 (post-gate §167): el domicilio local COBRADO se traza igual que el flete
+// nacional — quién lo paga y si ya llegó la plata, ANTES de despachar al mensajero.
+test('entrega_local CON domicilio persiste flete{valorCOP,cobro,medio,estado} (paridad con nacional)', async () => {
+    await db.doc('pieces/av8').set({ name: 'Local$', slug: 'local-dom', price: 100000, stockType: 'finito', cantidad: 1 });
+    await crearPedidoCore(db, { pedidoId: 'pAv8', pieceId: 'av8', medio: 'efectivo', autor: 'kary', requiereEnvio: true });
+    await avanzarPedidoCore(db, { pedidoId: 'pAv8', a: 'preparacion', autor: 'kary' });
+    await avanzarPedidoCore(db, {
+        pedidoId: 'pAv8', a: 'entrega_local', autor: 'kary',
+        datos: { receptorNombre: 'Mensajero Juan', flete: { valorCOP: 12000, cobro: 'cobrado', medio: 'transferencia', estado: 'recibido' } },
+    });
+    const p = (await db.doc('pedidos/pAv8').get()).data();
+    assert.deepEqual(p.flete, { valorCOP: 12000, cobro: 'cobrado', medio: 'transferencia', estado: 'recibido' });
+    assert.equal(p.total, 100000);      // el domicilio JAMÁS toca el snapshot (cargo aditivo, D-2)
+    assert.equal(p.pod.receptorNombre, 'Mensajero Juan');
 });
 
 // ── P0 ARQUEO (spec §3.4): el dinero NO se esfuma al avanzar; devuelto resta en turno posterior ──

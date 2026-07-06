@@ -361,7 +361,7 @@ function logisticaBlock(p) {
     const filas = [
         p.transportadora ? kv('Transportadora', esc(p.transportadora)) : '',
         p.guia ? kv('Guía', `<span class="adm-num">${esc(p.guia)}</span> <button class="adm-btn adm-btn--ghost adm-btn--sm" data-copy="${esc(p.guia)}" data-copy-label="Guía copiada">⧉</button>`) : '',
-        f ? kv('Flete', esc(`${cop(f.valorCOP)} · ${f.cobro === 'asumido' ? 'lo asume Bersaglio' : 'se cobra al cliente'} · ${f.estado === 'recibido' ? 'recibido' : 'pendiente'}${f.medio ? ' · ' + f.medio : ''}`)) : '',
+        f ? kv('Flete / domicilio', esc(`${cop(f.valorCOP)} · ${f.cobro === 'asumido' ? 'lo asume Bersaglio' : 'se cobra al cliente'} · ${f.estado === 'recibido' ? 'recibido' : 'pendiente'}${f.medio ? ' · ' + f.medio : ''}`)) : '',
         p.valorDeclarado ? kv('Valor declarado', esc(cop(p.valorDeclarado))) : '',
         typeof p.asegurado === 'boolean' ? kv('Asegurado', p.asegurado ? 'Sí' : 'No') : '',
         p.pesoEntregado ? kv('Peso entregado', esc(`${p.pesoEntregado} g${p.desglose?.peso ? ` (cobrado: ${p.desglose.peso} g)` : ''}`)) : '',
@@ -501,7 +501,14 @@ function renderForm(p) {
             ${p.desglose?.tipo === 'por_peso' ? campo('Peso entregado (g)', '<input class="adm-input" id="pf-peso" type="number" min="0" step="0.01" placeholder="Opcional — si difiere, registra merma">') : ''}`;
         aviso = 'El flete es un cargo APARTE: nunca cambia el total del pedido.';
     } else if (a === 'entrega_local') {
-        campos = campo('¿Quién recibe? *', '<input class="adm-input" id="pf-receptor" placeholder="Nombre de quien recibe">');
+        // Domicilio cobrado (Daniel 2026-07-06): misma trazabilidad que el flete nacional.
+        campos = `
+            ${campo('¿Quién recibe? *', '<input class="adm-input" id="pf-receptor" placeholder="Nombre de quien recibe">')}
+            ${campo('Domicilio (COP)', '<input class="adm-input" id="pf-flete" type="number" min="0" inputmode="numeric" placeholder="0 = gratis">')}
+            ${campo('¿Quién paga el domicilio?', `<select class="adm-input" id="pf-cobro"><option value="cobrado">Se cobra al cliente (aparte)</option><option value="asumido">Lo asume Bersaglio</option></select>`)}
+            ${campo('Estado del domicilio', `<select class="adm-input" id="pf-flete-estado"><option value="pendiente">Pendiente de pago</option><option value="recibido">Ya recibido</option></select>`)}
+            ${campo('Medio del domicilio', `<select class="adm-input" id="pf-flete-medio"><option value="">—</option><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="wompi">Wompi</option></select>`)}`;
+        aviso = 'El domicilio es un cargo APARTE: nunca cambia el total del pedido. Déjalo en 0 si es gratis.';
     } else if (a === 'listo_retiro') {
         aviso = 'El cliente retira en el atelier. Al entregarlo se cotejará la cédula.';
     } else if (a === 'entregado') {
@@ -580,6 +587,8 @@ function submitForm(pedidoId) {
     } else if (a === 'entrega_local') {
         datos.receptorNombre = val('pf-receptor');
         if (!datos.receptorNombre) { admToast('Escribe el nombre de quien recibe.', 'danger'); return; }
+        const dom = Number(val('pf-flete')) || 0;
+        if (dom > 0) datos.flete = { valorCOP: dom, cobro: val('pf-cobro') || 'cobrado', estado: val('pf-flete-estado') || 'pendiente', medio: val('pf-flete-medio') || null };
     } else if (a === 'entregado') {
         if (p.estado === 'listo_retiro') {
             if (!document.getElementById('pf-cedula')?.checked) { admToast('Confirma que cotejaste la cédula del comprador.', 'danger'); return; }

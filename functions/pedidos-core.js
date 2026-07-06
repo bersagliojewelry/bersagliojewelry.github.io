@@ -626,6 +626,13 @@ async function avanzarPedidoCore(db, input = {}, opts = {}) {
     if (!pedidoId || !a) throw new PedidoError('invalid-argument', 'pedidoId y el estado destino (a) son obligatorios.');
     const nowMs = Number.isFinite(opts.nowMs) ? opts.nowMs : Date.now();
     const str = (v, max = 200) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
+    // Flete/domicilio = cargo ADITIVO trazable (D-2), misma forma en nacional y local (Daniel 2026-07-06).
+    const normFlete = (f) => ({
+        valorCOP: entero(f.valorCOP),
+        cobro: f.cobro === 'asumido' ? 'asumido' : 'cobrado',   // D-2: default se cobra aparte
+        medio: str(f.medio, 40) || null,
+        estado: f.estado === 'recibido' ? 'recibido' : 'pendiente',
+    });
 
     return db.runTransaction(async (tx) => {
         const ref = db.doc(`pedidos/${pedidoId}`);
@@ -649,13 +656,7 @@ async function avanzarPedidoCore(db, input = {}, opts = {}) {
             if (!f || !transportadora || !guia) {
                 throw new PedidoError('invalid-argument', 'Despacho nacional exige flete{valorCOP,cobro,medio}, transportadora y guía.');
             }
-            const cobro = f.cobro === 'asumido' ? 'asumido' : 'cobrado';   // D-2: default cobrado aparte
-            update.flete = {
-                valorCOP: entero(f.valorCOP),
-                cobro,
-                medio: str(f.medio, 40) || null,
-                estado: f.estado === 'recibido' ? 'recibido' : 'pendiente',
-            };
+            update.flete = normFlete(f);
             update.transportadora = transportadora;
             update.guia = guia;
             if (datos.valorDeclarado != null) update.valorDeclarado = entero(datos.valorDeclarado);
@@ -676,6 +677,10 @@ async function avanzarPedidoCore(db, input = {}, opts = {}) {
             const receptor = str(datos.receptorNombre);
             if (!receptor) throw new PedidoError('invalid-argument', 'Entrega local exige el nombre de quien recibe.');
             update.pod = { receptorNombre: receptor };
+            // Domicilio local COBRADO (Daniel 2026-07-06): misma trazabilidad que el flete nacional —
+            // cuánto, quién lo paga y si la plata ya llegó, ANTES de despachar al mensajero.
+            // Opcional: domicilio gratis no deja rastro de flete.
+            if (datos.flete && typeof datos.flete === 'object') update.flete = normFlete(datos.flete);
         } else if (a === 'entregado') {
             update.entregadoEn = FieldValue.serverTimestamp();
             if (p.estado === 'listo_retiro') {

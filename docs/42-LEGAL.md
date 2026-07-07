@@ -118,3 +118,9 @@
 2. Para algo sustantivo (redactar/decidir): **investigación profunda con agentes/workflow** contra fuentes oficiales (`.gov.co`), nunca de memoria ni de plugins extranjeros.
 3. Producir SIEMPRE en marco colombiano + disclaimer §0 + Comité ×3 (§3.7).
 4. Hallazgos/decisiones nuevas → actualizar este lóbulo (Reflejo de Captura). Al cerrar una tarea legal grande → ADR en `99` + fila en `00-INDICE`.
+
+---
+
+## §7 — Registro de hallazgos (por fecha)
+
+- **2026-07-07 · Consentimiento Habeas Data en el POS (F2.1, §171)**: al crear un cliente con documento en el mostrador, la UI captura autorización **previa, expresa e informada** (Ley 1581/2012 + Decreto 1377/2013): aviso con **responsable** (Bersaglio Jewelry) + **finalidades** (facturación DIAN · antifraude · cartera/posventa) + **enlace a `privacidad.html`** + **derechos** (conocer/actualizar/rectificar/suprimir/**revocar**). El servidor GUARDA la prueba: `consent{granted, method, canal:'mostrador_POS', policyVersion, finalidades[], capturedBy, at}` (la CF `crearClienteConDoc` RECHAZA persistir el documento sin consentimiento). Consentimiento tácito PROHIBIDO — el checkbox es el acto expreso. **[a verificar] con abogado colombiano** antes de uso masivo (orientación, no asesoría). La cédula NO es secreto → jamás llave de autenticación (portal F5 = 2º factor). Detalle → spec `2026-07-07-f2-1-vinculo-cliente-DISENO.md §1.7/§9.4`.

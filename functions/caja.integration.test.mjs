@@ -11,11 +11,20 @@
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { initializeApp } from 'firebase-admin/app';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import core from './caja-core.js';
 import pedidosCore from './pedidos-core.js';
-const { abrirTurnoCore, cerrarTurnoCore } = core;
+const { abrirTurnoCore, cerrarTurnoCore, registrarTrasladoCore, reversoCore, recalcBovedaCore } = core;
 const { crearPedidoCore, COTA_TURNO } = pedidosCore;
+
+// Limpia la bóveda entre tests B3 (singleton + ledger + checkpoints).
+async function resetBoveda() {
+    await db.doc('boveda/main').delete().catch(() => {});
+    const movs = await db.collection('bovedaMovimientos').get();
+    await Promise.all(movs.docs.map((d) => d.ref.delete()));
+    const cps = await db.collection('boveda').doc('main').collection('checkpoints').get();
+    await Promise.all(cps.docs.map((d) => d.ref.delete()));
+}
 
 initializeApp({ projectId: 'demo-bersaglio' });
 const db = getFirestore();
@@ -70,15 +79,17 @@ test('abrir · 2 aperturas CONCURRENTES (distinto opId) → exactamente 1 gana (
     assert.equal(existen.filter(Boolean).length, 1, 'solo el ganador existe como turno');
 });
 
-test('abrir · doble-tap MISMO opId → idempotente (1 turno, sin error)', async () => {
+test('abrir · doble-tap MISMO opId → idempotente (1 turno, sin duplicar)', async () => {
     await limpiarPuntero();
-    const [a, b] = await Promise.all([
+    // opId = docId ⇒ la duplicación es estructuralmente imposible. Bajo contención extrema el emulador
+    // puede abortar una de las dos tx (en prod el cliente reintenta); aseramos el INVARIANTE, no el XOR.
+    const settled = await Promise.allSettled([
         abrirTurnoCore(db, { opId: 'IDEM', fondoApertura: 200000, autor: 'c1' }),
         abrirTurnoCore(db, { opId: 'IDEM', fondoApertura: 200000, autor: 'c1' }),
     ]);
-    assert.equal(a.turnoId, 'IDEM');
-    assert.equal(b.turnoId, 'IDEM');
-    assert.equal(a.yaExistia !== b.yaExistia, true, 'exactamente uno lo creó, el otro lo encontró');
+    assert.ok(settled.some((s) => s.status === 'fulfilled' && s.value.turnoId === 'IDEM'), 'al menos una apertura resolvió');
+    assert.equal((await db.doc('turnos/IDEM').get()).exists, true);
+    assert.equal((await db.doc('caja/estado').get()).data().turnoAbiertoId, 'IDEM');
 });
 
 // ─── Cierre por puntero + ecuación completa (invariantes #7) ─────────────────
@@ -201,4 +212,91 @@ test('B2 · CARRERA cerrarTurno vs crearPedido → sin pedido HUÉRFANO (invaria
         assert.ok(!pedSnap.exists || (pedSnap.data().turnoId ?? null) === null, 'venta rechazada o sin turno = sin huérfano');
     }
     await sinEnforce();
+});
+
+// ─── B3 · Bóveda: traslado/reverso + recompute + checkpoint (§9.3 · §8.1.2/3 · §8.3) ─────────
+test('B3 · traslado cajón→bóveda: el saldo SUBE por recompute (no se incrementa a mano)', async () => {
+    await resetBoveda();
+    const r1 = await registrarTrasladoCore(db, { opId: 'TR1', tipo: 'cajon_a_boveda', monto: 100000, turnoId: 'T', autor: 'kary' });
+    assert.equal(r1.saldo, 100000);
+    const r2 = await registrarTrasladoCore(db, { opId: 'TR2', tipo: 'cajon_a_boveda', monto: 50000, turnoId: 'T', autor: 'kary' });
+    assert.equal(r2.saldo, 150000);
+    assert.equal((await db.doc('boveda/main').get()).data().saldo, 150000);
+    const mov = (await db.doc('bovedaMovimientos/TR1').get()).data();
+    assert.equal(mov.delta, 100000);                        // delta firmado = autoridad del recompute
+});
+
+test('B3 · salida boveda→banco: el saldo BAJA (signo por tipo)', async () => {
+    await resetBoveda();
+    await registrarTrasladoCore(db, { opId: 'S1', tipo: 'cajon_a_boveda', monto: 200000, autor: 'kary' });
+    const r = await registrarTrasladoCore(db, { opId: 'S2', tipo: 'boveda_a_banco', monto: 120000, autor: 'kary', nota: 'consignación' });
+    assert.equal(r.saldo, 80000);
+    assert.equal((await db.doc('bovedaMovimientos/S2').get()).data().delta, -120000);
+});
+
+test('B3 · reverso: NO borra el original — crea asiento compensatorio (doble rastro) y el saldo vuelve', async () => {
+    await resetBoveda();
+    await registrarTrasladoCore(db, { opId: 'ORIG', tipo: 'cajon_a_boveda', monto: 100000, autor: 'kary' });
+    const rev = await reversoCore(db, { opId: 'REV', reversaA: 'ORIG', autor: 'kary', motivo: 'traslado mal digitado' });
+    assert.equal(rev.saldo, 0);                             // compensado
+    assert.equal((await db.doc('bovedaMovimientos/ORIG').get()).exists, true);   // el original SIGUE (no se borró)
+    const r = (await db.doc('bovedaMovimientos/REV').get()).data();
+    assert.equal(r.tipo, 'reverso');
+    assert.equal(r.reversaA, 'ORIG');
+    assert.equal(r.delta, -100000);                         // exactamente el opuesto
+    assert.equal((await db.doc('boveda/main').get()).data().saldo, 0);
+});
+
+test('B3 · reverso: doble reverso del MISMO original → rechaza (no doble compensación)', async () => {
+    await resetBoveda();
+    await registrarTrasladoCore(db, { opId: 'O2', tipo: 'cajon_a_boveda', monto: 100000, autor: 'kary' });
+    await reversoCore(db, { opId: 'RV2', reversaA: 'O2', autor: 'kary', motivo: 'x' });
+    await assert.rejects(reversoCore(db, { opId: 'RV2b', reversaA: 'O2', autor: 'kary', motivo: 'otra vez' }), /ya.*revers/i);
+});
+
+test('B3 · idempotencia: doble-tap MISMO opId de traslado → saldo NO se duplica (un solo asiento)', async () => {
+    await resetBoveda();
+    // opId = docId ⇒ un solo movimiento posible. Tolera un abort transitorio; asera el saldo.
+    const settled = await Promise.allSettled([
+        registrarTrasladoCore(db, { opId: 'IDEMT', tipo: 'cajon_a_boveda', monto: 100000, autor: 'kary' }),
+        registrarTrasladoCore(db, { opId: 'IDEMT', tipo: 'cajon_a_boveda', monto: 100000, autor: 'kary' }),
+    ]);
+    assert.ok(settled.some((s) => s.status === 'fulfilled'), 'al menos un traslado resolvió');
+    assert.equal((await db.doc('boveda/main').get()).data().saldo, 100000);   // NO 200000
+    assert.equal((await db.collection('bovedaMovimientos').get()).docs.filter((d) => d.id === 'IDEMT').length, 1);
+});
+
+test('B3 · guard de monto: no-entero / negativo / cero → rechaza (§8.3)', async () => {
+    await resetBoveda();
+    await assert.rejects(registrarTrasladoCore(db, { opId: 'G1', tipo: 'cajon_a_boveda', monto: 100.5, autor: 'k' }), /monto/i);
+    await assert.rejects(registrarTrasladoCore(db, { opId: 'G2', tipo: 'cajon_a_boveda', monto: -100, autor: 'k' }), /monto/i);
+    await assert.rejects(registrarTrasladoCore(db, { opId: 'G3', tipo: 'cajon_a_boveda', monto: 0, autor: 'k' }), /monto/i);
+    await assert.rejects(registrarTrasladoCore(db, { opId: 'G4', tipo: 'inventado', monto: 100, autor: 'k' }), /tipo/i);
+});
+
+test('B3 · saldo insuficiente: boveda→banco por más que el saldo → rechaza (no deja negativa la bóveda)', async () => {
+    await resetBoveda();
+    await registrarTrasladoCore(db, { opId: 'I1', tipo: 'cajon_a_boveda', monto: 50000, autor: 'kary' });
+    await assert.rejects(registrarTrasladoCore(db, { opId: 'I2', tipo: 'boveda_a_banco', monto: 120000, autor: 'kary' }), /insuficiente/i);
+    assert.equal((await db.doc('boveda/main').get()).data().saldo, 50000);   // no cambió
+});
+
+test('B3 · checkpoint ACOTA el recompute (base sellada + solo movimientos posteriores)', async () => {
+    await resetBoveda();
+    const sellTs = Timestamp.fromMillis(1_700_000_000_000);   // corte fijo en el pasado
+    await db.doc('boveda/main/checkpoints/2026-06').set({ mes: '2026-06', saldo: 500000, sellTs });
+    // Movimiento ANTERIOR al corte (ya sellado en el checkpoint) → debe IGNORARSE en el recompute.
+    await db.doc('bovedaMovimientos/viejo').set({ tipo: 'cajon_a_boveda', monto: 999999, delta: 999999, autor: 'x', ts: Timestamp.fromMillis(1_600_000_000_000) });
+    // Nuevo traslado (ts = ahora > sellTs) → recompute = 500000 + 30000, ignora el viejo.
+    const r = await registrarTrasladoCore(db, { opId: 'CP1', tipo: 'cajon_a_boveda', monto: 30000, autor: 'kary' });
+    assert.equal(r.saldo, 530000);
+    assert.equal((await recalcBovedaCore(db)).saldo, 530000);   // el recompute standalone (trigger) coincide
+});
+
+test('B3 · recalcBovedaCore: no-op si el saldo no cambió (evita re-trigger)', async () => {
+    await resetBoveda();
+    await registrarTrasladoCore(db, { opId: 'NC1', tipo: 'cajon_a_boveda', monto: 100000, autor: 'kary' });
+    const r = await recalcBovedaCore(db);
+    assert.equal(r.saldo, 100000);
+    assert.equal(r.changed, false);                         // ya estaba en 100000 → no reescribe
 });

@@ -138,4 +138,115 @@ async function cerrarTurnoCore(db, input = {}) {
     });
 }
 
-module.exports = { abrirTurnoCore, cerrarTurnoCore };
+// ─── B3 · Bóveda: traslado / reverso / recompute (§9.3 · §8.1.2/3 · §8.3) ─────────────────────
+// El saldo de bóveda NUNCA se incrementa a mano: se RECOMPUTA desde el ledger (patrón recalcSaldoCliente
+// §50). Cada movimiento guarda un `delta` FIRMADO (autoridad del recompute); el signo lo da el tipo. El
+// ledger es INMUTABLE ESTRICTO (§9.3): corregir = asiento `reverso` (delta=−original), jamás editar/borrar.
+// El CHECKPOINT mensual (boveda/main/checkpoints/{YYYY-MM}, sellado por `sellTs`) ACOTA el recompute a
+// [checkpoint, ahora] → no O(n) a 2-3 años (§8.3).
+const SIGNO_BOVEDA = { cajon_a_boveda: 1, boveda_a_cajon: -1, boveda_a_banco: -1 };   // traslados que acepta registrarTraslado
+
+// Guard duro de montos (§8.3): entero seguro y positivo (COP sin centavos). NO usa entero() (que coacciona).
+function guardMonto(monto) {
+    if (!Number.isSafeInteger(monto) || monto <= 0) {
+        throw new PedidoError('invalid-argument', 'El monto debe ser un entero positivo (pesos COP sin centavos).');
+    }
+}
+
+// Recompute AUTORIDAD: saldo = último checkpoint + Σ(delta de los movimientos posteriores YA commiteados).
+// `tx` opcional → dentro de una transacción (gate síncrono §8.1.3) o standalone (recalc/display).
+async function saldoBovedaDesdeLedger(db, tx = null) {
+    const cpQ = db.collection('boveda').doc('main').collection('checkpoints').orderBy('sellTs', 'desc').limit(1);
+    const cpSnap = tx ? await tx.get(cpQ) : await cpQ.get();
+    const cp = cpSnap.empty ? null : cpSnap.docs[0].data();
+    const base = cp ? (cp.saldo || 0) : 0;
+    let movQ = db.collection('bovedaMovimientos');
+    if (cp && cp.sellTs) movQ = movQ.where('ts', '>', cp.sellTs);   // solo lo posterior al corte
+    const movSnap = tx ? await tx.get(movQ) : await movQ.get();
+    let suma = 0;
+    movSnap.forEach((d) => { suma += (d.data().delta || 0); });
+    return base + suma;
+}
+
+/**
+ * Registra un traslado de dinero físico de/hacia la bóveda. Recompute SÍNCRONO en la tx (gate §8.1.3):
+ * una salida no puede dejar la bóveda negativa. Idempotente por opId. Escribe el ledger + boveda/main atómico.
+ * @param db Firestore (admin). @param input { opId, tipo, monto, turnoId?, autor, nota? }
+ */
+async function registrarTrasladoCore(db, input = {}) {
+    const opId = String(input.opId || '').trim();
+    const tipo = input.tipo;
+    const monto = input.monto;
+    const autor = input.autor || null;
+    if (!opId) throw new PedidoError('invalid-argument', 'opId es obligatorio.');
+    const signo = SIGNO_BOVEDA[tipo];
+    if (signo === undefined) throw new PedidoError('invalid-argument', `tipo de traslado inválido: ${tipo}`);
+    guardMonto(monto);
+    const delta = signo * monto;
+
+    return db.runTransaction(async (tx) => {
+        const movRef = db.doc(`bovedaMovimientos/${opId}`);
+        const existing = await tx.get(movRef);
+        const base = await saldoBovedaDesdeLedger(db, tx);   // recompute autoridad (movimientos ya commiteados)
+        if (existing.exists) return { opId, saldo: base, yaExistia: true };   // IDEMPOTENTE: no re-suma
+
+        const nuevoSaldo = base + delta;
+        if (delta < 0 && nuevoSaldo < 0) throw new PedidoError('failed-precondition', 'Saldo insuficiente en la bóveda para esa salida.');
+
+        const mov = { tipo, monto, delta, autor, ts: FieldValue.serverTimestamp() };
+        if (input.turnoId) mov.turnoId = String(input.turnoId);
+        if (input.nota) mov.nota = String(input.nota).slice(0, 500);
+        tx.set(movRef, mov);
+        tx.set(db.doc('boveda/main'), { saldo: nuevoSaldo, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+        return { opId, saldo: nuevoSaldo, tipo, delta, yaExistia: false };
+    });
+}
+
+/**
+ * Reversa un movimiento del ledger SIN borrarlo: crea un asiento compensatorio `reverso` (delta=−original).
+ * Doble rastro contable (reversing entry, §9.3). Rechaza reversar un reverso o un movimiento ya reversado.
+ * @param db Firestore (admin). @param input { opId, reversaA, autor, motivo? }
+ */
+async function reversoCore(db, input = {}) {
+    const opId = String(input.opId || '').trim();
+    const reversaA = String(input.reversaA || '').trim();
+    const autor = input.autor || null;
+    const motivo = input.motivo ? String(input.motivo).slice(0, 500) : null;
+    if (!opId || !reversaA) throw new PedidoError('invalid-argument', 'opId y reversaA son obligatorios.');
+
+    return db.runTransaction(async (tx) => {
+        const movRef = db.doc(`bovedaMovimientos/${opId}`);
+        const origRef = db.doc(`bovedaMovimientos/${reversaA}`);
+        const existing = await tx.get(movRef);
+        const origSnap = await tx.get(origRef);
+        const yaRev = await tx.get(db.collection('bovedaMovimientos').where('reversaA', '==', reversaA));
+        const base = await saldoBovedaDesdeLedger(db, tx);
+        if (existing.exists) return { opId, saldo: base, yaExistia: true };   // IDEMPOTENTE
+        if (!origSnap.exists) throw new PedidoError('not-found', 'El movimiento a reversar no existe.');
+        if (origSnap.data().tipo === 'reverso') throw new PedidoError('failed-precondition', 'No se puede reversar un reverso.');
+        if (!yaRev.empty) throw new PedidoError('failed-precondition', 'Ese movimiento ya fue reversado.');
+
+        const delta = -(origSnap.data().delta || 0);
+        const nuevoSaldo = base + delta;
+        tx.set(movRef, { tipo: 'reverso', reversaA, monto: Math.abs(delta), delta, autor, motivo, ts: FieldValue.serverTimestamp() });
+        tx.set(db.doc('boveda/main'), { saldo: nuevoSaldo, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+        return { opId, reversaA, saldo: nuevoSaldo, delta, yaExistia: false };
+    });
+}
+
+/**
+ * Recompute de "vista" (cuerpo del trigger recalcBoveda §8.1.3): recalcula boveda/main desde el ledger.
+ * NO tiene autoridad (los gates recomputan en su propia tx) — solo mantiene el saldo fresco para mostrar.
+ * No-op si el saldo no cambió (evita re-trigger). @param db Firestore (admin).
+ */
+async function recalcBovedaCore(db) {
+    const saldo = await saldoBovedaDesdeLedger(db, null);
+    const mainRef = db.doc('boveda/main');
+    const cur = await mainRef.get();
+    const actual = cur.exists ? (cur.data().saldo ?? null) : null;
+    if (actual === saldo) return { saldo, changed: false };
+    await mainRef.set({ saldo, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    return { saldo, changed: true };
+}
+
+module.exports = { abrirTurnoCore, cerrarTurnoCore, registrarTrasladoCore, reversoCore, recalcBovedaCore };

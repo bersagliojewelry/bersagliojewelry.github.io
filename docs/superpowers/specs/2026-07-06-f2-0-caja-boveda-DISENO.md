@@ -331,13 +331,15 @@ T0+flag vs periodo de gracia — ¿venta en vuelo cruzando el corte?
 > Claude las adopta con matices (no subordinación, §3.3). **Esto cierra el diseño; falta solo 2 decisiones de
 > negocio de Daniel (§9.6) y confirmar el modelo de owner (§9.1) → luego spec ejecutable con spec-kit.**
 
-### 9.1 Dual-Approval — DESCARTADO por decisión de Daniel (§9.6.3) → sustituido por §9.8
-Gemini propuso que los eventos destructivos (`ajuste_faltante/sobrante`, reverso de traslado) nacieran
-`pendiente_aprobacion` y requirieran la firma del owner (reusando la SoD del CRM). **Daniel declinó la
-aprobación previa (§9.6.3 "solo alerta") y ambos son owner (§9.6.1)** → el Dual-Approval con `isOwner()` ni
-distinguiría a Kary. **Se reemplaza por la mitigación de CERO FRICCIÓN de §9.8** (ledger incorruptible +
-alerta hardcoded a Daniel + auditoría a demanda): no bloquea a Kary, pero nada de dinero queda oculto. Se
-CONSERVA el registro `reverso` (§9.3) — no por control preventivo sino por integridad del ledger/checkpoint.
+### 9.1 Dual-Approval para eventos destructivos — ADOPTADO (Kary aprueba; §9.6.3 reencuadrado)
+Los eventos DESTRUCTIVOS de caja — `ajuste_faltante/ajuste_sobrante` de bóveda y el **reverso** de un traslado
+(§9.3) — nacen `pendiente_aprobacion` y **requieren `isOwner()` (Kary) para entrar al recompute**. Reusa el
+patrón SoD del CRM (movimientos sobre `autoAprobacionMax` → aprobación owner, `rules:100-104`;
+`[[feedback_claude_experto_verifica]]` "operadora registra / dueño aprueba"). Ahora el aprobador es **Kary
+(owner, presente en el negocio)** — no Daniel — así que la fricción es mínima. **MATIZ a Gemini** (no todo
+evento): los egresos rutinarios y los traslados normales cajón→bóveda NO piden aprobación (sería fricción
+diaria) → van con **alerta al owner**. Solo lo destructivo/correctivo pide la firma de Kary. La solicita el rol
+`caja`, la aprueba `owner` (panel de aprobaciones, §7 fase 2).
 
 ### 9.2 Cota de turno (límite Firestore 500 lecturas/tx) — hace seguro el invariante #3
 El recompute síncrono es correcto PERO un turno con >400 docs (turno olvidado en fin de semana alto) haría
@@ -369,34 +371,51 @@ el cliente paga solo) NO tienen turno → no llevan turnoId → reporte de ingre
 Pedidos + export contador ya lo cubren). D4 sigue válido en su esencia (transferencia/wompi no son candado del
 cajón), pero SÍ heredan el turnoId si la venta es de mostrador. **DECISIÓN DE NEGOCIO → §9.6.2**.
 
-### 9.6 Decisiones de negocio de Daniel — RESPONDIDAS (2026-07-06)
-1. **Modelo de owner: AMBOS son `owner`** (Daniel: *"ambos somos dueños"*). Kary y Daniel = co-dueños.
-2. **Arqueo del turno = MOSTRADOR SOLO** (Daniel: *"aparte"*). El cierre de turno concilia únicamente lo del
-   mostrador (efectivo del cajón + medios que Kary cobró ahí, por `turnoId`). Las ventas WEB van a su reporte
-   de ingresos digitales aparte (módulo Pedidos + export contador). ✅ confirma el §9.5 y simplifica la query.
-3. **Sin Dual-Approval: SOLO ALERTA** (Daniel: *"solo alerta, sin aprobar"*). Los ajustes/reversos se registran
-   directo (sin estado `pendiente_aprobacion`, sin fricción para Kary).
+### 9.6 Decisiones de negocio de Daniel — RESPONDIDAS + REENCUADRADAS (2026-07-06)
+> ⚑ **Reencuadre fundamental (Daniel 2026-07-06)**: *"Kary no es mi socia, yo no soy dueño de Bersaglio, solo
+> soy el desarrollador… una vez me pague le entregaré el software, luego ella podrá crear usuarios y dar roles.
+> En caja no se entregará el usuario de Kary sino un usuario de caja con roles de caja."* → **La respuesta
+> previa "ambos owner" queda ANULADA.** Coincide con `[[user_daniel_romero]]` (Daniel = dueño del SISTEMA;
+> empresa Bersaglio = Kary Mendoza). Modelo REAL de producción:
+1. **`owner` = Kary** (dueña del negocio y del sistema). **`caja` = rol NUEVO** (la cajera/vendedora del
+   mostrador). **Daniel = desarrollador** (construye y entrega; NO rol operativo). Kary reparte roles al recibir.
+2. **Arqueo del turno = MOSTRADOR SOLO** (Daniel: *"aparte"*). El cierre concilia solo el mostrador (efectivo
+   del cajón + medios que la cajera cobró ahí, por `turnoId`). Las ventas WEB → reporte digital aparte. ✅ §9.5.
+3. **Dual-Approval SÍ (Kary aprueba)** (Daniel: *"Kary (dueña) aprueba"* — la respuesta previa "solo alerta"
+   fue bajo premisa falsa de que Daniel era el aprobador). Ahora quien aprueba es Kary (`owner`), presente en el
+   negocio → **el Dual-Approval de Gemini REVIVE** (§9.1). Cero fricción de dueño-ausente.
 
-### 9.7 ⚠️ CONSECUENCIA de §9.6.1 + §9.6.3 (deber del arquitecto señalarlo — §3.3/§3.6)
-**Combinadas, estas dos decisiones DESACTIVAN el control PREVENTIVO interno.** Si ambos son owner, la
-protección owner-only NO distingue a Kary de Daniel (puede editar `config/caja`, límites), y sin Dual-Approval
-los ajustes/reversos de dinero se registran sin visto bueno de nadie. Es exactamente lo que Gemini llamó
-"teatro de seguridad" y el comité "auto-reporte". **F2.0 quedaría protegiendo contra el LADRÓN EXTERNO (límite
-del cajón) pero SIN control interno** — es una decisión LEGÍTIMA del dueño (confianza en Kary + agilidad), pero
-debe ser INFORMADA, no un default accidental. **Se le señala a Daniel para confirmación explícita.**
+### 9.7 ✅ SoD RESTAURADA (la consecuencia preocupante se DISUELVE)
+Con dos roles separados (cajera `caja` opera / dueña `owner` supervisa+aprueba), el **antirrobo interno SÍ
+funciona, natural y sin fricción**: es la Segregation of Duties que el comité y Gemini pedían, pero DENTRO del
+sistema. La cajera maneja el cajón (máx `limiteCajon`); la dueña (Kary) ve la bóveda, fija límites, hace el
+conteo físico, consigna al banco, aprueba ajustes y recibe alertas. **F2.0 protege contra el ladrón EXTERNO
+(límite del cajón) Y contra el mal manejo INTERNO (SoD cajera↔dueña)**. La preocupación de §9.7-previa (ambos
+owner sin control) queda anulada por el reencuadre §9.6.
 
-### 9.8 Mitigación de CERO FRICCIÓN (preserva lo esencial sin bloquear a Kary) — protección MUTUA
-Dado §9.6, se conserva el control mínimo que NO cuesta un solo paso extra a Kary y **protege a ambos** (si un
-día hay discrepancia, hay evidencia objetiva que también limpia a Kary si no fue ella):
-1. **Ledger de dinero INCORRUPTIBLE**: `bovedaMovimientos` y `turnos/*/movimientos` son CF-only + append-only
-   ESTRICTO — la regla Firestore prohíbe `update`/`delete` **incluso a un owner** (§9.3). Ningún dueño puede
-   borrar ni editar un movimiento; corregir = reverso que deja doble rastro. **Nada de dinero se puede ocultar.**
-2. **Alerta a Daniel HARDCODED (no removible)**: las alertas de eventos delicados (anulación/reverso de dinero
-   físico, ajuste de faltante, egreso, descuadre) incluyen SIEMPRE a Daniel — el destinatario crítico está
-   FIJO en el código de la Cloud Function, NO en `config/caja` editable. Aunque Kary sea owner, no puede
-   quitarse esa alerta desde la app (no toca el código de la CF). `config/caja` solo AÑADE destinatarios extra.
-3. **Historial auditable a demanda**: Daniel puede revisar en cualquier momento el ledger completo (append-only,
-   inocultable). Es vigilancia PASIVA pero INCORRUPTIBLE — más débil que Dual-Approval (que Daniel declinó),
-   mucho más fuerte que nada, y cero fricción operativa.
-> Esto NO reintroduce la aprobación previa (Daniel la declinó); solo garantiza que **nada quede oculto** y que
-> **Daniel siempre se entere**. Si acepta, el diseño queda CERRADO → spec ejecutable.
+### 9.8 Mitigación INCORRUPTIBLE (complementa el Dual-Approval, no lo reemplaza)
+Sobre el Dual-Approval (§9.1) se conserva, como defensa en profundidad y protección MUTUA (limpia a la cajera
+si no fue ella):
+1. **Ledger de dinero INCORRUPTIBLE**: `bovedaMovimientos` y `turnos/*/movimientos` = CF-only + append-only
+   ESTRICTO — la regla Firestore prohíbe `update`/`delete` **incluso al owner** (§9.3). Corregir = reverso con
+   doble rastro. Nada de dinero se puede borrar u ocultar.
+2. **Alerta al owner (Kary) SIEMPRE**: las alertas de eventos delicados incluyen SIEMPRE al `owner` — fijo en
+   el código de la CF. `config/caja` solo AÑADE destinatarios (p.ej. el celular de Daniel durante el soporte),
+   nunca remueve al owner.
+3. **Historial auditable a demanda** por el owner (append-only, inocultable).
+> Diseño CERRADO (comité ×3 + Gemini + decisiones de Daniel + modelo de roles) → **spec ejecutable**.
+
+### 9.9 Modelo de roles DEFINITIVO de caja (base de la spec)
+Nuevo rol **`caja`** en el árbol de roles (`firestore.rules`, junto a owner/admin/editor/catalogo). Helper
+`isCaja()` = `getUserRole() in ['owner','admin','caja']` para OPERAR el POS; el resto sigue owner-only.
+| Acción | `caja` (cajera) | `owner` (Kary) |
+|---|---|---|
+| Abrir turno · registrar venta POS · movimientos (ingreso/egreso) · cerrar turno | ✅ | ✅ |
+| Traslado cajón→bóveda (vaciar el cajón al superar el límite) | ✅ (registra; no ve el total) | ✅ |
+| Ver saldo ACUMULADO de bóveda · consignar al banco (bóveda→banco) · reponer fondo (bóveda→cajón) | ❌ | ✅ |
+| Editar `config/caja` (límites, enforceTurno, destinatarios) · conteo físico de bóveda | ❌ | ✅ |
+| **Aprobar** ajuste de faltante/sobrante · reverso de traslado | ❌ (los solicita) | ✅ (los aprueba) |
+- El POS de venta NUNCA muestra a la cajera el saldo acumulado de bóveda (discreción D7). La cajera ve solo su
+  turno (fondo, ventas, efectivo del cajón, alerta de límite).
+- Todas las CF validan por rol (`isCaja()` para operar; `isOwner()` para supervisar/aprobar). Wrappers como los
+  de `pedidos.js` (`verifyRole`). Daniel (dev) opera en desarrollo; en producción no es un rol del negocio.

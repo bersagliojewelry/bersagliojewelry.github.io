@@ -355,12 +355,14 @@
                         <input class="adm-input" id="adjuntar-doc" type="text" maxlength="30" autocomplete="off" inputmode="numeric">
                     </div>
                 </div>
-                <!-- Consentimiento Habeas Data: solo cuando hay documento (comité seguridad) -->
+                <!-- Consentimiento Habeas Data (Ley 1581/2012 · Decreto 1377/2013): solo cuando hay documento.
+                     Autorización PREVIA, EXPRESA e INFORMADA — informada = finalidad + responsable + enlace a la
+                     política publicada + derechos (incl. revocar). El servidor guarda la prueba (versión/finalidades). -->
                 <div class="pos-consent" id="adjuntar-consent-wrap" hidden>
-                    <p class="pos-hint">Bersaglio tratará este documento para facturación electrónica (DIAN), prevención de fraude y gestión de su cuenta (cartera y posventa), conforme a su Política de Tratamiento de Datos. El titular puede conocer, actualizar, rectificar y suprimir sus datos.</p>
+                    <p class="pos-hint"><strong>Bersaglio Jewelry</strong> (responsable) tratará el documento del cliente para facturación electrónica (DIAN), prevención de fraude y gestión de su cuenta (cartera y posventa), conforme a su <a href="privacidad.html" target="_blank" rel="noopener">Política de Tratamiento de Datos</a>. El titular puede conocer, actualizar, rectificar y suprimir sus datos, y <strong>revocar</strong> esta autorización.</p>
                     <label class="pos-envio-check">
                         <input type="checkbox" id="adjuntar-consent">
-                        El cliente autoriza el tratamiento de sus datos (Habeas Data · Ley 1581)
+                        El cliente da su autorización previa, expresa e informada para el tratamiento de sus datos (Habeas Data · Ley 1581 de 2012)
                     </label>
                 </div>
                 <button class="adm-btn adm-btn--primary adm-btn--sm" id="adjuntar-crear-btn" type="button">Crear y vincular</button>

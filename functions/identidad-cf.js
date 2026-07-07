@@ -30,12 +30,16 @@ function consentValido(c) {
     return !!c && c.granted === true && typeof c.method === 'string' && c.method.length > 0;
 }
 
-// Sello de consentimiento persistido (evidencia). serverTimestamp lo pone el caller (`now`).
+// Sello de consentimiento persistido (evidencia Habeas Data, comité seguridad UI). serverTimestamp
+// lo pone el caller (`now`). Registra la PRUEBA reconstruible: versión de política + finalidades +
+// canal + quién lo capturó — sin esto, la autorización "informada" no se puede probar después.
 function selloConsent(consent, autor, now) {
     return {
         granted: true,
         method: consent.method,
+        canal: typeof consent.canal === 'string' && consent.canal ? consent.canal : 'mostrador_POS',
         policyVersion: consent.policyVersion || null,
+        finalidades: Array.isArray(consent.finalidades) ? consent.finalidades : [],
         capturedBy: autor || null,
         at: now,
     };

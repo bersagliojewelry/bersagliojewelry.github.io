@@ -120,6 +120,37 @@ export async function aprobarEventoCaja(input) {
     return (await fn(input)).data;
 }
 
+// ─── F2.1 · Identidad del cliente (transporte callable; lógica en identidad-cf.js del server) ─────
+// SOLO admin (rol lo valida la CF). resolverCliente = match EXACTO por documento (NUNCA desde el
+// checkout público — oráculo de enumeración, comité seguridad). El dedup BLANDO por teléfono/nombre
+// es client-side (advisory-match.js); aquí solo transporte.
+
+/** Match exacto por documento del comprador → clienteId. @param {{docType, docNumber, telefono?, nombre?}} input */
+export async function resolverCliente(input) {
+    const fn = await _callable('resolverCliente');
+    return (await fn(input)).data;
+}
+/** Crea cliente (doc opcional; colisión→existente; consent obligatorio si hay doc). @param {{nombre, telefono?, docType?, docNumber?, consent?}} input */
+export async function crearClienteConDoc(input) {
+    const fn = await _callable('crearClienteConDoc');
+    return (await fn(input)).data;
+}
+/** Adjunta un documento a un cliente existente (colisión con otro→needsMerge). @param {{clienteId, docType, docNumber, consent}} input */
+export async function attachDocACliente(input) {
+    const fn = await _callable('attachDocACliente');
+    return (await fn(input)).data;
+}
+/** Vincula un pedido a un cliente (escribe pedido.clienteId + historial, CF-only). @param {{pedidoId, clienteId}} input */
+export async function vincularClientePedido(input) {
+    const fn = await _callable('vincularClientePedido');
+    return (await fn(input)).data;
+}
+/** Fusiona dos clientes duplicados (append-only). SOLO owner. @param {{fromId, intoId}} input */
+export async function fusionarClientes(input) {
+    const fn = await _callable('fusionarClientes');
+    return (await fn(input)).data;
+}
+
 // ─── F2.0 · LECTURAS en vivo (listeners) — el candado real es server-side (reglas por rol) ────
 // La UI ESCUCHA; ninguna lógica de dinero vive aquí (§3.6). El rol define qué ve: `isCaja` lee su
 // turno/config; `isOwner` lee la bóveda + su ledger (discreción D7). Cada helper acepta `onErr`
@@ -238,4 +269,6 @@ export default {
     // F2.0 caja/bóveda — lecturas (listeners)
     onCajaEstadoChange, onConfigCajaChange, onTurnoChange, onMovsCajaChange, onVentasTurnoChange,
     onTrasladosTurnoChange, onBovedaChange, onBovedaMovsChange,
+    // F2.1 identidad del cliente (callables, SOLO admin)
+    resolverCliente, crearClienteConDoc, attachDocACliente, vincularClientePedido, fusionarClientes,
 };

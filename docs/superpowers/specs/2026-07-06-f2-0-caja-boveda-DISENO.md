@@ -471,7 +471,7 @@ Nuevo rol **`caja`** en el árbol de roles (`firestore.rules`, junto a owner/adm
 ### Checklist (evidencia por bloque)
 - [x] B0 reglas rol caja + config/caja + append-only — evidencia: test:rules 233/233 (B0a root+enum + B0b colecciones; commit `[OPUS-4.8]`). ⚑ Desvío: subcolección `movsCaja` (no `movimientos`) para no contaminar el CG de cartera → L-73.
 - [x] B1 turnos por puntero + test de carrera — evidencia: `functions/caja-core.js` (`abrir/cerrarTurnoCore`) + `caja.integration` **8/8** (puntero singleton #4, idempotencia opId #2, ecuación #7, test de carrera → 1 gana) + pedidos-integración **24/24** (no-regresión). Cierre COMPLETO computa ventas por turnoId con filtro de estado en JS → **sin índice compuesto** (evita el trap §8.3; solo auto-index de `turnoId`). Commit `[OPUS-4.8]`.
-- [ ] B2 enlace venta↔turno + enforceTurno + cota — evidencia: integración + ventas/wompi verdes
+- [x] B2 enlace venta↔turno + enforceTurno + cota — evidencia: `crearPedidoCore` (POS lee `caja/estado`+`config/caja` en la MISMA tx → atomicidad #5; guarda `turnoId` en TODOS los medios POS §9.5; `enforceTurno` gate; cota `docsDelTurno` §9.2) + caja.integration **14/14** (6 B2, incl. carrera sin huérfano) + pedidos **24/24** + wompi **16/16** AISLADOS (no-regresión). Web NO hereda turno. Contador compartido → correr suites por separado (**L-75**). Commit `[OPUS-4.8]`.
 - [ ] B3 bóveda traslado/reverso/recompute/checkpoint — evidencia: integración
 - [ ] B4 Dual-Approval + alertas — evidencia: integración
 - [ ] B5 UI + gate prod (Chrome) + SW bump + ADR

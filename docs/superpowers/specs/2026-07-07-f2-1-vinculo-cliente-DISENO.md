@@ -127,5 +127,37 @@
 - **F-B (alcance/tiempo)**: ✅ **ROBUSTO DE UNA** (Daniel 2026-07-07). Se construye el contrato de identidad completo ahora (§1 íntegro) — cero retroceso; el portal F5 nace con el contrato atado.
 
 ## 8. Artefactos del flujo (proceso-decision-fuerte)
-- ✅ Comité ×3 (crudo en bóveda + síntesis aquí). ✅ Prompt de consejo externo (`…-PROMPT-CONSEJO-EXTERNO.md`).
-- ⏳ Mockup del widget "adjuntar cliente" + validación Chrome en navegador REAL = **etapa de implementación** (tras decidir F-A/F-B; mockear una interacción no decidida sería teatro).
+- ✅ Comité ×3 DECISIÓN (crudo `…-comite-f2-1-vinculo-cliente-CRUDO.md` + síntesis §1). ✅ Prompt consejo decisión (`…-vinculo-cliente-PROMPT-CONSEJO-EXTERNO.md`).
+- ✅ Mockup del widget "adjuntar cliente" (2026-07-07, POS post-cobro + cola + match web).
+- ✅ Comité ×3 UI (crudo `…-comite-f2-1-UI-CRUDO.md` + síntesis §9). ✅ Prompt consejo UI (`…-f2-1-UI-PROMPT-CONSEJO-EXTERNO.md`).
+- ⏳ Validación Chrome navegador REAL = gate empírico al final de la implementación (tras deploy dark + pepper + flag).
+
+## 9. Diseño de IMPLEMENTACIÓN de la UI (comité ×3 UI, 2026-07-07 — dinero/CRM → flujo completo, directiva Daniel)
+> Todos los cambios del comité UI (unánime APROBAR_CON_CAMBIOS) INTEGRADOS. GATE de implementación:
+
+### 9.1 Transporte (`js/pedidos-service.js`)
+Añadir callables lazy: `resolverCliente`, `crearClienteConDoc`, `attachDocACliente`, `vincularClientePedido`, `fusionarClientes` (patrón `_callable`).
+
+### 9.2 POS (`js/admin/pos.js`) — money-safety PRIMERO (comité regresión)
+- **Orden blindado en `doRegister`**: `resetSale()` + `loadVentas()` corren PRIMERO (o en `finally`); el panel de adjuntar se abre DESPUÉS, envuelto en `try/catch`. **El panel JAMÁS puede impedir el reset** (si `resetSale` no corre, `_pedidoId` no rota → la venta siguiente colisiona por idempotencia → venta perdida en silencio con toast de éxito). 🔴 riesgo #1.
+- **`pedidoId` por VALOR**: el panel captura `const pedidoId = res.pedidoId` (string) / `data-pedido-id`; **NUNCA lee el global `_pedidoId` al vincular** (lo regenera resetSale → vincularía a la venta B).
+- **Botón por fila (`data-id`) = camino AUTORITATIVO** de adjuntar (en `renderVentas`, filas sin `clienteId`); el panel post-venta es solo conveniencia → mata el traslape A/B.
+- Panel **no-modal, FUERA de `anyOverlayOpen()`** (si contara, inhibiría el auto-traslado de caja F2.0), **flag propio** `_attachSubmitting`, **auto-descartable**: iniciar la siguiente venta lo archiva solo a la cola (SIN "Después" obligatorio).
+- **Cola "ventas sin cliente" DENTRO del POS**: badge permanente "· N" + filas auto-identificables (pieza+monto+hora+pago) + adjuntar a 1 toque + checkpoint suave al cerrar caja.
+- **Clientes**: fetch ACOTADO/cacheado por sesión (NO `onSnapshot` permanente de la colección — PII+escala); `append` en memoria al crear; norte = typeahead server-side. Stale solo afecta el dedup blando (server es autoridad; colisión→existente).
+
+### 9.3 Pedidos web (`js/admin/pedidos.js`) — SOLO admin
+- En el detalle, si el pedido trae `shipping.docType+docNumber` y no tiene `clienteId`: llamar `resolverCliente` → match → "¿Es X? Vincular" (1 clic) / "Crear desde pedido" (prefill + `crearClienteConDoc` + `vincularClientePedido`).
+- 🔴 **`resolverCliente` es admin-only** (el wrapper ya exige rol VENTAS) y se llama **SOLO desde el panel admin, JAMÁS desde el checkout público** (evita el oráculo de enumeración del portal F5). No devolver PII/existencia a un comprador. Documentado como invariante.
+
+### 9.4 Seguridad / Habeas Data (comité seguridad)
+- **PII enmascarada por defecto** en el POS (`CC •••.456.789` · tel `···8877`); revelar completo bajo clic explícito. **Cero PII en logs/analytics/errores/URL**.
+- **Dedup blando client-side** en módulo aislado `js/admin/advisory-match.js` (nombre `advisoryMatchHint`, no `normalizeKey`): normaliza teléfono/nombre SOLO para el aviso "¿es la misma?"; **nunca persiste, nunca decide fusión, el server re-valida**. Frontera documentada (la normalización CANÓNICA del documento sigue solo-servidor).
+- **Consentimiento**: la UI MUESTRA aviso (finalidad DIAN/antifraude/cartera + responsable Bersaglio + referencia a política + derechos del titular) + checkbox; y el backend registra `{version_politica, timestamp, capturadoPor, canal:'mostrador_POS', finalidades[]}`. **Ampliar `selloConsent`** de `identidad-cf.js` para aceptar `finalidades`+`canal`. El gate real = el CF (ya obliga). Consultar skill `legal-colombia` para el texto exacto del aviso.
+
+### 9.5 Feature-flag + orden de deploy
+- `config/identidad.activo` gatea toda la UI nueva. **Fail-closed**: read síncrono cacheado en boot; si no se puede leer → OFF (POS idéntico a hoy). Chequeado en `doRegister` y `renderVentas`.
+- Orden: **deploy dark (flag off)** → `firebase functions:secrets:set IDENTIDAD_PEPPER` → flip `config/identidad.activo=true` → **gate Chrome**. (Pepper ausente + flag on → CFs lanzan, pero post-venta + try/catch → POS seguro.)
+
+### 9.6 Gate empírico (Chrome navegador REAL) — lista cerrada estado-cero
+Reusa §5 (estado-cero backend) + UI: cobrar sin adjuntar (venta OK, va a la cola) · adjuntar existente 1 toque · crear con cédula+consent · aviso anti-duplicado por teléfono · match web 1 clic · **traslape A/B: vincular la venta correcta** · flag OFF = POS igual a hoy · PII enmascarada · panel no inhibe auto-traslado de caja.

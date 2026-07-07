@@ -1582,6 +1582,25 @@ select.adm-input { cursor: pointer; appearance: none; -webkit-appearance: none; 
 .pos-ventas-empty { padding: 30px 16px; }
 .pos-cierre-result { margin-top: 16px; }
 
+/* ── F2.1 · Adjuntar cliente (banner no-modal + cola + modal) ────────────────── */
+.pos-ventas-badge { margin-left: 8px; font-size: 11px; vertical-align: middle; }
+.pos-adjuntar-banner { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 12px; padding: 10px 14px; background: var(--adm-accent-light); border: 1px solid var(--adm-border); border-radius: var(--adm-radius); }
+.pos-adjuntar-banner span { font-size: 13px; color: var(--adm-text); min-width: 0; }
+.pos-venta--sin-cliente { border-left: 3px solid var(--adm-gold); }
+.pos-venta-cliente { font-size: 11.5px; color: var(--adm-muted); display: inline-flex; align-items: center; gap: 5px; }
+.pos-venta-cliente--none { color: #9a7730; }
+.pos-adjuntar-results { max-height: 240px; overflow-y: auto; }
+.pos-adjuntar-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; background: #fff; border: 1px solid var(--adm-border); border-radius: var(--adm-radius); }
+.pos-adjuntar-row-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pos-adjuntar-row-info strong { font-weight: 500; color: var(--adm-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pos-adjuntar-row-info span { font-size: 12px; color: var(--adm-muted); font-family: 'Space Mono', monospace; }
+.pos-adjuntar-crear { margin-top: 14px; border-top: 1px solid var(--adm-border); padding-top: 12px; }
+.pos-adjuntar-crear > summary { cursor: pointer; font-size: 13px; font-weight: 500; color: var(--adm-accent); padding: 4px 0; }
+.pos-adjuntar-crear[open] > summary { margin-bottom: 8px; }
+.pos-adjuntar-dupe { margin: 4px 0 12px; }
+.pos-consent { margin: 10px 0; padding: 10px 12px; background: var(--adm-warn-light); border-radius: var(--adm-radius); }
+.pos-consent .pos-hint { margin-top: 0; }
+
 /* ─── Pedidos (F1-PUENTE · TODO-68): lista + detalle read-only ─────────────── */
 .ped-row { cursor: pointer; }
 .ped-count { font-size: 12px; color: var(--adm-muted); }

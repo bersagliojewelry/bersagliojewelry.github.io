@@ -58,7 +58,9 @@
 // v78 = [OPUS-4.8] §170 pulido de la revisión adversarial §169 (4 hallazgos low): handleCierre revalida el turno
 // vivo · opId propio+perezoso en bóveda salida/conteo · guard del auto-traslado ignora mov/confirm
 // abiertos · listeners de caja con subscribeWithRetry (re-suscripción ante error transitorio).
-const CACHE_NAME    = 'bersaglio-v78';
+// v79 = [OPUS-4.8] F2.1 UI: POS adjuntar cliente post-cobro (banner no-modal + cola "sin cliente" +
+// modal búsqueda/crear con consentimiento) tras flag config/identidad.activo (fail-closed). Shell admin.
+const CACHE_NAME    = 'bersaglio-v79';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

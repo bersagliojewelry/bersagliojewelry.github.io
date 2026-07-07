@@ -279,15 +279,20 @@ function renderCaja() {
         }
     }
 
-    // Alerta + auto-modal al CRUZAR el límite (una sola vez; se re-arma al bajar).
+    // Alerta + auto-modal al CRUZAR el límite (una sola vez; se re-arma al bajar). Se inhibe si YA hay
+    // un overlay abierto (traslado/cierre/movimiento/confirmación): abrir el traslado encima apilaría
+    // dos modales sobre el mismo backdrop y robaría el foco a la operación en curso.
     const alerta = document.getElementById('caja-alerta');
     if (alerta) alerta.hidden = !over;
-    if (over && !_overLimit && !isTrasladoOpen() && !isCierreOpen()) openTraslado(efectivo);
+    if (over && !_overLimit && !anyOverlayOpen()) openTraslado(efectivo);
     _overLimit = over;
 }
 
 function isTrasladoOpen() { return !document.getElementById('tras-modal')?.hidden; }
 function isCierreOpen()   { return !document.getElementById('cierre-modal')?.hidden; }
+function isMovOpen()      { return !document.getElementById('mov-modal')?.hidden; }
+function isConfirmOpen()  { return !document.getElementById('confirm-dialog')?.hidden; }
+function anyOverlayOpen() { return isTrasladoOpen() || isCierreOpen() || isMovOpen() || isConfirmOpen(); }
 
 // ─── Abrir caja ────────────────────────────────────────────────────────────────
 function abrirCaja() {
@@ -712,13 +717,23 @@ async function handleCierre() {
     const raw = document.getElementById('cierre-efectivo').value;
     if (raw === '' || !(Number(raw) >= 0)) { admToast('Escribe el efectivo contado.', 'danger'); return; }
 
+    // Revalidación (edge multi-sesión): el modo se fijó al ABRIR el modal; si el turno se cerró desde
+    // otra sesión entre tanto, `_cajaEstado.turnoAbiertoId` ya es null (lo actualizó handleCajaEstado).
+    // Re-derivamos el turnoId del estado VIVO para no mandar cerrarTurno({turnoId:null}); si ya no hay
+    // turno, avisamos (el arqueo del turno lo hizo la otra sesión — no forzamos un Z legacy espurio).
+    const turnoId = _cajaEstado?.turnoAbiertoId || null;
+    if (_cierreTurnoMode && !turnoId) {
+        admToast('El turno ya se cerró (posiblemente desde otra sesión). No se registró un cierre duplicado.', 'danger', 5000);
+        closeCierre();
+        return;
+    }
+
     const submit = document.getElementById('cierre-submit');
     submit.disabled = true;
     submit.textContent = 'Calculando…';
     try {
         let r;
         if (_cierreTurnoMode) {
-            const turnoId = _cajaEstado.turnoAbiertoId;
             r = await cerrarTurno({ turnoId, conteoPorMedio: { efectivo: entero(raw) } });
             renderDigitalBreakdown(r.esperadoPorMedio);             // reporte diario de tarjetas/transferencias (§9.5)
         } else {

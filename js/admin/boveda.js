@@ -28,7 +28,12 @@ const BUSINESS_ERR = ['failed-precondition', 'invalid-argument', 'not-found', 'a
 
 let _saldo = 0;
 let _movs  = [];
-let _opId  = null;       // opId de la acción en curso (idempotencia §8.1.2)
+// opId de idempotencia (§8.1.2): uno POR operación y acuñado PEREZOSO en el handler (patrón pos.js
+// openMov/openTraslado, §169). Así cerrar+reabrir el modal tras un fallo de red REUSA el mismo id
+// (idempotente) en vez de acuñar uno nuevo que duplicaría. Salida y conteo llevan vars SEPARADAS
+// para no pisarse entre sí (antes compartían `_opId`). Se limpian al ÉXITO.
+let _salidaOpId = null;  // consignar / reponer (modal de salida)
+let _conteoOpId = null;  // conteo físico → ajuste
 let _accionTipo = null;  // 'boveda_a_banco' | 'boveda_a_cajon' (modal de salida)
 let _turnoAbiertoId = null;  // turno abierto (para atribuir la reposición de cambio al cierre)
 
@@ -175,8 +180,10 @@ function reversar(mov) {
 
 // ─── Salida de bóveda: consignar al banco / reponer cambio al cajón ───────────
 function openSalida(tipo) {
+    // Cambiar de operación (consignar↔reponer) NO reusa el opId de la otra; el MISMO tipo sí lo conserva
+    // para que un reintento tras fallo de red sea idempotente. El opId se acuña PEREZOSO en handleSalida.
+    if (tipo !== _accionTipo) _salidaOpId = null;
     _accionTipo = tipo;
-    _opId = uid();
     const esBanco = tipo === 'boveda_a_banco';
     document.getElementById('sal-title').textContent = esBanco ? 'Consignar al banco' : 'Reponer cambio al cajón';
     document.getElementById('sal-hint').textContent = esBanco
@@ -202,14 +209,14 @@ async function handleSalida() {
         admToast('Abre la caja del mostrador antes de reponer el cambio (el traslado se atribuye al turno abierto).', 'danger', 5000);
         return;
     }
-    if (!_opId) _opId = uid();
+    if (!_salidaOpId) _salidaOpId = uid();
     const turnoId = _accionTipo === 'boveda_a_cajon' ? _turnoAbiertoId : undefined;
 
     const submit = document.getElementById('sal-submit');
     submit.disabled = true; submit.textContent = 'Registrando…';
     try {
-        await registrarTraslado({ opId: _opId, tipo: _accionTipo, monto, turnoId, nota: nota || undefined });
-        _opId = null;
+        await registrarTraslado({ opId: _salidaOpId, tipo: _accionTipo, monto, turnoId, nota: nota || undefined });
+        _salidaOpId = null;
         admToast('✓ Movimiento registrado', 'success');
         closeSalida();
     } catch (err) {
@@ -221,7 +228,7 @@ async function handleSalida() {
 
 // ─── Conteo físico → ajuste faltante/sobrante (§8.1.8, nace pendiente + alerta) ───
 function openConteo() {
-    _opId = uid();
+    // opId perezoso (se acuña en handleConteo): reabrir tras un fallo de red reusa el mismo id (idempotente).
     document.getElementById('cnt-saldo').textContent = cop(_saldo);
     document.getElementById('cnt-contado').value = '';
     document.getElementById('cnt-motivo').value = '';
@@ -251,15 +258,15 @@ async function handleConteo() {
     if (diff === 0) { admToast('El conteo cuadra con el saldo: no hace falta ajuste.', 'default', 4000); closeConteo(); return; }
     const motivo = document.getElementById('cnt-motivo').value.trim();
     if (!motivo) { admToast('El ajuste exige un motivo.', 'danger'); return; }
-    if (!_opId) _opId = uid();
+    if (!_conteoOpId) _conteoOpId = uid();
 
     const tipo = diff > 0 ? 'ajuste_sobrante' : 'ajuste_faltante';
     const monto = Math.abs(diff);
     const submit = document.getElementById('cnt-submit');
     submit.disabled = true; submit.textContent = 'Registrando…';
     try {
-        await ajusteBoveda({ opId: _opId, tipo, monto, motivo });
-        _opId = null;
+        await ajusteBoveda({ opId: _conteoOpId, tipo, monto, motivo });
+        _conteoOpId = null;
         admToast('✓ Ajuste registrado · pendiente de aprobación', 'success', 4000);
         closeConteo();
     } catch (err) {

@@ -55,7 +55,10 @@
 // página Bóveda owner (saldo/consignar/reponer/conteo/reverso) + panel de aprobaciones (Dual-Approval).
 // v77 = [OPUS-4.8] B5c fixes post-gate: reponer cambio lleva turnoId (cierre correcto) + opId de
 // idempotencia perezoso (no duplica un movimiento al reabrir el modal tras un fallo de red).
-const CACHE_NAME    = 'bersaglio-v77';
+// v78 = [OPUS-4.8] §170 pulido de la revisión adversarial §169 (4 hallazgos low): handleCierre revalida el turno
+// vivo · opId propio+perezoso en bóveda salida/conteo · guard del auto-traslado ignora mov/confirm
+// abiertos · listeners de caja con subscribeWithRetry (re-suscripción ante error transitorio).
+const CACHE_NAME    = 'bersaglio-v78';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

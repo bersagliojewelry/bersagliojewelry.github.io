@@ -50,8 +50,7 @@ Programa "Nuevo Bersaglio": Fase 1 rediseño ✅ · Fase 2 hardening (Tier C pen
 
 ## 📝 Bitácora (efímera)
 
-> 2026-07-07 · **F2.1 vínculo cliente + contrato de identidad CERRADO → ADR §171** (gate Chrome prod VERDE, flag LIVE). Flujo completo (comité ×3 decisión + ×3 UI + consejo + skills — directiva Daniel: dinero/facturación/CRM → flujo también en la IMPLEMENTACIÓN, `[[feedback_flujo_completo_nunca_parcial]]`). 272 tests + gate live. Follow-ups: consent legal-colombia + instructivo Kary · F2.1b match web dormido. SW v79 · `IDENTIDAD_PEPPER` en Secret Manager.
-> 2026-07-07 · **§170 F2.0 pulido UI (4 hallazgos bajos, revisión adversarial) — SW v78/APP v41 EN PROD** → ADR §170 (otra sesión). Sin gate Chrome (edges no observables, L-05).
-> 2026-07-07 · **F2.0 caja/bóveda CERRADO → ADR §169** (gate Chrome owner verde). Pend operativo (Kary): runbook §9.4. B5d rol `caja` diferido.
+> 2026-07-07 · **F2.1 vínculo cliente + contrato de identidad CERRADO → ADR §171** (gate Chrome prod VERDE · flag LIVE Kary). Flujo completo (comité ×3 decisión + ×3 UI + consejo + skills — `[[feedback_flujo_completo_nunca_parcial]]`). 272 tests + gate live + **follow-ups ✅** (aviso Ley 1581 reforzado · instructivo Kary spec §10). F2.1b match web dormido. SW v79 · `IDENTIDAD_PEPPER` Secret Manager. **[a verificar] aviso con abogado CO antes de uso masivo.**
+> 2026-07-07 · **F2.0 caja/bóveda CERRADO → ADR §169-§170** (gate owner verde + pulido adversarial, SW v78). Runbook §9.4 + B5d rol `caja` diferidos (Kary).
 > **Consolidado (detalle → ADRs)**: F1 COMPLETO §165-§168 · L-72 · shard `20`→`21`. Pend no-gate F1: push A.6 · badge sidebar. Menores: TODO-67 fotos · guía dictado Kary→F2.3 · rebote frío 1ª URL (vigilar A.6) · botón "Hablar con el Atelier" (§156.12). ⚠️ ADC gcloud caducado (backfills: re-login/MCP). **GC pendiente: `30`/`10`/`00` >cap → shard (auditoría Nivel-2 vencida).**
 > **🚦 Reglas vivas**: arquitecto SIEMPRE · 100% COP (§127) · NO inventado (`[[feedback_no_demo_en_index]]`) · pruebas vivo solo al final (§130.4) · W-11 en decisión-diseño · `[[feedback_workflows_acotados]]` · **interinato Opus: dinero con comité+consejo+skills+agentes**.

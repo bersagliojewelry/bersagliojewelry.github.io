@@ -57,4 +57,4 @@ export const NAV_FOOTER = { label: 'Ver sitio', href: 'index.html', icon: 'exter
 // Versión visible del panel (criterio de deploy para no-técnicos, spec §9.1): Kary
 // confirma que está en la versión nueva tras un despliegue. Se bumpea JUNTO al
 // CACHE_NAME del Service Worker (`public/sw.js`) en cada cambio del shell admin.
-export const APP_VERSION = 'v39 · 2026-07-06';   // F2.0 B5b-1 UI caja/bóveda (turno + bóveda owner + aprobaciones) (SW v76 en B5c)
+export const APP_VERSION = 'v40 · 2026-07-07';   // F2.0 B5c: gate prod verde + fixes (reponer turnoId · opId perezoso) (SW v77)

@@ -318,7 +318,8 @@ function abrirCaja() {
 // ─── Movimiento manual (ingreso / egreso) ──────────────────────────────────────
 function openMov() {
     if (!_turno || _turno.estado !== 'abierto') { admToast('Abre la caja primero.', 'danger'); return; }
-    _movOpId = uid();
+    // El opId se acuña PEREZOSO en handleMov (no aquí): así, tras un fallo aparente que dejó la CF
+    // ya commiteada, cerrar y REABRIR el modal reusa el mismo opId (idempotente) en vez de duplicar.
     document.getElementById('mov-tipo').value = 'egreso';
     document.getElementById('mov-concepto').value = CONCEPTOS_CAJA[0];
     document.getElementById('mov-monto').value = '';
@@ -365,7 +366,8 @@ async function handleMov() {
 // ─── Traslado a bóveda (vaciar el cajón al superar el límite) ───────────────────
 function openTraslado(efectivoActual) {
     if (!_turno || _turno.estado !== 'abierto') { admToast('Abre la caja primero.', 'danger'); return; }
-    _trasladoOpId = uid();
+    // opId perezoso (se acuña en handleTraslado): cerrar+reabrir tras un fallo aparente reusa el mismo
+    // id → cero doble-vaciado del cajón si la CF ya había commiteado antes del corte de red.
     const sugerido = trasladoSugerido(efectivoActual, entero(_cfgCaja?.fondoTrabajo || 0));
     const over = superaLimite(efectivoActual, Number(_cfgCaja?.limiteCajon));
     document.getElementById('tras-monto').value = sugerido || '';

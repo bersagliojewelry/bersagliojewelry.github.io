@@ -859,25 +859,41 @@ service cloud.firestore {
     // admin NO escribe docs de usuario: así no puede reescribir el `role` de otros
     // ni tocar al owner (§66) — y sin esto el trigger `syncRoleClaim` sellaría un
     // claim REAL escalado (§65). `role:'owner'` no se acuña desde la app (seed/consola).
+    // `root:true` = cuenta ROOT del dev (Daniel) — protegida/invisible, sembrada SOLO por consola
+    // (Admin SDK salta reglas). `caja` = rol operador del POS (F2.0 B0). [[project_root_account_daniel]]
     function usersFieldsValidos() {
       let d = request.resource.data;
-      return d.keys().hasOnly(['email', 'displayName', 'role', 'active',
+      return d.keys().hasOnly(['email', 'displayName', 'role', 'active', 'root',
                                'createdAt', 'createdBy', 'updatedAt', 'updatedBy',
                                'lastLogin', 'deactivatedAt', 'deactivatedBy'])
-          && (!('role' in d)   || d.role in ['owner', 'admin', 'editor', 'catalogo'])
-          && (!('active' in d) || d.active is bool);
+          && (!('role' in d)   || d.role in ['owner', 'admin', 'editor', 'catalogo', 'caja'])
+          && (!('active' in d) || d.active is bool)
+          && (!('root' in d)   || d.root is bool);
     }
+    function esRoot(res) { return res.data.get('root', false) == true; }
 
     match /users/{userId} {
-      allow read:   if isAuth() && (request.auth.uid == userId || isAdmin());
+      // read: uid propio, o admin/owner — pero un doc ROOT es INVISIBLE para quien no sea él mismo.
+      allow read:   if isAuth() && (request.auth.uid == userId || (isAdmin() && !esRoot(resource)));
+      // create: el owner crea SOLO roles operativos; la app JAMÁS acuña owner (§66) ni root (solo consola).
       allow create: if isOwner() && usersFieldsValidos()
-                    && request.resource.data.role in ['admin', 'editor', 'catalogo'];
-      // E.5: el update tampoco puede acuñar role:'owner' (el create ya lo prohíbe). Mantiene el
-      // invariante "owner único, sembrado por consola" — antes el owner podía promover a otro a owner.
-      allow update: if isOwner() && usersFieldsValidos()
-                    && (!('role' in request.resource.data.diff(resource.data).affectedKeys())
-                        || request.resource.data.role in ['admin', 'editor', 'catalogo']);
-      allow delete: if isOwner();
+                    && request.resource.data.role in ['admin', 'editor', 'catalogo', 'caja']
+                    && request.resource.data.get('root', false) != true;
+      // update: el flag `root` es INMUTABLE desde la app (no se acuña ni se quita). Dos vías:
+      //  (a) el propio ROOT edita su doc (self-service: displayName/lastLogin) sin cambiar su role;
+      //  (b) un owner edita un doc NO-root (gestión normal) sin acuñar owner (E.5). Un doc root es
+      //      INTOCABLE para un owner ajeno (ni Kary lo toca).
+      allow update: if usersFieldsValidos()
+                    && request.resource.data.get('root', false) == resource.data.get('root', false)
+                    && (
+                         (request.auth.uid == userId && esRoot(resource)
+                          && !('role' in request.resource.data.diff(resource.data).affectedKeys()))
+                         || (isOwner() && !esRoot(resource)
+                             && (!('role' in request.resource.data.diff(resource.data).affectedKeys())
+                                 || request.resource.data.role in ['admin', 'editor', 'catalogo', 'caja']))
+                       );
+      // delete: el owner borra usuarios operativos; un doc ROOT JAMÁS se borra desde la app.
+      allow delete: if isOwner() && !esRoot(resource);
     }
 
     // ─── Config (site settings, status) ────────────────────────────────────────

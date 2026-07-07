@@ -55,6 +55,7 @@ before(async () => {
         await setDoc(doc(db, 'users/vendUid'),  { role: 'vendedora' }); // rol RESIDUAL: debe quedar SIN acceso al CRM
         await setDoc(doc(db, 'users/degradadoUid'), { role: 'admin' }); // F6-B: doc admin + claim editor → claim manda
         await setDoc(doc(db, 'users/objetivoUid'), { role: 'editor', email: 'o@x.co', displayName: 'Obj' }); // F6-B: víctima de los tests de escalada
+        await setDoc(doc(db, 'users/rootUid'), { role: 'owner', root: true, email: 'daniel@dev.co', displayName: 'Daniel (dev)' }); // ROOT (Daniel dev): protegido/invisible ([[project_root_account_daniel]])
         await setDoc(doc(db, 'vendedoras/vendA'), { nombre: 'Vendedora A', activa: true });
         await setDoc(doc(db, 'clientes/cliV'), { nombre: 'Cliente V', vendedoraId: 'vendA', saldoActual: 0 });
         await setDoc(doc(db, 'clientes/cliV/movimientos/m1'), { tipo: 'factura', monto: 100000, registradoPor: 'adminUid', anulado: false }); // > tope: anularla = owner (M3)
@@ -337,6 +338,27 @@ test('catálogo · CANDADO: NO crea usuarios (users = owner-only)', async () => 
 test('users · E.5: el owner NO puede promover a otro usuario a role:owner (ni en update)', async () => {
     await assertFails(updateDoc(doc(asUser('ownerUid'), 'users/objetivoUid'), { role: 'owner' }));
     await assertSucceeds(updateDoc(doc(asUser('ownerUid'), 'users/objetivoUid'), { role: 'admin' }));  // otros roles sí
+});
+
+// ─── ROOT account (Daniel dev) — [[project_root_account_daniel]]: invisible + intocable para Kary ───
+test('root · un owner normal (Kary) NO puede LEER un doc root (invisibilidad)', async () => {
+    await assertFails(getDoc(doc(asUser('ownerUid'), 'users/rootUid')));
+});
+test('root · un owner normal NO puede MODIFICAR ni ELIMINAR un doc root', async () => {
+    await assertFails(updateDoc(doc(asUser('ownerUid'), 'users/rootUid'), { displayName: 'hack' }));
+    await assertFails(deleteDoc(doc(asUser('ownerUid'), 'users/rootUid')));
+});
+test('root · el propio root LEE y edita su doc, pero NO puede quitarse root ni cambiar su role', async () => {
+    await assertSucceeds(getDoc(doc(asUser('rootUid'), 'users/rootUid')));
+    await assertSucceeds(updateDoc(doc(asUser('rootUid'), 'users/rootUid'), { displayName: 'Daniel' }));
+    await assertFails(updateDoc(doc(asUser('rootUid'), 'users/rootUid'), { root: false }));      // no se auto-desprotege
+    await assertFails(updateDoc(doc(asUser('rootUid'), 'users/rootUid'), { role: 'admin' }));     // no se auto-degrada
+});
+test('root · NADIE acuña root:true desde la app (create)', async () => {
+    await assertFails(setDoc(doc(asUser('ownerUid'), 'users/nuevoRoot'), { role: 'admin', root: true, email: 'x@x.co' }));
+});
+test('rol caja · el owner (Kary) SÍ puede crear un usuario con rol caja (B0)', async () => {
+    await assertSucceeds(setDoc(doc(asUser('ownerUid'), 'users/cajaUid'), { role: 'caja', email: 'caja@x.co', displayName: 'Cajera' }));
 });
 
 // ─── CMS · Journal: lectura pública, escritura editor con hasOnly tipado ──────

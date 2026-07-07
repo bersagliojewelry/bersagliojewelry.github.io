@@ -124,42 +124,56 @@ export async function aprobarEventoCaja(input) {
 // La UI ESCUCHA; ninguna lógica de dinero vive aquí (§3.6). El rol define qué ve: `isCaja` lee su
 // turno/config; `isOwner` lee la bóveda + su ledger (discreción D7). Cada helper acepta `onErr`
 // para que la vista degrade con un aviso (p.ej. un `caja` que aún no puede leer pedidos → gap).
+//
+// Los listeners de CAJA usan `subscribeWithRetry` (§93, igual que onPedidosChange): Firestore TERMINA
+// el stream ante un error transitorio (bajón de red / refresh de token) y NO reintenta solo — un
+// listener crudo dejaría el turno/movs CONGELADO hasta recargar. `onErr` se invoca en CADA fallo
+// (idempotente aquí: console.warn o `_trasladosLedger=null`), MIENTRAS el helper re-suscribe con
+// backoff. Nota: un rol `caja` puro sin lectura de pedidos/traslados dará permission-denied → reintento
+// perpetuo con backoff cap 30s (inofensivo; el owner —Kary en prod— nunca lo toca; L-78). Los listeners
+// de BÓVEDA se dejan crudos a propósito: su `onErr` muestra un TOAST, que se apilaría por reintento.
 
 /** Puntero del turno abierto (`caja/estado`: turnoAbiertoId + cota docsDelTurno). read isCaja. */
 export function onCajaEstadoChange(cb, onErr) {
-    return onSnapshot(doc(firestoreDb, 'caja', 'estado'),
+    return subscribeWithRetry(
+        () => doc(firestoreDb, 'caja', 'estado'),
         s => cb(s.exists() ? s.data() : { turnoAbiertoId: null, docsDelTurno: 0 }),
-        e => onErr?.(e));
+        'caja/estado', onErr);
 }
 /** Config de caja (enforceTurno/fondoTrabajo/limiteCajon). read isCaja (el POS necesita el límite). */
 export function onConfigCajaChange(cb, onErr) {
-    return onSnapshot(doc(firestoreDb, 'config', 'caja'),
+    return subscribeWithRetry(
+        () => doc(firestoreDb, 'config', 'caja'),
         s => cb(s.exists() ? s.data() : null),
-        e => onErr?.(e));
+        'config/caja', onErr);
 }
 /** Turno por id (fondo, estado, sellos de cierre). read isCaja. cb(null) si no existe. */
 export function onTurnoChange(turnoId, cb, onErr) {
-    return onSnapshot(doc(firestoreDb, 'turnos', turnoId),
+    return subscribeWithRetry(
+        () => doc(firestoreDb, 'turnos', turnoId),
         s => cb(s.exists() ? { id: s.id, ...s.data() } : null),
-        e => onErr?.(e));
+        'turno', onErr);
 }
 /** Movimientos manuales (ingreso/egreso) del turno. read isCaja. Más reciente primero. */
 export function onMovsCajaChange(turnoId, cb, onErr) {
-    return onSnapshot(query(collection(firestoreDb, 'turnos', turnoId, 'movsCaja'), orderBy('ts', 'desc')),
+    return subscribeWithRetry(
+        () => query(collection(firestoreDb, 'turnos', turnoId, 'movsCaja'), orderBy('ts', 'desc')),
         s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))),
-        e => onErr?.(e));
+        'movsCaja', onErr);
 }
 /** Ventas del turno (pertenencia por turnoId #6; filtro de estado/medio en la vista). read isVentas. */
 export function onVentasTurnoChange(turnoId, cb, onErr) {
-    return onSnapshot(query(collection(firestoreDb, 'pedidos'), where('turnoId', '==', turnoId)),
+    return subscribeWithRetry(
+        () => query(collection(firestoreDb, 'pedidos'), where('turnoId', '==', turnoId)),
         s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))),
-        e => onErr?.(e));
+        'ventasTurno', onErr);
 }
 /** Traslados cajón↔bóveda de ESTE turno (para el efectivo exacto del cajón). read isOwner (cae si no). */
 export function onTrasladosTurnoChange(turnoId, cb, onErr) {
-    return onSnapshot(query(collection(firestoreDb, 'bovedaMovimientos'), where('turnoId', '==', turnoId)),
+    return subscribeWithRetry(
+        () => query(collection(firestoreDb, 'bovedaMovimientos'), where('turnoId', '==', turnoId)),
         s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))),
-        e => onErr?.(e));
+        'trasladosTurno', onErr);
 }
 /** Saldo de la bóveda (materializado por recalcBoveda; VISTA, no autoridad §8.1.3). read isOwner. */
 export function onBovedaChange(cb, onErr) {

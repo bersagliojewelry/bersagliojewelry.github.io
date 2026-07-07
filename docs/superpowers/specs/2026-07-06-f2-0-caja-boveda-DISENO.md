@@ -202,12 +202,13 @@ pedidos/{id}                          # ADITIVO
 > origen (experto/severidad). Esta v2 es la base de la spec.
 
 ### 8.1 Los 9 invariantes DUROS (bloqueantes del gate — sin esto no hay spec)
-1. **SEMILLA DE BÓVEDA firmada por Daniel** (riesgo #1, 3 peers convergieron — el más peligroso). Kary YA
-   tiene millones físicos hoy; si el ledger arranca en $0, `boveda/main` MIENTE desde el minuto uno y nada
-   posterior es auditable. → **Asiento fundacional** `tipo:'saldo_inicial'` (owner-only, conteo físico
-   firmado por Daniel) como PRIMER movimiento del ledger, ANTES de la 1ª venta. Análogo: el `fondoApertura`
-   del primerísimo turno (no hay cierre previo del cual heredar). **INPUT DE DANIEL: ¿cuánto efectivo hay
-   físicamente en la caja fuerte hoy?**
+1. **SEMILLA DE BÓVEDA firmada por Daniel** (riesgo #1). El comité asumió "Kary YA tiene millones físicos" →
+   **REFUTADO por Daniel (gate §8.6.1): la bóveda arranca en $0**. El defecto se resuelve trivial y limpio: el
+   ledger nace vacío ($0, certificado por Daniel), NO hay dinero histórico que sembrar. Se conserva el
+   **asiento fundacional** `tipo:'saldo_inicial', monto:0` (owner-only) como PRIMER movimiento explícito (deja
+   traza de que el arranque en cero fue una decisión firmada, no un olvido). El `fondoApertura` del primerísimo
+   turno = **$200.000** (la "base"; no hay cierre previo del cual heredar). Si el futuro exige sembrar un saldo
+   real, el mismo asiento `saldo_inicial` lo soporta con `monto>0`.
 2. **IDEMPOTENCIA por opId** en las 3 CF de escritura del ledger (`registrarTraslado`, `movimientoCaja`,
    `cerrarTurno`) + `crearPedido` (ledger, severidad alta). Sin ella: doble-tap del modal / retry por
    timeout / re-entrega de plataforma → DOS movimientos → recompute infla el saldo / "vaciado dos veces".
@@ -284,7 +285,8 @@ salvo la afirmación barata: **la app REGISTRA, nunca ABRE la caja fuerte físic
 ```
 caja/estado                   # NUEVO singleton — puntero del turno abierto (invariante transaccional)
   turnoAbiertoId: string|null
-config/caja                   # + enforceTurno:bool(false) + fondoTrabajo + limiteCajon (owner-only)
+config/caja                   # owner-only: enforceTurno:bool(false) · fondoTrabajo:200000 · limiteCajon:4000000
+                              #   · alertas:{destinatarios:[uid...], Daniel SIEMPRE en anulaciones} · conteoPor:[uid...]
 bovedaMovimientos/{opId}      # opId = docId (idempotencia). tipos += saldo_inicial · ajuste_faltante ·
                               #   ajuste_sobrante · (boveda_a_banco gana estado:en_transito|confirmado + nroConsignacion)
 boveda/checkpoints/{YYYY-MM}  # NUEVO — saldo sellado mensual anclado en conteo_fisico (cota del recompute)
@@ -297,13 +299,23 @@ Arrancar con: `pago_domiciliario · compra_empaques · adelanto_vendedora · gas
 `otro` exige nota obligatoria; `otro` recurrente = señal para promover un concepto. **Alerta FCM a Daniel en
 TODO egreso** (evento de mayor riesgo de fraude interno, hoy el menos controlado).
 
-### 8.6 Lo que necesito de Daniel ANTES de la spec ejecutable (gate)
-1. **Semilla de bóveda**: ¿cuánto efectivo físico hay en la caja fuerte hoy? (asiento fundacional firmado).
-2. **`limiteCajon`** (techo de alarma del cajón, guía: ~1-2 ventas promedio en efectivo) y **`fondoTrabajo`**
-   (nivel operativo para vueltos). Valores concretos en COP.
-3. **Conteo de bóveda**: ¿Daniel puede hacer el conteo físico periódico (semanal + al consignar)? Es el
-   único control real ante operadora única. Si no, ¿quién?
-4. Confirmar los 6 conceptos de movimientos (o ajustar).
+### 8.6 GATE de Daniel — RESPONDIDO (2026-07-06)
+1. **Semilla de bóveda = $0** (Daniel: *"empezará desde cero con una base de 200 mil"*). ⚑ **Corrige la
+   premisa del comité** (que asumió millones históricos, ver §8.1.1): NO hay dinero acumulado que sembrar → la
+   bóveda nace legítimamente en $0, auditable, sin asiento de millones. El **`fondoApertura` del primer turno =
+   $200.000** (la "base"). `saldo_inicial` de bóveda = 0 certificado por Daniel (el ledger arranca vacío).
+2. **`limiteCajon` = $4.000.000** · **`fondoTrabajo` = $200.000** (Daniel). Valores iniciales de `config/caja`,
+   owner-only, editables después. → El default `limiteCajon=∞` de §8.3 se reemplaza por estos valores concretos.
+3. **Conteo/alertas = Daniel (default) PERO configurable para asignar TAMBIÉN al usuario de Kary** (Daniel:
+   *"ok listo pero debe quedar la posibilidad de colocar estas funciones al usuario de Kary"*). → **destinatario
+   de alertas FCM y operador del conteo físico = CONFIGURABLES** (`config/caja`, owner-only). Default = Daniel.
+   ⚠️ **TRADE-OFF (§8.2, Daniel debe conocerlo)**: asignar el conteo/alertas a Kary la vuelve auto-vigilante →
+   el antirrobo INTERNO se degrada a auto-reporte. **Mitigación DURA de diseño**: las alertas de **anulación de
+   dinero físico** son INMUTABLES y SIEMPRE incluyen a Daniel — la config solo AÑADE destinatarios, JAMÁS
+   remueve a Daniel de las alertas críticas (Kary no puede quitarse su propia vigilancia). Daniel fija la config.
+4. **Conceptos de movimientos**: se arranca con los 6 default (§8.5); ajustables en la spec o en vivo.
+5. **Consejo externo (Gemini): SÍ** (Daniel) → prompt `-PROMPT-CONSEJO-EXTERNO.md` actualizado con la
+   restricción nueva (configurabilidad Kary) para su pregunta #1. Se espera su respuesta ANTES de codear.
 
 ### 8.7 Preguntas para el CONSEJO EXTERNO (Gemini) — las 4 del comité
 Prompt autocontenido preparado aparte (R1 anti-anclaje: problema crudo + opciones). Ejes: (1) control

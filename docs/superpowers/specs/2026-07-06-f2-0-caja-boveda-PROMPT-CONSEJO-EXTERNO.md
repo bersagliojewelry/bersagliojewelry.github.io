@@ -49,11 +49,19 @@ cazó 9 defectos estructurales. Queremos tu crítica adversarial ANTES de escrib
 5. `boveda/main` puede reconstruirse desde el ledger + checkpoints en cualquier momento (auditable).
 6. El deploy no puede romper a Kary a mitad de venta (flag `enforceTurno`, rollback = flip).
 
+## Datos del negocio (Daniel confirmó el 2026-07-06)
+- La bóveda **arranca en $0** (no hay millones históricos que sembrar; el sistema nace limpio).
+- Fondo del cajón para vueltos = **$200.000**; techo de alarma del cajón (`limiteCajon`) = **$4.000.000**.
+- **Daniel quiere que el conteo físico y las alertas se puedan asignar TAMBIÉN al usuario de Kary** (no solo
+  a él). Nuestra mitigación: config owner-only que solo AÑADE destinatarios y NUNCA remueve a Daniel de las
+  alertas de anulación de dinero (Kary no puede quitarse su propia vigilancia). Critica esta mitigación.
+
 ## Las 4 PREGUNTAS (el comité quiere tu segunda opinión aquí)
-1. **Control compensatorio para operadora única sin SoD**: dado que Kary hace todo, ¿el único control real
-   es empujar la SoD hacia afuera (Daniel hace el conteo físico de bóveda, fija `limiteCajon`, recibe
-   alertas FCM inmutables de toda anulación/egreso)? ¿O existe un patrón mejor para un negocio de una sola
-   operadora de confianza que no dependa de que Daniel vigile manualmente cada alerta?
+1. **Control compensatorio para operadora única sin SoD, con el agravante nuevo**: Kary hace todo Y Daniel
+   quiere poder asignarle también el conteo/alertas (por practicidad operativa). ¿Nuestra mitigación (config
+   que solo añade destinatarios, Daniel siempre en las alertas de anulación, alertas de anulación inmutables
+   append-only) preserva control real, o es teatro? ¿Hay un patrón mejor para una sola operadora de confianza
+   donde el dueño quiere delegar operación sin perder la vigilancia — sin depender de que Daniel lea cada alerta?
 2. **Recompute síncrono vs checkpoint+materializado en el hot-path**: ¿es correcto exigir recompute del saldo
    dentro de la misma `runTransaction` de cada venta/traslado (el trigger solo como vista), o el costo/latencia
    de recomputar el ledger en el hot-path de CADA venta justifica un patrón de checkpoint + saldo materializado

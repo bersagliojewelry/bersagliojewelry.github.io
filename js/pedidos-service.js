@@ -259,6 +259,7 @@ export async function historialPedido(pedidoId, max = 100) {
 
 /**
  * Últimas ventas registradas (lectura permitida a staff de ventas: owner/admin/catálogo).
+ * One-shot — para exports on-demand (contador). Para la VISTA usar `onUltimasVentasChange`.
  * @param {number} [max=15]
  * @returns {Promise<Array>} pedidos (más reciente primero)
  */
@@ -266,6 +267,26 @@ export async function ultimasVentas(max = 15) {
     const q = query(collection(firestoreDb, 'pedidos'), orderBy('createdAt', 'desc'), limit(max));
     const snap = await getDocs(q);
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+/**
+ * Últimas ventas EN VIVO (reactividad money-safe · Daniel 2026-07-07): mismo query que
+ * `ultimasVentas` pero como listener robusto (subscribeWithRetry, ADR §93). El Mostrador NUNCA
+ * debe requerir refresco para ver la verdad del dinero: una venta / anulación / confirmación
+ * hecha desde OTRA sesión o el cierre del turno se refleja al instante. Lectura = staff de
+ * ventas (owner/admin/catalogo, reglas). Re-suscribe sola ante errores transitorios.
+ * @param {Function} cb (ventas[]) => void — más reciente primero
+ * @param {number}   [max=15] tope del listener
+ * @param {Function} [onUiError] opcional: la UI pinta un aviso mientras el helper reintenta
+ * @returns {Function} cleanup
+ */
+export function onUltimasVentasChange(cb, max = 15, onUiError) {
+    return subscribeWithRetry(
+        () => query(collection(firestoreDb, 'pedidos'), orderBy('createdAt', 'desc'), limit(max)),
+        snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+        'ultimasVentas',
+        onUiError,
+    );
 }
 
 /**
@@ -288,7 +309,7 @@ export function onPedidosChange(cb, max = 200, onUiError) {
 
 export default {
     crearPedido, iniciarPagoWeb, confirmarPago, anularPedido, cierreCaja, avanzarPedido,
-    historialPedido, ultimasVentas, onPedidosChange,
+    historialPedido, ultimasVentas, onUltimasVentasChange, onPedidosChange,
     // F2.0 caja/bóveda — escrituras (callables)
     abrirTurno, cerrarTurno, movimientoCaja, registrarTraslado, reversoTraslado, ajusteBoveda, aprobarEventoCaja,
     // F2.0 caja/bóveda — lecturas (listeners)

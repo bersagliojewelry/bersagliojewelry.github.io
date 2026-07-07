@@ -19,7 +19,7 @@ import { esDisponible, STOCK_TYPES } from './inventario-model.js';   // TODO-40 
 import { calcularPrecio } from './calculadora.js';
 import { calcularNeto } from './fiscal.js';
 import {
-    crearPedido, confirmarPago, anularPedido, cierreCaja, ultimasVentas,
+    crearPedido, confirmarPago, anularPedido, cierreCaja, ultimasVentas, onUltimasVentasChange,
     abrirTurno, cerrarTurno, movimientoCaja, registrarTraslado,               // F2.0 · escrituras
     onCajaEstadoChange, onConfigCajaChange, onTurnoChange, onMovsCajaChange,  // F2.0 · lecturas
     onVentasTurnoChange, onTrasladosTurnoChange,
@@ -64,6 +64,14 @@ let _trasladoOpId  = null;                                   // opId del traslad
 let _cierreTurnoMode = false;                                // el modal de cierre cierra un TURNO (no el Z legacy)
 let _overLimit     = false;                                  // el cajón superó el límite → ventas bloqueadas hasta trasladar
 let _turnoUnsubs   = [];                                     // listeners con alcance de turno (se recablean al cambiar de turno)
+let _pendingOpenTurno = null;                                // turno recién abierto (pinta el panel al instante; el listener lo reconcilia)
+
+// ─── Ventas recientes EN VIVO (reactividad money-safe · Daniel 2026-07-07) ────────────────────────
+// La lista se ALIMENTA de un listener (onUltimasVentasChange) — NUNCA de un fetch de una vez: cerrar
+// el turno, o una venta/anulación desde otra sesión, se refleja sin refrescar. Autoridad = Firestore.
+let _ventasRecientes = [];   // últimas 15 ventas (fuente del render; la escribe el listener)
+let _ventasError     = false;// el listener falló y aún no hay datos → aviso mientras reintenta solo
+let _ventasUnsub     = null; // cleanup del listener (page-scope; no hay SPA teardown, pero lo guardamos)
 
 // ─── F2.1 · Adjuntar cliente a la venta (flag fail-closed; cache local de clientes) ───────────────
 let _identidadActiva = false;   // flag config/identidad.activo (leído 1 vez en boot; hot path lee este cache)
@@ -127,7 +135,7 @@ async function init() {
     initCaja();       // F2.0 · turno de caja + bóveda (no-op si el rol no opera caja)
     await initIdentidad();   // F2.1 · flag + cache de clientes + wiring del modal (no-op si el flag está OFF)
     updateMedioHint();
-    loadVentas();
+    subscribeVentas();   // ventas recientes EN VIVO (tras initIdentidad → _identidadActiva/_clientes listos al 1er render)
 }
 
 // ─── F2.0 · Ciclo del turno de caja (apertura / movimientos / traslado / cierre) ──────────────
@@ -185,7 +193,11 @@ function handleCajaEstado(est) {
     if (id !== prev) {
         _turnoUnsubs.forEach(u => { try { u(); } catch { /* noop */ } });
         _turnoUnsubs = [];
-        _turno = null; _movsCaja = []; _ventasTurno = []; _trasladosLedger = null; _trasladadoSesion = 0; _overLimit = false;
+        // Sembrado OPTIMISTA: si acabamos de abrir ESTE turno, arranca `_turno` con el dato de la CF
+        // (no null) → el panel pinta "abierta" de una vez, sin parpadear "cerrada" hasta que llegue
+        // el snapshot de onTurnoChange (que reconcilia con la autoridad server).
+        _turno = (id && _pendingOpenTurno && _pendingOpenTurno.id === id) ? _pendingOpenTurno : null;
+        _movsCaja = []; _ventasTurno = []; _trasladosLedger = null; _trasladadoSesion = 0; _overLimit = false;
         if (id) {
             _turnoUnsubs.push(onTurnoChange(id, t => { _turno = t; renderCaja(); recalcTotal(); },
                 e => console.warn('[caja] turno no legible:', e?.code || e)));
@@ -322,8 +334,13 @@ function abrirCaja() {
 
     admConfirm(`¿Abrir la caja con un fondo de ${cop(fondo)}?`, async () => {
         try {
-            await abrirTurno({ opId: _turnoOpId, fondoApertura: fondo });
+            const res = await abrirTurno({ opId: _turnoOpId, fondoApertura: fondo });
             _turnoOpId = null;                        // el turno nuevo resetea _trasladadoSesion vía handleCajaEstado
+            // Render OPTIMISTA: la CF ya commiteó el turno (existe en Firestore) → pintamos "abierta" AL
+            // INSTANTE, sin esperar los 2 viajes del puntero encadenado (caja/estado → onTurnoChange).
+            // Disparamos handleCajaEstado a mano con el estado ya conocido; el snapshot real reconcilia.
+            _pendingOpenTurno = { id: res.turnoId, estado: 'abierto', fondoApertura: entero(res.fondoApertura ?? fondo) };
+            handleCajaEstado({ turnoAbiertoId: res.turnoId, docsDelTurno: 0 });
             admToast('✓ Caja abierta', 'success');
         } catch (err) {
             const msg = (BUSINESS_ERR.includes(err?.code) && err?.message) ? err.message
@@ -614,7 +631,7 @@ async function doRegister(medio, total) {
             admToast(`✓ Venta registrada · Pedido ${res.codigo || '#' + res.numero} · ${cop(res.total)}`, 'success', 4000);
         }
         resetSale();
-        loadVentas();
+        // ventas recientes se re-pinta sola vía el listener onUltimasVentasChange (money-safe).
         if (_identidadActiva && fueNueva) {
             try { mostrarBannerAdjuntar(nuevoPedidoId, label); } catch (e) { console.warn('[pos] banner adjuntar:', e?.message || e); }
         }
@@ -632,21 +649,33 @@ async function doRegister(medio, total) {
     }
 }
 
-// ─── Ventas recientes ─────────────────────────────────────────────────────────
-async function loadVentas() {
+// ─── Ventas recientes (EN VIVO) ───────────────────────────────────────────────
+// Suscripción única: el listener escribe `_ventasRecientes` y re-pinta. Reemplaza el patrón viejo
+// de `loadVentas()` imperativo (fetch de una vez tras cada acción) que exigía refrescar para ver
+// cambios de otra sesión / del cierre de turno. Autoridad = Firestore; re-suscribe sola (ADR §93).
+function subscribeVentas() {
+    _ventasUnsub = onUltimasVentasChange(
+        (ventas) => { _ventasRecientes = ventas; _ventasError = false; renderVentas(); },
+        15,
+        // El helper reintenta con backoff; solo avisamos si aún no hay datos que mostrar.
+        () => { if (!_ventasRecientes.length) { _ventasError = true; renderVentas(); } },
+    );
+}
+
+function renderVentas() {
     const ul    = document.getElementById('pos-ventas');
     const empty = document.getElementById('pos-ventas-empty');
-    let ventas = [];
-    try {
-        ventas = await ultimasVentas(15);
-    } catch (err) {
-        console.error('[pos] ultimasVentas:', err?.code || err);
+    const emptyP = empty.querySelector('p');
+
+    if (_ventasError) {
         empty.hidden = false;
-        empty.querySelector('p').textContent = 'No se pudieron cargar las ventas.';
+        if (emptyP) emptyP.textContent = 'No se pudieron cargar las ventas (reintentando…).';
         ul.replaceChildren();
         return;
     }
 
+    const ventas = _ventasRecientes;
+    if (emptyP) emptyP.textContent = 'Aún no hay ventas registradas.';   // restaura el texto por defecto tras un error
     empty.hidden = ventas.length > 0;
     if (!ventas.length) { ul.replaceChildren(); renderColaBadge(0); return; }
 
@@ -701,7 +730,7 @@ function confirmarVenta(pedidoId) {
         try {
             await confirmarPago(pedidoId);
             admToast('✓ Pago confirmado', 'success');
-            loadVentas();
+            // la lista se actualiza sola (listener en vivo)
         } catch (err) {
             const msg = (BUSINESS_ERR.includes(err?.code) && err?.message)
                 ? err.message
@@ -717,7 +746,7 @@ function anularVenta(pedidoId) {
         try {
             const r = await anularPedido(pedidoId);
             admToast(r.piezaReintegrada ? '✓ Venta anulada · la pieza volvió al catálogo' : '✓ Venta anulada', 'success', 4000);
-            loadVentas();   // la pieza reintegrada reaparece en el buscador vía el listener de adminDb('pieces')
+            // la venta anulada se re-pinta sola (listener); la pieza reintegrada vuelve al buscador vía adminDb('pieces')
         } catch (err) {
             const msg = (BUSINESS_ERR.includes(err?.code) && err?.message)
                 ? err.message
@@ -832,7 +861,7 @@ async function doVincular(clienteId) {
     try {
         await vincularClientePedido({ pedidoId: _adjPedidoId, clienteId });
         admToast('✓ Cliente vinculado a la venta', 'success');
-        ocultarBannerAdjuntar(); closeAdjuntar(); loadVentas();
+        ocultarBannerAdjuntar(); closeAdjuntar();   // lista en vivo (listener)
     } catch (err) {
         const msg = (BUSINESS_ERR.includes(err?.code) && err?.message) ? err.message : errorMessage(err, 'No se pudo vincular el cliente.');
         admToast(msg, 'danger', 4000);
@@ -865,7 +894,7 @@ async function doCrearVincular() {
             _clientes.push({ id: r.clienteId, nombre, telefono, whatsapp: '', docKeys: [], activo: true });
         }
         admToast(r.yaExistia ? '✓ Ese documento ya era de un cliente; se vinculó a la venta' : '✓ Cliente creado y vinculado', 'success', 4000);
-        ocultarBannerAdjuntar(); closeAdjuntar(); loadVentas();
+        ocultarBannerAdjuntar(); closeAdjuntar();   // lista en vivo (listener)
     } catch (err) {
         const msg = (BUSINESS_ERR.includes(err?.code) && err?.message) ? err.message : errorMessage(err, 'No se pudo crear el cliente.');
         admToast(msg, 'danger', 4000);

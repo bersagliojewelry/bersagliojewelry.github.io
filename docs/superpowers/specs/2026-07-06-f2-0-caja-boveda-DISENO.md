@@ -470,7 +470,7 @@ Nuevo rol **`caja`** en el árbol de roles (`firestore.rules`, junto a owner/adm
 
 ### Checklist (evidencia por bloque)
 - [x] B0 reglas rol caja + config/caja + append-only — evidencia: test:rules 233/233 (B0a root+enum + B0b colecciones; commit `[OPUS-4.8]`). ⚑ Desvío: subcolección `movsCaja` (no `movimientos`) para no contaminar el CG de cartera → L-73.
-- [ ] B1 turnos por puntero + test de carrera — evidencia: caja.integration
+- [x] B1 turnos por puntero + test de carrera — evidencia: `functions/caja-core.js` (`abrir/cerrarTurnoCore`) + `caja.integration` **8/8** (puntero singleton #4, idempotencia opId #2, ecuación #7, test de carrera → 1 gana) + pedidos-integración **24/24** (no-regresión). Cierre COMPLETO computa ventas por turnoId con filtro de estado en JS → **sin índice compuesto** (evita el trap §8.3; solo auto-index de `turnoId`). Commit `[OPUS-4.8]`.
 - [ ] B2 enlace venta↔turno + enforceTurno + cota — evidencia: integración + ventas/wompi verdes
 - [ ] B3 bóveda traslado/reverso/recompute/checkpoint — evidencia: integración
 - [ ] B4 Dual-Approval + alertas — evidencia: integración

@@ -808,7 +808,7 @@ module.exports = {
     iniciarPagoWebCore,                          // Wompi F2: reserva web → pago_pendiente + firma
     confirmarPagoWompiCore,                      // Wompi F2: webhook → valida firma+re-consulta → pagado
     liberarReservaCore, liberarReservasVencidasCore,   // Wompi F2: reaper (libera reservas vencidas no pagadas)
-    entero, calcOro, PedidoError,
+    entero, calcOro, PedidoError, MEDIOS,   // MEDIOS: SSoT de medios de pago (reusado por caja-core, F2.0)
     derivarEstado, normStockType, STOCK_TYPES,   // modelo v3 (reusado por inventario-core.js)
     evaluarStock, aplicarConsumo,                // candado de stock compartido (reusado por iniciarPagoWeb, F2)
     generarCodigoPedido, CODIGO_ALFABETO,        // §166: código público (tests + backfill)

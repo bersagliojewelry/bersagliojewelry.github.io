@@ -13,6 +13,10 @@ const { montoEnCentavos, firmaIntegridad, verificarFirmaEvento } = require('./wo
 
 const MEDIOS  = ['efectivo', 'transferencia', 'wompi', 'addi'];
 const CANALES = ['pos', 'web', 'whatsapp'];
+// F2.0 B2 (§9.2): cota de docs por turno. El cierre recomputa síncrono en UNA transacción; el límite
+// duro de Firestore es 500 lecturas/tx. Al acercarse (~350, margen), el POS FUERZA cerrar el turno antes
+// de seguir vendiendo → cerrarTurno queda SIEMPRE O(<400). `crearPedido` devuelve `cotaProxima` al cruzarla.
+const COTA_TURNO = 350;
 
 // ── Código PÚBLICO de pedido (§166 · comité ×3) ────────────────────────────────
 // El correlativo `numero` es INTERNO (contable, jamás al cliente: revela volumen). Lo que el
@@ -173,6 +177,25 @@ async function crearPedidoCore(db, input = {}, opts = {}) {
             return { pedidoId, numero: e.numero, codigo: e.codigo || null, total: e.total, yaExistia: true };
         }
 
+        // ── F2.0 B2: enlace venta↔turno (SOLO canal POS) ──────────────────────────────────────
+        // Lee el puntero `caja/estado` en la MISMA tx → atomicidad #5 con cerrarTurno: si el cierre
+        // gana, esta venta reintenta, re-lee puntero=null y —con enforceTurno— falla limpio; jamás un
+        // pedido apuntando a un turno YA cerrado (sin huérfano). §9.5: el turno viaja en TODOS los
+        // medios POS (efectivo/transferencia/wompi/addi), no solo efectivo. Web/WhatsApp NO llevan turno.
+        let turnoId = null, docsDelTurnoNuevo = null, cotaProxima = false;
+        const estadoRef = db.doc('caja/estado');
+        if (canal === 'pos') {
+            const [estadoSnap, cfgSnap] = await Promise.all([tx.get(estadoRef), tx.get(db.doc('config/caja'))]);
+            const abiertoId = estadoSnap.exists ? (estadoSnap.data().turnoAbiertoId || null) : null;
+            const enforceTurno = cfgSnap.exists && cfgSnap.data().enforceTurno === true;   // default false (config ausente)
+            if (!abiertoId && enforceTurno) throw new PedidoError('failed-precondition', 'Abre la caja antes de registrar una venta en el mostrador.');
+            if (abiertoId) {
+                turnoId = abiertoId;
+                docsDelTurnoNuevo = (estadoSnap.data().docsDelTurno || 0) + 1;
+                cotaProxima = docsDelTurnoNuevo >= COTA_TURNO;   // §9.2: el POS forzará cerrar el turno
+            }
+        }
+
         const pieceRef = db.doc(`pieces/${pieceId}`);
         const pieceSnap = await tx.get(pieceRef);
         if (!pieceSnap.exists) throw new PedidoError('not-found', 'La pieza no existe.');
@@ -224,7 +247,9 @@ async function crearPedidoCore(db, input = {}, opts = {}) {
             createdAt: FieldValue.serverTimestamp(),
         };
         if (enMano) { doc.entregadoEn = FieldValue.serverTimestamp(); doc.pod = { enMano: true }; }
+        if (turnoId) doc.turnoId = turnoId;                         // F2.0 B2 (§9.5): la venta POS pertenece al turno
         tx.set(pedidoRef, doc);
+        if (turnoId) tx.update(estadoRef, { docsDelTurno: docsDelTurnoNuevo });   // cota §9.2 + refuerza el conflicto con cerrarTurno
         if (enMano) {
             tx.set(pedidoRef.collection('historial').doc(), {
                 de: 'pagado', a: 'entregado', autor, nota: 'venta en mano',
@@ -236,7 +261,7 @@ async function crearPedidoCore(db, input = {}, opts = {}) {
         tx.set(contRef, { valor: numero });
         tx.set(codigoRef, { pedidoId, at: FieldValue.serverTimestamp() });   // reserva del código (misma tx = atómico)
 
-        return { pedidoId, numero, codigo, total, estado: estadoInicial, yaExistia: false };
+        return { pedidoId, numero, codigo, total, estado: estadoInicial, turnoId, cotaProxima, yaExistia: false };
     });
 }
 
@@ -808,7 +833,7 @@ module.exports = {
     iniciarPagoWebCore,                          // Wompi F2: reserva web → pago_pendiente + firma
     confirmarPagoWompiCore,                      // Wompi F2: webhook → valida firma+re-consulta → pagado
     liberarReservaCore, liberarReservasVencidasCore,   // Wompi F2: reaper (libera reservas vencidas no pagadas)
-    entero, calcOro, PedidoError,
+    entero, calcOro, PedidoError, MEDIOS, COTA_TURNO,   // SSoT reusados por caja-core / tests (F2.0)
     derivarEstado, normStockType, STOCK_TYPES,   // modelo v3 (reusado por inventario-core.js)
     evaluarStock, aplicarConsumo,                // candado de stock compartido (reusado por iniciarPagoWeb, F2)
     generarCodigoPedido, CODIGO_ALFABETO,        // §166: código público (tests + backfill)

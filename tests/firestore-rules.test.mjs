@@ -120,6 +120,16 @@ before(async () => {
         await setDoc(doc(db, 'saludEventos/ev4'), { tipo: 'recalc-saldo-error', clienteId: 'cliV', error: 'boom', resuelto: false });
         await setDoc(doc(db, 'saludEventos/ev5'), { tipo: 'recalc-saldo-error', clienteId: 'cliV', error: 'boom', resuelto: false });
         await setDoc(doc(db, 'saludEventos/evResuelto'), { tipo: 'recalc-saldo-error', error: 'boom', resuelto: true, resueltoPor: 'adminUid' });
+
+        // ─── F2.0 B0b: caja/bóveda (CF-only; seed con reglas off) ────────────────
+        // Diseño SSoT: docs/superpowers/specs/2026-07-06-f2-0-caja-boveda-DISENO.md (§Bloque B0 · §9.9).
+        await setDoc(doc(db, 'config/caja'), { enforceTurno: false, fondoTrabajo: 200000, limiteCajon: 4000000 });
+        await setDoc(doc(db, 'caja/estado'), { turnoAbiertoId: null });                                              // puntero singleton del turno abierto (#4)
+        await setDoc(doc(db, 'turnos/t1'), { estado: 'abierto', fondoApertura: 200000, aperturaPor: 'cajT' });
+        await setDoc(doc(db, 'turnos/t1/movsCaja/movc1'), { tipo: 'egreso', concepto: 'compra_empaques', monto: 5000, autor: 'cajT' }); // `movsCaja` (NO `movimientos`: no contaminar el CG de cartera)
+        await setDoc(doc(db, 'boveda/main'), { saldo: 0, updatedAt: new Date() });
+        await setDoc(doc(db, 'boveda/main/checkpoints/2026-07'), { mes: '2026-07', saldo: 0 });
+        await setDoc(doc(db, 'bovedaMovimientos/bm1'), { tipo: 'saldo_inicial', monto: 0, autor: 'ownerUid' });      // asiento fundacional $0 (§8.1.1)
     });
 });
 
@@ -359,6 +369,50 @@ test('root · NADIE acuña root:true desde la app (create)', async () => {
 });
 test('rol caja · el owner (Kary) SÍ puede crear un usuario con rol caja (B0)', async () => {
     await assertSucceeds(setDoc(doc(asUser('ownerUid'), 'users/cajaUid'), { role: 'caja', email: 'caja@x.co', displayName: 'Cajera' }));
+});
+
+// ─── F2.0 B0b · colecciones de caja/bóveda (CF-only · append-only · discreción D7) ───
+// SSoT: docs/superpowers/specs/2026-07-06-f2-0-caja-boveda-DISENO.md (§Bloque B0 · §9.9).
+// La cajera (`caja`, contexto por claim) OPERA su turno pero NO ve el saldo ACUMULADO de
+// bóveda (antirrobo). Todo el ledger de dinero lo escribe SOLO la CF (Admin SDK) → write:false.
+test('B0b · config/caja: owner escribe; caja NO escribe (no cambia sus límites); caja SÍ lee (limiteCajon del POS)', async () => {
+    await assertSucceeds(setDoc(doc(asUser('ownerUid'), 'config/caja'), { limiteCajon: 4000000 }, { merge: true }));
+    await assertFails(setDoc(doc(asClaim('cajT', 'caja'), 'config/caja'), { limiteCajon: 1 }, { merge: true }));
+    await assertFails(setDoc(doc(asUser('adminUid'),     'config/caja'), { limiteCajon: 1 }, { merge: true })); // owner-only (patrón config/cartera)
+    await assertSucceeds(getDoc(doc(asClaim('cajT', 'caja'), 'config/caja')));                                  // el POS de la cajera lee el límite
+});
+test('B0b · config/cartera sigue vedado a la cajera (parámetros del negocio = admin+)', async () => {
+    await assertFails(getDoc(doc(asClaim('cajT', 'caja'), 'config/cartera')));
+});
+test('B0b · caja/estado (puntero de turno): la cajera lee; nadie escribe por fuera (CF-only, ni el owner)', async () => {
+    await assertSucceeds(getDoc(doc(asClaim('cajT', 'caja'), 'caja/estado')));
+    await assertFails(setDoc(doc(asClaim('cajT', 'caja'), 'caja/estado'), { turnoAbiertoId: 'hack' }));
+    await assertFails(setDoc(doc(asUser('ownerUid'),      'caja/estado'), { turnoAbiertoId: 'hack' }));
+});
+test('B0b · turnos: la cajera lee su turno + movimientos (movsCaja); nadie escribe por fuera (CF-only)', async () => {
+    await assertSucceeds(getDoc(doc(asClaim('cajT', 'caja'), 'turnos/t1')));
+    await assertSucceeds(getDoc(doc(asClaim('cajT', 'caja'), 'turnos/t1/movsCaja/movc1')));
+    await assertFails(setDoc(doc(asClaim('cajT', 'caja'), 'turnos/t2'), { estado: 'abierto' }));
+    await assertFails(setDoc(doc(asClaim('cajT', 'caja'), 'turnos/t1/movsCaja/hack'), { tipo: 'ingreso', monto: 1 }));
+    await assertFails(setDoc(doc(asUser('ownerUid'),      'turnos/t1'), { estado: 'cerrado' }, { merge: true })); // ni el owner por fuera de la CF
+});
+test('B0b · bóveda (discreción D7): la cajera NO ve el acumulado; el owner SÍ; nadie escribe por fuera', async () => {
+    await assertFails(getDoc(doc(asClaim('cajT', 'caja'), 'boveda/main')));                                       // antirrobo: la cajera no ve el total
+    await assertSucceeds(getDoc(doc(asUser('ownerUid'), 'boveda/main')));                                          // el owner (Kary) sí
+    await assertFails(getDoc(doc(asUser('adminUid'),    'boveda/main')));                                          // owner-only (§9.9), ni admin
+    await assertFails(setDoc(doc(asUser('ownerUid'),    'boveda/main'), { saldo: 999 }, { merge: true }));         // saldo = recompute CF-only
+});
+test('B0b · bóveda checkpoints (subcolección): owner lee; la cajera no; CF-only', async () => {
+    await assertSucceeds(getDoc(doc(asUser('ownerUid'), 'boveda/main/checkpoints/2026-07')));
+    await assertFails(getDoc(doc(asClaim('cajT', 'caja'), 'boveda/main/checkpoints/2026-07')));
+    await assertFails(setDoc(doc(asUser('ownerUid'), 'boveda/main/checkpoints/2026-08'), { saldo: 0 }));
+});
+test('B0b · bovedaMovimientos (ledger APPEND-ONLY ESTRICTO): CF-only; ni el owner hace update/delete', async () => {
+    await assertFails(getDoc(doc(asClaim('cajT', 'caja'), 'bovedaMovimientos/bm1')));                             // la cajera no ve el ledger
+    await assertSucceeds(getDoc(doc(asUser('ownerUid'), 'bovedaMovimientos/bm1')));                                // el owner audita
+    await assertFails(setDoc(doc(asUser('ownerUid'),    'bovedaMovimientos/bm2'), { tipo: 'cajon_a_boveda', monto: 100 })); // create CF-only
+    await assertFails(updateDoc(doc(asUser('ownerUid'), 'bovedaMovimientos/bm1'), { monto: 0 }));                  // inmutable: corregir = reverso, no editar
+    await assertFails(deleteDoc(doc(asUser('ownerUid'), 'bovedaMovimientos/bm1')));                                // jamás se borra
 });
 
 // ─── CMS · Journal: lectura pública, escritura editor con hasOnly tipado ──────

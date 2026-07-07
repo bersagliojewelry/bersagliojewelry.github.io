@@ -252,6 +252,15 @@ exports.anularPedido = require('./pedidos').anularPedido;     // B1 paso 5: VOID
 exports.cierreCaja = require('./pedidos').cierreCaja;         // B1 paso 5: Cierre Z / arqueo del turno
 exports.avanzarPedido = require('./pedidos').avanzarPedido;   // F1-CORE: transiciones post-pago por TABLA + historial
 exports.alertaPedidoRevision = require('./pedidos').alertaPedidoRevision; // A.6: alerta pagado_sin_stock/a_revisar → saludEventos
+// ─── F2.0 · Sesión de caja + Bóveda (wrappers; lógica en caja-core.js) ───────────────────────
+exports.abrirTurno = require('./pedidos').abrirTurno;               // isCaja: abre turno (puntero singleton)
+exports.cerrarTurno = require('./pedidos').cerrarTurno;             // isCaja: cierra turno (ecuación + descuadre)
+exports.movimientoCaja = require('./pedidos').movimientoCaja;       // isCaja: ingreso/egreso del turno (egreso → alerta)
+exports.registrarTraslado = require('./pedidos').registrarTraslado; // isCaja: traslado cajón↔bóveda↔banco (recompute)
+exports.reversoTraslado = require('./pedidos').reversoTraslado;     // isCaja: reversa (nace pendiente + alerta)
+exports.ajusteBoveda = require('./pedidos').ajusteBoveda;           // isCaja: ajuste faltante/sobrante (pendiente + alerta)
+exports.aprobarEventoCaja = require('./pedidos').aprobarEventoCaja; // isOwner: aprueba reverso/ajuste (SoD §9.1)
+exports.recalcBoveda = require('./pedidos').recalcBoveda;           // trigger: mantiene boveda/main fresco (backstop)
 exports.ajustarStock = require('./inventario').ajustarStock;         // TODO-40 F1: merma/reabasto/corrección (delta + ledger)
 exports.cambiarTipoPieza = require('./inventario').cambiarTipoPieza; // TODO-40 F1: transición de tipo (purga cantidad, D6)
 exports.backupDiario = require('./backup').backupDiario;

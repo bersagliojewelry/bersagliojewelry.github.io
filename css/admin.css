@@ -1649,3 +1649,62 @@ select.adm-input { cursor: pointer; appearance: none; -webkit-appearance: none; 
     display: flex; align-items: flex-start; gap: 8px;
     margin-top: 10px; font-size: 13px; cursor: pointer;
 }
+
+/* ═══ F2.0 · Turno de caja (POS) ═══════════════════════════════════════════════ */
+.caja-card { margin-bottom: 20px; }
+.caja-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+
+.caja-metrics {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;
+}
+.caja-metric {
+    display: flex; flex-direction: column; gap: 3px; padding: 12px 14px;
+    background: rgba(27,75,54,0.04); border: 1px solid var(--adm-border); border-radius: var(--adm-radius);
+}
+.caja-metric span { font-size: 11.5px; color: var(--adm-muted); }
+.caja-metric strong { font-family: 'Space Mono', monospace; font-variant-numeric: tabular-nums; color: var(--adm-text); font-size: 16px; }
+.caja-metric--main { background: var(--adm-accent-light); border-color: rgba(27,75,54,0.2); }
+.caja-metric--main span { color: var(--adm-accent); font-weight: 600; }
+.caja-metric--main strong { color: var(--adm-accent); font-size: 20px; }
+
+.caja-limite { margin-top: 14px; }
+.caja-limite-track { height: 8px; border-radius: 6px; background: rgba(27,75,54,0.1); overflow: hidden; }
+.caja-limite-bar { height: 100%; width: 0; background: var(--adm-success); border-radius: 6px; transition: width 0.35s ease, background 0.25s ease; }
+.caja-limite-bar.is-over { background: var(--adm-danger); }
+.caja-limite .pos-hint { margin-top: 6px; }
+
+.caja-alerta {
+    margin-top: 14px; padding: 11px 14px; border-radius: 10px; font-size: 13px; font-weight: 500;
+    background: var(--adm-danger-light); color: var(--adm-danger); border: 1px solid rgba(217,64,64,0.2);
+}
+.caja-block { text-align: center; margin: 10px 0 0; }
+.caja-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.caja-req { color: var(--adm-danger); font-weight: 600; }
+
+/* ═══ F2.0 · Bóveda (owner) ════════════════════════════════════════════════════ */
+.bov-grid { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 20px; align-items: start; }
+@media (max-width: 900px) { .bov-grid { grid-template-columns: 1fr; } }
+
+.bov-saldo-box { padding: 16px 18px; background: var(--adm-accent-light); border: 1px solid rgba(27,75,54,0.2); border-radius: var(--adm-radius-lg); }
+.bov-saldo { display: block; font-family: 'Space Mono', monospace; font-variant-numeric: tabular-nums; color: var(--adm-accent); font-size: 32px; margin: 6px 0 4px; }
+
+.bov-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.bov-pendientes.bov-has-pend {
+    padding: 12px 14px; border-radius: 10px;
+    background: var(--adm-warn-light); border: 1px solid rgba(217,119,6,0.25);
+}
+
+.bov-mov-list { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.bov-mov {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 11px 13px; background: #fff; border: 1px solid var(--adm-border); border-radius: var(--adm-radius);
+}
+.bov-mov--pend { background: #fff; border-color: rgba(217,119,6,0.35); }
+.bov-mov-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.bov-mov-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bov-mov-tipo { font-weight: 500; color: var(--adm-text); font-size: 13.5px; }
+.bov-mov-sub { font-size: 12px; color: var(--adm-muted); overflow-wrap: anywhere; }
+.bov-mov-time { font-size: 11px; color: var(--adm-muted); }
+.bov-mov-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.bov-mov-right .adm-money { font-size: 14px; white-space: nowrap; }

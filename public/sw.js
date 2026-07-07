@@ -51,7 +51,9 @@
 // transición (avanzarPedido) + historial + aviso de despacho; POS con checkbox "requiere envío".
 // v75 = [OPUS-4.8] domicilio local cobrado: entrega_local traza flete{valorCOP,cobro,medio,estado}
 // igual que el envío nacional (Daniel 2026-07-06); "Flete / domicilio" en el detalle.
-const CACHE_NAME    = 'bersaglio-v75';
+// v76 = [OPUS-4.8] F2.0 B5b-1 UI caja/bóveda: POS turno (apertura/movimientos/traslado/cierre) +
+// página Bóveda owner (saldo/consignar/reponer/conteo/reverso) + panel de aprobaciones (Dual-Approval).
+const CACHE_NAME    = 'bersaglio-v76';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

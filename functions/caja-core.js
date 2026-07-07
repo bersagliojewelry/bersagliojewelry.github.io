@@ -159,9 +159,9 @@ const CONCEPTOS_CAJA = new Set(['pago_domiciliario', 'compra_empaques', 'adelant
 // B4 · emisor de alerta al owner (§9.8.2): el owner es SIEMPRE destinatario (fijo en la CF; config/caja
 // solo AÑADE, jamás remueve). `notificar` se INYECTA (opts) → hoy mock en tests; el transporte FCM real se
 // cablea con A.6 (pendiente). Si no se inyecta, no-op (comportamiento intacto para llamadores sin alertas).
-function emitirAlerta(opts, evt) {
+async function emitirAlerta(opts, evt) {
     const notif = opts && typeof opts.notificar === 'function' ? opts.notificar : null;
-    if (notif) notif({ ...evt, alOwner: true });
+    if (notif) await notif({ ...evt, alOwner: true });   // await → la alerta es durable (no fire-and-forget en la CF)
 }
 
 // Recompute AUTORIDAD: saldo = último checkpoint + Σ(delta de los movimientos posteriores YA commiteados).
@@ -246,7 +246,7 @@ async function reversoCore(db, input = {}, opts = {}) {
         tx.set(movRef, { tipo: 'reverso', reversaA, monto: Math.abs(delta), delta, estado: 'pendiente_aprobacion', autor, motivo, ts: FieldValue.serverTimestamp() });
         return { opId, reversaA, estado: 'pendiente_aprobacion', saldo: base, delta, yaExistia: false };
     });
-    if (!res.yaExistia) emitirAlerta(opts, { evento: 'reverso', opId, reversaA, monto: Math.abs(res.delta), autor, requiereAprobacion: true });
+    if (!res.yaExistia) await emitirAlerta(opts, { evento: 'reverso', opId, reversaA, monto: Math.abs(res.delta), autor, requiereAprobacion: true });
     return res;
 }
 
@@ -298,7 +298,7 @@ async function movimientoCajaCore(db, input = {}, opts = {}) {
         tx.set(movRef, mov);
         return { turnoId, opId, tipo, monto, yaExistia: false };
     });
-    if (!res.yaExistia && tipo === 'egreso') emitirAlerta(opts, { evento: 'egreso', turnoId, opId, concepto, monto, autor });
+    if (!res.yaExistia && tipo === 'egreso') await emitirAlerta(opts, { evento: 'egreso', turnoId, opId, concepto, monto, autor });
     return res;
 }
 
@@ -326,7 +326,7 @@ async function ajusteCore(db, input = {}, opts = {}) {
         tx.set(movRef, { tipo, monto, delta, estado: 'pendiente_aprobacion', motivo: motivo.slice(0, 500), autor, ts: FieldValue.serverTimestamp() });
         return { opId, estado: 'pendiente_aprobacion', saldo: base, delta, yaExistia: false };
     });
-    if (!res.yaExistia) emitirAlerta(opts, { evento: tipo, opId, monto, motivo, autor, requiereAprobacion: true });
+    if (!res.yaExistia) await emitirAlerta(opts, { evento: tipo, opId, monto, motivo, autor, requiereAprobacion: true });
     return res;
 }
 
@@ -355,7 +355,7 @@ async function aprobarEventoCajaCore(db, input = {}, opts = {}) {
         tx.set(db.doc('boveda/main'), { saldo: nuevoSaldo, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
         return { opId, estado: 'aprobado', saldo: nuevoSaldo, yaExistia: false };
     });
-    if (!res.yaExistia) emitirAlerta(opts, { evento: 'aprobacion', opId, aprobadoPor, requiereAprobacion: false });
+    if (!res.yaExistia) await emitirAlerta(opts, { evento: 'aprobacion', opId, aprobadoPor, requiereAprobacion: false });
     return res;
 }
 

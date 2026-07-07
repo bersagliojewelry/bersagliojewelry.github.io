@@ -11,12 +11,14 @@
  */
 const { onCall, onRequest, HttpsError } = require('firebase-functions/v2/https');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
-const { onDocumentUpdated } = require('firebase-functions/v2/firestore');
+const { onDocumentUpdated, onDocumentWritten } = require('firebase-functions/v2/firestore');
 const { defineSecret } = require('firebase-functions/params');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { crearPedidoCore, confirmarPagoCore, anularPedidoCore, cierreCajaCore, iniciarPagoWebCore, confirmarPagoWompiCore, liberarReservasVencidasCore, avanzarPedidoCore, PedidoError } = require('./pedidos-core');
+const { abrirTurnoCore, cerrarTurnoCore, movimientoCajaCore, registrarTrasladoCore, reversoCore, ajusteCore, aprobarEventoCajaCore, recalcBovedaCore } = require('./caja-core');   // F2.0
 
 const VENTAS = ['owner', 'admin', 'catalogo'];
+const CAJA = ['owner', 'admin', 'caja'];   // F2.0: quien OPERA la caja (isCaja); aprobar = solo owner
 
 // Secreto de INTEGRIDAD de Wompi (Secret Manager; NUNCA en el repo). Se setea por entorno:
 //   firebase functions:secrets:set WOMPI_INTEGRITY_SECRET   (test en sandbox · prod al lanzar)
@@ -38,6 +40,55 @@ async function rolDeVentas(db, auth) {
     }
     if (!VENTAS.includes(role)) throw new HttpsError('permission-denied', 'No tienes permiso para registrar ventas.');
     return role;
+}
+
+// F2.0 · rol para OPERAR la caja (isCaja) y para APROBAR (owner). `caja` no está en el ROLE_LEVEL
+// jerárquico de index.js → se valida por SET (como rolDeVentas), no por nivel.
+async function rolDeCaja(db, auth) {
+    if (!auth) throw new HttpsError('unauthenticated', 'Debes iniciar sesión.');
+    let role = typeof auth.token?.role === 'string' ? auth.token.role : null;
+    if (!role) {
+        const snap = await db.collection('users').doc(auth.uid).get();
+        if (!snap.exists) throw new HttpsError('permission-denied', 'Usuario no registrado.');
+        role = snap.data().role;
+    }
+    if (!CAJA.includes(role)) throw new HttpsError('permission-denied', 'No tienes permiso para operar la caja.');
+    return role;
+}
+async function rolDeOwner(db, auth) {
+    if (!auth) throw new HttpsError('unauthenticated', 'Debes iniciar sesión.');
+    let role = typeof auth.token?.role === 'string' ? auth.token.role : null;
+    if (!role) {
+        const snap = await db.collection('users').doc(auth.uid).get();
+        if (!snap.exists) throw new HttpsError('permission-denied', 'Usuario no registrado.');
+        role = snap.data().role;
+    }
+    if (role !== 'owner') throw new HttpsError('permission-denied', 'Solo el dueño (owner) puede hacer esto.');
+    return role;
+}
+
+// F2.0 · emisor de alerta de caja → `saludEventos` (canal del panel, patrón alertaPedidoRevision). El
+// owner SIEMPRE es destinatario; el transporte FCM push real se cablea con A.6. Id determinista →
+// idempotente. Se INYECTA en los cores (opts.notificar); best-effort (no tumba la operación de dinero).
+function notificarCaja(db) {
+    return async (evt) => {
+        const DETALLE = {
+            egreso:          `💸 Egreso de caja${evt.concepto ? ` (${evt.concepto})` : ''} — ${evt.monto || '?'} COP · turno ${evt.turnoId || '?'}.`,
+            reverso:         `↩️ Reversa de bóveda PENDIENTE de tu aprobación — ${evt.monto || '?'} COP.`,
+            ajuste_faltante: `⚠️ Ajuste FALTANTE de bóveda pendiente de aprobación — ${evt.monto || '?'} COP. ${evt.motivo || ''}`,
+            ajuste_sobrante: `⚠️ Ajuste SOBRANTE de bóveda pendiente de aprobación — ${evt.monto || '?'} COP. ${evt.motivo || ''}`,
+            aprobacion:      `✅ Evento de bóveda aprobado.`,
+        };
+        try {
+            await db.collection('saludEventos').doc(`caja-${evt.evento}-${evt.opId}`).set({
+                tipo: 'caja-alerta', evento: evt.evento,
+                detalle: DETALLE[evt.evento] || `Evento de caja: ${evt.evento}`,
+                opId: evt.opId || null, monto: evt.monto ?? null, autor: evt.autor ?? null,
+                requiereAprobacion: evt.requiereAprobacion === true,
+                at: FieldValue.serverTimestamp(), resuelto: false,
+            });
+        } catch (e) { console.error('[notificarCaja] alerta no registrada:', e); }
+    };
 }
 
 const crearPedido = onCall({ region: 'us-central1', invoker: 'public' }, async (request) => {
@@ -101,6 +152,72 @@ const cierreCaja = onCall({ region: 'us-central1', invoker: 'public' }, async (r
         if (e instanceof PedidoError) throw new HttpsError(e.code, e.message);
         throw e;
     }
+});
+
+// ─── F2.0 · Sesión de caja + Bóveda (wrappers onCall; toda la lógica en caja-core.js) ────────
+// isCaja (owner/admin/caja) OPERA; isOwner APRUEBA (SoD §9.1). El cliente genera el `opId`
+// (idempotencia §8.1.2). Alertas → saludEventos (notificarCaja). Reglas caja/*/turnos/boveda* = CF-only (B0b).
+const abrirTurno = onCall({ region: 'us-central1', invoker: 'public' }, async (request) => {
+    const db = getFirestore();
+    await rolDeCaja(db, request.auth);
+    try {
+        const d = request.data || {};
+        return await abrirTurnoCore(db, { opId: d.opId, fondoApertura: d.fondoApertura, autor: request.auth.uid });
+    } catch (e) { if (e instanceof PedidoError) throw new HttpsError(e.code, e.message); throw e; }
+});
+const cerrarTurno = onCall({ region: 'us-central1', invoker: 'public' }, async (request) => {
+    const db = getFirestore();
+    await rolDeCaja(db, request.auth);
+    try {
+        const d = request.data || {};
+        return await cerrarTurnoCore(db, { turnoId: d.turnoId, conteoPorMedio: d.conteoPorMedio, autor: request.auth.uid });
+    } catch (e) { if (e instanceof PedidoError) throw new HttpsError(e.code, e.message); throw e; }
+});
+const movimientoCaja = onCall({ region: 'us-central1', invoker: 'public' }, async (request) => {
+    const db = getFirestore();
+    await rolDeCaja(db, request.auth);
+    try {
+        const d = request.data || {};
+        return await movimientoCajaCore(db, { turnoId: d.turnoId, opId: d.opId, tipo: d.tipo, concepto: d.concepto, monto: d.monto, nota: d.nota, autor: request.auth.uid }, { notificar: notificarCaja(db) });
+    } catch (e) { if (e instanceof PedidoError) throw new HttpsError(e.code, e.message); throw e; }
+});
+const registrarTraslado = onCall({ region: 'us-central1', invoker: 'public' }, async (request) => {
+    const db = getFirestore();
+    await rolDeCaja(db, request.auth);
+    try {
+        const d = request.data || {};
+        return await registrarTrasladoCore(db, { opId: d.opId, tipo: d.tipo, monto: d.monto, turnoId: d.turnoId, nota: d.nota, autor: request.auth.uid }, { notificar: notificarCaja(db) });
+    } catch (e) { if (e instanceof PedidoError) throw new HttpsError(e.code, e.message); throw e; }
+});
+const reversoTraslado = onCall({ region: 'us-central1', invoker: 'public' }, async (request) => {
+    const db = getFirestore();
+    await rolDeCaja(db, request.auth);
+    try {
+        const d = request.data || {};
+        return await reversoCore(db, { opId: d.opId, reversaA: d.reversaA, motivo: d.motivo, autor: request.auth.uid }, { notificar: notificarCaja(db) });
+    } catch (e) { if (e instanceof PedidoError) throw new HttpsError(e.code, e.message); throw e; }
+});
+const ajusteBoveda = onCall({ region: 'us-central1', invoker: 'public' }, async (request) => {
+    const db = getFirestore();
+    await rolDeCaja(db, request.auth);
+    try {
+        const d = request.data || {};
+        return await ajusteCore(db, { opId: d.opId, tipo: d.tipo, monto: d.monto, motivo: d.motivo, autor: request.auth.uid }, { notificar: notificarCaja(db) });
+    } catch (e) { if (e instanceof PedidoError) throw new HttpsError(e.code, e.message); throw e; }
+});
+const aprobarEventoCaja = onCall({ region: 'us-central1', invoker: 'public' }, async (request) => {
+    const db = getFirestore();
+    const rol = await rolDeOwner(db, request.auth);   // SoD §9.1: SOLO owner aprueba
+    try {
+        const d = request.data || {};
+        return await aprobarEventoCajaCore(db, { opId: d.opId, aprobadoPor: request.auth.uid, rol }, { notificar: notificarCaja(db) });
+    } catch (e) { if (e instanceof PedidoError) throw new HttpsError(e.code, e.message); throw e; }
+});
+// recalcBoveda: mantiene boveda/main fresco tras cualquier escritura del ledger (BACKSTOP — los cores ya
+// lo escriben síncrono; no-op si igual). No re-dispara (escribe boveda/main, no bovedaMovimientos).
+const recalcBoveda = onDocumentWritten({ document: 'bovedaMovimientos/{opId}', region: 'us-central1' }, async () => {
+    try { await recalcBovedaCore(getFirestore()); }
+    catch (e) { console.error('[recalcBoveda] recompute falló:', e); }
 });
 
 // iniciarPagoWeb (Wompi F2): el cliente PÚBLICO (sin login) inicia el cobro de una pieza.
@@ -223,4 +340,9 @@ const alertaPedidoRevision = onDocumentUpdated({ document: 'pedidos/{pedidoId}',
     } catch (e) { console.error('[alertaPedidoRevision] no se pudo registrar:', e); }
 });
 
-module.exports = { crearPedido, confirmarPago, anularPedido, cierreCaja, iniciarPagoWeb, confirmarPagoWompi, liberarReservasVencidas, alertaPedidoRevision, avanzarPedido };
+module.exports = {
+    crearPedido, confirmarPago, anularPedido, cierreCaja, iniciarPagoWeb, confirmarPagoWompi,
+    liberarReservasVencidas, alertaPedidoRevision, avanzarPedido,
+    // F2.0 caja/bóveda
+    abrirTurno, cerrarTurno, movimientoCaja, registrarTraslado, reversoTraslado, ajusteBoveda, aprobarEventoCaja, recalcBoveda,
+};

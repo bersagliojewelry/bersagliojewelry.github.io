@@ -42,6 +42,15 @@ service cloud.firestore {
       return isAuth() && getUserRole() in ['owner', 'admin', 'editor', 'catalogo'];
     }
 
+    // Rol "caja" (F2.0 B0, §9.9): la CAJERA del mostrador. OPERA el POS (su turno:
+    // abrir/registrar venta/movimientos/cerrar, y el traslado cajón→bóveda) — pero NO
+    // ve el saldo ACUMULADO de bóveda (discreción antirrobo D7). isCaja() = "quien opera
+    // la caja" = admin+ ∪ caja; NO incluye a `catalogo` (un gestor de catálogo no es cajero).
+    // Ver/consignar bóveda, editar config/caja y APROBAR ajustes siguen siendo owner-only.
+    function isCaja() {
+      return isAuth() && getUserRole() in ['owner', 'admin', 'caja'];
+    }
+
     // ─── CRM (cuentas por cobrar): validadores ───────────────────────────────────
     // Contenido REAL = no vacío y no solo-espacios (' '.size()==1 pasaría size()>0 →
     // dejaría publicar campos en blanco-visual: brecha cero-ficción, red-team Fase B).
@@ -679,6 +688,52 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    // ─── F2.0 · Sesión de caja + Bóveda antirrobo (B0b) ─────────────────────────
+    // SSoT del diseño: docs/superpowers/specs/2026-07-06-f2-0-caja-boveda-DISENO.md (§Bloque B0 · §9.9).
+    // TODO el ledger de dinero de caja lo ESCRIBE solo la CF (Admin SDK, que IGNORA estas
+    // reglas): apertura/movimiento/traslado/cierre en runTransaction (invariantes #2-#6).
+    // El cliente NUNCA escribe (write:false). La cajera (`caja`) LEE su turno; la bóveda es
+    // OWNER-only (discreción D7: ni un atraco ni un vistazo al POS revela el acumulado).
+
+    // Puntero SINGLETON del turno abierto (invariante #4): lo mueve SOLO abrir/cerrarTurno
+    // (CF, tx atómica sobre `caja/estado`). La cajera lo LEE (¿hay caja abierta?).
+    match /caja/{docId} {
+      allow read:  if isCaja();
+      allow write: if false;                    // SOLO Admin SDK (las CF de caja)
+    }
+    // Turnos de caja (ciclo abierto→cerrado) + sus movimientos manuales (ingreso/egreso).
+    // ⚠️ Subcolección `movsCaja`, NO `movimientos`: ese nombre alimenta el collectionGroup de
+    // cartera CxC (corte/salud/reconciliación, functions/*) — reusarlo contaminaría el aging
+    // e infla su full-scan a 2-3 años (§3.6, verificado 2026-07-07). Desvía del §3 de la spec
+    // con evidencia (Reflejo de Desafío Crítico §G.4) → L-73.
+    match /turnos/{turnoId} {
+      allow read:  if isCaja();
+      allow create, update, delete: if false;   // SOLO Admin SDK (abrir/cerrar por puntero)
+      match /movsCaja/{movId} {
+        allow read:  if isCaja();
+        allow write: if false;                  // append-only vía CF (movimientoCaja)
+      }
+    }
+    // Bóveda (caja fuerte) — DISCRECIÓN D7 (§9.9): saldo acumulado + checkpoints = OWNER-only
+    // (la cajera JAMÁS lo ve). `saldo` lo recomputa la CF `recalcBoveda` desde el ledger
+    // (patrón recalcSaldoCliente §50), NUNCA el cliente. El wildcard cubre boveda/main y sus
+    // checkpoints mensuales (boveda/main/checkpoints/{YYYY-MM}, cota del recompute §8.3).
+    match /boveda/{docId} {
+      allow read:  if isOwner();
+      allow write: if false;
+      match /{sub=**} {
+        allow read:  if isOwner();
+        allow write: if false;
+      }
+    }
+    // Ledger de bóveda — APPEND-ONLY ESTRICTO (§9.3): CF-only + NUNCA update/delete (ni el
+    // owner). Corregir = movimiento `reverso` NUEVO con doble rastro, jamás editar/borrar el
+    // asiento (reversing entries: el dinero no se puede ocultar). Lectura owner-only (auditoría).
+    match /bovedaMovimientos/{opId} {
+      allow read:  if isOwner();
+      allow write: if false;                    // SOLO Admin SDK; sin update/delete = inmutable
+    }
+
     // ─── Collections (categories) ──────────────────────────────────────────────
 
     match /collections/{colId} {
@@ -904,8 +959,11 @@ service cloud.firestore {
       // EXCEPCIÓN M0 (Fase M §69): `config/cartera` guarda los LÍMITES que gobiernan
       // a la operadora (tope de auto-aprobación, motivos, criterios de castigo) —
       // write OWNER-ONLY: quien opera bajo los límites no puede reescribirlos.
-      allow read:  if docId == 'status' || isAdmin();
-      allow write: if docId == 'cartera' ? isOwner() : isAdmin();
+      // F2.0 B0b: `config/caja` (enforceTurno/fondoTrabajo/limiteCajon/alertas) sigue el mismo
+      // patrón owner-only; PERO la cajera SÍ lo LEE (el POS necesita `limiteCajon` para el modal
+      // de traslado). `config/cartera` sigue vedado a la cajera (parámetros del negocio = admin+).
+      allow read:  if docId == 'status' || (docId == 'caja' && isCaja()) || isAdmin();
+      allow write: if docId in ['cartera', 'caja'] ? isOwner() : isAdmin();
     }
 
     // ─── CMS · System/meta (señal de frescura de cache) ─────────────────────────

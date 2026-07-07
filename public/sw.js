@@ -53,7 +53,9 @@
 // igual que el envío nacional (Daniel 2026-07-06); "Flete / domicilio" en el detalle.
 // v76 = [OPUS-4.8] F2.0 B5b-1 UI caja/bóveda: POS turno (apertura/movimientos/traslado/cierre) +
 // página Bóveda owner (saldo/consignar/reponer/conteo/reverso) + panel de aprobaciones (Dual-Approval).
-const CACHE_NAME    = 'bersaglio-v76';
+// v77 = [OPUS-4.8] B5c fixes post-gate: reponer cambio lleva turnoId (cierre correcto) + opId de
+// idempotencia perezoso (no duplica un movimiento al reabrir el modal tras un fallo de red).
+const CACHE_NAME    = 'bersaglio-v77';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

@@ -16,7 +16,7 @@ import adminDb from './db.js';
 import { admToast, admConfirm, initSidebar, requireAuth, errorMessage, fmtDateTime } from './shared.js';
 import {
     registrarTraslado, ajusteBoveda, reversoTraslado, aprobarEventoCaja,
-    onBovedaChange, onBovedaMovsChange,
+    onBovedaChange, onBovedaMovsChange, onCajaEstadoChange,
 } from '../pedidos-service.js';
 import { tipoBovedaLabel, aprobacionInfo, esDestructivo } from './caja-format.js';
 
@@ -30,6 +30,7 @@ let _saldo = 0;
 let _movs  = [];
 let _opId  = null;       // opId de la acción en curso (idempotencia §8.1.2)
 let _accionTipo = null;  // 'boveda_a_banco' | 'boveda_a_cajon' (modal de salida)
+let _turnoAbiertoId = null;  // turno abierto (para atribuir la reposición de cambio al cierre)
 
 // ─── DOM builder seguro (sin innerHTML) ──────────────────────────────────────
 function el(tag, attrs = {}, kids = []) {
@@ -58,6 +59,8 @@ async function init() {
         200,
         (e) => admToast(errorMessage(e, 'No se pudo leer el movimiento de la bóveda.'), 'danger', 4000),
     );
+    // Turno abierto (owner lee caja/estado): la reposición de cambio se atribuye a ESE turno.
+    onCajaEstadoChange((est) => { _turnoAbiertoId = est?.turnoAbiertoId || null; }, () => { _turnoAbiertoId = null; });
 
     // Acciones (owner)
     document.getElementById('bov-consignar').addEventListener('click', () => openSalida('boveda_a_banco'));
@@ -193,12 +196,19 @@ async function handleSalida() {
     const nota = document.getElementById('sal-nota').value.trim();
     if (!(monto > 0)) { admToast('El monto debe ser mayor a 0.', 'danger'); return; }
     if (monto > _saldo) { admToast('No hay saldo suficiente en la bóveda para esa salida.', 'danger'); return; }
+    // Reponer cambio (bóveda→cajón) SOLO con turno abierto: el cierre necesita el turnoId para sumar
+    // +bovedaACajon a su ecuación (§8.1.7); sin él, el arqueo del turno mostraría un "sobra" falso.
+    if (_accionTipo === 'boveda_a_cajon' && !_turnoAbiertoId) {
+        admToast('Abre la caja del mostrador antes de reponer el cambio (el traslado se atribuye al turno abierto).', 'danger', 5000);
+        return;
+    }
     if (!_opId) _opId = uid();
+    const turnoId = _accionTipo === 'boveda_a_cajon' ? _turnoAbiertoId : undefined;
 
     const submit = document.getElementById('sal-submit');
     submit.disabled = true; submit.textContent = 'Registrando…';
     try {
-        await registrarTraslado({ opId: _opId, tipo: _accionTipo, monto, nota: nota || undefined });
+        await registrarTraslado({ opId: _opId, tipo: _accionTipo, monto, turnoId, nota: nota || undefined });
         _opId = null;
         admToast('✓ Movimiento registrado', 'success');
         closeSalida();

@@ -80,6 +80,46 @@ export async function cierreCaja(input) {
     return (await fn(input)).data;
 }
 
+// ─── F2.0 · Sesión de caja + Bóveda (transporte callable; lógica en caja-core.js del server) ─────
+// El navegador genera el `opId` (idempotencia §8.1.2) y lo manda; el rol lo valida la CF (isCaja opera,
+// owner aprueba). Los cores recomputan/gatean server-side; aquí SOLO transporte (§3.6 cero monolitos).
+
+/** Abre el turno de caja (rechaza si ya hay uno abierto). @param {{opId:string, fondoApertura:number}} input */
+export async function abrirTurno(input) {
+    const fn = await _callable('abrirTurno');
+    return (await fn(input)).data;
+}
+/** Cierra el turno: arqueo a ciegas + ecuación completa + descuadre. @param {{turnoId:string, conteoPorMedio:object}} input */
+export async function cerrarTurno(input) {
+    const fn = await _callable('cerrarTurno');
+    return (await fn(input)).data;
+}
+/** Ingreso/egreso manual del turno (egreso → alerta al owner). @param {{turnoId, opId, tipo, concepto, monto, nota?}} input */
+export async function movimientoCaja(input) {
+    const fn = await _callable('movimientoCaja');
+    return (await fn(input)).data;
+}
+/** Traslado de dinero cajón↔bóveda↔banco (recompute del saldo). @param {{opId, tipo, monto, turnoId?, nota?}} input */
+export async function registrarTraslado(input) {
+    const fn = await _callable('registrarTraslado');
+    return (await fn(input)).data;
+}
+/** Reversa (asiento compensatorio) de un movimiento de bóveda — nace PENDIENTE. @param {{opId, reversaA, motivo}} input */
+export async function reversoTraslado(input) {
+    const fn = await _callable('reversoTraslado');
+    return (await fn(input)).data;
+}
+/** Ajuste de bóveda por conteo físico (faltante/sobrante) — nace PENDIENTE. @param {{opId, tipo, monto, motivo}} input */
+export async function ajusteBoveda(input) {
+    const fn = await _callable('ajusteBoveda');
+    return (await fn(input)).data;
+}
+/** Aprueba un evento destructivo pendiente (reverso/ajuste) → entra al recompute. SOLO owner. @param {{opId}} input */
+export async function aprobarEventoCaja(input) {
+    const fn = await _callable('aprobarEventoCaja');
+    return (await fn(input)).data;
+}
+
 /**
  * F1-CORE: historial append-only del pedido (traza de transiciones que escribe `avanzarPedido`).
  * One-shot al abrir el detalle (no listener: es una traza, no un tablero). La regla de `pedidos`
@@ -122,4 +162,9 @@ export function onPedidosChange(cb, max = 200, onUiError) {
     );
 }
 
-export default { crearPedido, iniciarPagoWeb, confirmarPago, anularPedido, cierreCaja, avanzarPedido, historialPedido, ultimasVentas, onPedidosChange };
+export default {
+    crearPedido, iniciarPagoWeb, confirmarPago, anularPedido, cierreCaja, avanzarPedido,
+    historialPedido, ultimasVentas, onPedidosChange,
+    // F2.0 caja/bóveda
+    abrirTurno, cerrarTurno, movimientoCaja, registrarTraslado, reversoTraslado, ajusteBoveda, aprobarEventoCaja,
+};

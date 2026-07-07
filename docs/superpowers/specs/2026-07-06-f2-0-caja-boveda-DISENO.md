@@ -469,7 +469,7 @@ Nuevo rol **`caja`** en el árbol de roles (`firestore.rules`, junto a owner/adm
 - SW/APP bump. Gate en prod (Chrome, con usuario caja + usuario owner de prueba). ADR.
 
 ### Checklist (evidencia por bloque)
-- [ ] B0 reglas rol caja + config/caja + append-only — evidencia: test:rules
+- [x] B0 reglas rol caja + config/caja + append-only — evidencia: test:rules 233/233 (B0a root+enum + B0b colecciones; commit `[OPUS-4.8]`). ⚑ Desvío: subcolección `movsCaja` (no `movimientos`) para no contaminar el CG de cartera → L-73.
 - [ ] B1 turnos por puntero + test de carrera — evidencia: caja.integration
 - [ ] B2 enlace venta↔turno + enforceTurno + cota — evidencia: integración + ventas/wompi verdes
 - [ ] B3 bóveda traslado/reverso/recompute/checkpoint — evidencia: integración

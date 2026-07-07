@@ -322,3 +322,62 @@ Prompt autocontenido preparado aparte (R1 anti-anclaje: problema crudo + opcione
 compensatorio para operadora única sin SoD; (2) recompute síncrono vs checkpoint+materializado en el
 hot-path; (3) checkpoint mensual sobre Firestore zero-budget — ¿introduce su propio hueco?; (4) migración
 T0+flag vs periodo de gracia — ¿venta en vuelo cruzando el corte?
+
+---
+
+## 9. CONSEJO EXTERNO (Gemini) INTEGRADO — DISEÑO v3 (final antes de la spec) · 2026-07-06
+> Respuesta de Gemini + verificación de Claude → CRUDO en bóveda
+> `2026-07-06-consejo-gemini-f2-caja-boveda-RESPUESTA.md`. Gemini aportó 5 cosas que el comité NO tenía;
+> Claude las adopta con matices (no subordinación, §3.3). **Esto cierra el diseño; falta solo 2 decisiones de
+> negocio de Daniel (§9.6) y confirmar el modelo de owner (§9.1) → luego spec ejecutable con spec-kit.**
+
+### 9.1 Dual-Approval para eventos destructivos (reusa la SoD que YA existe) — corrige el invariante #8 de §8.2
+La mitigación "alertas append-only" era débil: si Kary edita `config/caja` puede removerse de la vigilancia.
+**Fix**: los eventos DESTRUCTIVOS de caja — `ajuste_faltante/ajuste_sobrante` de bóveda, y el **reverso** de un
+traslado (§9.3) — nacen `pendiente_aprobacion` y **requieren `isOwner()` (Daniel) para entrar al recompute**.
+Reusa el patrón SoD del CRM (movimientos sobre `autoAprobacionMax` → aprobación owner, `rules:100-104`;
+`[[feedback_claude_experto_verifica]]` "Kary opera / Daniel aprueba"). **MATIZ a Gemini** (no todo evento):
+los egresos rutinarios y traslados normales NO piden aprobación (sería fricción diaria inaceptable) → van con
+**alerta FCM inmutable**. Solo lo destructivo/correctivo pide la firma del owner. ⚠️ **DEPENDE de §9.1-owner**.
+
+### 9.2 Cota de turno (límite Firestore 500 lecturas/tx) — hace seguro el invariante #3
+El recompute síncrono es correcto PERO un turno con >400 docs (turno olvidado en fin de semana alto) haría
+explotar `cerrarTurno`/`registrarTraslado` con "Transaction too large". **Fix**: `caja/estado` lleva un
+contador `docsDelTurno`; al acercarse a ~350-400, el POS FUERZA cerrar el turno (y abrir otro) antes de seguir
+vendiendo; + **auto-cierre por caducidad 24h** (turno olvidado). Así el recompute síncrono es SIEMPRE O(<400).
+
+### 9.3 Inmutabilidad ESTRICTA de bóveda (reverso, no `anulado`) — corrige §8.3 y el checkpoint
+El campo `anulado:true` + checkpoint mensual = hueco FATAL (anular en el pasado un movimiento ya sellado en un
+checkpoint no afecta el presente → dinero alterado invisible). **Fix**: `bovedaMovimientos` es INMUTABLE
+ESTRICTO (regla prohíbe update/delete). Anular = **NUEVO** movimiento `tipo:'reverso', reversaA:<opId>,
+monto:-X`, ts ACTUAL (entra en el checkpoint activo). Patrón contable estándar (reversing entries) + refuerza
+antirrobo (el reverso deja traza permanente, no se puede "restaurar config y ocultar"). El reverso de un
+traslado es evento destructivo → Dual-Approval (§9.1).
+
+### 9.4 Runbook de activación `enforceTurno` (flanqueado) — cierra §6.3
+Para que ninguna venta caiga en el hueco T0: **(1) Kary hace el ÚLTIMO cierre Z viejo** (limpia la casa) →
+**(2) Daniel activa `enforceTurno`** → **(3) Kary abre el 1er turno**. Todo pedido `ts<T0` quedó en el cierre Z
+viejo; `ts>=T0` exige turnoId. Cero dinero huérfano. Documentar como runbook operativo en la spec.
+
+### 9.5 🚨 turnoId en TODA venta POS (corrige el defecto masivo D4+#6)
+**El defecto más valioso que cazó Gemini (el comité no lo vio)**: el invariante #6 (pertenencia por turnoId) +
+D4 (transferencia/Wompi no guardan turnoId) haría que el cierre de turno reporte **$0 en medios digitales** —
+Kary pierde su reporte diario de tarjetas/transferencias (el viejo `cierreCajaCore` desglosa TODOS los medios).
+**Fix (opción 1 de Gemini, acotada por Claude a POS)**: `crearPedido` en **canal POS** guarda el `turnoId`
+activo para TODOS los medios (efectivo, transferencia, wompi, addi), no solo efectivo → `cerrarTurno` desglosa
+`esperadoPorMedio` completo por una sola query `where turnoId==id`. **MATIZ**: las ventas **WEB** (canal web,
+el cliente paga solo) NO tienen turno → no llevan turnoId → reporte de ingresos digitales aparte (módulo
+Pedidos + export contador ya lo cubren). D4 sigue válido en su esencia (transferencia/wompi no son candado del
+cajón), pero SÍ heredan el turnoId si la venta es de mostrador. **DECISIÓN DE NEGOCIO → §9.6.2**.
+
+### 9.6 DOS decisiones de negocio de Daniel (últimas antes de la spec)
+1. **Modelo de owner (seguridad)**: ¿Kary tiene rol **`admin`** (operadora) y Daniel es el **único `owner`**
+   (aprobador)? El Dual-Approval (§9.1) y la protección de `config/caja` dependen de esto. Si Kary fuera owner,
+   hay que degradarla a admin (Daniel = único owner) — es la base de toda la vigilancia.
+2. **Arqueo del turno ↔ ventas web**: ¿el cierre de turno de Kary (mostrador) **incluye las ventas de la web**
+   (que se pagan solas desde casa, sin que Kary esté en el mostrador), o esas van en un **reporte de ingresos
+   digitales aparte**? Default arquitectónico: **aparte** (el arqueo concilia el mostrador; las ventas web ya
+   tienen su módulo Pedidos). Daniel decide.
+3. **Nivel de fricción del Dual-Approval**: los ajustes de faltante / reversos de bóveda, ¿los **apruebas tú**
+   (más seguro, algo de fricción cuando Kary necesita corregir algo), o prefieres **solo la alerta** (más ágil,
+   menos control)? Recomiendo aprobación para esos 2-3 eventos raros; alerta para el resto.

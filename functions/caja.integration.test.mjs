@@ -13,13 +13,21 @@ import assert from 'node:assert/strict';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import core from './caja-core.js';
+import pedidosCore from './pedidos-core.js';
 const { abrirTurnoCore, cerrarTurnoCore } = core;
+const { crearPedidoCore, COTA_TURNO } = pedidosCore;
 
 initializeApp({ projectId: 'demo-bersaglio' });
 const db = getFirestore();
 
 const limpiarPuntero = () => db.doc('caja/estado').delete().catch(() => {});
-before(limpiarPuntero);
+const sinEnforce   = () => db.doc('config/caja').delete().catch(() => {});   // config ausente ⇒ enforceTurno=false
+before(async () => {
+    await limpiarPuntero();
+    await sinEnforce();
+    // Pieza precio-fijo con stock holgado para las ventas POS del bloque B2 (id fijo, cantidad alta).
+    await db.doc('pieces/pCajaB2').set({ name: 'Dije B2', slug: 'dije-b2', price: 100000, stockType: 'finito', cantidad: 500, visibilidad: 'privada' });
+});
 
 // ─── Apertura por puntero singleton (invariante #4) ──────────────────────────
 test('abrir · puntero null → crea 1 turno abierto + el puntero lo apunta', async () => {
@@ -122,4 +130,75 @@ test('cerrar · ecuación COMPLETA con boveda_a_cajon (fondo + ingresos − egre
 
 test('cerrar · turno inexistente → rechaza (not-found)', async () => {
     await assert.rejects(cerrarTurnoCore(db, { turnoId: 'NOPE', conteoPorMedio: { efectivo: 0 }, autor: 'c1' }), /no existe/i);
+});
+
+// ─── B2 · Enlace venta↔turno (crearPedido POS) — invariantes #5/#6, §9.5, cota §9.2 ──────────
+test('B2 · venta POS con turno abierto guarda turnoId en TODOS los medios (§9.5)', async () => {
+    await limpiarPuntero(); await sinEnforce();
+    await abrirTurnoCore(db, { opId: 'TV', fondoApertura: 200000, autor: 'c1' });
+    const r1 = await crearPedidoCore(db, { pedidoId: 'v-efec', pieceId: 'pCajaB2', medio: 'efectivo', canal: 'pos', autor: 'c1' });
+    const r2 = await crearPedidoCore(db, { pedidoId: 'v-transf', pieceId: 'pCajaB2', medio: 'transferencia', canal: 'pos', autor: 'c1' });
+    assert.equal(r1.turnoId, 'TV');
+    assert.equal(r2.turnoId, 'TV');                                   // §9.5: transferencia POS también hereda el turno
+    assert.equal((await db.doc('pedidos/v-efec').get()).data().turnoId, 'TV');
+    assert.equal((await db.doc('pedidos/v-transf').get()).data().turnoId, 'TV');
+    assert.equal((await db.doc('caja/estado').get()).data().docsDelTurno, 2);   // cota: 2 ventas en el turno
+});
+
+test('B2 · venta WEB NO hereda turno (el cliente paga solo; reporte digital aparte, §9.5)', async () => {
+    await limpiarPuntero(); await sinEnforce();
+    await abrirTurnoCore(db, { opId: 'TW', fondoApertura: 0, autor: 'c1' });
+    const r = await crearPedidoCore(db, { pedidoId: 'v-web', pieceId: 'pCajaB2', medio: 'efectivo', canal: 'whatsapp', autor: 'c1' });
+    assert.equal(r.turnoId ?? null, null);                           // canal ≠ pos → sin turnoId
+    assert.equal((await db.doc('pedidos/v-web').get()).data().turnoId ?? null, null);
+    assert.equal((await db.doc('caja/estado').get()).data().docsDelTurno, 0);   // no tocó la cota del turno
+});
+
+test('B2 · sin turno + enforceTurno=true → RECHAZA la venta POS ("abre la caja")', async () => {
+    await limpiarPuntero();
+    await db.doc('config/caja').set({ enforceTurno: true });
+    await assert.rejects(
+        crearPedidoCore(db, { pedidoId: 'v-noturno', pieceId: 'pCajaB2', medio: 'efectivo', canal: 'pos', autor: 'c1' }),
+        /abre la caja/i,
+    );
+    assert.equal((await db.doc('pedidos/v-noturno').get()).exists, false);   // no se creó
+    await sinEnforce();
+});
+
+test('B2 · sin turno + enforceTurno=false → vende sin turnoId (compat. migración T0)', async () => {
+    await limpiarPuntero(); await sinEnforce();
+    const r = await crearPedidoCore(db, { pedidoId: 'v-legacy', pieceId: 'pCajaB2', medio: 'efectivo', canal: 'pos', autor: 'c1' });
+    assert.equal(r.turnoId ?? null, null);
+    assert.equal((await db.doc('pedidos/v-legacy').get()).data().turnoId ?? null, null);
+});
+
+test('B2 · cota §9.2: al cruzar COTA_TURNO la venta devuelve cotaProxima=true', async () => {
+    await limpiarPuntero(); await sinEnforce();
+    await abrirTurnoCore(db, { opId: 'TCota', fondoApertura: 0, autor: 'c1' });
+    await db.doc('caja/estado').update({ docsDelTurno: COTA_TURNO - 1 });     // justo debajo del tope
+    const r = await crearPedidoCore(db, { pedidoId: 'v-cota', pieceId: 'pCajaB2', medio: 'efectivo', canal: 'pos', autor: 'c1' });
+    assert.equal(r.cotaProxima, true);
+    assert.equal((await db.doc('caja/estado').get()).data().docsDelTurno, COTA_TURNO);
+});
+
+test('B2 · CARRERA cerrarTurno vs crearPedido → sin pedido HUÉRFANO (invariante #5)', async () => {
+    await limpiarPuntero();
+    await db.doc('config/caja').set({ enforceTurno: true });
+    await abrirTurnoCore(db, { opId: 'TRace', fondoApertura: 0, autor: 'c1' });
+    const [rClose, rSale] = await Promise.allSettled([
+        cerrarTurnoCore(db, { turnoId: 'TRace', conteoPorMedio: { efectivo: 100000 }, autor: 'c1' }),
+        crearPedidoCore(db, { pedidoId: 'pRace', pieceId: 'pCajaB2', medio: 'efectivo', canal: 'pos', autor: 'c1' }),
+    ]);
+    assert.equal(rClose.status, 'fulfilled');                        // el cierre SIEMPRE gana (o la venta reintenta)
+    const pedSnap = await db.doc('pedidos/pRace').get();
+    const turno = (await db.doc('turnos/TRace').get()).data();
+    assert.equal(turno.estado, 'cerrado');
+    // INVARIANTE: si el pedido quedó con turnoId=TRace, el cierre DEBE haberlo contado (no huérfano);
+    // si no, la venta fue rechazada (puntero ya null) o no lleva turnoId. Nunca lo tercero.
+    if (pedSnap.exists && pedSnap.data().turnoId === 'TRace') {
+        assert.ok(turno.esperadoPorMedio.efectivo >= pedSnap.data().total, 'el cierre contó el pedido enlazado');
+    } else {
+        assert.ok(!pedSnap.exists || (pedSnap.data().turnoId ?? null) === null, 'venta rechazada o sin turno = sin huérfano');
+    }
+    await sinEnforce();
 });

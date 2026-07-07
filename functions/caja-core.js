@@ -50,7 +50,8 @@ async function abrirTurnoCore(db, input = {}) {
             aperturaPor: autor,
             aperturaTs: FieldValue.serverTimestamp(),
         });
-        tx.set(estadoRef, { turnoAbiertoId: opId }, { merge: true });   // el puntero pasa a apuntar a este turno (atómico)
+        // El puntero apunta a este turno + resetea la cota (§9.2): docsDelTurno arranca en 0.
+        tx.set(estadoRef, { turnoAbiertoId: opId, docsDelTurno: 0 }, { merge: true });
         return { turnoId: opId, estado: 'abierto', fondoApertura, yaExistia: false };
     });
 }
@@ -131,7 +132,7 @@ async function cerrarTurnoCore(db, input = {}) {
             declaradoEfectivo, descuadre,
         });
         if (estadoSnap.exists && estadoSnap.data().turnoAbiertoId === turnoId) {
-            tx.update(estadoRef, { turnoAbiertoId: null });
+            tx.update(estadoRef, { turnoAbiertoId: null, docsDelTurno: 0 });   // libera el puntero + resetea la cota
         }
         return { turnoId, esperadoPorMedio, esperadoEfectivo, declaradoEfectivo, descuadre, yaExistia: false };
     });

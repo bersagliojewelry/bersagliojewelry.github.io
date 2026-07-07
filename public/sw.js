@@ -60,7 +60,9 @@
 // abiertos · listeners de caja con subscribeWithRetry (re-suscripción ante error transitorio).
 // v79 = [OPUS-4.8] F2.1 UI: POS adjuntar cliente post-cobro (banner no-modal + cola "sin cliente" +
 // modal búsqueda/crear con consentimiento) tras flag config/identidad.activo (fail-closed). Shell admin.
-const CACHE_NAME    = 'bersaglio-v79';
+// v80 = [OPUS-4.8] Mostrador reactividad money-safe: "Ventas recientes" EN VIVO (onUltimasVentasChange,
+// ya no fetch de una vez → no exige refresco) + render OPTIMISTA del panel al abrir caja (sin parpadeo).
+const CACHE_NAME    = 'bersaglio-v80';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

@@ -162,3 +162,16 @@ Añadir callables lazy: `resolverCliente`, `crearClienteConDoc`, `attachDocAClie
 
 ### 9.6 Gate empírico (Chrome navegador REAL) — lista cerrada estado-cero
 Reusa §5 (estado-cero backend) + UI: cobrar sin adjuntar (venta OK, va a la cola) · adjuntar existente 1 toque · crear con cédula+consent · aviso anti-duplicado por teléfono · match web 1 clic · **traslape A/B: vincular la venta correcta** · flag OFF = POS igual a hoy · PII enmascarada · panel no inhibe auto-traslado de caja.
+**GATE EJECUTADO 2026-07-07 (prod, Chrome real, Claude condujo la extensión) → VERDE**: venta $1.000 → form reset (money-safety) → banner → modal (typeahead 344 reales + PII "sin documento") → vincular escribió `clienteId` (backend confirmado) → badge/banner limpios → anular (pieza reintegrada). ADR §171.
+
+## 10. Mini-instructivo para Kary (operadora única, no técnica)
+> Aparece SOLO si el flag `config/identidad.activo` está en verdadero (ya LIVE). Es OPCIONAL — nunca frena la venta.
+1. **Cobra la venta como siempre** (elige pieza → precio → medio → Registrar). El cobro no cambia en nada.
+2. Después del cobro, arriba de "Ventas recientes" aparece **"¿adjuntar cliente?"**. Es opcional: si estás de afán, **no toques nada** — la venta queda marcada "sin cliente" y un contador te la recuerda para el cierre del día.
+3. Para adjuntar, toca **"+ Adjuntar cliente"** (o el **"+ cliente"** de la venta en la lista) → busca por **nombre, cédula o teléfono**.
+4. **Si aparece** el cliente → toca **"Vincular"**. Listo.
+5. **Si no aparece** → **"Crear cliente nuevo"**: nombre + teléfono bastan. La **cédula es opcional** y solo se guarda si el cliente **da su visto bueno** (marca la casilla de autorización de datos — es un requisito legal, Habeas Data). Si sale un aviso "¿es la misma persona?", revísalo antes de crear un duplicado.
+
+## 11. Follow-ups operativos
+- ✅ **Aviso de consentimiento** reforzado (2026-07-07): responsable + enlace a `privacidad.html` + derecho a revocar + lenguaje Ley 1581 "previa/expresa/informada". **[a verificar]** con abogado colombiano antes de uso masivo (orientación, no asesoría legal — método `legal-colombia`).
+- ⏳ **F2.1b** match web en `pedidos.js` (dormido; backend listo).

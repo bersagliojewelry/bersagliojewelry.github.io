@@ -23,9 +23,11 @@ import {
     abrirTurno, cerrarTurno, movimientoCaja, registrarTraslado,               // F2.0 · escrituras
     onCajaEstadoChange, onConfigCajaChange, onTurnoChange, onMovsCajaChange,  // F2.0 · lecturas
     onVentasTurnoChange, onTrasladosTurnoChange,
+    crearClienteConDoc, vincularClientePedido, getConfigIdentidadActiva, fetchClientesLite,  // F2.1 · identidad
 } from '../pedidos-service.js';
 import { estadoPedido, ESTADOS_SIN_DINERO } from './pedidos-format.js';   // F1-CORE: mapa de estados compartido con Pedidos
 import { CONCEPTOS_CAJA, conceptoLabel, efectivoEnCajon, trasladoSugerido, superaLimite } from './caja-format.js';
+import { advisoryMatchHint, filterClientes, maskDoc, maskPhone } from './advisory-match.js';   // F2.1 · dedup blando + máscara PII
 
 const cop = n => '$' + Math.round(Math.max(0, Number(n) || 0)).toLocaleString('es-CO');
 const entero = n => Math.round(Math.max(0, Number(n) || 0));
@@ -62,6 +64,17 @@ let _trasladoOpId  = null;                                   // opId del traslad
 let _cierreTurnoMode = false;                                // el modal de cierre cierra un TURNO (no el Z legacy)
 let _overLimit     = false;                                  // el cajón superó el límite → ventas bloqueadas hasta trasladar
 let _turnoUnsubs   = [];                                     // listeners con alcance de turno (se recablean al cambiar de turno)
+
+// ─── F2.1 · Adjuntar cliente a la venta (flag fail-closed; cache local de clientes) ───────────────
+let _identidadActiva = false;   // flag config/identidad.activo (leído 1 vez en boot; hot path lee este cache)
+let _clientes        = [];      // lista acotada para el typeahead (fetch puntual, NO listener; comité)
+let _adjPedidoId     = null;    // pedido al que se está adjuntando (capturado POR VALOR — nunca el global _pedidoId)
+let _adjLabel        = '';      // etiqueta de la venta (pieza·monto) para que el modal muestre a cuál adjunta
+let _adjSubmitting   = false;   // flag PROPIO del modal (no comparte _submitting de la venta)
+
+// Helpers F2.1 (módulo): estado muerto de un pedido + nombre de cliente desde el cache local.
+const esMuertaVenta = (v) => ['anulado', 'cancelado', 'reembolsado', 'expirado'].includes(v?.estado);
+const nombreClienteLocal = (id) => _clientes.find(c => c.id === id)?.nombre || null;
 
 // ─── Init ───────────────────────────────────────────────────────────────────────
 async function init() {
@@ -112,6 +125,7 @@ async function init() {
     document.getElementById('btn-export-contador').addEventListener('click', exportarContador);
 
     initCaja();       // F2.0 · turno de caja + bóveda (no-op si el rol no opera caja)
+    await initIdentidad();   // F2.1 · flag + cache de clientes + wiring del modal (no-op si el flag está OFF)
     updateMedioHint();
     loadVentas();
 }
@@ -461,6 +475,7 @@ function selectPiece(id) {
 
     _selected = piece;
     _pedidoId = uid();   // nueva venta → nuevo UUID de idempotencia
+    ocultarBannerAdjuntar();   // F2.1: empezar la siguiente venta archiva la anterior a la cola (sin toques)
 
     document.getElementById('pos-sel-name').textContent = piece.name || 'Pieza';
     document.getElementById('pos-sel-code').textContent = piece.code ? `· ${piece.code}` : '';
@@ -586,6 +601,12 @@ async function doRegister(medio, total) {
 
     try {
         const res = await crearPedido(payload);
+        // F2.1 money-safety (comité regresión): capturar POR VALOR ANTES de resetSale; el reset va
+        // PRIMERO (si no corre, `_pedidoId` no rota → la venta siguiente colisiona por idempotencia →
+        // venta perdida en silencio); el banner de adjuntar va DESPUÉS, en try/catch, y JAMÁS lo impide.
+        const nuevoPedidoId = res.pedidoId || _pedidoId;
+        const label = `Pedido ${res.codigo || '#' + res.numero} · ${_selected?.name || 'Pieza'} · ${cop(res.total)}`;
+        const fueNueva = !res.yaExistia;
         if (res.yaExistia) {
             admToast(`Esta venta ya estaba registrada (Pedido ${res.codigo || '#' + res.numero}) — no se duplicó.`, 'default', 4000);
         } else {
@@ -594,6 +615,9 @@ async function doRegister(medio, total) {
         }
         resetSale();
         loadVentas();
+        if (_identidadActiva && fueNueva) {
+            try { mostrarBannerAdjuntar(nuevoPedidoId, label); } catch (e) { console.warn('[pos] banner adjuntar:', e?.message || e); }
+        }
     } catch (err) {
         // Mensaje de negocio de la CF ("Esa pieza ya fue vendida.") cuando aplica; si no, el genérico.
         const msg = (BUSINESS_ERR.includes(err?.code) && err?.message)
@@ -619,24 +643,36 @@ async function loadVentas() {
         console.error('[pos] ultimasVentas:', err?.code || err);
         empty.hidden = false;
         empty.querySelector('p').textContent = 'No se pudieron cargar las ventas.';
-        ul.innerHTML = '';
+        ul.replaceChildren();
         return;
     }
 
     empty.hidden = ventas.length > 0;
-    if (!ventas.length) { ul.innerHTML = ''; return; }
+    if (!ventas.length) { ul.replaceChildren(); renderColaBadge(0); return; }
 
     ul.innerHTML = ventas.map(v => {
         // F1-CORE: el POS conoce TODOS los estados (mapa compartido con Pedidos — antes el trinario
         // legacy pintaba "Por verificar" a un entregado/expirado y le ofrecía "Confirmar pago").
         const est = estadoPedido(v.estado);
-        const muerta = ['anulado', 'cancelado', 'reembolsado', 'expirado'].includes(v.estado);
+        const muerta = esMuertaVenta(v);
         const confirmBtn = v.estado === 'pago_por_verificar'
             ? `<button class="adm-btn adm-btn--ghost adm-btn--sm pos-venta-confirm" data-id="${esc(v.id)}">Confirmar pago</button>` : '';
         const anularBtn = muerta ? '' :
             `<button class="adm-btn adm-btn--ghost adm-btn--sm pos-venta-anular" data-id="${esc(v.id)}">Anular</button>`;
+        // F2.1 (solo con el flag activo): vínculo con el cliente. Botón por fila = camino AUTORITATIVO
+        // (data-id sin ambigüedad, comité). Sin cliente → resalta + cuenta para la cola; con cliente → nombre.
+        const falta = _identidadActiva && !muerta && !v.clienteId;
+        let clienteCell = '';
+        if (_identidadActiva && !muerta) {
+            if (v.clienteId) {
+                clienteCell = `<span class="pos-venta-cliente">✓ ${esc(nombreClienteLocal(v.clienteId) || 'cliente')}</span>`;
+            } else {
+                const lbl = `Pedido ${v.codigo || '#' + (v.numero ?? '—')} · ${v.pieceName || 'Pieza'} · ${cop(v.total)}`;
+                clienteCell = `<button class="adm-btn adm-btn--ghost adm-btn--sm pos-venta-cliente-btn pos-venta-cliente--none" data-id="${esc(v.id)}" data-label="${esc(lbl)}">+ cliente</button>`;
+            }
+        }
         return `
-        <li class="pos-venta${muerta ? ' pos-venta--anulada' : ''}">
+        <li class="pos-venta${muerta ? ' pos-venta--anulada' : ''}${falta ? ' pos-venta--sin-cliente' : ''}">
             <div class="pos-venta-main">
                 <span class="pos-venta-num">#${esc(v.numero ?? '—')}</span>
                 <span class="pos-venta-name">${esc(v.pieceName || 'Pieza')}</span>
@@ -645,11 +681,14 @@ async function loadVentas() {
                 <strong>${esc(cop(v.total))}</strong>
                 <span class="adm-pill adm-pill--${esc(est.pill)}">${esc(est.label)}</span>
                 <span class="pos-venta-time">${esc(fmtDateTime(v.createdAt))}</span>
-                ${confirmBtn}${anularBtn}
+                ${clienteCell}${confirmBtn}${anularBtn}
             </div>
         </li>`;
     }).join('');
 
+    renderColaBadge(ventas.filter(v => _identidadActiva && !esMuertaVenta(v) && !v.clienteId).length);
+    ul.querySelectorAll('.pos-venta-cliente-btn').forEach(btn =>
+        btn.addEventListener('click', () => openAdjuntar(btn.dataset.id, btn.dataset.label || '')));
     ul.querySelectorAll('.pos-venta-confirm').forEach(btn =>
         btn.addEventListener('click', () => confirmarVenta(btn.dataset.id)));
     ul.querySelectorAll('.pos-venta-anular').forEach(btn =>
@@ -686,6 +725,170 @@ function anularVenta(pedidoId) {
             admToast(msg, 'danger', 4000);
         }
     });
+}
+
+// ─── F2.1 · Adjuntar cliente a la venta (banner no-modal + cola + modal) ──────────────────────
+// Regla de oro (comité): esto NUNCA toca el flujo de dinero. El banner auto-aparece post-venta y se
+// ignora con cero toques; el modal se abre EXPLÍCITO, atado a un pedidoId capturado por valor.
+
+function renderColaBadge(n) {
+    const badge = document.getElementById('pos-ventas-badge');
+    if (!badge) return;
+    if (_identidadActiva && n > 0) { badge.textContent = `${n} sin cliente`; badge.hidden = false; }
+    else badge.hidden = true;
+}
+
+function mostrarBannerAdjuntar(pedidoId, label) {
+    const banner = document.getElementById('pos-adjuntar-banner');
+    const txt = document.getElementById('pos-adjuntar-banner-txt');
+    const btn = document.getElementById('pos-adjuntar-banner-btn');
+    if (!banner || !btn || !txt) return;
+    txt.textContent = `${label} — ¿adjuntar cliente?`;   // textContent = sin riesgo XSS
+    btn.dataset.pedido = pedidoId;
+    btn.dataset.label = label;
+    banner.hidden = false;
+}
+function ocultarBannerAdjuntar() {
+    const banner = document.getElementById('pos-adjuntar-banner');
+    if (banner) banner.hidden = true;
+}
+
+function openAdjuntar(pedidoId, label) {
+    if (!pedidoId || !_identidadActiva) return;
+    _adjPedidoId = pedidoId;                 // POR VALOR — nunca el global _pedidoId
+    _adjLabel = label || '';
+    document.getElementById('adjuntar-sub').textContent = label ? `Adjuntando a: ${label}` : 'Adjuntar cliente a la venta';
+    document.getElementById('adjuntar-search').value = '';
+    document.getElementById('adjuntar-results').replaceChildren();
+    ['adjuntar-nombre', 'adjuntar-tel', 'adjuntar-doc'].forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('adjuntar-doctype').value = '';
+    document.getElementById('adjuntar-consent').checked = false;
+    document.getElementById('adjuntar-consent-wrap').hidden = true;
+    const dupe = document.getElementById('adjuntar-dupe'); dupe.hidden = true; dupe.replaceChildren();
+    document.getElementById('adjuntar-crear-wrap').open = false;
+    document.getElementById('adjuntar-modal').hidden = false;
+    document.getElementById('adjuntar-search').focus();
+}
+function closeAdjuntar() {
+    const modal = document.getElementById('adjuntar-modal');
+    if (modal) modal.hidden = true;
+    _adjPedidoId = null; _adjLabel = '';
+}
+
+// Resultados de búsqueda: DOM seguro (createElement + textContent), PII enmascarada (maskDoc/maskPhone).
+function renderAdjuntarResults() {
+    const ul = document.getElementById('adjuntar-results');
+    ul.replaceChildren();
+    const matches = filterClientes(_clientes, document.getElementById('adjuntar-search').value);
+    for (const c of matches) {
+        const li = document.createElement('li');
+        li.className = 'pos-adjuntar-row';
+        const info = document.createElement('div');
+        info.className = 'pos-adjuntar-row-info';
+        const nm = document.createElement('strong'); nm.textContent = c.nombre || 'Cliente';
+        const meta = document.createElement('span');
+        const doc = (c.docKeys && c.docKeys[0]) ? maskDoc(c.docKeys[0]) : '';
+        const tel = maskPhone(c.telefono || c.whatsapp);
+        meta.textContent = [doc, tel].filter(Boolean).join(' · ') || 'sin documento en sistema';
+        info.append(nm, meta);
+        const btn = document.createElement('button');
+        btn.className = 'adm-btn adm-btn--primary adm-btn--sm';
+        btn.textContent = 'Vincular';
+        btn.addEventListener('click', () => doVincular(c.id));
+        li.append(info, btn);
+        ul.appendChild(li);
+    }
+}
+
+// Aviso anti-duplicado (advisory) al escribir un cliente nuevo: teléfono/nombre ya existente.
+function checkAdjuntarDupe() {
+    const nombre = document.getElementById('adjuntar-nombre').value.trim();
+    const telefono = document.getElementById('adjuntar-tel').value.trim();
+    const box = document.getElementById('adjuntar-dupe');
+    const hints = advisoryMatchHint(_clientes, { telefono, nombre });
+    box.replaceChildren();
+    if (!hints.length) { box.hidden = true; return; }
+    const h = hints[0];
+    const span = document.createElement('span');
+    span.textContent = `Ya existe «${h.nombre || 'un cliente'}» con ese ${h.motivo === 'telefono' ? 'teléfono' : 'nombre'}. ¿Es la misma persona? `;
+    const btn = document.createElement('button');
+    btn.className = 'adm-btn adm-btn--ghost adm-btn--sm';
+    btn.textContent = 'Vincular a ese cliente';
+    btn.addEventListener('click', () => doVincular(h.clienteId));
+    box.append(span, btn);
+    box.hidden = false;
+}
+
+// El consentimiento (Habeas Data) solo aparece cuando hay documento (comité seguridad).
+function toggleConsent() {
+    const doc = document.getElementById('adjuntar-doc').value.trim();
+    const dt = document.getElementById('adjuntar-doctype').value;
+    document.getElementById('adjuntar-consent-wrap').hidden = !(doc && dt);
+}
+
+async function doVincular(clienteId) {
+    if (_adjSubmitting || !_adjPedidoId || !clienteId) return;
+    _adjSubmitting = true;
+    try {
+        await vincularClientePedido({ pedidoId: _adjPedidoId, clienteId });
+        admToast('✓ Cliente vinculado a la venta', 'success');
+        ocultarBannerAdjuntar(); closeAdjuntar(); loadVentas();
+    } catch (err) {
+        const msg = (BUSINESS_ERR.includes(err?.code) && err?.message) ? err.message : errorMessage(err, 'No se pudo vincular el cliente.');
+        admToast(msg, 'danger', 4000);
+    } finally { _adjSubmitting = false; }
+}
+
+async function doCrearVincular() {
+    if (_adjSubmitting || !_adjPedidoId) return;
+    const nombre = document.getElementById('adjuntar-nombre').value.trim();
+    const telefono = document.getElementById('adjuntar-tel').value.trim();
+    const docType = document.getElementById('adjuntar-doctype').value;
+    const docNumber = document.getElementById('adjuntar-doc').value.trim();
+    if (!nombre) { admToast('Escribe el nombre del cliente.', 'danger'); return; }
+    const tieneDoc = !!(docType && docNumber);
+    let consent;
+    if (tieneDoc) {
+        if (!document.getElementById('adjuntar-consent').checked) {
+            admToast('Marca la autorización de datos (Habeas Data) para guardar el documento.', 'danger', 4500); return;
+        }
+        consent = { granted: true, method: 'presencial', canal: 'mostrador_POS', policyVersion: 'v1',
+                    finalidades: ['facturacion_dian', 'antifraude', 'cartera_posventa'] };
+    }
+    _adjSubmitting = true;
+    try {
+        const r = await crearClienteConDoc({ nombre, telefono, docType: docType || undefined, docNumber: docNumber || undefined, consent });
+        await vincularClientePedido({ pedidoId: _adjPedidoId, clienteId: r.clienteId });
+        // Append en memoria (comité: sin refetch de la colección). docKeys las calcula el server → se
+        // completan en el próximo fetch; la búsqueda por nombre/teléfono ya funciona con esto.
+        if (!_clientes.find(c => c.id === r.clienteId)) {
+            _clientes.push({ id: r.clienteId, nombre, telefono, whatsapp: '', docKeys: [], activo: true });
+        }
+        admToast(r.yaExistia ? '✓ Ese documento ya era de un cliente; se vinculó a la venta' : '✓ Cliente creado y vinculado', 'success', 4000);
+        ocultarBannerAdjuntar(); closeAdjuntar(); loadVentas();
+    } catch (err) {
+        const msg = (BUSINESS_ERR.includes(err?.code) && err?.message) ? err.message : errorMessage(err, 'No se pudo crear el cliente.');
+        admToast(msg, 'danger', 4000);
+    } finally { _adjSubmitting = false; }
+}
+
+async function initIdentidad() {
+    try { _identidadActiva = await getConfigIdentidadActiva(); } catch { _identidadActiva = false; }
+    if (!_identidadActiva) return;   // flag OFF (o error) → POS idéntico a hoy (fail-closed)
+    try { _clientes = await fetchClientesLite(); } catch (e) { console.warn('[pos] fetchClientesLite:', e?.code || e); _clientes = []; }
+    document.getElementById('pos-adjuntar-banner-btn')?.addEventListener('click', (e) => {
+        const b = e.currentTarget; openAdjuntar(b.dataset.pedido, b.dataset.label || '');
+    });
+    document.getElementById('adjuntar-close')?.addEventListener('click', closeAdjuntar);
+    document.getElementById('adjuntar-cancel')?.addEventListener('click', closeAdjuntar);
+    document.getElementById('adjuntar-modal')?.addEventListener('click', (e) => { if (e.target.id === 'adjuntar-modal') closeAdjuntar(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !document.getElementById('adjuntar-modal')?.hidden) closeAdjuntar(); });
+    document.getElementById('adjuntar-search')?.addEventListener('input', renderAdjuntarResults);
+    document.getElementById('adjuntar-crear-btn')?.addEventListener('click', doCrearVincular);
+    document.getElementById('adjuntar-doc')?.addEventListener('input', toggleConsent);
+    document.getElementById('adjuntar-doctype')?.addEventListener('change', toggleConsent);
+    document.getElementById('adjuntar-nombre')?.addEventListener('input', checkAdjuntarDupe);
+    document.getElementById('adjuntar-tel')?.addEventListener('input', checkAdjuntarDupe);
 }
 
 // ─── Cierre de caja (arqueo · paso 5 / cierre de TURNO F2.0) ───────────────────

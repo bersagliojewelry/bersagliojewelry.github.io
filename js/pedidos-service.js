@@ -8,7 +8,7 @@
  * web/WhatsApp reusen lo mismo sin arrastrar el DOM del panel (§3.6 cero monolitos).
  */
 import { app, firestoreDb } from './firebase-config.js';
-import { collection, query, orderBy, limit, getDocs, doc, onSnapshot, where } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, getDoc, doc, onSnapshot, where } from 'firebase/firestore';
 import { subscribeWithRetry } from './core/live-query.js';
 
 // Callable lazy (no cargamos firebase/functions hasta la 1ª venta — igual que crm-service).
@@ -149,6 +149,31 @@ export async function vincularClientePedido(input) {
 export async function fusionarClientes(input) {
     const fn = await _callable('fusionarClientes');
     return (await fn(input)).data;
+}
+
+/**
+ * Flag `config/identidad.activo` (one-shot, FAIL-CLOSED). El POS lo lee UNA vez en boot y cachea;
+ * el hot path (doRegister/render) consulta el cache, no esto. Cualquier error/ausencia → false
+ * (POS idéntico a hoy). Deploy dark → set pepper → flip flag → gate. @returns {Promise<boolean>}
+ */
+export async function getConfigIdentidadActiva() {
+    try {
+        const snap = await getDoc(doc(firestoreDb, 'config', 'identidad'));
+        return snap.exists() && snap.data().activo === true;
+    } catch { return false; }
+}
+
+/**
+ * Lista ACOTADA de clientes para el typeahead del POS (fetch puntual, NO listener permanente —
+ * comité: la colección completa viva = PII+escala). Solo los campos del vínculo. Refrescar =
+ * llamar de nuevo o append en memoria al crear. @returns {Promise<Array>}
+ */
+export async function fetchClientesLite(max = 500) {
+    const snap = await getDocs(query(collection(firestoreDb, 'clientes'), limit(max)));
+    return snap.docs.map((d) => {
+        const x = d.data();
+        return { id: d.id, nombre: x.nombre || '', telefono: x.telefono || '', whatsapp: x.whatsapp || '', docKeys: Array.isArray(x.docKeys) ? x.docKeys : [], activo: x.activo };
+    });
 }
 
 // ─── F2.0 · LECTURAS en vivo (listeners) — el candado real es server-side (reglas por rol) ────

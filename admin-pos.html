@@ -178,7 +178,15 @@
 
                 <!-- ── Ventas recientes ────────────────────────────────── -->
                 <section class="pos-card">
-                    <h2 class="pos-card-title">Ventas recientes</h2>
+                    <h2 class="pos-card-title">Ventas recientes
+                        <span class="adm-pill adm-pill--gold pos-ventas-badge" id="pos-ventas-badge" hidden></span>
+                    </h2>
+                    <!-- F2.1 · banner NO-modal post-venta: auto-aparece, se ignora con cero toques
+                         (empezar la siguiente venta lo limpia). Solo visible con el flag identidad activo. -->
+                    <div class="pos-adjuntar-banner" id="pos-adjuntar-banner" hidden>
+                        <span id="pos-adjuntar-banner-txt">Venta registrada.</span>
+                        <button class="adm-btn adm-btn--ghost adm-btn--sm" id="pos-adjuntar-banner-btn" type="button">+ Adjuntar cliente</button>
+                    </div>
                     <ul class="pos-ventas" id="pos-ventas"></ul>
                     <div class="adm-empty pos-ventas-empty" id="pos-ventas-empty" hidden>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="40" height="40"><path d="M3 3h2l.4 2M7 13h10l3-8H6.4M7 13L5.4 5M7 13l-2 4h12"/><circle cx="8" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
@@ -297,6 +305,69 @@
         <div class="adm-modal-foot">
             <button class="adm-btn adm-btn--ghost" id="tras-cancel">Cancelar</button>
             <button class="adm-btn adm-btn--primary" id="tras-submit">Registrar traslado</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Adjuntar cliente a una venta (F2.1) — se abre EXPLÍCITO (banner o botón de fila),
+     atado a un pedidoId capturado por valor (sin traslape). NO auto-modal en cada venta. -->
+<div class="adm-modal" id="adjuntar-modal" hidden>
+    <div class="adm-modal-box adm-modal-box--sm">
+        <div class="adm-modal-head">
+            <h2>Adjuntar cliente</h2>
+            <button class="adm-modal-close" id="adjuntar-close" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="adm-modal-body">
+            <p class="pos-hint" id="adjuntar-sub">—</p>
+
+            <div class="adm-field">
+                <label for="adjuntar-search">Buscar cliente (nombre, cédula o teléfono)</label>
+                <input class="adm-input" id="adjuntar-search" type="text" autocomplete="off" placeholder="Ej. Ana · 300… · 1032…">
+            </div>
+            <ul class="pos-results pos-adjuntar-results" id="adjuntar-results"></ul>
+
+            <details class="pos-adjuntar-crear" id="adjuntar-crear-wrap">
+                <summary>Crear cliente nuevo</summary>
+                <div class="caja-alerta pos-adjuntar-dupe" id="adjuntar-dupe" hidden></div>
+                <div class="adm-field">
+                    <label for="adjuntar-nombre">Nombre completo</label>
+                    <input class="adm-input" id="adjuntar-nombre" type="text" maxlength="120" autocomplete="off">
+                </div>
+                <div class="adm-field">
+                    <label for="adjuntar-tel">Teléfono</label>
+                    <input class="adm-input" id="adjuntar-tel" type="tel" maxlength="40" autocomplete="off" placeholder="Ej. 300 123 4567">
+                </div>
+                <div class="adm-form-row">
+                    <div class="adm-field">
+                        <label for="adjuntar-doctype">Tipo de documento (opcional)</label>
+                        <select class="adm-input" id="adjuntar-doctype">
+                            <option value="">— sin documento —</option>
+                            <option value="CC">Cédula (CC)</option>
+                            <option value="CE">Cédula de extranjería (CE)</option>
+                            <option value="NIT">NIT (empresa)</option>
+                            <option value="PA">Pasaporte</option>
+                            <option value="PPT">PPT</option>
+                            <option value="TI">Tarjeta de identidad (TI)</option>
+                        </select>
+                    </div>
+                    <div class="adm-field">
+                        <label for="adjuntar-doc">Número</label>
+                        <input class="adm-input" id="adjuntar-doc" type="text" maxlength="30" autocomplete="off" inputmode="numeric">
+                    </div>
+                </div>
+                <!-- Consentimiento Habeas Data: solo cuando hay documento (comité seguridad) -->
+                <div class="pos-consent" id="adjuntar-consent-wrap" hidden>
+                    <p class="pos-hint">Bersaglio tratará este documento para facturación electrónica (DIAN), prevención de fraude y gestión de su cuenta (cartera y posventa), conforme a su Política de Tratamiento de Datos. El titular puede conocer, actualizar, rectificar y suprimir sus datos.</p>
+                    <label class="pos-envio-check">
+                        <input type="checkbox" id="adjuntar-consent">
+                        El cliente autoriza el tratamiento de sus datos (Habeas Data · Ley 1581)
+                    </label>
+                </div>
+                <button class="adm-btn adm-btn--primary adm-btn--sm" id="adjuntar-crear-btn" type="button">Crear y vincular</button>
+            </details>
+        </div>
+        <div class="adm-modal-foot">
+            <button class="adm-btn adm-btn--ghost" id="adjuntar-cancel">Cerrar</button>
         </div>
     </div>
 </div>

@@ -146,9 +146,10 @@ Añadir callables lazy: `resolverCliente`, `crearClienteConDoc`, `attachDocAClie
 - **Cola "ventas sin cliente" DENTRO del POS**: badge permanente "· N" + filas auto-identificables (pieza+monto+hora+pago) + adjuntar a 1 toque + checkpoint suave al cerrar caja.
 - **Clientes**: fetch ACOTADO/cacheado por sesión (NO `onSnapshot` permanente de la colección — PII+escala); `append` en memoria al crear; norte = typeahead server-side. Stale solo afecta el dedup blando (server es autoridad; colisión→existente).
 
-### 9.3 Pedidos web (`js/admin/pedidos.js`) — SOLO admin
-- En el detalle, si el pedido trae `shipping.docType+docNumber` y no tiene `clienteId`: llamar `resolverCliente` → match → "¿Es X? Vincular" (1 clic) / "Crear desde pedido" (prefill + `crearClienteConDoc` + `vincularClientePedido`).
-- 🔴 **`resolverCliente` es admin-only** (el wrapper ya exige rol VENTAS) y se llama **SOLO desde el panel admin, JAMÁS desde el checkout público** (evita el oráculo de enumeración del portal F5). No devolver PII/existencia a un comprador. Documentado como invariante.
+### 9.3 Pedidos web (`js/admin/pedidos.js`) — SOLO admin — **F2.1b DIFERIDO (dormido)**
+- **Estado**: el backend (`resolverCliente` admin-only + `vincularClientePedido`) está LISTO y probado; la UI del match web se difiere a **F2.1b** porque hoy hay **CERO pedidos web** (1ª APPROVED pendiente) → UI para 0 usuarios = gold-plating (L-50). Se cablea cuando lleguen pedidos web (trivial, contrato listo).
+- **Diseño (cuando se active)**: en el detalle, si el pedido trae `shipping.docType+docNumber` y no tiene `clienteId`: `resolverCliente` → match → "¿Es X? Vincular" (1 clic) / "Crear desde pedido" (prefill + `crearClienteConDoc` + `vincularClientePedido`). Inyectar con DOM seguro tras `renderDetalle` (append a `#ped-detail`).
+- 🔴 **`resolverCliente` es admin-only** (el wrapper ya exige rol VENTAS) y se llama **SOLO desde el panel admin, JAMÁS desde el checkout público** (evita el oráculo de enumeración del portal F5). Invariante documentado.
 
 ### 9.4 Seguridad / Habeas Data (comité seguridad)
 - **PII enmascarada por defecto** en el POS (`CC •••.456.789` · tel `···8877`); revelar completo bajo clic explícito. **Cero PII en logs/analytics/errores/URL**.

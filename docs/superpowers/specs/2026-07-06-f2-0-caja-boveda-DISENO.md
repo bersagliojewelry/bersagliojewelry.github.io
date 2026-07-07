@@ -419,3 +419,59 @@ Nuevo rol **`caja`** en el árbol de roles (`firestore.rules`, junto a owner/adm
   turno (fondo, ventas, efectivo del cajón, alerta de límite).
 - Todas las CF validan por rol (`isCaja()` para operar; `isOwner()` para supervisar/aprobar). Wrappers como los
   de `pedidos.js` (`verifyRole`). Daniel (dev) opera en desarrollo; en producción no es un rol del negocio.
+
+---
+
+## 10. SPEC EJECUTABLE — plan de implementación TDD por bloques (interinato Opus §0 f1-core)
+> Reglas de interinato: TDD estricto en `functions/` (rojo→verde), commits `[OPUS-4.8]`, deploy manual con
+> suites verdes, NO tocar `wompi-core`/webhook/reaper/snapshot. Cada bloque cierra verde antes del siguiente.
+> **Núcleos PUROS testeables** en `pedidos-core.js` (o un nuevo `caja-core.js` si crece); wrappers en `pedidos.js`.
+
+### Bloque B0 — Rol `caja` + `config/caja` + reglas (fundación, sin dinero aún)
+- `firestore.rules`: helper `isCaja()` (owner/admin/caja); `config/caja` → `docId in ['cartera','caja'] ?
+  isOwner() : isAdmin()`; colecciones nuevas `turnos`/`caja`/`boveda`/`bovedaMovimientos` = CF-only
+  (read por rol, write false) + append-only ESTRICTO en los ledgers (sin update/delete ni owner).
+- Tests: `test:rules` (emulador) — caja lee su turno pero NO `boveda/main`; caja NO escribe `config/caja`;
+  nadie hace update/delete de `bovedaMovimientos`. Rojo→verde.
+
+### Bloque B1 — Turnos: abrir/cerrar por PUNTERO singleton (invariante #4, sin ventas aún)
+- `abrirTurnoCore(db,{fondoApertura,autor})`: runTransaction sobre `caja/estado` (puntero); si `turnoAbiertoId!=null`
+  aborta `failed-precondition`; si null crea `turnos/{id}` (estado abierto, fondoApertura, aperturaTs, aperturaPor)
+  + set puntero. `cerrarTurnoCore(db,{turnoId,conteoPorMedio,autor})`: flip estado→cerrado + limpia puntero + esperado
+  por medio (§8.1.7 ecuación completa) + descuadre. Idempotencia por opId.
+- Tests (`functions/caja.integration.test.mjs`, emulador, SOLO): abrir con puntero null crea 1 turno; 2ª apertura
+  concurrente → exactamente 1 gana (test de carrera); cerrar limpia puntero; doble-cierre idempotente; ecuación
+  de cierre con boveda_a_cajon. Rojo→verde.
+
+### Bloque B2 — Enlace venta↔turno + ruta corta + cota (invariantes #5/#6, toca crearPedido)
+- `crearPedidoCore`: si `canal==='pos'` → lee puntero `caja/estado` en la MISMA tx; si `enforceTurno && !turnoAbierto`
+  → rechaza ("abre la caja"); si hay turno → guarda `turnoId` (TODOS los medios POS, §9.5). Incrementa `docsDelTurno`;
+  al superar ~350 → señal de cierre forzado. `enforceTurno` (flag config, default false).
+- Tests: venta POS con turno guarda turnoId (todos los medios); sin turno + enforceTurno rechaza; test de carrera
+  cerrarTurno vs crearPedido (uno gana, sin huérfano); ventas 24/24 existentes verdes; wompi 16/16.
+
+### Bloque B3 — Bóveda: traslado/reverso + recompute + checkpoint (invariantes #2/#3, §9.3)
+- `registrarTrasladoCore`, `reversoCore` (crea movimiento compensatorio, NO edita), `recalcBoveda` (trigger
+  onDocumentWritten; recompute desde último checkpoint + posteriores; no-op si saldo igual). `saldo_inicial:0`
+  fundacional. Todo con recompute SÍNCRONO en tx para gates (§8.1.3). Idempotencia opId.
+- Tests: traslado cajón→bóveda actualiza saldo por recompute; reverso deja doble rastro (no borra); doble-tap
+  opId no duplica; checkpoint acota el recompute; guard duro de montos (no negativo/no entero rechaza).
+
+### Bloque B4 — Dual-Approval + alertas (§9.1/§9.8)
+- `ajuste_faltante/sobrante` y `reverso` nacen `pendiente_aprobacion`; `aprobarEventoCaja` (isOwner) → entra al
+  recompute. Alertas FCM al owner (hardcoded) en eventos delicados (reusa infra A.6). Egresos/traslados normales
+  = alerta, no aprobación.
+- Tests: evento destructivo no cuenta hasta aprobación owner; caja NO puede aprobar; alerta se emite (mock).
+
+### Bloque B5 — UI (POS caja + vista Bóveda owner + panel aprobaciones) + fix L-72
+- POS: apertura de turno, movimientos, alerta de límite + modal traslado obligatorio, cierre enlazado. Vista
+  Bóveda (owner-only, discreta). Panel de aprobaciones (owner). Fix `ESTADO_LBL` (`d244d77`, ya en Desarrollo).
+- SW/APP bump. Gate en prod (Chrome, con usuario caja + usuario owner de prueba). ADR.
+
+### Checklist (evidencia por bloque)
+- [ ] B0 reglas rol caja + config/caja + append-only — evidencia: test:rules
+- [ ] B1 turnos por puntero + test de carrera — evidencia: caja.integration
+- [ ] B2 enlace venta↔turno + enforceTurno + cota — evidencia: integración + ventas/wompi verdes
+- [ ] B3 bóveda traslado/reverso/recompute/checkpoint — evidencia: integración
+- [ ] B4 Dual-Approval + alertas — evidencia: integración
+- [ ] B5 UI + gate prod (Chrome) + SW bump + ADR

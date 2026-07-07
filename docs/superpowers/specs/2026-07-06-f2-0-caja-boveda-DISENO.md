@@ -331,14 +331,13 @@ T0+flag vs periodo de gracia — ¿venta en vuelo cruzando el corte?
 > Claude las adopta con matices (no subordinación, §3.3). **Esto cierra el diseño; falta solo 2 decisiones de
 > negocio de Daniel (§9.6) y confirmar el modelo de owner (§9.1) → luego spec ejecutable con spec-kit.**
 
-### 9.1 Dual-Approval para eventos destructivos (reusa la SoD que YA existe) — corrige el invariante #8 de §8.2
-La mitigación "alertas append-only" era débil: si Kary edita `config/caja` puede removerse de la vigilancia.
-**Fix**: los eventos DESTRUCTIVOS de caja — `ajuste_faltante/ajuste_sobrante` de bóveda, y el **reverso** de un
-traslado (§9.3) — nacen `pendiente_aprobacion` y **requieren `isOwner()` (Daniel) para entrar al recompute**.
-Reusa el patrón SoD del CRM (movimientos sobre `autoAprobacionMax` → aprobación owner, `rules:100-104`;
-`[[feedback_claude_experto_verifica]]` "Kary opera / Daniel aprueba"). **MATIZ a Gemini** (no todo evento):
-los egresos rutinarios y traslados normales NO piden aprobación (sería fricción diaria inaceptable) → van con
-**alerta FCM inmutable**. Solo lo destructivo/correctivo pide la firma del owner. ⚠️ **DEPENDE de §9.1-owner**.
+### 9.1 Dual-Approval — DESCARTADO por decisión de Daniel (§9.6.3) → sustituido por §9.8
+Gemini propuso que los eventos destructivos (`ajuste_faltante/sobrante`, reverso de traslado) nacieran
+`pendiente_aprobacion` y requirieran la firma del owner (reusando la SoD del CRM). **Daniel declinó la
+aprobación previa (§9.6.3 "solo alerta") y ambos son owner (§9.6.1)** → el Dual-Approval con `isOwner()` ni
+distinguiría a Kary. **Se reemplaza por la mitigación de CERO FRICCIÓN de §9.8** (ledger incorruptible +
+alerta hardcoded a Daniel + auditoría a demanda): no bloquea a Kary, pero nada de dinero queda oculto. Se
+CONSERVA el registro `reverso` (§9.3) — no por control preventivo sino por integridad del ledger/checkpoint.
 
 ### 9.2 Cota de turno (límite Firestore 500 lecturas/tx) — hace seguro el invariante #3
 El recompute síncrono es correcto PERO un turno con >400 docs (turno olvidado en fin de semana alto) haría
@@ -370,14 +369,34 @@ el cliente paga solo) NO tienen turno → no llevan turnoId → reporte de ingre
 Pedidos + export contador ya lo cubren). D4 sigue válido en su esencia (transferencia/wompi no son candado del
 cajón), pero SÍ heredan el turnoId si la venta es de mostrador. **DECISIÓN DE NEGOCIO → §9.6.2**.
 
-### 9.6 DOS decisiones de negocio de Daniel (últimas antes de la spec)
-1. **Modelo de owner (seguridad)**: ¿Kary tiene rol **`admin`** (operadora) y Daniel es el **único `owner`**
-   (aprobador)? El Dual-Approval (§9.1) y la protección de `config/caja` dependen de esto. Si Kary fuera owner,
-   hay que degradarla a admin (Daniel = único owner) — es la base de toda la vigilancia.
-2. **Arqueo del turno ↔ ventas web**: ¿el cierre de turno de Kary (mostrador) **incluye las ventas de la web**
-   (que se pagan solas desde casa, sin que Kary esté en el mostrador), o esas van en un **reporte de ingresos
-   digitales aparte**? Default arquitectónico: **aparte** (el arqueo concilia el mostrador; las ventas web ya
-   tienen su módulo Pedidos). Daniel decide.
-3. **Nivel de fricción del Dual-Approval**: los ajustes de faltante / reversos de bóveda, ¿los **apruebas tú**
-   (más seguro, algo de fricción cuando Kary necesita corregir algo), o prefieres **solo la alerta** (más ágil,
-   menos control)? Recomiendo aprobación para esos 2-3 eventos raros; alerta para el resto.
+### 9.6 Decisiones de negocio de Daniel — RESPONDIDAS (2026-07-06)
+1. **Modelo de owner: AMBOS son `owner`** (Daniel: *"ambos somos dueños"*). Kary y Daniel = co-dueños.
+2. **Arqueo del turno = MOSTRADOR SOLO** (Daniel: *"aparte"*). El cierre de turno concilia únicamente lo del
+   mostrador (efectivo del cajón + medios que Kary cobró ahí, por `turnoId`). Las ventas WEB van a su reporte
+   de ingresos digitales aparte (módulo Pedidos + export contador). ✅ confirma el §9.5 y simplifica la query.
+3. **Sin Dual-Approval: SOLO ALERTA** (Daniel: *"solo alerta, sin aprobar"*). Los ajustes/reversos se registran
+   directo (sin estado `pendiente_aprobacion`, sin fricción para Kary).
+
+### 9.7 ⚠️ CONSECUENCIA de §9.6.1 + §9.6.3 (deber del arquitecto señalarlo — §3.3/§3.6)
+**Combinadas, estas dos decisiones DESACTIVAN el control PREVENTIVO interno.** Si ambos son owner, la
+protección owner-only NO distingue a Kary de Daniel (puede editar `config/caja`, límites), y sin Dual-Approval
+los ajustes/reversos de dinero se registran sin visto bueno de nadie. Es exactamente lo que Gemini llamó
+"teatro de seguridad" y el comité "auto-reporte". **F2.0 quedaría protegiendo contra el LADRÓN EXTERNO (límite
+del cajón) pero SIN control interno** — es una decisión LEGÍTIMA del dueño (confianza en Kary + agilidad), pero
+debe ser INFORMADA, no un default accidental. **Se le señala a Daniel para confirmación explícita.**
+
+### 9.8 Mitigación de CERO FRICCIÓN (preserva lo esencial sin bloquear a Kary) — protección MUTUA
+Dado §9.6, se conserva el control mínimo que NO cuesta un solo paso extra a Kary y **protege a ambos** (si un
+día hay discrepancia, hay evidencia objetiva que también limpia a Kary si no fue ella):
+1. **Ledger de dinero INCORRUPTIBLE**: `bovedaMovimientos` y `turnos/*/movimientos` son CF-only + append-only
+   ESTRICTO — la regla Firestore prohíbe `update`/`delete` **incluso a un owner** (§9.3). Ningún dueño puede
+   borrar ni editar un movimiento; corregir = reverso que deja doble rastro. **Nada de dinero se puede ocultar.**
+2. **Alerta a Daniel HARDCODED (no removible)**: las alertas de eventos delicados (anulación/reverso de dinero
+   físico, ajuste de faltante, egreso, descuadre) incluyen SIEMPRE a Daniel — el destinatario crítico está
+   FIJO en el código de la Cloud Function, NO en `config/caja` editable. Aunque Kary sea owner, no puede
+   quitarse esa alerta desde la app (no toca el código de la CF). `config/caja` solo AÑADE destinatarios extra.
+3. **Historial auditable a demanda**: Daniel puede revisar en cualquier momento el ledger completo (append-only,
+   inocultable). Es vigilancia PASIVA pero INCORRUPTIBLE — más débil que Dual-Approval (que Daniel declinó),
+   mucho más fuerte que nada, y cero fricción operativa.
+> Esto NO reintroduce la aprobación previa (Daniel la declinó); solo garantiza que **nada quede oculto** y que
+> **Daniel siempre se entere**. Si acepta, el diseño queda CERRADO → spec ejecutable.

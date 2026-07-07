@@ -153,6 +153,17 @@ function guardMonto(monto) {
     }
 }
 
+// B4 · conceptos de movimiento de caja (§8.5, lista cerrada; 'otro' exige nota).
+const CONCEPTOS_CAJA = new Set(['pago_domiciliario', 'compra_empaques', 'adelanto_vendedora', 'gasto_menor', 'retiro_socio', 'otro']);
+
+// B4 · emisor de alerta al owner (§9.8.2): el owner es SIEMPRE destinatario (fijo en la CF; config/caja
+// solo AÑADE, jamás remueve). `notificar` se INYECTA (opts) → hoy mock en tests; el transporte FCM real se
+// cablea con A.6 (pendiente). Si no se inyecta, no-op (comportamiento intacto para llamadores sin alertas).
+function emitirAlerta(opts, evt) {
+    const notif = opts && typeof opts.notificar === 'function' ? opts.notificar : null;
+    if (notif) notif({ ...evt, alOwner: true });
+}
+
 // Recompute AUTORIDAD: saldo = último checkpoint + Σ(delta de los movimientos posteriores YA commiteados).
 // `tx` opcional → dentro de una transacción (gate síncrono §8.1.3) o standalone (recalc/display).
 async function saldoBovedaDesdeLedger(db, tx = null) {
@@ -164,7 +175,11 @@ async function saldoBovedaDesdeLedger(db, tx = null) {
     if (cp && cp.sellTs) movQ = movQ.where('ts', '>', cp.sellTs);   // solo lo posterior al corte
     const movSnap = tx ? await tx.get(movQ) : await movQ.get();
     let suma = 0;
-    movSnap.forEach((d) => { suma += (d.data().delta || 0); });
+    movSnap.forEach((d) => {
+        const m = d.data();
+        if (m.estado === 'pendiente_aprobacion' || m.estado === 'rechazado') return;   // Dual-Approval §9.1: pendiente NO cuenta
+        suma += (m.delta || 0);
+    });
     return base + suma;
 }
 
@@ -207,31 +222,32 @@ async function registrarTrasladoCore(db, input = {}) {
  * Doble rastro contable (reversing entry, §9.3). Rechaza reversar un reverso o un movimiento ya reversado.
  * @param db Firestore (admin). @param input { opId, reversaA, autor, motivo? }
  */
-async function reversoCore(db, input = {}) {
+async function reversoCore(db, input = {}, opts = {}) {
     const opId = String(input.opId || '').trim();
     const reversaA = String(input.reversaA || '').trim();
     const autor = input.autor || null;
     const motivo = input.motivo ? String(input.motivo).slice(0, 500) : null;
     if (!opId || !reversaA) throw new PedidoError('invalid-argument', 'opId y reversaA son obligatorios.');
 
-    return db.runTransaction(async (tx) => {
+    const res = await db.runTransaction(async (tx) => {
         const movRef = db.doc(`bovedaMovimientos/${opId}`);
         const origRef = db.doc(`bovedaMovimientos/${reversaA}`);
         const existing = await tx.get(movRef);
         const origSnap = await tx.get(origRef);
         const yaRev = await tx.get(db.collection('bovedaMovimientos').where('reversaA', '==', reversaA));
-        const base = await saldoBovedaDesdeLedger(db, tx);
-        if (existing.exists) return { opId, saldo: base, yaExistia: true };   // IDEMPOTENTE
+        const base = await saldoBovedaDesdeLedger(db, tx);   // saldo actual (excluye pendientes)
+        if (existing.exists) return { opId, estado: existing.data().estado, saldo: base, delta: existing.data().delta, yaExistia: true };
         if (!origSnap.exists) throw new PedidoError('not-found', 'El movimiento a reversar no existe.');
         if (origSnap.data().tipo === 'reverso') throw new PedidoError('failed-precondition', 'No se puede reversar un reverso.');
         if (!yaRev.empty) throw new PedidoError('failed-precondition', 'Ese movimiento ya fue reversado.');
 
         const delta = -(origSnap.data().delta || 0);
-        const nuevoSaldo = base + delta;
-        tx.set(movRef, { tipo: 'reverso', reversaA, monto: Math.abs(delta), delta, autor, motivo, ts: FieldValue.serverTimestamp() });
-        tx.set(db.doc('boveda/main'), { saldo: nuevoSaldo, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
-        return { opId, reversaA, saldo: nuevoSaldo, delta, yaExistia: false };
+        // DESTRUCTIVO (§9.1): nace PENDIENTE → NO escribe boveda/main (no cuenta hasta que el owner apruebe).
+        tx.set(movRef, { tipo: 'reverso', reversaA, monto: Math.abs(delta), delta, estado: 'pendiente_aprobacion', autor, motivo, ts: FieldValue.serverTimestamp() });
+        return { opId, reversaA, estado: 'pendiente_aprobacion', saldo: base, delta, yaExistia: false };
     });
+    if (!res.yaExistia) emitirAlerta(opts, { evento: 'reverso', opId, reversaA, monto: Math.abs(res.delta), autor, requiereAprobacion: true });
+    return res;
 }
 
 /**
@@ -249,4 +265,101 @@ async function recalcBovedaCore(db) {
     return { saldo, changed: true };
 }
 
-module.exports = { abrirTurnoCore, cerrarTurnoCore, registrarTrasladoCore, reversoCore, recalcBovedaCore };
+// ─── B4 · Dual-Approval + alertas (§9.1 · §9.8 · §8.5) ────────────────────────────────────────
+
+/**
+ * Ingreso/egreso manual de la caja del turno (turnos/{id}/movsCaja). NO toca la bóveda; alimenta la
+ * ecuación de cierre. Idempotente por opId. EGRESO → alerta al owner (fraude interno §8.5).
+ * @param db Firestore. @param input { turnoId, opId, tipo:'ingreso'|'egreso', concepto, monto, nota?, autor }
+ */
+async function movimientoCajaCore(db, input = {}, opts = {}) {
+    const turnoId = String(input.turnoId || '').trim();
+    const opId = String(input.opId || '').trim();
+    const tipo = input.tipo;
+    const concepto = input.concepto;
+    const nota = input.nota ? String(input.nota).slice(0, 500) : null;
+    const autor = input.autor || null;
+    if (!turnoId || !opId) throw new PedidoError('invalid-argument', 'turnoId y opId son obligatorios.');
+    if (tipo !== 'ingreso' && tipo !== 'egreso') throw new PedidoError('invalid-argument', 'tipo de movimiento inválido.');
+    if (!CONCEPTOS_CAJA.has(concepto)) throw new PedidoError('invalid-argument', `concepto de caja inválido: ${concepto}`);
+    guardMonto(input.monto);
+    if (concepto === 'otro' && !nota) throw new PedidoError('invalid-argument', 'El concepto "otro" exige una nota.');
+    const monto = input.monto;
+
+    const res = await db.runTransaction(async (tx) => {
+        const turnoRef = db.doc(`turnos/${turnoId}`);
+        const movRef = db.doc(`turnos/${turnoId}/movsCaja/${opId}`);
+        const [turnoSnap, existing] = await Promise.all([tx.get(turnoRef), tx.get(movRef)]);
+        if (existing.exists) return { turnoId, opId, yaExistia: true };   // IDEMPOTENTE
+        if (!turnoSnap.exists) throw new PedidoError('not-found', 'El turno no existe.');
+        if (turnoSnap.data().estado !== 'abierto') throw new PedidoError('failed-precondition', 'La caja no está abierta.');
+        const mov = { tipo, concepto, monto, autor, ts: FieldValue.serverTimestamp() };
+        if (nota) mov.nota = nota;
+        tx.set(movRef, mov);
+        return { turnoId, opId, tipo, monto, yaExistia: false };
+    });
+    if (!res.yaExistia && tipo === 'egreso') emitirAlerta(opts, { evento: 'egreso', turnoId, opId, concepto, monto, autor });
+    return res;
+}
+
+/**
+ * Ajuste de bóveda por conteo físico (§8.1.8). DESTRUCTIVO → nace pendiente_aprobacion (no cuenta) + alerta.
+ * ajuste_sobrante +saldo · ajuste_faltante −saldo. Motivo obligatorio. @param input { opId, tipo, monto, motivo, autor }
+ */
+async function ajusteCore(db, input = {}, opts = {}) {
+    const opId = String(input.opId || '').trim();
+    const tipo = input.tipo;
+    const motivo = input.motivo ? String(input.motivo).trim() : '';
+    const autor = input.autor || null;
+    if (!opId) throw new PedidoError('invalid-argument', 'opId es obligatorio.');
+    if (tipo !== 'ajuste_faltante' && tipo !== 'ajuste_sobrante') throw new PedidoError('invalid-argument', 'tipo de ajuste inválido.');
+    guardMonto(input.monto);
+    if (!motivo) throw new PedidoError('invalid-argument', 'El ajuste exige un motivo.');
+    const monto = input.monto;
+    const delta = tipo === 'ajuste_sobrante' ? monto : -monto;
+
+    const res = await db.runTransaction(async (tx) => {
+        const movRef = db.doc(`bovedaMovimientos/${opId}`);
+        const existing = await tx.get(movRef);
+        const base = await saldoBovedaDesdeLedger(db, tx);
+        if (existing.exists) return { opId, estado: existing.data().estado, saldo: base, yaExistia: true };
+        tx.set(movRef, { tipo, monto, delta, estado: 'pendiente_aprobacion', motivo: motivo.slice(0, 500), autor, ts: FieldValue.serverTimestamp() });
+        return { opId, estado: 'pendiente_aprobacion', saldo: base, delta, yaExistia: false };
+    });
+    if (!res.yaExistia) emitirAlerta(opts, { evento: tipo, opId, monto, motivo, autor, requiereAprobacion: true });
+    return res;
+}
+
+/**
+ * Aprueba un evento destructivo pendiente (reverso/ajuste) — SOLO owner (SoD §9.1). Al aprobar, el evento
+ * ENTRA al recompute (recompute síncrono in-tx). Idempotente. @param input { opId, aprobadoPor, rol }
+ */
+async function aprobarEventoCajaCore(db, input = {}, opts = {}) {
+    const opId = String(input.opId || '').trim();
+    const aprobadoPor = input.aprobadoPor || null;
+    if (!opId) throw new PedidoError('invalid-argument', 'opId es obligatorio.');
+    if (input.rol !== 'owner') throw new PedidoError('permission-denied', 'Solo el dueño (owner) puede aprobar eventos de dinero.');
+
+    const res = await db.runTransaction(async (tx) => {
+        const movRef = db.doc(`bovedaMovimientos/${opId}`);
+        const snap = await tx.get(movRef);
+        const base = await saldoBovedaDesdeLedger(db, tx);   // excluye este evento (aún pendiente)
+        if (!snap.exists) throw new PedidoError('not-found', 'El evento a aprobar no existe.');
+        const ev = snap.data();
+        if (ev.estado === 'aprobado') return { opId, estado: 'aprobado', saldo: base, yaExistia: true };   // base ya lo incluye
+        if (ev.estado !== 'pendiente_aprobacion') throw new PedidoError('failed-precondition', 'El evento no está pendiente de aprobación.');
+        const delta = ev.delta || 0;
+        const nuevoSaldo = base + delta;
+        if (delta < 0 && nuevoSaldo < 0) throw new PedidoError('failed-precondition', 'Aprobar dejaría la bóveda negativa.');
+        tx.update(movRef, { estado: 'aprobado', aprobadoPor, aprobadoEn: FieldValue.serverTimestamp() });
+        tx.set(db.doc('boveda/main'), { saldo: nuevoSaldo, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+        return { opId, estado: 'aprobado', saldo: nuevoSaldo, yaExistia: false };
+    });
+    if (!res.yaExistia) emitirAlerta(opts, { evento: 'aprobacion', opId, aprobadoPor, requiereAprobacion: false });
+    return res;
+}
+
+module.exports = {
+    abrirTurnoCore, cerrarTurnoCore, registrarTrasladoCore, reversoCore, recalcBovedaCore,
+    movimientoCajaCore, ajusteCore, aprobarEventoCajaCore,
+};

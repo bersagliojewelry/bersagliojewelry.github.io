@@ -14,7 +14,8 @@ import { initializeApp } from 'firebase-admin/app';
 import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import core from './caja-core.js';
 import pedidosCore from './pedidos-core.js';
-const { abrirTurnoCore, cerrarTurnoCore, registrarTrasladoCore, reversoCore, recalcBovedaCore } = core;
+const { abrirTurnoCore, cerrarTurnoCore, registrarTrasladoCore, reversoCore, recalcBovedaCore,
+        movimientoCajaCore, ajusteCore, aprobarEventoCajaCore } = core;
 const { crearPedidoCore, COTA_TURNO } = pedidosCore;
 
 // Limpia la bóveda entre tests B3 (singleton + ledger + checkpoints).
@@ -234,17 +235,19 @@ test('B3 · salida boveda→banco: el saldo BAJA (signo por tipo)', async () => 
     assert.equal((await db.doc('bovedaMovimientos/S2').get()).data().delta, -120000);
 });
 
-test('B3 · reverso: NO borra el original — crea asiento compensatorio (doble rastro) y el saldo vuelve', async () => {
+test('B3/B4 · reverso: NO borra el original — nace asiento compensatorio PENDIENTE (saldo NO cambia aún, §9.1)', async () => {
     await resetBoveda();
     await registrarTrasladoCore(db, { opId: 'ORIG', tipo: 'cajon_a_boveda', monto: 100000, autor: 'kary' });
     const rev = await reversoCore(db, { opId: 'REV', reversaA: 'ORIG', autor: 'kary', motivo: 'traslado mal digitado' });
-    assert.equal(rev.saldo, 0);                             // compensado
+    assert.equal(rev.estado, 'pendiente_aprobacion');       // destructivo → requiere firma del owner
+    assert.equal(rev.saldo, 100000);                        // NO cuenta hasta aprobar
     assert.equal((await db.doc('bovedaMovimientos/ORIG').get()).exists, true);   // el original SIGUE (no se borró)
     const r = (await db.doc('bovedaMovimientos/REV').get()).data();
     assert.equal(r.tipo, 'reverso');
     assert.equal(r.reversaA, 'ORIG');
     assert.equal(r.delta, -100000);                         // exactamente el opuesto
-    assert.equal((await db.doc('boveda/main').get()).data().saldo, 0);
+    assert.equal(r.estado, 'pendiente_aprobacion');
+    assert.equal((await db.doc('boveda/main').get()).data().saldo, 100000);   // saldo INTACTO (pendiente)
 });
 
 test('B3 · reverso: doble reverso del MISMO original → rechaza (no doble compensación)', async () => {
@@ -299,4 +302,89 @@ test('B3 · recalcBovedaCore: no-op si el saldo no cambió (evita re-trigger)', 
     const r = await recalcBovedaCore(db);
     assert.equal(r.saldo, 100000);
     assert.equal(r.changed, false);                         // ya estaba en 100000 → no reescribe
+});
+
+// ─── B4 · Dual-Approval (§9.1) + alertas al owner (§9.8, mock) ────────────────────────────────
+const mockAlertas = () => { const buf = []; return { notificar: (e) => buf.push(e), buf }; };
+
+test('B4 · evento destructivo (reverso) NO cuenta hasta que el OWNER aprueba; luego el saldo baja', async () => {
+    await resetBoveda();
+    await registrarTrasladoCore(db, { opId: 'RO', tipo: 'cajon_a_boveda', monto: 100000, autor: 'kary' });
+    await reversoCore(db, { opId: 'RREV', reversaA: 'RO', autor: 'caja1', motivo: 'error' });
+    assert.equal((await db.doc('boveda/main').get()).data().saldo, 100000);   // pendiente → aún no cuenta
+    const ap = await aprobarEventoCajaCore(db, { opId: 'RREV', aprobadoPor: 'kary', rol: 'owner' });
+    assert.equal(ap.estado, 'aprobado');
+    assert.equal(ap.saldo, 0);                                                 // ya cuenta → compensado
+    assert.equal((await db.doc('bovedaMovimientos/RREV').get()).data().estado, 'aprobado');
+    assert.equal((await db.doc('boveda/main').get()).data().saldo, 0);
+});
+
+test('B4 · la CAJA NO puede aprobar (SoD): rol ≠ owner → rechaza', async () => {
+    await resetBoveda();
+    await registrarTrasladoCore(db, { opId: 'RO2', tipo: 'cajon_a_boveda', monto: 100000, autor: 'kary' });
+    await reversoCore(db, { opId: 'RREV2', reversaA: 'RO2', autor: 'caja1', motivo: 'error' });
+    await assert.rejects(aprobarEventoCajaCore(db, { opId: 'RREV2', aprobadoPor: 'caja1', rol: 'caja' }), /dueñ|owner|aprob/i);
+    assert.equal((await db.doc('bovedaMovimientos/RREV2').get()).data().estado, 'pendiente_aprobacion');   // sigue pendiente
+    assert.equal((await db.doc('boveda/main').get()).data().saldo, 100000);   // no cambió
+});
+
+test('B4 · ajuste_faltante nace pendiente (no cuenta) → owner aprueba → baja el saldo', async () => {
+    await resetBoveda();
+    await registrarTrasladoCore(db, { opId: 'AJB', tipo: 'cajon_a_boveda', monto: 500000, autor: 'kary' });
+    const aj = await ajusteCore(db, { opId: 'AJ1', tipo: 'ajuste_faltante', monto: 20000, motivo: 'conteo físico: faltan 20k', autor: 'caja1' });
+    assert.equal(aj.estado, 'pendiente_aprobacion');
+    assert.equal((await db.doc('boveda/main').get()).data().saldo, 500000);   // pendiente → no cuenta
+    const ap = await aprobarEventoCajaCore(db, { opId: 'AJ1', aprobadoPor: 'kary', rol: 'owner' });
+    assert.equal(ap.saldo, 480000);                                            // 500000 − 20000
+});
+
+test('B4 · ajuste: monto inválido / motivo vacío / tipo malo → rechaza', async () => {
+    await resetBoveda();
+    await assert.rejects(ajusteCore(db, { opId: 'AX1', tipo: 'ajuste_faltante', monto: -5, motivo: 'x', autor: 'c' }), /monto/i);
+    await assert.rejects(ajusteCore(db, { opId: 'AX2', tipo: 'ajuste_faltante', monto: 5000, motivo: '', autor: 'c' }), /motivo/i);
+    await assert.rejects(ajusteCore(db, { opId: 'AX3', tipo: 'inventado', monto: 5000, motivo: 'x', autor: 'c' }), /tipo/i);
+});
+
+test('B4 · alerta al owner: crear un reverso EMITE alerta (mock); el destinatario incluye SIEMPRE al owner', async () => {
+    await resetBoveda();
+    const a = mockAlertas();
+    await registrarTrasladoCore(db, { opId: 'AL1', tipo: 'cajon_a_boveda', monto: 100000, autor: 'kary' });
+    await reversoCore(db, { opId: 'ALREV', reversaA: 'AL1', autor: 'caja1', motivo: 'error' }, a);
+    assert.equal(a.buf.length, 1);
+    assert.equal(a.buf[0].evento, 'reverso');
+    assert.equal(a.buf[0].requiereAprobacion, true);
+});
+
+test('B4 · movimientoCaja EGRESO emite alerta (fraude interno §8.5); INGRESO no', async () => {
+    await limpiarPuntero();
+    await abrirTurnoCore(db, { opId: 'TMOV', fondoApertura: 200000, autor: 'caja1' });
+    const a = mockAlertas();
+    const eg = await movimientoCajaCore(db, { turnoId: 'TMOV', opId: 'MEG', tipo: 'egreso', concepto: 'gasto_menor', monto: 15000, autor: 'caja1' }, a);
+    assert.equal(eg.yaExistia, false);
+    assert.equal((await db.doc('turnos/TMOV/movsCaja/MEG').get()).data().monto, 15000);
+    assert.equal(a.buf.filter((e) => e.evento === 'egreso').length, 1);        // egreso → alerta
+    const b = mockAlertas();
+    await movimientoCajaCore(db, { turnoId: 'TMOV', opId: 'MIN', tipo: 'ingreso', concepto: 'otro', monto: 5000, nota: 'devolución', autor: 'caja1' }, b);
+    assert.equal(b.buf.filter((e) => e.evento === 'egreso').length, 0);        // ingreso → sin alerta de egreso
+});
+
+test('B4 · movimientoCaja: concepto fuera de lista / "otro" sin nota / turno cerrado → rechaza', async () => {
+    await limpiarPuntero();
+    await abrirTurnoCore(db, { opId: 'TMOV2', fondoApertura: 0, autor: 'caja1' });
+    await assert.rejects(movimientoCajaCore(db, { turnoId: 'TMOV2', opId: 'MC1', tipo: 'egreso', concepto: 'sobornos', monto: 1000, autor: 'c' }), /concepto/i);
+    await assert.rejects(movimientoCajaCore(db, { turnoId: 'TMOV2', opId: 'MC2', tipo: 'egreso', concepto: 'otro', monto: 1000, autor: 'c' }), /nota/i);
+    await cerrarTurnoCore(db, { turnoId: 'TMOV2', conteoPorMedio: { efectivo: 0 }, autor: 'caja1' });
+    await assert.rejects(movimientoCajaCore(db, { turnoId: 'TMOV2', opId: 'MC3', tipo: 'egreso', concepto: 'gasto_menor', monto: 1000, autor: 'c' }), /cerrad|abiert/i);
+});
+
+test('B4 · aprobar: evento inexistente → not-found; doble aprobación → idempotente', async () => {
+    await resetBoveda();
+    await registrarTrasladoCore(db, { opId: 'DA', tipo: 'cajon_a_boveda', monto: 100000, autor: 'kary' });
+    await reversoCore(db, { opId: 'DAREV', reversaA: 'DA', autor: 'caja1', motivo: 'x' });
+    await assert.rejects(aprobarEventoCajaCore(db, { opId: 'NOEXISTE', aprobadoPor: 'kary', rol: 'owner' }), /no existe|not.?found/i);
+    const a1 = await aprobarEventoCajaCore(db, { opId: 'DAREV', aprobadoPor: 'kary', rol: 'owner' });
+    const a2 = await aprobarEventoCajaCore(db, { opId: 'DAREV', aprobadoPor: 'kary', rol: 'owner' });
+    assert.equal(a1.saldo, 0);
+    assert.equal(a2.yaExistia, true);
+    assert.equal(a2.saldo, 0);                                                 // no re-aplica
 });

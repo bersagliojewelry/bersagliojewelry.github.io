@@ -25,12 +25,15 @@ import {
 let testEnv;
 
 before(async () => {
+    // Respeta FIRESTORE_EMULATOR_HOST (emulators:exec lo exporta) → corre en cualquier puerto
+    // si 8080 está ocupado (p.ej. otro dev-server en el equipo). Fallback: 127.0.0.1:8080.
+    const [emuHost, emuPort] = (process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8080').split(':');
     testEnv = await initializeTestEnvironment({
         projectId: 'demo-bersaglio',
         firestore: {
             rules: readFileSync('firestore.rules', 'utf8'),
-            host: '127.0.0.1',
-            port: 8080,
+            host: emuHost,
+            port: Number(emuPort),
         },
     });
 
@@ -1578,4 +1581,31 @@ test('size() ≤500 en texto libre: gestiones/solicitudes/movimientos (deferido 
     await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mDescLarga'),
         { tipo: 'factura', monto: 10000, fecha: '2026-06-07', descripcion: larga,
           registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false }));
+});
+
+// ─── F2.1 · Identidad del cliente (índice CF-only + campos de identidad no inyectables) ───
+test('F2.1 · clientesPorDoc es DENY-ALL incluso para admin y owner (lectura y escritura)', async () => {
+    // Índice de identidad = estructura interna: leerlo = enumerar documentos, escribirlo = romper el dedup.
+    await assertFails(getDoc(doc(asUser('adminUid'), 'clientesPorDoc/hashabc')));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientesPorDoc/hashabc'), { clienteId: 'x' }));
+    await assertFails(getDoc(doc(asClaim('ownU', 'owner'), 'clientesPorDoc/hashabc')));
+    await assertFails(setDoc(doc(asClaim('ownU', 'owner'), 'clientesPorDoc/hashabc'), { clienteId: 'x' }));
+    await assertFails(getDoc(doc(anon(), 'clientesPorDoc/hashabc')));
+});
+
+test('F2.1 · el cliente NO puede inyectar campos de identidad al CREAR (CF-only por hasOnly)', async () => {
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cInjKey'),  { nombre: 'A', legalIdKey: 'CC:123' }));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cInjKeys'), { nombre: 'B', docKeys: ['CC:123'] }));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cInjUid'),  { nombre: 'C', authUid: 'uid1' }));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cInjCon'),  { nombre: 'D', contacto: { contactVerified: true } }));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cInjNv'),   { nombre: 'E', normVersion: 1 }));
+    // control: crear sin campos de identidad SÍ pasa.
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cSano'), { nombre: 'Sano', telefono: '3001112233' }));
+});
+
+test('F2.1 · el cliente NO puede MUTAR campos de identidad en update (inmutables)', async () => {
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV'), { legalIdKey: 'CC:999' }, { merge: true }));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV'), { authUid: 'hacked' },    { merge: true }));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV'), { docKeys: ['CC:999'] },  { merge: true }));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV'), { contacto: { contactVerified: true } }, { merge: true }));
 });

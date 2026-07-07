@@ -13,6 +13,7 @@
     "test:rules:run": "node --test tests/firestore-rules.test.mjs",
     "test:saldo": "node --test functions/saldo.test.mjs",
     "test:identidad": "node --test functions/identidad-core.test.mjs",
+    "test:identidad:integration": "firebase emulators:exec --only firestore --project demo-bersaglio \"node --test functions/identidad.integration.test.mjs\"",
     "test:backup": "node --test functions/backup.test.mjs",
     "test:reconciliacion": "node --test functions/reconciliacion.test.mjs",
     "test:saldo:integration": "firebase emulators:exec --only firestore,functions --project demo-bersaglio \"node --test functions/saldo.integration.test.mjs\"",

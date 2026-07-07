@@ -263,6 +263,12 @@ exports.aprobarEventoCaja = require('./pedidos').aprobarEventoCaja; // isOwner: 
 exports.recalcBoveda = require('./pedidos').recalcBoveda;           // trigger: mantiene boveda/main fresco (backstop)
 exports.ajustarStock = require('./inventario').ajustarStock;         // TODO-40 F1: merma/reabasto/corrección (delta + ledger)
 exports.cambiarTipoPieza = require('./inventario').cambiarTipoPieza; // TODO-40 F1: transición de tipo (purga cantidad, D6)
+// F2.1 · identidad del cliente (contrato legalIdKey; índice clientesPorDoc CF-only, pepper Secret Manager)
+exports.resolverCliente = require('./identidad').resolverCliente;             // match exacto por documento (sugerencia web)
+exports.crearClienteConDoc = require('./identidad').crearClienteConDoc;       // crea (doc opcional; reserva índice + consent)
+exports.attachDocACliente = require('./identidad').attachDocACliente;         // adjunta doc a cliente (colisión→needsMerge)
+exports.vincularClientePedido = require('./identidad').vincularClientePedido; // escribe pedido.clienteId + historial
+exports.fusionarClientes = require('./identidad').fusionarClientes;           // owner-only: fusiona duplicados (append-only)
 exports.backupDiario = require('./backup').backupDiario;
 
 // ─── reconciliacionDiaria (F6 frente D) ──────────────────────────────────────

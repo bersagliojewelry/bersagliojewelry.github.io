@@ -674,6 +674,16 @@ service cloud.firestore {
     match /codigosPedido/{codigo} {
       allow read, write: if false;
     }
+    // F2.1 · Índice de IDENTIDAD del cliente (docHash = HMAC(legalIdKey, pepper) → clienteId).
+    // DENY-ALL incluso para admin/owner (comité seguridad): es estructura de integridad interna;
+    // que un cliente lo lea = enumerar documentos, que lo escriba = desincronizar el dedup. SOLO
+    // las CFs de identidad (Admin SDK) lo leen/reservan DENTRO de una transacción. La cédula NUNCA
+    // viaja en la ruta (va hasheada). Los campos `legalIdKey`/`docKeys`/`authUid`/`contacto` de
+    // `clientes` quedan CF-only por EXCLUSIÓN de los whitelists hasOnly de create/update (ausentes
+    // en create, inmutables en update) — no se añaden a esas listas a propósito.
+    match /clientesPorDoc/{docHash} {
+      allow read, write: if false;
+    }
     // Arqueo / Cierre Z (B1 paso 5) — lo ESCRIBE solo la CF `cierreCaja` (Admin SDK); el staff
     // de ventas LEE el histórico de cierres, nadie escribe por fuera (el descuadre no se falsea).
     match /arqueo/{turnoId} {

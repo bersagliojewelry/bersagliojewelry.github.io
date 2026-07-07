@@ -14,12 +14,18 @@
  */
 
 import adminDb from './db.js';
-import { admToast, admConfirm, initSidebar, esc, requireAuth, errorMessage, fmtDateTime } from './shared.js';
+import { admToast, admConfirm, initSidebar, esc, requireAuth, currentRole, errorMessage, fmtDateTime } from './shared.js';
 import { esDisponible, STOCK_TYPES } from './inventario-model.js';   // TODO-40 v3: vendibles espeja el gate de la CF
 import { calcularPrecio } from './calculadora.js';
 import { calcularNeto } from './fiscal.js';
-import { crearPedido, confirmarPago, anularPedido, cierreCaja, ultimasVentas } from '../pedidos-service.js';
-import { estadoPedido } from './pedidos-format.js';   // F1-CORE: mapa de estados compartido con Pedidos
+import {
+    crearPedido, confirmarPago, anularPedido, cierreCaja, ultimasVentas,
+    abrirTurno, cerrarTurno, movimientoCaja, registrarTraslado,               // F2.0 · escrituras
+    onCajaEstadoChange, onConfigCajaChange, onTurnoChange, onMovsCajaChange,  // F2.0 · lecturas
+    onVentasTurnoChange, onTrasladosTurnoChange,
+} from '../pedidos-service.js';
+import { estadoPedido, ESTADOS_SIN_DINERO } from './pedidos-format.js';   // F1-CORE: mapa de estados compartido con Pedidos
+import { CONCEPTOS_CAJA, conceptoLabel, efectivoEnCajon, trasladoSugerido, superaLimite } from './caja-format.js';
 
 const cop = n => '$' + Math.round(Math.max(0, Number(n) || 0)).toLocaleString('es-CO');
 const entero = n => Math.round(Math.max(0, Number(n) || 0));
@@ -37,6 +43,25 @@ let _query     = '';
 let _submitting = false;
 let _arqueoId  = null;    // UUID del cierre de caja en curso (idempotencia)
 let _cierreDone = false;  // ya se calculó el arqueo (el botón pasa a "Listo")
+
+// ─── F2.0 · Sesión de caja + Bóveda (estado del turno) ─────────────────────────
+// isCaja = quien OPERA la caja (owner/admin/caja). En prod Kary opera como `owner`. El candado real
+// es server-side (reglas + wrappers rolDeCaja); esto solo decide qué UI pintar. Se resuelve en
+// initCaja() (tras requireAuth) — NUNCA en tiempo de import: ahí el perfil aún no está cargado.
+let _isCaja        = false;
+let _cfgCaja       = null;                                   // config/caja {enforceTurno,fondoTrabajo,limiteCajon}
+let _cajaEstado    = { turnoAbiertoId: null, docsDelTurno: 0 };
+let _turno         = null;                                   // turno abierto {id,fondoApertura,estado,...}
+let _movsCaja      = [];                                     // ingresos/egresos del turno
+let _ventasTurno   = [];                                     // pedidos where turnoId (pertenencia #6)
+let _trasladosLedger = null;                                 // traslados owner-authoritative (null = sin acceso → fallback en memoria)
+let _trasladadoSesion = 0;                                   // fallback: traslados cajón→bóveda de ESTA sesión (rol sin lectura del ledger)
+let _turnoOpId     = null;                                   // opId de la apertura en curso (idempotencia §8.1.2)
+let _movOpId       = null;                                   // opId del movimiento en curso
+let _trasladoOpId  = null;                                   // opId del traslado en curso
+let _cierreTurnoMode = false;                                // el modal de cierre cierra un TURNO (no el Z legacy)
+let _overLimit     = false;                                  // el cajón superó el límite → ventas bloqueadas hasta trasladar
+let _turnoUnsubs   = [];                                     // listeners con alcance de turno (se recablean al cambiar de turno)
 
 // ─── Init ───────────────────────────────────────────────────────────────────────
 async function init() {
@@ -86,8 +111,296 @@ async function init() {
 
     document.getElementById('btn-export-contador').addEventListener('click', exportarContador);
 
+    initCaja();       // F2.0 · turno de caja + bóveda (no-op si el rol no opera caja)
     updateMedioHint();
     loadVentas();
+}
+
+// ─── F2.0 · Ciclo del turno de caja (apertura / movimientos / traslado / cierre) ──────────────
+
+function initCaja() {
+    _isCaja = ['owner', 'admin', 'caja'].includes(currentRole());   // tras requireAuth: el perfil ya está
+    const card = document.getElementById('caja-card');
+    if (!_isCaja) { if (card) card.hidden = true; return; }   // catálogo/editor: sin caja (usan el Z legacy)
+    if (card) card.hidden = false;
+
+    // Config + puntero del turno abierto (read isCaja). El puntero manda: al cambiar `turnoAbiertoId`
+    // recableamos los listeners con alcance de turno (turno + movs + ventas + traslados).
+    onConfigCajaChange(cfg => { _cfgCaja = cfg; renderCaja(); recalcTotal(); },
+        e => console.warn('[caja] config no legible:', e?.code || e));
+    onCajaEstadoChange(handleCajaEstado,
+        e => console.warn('[caja] estado no legible:', e?.code || e));
+
+    // Botones del turno (existen en el HTML del POS; wire defensivo).
+    document.getElementById('caja-abrir')?.addEventListener('click', abrirCaja);
+    document.getElementById('caja-mov')?.addEventListener('click', () => openMov());
+    document.getElementById('caja-traslado')?.addEventListener('click', () => openTraslado(efectivoCajon()));
+    document.getElementById('caja-cerrar')?.addEventListener('click', openCierre);
+
+    // Modal de movimiento (ingreso/egreso)
+    document.getElementById('mov-close')?.addEventListener('click', closeMov);
+    document.getElementById('mov-cancel')?.addEventListener('click', closeMov);
+    document.getElementById('mov-submit')?.addEventListener('click', handleMov);
+    document.getElementById('mov-concepto')?.addEventListener('change', updateMovNota);
+    document.getElementById('mov-modal')?.addEventListener('click', e => { if (e.target.id === 'mov-modal') closeMov(); });
+
+    // Modal de traslado a bóveda
+    document.getElementById('tras-close')?.addEventListener('click', closeTraslado);
+    document.getElementById('tras-cancel')?.addEventListener('click', closeTraslado);
+    document.getElementById('tras-submit')?.addEventListener('click', handleTraslado);
+    document.getElementById('tras-modal')?.addEventListener('click', e => { if (e.target.id === 'tras-modal') closeTraslado(); });
+
+    // Poblar el <select> de conceptos una vez (DOM seguro, sin innerHTML).
+    const sel = document.getElementById('mov-concepto');
+    if (sel && !sel.children.length) {
+        for (const c of CONCEPTOS_CAJA) {
+            const opt = document.createElement('option');
+            opt.value = c;
+            opt.textContent = conceptoLabel(c);
+            sel.appendChild(opt);
+        }
+    }
+}
+
+// Cambió el puntero del turno abierto → recablea los listeners con alcance de turno.
+function handleCajaEstado(est) {
+    const prev = _cajaEstado?.turnoAbiertoId || null;
+    _cajaEstado = est || { turnoAbiertoId: null, docsDelTurno: 0 };
+    const id = _cajaEstado.turnoAbiertoId || null;
+
+    if (id !== prev) {
+        _turnoUnsubs.forEach(u => { try { u(); } catch { /* noop */ } });
+        _turnoUnsubs = [];
+        _turno = null; _movsCaja = []; _ventasTurno = []; _trasladosLedger = null; _trasladadoSesion = 0; _overLimit = false;
+        if (id) {
+            _turnoUnsubs.push(onTurnoChange(id, t => { _turno = t; renderCaja(); recalcTotal(); },
+                e => console.warn('[caja] turno no legible:', e?.code || e)));
+            _turnoUnsubs.push(onMovsCajaChange(id, m => { _movsCaja = m; renderCaja(); recalcTotal(); },
+                e => console.warn('[caja] movimientos no legibles:', e?.code || e)));
+            // Ventas del turno (read isVentas). Un rol `caja` puro aún NO puede leer pedidos (gap
+            // documentado) → degrada: el efectivo del cajón se muestra sin las ventas hasta habilitarlo.
+            _turnoUnsubs.push(onVentasTurnoChange(id, v => { _ventasTurno = v; renderCaja(); recalcTotal(); },
+                e => console.warn('[caja] ventas del turno no legibles (rol sin lectura de pedidos):', e?.code || e)));
+            // Traslados del turno (read isOwner). Si el operador NO es owner → error → usamos el
+            // rastreo por sesión (client-track). El owner (Kary en prod) obtiene el cajón exacto.
+            _turnoUnsubs.push(onTrasladosTurnoChange(id, tr => { _trasladosLedger = tr; renderCaja(); recalcTotal(); },
+                () => { _trasladosLedger = null; renderCaja(); }));
+        }
+    }
+    renderCaja();
+    recalcTotal();
+}
+
+// ─── Derivación del efectivo del cajón (ESTIMACIÓN operativa; la autoridad es el cierre server) ──
+function ventasEfectivoTurno() {
+    return _ventasTurno.reduce((s, p) =>
+        (p.medio === 'efectivo' && !ESTADOS_SIN_DINERO.has(p.estado)) ? s + entero(p.total) : s, 0);
+}
+function movsSums() {
+    let ingresos = 0, egresos = 0;
+    for (const m of _movsCaja) {
+        if (m.anulado) continue;
+        if (m.tipo === 'ingreso') ingresos += entero(m.monto);
+        else if (m.tipo === 'egreso') egresos += entero(m.monto);
+    }
+    return { ingresos, egresos };
+}
+function trasladosSums() {
+    if (Array.isArray(_trasladosLedger)) {                          // owner-authoritative (ledger real)
+        let cajonABoveda = 0, bovedaACajon = 0;
+        for (const t of _trasladosLedger) {
+            if (t.anulado) continue;
+            if (t.tipo === 'cajon_a_boveda') cajonABoveda += entero(t.monto);
+            else if (t.tipo === 'boveda_a_cajon') bovedaACajon += entero(t.monto);
+        }
+        return { cajonABoveda, bovedaACajon };
+    }
+    return { cajonABoveda: _trasladadoSesion, bovedaACajon: 0 };   // fallback en memoria (rol sin lectura del ledger)
+}
+function efectivoCajon() {
+    if (!_turno) return 0;
+    const { ingresos, egresos } = movsSums();
+    const { cajonABoveda, bovedaACajon } = trasladosSums();
+    return efectivoEnCajon({
+        fondoApertura: _turno.fondoApertura, ventasEfectivo: ventasEfectivoTurno(),
+        ingresos, egresos, cajonABoveda, bovedaACajon,
+    });
+}
+// La venta se bloquea si: (enforceTurno && sin turno abierto) o (cajón sobre el límite sin trasladar).
+function ventaBloqueadaPorCaja() {
+    if (!_isCaja) return false;
+    if (_cfgCaja?.enforceTurno && !_cajaEstado?.turnoAbiertoId) return true;
+    return _overLimit;
+}
+
+// ─── Render del panel de caja ─────────────────────────────────────────────────
+function renderCaja() {
+    const card = document.getElementById('caja-card');
+    if (!card || !_isCaja) return;
+
+    const abierta = !!_turno && _turno.estado === 'abierto';
+    document.getElementById('caja-cerrada').hidden = abierta;
+    document.getElementById('caja-abierta').hidden = !abierta;
+
+    // Estado CERRADA: aviso + botón abrir. Si enforceTurno, recalca que sin caja no hay ventas.
+    const avisoCerrada = document.getElementById('caja-cerrada-aviso');
+    if (avisoCerrada) {
+        avisoCerrada.textContent = _cfgCaja?.enforceTurno
+            ? 'La caja está cerrada. Ábrela para poder registrar ventas de mostrador.'
+            : 'La caja está cerrada. Ábrela para llevar el control del efectivo del turno.';
+    }
+
+    if (!abierta) { _overLimit = false; return; }
+
+    // Estado ABIERTA: métricas del turno.
+    const efectivo = efectivoCajon();
+    const { ingresos, egresos } = movsSums();
+    const ventas = ventasEfectivoTurno();
+    const limite = Number(_cfgCaja?.limiteCajon);
+
+    document.getElementById('caja-fondo').textContent     = cop(_turno.fondoApertura);
+    document.getElementById('caja-ventas-ef').textContent = cop(ventas);
+    document.getElementById('caja-ingresos').textContent  = cop(ingresos);
+    document.getElementById('caja-egresos').textContent   = cop(egresos);
+    document.getElementById('caja-efectivo').textContent  = cop(efectivo);
+
+    // Barra de límite (discreta): solo si el owner configuró un límite.
+    const limWrap = document.getElementById('caja-limite-wrap');
+    const over = superaLimite(efectivo, limite);
+    if (limWrap) {
+        if (Number.isFinite(limite) && limite > 0) {
+            limWrap.hidden = false;
+            const pct = Math.min(100, Math.round((efectivo / limite) * 100));
+            const bar = document.getElementById('caja-limite-bar');
+            if (bar) { bar.style.width = pct + '%'; bar.classList.toggle('is-over', over); }
+            document.getElementById('caja-limite-txt').textContent = `Límite del cajón: ${cop(limite)}`;
+        } else {
+            limWrap.hidden = true;
+        }
+    }
+
+    // Alerta + auto-modal al CRUZAR el límite (una sola vez; se re-arma al bajar).
+    const alerta = document.getElementById('caja-alerta');
+    if (alerta) alerta.hidden = !over;
+    if (over && !_overLimit && !isTrasladoOpen() && !isCierreOpen()) openTraslado(efectivo);
+    _overLimit = over;
+}
+
+function isTrasladoOpen() { return !document.getElementById('tras-modal')?.hidden; }
+function isCierreOpen()   { return !document.getElementById('cierre-modal')?.hidden; }
+
+// ─── Abrir caja ────────────────────────────────────────────────────────────────
+function abrirCaja() {
+    const fondoDefault = entero(_cfgCaja?.fondoTrabajo || 0);
+    const raw = window.prompt(
+        `Fondo de apertura (base en efectivo para el cambio).\nSugerido: ${cop(fondoDefault)}`,
+        String(fondoDefault || ''),
+    );
+    if (raw === null) return;                       // canceló
+    const fondo = entero(raw);
+    if (!(fondo >= 0)) { admToast('El fondo debe ser un número válido.', 'danger'); return; }
+    if (!_turnoOpId) _turnoOpId = uid();            // idempotencia: mismo opId si reintenta
+
+    admConfirm(`¿Abrir la caja con un fondo de ${cop(fondo)}?`, async () => {
+        try {
+            await abrirTurno({ opId: _turnoOpId, fondoApertura: fondo });
+            _turnoOpId = null;                        // el turno nuevo resetea _trasladadoSesion vía handleCajaEstado
+            admToast('✓ Caja abierta', 'success');
+        } catch (err) {
+            const msg = (BUSINESS_ERR.includes(err?.code) && err?.message) ? err.message
+                : errorMessage(err, 'No se pudo abrir la caja.');
+            admToast(msg, 'danger', 5000);
+            // Conservamos _turnoOpId → reintentar es idempotente (no crea dos turnos).
+        }
+    });
+}
+
+// ─── Movimiento manual (ingreso / egreso) ──────────────────────────────────────
+function openMov() {
+    if (!_turno || _turno.estado !== 'abierto') { admToast('Abre la caja primero.', 'danger'); return; }
+    _movOpId = uid();
+    document.getElementById('mov-tipo').value = 'egreso';
+    document.getElementById('mov-concepto').value = CONCEPTOS_CAJA[0];
+    document.getElementById('mov-monto').value = '';
+    document.getElementById('mov-nota').value = '';
+    updateMovNota();
+    const submit = document.getElementById('mov-submit');
+    submit.disabled = false; submit.textContent = 'Registrar movimiento';
+    document.getElementById('mov-modal').hidden = false;
+    document.getElementById('mov-monto').focus();
+}
+function closeMov() { document.getElementById('mov-modal').hidden = true; }
+function updateMovNota() {
+    // 'otro' exige nota (espeja el guard del core). El resto la deja opcional.
+    const esOtro = document.getElementById('mov-concepto').value === 'otro';
+    const nota = document.getElementById('mov-nota');
+    nota.placeholder = esOtro ? 'Nota (obligatoria para "Otro")' : 'Nota (opcional)';
+    document.getElementById('mov-nota-req').hidden = !esOtro;
+}
+async function handleMov() {
+    if (!_turno) return;
+    const tipo = document.getElementById('mov-tipo').value;
+    const concepto = document.getElementById('mov-concepto').value;
+    const monto = entero(document.getElementById('mov-monto').value);
+    const nota = document.getElementById('mov-nota').value.trim();
+    if (!(monto > 0)) { admToast('El monto debe ser mayor a 0.', 'danger'); return; }
+    if (concepto === 'otro' && !nota) { admToast('El concepto "Otro" exige una nota.', 'danger'); return; }
+    if (!_movOpId) _movOpId = uid();
+
+    const submit = document.getElementById('mov-submit');
+    submit.disabled = true; submit.textContent = 'Registrando…';
+    try {
+        await movimientoCaja({ turnoId: _turno.id, opId: _movOpId, tipo, concepto, monto, nota: nota || undefined });
+        _movOpId = null;
+        admToast(`✓ ${tipo === 'egreso' ? 'Egreso' : 'Ingreso'} registrado · ${cop(monto)}`, 'success');
+        closeMov();
+    } catch (err) {
+        const msg = (BUSINESS_ERR.includes(err?.code) && err?.message) ? err.message
+            : errorMessage(err, 'No se pudo registrar el movimiento.');
+        admToast(msg, 'danger', 5000);
+        submit.disabled = false; submit.textContent = 'Registrar movimiento';
+    }
+}
+
+// ─── Traslado a bóveda (vaciar el cajón al superar el límite) ───────────────────
+function openTraslado(efectivoActual) {
+    if (!_turno || _turno.estado !== 'abierto') { admToast('Abre la caja primero.', 'danger'); return; }
+    _trasladoOpId = uid();
+    const sugerido = trasladoSugerido(efectivoActual, entero(_cfgCaja?.fondoTrabajo || 0));
+    const over = superaLimite(efectivoActual, Number(_cfgCaja?.limiteCajon));
+    document.getElementById('tras-monto').value = sugerido || '';
+    document.getElementById('tras-nota').value = '';
+    document.getElementById('tras-obligatorio').hidden = !over;
+    document.getElementById('tras-efectivo').textContent = cop(efectivoActual);
+    const submit = document.getElementById('tras-submit');
+    submit.disabled = false; submit.textContent = 'Registrar traslado';
+    document.getElementById('tras-modal').hidden = false;
+    document.getElementById('tras-monto').focus();
+}
+function closeTraslado() { document.getElementById('tras-modal').hidden = true; }
+async function handleTraslado() {
+    if (!_turno) return;
+    const monto = entero(document.getElementById('tras-monto').value);
+    const nota = document.getElementById('tras-nota').value.trim();
+    if (!(monto > 0)) { admToast('El monto debe ser mayor a 0.', 'danger'); return; }
+    if (!_trasladoOpId) _trasladoOpId = uid();
+
+    const submit = document.getElementById('tras-submit');
+    submit.disabled = true; submit.textContent = 'Trasladando…';
+    try {
+        await registrarTraslado({ opId: _trasladoOpId, tipo: 'cajon_a_boveda', monto, turnoId: _turno.id, nota: nota || undefined });
+        _trasladadoSesion += entero(monto);          // fallback en memoria (el owner usa el ledger real)
+        _trasladoOpId = null;
+        admToast(`✓ Trasladado a bóveda · ${cop(monto)}`, 'success');
+        closeTraslado();
+        renderCaja();                                 // re-evalúa el límite (baja el cajón → desbloquea ventas)
+        recalcTotal();
+    } catch (err) {
+        const msg = (BUSINESS_ERR.includes(err?.code) && err?.message) ? err.message
+            : errorMessage(err, 'No se pudo registrar el traslado.');
+        admToast(msg, 'danger', 5000);
+        submit.disabled = false; submit.textContent = 'Registrar traslado';
+    }
 }
 
 // ─── Paso 1: elegir pieza ─────────────────────────────────────────────────────
@@ -202,7 +515,17 @@ function computeTotal() {
 function recalcTotal() {
     const total = computeTotal();
     document.getElementById('pos-total').textContent = cop(total);
-    document.getElementById('pos-submit').disabled = !(total > 0) || _submitting;
+    const blocked = ventaBloqueadaPorCaja();   // F2.0: sin caja abierta (enforceTurno) o cajón sobre el límite
+    document.getElementById('pos-submit').disabled = !(total > 0) || _submitting || blocked;
+    const bh = document.getElementById('pos-caja-block');
+    if (bh) {
+        bh.hidden = !blocked;
+        if (blocked) {
+            bh.textContent = _overLimit
+                ? 'El cajón superó el límite: traslada efectivo a la bóveda antes de registrar otra venta.'
+                : 'Abre la caja para registrar ventas de mostrador.';
+        }
+    }
 }
 
 // ─── Paso 3: medio de pago ────────────────────────────────────────────────────
@@ -358,15 +681,23 @@ function anularVenta(pedidoId) {
     });
 }
 
-// ─── Cierre de caja (arqueo · paso 5) ─────────────────────────────────────────
+// ─── Cierre de caja (arqueo · paso 5 / cierre de TURNO F2.0) ───────────────────
+// Contexto: si hay un turno abierto (F2.0), "Cerrar caja" cierra el TURNO (cerrarTurno, ecuación
+// completa §8.1.7 + desglose por medio); si no, cae al Cierre Z legacy (cierreCaja). El conteo a
+// ciegas (contar efectivo antes de ver el esperado) es idéntico en ambos.
 function openCierre() {
+    _cierreTurnoMode = _isCaja && !!_cajaEstado?.turnoAbiertoId;
     _arqueoId   = uid();
     _cierreDone = false;
+    const title = document.getElementById('cierre-title');
+    if (title) title.textContent = _cierreTurnoMode ? 'Cerrar turno de caja' : 'Cerrar caja';
     document.getElementById('cierre-efectivo').value = '';
     document.getElementById('cierre-input-wrap').hidden = false;
     document.getElementById('cierre-result').hidden = true;
+    const digital = document.getElementById('cierre-digital');
+    if (digital) digital.hidden = true;
     const submit = document.getElementById('cierre-submit');
-    submit.textContent = 'Cerrar caja';
+    submit.textContent = _cierreTurnoMode ? 'Cerrar turno' : 'Cerrar caja';
     submit.disabled = false;
     document.getElementById('cierre-modal').hidden = false;
     document.getElementById('cierre-efectivo').focus();
@@ -383,7 +714,14 @@ async function handleCierre() {
     submit.disabled = true;
     submit.textContent = 'Calculando…';
     try {
-        const r = await cierreCaja({ arqueoId: _arqueoId, declaradoEfectivo: raw });
+        let r;
+        if (_cierreTurnoMode) {
+            const turnoId = _cajaEstado.turnoAbiertoId;
+            r = await cerrarTurno({ turnoId, conteoPorMedio: { efectivo: entero(raw) } });
+            renderDigitalBreakdown(r.esperadoPorMedio);             // reporte diario de tarjetas/transferencias (§9.5)
+        } else {
+            r = await cierreCaja({ arqueoId: _arqueoId, declaradoEfectivo: raw });
+        }
         // Conteo a ciegas: el esperado se revela AHORA, no antes.
         document.getElementById('cierre-esperado').textContent = cop(r.esperadoEfectivo);
         document.getElementById('cierre-contado').textContent  = cop(r.declaradoEfectivo);
@@ -399,10 +737,33 @@ async function handleCierre() {
         submit.textContent = 'Listo';
         submit.disabled = false;
     } catch (err) {
-        admToast(errorMessage(err, 'No se pudo cerrar la caja.'), 'danger', 4000);
-        submit.textContent = 'Cerrar caja';
+        const msg = (BUSINESS_ERR.includes(err?.code) && err?.message) ? err.message
+            : errorMessage(err, 'No se pudo cerrar la caja.');
+        admToast(msg, 'danger', 4000);
+        submit.textContent = _cierreTurnoMode ? 'Cerrar turno' : 'Cerrar caja';
         submit.disabled = false;
     }
+}
+
+// Desglose por medio digital (transferencia/Wompi/Addi) del turno cerrado — reporte diario (§9.5).
+// El efectivo va aparte (arriba); esto es informativo (medios electrónicos no se "cuentan a ciegas").
+function renderDigitalBreakdown(esperadoPorMedio) {
+    const box  = document.getElementById('cierre-digital');
+    const list = document.getElementById('cierre-digital-list');
+    if (!box || !list) return;
+    list.textContent = '';
+    const MEDIOS = [['transferencia', 'Transferencia'], ['wompi', 'Wompi'], ['addi', 'Addi']];
+    let any = false;
+    for (const [k, label] of MEDIOS) {
+        const val = entero(esperadoPorMedio?.[k]);
+        if (val <= 0) continue;
+        any = true;
+        const line = document.createElement('div'); line.className = 'adm-calc-line';
+        const s  = document.createElement('span');   s.textContent = label;
+        const st = document.createElement('strong'); st.textContent = cop(val);
+        line.appendChild(s); line.appendChild(st); list.appendChild(line);
+    }
+    box.hidden = !any;
 }
 
 // ─── Export al contador (paso 6 · bruto/neto) ─────────────────────────────────

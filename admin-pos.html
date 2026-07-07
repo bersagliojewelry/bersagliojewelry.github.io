@@ -33,6 +33,54 @@
         </header>
 
         <div class="adm-content">
+
+            <!-- ── F2.0 · Turno de caja (apertura / efectivo / traslado / cierre) ── -->
+            <section class="pos-card caja-card" id="caja-card" hidden>
+                <!-- Estado: caja CERRADA -->
+                <div id="caja-cerrada">
+                    <div class="caja-head">
+                        <h2 class="pos-card-title" style="margin:0;border:0;padding:0;">Caja del mostrador</h2>
+                        <span class="adm-pill adm-pill--gray">Cerrada</span>
+                    </div>
+                    <p class="pos-hint" id="caja-cerrada-aviso">La caja está cerrada. Ábrela para llevar el control del efectivo del turno.</p>
+                    <button class="adm-btn adm-btn--primary" id="caja-abrir" type="button">Abrir caja</button>
+                </div>
+
+                <!-- Estado: caja ABIERTA -->
+                <div id="caja-abierta" hidden>
+                    <div class="caja-head">
+                        <h2 class="pos-card-title" style="margin:0;border:0;padding:0;">Caja del mostrador</h2>
+                        <span class="adm-pill adm-pill--green">Abierta</span>
+                    </div>
+
+                    <div class="caja-metrics">
+                        <div class="caja-metric"><span>Fondo de apertura</span><strong id="caja-fondo" class="adm-money">$0</strong></div>
+                        <div class="caja-metric"><span>Ventas en efectivo</span><strong id="caja-ventas-ef" class="adm-money">$0</strong></div>
+                        <div class="caja-metric"><span>Ingresos</span><strong id="caja-ingresos" class="adm-money">$0</strong></div>
+                        <div class="caja-metric"><span>Egresos</span><strong id="caja-egresos" class="adm-money">$0</strong></div>
+                        <div class="caja-metric caja-metric--main"><span>Efectivo estimado en el cajón</span><strong id="caja-efectivo" class="adm-money">$0</strong></div>
+                    </div>
+
+                    <!-- Barra de límite del cajón (solo si el owner configuró un límite) -->
+                    <div class="caja-limite" id="caja-limite-wrap" hidden>
+                        <div class="caja-limite-track"><div class="caja-limite-bar" id="caja-limite-bar"></div></div>
+                        <span class="pos-hint" id="caja-limite-txt">Límite del cajón</span>
+                    </div>
+
+                    <!-- Alerta: el cajón superó el límite → traslado obligatorio -->
+                    <div class="caja-alerta" id="caja-alerta" hidden>
+                        El cajón superó el límite. Traslada el excedente a la bóveda antes de seguir vendiendo.
+                    </div>
+
+                    <div class="caja-actions">
+                        <button class="adm-btn adm-btn--ghost adm-btn--sm" id="caja-mov" type="button">+ Ingreso / egreso</button>
+                        <button class="adm-btn adm-btn--ghost adm-btn--sm" id="caja-traslado" type="button">↑ Trasladar a bóveda</button>
+                        <button class="adm-btn adm-btn--primary adm-btn--sm" id="caja-cerrar" type="button">🧾 Cerrar turno</button>
+                    </div>
+                    <p class="pos-hint">El efectivo del cajón es una estimación operativa; el conteo real y el descuadre se calculan al cerrar el turno.</p>
+                </div>
+            </section>
+
             <div class="pos-grid">
 
                 <!-- ── Registrar venta ─────────────────────────────────── -->
@@ -123,6 +171,7 @@
                         <button class="adm-btn adm-btn--primary pos-submit" id="pos-submit" type="button" disabled>
                             Registrar venta
                         </button>
+                        <p class="caja-alerta caja-block" id="pos-caja-block" hidden></p>
                         <p class="pos-hint pos-hint--center">La venta se registra una sola vez: si tocas el botón dos veces, no se duplica.</p>
                     </div>
                 </section>
@@ -154,11 +203,11 @@
     </div>
 </div>
 
-<!-- Modal: Cierre de caja (arqueo · B1 paso 5) -->
+<!-- Modal: Cierre de caja (arqueo Z legacy · o cierre de TURNO F2.0) -->
 <div class="adm-modal" id="cierre-modal" hidden>
     <div class="adm-modal-box adm-modal-box--sm">
         <div class="adm-modal-head">
-            <h2>Cerrar caja</h2>
+            <h2 id="cierre-title">Cerrar caja</h2>
             <button class="adm-modal-close" id="cierre-close" aria-label="Cerrar">✕</button>
         </div>
         <div class="adm-modal-body">
@@ -172,10 +221,82 @@
                 <div class="adm-calc-line"><span>Contaste</span><strong id="cierre-contado">$0</strong></div>
                 <div class="adm-calc-line adm-calc-total"><span id="cierre-descuadre-label">Descuadre</span><strong id="cierre-descuadre">$0</strong></div>
             </div>
+            <!-- Turno F2.0: reporte diario de los medios digitales (no se cuentan a ciegas) -->
+            <div class="adm-calc-result pos-cierre-result" id="cierre-digital" hidden>
+                <p class="pos-label" style="margin-bottom:8px;">Otros medios del turno (informativo)</p>
+                <div id="cierre-digital-list"></div>
+            </div>
         </div>
         <div class="adm-modal-foot">
             <button class="adm-btn adm-btn--ghost" id="cierre-cancel">Cancelar</button>
             <button class="adm-btn adm-btn--primary" id="cierre-submit">Cerrar caja</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Movimiento de caja (ingreso / egreso · F2.0) -->
+<div class="adm-modal" id="mov-modal" hidden>
+    <div class="adm-modal-box adm-modal-box--sm">
+        <div class="adm-modal-head">
+            <h2>Ingreso / egreso de caja</h2>
+            <button class="adm-modal-close" id="mov-close" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="adm-modal-body">
+            <div class="adm-field">
+                <label for="mov-tipo">Tipo</label>
+                <select class="adm-input" id="mov-tipo">
+                    <option value="egreso">Egreso (sale dinero del cajón)</option>
+                    <option value="ingreso">Ingreso (entra dinero al cajón)</option>
+                </select>
+            </div>
+            <div class="adm-field">
+                <label for="mov-concepto">Concepto</label>
+                <select class="adm-input" id="mov-concepto"></select>
+            </div>
+            <div class="adm-field">
+                <label for="mov-monto">Monto (COP)</label>
+                <input class="adm-input" id="mov-monto" type="number" min="0" inputmode="numeric" placeholder="Ej. 20000">
+            </div>
+            <div class="adm-field">
+                <label for="mov-nota">Nota <span id="mov-nota-req" class="caja-req" hidden>· obligatoria</span></label>
+                <input class="adm-input" id="mov-nota" type="text" maxlength="500" placeholder="Nota (opcional)">
+            </div>
+            <p class="pos-hint">Cada egreso queda registrado y le avisa al dueño (control antifraude). No se puede borrar; corregir = registrar el movimiento contrario.</p>
+        </div>
+        <div class="adm-modal-foot">
+            <button class="adm-btn adm-btn--ghost" id="mov-cancel">Cancelar</button>
+            <button class="adm-btn adm-btn--primary" id="mov-submit">Registrar movimiento</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Traslado a bóveda (vaciar el cajón · F2.0) -->
+<div class="adm-modal" id="tras-modal" hidden>
+    <div class="adm-modal-box adm-modal-box--sm">
+        <div class="adm-modal-head">
+            <h2>Trasladar a la bóveda</h2>
+            <button class="adm-modal-close" id="tras-close" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="adm-modal-body">
+            <div class="caja-alerta" id="tras-obligatorio" hidden>
+                El cajón superó el límite. Guarda el excedente en la caja fuerte y déjalo con la base de trabajo.
+            </div>
+            <div class="adm-calc-line" style="padding:0 0 12px;">
+                <span>Efectivo estimado en el cajón</span><strong class="adm-money" id="tras-efectivo">$0</strong>
+            </div>
+            <div class="adm-field">
+                <label for="tras-monto">Monto a trasladar (COP)</label>
+                <input class="adm-input" id="tras-monto" type="number" min="0" inputmode="numeric" placeholder="Ej. 3000000">
+            </div>
+            <div class="adm-field">
+                <label for="tras-nota">Nota (opcional)</label>
+                <input class="adm-input" id="tras-nota" type="text" maxlength="500" placeholder="Nota (opcional)">
+            </div>
+            <p class="pos-hint">Por seguridad, el cajón solo debe tener montos pequeños. El grueso vive en la caja fuerte (bóveda). Este movimiento no se puede borrar.</p>
+        </div>
+        <div class="adm-modal-foot">
+            <button class="adm-btn adm-btn--ghost" id="tras-cancel">Cancelar</button>
+            <button class="adm-btn adm-btn--primary" id="tras-submit">Registrar traslado</button>
         </div>
     </div>
 </div>

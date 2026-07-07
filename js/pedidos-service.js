@@ -8,7 +8,7 @@
  * web/WhatsApp reusen lo mismo sin arrastrar el DOM del panel (§3.6 cero monolitos).
  */
 import { app, firestoreDb } from './firebase-config.js';
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, doc, onSnapshot, where } from 'firebase/firestore';
 import { subscribeWithRetry } from './core/live-query.js';
 
 // Callable lazy (no cargamos firebase/functions hasta la 1ª venta — igual que crm-service).
@@ -120,6 +120,60 @@ export async function aprobarEventoCaja(input) {
     return (await fn(input)).data;
 }
 
+// ─── F2.0 · LECTURAS en vivo (listeners) — el candado real es server-side (reglas por rol) ────
+// La UI ESCUCHA; ninguna lógica de dinero vive aquí (§3.6). El rol define qué ve: `isCaja` lee su
+// turno/config; `isOwner` lee la bóveda + su ledger (discreción D7). Cada helper acepta `onErr`
+// para que la vista degrade con un aviso (p.ej. un `caja` que aún no puede leer pedidos → gap).
+
+/** Puntero del turno abierto (`caja/estado`: turnoAbiertoId + cota docsDelTurno). read isCaja. */
+export function onCajaEstadoChange(cb, onErr) {
+    return onSnapshot(doc(firestoreDb, 'caja', 'estado'),
+        s => cb(s.exists() ? s.data() : { turnoAbiertoId: null, docsDelTurno: 0 }),
+        e => onErr?.(e));
+}
+/** Config de caja (enforceTurno/fondoTrabajo/limiteCajon). read isCaja (el POS necesita el límite). */
+export function onConfigCajaChange(cb, onErr) {
+    return onSnapshot(doc(firestoreDb, 'config', 'caja'),
+        s => cb(s.exists() ? s.data() : null),
+        e => onErr?.(e));
+}
+/** Turno por id (fondo, estado, sellos de cierre). read isCaja. cb(null) si no existe. */
+export function onTurnoChange(turnoId, cb, onErr) {
+    return onSnapshot(doc(firestoreDb, 'turnos', turnoId),
+        s => cb(s.exists() ? { id: s.id, ...s.data() } : null),
+        e => onErr?.(e));
+}
+/** Movimientos manuales (ingreso/egreso) del turno. read isCaja. Más reciente primero. */
+export function onMovsCajaChange(turnoId, cb, onErr) {
+    return onSnapshot(query(collection(firestoreDb, 'turnos', turnoId, 'movsCaja'), orderBy('ts', 'desc')),
+        s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))),
+        e => onErr?.(e));
+}
+/** Ventas del turno (pertenencia por turnoId #6; filtro de estado/medio en la vista). read isVentas. */
+export function onVentasTurnoChange(turnoId, cb, onErr) {
+    return onSnapshot(query(collection(firestoreDb, 'pedidos'), where('turnoId', '==', turnoId)),
+        s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))),
+        e => onErr?.(e));
+}
+/** Traslados cajón↔bóveda de ESTE turno (para el efectivo exacto del cajón). read isOwner (cae si no). */
+export function onTrasladosTurnoChange(turnoId, cb, onErr) {
+    return onSnapshot(query(collection(firestoreDb, 'bovedaMovimientos'), where('turnoId', '==', turnoId)),
+        s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))),
+        e => onErr?.(e));
+}
+/** Saldo de la bóveda (materializado por recalcBoveda; VISTA, no autoridad §8.1.3). read isOwner. */
+export function onBovedaChange(cb, onErr) {
+    return onSnapshot(doc(firestoreDb, 'boveda', 'main'),
+        s => cb(s.exists() ? s.data() : { saldo: 0 }),
+        e => onErr?.(e));
+}
+/** Ledger de bóveda (append-only, inmutable §9.3). read isOwner. Más reciente primero. */
+export function onBovedaMovsChange(cb, max = 200, onErr) {
+    return onSnapshot(query(collection(firestoreDb, 'bovedaMovimientos'), orderBy('ts', 'desc'), limit(max)),
+        s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))),
+        e => onErr?.(e));
+}
+
 /**
  * F1-CORE: historial append-only del pedido (traza de transiciones que escribe `avanzarPedido`).
  * One-shot al abrir el detalle (no listener: es una traza, no un tablero). La regla de `pedidos`
@@ -165,6 +219,9 @@ export function onPedidosChange(cb, max = 200, onUiError) {
 export default {
     crearPedido, iniciarPagoWeb, confirmarPago, anularPedido, cierreCaja, avanzarPedido,
     historialPedido, ultimasVentas, onPedidosChange,
-    // F2.0 caja/bóveda
+    // F2.0 caja/bóveda — escrituras (callables)
     abrirTurno, cerrarTurno, movimientoCaja, registrarTraslado, reversoTraslado, ajusteBoveda, aprobarEventoCaja,
+    // F2.0 caja/bóveda — lecturas (listeners)
+    onCajaEstadoChange, onConfigCajaChange, onTurnoChange, onMovsCajaChange, onVentasTurnoChange,
+    onTrasladosTurnoChange, onBovedaChange, onBovedaMovsChange,
 };

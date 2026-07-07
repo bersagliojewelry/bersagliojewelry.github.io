@@ -19,6 +19,9 @@ export const NAV = [
     // Los placeholders "Ventas"/"Facturas"/"CxC" se retiraron (plan v4 §2): una-entidad-por-concepto
     // también en la nav — la factura vive en el pedido; CxC vive en Clientes (cartera CRM).
     { label: 'Pedidos',   href: 'admin-pedidos.html', icon: 'receipt', role: 'catalogo' },
+    // Bóveda (F2.0 B5b-1): caja fuerte OWNER-only (discreción D7 §9.9) — saldo + consignar/reponer
+    // + conteo físico + aprobaciones (Dual-Approval). NUNCA visible desde el POS de venta.
+    { label: 'Bóveda',    href: 'admin-boveda.html',  icon: 'shield',  role: 'owner' },
   ]},
   { label: 'Cobranza', items: [
     { label: 'Pagos / Recibos', href: '#', icon: 'receipt', role: 'admin', soon: true },
@@ -54,4 +57,4 @@ export const NAV_FOOTER = { label: 'Ver sitio', href: 'index.html', icon: 'exter
 // Versión visible del panel (criterio de deploy para no-técnicos, spec §9.1): Kary
 // confirma que está en la versión nueva tras un despliegue. Se bumpea JUNTO al
 // CACHE_NAME del Service Worker (`public/sw.js`) en cada cambio del shell admin.
-export const APP_VERSION = 'v38 · 2026-07-06';   // domicilio local cobrado (traza como flete nacional) (SW v75)
+export const APP_VERSION = 'v39 · 2026-07-06';   // F2.0 B5b-1 UI caja/bóveda (turno + bóveda owner + aprobaciones) (SW v76 en B5c)

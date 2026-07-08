@@ -1569,6 +1569,53 @@ select.adm-input { cursor: pointer; appearance: none; -webkit-appearance: none; 
 .pos-submit { width: 100%; justify-content: center; }
 .pos-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* ─── F2.2 · Servicios / modificaciones (bloque colapsable del mostrador) ─────── */
+.pos-serv { border-top: 1px dashed var(--adm-border); padding-top: 14px; }
+.pos-serv-toggle {
+    width: 100%; display: flex; align-items: center; justify-content: space-between;
+    padding: 11px 14px; background: rgba(201,169,110,0.08); border: 1px solid var(--adm-border);
+    border-radius: var(--adm-radius); color: var(--adm-accent); font: inherit; font-weight: 600;
+    font-size: 13.5px; cursor: pointer; transition: background 0.16s ease, border-color 0.16s ease;
+}
+.pos-serv-toggle:hover { background: rgba(201,169,110,0.14); border-color: var(--adm-accent); }
+.pos-serv-chev { transition: transform 0.2s ease; font-size: 15px; }
+.pos-serv-toggle[aria-expanded="true"] .pos-serv-chev { transform: rotate(180deg); }
+.pos-serv-body { margin-top: 12px; }
+.pos-serv-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.pos-serv-chip {
+    padding: 8px 13px; background: #fff; border: 1px solid var(--adm-border); border-radius: 999px;
+    color: var(--adm-text); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap;
+    transition: transform 0.12s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+.pos-serv-chip:hover { transform: translateY(-1px); border-color: var(--adm-accent); box-shadow: 0 4px 12px rgba(27,75,54,0.08); }
+.pos-serv-libre { margin-top: 12px; }
+.pos-serv-libre > summary { cursor: pointer; font-size: 12.5px; color: var(--adm-muted); font-weight: 600; list-style: none; }
+.pos-serv-libre > summary::-webkit-details-marker { display: none; }
+.pos-serv-libre > summary::before { content: '+ '; color: var(--adm-accent); }
+.pos-serv-libre[open] > summary::before { content: '\2212 '; }
+.pos-serv-err { color: var(--adm-danger); }
+.pos-serv-list { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.pos-serv-item {
+    display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: rgba(27,75,54,0.04);
+    border: 1px solid var(--adm-border); border-radius: var(--adm-radius);
+}
+.pos-serv-item-name { flex: 1; min-width: 0; font-size: 13.5px; color: var(--adm-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pos-serv-qty { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.pos-serv-qbtn {
+    width: 26px; height: 26px; display: grid; place-items: center; padding: 0; line-height: 1;
+    background: #fff; border: 1px solid var(--adm-border); border-radius: 7px; color: var(--adm-accent);
+    font-size: 16px; font-weight: 600; cursor: pointer; transition: border-color 0.16s ease, background 0.16s ease;
+}
+.pos-serv-qbtn:hover { border-color: var(--adm-accent); background: rgba(27,75,54,0.06); }
+.pos-serv-qn { min-width: 20px; text-align: center; font-family: 'Space Mono', monospace; font-size: 13px; color: var(--adm-text); }
+.pos-serv-item-sub { flex-shrink: 0; min-width: 84px; text-align: right; font-family: 'Space Mono', monospace; font-variant-numeric: tabular-nums; color: var(--adm-accent); font-size: 14px; }
+.pos-serv-remove {
+    flex-shrink: 0; width: 24px; height: 24px; display: grid; place-items: center; padding: 0;
+    background: none; border: none; color: var(--adm-muted); font-size: 13px; cursor: pointer; border-radius: 6px;
+    transition: color 0.16s ease, background 0.16s ease;
+}
+.pos-serv-remove:hover { color: var(--adm-danger); background: var(--adm-danger-light); }
+
 .pos-ventas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .pos-venta { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; background: #fff; border: 1px solid var(--adm-border); border-radius: var(--adm-radius); }
 .pos-venta-main { display: flex; align-items: baseline; gap: 9px; min-width: 0; }

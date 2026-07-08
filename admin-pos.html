@@ -147,6 +147,34 @@
                             </div>
                         </div>
 
+                        <!-- F2.2: Servicios / modificaciones (opcional) — COLAPSADO por defecto (la venta solo-pieza queda idéntica) -->
+                        <div class="pos-step pos-serv" id="pos-serv-step">
+                            <button class="pos-serv-toggle" id="pos-serv-toggle" type="button" aria-expanded="false" aria-controls="pos-serv-body">
+                                <span id="pos-serv-toggle-label">+ Servicio o modificación</span>
+                                <span class="pos-serv-chev" aria-hidden="true">⌄</span>
+                            </button>
+                            <div class="pos-serv-body" id="pos-serv-body" hidden>
+                                <p class="pos-hint">Grabado, ajuste de talla, reparación… se cobran junto con la pieza.</p>
+                                <div class="pos-serv-chips" id="pos-serv-chips"></div>
+                                <details class="pos-serv-libre">
+                                    <summary>Otro (a mano)</summary>
+                                    <div class="adm-form-row" style="margin-top:10px;">
+                                        <div class="adm-field">
+                                            <label for="pos-libre-concepto">Concepto</label>
+                                            <input class="adm-input" id="pos-libre-concepto" type="text" maxlength="120" placeholder="Ej. Reparación de broche">
+                                        </div>
+                                        <div class="adm-field">
+                                            <label for="pos-libre-precio">Precio (COP)</label>
+                                            <input class="adm-input" id="pos-libre-precio" type="number" min="1" inputmode="numeric" placeholder="Ej. 40000">
+                                        </div>
+                                    </div>
+                                    <button class="adm-btn adm-btn--ghost pos-serv-libre-add" id="pos-libre-add" type="button">Agregar línea</button>
+                                    <p class="pos-hint pos-serv-err" id="pos-libre-hint" hidden></p>
+                                </details>
+                                <ul class="pos-serv-list" id="pos-serv-list"></ul>
+                            </div>
+                        </div>
+
                         <!-- Medio de pago -->
                         <div class="pos-step">
                             <label class="pos-label" for="pos-medio">3 · Medio de pago</label>

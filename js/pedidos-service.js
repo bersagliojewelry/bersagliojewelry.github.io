@@ -297,6 +297,26 @@ export function onUltimasVentasChange(cb, max = 15, onUiError) {
 }
 
 /**
+ * F2.2 · Catálogo de servicios ACTIVOS en vivo (chips del bloque de servicios del mostrador).
+ * Filtro de UN campo (`activo==true`) → sin índice compuesto; el orden por nombre se hace en cliente.
+ * Read = staff de ventas ∪ caja (reglas). Estos datos SOLO pintan los chips y el total en vivo; el
+ * COBRO re-lee el precio server-side (crearPedido) → nunca son la verdad del dinero. Re-suscribe sola.
+ * @param {Function} cb (servicios[]) => void — ordenados por nombre (es-CO)
+ * @param {Function} [onUiError]
+ * @returns {Function} cleanup
+ */
+export function onServiciosChange(cb, onUiError) {
+    return subscribeWithRetry(
+        () => query(collection(firestoreDb, 'servicios'), where('activo', '==', true)),
+        snap => cb(snap.docs
+            .map(d => ({ id: d.id, ...d.data() }))
+            .sort((a, b) => String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es'))),
+        'servicios',
+        onUiError,
+    );
+}
+
+/**
  * Pedidos EN VIVO (F1-PUENTE · TODO-68): lista reactiva para el módulo admin Pedidos.
  * Re-suscribe sola ante errores transitorios (subscribeWithRetry, ADR §93) — un pedido web
  * nuevo aparece sin recargar. Lectura = staff de ventas (owner/admin/catalogo, reglas).
@@ -316,7 +336,7 @@ export function onPedidosChange(cb, max = 200, onUiError) {
 
 export default {
     crearPedido, iniciarPagoWeb, confirmarPago, anularPedido, cierreCaja, avanzarPedido,
-    historialPedido, ultimasVentas, onUltimasVentasChange, onPedidosChange,
+    historialPedido, ultimasVentas, onUltimasVentasChange, onPedidosChange, onServiciosChange,
     // F2.0 caja/bóveda — escrituras (callables)
     abrirTurno, cerrarTurno, movimientoCaja, registrarTraslado, reversoTraslado, ajusteBoveda, aprobarEventoCaja,
     // F2.0 caja/bóveda — lecturas (listeners)

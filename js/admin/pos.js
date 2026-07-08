@@ -20,6 +20,7 @@ import { calcularPrecio } from './calculadora.js';
 import { calcularNeto } from './fiscal.js';
 import {
     crearPedido, confirmarPago, anularPedido, ultimasVentas, onUltimasVentasChange,
+    onServiciosChange,                                                        // F2.2 · catálogo de servicios (chips)
     abrirTurno, cerrarTurno, movimientoCaja, registrarTraslado,               // F2.0 · escrituras
     onCajaEstadoChange, onConfigCajaChange, onTurnoChange, onMovsCajaChange,  // F2.0 · lecturas
     onVentasTurnoChange, onTrasladosTurnoChange,
@@ -44,6 +45,11 @@ let _pedidoId  = null;    // UUID de la venta en curso (idempotencia)
 let _query     = '';
 let _submitting = false;
 let _cierreDone = false;  // ya se calculó el arqueo (el botón pasa a "Listo")
+
+// ─── F2.2 · Facturación multi-línea (servicios/modificaciones de la venta en curso) ───────────
+let _lineasExtra    = [];     // líneas extra de ESTA venta: {tipo,servicioId?,codigo?,nombre?,concepto?,precio,cantidad,naturaleza}
+let _servicios      = [];     // catálogo de servicios ACTIVOS (listener onServiciosChange)
+let _serviciosUnsub = null;   // cleanup del listener
 
 // ─── F2.0 · Sesión de caja + Bóveda (estado del turno) ─────────────────────────
 // isCaja = quien OPERA la caja (owner/admin/caja). En prod Kary opera como `owner`. El candado real
@@ -119,6 +125,17 @@ async function init() {
     ['pos-gramo', 'pos-peso', 'pos-mano'].forEach(id =>
         document.getElementById(id).addEventListener('input', recalcTotal));
     document.getElementById('pos-submit').addEventListener('click', handleSubmit);
+
+    // F2.2 · bloque de servicios/modificaciones (colapsable + línea libre) + catálogo en vivo
+    document.getElementById('pos-serv-toggle')?.addEventListener('click', () => {
+        const body = document.getElementById('pos-serv-body');
+        const toggle = document.getElementById('pos-serv-toggle');
+        const abrir = body.hidden;
+        body.hidden = !abrir;
+        toggle.setAttribute('aria-expanded', String(abrir));
+    });
+    document.getElementById('pos-libre-add')?.addEventListener('click', addLibreLine);
+    subscribeServicios();
 
     // Cierre de caja (arqueo · paso 5). TODO-70/L-81: el cierre vive SOLO en la tarjeta de caja
     // (botón "Cerrar turno", visible únicamente con turno abierto). El "Cerrar caja" legacy del
@@ -506,6 +523,7 @@ function selectPiece(id) {
     document.getElementById('pos-selected').hidden = false;
     document.getElementById('pos-sale').hidden     = false;
 
+    resetServicios();      // F2.2: cada nueva venta arranca sin servicios y con el bloque colapsado
     setupPriceMode(piece);
     recalcTotal();
 }
@@ -520,6 +538,7 @@ function resetSale() {
     document.getElementById('pos-sale').hidden     = true;
     ['pos-gramo', 'pos-peso', 'pos-mano'].forEach(id => { document.getElementById(id).value = ''; });
     document.getElementById('pos-envio').checked = false;   // F1-CORE: cada venta decide su envío
+    resetServicios();                                        // F2.2: vacía líneas + colapsa el bloque
     updateMedioHint();
     renderResults();
     document.getElementById('pos-search').focus();
@@ -545,16 +564,22 @@ function setupPriceMode(piece) {
     }
 }
 
-/** Total que se MOSTRARÁ y se cobrará (mismo criterio que pedidos-core). */
+/** Subtotal SOLO de las líneas extra (servicios/modificaciones) de la venta en curso. */
+function extrasTotal() {
+    return _lineasExtra.reduce((a, l) => a + entero(l.precio) * (l.cantidad || 1), 0);
+}
+
+/** Total que se MOSTRARÁ y se cobrará (mismo criterio que pedidos-core): pieza + líneas extra (F2.2). */
 function computeTotal() {
     if (!_selected) return 0;
-    if (isPrecioFijo(_selected)) return entero(_selected.price);
-    const r = calcularPrecio({
-        valorGramo: document.getElementById('pos-gramo').value,
-        peso:       document.getElementById('pos-peso').value,
-        manoObra:   document.getElementById('pos-mano').value,
-    });
-    return r.total;
+    const base = isPrecioFijo(_selected)
+        ? entero(_selected.price)
+        : calcularPrecio({
+            valorGramo: document.getElementById('pos-gramo').value,
+            peso:       document.getElementById('pos-peso').value,
+            manoObra:   document.getElementById('pos-mano').value,
+        }).total;
+    return base + extrasTotal();   // §regla de oro: el total en vivo = pieza + servicios = lo que cobra la CF
 }
 
 function recalcTotal() {
@@ -571,6 +596,147 @@ function recalcTotal() {
                 : 'Abre la caja para registrar ventas de mostrador.';
         }
     }
+}
+
+// ─── Paso 2.5 · Servicios / modificaciones (F2.2, opcional) ────────────────────
+// El bloque nace COLAPSADO (la venta solo-pieza queda idéntica). Catálogo PRIMERO (chips de un
+// toque), línea libre = último recurso. El precio del servicio lo re-lee la CF server-side; estos
+// chips/total son espejo. Render 100% por createElement/textContent (XSS-safe, L-03).
+function renderServChips() {
+    const box = document.getElementById('pos-serv-chips');
+    if (!box) return;
+    box.textContent = '';
+    if (!_servicios.length) {
+        const p = document.createElement('p');
+        p.className = 'pos-hint';
+        p.textContent = 'Aún no hay servicios en el catálogo. El dueño los crea en Configuración.';
+        box.appendChild(p);
+        return;
+    }
+    for (const s of _servicios) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'pos-serv-chip';
+        b.textContent = `+ ${s.nombre} · ${cop(s.precio)}`;
+        b.addEventListener('click', () => addServicioLine(s.id));
+        box.appendChild(b);
+    }
+}
+
+function addServicioLine(id) {
+    const s = _servicios.find(x => x.id === id);
+    if (!s) { admToast('Ese servicio ya no está disponible.', 'danger'); return; }
+    const existing = _lineasExtra.find(l => l.tipo === 'servicio' && l.servicioId === id);
+    if (existing) {
+        if (existing.cantidad >= 50) return;   // tope de cantidad por línea (espeja la CF)
+        existing.cantidad += 1;
+    } else {
+        _lineasExtra.push({ tipo: 'servicio', servicioId: id, codigo: s.codigo, nombre: s.nombre, precio: entero(s.precio), cantidad: 1, naturaleza: s.naturaleza || 'servicio' });
+    }
+    renderLineas();
+    recalcTotal();
+}
+
+function addLibreLine() {
+    const cIn  = document.getElementById('pos-libre-concepto');
+    const pIn  = document.getElementById('pos-libre-precio');
+    const hint = document.getElementById('pos-libre-hint');
+    const err  = (msg) => { hint.textContent = msg; hint.hidden = false; };
+    const concepto = (cIn.value || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+    const precio   = Number(pIn.value);
+    const tope     = Number.isInteger(_cfgCaja?.topeLineaLibre) ? _cfgCaja.topeLineaLibre : 2000000;   // espeja config/caja
+    if (!concepto) return err('Escribe el concepto del trabajo.');
+    if (!Number.isInteger(precio) || precio < 1) return err('El precio debe ser un número entero mayor a 0 (sin decimales).');
+    if (precio > tope) return err(`El precio supera el tope de ${cop(tope)}.`);
+    hint.hidden = true;
+    _lineasExtra.push({ tipo: 'libre', concepto, precio, cantidad: 1, naturaleza: 'servicio' });
+    cIn.value = ''; pIn.value = '';
+    renderLineas();
+    recalcTotal();
+    cIn.focus();
+}
+
+function changeQty(idx, delta) {
+    const l = _lineasExtra[idx];
+    if (!l) return;
+    const next = l.cantidad + delta;
+    if (next < 1) { removeLine(idx); return; }   // "−" en 1 = quitar
+    if (next > 50) return;
+    l.cantidad = next;
+    renderLineas();
+    recalcTotal();
+}
+
+function removeLine(idx) {
+    _lineasExtra.splice(idx, 1);
+    renderLineas();
+    recalcTotal();
+}
+
+function renderLineas() {
+    const ul = document.getElementById('pos-serv-list');
+    if (!ul) return;
+    ul.textContent = '';
+    _lineasExtra.forEach((l, idx) => {
+        const li = document.createElement('li');
+        li.className = 'pos-serv-item';
+
+        const name = document.createElement('span');
+        name.className = 'pos-serv-item-name';
+        name.textContent = l.tipo === 'servicio' ? l.nombre : l.concepto;   // textContent = XSS-safe
+
+        const stepper = document.createElement('div');
+        stepper.className = 'pos-serv-qty';
+        const minus = document.createElement('button'); minus.type = 'button'; minus.className = 'pos-serv-qbtn'; minus.textContent = '−'; minus.setAttribute('aria-label', 'Quitar uno');
+        const qn    = document.createElement('span');   qn.className = 'pos-serv-qn'; qn.textContent = String(l.cantidad);
+        const plus  = document.createElement('button'); plus.type = 'button'; plus.className = 'pos-serv-qbtn'; plus.textContent = '+'; plus.setAttribute('aria-label', 'Agregar uno');
+        minus.addEventListener('click', () => changeQty(idx, -1));
+        plus.addEventListener('click', () => changeQty(idx, +1));
+        stepper.append(minus, qn, plus);
+
+        const sub = document.createElement('strong');
+        sub.className = 'pos-serv-item-sub';
+        sub.textContent = cop(entero(l.precio) * (l.cantidad || 1));
+
+        const rm = document.createElement('button');
+        rm.type = 'button'; rm.className = 'pos-serv-remove'; rm.textContent = '✕'; rm.setAttribute('aria-label', 'Quitar línea');
+        rm.addEventListener('click', () => removeLine(idx));
+
+        li.append(name, stepper, sub, rm);
+        ul.appendChild(li);
+    });
+}
+
+/** Reinicia el bloque de servicios (nueva venta o cambio de pieza): vacía líneas, colapsa, limpia libre. */
+function resetServicios() {
+    _lineasExtra = [];
+    const body = document.getElementById('pos-serv-body');
+    const toggle = document.getElementById('pos-serv-toggle');
+    if (body) body.hidden = true;
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+    const cIn = document.getElementById('pos-libre-concepto'); if (cIn) cIn.value = '';
+    const pIn = document.getElementById('pos-libre-precio');   if (pIn) pIn.value = '';
+    const hint = document.getElementById('pos-libre-hint');    if (hint) hint.hidden = true;
+    renderLineas();
+}
+
+// Catálogo de servicios EN VIVO. Doctrina "nunca un total distinto al que se cobra" (C.3): si un
+// servicio YA agregado cambia de precio o se desactiva, re-sincroniza las líneas de la venta en curso.
+function subscribeServicios() {
+    _serviciosUnsub = onServiciosChange((servicios) => {
+        _servicios = servicios;
+        let changed = false;
+        _lineasExtra = _lineasExtra.filter(l => {
+            if (l.tipo !== 'servicio') return true;
+            const fresh = servicios.find(s => s.id === l.servicioId);
+            if (!fresh) { changed = true; return false; }                 // desactivado → quitar la línea
+            if (entero(fresh.precio) !== l.precio) { l.precio = entero(fresh.precio); l.nombre = fresh.nombre; changed = true; }
+            return true;
+        });
+        renderServChips();
+        renderLineas();
+        if (changed) { recalcTotal(); admToast('El catálogo de servicios cambió; se actualizó el total.', 'danger', 4000); }
+    });
 }
 
 // ─── Paso 3: medio de pago ────────────────────────────────────────────────────
@@ -620,6 +786,12 @@ async function doRegister(medio, total) {
         payload.valorGramo = document.getElementById('pos-gramo').value;
         payload.peso       = document.getElementById('pos-peso').value;
         payload.manoObra   = document.getElementById('pos-mano').value;
+    }
+    // F2.2: líneas extra (servicio = solo el id → precio server-side; libre = concepto+precio con guardas).
+    if (_lineasExtra.length) {
+        payload.lineasExtra = _lineasExtra.map(l => l.tipo === 'servicio'
+            ? { tipo: 'servicio', servicioId: l.servicioId, cantidad: l.cantidad }
+            : { tipo: 'libre', concepto: l.concepto, precio: l.precio, cantidad: l.cantidad });
     }
 
     try {

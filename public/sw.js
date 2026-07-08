@@ -66,7 +66,9 @@
 // solo-lectura, línea de tiempo EN VIVO de cada turno (quién abrió/movió/vendió/cerró + hora), UID→nombre.
 // v82 = [OPUS-4.8] Hardening export CSV: csvCell neutraliza inyección de fórmulas (=/+/-/@) en el export
 // al contador (pos.js) y al turno (auditoria.js) — hallazgo del comité F2.2, ya explotable hoy.
-const CACHE_NAME    = 'bersaglio-v82';
+// v83 = [OPUS-4.8] TODO-70 POS profesional: cierre solo-turno (Z legacy retirado), ventas ocultas con caja
+// cerrada, panel de anomalías (ventas fuera de turno) en la Auditoría. Prereq de F2.2.
+const CACHE_NAME    = 'bersaglio-v83';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

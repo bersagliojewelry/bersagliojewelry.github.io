@@ -19,7 +19,7 @@ import { esDisponible, STOCK_TYPES } from './inventario-model.js';   // TODO-40 
 import { calcularPrecio } from './calculadora.js';
 import { calcularNeto } from './fiscal.js';
 import {
-    crearPedido, confirmarPago, anularPedido, cierreCaja, ultimasVentas, onUltimasVentasChange,
+    crearPedido, confirmarPago, anularPedido, ultimasVentas, onUltimasVentasChange,
     abrirTurno, cerrarTurno, movimientoCaja, registrarTraslado,               // F2.0 · escrituras
     onCajaEstadoChange, onConfigCajaChange, onTurnoChange, onMovsCajaChange,  // F2.0 · lecturas
     onVentasTurnoChange, onTrasladosTurnoChange,
@@ -43,7 +43,6 @@ let _selected  = null;    // pieza elegida
 let _pedidoId  = null;    // UUID de la venta en curso (idempotencia)
 let _query     = '';
 let _submitting = false;
-let _arqueoId  = null;    // UUID del cierre de caja en curso (idempotencia)
 let _cierreDone = false;  // ya se calculó el arqueo (el botón pasa a "Listo")
 
 // ─── F2.0 · Sesión de caja + Bóveda (estado del turno) ─────────────────────────
@@ -61,7 +60,6 @@ let _trasladadoSesion = 0;                                   // fallback: trasla
 let _turnoOpId     = null;                                   // opId de la apertura en curso (idempotencia §8.1.2)
 let _movOpId       = null;                                   // opId del movimiento en curso
 let _trasladoOpId  = null;                                   // opId del traslado en curso
-let _cierreTurnoMode = false;                                // el modal de cierre cierra un TURNO (no el Z legacy)
 let _overLimit     = false;                                  // el cajón superó el límite → ventas bloqueadas hasta trasladar
 let _turnoUnsubs   = [];                                     // listeners con alcance de turno (se recablean al cambiar de turno)
 let _pendingOpenTurno = null;                                // turno recién abierto (pinta el panel al instante; el listener lo reconcilia)
@@ -122,8 +120,9 @@ async function init() {
         document.getElementById(id).addEventListener('input', recalcTotal));
     document.getElementById('pos-submit').addEventListener('click', handleSubmit);
 
-    // Cierre de caja (arqueo · paso 5)
-    document.getElementById('btn-cierre').addEventListener('click', openCierre);
+    // Cierre de caja (arqueo · paso 5). TODO-70/L-81: el cierre vive SOLO en la tarjeta de caja
+    // (botón "Cerrar turno", visible únicamente con turno abierto). El "Cerrar caja" legacy del
+    // topbar (Z a ciegas sin turno) se RETIRÓ — caja cerrada = solo abrir, ni vender ni cerrar.
     document.getElementById('cierre-close').addEventListener('click', closeCierre);
     document.getElementById('cierre-cancel').addEventListener('click', closeCierre);
     document.getElementById('cierre-submit').addEventListener('click', handleCierre);
@@ -148,7 +147,7 @@ function initCaja() {
 
     // Config + puntero del turno abierto (read isCaja). El puntero manda: al cambiar `turnoAbiertoId`
     // recableamos los listeners con alcance de turno (turno + movs + ventas + traslados).
-    onConfigCajaChange(cfg => { _cfgCaja = cfg; renderCaja(); recalcTotal(); },
+    onConfigCajaChange(cfg => { _cfgCaja = cfg; renderCaja(); recalcTotal(); renderVentas(); },
         e => console.warn('[caja] config no legible:', e?.code || e));
     onCajaEstadoChange(handleCajaEstado,
         e => console.warn('[caja] estado no legible:', e?.code || e));
@@ -215,6 +214,7 @@ function handleCajaEstado(est) {
     }
     renderCaja();
     recalcTotal();
+    renderVentas();   // TODO-70: caja cerrada ↔ abierta cambia si se listan (o no) las ventas del turno
 }
 
 // ─── Derivación del efectivo del cajón (ESTIMACIÓN operativa; la autoridad es el cierre server) ──
@@ -257,6 +257,12 @@ function ventaBloqueadaPorCaja() {
     if (!_isCaja) return false;
     if (_cfgCaja?.enforceTurno && !_cajaEstado?.turnoAbiertoId) return true;
     return _overLimit;
+}
+// TODO-70/L-81: caja OBLIGATORIA cerrada (enforceTurno y sin turno abierto). El mostrador está
+// "cerrado" → no se vende NI se listan las ventas del turno (no se opera sobre una caja cerrada).
+// Distinto de ventaBloqueadaPorCaja: el over-límite NO cierra el mostrador (el turno sigue abierto).
+function sinTurnoAbierto() {
+    return _isCaja && _cfgCaja?.enforceTurno === true && !_cajaEstado?.turnoAbiertoId;
 }
 
 // ─── Render del panel de caja ─────────────────────────────────────────────────
@@ -667,6 +673,15 @@ function renderVentas() {
     const empty = document.getElementById('pos-ventas-empty');
     const emptyP = empty.querySelector('p');
 
+    // TODO-70/L-81: caja obligatoria cerrada → no se listan ventas (mostrador cerrado hasta abrir turno).
+    if (sinTurnoAbierto()) {
+        empty.hidden = false;
+        if (emptyP) emptyP.textContent = 'La caja está cerrada. Ábrela para registrar y ver las ventas del turno.';
+        ul.replaceChildren();
+        renderColaBadge(0);
+        return;
+    }
+
     if (_ventasError) {
         empty.hidden = false;
         if (emptyP) emptyP.textContent = 'No se pudieron cargar las ventas (reintentando…).';
@@ -920,23 +935,20 @@ async function initIdentidad() {
     document.getElementById('adjuntar-tel')?.addEventListener('input', checkAdjuntarDupe);
 }
 
-// ─── Cierre de caja (arqueo · paso 5 / cierre de TURNO F2.0) ───────────────────
-// Contexto: si hay un turno abierto (F2.0), "Cerrar caja" cierra el TURNO (cerrarTurno, ecuación
-// completa §8.1.7 + desglose por medio); si no, cae al Cierre Z legacy (cierreCaja). El conteo a
-// ciegas (contar efectivo antes de ver el esperado) es idéntico en ambos.
+// ─── Cierre de TURNO de caja (arqueo · conteo a ciegas) ───────────────────────
+// TODO-70/L-81: el cierre es SIEMPRE de un turno abierto (el Cierre Z legacy sin turno se RETIRÓ). El
+// modal solo se abre desde "Cerrar turno" de la tarjeta de caja, visible únicamente con turno abierto.
 function openCierre() {
-    _cierreTurnoMode = _isCaja && !!_cajaEstado?.turnoAbiertoId;
-    _arqueoId   = uid();
     _cierreDone = false;
     const title = document.getElementById('cierre-title');
-    if (title) title.textContent = _cierreTurnoMode ? 'Cerrar turno de caja' : 'Cerrar caja';
+    if (title) title.textContent = 'Cerrar turno de caja';
     document.getElementById('cierre-efectivo').value = '';
     document.getElementById('cierre-input-wrap').hidden = false;
     document.getElementById('cierre-result').hidden = true;
     const digital = document.getElementById('cierre-digital');
     if (digital) digital.hidden = true;
     const submit = document.getElementById('cierre-submit');
-    submit.textContent = _cierreTurnoMode ? 'Cerrar turno' : 'Cerrar caja';
+    submit.textContent = 'Cerrar turno';
     submit.disabled = false;
     document.getElementById('cierre-modal').hidden = false;
     document.getElementById('cierre-efectivo').focus();
@@ -949,13 +961,11 @@ async function handleCierre() {
     const raw = document.getElementById('cierre-efectivo').value;
     if (raw === '' || !(Number(raw) >= 0)) { admToast('Escribe el efectivo contado.', 'danger'); return; }
 
-    // Revalidación (edge multi-sesión): el modo se fijó al ABRIR el modal; si el turno se cerró desde
-    // otra sesión entre tanto, `_cajaEstado.turnoAbiertoId` ya es null (lo actualizó handleCajaEstado).
-    // Re-derivamos el turnoId del estado VIVO para no mandar cerrarTurno({turnoId:null}); si ya no hay
-    // turno, avisamos (el arqueo del turno lo hizo la otra sesión — no forzamos un Z legacy espurio).
+    // El cierre es SIEMPRE de un turno (Z legacy retirado). Re-derivamos el turnoId del estado VIVO:
+    // si el turno se cerró desde otra sesión entre abrir el modal y confirmar, avisamos y no forzamos nada.
     const turnoId = _cajaEstado?.turnoAbiertoId || null;
-    if (_cierreTurnoMode && !turnoId) {
-        admToast('El turno ya se cerró (posiblemente desde otra sesión). No se registró un cierre duplicado.', 'danger', 5000);
+    if (!turnoId) {
+        admToast('No hay un turno de caja abierto para cerrar (¿ya se cerró en otra sesión?).', 'danger', 5000);
         closeCierre();
         return;
     }
@@ -964,13 +974,8 @@ async function handleCierre() {
     submit.disabled = true;
     submit.textContent = 'Calculando…';
     try {
-        let r;
-        if (_cierreTurnoMode) {
-            r = await cerrarTurno({ turnoId, conteoPorMedio: { efectivo: entero(raw) } });
-            renderDigitalBreakdown(r.esperadoPorMedio);             // reporte diario de tarjetas/transferencias (§9.5)
-        } else {
-            r = await cierreCaja({ arqueoId: _arqueoId, declaradoEfectivo: raw });
-        }
+        const r = await cerrarTurno({ turnoId, conteoPorMedio: { efectivo: entero(raw) } });
+        renderDigitalBreakdown(r.esperadoPorMedio);             // reporte diario de tarjetas/transferencias (§9.5)
         // Conteo a ciegas: el esperado se revela AHORA, no antes.
         document.getElementById('cierre-esperado').textContent = cop(r.esperadoEfectivo);
         document.getElementById('cierre-contado').textContent  = cop(r.declaradoEfectivo);
@@ -987,9 +992,9 @@ async function handleCierre() {
         submit.disabled = false;
     } catch (err) {
         const msg = (BUSINESS_ERR.includes(err?.code) && err?.message) ? err.message
-            : errorMessage(err, 'No se pudo cerrar la caja.');
+            : errorMessage(err, 'No se pudo cerrar el turno.');
         admToast(msg, 'danger', 4000);
-        submit.textContent = _cierreTurnoMode ? 'Cerrar turno' : 'Cerrar caja';
+        submit.textContent = 'Cerrar turno';
         submit.disabled = false;
     }
 }

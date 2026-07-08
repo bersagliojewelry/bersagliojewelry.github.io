@@ -224,6 +224,13 @@ export function onVentasTurnoChange(turnoId, cb, onErr) {
         s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))),
         'ventasTurno', onErr);
 }
+/** Lista de turnos (AUDITORÍA · owner) — más reciente primero, EN VIVO. read isCaja. */
+export function onTurnosChange(cb, max = 60, onUiError) {
+    return subscribeWithRetry(
+        () => query(collection(firestoreDb, 'turnos'), orderBy('aperturaTs', 'desc'), limit(max)),
+        s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))),
+        'turnos', onUiError);
+}
 /** Traslados cajón↔bóveda de ESTE turno (para el efectivo exacto del cajón). read isOwner (cae si no). */
 export function onTrasladosTurnoChange(turnoId, cb, onErr) {
     return subscribeWithRetry(
@@ -313,7 +320,7 @@ export default {
     // F2.0 caja/bóveda — escrituras (callables)
     abrirTurno, cerrarTurno, movimientoCaja, registrarTraslado, reversoTraslado, ajusteBoveda, aprobarEventoCaja,
     // F2.0 caja/bóveda — lecturas (listeners)
-    onCajaEstadoChange, onConfigCajaChange, onTurnoChange, onMovsCajaChange, onVentasTurnoChange,
+    onCajaEstadoChange, onConfigCajaChange, onTurnoChange, onTurnosChange, onMovsCajaChange, onVentasTurnoChange,
     onTrasladosTurnoChange, onBovedaChange, onBovedaMovsChange,
     // F2.1 identidad del cliente (callables, SOLO admin)
     resolverCliente, crearClienteConDoc, attachDocACliente, vincularClientePedido, fusionarClientes,

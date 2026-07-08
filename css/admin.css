@@ -1727,3 +1727,28 @@ select.adm-input { cursor: pointer; appearance: none; -webkit-appearance: none; 
 .bov-mov-time { font-size: 11px; color: var(--adm-muted); }
 .bov-mov-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .bov-mov-right .adm-money { font-size: 14px; white-space: nowrap; }
+
+/* ── Auditoría de caja (F2 · TODO-69) — reusa .pos-card / .bov-mov* ────────────── */
+.aud-turnos { max-height: 62vh; overflow-y: auto; }
+.aud-turno { cursor: pointer; transition: border-color .12s ease, background-color .12s ease; }
+.aud-turno:hover { border-color: var(--adm-accent); }
+.aud-turno--sel { border-color: var(--adm-accent); background: var(--adm-accent-light); }
+.aud-turno--sel .bov-mov-tipo { color: var(--adm-accent); }
+.aud-descuadre-mini { font-size: 12px; font-weight: 600; white-space: nowrap; }
+
+.aud-detail-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--adm-border); }
+
+.aud-summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.aud-metric { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; background: var(--adm-bg, #f7f7f5); border: 1px solid var(--adm-border); border-radius: var(--adm-radius); }
+.aud-metric > span { font-size: 11px; font-weight: 600; letter-spacing: .4px; text-transform: uppercase; color: var(--adm-muted); }
+.aud-metric > strong { font-size: 14px; color: var(--adm-text); }
+.aud-arqueo { margin-top: 12px; padding: 12px 14px; border: 1px solid var(--adm-border); border-radius: var(--adm-radius); }
+
+.aud-timeline { max-height: 46vh; overflow-y: auto; }
+.aud-ev { border-left: 3px solid var(--adm-border); }
+.aud-ev--apertura { border-left-color: var(--adm-success); }
+.aud-ev--cierre   { border-left-color: var(--adm-accent); }
+.aud-ev--egreso   { border-left-color: var(--adm-danger); }
+.aud-ev--traslado { border-left-color: #b8860b; }
+.aud-ev--muerta   { opacity: .55; }
+.aud-ev--muerta .bov-mov-tipo { text-decoration: line-through; }

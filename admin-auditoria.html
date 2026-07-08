@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditoría de caja — Bersaglio Admin</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..500&family=Cormorant+Garamond:ital,wght@0,300..600;1,300..400&family=Manrope:wght@300..700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/admin.css">
+    <script type="module" src="js/admin/auditoria.js"></script>
+</head>
+<body style="display:none">
+<script>try{if(sessionStorage.getItem('bj_auth')){document.body.style.display=''}else{location.replace('admin-login.html')}}catch(e){location.replace('admin-login.html')}</script>
+<div class="adm-layout">
+
+    <!-- Sidebar (se rellena desde datos por js/admin/shared.js → renderSidebar) -->
+    <aside class="adm-sidebar"></aside>
+    <div class="adm-sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <!-- Main -->
+    <main class="adm-main">
+        <header class="adm-topbar">
+            <button class="adm-hamburger" id="hamburger-btn" aria-label="Menú">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="22" height="22"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <h1>Auditoría de caja</h1>
+        </header>
+
+        <div class="adm-content">
+            <div class="bov-grid">
+
+                <!-- ── Turnos de caja (lista, en vivo) ───────────────────── -->
+                <section class="pos-card">
+                    <h2 class="pos-card-title">Turnos de caja</h2>
+                    <p class="pos-hint" style="margin:0 0 12px;">Cada turno con quién abrió, quién cerró y a qué hora. Toca uno para ver todo lo que pasó dentro.</p>
+                    <ul class="bov-mov-list aud-turnos" id="aud-turnos"></ul>
+                    <div class="adm-empty" id="aud-turnos-empty" hidden>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="40" height="40"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>
+                        <p>Aún no hay turnos de caja registrados.</p>
+                    </div>
+                </section>
+
+                <!-- ── Detalle del turno seleccionado ────────────────────── -->
+                <section class="pos-card">
+                    <div class="aud-detail-head">
+                        <h2 class="pos-card-title" style="margin-bottom:0;border:0;padding:0;">Detalle del turno</h2>
+                        <button class="adm-btn adm-btn--ghost adm-btn--sm" id="aud-export" type="button" hidden>↓ Exportar turno</button>
+                    </div>
+
+                    <!-- Resumen del turno (apertura / cierre / arqueo) -->
+                    <div class="aud-summary" id="aud-summary" hidden>
+                        <div class="aud-summary-grid">
+                            <div class="aud-metric"><span>Apertura</span><strong id="aud-apertura">—</strong></div>
+                            <div class="aud-metric"><span>Cierre</span><strong id="aud-cierre">—</strong></div>
+                            <div class="aud-metric"><span>Fondo de apertura</span><strong class="adm-money" id="aud-fondo">$0</strong></div>
+                            <div class="aud-metric"><span>Estado</span><strong id="aud-estado">—</strong></div>
+                        </div>
+                        <div class="aud-arqueo" id="aud-arqueo" hidden>
+                            <div class="adm-calc-line"><span>Efectivo esperado</span><strong class="adm-money" id="aud-esperado">$0</strong></div>
+                            <div class="adm-calc-line"><span>Efectivo contado</span><strong class="adm-money" id="aud-contado">$0</strong></div>
+                            <div class="adm-calc-line adm-calc-total"><span id="aud-descuadre-label">Descuadre</span><strong id="aud-descuadre">$0</strong></div>
+                        </div>
+                    </div>
+
+                    <!-- Línea de tiempo de eventos del turno -->
+                    <div class="pos-step" style="margin-top:16px;">
+                        <span class="pos-label" id="aud-timeline-label" hidden>Todo lo que pasó en el turno</span>
+                        <ul class="bov-mov-list aud-timeline" id="aud-timeline"></ul>
+                    </div>
+
+                    <div class="adm-empty" id="aud-detail-empty">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="40" height="40"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                        <p>Elige un turno de la izquierda para ver su historial.</p>
+                    </div>
+                    <p class="pos-hint" style="margin-top:14px;">El historial es solo lectura y no se puede borrar: refleja lo que quedó grabado en el servidor con quién y cuándo.</p>
+                </section>
+
+            </div>
+        </div>
+    </main>
+</div>
+
+<div class="adm-toast-wrap" id="toast-wrap"></div>
+</body>
+</html>

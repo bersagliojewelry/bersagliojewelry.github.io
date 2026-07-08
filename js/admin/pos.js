@@ -1038,8 +1038,14 @@ async function exportarContador() {
     catch (err) { admToast(errorMessage(err, 'No se pudieron cargar las ventas.'), 'danger'); return; }
     if (!ventas.length) { admToast('No hay ventas para exportar.', 'default'); return; }
 
+    // F2.2 §8.3 D: split por NATURALEZA para la renta por actividad (joyas 3211 vs servicios). Cada venta
+    // es 1 pieza (bien) + N servicios/modificaciones → "Servicios (bruto)" = Σ líneas naturaleza 'servicio';
+    // bienes = Bruto − Servicios. Sin IVA (titular No responsable de IVA, §8.3 D). Legacy sin items → 0.
+    const brutoServicios = v => Array.isArray(v.items)
+        ? v.items.reduce((a, it) => a + (it.naturaleza === 'servicio' ? entero(it.precio) * (Number(it.cantidad) || 1) : 0), 0)
+        : 0;
     // C.4: la comisión Wompi va DISCRIMINADA (base + IVA) para que el contador tenga el IVA descontable aparte.
-    const head = ['Número', 'Fecha', 'Pieza', 'Medio', 'Estado', 'Bruto', 'Comisión base', 'IVA comisión', 'Comisión total', 'ReteFuente', 'ReteICA', 'Neto'];
+    const head = ['Número', 'Fecha', 'Pieza', 'Medio', 'Estado', 'Bruto', 'Servicios (bruto)', 'Comisión base', 'IVA comisión', 'Comisión total', 'ReteFuente', 'ReteICA', 'Neto'];
     const rows = ventas.map(v => {
         const f = (v.estado === 'anulado')
             ? { bruto: entero(v.total), comisionWompi: 0, comisionBase: 0, comisionIva: 0, reteFuente: 0, reteIca: 0, neto: 0 }
@@ -1047,7 +1053,7 @@ async function exportarContador() {
         return [
             v.numero ?? '', fmtDateTime(v.createdAt), v.pieceName || 'Pieza', v.medio || '',
             estadoPedido(v.estado).label,
-            f.bruto, f.comisionBase, f.comisionIva, f.comisionWompi, f.reteFuente, f.reteIca, f.neto,
+            f.bruto, brutoServicios(v), f.comisionBase, f.comisionIva, f.comisionWompi, f.reteFuente, f.reteIca, f.neto,
         ].map(csvCell).join(',');
     });
     const csv = '﻿' + [head.map(csvCell).join(','), ...rows].join('\r\n');   // BOM → Excel respeta acentos

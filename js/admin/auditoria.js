@@ -17,6 +17,7 @@
 import { initSidebar, requireAuth, errorMessage, fmtDateTime, admToast } from './shared.js';
 import {
     onTurnosChange, onTurnoChange, onMovsCajaChange, onVentasTurnoChange, onTrasladosTurnoChange,
+    onPedidosChange,
 } from '../pedidos-service.js';
 import { conceptoLabel, tipoBovedaLabel } from './caja-format.js';
 import { estadoPedido, ESTADOS_SIN_DINERO } from './pedidos-format.js';
@@ -34,6 +35,10 @@ let _ventas   = [];      // pedidos del turno
 let _traslados = [];     // bovedaMovimientos del turno
 let _turnoUnsubs = [];   // listeners con alcance del turno seleccionado
 let _renderTimer = null;
+let _orphans  = [];      // TODO-70/L-81: ventas de mostrador SIN turno (huérfanas, fuera del arqueo)
+
+// Venta de MOSTRADOR con dinero pero SIN turno = huérfana (quedó fuera del arqueo por turno).
+const esOrfana = (p) => p.canal === 'pos' && !p.turnoId && !ESTADOS_SIN_DINERO.has(p.estado);
 
 // Cache UID → nombre legible (displayName|email|fallback). Se llena perezoso, una vez por UID.
 const _nameCache = new Map();
@@ -63,6 +68,45 @@ async function init() {
         60,
         (e) => admToast(errorMessage(e, 'No se pudieron leer los turnos de caja.'), 'danger', 4000),
     );
+
+    // TODO-70/L-81: superficie de anomalías = ventas de mostrador SIN turno. Listener sobre los pedidos
+    // recientes (mismo query que el módulo Pedidos, sin índice extra) filtrado client-side por `esOrfana`.
+    // Tope 500 (lujo = bajo volumen; tras encender la caja obligatoria NO nacen huérfanas nuevas). Un
+    // fallo transitorio no bloquea la auditoría de turnos (el helper re-suscribe solo, ADR §93).
+    onPedidosChange(
+        (pedidos) => { _orphans = pedidos.filter(esOrfana); renderAnomalias(); },
+        500,
+        () => { /* transitorio → reintento automático; sin toast (no apilar sobre la vista de turnos) */ },
+    );
+}
+
+// ─── Anomalías: ventas de mostrador fuera de turno (TODO-70/L-81) ─────────────
+function renderAnomalias() {
+    const card = document.getElementById('aud-anomalias');
+    if (!card) return;
+    const sum  = document.getElementById('aud-anomalias-sum');
+    const list = document.getElementById('aud-anomalias-list');
+    if (!_orphans.length) { card.hidden = true; list.replaceChildren(); return; }
+
+    const total = _orphans.reduce((s, p) => s + Math.round(Number(p.total) || 0), 0);
+    const n = _orphans.length;
+    sum.textContent = `${n} venta${n === 1 ? '' : 's'} fuera de turno · ${cop(total)}`;
+    card.hidden = false;
+
+    list.replaceChildren();
+    for (const p of _orphans) {   // onPedidosChange ya viene ordenado por createdAt desc
+        const est = estadoPedido(p.estado);
+        const info = el('div', { class: 'bov-mov-info' }, [
+            el('div', { class: 'bov-mov-head' }, [
+                el('span', { class: 'bov-mov-tipo', text: `Venta ${p.codigo || '#' + (p.numero ?? '—')}` }),
+                el('span', { class: `adm-pill adm-pill--${est.pill}`, text: est.label }),
+            ]),
+            el('span', { class: 'bov-mov-sub', text: p.pieceName || 'Pieza' }),
+            el('span', { class: 'bov-mov-time', text: fmtDateTime(p.createdAt) }),
+        ]);
+        list.appendChild(el('li', { class: 'bov-mov aud-ev aud-ev--venta' },
+            [info, el('div', { class: 'bov-mov-right' }, [el('strong', { class: 'adm-money', text: cop(p.total) })])]));
+    }
 }
 
 // Al llegar la lista: si no hay selección, auto-elige el turno ABIERTO (si lo hay) o el más reciente.

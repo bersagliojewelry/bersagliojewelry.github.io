@@ -29,6 +29,18 @@
         </header>
 
         <div class="adm-content">
+
+            <!-- ── Anomalías: ventas registradas FUERA de un turno (TODO-70/L-81) ── -->
+            <!-- Solo aparece si existen: ventas de mostrador sin turnoId (huérfanas del período en
+                 que la caja NO era obligatoria) → plata cobrada fuera del arqueo/auditoría por turno. -->
+            <section class="pos-card aud-anomalias" id="aud-anomalias" hidden>
+                <div class="caja-alerta" style="margin-bottom:12px;">
+                    <strong id="aud-anomalias-sum">—</strong>
+                    <p style="margin:6px 0 0;">Estas ventas de mostrador quedaron <strong>fuera de un turno de caja</strong> (se registraron con la caja obligatoria apagada). No entraron al arqueo por turno. Revísalas y, si corresponde, anúlalas o déjalas registradas como referencia histórica.</p>
+                </div>
+                <ul class="bov-mov-list" id="aud-anomalias-list"></ul>
+            </section>
+
             <div class="bov-grid">
 
                 <!-- ── Turnos de caja (lista, en vivo) ───────────────────── -->

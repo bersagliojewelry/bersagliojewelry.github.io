@@ -22,6 +22,9 @@ export const NAV = [
     // Bóveda (F2.0 B5b-1): caja fuerte OWNER-only (discreción D7 §9.9) — saldo + consignar/reponer
     // + conteo físico + aprobaciones (Dual-Approval). NUNCA visible desde el POS de venta.
     { label: 'Bóveda',    href: 'admin-boveda.html',  icon: 'shield',  role: 'owner' },
+    // Auditoría de caja (F2 "caja en tiempo real" · TODO-69): OWNER-only. Línea de tiempo de cada
+    // turno (quién abrió/movió/vendió/cerró + hora), solo lectura, sobre la data que ya graban las CFs.
+    { label: 'Auditoría', href: 'admin-auditoria.html', icon: 'receipt', role: 'owner' },
   ]},
   { label: 'Cobranza', items: [
     { label: 'Pagos / Recibos', href: '#', icon: 'receipt', role: 'admin', soon: true },
@@ -57,4 +60,4 @@ export const NAV_FOOTER = { label: 'Ver sitio', href: 'index.html', icon: 'exter
 // Versión visible del panel (criterio de deploy para no-técnicos, spec §9.1): Kary
 // confirma que está en la versión nueva tras un despliegue. Se bumpea JUNTO al
 // CACHE_NAME del Service Worker (`public/sw.js`) en cada cambio del shell admin.
-export const APP_VERSION = 'v42 · 2026-07-07';   // Mostrador reactividad money-safe: ventas recientes EN VIVO + panel de caja optimista al abrir (SW v80)
+export const APP_VERSION = 'v43 · 2026-07-07';   // Auditoría de caja (F2 · TODO-69): vista owner solo-lectura, línea de tiempo en vivo por turno (SW v81)

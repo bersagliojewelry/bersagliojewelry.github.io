@@ -19,6 +19,7 @@
     "test:reconciliacion": "node --test functions/reconciliacion.test.mjs",
     "test:saldo:integration": "firebase emulators:exec --only firestore,functions --project demo-bersaglio \"node --test functions/saldo.integration.test.mjs\"",
     "test:caja:integration": "firebase emulators:exec --only firestore --project demo-bersaglio \"node --test functions/caja.integration.test.mjs\"",
+    "test:f2-2:integration": "firebase emulators:exec --only firestore --project demo-bersaglio \"node --test functions/f2-2-multilinea.integration.test.mjs\"",
     "test:sidebar": "node --test tests/render-sidebar.test.mjs",
     "test:truncado": "node --test tests/truncado.test.mjs",
     "test:parametros": "node --test tests/parametros-form.test.mjs",

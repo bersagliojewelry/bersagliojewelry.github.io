@@ -445,6 +445,21 @@ service cloud.firestore {
           && (!('subtitle' in d) || d.subtitle is string)
           && (!('featured' in d) || d.featured is bool);
     }
+    // ─── F2.2 · Catálogo de servicios/modificaciones (facturación multi-línea) ───
+    // OWNER-only write (comité §8.3 A: el precio de servicio ES dinero → least-privilege;
+    // caja/admin NO editan). hasOnly acotado (anti-inyección L-15) + tipos. El COBRO re-lee
+    // el precio server-side (crearPedidoCore, candado en la tx) → el catálogo NO es el camino
+    // del dinero; por eso write-directo owner-gated es seguro (+ historial inmutable como red).
+    function servicioValido() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['codigo', 'nombre', 'precio', 'activo', 'naturaleza',
+                               'createdAt', 'createdBy', 'updatedAt', 'updatedBy'])
+          && nonEmptyStr(d.codigo) && d.codigo.size() <= 20
+          && nonEmptyStr(d.nombre) && d.nombre.size() <= 80
+          && d.precio is int && d.precio >= 0
+          && (!('activo' in d)     || d.activo is bool)
+          && (!('naturaleza' in d) || d.naturaleza in ['bien', 'servicio']);
+    }
 
     // ─── CMS · Contenido público (journal/films/social…) — validador genérico ────
     // Whitelist hasOnly OBLIGATORIA (L-15, repo público): cada recurso declara solo
@@ -646,6 +661,27 @@ service cloud.firestore {
       match /movimientos/{movId} {
         allow read:  if isCatalogo();
         allow write: if false;
+      }
+    }
+
+    // ─── F2.2 · Servicios/modificaciones (catálogo del mostrador) ───────────────
+    // READ = staff que OPERA el POS (ventas ∪ caja): el buscador de servicios del mostrador
+    // lo necesita. WRITE = OWNER-only (comité §8.3 A: el precio ES dinero). `codigo` INMUTABLE
+    // en update (llave de facturación rápida). Soft-delete: prohibir delete (solo activo:false)
+    // → las ventas viejas conservan el servicio aunque se retire del catálogo. El COBRO re-lee
+    // el precio en la CF (server-side, candado) → el catálogo NUNCA manipula el cobro.
+    match /servicios/{servicioId} {
+      allow read:   if isVentas() || isCaja();
+      allow create: if isOwner() && servicioValido();
+      allow update: if isOwner() && servicioValido()
+                    && request.resource.data.codigo == resource.data.codigo;   // codigo inmutable
+      allow delete: if false;                       // soft-delete (activo:false), nunca borrar
+      // Historial INMUTABLE del cambio de precio (comité §8.3 A · doc inmutable). Lo escribe el
+      // CMS owner al cambiar el precio; append-only (como movimientos/gestiones del CRM).
+      match /historial/{histId} {
+        allow read:   if isVentas() || isCaja();
+        allow create: if isOwner();
+        allow update, delete: if false;
       }
     }
 

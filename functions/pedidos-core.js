@@ -18,6 +18,37 @@ const CANALES = ['pos', 'web', 'whatsapp'];
 // de seguir vendiendo → cerrarTurno queda SIEMPRE O(<400). `crearPedido` devuelve `cotaProxima` al cruzarla.
 const COTA_TURNO = 350;
 
+// ── F2.2 · Facturación multi-línea (spec 2026-07-07 §8) ────────────────────────────
+// El mostrador cobra la pieza + N líneas EXTRA: servicio de catálogo (precio fijo) o
+// línea libre (concepto+precio a mano). Invariantes de dinero (§8.1): items[]=SSoT del
+// total, total RECALCULADO server-side, precio de servicio LEÍDO del catálogo en la tx
+// (cero confianza en el cliente), guardas de la línea libre + caps anti-payload. Solo
+// canal POS (mostrador). Los topes viven en config/caja (owner-write, YA leído en la tx
+// del POS → sin lectura extra) con defaults seguros alineados al ticket de servicios.
+const NATURALEZAS = ['bien', 'servicio'];              // future-proof fiscal (§8.3 D)
+const MAX_LINEAS_EXTRA = 20;                           // §8.1.5: nº de líneas por venta
+const CANTIDAD_MAX_LINEA = 50;                         // cantidad por línea (tope pequeño)
+const CONCEPTO_MAX = 120;                              // §8.1.4: concepto de línea libre
+const TOPE_LINEA_LIBRE_DEFAULT = 2000000;              // §8.3 B: alineado al ticket de SERVICIOS
+const TOPE_EXTRAS_TOTAL_DEFAULT = 10000000;            // §8.1.5: cap a la suma de extras
+const UMBRAL_REVISION_DEFAULT = 500000;                // §8.3 B: umbral blando → marca para el owner
+
+/** Sanea el concepto de una línea libre: quita control/saltos/RTL, colapsa espacios, recorta. */
+function sanitizeConcepto(s) {
+    if (typeof s !== 'string') return '';
+    let out = '';
+    for (const ch of s) {
+        const c = ch.codePointAt(0);
+        const rtl = (c >= 0x202A && c <= 0x202E) || c === 0x200E || c === 0x200F || c === 0xFEFF;
+        out += (c < 0x20 || c === 0x7F || rtl) ? ' ' : ch;
+    }
+    return out.replace(/ +/g, ' ').trim().slice(0, CONCEPTO_MAX);
+}
+/** Fingerprint del payload (idempotencia §8.1.6): mismo pedidoId + payload distinto = marca. */
+function fingerprintPayload(o) {
+    return crypto.createHash('sha256').update(JSON.stringify(o)).digest('hex').slice(0, 16);
+}
+
 // ── Código PÚBLICO de pedido (§166 · comité ×3) ────────────────────────────────
 // El correlativo `numero` es INTERNO (contable, jamás al cliente: revela volumen). Lo que el
 // cliente ve es `codigo` BJ-XXXX-XXXX: 8 símbolos crypto-aleatorios de un alfabeto de 29 SIN
@@ -157,24 +188,48 @@ function reponerStock(tx, pieceRef, piece, { pedidoId, motivo, ledgerId, actor }
 
 /**
  * @param db Firestore (admin) — bypassa reglas (único escritor server-side).
- * @param input { pedidoId, pieceId, valorGramo?, peso?, manoObra?, medio?, canal?, autor }
+ * @param input { pedidoId, pieceId, valorGramo?, peso?, manoObra?, medio?, canal?, autor,
+ *                autorRol?, lineasExtra? } — F2.2: lineasExtra = servicio de catálogo / línea libre
  * @param opts  { randInt? } — inyección del rng del código (tests deterministas)
  */
 async function crearPedidoCore(db, input = {}, opts = {}) {
     const pedidoId = String(input.pedidoId || '').trim();   // UUID del cliente (idempotencia)
     const pieceId  = String(input.pieceId  || '').trim();
     const autor    = input.autor || null;
+    const autorRol = typeof input.autorRol === 'string' ? input.autorRol : null;   // F2.2: auditoría de la línea libre
     if (!pedidoId || !pieceId) throw new PedidoError('invalid-argument', 'pedidoId y pieceId son obligatorios.');
     const medio = MEDIOS.includes(input.medio)  ? input.medio  : 'efectivo';
     const canal = CANALES.includes(input.canal) ? input.canal : 'pos';
     const requiereEnvio = input.requiereEnvio === true;   // F1-CORE §3.3: mostrador con envío = flujo logístico
+
+    // ── F2.2: líneas extra (servicio de catálogo / línea libre) — validación ESTRUCTURAL (pre-tx) ──
+    // El precio del servicio y los topes se resuelven DENTRO de la tx (candado); aquí solo forma/canal.
+    let lineasExtra = input.lineasExtra == null ? [] : input.lineasExtra;
+    if (!Array.isArray(lineasExtra)) throw new PedidoError('invalid-argument', 'lineasExtra debe ser una lista.');
+    if (lineasExtra.length > MAX_LINEAS_EXTRA) throw new PedidoError('invalid-argument', `Máximo ${MAX_LINEAS_EXTRA} líneas por venta.`);
+    if (lineasExtra.length > 0 && canal !== 'pos') throw new PedidoError('failed-precondition', 'Las líneas de servicio/modificación solo aplican en el mostrador (POS).');
+
+    // Fingerprint del payload (idempotencia §8.1.6): mismo pedidoId + payload DISTINTO = marca (no re-cobra).
+    const fingerprint = fingerprintPayload({
+        pieceId, medio, canal,
+        valorGramo: input.valorGramo ?? null, peso: input.peso ?? null, manoObra: input.manoObra ?? null,
+        lineasExtra: lineasExtra.map(l => l && typeof l === 'object' ? {
+            tipo: l.tipo, servicioId: l.servicioId || null,
+            concepto: l.tipo === 'libre' ? sanitizeConcepto(l.concepto) : null,
+            precio: l.tipo === 'libre' ? l.precio : null,
+            cantidad: Number.isInteger(l.cantidad) ? l.cantidad : 1,
+        } : l),
+    });
 
     return db.runTransaction(async (tx) => {
         const pedidoRef = db.doc(`pedidos/${pedidoId}`);
         const existing = await tx.get(pedidoRef);
         if (existing.exists) {                          // IDEMPOTENTE: reintento → mismo pedido
             const e = existing.data();
-            return { pedidoId, numero: e.numero, codigo: e.codigo || null, total: e.total, yaExistia: true };
+            // §8.1.6: si el reintento trae un payload DISTINTO (reuso del pedidoId), se MARCA — jamás se
+            // re-cobra ni re-decrementa stock (el snapshot original manda). El caller lo audita.
+            const fingerprintDivergente = !!(e.fingerprint && e.fingerprint !== fingerprint);
+            return { pedidoId, numero: e.numero, codigo: e.codigo || null, total: e.total, yaExistia: true, fingerprintDivergente };
         }
 
         // ── F2.0 B2: enlace venta↔turno (SOLO canal POS) ──────────────────────────────────────
@@ -183,11 +238,17 @@ async function crearPedidoCore(db, input = {}, opts = {}) {
         // pedido apuntando a un turno YA cerrado (sin huérfano). §9.5: el turno viaja en TODOS los
         // medios POS (efectivo/transferencia/wompi/addi), no solo efectivo. Web/WhatsApp NO llevan turno.
         let turnoId = null, docsDelTurnoNuevo = null, cotaProxima = false;
+        // F2.2: topes de las líneas extra (config/caja, owner-write) con defaults seguros.
+        let topeLineaLibre = TOPE_LINEA_LIBRE_DEFAULT, topeExtrasTotal = TOPE_EXTRAS_TOTAL_DEFAULT, umbralRevisionLibre = UMBRAL_REVISION_DEFAULT;
         const estadoRef = db.doc('caja/estado');
         if (canal === 'pos') {
             const [estadoSnap, cfgSnap] = await Promise.all([tx.get(estadoRef), tx.get(db.doc('config/caja'))]);
             const abiertoId = estadoSnap.exists ? (estadoSnap.data().turnoAbiertoId || null) : null;
-            const enforceTurno = cfgSnap.exists && cfgSnap.data().enforceTurno === true;   // default false (config ausente)
+            const cfg = cfgSnap.exists ? cfgSnap.data() : {};
+            const enforceTurno = cfg.enforceTurno === true;   // default false (config ausente)
+            if (Number.isInteger(cfg.topeLineaLibre))      topeLineaLibre = cfg.topeLineaLibre;
+            if (Number.isInteger(cfg.topeExtrasTotal))     topeExtrasTotal = cfg.topeExtrasTotal;
+            if (Number.isInteger(cfg.umbralRevisionLibre)) umbralRevisionLibre = cfg.umbralRevisionLibre;
             if (!abiertoId && enforceTurno) throw new PedidoError('failed-precondition', 'Abre la caja antes de registrar una venta en el mostrador.');
             if (abiertoId) {
                 turnoId = abiertoId;
@@ -210,8 +271,51 @@ async function crearPedidoCore(db, input = {}, opts = {}) {
         const precioFijo = typeof piece.price === 'number' && isFinite(piece.price) && piece.price > 0;
         const oro   = precioFijo ? 0 : calcOro(input.valorGramo, input.peso);
         const mano  = precioFijo ? 0 : entero(input.manoObra);
-        const total = precioFijo ? entero(piece.price) : (oro + mano);
-        if (total <= 0) throw new PedidoError('invalid-argument', 'El total debe ser mayor a 0 (revisa el precio o el peso/gramo).');
+        const piezaTotal = precioFijo ? entero(piece.price) : (oro + mano);
+        if (piezaTotal <= 0) throw new PedidoError('invalid-argument', 'El total debe ser mayor a 0 (revisa el precio o el peso/gramo).');
+
+        // ── F2.2: resolver las líneas extra DENTRO de la tx (aún en fase de LECTURAS, antes de escribir) ──
+        // Servicio = precio LEÍDO del catálogo con candado (cero confianza en el cliente); línea libre =
+        // precio del cliente con guardas + auditoría. Snapshot auto-contenido (§8.1.7): cada línea congela
+        // codigo+nombre+precio. Los servicios NO tocan stock (§8.1.10). lineId estable desde ya (§8.1.8).
+        const itemsExtra = [];
+        for (let i = 0; i < lineasExtra.length; i++) {
+            const l = (lineasExtra[i] && typeof lineasExtra[i] === 'object') ? lineasExtra[i] : {};
+            const cantidad = Number.isInteger(l.cantidad) ? l.cantidad : 1;
+            if (cantidad < 1 || cantidad > CANTIDAD_MAX_LINEA) throw new PedidoError('invalid-argument', `Cantidad inválida en la línea ${i + 1} (1..${CANTIDAD_MAX_LINEA}).`);
+            if (l.tipo === 'servicio') {
+                const sid = String(l.servicioId || '').trim();
+                if (!sid) throw new PedidoError('invalid-argument', 'La línea de servicio necesita servicioId.');
+                const sSnap = await tx.get(db.doc(`servicios/${sid}`));
+                if (!sSnap.exists || sSnap.data().activo !== true) throw new PedidoError('failed-precondition', 'Ese servicio no está disponible.');
+                const s = sSnap.data();
+                const precio = entero(s.precio);
+                if (precio <= 0) throw new PedidoError('failed-precondition', 'Ese servicio no tiene un precio válido en el catálogo.');
+                itemsExtra.push({
+                    tipo: 'servicio', lineId: `L${i + 1}`, servicioId: sid,
+                    codigo: s.codigo || sid, nombre: s.nombre || 'Servicio',
+                    cantidad, precio,
+                    naturaleza: NATURALEZAS.includes(s.naturaleza) ? s.naturaleza : 'servicio',
+                });
+            } else if (l.tipo === 'libre') {
+                const concepto = sanitizeConcepto(l.concepto);
+                if (!concepto) throw new PedidoError('invalid-argument', `La línea libre ${i + 1} necesita un concepto.`);
+                if (!Number.isInteger(l.precio) || l.precio < 1) throw new PedidoError('invalid-argument', `Precio inválido en la línea libre "${concepto}".`);
+                if (l.precio > topeLineaLibre) throw new PedidoError('failed-precondition', `La línea libre supera el tope de $${topeLineaLibre.toLocaleString('es-CO')}.`);
+                itemsExtra.push({
+                    tipo: 'libre', lineId: `L${i + 1}`, concepto,
+                    cantidad, precio: l.precio,
+                    naturaleza: NATURALEZAS.includes(l.naturaleza) ? l.naturaleza : 'servicio',
+                    addedBy: autor, rol: autorRol,                                   // §8.2: auditoría de la línea libre
+                    sobreUmbral: (l.precio * cantidad) > umbralRevisionLibre,        // §8.3 B: marca para el owner
+                });
+            } else {
+                throw new PedidoError('invalid-argument', `Tipo de línea inválido en la posición ${i + 1}.`);
+            }
+        }
+        const extrasTotal = itemsExtra.reduce((a, it) => a + it.precio * it.cantidad, 0);
+        if (extrasTotal > topeExtrasTotal) throw new PedidoError('failed-precondition', `La suma de servicios/modificaciones supera el tope de $${topeExtrasTotal.toLocaleString('es-CO')}.`);
+        const total = piezaTotal + extrasTotal;
 
         // Correlativo atómico (dentro de ESTA transacción → sin números repetidos).
         const contRef = db.doc('contadores/pedidos');
@@ -220,15 +324,27 @@ async function crearPedidoCore(db, input = {}, opts = {}) {
         // Código PÚBLICO único (§166) — última LECTURA de la tx (antes de cualquier write).
         const { codigo, codigoRef } = await reservarCodigo(db, tx, opts.randInt);
 
+        // F2.2: `desglose` describe el precio DE LA PIEZA (precio_fijo/por_peso) — lo lee la merma por peso
+        // (avanzarPedido) y el detalle de Pedidos. Su `.total` = subtotal de la pieza; el gran total (pieza +
+        // extras) vive en `total` y su verdad es `items[]`. Sin extras, desglose.total === total (idéntico a hoy).
         const desglose = precioFijo
-            ? { tipo: 'precio_fijo', total }
-            : { tipo: 'por_peso', peso: Math.max(0, Number(input.peso) || 0), valorGramo: entero(input.valorGramo), manoObra: mano, oro, total };
+            ? { tipo: 'precio_fijo', total: piezaTotal }
+            : { tipo: 'por_peso', peso: Math.max(0, Number(input.peso) || 0), valorGramo: entero(input.valorGramo), manoObra: mano, oro, total: piezaTotal };
 
         // F1-CORE ruta corta (spec §3.3): mostrador en efectivo SIN envío = venta EN MANO → nace
         // `entregado` (el ciclo no queda artificialmente abierto). Con envío o pago por confirmar,
         // entra al flujo normal. El arqueo cuenta igual (ESTADOS_CON_DINERO incluye `entregado`).
         const enMano = medio === 'efectivo' && canal === 'pos' && !requiereEnvio;
         const estadoInicial = medio === 'efectivo' ? (enMano ? 'entregado' : 'pagado') : 'pago_por_verificar';
+        // items[] = ÚNICA verdad del desglose (§8.1.1). La línea de la pieza (L0) lleva `tipo`/`lineId`/
+        // `naturaleza` DESDE YA (§8.1.8, habilita anulación parcial futura sin migrar). El costo se congela
+        // en F3 (hoy null, NO inventarlo). Aserto defensivo: total === Σ(items) o aborta (jamás desincroniza).
+        const items = [
+            { tipo: 'pieza', lineId: 'L0', pieceId, pieceName: piece.name || 'Pieza', pieceSlug: piece.slug || pieceId, cantidad: 1, precio: piezaTotal, naturaleza: 'bien', costoSnapshot: null },
+            ...itemsExtra,
+        ];
+        const sumaItems = items.reduce((a, it) => a + it.precio * it.cantidad, 0);
+        if (sumaItems !== total) throw new PedidoError('internal', 'Descuadre interno del desglose (items ≠ total).');
         const doc = {
             numero, codigo, pieceId,
             pieceSlug: piece.slug || pieceId,
@@ -236,12 +352,11 @@ async function crearPedidoCore(db, input = {}, opts = {}) {
             canal, medio,
             estado: estadoInicial,
             total,
-            desglose,                                   // SNAPSHOT inmutable (la CF nunca lo edita)
+            desglose,                                   // SNAPSHOT inmutable de la PIEZA (la CF nunca lo edita)
             consumioStock: consumeUnidad,               // v3: ¿bajó una unidad física? → anular la repone
             requiereEnvio,                              // F1-CORE: lo respeta confirmarPago (ruta corta)
-            // Costuras F1-CORE (spec §3.5, contratos aditivos): F2.2 generaliza a N líneas; el costo
-            // se congela cuando las piezas tengan campo de costo (F3) — hoy null, NO inventarlo.
-            items: [{ pieceId, pieceName: piece.name || 'Pieza', pieceSlug: piece.slug || pieceId, cantidad: 1, precio: total, costoSnapshot: null }],
+            items,                                      // F2.2: pieza + N líneas extra (SSoT del total)
+            fingerprint,                                // §8.1.6: detecta reuso del pedidoId con payload distinto
             clienteId: null,                            // vínculo CRM = F2.1 (CF-only)
             autor,
             createdAt: FieldValue.serverTimestamp(),
@@ -837,4 +952,5 @@ module.exports = {
     derivarEstado, normStockType, STOCK_TYPES,   // modelo v3 (reusado por inventario-core.js)
     evaluarStock, aplicarConsumo,                // candado de stock compartido (reusado por iniciarPagoWeb, F2)
     generarCodigoPedido, CODIGO_ALFABETO,        // §166: código público (tests + backfill)
+    sanitizeConcepto,                            // F2.2: saneo de la línea libre (tests)
 };

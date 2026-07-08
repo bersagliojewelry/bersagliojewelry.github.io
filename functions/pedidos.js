@@ -93,9 +93,10 @@ function notificarCaja(db) {
 
 const crearPedido = onCall({ region: 'us-central1', invoker: 'public' }, async (request) => {
     const db = getFirestore();
-    await rolDeVentas(db, request.auth);
+    const rol = await rolDeVentas(db, request.auth);
     try {
-        return await crearPedidoCore(db, { ...(request.data || {}), autor: request.auth.uid });
+        // F2.2: `lineasExtra` viaja en request.data (spread); `autorRol` sella la auditoría de la línea libre.
+        return await crearPedidoCore(db, { ...(request.data || {}), autor: request.auth.uid, autorRol: rol });
     } catch (e) {
         if (e instanceof PedidoError) throw new HttpsError(e.code, e.message);
         throw e;   // error inesperado → 'internal' (firebase-functions lo envuelve)

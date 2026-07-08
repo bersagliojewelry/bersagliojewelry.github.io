@@ -133,6 +133,10 @@ before(async () => {
         await setDoc(doc(db, 'boveda/main'), { saldo: 0, updatedAt: new Date() });
         await setDoc(doc(db, 'boveda/main/checkpoints/2026-07'), { mes: '2026-07', saldo: 0 });
         await setDoc(doc(db, 'bovedaMovimientos/bm1'), { tipo: 'saldo_inicial', monto: 0, autor: 'ownerUid' });      // asiento fundacional $0 (§8.1.1)
+
+        // ─── F2.2: catálogo de servicios (owner-write acotado, POS-read, soft-delete) ──
+        await setDoc(doc(db, 'servicios/srvSeed'), { codigo: 'GRAB', nombre: 'Grabado láser', precio: 20000, activo: true, naturaleza: 'servicio' });
+        await setDoc(doc(db, 'servicios/srvSeed/historial/h1'), { precioAntes: 15000, precioDespues: 20000, cambiadoPor: 'ownerUid', cambiadoEn: new Date() });
     });
 });
 
@@ -1608,4 +1612,47 @@ test('F2.1 · el cliente NO puede MUTAR campos de identidad en update (inmutable
     await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV'), { authUid: 'hacked' },    { merge: true }));
     await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV'), { docKeys: ['CC:999'] },  { merge: true }));
     await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV'), { contacto: { contactVerified: true } }, { merge: true }));
+});
+
+// ─── F2.2 · Catálogo de servicios (owner-write acotado, POS-read, soft-delete) ──
+const SERVICIO_OK = { codigo: 'REP', nombre: 'Reparación', precio: 50000, activo: true, naturaleza: 'servicio' };
+
+test('F2.2 · READ servicios: ventas (catalogo) y caja SÍ; público NO', async () => {
+    await assertSucceeds(getDoc(doc(asClaim('u', 'catalogo'), 'servicios/srvSeed')));
+    await assertSucceeds(getDoc(doc(asClaim('u', 'caja'),     'servicios/srvSeed')));
+    await assertSucceeds(getDoc(doc(asClaim('u', 'owner'),    'servicios/srvSeed')));
+    await assertFails(getDoc(doc(anon(), 'servicios/srvSeed')));
+});
+
+test('F2.2 · CREATE servicio: SOLO owner (el precio ES dinero)', async () => {
+    await assertSucceeds(setDoc(doc(asClaim('o', 'owner'), 'servicios/srvNew'), SERVICIO_OK));
+    await assertFails(setDoc(doc(asClaim('a', 'admin'),    'servicios/srvA'), SERVICIO_OK));
+    await assertFails(setDoc(doc(asClaim('c', 'catalogo'), 'servicios/srvC'), SERVICIO_OK));
+    await assertFails(setDoc(doc(asClaim('k', 'caja'),     'servicios/srvK'), SERVICIO_OK));
+});
+
+test('F2.2 · CREATE: hasOnly y tipos (inyección / precio float o negativo / campos vacíos → DENY)', async () => {
+    await assertFails(setDoc(doc(asClaim('o', 'owner'), 'servicios/srvInj'),   { ...SERVICIO_OK, saldoActual: 999 }));   // clave fuera de whitelist
+    await assertFails(setDoc(doc(asClaim('o', 'owner'), 'servicios/srvFloat'), { ...SERVICIO_OK, precio: 50000.5 }));    // no-entero
+    await assertFails(setDoc(doc(asClaim('o', 'owner'), 'servicios/srvNeg'),   { ...SERVICIO_OK, precio: -1 }));         // negativo
+    await assertFails(setDoc(doc(asClaim('o', 'owner'), 'servicios/srvVac'),   { ...SERVICIO_OK, codigo: '   ' }));      // codigo vacío
+    await assertFails(setDoc(doc(asClaim('o', 'owner'), 'servicios/srvNat'),   { ...SERVICIO_OK, naturaleza: 'otro' })); // naturaleza fuera del enum
+});
+
+test('F2.2 · UPDATE: owner edita precio; codigo INMUTABLE', async () => {
+    await assertSucceeds(updateDoc(doc(asClaim('o', 'owner'), 'servicios/srvSeed'), { precio: 25000 }));
+    await assertFails(updateDoc(doc(asClaim('o', 'owner'), 'servicios/srvSeed'), { codigo: 'OTRO' }));   // codigo no cambia
+    await assertFails(updateDoc(doc(asClaim('a', 'admin'), 'servicios/srvSeed'), { precio: 1 }));         // admin no edita
+});
+
+test('F2.2 · DELETE prohibido (soft-delete: activo:false, nunca borrar)', async () => {
+    await assertFails(deleteDoc(doc(asClaim('o', 'owner'), 'servicios/srvSeed')));
+    await assertSucceeds(updateDoc(doc(asClaim('o', 'owner'), 'servicios/srvSeed'), { activo: false }));  // retirar = soft-delete
+});
+
+test('F2.2 · historial de precio: owner CREA (inmutable); update/delete y otros roles → DENY', async () => {
+    await assertSucceeds(setDoc(doc(asClaim('o', 'owner'), 'servicios/srvSeed/historial/h2'), { precioAntes: 20000, precioDespues: 25000, cambiadoPor: 'o', cambiadoEn: serverTimestamp() }));
+    await assertFails(setDoc(doc(asClaim('a', 'admin'), 'servicios/srvSeed/historial/h3'), { precioAntes: 1, precioDespues: 2 }));
+    await assertFails(updateDoc(doc(asClaim('o', 'owner'), 'servicios/srvSeed/historial/h1'), { precioDespues: 99999 }));
+    await assertFails(deleteDoc(doc(asClaim('o', 'owner'), 'servicios/srvSeed/historial/h1')));
 });

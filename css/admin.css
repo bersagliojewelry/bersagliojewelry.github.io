@@ -1616,6 +1616,20 @@ select.adm-input { cursor: pointer; appearance: none; -webkit-appearance: none; 
 }
 .pos-serv-remove:hover { color: var(--adm-danger); background: var(--adm-danger-light); }
 
+/* ─── F2.2 · CMS del catálogo de servicios (admin-servicios.html, owner) ───────── */
+.serv-cms-card { background: #fff; border: 1px solid var(--adm-border); border-radius: var(--adm-radius); padding: 18px 20px; }
+.serv-cms-title { font-family: 'Fraunces', serif; font-weight: 500; font-size: 17px; color: var(--adm-text); margin: 0 0 14px; }
+.serv-cms-err { color: var(--adm-danger); }
+.serv-cms-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.serv-cms-item { display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: rgba(27,75,54,0.03); border: 1px solid var(--adm-border); border-radius: var(--adm-radius); }
+.serv-cms-item--off { opacity: 0.55; }
+.serv-cms-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.serv-cms-name { font-weight: 500; color: var(--adm-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.serv-cms-meta { font-size: 11.5px; color: var(--adm-muted); font-family: 'Space Mono', monospace; letter-spacing: 0.3px; }
+.serv-cms-price { flex-shrink: 0; font-family: 'Space Mono', monospace; font-variant-numeric: tabular-nums; color: var(--adm-accent); font-size: 15px; }
+.serv-cms-actions { flex-shrink: 0; display: flex; gap: 8px; align-items: center; }
+.serv-cms-edit-input { max-width: 130px; }
+
 .pos-ventas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .pos-venta { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; background: #fff; border: 1px solid var(--adm-border); border-radius: var(--adm-radius); }
 .pos-venta-main { display: flex; align-items: baseline; gap: 9px; min-width: 0; }

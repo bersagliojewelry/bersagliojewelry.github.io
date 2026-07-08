@@ -50,6 +50,7 @@ export const NAV = [
     { label: 'Usuarios',      href: 'admin-usuarios.html',          icon: 'shield',  role: 'owner' },
     { label: 'Salud',         href: 'admin-salud.html',             icon: 'pulse',   role: 'owner' },
     { label: 'Parámetros',    href: 'admin-parametros.html',        icon: 'sliders', role: 'owner' },
+    { label: 'Servicios',     href: 'admin-servicios.html',         icon: 'receipt', role: 'owner' },
     { label: 'Configuración', href: 'admin-config.html',            icon: 'gear',    role: 'admin' },
   ]},
 ];

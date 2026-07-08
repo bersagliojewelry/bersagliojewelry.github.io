@@ -269,7 +269,11 @@ async function renderDetail() {
 }
 
 // ─── Export CSV del turno (para el contador / archivo) ────────────────────────
-const csvCell = (v) => { const s = String(v ?? ''); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+const csvCell = (v) => {
+    let s = String(v ?? '');
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;   // anti CSV/formula-injection (comité F2.2)
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
 function exportarTurno() {
     if (!_turno) return;
     const eventos = buildEventos();

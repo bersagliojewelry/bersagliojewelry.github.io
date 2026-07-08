@@ -1018,7 +1018,11 @@ function renderDigitalBreakdown(esperadoPorMedio) {
 // ─── Export al contador (paso 6 · bruto/neto) ─────────────────────────────────
 // L-72: el estado se rotula con estadoPedido() compartido (no un mapa local que se pudre al
 // sumar estados — antes el CSV mostraba 'despacho_nacional' crudo en vez de "En camino").
-const csvCell = v => { const s = String(v ?? ''); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+const csvCell = v => {
+    let s = String(v ?? '');
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;   // anti CSV/formula-injection: '=SUM(..)' no se ejecuta en Excel/Sheets (comité F2.2)
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
 
 // Descarga un CSV de las ventas con bruto/comisión/retenciones/neto para el contador.
 // Bruto = exacto (server). Neto usa tasas DEFAULT (Wompi/retenciones) hasta que el contador

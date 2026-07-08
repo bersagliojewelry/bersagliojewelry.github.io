@@ -105,8 +105,45 @@ La factura/ticket (F2.3 térmica, futura) y el detalle en Pedidos muestran el de
 - `test:rules` para `servicios`.
 - Build + gate live Chrome (venta real pieza+servicio en prod, anulada al cierre).
 
+---
+
+## 8 · Síntesis del comité ×3 (v2 — REFINAMIENTOS VINCULANTES)
+
+> Deliberación CRUDA: `../brain-private/bersaglio/2026-07-07-comite-f2-2-multilinea-CRUDO.md` (3 lentes: backend/dinero · UX/mostrador · seguridad/reglas/fiscal). **Veredicto convergente: GO CONDICIONADO** — columna vertebral correcta; cerrar los P0 de abajo antes de codear; **D (fiscal) = gate que exige al contador antes de congelar el esquema.**
+
+### 8.1 Invariantes de dinero (asertados en la tx, pre-commit)
+1. `pedido.total === Σ(item.precio×item.cantidad) === desglose.total` — **`items[]` = SSoT; `desglose` DERIVADO y asertado, jamás del cliente**. Si no cuadra → aborta.
+2. Exactamente 1 ítem `tipo:'pieza'`, `cantidad===1` (server-enforced; si no, desincroniza stock).
+3. `tipo:'servicio'`: precio LEÍDO de `servicios/{id}` en la tx + `activo===true`, o **FALLA CERRADO** (aborta la venta; nunca omite ni $0).
+4. `tipo:'libre'`: precio entero `[1, TOPE]` (rechazar 0/negativo/NaN/float/string), `concepto` 1–120 **saneado**, `cantidad` `[1, MAX]`.
+5. **Caps**: nº de líneas por venta `≤ 20` · cap a la suma de extras · `total > 0` (anti-payload/1MiB/timeout).
+6. **Idempotencia con FINGERPRINT del payload**: mismo `pedidoId` → snapshot VERBATIM; fingerprint distinto → rechaza/marca; jamás re-decrementa stock ni re-suma al turno.
+7. **Snapshot auto-contenido**: cada línea congela `codigo+nombre+precioSnapshot` (no solo `servicioId`) → editar el catálogo mañana NO altera ventas viejas ni la reimpresión.
+8. **`lineId` estable por ítem DESDE YA** (barato; habilita anulación parcial futura sin migrar).
+9. **Anular revierte el TOTAL COMPLETO** del turno (pieza + servicios), todo-o-nada. **Política post-cierre**: definir (bloquear anulación de turno cerrado, o movimiento compensatorio en el turno abierto).
+10. Servicios NO tocan stock (ruta de decremento de la pieza intacta). Mismo `turnoId` que la pieza.
+11. `lineasExtra` ausente ⇒ salida **byte-idéntica** al comportamiento actual (test de no-regresión #1).
+
+### 8.2 Seguridad de la línea libre (superficie de fraude/error)
+- **Saneo del `concepto` en DOS frentes**: (a) **XSS** al renderizar (POS/auditoría/factura) — DOM-safe; (b) **CSV/Formula-injection** en el export contador — neutralizar líder `= + - @`, filtrar saltos/control/RTL. (El `csvCell` actual escapa comillas pero NO neutraliza el líder de fórmula → **bug latente a corregir también en el export existente**.)
+- Auditar cada línea libre: `addedByUid + role + turnoId + precioSnapshot + motivo` (server-side).
+
+### 8.3 Decisiones A–D
+- **A · Catálogo `servicios`**: **owner-only** (el precio de servicio ES dinero → least-privilege; `caja`/`admin` NO editan). Write vía reglas directas ACOTADAS (`hasOnly([codigo,nombre,precio,activo,naturaleza,createdAt,updatedAt])` · `precio is int>=0` · `codigo` inmutable en update · `nombre` 1..80 · `activo` bool) + **soft-delete** (prohibir `delete`, solo `activo:false`) + **auditoría del cambio de precio** (doc inmutable). READ = staff ventas (owner/admin/catalogo/**caja**). _(La ruta de VENTA re-lee el precio server-side → segura sin importar cómo se escriba el catálogo; por eso write-directo owner-gated es aceptable y más barato que CF, con la auditoría como red.)_
+- **B · Tope línea libre**: **triple cap** (por línea + suma + nº de líneas) + **umbral blando** que marca la línea para revisión del owner en la Auditoría. Tope duro **configurable por el dueño** (`config/…`), alineado al ticket de SERVICIOS (~$1–2M), no al de una pieza.
+- **C · Servicio sin pieza**: **NO en F2.2** (rama sin stock/reserva; `pieceId=null` rompe consumidores; toca el reaper PROHIBIDO). Modelo self-describing (`tipo`) no lo precluye → **F2.3 aparte**.
+- **D · FISCAL = GATE 🔴**: servicio ≠ bien en IVA/retenciones/factura DIAN. El esquema NACE con **`naturaleza:'bien'|'servicio'` + `precioSnapshot` por línea** y `desglose{subtotalBienes,subtotalServicios}` + slot `impuesto` por línea (default 0, aditivo) → agregar IVA luego NO es migración. **NO congelar el export contador / la lógica fiscal sin confirmar con el CONTADOR**: (1) ¿responsable de IVA? ¿Régimen Simple (RST)? (RST cambia las retenciones); (2) IVA por tipo; (3) ReteFuente/ReteICA bienes vs servicios; (4) UNSPSC/factura. Consultar skill `legal-colombia` + contador.
+
+### 8.4 UX (vinculante)
+- **Bloque de servicios COLAPSADO por defecto** ("+ Agregar servicio/modificación") → la venta solo-pieza (mayoría) queda idéntica a hoy.
+- **Catálogo PRIMERO** = chips grandes de un toque ("+ Grabado $20.000"); **línea libre = último recurso** "Otro (a mano)", secundario, con concepto obligatorio antes del precio + formato de miles automático.
+- **El TOTAL del botón Confirmar = el del SERVIDOR** (nunca un cálculo del navegador que pueda divergir → regla de oro). Confirmación final = recibo miniatura con TOTAL dominante.
+- Cantidad: default 1 oculto; stepper "− 1 +" dentro de la línea (no campo tecleable). Botón quitar grande + feedback del nuevo total. Ticket muestra concepto legible, no el código interno.
+- Catálogo de servicios: en **Configuración** (no en el flujo POS) + atajo; anti-duplicados al crear; editar precio no altera ventas viejas.
+
 ## Checklist
-- [ ] Comité ×3 sobre este diseño (Decisión Fuerte de dinero) — refinar §6.
+- [x] Comité ×3 sobre este diseño (Decisión Fuerte de dinero) — refinado en §8 (CRUDO en bóveda).
+- [ ] **GATE D (fiscal)**: confirmar régimen/IVA/retenciones con el contador ANTES de congelar el esquema/export.
 - [ ] Consejo externo (provider) — crítica adversarial.
 - [ ] Decisiones A–D cerradas (Daniel/comité).
 - [ ] CF `crearPedido` + `servicios` (TDD estricto, interinato).

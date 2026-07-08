@@ -64,7 +64,9 @@
 // ya no fetch de una vez → no exige refresco) + render OPTIMISTA del panel al abrir caja (sin parpadeo).
 // v81 = [OPUS-4.8] Auditoría de caja (F2 · TODO-69): admin-auditoria.html + auditoria.js — vista OWNER
 // solo-lectura, línea de tiempo EN VIVO de cada turno (quién abrió/movió/vendió/cerró + hora), UID→nombre.
-const CACHE_NAME    = 'bersaglio-v81';
+// v82 = [OPUS-4.8] Hardening export CSV: csvCell neutraliza inyección de fórmulas (=/+/-/@) en el export
+// al contador (pos.js) y al turno (auditoria.js) — hallazgo del comité F2.2, ya explotable hoy.
+const CACHE_NAME    = 'bersaglio-v82';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

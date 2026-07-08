@@ -60,4 +60,4 @@ export const NAV_FOOTER = { label: 'Ver sitio', href: 'index.html', icon: 'exter
 // Versión visible del panel (criterio de deploy para no-técnicos, spec §9.1): Kary
 // confirma que está en la versión nueva tras un despliegue. Se bumpea JUNTO al
 // CACHE_NAME del Service Worker (`public/sw.js`) en cada cambio del shell admin.
-export const APP_VERSION = 'v43 · 2026-07-07';   // Auditoría de caja (F2 · TODO-69): vista owner solo-lectura, línea de tiempo en vivo por turno (SW v81)
+export const APP_VERSION = 'v44 · 2026-07-07';   // Hardening export CSV (anti formula-injection) — hallazgo comité F2.2 (SW v82)

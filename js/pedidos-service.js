@@ -8,7 +8,7 @@
  * web/WhatsApp reusen lo mismo sin arrastrar el DOM del panel (§3.6 cero monolitos).
  */
 import { app, firestoreDb } from './firebase-config.js';
-import { collection, query, orderBy, limit, getDocs, getDoc, doc, onSnapshot, where } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, getDoc, doc, onSnapshot, where, addDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { subscribeWithRetry } from './core/live-query.js';
 
 // Callable lazy (no cargamos firebase/functions hasta la 1ª venta — igual que crm-service).
@@ -297,6 +297,77 @@ export function onUltimasVentasChange(cb, max = 15, onUiError) {
 }
 
 /**
+ * F2.2 · Catálogo de servicios ACTIVOS en vivo (chips del bloque de servicios del mostrador).
+ * Filtro de UN campo (`activo==true`) → sin índice compuesto; el orden por nombre se hace en cliente.
+ * Read = staff de ventas ∪ caja (reglas). Estos datos SOLO pintan los chips y el total en vivo; el
+ * COBRO re-lee el precio server-side (crearPedido) → nunca son la verdad del dinero. Re-suscribe sola.
+ * @param {Function} cb (servicios[]) => void — ordenados por nombre (es-CO)
+ * @param {Function} [onUiError]
+ * @returns {Function} cleanup
+ */
+export function onServiciosChange(cb, onUiError) {
+    return subscribeWithRetry(
+        () => query(collection(firestoreDb, 'servicios'), where('activo', '==', true)),
+        snap => cb(snap.docs
+            .map(d => ({ id: d.id, ...d.data() }))
+            .sort((a, b) => String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es'))),
+        'servicios',
+        onUiError,
+    );
+}
+
+// ─── F2.2 · CMS del catálogo de servicios (owner-only, spec §8.3 A) ────────────────────────────
+// El precio de un servicio ES dinero: las reglas lo blindan a owner-write acotada (sin CF) y el COBRO
+// re-lee el precio server-side. Aquí solo transporte. Cada cambio de precio escribe un doc INMUTABLE
+// en servicios/{id}/historial (auditoría, comité §8.3 A). El anti-dup de `codigo` lo valida el CMS.
+
+/** Catálogo COMPLETO (activos + inactivos) en vivo — para la gestión del dueño. Activos primero. */
+export function onServiciosAllChange(cb, onUiError) {
+    return subscribeWithRetry(
+        () => query(collection(firestoreDb, 'servicios')),
+        snap => cb(snap.docs
+            .map(d => ({ id: d.id, ...d.data() }))
+            .sort((a, b) => Number(!!b.activo) - Number(!!a.activo) || String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es'))),
+        'serviciosAll',
+        onUiError,
+    );
+}
+
+/** Crea un servicio + su asiento fundacional de precio en el historial. `uid` sella la auditoría. */
+export async function crearServicio({ codigo, nombre, precio, naturaleza }, uid) {
+    const payload = {
+        codigo: String(codigo || '').trim().toUpperCase().slice(0, 20),
+        nombre: String(nombre || '').trim().slice(0, 80),
+        precio: Math.round(Math.max(0, Number(precio) || 0)),
+        activo: true,
+        naturaleza: naturaleza === 'bien' ? 'bien' : 'servicio',
+        createdAt: serverTimestamp(),
+        createdBy: uid || null,
+        updatedAt: serverTimestamp(),
+    };
+    const ref = await addDoc(collection(firestoreDb, 'servicios'), payload);
+    await addDoc(collection(firestoreDb, 'servicios', ref.id, 'historial'), {
+        precioAntes: null, precioDespues: payload.precio, cambiadoPor: uid || null, cambiadoEn: serverTimestamp(),
+    });
+    return { id: ref.id, ...payload };
+}
+
+/** Cambia el precio (con asiento inmutable de historial precioAntes→precioDespues). */
+export async function actualizarServicioPrecio(id, nuevoPrecio, precioAntes, uid) {
+    const precio = Math.round(Math.max(0, Number(nuevoPrecio) || 0));
+    await updateDoc(doc(firestoreDb, 'servicios', id), { precio, updatedAt: serverTimestamp() });
+    await addDoc(collection(firestoreDb, 'servicios', id, 'historial'), {
+        precioAntes: Math.round(Math.max(0, Number(precioAntes) || 0)), precioDespues: precio,
+        cambiadoPor: uid || null, cambiadoEn: serverTimestamp(),
+    });
+}
+
+/** Activa/retira un servicio (soft-delete: nunca se borra; las ventas viejas lo conservan). */
+export async function setServicioActivo(id, activo) {
+    await updateDoc(doc(firestoreDb, 'servicios', id), { activo: !!activo, updatedAt: serverTimestamp() });
+}
+
+/**
  * Pedidos EN VIVO (F1-PUENTE · TODO-68): lista reactiva para el módulo admin Pedidos.
  * Re-suscribe sola ante errores transitorios (subscribeWithRetry, ADR §93) — un pedido web
  * nuevo aparece sin recargar. Lectura = staff de ventas (owner/admin/catalogo, reglas).
@@ -316,7 +387,8 @@ export function onPedidosChange(cb, max = 200, onUiError) {
 
 export default {
     crearPedido, iniciarPagoWeb, confirmarPago, anularPedido, cierreCaja, avanzarPedido,
-    historialPedido, ultimasVentas, onUltimasVentasChange, onPedidosChange,
+    historialPedido, ultimasVentas, onUltimasVentasChange, onPedidosChange, onServiciosChange,
+    onServiciosAllChange, crearServicio, actualizarServicioPrecio, setServicioActivo,   // F2.2 CMS (owner)
     // F2.0 caja/bóveda — escrituras (callables)
     abrirTurno, cerrarTurno, movimientoCaja, registrarTraslado, reversoTraslado, ajusteBoveda, aprobarEventoCaja,
     // F2.0 caja/bóveda — lecturas (listeners)

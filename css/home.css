@@ -1471,6 +1471,44 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 .bj-lite .bj-fade-in { animation: none; }
 @media (prefers-reduced-motion: reduce) { .bj-fade-in { animation: none; } }
 
+/* ═══ Esqueleto de carga (skeleton) de las franjas dinámicas del index ═══════════════
+   Estado "cargando" para el visitante NUEVO/incógnito: en vez del hueco en blanco (la
+   reserva-en-blanco del comité v3, que en 1ª visita colapsaba a nada — §NN), tarjetas
+   fantasma de CRISTAL que RESPIRAN, no el brillo gris de las apps (comité 2026-07-08,
+   lente UX de lujo). Reusan el MISMO grid/columnas/aspect-ratio que las reales → el
+   reemplazo por contenido es casi imperceptible. Cero-ficción intacta: el skeleton solo
+   existe en estado "cargando"; con datos bajo umbral la sección colapsa igual, y el
+   watchdog de 8s la colapsa si nunca llegan. Rendimiento (§3.1): anima SOLO opacity (capa
+   de composición), jamás background-position; se APAGA en .bj-lite y movimiento-reducido. */
+.home-featured-grid.is-skeleton,
+.cat-dock.is-skeleton { pointer-events: none; }
+.bj-skel {
+    position: relative;
+    overflow: hidden;
+    background: oklch(97% 0.015 155 / 0.5);
+    border: 1px solid oklch(100% 0 0 / 0.5);
+    box-shadow: inset 0 1px 0 oklch(100% 0 0 / 0.55);
+    animation: bj-skel-breathe 2.5s ease-in-out infinite;
+}
+.bj-skel::after {   /* velo esmeralda/dorado tenue = reflejo de cristal, no spinner */
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(135deg, oklch(74% 0.15 152 / 0.06), transparent 55%, oklch(88% 0.14 85 / 0.05));
+}
+.bj-skel-thumb { aspect-ratio: 4/5; background: oklch(93% 0.03 152 / 0.7); }
+.bj-skel-body { padding: 20px 22px 22px; display: flex; flex-direction: column; gap: 10px; }
+.bj-skel-line { height: 11px; border-radius: 6px; background: oklch(90% 0.025 152 / 0.85); }
+.bj-skel-line.lg { width: 72%; }
+.bj-skel-line.sm { width: 45%; height: 8px; }
+.bj-skel:nth-child(2) { animation-delay: .5s; }   /* pulsos desincronizados (no un barrido uniforme) */
+.bj-skel:nth-child(3) { animation-delay: 1s; }
+.bj-skel:nth-child(4) { animation-delay: 1.5s; }
+.bj-skel:nth-child(5) { animation-delay: .8s; }
+.bj-skel:nth-child(6) { animation-delay: 1.3s; }
+.bj-skel:nth-child(7) { animation-delay: .3s; }
+@keyframes bj-skel-breathe { 0%, 100% { opacity: .5; } 50% { opacity: .82; } }
+.bj-lite .bj-skel { animation: none; }
+@media (prefers-reduced-motion: reduce) { .bj-skel { animation: none; } }
+
 /* Cero-ficción (feedback_no_demo_en_index): una sección dinámica sin contenido
    publicado suficiente rinde su inner = '' → :empty la oculta (sin hueco ni salto de
    layout / CLS). El nodo <section> queda como ancla para el refresh en vivo. */

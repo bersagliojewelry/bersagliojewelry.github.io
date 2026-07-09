@@ -68,7 +68,9 @@
 // al contador (pos.js) y al turno (auditoria.js) — hallazgo del comité F2.2, ya explotable hoy.
 // v83 = [OPUS-4.8] TODO-70 POS profesional: cierre solo-turno (Z legacy retirado), ventas ocultas con caja
 // cerrada, panel de anomalías (ventas fuera de turno) en la Auditoría. Prereq de F2.2.
-const CACHE_NAME    = 'bersaglio-v83';
+// v84 = [OPUS-4.8] Index carga fluida (TODO-74): skeleton de cristal (destacadas + colecciones) en el
+// estado "cargando" — reemplaza el hueco en blanco del visitante nuevo/incógnito (home.css + featured/categories).
+const CACHE_NAME    = 'bersaglio-v84';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

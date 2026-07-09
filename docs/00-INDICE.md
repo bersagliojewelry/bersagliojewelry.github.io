@@ -66,6 +66,7 @@
 | §173 | 2026-07-08 — **POS profesional: caja OBLIGATORIA ON — TODO-70**. Vender con caja cerrada dejaba huérfanas sin `turnoId` fuera del arqueo (L-81); fix = `enforceTurno=true` en prod + cierre solo-turno + panel de anomalías fuera-de-turno, CERO `functions/`. **Gate Chrome prod VERDE**. SW v83. → L-81 · §173. [OPUS-4.8] | 2361 |
 | §174 | 2026-07-08 — **2º range-shard del índice (00→00b, §116–§157)**: `00-INDICE` 30.8k→15.6k (kernel ya shard-aware §140, sin cambio); #3 173/173, `00b` no huérfana. Mantenimiento de cerebro. [OPUS-4.8] | 2371 |
 | §175 | 2026-07-08 — **Auditoría de cerebro Nivel-2 (semántica)** — vencida 59 ADRs: ACOTADA (2 subagentes read-only + sondas directas), retrieval 5/5; 7 hallazgos (4 resueltos + TODO-71: gates `[[...]]`/ssotFacts = cars-operador). deepAudit re-sellado. [OPUS-4.8] | 2381 |
+| §176 | 2026-07-08 — **F2.2 facturación multi-línea: deploy backend + gate vivo prod (OPERATIVO, cierra TODO-41)**. Código H1-H4 ya en main (PR#411); faltaba `firebase deploy --only functions,firestore:rules` (47 fn + reglas `servicios`). Pre-deploy: rules 242/242·f2-2 16/16. **Gate Chrome prod VERDE** (owner Daniel): CMS crea servicio→chip en mostrador→venta pieza $100k+servicio $50k=**$150k server-side**→caja→anular→arqueo cuadra $0. Sin SW bump (admin network-first). Falta uso real: cargar servicios reales (data). → §176. [OPUS-4.8] | 2397 |
 
 > Mantener este índice sincronizado: cuando se agregue un ADR nuevo (§174+) al historial,
 > añadir su fila aquí con la línea de inicio (`Select-String` o `grep`).

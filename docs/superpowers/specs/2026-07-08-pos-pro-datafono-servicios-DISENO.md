@@ -113,12 +113,12 @@ UNIFICA el modelo: el medio deja de ser un escalar → el pedido lleva `pagos[]`
 ## Checklist
 - [x] Comité ×3 sobre el spec (money-safety) — findings incorporados (§8)
 - [x] Decisiones del dueño: anular-tarjeta (se reversa en terminal) + pago dividido (SÍ) — §9
-- [ ] Núcleo `pagos[]` + datáfono + sin-pieza (TDD, pedidos-core) verde
-- [ ] `cerrarTurnoCore` split-aware + vouchers (TDD, caja-core) verde
-- [ ] Tests escritos ANTES (rojos) — plan §6
-- [ ] 3a datáfono (core + POS) verde
-- [ ] 3b vouchers al cierre (core + UI) verde
-- [ ] 3c venta sin pieza (core + POS) verde
-- [ ] No-regresión: suites caja/f2-2/rules verdes
-- [ ] Gate Chrome holístico prod verde
-- [ ] ADR + índice + cierre TODO-73
+- [x] Núcleo `pagos[]` + datáfono + sin-pieza (TDD, `pedidos-core.js`) verde — commit `d6a5728`
+- [x] `cerrarTurnoCore` split-aware + vouchers (TDD, `caja-core.js`) verde — commit `d6a5728`
+- [x] Tests escritos + verdes — `f2-3-pos-pro.integration.test.mjs` 16/16
+- [x] 3a datáfono (core + POS) verde — gate Chrome prod (§179.4): venta datáfono → Entregado
+- [x] 3b vouchers al cierre (core + UI) verde — ADR §179.4 (gate prod: 2 vouchers $110k, Monto cuadra + Cantidad coinciden)
+- [x] 3c venta sin pieza (core + POS) verde — ADR §179.4 (gate prod: sin-pieza $50k, nombre legible)
+- [x] No-regresión: `f2-3-pos-pro.integration.test.mjs` 16/16 + core backward-compat — ADR §179.3
+- [x] Gate Chrome holístico prod verde — §179.4 (turno real: datáfono·split·sin-pieza·cierre-vouchers, cero errores)
+- [x] ADR §179 + índice `00` + cierre TODO-73 — commit de cierre

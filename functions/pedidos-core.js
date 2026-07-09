@@ -11,7 +11,9 @@ const { FieldValue, Timestamp } = require('firebase-admin/firestore');
 const crypto = require('crypto');
 const { montoEnCentavos, firmaIntegridad, verificarFirmaEvento } = require('./wompi-core');
 
-const MEDIOS  = ['efectivo', 'transferencia', 'wompi', 'addi'];
+const MEDIOS  = ['efectivo', 'transferencia', 'wompi', 'addi', 'datafono'];   // TODO-73: datafono = tarjeta en el local (pago inmediato)
+const MEDIOS_INMEDIATOS = new Set(['efectivo', 'datafono']);                  // aprueban en el acto → NO "por verificar"
+const MAX_PAGOS = 4;                                                          // §9 split-tender: máx medios por venta
 const CANALES = ['pos', 'web', 'whatsapp'];
 // F2.0 B2 (§9.2): cota de docs por turno. El cierre recomputa síncrono en UNA transacción; el límite
 // duro de Firestore es 500 lecturas/tx. Al acercarse (~350, margen), el POS FUERZA cerrar el turno antes
@@ -47,6 +49,30 @@ function sanitizeConcepto(s) {
 /** Fingerprint del payload (idempotencia §8.1.6): mismo pedidoId + payload distinto = marca. */
 function fingerprintPayload(o) {
     return crypto.createHash('sha256').update(JSON.stringify(o)).digest('hex').slice(0, 16);
+}
+
+// ── TODO-73 · Pagos (split-tender §9) ──────────────────────────────────────────────
+// Validación ESTRUCTURAL (pre-tx) de `input.pagos`: lista [{medio,monto}] con medios válidos y montos
+// enteros positivos. La igualdad Σmonto === total se verifica DENTRO de la tx (el total es server-side).
+// Devuelve null si no vino `pagos` (→ se deriva de `medio` con el total ya conocido).
+function parsePagosInput(pagos) {
+    if (pagos == null) return null;
+    if (!Array.isArray(pagos) || pagos.length < 1) throw new PedidoError('invalid-argument', 'pagos debe ser una lista con al menos un pago.');
+    if (pagos.length > MAX_PAGOS) throw new PedidoError('invalid-argument', `Máximo ${MAX_PAGOS} medios de pago por venta.`);
+    return pagos.map((p, i) => {
+        const o = (p && typeof p === 'object') ? p : {};
+        if (!MEDIOS.includes(o.medio)) throw new PedidoError('invalid-argument', `Medio de pago inválido en el pago ${i + 1}.`);
+        if (!Number.isInteger(o.monto) || o.monto <= 0) throw new PedidoError('invalid-argument', `El monto del pago ${i + 1} debe ser un entero positivo.`);
+        return { medio: o.medio, monto: o.monto };
+    });
+}
+
+// Etiqueta legible de una venta SIN pieza (para la lista de ventas / recibo): nombre/concepto de la 1ª
+// línea + "+N" si hay más. Nunca vacío.
+function etiquetaSinPieza(itemsExtra) {
+    const first = itemsExtra[0] || {};
+    const base = (first.nombre || first.concepto || 'Servicio');
+    return itemsExtra.length > 1 ? `${base} +${itemsExtra.length - 1}` : base;
 }
 
 // ── Código PÚBLICO de pedido (§166 · comité ×3) ────────────────────────────────
@@ -197,8 +223,9 @@ async function crearPedidoCore(db, input = {}, opts = {}) {
     const pieceId  = String(input.pieceId  || '').trim();
     const autor    = input.autor || null;
     const autorRol = typeof input.autorRol === 'string' ? input.autorRol : null;   // F2.2: auditoría de la línea libre
-    if (!pedidoId || !pieceId) throw new PedidoError('invalid-argument', 'pedidoId y pieceId son obligatorios.');
-    const medio = MEDIOS.includes(input.medio)  ? input.medio  : 'efectivo';
+    if (!pedidoId) throw new PedidoError('invalid-argument', 'pedidoId es obligatorio.');   // TODO-73: pieceId ya NO es obligatorio (venta sin pieza)
+    const medioSimple = MEDIOS.includes(input.medio) ? input.medio : 'efectivo';   // usado SOLO si no viene pagos[]
+    const pagosInput = parsePagosInput(input.pagos);                               // TODO-73 §9: split-tender (Σ vs total se valida en la tx)
     const canal = CANALES.includes(input.canal) ? input.canal : 'pos';
     const requiereEnvio = input.requiereEnvio === true;   // F1-CORE §3.3: mostrador con envío = flujo logístico
 
@@ -208,10 +235,12 @@ async function crearPedidoCore(db, input = {}, opts = {}) {
     if (!Array.isArray(lineasExtra)) throw new PedidoError('invalid-argument', 'lineasExtra debe ser una lista.');
     if (lineasExtra.length > MAX_LINEAS_EXTRA) throw new PedidoError('invalid-argument', `Máximo ${MAX_LINEAS_EXTRA} líneas por venta.`);
     if (lineasExtra.length > 0 && canal !== 'pos') throw new PedidoError('failed-precondition', 'Las líneas de servicio/modificación solo aplican en el mostrador (POS).');
+    // TODO-73 §3c: pieceId OPCIONAL — una venta SIN pieza necesita al menos un servicio/línea libre.
+    if (!pieceId && lineasExtra.length === 0) throw new PedidoError('invalid-argument', 'Una venta necesita al menos una pieza o un servicio/modificación.');
 
     // Fingerprint del payload (idempotencia §8.1.6): mismo pedidoId + payload DISTINTO = marca (no re-cobra).
     const fingerprint = fingerprintPayload({
-        pieceId, medio, canal,
+        pieceId, medio: input.medio ?? null, pagos: pagosInput, canal,
         valorGramo: input.valorGramo ?? null, peso: input.peso ?? null, manoObra: input.manoObra ?? null,
         lineasExtra: lineasExtra.map(l => l && typeof l === 'object' ? {
             tipo: l.tipo, servicioId: l.servicioId || null,
@@ -257,22 +286,24 @@ async function crearPedidoCore(db, input = {}, opts = {}) {
             }
         }
 
-        const pieceRef = db.doc(`pieces/${pieceId}`);
-        const pieceSnap = await tx.get(pieceRef);
-        if (!pieceSnap.exists) throw new PedidoError('not-found', 'La pieza no existe.');
-        const piece = pieceSnap.data();
-        // TODO-40 v3: candado de stock compartido (POS + reserva web). Valida disponibilidad (throw si
-        // agotada) y calcula si esta venta consume una unidad física. SSoT = cantidad (helper reusable).
-        const { stockType, cantidadActual, consumeUnidad } = evaluarStock(piece);
-
-        // Total server-side: precio fijo si la pieza lo tiene; si no, por peso (peso×gramo+mano).
-        // price 0 o ausente = "SIN precio en sistema" (regla del dueño): el mostrador cobra POR PESO.
-        // Sin el `> 0`, una pieza en 0 caía en modo fijo → total 0 → rechazo = mostrador bloqueado.
-        const precioFijo = typeof piece.price === 'number' && isFinite(piece.price) && piece.price > 0;
-        const oro   = precioFijo ? 0 : calcOro(input.valorGramo, input.peso);
-        const mano  = precioFijo ? 0 : entero(input.manoObra);
-        const piezaTotal = precioFijo ? entero(piece.price) : (oro + mano);
-        if (piezaTotal <= 0) throw new PedidoError('invalid-argument', 'El total debe ser mayor a 0 (revisa el precio o el peso/gramo).');
+        // TODO-73 §3c: la pieza es OPCIONAL (venta de solo servicio/modificación). Con pieza: candado de
+        // stock + precio (fijo o por peso). Sin pieza: no lee ni consume nada; el total lo dan los extras.
+        let piece = null, stockType = null, cantidadActual = null, consumeUnidad = false;
+        let precioFijo = false, oro = 0, mano = 0, piezaTotal = 0;
+        const pieceRef = pieceId ? db.doc(`pieces/${pieceId}`) : null;
+        if (pieceId) {
+            const pieceSnap = await tx.get(pieceRef);
+            if (!pieceSnap.exists) throw new PedidoError('not-found', 'La pieza no existe.');
+            piece = pieceSnap.data();
+            // TODO-40 v3: candado de stock compartido (POS + reserva web). Valida disponibilidad + si consume unidad.
+            ({ stockType, cantidadActual, consumeUnidad } = evaluarStock(piece));
+            // price 0/ausente = "sin precio en sistema" → cobra POR PESO (peso×gramo+mano); si no, precio fijo.
+            precioFijo = typeof piece.price === 'number' && isFinite(piece.price) && piece.price > 0;
+            oro  = precioFijo ? 0 : calcOro(input.valorGramo, input.peso);
+            mano = precioFijo ? 0 : entero(input.manoObra);
+            piezaTotal = precioFijo ? entero(piece.price) : (oro + mano);
+            if (piezaTotal <= 0) throw new PedidoError('invalid-argument', 'El total de la pieza debe ser mayor a 0 (revisa el precio o el peso/gramo).');
+        }
 
         // ── F2.2: resolver las líneas extra DENTRO de la tx (aún en fase de LECTURAS, antes de escribir) ──
         // Servicio = precio LEÍDO del catálogo con candado (cero confianza en el cliente); línea libre =
@@ -316,6 +347,7 @@ async function crearPedidoCore(db, input = {}, opts = {}) {
         const extrasTotal = itemsExtra.reduce((a, it) => a + it.precio * it.cantidad, 0);
         if (extrasTotal > topeExtrasTotal) throw new PedidoError('failed-precondition', `La suma de servicios/modificaciones supera el tope de $${topeExtrasTotal.toLocaleString('es-CO')}.`);
         const total = piezaTotal + extrasTotal;
+        if (total <= 0) throw new PedidoError('invalid-argument', 'El total debe ser mayor a 0.');   // red de seguridad (sin-pieza incluido)
 
         // Correlativo atómico (dentro de ESTA transacción → sin números repetidos).
         const contRef = db.doc('contadores/pedidos');
@@ -327,35 +359,51 @@ async function crearPedidoCore(db, input = {}, opts = {}) {
         // F2.2: `desglose` describe el precio DE LA PIEZA (precio_fijo/por_peso) — lo lee la merma por peso
         // (avanzarPedido) y el detalle de Pedidos. Su `.total` = subtotal de la pieza; el gran total (pieza +
         // extras) vive en `total` y su verdad es `items[]`. Sin extras, desglose.total === total (idéntico a hoy).
-        const desglose = precioFijo
-            ? { tipo: 'precio_fijo', total: piezaTotal }
-            : { tipo: 'por_peso', peso: Math.max(0, Number(input.peso) || 0), valorGramo: entero(input.valorGramo), manoObra: mano, oro, total: piezaTotal };
+        // Desglose describe el precio DE LA PIEZA (lo lee la merma por peso y el detalle). Sin pieza → sentinel.
+        const desglose = !pieceId
+            ? { tipo: 'sin_pieza', total: 0 }
+            : (precioFijo
+                ? { tipo: 'precio_fijo', total: piezaTotal }
+                : { tipo: 'por_peso', peso: Math.max(0, Number(input.peso) || 0), valorGramo: entero(input.valorGramo), manoObra: mano, oro, total: piezaTotal });
 
-        // F1-CORE ruta corta (spec §3.3): mostrador en efectivo SIN envío = venta EN MANO → nace
-        // `entregado` (el ciclo no queda artificialmente abierto). Con envío o pago por confirmar,
-        // entra al flujo normal. El arqueo cuenta igual (ESTADOS_CON_DINERO incluye `entregado`).
-        const enMano = medio === 'efectivo' && canal === 'pos' && !requiereEnvio;
-        const estadoInicial = medio === 'efectivo' ? (enMano ? 'entregado' : 'pagado') : 'pago_por_verificar';
-        // items[] = ÚNICA verdad del desglose (§8.1.1). La línea de la pieza (L0) lleva `tipo`/`lineId`/
-        // `naturaleza` DESDE YA (§8.1.8, habilita anulación parcial futura sin migrar). El costo se congela
-        // en F3 (hoy null, NO inventarlo). Aserto defensivo: total === Σ(items) o aborta (jamás desincroniza).
+        // ── TODO-73 §9 · PAGOS (split-tender). Con `pagos[]` explícito: Σ debe cuadrar el total (server-side).
+        // Sin él: pago único derivado del medio simple. `medio` top-level = medio único o 'mixto' (para el badge).
+        let pagos;
+        if (pagosInput) {
+            const suma = pagosInput.reduce((a, p) => a + p.monto, 0);
+            if (suma !== total) throw new PedidoError('invalid-argument', `Los pagos ($${suma.toLocaleString('es-CO')}) no cuadran con el total ($${total.toLocaleString('es-CO')}).`);
+            pagos = pagosInput.map(p => ({ medio: p.medio, monto: p.monto }));
+        } else {
+            pagos = [{ medio: medioSimple, monto: total }];
+        }
+        const mediosDistintos = [...new Set(pagos.map(p => p.medio))];
+        const medio = mediosDistintos.length === 1 ? mediosDistintos[0] : 'mixto';
+        // F1-CORE §3.3 + §9: la venta es INMEDIATA si TODOS los pagos aprueban en el acto (efectivo/datáfono).
+        // Inmediata sin envío = venta EN MANO → `entregado`; con envío → `pagado`. Algún pago diferido
+        // (transferencia/wompi/addi) → `pago_por_verificar` (la venta entera espera; confirmarPago la libera).
+        const inmediato = pagos.every(p => MEDIOS_INMEDIATOS.has(p.medio));
+        const enMano = inmediato && canal === 'pos' && !requiereEnvio;
+        const estadoInicial = inmediato ? (enMano ? 'entregado' : 'pagado') : 'pago_por_verificar';
+        // items[] = ÚNICA verdad del total (§8.1.1). Con pieza: L0 primero. Sin pieza: solo los extras (L1..).
         const items = [
-            { tipo: 'pieza', lineId: 'L0', pieceId, pieceName: piece.name || 'Pieza', pieceSlug: piece.slug || pieceId, cantidad: 1, precio: piezaTotal, naturaleza: 'bien', costoSnapshot: null },
+            ...(pieceId ? [{ tipo: 'pieza', lineId: 'L0', pieceId, pieceName: piece.name || 'Pieza', pieceSlug: piece.slug || pieceId, cantidad: 1, precio: piezaTotal, naturaleza: 'bien', costoSnapshot: null }] : []),
             ...itemsExtra,
         ];
         const sumaItems = items.reduce((a, it) => a + it.precio * it.cantidad, 0);
         if (sumaItems !== total) throw new PedidoError('internal', 'Descuadre interno del desglose (items ≠ total).');
+        const pieceName = pieceId ? (piece.name || 'Pieza') : etiquetaSinPieza(itemsExtra);   // etiqueta legible sin-pieza
         const doc = {
-            numero, codigo, pieceId,
-            pieceSlug: piece.slug || pieceId,
-            pieceName: piece.name || 'Pieza',
-            canal, medio,
+            numero, codigo,
+            pieceId: pieceId || null,                   // TODO-73: null si es venta sin pieza (anular NO repone)
+            pieceSlug: pieceId ? (piece.slug || pieceId) : null,
+            pieceName,
+            canal, medio, pagos,                        // §9: pagos[] = SSoT del arqueo por medio
             estado: estadoInicial,
             total,
-            desglose,                                   // SNAPSHOT inmutable de la PIEZA (la CF nunca lo edita)
-            consumioStock: consumeUnidad,               // v3: ¿bajó una unidad física? → anular la repone
+            desglose,                                   // SNAPSHOT inmutable (la CF nunca lo edita); sin pieza = {tipo:'sin_pieza'}
+            consumioStock: consumeUnidad,               // v3: ¿bajó una unidad física? (false sin pieza) → anular la repone
             requiereEnvio,                              // F1-CORE: lo respeta confirmarPago (ruta corta)
-            items,                                      // F2.2: pieza + N líneas extra (SSoT del total)
+            items,                                      // F2.2/§9: (pieza?) + N líneas extra (SSoT del total)
             fingerprint,                                // §8.1.6: detecta reuso del pedidoId con payload distinto
             clienteId: null,                            // vínculo CRM = F2.1 (CF-only)
             autor,

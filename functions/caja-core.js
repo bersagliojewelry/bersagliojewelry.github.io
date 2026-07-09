@@ -74,9 +74,14 @@ async function cerrarTurnoCore(db, input = {}) {
         if (!turnoSnap.exists) throw new PedidoError('not-found', 'El turno no existe.');
         const turno = turnoSnap.data();
         if (turno.estado === 'cerrado') {                  // IDEMPOTENTE: doble cierre → devuelve el sello (no re-computa)
+            const cero = { suma: 0, cantidad: 0 };         // back-compat: turnos sellados antes de §3b
             return {
                 turnoId, esperadoPorMedio: turno.esperadoPorMedio, esperadoEfectivo: turno.esperadoEfectivo,
-                declaradoEfectivo: turno.declaradoEfectivo, descuadre: turno.descuadre, yaExistia: true,
+                declaradoEfectivo: turno.declaradoEfectivo, descuadre: turno.descuadre,
+                // TODO-73 §3b: el reintento/doble-tap debe devolver TAMBIÉN los vouchers sellados (no vacíos).
+                esperadoDatafono: turno.esperadoDatafono || cero, declaradoDatafono: turno.declaradoDatafono || cero,
+                descuadreDatafono: turno.descuadreDatafono || cero, datafonoAnuladoEnTurno: turno.datafonoAnuladoEnTurno || cero,
+                yaExistia: true,
             };
         }
 
@@ -90,10 +95,26 @@ async function cerrarTurnoCore(db, input = {}) {
         ]);
 
         // Ventas por medio (pertenencia por turnoId #6; filtro de estado en JS → sin índice compuesto, §8.3).
+        // TODO-73 §9: SPLIT-AWARE — cada PAGO va a su medio (un pedido puede tener varios). Legacy (sin
+        // `pagos[]`) = [{medio,total}]. §3b: el voucher datáfono cuenta/suma los PAGOS datáfono con dinero;
+        // los datáfono ANULADOS se exponen aparte (comité H1: una "sobra" de voucher queda EXPLICABLE).
+        const ESTADOS_MUERTOS = new Set(['anulado', 'cancelado', 'reembolsado', 'expirado']);
+        const pagosDe = (p) => (Array.isArray(p.pagos) && p.pagos.length) ? p.pagos : [{ medio: p.medio, monto: entero(p.total) }];
         const ventasPorMedio = Object.fromEntries(MEDIOS.map((m) => [m, 0]));
+        let datafonoCount = 0, datafonoAnuladoSuma = 0, datafonoAnuladoCant = 0;
         ventasSnap.forEach((d) => {
             const p = d.data();
-            if (ventasPorMedio[p.medio] != null && ESTADOS_CON_DINERO.has(p.estado)) ventasPorMedio[p.medio] += entero(p.total);
+            const conDinero = ESTADOS_CON_DINERO.has(p.estado);
+            const muerta = ESTADOS_MUERTOS.has(p.estado);
+            for (const pago of pagosDe(p)) {
+                const monto = entero(pago.monto);
+                if (conDinero && ventasPorMedio[pago.medio] != null) {
+                    ventasPorMedio[pago.medio] += monto;
+                    if (pago.medio === 'datafono') datafonoCount += 1;
+                } else if (muerta && pago.medio === 'datafono') {
+                    datafonoAnuladoSuma += monto; datafonoAnuladoCant += 1;
+                }
+            }
         });
 
         // Ingresos/egresos manuales del turno (los anulados NO cuentan).
@@ -121,6 +142,15 @@ async function cerrarTurnoCore(db, input = {}) {
         const declaradoEfectivo = entero(conteo.efectivo);
         const descuadre = declaradoEfectivo - esperadoEfectivo;   // + sobra, − falta (espejo de cierreCajaCore)
 
+        // TODO-73 §3b: reconciliación de VOUCHERS datáfono (cantidad + suma). NULL-SAFE: `conteo.datafono`
+        // es objeto anidado y puede AUSENTARSE (turno solo-efectivo) → sin este guard, todo cierre de hoy
+        // crashearía (comité). El descuadre NUNCA bloquea (decisión Daniel): se sella para auditoría.
+        const esperadoDatafono = { suma: entero(ventasPorMedio.datafono), cantidad: datafonoCount };
+        const cd = (conteo.datafono && typeof conteo.datafono === 'object') ? conteo.datafono : {};
+        const declaradoDatafono = { suma: entero(cd.suma), cantidad: entero(cd.cantidad) };
+        const descuadreDatafono = { suma: declaradoDatafono.suma - esperadoDatafono.suma, cantidad: declaradoDatafono.cantidad - esperadoDatafono.cantidad };
+        const datafonoAnuladoEnTurno = { suma: datafonoAnuladoSuma, cantidad: datafonoAnuladoCant };
+
         // Sello INMUTABLE del turno + libera el puntero (el cierre gana: una venta tardía re-lee 'cerrado').
         tx.update(turnoRef, {
             estado: 'cerrado',
@@ -130,11 +160,15 @@ async function cerrarTurnoCore(db, input = {}) {
             esperadoPorMedio, esperadoEfectivo,
             ingresos, egresos, bovedaACajon, cajonABoveda,
             declaradoEfectivo, descuadre,
+            esperadoDatafono, declaradoDatafono, descuadreDatafono, datafonoAnuladoEnTurno,   // §3b vouchers datáfono
         });
         if (estadoSnap.exists && estadoSnap.data().turnoAbiertoId === turnoId) {
             tx.update(estadoRef, { turnoAbiertoId: null, docsDelTurno: 0 });   // libera el puntero + resetea la cota
         }
-        return { turnoId, esperadoPorMedio, esperadoEfectivo, declaradoEfectivo, descuadre, yaExistia: false };
+        return {
+            turnoId, esperadoPorMedio, esperadoEfectivo, declaradoEfectivo, descuadre,
+            esperadoDatafono, declaradoDatafono, descuadreDatafono, datafonoAnuladoEnTurno, yaExistia: false,
+        };
     });
 }
 

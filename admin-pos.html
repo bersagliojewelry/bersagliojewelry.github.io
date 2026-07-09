@@ -100,6 +100,10 @@
                             </div>
                             <ul class="pos-results" id="pos-results"></ul>
                             <p class="pos-hint" id="pos-picker-hint">Escribe para buscar entre las piezas disponibles.</p>
+                            <!-- TODO-73 3c: cobrar solo un servicio/arreglo, sin vender una pieza -->
+                            <button class="adm-btn adm-btn--ghost adm-btn--sm" id="pos-sin-pieza" type="button" style="margin-top:10px;">
+                                Cobrar solo un servicio o arreglo (sin pieza)
+                            </button>
                         </div>
 
                         <!-- Pieza elegida -->
@@ -175,16 +179,35 @@
                             </div>
                         </div>
 
-                        <!-- Medio de pago -->
-                        <div class="pos-step">
+                        <!-- Medio de pago (TODO-73: + Datáfono). Se oculta si se activa el pago dividido. -->
+                        <div class="pos-step" id="pos-medio-step">
                             <label class="pos-label" for="pos-medio">3 · Medio de pago</label>
                             <select class="adm-input" id="pos-medio">
                                 <option value="efectivo">Efectivo</option>
+                                <option value="datafono">Datáfono (tarjeta)</option>
                                 <option value="transferencia">Transferencia</option>
                                 <option value="wompi">Wompi (pasarela)</option>
                             </select>
-                            <!-- F1-CORE §3.3: sin envío = venta EN MANO (nace/termina entregado);
-                                 con envío entra al flujo logístico del módulo Pedidos. -->
+                        </div>
+
+                        <!-- TODO-73 §9 · Pago dividido (opcional): cobrar una parte con cada medio -->
+                        <div class="pos-step pos-serv" id="pos-split-step">
+                            <button class="pos-serv-toggle" id="pos-split-toggle" type="button" aria-expanded="false" aria-controls="pos-split-body">
+                                <span id="pos-split-toggle-label">+ Dividir el pago en varios medios</span>
+                                <span class="pos-serv-chev" aria-hidden="true">⌄</span>
+                            </button>
+                            <div class="pos-split-body" id="pos-split-body" hidden>
+                                <p class="pos-hint">Cobra una parte con cada medio (ej. tarjeta + efectivo). La suma debe igualar el total.</p>
+                                <div id="pos-split-rows"></div>
+                                <button class="adm-btn adm-btn--ghost adm-btn--sm" id="pos-split-add" type="button" style="margin-top:10px;">+ Agregar medio</button>
+                                <p class="pos-hint" id="pos-split-status" style="margin-top:10px;"></p>
+                            </div>
+                        </div>
+
+                        <!-- Envío (independiente del medio) -->
+                        <!-- F1-CORE §3.3: sin envío = venta EN MANO (nace/termina entregado);
+                             con envío entra al flujo logístico del módulo Pedidos. -->
+                        <div class="pos-step">
                             <label class="pos-envio-check">
                                 <input type="checkbox" id="pos-envio">
                                 Requiere envío o entrega (no se lleva en mano)
@@ -253,10 +276,34 @@
                 <label for="cierre-efectivo">Efectivo contado (COP)</label>
                 <input class="adm-input" id="cierre-efectivo" type="number" min="0" inputmode="numeric" placeholder="Ej. 1500000">
             </div>
+            <!-- TODO-73 3b: conteo de vouchers del datáfono (aparece solo si hubo ventas con tarjeta en el turno) -->
+            <div id="cierre-voucher-wrap" hidden style="margin-top:14px;">
+                <p class="pos-label" style="margin-bottom:8px;">Vouchers del datáfono (tarjeta)</p>
+                <div class="adm-form-row">
+                    <div class="adm-field">
+                        <label for="cierre-voucher-cant">¿Cuántos vouchers?</label>
+                        <input class="adm-input" id="cierre-voucher-cant" type="number" min="0" step="1" inputmode="numeric" placeholder="Ej. 3">
+                    </div>
+                    <div class="adm-field">
+                        <label for="cierre-voucher-suma">Suma de los vouchers (COP)</label>
+                        <input class="adm-input" id="cierre-voucher-suma" type="number" min="0" inputmode="numeric" placeholder="Ej. 2500000">
+                    </div>
+                </div>
+                <p class="pos-hint">Cuenta los comprobantes físicos del datáfono: cuántos son y por cuánto en total.</p>
+            </div>
             <div class="adm-calc-result pos-cierre-result" id="cierre-result" hidden>
                 <div class="adm-calc-line"><span>Esperado en efectivo</span><strong id="cierre-esperado">$0</strong></div>
                 <div class="adm-calc-line"><span>Contaste</span><strong id="cierre-contado">$0</strong></div>
                 <div class="adm-calc-line adm-calc-total"><span id="cierre-descuadre-label">Descuadre</span><strong id="cierre-descuadre">$0</strong></div>
+            </div>
+            <!-- TODO-73 3b: cuadre de vouchers (monto + cantidad · no bloquea) -->
+            <div class="adm-calc-result pos-cierre-result" id="cierre-voucher-result" hidden>
+                <p class="pos-label" style="margin-bottom:8px;">Vouchers del datáfono</p>
+                <div class="adm-calc-line"><span>Esperado</span><strong id="cierre-voucher-esp">—</strong></div>
+                <div class="adm-calc-line"><span>Contaste</span><strong id="cierre-voucher-con">—</strong></div>
+                <div class="adm-calc-line adm-calc-total"><span id="cierre-voucher-monto-label">Monto</span><strong id="cierre-voucher-monto">$0</strong></div>
+                <div class="adm-calc-line"><span id="cierre-voucher-cant-label">Cantidad</span><strong id="cierre-voucher-cant-res">—</strong></div>
+                <p class="pos-hint" id="cierre-voucher-anulado" hidden style="margin-top:8px;"></p>
             </div>
             <!-- Turno F2.0: reporte diario de los medios digitales (no se cuentan a ciegas) -->
             <div class="adm-calc-result pos-cierre-result" id="cierre-digital" hidden>

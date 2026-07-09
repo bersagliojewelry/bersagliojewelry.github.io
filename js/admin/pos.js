@@ -35,7 +35,11 @@ const entero = n => Math.round(Math.max(0, Number(n) || 0));
 // UUID de idempotencia (secure context → randomUUID; fallback defensivo si faltara).
 const uid = () => (crypto?.randomUUID?.() || `pos-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`);
 
-const MEDIO_LABEL = { efectivo: 'Efectivo', transferencia: 'Transferencia', wompi: 'Wompi' };
+const MEDIO_LABEL = { efectivo: 'Efectivo', datafono: 'Datáfono (tarjeta)', transferencia: 'Transferencia', wompi: 'Wompi', addi: 'Addi', mixto: 'Mixto' };
+// TODO-73: medios SELECCIONABLES en el mostrador. Addi ❄️ congelado (hasta que Kary vincule) → fuera del
+// selector; su label queda en MEDIO_LABEL para pintar pedidos legacy. Orden: efectivo → datáfono → transferencia → wompi.
+const MEDIOS_POS = [['efectivo', 'Efectivo'], ['datafono', 'Datáfono (tarjeta)'], ['transferencia', 'Transferencia'], ['wompi', 'Wompi']];
+const MEDIOS_INMEDIATOS = new Set(['efectivo', 'datafono']);   // aprueban en el acto (espeja pedidos-core)
 // Mensaje de negocio de la CF (claro, en español) > el genérico por código.
 const BUSINESS_ERR = ['failed-precondition', 'invalid-argument', 'not-found', 'already-exists'];
 
@@ -45,6 +49,10 @@ let _pedidoId  = null;    // UUID de la venta en curso (idempotencia)
 let _query     = '';
 let _submitting = false;
 let _cierreDone = false;  // ya se calculó el arqueo (el botón pasa a "Listo")
+// ─── TODO-73 · POS money-model (datáfono · pago dividido · venta sin pieza) ────────────────────
+let _sinPieza = false;    // venta de solo servicio/arreglo (sin pieza): computeTotal usa solo los extras
+let _split    = false;    // §9: pago dividido activo (el constructor de pagos manda sobre #pos-medio)
+let _pagos    = [];       // §9: [{medio, monto}] cuando _split; se envía como input.pagos (Σ === total)
 
 // ─── F2.2 · Facturación multi-línea (servicios/modificaciones de la venta en curso) ───────────
 let _lineasExtra    = [];     // líneas extra de ESTA venta: {tipo,servicioId?,codigo?,nombre?,concepto?,precio,cantidad,naturaleza}
@@ -136,6 +144,11 @@ async function init() {
     });
     document.getElementById('pos-libre-add')?.addEventListener('click', addLibreLine);
     subscribeServicios();
+
+    // TODO-73 · venta sin pieza + pago dividido
+    document.getElementById('pos-sin-pieza')?.addEventListener('click', startSinPieza);
+    document.getElementById('pos-split-toggle')?.addEventListener('click', toggleSplit);
+    document.getElementById('pos-split-add')?.addEventListener('click', addSplitRow);
 
     // Cierre de caja (arqueo · paso 5). TODO-70/L-81: el cierre vive SOLO en la tarjeta de caja
     // (botón "Cerrar turno", visible únicamente con turno abierto). El "Cerrar caja" legacy del
@@ -236,8 +249,20 @@ function handleCajaEstado(est) {
 
 // ─── Derivación del efectivo del cajón (ESTIMACIÓN operativa; la autoridad es el cierre server) ──
 function ventasEfectivoTurno() {
-    return _ventasTurno.reduce((s, p) =>
-        (p.medio === 'efectivo' && !ESTADOS_SIN_DINERO.has(p.estado)) ? s + entero(p.total) : s, 0);
+    // TODO-73 §9 split-aware: una venta MIXTA aporta SOLO su porción efectivo (no el total). Con `pagos[]`
+    // sumamos los pagos efectivo; legacy (sin pagos) cae al total si el medio único era efectivo.
+    return _ventasTurno.reduce((s, p) => {
+        if (ESTADOS_SIN_DINERO.has(p.estado)) return s;
+        if (Array.isArray(p.pagos) && p.pagos.length) {
+            return s + p.pagos.reduce((a, pg) => a + (pg.medio === 'efectivo' ? entero(pg.monto) : 0), 0);
+        }
+        return p.medio === 'efectivo' ? s + entero(p.total) : s;
+    }, 0);
+}
+// TODO-73 3b: ¿hubo ventas con datáfono en el turno? Incluye ANULADAS: el voucher físico se imprimió
+// igual → la cajera lo cuenta (una "sobra" queda explicada por `datafonoAnuladoEnTurno`).
+function hayVentasDatafonoTurno() {
+    return _ventasTurno.some(p => Array.isArray(p.pagos) && p.pagos.some(pg => pg.medio === 'datafono'));
 }
 function movsSums() {
     let ingresos = 0, egresos = 0;
@@ -519,6 +544,7 @@ function selectPiece(id) {
     const piece = _allPieces.find(p => p.id === id);
     if (!piece) { admToast('Esa pieza ya no está disponible.', 'danger'); renderResults(); return; }
 
+    _sinPieza = false;     // TODO-73: venta CON pieza (no sin-pieza)
     _selected = piece;
     _pedidoId = uid();   // nueva venta → nuevo UUID de idempotencia
     ocultarBannerAdjuntar();   // F2.1: empezar la siguiente venta archiva la anterior a la cola (sin toques)
@@ -530,13 +556,38 @@ function selectPiece(id) {
     document.getElementById('pos-sale').hidden     = false;
 
     resetServicios();      // F2.2: cada nueva venta arranca sin servicios y con el bloque colapsado
+    resetSplit();          // TODO-73 §9: cada venta arranca en pago único
     setupPriceMode(piece);
+    recalcTotal();
+}
+
+// TODO-73 3c · venta SIN pieza (solo servicio/arreglo). No hay paso de precio de pieza; el bloque de
+// servicios arranca ABIERTO (es lo único que se cobra). El payload omite pieceId → anular NO repone stock.
+function startSinPieza() {
+    _sinPieza = true;
+    _selected = null;
+    _pedidoId = uid();
+    ocultarBannerAdjuntar();
+    document.getElementById('pos-sel-name').textContent = 'Servicio / arreglo (sin pieza)';
+    document.getElementById('pos-sel-code').textContent = '';
+    document.getElementById('pos-picker').hidden   = true;
+    document.getElementById('pos-selected').hidden = false;
+    document.getElementById('pos-sale').hidden     = false;
+    document.getElementById('pos-price-fijo').hidden = true;   // sin pieza → sin precio de pieza
+    document.getElementById('pos-price-peso').hidden = true;
+    resetServicios();
+    const body = document.getElementById('pos-serv-body');
+    const toggle = document.getElementById('pos-serv-toggle');
+    if (body) body.hidden = false;                              // abrir el bloque de servicios de una
+    if (toggle) toggle.setAttribute('aria-expanded', 'true');
+    resetSplit();
     recalcTotal();
 }
 
 function resetSale() {
     _selected = null;
     _pedidoId = null;
+    _sinPieza = false;      // TODO-73: la siguiente venta arranca en modo pieza
     _query = '';
     document.getElementById('pos-search').value = '';
     document.getElementById('pos-picker').hidden   = false;
@@ -545,6 +596,7 @@ function resetSale() {
     ['pos-gramo', 'pos-peso', 'pos-mano'].forEach(id => { document.getElementById(id).value = ''; });
     document.getElementById('pos-envio').checked = false;   // F1-CORE: cada venta decide su envío
     resetServicios();                                        // F2.2: vacía líneas + colapsa el bloque
+    resetSplit();                                            // TODO-73 §9: vuelve a pago único
     updateMedioHint();
     renderResults();
     document.getElementById('pos-search').focus();
@@ -577,6 +629,7 @@ function extrasTotal() {
 
 /** Total que se MOSTRARÁ y se cobrará (mismo criterio que pedidos-core): pieza + líneas extra (F2.2). */
 function computeTotal() {
+    if (_sinPieza) return extrasTotal();   // TODO-73 3c: venta sin pieza → solo los servicios/líneas
     if (!_selected) return 0;
     const base = isPrecioFijo(_selected)
         ? entero(_selected.price)
@@ -591,8 +644,10 @@ function computeTotal() {
 function recalcTotal() {
     const total = computeTotal();
     document.getElementById('pos-total').textContent = cop(total);
+    if (_split) updateSplitStatus();   // TODO-73 §9: si cambió el total (p.ej. otro servicio), refresca el reparto
     const blocked = ventaBloqueadaPorCaja();   // F2.0: sin caja abierta (enforceTurno) o cajón sobre el límite
-    document.getElementById('pos-submit').disabled = !(total > 0) || _submitting || blocked;
+    const splitOk = !_split || splitStatus().ok;   // §9: con pago dividido exige Σ montos === total
+    document.getElementById('pos-submit').disabled = !(total > 0) || !splitOk || _submitting || blocked;
     const bh = document.getElementById('pos-caja-block');
     if (bh) {
         bh.hidden = !blocked;
@@ -753,10 +808,18 @@ function updateMedioHint() {
     const medio = document.getElementById('pos-medio').value;
     const envio = document.getElementById('pos-envio').checked;
     const hint  = document.getElementById('pos-medio-hint');
+    if (_split) {   // TODO-73 §9: con pago dividido el hint lo da el constructor de pagos
+        hint.textContent = 'Pago dividido: la venta queda entregada si TODOS los medios aprueban en el acto (efectivo/tarjeta); si hay un medio diferido (transferencia/Wompi) queda "por verificar".';
+        return;
+    }
     if (medio === 'efectivo') {
         hint.textContent = envio
             ? 'Quedará PAGADA y entrará al flujo de envío (módulo Pedidos).'
             : 'Venta en mano: quedará ENTREGADA (pagada) de una vez.';
+    } else if (medio === 'datafono') {   // TODO-73 3a: tarjeta = pago inmediato (como efectivo); su voucher se cuadra al cierre
+        hint.textContent = envio
+            ? 'Tarjeta: quedará PAGADA y entrará al flujo de envío. Su voucher se cuadra al cerrar caja.'
+            : 'Tarjeta: queda ENTREGADA (pagada) de una vez. Su voucher se cuadra al cerrar caja.';
     } else {
         hint.textContent = envio
             ? 'Quedará "por verificar"; al confirmar el pago entrará al flujo de envío.'
@@ -764,31 +827,134 @@ function updateMedioHint() {
     }
 }
 
-// ─── Confirmar y registrar ────────────────────────────────────────────────────
-function handleSubmit() {
-    if (!_selected || _submitting) return;
-    const total = computeTotal();
-    if (total <= 0) { admToast('El total debe ser mayor a 0.', 'danger'); return; }
+// ─── TODO-73 §9 · Pago dividido (constructor de pagos) ─────────────────────────────────────────
+// El pago único (la mayoría) NO cambia: #pos-medio manda. "Dividir pago" activa un constructor de
+// líneas {medio, monto}; la venta solo se registra cuando Σ montos === total (el server re-valida).
+function resetSplit() {
+    _split = false;
+    _pagos = [];
+    const body = document.getElementById('pos-split-body');
+    const toggle = document.getElementById('pos-split-toggle');
+    const label = document.getElementById('pos-split-toggle-label');
+    const medioStep = document.getElementById('pos-medio-step');
+    if (body) body.hidden = true;
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+    if (label) label.textContent = '+ Dividir el pago en varios medios';
+    if (medioStep) medioStep.hidden = false;
+}
 
-    const medio = document.getElementById('pos-medio').value;
-    const nombre = _selected.name || 'la pieza';
+function toggleSplit() {
+    _split = !_split;
+    const body = document.getElementById('pos-split-body');
+    const toggle = document.getElementById('pos-split-toggle');
+    const label = document.getElementById('pos-split-toggle-label');
+    const medioStep = document.getElementById('pos-medio-step');
+    if (_split) {
+        // Semilla: 1 línea = medio actual + total. La cajera reparte desde ahí.
+        _pagos = [{ medio: document.getElementById('pos-medio').value, monto: computeTotal() }];
+        if (medioStep) medioStep.hidden = true;   // el select simple se oculta (el constructor manda)
+        if (body) body.hidden = false;
+        if (label) label.textContent = '− Volver a un solo medio de pago';
+        if (toggle) toggle.setAttribute('aria-expanded', 'true');
+        renderSplitRows();
+    } else {
+        resetSplit();
+    }
+    updateMedioHint();
+    recalcTotal();
+}
+
+/** Estado del reparto: total, asignado, faltante y si cuadra (Σ === total con medios/montos válidos). */
+function splitStatus() {
+    const total = computeTotal();
+    const asignado = _pagos.reduce((a, p) => a + entero(p.monto), 0);
+    const okMedios = _pagos.length >= 1 && _pagos.every(p => MEDIOS_POS.some(([k]) => k === p.medio) && entero(p.monto) > 0);
+    return { total, asignado, faltan: total - asignado, ok: okMedios && asignado === total && total > 0 };
+}
+
+function renderSplitRows() {
+    const box = document.getElementById('pos-split-rows');
+    if (!box) return;
+    box.textContent = '';
+    _pagos.forEach((pago, i) => {
+        const row = document.createElement('div');
+        row.className = 'adm-form-row pos-split-row';
+        row.style.cssText = 'margin-top:10px;align-items:flex-end;gap:8px;';
+        const selWrap = document.createElement('div'); selWrap.className = 'adm-field'; selWrap.style.flex = '1';
+        const sel = document.createElement('select'); sel.className = 'adm-input'; sel.setAttribute('aria-label', `Medio del pago ${i + 1}`);
+        for (const [k, lbl] of MEDIOS_POS) { const o = document.createElement('option'); o.value = k; o.textContent = lbl; if (k === pago.medio) o.selected = true; sel.appendChild(o); }
+        sel.addEventListener('change', () => { _pagos[i].medio = sel.value; updateSplitStatus(); recalcTotal(); });
+        selWrap.appendChild(sel);
+        const inWrap = document.createElement('div'); inWrap.className = 'adm-field'; inWrap.style.width = '140px';
+        const inp = document.createElement('input'); inp.className = 'adm-input'; inp.type = 'number'; inp.min = '0'; inp.inputMode = 'numeric'; inp.placeholder = 'Monto'; inp.setAttribute('aria-label', `Monto del pago ${i + 1}`);
+        inp.value = entero(pago.monto) || '';
+        inp.addEventListener('input', () => { _pagos[i].monto = entero(inp.value); updateSplitStatus(); recalcTotal(); });
+        inWrap.appendChild(inp);
+        row.appendChild(selWrap); row.appendChild(inWrap);
+        if (_pagos.length > 1) {
+            const rm = document.createElement('button'); rm.type = 'button'; rm.className = 'adm-btn adm-btn--ghost adm-btn--sm'; rm.textContent = '✕'; rm.setAttribute('aria-label', `Quitar el pago ${i + 1}`);
+            rm.addEventListener('click', () => { _pagos.splice(i, 1); renderSplitRows(); recalcTotal(); });
+            row.appendChild(rm);
+        }
+        box.appendChild(row);
+    });
+    updateSplitStatus();
+}
+
+function addSplitRow() {
+    if (_pagos.length >= 4) { admToast('Máximo 4 medios de pago por venta.', 'default'); return; }
+    const { faltan } = splitStatus();
+    _pagos.push({ medio: 'efectivo', monto: Math.max(0, faltan) });   // sugiere lo que falta
+    renderSplitRows();
+    recalcTotal();
+}
+
+function updateSplitStatus() {
+    const st = document.getElementById('pos-split-status');
+    if (!st) return;
+    const { asignado, faltan, total } = splitStatus();
+    if (total <= 0) { st.textContent = 'Agrega la pieza o el servicio primero.'; st.style.color = ''; return; }
+    if (faltan === 0)      { st.textContent = `✓ Asignado ${cop(asignado)} — cuadra con el total.`;        st.style.color = 'var(--adm-success)'; }
+    else if (faltan > 0)   { st.textContent = `Asignado ${cop(asignado)} · Faltan ${cop(faltan)} por asignar.`; st.style.color = 'var(--adm-danger)'; }
+    else                   { st.textContent = `Asignado ${cop(asignado)} · Te pasaste ${cop(-faltan)} del total.`; st.style.color = 'var(--adm-danger)'; }
+}
+
+// ─── Confirmar y registrar ────────────────────────────────────────────────────
+// TODO-73 §9: la venta SIEMPRE se envía como `pagos[]` (pago único = 1 pago con el total). Split = las
+// líneas del constructor. El server re-valida Σ === total (cero confianza cliente).
+function buildPagos(total) {
+    if (_split) return _pagos.map(p => ({ medio: p.medio, monto: entero(p.monto) }));
+    return [{ medio: document.getElementById('pos-medio').value, monto: entero(total) }];
+}
+
+function handleSubmit() {
+    if ((!_selected && !_sinPieza) || _submitting) return;   // TODO-73 3c: sin-pieza es venta válida
+    const total = computeTotal();
+    if (total <= 0) { admToast(_sinPieza ? 'Agrega al menos un servicio o una línea.' : 'El total debe ser mayor a 0.', 'danger'); return; }
+    if (_split && !splitStatus().ok) { admToast('El pago dividido debe sumar exactamente el total.', 'danger'); return; }
+
+    const pagos = buildPagos(total);
+    const medioTxt = _split ? 'varios medios' : (MEDIO_LABEL[document.getElementById('pos-medio').value] || document.getElementById('pos-medio').value);
+    const nombre = _sinPieza ? 'servicio / arreglo' : (_selected.name || 'la pieza');
     admConfirm(
-        `¿Registrar la venta de «${nombre}» por ${cop(total)} (${MEDIO_LABEL[medio] || medio})?`,
-        () => doRegister(medio, total)
+        `¿Registrar la venta de «${nombre}» por ${cop(total)} (${medioTxt})?`,
+        () => doRegister(pagos, total)
     );
 }
 
-async function doRegister(medio, total) {
+async function doRegister(pagos, total) {
     _submitting = true;
     const btn = document.getElementById('pos-submit');
     btn.disabled = true;
     const prevText = btn.textContent;
     btn.textContent = 'Registrando…';
 
-    const payload = { pedidoId: _pedidoId, pieceId: _selected.id, medio, canal: 'pos' };
+    // §9: `pagos[]` es la SSoT del medio; `pieceId` se omite en venta sin pieza (anular NO repone stock).
+    const payload = { pedidoId: _pedidoId, pagos, canal: 'pos' };
+    if (!_sinPieza) payload.pieceId = _selected.id;
     // F1-CORE §3.3: con envío el pedido NO es venta en mano → entra al flujo logístico.
     if (document.getElementById('pos-envio').checked) payload.requiereEnvio = true;
-    if (!isPrecioFijo(_selected)) {
+    if (!_sinPieza && !isPrecioFijo(_selected)) {
         payload.valorGramo = document.getElementById('pos-gramo').value;
         payload.peso       = document.getElementById('pos-peso').value;
         payload.manoObra   = document.getElementById('pos-mano').value;
@@ -806,7 +972,7 @@ async function doRegister(medio, total) {
         // PRIMERO (si no corre, `_pedidoId` no rota → la venta siguiente colisiona por idempotencia →
         // venta perdida en silencio); el banner de adjuntar va DESPUÉS, en try/catch, y JAMÁS lo impide.
         const nuevoPedidoId = res.pedidoId || _pedidoId;
-        const label = `Pedido ${res.codigo || '#' + res.numero} · ${_selected?.name || 'Pieza'} · ${cop(res.total)}`;
+        const label = `Pedido ${res.codigo || '#' + res.numero} · ${_sinPieza ? 'Servicio / arreglo' : (_selected?.name || 'Pieza')} · ${cop(res.total)}`;
         const fueNueva = !res.yaExistia;
         if (res.yaExistia) {
             admToast(`Esta venta ya estaba registrada (Pedido ${res.codigo || '#' + res.numero}) — no se duplicó.`, 'default', 4000);
@@ -902,6 +1068,7 @@ function renderVentas() {
             <div class="pos-venta-meta">
                 <strong>${esc(cop(v.total))}</strong>
                 <span class="adm-pill adm-pill--${esc(est.pill)}">${esc(est.label)}</span>
+                ${v.medio ? `<span class="pos-venta-medio" style="font-size:11px;opacity:.7">${esc(MEDIO_LABEL[v.medio] || v.medio)}</span>` : ''}
                 <span class="pos-venta-time">${esc(fmtDateTime(v.createdAt))}</span>
                 ${clienteCell}${confirmBtn}${anularBtn}
             </div>
@@ -1125,6 +1292,16 @@ function openCierre() {
     document.getElementById('cierre-result').hidden = true;
     const digital = document.getElementById('cierre-digital');
     if (digital) digital.hidden = true;
+    // TODO-73 3b: los campos de voucher solo aparecen si hubo ventas con datáfono en el turno.
+    const hayDatafono = hayVentasDatafonoTurno();
+    const vwrap = document.getElementById('cierre-voucher-wrap');
+    if (vwrap) {
+        vwrap.hidden = !hayDatafono;
+        document.getElementById('cierre-voucher-cant').value = '';
+        document.getElementById('cierre-voucher-suma').value = '';
+    }
+    const vres = document.getElementById('cierre-voucher-result');
+    if (vres) vres.hidden = true;
     const submit = document.getElementById('cierre-submit');
     submit.textContent = 'Cerrar turno';
     submit.disabled = false;
@@ -1139,6 +1316,19 @@ async function handleCierre() {
     const raw = document.getElementById('cierre-efectivo').value;
     if (raw === '' || !(Number(raw) >= 0)) { admToast('Escribe el efectivo contado.', 'danger'); return; }
 
+    // TODO-73 3b: si hubo datáfono, EXIGIR el conteo de vouchers (como el efectivo → evita el "Falta $X"
+    // falso que Daniel odia). El core distingue `datafono` AUSENTE de `{0,0}`.
+    const conteoPorMedio = { efectivo: entero(raw) };
+    const hayDatafono = hayVentasDatafonoTurno();
+    if (hayDatafono) {
+        const vc = document.getElementById('cierre-voucher-cant').value;
+        const vs = document.getElementById('cierre-voucher-suma').value;
+        if (vc === '' || !(Number(vc) >= 0) || vs === '' || !(Number(vs) >= 0)) {
+            admToast('Cuenta los vouchers del datáfono: cuántos son y por cuánto.', 'danger'); return;
+        }
+        conteoPorMedio.datafono = { suma: entero(vs), cantidad: entero(vc) };
+    }
+
     // El cierre es SIEMPRE de un turno (Z legacy retirado). Re-derivamos el turnoId del estado VIVO:
     // si el turno se cerró desde otra sesión entre abrir el modal y confirmar, avisamos y no forzamos nada.
     const turnoId = _cajaEstado?.turnoAbiertoId || null;
@@ -1152,8 +1342,9 @@ async function handleCierre() {
     submit.disabled = true;
     submit.textContent = 'Calculando…';
     try {
-        const r = await cerrarTurno({ turnoId, conteoPorMedio: { efectivo: entero(raw) } });
+        const r = await cerrarTurno({ turnoId, conteoPorMedio });
         renderDigitalBreakdown(r.esperadoPorMedio);             // reporte diario de tarjetas/transferencias (§9.5)
+        renderVoucherResult(r, hayDatafono);                    // TODO-73 3b: cuadre de vouchers del datáfono
         // Conteo a ciegas: el esperado se revela AHORA, no antes.
         document.getElementById('cierre-esperado').textContent = cop(r.esperadoEfectivo);
         document.getElementById('cierre-contado').textContent  = cop(r.declaradoEfectivo);
@@ -1164,6 +1355,7 @@ async function handleCierre() {
         else if (d > 0) { label.textContent = 'Sobra';     val.textContent = cop(d);  val.style.color = 'var(--adm-accent)'; }
         else            { label.textContent = 'Falta';     val.textContent = cop(-d); val.style.color = 'var(--adm-danger)'; }
         document.getElementById('cierre-input-wrap').hidden = true;
+        const vwrap = document.getElementById('cierre-voucher-wrap'); if (vwrap) vwrap.hidden = true;   // TODO-73: ocultar inputs tras revelar
         document.getElementById('cierre-result').hidden = false;
         _cierreDone = true;
         submit.textContent = 'Listo';
@@ -1198,6 +1390,42 @@ function renderDigitalBreakdown(esperadoPorMedio) {
     box.hidden = !any;
 }
 
+// TODO-73 3b · Cuadre de VOUCHERS del datáfono (cantidad + monto). Lenguaje del comité (§8): Cuadra/Sobra/
+// Falta para el MONTO ($); coinciden/sobran N/faltan N para la CANTIDAD (jamás formatear la cantidad como
+// dinero). NUNCA bloquea (Daniel). `datafonoAnuladoEnTurno` explica una "sobra" (anti-fraude). Back-compat:
+// turnos viejos sin esperadoDatafono → {suma:0,cantidad:0}.
+function renderVoucherResult(r, hayDatafono) {
+    const box = document.getElementById('cierre-voucher-result');
+    if (!box) return;
+    if (!hayDatafono) { box.hidden = true; return; }
+    const cero = { suma: 0, cantidad: 0 };
+    const esp = r.esperadoDatafono  || cero;
+    const dec = r.declaradoDatafono || cero;
+    const dMonto = entero(dec.suma) - entero(esp.suma);
+    const dCant  = entero(dec.cantidad) - entero(esp.cantidad);
+    document.getElementById('cierre-voucher-esp').textContent = `${entero(esp.cantidad)} voucher(s) · ${cop(esp.suma)}`;
+    document.getElementById('cierre-voucher-con').textContent = `${entero(dec.cantidad)} voucher(s) · ${cop(dec.suma)}`;
+    const mLbl = document.getElementById('cierre-voucher-monto-label');
+    const mVal = document.getElementById('cierre-voucher-monto');
+    if (dMonto === 0)     { mLbl.textContent = 'Monto: cuadra ✓'; mVal.textContent = cop(0);       mVal.style.color = 'var(--adm-success)'; }
+    else if (dMonto > 0)  { mLbl.textContent = 'Monto: sobra';    mVal.textContent = cop(dMonto);   mVal.style.color = 'var(--adm-accent)'; }
+    else                  { mLbl.textContent = 'Monto: falta';    mVal.textContent = cop(-dMonto);  mVal.style.color = 'var(--adm-danger)'; }
+    const cLbl = document.getElementById('cierre-voucher-cant-label');
+    const cVal = document.getElementById('cierre-voucher-cant-res');
+    if (dCant === 0)     { cLbl.textContent = 'Cantidad: coinciden ✓'; cVal.textContent = String(entero(dec.cantidad)); cVal.style.color = 'var(--adm-success)'; }
+    else if (dCant > 0)  { cLbl.textContent = 'Cantidad: sobran';      cVal.textContent = `+${dCant}`;                   cVal.style.color = 'var(--adm-accent)'; }
+    else                 { cLbl.textContent = 'Cantidad: faltan';      cVal.textContent = String(dCant);                 cVal.style.color = 'var(--adm-danger)'; }
+    const anu  = r.datafonoAnuladoEnTurno || cero;
+    const anuP = document.getElementById('cierre-voucher-anulado');
+    if (anuP) {
+        if (entero(anu.cantidad) > 0) {
+            anuP.textContent = `⚠ ${entero(anu.cantidad)} cobro(s) con tarjeta anulados en el turno (${cop(anu.suma)}): verifica que también se anularan en el datáfono.`;
+            anuP.hidden = false;
+        } else { anuP.hidden = true; }
+    }
+    box.hidden = false;
+}
+
 // ─── Export al contador (paso 6 · bruto/neto) ─────────────────────────────────
 // L-72: el estado se rotula con estadoPedido() compartido (no un mapa local que se pudre al
 // sumar estados — antes el CSV mostraba 'despacho_nacional' crudo en vez de "En camino").
@@ -1224,10 +1452,18 @@ async function exportarContador() {
         : 0;
     // C.4: la comisión Wompi va DISCRIMINADA (base + IVA) para que el contador tenga el IVA descontable aparte.
     const head = ['Número', 'Fecha', 'Pieza', 'Medio', 'Estado', 'Bruto', 'Servicios (bruto)', 'Comisión base', 'IVA comisión', 'Comisión total', 'ReteFuente', 'ReteICA', 'Neto'];
+    // TODO-73 §9: con pago dividido la comisión (p.ej. Wompi) aplica SOLO a su porción → neto por-pago y se suma.
+    const fiscalDe = (v) => {
+        if (v.estado === 'anulado') return { bruto: entero(v.total), comisionWompi: 0, comisionBase: 0, comisionIva: 0, reteFuente: 0, reteIca: 0, neto: 0 };
+        if (Array.isArray(v.pagos) && v.pagos.length) {
+            const acc = { bruto: 0, comisionWompi: 0, comisionBase: 0, comisionIva: 0, reteFuente: 0, reteIca: 0, neto: 0 };
+            for (const pg of v.pagos) { const g = calcularNeto({ bruto: entero(pg.monto), medio: pg.medio }); for (const k in acc) acc[k] += (Number(g[k]) || 0); }
+            return acc;
+        }
+        return calcularNeto({ bruto: v.total, medio: v.medio });
+    };
     const rows = ventas.map(v => {
-        const f = (v.estado === 'anulado')
-            ? { bruto: entero(v.total), comisionWompi: 0, comisionBase: 0, comisionIva: 0, reteFuente: 0, reteIca: 0, neto: 0 }
-            : calcularNeto({ bruto: v.total, medio: v.medio });
+        const f = fiscalDe(v);
         return [
             v.numero ?? '', fmtDateTime(v.createdAt), v.pieceName || 'Pieza', v.medio || '',
             estadoPedido(v.estado).label,

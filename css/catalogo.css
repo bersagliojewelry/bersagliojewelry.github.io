@@ -217,6 +217,30 @@
     transition: transform 0.7s cubic-bezier(.2,.9,.2,1);
 }
 .cat-card:hover .cat-card-img { transform: scale(1.04); }
+
+/* ── Esqueleto de carga (TODO-72, Daniel): shimmer mientras Firestore responde ──
+   Reusa .cat-card/.cat-card-imgwrap → mismo alto que la tarjeta real (cero salto al llegar el dato).
+   El shimmer se apaga en equipos modestos (.bj-lite) y con prefers-reduced-motion (§3.1). */
+.cat-card--skeleton { pointer-events: none; cursor: default; }
+.cat-card--skeleton:hover { transform: none; }
+.cat-sk-shimmer {
+    background: linear-gradient(100deg,
+        oklch(94% 0.01 150) 30%, oklch(97% 0.006 150) 50%, oklch(94% 0.01 150) 70%);
+    background-size: 200% 100%;
+    animation: cat-shimmer 1.5s ease-in-out infinite;
+}
+.cat-card--skeleton .cat-card-imgwrap { background: oklch(94% 0.01 150); }
+.cat-sk-line { height: 12px; border-radius: 7px; margin-top: 12px; }
+.cat-sk-line--sm { width: 38%; }
+.cat-sk-line--md { width: 55%; }
+.cat-sk-line--lg { width: 78%; height: 18px; }
+@keyframes cat-shimmer {
+    from { background-position: 200% 0; }
+    to   { background-position: -200% 0; }
+}
+.bj-lite .cat-sk-shimmer { animation: none; }
+@media (prefers-reduced-motion: reduce) { .cat-sk-shimmer { animation: none; } }
+
 .cat-card-vignette {
     position: absolute; inset: 0;
     background: linear-gradient(180deg, oklch(92% 0.06 150 / 0.15), transparent 40%);

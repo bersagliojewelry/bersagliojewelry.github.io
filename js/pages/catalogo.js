@@ -400,16 +400,27 @@ function armWatchdog() {
     } catch { /* sin timers → sin watchdog */ }
 }
 
-// Estado CARGANDO: eyebrow real (ancla de marca) + título y grilla reservados — sin título
-// genérico ni "no hay piezas" falso. Se reemplaza por el render real al llegar los datos.
+// Estado CARGANDO (TODO-72, Daniel): eyebrow real (ancla de marca) + ESQUELETO VISIBLE de tarjetas
+// (shimmer) — antes la grilla quedaba en blanco (`min-height:60vh` vacío) → "parece que no hay piezas"
+// en equipos nuevos con red lenta. El esqueleto reusa `.cat-card`/`.cat-card-imgwrap` (mismo alto 4/5)
+// → cuando llega el contenido real NO hay salto. Se reemplaza por el render real al resolver Firestore.
 function renderLoading() {
+    const skeletons = Array.from({ length: 8 }, () => html`
+        <div class="glass glass-iridescent cat-card cat-card--skeleton" aria-hidden="true">
+            <div class="cat-card-imgwrap cat-sk-shimmer"></div>
+            <div class="cat-card-body">
+                <div class="cat-sk-line cat-sk-line--sm cat-sk-shimmer"></div>
+                <div class="cat-sk-line cat-sk-line--lg cat-sk-shimmer"></div>
+                <div class="cat-sk-line cat-sk-line--md cat-sk-shimmer"></div>
+            </div>
+        </div>`);
     return html`
         <div class="container cat-page">
             <div class="cat-page-header">
                 <div class="eyebrow cat-page-eyebrow">Catálogo · 2026</div>
                 <h1 class="cat-page-title" aria-busy="true" style="min-height:1.1em">&nbsp;</h1>
             </div>
-            <div class="cat-grid" aria-busy="true" aria-hidden="true" style="min-height:60vh"></div>
+            <div class="cat-grid" aria-busy="true" style="--n:4">${skeletons}</div>
         </div>`;
 }
 

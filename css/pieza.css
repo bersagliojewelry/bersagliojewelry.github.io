@@ -186,10 +186,15 @@
     touch-action: none;
     overscroll-behavior: contain;
     cursor: grab;
+    /* §147 (Daniel): arrastrar el visor NO debe seleccionar el contador "1/1" ni ningún texto.
+       touch-action cubre el táctil; user-select cubre el mouse (arrastre = selección nativa). */
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
 }
 .pz-zoom.is-open { display: block; }
 .pz-zoom.is-grabbing { cursor: grabbing; }
-.pz-zoom[data-single] .pz-zoom-nav { display: none; }   /* 1 sola imagen → sin flechas */
+/* 1 sola imagen → sin flechas Y sin el contador "1 / 1" (redundante, y era lo que se seleccionaba). */
+.pz-zoom[data-single] .pz-zoom-nav,
+.pz-zoom[data-single] .pz-zoom-counter { display: none; }
 
 /* Capa de la imagen: se mueve/escala SOLO con transform (§3.1). */
 .pz-zoom-stage {
@@ -236,6 +241,7 @@
 
 .pz-zoom-counter {
     position: absolute; top: 28px; left: 24px; z-index: 2;
+    pointer-events: none;   /* §147: nunca captura el arrastre (solo informa) */
     font-family: var(--font-mono);
     font-size: 13px; letter-spacing: 0.05em; font-variant-numeric: tabular-nums;
     color: var(--bj-emerald-800);

@@ -287,6 +287,12 @@ function renderCaja() {
     const card = document.getElementById('caja-card');
     if (!card || !_isCaja) return;
 
+    // TODO-72 (Daniel): mostrador CERRADO (enforceTurno sin turno) = no se opera. Se oculta TODA la
+    // zona de registro ("Registrar venta" / elige la pieza), no solo el botón — antes el buscador
+    // seguía visible con la caja cerrada (confuso: parecía que se podía vender).
+    const regCard = document.getElementById('pos-registrar-card');
+    if (regCard) regCard.hidden = sinTurnoAbierto();
+
     const abierta = !!_turno && _turno.estado === 'abierto';
     document.getElementById('caja-cerrada').hidden = abierta;
     document.getElementById('caja-abierta').hidden = !abierta;

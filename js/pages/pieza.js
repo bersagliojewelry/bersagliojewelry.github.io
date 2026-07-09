@@ -836,6 +836,7 @@ function bindZoomViewer(el) {
 
     el.addEventListener('pointerdown', e => {
         if (e.target.closest('button')) return;        // los botones llevan su propio click
+        e.preventDefault();                            // §147: corta la selección/arrastre nativo del mouse (el pan lo maneja el pointermove)
         pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
         try { el.setPointerCapture(e.pointerId); } catch { /* no-op */ }
         if (pts.size === 1) {

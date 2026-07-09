@@ -49,9 +49,9 @@ skeleton-vs-instantáneo: es **B ahora** (skeleton, seguro, resuelve el hueco) *
 Validado live en prod (Chrome): skeleton → contenido real; secciones vacías colapsan; sin errores.
 Gotcha: en pestaña `hidden` el skeleton persiste (Firestore + timers throttled) — correcto, no bug.
 
-## Capa A — Carga instantánea (PENDIENTE · Decisión Fuerte)
+## Capa A — Carga instantánea (EVALUADA → ⛔ ABORTADA · ver "Consejo externo" abajo)
 
-**Plan**: `data.js` consume `catalogo.json` como fuente rápida del PRIMER paint (piezas+
+**Plan evaluado**: `data.js` consume `catalogo.json` como fuente rápida del PRIMER paint (piezas+
 colecciones reales al instante en frío) y Firestore `onSnapshot` hace live-upgrade con diff-gate.
 **Reglas duras (comité, L-54)**: (1) normalizador único idempotente (Firestore crudo → derivar
 `available` con `inventario-model` desde `cantidad/stockType`; timestamps → epoch); (2) firma por
@@ -59,9 +59,28 @@ colecciones reales al instante en frío) y Firestore `onSnapshot` hace live-upgr
 jamás alimenta un cobro; (5) fallback a skeleton si el fetch estático falla (404). Retirar
 `reservedHeight` (superado por el skeleton). **Flujo**: consejo externo (read-only) + gate holístico.
 
+## Consejo externo (Antigravity, read-only, 2026-07-08) + decisión final
+
+**Veredicto**: "FALLO FATAL" en la Capa A live-upgrade. (1) **Bait-and-switch**: sobre un catálogo
+de precios/stock MUTABLES, pintar el dato horneado (stale) y corregirlo en vivo = un precio que
+sube solo en la cara del cliente (estafa percibida en lujo) — a diferencia de `siteContent`
+(inmutable-ish) donde el SWR sí aplica. (2) **Salto de layout POSPUESTO**: si el conteo horneado
+cruza el umbral vs el vivo, la franja se materializa/desaparece DESPUÉS del primer paint. (3)
+**Normalizador dual frágil**: sincronizar la forma JSON (build) con la del cliente al 100% es
+frágil; un desajuste → re-pinta siempre. Confirmó: *"ya resolviste el problema real con la Capa B."*
+Alternativa segura si se quiere instant-load: **"Vitrina diaria"** (index = `catalogo.json` puro,
+SIN listener vivo; verdad viva en `pieza.js`).
+
+**Decisión (Claude delibera; Daniel delega lo técnico)**: ADOPTADO — insumo, no oráculo.
+**Capa A live-upgrade ABORTADA.** El skeleton (Capa B) es el cierre. La "Vitrina diaria" es el
+único instant-load sano PERO cuesta el "en vivo" del inicio (un cambio no se ve hasta el próximo
+bake) → **DIFERIDA**: decidir con analítica real (¿la velocidad en frío daña conversión?), no por
+corazonada (anti-optimización-prematura §3.6). La lentitud real la causa el motor Firebase (636KB)
+que el skeleton ya disimula con dignidad.
+
 ## Checklist
 
 - [x] Capa B skeleton implementada, build verde, cache v84 — evidencia: commit `f5d4858`.
 - [x] Validada live en prod (Chrome holístico) — evidencia: skeleton→contenido real + secciones vacías colapsadas, 2026-07-08.
-- [ ] Capa A: consejo externo + implementación con normalizador único + gate holístico.
-- [ ] Cierre TODO-74: ADR en `99` + fila `00` + lección L-82 en `32` (skeleton cold-load supera reserva-en-blanco; gotcha pestaña hidden).
+- [x] Consejo externo (Antigravity) integrado — Capa A live-upgrade ABORTADA (bait-and-switch); "Vitrina diaria" diferida a datos. Evidencia: ADR §178.5/§178.7 + sección "Consejo externo" de este doc.
+- [x] Cierre TODO-74: ADR §178 (`99`) + fila `00` + lección L-82 (`30` stub + `32` detalle).

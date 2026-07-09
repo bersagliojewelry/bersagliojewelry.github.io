@@ -14,7 +14,7 @@ import { html, escape, mount } from '../core/html.js';
 import { priceDisplay } from '../core/format.js';
 import { data } from '../core/data.js';
 import { MIN_FEATURED } from '../core/home-sections.js';   // umbral de dignidad (SSoT cero-ficción)
-import { reservedHeight, rememberHeight } from '../core/section-reserve.js';
+import { rememberHeight } from '../core/section-reserve.js';
 import { lqipBgStyle } from '../core/lqip.js';             // §108 F3: blur-up (degrada si no hay LQIP)
 import { pieceUrl } from '../core/urls.js';               // SSoT URL pieza horneada (/pieza/<slug>.html)
 import { gemBadge } from '../core/gem-badge.js';          // §149: badge de gema por color (reemplaza "Destacada")
@@ -79,12 +79,25 @@ function contentHtml(pieces) {
         </div>`;
 }
 
-// CARGANDO: header real + grilla vacía con el alto reservado de la última carga.
-function loadingHtml(rh) {
+// Fantasmas mientras carga: UNA fila de escritorio. El comité (lente UX de lujo) pidió POCOS
+// (no 16 cajas): pocos se leen intencionales; una parrilla llena de grises se ve rota.
+const SKELETON_CARDS = 4;
+
+// CARGANDO: header real (ancla la sección) + grilla de tarjetas fantasma de cristal que respiran.
+// Reemplaza el hueco en blanco de la 1ª visita/incógnito (comité 2026-07-08 §NN, revierte la
+// reserva-en-blanco del comité v3 — el feedback de Daniel gana sobre el anti-CLS teórico, L-50).
+// Reusa .home-featured-card (mismo flex/columnas) + aspect 4/5 → swap casi imperceptible.
+// aria-hidden en la grilla (decorativa) + aria-busy para lectores de pantalla.
+function skeletonCard() {
+    return html`<div class="home-featured-card bj-skel"><div class="bj-skel-thumb"></div><div class="bj-skel-body"><div class="bj-skel-line lg"></div><div class="bj-skel-line sm"></div></div></div>`;
+}
+function skeletonHtml() {
     return html`
         <div class="container">
             ${headerHtml()}
-            <div class="home-featured-grid is-loading" aria-busy="true" aria-hidden="true" style="min-height:${rh}px"></div>
+            <div class="home-featured-grid is-skeleton" aria-busy="true" aria-hidden="true" style="--n:${SKELETON_CARDS}">
+                ${Array.from({ length: SKELETON_CARDS }, skeletonCard)}
+            </div>
         </div>`;
 }
 
@@ -94,8 +107,7 @@ function featuredInner() {
         return pieces.length >= MIN_FEATURED ? contentHtml(pieces) : '';   // datos | bajo umbral(colapsa)
     }
     if (_gaveUp) return '';                                                 // watchdog: datos nunca llegaron
-    const rh = reservedHeight('featured');
-    return rh ? loadingHtml(rh) : '';                                       // reserva | colapso limpio (1ª visita)
+    return skeletonHtml();                                                  // cargando → skeleton (ya no hueco en blanco)
 }
 
 function renderFeaturedCard(p) {

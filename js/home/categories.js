@@ -24,7 +24,7 @@ import { html, escape, mount } from '../core/html.js';
 import { data } from '../core/data.js';
 import { safeUrl } from '../core/safe-url.js';
 import { cardsFrom } from './categories-data.js';
-import { reservedHeight, rememberHeight } from '../core/section-reserve.js';
+import { rememberHeight } from '../core/section-reserve.js';
 import { lqipImgStyle } from '../core/lqip.js';   // §108 F3: blur-up del banner (degrada si no hay LQIP)
 import { balancedCols } from '../core/grid-balance.js';   // reparto inteligente (6 ó 7 colecciones, sin huérfana)
 
@@ -113,13 +113,20 @@ function contentHtml(list, total) {
         </div>`;
 }
 
-// Estado CARGANDO: header real + grilla vacía con el alto reservado de la última carga.
-// Sin brillo/skeleton (comité: reservar el espacio, no adornar). aria-busy para lectores.
-function loadingHtml(rh) {
+// Fantasmas mientras carga: pocos (comité UX de lujo — no una parrilla llena de grises).
+const SKELETON_CATS = 3;
+
+// Estado CARGANDO: header real (ancla la sección) + tiles fantasma de cristal que respiran.
+// Reemplaza el hueco en blanco de la 1ª visita/incógnito (comité 2026-07-08 §NN, revierte la
+// reserva-en-blanco del comité v3). Reusa .cat-tile (mismo flex/columnas) + aspect 3/4 → swap
+// casi imperceptible. aria-hidden en la grilla (decorativa) + aria-busy para lectores.
+function skeletonHtml() {
     return html`
         <div class="container">
             ${headerHtml()}
-            <div class="cat-dock is-loading" aria-busy="true" aria-hidden="true" style="min-height:${rh}px"></div>
+            <div class="cat-dock is-skeleton" aria-busy="true" aria-hidden="true" style="--n:${SKELETON_CATS}">
+                ${Array.from({ length: SKELETON_CATS }, () => html`<div class="cat-tile bj-skel"></div>`)}
+            </div>
         </div>`;
 }
 
@@ -131,8 +138,7 @@ function categoriesInner() {
         return list.length ? contentHtml(list, all.length) : '';   // datos | vacío(colapsa)
     }
     if (_gaveUp) return '';                                         // watchdog: datos nunca llegaron
-    const rh = reservedHeight('cats');
-    return rh ? loadingHtml(rh) : '';                              // reserva | colapso limpio (1ª visita)
+    return skeletonHtml();                                          // cargando → skeleton (ya no hueco en blanco)
 }
 
 // Re-render en vivo (data.onChange). Recuerda el alto al pintar datos (para reservar la próxima

@@ -10,7 +10,7 @@
 
 > ⚙️ **OPUS 4.8 INTERINATO** (Fable sin cuota; Daniel avisa el retorno): commits `[OPUS-4.8]` + footer real + TDD estricto en `functions/` + deploy manual + NO tocar webhook/firma/reaper/snapshot. `[[feedback_opus_interino]]`
 >
-> **🧭 FOCO = PLAN ÚNICO ERP v4 (TODO-68)**. F1·F2.0·F2.1·caja-tiempo-real·TODO-70·F2.2 ✅ EN PROD (§165-§176). Correcciones Daniel 2026-07-08 (validación no-holística `[[feedback_validacion_chrome_holistica]]`): **TODO-72 UX ✅ (§177)**; **TODO-73 money-model CORE ✅ TDD (`d6a5728`, SIN deploy) · UI pend → Daniel trae ajustes en sesión nueva**; **TODO-74 index carga fluida ✅ CERRADO (§178, skeleton EN PROD; live-upgrade descartado por consejo externo)**. DESPUÉS: F2.4 (TODO-39). `[[project_comercio_pagos]]`
+> **🧭 FOCO = PLAN ÚNICO ERP v4 (TODO-68)**. F1·F2.0·F2.1·caja-tiempo-real·TODO-70·F2.2 ✅ EN PROD (§165-§176). Correcciones Daniel 2026-07-08 (validación no-holística `[[feedback_validacion_chrome_holistica]]`): **TODO-72 UX ✅ (§177)**; **TODO-73 money-model ✅ CERRADO (§179): datáfono+pago-dividido+sin-pieza+vouchers DESPLEGADOS a prod (functions+Pages), gate Chrome holístico verde**; **TODO-74 index skeleton ✅ (§178)**. **SIGUE: F2.4 apartados (TODO-39)** → 2.3 térmica. **GATE negocio: precios reales + 1ª APPROVED (Daniel/Kary).** `[[project_comercio_pagos]]`
 > _MCP Firebase=escritura prod · **push+merge a main=Claude sin preguntar** (`[[feedback_claude_deploy_autorizado]]`) · consejo externo read-only · Claude valida en Chrome (`[[feedback_validacion_chrome_directa]]`)._
 
 ---
@@ -39,8 +39,7 @@
 | TODO-50 | **Catálogo de lujo** — imagen real + filtros gema/tipo + badges. Detalle → §133.2(B/C). (Taxonomía=TODO-57.) | 🔲 | tras TODO-44 |
 | TODO-71 | **Endurecer gates del cerebro (cross-repo, §175)**: (a) resolver `[[feedback_*]]` vs memoria del harness (portan autorizaciones; HUECO B); (b) `ssotFacts` / reducir dup 05↔10 (check #8 inerte, HUECO C); (c) Sonda 5 `auditoria-cerebro`. → cars-operador. | 🔲 | cars-operador |
 | TODO-57 | **Modelo GEMA** (§150-§151). HECHO: fundación+form+backfill 32/32+JSON-LD (test 9/9). **Pend**: `settings/gems`+bake · filtros (TODO-50) · live form. D.0: `badgeGem`/`gemFilterIds` fuera de `PUBLIC_SPEC_KEYS` (`generate-pieces.mjs:676`) → whitelist con Bloque D. SSoT → spec. | 🟡 | D.0 (whitelist gema) |
-| TODO-73 | **POS-pro money-model (Daniel 2026-07-08, Decisión Fuerte, TDD)** — SSoT spec `…/2026-07-08-pos-pro-datafono-servicios-DISENO.md` (comité ×3 §8 · decisiones §9). Alcance: datáfono · vouchers al cierre · venta sin pieza · pago dividido `pagos[]`. **CORE ✅ TDD** (`d6a5728`: f2-3 16/16 + no-reg verdes; SIN deploy, backward-compat). **Pend UI** (`pos.js`/`admin-pos.html`: constructor pagos + datáfono + cierre con conteo vouchers + venta-sin-pieza `_sinPieza`) → deploy `functions` + gate → ADR. Daniel trae ajustes en sesión nueva. NO tocar webhook/firma/reaper/snapshot. | 🟡 | UI → deploy+gate |
-> ✅ **Cerrados** (detalle → ADRs/`99`): **TODO-74 (§178 index skeleton de cristal; Capa A live-upgrade DESCARTADA por consejo externo — bait-and-switch; "Vitrina diaria" diferida a datos)** · TODO-72 (§177 Grupo A UX) · TODO-41 (§176 F2.2 multi-línea) · TODO-70 (§173 POS pro/caja ON) · TODO-69 (§172 caja tiempo real) · TODO-37/65/63/49/42/66/64/21/40/32 + 62-44 (rango). Pend Daniel: precios + fotos IA.
+> ✅ **Cerrados** (detalle → ADRs/`99`): **TODO-73 (§179 POS-pro money-model: datáfono + pago dividido `pagos[]` + venta sin pieza + vouchers al cierre; core+UI DESPLEGADOS a prod, f2-3 16/16 + gate Chrome holístico verde)** · **TODO-74 (§178 index skeleton; Capa A live-upgrade DESCARTADA por consejo externo — bait-and-switch)** · TODO-72 (§177 Grupo A UX) · TODO-41 (§176 F2.2 multi-línea) · TODO-70 (§173 POS pro/caja ON) · TODO-69 (§172 caja tiempo real) · TODO-37/65/63/49/42/66/64/21/40/32 + 62-44 (rango). Pend Daniel: precios + fotos IA.
 
 ---
 
@@ -51,6 +50,6 @@ Programa "Nuevo Bersaglio": F1 rediseño ✅ · F2 hardening (Tier C pend.) · F
 
 ## 📝 Bitácora (efímera)
 
-> 2026-07-08 · **F2.2 (§176)** + **TODO-72 UX (§177)** cerradas. **TODO-73** diseño+comité×3+CORE TDD ✅ (`d6a5728`, SIN deploy). Gotcha: `test:rules` falla si `http-server` de altorra ocupa `:8080` (matar PID).
+> 2026-07-08 · **F2.2 (§176)** + **TODO-72 UX (§177)** + **TODO-73 money-model (§179)** cerradas. TODO-73: datáfono+pago-dividido+sin-pieza+vouchers, core (`d6a5728`)+UI (`02546b9`) **DESPLEGADOS** (`firebase deploy --only functions` + Pages), f2-3 16/16 + **gate Chrome holístico verde (turno real)**. Gotcha: `test:rules` falla si `:8080` ocupado (matar PID).
 > 2026-07-08 · **TODO-74 CERRADO ✅ (§178)**: skeleton de cristal EN PROD, validado LIVE (Chrome holístico: skeleton→contenido real, secciones vacías colapsan). Consejo externo (Antigravity) → **Capa A live-upgrade DESCARTADA** (bait-and-switch en precios); "Vitrina diaria" diferida a analítica. **Deploy**: cherry-pick del público (`9355d5b`) + luego **merge completo `Desarrollo→main` (`42d2406`)** → `main`≡`Desarrollo`; el core TODO-73 quedó en `main` pero `functions` SIN desplegar (CI no despliega functions). Gotcha: pestaña `hidden` throttlea skeleton (no bug).
 > **Pend no-gate (→ ADRs §165-171)**: instructivo Kary · push A.6 · badge sidebar · TODO-67 fotos · botón "Atelier" · abogado CO. ⚠️ ADC gcloud caducado — firebase CLI SÍ auth (bersagliojewelry@gmail.com).

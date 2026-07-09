@@ -26,6 +26,7 @@ import { getFirestore, collection, getDocs, query, where, doc as fsDoc, getDoc }
 import { derivarEstado, esDisponible, STOCK_TYPES } from '../js/admin/inventario-model.js';   // SSoT modelo v3
 import { gemDisplayName } from '../js/core/gem-badge.js';   // §151: gema canónica (badgeGem) para JSON-LD/AEO
 import { metalConColor } from '../js/core/metal.js';        // TODO-59: color del oro (metalColor) en el metal mostrado
+import { HOME_DEFAULTS } from '../js/home/siteContent-defaults.js';
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, unlinkSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -298,7 +299,387 @@ function bakeSiteContentHtml(html, sc) {
     return out;
 }
 
-async function injectSiteContentIntoIndex(handle) {
+// ===================== PRERENDERIZADO ESTÁTICO DE LA HOME (SEO/AEO v1) =====================
+
+function priceDisplayNode(p) {
+    const price = p && p.price;
+    if (price && Number.isFinite(Number(price))) {
+        return '$ ' + Number(price).toLocaleString('es-CO');
+    }
+    const lbl = p && p.priceLabel && String(p.priceLabel).trim();
+    return lbl || 'Consultar precio';
+}
+
+function renderHeroPrerender(c) {
+    const heroImg = c.bgImage
+        ? `<img src="${escapeAttr(c.bgImage)}" alt="Atelier Bersaglio" fetchpriority="high" decoding="async" class="home-hero-img home-hero-img-fallback">`
+        : `<picture class="home-hero-img">
+                <source type="image/avif" srcset="/img/hero-800.avif 800w, /img/hero-1200.avif 1200w, /img/hero-1600.avif 1600w, /img/hero-2200.avif 2200w" sizes="100vw">
+                <source type="image/webp" srcset="/img/hero-800.webp 800w, /img/hero-1200.webp 1200w, /img/hero-1600.webp 1600w, /img/hero-2200.webp 2200w" sizes="100vw">
+                <img src="/img/hero-1200.webp" alt="Atelier Bersaglio" fetchpriority="high" decoding="async" class="home-hero-img-fallback">
+           </picture>`;
+
+    return `
+        <section class="home-hero" data-hero>
+            <div aria-hidden="true" class="home-hero-bg">
+                <div class="home-hero-blob home-hero-blob--em"></div>
+                <div class="home-hero-blob home-hero-blob--gold"></div>
+            </div>
+
+            <div class="home-hero-stage">
+                <div class="home-hero-frame">
+                    <div class="home-hero-banner">
+                        ${heroImg}
+                        <div aria-hidden="true" class="home-hero-rim"></div>
+
+                        <div class="home-hero-content">
+                            <div class="home-hero-locator-row">
+                                <div class="mono home-hero-locator">
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                                        <circle cx="12" cy="10" r="2.5"/>
+                                    </svg>
+                                    ${escapeHtml(c.locator || 'Cartagena de Indias · Colombia')}
+                                </div>
+                            </div>
+
+                            <div class="home-hero-body">
+                                <div class="home-hero-eyebrow-row">
+                                    <span class="home-hero-eyebrow-line"></span>
+                                    <span class="mono home-hero-eyebrow">${escapeHtml(c.eyebrow)}</span>
+                                </div>
+
+                                <h1 class="home-hero-headline">
+                                    ${escapeHtml(c.headline1)}<br>
+                                    <span class="home-hero-headline-italic">${escapeHtml(c.headline2)}</span>
+                                </h1>
+
+                                <p class="home-hero-manifesto">${escapeHtml(c.manifesto)}</p>
+
+                                <div class="home-hero-trust">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                                    Certificación de origen · Oro de ley 750
+                                </div>
+
+                                <div class="home-hero-actions">
+                                    <a href="${escapeAttr(c.ctaHref || '/colecciones.html')}" class="btn-hero">
+                                        <span class="btn-hero-bg" aria-hidden="true"></span>
+                                        <span class="btn-hero-shimmer" aria-hidden="true"></span>
+                                        <span class="btn-hero-label">${escapeHtml(c.ctaLabel)}</span>
+                                        <span class="btn-hero-arrow" aria-hidden="true">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M5 12h14M13 5l7 7-7 7"/>
+                                            </svg>
+                                        </span>
+                                    </a>
+                                    <a href="https://wa.me/573008142345" class="btn-hero-ghost" target="_blank" rel="noopener">Asesoría privada</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="home-hero-signature">
+                            <span class="mono home-hero-signature-eyebrow">${escapeHtml(c.signatureEyebrow)}</span>
+                            <span class="home-hero-signature-line"></span>
+                            <span class="home-hero-signature-name">${escapeHtml(c.signatureName)}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>`;
+}
+
+function renderCategoriesPrerender(collections) {
+    const MAX_CATS = 7;
+    const list = collections.slice(0, MAX_CATS);
+    const tilesHtml = list.map(c => {
+        const slug = c.slug || c.id;
+        const img = c.img ? escapeAttr(c.img) : '';
+        const name = c.name || '';
+        return `
+            <a class="glass cat-tile" href="/colecciones.html?col=${escapeAttr(slug)}" style="--cat-hue:${escapeHtml(String(c.hue || 155))}">
+                <div class="cat-tile-inner">
+                    <div class="cat-tile-img">
+                        ${img ? `<img src="${img}" alt="${escapeHtml(name)}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block;">` : `<div class="cat-tile-img-bg"></div>`}
+                    </div>
+                    <div class="cat-tile-overlay"></div>
+                    <div class="cat-tile-content">
+                        <div class="cat-tile-name">${escapeHtml(name)}</div>
+                        <div class="mono cat-tile-count">Explorar colección</div>
+                    </div>
+                </div>
+            </a>`;
+    }).join('\n');
+
+    return `
+        <section class="home-cats">
+            <div class="container">
+                <div class="home-cats-header">
+                    <div class="eyebrow">Colecciones singulares</div>
+                    <h2 class="home-cats-title">
+                        La refracción del <span class="italic emerald-text">alma verde</span>
+                    </h2>
+                    <p class="home-cats-lead">
+                        Nuestras colecciones son capítulos de una historia compartida. Cada anillo, arete y dije es esculpido pacientemente en oro de 18K, rindiendo homenaje al fuego interno y la mística de la esmeralda colombiana.
+                    </p>
+                </div>
+                <div class="cat-dock" style="--n:${list.length}">
+                    ${tilesHtml}
+                </div>
+            </div>
+        </section>`;
+}
+
+function renderFeaturedPrerender(pieces, slugMap) {
+    const list = pieces.slice(0, 16);
+    const cardsHtml = list.map(p => {
+        const slug = slugMap.get(String(p.id)) || p.slug || p.id;
+        const img = p.images?.[0] || p.image || '';
+        const stones = p.specs?.stones || p.specs?.stone || '';
+        const metal = p.specs?.metal || p.specs?.gold || '';
+        const cat = p.collection || '';
+        const priceText = priceDisplayNode(p);
+        const name = p.name || 'Pieza';
+        return `
+            <a class="glass glass-iridescent home-featured-card" href="${SITE_URL}/pieza/${escapeAttr(slug)}.html">
+                <div class="home-featured-card-imgwrap">
+                    <div class="home-featured-card-img" style="background-image:url(${escapeAttr(img)});background-size:cover;background-position:center"></div>
+                    <div class="home-featured-card-vignette" aria-hidden="true"></div>
+                </div>
+                <div class="home-featured-card-body">
+                    <div class="home-featured-card-cat">${escapeHtml(cat)}</div>
+                    <div class="home-featured-card-name">${escapeHtml(name)}</div>
+                    <div class="home-featured-card-meta">${escapeHtml([stones, metal].filter(Boolean).join(' · '))}</div>
+                    <div class="home-featured-card-foot">
+                        <div class="mono home-featured-card-price">${escapeHtml(priceText)}</div>
+                        <div class="home-featured-card-arrow">
+                            Ver pieza
+                        </div>
+                    </div>
+                </div>
+            </a>`;
+    }).join('\n');
+
+    return `
+        <section class="home-featured">
+            <div class="container">
+                <div class="home-featured-header">
+                    <div>
+                        <div class="eyebrow">Curaduría del Atelier</div>
+                        <h2 class="home-featured-title">Piezas <span class="italic emerald-text">singulares</span></h2>
+                    </div>
+                </div>
+                <div class="home-featured-grid" style="--n:4">
+                    ${cardsHtml}
+                </div>
+                <div class="home-featured-foot">
+                    <a href="/colecciones.html" class="btn-aqua home-featured-cta">
+                        Ver más piezas
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                    </a>
+                </div>
+            </div>
+        </section>`;
+}
+
+function renderEditorialPrerender(c) {
+    const stats = [
+        { num: c.stat1Num, lab: c.stat1Lab },
+        { num: c.stat2Num, lab: c.stat2Lab },
+        { num: c.stat3Num, lab: c.stat3Lab },
+    ];
+    const statsHtml = stats.map(s => `
+        <div class="home-editorial-stat">
+            <div class="display home-editorial-stat-num">${escapeHtml(s.num)}</div>
+            <div class="eyebrow home-editorial-stat-lab">${escapeHtml(s.lab)}</div>
+        </div>`).join('\n');
+
+    return `
+        <section class="home-editorial">
+            <div class="container">
+                <div class="home-editorial-grid">
+                    <div class="glass glass-iridescent home-editorial-image">
+                        <div class="home-editorial-image-bg"></div>
+                        <div class="home-editorial-image-shade"></div>
+                        <div class="home-editorial-image-content">
+                            <div class="chip home-editorial-chip">
+                                <span class="chip-dot"></span>${escapeHtml(c.chip)}
+                            </div>
+                            <h3 class="home-editorial-image-title">${escapeHtml(c.imageTitle)}</h3>
+                            <p class="home-editorial-image-sub">${escapeHtml(c.imageSub)}</p>
+                        </div>
+                    </div>
+
+                    <div class="glass home-editorial-text">
+                        <div class="eyebrow">${escapeHtml(c.eyebrow)}</div>
+                        <h2 class="home-editorial-title">
+                            ${escapeHtml(c.title1)}<br>
+                            <span class="italic emerald-text">${escapeHtml(c.title2)}</span>
+                        </h2>
+                        <p class="home-editorial-lead">${escapeHtml(c.lead)}</p>
+                        <blockquote class="home-editorial-quote">${escapeHtml(c.quote)}</blockquote>
+                        <div class="home-editorial-stats">
+                            ${statsHtml}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>`;
+}
+
+function renderServicesPrerender() {
+    const services = [
+        { t: 'Diseño a medida', d: 'Crea la pieza de tus sueños con nuestro atelier. Desde boceto hasta entrega.', icon: 'pen' },
+        { t: 'Asesoría privada', d: 'Consulta 1:1 con nuestros gemólogos. Virtual o en nuestra casa en Cartagena.', icon: 'user' },
+        { t: 'Certificación GIA', d: 'Cada pieza con diamante incluye certificado del Gemological Institute.', icon: 'gia' },
+        { t: 'Garantía vitalicia', d: 'Mantenimiento, pulido y verificación de piedras de por vida.', icon: 'shield' },
+    ];
+    const serviceIcons = {
+        pen:    `<path d="m12 19 7-7 3 3-7 7-3-3z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="m2 2 7.586 7.586"/><circle cx="11" cy="11" r="2"/>`,
+        user:   `<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>`,
+        gia:    `<path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/>`,
+        shield: `<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>`,
+    };
+
+    const itemsHtml = services.map(s => `
+        <div class="glass home-service-card">
+            <div class="home-service-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                    ${serviceIcons[s.icon]}
+                </svg>
+            </div>
+            <div class="home-service-name">${escapeHtml(s.t)}</div>
+            <p class="home-service-desc">${escapeHtml(s.d)}</p>
+        </div>`).join('\n');
+
+    return `
+        <section class="home-services">
+            <div class="container">
+                <div class="home-services-header">
+                    <div class="eyebrow">El valor de lo excepcional</div>
+                    <h2 class="home-services-title">
+                        Una experiencia a la altura<br>
+                        <span class="italic emerald-text">de tu propia historia</span>
+                    </h2>
+                </div>
+                <div class="home-services-grid">
+                    ${itemsHtml}
+                </div>
+            </div>
+        </section>`;
+}
+
+function renderAtelierPrerender(c) {
+    const steps = [
+        { t: c.step1Title, d: c.step1Desc, corner: 0 },
+        { t: c.step2Title, d: c.step2Desc, corner: 1 },
+        { t: c.step3Title, d: c.step3Desc, corner: 2 },
+        { t: c.step4Title, d: c.step4Desc, corner: 3 },
+    ];
+    const stepsHtml = steps.map(s => `
+        <div class="at-card at-card--corner-${s.corner}">
+            <div class="at-card-title"><span class="at-card-dot" aria-hidden="true"></span>${escapeHtml(s.t)}</div>
+            <p class="at-card-desc">${escapeHtml(s.d)}</p>
+        </div>`).join('\n');
+
+    return `
+        <section class="home-atelier">
+            <div class="container">
+                <div class="home-atelier-header">
+                    <div class="chip"><span class="chip-dot"></span>${escapeHtml(c.chip)}</div>
+                    <h2 class="home-atelier-title">
+                        ${escapeHtml(c.title1)} <span class="italic emerald-text">${escapeHtml(c.title2)}</span>
+                    </h2>
+                    <p class="home-atelier-lead">${escapeHtml(c.lead)}</p>
+                </div>
+
+                <div class="glass glass-iridescent at-stage">
+                    <div aria-hidden="true" class="at-halo"></div>
+                    <div aria-hidden="true" class="at-ring"></div>
+
+                    <div class="at-jewel">
+                        <img src="/img/gema.png" alt="Esmeralda Bersaglio engastada en oro 18K" class="at-jewel-img" loading="lazy" decoding="async">
+                    </div>
+
+                    ${stepsHtml}
+
+                    <div class="at-cta">
+                        <a href="${escapeAttr(c.ctaHref || '/contacto.html')}" class="btn-aqua btn-aqua-emerald">
+                            ${escapeHtml(c.ctaLabel)}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>`;
+}
+
+function renderCtaPrerender(c) {
+    return `
+        <section class="home-cta">
+            <div class="container">
+                <div class="glass glass-iridescent home-cta-card">
+                    <div class="home-cta-glow" aria-hidden="true"></div>
+                    <div class="home-cta-content">
+                        <div class="eyebrow">${escapeHtml(c.eyebrow)}</div>
+                        <h2 class="home-cta-title">
+                            ${escapeHtml(c.title1)}<br>
+                            <span class="italic emerald-text">${escapeHtml(c.title2)}</span>
+                        </h2>
+                        <p class="home-cta-lead">${escapeHtml(c.lead)}</p>
+                        <div class="home-cta-actions">
+                            <a href="${escapeAttr(c.cta1Href || '/contacto.html')}" class="btn-aqua btn-aqua-emerald">${escapeHtml(c.cta1Label)}</a>
+                            <a href="${escapeAttr(c.cta2Href || '/colecciones.html')}" class="btn-aqua">${escapeHtml(c.cta2Label)}</a>
+                        </div>
+                        <div class="mono home-cta-address">${escapeHtml(c.address)}</div>
+                    </div>
+                </div>
+            </div>
+        </section>`;
+}
+
+function prerenderHomeHtml(html, sc, pieces, collections, slugMap) {
+    const c = {
+        hero: { ...HOME_DEFAULTS.hero, ...(sc.home?.hero || {}) },
+        editorial: { ...HOME_DEFAULTS.editorial, ...(sc.home?.editorial || {}) },
+        atelier: { ...HOME_DEFAULTS.atelier, ...(sc.home?.atelier || {}) },
+        cta: { ...HOME_DEFAULTS.cta, ...(sc.home?.cta || {}) },
+    };
+
+    const heroHtml = renderHeroPrerender(c.hero);
+    const catsHtml = renderCategoriesPrerender(collections);
+    const featHtml = renderFeaturedPrerender(pieces, slugMap);
+    const editHtml = renderEditorialPrerender(c.editorial);
+    const serviceHtml = renderServicesPrerender();
+    const atelierHtml = renderAtelierPrerender(c.atelier);
+    const ctaHtml = renderCtaPrerender(c.cta);
+
+    const fullContent = [
+        heroHtml,
+        catsHtml,
+        featHtml,
+        editHtml,
+        serviceHtml,
+        atelierHtml,
+        ctaHtml,
+    ].join('\n');
+
+    const startAnchor = '<main id="main-content" data-screen-label="home">';
+    const endAnchor = '</main>';
+
+    const startIndex = html.indexOf(startAnchor);
+    const endIndex = html.indexOf(endAnchor, startIndex);
+
+    if (startIndex === -1 || endIndex === -1) {
+        console.warn('[generate] No se encontraron las etiquetas main en index.html.');
+        return html;
+    }
+
+    const before = html.substring(0, startIndex + startAnchor.length);
+    const after = html.substring(endIndex);
+
+    return before + '\n' + fullContent + '\n' + after;
+}
+
+async function injectSiteContentIntoIndex(handle, pieces, collections, slugMap) {
     const indexPath = join(DIST, 'index.html');
     if (!existsSync(indexPath)) throw new Error('[generate] No existe dist/index.html.');
     const sc = {};
@@ -317,14 +698,21 @@ async function injectSiteContentIntoIndex(handle) {
         return;
     }
     if (!Object.keys(sc).length) { console.log('[generate] siteContent vacío — bake omitido.'); return; }
-    const html = readFileSync(indexPath, 'utf-8');
-    const out = bakeSiteContentHtml(html, sc);
+    let html = readFileSync(indexPath, 'utf-8');
+    let out = bakeSiteContentHtml(html, sc);
+    
+    try {
+        out = prerenderHomeHtml(out, sc, pieces, collections, slugMap);
+    } catch (e) {
+        console.warn('[generate] Error en prerenderizado de Home — omitiendo prerender:', e.message);
+    }
+
     if (out.length <= html.length || !out.includes('</html>')) {
         throw new Error('[generate] dist/index.html quedó inválido tras hornear siteContent.');
     }
     writeFileSync(indexPath, out);
     const conPreload = (sc.home && sc.home.hero && sc.home.hero.bgImage) ? ' + preload → imagen del CMS' : '';
-    console.log(`[generate] siteContent horneado en dist/index.html (${Object.keys(sc).join('+')})${conPreload}.`);
+    console.log(`[generate] siteContent + prerender horneado en dist/index.html (${Object.keys(sc).join('+')})${conPreload}.`);
 }
 
 // Hornea una PÁGINA DE LISTADO (catálogo o journal): flip noindex→index + canonical +
@@ -947,7 +1335,7 @@ async function main() {
     injectBusinessIntoIndex(readTenantConfig());
 
     // siteContent del CMS horneado (anti-flash 1ª visita + preload al hero real, §163).
-    await injectSiteContentIntoIndex(handle);
+    await injectSiteContentIntoIndex(handle, pieces, collections, slugMap);
 
     // Páginas de listado indexables (catálogo + journal) — A2a. Por-categoría/por-artículo = A2b.
     injectListingPage('colecciones.html', '<main id="main-content" data-screen-label="colecciones">', {

@@ -16,10 +16,10 @@ export const HOME_DEFAULTS = {
         bgImage:          '',   // P3.5: URL de portada custom (Storage). Vacío → <picture> estático optimizado.
         bgImageLqip:      '',   // §103 F1: placeholder difuso (data-URI) generado al subir bgImage.
         locator:          'Cartagena de Indias · Colombia',
-        eyebrow:          'Alta Joyería Personalizada y de Confianza',
+        eyebrow:          'Alta Joyería en Esmeraldas y Diamantes · Boutique E-Commerce y Atelier',
         headline1:        'El arte de escuchar tu historia,',
         headline2:        'tallado en una joya única.',
-        manifesto:        'Nacimos visitando a nuestros clientes de puerta en puerta, cimentando una relación de cercanía y confianza duradera. En nuestro atelier privado del Centro Histórico de Cartagena, no diseñamos simples accesorios: nos tomamos el tiempo para asesorarte y dar vida a piezas irrepetibles de oro de 18 quilates y esmeraldas colombianas éticas. Una inversión emocional y material destinada a custodiar tu esencia para siempre.',
+        manifesto:        'En nuestra boutique de e-commerce y atelier privado en el Centro Histórico de Cartagena, ofrecemos un catálogo exclusivo de entrega inmediata con anillos, aretes, cadenas, dijes y pulseras en oro de 18K y esmeraldas colombianas genuinas, además de diseñar piezas de alta joyería a medida con envíos nacionales e internacionales asegurados.',
         ctaLabel:         'Descubrir la colección',
         ctaHref:          '/colecciones.html',
         signatureEyebrow: 'Una creación de',
@@ -53,10 +53,10 @@ export const HOME_DEFAULTS = {
         ctaHref:    '/contacto.html',
     },
     cta: {
-        eyebrow:   'Visita nuestro Atelier privado',
+        eyebrow:   'Visita nuestra joyería virtual o atelier físico',
         title1:    'Nuestra Maison',
         title2:    'Cartagena de Indias',
-        lead:      'Te invitamos a cruzar el umbral de nuestra Maison en el Centro Histórico de Cartagena de Indias. Con la calma de un buen café, conversaremos sin prisa sobre la pieza que habitará en tu linaje familiar.',
+        lead:      'Te invitamos a comprar online en nuestra joyería virtual con despacho nacional asegurado, o a agendar una cita presencial en nuestra Maison en el Centro Histórico de Cartagena para conversar con calma sobre la pieza que custodiará tu historia.',
         cta1Label: 'Agendar cita privada',  cta1Href: '/contacto.html',
         cta2Label: 'Explorar colecciones',  cta2Href: '/colecciones.html',
         address:   'Calle 36 # 6-32 · San Agustín Chiquita / Centro Histórico · Bolívar, Colombia',

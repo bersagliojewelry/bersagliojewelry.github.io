@@ -370,6 +370,36 @@ svg { display: block; flex-shrink: 0; }
     white-space: nowrap;
 }
 .adm-money--debe   { color: var(--adm-danger); }
+/* KPI de dinero en TARJETAS: el nowrap de .adm-money es para tablas; en una stat-card impide
+   partir cifras de 9+ digitos y el numero se monta sobre la tarjeta vecina (auditoria 2026-07-10). */
+.adm-stat-value.adm-money { white-space: normal; overflow-wrap: anywhere; }
+.adm-stat-exacto {
+    font-size: 12.5px;
+    color: var(--adm-muted);
+    margin-top: 2px;
+    white-space: nowrap;
+}
+.adm-aging-bar {
+    display: flex;
+    height: 6px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.06);
+    margin: 8px 0 6px;
+}
+.adm-aging-seg--1 { background: var(--adm-accent); opacity: .55; }
+.adm-aging-seg--2 { background: var(--adm-danger); opacity: .55; }
+.adm-aging-seg--3 { background: var(--adm-danger); }
+.adm-aging-chip {
+    display: inline-block;
+    background: rgba(122, 62, 44, 0.08);
+    border-radius: 6px;
+    padding: 2px 7px;
+    margin: 2px 4px 0 0;
+    font-size: 10.5px;
+    white-space: nowrap;
+}
+.adm-aging-chip strong { font-weight: 700; }
 .adm-money--favor  { color: var(--adm-success); }
 .adm-money--cero   { color: var(--adm-muted); }
 

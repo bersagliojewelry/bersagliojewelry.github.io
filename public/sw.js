@@ -76,7 +76,10 @@
 // de traslado en el doc del turno + reversa consciente del turno + estimado sin clamp + tope $500k Kary.
 // v87 = [FABLE-5] Auditoría anti-fugas: anti doble-reintegro de stock, webhook Wompi maneja reversas y
 // doble cobro, arqueo split-aware, opIds por turno, vouchers legacy, auditoría honesta del descuadre.
-const CACHE_NAME    = 'bersaglio-v87';
+// v88 = [FABLE-5] Reestructuración IA del panel (rail v2 comité ×3): grupos por dominio, cero PRONTO,
+// menú==título; KPI cartera sin desborde (abreviado+exacto+mini-barra aging); Anular solo turno abierto;
+// modal propio de apertura (fuera window.prompt).
+const CACHE_NAME    = 'bersaglio-v88';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

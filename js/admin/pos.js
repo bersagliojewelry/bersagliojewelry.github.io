@@ -199,6 +199,13 @@ function initCaja() {
     document.getElementById('caja-traslado')?.addEventListener('click', () => openTraslado(efectivoCajon()));
     document.getElementById('caja-cerrar')?.addEventListener('click', openCierre);
 
+    // Modal de apertura de caja (fondo)
+    document.getElementById('apertura-close')?.addEventListener('click', closeApertura);
+    document.getElementById('apertura-cancel')?.addEventListener('click', closeApertura);
+    document.getElementById('apertura-submit')?.addEventListener('click', handleApertura);
+    document.getElementById('apertura-modal')?.addEventListener('click', e => { if (e.target.id === 'apertura-modal') closeApertura(); });
+    document.getElementById('apertura-fondo')?.addEventListener('keydown', e => { if (e.key === 'Enter') handleApertura(); });
+
     // Modal de movimiento (ingreso/egreso)
     document.getElementById('mov-close')?.addEventListener('click', closeMov);
     document.getElementById('mov-cancel')?.addEventListener('click', closeMov);
@@ -436,37 +443,49 @@ function isTrasladoOpen() { return !document.getElementById('tras-modal')?.hidde
 function isCierreOpen()   { return !document.getElementById('cierre-modal')?.hidden; }
 function isMovOpen()      { return !document.getElementById('mov-modal')?.hidden; }
 function isConfirmOpen()  { return !document.getElementById('confirm-dialog')?.hidden; }
-function anyOverlayOpen() { return isTrasladoOpen() || isCierreOpen() || isMovOpen() || isConfirmOpen(); }
+function isAperturaOpen() { return !document.getElementById('apertura-modal')?.hidden; }
+function anyOverlayOpen() { return isTrasladoOpen() || isCierreOpen() || isMovOpen() || isConfirmOpen() || isAperturaOpen(); }
 
 // ─── Abrir caja ────────────────────────────────────────────────────────────────
+// Modal propio (comité UX 2026-07-10): el window.prompt() nativo parecía un error del navegador,
+// no validaba y no se podía estilar. El modal ES la confirmación (un solo paso, botón explícito).
 function abrirCaja() {
     const fondoDefault = entero(_cfgCaja?.fondoTrabajo || 0);
-    const raw = window.prompt(
-        `Fondo de apertura (base en efectivo para el cambio).\nSugerido: ${cop(fondoDefault)}`,
-        String(fondoDefault || ''),
-    );
-    if (raw === null) return;                       // canceló
+    document.getElementById('apertura-fondo').value = fondoDefault || '';
+    document.getElementById('apertura-hint').textContent = fondoDefault
+        ? `Sugerido: ${cop(fondoDefault)} (la base de trabajo configurada).`
+        : 'Escribe la base en efectivo con la que abre el cajón (puede ser 0).';
+    const submit = document.getElementById('apertura-submit');
+    submit.disabled = false; submit.textContent = 'Abrir caja';
+    document.getElementById('apertura-modal').hidden = false;
+    document.getElementById('apertura-fondo').focus();
+}
+function closeApertura() { document.getElementById('apertura-modal').hidden = true; }
+async function handleApertura() {
+    const raw = document.getElementById('apertura-fondo').value;
     const fondo = entero(raw);
-    if (!(fondo >= 0)) { admToast('El fondo debe ser un número válido.', 'danger'); return; }
+    if (raw === '' || !(fondo >= 0)) { admToast('Escribe el fondo de apertura (puede ser 0).', 'danger'); return; }
     if (!_turnoOpId) _turnoOpId = uid();            // idempotencia: mismo opId si reintenta
 
-    admConfirm(`¿Abrir la caja con un fondo de ${cop(fondo)}?`, async () => {
-        try {
-            const res = await abrirTurno({ opId: _turnoOpId, fondoApertura: fondo });
-            _turnoOpId = null;                        // el turno nuevo resetea _trasladadoSesion vía handleCajaEstado
-            // Render OPTIMISTA: la CF ya commiteó el turno (existe en Firestore) → pintamos "abierta" AL
-            // INSTANTE, sin esperar los 2 viajes del puntero encadenado (caja/estado → onTurnoChange).
-            // Disparamos handleCajaEstado a mano con el estado ya conocido; el snapshot real reconcilia.
-            _pendingOpenTurno = { id: res.turnoId, estado: 'abierto', fondoApertura: entero(res.fondoApertura ?? fondo) };
-            handleCajaEstado({ turnoAbiertoId: res.turnoId, docsDelTurno: 0 });
-            admToast('✓ Caja abierta', 'success');
-        } catch (err) {
-            const msg = (BUSINESS_ERR.includes(err?.code) && err?.message) ? err.message
-                : errorMessage(err, 'No se pudo abrir la caja.');
-            admToast(msg, 'danger', 5000);
-            // Conservamos _turnoOpId → reintentar es idempotente (no crea dos turnos).
-        }
-    });
+    const submit = document.getElementById('apertura-submit');
+    submit.disabled = true; submit.textContent = 'Abriendo…';
+    try {
+        const res = await abrirTurno({ opId: _turnoOpId, fondoApertura: fondo });
+        _turnoOpId = null;                        // el turno nuevo resetea _trasladadoSesion vía handleCajaEstado
+        // Render OPTIMISTA: la CF ya commiteó el turno (existe en Firestore) → pintamos "abierta" AL
+        // INSTANTE, sin esperar los 2 viajes del puntero encadenado (caja/estado → onTurnoChange).
+        // Disparamos handleCajaEstado a mano con el estado ya conocido; el snapshot real reconcilia.
+        _pendingOpenTurno = { id: res.turnoId, estado: 'abierto', fondoApertura: entero(res.fondoApertura ?? fondo) };
+        handleCajaEstado({ turnoAbiertoId: res.turnoId, docsDelTurno: 0 });
+        admToast('✓ Caja abierta', 'success');
+        closeApertura();
+    } catch (err) {
+        const msg = (BUSINESS_ERR.includes(err?.code) && err?.message) ? err.message
+            : errorMessage(err, 'No se pudo abrir la caja.');
+        admToast(msg, 'danger', 5000);
+        submit.disabled = false; submit.textContent = 'Abrir caja';
+        // Conservamos _turnoOpId → reintentar es idempotente (no crea dos turnos).
+    }
 }
 
 // ─── Movimiento manual (ingreso / egreso) ──────────────────────────────────────
@@ -1132,7 +1151,12 @@ function renderVentas() {
         const muerta = esMuertaVenta(v);
         const confirmBtn = v.estado === 'pago_por_verificar'
             ? `<button class="adm-btn adm-btn--ghost adm-btn--sm pos-venta-confirm" data-id="${esc(v.id)}">Confirmar pago</button>` : '';
-        const anularBtn = muerta ? '' :
+        // Semántica de POS real (comité + pregunta de Daniel 2026-07-10): ANULAR (void) es para el
+        // ERROR DE REGISTRO INMEDIATO y solo existe dentro del MISMO turno abierto. Una venta de un
+        // turno ya cerrado o de la web es una DEVOLUCIÓN → se gestiona en Pedidos (cancelar/reembolsar)
+        // con motivo y rastro. Antes el botón salía en ventas entregadas de días anteriores.
+        const esDelTurnoAbierto = !!v.turnoId && v.turnoId === (_cajaEstado?.turnoAbiertoId || null);
+        const anularBtn = (muerta || !esDelTurnoAbierto) ? '' :
             `<button class="adm-btn adm-btn--ghost adm-btn--sm pos-venta-anular" data-id="${esc(v.id)}">Anular</button>`;
         // F2.1 (solo con el flag activo): vínculo con el cliente. Botón por fila = camino AUTORITATIVO
         // (data-id sin ambigüedad, comité). Sin cliente → resalta + cuenta para la cola; con cliente → nombre.

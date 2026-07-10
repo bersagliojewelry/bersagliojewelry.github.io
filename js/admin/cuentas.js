@@ -96,17 +96,59 @@ function carteraVencida() {
     return { vencido, d1_30, d31_60, d60plus };
 }
 
+// ── Dinero en tarjetas KPI (comité UX 2026-07-10) ────────────────────────────────
+// >= $10M se muestra ABREVIADO ($506,7 M) y el exacto queda SIEMPRE visible debajo en línea
+// pequeña (Kary cuadra con exactos; en táctil no hay hover) — jamás se parte la cifra en dos líneas.
+function fmtCOPCompacto(n) {
+    const v = Math.round(Number(n) || 0);
+    if (Math.abs(v) >= 10_000_000) {
+        return '$' + (v / 1_000_000).toLocaleString('es-CO', { maximumFractionDigits: 1 }) + ' M';
+    }
+    return fmtCOP(v);
+}
+function setStatMoney(id, monto) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const compacto = fmtCOPCompacto(monto);
+    el.textContent = compacto;
+    let exacto = el.parentElement.querySelector('.adm-stat-exacto');
+    if (compacto !== fmtCOP(Math.round(Number(monto) || 0))) {
+        if (!exacto) {
+            exacto = document.createElement('div');
+            exacto.className = 'adm-stat-exacto adm-money';
+            el.insertAdjacentElement('afterend', exacto);
+        }
+        exacto.textContent = fmtCOP(monto);
+    } else if (exacto) {
+        exacto.remove();
+    }
+}
+
 function renderStats() {
     const t = carteraTotals(_clientes);
-    document.getElementById('stat-por-cobrar').textContent = fmtCOP(t.porCobrar);
+    setStatMoney('stat-por-cobrar', t.porCobrar);
     document.getElementById('stat-clientes').textContent = String(t.clientes);
-    document.getElementById('stat-a-favor').textContent = fmtCOP(Math.abs(t.aFavor));
+    setStatMoney('stat-a-favor', Math.abs(t.aFavor));
 
     const v = carteraVencida();
-    document.getElementById('stat-vencida').textContent = fmtCOP(v.vencido);
-    document.getElementById('stat-vencida-desglose').innerHTML = v.vencido > 0
-        ? `1-30: ${esc(fmtCOP(v.d1_30))} · 31-60: ${esc(fmtCOP(v.d31_60))} · +60: ${esc(fmtCOP(v.d60plus))}`
-        : 'Todo al día';
+    setStatMoney('stat-vencida', v.vencido);
+    // Aging como MINI-BARRA apilada (la proporción de un vistazo) + etiquetas con monto por tramo
+    // (comité UX 2026-07-10: el texto corrido en mono 11px era ilegible y no mostraba proporción).
+    const desg = document.getElementById('stat-vencida-desglose');
+    if (v.vencido > 0) {
+        const pct = (n) => Math.max(0, Math.round((n / v.vencido) * 100));
+        desg.innerHTML =
+            `<div class="adm-aging-bar" role="img" aria-label="Distribución de la mora por tramo">` +
+              `<span class="adm-aging-seg adm-aging-seg--1" style="width:${pct(v.d1_30)}%"></span>` +
+              `<span class="adm-aging-seg adm-aging-seg--2" style="width:${pct(v.d31_60)}%"></span>` +
+              `<span class="adm-aging-seg adm-aging-seg--3" style="width:${pct(v.d60plus)}%"></span>` +
+            `</div>` +
+            `<span class="adm-aging-chip">1-30 · <strong>${esc(fmtCOP(v.d1_30))}</strong></span>` +
+            `<span class="adm-aging-chip">31-60 · <strong>${esc(fmtCOP(v.d31_60))}</strong></span>` +
+            `<span class="adm-aging-chip">+60 · <strong>${esc(fmtCOP(v.d60plus))}</strong></span>`;
+    } else {
+        desg.textContent = 'Todo al día';
+    }
 }
 
 function renderCarteraVendedora() {

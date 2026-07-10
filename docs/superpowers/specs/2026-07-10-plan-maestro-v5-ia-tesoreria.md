@@ -84,3 +84,9 @@ Fase B/C adaptada a conocimiento).
    con `impeccable` ya instalada en skills/.
 **⛔ REGLA**: el PROMPT A ALTORRA (§182 + skills nuevas + lo minado aquí) está EN ESPERA hasta
 cerrar este TODO — se envía UNO solo ampliado (un solo chat toca el cerebro a la vez).
+
+> ✅ **EJECUTADO 2026-07-10 (ADR §183)**: síntesis → `docs/mineria-recursos-2026-07-10.md` · CRUDO →
+> bóveda `research-archive/2026-07-10-todo75-mineria-recursos-CRUDO.md`. Adopciones aplicadas:
+> twenty (7 principios ADOPTAR-YA, vinculantes para F-IA-2/F-TESORERIA/F-COMPRAS) · adspirer 12
+> técnicas → `skills/meta-ads-diagnostico` · impeccable → `33-DOCTRINAS-CSS §4` · Divisual 3 técnicas.
+> skills-main = callejón (CLI vercel-labs). Prompt a ALTORRA desbloqueado.

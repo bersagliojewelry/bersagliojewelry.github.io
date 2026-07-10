@@ -10,7 +10,7 @@
  * panel; esc() escapa también comillas para contextos de atributo, L-34).
  */
 
-import { admToast, admConfirm, initSidebar, esc, requireAuth, fmtDateTime, currentUser } from './shared.js';
+import { admToast, admConfirm, esc, fmtDateTime, currentUser } from './shared.js';
 import { onConfigCarteraChange, updateConfigCartera } from '../crm-service.js';
 import { DEFAULTS, SECCIONES, LISTAS, validarConfigCartera, leerPath, escribirPath } from './parametros-form.js';
 
@@ -18,10 +18,14 @@ let _vivo = null;       // último snapshot de config/cartera
 let _borrador = null;   // copia editable (solo se re-sincroniza si NO hay cambios sin guardar)
 let _dirty = new Set(); // ids de sección con cambios sin guardar
 
-async function init() {
-    await requireAuth('owner');
-    initSidebar();
-
+/**
+ * F-IA-2 B1 (§0.7 D7): módulo MONTABLE. La página propia (admin-parametros.html) se retiró;
+ * ahora esto se incrusta en la pestaña Cobranza de "Negocio y equipo" (admin-config.html). El
+ * host (config.js) ya hizo requireAuth('admin')+initSidebar y solo lo monta si hasRole('owner').
+ * El candado REAL sigue en las reglas (config/cartera write owner-only) — la UI solo respeta.
+ * Requiere en el DOM: #parametros-root (+ opcional #meta-section/#meta-info).
+ */
+export function initParametros() {
     onConfigCarteraChange((data) => {
         _vivo = data;
         if (_dirty.size === 0) {
@@ -38,7 +42,7 @@ async function init() {
 
 function render() {
     const root = document.getElementById('parametros-root');
-    if (!_borrador) return;
+    if (!root || !_borrador) return;
 
     const secciones = SECCIONES.map(renderSeccion).join('');
     const listas = `
@@ -115,6 +119,7 @@ function renderLista(l) {
 function renderMeta() {
     const sec = document.getElementById('meta-section');
     const info = document.getElementById('meta-info');
+    if (!sec || !info) return;   // host sin nodos de trazabilidad → no-op
     if (!_vivo) { sec.hidden = true; return; }
     sec.hidden = false;
     const cuando = _vivo.actualizadoEn || _vivo.creadoEn;
@@ -199,5 +204,3 @@ async function guardar(seccionId) {
         admToast(`No se pudo guardar: ${err.message}`, 'danger');
     }
 }
-
-init();

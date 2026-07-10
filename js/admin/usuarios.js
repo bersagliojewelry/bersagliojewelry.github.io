@@ -3,7 +3,7 @@
  * Only accessible by the Owner role.
  */
 
-import { admToast, admConfirm, initSidebar, esc, requireAuth, errorMessage } from './shared.js';
+import { admToast, admConfirm, esc, errorMessage } from './shared.js';
 import { createUser, updateUserRole, deactivateUser } from '../auth.js';
 import { firestoreDb } from '../firebase-config.js';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
@@ -11,9 +11,16 @@ import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 let _users = [];
 let _editingUid = null;  // null = modo ADD (crea cuenta); uid = modo EDIT (cambia rol)
 
-async function init() {
-    await requireAuth('owner');
-    initSidebar();
+/**
+ * F-IA-2 B1 (§0.7 D1): módulo MONTABLE. La página propia (admin-usuarios.html) se retiró; ahora
+ * esto se incrusta en la pestaña "Usuarios" de "Negocio y equipo" (admin-config.html), montada
+ * SOLO si hasRole('owner'). El candado real siguen siendo las callables owner-only (createUser /
+ * updateUserRole / deactivateUser). Requiere en el DOM los ids: #btn-new-user, #users-tbody,
+ * #users-empty, #user-modal (+ campos uf-*). Idempotente por bandera (no re-cablea).
+ */
+export async function initUsuarios() {
+    if (initUsuarios._mounted) { await loadUsers(); renderTable(); return; }
+    initUsuarios._mounted = true;
 
     await loadUsers();
     renderTable();
@@ -171,5 +178,3 @@ async function handleDeactivate(uid) {
         }
     );
 }
-
-init();

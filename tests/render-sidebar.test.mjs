@@ -15,11 +15,12 @@ test('marca el link activo por filename', () => {
   assert.match(html, /href="admin-cuentas\.html"[^>]*class="adm-nav-link is-active"/);
 });
 
-test('oculta Usuarios si el rol no es owner', () => {
-  const adminHtml = renderSidebar(NAV, { role: 'admin', activePage: 'admin.html' });
-  assert.doesNotMatch(adminHtml, /href="admin-usuarios\.html"/);
-  const ownerHtml = renderSidebar(NAV, { role: 'owner', activePage: 'admin.html' });
-  assert.match(ownerHtml, /href="admin-usuarios\.html"/);
+test('Usuarios ya NO es ítem del rail (F-IA-2 B1: absorbido como pestaña owner de "Negocio y equipo")', () => {
+  // Ni admin ni owner ven un ítem "Usuarios" en el rail — se gestiona dentro de admin-config.html.
+  for (const role of ['admin', 'owner']) {
+    const html = renderSidebar(NAV, { role, activePage: 'admin.html' });
+    assert.doesNotMatch(html, /href="admin-usuarios\.html"/, `rol ${role} no debe ver el ítem Usuarios`);
+  }
 });
 
 test('el renderer soporta placeholders `soon` (capacidad), pero el rail v2 NO trae ninguno (comité 2026-07-10)', () => {
@@ -59,11 +60,23 @@ test('Salud solo es visible para el owner (F6 frente D)', () => {
   assert.match(ownerHtml, /href="admin-salud\.html"/);
 });
 
-test('Parámetros solo es visible para el owner (M0-C: Kary no gobierna sus límites)', () => {
-  const adminHtml = renderSidebar(NAV, { role: 'admin', activePage: 'admin.html' });
-  assert.doesNotMatch(adminHtml, /href="admin-parametros\.html"/);
-  const ownerHtml = renderSidebar(NAV, { role: 'owner', activePage: 'admin.html' });
-  assert.match(ownerHtml, /href="admin-parametros\.html"/);
+test('Parámetros ya NO es ítem del rail (F-IA-2 B1: fusionado en la pestaña Cobranza de "Negocio y equipo")', () => {
+  // La política de cartera se edita dentro de admin-config.html (pestaña Cobranza, solo owner).
+  for (const role of ['admin', 'owner']) {
+    const html = renderSidebar(NAV, { role, activePage: 'admin.html' });
+    assert.doesNotMatch(html, /href="admin-parametros\.html"/, `rol ${role} no debe ver el ítem Parámetros`);
+  }
+});
+
+test('rail v2: el grupo Sistema queda con exactamente 2 ítems (Negocio y equipo + Salud)', () => {
+  const html = renderSidebar(NAV, { role: 'owner', activePage: 'admin.html' });
+  // Aísla el grupo Sistema (desde su label hasta el siguiente grupo/divisor).
+  const m = html.match(/adm-nav-label">Sistema<\/span>([\s\S]*?)<\/div>/);
+  assert.ok(m, 'debe existir el grupo Sistema');
+  const items = (m[1].match(/adm-nav-link/g) || []).length;
+  assert.equal(items, 2, 'Sistema debe tener solo Negocio y equipo + Salud');
+  assert.match(m[1], /href="admin-config\.html"/);
+  assert.match(m[1], /href="admin-salud\.html"/);
 });
 
 test('muestra el indicador de versión del panel (criterio de deploy, M2a-6)', () => {

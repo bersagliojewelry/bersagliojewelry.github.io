@@ -9,6 +9,20 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..500&family=Cormorant+Garamond:ital,wght@0,300..600;1,300..400&family=Manrope:wght@300..700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/admin.css">
+    <style>
+        /* Barra de pestañas (scoped, mismo patrón que admin-contenido.html — sin tocar admin.css). */
+        .adm-tabs { display:flex; gap:4px; flex-wrap:wrap; border-bottom:1px solid var(--adm-border); margin-bottom:20px; }
+        .adm-tab {
+            appearance:none; background:none; border:none; cursor:pointer;
+            padding:10px 16px; font:inherit; font-size:14px; color:var(--adm-muted);
+            border-bottom:2px solid transparent; margin-bottom:-1px; transition:color .15s,border-color .15s;
+        }
+        .adm-tab:hover { color:var(--adm-text, #eee); }
+        .adm-tab.is-active { color:var(--adm-accent); border-bottom-color:var(--adm-accent); font-weight:600; }
+        .adm-readonly-row { display:flex; justify-content:space-between; gap:16px; padding:10px 0; border-bottom:1px solid var(--adm-border); font-size:13px; }
+        .adm-readonly-row:last-child { border-bottom:none; }
+        .adm-readonly-row .adm-readonly-val { font-weight:600; white-space:nowrap; }
+    </style>
     <script type="module" src="js/admin/config.js"></script>
 </head>
 <body style="display:none">
@@ -25,119 +39,210 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="22" height="22"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
             </button>
             <h1>Negocio y equipo</h1>
-            <div class="adm-topbar-actions">
-                <a href="admin-cuentas.html" class="adm-btn adm-btn--ghost">← Volver a Clientes</a>
-            </div>
         </header>
 
         <div class="adm-content">
-            <form id="config-form">
-                <div class="adm-section">
-                    <div class="adm-section-head"><h2>Migración del Kardex</h2></div>
-                    <div class="adm-section-body">
-                        <p style="color:var(--adm-muted);font-size:13px;margin:0 0 16px;">
-                            Fecha de corte: los saldos del Excel se importan como saldo inicial (apertura) a ESTA fecha.
-                            El historial anterior queda archivado en el Excel.
-                        </p>
-                        <div class="adm-form-row">
-                            <div class="adm-field">
-                                <label for="cfg-fecha-corte">Fecha de corte de migración</label>
-                                <input type="date" id="cfg-fecha-corte" class="adm-input">
+
+            <!-- Pestañas. Las marcadas data-owner solo se muestran al owner (config.js). -->
+            <nav class="adm-tabs" id="config-tabs" aria-label="Secciones de negocio y equipo">
+                <button class="adm-tab is-active" data-tab="negocio" type="button">Negocio</button>
+                <button class="adm-tab" data-tab="cobranza" type="button">Cobranza</button>
+                <button class="adm-tab" data-tab="equipo" type="button">Equipo</button>
+                <button class="adm-tab" data-tab="usuarios" type="button" data-owner hidden>Usuarios</button>
+            </nav>
+
+            <!-- ─── Pestaña: Negocio ─────────────────────────────────────────── -->
+            <section class="adm-tabpanel" data-panel="negocio">
+                <form id="config-negocio-form">
+                    <div class="adm-section">
+                        <div class="adm-section-head"><h2>Datos del negocio</h2></div>
+                        <div class="adm-section-body">
+                            <p style="color:var(--adm-muted);font-size:13px;margin:0 0 16px;">
+                                Se usarán en las facturas y recibos.
+                            </p>
+                            <div class="adm-form-row">
+                                <div class="adm-field">
+                                    <label for="cfg-negocio">Nombre del negocio</label>
+                                    <input type="text" id="cfg-negocio" class="adm-input" maxlength="120">
+                                </div>
+                                <div class="adm-field">
+                                    <label for="cfg-nit">NIT / Documento</label>
+                                    <input type="text" id="cfg-nit" class="adm-input" maxlength="40">
+                                </div>
+                            </div>
+                            <div class="adm-form-row">
+                                <div class="adm-field">
+                                    <label for="cfg-direccion">Dirección</label>
+                                    <input type="text" id="cfg-direccion" class="adm-input" maxlength="160">
+                                </div>
+                                <div class="adm-field">
+                                    <label for="cfg-telefono">Teléfono</label>
+                                    <input type="tel" id="cfg-telefono" class="adm-input" maxlength="40">
+                                </div>
+                            </div>
+                            <div style="margin-top:18px;">
+                                <button type="submit" class="adm-btn adm-btn--primary" id="cfg-negocio-save">Guardar datos del negocio</button>
                             </div>
                         </div>
                     </div>
-                </div>
+                </form>
 
-                <div class="adm-section">
-                    <div class="adm-section-head"><h2>Reglas de cobranza</h2></div>
+                <!-- Reglas del sistema (solo lectura, owner) — F-IA-2 §0.7 D1 -->
+                <div class="adm-section" id="reglas-sistema" data-owner hidden>
+                    <div class="adm-section-head"><h2>Reglas del sistema (solo lectura)</h2></div>
                     <div class="adm-section-body">
-                        <p style="color:var(--adm-muted);font-size:13px;margin:0 0 16px;">
-                            Días de plazo para considerar una cuenta como <strong>atrasada</strong>.
-                            Lo definen ustedes y se puede cambiar cuando quieran.
+                        <p style="color:var(--adm-muted);font-size:13px;margin:0 0 14px;">
+                            Estos valores los define el sistema o el contador. Se podrán editar desde <strong>Tesorería</strong> más adelante.
                         </p>
-                        <div class="adm-form-row">
-                            <div class="adm-field">
-                                <label for="cfg-dias-plazo">Días de plazo (atraso)</label>
-                                <input type="number" id="cfg-dias-plazo" class="adm-input" min="0" step="1" inputmode="numeric" placeholder="Ej. 30">
+                        <div id="reglas-sistema-body"><div class="adm-empty"><p>Cargando…</p></div></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ─── Pestaña: Cobranza ────────────────────────────────────────── -->
+            <section class="adm-tabpanel" data-panel="cobranza" hidden>
+                <form id="config-cobranza-form">
+                    <div class="adm-section">
+                        <div class="adm-section-head"><h2>Reglas de cobranza</h2></div>
+                        <div class="adm-section-body">
+                            <p style="color:var(--adm-muted);font-size:13px;margin:0 0 16px;">
+                                Días de plazo para considerar una cuenta como <strong>atrasada</strong>.
+                                Lo definen ustedes y se puede cambiar cuando quieran.
+                            </p>
+                            <div class="adm-form-row">
+                                <div class="adm-field">
+                                    <label for="cfg-dias-plazo">Días de plazo (atraso)</label>
+                                    <input type="number" id="cfg-dias-plazo" class="adm-input" min="0" step="1" inputmode="numeric" placeholder="Ej. 30">
+                                </div>
+                            </div>
+                            <div style="margin-top:18px;">
+                                <button type="submit" class="adm-btn adm-btn--primary" id="cfg-cobranza-save">Guardar cobranza</button>
                             </div>
                         </div>
                     </div>
-                </div>
+                </form>
 
-                <div class="adm-section">
-                    <div class="adm-section-head"><h2>Datos del negocio</h2></div>
-                    <div class="adm-section-body">
-                        <p style="color:var(--adm-muted);font-size:13px;margin:0 0 16px;">
-                            Se usarán en las facturas/recibos más adelante.
-                        </p>
-                        <div class="adm-form-row">
-                            <div class="adm-field">
-                                <label for="cfg-negocio">Nombre del negocio</label>
-                                <input type="text" id="cfg-negocio" class="adm-input" maxlength="120">
-                            </div>
-                            <div class="adm-field">
-                                <label for="cfg-nit">NIT / Documento</label>
-                                <input type="text" id="cfg-nit" class="adm-input" maxlength="40">
-                            </div>
-                        </div>
-                        <div class="adm-form-row">
-                            <div class="adm-field">
-                                <label for="cfg-direccion">Dirección</label>
-                                <input type="text" id="cfg-direccion" class="adm-input" maxlength="160">
-                            </div>
-                            <div class="adm-field">
-                                <label for="cfg-telefono">Teléfono</label>
-                                <input type="tel" id="cfg-telefono" class="adm-input" maxlength="40">
-                            </div>
-                        </div>
-                        <div style="margin-top:18px;">
-                            <button type="submit" class="adm-btn adm-btn--primary" id="cfg-save">Guardar configuración</button>
+                <!-- Política de cartera (owner): la monta initParametros() en #parametros-root -->
+                <div id="cobranza-politica" data-owner hidden>
+                    <div id="parametros-root"><div class="adm-empty"><p>Cargando parámetros…</p></div></div>
+                    <div class="adm-section" style="margin-top:20px;" id="meta-section" hidden>
+                        <div class="adm-section-body" style="font-size:12px;color:var(--adm-muted);">
+                            <span id="meta-info">—</span>
                         </div>
                     </div>
                 </div>
-            </form>
+            </section>
 
-            <!-- Vendedoras (entidad que gestiona Kary) -->
-            <div class="adm-section" id="vendedoras">
-                <div class="adm-section-head"><h2>Vendedoras</h2></div>
-                <div class="adm-section-body">
-                    <p style="color:var(--adm-muted);font-size:13px;margin:0 0 14px;">
-                        Las vendedoras no entran a la plataforma. Aquí las gestionas para asignarles clientes y ver su cartera.
-                    </p>
-                    <div id="vendedoras-list"></div>
-                    <div class="adm-empty" id="vendedoras-empty" hidden><p>Aún no hay vendedoras.</p></div>
-                    <form id="vendedora-form" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
-                        <input type="text" id="vend-nombre" class="adm-input" placeholder="Nombre de la vendedora…" style="flex:1;min-width:200px;" maxlength="80">
-                        <button type="submit" class="adm-btn adm-btn--ghost">Agregar</button>
-                    </form>
+            <!-- ─── Pestaña: Equipo (Vendedoras) ─────────────────────────────── -->
+            <section class="adm-tabpanel" data-panel="equipo" hidden>
+                <div class="adm-section" id="vendedoras">
+                    <div class="adm-section-head"><h2>Vendedoras</h2></div>
+                    <div class="adm-section-body">
+                        <p style="color:var(--adm-muted);font-size:13px;margin:0 0 14px;">
+                            Las vendedoras no entran a la plataforma. Aquí las gestionas para asignarles clientes y ver su cartera.
+                        </p>
+                        <div id="vendedoras-list"></div>
+                        <div class="adm-empty" id="vendedoras-empty" hidden><p>Aún no hay vendedoras.</p></div>
+                        <form id="vendedora-form" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
+                            <input type="text" id="vend-nombre" class="adm-input" placeholder="Nombre de la vendedora…" style="flex:1;min-width:200px;" maxlength="80">
+                            <button type="submit" class="adm-btn adm-btn--ghost">Agregar</button>
+                        </form>
+                    </div>
                 </div>
-            </div>
+            </section>
 
-            <!-- Pendientes (tablero para mostrar a Kary) -->
-            <div class="adm-section">
-                <div class="adm-section-head"><h2>Pendientes por definir / completar</h2></div>
-                <div class="adm-section-body">
-                    <p style="color:var(--adm-muted);font-size:13px;margin:0 0 14px;">
-                        Cosas por definir con Kary o completar. Márcalas como resueltas a medida que avancen.
-                    </p>
-                    <div id="pendientes-list"></div>
-                    <div class="adm-empty" id="pendientes-empty" hidden><p>Sin pendientes. 🎉</p></div>
-                    <form id="pendiente-form" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
-                        <input type="text" id="pend-titulo" class="adm-input" placeholder="Nuevo pendiente…" style="flex:1;min-width:200px;" maxlength="160">
-                        <select id="pend-cat" class="adm-input" style="max-width:210px;">
-                            <option value="definir-kary">Definir con Kary</option>
-                            <option value="datos">Datos por confirmar</option>
-                            <option value="roadmap">Próxima fase</option>
-                        </select>
-                        <button type="submit" class="adm-btn adm-btn--ghost">Agregar</button>
-                    </form>
+            <!-- ─── Pestaña: Usuarios (owner) — la monta initUsuarios() ──────── -->
+            <section class="adm-tabpanel" data-panel="usuarios" hidden data-owner>
+                <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+                    <button class="adm-btn adm-btn--primary" id="btn-new-user">
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+                        Agregar usuario
+                    </button>
                 </div>
-            </div>
+
+                <!-- Roles -->
+                <div class="adm-section" style="margin-bottom:20px;">
+                    <div class="adm-section-body" style="display:flex;gap:20px;flex-wrap:wrap;">
+                        <div><span class="adm-pill adm-pill--gold">Owner</span><span style="font-size:12px;color:var(--adm-muted);margin-left:6px;">Acceso total + gestión de usuarios</span></div>
+                        <div><span class="adm-pill adm-pill--green">Admin</span><span style="font-size:12px;color:var(--adm-muted);margin-left:6px;">Gestión completa de contenido</span></div>
+                        <div><span class="adm-pill adm-pill--gray">Editor</span><span style="font-size:12px;color:var(--adm-muted);margin-left:6px;">Contenido web y catálogo (sin borrar)</span></div>
+                        <div><span class="adm-pill adm-pill--gray">Catálogo</span><span style="font-size:12px;color:var(--adm-muted);margin-left:6px;">Solo Piezas y Colecciones</span></div>
+                    </div>
+                </div>
+
+                <!-- Tabla de usuarios -->
+                <div class="adm-table-wrap">
+                    <table class="adm-table">
+                        <thead>
+                            <tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Estado</th><th>Último acceso</th><th></th></tr>
+                        </thead>
+                        <tbody id="users-tbody"></tbody>
+                    </table>
+                </div>
+                <div id="users-empty" class="adm-empty" hidden>
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="48" height="48" style="opacity:0.2"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
+                    <p>No hay otros usuarios registrados.</p>
+                </div>
+
+                <div class="adm-section" style="margin-top:20px;">
+                    <div class="adm-section-head"><h2>Agregar usuarios</h2></div>
+                    <div class="adm-section-body">
+                        <p style="font-size:13px;color:var(--adm-muted);line-height:1.6;">
+                            Haz clic en <strong>"Agregar usuario"</strong>, escribe el correo, una contraseña
+                            (mínimo 8 caracteres) y el rol. El usuario queda creado y puede entrar de inmediato.<br><br>
+                            <strong>Roles:</strong> <em>Admin</em> — gestiona todo menos usuarios ·
+                            <em>Editor</em> — contenido web y catálogo (sin borrar) ·
+                            <em>Catálogo</em> — solo Piezas y Colecciones.<br>
+                            <em>Solo el Owner puede agregar y gestionar usuarios.</em>
+                        </p>
+                    </div>
+                </div>
+            </section>
+
         </div>
     </main>
 </div>
 
-<!-- Confirm (eliminar pendiente, etc.) -->
+<!-- Modal: Add/Edit user role (pestaña Usuarios) -->
+<div class="adm-modal" id="user-modal" hidden>
+    <div class="adm-modal-box" style="max-width:480px;">
+        <div class="adm-modal-head">
+            <h2 id="user-modal-title">Agregar usuario</h2>
+            <button class="adm-modal-close" id="user-modal-close" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="adm-modal-body">
+            <form id="user-form" novalidate>
+                <div class="adm-field" style="margin-bottom:14px;" id="uf-email-field">
+                    <label for="uf-email">Email</label>
+                    <input class="adm-input" id="uf-email" name="email" type="email" required placeholder="usuario@email.com">
+                </div>
+                <div class="adm-field" style="margin-bottom:14px;" id="uf-password-field">
+                    <label for="uf-password">Contraseña</label>
+                    <input class="adm-input" id="uf-password" name="password" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres">
+                </div>
+                <div class="adm-field" style="margin-bottom:14px;" id="uf-name-field">
+                    <label for="uf-name">Nombre</label>
+                    <input class="adm-input" id="uf-name" name="displayName" required placeholder="Nombre completo">
+                </div>
+                <div class="adm-field">
+                    <label for="uf-role">Rol</label>
+                    <select class="adm-input" id="uf-role" name="role" required>
+                        <option value="">— Seleccionar —</option>
+                        <option value="admin">Admin</option>
+                        <option value="editor">Editor</option>
+                        <option value="catalogo">Catálogo (solo Piezas y Colecciones)</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+        <div class="adm-modal-foot">
+            <button class="adm-btn adm-btn--ghost" id="user-modal-cancel">Cancelar</button>
+            <button class="adm-btn adm-btn--primary" id="user-modal-save">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm (compartido) -->
 <div class="adm-confirm" id="confirm-dialog" hidden>
     <div class="adm-confirm-box">
         <h3>Confirmar acción</h3>

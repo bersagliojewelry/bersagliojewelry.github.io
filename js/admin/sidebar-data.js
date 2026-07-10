@@ -43,12 +43,10 @@ export const NAV = [
     { label: 'Textos / Contacto', href: 'admin-contenido.html#contacto', icon: 'inbox',   role: 'editor' },
   ]},
   { label: 'Sistema', items: [
-    { label: 'Usuarios',         href: 'admin-usuarios.html',   icon: 'shield',  role: 'owner' },
-    // Negocio y equipo (ex "Configuración"): datos del negocio + vendedoras + pendientes. La fusión
-    // con Parámetros en UNA página de pestañas = F-IA-2 (mata la cobranza duplicada).
-    { label: 'Negocio y equipo', href: 'admin-config.html',     icon: 'gear',    role: 'admin' },
-    { label: 'Parámetros',       href: 'admin-parametros.html', icon: 'sliders', role: 'owner' },
-    { label: 'Salud del sistema', href: 'admin-salud.html',     icon: 'pulse',   role: 'owner' },
+    // F-IA-2 B1 (§0.7 D1): "Negocio y equipo" absorbió Parámetros (→ pestaña Cobranza, owner) y
+    // Usuarios (→ pestaña owner) en UNA página de pestañas. El rail Sistema queda compacto.
+    { label: 'Negocio y equipo',  href: 'admin-config.html', icon: 'gear',  role: 'admin' },
+    { label: 'Salud del sistema', href: 'admin-salud.html',  icon: 'pulse', role: 'owner' },
   ]},
 ];
 
@@ -58,4 +56,4 @@ export const NAV_FOOTER = { label: 'Ver sitio', href: 'index.html', icon: 'exter
 // Versión visible del panel (criterio de deploy para no-técnicos, spec §9.1): Kary
 // confirma que está en la versión nueva tras un despliegue. Se bumpea JUNTO al
 // CACHE_NAME del Service Worker (`public/sw.js`) en cada cambio del shell admin.
-export const APP_VERSION = 'v48 · 2026-07-10';   // [FABLE-5] Rail v2 (IA por dominios, comité ×3) + KPI cartera legible + Anular=void solo turno abierto — SW v88
+export const APP_VERSION = 'v49 · 2026-07-10';   // [OPUS-4.8] F-IA-2 B1: "Negocio y equipo" con pestañas (fusiona Parámetros+Usuarios; Sistema=2 ítems) — SW v89

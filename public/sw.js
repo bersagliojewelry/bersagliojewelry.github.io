@@ -79,7 +79,7 @@
 // v88 = [FABLE-5] Reestructuración IA del panel (rail v2 comité ×3): grupos por dominio, cero PRONTO,
 // menú==título; KPI cartera sin desborde (abreviado+exacto+mini-barra aging); Anular solo turno abierto;
 // modal propio de apertura (fuera window.prompt).
-const CACHE_NAME    = 'bersaglio-v88';
+const CACHE_NAME    = 'bersaglio-v89';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

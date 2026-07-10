@@ -13,6 +13,10 @@
 export const DEFAULTS = {
     autoAprobacionMax: 50000,
     slaRevisionDias: 2,
+    // plazoDefault: LEGACY. El plazo REAL de vencimiento/mora/aging/corte es
+    // `config/negocio.diasPlazo` (F-IA-2 §0.7 D7 · H1: `plazoDefault` no tenía lectores).
+    // Se retira de la UI (sección `plazos` fuera de SECCIONES) pero el default se conserva
+    // (límite de guardián: no se borra el dato del doc). NO editable desde el panel.
     plazoDefault: 30,
     criteriosCastigo: {
         moraDias: 360,
@@ -50,16 +54,8 @@ export const SECCIONES = [
               min: 1, max: 30 },
         ],
     },
-    {
-        id: 'plazos',
-        titulo: 'Plazos del fiado',
-        descripcion: 'Cuándo vence un fiado si no se pacta fecha específica.',
-        campos: [
-            { path: 'plazoDefault', label: 'Plazo por defecto del fiado', sufijo: 'días',
-              ayuda: 'Se mantiene en 30 por decisión del 2026-06-10 ("déjalo así por ahora"). La industria joyera usa 30–90; cámbialo aquí cuando lo concilies con Kary.',
-              min: 1, max: 365 },
-        ],
-    },
+    // Sección 'plazos' (plazoDefault) RETIRADA en F-IA-2 (§0.7 D7): el plazo real vive en
+    // `config/negocio.diasPlazo`, editable desde la pestaña Cobranza de "Negocio y equipo".
     {
         id: 'castigo',
         titulo: 'Criterios de castigo (incobrables)',

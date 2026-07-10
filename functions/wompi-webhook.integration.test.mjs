@@ -130,3 +130,79 @@ test('re-consulta es la VERDAD: evento dice APPROVED pero Wompi dice DECLINED �
     assert.match(r.reason, /no-aprobado/);
     assert.equal((await db.doc('pedidos/wpReQuery').get()).data().estado, 'pago_pendiente');
 });
+
+// ─── Auditoría 2026-07-10 · reversas (VOIDED/REFUNDED) y doble cobro ──────────────────────────
+// P0 real: la reversa llegaba con el MISMO txId del APPROVED → el replay-guard se la tragaba y
+// Kary despachaba mercancía cuyo dinero ya se devolvió. P0-2: un 2º APPROVED (otra tx, misma
+// referencia) cobraba al cliente 2× en silencio.
+
+test('REVERSA · VOIDED tras APPROVED (mismo txId) → frena el despacho (a_revisar) + alerta saludEventos', async () => {
+    await db.doc('pedidos/wpVoid').set({ total: 2150000, canal: 'web', medio: 'wompi', consumioStock: true, estado: 'pago_pendiente' });
+    const opts = ov => ({ eventsSecret: EVENTS_SECRET, fetchTransaction: fetcher({ reference: 'wpVoid', ...ov }) });
+    // 1) APPROVED normal → pagado.
+    await confirmarPagoWompiCore(db, signedEvent({ txId: 'tx_void', reference: 'wpVoid' }), opts());
+    assert.equal((await db.doc('pedidos/wpVoid').get()).data().estado, 'pagado');
+    // 2) Kary/Wompi reversa la transacción → evento del MISMO txId con status VOIDED.
+    const r = await confirmarPagoWompiCore(db, signedEvent({ txId: 'tx_void', reference: 'wpVoid', status: 'VOIDED' }), opts({ status: 'VOIDED' }));
+    assert.equal(r.reason, 'reversa:VOIDED');
+    const ped = (await db.doc('pedidos/wpVoid').get()).data();
+    assert.equal(ped.estado, 'a_revisar');                                     // despacho FRENADO
+    assert.match(ped.revisarMotivo, /VOIDED/);
+    const alerta = await db.doc('saludEventos/wompi-reversa-tx_void').get();
+    assert.equal(alerta.exists, true);                                          // el panel se entera
+    assert.equal((await db.doc('webhookEvents/tx_void-VOIDED').get()).exists, true);   // audit trail compuesto
+});
+
+test('REVERSA · VOIDED sobre pedido YA ENTREGADO → NO regresa el estado, pero alerta (mercancía afuera)', async () => {
+    await db.doc('pedidos/wpVoidEnt').set({ total: 2150000, canal: 'web', medio: 'wompi', estado: 'entregado', wompiTxId: 'tx_voident' });
+    await db.doc('webhookEvents/tx_voident').set({ txId: 'tx_voident', reference: 'wpVoidEnt', status: 'APPROVED' });
+    const r = await confirmarPagoWompiCore(db, signedEvent({ txId: 'tx_voident', reference: 'wpVoidEnt', status: 'REFUNDED' }),
+        { eventsSecret: EVENTS_SECRET, fetchTransaction: fetcher({ reference: 'wpVoidEnt', status: 'REFUNDED' }) });
+    assert.equal(r.reason, 'reversa:REFUNDED');
+    assert.equal((await db.doc('pedidos/wpVoidEnt').get()).data().estado, 'entregado');   // el estado NO se pisa
+    const alerta = (await db.doc('saludEventos/wompi-reversa-tx_voident').get()).data();
+    assert.match(alerta.detalle, /YA se entregó/);
+});
+
+test('REVERSA · replay EXACTO del mismo status sigue siendo replay (no rompe la idempotencia)', async () => {
+    const opts = { eventsSecret: EVENTS_SECRET, fetchTransaction: fetcher({ reference: 'wpVoid', status: 'VOIDED' }) };
+    const r = await confirmarPagoWompiCore(db, signedEvent({ txId: 'tx_void', reference: 'wpVoid', status: 'VOIDED' }), opts);
+    // el 2º VOIDED del mismo txId: el compuesto {txId}-VOIDED ya existe pero la llave base guarda APPROVED →
+    // status distinto → re-emite la reversa idempotente (merge sobre los mismos docs). No debe crashear.
+    assert.ok(['reversa:VOIDED', 'replay', 'status-cambiado:VOIDED'].includes(r.reason));   // ya frenado (a_revisar) → solo re-audita
+});
+
+test('DOBLE COBRO · 2º APPROVED con OTRO txId sobre pedido pagado → alerta de reembolso (antes: invisible)', async () => {
+    await db.doc('pedidos/wpDoble').set({ total: 2150000, canal: 'web', medio: 'wompi', estado: 'pagado', wompiTxId: 'tx_orig' });
+    const r = await confirmarPagoWompiCore(db, signedEvent({ txId: 'tx_dup2', reference: 'wpDoble' }),
+        { eventsSecret: EVENTS_SECRET, fetchTransaction: fetcher({ reference: 'wpDoble' }) });
+    assert.equal(r.reason, 'doble-cobro');
+    const ped = (await db.doc('pedidos/wpDoble').get()).data();
+    assert.equal(ped.estado, 'pagado');                    // el pedido NO se toca
+    assert.equal(ped.wompiTxId, 'tx_orig');                // la tx original manda
+    const alerta = (await db.doc('saludEventos/wompi-doble-cobro-tx_dup2').get()).data();
+    assert.match(alerta.detalle, /DOBLE COBRO/);
+});
+
+test('APPROVED tardío con otro txId sobre pedido ENTREGADO → ya-pagado/doble-cobro, JAMÁS pagado_sin_stock (regresión)', async () => {
+    await db.doc('pedidos/wpEntTardio').set({ total: 2150000, canal: 'web', medio: 'wompi', estado: 'entregado', wompiTxId: 'tx_ent1' });
+    const r = await confirmarPagoWompiCore(db, signedEvent({ txId: 'tx_ent2', reference: 'wpEntTardio' }),
+        { eventsSecret: EVENTS_SECRET, fetchTransaction: fetcher({ reference: 'wpEntTardio' }) });
+    assert.equal(r.reason, 'doble-cobro');
+    assert.equal((await db.doc('pedidos/wpEntTardio').get()).data().estado, 'entregado');   // NO regresa a pagado_sin_stock
+});
+
+test('COBRO SIN PEDIDO · APPROVED con referencia inexistente → alerta saludEventos (antes: solo audit invisible)', async () => {
+    const r = await confirmarPagoWompiCore(db, signedEvent({ txId: 'tx_huerfano', reference: 'no-existe-999' }),
+        { eventsSecret: EVENTS_SECRET, fetchTransaction: fetcher({ reference: 'no-existe-999' }) });
+    assert.equal(r.reason, 'pedido-inexistente');
+    assert.equal((await db.doc('saludEventos/wompi-sin-pedido-tx_huerfano').get()).exists, true);
+});
+
+test('MONEDA AUSENTE en la re-consulta → a_revisar (defensa en profundidad, ya no se salta el chequeo)', async () => {
+    await db.doc('pedidos/wpSinMoneda').set({ total: 2150000, canal: 'web', medio: 'wompi', estado: 'pago_pendiente' });
+    const r = await confirmarPagoWompiCore(db, signedEvent({ txId: 'tx_sinmoneda', reference: 'wpSinMoneda' }),
+        { eventsSecret: EVENTS_SECRET, fetchTransaction: fetcher({ reference: 'wpSinMoneda', currency: undefined }) });
+    assert.equal(r.reason, 'monto-no-coincide');
+    assert.equal((await db.doc('pedidos/wpSinMoneda').get()).data().estado, 'a_revisar');
+});

@@ -1008,8 +1008,11 @@ service cloud.firestore {
       // F2.0 B0b: `config/caja` (enforceTurno/fondoTrabajo/limiteCajon/alertas) sigue el mismo
       // patrón owner-only; PERO la cajera SÍ lo LEE (el POS necesita `limiteCajon` para el modal
       // de traslado). `config/cartera` sigue vedado a la cajera (parámetros del negocio = admin+).
+      // SoD 2026-07-10 (auditoría): `config/fiscal` (tasas de comisión/retención que alimentan el
+      // reporte al contador) también es OWNER-only — quien opera no reescribe los parámetros de su
+      // propio reporte (misma lógica que cartera/caja).
       allow read:  if docId == 'status' || (docId == 'caja' && isCaja()) || isAdmin();
-      allow write: if docId in ['cartera', 'caja'] ? isOwner() : isAdmin();
+      allow write: if docId in ['cartera', 'caja', 'fiscal'] ? isOwner() : isAdmin();
     }
 
     // ─── CMS · System/meta (señal de frescura de cache) ─────────────────────────

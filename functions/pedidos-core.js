@@ -224,6 +224,9 @@ async function crearPedidoCore(db, input = {}, opts = {}) {
     const autor    = input.autor || null;
     const autorRol = typeof input.autorRol === 'string' ? input.autorRol : null;   // F2.2: auditoría de la línea libre
     if (!pedidoId) throw new PedidoError('invalid-argument', 'pedidoId es obligatorio.');   // TODO-73: pieceId ya NO es obligatorio (venta sin pieza)
+    // Un medio INVÁLIDO se rechaza (auditoría 2026-07-10): antes caía en silencio a 'efectivo' y el
+    // arqueo esperaba efectivo que entró por otro canal. Ausente (legacy sin pagos[]) sigue = efectivo.
+    if (input.medio != null && !MEDIOS.includes(input.medio)) throw new PedidoError('invalid-argument', `Medio de pago inválido: ${input.medio}`);
     const medioSimple = MEDIOS.includes(input.medio) ? input.medio : 'efectivo';   // usado SOLO si no viene pagos[]
     const pagosInput = parsePagosInput(input.pagos);                               // TODO-73 §9: split-tender (Σ vs total se valida en la tx)
     const canal = CANALES.includes(input.canal) ? input.canal : 'pos';
@@ -474,6 +477,11 @@ async function iniciarPagoWebCore(db, input = {}, opts = {}) {
     const nowMs = Number.isFinite(opts.nowMs) ? opts.nowMs : Date.now();
     const shipping = sanitizeShipping(input.shipping);
     const tipoEntrega = normTipoEntrega(input.tipoEntrega);   // A.8: recoger-en-tienda vs envío (para el despacho)
+    // Invariante de negocio EN EL SERVIDOR (auditoría 2026-07-10): internacional NUNCA cobra online
+    // (Términos). Antes solo el navegador ocultaba el botón — el callable es público y se invoca a mano.
+    if (tipoEntrega === 'internacional') {
+        throw new PedidoError('failed-precondition', 'Los envíos internacionales no se cobran en línea: se coordinan con un asesor por WhatsApp.');
+    }
 
     const result = await db.runTransaction(async (tx) => {
         const pedidoRef = db.doc(`pedidos/${pedidoId}`);
@@ -641,14 +649,47 @@ async function confirmarPagoWompiCore(db, event = {}, opts = {}) {
         const pedidoRef = db.doc(`pedidos/${reference}`);
         const evtSnap = await t.get(evtRef);
         const pedSnap = await t.get(pedidoRef);                            // reads antes de writes
-        if (evtSnap.exists) return { ok: true, status: 200, reason: 'replay', yaProcesado: true };
-
         const evt = { txId, reference, status: tx.status, amount_in_cents: tx.amount_in_cents, procesadoEn: FieldValue.serverTimestamp() };
+        const ped = pedSnap.exists ? pedSnap.data() : null;
+        const REVERSAS = new Set(['VOIDED', 'REFUNDED']);
+
+        // Auditoría 2026-07-10 (P0): una REVERSA/ANULACIÓN del cobro llega con el MISMO txId que el
+        // APPROVED original → el replay-guard viejo se la tragaba en silencio y Kary despachaba una
+        // pieza cuyo dinero ya se devolvió. Ahora: mismo txId + status DISTINTO al procesado = evento
+        // NUEVO; si es VOIDED/REFUNDED sobre un pedido con dinero, se alerta y se frena el despacho.
+        if (evtSnap.exists) {
+            const prevStatus = evtSnap.data().status || 'APPROVED';
+            if (prevStatus === tx.status) return { ok: true, status: 200, reason: 'replay', yaProcesado: true };
+            t.set(db.doc(`webhookEvents/${txId}-${tx.status}`), { ...evt, accion: 'status-cambiado', statusPrevio: prevStatus }, { merge: true });
+            if (REVERSAS.has(tx.status) && ped && ped.wompiTxId === txId && ESTADOS_CON_DINERO.has(ped.estado)) {
+                const entregado = ped.estado === 'entregado';
+                if (!entregado) {
+                    // Aún no se entregó: FRENAR el despacho (a_revisar) — el dinero ya no está.
+                    t.update(pedidoRef, { estado: 'a_revisar', revisarMotivo: `Wompi reportó ${tx.status} (reversa del cobro ${txId}): NO despachar; verifica el reembolso y anula el pedido.`, updatedAt: FieldValue.serverTimestamp() });
+                }
+                t.set(db.collection('saludEventos').doc(`wompi-reversa-${txId}`), {
+                    tipo: 'wompi-reversa',
+                    detalle: `🔻 REVERSA Wompi (${tx.status}) sobre el pedido ${ped.codigo || reference} (${ped.total || '?'} COP)${entregado ? ' — ⚠️ la pieza YA se entregó: gestiona la devolución de la mercancía' : ' — el despacho quedó FRENADO (a_revisar)'}. Registra el desenlace en Pedidos (reembolsado/anulado).`,
+                    pedidoId: reference, at: FieldValue.serverTimestamp(), resuelto: false,
+                }, { merge: true });
+                return { ok: true, status: 200, reason: `reversa:${tx.status}` };
+            }
+            return { ok: true, status: 200, reason: `status-cambiado:${tx.status}` };
+        }
+
         if (!pedSnap.exists) {
+            // Cobro real SIN pedido (referencia manipulada o link manual): dinero entró y nadie lo ve →
+            // alerta al panel además del audit trail (auditoría 2026-07-10).
             t.set(evtRef, { ...evt, accion: 'pedido-inexistente' });
+            if (tx.status === 'APPROVED') {
+                t.set(db.collection('saludEventos').doc(`wompi-sin-pedido-${txId}`), {
+                    tipo: 'wompi-sin-pedido',
+                    detalle: `💸 Cobro Wompi APPROVED (${txId}) con referencia "${reference}" que NO corresponde a ningún pedido. Verifica en el panel de Wompi y reembolsa si aplica.`,
+                    at: FieldValue.serverTimestamp(), resuelto: false,
+                }, { merge: true });
+            }
             return { ok: true, status: 200, reason: 'pedido-inexistente' };
         }
-        const ped = pedSnap.data();
 
         // No-APPROVED (DECLINED/VOIDED/ERROR/PENDING): NO transiciona (el cliente reintenta; el reaper libera).
         // A.3: se audita en un doc COMPUESTO `webhookEvents/{txId}-{status}`, NUNCA en `webhookEvents/{txId}`.
@@ -659,17 +700,29 @@ async function confirmarPagoWompiCore(db, event = {}, opts = {}) {
             t.set(db.doc(`webhookEvents/${txId}-${tx.status}`), { ...evt, accion: 'auditado-no-aprobado' }, { merge: true });
             return { ok: true, status: 200, reason: `no-aprobado:${tx.status}`, pedidoEstado: ped.estado };
         }
-        // APPROVED: valida monto + moneda + referencia contra el pedido CONGELADO.
+        // APPROVED: valida monto + moneda + referencia contra el pedido CONGELADO. La moneda AUSENTE
+        // también se rechaza (defensa en profundidad, auditoría 2026-07-10).
         const esperado = Math.round(Number(ped.total) || 0) * 100;
-        if (tx.amount_in_cents !== esperado || (tx.currency && tx.currency !== 'COP') || tx.reference !== reference) {
+        if (tx.amount_in_cents !== esperado || tx.currency !== 'COP' || tx.reference !== reference) {
             t.set(evtRef, { ...evt, accion: 'monto-o-ref-no-coincide', esperado });
             t.update(pedidoRef, { estado: 'a_revisar', revisarMotivo: 'monto/moneda/referencia ≠ Wompi', wompiTxId: txId, updatedAt: FieldValue.serverTimestamp() });
             return { ok: false, status: 200, reason: 'monto-no-coincide' };
         }
         // Transición por estado del pedido (idempotencia de negocio). NUNCA toca stock (ya descontado).
-        if (ped.estado === 'pagado') {
-            t.set(evtRef, { ...evt, accion: 'ya-pagado' });
-            return { ok: true, status: 200, reason: 'ya-pagado', yaProcesado: true };
+        // Auditoría 2026-07-10 (P0 doble-cobro): un 2º APPROVED con OTRO txId sobre un pedido que ya
+        // tiene dinero (misma referencia re-pagada en la URL del checkout aún viva) es un CLIENTE
+        // COBRADO DOS VECES → alerta para reembolsar; antes se registraba como "ya-pagado" invisible.
+        if (ESTADOS_CON_DINERO.has(ped.estado)) {
+            const dobleCobro = !!ped.wompiTxId && ped.wompiTxId !== txId;
+            t.set(evtRef, { ...evt, accion: dobleCobro ? 'doble-cobro' : 'ya-pagado' });
+            if (dobleCobro) {
+                t.set(db.collection('saludEventos').doc(`wompi-doble-cobro-${txId}`), {
+                    tipo: 'wompi-doble-cobro',
+                    detalle: `⚠️ DOBLE COBRO Wompi: el pedido ${ped.codigo || reference} ya estaba cobrado con la transacción ${ped.wompiTxId} y llegó un 2º APPROVED (${txId}) por el mismo monto. Reembolsa el cobro duplicado en el panel de Wompi.`,
+                    pedidoId: reference, at: FieldValue.serverTimestamp(), resuelto: false,
+                }, { merge: true });
+            }
+            return { ok: true, status: 200, reason: dobleCobro ? 'doble-cobro' : 'ya-pagado', yaProcesado: true };
         }
         if (ped.estado === 'pago_pendiente') {
             t.set(evtRef, { ...evt, accion: 'pagado' });
@@ -708,7 +761,22 @@ async function liberarReservaCore(db, pedidoId, opts = {}) {
         catch { return { pedidoId, accion: 'consulta-fallo-skip' }; }
         if (estadoPago == null) return { pedidoId, accion: 'consulta-fallo-skip' };
     }
-    if (estadoPago === 'PENDING') return { pedidoId, accion: 'pendiente-skip' };
+    if (estadoPago === 'PENDING') {
+        // Anti pieza-bloqueada-para-siempre (auditoría 2026-07-10): una tx PENDING colgada en Wompi
+        // deja la unidad reservada indefinidamente sin que nadie lo sepa. Si lleva >1h vencida, se
+        // registra en saludEventos (id determinista → idempotente) para que el panel lo muestre.
+        const expiraMs = snap0.data().reservaExpira?.toMillis?.() ?? null;
+        if (expiraMs && (Date.now() - expiraMs) > 60 * 60 * 1000) {
+            try {
+                await db.collection('saludEventos').doc(`reserva-pending-${pedidoId}`).set({
+                    tipo: 'reserva-pending-colgada',
+                    detalle: `⏳ La reserva del pedido ${pedidoId} venció hace más de 1 hora pero Wompi la reporta PENDING: la pieza sigue bloqueada. Revisa la transacción en el panel de Wompi (anúlala si quedó colgada).`,
+                    pedidoId, at: FieldValue.serverTimestamp(), resuelto: false,
+                }, { merge: true });
+            } catch (e) { console.error('[reaper] alerta pending no registrada:', e); }
+        }
+        return { pedidoId, accion: 'pendiente-skip' };
+    }
 
     return db.runTransaction(async (t) => {
         const snap = await t.get(pedidoRef);
@@ -720,14 +788,18 @@ async function liberarReservaCore(db, pedidoId, opts = {}) {
             return { pedidoId, accion: 'a_revisar-aprobado' };
         }
         // NONE → liberar: repone la unidad si este pedido la consumió (helper compartido C.1).
+        let repuso = false;
         if (ped.consumioStock === true && ped.pieceId) {
             const pieceRef = db.doc(`pieces/${ped.pieceId}`);
             const pieceSnap = await t.get(pieceRef);
             if (pieceSnap.exists) {
                 reponerStock(t, pieceRef, pieceSnap.data(), { pedidoId, motivo: 'reserva-expirada', ledgerId: `exp-${pedidoId}`, actor: 'reaper' });
+                repuso = true;
             }
         }
-        t.update(pedidoRef, { estado: 'expirado', expiradoEn: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+        const updExp = { estado: 'expirado', expiradoEn: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() };
+        if (repuso) updExp.consumioStock = false;   // cinturón anti doble-reintegro (auditoría 2026-07-10)
+        t.update(pedidoRef, updExp);
         return { pedidoId, accion: 'liberado' };
     });
 }
@@ -768,6 +840,13 @@ async function anularPedidoCore(db, input = {}) {
         if (!snap.exists) throw new PedidoError('not-found', 'El pedido no existe.');
         const ped = snap.data();
         if (ped.estado === 'anulado') return { pedidoId, ok: true, yaAnulado: true };
+        // Auditoría 2026-07-10 (P0 doble-reintegro): un pedido cancelado/expirado/reembolsado YA devolvió
+        // (o decidió no devolver) su unidad por su propio camino — anularlo encima re-reponía el stock
+        // (+1 fantasma → pieza única vendible dos veces). Estados terminales NO se anulan.
+        const YA_CERRADOS = new Set(['cancelado', 'expirado', 'reembolsado']);
+        if (YA_CERRADOS.has(ped.estado)) {
+            throw new PedidoError('failed-precondition', `El pedido ya está ${ped.estado}: no se puede anular encima (evita duplicar el reintegro de la pieza).`);
+        }
 
         // TODO-40 v3: reponer la unidad si este pedido consumió stock. [reads antes de writes]
         // El gate de transición (ped.estado==='anulado' arriba) garantiza UNA sola reposición (idempotente).
@@ -788,10 +867,14 @@ async function anularPedidoCore(db, input = {}) {
                 }
             }
         }
-        tx.update(pedidoRef, {
+        const updPedido = {
             estado: 'anulado', anuladoPor: autor, anuladoEn: FieldValue.serverTimestamp(),
             motivoAnulacion: motivo || null, updatedAt: FieldValue.serverTimestamp(),
-        });
+        };
+        // Cinturón anti doble-reintegro: consumida la reposición, el flag se APAGA en el mismo commit —
+        // ningún camino futuro (por bug o carrera) puede volver a reponer por este pedido.
+        if (reintegrada) updPedido.consumioStock = false;
+        tx.update(pedidoRef, updPedido);
         return { pedidoId, ok: true, yaAnulado: false, piezaReintegrada: reintegrada };
     });
 }
@@ -903,7 +986,10 @@ async function avanzarPedidoCore(db, input = {}, opts = {}) {
         }
 
         // ── Writes (todas las lecturas ya ocurrieron) ──
-        if (reponer) reponerStock(tx, reponer.pieceRef, reponer.piece, { pedidoId, motivo: 'cancelado', ledgerId: `cancelado-${pedidoId}`, actor: autor });
+        if (reponer) {
+            reponerStock(tx, reponer.pieceRef, reponer.piece, { pedidoId, motivo: 'cancelado', ledgerId: `cancelado-${pedidoId}`, actor: autor });
+            update.consumioStock = false;   // cinturón anti doble-reintegro (auditoría 2026-07-10)
+        }
         if (merma) tx.set(merma.ref, merma.data);
         tx.update(ref, update);
         tx.set(ref.collection('historial').doc(), {
@@ -961,17 +1047,33 @@ async function cierreCajaCore(db, input = {}) {
     const esperado = Object.fromEntries(MEDIOS.map(m => [m, 0]));
     const ajustes  = Object.fromEntries(MEDIOS.map(m => [m, 0]));   // devoluciones de dinero contado en cierres PREVIOS
     const DEVUELVEN = { anulado: 'anuladoEn', cancelado: 'canceladoEn', reembolsado: 'reembolsadoEn' };
+    // Auditoría 2026-07-10 (P0): SPLIT-AWARE. Antes `if (esperado[p.medio]==null) continue` descartaba
+    // por completo las ventas `medio:'mixto'` (pagos[]) → efectivo real fuera del arqueo = "sobra" falsa
+    // que enmascara un robo exacto. Ahora cada PAGO va a su medio (espejo de cerrarTurnoCore/pagosDe).
+    // Además, la porción en medios INMEDIATOS (efectivo/datáfono) de una venta dividida "por verificar"
+    // SÍ está en el cajón (se cobró en el acto) → cuenta aunque la pierna diferida siga pendiente.
+    const INMEDIATOS = new Set(['efectivo', 'datafono']);
+    const pagosDeCierre = (p) => (Array.isArray(p.pagos) && p.pagos.length) ? p.pagos : [{ medio: p.medio, monto: entero(p.total) }];
     for (const p of vistos.values()) {
-        if (esperado[p.medio] == null) continue;
         const momento = p.confirmadoEn || p.createdAt;
-        if (ESTADOS_CON_DINERO.has(p.estado)) {
-            if (enVentana(momento)) esperado[p.medio] += entero(p.total);
+        const conDinero = ESTADOS_CON_DINERO.has(p.estado);
+        const porVerificar = p.estado === 'pago_por_verificar';
+        if (conDinero || porVerificar) {
+            if (!enVentana(momento)) continue;
+            for (const pg of pagosDeCierre(p)) {
+                if (esperado[pg.medio] == null) continue;
+                if (conDinero || INMEDIATOS.has(pg.medio)) esperado[pg.medio] += entero(pg.monto);
+            }
         } else if (DEVUELVEN[p.estado] && enVentana(p[DEVUELVEN[p.estado]])) {
             // Devuelto en este turno; si su dinero se contó en un cierre PREVIO (momento ≤ desde), se resta ahora.
-            // Transferencia/wompi solo INGRESAN al confirmarse: sin `confirmadoEn` nunca hubo dinero
-            // (pago_por_verificar/pago_pendiente viejo) → no genera devolución fantasma.
-            const ingreso = p.medio === 'efectivo' || !!p.confirmadoEn;
-            if (ingreso && desde && momento && (momento.toMillis?.() ?? 0) <= desde.toMillis()) ajustes[p.medio] -= entero(p.total);
+            // Diferidos (transferencia/wompi) solo INGRESAN al confirmarse: sin `confirmadoEn` nunca hubo
+            // dinero → no genera devolución fantasma. Los inmediatos (efectivo/datáfono) ingresan al crear.
+            if (!(desde && momento && (momento.toMillis?.() ?? 0) <= desde.toMillis())) continue;
+            for (const pg of pagosDeCierre(p)) {
+                if (ajustes[pg.medio] == null) continue;
+                const ingreso = INMEDIATOS.has(pg.medio) || !!p.confirmadoEn;
+                if (ingreso) ajustes[pg.medio] -= entero(pg.monto);
+            }
         }
     }
     const esperadoEfectivo = esperado.efectivo + ajustes.efectivo;   // neto: ventas del turno − devoluciones de turnos previos

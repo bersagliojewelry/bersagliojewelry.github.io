@@ -74,7 +74,9 @@
 // data.hydrateFromBake) + copy verdad-de-marca (fuera superlativo falso "más grande de la región").
 // v86 = [FABLE-5] Fix traslado-duplicado del POS (carrera de listeners → modal fantasma): acumuladores
 // de traslado en el doc del turno + reversa consciente del turno + estimado sin clamp + tope $500k Kary.
-const CACHE_NAME    = 'bersaglio-v86';
+// v87 = [FABLE-5] Auditoría anti-fugas: anti doble-reintegro de stock, webhook Wompi maneja reversas y
+// doble cobro, arqueo split-aware, opIds por turno, vouchers legacy, auditoría honesta del descuadre.
+const CACHE_NAME    = 'bersaglio-v87';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

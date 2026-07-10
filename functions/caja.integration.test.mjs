@@ -473,3 +473,18 @@ test('B4 · concepto reembolso_cliente (egreso trazable de un reembolso de turno
     assert.equal(cierre.esperadoEfectivo, 50000);
     assert.equal(cierre.descuadre, 0);
 });
+
+test('AUDIT 2026-07-10 · cierre de turno: la porción EFECTIVO de un split "por verificar" cuenta (la diferida no)', async () => {
+    await limpiarPuntero(); await resetBoveda();
+    await abrirTurnoCore(db, { opId: 'TSPLIT', fondoApertura: 100000, autor: 'kary' });
+    // Venta dividida: 60k efectivo (cobrado en el acto) + 40k transferencia (aún por verificar).
+    await db.doc('pedidos/pedTSplit').set({
+        total: 100000, medio: 'mixto', estado: 'pago_por_verificar', canal: 'pos', turnoId: 'TSPLIT',
+        pagos: [{ medio: 'efectivo', monto: 60000 }, { medio: 'transferencia', monto: 40000 }],
+    });
+    const r = await cerrarTurnoCore(db, { turnoId: 'TSPLIT', conteoPorMedio: { efectivo: 160000 }, autor: 'kary' });
+    assert.equal(r.esperadoEfectivo, 160000);                    // 100k fondo + 60k efectivo del split
+    assert.equal(r.esperadoPorMedio.transferencia, 0);           // la pierna diferida NO ingresó aún
+    assert.equal(r.descuadre, 0);                                // antes: "sobra $60.000" falsa (robo invisible)
+    await db.doc('pedidos/pedTSplit').delete();
+});

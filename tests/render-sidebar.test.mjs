@@ -5,8 +5,8 @@ import { NAV, APP_VERSION } from '../js/admin/sidebar-data.js';
 
 test('renderiza grupos y labels', () => {
   const html = renderSidebar(NAV, { role: 'owner', activePage: 'admin.html' });
-  assert.match(html, /adm-nav-label">CRM</);
-  assert.match(html, /adm-nav-label">Cobranza</);
+  assert.match(html, /adm-nav-label">Clientes</);
+  assert.match(html, /adm-nav-label">Finanzas</);
   assert.match(html, /adm-nav-label">Sistema</);
 });
 
@@ -22,10 +22,15 @@ test('oculta Usuarios si el rol no es owner', () => {
   assert.match(ownerHtml, /href="admin-usuarios\.html"/);
 });
 
-test('placeholders futuros salen deshabilitados', () => {
-  const html = renderSidebar(NAV, { role: 'admin', activePage: 'admin.html' });
-  assert.match(html, /adm-nav-link--soon/);
-  assert.match(html, /aria-disabled="true"/);
+test('el renderer soporta placeholders `soon` (capacidad), pero el rail v2 NO trae ninguno (comité 2026-07-10)', () => {
+  // Capacidad del renderer: probada con un fixture (un grupo nace cuando su página existe de verdad).
+  const fixture = [{ label: 'Futuro', items: [{ label: 'Algo', href: '#', icon: 'chart', role: 'admin', soon: true }] }];
+  const conSoon = renderSidebar(fixture, { role: 'admin', activePage: 'admin.html' });
+  assert.match(conSoon, /adm-nav-link--soon/);
+  assert.match(conSoon, /aria-disabled="true"/);
+  // Rail real: cero "PRONTO" visibles (anti grupos-cascarón, ADR §182).
+  const real = renderSidebar(NAV, { role: 'owner', activePage: 'admin.html' });
+  assert.doesNotMatch(real, /adm-nav-link--soon/);
 });
 
 test('Pedidos (F1-PUENTE) visible para el staff de ventas y sin placeholders retirados', () => {
@@ -41,9 +46,10 @@ test('conserva el badge de la Bandeja', () => {
   assert.match(html, /id="inq-badge"/);
 });
 
-test('Vendedoras es visible en la nav (grupo Sistema)', () => {
+test('rail v2: Negocio y equipo (ex Configuración, incluye Vendedoras) visible para admin', () => {
   const html = renderSidebar(NAV, { role: 'admin', activePage: 'admin.html' });
-  assert.match(html, /Vendedoras/);
+  assert.match(html, /Negocio y equipo/);
+  assert.match(html, /href="admin-config\.html"/);
 });
 
 test('Salud solo es visible para el owner (F6 frente D)', () => {

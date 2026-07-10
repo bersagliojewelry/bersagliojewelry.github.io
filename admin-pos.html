@@ -355,6 +355,26 @@
 </div>
 
 <!-- Modal: Traslado a bóveda (vaciar el cajón · F2.0) -->
+<div class="adm-modal" id="apertura-modal" hidden>
+    <div class="adm-modal-box">
+        <div class="adm-modal-head">
+            <h2>Abrir caja</h2>
+            <button class="adm-modal-x" id="apertura-close" type="button" aria-label="Cerrar">&times;</button>
+        </div>
+        <div class="adm-modal-body">
+            <div class="adm-field">
+                <label for="apertura-fondo">Fondo de apertura (COP)</label>
+                <input class="adm-input" id="apertura-fondo" type="number" min="0" inputmode="numeric" placeholder="Ej. 200000">
+                <p class="pos-hint" id="apertura-hint"></p>
+            </div>
+        </div>
+        <div class="adm-modal-actions">
+            <button class="adm-btn adm-btn--ghost" id="apertura-cancel" type="button">Cancelar</button>
+            <button class="adm-btn adm-btn--primary" id="apertura-submit" type="button">Abrir caja</button>
+        </div>
+    </div>
+</div>
+
 <div class="adm-modal" id="tras-modal" hidden>
     <div class="adm-modal-box adm-modal-box--sm">
         <div class="adm-modal-head">

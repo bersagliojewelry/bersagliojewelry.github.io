@@ -210,6 +210,23 @@ Cuando el usuario comparta sus métricas, estructurar la respuesta así:
 
 ---
 
+## Doctrinas minadas 2026-07-10 (adspirer C-* + Divisual R-8; verificadas — ADR §183 Bersaglio)
+
+**Antes de diagnosticar:**
+- **Tracking primero**: verifica píxel/CAPI/deduplicación/ventana de atribución ANTES de creer cualquier CPA/ROAS. Con tracking roto, toda métrica de conversión es ficción. Revisa también causas aburridas: campaña pausada, tag caído en un deploy, landing en 404.
+- **Falsos positivos de reporting**: "hoy" siempre es parcial; compara 7 días completos vs los 7 anteriores, nunca contra una semana a medias.
+
+**Diagnóstico:**
+- **Desperdicio (4 formas)**: gasto con 0 conversiones · gasto convirtiendo MUY por encima del objetivo (peor: parece funcionar) · términos/intereses no intencionados · placements/audiencias que nunca convierten. **Umbral de evidencia**: no declares perdedor nada con menos de ~3× el CPA objetivo en gasto o ~100 clics.
+- **Fatiga creativa**: frecuencia 7 días > ~3 + CTR cayendo = fatiga, NO problema de targeting; ningún cambio de puja/presupuesto la arregla. Fix por palanca y UNA variable a la vez: concepto nuevo → formato nuevo → rotar audiencia → recién ahí presupuesto.
+- **Competencia sin acceso a su cuenta**: audita sus anuncios ACTIVOS en la Biblioteca pública de Meta (facebook.com/ads/library) + evalúa coherencia anuncio↔landing (promesa, oferta, continuidad visual).
+
+**Acción:**
+- **Presupuesto pequeño = UNA plataforma bien hecha** > tres a medias (repartir $30/día entre 3 deja a todas sin datos para aprender). Para joyería/negocio local: concentrar en Meta.
+- **Orden de optimización**: exclusiones/negativas → pausar lo MÁS estrecho posible → reasignar. Presupuesto se mueve en pasos de 20–30% (saltos mayores reinician el aprendizaje).
+- **Specs/KPIs Meta**: ~50 conversiones/conjunto/semana para salir de learning · 4:5 rinde más que 1:1 en feed · texto visible se corta a ~125 caracteres (la oferta PRIMERO) · targeting vive en el conjunto (1 campaña / varios conjuntos) · copy desde términos reales y la landing, especificidad > adjetivos.
+- **Contrato de seguridad** (si se ejecutan cambios, no solo diagnóstico): cambios de dinero requieren "sí" explícito · todo se crea EN PAUSA · leer antes de escribir · verificar después de escribir (readback) · nunca inventar un número · destructivo = confirmación.
+
 ## Skills relacionadas
 
 - **ads**: Estrategia general de campañas Meta Ads

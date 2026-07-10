@@ -28,3 +28,12 @@
 *   **Display/Títulos**: Cormorant Garamond (`--font-display`, peso 300, itálicas) + Fraunces para el wordmark (`--font-brand`).
 *   **Body/UI**: **Manrope** (`--font-ui`) — NO Inter.
 *   **Numéricos/eyebrows**: **Space Mono** (`--font-mono`) con `tabular-nums` — NO JetBrains Mono.
+*   Complementos (minado impeccable §183): display con `clamp()` techo ≤6rem y letter-spacing ≥-0.04em; `text-wrap: balance` en h1–h3 y `text-wrap: pretty` en prosa; ratio ≥1.25 entre pasos de jerarquía.
+
+### 4. Calidad y legibilidad — checklist WCAG (minado impeccable v3.9.1, ADR §183 · detalle → `mineria-recursos-2026-07-10.md §5`)
+*   **Contraste**: body ≥4.5:1, texto grande ≥3:1 — INCLUIDOS placeholders. Gris-sobre-color prohibido: usar sombra oscura del propio hue.
+*   **Legibilidad**: largo de línea 65–75ch · line-height body 1.5–1.7 · texto ≥14px (ideal 16) · tracking body ≤0.05em · ALL-CAPS solo en labels/eyebrows · justificado prohibido sin `hyphens`.
+*   **Estructura**: jerarquía h1→h2→h3 sin saltos · padding ≥8–16px dentro de contenedores con borde/fondo · padding horizontal ≥16px contra el borde del viewport.
+*   **Motion**: `prefers-reduced-motion` OBLIGATORIO con alternativa (crossfade/instante) por CADA animación. **Reveal-safety**: NUNCA gatear la visibilidad del contenido a una transición por clase (en tabs ocultos/headless queda la sección EN BLANCO) — aplica a nuestro `.reveal`.
+*   **Z-index semántico**: escala nombrada dropdown→sticky→modal→toast→tooltip; nunca 999/9999 sueltos.
+*   ⚠️ **Guardia de marca**: el detector "slop" de impeccable marca nuestras firmas deliberadas (Liquid Glass, itálica serif display, Fraunces, paleta perla, dark-glow). La estética Bersaglio es color/estilo **comprometido, declarado** — no slop. Si algún día se corre `detect.mjs` como gate (W-11), pre-cargar allow-list de marca.

@@ -239,6 +239,10 @@ function handleCajaEstado(est) {
         _turno = (id && _pendingOpenTurno && _pendingOpenTurno.id === id) ? _pendingOpenTurno : null;
         _movsCaja = []; _ventasTurno = []; _trasladosLedger = null; _trasladadoSesion = 0; _overLimit = false;
         _ventasReady = false; _trasladosReady = false;   // la foto del cajón vuelve a estar INCOMPLETA
+        // Auditoría 2026-07-10 (P2): los opId pendientes NO cruzan turnos — la idempotencia de movsCaja
+        // vive en `turnos/{turnoId}/movsCaja/{opId}` (path POR turno): reusar un opId viejo en el turno
+        // nuevo crearía un movimiento fantasma contado en ambos turnos. Turno nuevo = opIds nuevos.
+        _movOpId = null; _trasladoOpId = null;
         if (id) {
             _turnoUnsubs.push(onTurnoChange(id, t => { _turno = t; renderCaja(); recalcTotal(); },
                 e => console.warn('[caja] turno no legible:', e?.code || e)));
@@ -274,7 +278,10 @@ function ventasEfectivoTurno() {
 // TODO-73 3b: ¿hubo ventas con datáfono en el turno? Incluye ANULADAS: el voucher físico se imprimió
 // igual → la cajera lo cuenta (una "sobra" queda explicada por `datafonoAnuladoEnTurno`).
 function hayVentasDatafonoTurno() {
-    return _ventasTurno.some(p => Array.isArray(p.pagos) && p.pagos.some(pg => pg.medio === 'datafono'));
+    // Legacy sin `pagos[]` (pre TODO-73): el medio único vive en p.medio — sin ese OR, el cierre no
+    // pedía contar esos vouchers y el cuadre de datáfono daba "faltan" falsos (auditoría 2026-07-10).
+    return _ventasTurno.some(p =>
+        (Array.isArray(p.pagos) && p.pagos.some(pg => pg.medio === 'datafono')) || p.medio === 'datafono');
 }
 function movsSums() {
     let ingresos = 0, egresos = 0;

@@ -61,4 +61,4 @@ export const NAV_FOOTER = { label: 'Ver sitio', href: 'index.html', icon: 'exter
 // Versión visible del panel (criterio de deploy para no-técnicos, spec §9.1): Kary
 // confirma que está en la versión nueva tras un despliegue. Se bumpea JUNTO al
 // CACHE_NAME del Service Worker (`public/sw.js`) en cada cambio del shell admin.
-export const APP_VERSION = 'v46 · 2026-07-10';   // [FABLE-5] Fix traslado-duplicado (acumuladores en turno + reversa consciente + estimado sin clamp) — SW v86
+export const APP_VERSION = 'v47 · 2026-07-10';   // [FABLE-5] Auditoría anti-fugas de dinero (stock, Wompi reversas/doble-cobro, arqueo split, opIds por turno) — SW v87

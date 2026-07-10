@@ -104,16 +104,22 @@ async function cerrarTurnoCore(db, input = {}) {
         // `pagos[]`) = [{medio,total}]. §3b: el voucher datáfono cuenta/suma los PAGOS datáfono con dinero;
         // los datáfono ANULADOS se exponen aparte (comité H1: una "sobra" de voucher queda EXPLICABLE).
         const ESTADOS_MUERTOS = new Set(['anulado', 'cancelado', 'reembolsado', 'expirado']);
+        const MEDIOS_INMEDIATOS = new Set(['efectivo', 'datafono']);   // cobran EN EL ACTO (espeja pedidos-core)
         const pagosDe = (p) => (Array.isArray(p.pagos) && p.pagos.length) ? p.pagos : [{ medio: p.medio, monto: entero(p.total) }];
         const ventasPorMedio = Object.fromEntries(MEDIOS.map((m) => [m, 0]));
         let datafonoCount = 0, datafonoAnuladoSuma = 0, datafonoAnuladoCant = 0;
         ventasSnap.forEach((d) => {
             const p = d.data();
             const conDinero = ESTADOS_CON_DINERO.has(p.estado);
+            // Auditoría 2026-07-10 (P1): en una venta DIVIDIDA "por verificar" (efectivo + transferencia
+            // pendiente), la porción efectivo/datáfono YA está en el cajón — si no cuenta, el arqueo da
+            // una "sobra" falsa exacta que enmascara un robo. La pierna diferida sigue sin contar.
+            const porVerificar = p.estado === 'pago_por_verificar';
             const muerta = ESTADOS_MUERTOS.has(p.estado);
             for (const pago of pagosDe(p)) {
                 const monto = entero(pago.monto);
-                if (conDinero && ventasPorMedio[pago.medio] != null) {
+                const cuenta = (conDinero || (porVerificar && MEDIOS_INMEDIATOS.has(pago.medio)));
+                if (cuenta && ventasPorMedio[pago.medio] != null) {
                     ventasPorMedio[pago.medio] += monto;
                     if (pago.medio === 'datafono') datafonoCount += 1;
                 } else if (muerta && pago.medio === 'datafono') {

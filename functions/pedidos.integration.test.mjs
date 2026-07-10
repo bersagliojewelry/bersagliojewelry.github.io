@@ -258,3 +258,61 @@ test('price 0 = SIN precio en sistema: el mostrador vende POR PESO (no queda blo
         /mayor a 0/i
     );
 });
+
+// ─── Auditoría 2026-07-10 · anti doble-reintegro + arqueo split-aware ──────────────────────────
+
+test('AUDIT · anular sobre CANCELADO → rechaza (el stock ya se repuso al cancelar; no se duplica)', async () => {
+    await db.doc('pieces/pAuditCan').set({ name: 'Audit Can', slug: 'audit-can', price: 100000, stockType: 'finito', cantidad: 1 });
+    await db.doc('pedidos/pedAuditCan').set({ pieceId: 'pAuditCan', total: 100000, medio: 'efectivo', estado: 'cancelado', consumioStock: true, canceladoEn: new Date() });
+    await assert.rejects(anularPedidoCore(db, { pedidoId: 'pedAuditCan', autor: 'kary' }), /cancelado/i);
+    assert.equal((await db.doc('pieces/pAuditCan').get()).data().cantidad, 1);   // intacta (sin +1 fantasma)
+});
+
+test('AUDIT · anular sobre EXPIRADO/REEMBOLSADO → rechaza (reaper/reembolso ya resolvieron el stock)', async () => {
+    await db.doc('pedidos/pedAuditExp').set({ pieceId: 'pAuditCan', total: 100000, medio: 'efectivo', estado: 'expirado', consumioStock: true });
+    await db.doc('pedidos/pedAuditRee').set({ pieceId: 'pAuditCan', total: 100000, medio: 'efectivo', estado: 'reembolsado', consumioStock: true });
+    await assert.rejects(anularPedidoCore(db, { pedidoId: 'pedAuditExp', autor: 'kary' }), /expirado/i);
+    await assert.rejects(anularPedidoCore(db, { pedidoId: 'pedAuditRee', autor: 'kary' }), /reembolsado/i);
+});
+
+test('AUDIT · anular APAGA consumioStock (cinturón: ningún camino futuro puede re-reponer)', async () => {
+    await db.doc('pieces/pAuditFlag').set({ name: 'Audit Flag', slug: 'audit-flag', price: 100000, stockType: 'finito', cantidad: 1 });
+    await core.crearPedidoCore(db, { pedidoId: 'pedAuditFlag', pieceId: 'pAuditFlag', medio: 'efectivo', autor: 'kary' });
+    assert.equal((await db.doc('pieces/pAuditFlag').get()).data().cantidad, 0);
+    await anularPedidoCore(db, { pedidoId: 'pedAuditFlag', autor: 'kary' });
+    const ped = (await db.doc('pedidos/pedAuditFlag').get()).data();
+    assert.equal(ped.consumioStock, false);                                       // flag apagado en el mismo commit
+    assert.equal((await db.doc('pieces/pAuditFlag').get()).data().cantidad, 1);   // repuesta UNA vez
+});
+
+test('AUDIT · crearPedido con medio INVÁLIDO → rechaza (antes caía en silencio a efectivo)', async () => {
+    await db.doc('pieces/pAuditMed').set({ name: 'Audit Med', slug: 'audit-med', price: 50000, stockType: 'finito', cantidad: 5 });
+    await assert.rejects(core.crearPedidoCore(db, { pedidoId: 'pedAuditMed', pieceId: 'pAuditMed', medio: 'bitcoin', autor: 'kary' }), /medio de pago inválido/i);
+});
+
+test('AUDIT · cierreCaja SPLIT-AWARE: la venta mixto reparte cada pago a su medio (antes se descartaba entera)', async () => {
+    // ancla la ventana: un arqueo previo fija `desde`
+    await cierreCajaCore(db, { arqueoId: 'arqAuditBase', declaradoEfectivo: 0, autor: 'kary' });
+    await db.doc('pedidos/pedAuditMixto').set({
+        total: 1000000, medio: 'mixto', estado: 'entregado', canal: 'pos',
+        pagos: [{ medio: 'efectivo', monto: 300000 }, { medio: 'datafono', monto: 700000 }],
+        createdAt: new Date(),
+    });
+    const r = await cierreCajaCore(db, { arqueoId: 'arqAuditMixto', declaradoEfectivo: 300000, autor: 'kary' });
+    assert.equal(r.esperadoPorMedio.efectivo, 300000);    // la porción efectivo SÍ cuenta
+    assert.equal(r.esperadoPorMedio.datafono, 700000);    // y la de datáfono va a su medio
+    assert.equal(r.descuadre, 0);                          // el cajón físico con 300k CUADRA (antes: "sobra" falsa)
+});
+
+test('AUDIT · cierreCaja: porción INMEDIATA (efectivo) de un split "por verificar" cuenta; la diferida NO', async () => {
+    await cierreCajaCore(db, { arqueoId: 'arqAuditBase2', declaradoEfectivo: 0, autor: 'kary' });
+    await db.doc('pedidos/pedAuditPorVer').set({
+        total: 500000, medio: 'mixto', estado: 'pago_por_verificar', canal: 'pos',
+        pagos: [{ medio: 'efectivo', monto: 200000 }, { medio: 'transferencia', monto: 300000 }],
+        createdAt: new Date(),
+    });
+    const r = await cierreCajaCore(db, { arqueoId: 'arqAuditPorVer', declaradoEfectivo: 200000, autor: 'kary' });
+    assert.equal(r.esperadoPorMedio.efectivo, 200000);        // el efectivo YA está en el cajón
+    assert.equal(r.esperadoPorMedio.transferencia, 0);        // la transferencia pendiente NO ingresó
+    assert.equal(r.descuadre, 0);
+});

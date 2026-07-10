@@ -28,7 +28,10 @@ const WOMPI_INTEGRITY_SECRET = defineSecret('WOMPI_INTEGRITY_SECRET');
 const WOMPI_EVENTS_SECRET = defineSecret('WOMPI_EVENTS_SECRET');
 const WOMPI_PRIVATE_KEY = defineSecret('WOMPI_PRIVATE_KEY');
 // Base de la API por ENTORNO (NO por flag): sandbox para pruebas, production al lanzar (paso 2c).
+// ⚠️ Auditoría 2026-07-10: si el env NO está seteado, el default SANDBOX haría que el webhook no
+// verifique cobros reales y el reaper libere reservas PAGADAS. Se avisa fuerte en el arranque frío.
 const WOMPI_API_BASE = process.env.WOMPI_API_BASE || 'https://sandbox.wompi.co/v1';
+if (!process.env.WOMPI_API_BASE) console.warn('[wompi] WOMPI_API_BASE no está seteado — usando SANDBOX por defecto. En producción esto rompe webhook/reaper.');
 
 async function rolDeVentas(db, auth) {
     if (!auth) throw new HttpsError('unauthenticated', 'Debes iniciar sesión.');

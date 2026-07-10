@@ -285,12 +285,24 @@ async function renderDetail() {
         arqueo.hidden = false;
         document.getElementById('aud-esperado').textContent = cop(_turno.esperadoEfectivo);
         document.getElementById('aud-contado').textContent = cop(_turno.declaradoEfectivo);
-        const d = Number(_turno.descuadre) || 0;
+        // Auditoría honesta (2026-07-10): un descuadre AUSENTE jamás se pinta como "Cuadra ✓" — una
+        // herramienta de auditoría falla en rojo, no en verde. Además se re-verifica la aritmética
+        // (declarado − esperado) contra el campo sellado: si no coinciden, se marca inconsistencia.
+        const dRaw = Number(_turno.descuadre);
         const lbl = document.getElementById('aud-descuadre-label');
         const val = document.getElementById('aud-descuadre');
-        if (d === 0)      { lbl.textContent = 'Cuadra ✓'; val.textContent = cop(0);  val.style.color = 'var(--adm-success)'; }
-        else if (d > 0)   { lbl.textContent = 'Sobra';     val.textContent = cop(d);  val.style.color = 'var(--adm-accent)'; }
-        else              { lbl.textContent = 'Falta';     val.textContent = cop(-d); val.style.color = 'var(--adm-danger)'; }
+        if (!Number.isFinite(dRaw)) {
+            lbl.textContent = 'Sin dato (revisar)'; val.textContent = '—'; val.style.color = 'var(--adm-danger)';
+        } else {
+            const d = dRaw;
+            if (d === 0)      { lbl.textContent = 'Cuadra ✓'; val.textContent = cop(0);  val.style.color = 'var(--adm-success)'; }
+            else if (d > 0)   { lbl.textContent = 'Sobra';     val.textContent = cop(d);  val.style.color = 'var(--adm-accent)'; }
+            else              { lbl.textContent = 'Falta';     val.textContent = cop(-d); val.style.color = 'var(--adm-danger)'; }
+            const esperadoN = Number(_turno.esperadoEfectivo), declaradoN = Number(_turno.declaradoEfectivo);
+            if (Number.isFinite(esperadoN) && Number.isFinite(declaradoN) && (declaradoN - esperadoN) !== d) {
+                lbl.textContent += ' · ⚠ inconsistente'; val.style.color = 'var(--adm-danger)';
+            }
+        }
     } else {
         arqueo.hidden = true;
     }

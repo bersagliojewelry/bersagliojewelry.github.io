@@ -175,16 +175,38 @@ WhatsApp) van a una cola idempotente POST-commit (**la outbox es F4**; v1 = reci
 
 ## 7. DECISIONES DEL DUEÑO (forks reales — resolver ANTES de implementar)
 
-| # | Decisión | Recomendación de Claude |
+| # | Decisión | Estado (2026-07-09) |
 |---|---|---|
-| **A. Régimen jurídico** | (A) anticipo **100% reembolsable sin penalidad** vs (B) arras. Prohibido híbrido. | **(A)** — más limpio legalmente, mejor para lujo. |
-| **B. Default de cancelación** | devolución **en dinero** vs crédito en tienda. | **Dinero** por defecto; crédito = opción con consentimiento fresco. Sin decomiso. |
-| **C. Penalidad** | OFF vs ON. | **OFF**. Si ON: visto bueno legal + perjuicio demostrable + tope + consentimiento separado + ingreso NO gravado. |
-| **D. RBAC** | ¿quién ABRE / ABONA / ENTREGA? (rol `caja` F2.0 vs owner). La entrega dispara revenue+factura. | Abrir/abonar = `caja`+admin+owner; **entregar** = admin/owner (dispara la venta). Confirmar. |
-| **E. Reglas finas (Kary)** | anticipo mínimo, plazo máximo. | **20%** y **60 días** (America/Bogota) — confirmar con Kary. |
-| **F. Revenue reporting** | `libroReconocimiento` ahora vs F4. | **F4** (capturar data ya). |
-| **G. Swap de pieza** | operación de 1ª clase vs cancelar+reabrir. | **Swap** atómico (`cambiarPiezaApartado`). |
-| **H. Naturaleza del instrumento** | aprobar "reserva revocable con anticipo imputable, NO promesa". | **Aprobar** (blinda art. 1611 CC). |
+| **A/B/C. Política de cancelación (régimen + default + penalidad)** | ¿qué pasa con el dinero si cancela? | ✅ **RESUELTA (veredicto §7.1)**: reembolso 100% (default dinero ≤15 días hábiles) · saldo a favor VOLUNTARIO **sin vencimiento**/reconvertible · **cero penalidad/decomiso** (art. 43.5 lo prohíbe) · costo de oportunidad se ataca UPSTREAM (plazo corto para única cara + relistado). **Pend: Daniel corre consejo externo + gate abogado CO antes del recibo.** |
+| **D. RBAC** | ¿quién ABRE / ABONA / ENTREGA? | ✅ **Daniel 2026-07-09: también la CAJERA** (rol `caja` F2.0) puede abrir/abonar/**entregar**. Entrega dispara la venta/factura — el cajero cierra venta (SoD relajada por decisión del dueño). |
+| **E. Reglas finas (Kary)** | anticipo mínimo, plazo máximo. | ✅ **Daniel 2026-07-09: 20% · 60 días** (America/Bogota) — confirmar el número final con Kary. |
+| **F. Revenue reporting** | `libroReconocimiento` ahora vs F4. | **F4** (capturar data ya) — veredicto de Claude. |
+| **G. Swap de pieza** | operación de 1ª clase vs cancelar+reabrir. | **Swap** atómico (`cambiarPiezaApartado`) — recomendado. |
+| **H. Naturaleza del instrumento** | aprobar "reserva revocable con anticipo imputable, NO promesa". | **Aprobar** (blinda art. 1611 CC) — recomendado; se cierra con §7.1. |
+
+### §7.1 — Decisión Fuerte enfocada: política de cancelación de PIEZA ÚNICA (en curso 2026-07-09)
+> Daniel: *"si es para una pieza única perdería la joyería... lanzar comité + consejo externo con agentes y skills"*.
+> Tensión: **costo de oportunidad de la pieza única** (retenida ~60d) vs **límites de la ley de consumo CO**
+> (Ley 1480 art.42-43 cláusulas abusivas; art.831 C.Co no-forfeiture) vs **relación de marca de lujo**.
+> Pre-frame de arquitecto: la joyería NO pierde la pieza (vuelve al mercado al cancelar) NI el dinero si se
+> convierte en **saldo a favor** (crédito redimible) → el downside real es solo el TIEMPO fuera de mercado.
+**VEREDICTO (comité enfocado 4 críticos + evidencia legal `.gov.co` + síntesis Claude; el presidente-agente cayó por límite semanal → sinteticé yo, que soy el decisor). CRUDO/evidencia en bóveda `2026-07-09-f2-4-apartados-EVIDENCIA-LEGAL.md`:**
+
+> 🔴 **Restricción legal DURA (art. 43.5 Ley 1480):** decomisar/retener el anticipo del consumidor = **NULO de pleno derecho**. NO existe penalidad legal por cancelar. La protección del negocio NO puede venir de quedarse con la plata.
+>
+> **P0 que cazó el comité (corrige mi v0):** un **saldo a favor CON VENCIMIENTO** = decomiso diferido / renuncia a un derecho irrenunciable → **también ilegal**. Mi v0 proponía crédito a 180 días: eso reintroduce la retención prohibida.
+>
+> **Política final (a validar con abogado CO antes del recibo):**
+> 1. **Anticipo 100% reembolsable, siempre. Default = DINERO**, por el mismo medio de pago, en **plazo cierto (≤15 días hábiles)** escrito en el recibo (sin plazo → la demora = retención de facto).
+> 2. **Saldo a favor = alternativa VOLUNTARIA del cliente** (documentada, con leyenda "el efectivo es el default y está disponible"), **SIN vencimiento** — o si vence, su valor se paga en dinero — y **reconvertible a efectivo en cualquier momento**. Nunca impuesto.
+> 3. **Cero penalidad / cero decomiso**, incluido al **vencer el plazo sin que el cliente pague ni cancele**: el negocio libera la pieza, pero el anticipo sigue 100% reembolsable (→ saldo a favor reembolsable, jamás decomiso).
+> 4. **Instrumento = "reserva revocable"** que GENUINAMENTE omite un requisito estructural de la promesa (art. 1611/1618): no obliga a celebrar la venta futura; **la revocación es facultad SOLO del consumidor** (no del negocio → evita cláusula de terminación unilateral abusiva).
+> 5. **Costo de oportunidad = se ataca UPSTREAM, no reteniendo**: **plazo más corto para pieza única de alto valor** (umbral de precio, p.ej. 30d vs 60d) + **relistado instantáneo** al cancelar + anticipo 20% como filtro de seriedad.
+> 6. **Segmentar por canal y tipo**: v1 = **POS presencial + pieza única (NO a-medida)**. Web (venta a distancia) → retracto art. 47 (reembolso íntegro + reversión art. 51) = fuera de v1. **A-medida (futuro)**: la pieza NO vuelve al mercado → anticipo igual reembolsable, pero el ÚNICO lever legítimo es cobrar la **labor realmente ejecutada como servicio real** (no penalidad), con visto bueno de abogado.
+>
+> **Reencuadre para Daniel (corregido por el escéptico):** la joyería NO pierde la pieza (vuelve al mercado) NI puede quedarse con plata que no era suya (ilegal). La pérdida real = solo el **tiempo** fuera de mercado, mitigada upstream; y el saldo a favor convierte muchas cancelaciones en ventas futuras (~68% recompra). El miedo de Daniel es legítimo SOLO en pieza **a-medida** → ahí, labor real cobrable, no penalidad.
+>
+> **Consejo externo (pend. Daniel):** falta pasar el `-PROMPT-CONSEJO-EXTERNO.md` para 2ª opinión. **Abogado CO = gate antes de fijar el recibo.**
 
 **Conflictos sin resolución técnica limpia (§ para el consejo externo):** pagador≠titular (regalo/tercero:
 SARLAFT vs derecho de consumo) · doble-abono HUMANO (caja + ficha CRM, dos ids: mitigación UX foto+monto+saldo,

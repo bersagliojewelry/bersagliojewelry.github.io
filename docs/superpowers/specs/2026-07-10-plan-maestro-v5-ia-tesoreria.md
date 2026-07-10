@@ -62,3 +62,25 @@ F-IA-2 (panel coherente) → F-TESORERIA (el dolor #1 de Kary: descuadres) → F
 
 ## 8. Runbook de limpieza pre-lanzamiento (documentado, NO ejecutado)
 Cuando Daniel dé la orden final: **BORRAR** pedidos de prueba (todos EXCEPTO `d87ab568…` código BJ-HPFS-84R8, la compra real de $5.000) · turnos · movsCaja · bovedaMovimientos · arqueo · webhookEvents de prueba · saludEventos resueltos · clientes/vendedoras DE PRUEBA. **CONSERVAR**: piezas/colecciones reales, config, usuarios, el pedido real. **⚠️ DECISIÓN PENDIENTE de Daniel+Kary**: los 344 clientes y su cartera de $506M vienen del Excel REAL de Kary (migración §47) — NO son datos de prueba; borrarlos = perder la cartera real. Confirmar: ¿se conservan (recomendado) o Kary re-registra desde cero? El borrado se hará por script auditado (Admin SDK, dry-run primero, respaldo previo vía backup diario §64) — nunca a mano.
+
+## 9. TODO-75 — Minería de recursos externos (Daniel 2026-07-10; PRIORIDAD 1 de la sesión fresca)
+Revisión PROFUNDA de 5 recursos descargados (rutas verificadas ✅ 2026-07-10). Extraer SOLO lo
+accionable a neuronas/skills (libre albedrío autorizado; anti-fragmentación §G.4). Método:
+exploradores acotados por recurso (uno c/u, lista cerrada, formato hallazgo→aplicación concreta a
+Bersaglio/cars/inmobiliaria) + verificación propia antes de adoptar (skill `auditoria-financiera`
+Fase B/C adaptada a conocimiento).
+1. `C:/Users/romad/Downloads/twenty-main` — **twentyhq/twenty**: CRM open-source real (~30k★,
+   se posiciona como alternativa open a Salesforce; confirmar estado actual). JUGO esperado:
+   modelo de datos CRM (objetos/campos custom, timeline de actividad), IA/navegación y patrones
+   UI de un CRM profesional (comparar contra nuestro rail v2 y F-IA-2), workspace multi-usuario,
+   ideas para F-TESORERIA/F-COMPRAS. NO adoptar stack (React/Nest/Postgres ≠ nuestro vanilla+Firebase):
+   se minan CONCEPTOS y UX, no código.
+2. `C:/Users/romad/Downloads/RECURSOS CLAUDE` — contenido desconocido; inventariar y clasificar.
+3. `C:/Users/romad/Downloads/skills-main` — probable repo de skills (¿anthropics/skills?);
+   comparar contra nuestro catálogo, adoptar las valiosas que falten.
+4. `C:/Users/romad/Downloads/adspirer-mcp-plugin-main (1)` — plugin MCP de ads; evaluar utilidad
+   para marketing de Bersaglio/cars.
+5. `C:/Users/romad/Downloads/impeccable-main` — probable skill/framework de calidad UI; comparar
+   con `impeccable` ya instalada en skills/.
+**⛔ REGLA**: el PROMPT A ALTORRA (§182 + skills nuevas + lo minado aquí) está EN ESPERA hasta
+cerrar este TODO — se envía UNO solo ampliado (un solo chat toca el cerebro a la vez).

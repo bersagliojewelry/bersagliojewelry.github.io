@@ -34,6 +34,27 @@ Recorre las **dos fronteras** + la carrera de carga:
 Los demás estados (lleno, idempotencia/re-montar) son secundarios; no diluyas el filo en una
 lista de QA genérica.
 
+## 2b. Checklist del DINERO (obligatorio si el subsistema mueve plata)
+Nace de un bug REAL (traslado duplicado de $5.6M, 2026-07-09): el camino vivo del dinero tiene
+fronteras propias que el checklist visual no cubre. Si el diff toca caja/pagos/stock/saldos:
+- **Ida-y-vuelta con recarga**: haz la operación → navega a OTRA página → VUELVE (recarga
+  completa). ¿La UI pide repetir la operación? ¿El estimado cuadra? (El bug real: 4 listeners
+  llegaban en desorden al recargar y el modal pedía trasladar de nuevo lo ya trasladado.)
+- **Foto incompleta**: ¿alguna decisión AUTOMÁTICA (modal, bloqueo, alerta, cálculo) se dispara
+  con datos a medio llegar? Toda automatización sobre datos remotos exige un gate de "fuentes
+  listas". Los botones manuales pueden ser optimistas; lo automático NO.
+- **Conservación**: después de cada operación, suma las tres vistas del mismo peso — UI
+  estimada, sello/ecuación del servidor y ledger. ¿Dan el MISMO número? Un descuadre entre
+  vistas es el bug, aunque cada vista "se vea bien" sola.
+- **El camino de deshacer**: anula/reversa/cancela la operación recién hecha. ¿TODAS las vistas
+  se netean (no solo una)? (Bug real #2: la reversa arreglaba la bóveda pero el cierre del turno
+  seguía contando el fantasma.) ¿Deshacer dos veces está bloqueado?
+- **Negativos a la vista**: fuerza un estado imposible (deshacer tras mover el dinero). ¿El
+  número negativo SE VE en rojo, o un formateador lo recorta a $0 y esconde la anomalía?
+- **Doble sesión**: la misma operación desde dos pestañas/sesiones. ¿Idempotencia real o
+  duplicado con id nuevo?
+Donde caces uno, blíndalo con un test de integración del ESCENARIO completo (no del paso).
+
 ## 3. "Rozar" — el disparador (con su frontera)
 - **SÍ dispara** si mi diff cambia una entrada/salida/contrato, **O el estado compartido** (doc
   de BD, sessionStorage, caché) que **otro** subsistema lee — aunque no edite su archivo.

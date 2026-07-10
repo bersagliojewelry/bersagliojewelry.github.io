@@ -1,16 +1,18 @@
 /**
- * Bersaglio Admin — Cuentas por cobrar (Panel de Kary · CRM Bloque 3).
+ * Bersaglio Admin — CARTERA (cuentas por cobrar · F-IA-2 B2, §3).
  *
- * Pantalla de entrada del CRM: cartera total + por vendedora + lista de clientes
- * con su saldo (desnormalizado, calculado por la Cloud Function). Solo admin/owner.
- * Datos vía el módulo desacoplado `js/crm-service.js`.
+ * La vista de COBRO: KPIs de cartera + por vendedora + lista de clientes ordenada por
+ * MORA, con saldo (desnormalizado, calculado por la Cloud Function) y filtros de mora.
+ * El DIRECTORIO (contacto, alta de cliente, cumpleaños) se separó a admin-clientes.html;
+ * cada fila de aquí lleva a la ficha (admin-cuenta.html). Solo admin/owner. Datos vía el
+ * módulo desacoplado `js/crm-service.js`.
  */
 
-import { requireAuth, initSidebar, admToast, esc, errorMessage } from './shared.js';
+import { requireAuth, initSidebar, esc } from './shared.js';
 import adminDb from './db.js';
 import {
-    onClientesChange, createCliente, fetchVendedoras, onAllMovimientosChange, getConfig,
-    fmtCOP, carteraTotals, carteraPorVendedora, cumpleanosDelMes, onAllAcuerdosVigentesChange,
+    onClientesChange, fetchVendedoras, onAllMovimientosChange, getConfig,
+    fmtCOP, carteraTotals, carteraPorVendedora, onAllAcuerdosVigentesChange,
 } from '../crm-service.js';
 import { saldoCellHTML, estadoBadgeHTML } from './saldo-format.js';
 import { estadoCuenta } from '../crm-estado-cuenta.js';
@@ -213,83 +215,10 @@ function renderClientes() {
 }
 
 
-function renderCumple() {
-    const section = document.getElementById('cumple-section');
-    const body = document.getElementById('cumple-body');
-    const mes = new Date().getMonth();
-    const list = cumpleanosDelMes(_clientes, mes);
-    if (!list.length) { section.hidden = true; body.innerHTML = ''; return; }
-    section.hidden = false;
-    body.innerHTML = list.map(c => {
-        const wa = (c.whatsapp || c.telefono || '').replace(/[^0-9]/g, '');
-        const contacto = wa
-            ? `<a href="https://wa.me/57${esc(wa)}" target="_blank" rel="noopener">WhatsApp</a>`
-            : (c.telefono ? esc(c.telefono) : '—');
-        return `<tr><td>${c._dia}</td><td>${esc(c.nombre || 'Sin nombre')}</td>
-                <td>${esc(nombreVendedora(c.vendedoraId))}</td><td>${contacto}</td></tr>`;
-    }).join('');
-}
-
 function render() {
     renderStats();
     renderCarteraVendedora();
     renderClientes();
-    renderCumple();
-}
-
-function populateVendedoraSelect() {
-    const sel = document.getElementById('cli-vendedora');
-    if (!sel) return;
-    for (const [id, nombre] of _vendedoras) {
-        const opt = document.createElement('option');
-        opt.value = id; opt.textContent = nombre;
-        sel.appendChild(opt);
-    }
-}
-
-// ─── Modal nuevo cliente ──────────────────────────────────────────────────────
-function openModal() {
-    document.getElementById('cliente-form').reset();
-    document.getElementById('cliente-modal').hidden = false;
-    document.getElementById('cli-nombre').focus();
-}
-function closeModal() {
-    document.getElementById('cliente-modal').hidden = true;
-}
-
-function wireModal() {
-    document.getElementById('btn-nuevo-cliente').addEventListener('click', openModal);
-    document.getElementById('cliente-modal-close').addEventListener('click', closeModal);
-    document.getElementById('cliente-cancel').addEventListener('click', closeModal);
-    document.getElementById('cliente-modal').addEventListener('click', (e) => {
-        if (e.target.id === 'cliente-modal') closeModal();
-    });
-
-    document.getElementById('cliente-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const nombre = document.getElementById('cli-nombre').value.trim();
-        if (!nombre) { admToast('El nombre es obligatorio.', 'danger'); return; }
-
-        const btn = document.getElementById('cliente-save');
-        btn.disabled = true;
-        try {
-            await createCliente({
-                nombre,
-                telefono:   document.getElementById('cli-telefono').value,
-                whatsapp:   document.getElementById('cli-whatsapp').value,
-                vendedoraId: document.getElementById('cli-vendedora').value || null,
-                cumpleanos: document.getElementById('cli-cumpleanos').value,
-                notas:      document.getElementById('cli-notas').value,
-            });
-            admToast('Cliente creado.');
-            closeModal();
-            // La lista se refresca sola por onClientesChange.
-        } catch (err) {
-            admToast(errorMessage(err, 'No se pudo crear el cliente.'), 'danger');
-        } finally {
-            btn.disabled = false;
-        }
-    });
 }
 
 function wireSearch() {
@@ -358,7 +287,6 @@ async function init() {
     } catch (err) {
         console.warn('[cuentas] fetchVendedoras:', err);
     }
-    populateVendedoraSelect();
     populateFiltroVendedora();
 
     // Config de mora (díasPlazo + fecha de corte): cambia rara vez → se lee una vez.
@@ -386,7 +314,6 @@ async function init() {
 
     pmark('page:config-done');
 
-    wireModal();
     wireSearch();
     wireFiltros();
     wireRows();

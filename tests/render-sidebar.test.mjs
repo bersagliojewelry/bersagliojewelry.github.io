@@ -6,8 +6,22 @@ import { NAV, APP_VERSION } from '../js/admin/sidebar-data.js';
 test('renderiza grupos y labels', () => {
   const html = renderSidebar(NAV, { role: 'owner', activePage: 'admin.html' });
   assert.match(html, /adm-nav-label">Clientes</);
+  assert.match(html, /adm-nav-label">Cartera</);
   assert.match(html, /adm-nav-label">Finanzas</);
   assert.match(html, /adm-nav-label">Sistema</);
+});
+
+test('F-IA-2 B2: Clientes (directorio) separado de Cartera (cobro)', () => {
+  const html = renderSidebar(NAV, { role: 'admin', activePage: 'admin.html' });
+  // El directorio es admin-clientes.html; la cartera queda en admin-cuentas.html.
+  assert.match(html, /href="admin-clientes\.html"/);
+  assert.match(html, /href="admin-cuentas\.html"/);
+  // Ya no existe el ítem fusionado "Clientes y cartera".
+  assert.doesNotMatch(html, /Clientes y cartera/);
+  // admin-cuentas.html vive bajo el grupo "Cartera".
+  const m = html.match(/adm-nav-label">Cartera<\/span>([\s\S]*?)<\/div>/);
+  assert.ok(m, 'debe existir el grupo Cartera');
+  assert.match(m[1], /href="admin-cuentas\.html"/);
 });
 
 test('marca el link activo por filename', () => {

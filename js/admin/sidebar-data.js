@@ -20,9 +20,13 @@ export const NAV = [
     { label: 'Pedidos',   href: 'admin-pedidos.html', icon: 'receipt', role: 'catalogo' },
   ]},
   { label: 'Clientes', items: [
-    // Directorio + cartera (CxC). La separación en dos páginas = F-IA-2; mientras, un solo ítem honesto.
-    { label: 'Clientes y cartera', href: 'admin-cuentas.html',   icon: 'users', role: 'admin' },
-    { label: 'Interesados',        href: 'admin-consultas.html', icon: 'inbox', role: 'editor', badgeId: 'inq-badge' },
+    // F-IA-2 B2: el DIRECTORIO (contacto/relación) se separó de la CARTERA (cobro/mora).
+    { label: 'Clientes',    href: 'admin-clientes.html',  icon: 'users', role: 'admin' },
+    { label: 'Interesados', href: 'admin-consultas.html', icon: 'inbox', role: 'editor', badgeId: 'inq-badge' },
+  ]},
+  { label: 'Cartera', items: [
+    // Cuentas por cobrar: KPIs + mora + acuerdos (admin-cuentas.html, ex "Clientes y cartera").
+    { label: 'Cartera', href: 'admin-cuentas.html', icon: 'card', role: 'admin' },
   ]},
   { label: 'Finanzas', items: [
     // Caja y turnos = historial + arqueos + línea de tiempo (control del dueño). El turno se OPERA
@@ -56,4 +60,4 @@ export const NAV_FOOTER = { label: 'Ver sitio', href: 'index.html', icon: 'exter
 // Versión visible del panel (criterio de deploy para no-técnicos, spec §9.1): Kary
 // confirma que está en la versión nueva tras un despliegue. Se bumpea JUNTO al
 // CACHE_NAME del Service Worker (`public/sw.js`) en cada cambio del shell admin.
-export const APP_VERSION = 'v49 · 2026-07-10';   // [OPUS-4.8] F-IA-2 B1: "Negocio y equipo" con pestañas (fusiona Parámetros+Usuarios; Sistema=2 ítems) — SW v89
+export const APP_VERSION = 'v50 · 2026-07-10';   // [OPUS-4.8] F-IA-2 B2: Clientes (directorio) separado de Cartera (cobro/mora) — SW v90

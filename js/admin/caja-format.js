@@ -15,13 +15,14 @@
 const n = (v) => Math.round(Number(v) || 0);
 
 // ─── Conceptos de movimiento de caja (§8.5 · lista cerrada, espeja CONCEPTOS_CAJA del core) ───
-export const CONCEPTOS_CAJA = ['pago_domiciliario', 'compra_empaques', 'adelanto_vendedora', 'gasto_menor', 'retiro_socio', 'otro'];
+export const CONCEPTOS_CAJA = ['pago_domiciliario', 'compra_empaques', 'adelanto_vendedora', 'gasto_menor', 'retiro_socio', 'reembolso_cliente', 'otro'];
 export const CONCEPTO_LABEL = {
     pago_domiciliario: 'Pago a domiciliario',
     compra_empaques:   'Compra de empaques',
     adelanto_vendedora:'Adelanto a vendedora',
     gasto_menor:       'Gasto menor',
     retiro_socio:      'Retiro de socio',
+    reembolso_cliente: 'Reembolso a cliente (venta de un turno anterior)',
     otro:              'Otro (con nota)',
 };
 export const conceptoLabel = (c) => CONCEPTO_LABEL[c] || c || '—';

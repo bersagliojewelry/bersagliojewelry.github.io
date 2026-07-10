@@ -72,7 +72,9 @@
 // estado "cargando" — reemplaza el hueco en blanco del visitante nuevo/incógnito (home.css + featured/categories).
 // v85 = [OPUS-4.8] Auditoría Antigravity SEO: hidratación sin skeleton (window.__BJ_CATALOG horneado +
 // data.hydrateFromBake) + copy verdad-de-marca (fuera superlativo falso "más grande de la región").
-const CACHE_NAME    = 'bersaglio-v85';
+// v86 = [FABLE-5] Fix traslado-duplicado del POS (carrera de listeners → modal fantasma): acumuladores
+// de traslado en el doc del turno + reversa consciente del turno + estimado sin clamp + tope $500k Kary.
+const CACHE_NAME    = 'bersaglio-v86';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

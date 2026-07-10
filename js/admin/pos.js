@@ -31,6 +31,10 @@ import { CONCEPTOS_CAJA, conceptoLabel, efectivoEnCajon, trasladoSugerido, super
 import { advisoryMatchHint, filterClientes, maskDoc, maskPhone } from './advisory-match.js';   // F2.1 · dedup blando + máscara PII
 
 const cop = n => '$' + Math.round(Math.max(0, Number(n) || 0)).toLocaleString('es-CO');
+// El ESTIMADO del cajón puede ser negativo (anomalía real: traslado duplicado / venta anulada tras
+// trasladar) → formateo con signo, sin clamp (patrón boveda.js). Bug "se perdieron los 200" 2026-07-09:
+// cop() recortaba −$5.4M a $0 y escondía la anomalía.
+const copSigned = n => { const v = Math.round(Number(n) || 0); return (v < 0 ? '-$' : '$') + Math.abs(v).toLocaleString('es-CO'); };
 const entero = n => Math.round(Math.max(0, Number(n) || 0));
 // UUID de idempotencia (secure context → randomUUID; fallback defensivo si faltara).
 const uid = () => (crypto?.randomUUID?.() || `pos-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`);
@@ -74,6 +78,13 @@ let _trasladadoSesion = 0;                                   // fallback: trasla
 let _turnoOpId     = null;                                   // opId de la apertura en curso (idempotencia §8.1.2)
 let _movOpId       = null;                                   // opId del movimiento en curso
 let _trasladoOpId  = null;                                   // opId del traslado en curso
+// Fix traslado-duplicado (2026-07-10): el auto-modal de traslado SOLO se dispara con la foto del cajón
+// COMPLETA — al recargar, las ventas podían llegar ANTES que los traslados → estimado inflado → el modal
+// pedía volver a trasladar lo ya trasladado (duplicó $5.6M en prod el 2026-07-09).
+let _ventasReady    = false;                                 // 1ª foto de ventas del turno ya llegó
+let _trasladosReady = false;                                 // 1ª foto del ledger de traslados ya llegó
+let _trasAutoOpened = false;                                 // el modal se abrió SOLO → puede cerrarse solo si fue falsa alarma
+let _trasPrefill    = null;                                  // sugerido pre-cargado (si el usuario no lo tocó, es refrescable)
 let _overLimit     = false;                                  // el cajón superó el límite → ventas bloqueadas hasta trasladar
 let _turnoUnsubs   = [];                                     // listeners con alcance de turno (se recablean al cambiar de turno)
 let _pendingOpenTurno = null;                                // turno recién abierto (pinta el panel al instante; el listener lo reconcilia)
@@ -227,6 +238,7 @@ function handleCajaEstado(est) {
         // el snapshot de onTurnoChange (que reconcilia con la autoridad server).
         _turno = (id && _pendingOpenTurno && _pendingOpenTurno.id === id) ? _pendingOpenTurno : null;
         _movsCaja = []; _ventasTurno = []; _trasladosLedger = null; _trasladadoSesion = 0; _overLimit = false;
+        _ventasReady = false; _trasladosReady = false;   // la foto del cajón vuelve a estar INCOMPLETA
         if (id) {
             _turnoUnsubs.push(onTurnoChange(id, t => { _turno = t; renderCaja(); recalcTotal(); },
                 e => console.warn('[caja] turno no legible:', e?.code || e)));
@@ -234,12 +246,12 @@ function handleCajaEstado(est) {
                 e => console.warn('[caja] movimientos no legibles:', e?.code || e)));
             // Ventas del turno (read isVentas). Un rol `caja` puro aún NO puede leer pedidos (gap
             // documentado) → degrada: el efectivo del cajón se muestra sin las ventas hasta habilitarlo.
-            _turnoUnsubs.push(onVentasTurnoChange(id, v => { _ventasTurno = v; renderCaja(); recalcTotal(); },
+            _turnoUnsubs.push(onVentasTurnoChange(id, v => { _ventasTurno = v; _ventasReady = true; renderCaja(); recalcTotal(); },
                 e => console.warn('[caja] ventas del turno no legibles (rol sin lectura de pedidos):', e?.code || e)));
             // Traslados del turno (read isOwner). Si el operador NO es owner → error → usamos el
-            // rastreo por sesión (client-track). El owner (Kary en prod) obtiene el cajón exacto.
-            _turnoUnsubs.push(onTrasladosTurnoChange(id, tr => { _trasladosLedger = tr; renderCaja(); recalcTotal(); },
-                () => { _trasladosLedger = null; renderCaja(); }));
+            // acumulador del doc del turno (server) o el rastreo por sesión como último recurso.
+            _turnoUnsubs.push(onTrasladosTurnoChange(id, tr => { _trasladosLedger = tr; _trasladosReady = true; renderCaja(); recalcTotal(); },
+                () => { _trasladosLedger = null; _trasladosReady = false; renderCaja(); }));
         }
     }
     renderCaja();
@@ -274,16 +286,32 @@ function movsSums() {
     return { ingresos, egresos };
 }
 function trasladosSums() {
-    if (Array.isArray(_trasladosLedger)) {                          // owner-authoritative (ledger real)
+    // 1º: acumuladores del DOC DEL TURNO — los escribe la CF en la MISMA transacción del traslado
+    // (atómicos con el fondo, legibles por cualquier rol de caja, cero carrera de listeners). Es la
+    // fuente preferida desde el fix traslado-duplicado 2026-07-10; la autoridad sigue siendo el cierre.
+    if (_turno && typeof _turno.cajonABoveda === 'number' && typeof _turno.bovedaACajon === 'number') {
+        return { cajonABoveda: Math.round(Number(_turno.cajonABoveda) || 0), bovedaACajon: Math.round(Number(_turno.bovedaACajon) || 0) };
+    }
+    if (Array.isArray(_trasladosLedger)) {                          // 2º: ledger real (owner; turnos legacy)
         let cajonABoveda = 0, bovedaACajon = 0;
         for (const t of _trasladosLedger) {
-            if (t.anulado) continue;
+            if (t.anulado || t.estado === 'pendiente_aprobacion' || t.estado === 'rechazado') continue;
             if (t.tipo === 'cajon_a_boveda') cajonABoveda += entero(t.monto);
             else if (t.tipo === 'boveda_a_cajon') bovedaACajon += entero(t.monto);
+            else if (t.tipo === 'reverso') {                        // espejo de cerrarTurnoCore: la reversa netea
+                if ((t.delta || 0) < 0) cajonABoveda -= entero(t.monto);
+                else bovedaACajon -= entero(t.monto);
+            }
         }
         return { cajonABoveda, bovedaACajon };
     }
-    return { cajonABoveda: _trasladadoSesion, bovedaACajon: 0 };   // fallback en memoria (rol sin lectura del ledger)
+    return { cajonABoveda: _trasladadoSesion, bovedaACajon: 0 };   // 3º: fallback en memoria (rol sin lectura del ledger)
+}
+// ¿La foto del cajón está COMPLETA para decisiones automáticas (auto-modal de traslado)? El botón
+// manual siempre funciona; esto solo gatea lo que se dispara SOLO.
+function fuentesDelCajonListas() {
+    const acumDelTurno = !!_turno && typeof _turno.cajonABoveda === 'number' && typeof _turno.bovedaACajon === 'number';
+    return _ventasReady && (acumDelTurno || _trasladosReady);
 }
 function efectivoCajon() {
     if (!_turno) return 0;
@@ -342,7 +370,10 @@ function renderCaja() {
     document.getElementById('caja-ventas-ef').textContent = cop(ventas);
     document.getElementById('caja-ingresos').textContent  = cop(ingresos);
     document.getElementById('caja-egresos').textContent   = cop(egresos);
-    document.getElementById('caja-efectivo').textContent  = cop(efectivo);
+    // El estimado JAMÁS se recorta a $0: un negativo es una anomalía y debe gritarse (2026-07-09).
+    const efEl = document.getElementById('caja-efectivo');
+    efEl.textContent = copSigned(efectivo);
+    efEl.style.color = efectivo < 0 ? 'var(--adm-danger)' : '';
 
     // Barra de límite (discreta): solo si el owner configuró un límite.
     const limWrap = document.getElementById('caja-limite-wrap');
@@ -350,7 +381,7 @@ function renderCaja() {
     if (limWrap) {
         if (Number.isFinite(limite) && limite > 0) {
             limWrap.hidden = false;
-            const pct = Math.min(100, Math.round((efectivo / limite) * 100));
+            const pct = Math.min(100, Math.max(0, Math.round((efectivo / limite) * 100)));
             const bar = document.getElementById('caja-limite-bar');
             if (bar) { bar.style.width = pct + '%'; bar.classList.toggle('is-over', over); }
             document.getElementById('caja-limite-txt').textContent = `Límite del cajón: ${cop(limite)}`;
@@ -359,12 +390,38 @@ function renderCaja() {
         }
     }
 
-    // Alerta + auto-modal al CRUZAR el límite (una sola vez; se re-arma al bajar). Se inhibe si YA hay
-    // un overlay abierto (traslado/cierre/movimiento/confirmación): abrir el traslado encima apilaría
-    // dos modales sobre el mismo backdrop y robaría el foco a la operación en curso.
+    // Alerta bajo la barra: sobre-límite (traslado obligatorio) o estimado NEGATIVO (anomalía).
     const alerta = document.getElementById('caja-alerta');
-    if (alerta) alerta.hidden = !over;
-    if (over && !_overLimit && !anyOverlayOpen()) openTraslado(efectivo);
+    if (alerta) {
+        alerta.hidden = !(over || efectivo < 0);
+        if (over) alerta.textContent = 'El cajón superó el límite. Traslada el excedente a la bóveda antes de seguir vendiendo.';
+        else if (efectivo < 0) alerta.textContent = 'El estimado del cajón quedó NEGATIVO — eso no debería pasar. Revisa en la Bóveda si un traslado quedó registrado dos veces (se corrige con «Reversar») o si se anuló una venta cuyo efectivo ya se había trasladado.';
+    }
+
+    // Modal de traslado ABIERTO: refresca sus cifras con la foto viva. Si se abrió SOLO (auto), el
+    // usuario no ha tocado el monto y la foto completa dice que ya no hace falta → se cierra solo
+    // (era la falsa alarma de datos a medio llegar que duplicó el traslado el 2026-07-09).
+    if (isTrasladoOpen()) {
+        document.getElementById('tras-efectivo').textContent = copSigned(efectivo);
+        document.getElementById('tras-obligatorio').hidden = !over;
+        const inp = document.getElementById('tras-monto');
+        const untouched = _trasPrefill !== null && (inp.value === '' || entero(inp.value) === _trasPrefill);
+        if (untouched) {
+            if (!over && _trasAutoOpened) {
+                closeTraslado();
+                admToast('Falsa alarma: con los datos completos el cajón está dentro del límite. No hace falta trasladar.', 'default', 5000);
+            } else {
+                const sug = trasladoSugerido(efectivo, entero(_cfgCaja?.fondoTrabajo || 0));
+                inp.value = sug || '';
+                _trasPrefill = sug;
+            }
+        }
+    }
+
+    // Auto-modal al CRUZAR el límite (una sola vez; se re-arma al bajar) — SOLO con la foto del cajón
+    // COMPLETA (fuentesDelCajonListas). Se inhibe si YA hay un overlay abierto (traslado/cierre/
+    // movimiento/confirmación): abrirlo encima apilaría modales y robaría el foco a la operación en curso.
+    if (over && !_overLimit && !anyOverlayOpen() && fuentesDelCajonListas()) openTraslado(efectivo, true);
     _overLimit = over;
 }
 
@@ -454,27 +511,50 @@ async function handleMov() {
 }
 
 // ─── Traslado a bóveda (vaciar el cajón al superar el límite) ───────────────────
-function openTraslado(efectivoActual) {
+function openTraslado(efectivoActual, auto = false) {
     if (!_turno || _turno.estado !== 'abierto') { admToast('Abre la caja primero.', 'danger'); return; }
     // opId perezoso (se acuña en handleTraslado): cerrar+reabrir tras un fallo aparente reusa el mismo
     // id → cero doble-vaciado del cajón si la CF ya había commiteado antes del corte de red.
     const sugerido = trasladoSugerido(efectivoActual, entero(_cfgCaja?.fondoTrabajo || 0));
     const over = superaLimite(efectivoActual, Number(_cfgCaja?.limiteCajon));
+    _trasAutoOpened = auto;        // si fue auto y resulta falsa alarma, renderCaja lo cierra solo
+    _trasPrefill = sugerido;       // mientras el usuario no toque el monto, la cifra es refrescable
     document.getElementById('tras-monto').value = sugerido || '';
     document.getElementById('tras-nota').value = '';
     document.getElementById('tras-obligatorio').hidden = !over;
-    document.getElementById('tras-efectivo').textContent = cop(efectivoActual);
+    document.getElementById('tras-efectivo').textContent = copSigned(efectivoActual);
     const submit = document.getElementById('tras-submit');
     submit.disabled = false; submit.textContent = 'Registrar traslado';
     document.getElementById('tras-modal').hidden = false;
     document.getElementById('tras-monto').focus();
 }
-function closeTraslado() { document.getElementById('tras-modal').hidden = true; }
+function closeTraslado() {
+    document.getElementById('tras-modal').hidden = true;
+    _trasAutoOpened = false;
+    _trasPrefill = null;
+}
 async function handleTraslado() {
     if (!_turno) return;
     const monto = entero(document.getElementById('tras-monto').value);
     const nota = document.getElementById('tras-nota').value.trim();
     if (!(monto > 0)) { admToast('El monto debe ser mayor a 0.', 'danger'); return; }
+
+    // Guard anti-duplicado (2026-07-09): trasladar MÁS de lo que el estimado dice que hay casi siempre
+    // significa que el traslado YA quedó registrado (o que faltan datos). Doble confirmación explícita —
+    // el estimado no es precondición (doctrina caja-format), pero repetir un traslado sí exige conciencia.
+    const efectivoActual = efectivoCajon();
+    if (monto > efectivoActual) {
+        admConfirm(
+            `⚠️ Vas a registrar un traslado de ${cop(monto)}, pero el efectivo estimado del cajón es ${copSigned(efectivoActual)}. ` +
+            'Esto suele pasar cuando el traslado YA quedó registrado (revísalo en la Bóveda). ¿Registrarlo de todos modos?',
+            () => doTraslado(monto, nota),
+        );
+        return;
+    }
+    await doTraslado(monto, nota);
+}
+async function doTraslado(monto, nota) {
+    if (!_turno) return;
     if (!_trasladoOpId) _trasladoOpId = uid();
 
     const submit = document.getElementById('tras-submit');

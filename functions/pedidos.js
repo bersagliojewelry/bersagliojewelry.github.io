@@ -77,7 +77,7 @@ function notificarCaja(db) {
             reverso:         `↩️ Reversa de bóveda PENDIENTE de tu aprobación — ${evt.monto || '?'} COP.`,
             ajuste_faltante: `⚠️ Ajuste FALTANTE de bóveda pendiente de aprobación — ${evt.monto || '?'} COP. ${evt.motivo || ''}`,
             ajuste_sobrante: `⚠️ Ajuste SOBRANTE de bóveda pendiente de aprobación — ${evt.monto || '?'} COP. ${evt.motivo || ''}`,
-            aprobacion:      `✅ Evento de bóveda aprobado.`,
+            aprobacion:      `✅ Evento de bóveda aprobado.${evt.turnoSellado ? ' ⚠️ El turno del movimiento ya estaba CERRADO: su arqueo quedó sellado sin esta reversa (el descuadre de ese turno no se corrige solo).' : ''}`,
         };
         try {
             await db.collection('saludEventos').doc(`caja-${evt.evento}-${evt.opId}`).set({

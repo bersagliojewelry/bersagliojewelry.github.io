@@ -361,7 +361,7 @@ function logisticaBlock(p) {
     const filas = [
         p.transportadora ? kv('Transportadora', esc(p.transportadora)) : '',
         p.guia ? kv('Guía', `<span class="adm-num">${esc(p.guia)}</span> <button class="adm-btn adm-btn--ghost adm-btn--sm" data-copy="${esc(p.guia)}" data-copy-label="Guía copiada">⧉</button>`) : '',
-        f ? kv('Flete / domicilio', esc(`${cop(f.valorCOP)} · ${f.cobro === 'asumido' ? 'lo asume Bersaglio' : 'se cobra al cliente'} · ${f.estado === 'recibido' ? 'recibido' : 'pendiente'}${f.medio ? ' · ' + f.medio : ''}`)) : '',
+        (f && Number(f.valorCOP) > 0) ? kv('Flete / domicilio', esc(`${cop(f.valorCOP)} · ${f.cobro === 'asumido' ? 'lo asume Bersaglio' : 'se cobra al cliente'} · ${f.estado === 'recibido' ? 'recibido' : 'pendiente'}${f.medio ? ' · ' + f.medio : ''}`)) : '',
         p.valorDeclarado ? kv('Valor declarado', esc(cop(p.valorDeclarado))) : '',
         typeof p.asegurado === 'boolean' ? kv('Asegurado', p.asegurado ? 'Sí' : 'No') : '',
         p.pesoEntregado ? kv('Peso entregado', esc(`${p.pesoEntregado} g${p.desglose?.peso ? ` (cobrado: ${p.desglose.peso} g)` : ''}`)) : '',
@@ -492,10 +492,12 @@ function renderForm(p) {
         campos = `
             ${campo('Transportadora *', '<input class="adm-input" id="pf-transportadora" placeholder="Ej. Servientrega">')}
             ${campo('Guía *', '<input class="adm-input" id="pf-guia" placeholder="Número de guía">')}
-            ${campo('Flete (COP)', '<input class="adm-input" id="pf-flete" type="number" min="0" inputmode="numeric" placeholder="0">')}
+            ${campo('Flete (COP)', '<input class="adm-input" id="pf-flete" type="number" min="0" inputmode="numeric" placeholder="0 = gratis / lo asume Bersaglio">')}
+            <div id="pf-flete-deps" style="display:none">
             ${campo('¿Quién paga el flete?', `<select class="adm-input" id="pf-cobro"><option value="cobrado">Se cobra al cliente (aparte)</option><option value="asumido">Lo asume Bersaglio</option></select>`)}
-            ${campo('Estado del flete', `<select class="adm-input" id="pf-flete-estado"><option value="pendiente">Pendiente de pago</option><option value="recibido">Ya recibido</option></select>`)}
-            ${campo('Medio del flete', `<select class="adm-input" id="pf-flete-medio"><option value="">—</option><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="wompi">Wompi</option></select>`)}
+            ${campo('Estado del pago del flete', `<select class="adm-input" id="pf-flete-estado"><option value="pendiente">Pendiente de pago</option><option value="recibido">Ya recibido</option></select>`)}
+            ${campo('Medio de pago del flete', `<select class="adm-input" id="pf-flete-medio"><option value="">—</option><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="wompi">Wompi</option></select>`)}
+            </div>
             ${campo('Valor declarado (COP)', '<input class="adm-input" id="pf-declarado" type="number" min="0" inputmode="numeric" placeholder="Opcional">')}
             ${campo('¿Asegurado?', '<select class="adm-input" id="pf-asegurado"><option value="">—</option><option value="si">Sí</option><option value="no">No</option></select>')}
             ${p.desglose?.tipo === 'por_peso' ? campo('Peso entregado (g)', '<input class="adm-input" id="pf-peso" type="number" min="0" step="0.01" placeholder="Opcional — si difiere, registra merma">') : ''}`;
@@ -505,10 +507,12 @@ function renderForm(p) {
         campos = `
             ${campo('¿Quién recibe? *', '<input class="adm-input" id="pf-receptor" placeholder="Nombre de quien recibe">')}
             ${campo('Domicilio (COP)', '<input class="adm-input" id="pf-flete" type="number" min="0" inputmode="numeric" placeholder="0 = gratis">')}
+            <div id="pf-flete-deps" style="display:none">
             ${campo('¿Quién paga el domicilio?', `<select class="adm-input" id="pf-cobro"><option value="cobrado">Se cobra al cliente (aparte)</option><option value="asumido">Lo asume Bersaglio</option></select>`)}
-            ${campo('Estado del domicilio', `<select class="adm-input" id="pf-flete-estado"><option value="pendiente">Pendiente de pago</option><option value="recibido">Ya recibido</option></select>`)}
-            ${campo('Medio del domicilio', `<select class="adm-input" id="pf-flete-medio"><option value="">—</option><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="wompi">Wompi</option></select>`)}`;
-        aviso = 'El domicilio es un cargo APARTE: nunca cambia el total del pedido. Déjalo en 0 si es gratis.';
+            ${campo('Estado del pago del domicilio', `<select class="adm-input" id="pf-flete-estado"><option value="pendiente">Pendiente de pago</option><option value="recibido">Ya recibido</option></select>`)}
+            ${campo('Medio de pago del domicilio', `<select class="adm-input" id="pf-flete-medio"><option value="">—</option><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="wompi">Wompi</option></select>`)}
+            </div>`;
+        aviso = 'El domicilio es un cargo APARTE: nunca cambia el total del pedido. Déjalo en 0 si es gratis (con 0 no se pregunta cómo se paga).';
     } else if (a === 'listo_retiro') {
         aviso = 'El cliente retira en el atelier. Al entregarlo se cotejará la cédula.';
     } else if (a === 'entregado') {
@@ -561,6 +565,15 @@ function renderForm(p) {
 
     document.getElementById('pf-cancelar').addEventListener('click', cerrarForm);
     document.getElementById('pf-ok').addEventListener('click', () => submitForm(p.id));
+    // Divulgación progresiva (Daniel 2026-07-10): con flete/domicilio en 0 NO se pregunta quién lo paga,
+    // su estado ni el medio — solo aparecen si hay un valor > 0. display:contents preserva la grilla.
+    const fleteInp = document.getElementById('pf-flete');
+    const fleteDeps = document.getElementById('pf-flete-deps');
+    if (fleteInp && fleteDeps) {
+        const syncFleteDeps = () => { fleteDeps.style.display = (Number(fleteInp.value) > 0) ? 'contents' : 'none'; };
+        fleteInp.addEventListener('input', syncFleteDeps);
+        syncFleteDeps();
+    }
     // El instructivo tiene botón de copiar (delegación aparte: este wrap no es #ped-detail).
     document.getElementById('ped-form-wrap').querySelectorAll('[data-copy]').forEach(b =>
         b.addEventListener('click', () => copiar(b.dataset.copy, b.dataset.copyLabel || 'Copiado')));

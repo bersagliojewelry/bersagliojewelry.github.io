@@ -46,8 +46,32 @@ class PublicData {
         this._initialJournal = false;   // journal (lazy) — para readiness por sección
     }
 
+    /**
+     * Hidratación SÍNCRONA desde la semilla horneada por el SSG (`window.__BJ_CATALOG`, §fix-Antigravity
+     * 2026-07-09) — espeja el patrón de `window.__BJ_SC` (§163). El 1er paint de la home pinta las
+     * DESTACADAS reales (sin skeleton) ANTES de que llegue Firestore, evitando el real→skeleton→real.
+     * Idempotente; solo siembra secciones aún vacías. Firestore refresca luego (mismo/ más dato).
+     * Fallback seguro: sin semilla → comportamiento de skeleton normal.
+     */
+    hydrateFromBake() {
+        if (this._initialPieces && this._initialCols) return;
+        try {
+            const seed = typeof window !== 'undefined' && window.__BJ_CATALOG;
+            if (!seed || typeof seed !== 'object') return;
+            if (!this._initialPieces && Array.isArray(seed.pieces) && seed.pieces.length) {
+                this._pieces = seed.pieces;
+                this._initialPieces = true;
+            }
+            if (!this._initialCols && Array.isArray(seed.collections) && seed.collections.length) {
+                this._collections = seed.collections;
+                this._initialCols = true;
+            }
+        } catch { /* sin semilla / entorno sin window → skeleton normal (fallback seguro) */ }
+    }
+
     /** Returns a promise that resolves once first snapshot of pieces+collections arrives. */
     async load() {
+        this.hydrateFromBake();   // §fix-Antigravity: 1er paint real desde la semilla horneada (anti-skeleton)
         if (this._loadPromise) return this._loadPromise;
 
         this._loadPromise = (async () => {

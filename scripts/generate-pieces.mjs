@@ -299,6 +299,23 @@ function bakeSiteContentHtml(html, sc) {
     return out;
 }
 
+// Semilla de catálogo horneada (HIDRATACIÓN anti-skeleton · fix auditoría Antigravity 2026-07-09):
+// el prerender estático sirve a bots sin-JS, pero el cliente re-renderiza el main con renderAll() y
+// —sin datos— pintaba SKELETON, borrando el contenido real (real→skeleton→real = FOUC/CLS). Fix
+// (asesor crítico: dataset INLINE, no fetch): horneamos las DESTACADAS + colecciones en el HTML;
+// data.js las lee SÍNCRONO (window.__BJ_CATALOG) → el 1er paint del cliente ya trae contenido real,
+// sin skeleton. Solo las `featured` (lo que la home pinta) → payload chico. Espeja bakeSiteContentHtml
+// (safeJsonLd neutraliza </script>+U+2028/29); idempotente por id. PURA (cubierta por SSG_SELFTEST).
+function bakeCatalogSeed(html, catalogo) {
+    if (!catalogo || !html.includes('</head>') || html.includes('id="baked-catalog"')) return html;
+    const seed = {
+        pieces: (catalogo.pieces || []).filter(p => p && p.featured),
+        collections: catalogo.collections || [],
+    };
+    return html.replace('</head>',
+        `    <script id="baked-catalog">window.__BJ_CATALOG=${safeJsonLd(seed)};</script>\n</head>`);
+}
+
 // ===================== PRERENDERIZADO ESTÁTICO DE LA HOME (SEO/AEO v1) =====================
 
 function priceDisplayNode(p) {
@@ -1337,6 +1354,23 @@ async function main() {
     // siteContent del CMS horneado (anti-flash 1ª visita + preload al hero real, §163).
     await injectSiteContentIntoIndex(handle, pieces, collections, slugMap);
 
+    // Semilla de catálogo (destacadas + colecciones) horneada → hidratación del 1er paint SIN
+    // skeleton (fix auditoría Antigravity 2026-07-09). Inyección aislada (read/write propio) para
+    // no acoplarse al guard de longitud de injectSiteContentIntoIndex. Idempotente por id.
+    try {
+        const idxPath = join(DIST, 'index.html');
+        if (existsSync(idxPath)) {
+            const h = readFileSync(idxPath, 'utf-8');
+            const out = bakeCatalogSeed(h, catalogo);
+            if (out !== h) {
+                writeFileSync(idxPath, out);
+                console.log(`[generate] window.__BJ_CATALOG horneado (${(catalogo.pieces || []).filter(p => p && p.featured).length} destacadas + ${(catalogo.collections || []).length} colecciones — hidratación sin skeleton).`);
+            }
+        }
+    } catch (e) {
+        console.warn('[generate] Semilla de catálogo omitida:', e.message);
+    }
+
     // Páginas de listado indexables (catálogo + journal) — A2a. Por-categoría/por-artículo = A2b.
     injectListingPage('colecciones.html', '<main id="main-content" data-screen-label="colecciones">', {
         schemaType: 'CollectionPage',
@@ -1429,6 +1463,19 @@ function runSelfTest() {
     const bk2 = bakeSiteContentHtml(FAKE_INDEX, { home: { hero: { bgImage: 'javascript:alert(1)' } } });
     if (!bk2.includes('/img/hero-1200.avif')) fails.push('bake-sc: URL no-https debió conservar el preload estático.');
     if (bakeSiteContentHtml(bk, { home: {} }) !== bk) fails.push('bake-sc: NO es idempotente.');
+
+    // Semilla de catálogo (hidratación §fix-Antigravity): anti-breakout + idempotencia + solo featured.
+    const FAKE_IDX2 = '<html><head></head><body>x</body></html>';
+    const catSeed = { pieces: [{ id: 'p1', name: PAYLOAD, slug: 's1', featured: true }, { id: 'p2', name: 'no', featured: false }], collections: [{ id: 'c', name: PAYLOAD }] };
+    const bkc = bakeCatalogSeed(FAKE_IDX2, catSeed);
+    if (!bkc.includes('window.__BJ_CATALOG=')) fails.push('bake-catalog: no inyectó __BJ_CATALOG.');
+    if (bkc.includes('</script><script>alert')) fails.push('bake-catalog: breakout </script> NO neutralizado.');
+    try {
+        const val = bkc.split('window.__BJ_CATALOG=')[1].split(';</script>')[0];
+        const parsed = JSON.parse(val);
+        if (parsed.pieces.length !== 1 || parsed.pieces[0].id !== 'p1') fails.push('bake-catalog: debe hornear SOLO las featured.');
+    } catch (e) { fails.push('bake-catalog: el valor NO parsea: ' + e.message); }
+    if (bakeCatalogSeed(bkc, catSeed) !== bkc) fails.push('bake-catalog: NO es idempotente.');
 
     // STOCK-AWARE (§10.1): vendida → OutOfStock + sin precio + "Vendida" en el HTML; no rebrota InStock.
     const soldPiece = { ...mockPiece, estado: 'vendida' };

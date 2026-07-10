@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clientes y cartera — Bersaglio Admin</title>
+    <title>Cartera — Bersaglio Admin</title>
     <meta name="robots" content="noindex, nofollow">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,13 +25,9 @@
             <button class="adm-hamburger" id="hamburger-btn" aria-label="Menú">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="22" height="22"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
             </button>
-            <h1>Clientes y cartera</h1>
+            <h1>Cartera</h1>
             <div class="adm-topbar-actions">
-                <a href="admin-config.html" class="adm-btn adm-btn--ghost" title="Configuración">⚙ Configuración</a>
-                <button id="btn-nuevo-cliente" class="adm-btn adm-btn--primary">
-                    <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
-                    Nuevo cliente
-                </button>
+                <a href="admin-clientes.html" class="adm-btn adm-btn--ghost" title="Ver el directorio de clientes">← Ver clientes</a>
             </div>
         </header>
 
@@ -78,17 +74,6 @@
                 </div>
             </div>
 
-            <!-- Cumpleaños del mes -->
-            <div class="adm-section" id="cumple-section" hidden>
-                <div class="adm-section-head"><h2>🎂 Cumpleaños del mes</h2></div>
-                <div class="adm-table-wrap">
-                    <table class="adm-table">
-                        <thead><tr><th>Día</th><th>Cliente</th><th>Vendedora</th><th>Contacto</th></tr></thead>
-                        <tbody id="cumple-body"></tbody>
-                    </table>
-                </div>
-            </div>
-
             <!-- Cartera por vendedora -->
             <div class="adm-section">
                 <div class="adm-section-head"><h2>Cartera por vendedora</h2></div>
@@ -103,7 +88,7 @@
             <!-- Clientes -->
             <div class="adm-section">
                 <div class="adm-section-head">
-                    <h2>Clientes</h2>
+                    <h2>Cuentas por cliente</h2>
                     <input type="search" id="cli-search" class="adm-input" placeholder="Buscar por nombre…" style="max-width:260px;">
                 </div>
                 <div class="adm-filtros-bar" id="cli-filtros">
@@ -139,67 +124,13 @@
                         </table>
                     </div>
                     <div class="adm-empty" id="clientes-empty" hidden>
-                        <p>Aún no hay clientes con cuenta. Crea el primero o impórtalos desde el Kardex (migración).</p>
+                        <p>Aún no hay clientes registrados. Agrégalos en la sección <strong>Clientes</strong>.</p>
                     </div>
                 </div>
             </div>
 
         </div>
     </main>
-</div>
-
-<!-- Modal: nuevo cliente -->
-<div class="adm-modal" id="cliente-modal" hidden>
-    <div class="adm-modal-box">
-        <div class="adm-modal-head">
-            <h2>Nuevo cliente</h2>
-            <button class="adm-modal-close" id="cliente-modal-close" aria-label="Cerrar">
-                <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
-            </button>
-        </div>
-        <form id="cliente-form">
-            <div class="adm-modal-body">
-                <div class="adm-form-row adm-col-1">
-                    <div class="adm-field">
-                        <label for="cli-nombre">Nombre <span class="adm-opt">(obligatorio)</span></label>
-                        <input type="text" id="cli-nombre" class="adm-input" required maxlength="120" autocomplete="off">
-                    </div>
-                </div>
-                <div class="adm-form-row">
-                    <div class="adm-field">
-                        <label for="cli-telefono">Teléfono</label>
-                        <input type="tel" id="cli-telefono" class="adm-input" maxlength="40" autocomplete="off">
-                    </div>
-                    <div class="adm-field">
-                        <label for="cli-whatsapp">WhatsApp</label>
-                        <input type="tel" id="cli-whatsapp" class="adm-input" maxlength="40" autocomplete="off">
-                    </div>
-                </div>
-                <div class="adm-form-row">
-                    <div class="adm-field">
-                        <label for="cli-vendedora">Vendedora</label>
-                        <select id="cli-vendedora" class="adm-input">
-                            <option value="">Directo de Kary</option>
-                        </select>
-                    </div>
-                    <div class="adm-field">
-                        <label for="cli-cumpleanos">Cumpleaños</label>
-                        <input type="date" id="cli-cumpleanos" class="adm-input">
-                    </div>
-                </div>
-                <div class="adm-form-row adm-col-1">
-                    <div class="adm-field">
-                        <label for="cli-notas">Notas</label>
-                        <textarea id="cli-notas" class="adm-input" maxlength="500"></textarea>
-                    </div>
-                </div>
-            </div>
-            <div class="adm-modal-foot">
-                <button type="button" class="adm-btn adm-btn--ghost" id="cliente-cancel">Cancelar</button>
-                <button type="submit" class="adm-btn adm-btn--primary" id="cliente-save">Crear cliente</button>
-            </div>
-        </form>
-    </div>
 </div>
 
 <!-- Toast container -->

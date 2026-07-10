@@ -218,6 +218,8 @@ test('B2 · CARRERA cerrarTurno vs crearPedido → sin pedido HUÉRFANO (invaria
 // ─── B3 · Bóveda: traslado/reverso + recompute + checkpoint (§9.3 · §8.1.2/3 · §8.3) ─────────
 test('B3 · traslado cajón→bóveda: el saldo SUBE por recompute (no se incrementa a mano)', async () => {
     await resetBoveda();
+    await limpiarPuntero();
+    await abrirTurnoCore(db, { opId: 'T', fondoApertura: 0, autor: 'kary' });   // 2026-07-10: el turno atribuido debe existir y estar abierto
     const r1 = await registrarTrasladoCore(db, { opId: 'TR1', tipo: 'cajon_a_boveda', monto: 100000, turnoId: 'T', autor: 'kary' });
     assert.equal(r1.saldo, 100000);
     const r2 = await registrarTrasladoCore(db, { opId: 'TR2', tipo: 'cajon_a_boveda', monto: 50000, turnoId: 'T', autor: 'kary' });
@@ -387,4 +389,87 @@ test('B4 · aprobar: evento inexistente → not-found; doble aprobación → ide
     assert.equal(a1.saldo, 0);
     assert.equal(a2.yaExistia, true);
     assert.equal(a2.saldo, 0);                                                 // no re-aplica
+});
+
+// ─── Fix traslado-duplicado (2026-07-10) · acumuladores del turno + reversa consciente del turno ──
+// RCA real de prod (2026-07-09): la carrera de listeners del POS duplicó un traslado de $5.6M; la
+// reversa arregló la bóveda pero el cierre del turno selló un descuadre de +11.2M porque no la veía.
+
+test('acumuladores · abrir inicializa en 0; el traslado con turnoId incrementa en la MISMA tx (idempotente)', async () => {
+    await limpiarPuntero(); await resetBoveda();
+    await abrirTurnoCore(db, { opId: 'TAC1', fondoApertura: 200000, autor: 'kary' });
+    let t = (await db.doc('turnos/TAC1').get()).data();
+    assert.equal(t.cajonABoveda, 0);
+    assert.equal(t.bovedaACajon, 0);
+    await registrarTrasladoCore(db, { opId: 'TAC1-T1', tipo: 'cajon_a_boveda', monto: 300000, turnoId: 'TAC1', autor: 'kary' });
+    await registrarTrasladoCore(db, { opId: 'TAC1-T2', tipo: 'boveda_a_cajon', monto: 50000, turnoId: 'TAC1', autor: 'kary' });
+    t = (await db.doc('turnos/TAC1').get()).data();
+    assert.equal(t.cajonABoveda, 300000);
+    assert.equal(t.bovedaACajon, 50000);
+    // Reintento del MISMO opId → idempotente: NO re-incrementa el acumulador.
+    await registrarTrasladoCore(db, { opId: 'TAC1-T1', tipo: 'cajon_a_boveda', monto: 300000, turnoId: 'TAC1', autor: 'kary' });
+    assert.equal((await db.doc('turnos/TAC1').get()).data().cajonABoveda, 300000);
+    await cerrarTurnoCore(db, { turnoId: 'TAC1', conteoPorMedio: { efectivo: 0 }, autor: 'kary' });
+});
+
+test('acumuladores · traslado atribuido a turno CERRADO o inexistente → rechaza (sin turnoId sigue OK)', async () => {
+    await limpiarPuntero(); await resetBoveda();
+    await abrirTurnoCore(db, { opId: 'TAC2', fondoApertura: 0, autor: 'kary' });
+    await cerrarTurnoCore(db, { turnoId: 'TAC2', conteoPorMedio: { efectivo: 0 }, autor: 'kary' });
+    await assert.rejects(registrarTrasladoCore(db, { opId: 'TAC2-T1', tipo: 'cajon_a_boveda', monto: 1000, turnoId: 'TAC2', autor: 'kary' }), /cerrad/i);
+    await assert.rejects(registrarTrasladoCore(db, { opId: 'TAC2-T2', tipo: 'cajon_a_boveda', monto: 1000, turnoId: 'NOEXISTE', autor: 'kary' }), /no existe/i);
+    const r = await registrarTrasladoCore(db, { opId: 'TAC2-T3', tipo: 'cajon_a_boveda', monto: 1000, autor: 'kary' });
+    assert.equal(r.saldo, 1000);
+});
+
+test('reversa-turno · ESCENARIO DEL DUPLICADO: reverso hereda turnoId, aprobar netea el acumulador y el CIERRE lo ve', async () => {
+    await limpiarPuntero(); await resetBoveda();
+    await abrirTurnoCore(db, { opId: 'TDUP', fondoApertura: 200000, autor: 'kary' });
+    await registrarTrasladoCore(db, { opId: 'DUP-1', tipo: 'cajon_a_boveda', monto: 100000, turnoId: 'TDUP', autor: 'kary' });
+    await registrarTrasladoCore(db, { opId: 'DUP-2', tipo: 'cajon_a_boveda', monto: 100000, turnoId: 'TDUP', autor: 'kary' });   // el fantasma
+    const rev = await reversoCore(db, { opId: 'DUP-REV', reversaA: 'DUP-2', autor: 'kary', motivo: 'traslado duplicado' });
+    assert.equal(rev.estado, 'pendiente_aprobacion');
+    const revDoc = (await db.doc('bovedaMovimientos/DUP-REV').get()).data();
+    assert.equal(revDoc.turnoId, 'TDUP');                        // hereda el turno del original
+    assert.equal(revDoc.reversaTipo, 'cajon_a_boveda');
+    assert.equal((await db.doc('turnos/TDUP').get()).data().cajonABoveda, 200000);   // pendiente: aún NO netea
+    await aprobarEventoCajaCore(db, { opId: 'DUP-REV', aprobadoPor: 'kary', rol: 'owner' });
+    assert.equal((await db.doc('turnos/TDUP').get()).data().cajonABoveda, 100000);   // acumulador neteado
+    assert.equal((await db.doc('boveda/main').get()).data().saldo, 100000);          // bóveda sana
+    const cierre = await cerrarTurnoCore(db, { turnoId: 'TDUP', conteoPorMedio: { efectivo: 100000 }, autor: 'kary' });
+    assert.equal(cierre.esperadoEfectivo, 100000);   // 200000 − (200000 − 100000 reversa) — antes del fix: 0 y descuadre fantasma
+    assert.equal(cierre.descuadre, 0);
+});
+
+test('reversa-turno · reverso PENDIENTE no cuenta: el cierre solo netea reversas APROBADAS', async () => {
+    await limpiarPuntero(); await resetBoveda();
+    await abrirTurnoCore(db, { opId: 'TPEND', fondoApertura: 0, autor: 'kary' });
+    await registrarTrasladoCore(db, { opId: 'PEND-1', tipo: 'cajon_a_boveda', monto: 40000, turnoId: 'TPEND', autor: 'kary' });
+    await reversoCore(db, { opId: 'PEND-REV', reversaA: 'PEND-1', autor: 'kary', motivo: 'x' });
+    const cierre = await cerrarTurnoCore(db, { turnoId: 'TPEND', conteoPorMedio: { efectivo: 0 }, autor: 'kary' });
+    assert.equal(cierre.esperadoEfectivo, -40000);   // el traslado cuenta; la reversa pendiente NO
+});
+
+test('reversa-turno · aprobar tras el CIERRE → el sello NO se toca, la bóveda SÍ, y alerta turnoSellado', async () => {
+    await limpiarPuntero(); await resetBoveda();
+    await abrirTurnoCore(db, { opId: 'TSEL', fondoApertura: 0, autor: 'kary' });
+    await registrarTrasladoCore(db, { opId: 'SEL-1', tipo: 'cajon_a_boveda', monto: 25000, turnoId: 'TSEL', autor: 'kary' });
+    await reversoCore(db, { opId: 'SEL-REV', reversaA: 'SEL-1', autor: 'kary', motivo: 'tarde' });
+    await cerrarTurnoCore(db, { turnoId: 'TSEL', conteoPorMedio: { efectivo: 0 }, autor: 'kary' });
+    const a = mockAlertas();
+    const r = await aprobarEventoCajaCore(db, { opId: 'SEL-REV', aprobadoPor: 'kary', rol: 'owner' }, a);
+    assert.equal(r.turnoSellado, true);
+    assert.equal((await db.doc('turnos/TSEL').get()).data().cajonABoveda, 25000);   // sello inmutable
+    assert.equal((await db.doc('boveda/main').get()).data().saldo, 0);              // bóveda corregida
+    assert.ok(a.buf.some((e) => e.evento === 'aprobacion' && e.turnoSellado === true));
+});
+
+test('B4 · concepto reembolso_cliente (egreso trazable de un reembolso de turno anterior) entra a la ecuación', async () => {
+    await limpiarPuntero(); await resetBoveda();
+    await abrirTurnoCore(db, { opId: 'TREM', fondoApertura: 100000, autor: 'kary' });
+    const r = await movimientoCajaCore(db, { turnoId: 'TREM', opId: 'REM1', tipo: 'egreso', concepto: 'reembolso_cliente', monto: 50000, autor: 'kary' });
+    assert.equal(r.yaExistia, false);
+    const cierre = await cerrarTurnoCore(db, { turnoId: 'TREM', conteoPorMedio: { efectivo: 50000 }, autor: 'kary' });
+    assert.equal(cierre.esperadoEfectivo, 50000);
+    assert.equal(cierre.descuadre, 0);
 });

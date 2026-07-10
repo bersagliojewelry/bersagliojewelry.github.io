@@ -49,6 +49,11 @@ async function abrirTurnoCore(db, input = {}) {
             fondoApertura,
             aperturaPor: autor,
             aperturaTs: FieldValue.serverTimestamp(),
+            // Acumuladores de traslado DENORMALIZADOS (§traslado-duplicado 2026-07-10): el POS estima el
+            // cajón desde ESTE doc (atómico con el fondo, legible por cualquier rol de caja) — cero carrera
+            // de listeners. La AUTORIDAD sigue siendo el ledger (el cierre recomputa desde bovedaMovimientos).
+            cajonABoveda: 0,
+            bovedaACajon: 0,
         });
         // El puntero apunta a este turno + resetea la cota (§9.2): docsDelTurno arranca en 0.
         tx.set(estadoRef, { turnoAbiertoId: opId, docsDelTurno: 0 }, { merge: true });
@@ -126,13 +131,22 @@ async function cerrarTurnoCore(db, input = {}) {
             else if (m.tipo === 'egreso') egresos += entero(m.monto);
         });
 
-        // Traslados bóveda↔cajón de ESTE turno (reposición de cambio suma; vaciado resta).
+        // Traslados bóveda↔cajón de ESTE turno (reposición de cambio suma; vaciado resta). Los REVERSOS
+        // APROBADOS netean el traslado que deshacen (§traslado-duplicado 2026-07-10: sin esto, reversar un
+        // traslado duplicado arreglaba la bóveda pero el cierre seguía contando el fantasma → descuadre
+        // absurdo, visto en prod con +11.2M). Pendiente/rechazado NO cuentan (Dual-Approval §9.1).
         let bovedaACajon = 0, cajonABoveda = 0;
         trasSnap.forEach((d) => {
             const t = d.data();
             if (t.anulado) return;
+            if (t.estado === 'pendiente_aprobacion' || t.estado === 'rechazado') return;
             if (t.tipo === 'boveda_a_cajon') bovedaACajon += entero(t.monto);
             else if (t.tipo === 'cajon_a_boveda') cajonABoveda += entero(t.monto);
+            else if (t.tipo === 'reverso') {
+                // delta hereda el signo de bóveda: reversa de cajón→bóveda tiene delta<0 (la plata "vuelve" al cajón).
+                if ((t.delta || 0) < 0) cajonABoveda -= entero(t.monto);
+                else bovedaACajon -= entero(t.monto);
+            }
         });
 
         // Ecuación de cierre COMPLETA (§8.1.7). El esperado puede ser < 0 (anomalía real) → sin clamp.
@@ -187,8 +201,10 @@ function guardMonto(monto) {
     }
 }
 
-// B4 · conceptos de movimiento de caja (§8.5, lista cerrada; 'otro' exige nota).
-const CONCEPTOS_CAJA = new Set(['pago_domiciliario', 'compra_empaques', 'adelanto_vendedora', 'gasto_menor', 'retiro_socio', 'otro']);
+// B4 · conceptos de movimiento de caja (§8.5, lista cerrada; 'otro' exige nota). 'reembolso_cliente'
+// (2026-07-10): devolver plata de una venta de un turno YA CERRADO sale del cajón actual como egreso
+// trazable — sin él, ese efectivo salía "por debajo" y el arqueo marcaba una falta inexplicable.
+const CONCEPTOS_CAJA = new Set(['pago_domiciliario', 'compra_empaques', 'adelanto_vendedora', 'gasto_menor', 'retiro_socio', 'reembolso_cliente', 'otro']);
 
 // B4 · emisor de alerta al owner (§9.8.2): el owner es SIEMPRE destinatario (fijo en la CF; config/caja
 // solo AÑADE, jamás remueve). `notificar` se INYECTA (opts) → hoy mock en tests; el transporte FCM real se
@@ -233,19 +249,34 @@ async function registrarTrasladoCore(db, input = {}) {
     guardMonto(monto);
     const delta = signo * monto;
 
+    // Traslados que tocan el CAJÓN espejan su acumulador en el doc del turno (misma tx = atómico).
+    const CAMPO_ACUM = { cajon_a_boveda: 'cajonABoveda', boveda_a_cajon: 'bovedaACajon' };
+    const turnoId = input.turnoId ? String(input.turnoId) : null;
+
     return db.runTransaction(async (tx) => {
         const movRef = db.doc(`bovedaMovimientos/${opId}`);
+        const turnoRef = (turnoId && CAMPO_ACUM[tipo]) ? db.doc(`turnos/${turnoId}`) : null;
+        // Todas las lecturas ANTES de escribir (regla de las transacciones Firestore).
         const existing = await tx.get(movRef);
+        const turnoSnap = turnoRef ? await tx.get(turnoRef) : null;
         const base = await saldoBovedaDesdeLedger(db, tx);   // recompute autoridad (movimientos ya commiteados)
         if (existing.exists) return { opId, saldo: base, yaExistia: true };   // IDEMPOTENTE: no re-suma
+
+        // Un traslado atribuido a un turno exige que el turno exista y siga ABIERTO: uno tardío contra un
+        // turno sellado jamás entraría a su ecuación de cierre (drift silencioso, §traslado-duplicado).
+        if (turnoRef) {
+            if (!turnoSnap.exists) throw new PedidoError('not-found', 'El turno del traslado no existe.');
+            if (turnoSnap.data().estado !== 'abierto') throw new PedidoError('failed-precondition', 'La caja de ese turno ya está cerrada: abre un turno para registrar el traslado.');
+        }
 
         const nuevoSaldo = base + delta;
         if (delta < 0 && nuevoSaldo < 0) throw new PedidoError('failed-precondition', 'Saldo insuficiente en la bóveda para esa salida.');
 
         const mov = { tipo, monto, delta, autor, ts: FieldValue.serverTimestamp() };
-        if (input.turnoId) mov.turnoId = String(input.turnoId);
+        if (turnoId) mov.turnoId = turnoId;
         if (input.nota) mov.nota = String(input.nota).slice(0, 500);
         tx.set(movRef, mov);
+        if (turnoRef) tx.update(turnoRef, { [CAMPO_ACUM[tipo]]: FieldValue.increment(monto) });
         tx.set(db.doc('boveda/main'), { saldo: nuevoSaldo, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
         return { opId, saldo: nuevoSaldo, tipo, delta, yaExistia: false };
     });
@@ -275,9 +306,15 @@ async function reversoCore(db, input = {}, opts = {}) {
         if (origSnap.data().tipo === 'reverso') throw new PedidoError('failed-precondition', 'No se puede reversar un reverso.');
         if (!yaRev.empty) throw new PedidoError('failed-precondition', 'Ese movimiento ya fue reversado.');
 
-        const delta = -(origSnap.data().delta || 0);
+        const orig = origSnap.data();
+        const delta = -(orig.delta || 0);
         // DESTRUCTIVO (§9.1): nace PENDIENTE → NO escribe boveda/main (no cuenta hasta que el owner apruebe).
-        tx.set(movRef, { tipo: 'reverso', reversaA, monto: Math.abs(delta), delta, estado: 'pendiente_aprobacion', autor, motivo, ts: FieldValue.serverTimestamp() });
+        // Hereda turnoId + tipo del original (§traslado-duplicado 2026-07-10): al aprobarse, la ecuación del
+        // turno y su acumulador netean la reversa — antes la bóveda quedaba bien pero el cierre no la veía.
+        const mov = { tipo: 'reverso', reversaA, monto: Math.abs(delta), delta, estado: 'pendiente_aprobacion', autor, motivo, ts: FieldValue.serverTimestamp() };
+        if (orig.turnoId) mov.turnoId = orig.turnoId;
+        if (orig.tipo) mov.reversaTipo = orig.tipo;
+        tx.set(movRef, mov);
         return { opId, reversaA, estado: 'pendiente_aprobacion', saldo: base, delta, yaExistia: false };
     });
     if (!res.yaExistia) await emitirAlerta(opts, { evento: 'reverso', opId, reversaA, monto: Math.abs(res.delta), autor, requiereAprobacion: true });
@@ -380,16 +417,28 @@ async function aprobarEventoCajaCore(db, input = {}, opts = {}) {
         const base = await saldoBovedaDesdeLedger(db, tx);   // excluye este evento (aún pendiente)
         if (!snap.exists) throw new PedidoError('not-found', 'El evento a aprobar no existe.');
         const ev = snap.data();
+        // Reversa de un TRASLADO con turno: al aprobar, netea el acumulador del turno (si sigue abierto).
+        const CAMPO_ACUM = { cajon_a_boveda: 'cajonABoveda', boveda_a_cajon: 'bovedaACajon' };
+        const campoAcum = (ev.tipo === 'reverso' && ev.turnoId && CAMPO_ACUM[ev.reversaTipo]) ? CAMPO_ACUM[ev.reversaTipo] : null;
+        const turnoSnap = campoAcum ? await tx.get(db.doc(`turnos/${ev.turnoId}`)) : null;   // lectura antes de escribir
         if (ev.estado === 'aprobado') return { opId, estado: 'aprobado', saldo: base, yaExistia: true };   // base ya lo incluye
         if (ev.estado !== 'pendiente_aprobacion') throw new PedidoError('failed-precondition', 'El evento no está pendiente de aprobación.');
         const delta = ev.delta || 0;
         const nuevoSaldo = base + delta;
         if (delta < 0 && nuevoSaldo < 0) throw new PedidoError('failed-precondition', 'Aprobar dejaría la bóveda negativa.');
         tx.update(movRef, { estado: 'aprobado', aprobadoPor, aprobadoEn: FieldValue.serverTimestamp() });
+        let turnoSellado = false;
+        if (campoAcum && turnoSnap) {
+            if (turnoSnap.exists && turnoSnap.data().estado === 'abierto') {
+                tx.update(db.doc(`turnos/${ev.turnoId}`), { [campoAcum]: FieldValue.increment(-Math.abs(ev.monto || delta)) });
+            } else {
+                turnoSellado = true;   // el cierre ya selló SIN esta reversa — el sello es inmutable; se alerta
+            }
+        }
         tx.set(db.doc('boveda/main'), { saldo: nuevoSaldo, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
-        return { opId, estado: 'aprobado', saldo: nuevoSaldo, yaExistia: false };
+        return { opId, estado: 'aprobado', saldo: nuevoSaldo, turnoSellado, yaExistia: false };
     });
-    if (!res.yaExistia) await emitirAlerta(opts, { evento: 'aprobacion', opId, aprobadoPor, requiereAprobacion: false });
+    if (!res.yaExistia) await emitirAlerta(opts, { evento: 'aprobacion', opId, aprobadoPor, requiereAprobacion: false, turnoSellado: res.turnoSellado === true });
     return res;
 }
 

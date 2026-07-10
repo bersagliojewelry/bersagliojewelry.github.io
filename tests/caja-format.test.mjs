@@ -55,8 +55,9 @@ test('superaLimite — dispara SOLO por encima del límite (no en el borde)', ()
 });
 
 test('conceptos de caja: lista cerrada + etiquetas + fallback', () => {
-    assert.deepEqual(CONCEPTOS_CAJA, ['pago_domiciliario', 'compra_empaques', 'adelanto_vendedora', 'gasto_menor', 'retiro_socio', 'otro']);
+    assert.deepEqual(CONCEPTOS_CAJA, ['pago_domiciliario', 'compra_empaques', 'adelanto_vendedora', 'gasto_menor', 'retiro_socio', 'reembolso_cliente', 'otro']);
     assert.equal(conceptoLabel('retiro_socio'), 'Retiro de socio');
+    assert.equal(conceptoLabel('reembolso_cliente'), 'Reembolso a cliente (venta de un turno anterior)');
     assert.equal(conceptoLabel('desconocido'), 'desconocido');   // fallback nunca rompe la UI
 });
 

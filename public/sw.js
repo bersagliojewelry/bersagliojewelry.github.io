@@ -70,7 +70,9 @@
 // cerrada, panel de anomalías (ventas fuera de turno) en la Auditoría. Prereq de F2.2.
 // v84 = [OPUS-4.8] Index carga fluida (TODO-74): skeleton de cristal (destacadas + colecciones) en el
 // estado "cargando" — reemplaza el hueco en blanco del visitante nuevo/incógnito (home.css + featured/categories).
-const CACHE_NAME    = 'bersaglio-v84';
+// v85 = [OPUS-4.8] Auditoría Antigravity SEO: hidratación sin skeleton (window.__BJ_CATALOG horneado +
+// data.hydrateFromBake) + copy verdad-de-marca (fuera superlativo falso "más grande de la región").
+const CACHE_NAME    = 'bersaglio-v85';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

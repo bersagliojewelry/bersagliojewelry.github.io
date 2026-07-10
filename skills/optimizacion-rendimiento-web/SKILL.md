@@ -66,6 +66,30 @@ Mide, no supongas. Fuentes de verdad, por orden:
    **render-blocking**, qué es externo (DNS+TLS extra), qué pesa, qué se puede diferir.
 3. **Coverage / bundle**: cuánto CSS/JS se carga sin usar above-the-fold.
 
+**Cómo medir de forma robusta** (aprendido en cars): la API pública de PageSpeed suele estar sin
+cuota y la UI `pagespeed.web.dev` tarda ~90s y a veces se cuelga. La fuente más rica y controlable es
+**Lighthouse local contra la URL de PRODUCCIÓN**: `npx --yes lighthouse <url> --form-factor=mobile
+--output=json --output-path=lh.json --chrome-flags="--headless=new"` (y `--preset=desktop` para
+ordenador). El JSON trae cada audit con su ahorro (ms/KB); parsea `audits[*].details.type==='opportunity'`
+(oportunidades) y los `*-insight` (diagnósticos: render-blocking, cache, main-thread, forced-reflow).
+Mide **SIEMPRE móvil Y ordenador** — divergen mucho (en cars: móvil 57 vs ordenador 95 con el MISMO código).
+
+> **Lab ≠ campo (dato clave):** el móvil de Lighthouse simula 4G lento + CPU 4× → números pesimistas
+> (un FCP lab de 8s puede ser <1s para un usuario real). Los datos de **campo (CrUX, "usuarios reales"
+> en PageSpeed)** son la verdad, pero Google solo los publica sobre un umbral de TRÁFICO; un sitio con
+> poco tráfico verá **"No hay datos"** — NO es un defecto técnico, se resuelve con visitas (SEO/marketing).
+> Usa el lab para HALLAR cuellos (son reales), no para juzgar la experiencia real en cifras absolutas.
+
+> **Cuidado con la varianza en sitios de galería dinámica (aprendido en cars):** si la página carga
+> muchas imágenes dinámicas (fotos de producto/vehículo desde Storage/CDN), el nº que entra en el
+> trace de Lighthouse VARÍA enormemente entre corridas (en cars: 13 vs 53 imágenes = ±1,8MB), lo que
+> ENMASCARA por completo un ahorro de ~500KB en el SCORE (el score puede incluso BAJAR). Para deltas
+> pequeños **mide el efecto por RED DIRECTA** — ¿la request desapareció? ¿bajó el peso de esa categoría
+> en `resource-summary`? — no por el score global, que es demasiado ruidoso. En cars la Ola 1 se
+> confirmó así: logo 412KB → 0 reqs, GSI → 0, Script −96KB (medido en `resource-summary`), aunque el
+> score móvil no se movió. Corolario: en un sitio con galería, el mayor cuello suele ser el **payload
+> de imágenes dinámicas** — atácalo (lazy agresivo, srcset responsive, CDN) antes que los KB de chrome.
+
 > Regla: **un cuello a la vez**, con su número. "El sitio carga lento" no es accionable; "el FCP es
 > 3s porque 2 conexiones externas a fonts.* bloquean el render" sí lo es.
 
@@ -117,6 +141,15 @@ El JS bloquea el render y el hilo principal (TBT). Por orden:
 Widgets de Google (reCAPTCHA, GSI Sign-In), chats y mapas inyectan sus PROPIAS fuentes/recursos.
 No los confundas con los tuyos al auditar la red (filtra por la familia/host: `Cardo`/`Manrope` = tuyo;
 `Roboto`/`Google Sans` = del widget). Diferir/lazy-cargar esos widgets cuando el negocio lo permita.
+
+**Sospechosos habituales del "JS sin usar" (caso cars, ~445KB / ~2,6s en móvil):** reCAPTCHA/App Check
+(~375KB), Google Sign-In / GSI (~97KB, + lanza errores `FedCM` en consola que BAJAN Best-Practices) y
+Google Tag Manager / Analytics (~166KB) se cargan en el ARRANQUE pero solo se usan al interactuar
+(login, formulario, tracking). **Diferirlos al primer uso** (click en “Ingresar”, submit, o `requestIdleCallback`)
+recupera cientos de KB y varios segundos en móvil; GSI diferido además elimina los errores de consola.
+Ojo con App Check: no lo difieras a ciegas si protege desde el inicio — evalúa el modelo de seguridad.
+**Y busca imágenes pesadas sueltas:** en cars, `logo-placeholder.png` pesaba 413KB (más que reCAPTCHA) —
+un solo asset mal optimizado puede superar a todo el JS de terceros. Ordena `network-requests` por peso.
 
 ## 4. Verificación LIVE (adversarial — refuta, no confirmes)
 

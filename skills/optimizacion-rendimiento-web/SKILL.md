@@ -80,6 +80,16 @@ Mide **SIEMPRE móvil Y ordenador** — divergen mucho (en cars: móvil 57 vs or
 > poco tráfico verá **"No hay datos"** — NO es un defecto técnico, se resuelve con visitas (SEO/marketing).
 > Usa el lab para HALLAR cuellos (son reales), no para juzgar la experiencia real en cifras absolutas.
 
+> **Cuidado con la varianza en sitios de galería dinámica (aprendido en cars):** si la página carga
+> muchas imágenes dinámicas (fotos de producto/vehículo desde Storage/CDN), el nº que entra en el
+> trace de Lighthouse VARÍA enormemente entre corridas (en cars: 13 vs 53 imágenes = ±1,8MB), lo que
+> ENMASCARA por completo un ahorro de ~500KB en el SCORE (el score puede incluso BAJAR). Para deltas
+> pequeños **mide el efecto por RED DIRECTA** — ¿la request desapareció? ¿bajó el peso de esa categoría
+> en `resource-summary`? — no por el score global, que es demasiado ruidoso. En cars la Ola 1 se
+> confirmó así: logo 412KB → 0 reqs, GSI → 0, Script −96KB (medido en `resource-summary`), aunque el
+> score móvil no se movió. Corolario: en un sitio con galería, el mayor cuello suele ser el **payload
+> de imágenes dinámicas** — atácalo (lazy agresivo, srcset responsive, CDN) antes que los KB de chrome.
+
 > Regla: **un cuello a la vez**, con su número. "El sitio carga lento" no es accionable; "el FCP es
 > 3s porque 2 conexiones externas a fonts.* bloquean el render" sí lo es.
 

@@ -10,6 +10,7 @@ import { renderSidebar } from './render-sidebar.js';
 import { NAV } from './sidebar-data.js';
 import { esPendiente } from './lead-format.js';
 import { initTruncadoBanner } from './truncado.js';
+import { initAprobBadge } from './aprob-badge.js';   // F-IA-2 B4: contador vivo del badge "Aprobaciones" (owner)
 
 // ─── Auth guard ────────────────────────────────────────────────────────────────
 
@@ -79,6 +80,10 @@ export function initSidebar() {
         initSidebar._subscribed = true;
         adminDb.on('inquiries', () => updateBadge());
     }
+
+    // Badge "Aprobaciones" (F-IA-2 B4): contador vivo en el rail, SOLO owner (el ítem existe solo
+    // para owner; sus fuentes —bóveda/solicitudes— son owner-read). Idempotente (una suscripción).
+    if (hasRole('owner')) initAprobBadge();
 
     // Propagate auth context to the Firestore service for audit stamping.
     const user = currentUser();

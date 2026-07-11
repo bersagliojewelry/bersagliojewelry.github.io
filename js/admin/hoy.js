@@ -314,12 +314,13 @@ function renderListaCobros({ sec, body }, filas) {
 // ─── #5 Avisos (aprobaciones pendientes + fallos del sistema sin resolver) ─────────────────────
 function initSenalAvisos(grid, esOwner) {
     const c = statCard({ icon: '🔔', tone: 'red', label: 'Avisos' });
-    // Hoy las aprobaciones y los fallos viven en Salud (owner-only); B4 los moverá a la Bandeja
-    // (D2/D5). Solo el owner navega ahí: un admin ve el conteo pero Salud lo redirige (guard owner).
+    // Las aprobaciones (lo frecuente/accionable) viven en la Bandeja (F-IA-2 B4); los fallos del
+    // sistema, en Salud. La tarjeta enlaza a la Bandeja (owner-only, como sus fuentes). Solo el owner
+    // navega ahí; un admin ve el conteo de solicitudes pero no la página.
     if (esOwner) {
         c.card.style.cursor = 'pointer';
         c.card.setAttribute('role', 'link');
-        c.card.addEventListener('click', () => { location.href = 'admin-salud.html'; });
+        c.card.addEventListener('click', () => { location.href = 'admin-aprobaciones.html'; });
     }
     grid.append(c.card);
 

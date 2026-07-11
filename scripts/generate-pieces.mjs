@@ -25,6 +25,7 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, query, where, doc as fsDoc, getDoc } from 'firebase/firestore';
 import { derivarEstado, esDisponible, STOCK_TYPES } from '../js/admin/inventario-model.js';   // SSoT modelo v3
 import { gemDisplayName } from '../js/core/gem-badge.js';   // §151: gema canónica (badgeGem) para JSON-LD/AEO
+import { gemLabel, gemKnown } from '../js/core/gem-taxonomy.js';   // A2b (TODO-35/57): label + validez de gema para facetas
 import { metalConColor } from '../js/core/metal.js';        // TODO-59: color del oro (metalColor) en el metal mostrado
 import { HOME_DEFAULTS } from '../js/home/siteContent-defaults.js';
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, unlinkSync, existsSync } from 'fs';
@@ -802,6 +803,196 @@ function injectListingPage(filename, mainAnchor, opts) {
     console.log(`[generate] Listado horneado en dist/${filename} (${opts.items.length} ítems, index,follow).`);
 }
 
+// ===================== Páginas de FACETA indexables (A2b · TODO-35) =====================
+// Landing pages por CATEGORÍA (/coleccion/<slug>) y por GEMA (/gema/<slug>): reusan el shell
+// del catálogo (dist/colecciones.html) horneando title/meta/canonical/robots keyword-first +
+// H1 + intro (voz de marca) + JSON-LD (CollectionPage + ItemList + BreadcrumbList) + <noscript>
+// con los enlaces a las piezas, y `window.__BJ_FACET` para que catalogo.js hidrate la grilla
+// pre-filtrada (por colección — filtro existente — o por gema — tieneGema/gemFilterIds).
+//
+// "Inundar Google" (problema #1 del dueño): más URLs indexables de cola-larga con contenido REAL.
+// cero-demo: la intro de colección = su `description` de Firestore (voz de marca ya escrita); las 4
+// intros de gema son copy evergreen (revisable por Daniel, sin claims fabricados). Solo se hornea una
+// faceta con >= FACET_MIN piezas pedibles (anti thin-content — Google hunde las páginas-puerta
+// vacías, red-team AEO §5).
+const FACET_MIN = 2;
+const SIN_GEMA_SLUG = new Set(['oro', 'ninguna', 'none', '']);
+const SAFE_SLUG_RE = /^[a-z0-9-]+$/;   // slug apto para nombre de archivo/URL (sin barras/puntos → sin path-traversal)
+
+// Gemas presentes en una pieza (SSoT = specs.gemFilterIds, array plano indexable; fallback a badgeGem).
+// MISMO criterio que tieneGema() del cliente → la ItemList horneada == la grilla que hidrata catalogo.js.
+function gemasDe(p) {
+    const s = p.specs || {};
+    const ids = Array.isArray(s.gemFilterIds) ? s.gemFilterIds : (s.badgeGem ? [s.badgeGem] : []);
+    return [...new Set(ids.map(x => String(x).toLowerCase()).filter(g => g && !SIN_GEMA_SLUG.has(g)))];
+}
+
+// Intro evergreen por gema (voz de marca — factual, cero claims fabricados; revisable por Daniel).
+// Se muestra como respuesta-directa <150 palabras (AEO) + meta description keyword-first.
+const GEMA_INTRO = {
+    esmeralda: 'La esmeralda colombiana es el corazón de Bersaglio: un verde con fuego propio, nacido en las montañas de Muzo y Chivor. La engastamos a mano en oro de 18 quilates, en anillos, aretes, dijes y cadenas hechos en nuestro atelier del Centro Histórico de Cartagena. Piezas únicas y certificadas, para acompañar los días que se recuerdan.',
+    diamante: 'El diamante es luz que no se apaga. En Bersaglio lo trabajamos sobre oro de 18 quilates —solo o acompañando una esmeralda, un rubí o un zafiro— en anillos, aretes, dijes y pulseras que atrapan el brillo desde cualquier ángulo. Cada pieza se hace a mano en nuestro atelier de Cartagena, única y certificada.',
+    rubi: 'El rubí lleva el calor del Caribe en su rojo. Lo engastamos a mano en oro de 18 quilates, rodeado de diamantes, en anillos, aretes y dijes forjados en nuestro atelier del Centro Histórico de Cartagena. Piezas únicas y certificadas, pensadas para una historia intensa.',
+    zafiro: 'El zafiro guarda la profundidad del mar en su azul. En Bersaglio lo montamos sobre oro de 18 quilates, realzado con diamantes, en anillos, aretes y dijes hechos a mano en nuestro atelier de Cartagena. Piezas únicas y certificadas, serenas y elegantes a la vez.',
+};
+
+// H1 keyword-first + <title>/meta description por faceta (keyword de producto/gema + ciudad).
+function facetMeta(f) {
+    if (f.kind === 'gema') {
+        const g = f.label;   // "Esmeralda"
+        return {
+            h1: `Joyería de ${g} en Cartagena`,
+            title: `Joyería de ${g} en Cartagena · Oro 18K · ${BRAND}`,
+            intro: GEMA_INTRO[f.slug] || `${g} engastada a mano en oro de 18 quilates. Alta joyería ${BRAND} en Cartagena de Indias.`,
+        };
+    }
+    const name = f.label;   // "Anillos" / "Topos & Aretes"
+    return {
+        h1: `${name} en Cartagena`,
+        title: `${name} en oro 18K · Joyería en Cartagena · ${BRAND}`,
+        intro: (f.description || `${name} de alta joyería en oro de 18 quilates con esmeraldas colombianas y diamantes certificados, hechos a mano en nuestro atelier de Cartagena.`).trim(),
+    };
+}
+
+// CollectionPage + BreadcrumbList (doctrina AEO §1: Listado/categoría). ItemList con las piezas de la
+// faceta. Condicional cero-demo: sin aggregateRating (no hay reseñas on-site).
+function buildFacetSchemas(f, canonical, meta, items) {
+    const collectionPage = {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: meta.title,
+        description: meta.intro,
+        url: canonical,
+        inLanguage: 'es-CO',
+        isPartOf: { '@id': WEBSITE_ID },
+        ...(f.kind === 'gema' ? { about: { '@type': 'Thing', name: meta.h1 } } : {}),
+        mainEntity: {
+            '@type': 'ItemList',
+            numberOfItems: items.length,
+            itemListElement: items.map((it, i) => ({ '@type': 'ListItem', position: i + 1, url: it.url, name: it.name })),
+        },
+    };
+    const breadcrumb = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE_URL}/` },
+            { '@type': 'ListItem', position: 2, name: 'Catálogo', item: `${SITE_URL}/colecciones.html` },
+            { '@type': 'ListItem', position: 3, name: meta.h1, item: canonical },
+        ],
+    };
+    return [collectionPage, breadcrumb];
+}
+
+// Anclas del shell dist/colecciones.html (fail-loud si un rediseño las rompe — patrón SP-5.3 de Altorra).
+const FACET_ANCHORS = [
+    '<meta charset="UTF-8">',
+    '<meta name="robots" content="noindex, nofollow">',
+    '<link rel="canonical" href="https://bersagliojewelry.co/colecciones.html">',
+    '<meta property="og:url" content="https://bersagliojewelry.co/">',
+    '<meta property="og:image" content="https://bersagliojewelry.co/img/og-image.jpg">',
+    '<meta name="twitter:card" content="summary_large_image">',
+    '</head>',
+    '<main id="main-content" data-screen-label="colecciones">',
+];
+
+// PURA (cubierta por SSG_SELFTEST): shell + faceta → HTML horneado indexable. Idempotente por id.
+function bakeFacetPage(shell, f, slugMap) {
+    for (const a of FACET_ANCHORS) {
+        if (!shell.includes(a)) throw new Error(`[generate] ANCLAJE FALTANTE en dist/colecciones.html (faceta): ${a}\n  → El rediseño del catálogo rompió un punto de inyección.`);
+    }
+    const meta = facetMeta(f);
+    const canonical = `${SITE_URL}/${f.kind === 'gema' ? 'gema' : 'coleccion'}/${f.slug}.html`;
+    const items = f.pieces.map(p => ({ name: p.name || 'Pieza', url: `${SITE_URL}/pieza/${slugMap.get(String(p.id))}.html` }));
+
+    let html = shell;
+    // <base href="/"> — la faceta vive en subdir (/coleccion/, /gema/) → rutas relativas resuelven a la raíz.
+    if (!html.includes('<base href="/">')) {
+        html = html.replace('<meta charset="UTF-8">', '<meta charset="UTF-8">\n    <base href="/">');
+    }
+    // robots noindex → index (esta faceta SÍ se indexa; el shell colecciones.html queda noindex).
+    html = html.replace('<meta name="robots" content="noindex, nofollow">', '<meta name="robots" content="index, follow">');
+    // <title> + meta description keyword-first.
+    html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(meta.title)}</title>`);
+    html = html.replace(/<meta name="description" content="[\s\S]*?">/, `<meta name="description" content="${escapeAttr(meta.intro)}">`);
+    // canonical autorreferencial + OG + Twitter.
+    html = html.replace('<link rel="canonical" href="https://bersagliojewelry.co/colecciones.html">', `<link rel="canonical" href="${escapeAttr(canonical)}">`);
+    html = html.replace('<meta property="og:url" content="https://bersagliojewelry.co/">', `<meta property="og:url" content="${escapeAttr(canonical)}">`);
+    html = html.replace(/<meta property="og:title" content="[\s\S]*?">/, `<meta property="og:title" content="${escapeAttr(meta.title)}">`);
+    html = html.replace(/<meta property="og:description" content="[\s\S]*?">/, `<meta property="og:description" content="${escapeAttr(meta.intro)}">`);
+    html = html.replace('<meta name="twitter:card" content="summary_large_image">',
+        '<meta name="twitter:card" content="summary_large_image">\n' +
+        `    <meta name="twitter:title" content="${escapeAttr(meta.title)}">\n` +
+        `    <meta name="twitter:description" content="${escapeAttr(meta.intro)}">\n` +
+        `    <meta name="twitter:image" content="${DEFAULT_OG}">`);
+
+    // JSON-LD (CollectionPage + Breadcrumb) + __BJ_FACET (hidratación cliente) antes de </head>.
+    const [cp, bc] = buildFacetSchemas(f, canonical, meta, items);
+    const facetGlobal = { kind: f.kind, value: f.slug, label: f.label, title: meta.h1, intro: meta.intro };
+    html = html.replace('</head>',
+        `    <script type="application/ld+json" id="facet-collection-jsonld">${safeJsonLd(cp)}</script>\n` +
+        `    <script type="application/ld+json" id="facet-breadcrumb-jsonld">${safeJsonLd(bc)}</script>\n` +
+        `    <script id="baked-facet">window.__BJ_FACET=${safeJsonLd(facetGlobal)};</script>\n</head>`);
+
+    // <noscript> SEO: breadcrumb + H1 + intro (respuesta-directa AEO) + enlaces a las piezas (bots sin JS).
+    const lis = items.map(it => `                <li><a href="${escapeAttr(it.url)}">${escapeHtml(it.name)}</a></li>`).join('\n');
+    const noscript = `
+    <noscript>
+        <div style="max-width:1100px;margin:96px auto;padding:24px;font-family:Manrope,system-ui,sans-serif">
+            <nav style="font-size:14px;opacity:.7;margin-bottom:16px"><a href="${SITE_URL}/">Inicio</a> › <a href="${SITE_URL}/colecciones.html">Catálogo</a> › ${escapeHtml(meta.h1)}</nav>
+            <h1>${escapeHtml(meta.h1)}</h1>
+            <p>${escapeHtml(meta.intro)}</p>
+            <ul style="list-style:none;padding:0;line-height:2">
+${lis}
+            </ul>
+            <p><a href="${SITE_URL}/contacto.html">Hablar con un asesor</a> · <a href="${SITE_URL}/colecciones.html">Ver todo el catálogo</a></p>
+        </div>
+    </noscript>`;
+    html = html.replace('<main id="main-content" data-screen-label="colecciones">',
+        `<main id="main-content" data-screen-label="colecciones">${noscript}`);
+    return html;
+}
+
+// Calcula las facetas HORNEABLES (>= FACET_MIN piezas pedibles). Determinista (orden estable → build
+// idempotente): piezas por featured luego nombre; colecciones en el orden de Firestore; gemas alfabético.
+function computeFacets(pieces, collections, slugMap) {
+    const orderable = pieces.filter(p => stockInfo(p).orderable);
+    const sortPieces = (a, b) => ((b.featured ? 1 : 0) - (a.featured ? 1 : 0)) || String(a.name || '').localeCompare(String(b.name || ''), 'es');
+    const facets = [];
+
+    // Por colección (categoría). Reusa el filtro cliente existente (p.collection === slug).
+    const colOf = new Map();
+    for (const c of collections) colOf.set(c.slug || c.id, c);
+    const byCol = new Map();
+    for (const p of orderable) {
+        const s = p.collection;
+        if (!s) continue;
+        if (!byCol.has(s)) byCol.set(s, []);
+        byCol.get(s).push(p);
+    }
+    for (const [slug, list] of byCol) {
+        if (list.length < FACET_MIN || !SAFE_SLUG_RE.test(slug)) continue;
+        const c = colOf.get(slug);
+        facets.push({ kind: 'col', slug, label: (c && c.name) || slug, description: (c && c.description) || '', pieces: [...list].sort(sortPieces) });
+    }
+
+    // Por gema (tieneGema/gemFilterIds — mismo criterio que el cliente).
+    const byGem = new Map();
+    for (const p of orderable) {
+        for (const g of gemasDe(p)) {
+            if (!byGem.has(g)) byGem.set(g, []);
+            byGem.get(g).push(p);
+        }
+    }
+    const gemSlugs = [...byGem.keys()].sort();
+    for (const slug of gemSlugs) {
+        const list = byGem.get(slug);
+        if (list.length < FACET_MIN || !gemKnown(slug) || !SAFE_SLUG_RE.test(slug)) continue;
+        facets.push({ kind: 'gema', slug, label: gemLabel(slug), pieces: [...list].sort(sortPieces) });
+    }
+    return facets;
+}
+
 // ===================== Generación de página =====================
 
 // Guard anti-regresión: el generador hace .replace() por string literal y FALLA EN
@@ -1043,10 +1234,14 @@ function sitemapUrl(loc, lastmod, freq, prio) {
     return `    <url>\n        <loc>${escapeXml(loc)}</loc>\n        <lastmod>${lastmod}</lastmod>\n        <changefreq>${freq}</changefreq>\n        <priority>${prio}</priority>\n    </url>`;
 }
 
-function generateSitemap(pieces, slugMap, today) {
+function generateSitemap(pieces, slugMap, today, facetUrls = []) {
     const urls = [];
     for (const sp of STATIC_PAGES) {
         urls.push(sitemapUrl(`${SITE_URL}${sp.loc}`, sp.lastmod, sp.freq, sp.prio));
+    }
+    // Facetas /coleccion/<slug> + /gema/<slug> (A2b): cambian con el catálogo → lastmod = hoy.
+    for (const u of facetUrls) {
+        urls.push(sitemapUrl(u, today, 'weekly', '0.7'));
     }
     for (const p of pieces) {
         const slug = slugMap.get(String(p.id));
@@ -1290,6 +1485,12 @@ async function main() {
         slugMap.set(String(p.id), slug);
     }
 
+    // Facetas indexables (A2b · TODO-35): QUÉ páginas /coleccion/<slug> + /gema/<slug> se hornearán
+    // (>= FACET_MIN piezas pedibles). Se calcula aquí para alimentar el sitemap; se hornean más abajo
+    // (tras las páginas de listado, reusando el shell dist/colecciones.html ya inyectado).
+    const facets = computeFacets(pieces, collections, slugMap);
+    const facetUrls = facets.map(f => `${SITE_URL}/${f.kind === 'gema' ? 'gema' : 'coleccion'}/${f.slug}.html`);
+
     // Salida limpia: dist/pieza/ (dist es fresco cada build; cleanup por si se corre suelto).
     const outDir = join(DIST, 'pieza');
     mkdirSync(outDir, { recursive: true });
@@ -1370,9 +1571,9 @@ async function main() {
 
     // Sitemap (sobrescribe el estático copiado por Vite desde public/).
     const today = isoDate(Date.now()) || '2026-06-25';
-    const sitemap = generateSitemap(pieces, slugMap, today);
+    const sitemap = generateSitemap(pieces, slugMap, today, facetUrls);
     writeFileSync(join(DIST, 'sitemap.xml'), sitemap);
-    console.log(`[generate] sitemap.xml regenerado (${STATIC_PAGES.length} estáticas + ${pieces.length} piezas).`);
+    console.log(`[generate] sitemap.xml regenerado (${STATIC_PAGES.length} estáticas + ${facetUrls.length} facetas + ${pieces.length} piezas).`);
 
     // Schema de marca (JewelryStore + WebSite) horneado en dist/index.html desde tenant_config.json.
     injectBusinessIntoIndex(readTenantConfig());
@@ -1397,6 +1598,12 @@ async function main() {
         console.warn('[generate] Semilla de catálogo omitida:', e.message);
     }
 
+    // Shell PRÍSTINO del catálogo (con robots noindex + canonical/og originales) ANTES de que
+    // injectListingPage lo mute → base para hornear las facetas /coleccion + /gema (A2b). La faceta
+    // NO hereda el listing-jsonld/noscript del catálogo (tiene los suyos).
+    const catalogShellPath = join(DIST, 'colecciones.html');
+    const catalogShell = existsSync(catalogShellPath) ? readFileSync(catalogShellPath, 'utf-8') : null;
+
     // Páginas de listado indexables (catálogo + journal) — A2a. Por-categoría/por-artículo = A2b.
     injectListingPage('colecciones.html', '<main id="main-content" data-screen-label="colecciones">', {
         schemaType: 'CollectionPage',
@@ -1412,6 +1619,38 @@ async function main() {
         description: 'Historias de alta joyería, esmeraldas colombianas y el oficio detrás de cada pieza.',
         items: journalEntries.map(e => ({ name: e.title || e.name || e.slug || 'Entrada', url: `${SITE_URL}/entrada.html?e=${encodeURIComponent(e.slug || e.id)}` })),
     });
+
+    // Facetas /coleccion/<slug> + /gema/<slug> (A2b): landing pages indexables reusando el shell del
+    // catálogo. Salida limpia (dist es fresco cada build; cleanup por si se corre suelto). Bake-integrity
+    // por página: una faceta rota ABORTA el run → prod queda en el último build bueno.
+    if (facets.length) {
+        if (!catalogShell) {
+            console.warn('[generate] dist/colecciones.html no existe — salto facetas A2b.');
+        } else {
+            const shell = catalogShell;   // shell prístino capturado antes de injectListingPage
+            for (const dir of ['coleccion', 'gema']) {
+                const d = join(DIST, dir);
+                mkdirSync(d, { recursive: true });
+                try { for (const fl of readdirSync(d).filter(x => x.endsWith('.html'))) unlinkSync(join(d, fl)); } catch { /* primer run */ }
+            }
+            const facetFailures = [];
+            let colCount = 0, gemCount = 0;
+            for (const f of facets) {
+                const dir = f.kind === 'gema' ? 'gema' : 'coleccion';
+                const html = bakeFacetPage(shell, f, slugMap);
+                const err = bakeIntegrityError(`${dir}/${f.slug}`, html);
+                if (err) { facetFailures.push(err); continue; }
+                writeFileSync(join(DIST, dir, `${f.slug}.html`), html);
+                if (f.kind === 'gema') gemCount++; else colCount++;
+            }
+            if (facetFailures.length) {
+                console.error('[generate] FACET-INTEGRITY FALLÓ — NO se publica:');
+                facetFailures.forEach(e => console.error('  x ' + e));
+                throw new Error(`[generate] ${facetFailures.length} faceta(s) con horneado inválido — abortado.`);
+            }
+            console.log(`[generate] ${colCount + gemCount} páginas de faceta horneadas (${colCount} /coleccion + ${gemCount} /gema, index,follow).`);
+        }
+    }
 
     console.log('[generate] Listo.');
     process.exit(0);
@@ -1570,6 +1809,51 @@ function runSelfTest() {
     if (safeCodeForFile('a/b') !== null) fails.push('safeCodeForFile: con "/" debe ser null.');
     if (safeCodeForFile('..') !== null) fails.push('safeCodeForFile: ".." debe ser null.');
     if (safeCodeForFile('') !== null) fails.push('safeCodeForFile: vacío debe ser null.');
+
+    // A2b FACETAS (/coleccion + /gema): shell → landing indexable. Anti-breakout XSS + robots index +
+    // canonical + <base> + __BJ_FACET + JSON-LD parsea + idempotencia + umbral thin-content.
+    const FAKE_SHELL = '<html><head><meta charset="UTF-8"><title>x</title><meta name="description" content="x"><meta name="robots" content="noindex, nofollow"><link rel="canonical" href="https://bersagliojewelry.co/colecciones.html"><meta property="og:url" content="https://bersagliojewelry.co/"><meta property="og:title" content="x"><meta property="og:description" content="x"><meta property="og:image" content="https://bersagliojewelry.co/img/og-image.jpg"><meta name="twitter:card" content="summary_large_image"></head><body><main id="main-content" data-screen-label="colecciones">x</main></body></html>' + ' '.repeat(MIN_BAKE_BYTES);
+    const facetMock = { kind: 'gema', slug: 'esmeralda', label: PAYLOAD, description: PAYLOAD, pieces: [{ id: PAYLOAD, name: PAYLOAD, featured: true }] };
+    const fSlug = new Map([[String(PAYLOAD), 'selftest']]);
+    const fh = bakeFacetPage(FAKE_SHELL, facetMock, fSlug);
+    if (fh.indexOf('</script><script>alert(1)</script>') >= 0) fails.push('facet: BREAKOUT crudo </script><script> presente.');
+    if (fh.indexOf('<meta name="robots" content="index, follow">') < 0) fails.push('facet: robots index,follow no inyectado.');
+    if (fh.indexOf('<link rel="canonical" href="https://bersagliojewelry.co/gema/esmeralda.html">') < 0) fails.push('facet: canonical de gema ausente.');
+    if (fh.indexOf('<base href="/">') < 0) fails.push('facet: <base href="/"> ausente (subdir).');
+    if (fh.indexOf('window.__BJ_FACET=') < 0) fails.push('facet: __BJ_FACET no inyectado.');
+    for (const id of ['facet-collection-jsonld', 'facet-breadcrumb-jsonld']) {
+        const marker = `id="${id}">`;
+        const i = fh.indexOf(marker);
+        if (i < 0) { fails.push(`facet: bloque ${id} ausente.`); continue; }
+        const content = fh.slice(i + marker.length).split('</script>')[0];
+        try { JSON.parse(content); } catch (e) { fails.push(`facet: ${id} NO parsea: ${e.message}`); }
+        if (content.indexOf(U2028) >= 0 || content.indexOf(U2029) >= 0) fails.push(`facet: ${id} contiene U+2028/2029 crudo.`);
+    }
+    {
+        const m = 'window.__BJ_FACET=';
+        const i = fh.indexOf(m);
+        const val = fh.slice(i + m.length).split(';</script>')[0];
+        try { JSON.parse(val); } catch (e) { fails.push('facet: __BJ_FACET no parsea: ' + e.message); }
+    }
+    if (bakeFacetPage(FAKE_SHELL, facetMock, fSlug) !== fh) fails.push('facet: no determinista (misma entrada → misma salida).');
+    const colFh = bakeFacetPage(FAKE_SHELL, { kind: 'col', slug: 'anillos', label: PAYLOAD, description: PAYLOAD, pieces: [{ id: 'p1', name: PAYLOAD }] }, new Map([['p1', 'p1']]));
+    if (colFh.indexOf('</script><script>alert(1)</script>') >= 0) fails.push('facet-col: BREAKOUT crudo (intro de colección).');
+    if (colFh.indexOf('<link rel="canonical" href="https://bersagliojewelry.co/coleccion/anillos.html">') < 0) fails.push('facet-col: canonical de colección ausente.');
+    // computeFacets: umbral thin-content (< FACET_MIN se salta) + gema desconocida se salta.
+    const cfPieces = [
+        { id: 'a1', name: 'A1', collection: 'anillos', stockType: 'finito', cantidad: 1, specs: { gemFilterIds: ['esmeralda'] } },
+        { id: 'a2', name: 'A2', collection: 'anillos', stockType: 'finito', cantidad: 1, specs: { gemFilterIds: ['esmeralda'] } },
+        { id: 'd1', name: 'D1', collection: 'dijes',   stockType: 'finito', cantidad: 1, specs: { gemFilterIds: ['zafiro'] } },
+        { id: 'x1', name: 'X1', collection: 'anillos', stockType: 'finito', cantidad: 1, specs: { gemFilterIds: ['xyzinventada'] } },
+    ];
+    const cf = computeFacets(cfPieces,
+        [{ id: 'anillos', slug: 'anillos', name: 'Anillos', description: 'd' }, { id: 'dijes', slug: 'dijes', name: 'Dijes' }],
+        new Map([['a1', 'a1'], ['a2', 'a2'], ['d1', 'd1'], ['x1', 'x1']]));
+    if (!cf.some(f => f.kind === 'col' && f.slug === 'anillos')) fails.push('computeFacets: colección anillos (3) debía hornearse.');
+    if (cf.some(f => f.kind === 'col' && f.slug === 'dijes')) fails.push('computeFacets: colección dijes (1<MIN) NO debía hornearse (thin).');
+    if (!cf.some(f => f.kind === 'gema' && f.slug === 'esmeralda')) fails.push('computeFacets: gema esmeralda (2) debía hornearse.');
+    if (cf.some(f => f.kind === 'gema' && f.slug === 'xyzinventada')) fails.push('computeFacets: gema desconocida NO debía hornearse.');
+    if (cf.some(f => f.kind === 'gema' && f.slug === 'zafiro')) fails.push('computeFacets: gema zafiro (1<MIN) NO debía hornearse (thin).');
 
     if (fails.length) {
         console.error('[SSG_SELFTEST] FALLO:');

@@ -19,14 +19,26 @@ import { data } from '../core/data.js';
 import { safeUrl } from '../core/safe-url.js';
 import { mergeGlobal, waHref, igHref } from '../core/global-defaults.js';
 
+// A2b (TODO-35): categorías y gemas apuntan a las landing pages indexables /coleccion/<slug> y
+// /gema/<slug> (antes ?col=, sin URL propia). Enlazado interno site-wide = señal SEO + navegación.
 const COLUMNS = [
     {
         title: 'Colecciones',
         links: [
-            { label: 'Anillos',  href: '/colecciones.html?col=anillos' },
-            { label: 'Aretes',   href: '/colecciones.html?col=aretes' },
-            { label: 'Dijes',    href: '/colecciones.html?col=dijes' },
-            { label: 'Argollas', href: '/colecciones.html?col=argollas-de-matrimonio' },
+            { label: 'Anillos',        href: '/coleccion/anillos.html' },
+            { label: 'Topos & Aretes', href: '/coleccion/aretes.html' },
+            { label: 'Dijes',          href: '/coleccion/dijes.html' },
+            { label: 'Pulseras',       href: '/coleccion/pulseras.html' },
+            { label: 'Cadenas',        href: '/coleccion/cadenas.html' },
+        ],
+    },
+    {
+        title: 'Por gema',
+        links: [
+            { label: 'Esmeralda', href: '/gema/esmeralda.html' },
+            { label: 'Rubí',      href: '/gema/rubi.html' },
+            { label: 'Diamante',  href: '/gema/diamante.html' },
+            { label: 'Zafiro',    href: '/gema/zafiro.html' },
         ],
     },
     {

@@ -64,10 +64,28 @@
 - Google Shopping / fichas producto (foto+precio) — encender A5 + Merchant Center al cargar precios.
 - Estrellas orgánicas → sistema de reseñas on-site (decisión de producto aparte).
 
-## 3. Estado / próximo
-- ✅ A1 en prod (títulos). ✅ GSC diagnosticado + colecciones solicitada. Piezas indexándose vía
-  sitemap+cascada+A1 (revisar en días).
-- SIGUIENTE (recomendado): **B2 GBP** (ataca directo el problema #2 local) + **A2/A3** (volumen) en
-  paralelo. Más solicitudes de indexación en tandas.
-- Crudo auditoría: `tasks/w9930xxeu.output` (47 findings, 6 frentes). Contexto competidores/redes en
-  la bitácora de `10`.
+## 3. Estado al cierre (2026-07-10)
+- ✅ **A1 en prod** (títulos keyword-first, commit `374b8e1` / deploy `43e0666`).
+- ✅ **B1 Search Console (verificado en vivo, authuser=3)**: sitemap enviado (37 desc.), diagnóstico
+  completo. **7 URLs solicitadas a indexación prioritaria**: home · colecciones (hub) · nosotros ·
+  anillo-diamante-0953 · aretes-esmeralda-0679 · pulsera-rubi-0954 · topos-zafiro-0581 (1 joya por
+  gema; el resto por cascada del hub + sitemap). Límite GSC ~10-12/día. **Truco extensión Chrome**:
+  la barra de inspección no acepta `type` → `form_input(ref)` + DOS `Return` en llamadas SEPARADAS;
+  cerrar el modal "probando" antes de la siguiente URL.
+- ✅ **Ciclo de precios VERIFICADO** (pregunta de Daniel): al guardar precio, `updateTypedDoc` sella
+  `updatedAt` server-side (`firestore-service.js:218`) → cron diario (`deploy.yml:9`) re-hornea →
+  sitemap `lastmod=updatedAt` (`generate-pieces.mjs:1054`) + schema InStock+price. Funciona AUTO
+  con ≤24h de retraso (mitigable con `workflow_dispatch` el día del cambio).
+- ⏳ **Skills SEO/AEO/GEO**: prompt masticado ENTREGADO a Daniel (aportar aprendizajes a
+  search-console/ssg-static-prerender/semantic-schema-aeo/maps-gbp-local) → ejecutar en sesión fresca.
+
+## 4. Relevo — retomar en conversación NUEVA (el dueño elige el orden)
+- **A2/A3 (Claude, construcción)**: páginas de categoría horneadas (`/coleccion/<tipo>` + `/gema/<slug>`)
+  + blog `/journal/<slug>` con 4-6 guías. Volumen ("inundar Google") + cola larga. Ver findings P0
+  del frente "Arquitectura de contenido" en `tasks/w9930xxeu.output`.
+- **B2 (juntos, Chrome)**: optimizar el GBP (categorías 2ª, productos con foto, posts). Mayor palanca
+  del ranking local = problema #2 del dueño.
+- **A4 (Claude)**: geo coords (pedir lat/lng del pin) + FAQPage + og:type=product.
+- **Skills**: correr el prompt entregado (portable a Altorra).
+- **Revisar en ~3-7 días** en GSC (authuser=3): cuántas de las 7 pasaron a indexadas + cuántas piezas
+  entró la cascada. Crudo auditoría: `tasks/w9930xxeu.output` (47 findings). Competidores/redes → `10`.

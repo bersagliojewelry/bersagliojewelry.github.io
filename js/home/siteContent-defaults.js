@@ -16,7 +16,7 @@ export const HOME_DEFAULTS = {
         bgImage:          '',   // P3.5: URL de portada custom (Storage). Vacío → <picture> estático optimizado.
         bgImageLqip:      '',   // §103 F1: placeholder difuso (data-URI) generado al subir bgImage.
         locator:          'Cartagena de Indias · Colombia',
-        eyebrow:          'Alta Joyería en Esmeraldas, Diamantes y Oro de 18K · Atelier y Tienda en Línea · Cartagena de Indias',
+        eyebrow:          'Alta Joyería en Esmeraldas, Diamantes y Oro de 18K',   // eyebrow VISIBLE corto (§185): "Cartagena/atelier/tienda en línea" ya viven en title/meta/locator/manifiesto/schema → cero pérdida SEO, sin texto escondido
         headline1:        'El arte de escuchar tu historia,',
         headline2:        'tallado en una joya única.',
         manifesto:        'Desde nuestro atelier en el Centro Histórico de Cartagena de Indias fabricamos —no revendemos— cada joya en oro de 18 quilates, esmeraldas colombianas y diamantes: anillos, argollas de matrimonio, cadenas, aretes y dijes que nacen para acompañarte. Compra en línea una pieza lista de nuestra colección y te la enviamos a todo el país, o co-creamos a tu medida la que habitará en tu historia. Más que un accesorio, una herencia destinada a custodiar tu esencia.',

@@ -135,6 +135,22 @@ function categoryLabel(p, collectionsById) {
     return (col && col.name) || p.collection || 'Pieza';
 }
 
+// Tipo de producto derivado del slug (convención "tipo-gema-natural-codigo") para el SEO on-page:
+// el <title>/meta de pieza necesita la keyword de producto ("Anillo de Diamante"), no solo el
+// nombre poético. Fallback '' si el primer segmento no es un tipo conocido (title cae al nombre).
+const TIPO_LABEL = {
+    anillo: 'Anillo', anillos: 'Anillo', argolla: 'Argollas', argollas: 'Argollas',
+    arete: 'Aretes', aretes: 'Aretes', topos: 'Topos', candonga: 'Candongas', candongas: 'Candongas',
+    dije: 'Dije', dijes: 'Dije', collar: 'Collar', collares: 'Collar',
+    cadena: 'Cadena', cadenas: 'Cadena', pulsera: 'Pulsera', pulseras: 'Pulsera',
+    gargantilla: 'Gargantilla', tobillera: 'Tobillera', broche: 'Broche',
+    prendedor: 'Prendedor', juego: 'Juego', set: 'Set', pendientes: 'Pendientes',
+};
+function tipoDeSlug(slug) {
+    const k = String(slug || '').split('-')[0].toLowerCase();
+    return TIPO_LABEL[k] || '';
+}
+
 // additionalProperty (AEO): deja a Google/Perplexity/ChatGPT CITAR quilataje,
 // claridad, material, certificación. SOLO campos con valor real (cero-demo).
 // Misma fuente que js/core/schema.js y la ficha de pieza.js.
@@ -807,14 +823,24 @@ const REQUIRED_ANCHORS = [
 function generatePage(template, p, slug, collectionsById) {
     const category = categoryLabel(p, collectionsById);
     const name = p.name || 'Pieza';
-    const title = `${name} · ${BRAND}`;
     const canonicalUrl = `${SITE_URL}/pieza/${slug}.html`;
     const image = getFullImage(p);
     const realDesc = descriptionFor(p);
-    const specsLine = buildAdditionalProperty(p.specs)
-        .slice(0, 4).map(x => x.value).join(', ');
-    const metaDesc = realDesc
-        || `${name} — ${category} en alta joyería ${BRAND}.${specsLine ? ' ' + specsLine + '.' : ''}`;
+
+    // SEO on-page (TODO-35 · visibilidad "joyería en Cartagena"): el <title>/meta que Google LEE
+    // llevan keyword de producto + gema + ciudad; el copy VISIBLE (poema) queda INTACTO y el poema
+    // se conserva en og:description/twitter para el preview social. Cero cambio en la página.
+    const tipo = tipoDeSlug(slug);
+    const gema = gemDisplayName(p.specs);
+    const producto = [tipo, gema].filter(Boolean).join(' de ');   // p.ej. "Anillo de Diamante"
+    const metal = metalConColor(p.specs);
+    const cert = (p.specs && String(p.specs.certificate || '').trim()) ? ' certificado' : '';
+    const title = producto
+        ? `${producto} · ${name} · ${BRAND} Cartagena`
+        : `${name} · ${BRAND} · Joyería en Cartagena`;
+    const metaDesc = `${producto ? `${producto}${metal ? ' en ' + metal : ''}${cert}. ` : ''}` +
+        'Joyería Bersaglio en el Centro Histórico de Cartagena. Compra online con envíos a toda Colombia.';
+    const ogDesc = realDesc || metaDesc;   // el poema para el preview social; keyword-first para Google
 
     let html = template;
 
@@ -860,7 +886,7 @@ function generatePage(template, p, slug, collectionsById) {
     );
     html = html.replace(
         '<meta property="og:description" content="Atelier en Cartagena de Indias. Esmeraldas Muzo, diamantes GIA, oro 18K.">',
-        `<meta property="og:description" content="${escapeAttr(metaDesc)}">`
+        `<meta property="og:description" content="${escapeAttr(ogDesc)}">`
     );
     html = html.replace(
         '<meta property="og:image" content="https://bersagliojewelry.co/img/og-image.jpg">',
@@ -872,7 +898,7 @@ function generatePage(template, p, slug, collectionsById) {
         '<meta name="twitter:card" content="summary_large_image">',
         '<meta name="twitter:card" content="summary_large_image">\n' +
         `    <meta name="twitter:title" content="${escapeAttr(title)}">\n` +
-        `    <meta name="twitter:description" content="${escapeAttr(metaDesc)}">\n` +
+        `    <meta name="twitter:description" content="${escapeAttr(ogDesc)}">\n` +
         `    <meta name="twitter:image" content="${escapeAttr(image)}">`
     );
 

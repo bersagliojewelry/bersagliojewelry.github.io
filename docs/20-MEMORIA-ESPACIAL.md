@@ -66,7 +66,8 @@
 │       ├── consultas.js        # Bandeja de leads (pipeline 5 estados + convertir a cliente)
 │       ├── pedidos.js          # Módulo Pedidos F1-PUENTE (lista+detalle read-only en vivo) — helper pedidos-format.js
 │       ├── hoy.js               # Página "Hoy" = pulso del negocio read-only (F-IA-2 B3; ex dashboard.js) — helper hoy-format.js
-│       ├── db.js · piezas.js · colecciones.js · cuentas.js · cuenta.js · config.js · salud.js
+│       ├── bandeja.js           # Bandeja ÚNICA de aprobaciones (F-IA-2 B4, owner): monta aprobaciones.js (cartera M2b) + sección bóveda (aprobarEventoCaja); badge vivo = aprob-badge.js (en shared.js)
+│       ├── db.js · piezas.js · colecciones.js · cuentas.js · cuenta.js · config.js · salud.js (ya SIN aprobaciones → Bandeja)
 │       └── (nav NO duplicada en HTML; cada admin*.html tiene <aside> vacío que llena shared.js)
 ├── public/                     # Archivos estáticos copiados a dist/ en el build
 │   ├── sw.js                   # Service Worker (Caché bersaglio-v9; versión vigente en 05)

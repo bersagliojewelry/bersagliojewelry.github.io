@@ -10,9 +10,12 @@
  * cerrar (cerrarTurnoCore, recompute en tx). `efectivoEnCajon()` es una ESTIMACIÓN operativa
  * para la UI (mueve la barra de límite y dispara el modal de traslado); NUNCA una precondición.
  */
+import { ESTADOS_SIN_DINERO } from './pedidos-format.js';
 
 // Entero COP seguro (sin centavos, sin negativos accidentales por coacción). Hasta 2^53, no |0.
 const n = (v) => Math.round(Number(v) || 0);
+// Entero COP NO negativo (los MONTOS de entrada — ventas, montos de pago — son positivos).
+const pos = (v) => Math.round(Math.max(0, Number(v) || 0));
 
 // ─── Conceptos de movimiento de caja (§8.5 · lista cerrada, espeja CONCEPTOS_CAJA del core) ───
 export const CONCEPTOS_CAJA = ['pago_domiciliario', 'compra_empaques', 'adelanto_vendedora', 'gasto_menor', 'retiro_socio', 'reembolso_cliente', 'otro'];
@@ -67,6 +70,25 @@ export function efectivoEnCajon(t = {}) {
 }
 
 /**
+ * Efectivo de las VENTAS de un turno (split-aware TODO-73 §9): una venta MIXTA aporta SOLO su
+ * porción en efectivo (no el total). Con `pagos[]` suma los pagos `medio==='efectivo'`; legacy
+ * (sin `pagos[]`) cae al total si el medio único era efectivo. Excluye los estados sin dinero
+ * (expirado/anulado/cancelado/pago_pendiente/reembolsado). Es la ÚNICA fuente compartida por el
+ * Mostrador (pos.js) y el pulso "Hoy" (hoy.js) → las dos vistas NO pueden divergir (conservación).
+ * @param {Array<object>} ventas  pedidos pertenecientes al turno
+ * @returns {number} efectivo de ventas del turno (COP entero, ≥ 0)
+ */
+export function ventasEfectivoTurno(ventas) {
+    return (Array.isArray(ventas) ? ventas : []).reduce((s, p) => {
+        if (ESTADOS_SIN_DINERO.has(p?.estado)) return s;
+        if (Array.isArray(p?.pagos) && p.pagos.length) {
+            return s + p.pagos.reduce((a, pg) => a + (pg?.medio === 'efectivo' ? pos(pg.monto) : 0), 0);
+        }
+        return p?.medio === 'efectivo' ? s + pos(p.total) : s;
+    }, 0);
+}
+
+/**
  * Monto SUGERIDO a trasladar a la bóveda cuando el cajón supera el límite: deja el cajón en el
  * `fondoTrabajo`. Nunca negativo (si por debajo del fondo, sugiere 0). Redondea al múltiplo de mil
  * más cercano hacia arriba para dejar cifras "de billete" (Kary mueve fajos, no monedas sueltas).
@@ -90,5 +112,5 @@ export default {
     CONCEPTOS_CAJA, CONCEPTO_LABEL, conceptoLabel,
     TIPO_BOVEDA_LABEL, tipoBovedaLabel, TIPOS_TRASLADO_POS,
     APROBACION_LABEL, aprobacionInfo, esDestructivo,
-    efectivoEnCajon, trasladoSugerido, superaLimite,
+    efectivoEnCajon, ventasEfectivoTurno, trasladoSugerido, superaLimite,
 };

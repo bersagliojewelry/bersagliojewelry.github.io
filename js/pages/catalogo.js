@@ -26,6 +26,14 @@ import { injectCatalogSchema } from '../core/schema.js';
 import { balancedCols } from '../core/grid-balance.js';   // reparto inteligente de columnas (sin huérfanas)
 import { esVendida } from '../core/stock.js';             // TODO-56: ocultar piezas únicas vendidas de la grilla
 import { filtrarCatalogo, agregarReciente } from '../core/codigo-util.js';   // TODO-60: filtro inteligente + recientes
+import { tieneGema } from '../core/gem-badge.js';         // A2b (TODO-35): filtro por gema en páginas /gema/<slug>
+
+// FACETA baked (A2b · TODO-35): las páginas /coleccion/<slug> y /gema/<slug> hornean window.__BJ_FACET
+// {kind:'col'|'gema', value, label, title, intro}. Esta MISMA vista de catálogo se hidrata pre-filtrada
+// (por colección — filtro existente — o por gema — tieneGema) y muestra el H1 keyword+ciudad que la
+// página horneó (schema == contenido visible, AEO). En colecciones.html no existe → comportamiento intacto.
+const FACET = (typeof window !== 'undefined' && window.__BJ_FACET && typeof window.__BJ_FACET === 'object')
+    ? window.__BJ_FACET : null;
 
 const SORTS = [
     { key: 'destacados', label: 'Destacados' },
@@ -34,17 +42,26 @@ const SORTS = [
     { key: 'nombre',     label: 'Nombre A-Z' },
 ];
 
-let _state = { cat: 'all', sort: 'destacados', q: '' };   // q = búsqueda por código/nombre (TODO-60)
+let _state = { cat: 'all', sort: 'destacados', q: '', gema: '' };   // q = búsqueda código/nombre (TODO-60); gema = faceta A2b
 
 function readURLState() {
     const u = new URL(location.href);
-    return {
+    const st = {
         cat:  u.searchParams.get('col')  || 'all',
         sort: u.searchParams.get('sort') || 'destacados',
         q:    u.searchParams.get('q')    || '',
+        gema: '',
     };
+    // Faceta baked (A2b): siembra el filtro desde window.__BJ_FACET (col → filtro de colección existente;
+    // gema → filtro por gema persistente). Consistente en init Y popstate.
+    if (FACET) {
+        if (FACET.kind === 'col' && st.cat === 'all') st.cat = FACET.value;
+        else if (FACET.kind === 'gema') st.gema = FACET.value;
+    }
+    return st;
 }
 function writeURLState(state) {
+    if (FACET) return;   // faceta: la URL bonita (/coleccion/, /gema/) ES el estado; no la mangleamos con ?col=.
     const u = new URL(location.href);
     if (state.cat === 'all') u.searchParams.delete('col');
     else                      u.searchParams.set('col', state.cat);
@@ -61,6 +78,7 @@ function applyFilters() {
     // "Vendida". Las refabricables/encargo (pedibles) se quedan.
     let list = data.getAll().filter(p => !esVendida(p));
     if (_state.cat !== 'all') list = list.filter(p => p.collection === _state.cat);
+    if (_state.gema) list = list.filter(p => tieneGema(p, _state.gema));   // A2b: faceta /gema/<slug>
     if (_state.q) list = filtrarCatalogo(list, _state.q);   // TODO-60: búsqueda inteligente código/nombre
 
     if (_state.sort === 'menor')  list = [...list].sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
@@ -80,6 +98,17 @@ function applyFilters() {
 }
 
 function renderHeader() {
+    // Faceta baked (A2b): muestra el H1 keyword+ciudad + intro que la página horneó (schema == contenido
+    // visible, doctrina AEO §5). En /gema siempre; en /coleccion mientras no cambien de categoría con las
+    // píldoras (si cambian, cae al header normal de esa colección).
+    if (FACET && (FACET.kind === 'gema' || _state.cat === FACET.value)) {
+        return html`
+            <div class="cat-page-header">
+                <div class="eyebrow cat-page-eyebrow">Catálogo · 2026</div>
+                <h1 class="cat-page-title">${escape(FACET.title)}</h1>
+                <p class="cat-page-lead">${escape(FACET.intro)}</p>
+            </div>`;
+    }
     const cat = _state.cat;
     const collection = cat !== 'all' ? data.getCollections().find(c => c.slug === cat) : null;
     const titleHtml = collection
@@ -221,6 +250,7 @@ function renderAll() {
 }
 
 function updateSchemaMetadata() {
+    if (FACET) return;   // A2b: la página horneó su CollectionPage+ItemList+Breadcrumb autoritativo → no duplicar por JS.
     try {
         const collection = _state.cat !== 'all' ? data.getCollections().find(c => c.slug === _state.cat) : null;
         const filteredList = applyFilters();

@@ -35,7 +35,8 @@ let _hidden = false;   // header auto-oculto (al bajar) — se preserva entre re
 function getCurrentKey() {
     const p = location.pathname.replace(/\.html$/, '').replace(/^\//, '');
     if (!p || p === 'index') return 'home';
-    if (p.startsWith('pieza') || p.startsWith('colecciones')) return 'colecciones';
+    // A2b: /pieza/*, /colecciones, /coleccion/<slug>, /gema/<slug> → píldora "Colecciones" activa.
+    if (p.startsWith('pieza') || p.startsWith('colecciones') || p.startsWith('coleccion/') || p.startsWith('gema/')) return 'colecciones';
     return p;
 }
 

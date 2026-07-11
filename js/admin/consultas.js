@@ -37,7 +37,7 @@ async function init() {
 
     document.getElementById('btn-export-csv').addEventListener('click', () => {
         adminDb.exportInquiriesCSV();
-        admToast('Descargando consultas.csv…');
+        admToast('Descargando la lista de interesados…');
     });
     // El alta manual es admin-only (Kary). Para editores se oculta el botón.
     const btnNuevo = document.getElementById('btn-nuevo-lead');
@@ -81,7 +81,7 @@ function render() {
     tbody.innerHTML = rows.map(l => {
         const dias = diasDesde(l.createdAt);
         const edad = dias == null ? '' : (dias === 0 ? 'hoy' : `hace ${dias} d`);
-        const demorado = estaDemorado(l) ? ' <span class="adm-pill adm-pill--red" title="Lead nuevo sin trabajar">demorado</span>' : '';
+        const demorado = estaDemorado(l) ? ' <span class="adm-pill adm-pill--red" title="Interesado nuevo sin atender">demorado</span>' : '';
         return `
         <tr data-id="${esc(l.id)}" style="cursor:pointer">
             <td class="adm-td-muted">${esc(fmtDate(l.createdAt))}<div style="font-size:11px;opacity:.7">${edad}</div></td>
@@ -137,7 +137,7 @@ function openModal(id) {
     if (!l) return;
     _activeId = id;
 
-    document.getElementById('inq-modal-title').textContent = `Lead · ${l.name || 'Sin nombre'}`;
+    document.getElementById('inq-modal-title').textContent = `Interesado · ${l.name || 'Sin nombre'}`;
     document.getElementById('inq-detail-name').textContent = l.name || '—';
     document.getElementById('inq-detail-date').textContent = fmtDateTime(l.createdAt);
     document.getElementById('inq-detail-email').textContent = l.email || '—';
@@ -190,7 +190,7 @@ async function setStatus(status) {
         // Sincroniza el estado local (evita parpadeo hasta que llegue el onSnapshot).
         const idx = _all.findIndex(x => x.id === l.id);
         if (idx >= 0) _all[idx] = { ..._all[idx], status };
-        admToast(`Lead marcado como "${LEAD_LABEL[status]}".`);
+        admToast(`Interesado marcado como "${LEAD_LABEL[status]}".`);
         renderStatusBtns({ ...l, status });
         render();
     } catch (err) {
@@ -221,15 +221,15 @@ async function convertir() {
         // plena = CF transaccional, llega con F7). Igual navegamos a la ficha.
         try {
             await adminDb.updateInquiry(l.id, { status: 'convertido', convertedTo: cli.id });
-            admToast('Lead convertido en cliente.');
+            admToast('Interesado convertido en cliente.');
         } catch (markErr) {
             console.error('[bandeja] marcar lead convertido:', markErr);
-            admToast('Cliente creado, pero no se pudo marcar el lead. Márcalo a mano.', 'danger');
+            admToast('Cliente creado, pero no se pudo actualizar al interesado. Actualízalo a mano.', 'danger');
         }
         location.href = `admin-cuenta.html?id=${encodeURIComponent(cli.id)}`;
     } catch (err) {
         console.error('[bandeja] convertir:', err);
-        admToast('No se pudo convertir (¿permiso de admin?).', 'danger');
+        admToast('No se pudo convertir. Puede que no tengas permiso para esta acción.', 'danger');
         btn.disabled = false;
     }
 }
@@ -250,7 +250,7 @@ function wireModal() {
         try {
             await adminDb.deleteInquiry(l.id);
             closeModal();
-            admToast('Lead eliminado.', 'danger');
+            admToast('Interesado eliminado.', 'danger');
         } catch (err) {
             console.error('[bandeja] delete:', err);
             admToast('No se pudo eliminar.', 'danger');
@@ -287,11 +287,11 @@ function wireNuevoLead() {
                 message: document.getElementById('nl-mensaje').value.trim(),
                 source:  document.getElementById('nl-origen').value || 'mostrador',
             });
-            admToast('Lead agregado.');
+            admToast('Interesado agregado.');
             close();
         } catch (err) {
             console.error('[bandeja] nuevo lead:', err);
-            admToast('No se pudo agregar el lead.', 'danger');
+            admToast('No se pudo agregar el interesado.', 'danger');
         } finally {
             btn.disabled = false;
         }

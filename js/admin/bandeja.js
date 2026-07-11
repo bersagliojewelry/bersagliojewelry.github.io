@@ -78,7 +78,7 @@ function aprobar(mov) {
         async () => {
             try {
                 await aprobarEventoCaja({ opId: mov.id });
-                admToast('✓ Evento aprobado', 'success');
+                admToast('✓ Movimiento aprobado', 'success');
             } catch (err) {
                 const msg = (BUSINESS_ERR.includes(err?.code) && err?.message) ? err.message : errorMessage(err, 'No se pudo aprobar.');
                 admToast(msg, 'danger', 4500);

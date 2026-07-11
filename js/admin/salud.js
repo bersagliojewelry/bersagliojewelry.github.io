@@ -73,9 +73,10 @@ function renderEstado() {
         setIcono('stat-recon-icon', 'red');
     }
 
-    // Fallos sin resolver
+    // Procesos automáticos: 0 avisos abiertos = todo en orden.
     const abiertos = _eventos.filter((e) => e.resuelto !== true).length;
-    document.getElementById('stat-fallos-valor').textContent = String(abiertos);
+    document.getElementById('stat-fallos-valor').textContent =
+        abiertos === 0 ? 'Todo en orden' : `${abiertos} aviso(s) por revisar`;
     setIcono('stat-fallos-icon', abiertos ? 'red' : 'green');
 
     renderDescuadres(recon);

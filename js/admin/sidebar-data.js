@@ -63,4 +63,4 @@ export const NAV_FOOTER = { label: 'Ver sitio', href: 'index.html', icon: 'exter
 // Versión visible del panel (criterio de deploy para no-técnicos, spec §9.1): Kary
 // confirma que está en la versión nueva tras un despliegue. Se bumpea JUNTO al
 // CACHE_NAME del Service Worker (`public/sw.js`) en cada cambio del shell admin.
-export const APP_VERSION = 'v52 · 2026-07-10';   // [OPUS-4.8] F-IA-2 B4: Bandeja única de aprobaciones (cartera + bóveda) + badge en rail; Salud pierde la sección — SW v92
+export const APP_VERSION = 'v53 · 2026-07-10';   // [OPUS-4.8] F-IA-2 B5: Salud legible + "Cierre de mes" in situ + microcopy global (solo texto) — SW v93

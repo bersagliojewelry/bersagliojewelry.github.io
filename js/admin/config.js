@@ -81,9 +81,9 @@ async function renderReglasSistema() {
     const sinRetenciones = (f.reteFuentePct || 0) === 0 && (f.reteIcaXMil || 0) === 0;
     const filas = [
         ['Turno de caja obligatorio', caja == null ? '—' : (caja.enforceTurno ? 'Sí' : 'No')],
-        ['Tope del cajón', (caja && typeof caja.limiteCajon === 'number') ? fmtCOP(caja.limiteCajon) : '—'],
-        ['Comisión de la pasarela (Wompi)', `${pct(f.wompiPct)} + ${fmtCOP(f.wompiFijo)} + IVA ${pct(f.wompiIvaPct)}`],
-        ['Retenciones', sinRetenciones ? 'Pendientes del contador' : `ReteFuente ${pct(f.reteFuentePct)} · ReteICA ${f.reteIcaXMil}‰`],
+        ['Máximo de efectivo en el cajón', (caja && typeof caja.limiteCajon === 'number') ? fmtCOP(caja.limiteCajon) : '—'],
+        ['Comisión por cobrar con Wompi', `${pct(f.wompiPct)} + ${fmtCOP(f.wompiFijo)} + IVA ${pct(f.wompiIvaPct)}`],
+        ['Retenciones', sinRetenciones ? 'Sin configurar — las define el contador' : `ReteFuente ${pct(f.reteFuentePct)} · ReteICA ${f.reteIcaXMil}‰`],
     ];
     body.replaceChildren();
     for (const [k, v] of filas) {

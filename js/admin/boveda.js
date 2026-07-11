@@ -115,7 +115,7 @@ function aprobar(mov) {
         async () => {
             try {
                 await aprobarEventoCaja({ opId: mov.id });
-                admToast('✓ Evento aprobado', 'success');
+                admToast('✓ Movimiento aprobado', 'success');
             } catch (err) {
                 const msg = (BUSINESS_ERR.includes(err?.code) && err?.message) ? err.message : errorMessage(err, 'No se pudo aprobar.');
                 admToast(msg, 'danger', 4500);
@@ -165,7 +165,7 @@ function reversar(mov) {
     if (motivo === null) return;
     if (!motivo.trim()) { admToast('La reversa exige un motivo.', 'danger'); return; }
     admConfirm(
-        'La reversa crea un asiento contrario (no borra el original) y queda PENDIENTE de tu aprobación. ¿Continuar?',
+        'La reversa crea un movimiento contrario que anula el efecto del original (el original NO se borra) y queda PENDIENTE de tu aprobación. ¿Continuar?',
         async () => {
             try {
                 await reversoTraslado({ opId: uid(), reversaA: mov.id, motivo: motivo.trim() });
@@ -206,7 +206,7 @@ async function handleSalida() {
     // Reponer cambio (bóveda→cajón) SOLO con turno abierto: el cierre necesita el turnoId para sumar
     // +bovedaACajon a su ecuación (§8.1.7); sin él, el arqueo del turno mostraría un "sobra" falso.
     if (_accionTipo === 'boveda_a_cajon' && !_turnoAbiertoId) {
-        admToast('Abre la caja del mostrador antes de reponer el cambio (el traslado se atribuye al turno abierto).', 'danger', 5000);
+        admToast('Abre la caja del mostrador antes de reponer el cambio: así este dinero queda sumado al turno que está abierto.', 'danger', 5000);
         return;
     }
     if (!_salidaOpId) _salidaOpId = uid();

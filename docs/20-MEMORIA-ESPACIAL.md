@@ -65,7 +65,8 @@
 │       ├── lead-format.js      # estado/color/origen del pipeline de leads (Bandeja, F4 §53)
 │       ├── consultas.js        # Bandeja de leads (pipeline 5 estados + convertir a cliente)
 │       ├── pedidos.js          # Módulo Pedidos F1-PUENTE (lista+detalle read-only en vivo) — helper pedidos-format.js
-│       ├── db.js · piezas.js · colecciones.js · cuentas.js · cuenta.js · config.js · dashboard.js · salud.js
+│       ├── hoy.js               # Página "Hoy" = pulso del negocio read-only (F-IA-2 B3; ex dashboard.js) — helper hoy-format.js
+│       ├── db.js · piezas.js · colecciones.js · cuentas.js · cuenta.js · config.js · salud.js
 │       └── (nav NO duplicada en HTML; cada admin*.html tiene <aside> vacío que llena shared.js)
 ├── public/                     # Archivos estáticos copiados a dist/ en el build
 │   ├── sw.js                   # Service Worker (Caché bersaglio-v9; versión vigente en 05)

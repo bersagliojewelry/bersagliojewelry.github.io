@@ -45,14 +45,14 @@
 ---
 
 ## 🔮 Contexto estratégico
-Programa "Nuevo Bersaglio": F1 rediseño ✅ · F2 hardening (Tier C pend.) · F3 CRM ✅ · Fase M M0-M6 ✅ (R1-R6 gateados). Horizonte: Wompi F2 → inventario/facturación + RBAC. Charter → `50-ARQUITECTURA`.
+Programa "Nuevo Bersaglio": F1✅ · F2 hardening (Tier C pend) · F3 CRM✅ · Fase M M0-M6✅. Charter → `50-ARQUITECTURA`.
 
 ---
 
 ## 📝 Bitácora (efímera)
 
-> 2026-07-11 · **[OPUS-4.8] §185 eyebrow home corto** (CMS+default; "Cartagena/atelier/tienda" ya visibles en title/meta/locator/manifiesto+schema → sin texto escondido; deploy `a38028a`). **A3 journal**: 6 guías CREADAS como entradas Firestore (`journal/*`, drafts; educativas cero-demo OK; borrador texto en `specs/2026-07-11-journal-guias-A3-DRAFT.md`). Daniel publica + sube imágenes **16:9 (1600×900+)**. **PEND**: (a) hornear `/journal/<slug>` (Article schema, reemplaza `entrada.html?e=` noindex) tras publicar; (b) **modelo Home Portada+Destacada** (Daniel eligió **2 casillas**) → REQUIERE campo `cover` en `firestore.rules journalValid` (whitelist `hasOnly` L479-481) + **DEPLOY MANUAL reglas** (L-22, `test:rules`) + checkbox admin (`contenido-tabs.js`) + `journal.js getCover/getFeaturedSmall` + `journal-preview.js` (home=cover+featured; resto solo /journal) + set `anillo.cover`/`muzo.featured`.
-> 2026-07-11 · **[OPUS-4.8] SEO A2 ✅ (§184)** — 9 landing de faceta (/coleccion×5 + /gema×4) en prod, verificadas (curl); hidratación visual = ambiental (L-05). Detalle → §184 + TODO-35. Deploy `922fabc`.
-> 2026-07-10 · **[OPUS-4.8] Auditoría visibilidad + A1 ✅** (spec SSoT; GSC authuser=3, 7 URLs solicitadas; A1 en prod `43e0666`). Detalle → spec/TODO-35. **Revisar GSC ~3-7d.**
+> 2026-07-11 · **[OPUS-4.8] Journal visual (SW v94 `50727a3`)** — capital cover 42→54px alineada + resumen 1-col + `.hj-trio` centrado (fin "tarjeta sola"). Solo CSS, build verde. ⏳ deploy pend OK Daniel.
+> 2026-07-11 · **[OPUS-4.8] Journal CMS colocación — PEND (Daniel pidió, falta OK)**: portada/destacada-debajo/orden/miniatura → campos NUEVOS `cover`+`order` (+`featured`=destacada) → `journalValid` whitelist+tipos **DEPLOY MANUAL reglas** (L-22 test:rules ~L479-481) + `contenido-tabs.js` (motor ya soporta number/thumb/checkbox) + `getCover/getDestacadas`+`journal-preview.js`/`journal.js` + migración (`cover`→como-elegir, `order` 1..6) + hornear `/journal/<slug>` Article schema. Datos: 6 pub+foto, solo como-elegir `featured`, orden alfabético (sin control). Guías A3 ✅ publicadas; borrador → `specs/2026-07-11-journal-guias-A3-DRAFT.md`.
+> 2026-07-11 **[OPUS-4.8] SEO A2 ✅ §184** (9 landing faceta) · 2026-07-10 **A1 ✅ + auditoría visibilidad** (GSC authuser=3, 7 URLs; **revisar ~3-7d**) → TODO-35.
 > 2026-07-10 · **[OPUS-4.8] F-IA-2 B0-B5 ✅ CODE-COMPLETE** (SW v93; ⏳ funcional-con-sesión; Fable audita). **[FABLE-5] §181-183 prod · 1ª APPROVED ✅**. `[[feedback_opus_interino]]`
 > **Pend Daniel/no-gate** (→ ADRs §165-171): cartera migrada (v5 §8) · consejo+abogado apartados (TODO-39) · instructivo Kary · push A.6 · TODO-67 fotos · abogado CO. ADC gcloud caducado — firebase CLI auth OK. **Precios = paso FINAL.**

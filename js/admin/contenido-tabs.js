@@ -32,9 +32,11 @@ const journalDescriptor = {
     idFrom:     'slug',
     listLimit:  100,
     columns: [
+        { key: 'image',     label: 'Imagen',    type: 'thumb' },
         { key: 'title',     label: 'Título',    type: 'text'  },
-        { key: 'section',   label: 'Sección',   type: 'text'  },
-        { key: 'date',      label: 'Fecha',     type: 'date'  },
+        { key: 'order',     label: 'Orden',     type: 'text'  },
+        { key: 'cover',     label: 'Portada',   type: 'badge', on: 'Portada', off: '—' },
+        { key: 'featured',  label: 'Destacada', type: 'badge', on: 'Sí',      off: '—' },
         { key: 'published', label: 'Estado',    type: 'badge', on: 'Publicada', off: 'Borrador' },
     ],
     fields: [
@@ -49,8 +51,10 @@ const journalDescriptor = {
         { name: 'image',      label: 'Imagen de portada',            type: 'image'     },
         { name: 'excerpt',    label: 'Resumen (tarjeta del listado)',type: 'textarea', rows: 2 },
         { name: 'body',       label: 'Cuerpo del artículo',          type: 'textarea', rows: 12, hint: 'Separa párrafos con una línea en blanco.' },
-        { name: 'featured',   label: 'Destacada (portada del Journal)', type: 'checkbox' },
-        { name: 'published',  label: 'Publicada (visible en la web)',   type: 'checkbox' },
+        { name: 'cover',      label: 'Portada — la entrada grande de arriba',        type: 'checkbox', hint: 'Márcala en UNA sola. Es la que sale grande arriba, en el inicio y en el Journal.' },
+        { name: 'featured',   label: 'Destacada — franja de abajo del inicio',       type: 'checkbox', hint: 'Márcala hasta en 3. Salen como tarjetas debajo de la portada, en el inicio.' },
+        { name: 'order',      label: 'Orden — posición (menor va primero)',          type: 'number',   hint: 'Un número: 1 va primero, 2 después… Ordena el listado, "Más leídos" y las destacadas.' },
+        { name: 'published',  label: 'Publicada — aparece en el listado del Journal', type: 'checkbox' },
     ],
     toDoc(v) {
         const doc = {
@@ -63,11 +67,13 @@ const journalDescriptor = {
             image:      v.image      || '',
             excerpt:    v.excerpt    || '',
             body:       v.body       || '',
-            featured:   !!v.featured,
+            cover:      !!v.cover,     // portada (la grande)
+            featured:   !!v.featured,  // destacada (franja de abajo del inicio)
             published:  !!v.published,
         };
-        if (v.slug) doc.slug = v.slug;     // el id ya es el slug; se guarda por trazabilidad
-        if (v.date) doc.date = v.date;     // omitir vacío: '' no pasa el regex ISO de las reglas
+        if (v.slug) doc.slug = v.slug;                 // el id ya es el slug; se guarda por trazabilidad
+        if (v.date) doc.date = v.date;                 // omitir vacío: '' no pasa el regex ISO de las reglas
+        if (typeof v.order === 'number') doc.order = v.order;  // omitir null: '' no pasa `order is number`
         return doc;
     },
 };

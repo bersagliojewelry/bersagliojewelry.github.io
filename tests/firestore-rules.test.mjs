@@ -430,6 +430,7 @@ test('journal · editor crea entrada bien formada', async () => {
     await assertSucceeds(setDoc(doc(asUser('editorUid'), 'journal/e1'), {
         title: 'El alma verde', section: 'Reportaje', excerpt: 'x',
         date: '2026-06-14', image: '/img/x.webp', featured: false, published: true,
+        cover: true, order: 5,   // colocación editorial (CMS): portada + posición
     }));
 });
 test('journal · NO crea sin title', async () => {
@@ -440,6 +441,9 @@ test('journal · hasOnly RECHAZA campo inyectado fuera del whitelist', async () 
 });
 test('journal · RECHAZA date con formato inválido', async () => {
     await assertFails(setDoc(doc(asUser('editorUid'), 'journal/e4'), { title: 'X', date: '14/06/2026' }));
+});
+test('journal · RECHAZA order que no es número', async () => {
+    await assertFails(setDoc(doc(asUser('editorUid'), 'journal/e6'), { title: 'X', order: 'primero' }));
 });
 test('journal · cliente SIN rol NO escribe', async () => {
     await assertFails(setDoc(doc(asUser('customerUid'), 'journal/e5'), { title: 'X' }));

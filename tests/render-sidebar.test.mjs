@@ -61,6 +61,21 @@ test('conserva el badge de la Bandeja', () => {
   assert.match(html, /id="inq-badge"/);
 });
 
+test('F-IA-2 B4: Aprobaciones (owner-only) con badge vivo bajo Finanzas', () => {
+  const ownerHtml = renderSidebar(NAV, { role: 'owner', activePage: 'admin.html' });
+  assert.match(ownerHtml, /href="admin-aprobaciones\.html"/);
+  // El badge se renderiza (oculto por defecto; lo llena aprob-badge.js).
+  assert.match(ownerHtml, /id="aprob-badge"[^>]*hidden/);
+  // Vive bajo el grupo Finanzas.
+  const m = ownerHtml.match(/adm-nav-label">Finanzas<\/span>([\s\S]*?)<\/div>/);
+  assert.ok(m, 'debe existir el grupo Finanzas');
+  assert.match(m[1], /href="admin-aprobaciones\.html"/);
+  // Owner-only: un admin NO ve el ítem ni su badge (sus fuentes son owner-read).
+  const adminHtml = renderSidebar(NAV, { role: 'admin', activePage: 'admin.html' });
+  assert.doesNotMatch(adminHtml, /href="admin-aprobaciones\.html"/);
+  assert.doesNotMatch(adminHtml, /id="aprob-badge"/);
+});
+
 test('rail v2: Negocio y equipo (ex Configuración, incluye Vendedoras) visible para admin', () => {
   const html = renderSidebar(NAV, { role: 'admin', activePage: 'admin.html' });
   assert.match(html, /Negocio y equipo/);

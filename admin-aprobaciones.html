@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aprobaciones — Bersaglio Admin</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..500&family=Cormorant+Garamond:ital,wght@0,300..600;1,300..400&family=Manrope:wght@300..700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/admin.css">
+    <script type="module" src="js/admin/bandeja.js"></script>
+</head>
+<body style="display:none">
+<script>try{if(sessionStorage.getItem('bj_auth')){document.body.style.display=''}else{location.replace('admin-login.html')}}catch(e){location.replace('admin-login.html')}</script>
+<div class="adm-layout">
+
+    <!-- Sidebar (se rellena desde datos por js/admin/shared.js → renderSidebar) -->
+    <aside class="adm-sidebar"></aside>
+    <div class="adm-sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <!-- Main -->
+    <main class="adm-main">
+        <header class="adm-topbar">
+            <button class="adm-hamburger" id="hamburger-btn" aria-label="Menú">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="22" height="22"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <h1>Aprobaciones</h1>
+            <div class="adm-topbar-actions">
+                <span id="aprob-banner" class="adm-pill adm-pill--gold" style="font-weight:600;">Estás aprobando como dueño</span>
+            </div>
+        </header>
+
+        <div class="adm-content">
+
+            <!-- Cola de cartera (Fase M · M2b): Kary pide, Daniel decide aquí. Mudada de Salud (F-IA-2 B4 · D2/D5). -->
+            <div class="adm-section" id="sec-aprobaciones">
+                <div class="adm-section-head"><h2>Correcciones de cartera</h2></div>
+                <div class="adm-section-body">
+                    <p style="font-size:13px;color:var(--adm-muted);margin:0 0 12px;">
+                        Correcciones que Kary no puede aplicar sola y esperan tu decisión.
+                        El saldo de la clienta <strong>no cambia</strong> hasta que apruebes.
+                        Cada solicitud se decide por separado; al rechazar, Kary ve tu motivo en la ficha.
+                    </p>
+                    <div id="aprob-list"></div>
+                    <div id="aprob-empty" class="adm-empty" hidden>
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="48" height="48" style="opacity:0.2"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        <p>No hay correcciones de cartera esperando tu aprobación.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bóveda y caja (Dual-Approval §9.1): traslados/reversas/ajustes que esperan tu firma. -->
+            <div class="adm-section" id="sec-caja" style="margin-top:20px;">
+                <div class="adm-section-head"><h2>Bóveda y caja</h2></div>
+                <div class="adm-section-body">
+                    <p style="font-size:13px;color:var(--adm-muted);margin:0 0 12px;">
+                        Movimientos de efectivo que exigen tu firma antes de entrar al saldo de la bóveda
+                        (reversas y ajustes por conteo físico). Aprobar es <strong>definitivo</strong>.
+                    </p>
+                    <ul id="caja-pend-list" class="bov-mov-list" style="list-style:none;margin:0;padding:0;"></ul>
+                    <div id="caja-pend-empty" class="adm-empty" hidden>
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="48" height="48" style="opacity:0.2"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        <p>Nada de bóveda o caja esperando tu firma.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- Modal de rechazo (M2b): el motivo es obligatorio — Kary lo ve en la ficha -->
+<div class="adm-confirm" id="rechazo-modal" hidden>
+    <div class="adm-confirm-box">
+        <button class="adm-modal-close" id="rechazo-close" aria-label="Cerrar" style="float:right;background:none;border:none;font-size:18px;cursor:pointer;">×</button>
+        <h3>Rechazar la solicitud</h3>
+        <p style="font-size:13px;color:var(--adm-muted);">Explica brevemente por qué — Kary verá este motivo y podrá volver a corregir.</p>
+        <form id="rechazo-form">
+            <textarea id="rechazo-motivo" class="adm-input" rows="3" required
+                placeholder="Ej.: el monto no coincide con la factura física, revísalo con la clienta"></textarea>
+            <div class="adm-confirm-actions" style="margin-top:12px;">
+                <button type="button" class="adm-btn adm-btn--ghost" id="rechazo-cancel">Cancelar</button>
+                <button type="submit" class="adm-btn adm-btn--danger" id="rechazo-confirm">Rechazar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Confirm dialog -->
+<div class="adm-confirm" id="confirm-dialog" hidden>
+    <div class="adm-confirm-box">
+        <h3>Confirmar acción</h3>
+        <p id="confirm-msg"></p>
+        <div class="adm-confirm-actions">
+            <button class="adm-btn adm-btn--ghost" id="confirm-cancel">Cancelar</button>
+            <button class="adm-btn adm-btn--danger" id="confirm-ok">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<div class="adm-toast-wrap" id="toast-wrap"></div>
+</body>
+</html>

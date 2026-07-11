@@ -14,7 +14,6 @@ import {
     onSaludChange, onSaludEventosChange, marcarEventoResuelto,
     reconciliarAhora, repararSaldoCliente, fmtCOP,
 } from '../crm-service.js';
-import { initAprobaciones } from './aprobaciones.js';
 import { initAuditoriaCartera } from './auditoria-cartera.js';
 
 const HORAS_BACKUP_AMBAR = 26;   // el backup corre cada 24h; >26h = se saltó una corrida
@@ -32,8 +31,7 @@ async function init() {
 
     document.getElementById('btn-reconciliar').addEventListener('click', handleReconciliar);
 
-    // Cola de aprobación de Daniel (Fase M · M2b) — módulo propio, mismo guard owner.
-    initAprobaciones();
+    // La cola de aprobación (M2b) se MUDÓ a la Bandeja (admin-aprobaciones.html · F-IA-2 B4 · D2/D5).
 
     // Auditoría detectiva del mes + acta + corte (Fase M · M4) — módulo propio.
     initAuditoriaCartera();

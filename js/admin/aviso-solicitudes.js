@@ -38,7 +38,7 @@ export async function initAvisoSolicitudes() {
             main.prepend(banner);
         }
         banner.textContent = esOwner
-            ? `⛔ ${r.vencidas.length} solicitud(es) de corrección llevan más de ${r.slaDias} días esperando TU aprobación — entra a Salud → Aprobaciones pendientes.`
+            ? `⛔ ${r.vencidas.length} solicitud(es) de corrección llevan más de ${r.slaDias} días esperando TU aprobación — entra a Finanzas → Aprobaciones.`
             : `⏳ ${r.vencidas.length} corrección(es) tuya(s) llevan más de ${r.slaDias} días esperando a Daniel — recuérdale por WhatsApp.`;
     };
 

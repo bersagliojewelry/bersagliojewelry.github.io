@@ -300,7 +300,7 @@ async function renderDetail() {
             else              { lbl.textContent = 'Falta';     val.textContent = cop(-d); val.style.color = 'var(--adm-danger)'; }
             const esperadoN = Number(_turno.esperadoEfectivo), declaradoN = Number(_turno.declaradoEfectivo);
             if (Number.isFinite(esperadoN) && Number.isFinite(declaradoN) && (declaradoN - esperadoN) !== d) {
-                lbl.textContent += ' · ⚠ inconsistente'; val.style.color = 'var(--adm-danger)';
+                lbl.textContent += ' · ⚠ las cuentas no coinciden, revisar'; val.style.color = 'var(--adm-danger)';
             }
         }
     } else {

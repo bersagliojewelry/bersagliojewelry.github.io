@@ -393,7 +393,7 @@ function sinStockBlock(p) {
         : `<button class="adm-btn adm-btn--primary adm-btn--sm" data-copy="${esc(plantilla)}" data-copy-label="Oferta copiada — envíala al cliente">⧉ Copiar oferta de refabricación</button>`;
     return `
     <section class="ped-block">
-        <h3>Resolver: pagado sin stock</h3>
+        <h3>Resolver: el cliente pagó pero la pieza se agotó</h3>
         <p class="ped-guia">El pago entró pero la pieza se agotó antes de apartarla. Ofrécele al cliente
         refabricarla a su medida, o devuélvele el dinero y anula el pedido.</p>
         <div class="ped-contact-row">
@@ -533,7 +533,7 @@ function renderForm(p) {
             ${campo('Medio del reembolso *', `<select class="adm-input" id="pf-r-medio"><option value="">—</option><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="wompi">Wompi</option></select>`)}
             ${campo('Monto (COP) *', `<input class="adm-input" id="pf-r-monto" type="number" min="1" inputmode="numeric" value="${esc(String(Math.round(Number(p.total) || 0)))}">`)}
             ${campo('Referencia', '<input class="adm-input" id="pf-r-ref" placeholder="Opcional — # de transacción/nota">')}`;
-        aviso = 'La pieza NO vuelve sola al inventario: si volvió física, se registra aparte (kardex).';
+        aviso = 'La pieza NO vuelve sola al inventario. Si el cliente devolvió la pieza física, avísale a quien lleva el inventario para que la registre.';
     } else if (a === 'sinstock') {
         campos = campo('Referencia del reembolso', '<input class="adm-input" id="pf-r-ref" placeholder="Opcional — # de transacción/nota">');
         aviso = 'Esto ANULA el pedido y registra que devolviste el dinero.';
@@ -660,7 +660,7 @@ async function ejecutarAnulacion(p, motivo) {
     _enviando = true;
     try {
         await anularPedido(p.id, motivo);
-        admToast(`✓ Pedido ${idVisible(p)} anulado · reembolso registrado en el motivo`, 'success', 4500);
+        admToast(`✓ Pedido ${idVisible(p)} anulado · quedó anotado que ya devolviste el dinero`, 'success', 4500);
         cerrarForm();
     } catch (err) {
         const msg = (BUSINESS_ERR.includes(err?.code) && err?.message)

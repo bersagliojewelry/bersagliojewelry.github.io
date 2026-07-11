@@ -232,9 +232,11 @@ function fmtFechaCorta(ts) {
 // movimientos, ni con la lista truncada, ni si el listener del acta falló.
 function textoResumenActa() {
     const rec = abonosPorMedio(_movs, _mesAnterior);
+    // Estado vacío HONESTO (§0.5): jamás empujar a levantar un acta de un mes sin
+    // actividad real (bajo RESET-A-CERO, los meses previos son datos de prueba).
     return rec.porMedio.size
         ? 'Recaudo registrado ese mes: ' + [...rec.porMedio.entries()].map(([k, v]) => `${MEDIO_LABEL[k] || k} ${fmtCOP(v.total)}`).join(' · ')
-        : 'Ese mes no registró abonos.';
+        : `${_mesAnterior} no registró abonos reales (posiblemente datos de prueba o migración). El primer cierre con actividad real aparecerá aquí — levanta el acta solo si de verdad hubo operación ese mes.`;
 }
 
 function renderActa() {
@@ -335,8 +337,8 @@ function renderCorte(corte) {
     const elC = document.getElementById('audit-corte');
     if (!elC) return;
     elC.textContent = corte
-        ? `📸 Último corte inmutable: ${corte.mes} — ${corte.totalClientes} clienta(s), vencido ${fmtCOP(corte.totales?.vencido || 0)} (generado ${fmtDateTime(corte.generadoEn)})`
-        : '📸 Aún no hay cortes mensuales: el primero se toma automáticamente el día 1 a las 3:50 AM.';
+        ? `📸 Última foto de cierre: ${corte.mes} — ${corte.totalClientes} clienta(s), vencido ${fmtCOP(corte.totales?.vencido || 0)} (guardada ${fmtDateTime(corte.generadoEn)})`
+        : '📸 Aún no se ha guardado ninguna foto de cierre. La primera se toma automáticamente el día 1 de cada mes (3:50 AM).';
 }
 
 // ─── Init (lo llama salud.js tras requireAuth('owner')) ────────────────────────

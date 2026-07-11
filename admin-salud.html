@@ -44,7 +44,7 @@
                     </div>
                     <div class="adm-stat-body">
                         <div class="adm-stat-value" id="stat-backup-valor">—</div>
-                        <div class="adm-stat-label">Última copia de seguridad</div>
+                        <div class="adm-stat-label">Copia de seguridad diaria</div>
                     </div>
                 </div>
                 <div class="adm-stat-card">
@@ -53,7 +53,7 @@
                     </div>
                     <div class="adm-stat-body">
                         <div class="adm-stat-value" id="stat-recon-valor">—</div>
-                        <div class="adm-stat-label">Cuadre de la cartera</div>
+                        <div class="adm-stat-label">Cuadre de saldos</div>
                     </div>
                 </div>
                 <div class="adm-stat-card">
@@ -62,7 +62,7 @@
                     </div>
                     <div class="adm-stat-body">
                         <div class="adm-stat-value" id="stat-fallos-valor">—</div>
-                        <div class="adm-stat-label">Fallos sin resolver</div>
+                        <div class="adm-stat-label">Procesos automáticos</div>
                     </div>
                 </div>
             </div>
@@ -71,23 +71,42 @@
                  sección "Aprobaciones pendientes" (con su banner y su modal de rechazo) viven ahora
                  en admin-aprobaciones.html. El pulso queda en: Bandeja + badge del rail + Avisos del Hoy. -->
 
-            <!-- Cartera: mes en curso — auditoría detectiva (Fase M · M4) -->
+            <!-- Vigilancia de la cartera — mes en curso (auditoría detectiva · Fase M · M4).
+                 B5 (D4): solo se reescribió el texto; los ids (audit-degradado/audit-cont) y la
+                 mecánica de auditoria-cartera.js quedan INTACTOS. -->
             <div class="adm-section" id="sec-auditoria" style="margin-top:20px;">
                 <div class="adm-section-head">
-                    <h2>Cartera — mes en curso (auditoría)</h2>
+                    <h2>Vigilancia de la cartera (mes en curso)</h2>
                 </div>
                 <div class="adm-section-body">
                     <div id="audit-degradado" hidden
                          style="padding:12px 14px;border-radius:12px;margin-bottom:12px;background:var(--adm-danger-light,#fdecea);color:var(--adm-danger);font-weight:700;font-size:13px;"></div>
                     <p style="font-size:13px;color:var(--adm-muted);margin:0 0 12px;">
-                        Lo que las reglas no pueden sumar, aquí se VIGILA: ajustes del mes por clienta contra el tope,
-                        anulaciones con sus banderas, rechazos burlados y el recaudo para tu conciliación.
-                        Todo agrupado por la fecha REAL de registro (cambiar la fecha del hecho no esconde nada).
+                        Aquí el sistema marca lo del mes que conviene mirar con calma: descuentos y
+                        anulaciones por clienta frente al tope permitido, un "no" que reaparece como
+                        ajuste directo, y el recaudo del mes por medio de pago. Todo se ordena por la
+                        fecha REAL en que se registró (cambiar la fecha del movimiento no lo esconde).
                     </p>
                     <div id="audit-cont"></div>
+                </div>
+            </div>
+
+            <!-- Cierre de mes: foto de cartera (corte inmutable) + acta de conciliación (Fase M).
+                 B5 (D4): reescritura IN SITU de la presentación; los ids (audit-corte/acta-cont) que
+                 puebla auditoria-cartera.js NO cambian → cero cambio de mecánica. -->
+            <div class="adm-section" id="sec-cierre-mes" style="margin-top:20px;">
+                <div class="adm-section-head">
+                    <h2>Cierre de mes</h2>
+                </div>
+                <div class="adm-section-body">
+                    <p style="font-size:13px;color:var(--adm-muted);margin:0 0 12px;">
+                        Al cerrar cada mes, el sistema guarda una foto de la cartera y comprueba que el
+                        banco y el efectivo cuadren con lo registrado. Esa foto queda fija: es el
+                        respaldo del mes.
+                    </p>
                     <div id="audit-corte" style="font-size:13px;color:var(--adm-muted);margin-top:4px;"></div>
                     <div style="margin-top:14px;padding:14px 16px;border-radius:14px;background:var(--adm-soft,#f5f3ef);">
-                        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--adm-muted);margin-bottom:8px;font-weight:700;">Acta mensual de conciliación</div>
+                        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--adm-muted);margin-bottom:8px;font-weight:700;">Acta del mes cerrado</div>
                         <div id="acta-cont"></div>
                     </div>
                 </div>
@@ -120,8 +139,12 @@
 
             <!-- Eventos de fallo -->
             <div class="adm-section" style="margin-top:20px;">
-                <div class="adm-section-head"><h2>Registro de fallos</h2></div>
+                <div class="adm-section-head"><h2>Avisos del sistema</h2></div>
                 <div class="adm-section-body">
+                    <p style="font-size:13px;color:var(--adm-muted);margin:0 0 12px;">
+                        Si un proceso automático falla o un saldo no cuadra, aparece aquí para revisarlo.
+                        Vacío = todo en orden.
+                    </p>
                     <div class="adm-table-wrap">
                         <table class="adm-table">
                             <thead>
@@ -139,7 +162,7 @@
                     </div>
                     <div id="eventos-empty" class="adm-empty" hidden>
                         <svg viewBox="0 0 20 20" fill="currentColor" width="48" height="48" style="opacity:0.2"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                        <p>Sin fallos registrados. El sistema está sano.</p>
+                        <p>✅ Sin avisos — todo en orden.</p>
                     </div>
                 </div>
             </div>
@@ -149,9 +172,9 @@
                 <div class="adm-section-head"><h2>¿Qué vigila esta pantalla?</h2></div>
                 <div class="adm-section-body">
                     <p style="font-size:13px;color:var(--adm-muted);line-height:1.6;margin:0;">
-                        1. <strong>Copia de seguridad</strong>: cada madrugada (3:00 AM) se guarda una copia completa de la base de datos.<br>
-                        2. <strong>Cuadre de la cartera</strong>: cada madrugada (3:30 AM) se recalcula el saldo de todos los clientes y se compara con el guardado — como cuadrar caja.<br>
-                        3. <strong>Registro de fallos</strong>: si algún cálculo automático falla, queda anotado aquí en vez de pasar en silencio.
+                        1. <strong>Copia de seguridad diaria</strong>: cada madrugada (3:00 AM) se guarda una copia completa de toda la base de datos, por si hay que restaurar.<br>
+                        2. <strong>Cuadre de saldos</strong>: cada madrugada (3:30 AM) el sistema re-verifica que el saldo de cada cliente coincida con la suma de sus movimientos — como cuadrar la caja.<br>
+                        3. <strong>Procesos automáticos</strong>: si alguno de estos cálculos falla, no pasa en silencio: queda como <strong>aviso</strong> abajo para que lo revises.
                     </p>
                 </div>
             </div>

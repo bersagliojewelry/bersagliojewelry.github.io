@@ -27,10 +27,10 @@
             </button>
             <h1>Interesados</h1>
             <div class="adm-topbar-actions">
-                <button class="adm-btn adm-btn--ghost" id="btn-export-csv">↓ Exportar CSV</button>
+                <button class="adm-btn adm-btn--ghost" id="btn-export-csv">↓ Exportar a Excel</button>
                 <button class="adm-btn adm-btn--primary" id="btn-nuevo-lead">
                     <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
-                    Nuevo lead
+                    Nuevo interesado
                 </button>
             </div>
         </header>
@@ -71,7 +71,7 @@
             </div>
             <div id="inq-empty" class="adm-empty" hidden>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="48" height="48"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg>
-                <p>No hay leads con ese filtro.</p>
+                <p>No hay interesados con ese filtro.</p>
             </div>
 
         </div>
@@ -82,7 +82,7 @@
 <div class="adm-modal" id="inq-modal" hidden>
     <div class="adm-modal-box">
         <div class="adm-modal-head">
-            <h2 id="inq-modal-title">Lead</h2>
+            <h2 id="inq-modal-title">Interesado</h2>
             <button class="adm-modal-close" id="inq-modal-close" aria-label="Cerrar">✕</button>
         </div>
         <div class="adm-modal-body">
@@ -120,7 +120,7 @@
                     <div id="inq-detail-message" class="adm-inq-detail"></div>
                 </div>
                 <div>
-                    <div class="adm-kv-label">Estado del lead</div>
+                    <div class="adm-kv-label">Estado del interesado</div>
                     <div class="adm-filters" id="inq-status-btns" style="flex-wrap:wrap;margin-top:4px;"></div>
                 </div>
             </div>
@@ -138,7 +138,7 @@
 <div class="adm-modal" id="nuevo-modal" hidden>
     <div class="adm-modal-box">
         <div class="adm-modal-head">
-            <h2>Nuevo lead</h2>
+            <h2>Nuevo interesado</h2>
             <button class="adm-modal-close" id="nuevo-close" aria-label="Cerrar">✕</button>
         </div>
         <form id="nuevo-form">
@@ -179,7 +179,7 @@
             </div>
             <div class="adm-modal-foot">
                 <button type="button" class="adm-btn adm-btn--ghost" id="nuevo-cancel">Cancelar</button>
-                <button type="submit" class="adm-btn adm-btn--primary" id="nuevo-save">Agregar lead</button>
+                <button type="submit" class="adm-btn adm-btn--primary" id="nuevo-save">Agregar interesado</button>
             </div>
         </form>
     </div>

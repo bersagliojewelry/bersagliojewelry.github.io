@@ -907,7 +907,7 @@ function updateMedioHint() {
     const envio = document.getElementById('pos-envio').checked;
     const hint  = document.getElementById('pos-medio-hint');
     if (_split) {   // TODO-73 §9: con pago dividido el hint lo da el constructor de pagos
-        hint.textContent = 'Pago dividido: la venta queda entregada si TODOS los medios aprueban en el acto (efectivo/tarjeta); si hay un medio diferido (transferencia/Wompi) queda "por verificar".';
+        hint.textContent = 'Pago dividido: la venta queda entregada si TODOS los pagos entran en el acto (efectivo/tarjeta); si hay un pago que no se ve al instante (transferencia/Wompi) queda "por verificar".';
         return;
     }
     if (medio === 'efectivo') {

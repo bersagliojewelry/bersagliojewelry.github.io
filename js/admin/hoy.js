@@ -115,7 +115,7 @@ async function init() {
 
     document.getElementById('btn-export-quick')?.addEventListener('click', () => {
         adminDb.exportPiecesCSV();
-        admToast('Descargando piezas.csv…');
+        admToast('Descargando la lista de piezas…');
     });
 }
 
@@ -331,7 +331,7 @@ function initSenalAvisos(grid, esOwner) {
         c.val.style.color = total > 0 ? 'var(--adm-danger)' : '';
         const partes = [];
         if (solOk) partes.push(`${solicitudes} aprobación${solicitudes === 1 ? '' : 'es'}`);
-        if (esOwner && falOk) partes.push(`${fallos} del sistema`);
+        if (esOwner && falOk) partes.push(`${fallos} fallas del sistema`);
         c.sub.textContent = total === 0 ? ((solOk || (esOwner && falOk)) ? 'Todo en orden' : 'Cargando…') : partes.join(' · ');
     };
     render();

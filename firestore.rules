@@ -478,7 +478,7 @@ service cloud.firestore {
       let d = request.resource.data;
       return publicContentValid(d, ['title', 'slug', 'section', 'kicker', 'excerpt',
                                     'body', 'date', 'read', 'author', 'authorRole',
-                                    'image', 'featured', 'published'])
+                                    'image', 'featured', 'published', 'cover', 'order'])
           && d.title is string && d.title.size() > 0 && d.title.size() <= 200
           && (!('slug' in d)       || (d.slug is string       && d.slug.size() <= 200))
           && (!('section' in d)    || (d.section is string    && d.section.size() <= 80))
@@ -492,6 +492,10 @@ service cloud.firestore {
           && (!('image' in d)      || (d.image is string      && d.image.size() <= 1000))
           && (!('featured' in d)   || d.featured is bool)
           && (!('published' in d)  || d.published is bool)
+          // Colocación editorial (CMS §journal): `cover` = portada (la grande);
+          // `featured` = destacada (franja de abajo del home); `order` = posición.
+          && (!('cover' in d)      || d.cover is bool)
+          && (!('order' in d)      || (d.order is number && d.order >= 0 && d.order <= 100000))
           // PUERTA cero-ficción (Fase B, TODO-24): un doc PUBLICADO exige los campos
           // reales del render (title ya exigido arriba + imagen + resumen) no vacíos.
           // `.get(k,'')` evita el throw al acceder a campo ausente (idiom S6) → DENY limpio.

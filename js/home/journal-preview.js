@@ -6,8 +6,9 @@ import { html, escape, mount } from '../core/html.js';
 import {
     JOURNAL_ISSUE,
     JOURNAL_TICKER,
-    getFeatured,
-    getNonFeatured,
+    getCover,
+    getDestacadas,
+    getListado,
 } from '../data/journal.js';
 
 export function renderJournalPreview() {
@@ -18,8 +19,8 @@ export function renderJournalPreview() {
 // EN TIEMPO DE RENDER — no en import (bug "eager" del consumo previo: capturaba el
 // estado baked para siempre) — para reflejar las entradas de Firestore al llegar.
 function journalInner() {
-    const feat = getFeatured();
-    // B2 (comité): sin entradas (y sin fallback baked) getFeatured() = null → no montar
+    const feat = getCover();
+    // B2 (comité): sin entradas (y sin fallback baked) getCover() = null → no montar
     // la sección en vez de romper en cover.excerpt.charAt(0). El no-demo de §4 la oculta.
     if (!feat) return '';
     const cover = {
@@ -34,11 +35,16 @@ function journalInner() {
         img: feat.image,
         slug: feat.slug,
     };
-    const nonFeatured = getNonFeatured();
-    const JOURNAL_SIDE = nonFeatured.slice(0, 4).map(e => ({
+    // Franja de abajo = DESTACADAS elegidas en el panel (hasta 3). "Más leídos"
+    // (sidebar) = el resto del listado, sin repetir las destacadas. Así el dueño
+    // controla qué va abajo y nunca queda una tarjeta suelta por reparto automático.
+    const destacadas = getDestacadas(3);
+    const destSlugs  = new Set(destacadas.map(e => e.slug));
+    const masLeidos  = getListado().filter(e => !destSlugs.has(e.slug)).slice(0, 4);
+    const JOURNAL_SIDE = masLeidos.map(e => ({
         sec: e.section, date: e.date, title: e.title, read: e.read, slug: e.slug,
     }));
-    const JOURNAL_TRIO = nonFeatured.slice(4, 7).map(e => ({
+    const JOURNAL_TRIO = destacadas.map(e => ({
         sec: e.section, title: e.title, who: e.author, img: e.image, slug: e.slug,
     }));
     const ticker = JOURNAL_TICKER;
@@ -149,7 +155,7 @@ function journalInner() {
                     </aside>
                 </div>
 
-                <div class="journal-trio hj-trio">
+                ${JOURNAL_TRIO.length ? html`<div class="journal-trio hj-trio">
                     ${JOURNAL_TRIO.map(t => html`
                         <article class="hj-trio-item">
                             <a class="hj-trio-link" href="/entrada.html?e=${encodeURIComponent(t.slug)}">
@@ -162,7 +168,7 @@ function journalInner() {
                                 <div class="mono hj-trio-who">${escape(t.who)}</div>
                             </a>
                         </article>`)}
-                </div>
+                </div>` : ''}
             </div>`;
 }
 

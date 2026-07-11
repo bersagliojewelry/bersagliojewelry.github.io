@@ -1,7 +1,7 @@
 /**
  * Bersaglio Jewelry — Journal entries (data layer).
  *
- * Los accessors (getFeatured/getNonFeatured/getAll/getEntryBySlug/getRelated) leen
+ * Los accessors (getCover/getDestacadas/getListado/getAll/getEntryBySlug/getRelated) leen
  * SOLO las entradas PUBLICADAS en Firestore (`data.getJournal()`, administradas desde
  * el panel Contenido web → Journal). normalizeEntry() mapea el doc Firestore (fecha
  * ISO) a la forma de display (date 'DD·MM·YY' + dateLong 'Marzo 2026').
@@ -14,7 +14,8 @@
  *
  * Cada entry (doc Firestore, normalizado):
  *   slug · section · kicker · title · excerpt · body · date · dateLong · read ·
- *   author · authorRole · image · featured · published
+ *   author · authorRole · image · published ·
+ *   cover (portada) · featured (destacada = franja de abajo) · order (posición)
  */
 
 import { data } from '../core/data.js';
@@ -45,29 +46,48 @@ export const JOURNAL_TICKER = [
  * publicada-incompleta NO se pinte rota en el home/archivo/detalle (defensa en profundidad
  * cero-ficción Fase B: el render no depende solo de la regla server-side).
  */
+/** Orden editorial: `order` asc (menor = primero); sin order → al final; desempate fecha desc + slug. */
+function byOrder(a, b) {
+    const ao = a.order == null ? Infinity : a.order;
+    const bo = b.order == null ? Infinity : b.order;
+    if (ao !== bo) return ao - bo;
+    if (a.iso !== b.iso) return (b.iso || '').localeCompare(a.iso || '');   // más reciente primero
+    return (a.slug || '').localeCompare(b.slug || '');
+}
+
 function entries() {
     const live = data.getJournal();
     return Array.isArray(live)
-        ? live.map(normalizeEntry).filter(e => isJournalComplete(e).complete)
+        ? live.map(normalizeEntry).filter(e => isJournalComplete(e).complete).sort(byOrder)
         : [];
 }
 
-/** Todas las entradas visibles (publicadas). */
+/** Todas las entradas visibles (publicadas), en su orden editorial. */
 export function getAll() {
     return entries();
 }
 
-/** La entrada destacada (cover), o la primera; null si no hay ninguna. */
-export function getFeatured() {
+/**
+ * La PORTADA del Journal: la marcada `cover`. Fallback (transición / sin cover elegida):
+ * la marcada `featured`, luego la 1ª por orden. null si no hay ninguna.
+ */
+export function getCover() {
     const all = entries();
-    return all.find(e => e.featured) || all[0] || null;
+    return all.find(e => e.cover) || all.find(e => e.featured) || all[0] || null;
 }
 
-/** Todas las entradas excepto la destacada. */
-export function getNonFeatured() {
-    const all  = entries();
-    const feat = getFeatured();
-    return feat ? all.filter(e => e.slug !== feat.slug) : all;
+/** DESTACADAS (franja de abajo del home): marcadas `featured`, excluyendo la portada, en orden. */
+export function getDestacadas(n = Infinity) {
+    const cover = getCover();
+    const coverSlug = cover ? cover.slug : null;
+    return entries().filter(e => e.featured && e.slug !== coverSlug).slice(0, n);
+}
+
+/** El listado completo menos la portada (fuente del archivo y de "Más leídos"), en orden. */
+export function getListado() {
+    const cover = getCover();
+    const coverSlug = cover ? cover.slug : null;
+    return entries().filter(e => e.slug !== coverSlug);
 }
 
 /** Busca una entrada por slug. */

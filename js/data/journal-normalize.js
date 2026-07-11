@@ -32,10 +32,15 @@ export function normalizeEntry(doc) {
         body:       doc.body       || '',
         date:       dt.short,
         dateLong:   dt.long,
+        iso:        typeof doc.date === 'string' ? doc.date : '',   // crudo, solo para ordenar (desempate)
         read:       doc.read       || '',
         author:     doc.author     || '',
         authorRole: doc.authorRole || '',
         image:      doc.image      || '',
+        // Colocación editorial (CMS): cover = portada (la grande); featured = destacada
+        // (franja de abajo del home); order = posición manual (menor = primero; null = al final).
+        cover:      !!doc.cover,
         featured:   !!doc.featured,
+        order:      (typeof doc.order === 'number' && isFinite(doc.order)) ? doc.order : null,
     };
 }

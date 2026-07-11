@@ -18,8 +18,8 @@ import { data } from '../core/data.js';
 import {
     JOURNAL_ISSUE,
     JOURNAL_TICKER,
-    getFeatured,
-    getNonFeatured,
+    getCover,
+    getListado,
 } from '../data/journal.js';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -251,10 +251,10 @@ function renderLoadingJournal() {
 
 function renderAll() {
     if (!data.isReady('journal') && !_gaveUp) return renderLoadingJournal();
-    const feat = getFeatured();
-    const nonFeatured = getNonFeatured();
-    const side = nonFeatured.slice(0, 4);
-    const archive = nonFeatured; // mostramos todas en el grid completo
+    const feat = getCover();
+    const listado = getListado();      // todo menos la portada, en orden editorial
+    const side = listado.slice(0, 4);  // "Más leídos"
+    const archive = listado;           // el archivo completo (grid)
     return html`
         <div class="container jr-page">
             ${renderMasthead(feat)}
@@ -265,7 +265,7 @@ function renderAll() {
         </div>`;
 }
 
-// Estado-cero (sin entradas publicadas): getFeatured() = null → NO crashear (clase §89/L-42:
+// Estado-cero (sin entradas publicadas): getCover() = null → NO crashear (clase §89/L-42:
 // el home-preview ya guardaba con `if (!feat) return ''`, pero esta página completa no lo
 // heredó). Empty-state editorial reusando clases ya estilizadas del archivo (cero CSS nueva).
 function renderEmpty() {

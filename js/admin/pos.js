@@ -26,8 +26,8 @@ import {
     onVentasTurnoChange, onTrasladosTurnoChange,
     crearClienteConDoc, vincularClientePedido, getConfigIdentidadActiva, fetchClientesLite,  // F2.1 · identidad
 } from '../pedidos-service.js';
-import { estadoPedido, ESTADOS_SIN_DINERO } from './pedidos-format.js';   // F1-CORE: mapa de estados compartido con Pedidos
-import { CONCEPTOS_CAJA, conceptoLabel, efectivoEnCajon, trasladoSugerido, superaLimite } from './caja-format.js';
+import { estadoPedido } from './pedidos-format.js';   // F1-CORE: mapa de estados compartido con Pedidos (censo de dinero → caja-format.ventasEfectivoTurno)
+import { CONCEPTOS_CAJA, conceptoLabel, efectivoEnCajon, ventasEfectivoTurno as cfVentasEfectivoTurno, trasladoSugerido, superaLimite } from './caja-format.js';
 import { advisoryMatchHint, filterClientes, maskDoc, maskPhone } from './advisory-match.js';   // F2.1 · dedup blando + máscara PII
 
 const cop = n => '$' + Math.round(Math.max(0, Number(n) || 0)).toLocaleString('es-CO');
@@ -271,17 +271,9 @@ function handleCajaEstado(est) {
 }
 
 // ─── Derivación del efectivo del cajón (ESTIMACIÓN operativa; la autoridad es el cierre server) ──
-function ventasEfectivoTurno() {
-    // TODO-73 §9 split-aware: una venta MIXTA aporta SOLO su porción efectivo (no el total). Con `pagos[]`
-    // sumamos los pagos efectivo; legacy (sin pagos) cae al total si el medio único era efectivo.
-    return _ventasTurno.reduce((s, p) => {
-        if (ESTADOS_SIN_DINERO.has(p.estado)) return s;
-        if (Array.isArray(p.pagos) && p.pagos.length) {
-            return s + p.pagos.reduce((a, pg) => a + (pg.medio === 'efectivo' ? entero(pg.monto) : 0), 0);
-        }
-        return p.medio === 'efectivo' ? s + entero(p.total) : s;
-    }, 0);
-}
+// Efectivo de las ventas del turno: delega en la fuente PURA compartida (caja-format.ventasEfectivoTurno),
+// la MISMA que usa el pulso "Hoy" → las dos vistas del efectivo no pueden divergir (dedup money-safe, F-IA-2 B3).
+const ventasEfectivoTurno = () => cfVentasEfectivoTurno(_ventasTurno);
 // TODO-73 3b: ¿hubo ventas con datáfono en el turno? Incluye ANULADAS: el voucher físico se imprimió
 // igual → la cajera lo cuenta (una "sobra" queda explicada por `datafonoAnuladoEnTurno`).
 function hayVentasDatafonoTurno() {

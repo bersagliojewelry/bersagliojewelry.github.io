@@ -60,4 +60,4 @@ export const NAV_FOOTER = { label: 'Ver sitio', href: 'index.html', icon: 'exter
 // Versión visible del panel (criterio de deploy para no-técnicos, spec §9.1): Kary
 // confirma que está en la versión nueva tras un despliegue. Se bumpea JUNTO al
 // CACHE_NAME del Service Worker (`public/sw.js`) en cada cambio del shell admin.
-export const APP_VERSION = 'v50 · 2026-07-10';   // [OPUS-4.8] F-IA-2 B2: Clientes (directorio) separado de Cartera (cobro/mora) — SW v90
+export const APP_VERSION = 'v51 · 2026-07-10';   // [OPUS-4.8] F-IA-2 B3: "Hoy" gana el pulso del negocio (read-only) + fuera Consultas recientes — SW v91

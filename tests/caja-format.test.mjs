@@ -8,7 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-    efectivoEnCajon, trasladoSugerido, superaLimite,
+    efectivoEnCajon, ventasEfectivoTurno, trasladoSugerido, superaLimite,
     CONCEPTOS_CAJA, conceptoLabel, tipoBovedaLabel, aprobacionInfo, esDestructivo,
 } from '../js/admin/caja-format.js';
 
@@ -32,6 +32,23 @@ test('efectivoEnCajon — puede ser negativo (anomalía real, sin clamp igual qu
 test('efectivoEnCajon — coacciona strings/basura a entero seguro (sin |0 de 32 bits)', () => {
     assert.equal(efectivoEnCajon({ fondoApertura: '200000', ventasEfectivo: '3000000000' }), 3000200000);
     assert.equal(efectivoEnCajon({ fondoApertura: null, ventasEfectivo: undefined, ingresos: NaN }), 0);
+});
+
+test('ventasEfectivoTurno — solo efectivo, split-aware, excluye estados sin dinero', () => {
+    const ventas = [
+        { estado: 'pagado', medio: 'efectivo', total: 100000 },                                  // efectivo puro
+        { estado: 'pagado', medio: 'wompi',    total: 500000 },                                  // digital → 0
+        { estado: 'pagado', pagos: [{ medio: 'efectivo', monto: 40000 }, { medio: 'datafono', monto: 60000 }] }, // mixta → solo 40k
+        { estado: 'anulado', medio: 'efectivo', total: 999999 },                                 // sin dinero → 0
+        { estado: 'reembolsado', medio: 'efectivo', total: 30000 },                              // sin dinero → 0
+    ];
+    assert.equal(ventasEfectivoTurno(ventas), 100000 + 40000);   // = 140000
+});
+
+test('ventasEfectivoTurno — vacío / no-array = 0 (estado-cero limpio)', () => {
+    assert.equal(ventasEfectivoTurno([]), 0);
+    assert.equal(ventasEfectivoTurno(null), 0);
+    assert.equal(ventasEfectivoTurno(undefined), 0);
 });
 
 test('trasladoSugerido — deja el cajón en el fondo de trabajo, redondeado a mil', () => {

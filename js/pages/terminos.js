@@ -61,7 +61,7 @@ Envíos internacionales: se cotizan caso por caso y se coordinan directamente co
         title: 'Garantía',
         body: `Toda pieza Bersaglio cuenta con la garantía legal obligatoria que ordena la ley colombiana (Ley 1480 de 2011): calidad, idoneidad y seguridad del producto. Es gratuita, no puede excluirse ni renunciarse y rige por el término legal aplicable.
 
-De forma adicional y sin perjuicio ni limitación de la garantía legal, ofrecemos una garantía comercial de doce (12) meses por defectos de fabricación, contados desde la entrega, que cubre fallas de manufactura como el desprendimiento de soldaduras, problemas de fundición o el aflojamiento del engaste de las piedras. Para hacerla efectiva, escríbenos a {{EMAIL}} o por WhatsApp al {{WA}}, de ser posible con fotos de la pieza; coordinamos la evaluación técnica y la reparación o solución que corresponda.
+De forma adicional y sin perjuicio ni limitación de la garantía legal, ofrecemos una garantía comercial de por vida por defectos de fabricación, sin límite de tiempo desde la entrega, que cubre fallas de manufactura como el desprendimiento de soldaduras, problemas de fundición o el aflojamiento del engaste de las piedras. Esta garantía rige mientras el atelier Bersaglio se encuentre en operación. Para hacerla efectiva, escríbenos a {{EMAIL}} o por WhatsApp al {{WA}}, de ser posible con fotos de la pieza; coordinamos la evaluación técnica y la reparación o solución que corresponda.
 
 Esta garantía comercial no cubre el desgaste natural por el uso, los daños por golpes o accidentes, la exposición a químicos abrasivos (cloro, amoníaco, blanqueador) ni las modificaciones realizadas por terceros ajenos al atelier; estas exclusiones no afectan tus derechos bajo la garantía legal.`,
     },

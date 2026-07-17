@@ -1153,6 +1153,7 @@ const REQUIRED_ANCHORS = [
     '<meta name="robots" content="noindex, nofollow">',
     '<title>Pieza · Bersaglio Jewelry</title>',
     '<link rel="canonical" href="https://bersagliojewelry.co/pieza.html">',
+    '<meta property="og:type" content="website">',
     '<meta property="og:url" content="https://bersagliojewelry.co/pieza.html">',
     '<meta property="og:title" content="Pieza · Bersaglio Jewelry">',
     '<meta property="og:image" content="https://bersagliojewelry.co/img/og-image.jpg">',
@@ -1217,6 +1218,9 @@ function generatePage(template, p, slug, collectionsById) {
     );
 
     // 5. Open Graph.
+    // og:type website → product (la ficha ES un producto; el shell pieza.html queda website).
+    // El stub /p/<code> ya nace con product; aquí lo alineamos en la página canónica.
+    html = html.replace('<meta property="og:type" content="website">', '<meta property="og:type" content="product">');
     html = html.replace(
         '<meta property="og:url" content="https://bersagliojewelry.co/pieza.html">',
         `<meta property="og:url" content="${escapeAttr(canonicalUrl)}">`
@@ -1884,6 +1888,8 @@ function runSelfTest() {
     if (html.indexOf('<link rel="canonical" href="https://bersagliojewelry.co/pieza/selftest.html">') < 0) {
         fails.push('canonical limpio NO inyectado.');
     }
+    // og:type=product inyectado (la ficha es un producto, no un "website").
+    if (html.indexOf('<meta property="og:type" content="product">') < 0) fails.push('pieza: og:type=product no inyectado.');
     // Bloques JSON-LD parsean.
     const parts = html.split('<script type="application/ld+json">');
     let n = 0;

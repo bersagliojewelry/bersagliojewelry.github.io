@@ -9,6 +9,7 @@ import {
     getCover,
     getDestacadas,
     getListado,
+    entryHref,
 } from '../data/journal.js';
 
 export function renderJournalPreview() {
@@ -87,7 +88,7 @@ function journalInner() {
 
                 <div class="journal-fold hj-fold">
                     <article class="hj-cover">
-                        <a class="hj-cover-link" href="/entrada.html?e=${encodeURIComponent(cover.slug)}">
+                        <a class="hj-cover-link" href="${entryHref(cover.slug)}">
                             <div class="hj-cover-imgwrap">
                                 <img src="${escape(cover.img)}" alt="${escape(cover.title)}" class="hj-cover-img" loading="lazy" decoding="async">
                                 <div aria-hidden="true" class="hj-cover-vignette"></div>
@@ -127,7 +128,7 @@ function journalInner() {
                         </div>
                         ${JOURNAL_SIDE.map((s, i) => html`
                             <article class="hj-side-row">
-                                <a class="hj-side-link" href="/entrada.html?e=${encodeURIComponent(s.slug)}">
+                                <a class="hj-side-link" href="${entryHref(s.slug)}">
                                     <div class="hj-side-num">0${i + 1}</div>
                                     <div>
                                         <div class="mono hj-side-meta">
@@ -158,7 +159,7 @@ function journalInner() {
                 ${JOURNAL_TRIO.length ? html`<div class="journal-trio hj-trio">
                     ${JOURNAL_TRIO.map(t => html`
                         <article class="hj-trio-item">
-                            <a class="hj-trio-link" href="/entrada.html?e=${encodeURIComponent(t.slug)}">
+                            <a class="hj-trio-link" href="${entryHref(t.slug)}">
                                 <div class="hj-trio-imgwrap">
                                     <img src="${escape(t.img)}" alt="${escape(t.title)}" class="hj-trio-img" loading="lazy" decoding="async">
                                     <div aria-hidden="true" class="hj-trio-vignette"></div>

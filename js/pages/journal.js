@@ -20,6 +20,7 @@ import {
     JOURNAL_TICKER,
     getCover,
     getListado,
+    entryHref,
 } from '../data/journal.js';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -66,7 +67,7 @@ function renderCover(feat, side) {
     return html`
         <div class="jr-fold">
             <article class="jr-cover">
-                <a class="jr-cover-link" href="/entrada.html?e=${encodeURIComponent(feat.slug)}">
+                <a class="jr-cover-link" href="${entryHref(feat.slug)}">
                     <div class="jr-cover-imgwrap">
                         <img src="${escape(feat.image)}" alt="${escape(feat.title)}" class="jr-cover-img" loading="eager" fetchpriority="high" decoding="async">
                         <div aria-hidden="true" class="jr-cover-vignette"></div>
@@ -105,7 +106,7 @@ function renderCover(feat, side) {
                 </div>
                 ${side.slice(0, 4).map((s, i) => html`
                     <article class="jr-side-row">
-                        <a class="jr-side-link" href="/entrada.html?e=${encodeURIComponent(s.slug)}">
+                        <a class="jr-side-link" href="${entryHref(s.slug)}">
                             <div class="jr-side-num">0${i + 1}</div>
                             <div>
                                 <div class="mono jr-side-meta">
@@ -165,7 +166,7 @@ function renderArchiveGrid(entries) {
 function renderArchiveCard(e) {
     return html`
         <article class="glass jr-archive-card">
-            <a class="jr-archive-link" href="/entrada.html?e=${encodeURIComponent(e.slug)}">
+            <a class="jr-archive-link" href="${entryHref(e.slug)}">
                 <div class="jr-archive-imgwrap">
                     <img src="${escape(e.image)}" alt="${escape(e.title)}" class="jr-archive-img" loading="lazy" decoding="async">
                     <div aria-hidden="true" class="jr-archive-vignette"></div>

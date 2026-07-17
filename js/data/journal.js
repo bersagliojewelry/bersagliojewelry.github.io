@@ -25,6 +25,16 @@ import { isJournalComplete } from '../core/home-sections.js';   // completitud (
 // Re-export de los puros (un solo punto de import para los consumers/tests).
 export { isoToDisplay, normalizeEntry };
 
+/**
+ * URL pública CANÓNICA de una entrada = la página HORNEADA e indexable `/journal/<slug>.html`
+ * (SSG A3, `scripts/generate-pieces.mjs`). SSoT del enlace: la usan el home, /journal y las
+ * relacionadas. `entrada.html?e=<slug>` sigue funcionando (shell SPA) pero es noindex → NO se
+ * enlaza (era un callejón sin salida para Google).
+ */
+export function entryHref(slug) {
+    return `/journal/${encodeURIComponent(String(slug || ''))}.html`;
+}
+
 // Masthead chrome (NO es contenido dinámico; identidad/branding evergreen, sin claims
 // fabricados). Solo se pinta cuando hay entradas reales (journal-preview se oculta si no).
 export const JOURNAL_ISSUE = {

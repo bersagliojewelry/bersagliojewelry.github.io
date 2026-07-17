@@ -1,7 +1,8 @@
 /**
  * Bersaglio Jewelry — Entrada (single journal post).
  *
- * URL: /entrada.html?e=<slug>
+ * URL: /journal/<slug>.html (HORNEADA por el SSG = canónica e indexable, A3) ·
+ *      /entrada.html?e=<slug> (shell SPA, noindex — sigue resolviendo por compatibilidad)
  *
  * Layout editorial:
  *   1. Breadcrumb (Inicio / Journal / título)
@@ -21,11 +22,21 @@
 
 import { html, escape, mount } from '../core/html.js';
 import { data } from '../core/data.js';
-import { getEntryBySlug, getRelated } from '../data/journal.js';
+import { getEntryBySlug, getRelated, entryHref } from '../data/journal.js';
 
 let _slug = '';
 
+/** URL absoluta canónica de una entrada (la horneada e indexable) — para canonical/og/compartir. */
+const entryUrlAbs = (slug) => `https://bersagliojewelry.co${entryHref(slug)}`;
+
+/**
+ * Página HORNEADA (/journal/<slug>.html): el slug lo inyecta el SSG en
+ * `window.PRERENDERED_ENTRY_SLUG` (no hay `?e=`) — espejo de PRERENDERED_PIECE_SLUG en las
+ * fichas de pieza. Shell SPA (/entrada.html?e=<slug>): el parámetro. Ambas resuelven al mismo
+ * artículo, así los enlaces viejos siguen funcionando.
+ */
 function getSlugFromURL() {
+    if (typeof window !== 'undefined' && window.PRERENDERED_ENTRY_SLUG) return window.PRERENDERED_ENTRY_SLUG;
     return new URL(location.href).searchParams.get('e') || '';
 }
 
@@ -108,7 +119,7 @@ function renderBody(entry) {
 }
 
 function renderShare(entry) {
-    const url = encodeURIComponent(`https://bersagliojewelry.co/entrada.html?e=${entry.slug}`);
+    const url = encodeURIComponent(entryUrlAbs(entry.slug));
     const title = encodeURIComponent(entry.title);
     return html`
         <aside class="en-share" aria-label="Compartir entrada">
@@ -154,7 +165,7 @@ function renderRelated(entry) {
             <div class="en-related-grid">
                 ${related.map(r => html`
                     <article class="glass en-related-card">
-                        <a class="en-related-link" href="/entrada.html?e=${encodeURIComponent(r.slug)}">
+                        <a class="en-related-link" href="${entryHref(r.slug)}">
                             <div class="en-related-imgwrap">
                                 <img src="${escape(r.image)}" alt="${escape(r.title)}" class="en-related-img" loading="lazy" decoding="async">
                             </div>
@@ -264,16 +275,24 @@ function refresh() {
     const ogTitle = document.querySelector('meta[property="og:title"]');
     const ogImg = document.querySelector('meta[property="og:image"]');
     const ogDesc = document.querySelector('meta[name="description"]');
-    const url = `https://bersagliojewelry.co/entrada.html?e=${encodeURIComponent(entry.slug)}`;
+    // canonical/og apuntan SIEMPRE a la horneada indexable (aunque se llegue por ?e=): una sola
+    // URL canónica → cero contenido duplicado para Google.
+    const url = entryUrlAbs(entry.slug);
     if (canonical) canonical.setAttribute('href', url);
     if (ogUrl)     ogUrl.setAttribute('content', url);
     if (ogTitle)   ogTitle.setAttribute('content', entry.title);
-    if (ogImg)     ogImg.setAttribute('content', `https://bersagliojewelry.co${entry.image}`);
+    // La imagen del CMS ya es ABSOLUTA (Firebase Storage). Prefijar el dominio la rompía
+    // ("https://bersagliojewelry.cohttps://firebasestorage…") → preview social roto.
+    if (ogImg && entry.image) {
+        ogImg.setAttribute('content', /^https?:\/\//i.test(entry.image)
+            ? entry.image
+            : `https://bersagliojewelry.co${entry.image}`);
+    }
     if (ogDesc)    ogDesc.setAttribute('content', entry.excerpt);
 }
 
 async function copyLink() {
-    const url = `https://bersagliojewelry.co/entrada.html?e=${encodeURIComponent(_slug)}`;
+    const url = entryUrlAbs(_slug);
     let copied = false;
     try {
         if (navigator.clipboard?.writeText) {

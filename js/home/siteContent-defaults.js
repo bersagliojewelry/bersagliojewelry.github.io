@@ -48,7 +48,7 @@ export const HOME_DEFAULTS = {
         step1Title: 'El Diseño y Concepto',      step1Desc: 'Concebimos la joya desde el boceto inicial sobre papel, seleccionando metales nobles y gemas con carácter propio.',
         step2Title: 'Asesoría Confidencial',     step2Desc: 'Te acompañamos en cada etapa de la elección. Un diálogo íntimo y pausado para dar con la pieza exacta que refleje tu legado.',
         step3Title: 'Garantía y Certificación',  step3Desc: 'Respaldamos la autenticidad y excelencia de cada piedra con reportes internacionales de la GIA y origen de mina.',
-        step4Title: 'Custodia de por vida',      step4Desc: 'Nuestras piezas nacen con vocación de eternidad. Ofrecemos mantenimiento, pulido y restauración vitalicia sin límites.',
+        step4Title: 'Custodia de por vida',      step4Desc: 'Nuestras piezas nacen con vocación de eternidad. Ofrecemos mantenimiento, pulido y restauración vitalicia de nuestra manufactura.',
         ctaLabel:   'Iniciar mi pieza',
         ctaHref:    '/contacto.html',
     },

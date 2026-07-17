@@ -1,5 +1,5 @@
 {
-  "_comment": "Identidad de negocio CANÓNICA (SSoT NAP + sameAs) para el SSG/visibilidad (TODO-35). La lee scripts/generate-pieces.mjs para hornear el JSON-LD de marca/Local en dist/index.html. Datos REALES de Daniel (2026-06-25) — cero-demo. Mantener idéntico al display del cliente (js/core/global-defaults.js). NO se sirve (build-time only).",
+  "_comment": "Identidad de negocio CANÓNICA (SSoT NAP + sameAs) para el SSG/visibilidad (TODO-35). La lee scripts/generate-pieces.mjs para hornear el JSON-LD de marca/Local en dist/index.html. Datos REALES de Daniel (2026-06-25) — cero-demo. Mantener idéntico al display del cliente (js/core/global-defaults.js). NO se sirve (build-time only). `geo` = coords del pin REAL del GBP (leídas de la URL de Maps del place /g/11z12mf6kd, 2026-07-17) — A4.",
   "vertical": "JewelryStore",
   "brand": "Bersaglio Jewelry",
   "legalName": "Bersaglio Jewelry",
@@ -16,7 +16,7 @@
   },
   "areaServed": "Cartagena de Indias",
   "hasMap": "https://share.google/dg6nfdgIHaFanKVYe",
-  "geo": null,
+  "geo": { "latitude": 10.4251642, "longitude": -75.5492068 },
   "openingHours": [
     {
       "@type": "OpeningHoursSpecification",

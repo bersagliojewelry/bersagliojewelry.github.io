@@ -2564,7 +2564,7 @@ A7 [media·SSoT] check #8 inerte (`ssotFacts:[]` desde §114) mientras 05↔10 d
 
 **186.7 Doctrina aplicada + cache**: SW v93→v94→v95 (comportamiento + shell). **Control editorial explícito (cover/featured/order) > reparto posicional automático** (que dejaba tarjetas sueltas y no daba control). Extender un CMS-lista (journal/films/social) = descriptor + reglas (whitelist+tipos, DEPLOY MANUAL) + accessors; el motor `createResourceAdmin` ya cubre `thumb`/`number`/`checkbox`/`badge` sin tocar el engine. `[[feedback_anunciar_modelo_por_paso]]` (diseño confirmado por Daniel → Opus implementa) · `[[feedback_reorganizar_no_es_depurar]]`. [OPUS-4.8]
 
-## 2026-07-11 — Opus 4.8: SEO A3 — Journal indexable (/journal/<slug>.html + schema Article)
+## 2026-07-17 — Opus 4.8: SEO A3 — Journal indexable (/journal/<slug>.html + schema Article)
 
 > Continuación directa de §186: Daniel publicó 6 guías reales con foto… que Google no podía ver. TODO-35 A3 (estaba GATED por "journal Firestore VACÍO" — con 6 entradas quedó desbloqueado).
 

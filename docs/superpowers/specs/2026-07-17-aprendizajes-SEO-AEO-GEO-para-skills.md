@@ -224,6 +224,32 @@ nada.
 ## 3.6 ✅ Un contenido = una URL canónica
 La cáscara SPA noindex + canonical → la horneada. Ver §2.2.
 
+## 3.7 ⚠️🚫 `FAQPage` YA NO da rich result — NUNCA venderlo como tal (verificado en fuente primaria)
+**Verificado 2026-07-17** en `developers.google.com/search/docs/appearance/structured-data/faqpage`
+(doc oficial, no blog): *"This feature will no longer appear in Google Search starting May 7, 2026"*.
+La deprecación es TOTAL — se acabó incluso la excepción gov/health que regía desde ago-2023; la doc se
+retiró el **15-jun-2026** y GSC eliminó el informe/filtro de FAQ (y el soporte en la API en ago-2026).
+
+**Regla para la skill** (era una trampa fácil: el patrón "añade FAQPage para ganar el acordeón en el
+SERP" está por todo internet y en material de entrenamiento previo a mayo-2026):
+- 🚫 **NUNCA** prometer rich result / acordeón / más espacio en el SERP por `FAQPage`. **Cero.**
+- ✅ `FAQPage` **sigue siendo schema válido** y Google lo parsea para *entender* la página; no hay que
+  correr a borrarlo (Google: no causa problemas, pero no tiene efecto visible). Simplemente **no vale
+  como trabajo de SEO por sí solo** → poner el schema y nada más = **teatro SEO**.
+- ✅ Lo que SÍ vale es la **FAQ VISIBLE**: (a) **AEO/GEO** — los LLM/AI Overviews citan lo que pueden
+  extraer fácil (pregunta literal + respuesta corta y autónoma); (b) ataca el estado **"Rastreada:
+  actualmente sin indexar"** (§0.3), que es juicio de VALOR → contenido real, no marcado.
+- ⇒ **Reclasificar**: una FAQ NO es tarea de *schema*, es tarea de **CONTENIDO**. Si la skill la mete en
+  el bucket de schema, el equipo la ejecuta como marcado invisible y no mueve nada.
+- 🚫 Y el marcado debe corresponder a **contenido visible** en la página (regla general de structured
+  data) → un `FAQPage` sin Q&A visibles es, además, marcado inválido.
+
+**Meta-lección (vale para CUALQUIER regla de SEO en una skill)**: las features del SERP **mueren**. Una
+regla de posicionamiento tiene *fecha de caducidad* → toda recomendación de rich result debe ir con
+**fecha + fuente primaria** y re-verificarse contra la doc de Google antes de portarse. La doc oficial
+manda sobre el blog, el post de terceros y sobre lo que "siempre se hizo". Ver §1.6 (contar ≠ muestrear):
+mismo espíritu — no convertir en regla lo que no verificaste **hoy**.
+
 ---
 
 # 4. `maps-gbp-local`

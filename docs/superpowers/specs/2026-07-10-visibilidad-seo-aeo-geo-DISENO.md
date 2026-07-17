@@ -45,8 +45,17 @@
   voz de marca, JSON-LD ItemList, enlazadas en header/footer. (cola-media/larga; hoy solo `?col=`.)
 - **A3** — Journal/blog: hornear `/journal/<slug>.html` (Article schema) reemplazando `entrada.html?e=`
   (noindex) + 4-6 guías fundacionales (elegir esmeralda, anillo compromiso Cartagena, Muzo vs Chivor).
-- **A4** — Schema/AEO: `geo` (coords del pin — pendiente lat/lng), FAQPage (home+ficha), `og:type=product`
-  en piezas, `hasMap` ok. sameAs YA está.
+- **A4 ✅ HECHO** — Schema/AEO: `geo` del pin real (deploy `d1015f2`) + `og:type=product` en la ficha
+  horneada (`cc63199`, guard en REQUIRED_ANCHORS + selftest; 32/32 verificadas). `hasMap`/`sameAs` YA estaban.
+  ⚠️ **FAQPage SACADO de A4 — el motivo original ya no existe** (verificado 2026-07-17 en fuente primaria,
+  `developers.google.com/search/docs/appearance/structured-data/faqpage`): *"This feature will no longer
+  appear in Google Search starting May 7, 2026"* — las FAQ rich results murieron del todo (incluso para
+  los gov/health que tenían la excepción de 2023); docs retiradas el 15-jun-2026 y GSC quitó el informe.
+  FAQPage sigue siendo schema VÁLIDO y Google lo parsea para entender la página, pero **cero efecto
+  visible en Search**. → Poner el *schema* solo = teatro SEO. Lo que sí vale es la **FAQ VISIBLE**
+  (AEO/GEO: los LLM citan lo que pueden extraer + ataca el cuello real "rastreada sin indexar" = juicio
+  de valor). Eso NO es tarea de schema sino de **CONTENIDO**, y choca con **TODO-47** (verdad de marca /
+  riesgo SIC: garantía, certificados, devoluciones NO confirmados con Kary) → reclasificada, ver `10`.
 - **A5** — Merchant/Shopping: generador de feed de productos LISTO (sin activar hasta precios).
 - **Extra**: sembrar H1/hero real en el HTML servido del home (hoy el copy visible es client-side);
   `public/sitemap.xml` seed obsoleto (3 URLs) → guard; lastmod dinámico.

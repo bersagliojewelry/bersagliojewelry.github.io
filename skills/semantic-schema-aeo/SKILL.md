@@ -25,12 +25,19 @@ description: El cerebro semántico de la visibilidad — qué structured data (J
 | Ficha de ítem | `Product` (o `Car`/`Residence` por vertical) + `Offer` | name, image, description, offers{price\|priceCurrency\|availability} | brand, sku, `aggregateRating`*, `review`*, additionalProperty |
 | Home/entidad | `Organization` + `LocalBusiness`→subtipo | name, url, logo | `sameAs`, address, geo, telephone, openingHours, `aggregateRating`* |
 | Listado/categoría | `BreadcrumbList` + `ItemList` | itemListElement | — |
-| FAQ / respuesta | `FAQPage` (Q&A visibles en la página) | mainEntity[{Question,acceptedAnswer}] | — |
+| FAQ / respuesta | `FAQPage`† (Q&A visibles en la página) | mainEntity[{Question,acceptedAnswer}] | — |
 | Journal/blog | `Article` + `Person` (autor) | headline, datePublished, author | `dateModified` (frescura), image |
 | Imagen | `ImageObject` | contentUrl | caption, `exifData` (geo, opcional) |
 
 `*` **AggregateRating/Review SOLO si hay reseñas REALES.** Inventarlas = structured-data spam → **acción manual /
 baneo algorítmico**. Cero-demo absoluto. Si no hay reseñas → omitir el campo (no poner 5.0 ficticio).
+
+`†` **`FAQPage` NO da rich result — verificado 2026-07-17 en la doc oficial** (`developers.google.com/search/
+docs/appearance/structured-data/faqpage`): *"no longer appear in Google Search starting May 7, 2026"*
+(deprecación TOTAL: cayó también la excepción gov/health de 2023; docs retiradas 15-jun-2026). Sigue siendo
+schema válido y Google lo parsea para entender la página, pero **cero efecto visible**. 🚫 Nunca venderlo como
+"gana el acordeón del SERP". El valor está en la **FAQ VISIBLE** (AEO: el LLM cita lo extraíble) → es tarea de
+**CONTENIDO, no de schema**. Marcar Q&A que NO son visibles = marcado inválido.
 
 ## 2. Plantilla JSON-LD parametrizable (el corazón de `buildSchema(vertical, item)`)
 ```js

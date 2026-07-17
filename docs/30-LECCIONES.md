@@ -71,7 +71,7 @@ window.scrollTo(0, scrollY);
 
 ### L-66: Redirect de login = DETERMINISTA (`sessionReady()` resuelve TRAS escribir `bj_auth`), NUNCA timeout. Rol insuficiente → SU landing, no al login. Pestaña nueva = 1 rebote esperado (sessionStorage por-pestaña; NO localStorage). → §159
 
-### L-65: `firebase functions:secrets:set` (gen2) NO re-empaqueta `functions/.env` → tras cambiar env vars no-secretos (`WOMPI_PUBLIC_KEY`/`WOMPI_API_BASE`) correr `firebase deploy --only functions` COMPLETO (síntoma: Widget en "modo pruebas" con `pub_prod` ya en `.env`). → 31
+### L-65: `secrets:set` (gen2) NO re-empaqueta `functions/.env` → tras cambiar env vars no-secretos, `deploy --only functions` COMPLETO → 31
 
 ### L-64: Proveedor que contrata el transporte = obligación de RESULTADO → trasladar al consumidor el riesgo de TRÁNSITO es cláusula abusiva (Ley 1480 Art.43, se asume no escrita); solo el riesgo ADUANERO es del comprador. Texto legal: verificar AMENDMENTS vigentes (Ley 2439/2024: reembolso retracto 30→15 días cal), no solo la ley base. → §157.11-13
 
@@ -246,3 +246,4 @@ Una fila **"TOTAL"** del Excel entró como un cliente más → cartera al doble 
 ### M-06: El kernel acopla `### L-NN` a `30` → shard = stub-en-30 + detalle-en-hija (§96) [HONOR] → 34
 ### M-08: Un TABLERO (`05`) no FIJA a mano un hecho verificable-por-comando (hash/PR PROD) — stale ×3, git = SSoT (§114) [HONOR] → 34
 ### M-07: Los node:tests NO corren en CI (solo `test:rules`) → test-rot silencioso tras refactor de render (§104) [HONOR] → 34
+### M-09: Muestrear ≠ contar — extrapolé de la 1ª pág de una lista paginada (GBP: "mayoría de 85 sin responder"; real 74/85 sí) [HONOR] → 34

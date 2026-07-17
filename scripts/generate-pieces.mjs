@@ -993,6 +993,156 @@ function computeFacets(pieces, collections, slugMap) {
     return facets;
 }
 
+// ===================== Journal: artículos indexables (A3 · TODO-35) =====================
+// Cada entrada se hornea en /journal/<slug>.html reusando el shell dist/entrada.html: robots
+// index + canonical autorreferencial + title/meta keyword-first + og:type=article + JSON-LD
+// (Article + BreadcrumbList) + <noscript> con el CUERPO REAL (el activo SEO, no solo el resumen)
+// + `window.PRERENDERED_ENTRY_SLUG` para que entrada.js hidrate SIN `?e=` (espejo exacto de
+// PRERENDERED_PIECE_SLUG en las fichas de pieza).
+//
+// PROBLEMA que resuelve: las entradas vivían SOLO en `entrada.html?e=<slug>` con robots noindex →
+// el hub /journal.html era indexable pero cada artículo era un callejón sin salida para Google
+// (contenido real escrito que no traía una sola visita). El shell entrada.html SIGUE noindex:
+// la horneada es la canónica.
+//
+// cero-ficción: solo entradas PUBLICADAS y COMPLETAS (title+imagen+resumen) — mismo criterio que
+// isJournalComplete (js/core/home-sections.js) y que la puerta de journalValid (firestore.rules).
+const JOURNAL_ANCHORS = [
+    '<meta charset="UTF-8">',
+    '<meta name="robots" content="noindex, nofollow">',
+    '<title>Journal · Bersaglio Jewelry</title>',
+    '<meta name="description" content="Una entrada del journal Bersaglio Jewelry — historias del atelier en Cartagena.">',
+    '<link rel="canonical" href="https://bersagliojewelry.co/entrada.html">',
+    '<meta property="og:type" content="website">',
+    '<meta property="og:url" content="https://bersagliojewelry.co/entrada.html">',
+    '<meta property="og:title" content="Journal · Bersaglio Jewelry">',
+    '<meta property="og:description" content="Atelier en Cartagena de Indias. Esmeraldas Muzo, diamantes GIA, oro 18K.">',
+    '<meta property="og:image" content="https://bersagliojewelry.co/img/og-image.jpg">',
+    '<meta name="twitter:card" content="summary_large_image">',
+    '</head>',
+    '<main id="main-content" data-screen-label="entrada">',
+];
+
+const journalSlugOf = (e) => String((e && (e.slug || e.id)) || '').trim();
+const journalUrlOf  = (e) => `${SITE_URL}/journal/${journalSlugOf(e)}.html`;
+
+// Entrada HORNEABLE = publicada + completa (title+imagen+resumen) + slug apto para archivo/URL
+// (SAFE_SLUG_RE: sin barras ni puntos → sin path-traversal).
+function isJournalBakeable(e) {
+    return !!e && e.published === true
+        && SAFE_SLUG_RE.test(journalSlugOf(e))
+        && !!String(e.title   || '').trim()
+        && !!String(e.image   || '').trim()
+        && !!String(e.excerpt || '').trim();
+}
+
+// title/meta keyword-first para Google; el copy VISIBLE del artículo queda INTACTO.
+function journalMeta(e) {
+    const h1 = String(e.title || '').trim();
+    return {
+        h1,
+        title: `${h1} · Journal · ${BRAND} Cartagena`,
+        metaDesc: String(e.excerpt || '').trim().slice(0, 300),
+        seccion: String(e.section || '').trim(),
+    };
+}
+
+function buildArticleSchemas(e, canonical, meta) {
+    const published = isoDate(e.date);
+    const modified  = isoDate(e.updatedAt) || published;
+    const article = {
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: meta.h1.slice(0, 110),          // Google recorta headlines largos
+        description: meta.metaDesc,
+        url: canonical,
+        mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
+        inLanguage: 'es-CO',
+        image: [String(e.image || DEFAULT_OG)],
+        author: { '@type': 'Person', name: String(e.author || BRAND).trim() },
+        publisher: { '@id': BUSINESS_ID },
+        isPartOf: { '@id': WEBSITE_ID },
+        ...(published ? { datePublished: published } : {}),
+        ...(modified  ? { dateModified:  modified }  : {}),
+        ...(meta.seccion ? { articleSection: meta.seccion } : {}),
+    };
+    const breadcrumb = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Inicio',  item: `${SITE_URL}/` },
+            { '@type': 'ListItem', position: 2, name: 'Journal', item: `${SITE_URL}/journal.html` },
+            { '@type': 'ListItem', position: 3, name: meta.h1,   item: canonical },
+        ],
+    };
+    return [article, breadcrumb];
+}
+
+// PURA (cubierta por SSG_SELFTEST): shell + entrada → HTML horneado indexable. Idempotente.
+function bakeJournalPage(shell, e) {
+    for (const a of JOURNAL_ANCHORS) {
+        if (!shell.includes(a)) {
+            throw new Error(`[generate] ANCLAJE FALTANTE en dist/entrada.html (journal): ${a}\n  → El rediseño de la entrada rompió un punto de inyección.`);
+        }
+    }
+    const slug = journalSlugOf(e);
+    const meta = journalMeta(e);
+    const canonical = journalUrlOf(e);
+    const image = String(e.image || DEFAULT_OG);
+
+    let html = shell;
+    // <base href="/"> — la horneada vive en /journal/ → rutas relativas resuelven a la raíz.
+    if (!html.includes('<base href="/">')) {
+        html = html.replace('<meta charset="UTF-8">', '<meta charset="UTF-8">\n    <base href="/">');
+    }
+    html = html.replace('<meta name="robots" content="noindex, nofollow">', '<meta name="robots" content="index, follow">');
+    html = html.replace('<title>Journal · Bersaglio Jewelry</title>', `<title>${escapeHtml(meta.title)}</title>`);
+    html = html.replace('<meta name="description" content="Una entrada del journal Bersaglio Jewelry — historias del atelier en Cartagena.">',
+        `<meta name="description" content="${escapeAttr(meta.metaDesc)}">`);
+    html = html.replace('<link rel="canonical" href="https://bersagliojewelry.co/entrada.html">',
+        `<link rel="canonical" href="${escapeAttr(canonical)}">`);
+    // og:type website → article (Google/redes lo tratan como pieza editorial).
+    html = html.replace('<meta property="og:type" content="website">', '<meta property="og:type" content="article">');
+    html = html.replace('<meta property="og:url" content="https://bersagliojewelry.co/entrada.html">',
+        `<meta property="og:url" content="${escapeAttr(canonical)}">`);
+    html = html.replace('<meta property="og:title" content="Journal · Bersaglio Jewelry">',
+        `<meta property="og:title" content="${escapeAttr(meta.h1)}">`);
+    html = html.replace('<meta property="og:description" content="Atelier en Cartagena de Indias. Esmeraldas Muzo, diamantes GIA, oro 18K.">',
+        `<meta property="og:description" content="${escapeAttr(meta.metaDesc)}">`);
+    html = html.replace('<meta property="og:image" content="https://bersagliojewelry.co/img/og-image.jpg">',
+        `<meta property="og:image" content="${escapeAttr(image)}">`);
+    html = html.replace('<meta name="twitter:card" content="summary_large_image">',
+        '<meta name="twitter:card" content="summary_large_image">\n' +
+        `    <meta name="twitter:title" content="${escapeAttr(meta.h1)}">\n` +
+        `    <meta name="twitter:description" content="${escapeAttr(meta.metaDesc)}">\n` +
+        `    <meta name="twitter:image" content="${escapeAttr(image)}">`);
+
+    const [art, bc] = buildArticleSchemas(e, canonical, meta);
+    html = html.replace('</head>',
+        `    <script type="application/ld+json">${safeJsonLd(art)}</script>\n` +
+        `    <script type="application/ld+json">${safeJsonLd(bc)}</script>\n` +
+        `    <script>window.PRERENDERED_ENTRY_SLUG = ${safeJsonLd(slug)};</script>\n</head>`);
+
+    // <noscript> SEO: el CUERPO REAL del artículo (los bots sin JS leen el texto completo).
+    const paras = String(e.body || '').split(/\n\s*\n/).map(s => s.trim()).filter(Boolean)
+        .map(p => `            <p>${escapeHtml(p)}</p>`).join('\n');
+    const firma = [meta.seccion, String(e.author || '').trim()].filter(Boolean).join(' · ');
+    const noscript = `
+    <noscript>
+        <div style="max-width:820px;margin:96px auto;padding:24px;font-family:Manrope,system-ui,sans-serif;line-height:1.7">
+            <nav style="font-size:14px;opacity:.7;margin-bottom:16px"><a href="${SITE_URL}/">Inicio</a> › <a href="${SITE_URL}/journal.html">Journal</a> › ${escapeHtml(meta.h1)}</nav>
+            <h1>${escapeHtml(meta.h1)}</h1>
+            ${firma ? `<p style="opacity:.7">${escapeHtml(firma)}</p>` : ''}
+            <img src="${escapeAttr(image)}" alt="${escapeAttr(meta.h1 + ' — ' + BRAND)}" style="max-width:100%;height:auto;border-radius:14px">
+${paras}
+            <p><a href="${SITE_URL}/contacto.html">Hablar con un asesor</a> · <a href="${SITE_URL}/journal.html">Ver el Journal</a></p>
+        </div>
+    </noscript>`;
+    html = html.replace('<main id="main-content" data-screen-label="entrada">',
+        `<main id="main-content" data-screen-label="entrada">${noscript}`);
+    return html;
+}
+
 // ===================== Generación de página =====================
 
 // Guard anti-regresión: el generador hace .replace() por string literal y FALLA EN
@@ -1234,7 +1384,7 @@ function sitemapUrl(loc, lastmod, freq, prio) {
     return `    <url>\n        <loc>${escapeXml(loc)}</loc>\n        <lastmod>${lastmod}</lastmod>\n        <changefreq>${freq}</changefreq>\n        <priority>${prio}</priority>\n    </url>`;
 }
 
-function generateSitemap(pieces, slugMap, today, facetUrls = []) {
+function generateSitemap(pieces, slugMap, today, facetUrls = [], journalEntries = []) {
     const urls = [];
     for (const sp of STATIC_PAGES) {
         urls.push(sitemapUrl(`${SITE_URL}${sp.loc}`, sp.lastmod, sp.freq, sp.prio));
@@ -1242,6 +1392,12 @@ function generateSitemap(pieces, slugMap, today, facetUrls = []) {
     // Facetas /coleccion/<slug> + /gema/<slug> (A2b): cambian con el catálogo → lastmod = hoy.
     for (const u of facetUrls) {
         urls.push(sitemapUrl(u, today, 'weekly', '0.7'));
+    }
+    // Artículos /journal/<slug>.html (A3): contenido editorial estable → `monthly`, y lastmod REAL
+    // (updatedAt/date de la entrada, no "hoy": Google ignora el lastmod si todo dice hoy).
+    for (const e of journalEntries) {
+        const lastmod = isoDate(e.updatedAt) || isoDate(e.date) || today;
+        urls.push(sitemapUrl(journalUrlOf(e), lastmod, 'monthly', '0.7'));
     }
     for (const p of pieces) {
         const slug = slugMap.get(String(p.id));
@@ -1491,6 +1647,15 @@ async function main() {
     const facets = computeFacets(pieces, collections, slugMap);
     const facetUrls = facets.map(f => `${SITE_URL}/${f.kind === 'gema' ? 'gema' : 'coleccion'}/${f.slug}.html`);
 
+    // Artículos del Journal indexables (A3 · TODO-35): QUÉ /journal/<slug>.html se hornearán
+    // (publicados + completos). Igual que las facetas: se calcula aquí para alimentar el sitemap
+    // y las URLs del listado; se hornean más abajo reusando el shell dist/entrada.html.
+    const journalBakeables = journalEntries.filter(isJournalBakeable);
+    const journalSkipped = journalEntries.length - journalBakeables.length;
+    if (journalSkipped > 0) {
+        console.warn(`[generate] ⚠️ ${journalSkipped} entrada(s) del Journal publicadas pero NO horneables (falta título/imagen/resumen o el slug no es apto) → no se indexan.`);
+    }
+
     // Salida limpia: dist/pieza/ (dist es fresco cada build; cleanup por si se corre suelto).
     const outDir = join(DIST, 'pieza');
     mkdirSync(outDir, { recursive: true });
@@ -1571,9 +1736,9 @@ async function main() {
 
     // Sitemap (sobrescribe el estático copiado por Vite desde public/).
     const today = isoDate(Date.now()) || '2026-06-25';
-    const sitemap = generateSitemap(pieces, slugMap, today, facetUrls);
+    const sitemap = generateSitemap(pieces, slugMap, today, facetUrls, journalBakeables);
     writeFileSync(join(DIST, 'sitemap.xml'), sitemap);
-    console.log(`[generate] sitemap.xml regenerado (${STATIC_PAGES.length} estáticas + ${facetUrls.length} facetas + ${pieces.length} piezas).`);
+    console.log(`[generate] sitemap.xml regenerado (${STATIC_PAGES.length} estáticas + ${facetUrls.length} facetas + ${journalBakeables.length} artículos + ${pieces.length} piezas).`);
 
     // Schema de marca (JewelryStore + WebSite) horneado en dist/index.html desde tenant_config.json.
     injectBusinessIntoIndex(readTenantConfig());
@@ -1617,7 +1782,9 @@ async function main() {
         schemaType: 'Blog',
         name: 'Journal · Bersaglio Jewelry',
         description: 'Historias de alta joyería, esmeraldas colombianas y el oficio detrás de cada pieza.',
-        items: journalEntries.map(e => ({ name: e.title || e.name || e.slug || 'Entrada', url: `${SITE_URL}/entrada.html?e=${encodeURIComponent(e.slug || e.id)}` })),
+        // A3: el hub enlaza a las HORNEADAS /journal/<slug>.html (indexables), no al
+        // `entrada.html?e=` noindex — antes cada artículo era un callejón sin salida para Google.
+        items: journalBakeables.map(e => ({ name: String(e.title || 'Entrada'), url: journalUrlOf(e) })),
     });
 
     // Facetas /coleccion/<slug> + /gema/<slug> (A2b): landing pages indexables reusando el shell del
@@ -1649,6 +1816,38 @@ async function main() {
                 throw new Error(`[generate] ${facetFailures.length} faceta(s) con horneado inválido — abortado.`);
             }
             console.log(`[generate] ${colCount + gemCount} páginas de faceta horneadas (${colCount} /coleccion + ${gemCount} /gema, index,follow).`);
+        }
+    }
+
+    // Artículos /journal/<slug>.html (A3 · TODO-35): cada entrada del Journal como página
+    // indexable con schema Article, reusando el shell dist/entrada.html (que SIGUE noindex —
+    // la horneada es la canónica). Bake-integrity por página: un artículo roto ABORTA el run
+    // → prod queda en el último build bueno (mismo contrato que las facetas).
+    if (journalBakeables.length) {
+        const entradaShellPath = join(DIST, 'entrada.html');
+        if (!existsSync(entradaShellPath)) {
+            console.warn('[generate] dist/entrada.html no existe — salto artículos del Journal (A3).');
+        } else {
+            const shell = readFileSync(entradaShellPath, 'utf-8');
+            const jDir = join(DIST, 'journal');
+            mkdirSync(jDir, { recursive: true });
+            try { for (const fl of readdirSync(jDir).filter(x => x.endsWith('.html'))) unlinkSync(join(jDir, fl)); } catch { /* primer run */ }
+            const jFailures = [];
+            let jCount = 0;
+            for (const e of journalBakeables) {
+                const slug = journalSlugOf(e);
+                const html = bakeJournalPage(shell, e);
+                const err = bakeIntegrityError(`journal/${slug}`, html);
+                if (err) { jFailures.push(err); continue; }
+                writeFileSync(join(jDir, `${slug}.html`), html);
+                jCount++;
+            }
+            if (jFailures.length) {
+                console.error('[generate] JOURNAL-INTEGRITY FALLÓ — NO se publica:');
+                jFailures.forEach(x => console.error('  x ' + x));
+                throw new Error(`[generate] ${jFailures.length} artículo(s) del Journal con horneado inválido — abortado.`);
+            }
+            console.log(`[generate] ${jCount} artículo(s) del Journal horneados en /journal/<slug>.html (index,follow, schema Article).`);
         }
     }
 
@@ -1854,6 +2053,57 @@ function runSelfTest() {
     if (!cf.some(f => f.kind === 'gema' && f.slug === 'esmeralda')) fails.push('computeFacets: gema esmeralda (2) debía hornearse.');
     if (cf.some(f => f.kind === 'gema' && f.slug === 'xyzinventada')) fails.push('computeFacets: gema desconocida NO debía hornearse.');
     if (cf.some(f => f.kind === 'gema' && f.slug === 'zafiro')) fails.push('computeFacets: gema zafiro (1<MIN) NO debía hornearse (thin).');
+
+    // A3 JOURNAL (/journal/<slug>.html): shell de entrada → artículo indexable. Anti-breakout XSS +
+    // robots index + canonical + <base> + og:type=article + PRERENDERED_ENTRY_SLUG + ld+json parsea
+    // + determinismo + puerta cero-ficción (isJournalBakeable) + anti path-traversal del slug.
+    const FAKE_ENTRY_SHELL = '<html><head><meta charset="UTF-8"><title>Journal · Bersaglio Jewelry</title><meta name="description" content="Una entrada del journal Bersaglio Jewelry — historias del atelier en Cartagena."><meta name="robots" content="noindex, nofollow"><link rel="canonical" href="https://bersagliojewelry.co/entrada.html"><meta property="og:type" content="website"><meta property="og:url" content="https://bersagliojewelry.co/entrada.html"><meta property="og:title" content="Journal · Bersaglio Jewelry"><meta property="og:description" content="Atelier en Cartagena de Indias. Esmeraldas Muzo, diamantes GIA, oro 18K."><meta property="og:image" content="https://bersagliojewelry.co/img/og-image.jpg"><meta name="twitter:card" content="summary_large_image"></head><body><main id="main-content" data-screen-label="entrada">x</main></body></html>' + ' '.repeat(MIN_BAKE_BYTES);
+    const entryMock = {
+        id: 'selftest', slug: 'selftest', title: PAYLOAD, section: PAYLOAD, author: PAYLOAD,
+        excerpt: PAYLOAD, body: PAYLOAD + '\n\n' + PAYLOAD, image: 'https://x/y.webp',
+        date: '2026-07-11', published: true,
+    };
+    const jh = bakeJournalPage(FAKE_ENTRY_SHELL, entryMock);
+    if (jh.indexOf('</script><script>alert(1)</script>') >= 0) fails.push('journal: BREAKOUT crudo </script><script> presente.');
+    if (jh.indexOf('<meta name="robots" content="index, follow">') < 0) fails.push('journal: robots index,follow no inyectado.');
+    if (jh.indexOf('<link rel="canonical" href="https://bersagliojewelry.co/journal/selftest.html">') < 0) fails.push('journal: canonical del artículo ausente.');
+    if (jh.indexOf('<base href="/">') < 0) fails.push('journal: <base href="/"> ausente (subdir /journal/).');
+    if (jh.indexOf('<meta property="og:type" content="article">') < 0) fails.push('journal: og:type=article no inyectado.');
+    {
+        const m = 'window.PRERENDERED_ENTRY_SLUG = ';
+        const i = jh.indexOf(m);
+        if (i < 0) fails.push('journal: PRERENDERED_ENTRY_SLUG no inyectado.');
+        else {
+            const val = jh.slice(i + m.length).split(';</script>')[0];
+            try { JSON.parse(val); } catch (e) { fails.push('journal: PRERENDERED_ENTRY_SLUG no parsea: ' + e.message); }
+        }
+    }
+    {
+        const jparts = jh.split('<script type="application/ld+json">');
+        let jn = 0;
+        for (let i = 1; i < jparts.length; i++) {
+            const content = jparts[i].split('</script>')[0];
+            jn++;
+            try { JSON.parse(content); } catch (e) { fails.push(`journal: ld+json #${jn} NO parsea: ${e.message}`); }
+            if (content.indexOf(U2028) >= 0 || content.indexOf(U2029) >= 0) fails.push(`journal: ld+json #${jn} con U+2028/2029 crudo.`);
+        }
+        if (jn < 2) fails.push(`journal: esperaba >=2 ld+json (Article+Breadcrumb), encontró ${jn}.`);
+    }
+    if (bakeJournalPage(FAKE_ENTRY_SHELL, entryMock) !== jh) fails.push('journal: no determinista (misma entrada → misma salida).');
+    if (bakeIntegrityError('journal/selftest', jh)) fails.push('journal: bake-integrity de un artículo válido NO debería fallar.');
+    // Puerta cero-ficción + anti path-traversal (espejo de isJournalComplete y journalValid).
+    if (!isJournalBakeable(entryMock)) fails.push('isJournalBakeable: entrada completa+publicada debía ser horneable.');
+    if (isJournalBakeable({ ...entryMock, published: false })) fails.push('isJournalBakeable: borrador NO debe hornearse.');
+    if (isJournalBakeable({ ...entryMock, image: '' })) fails.push('isJournalBakeable: sin imagen NO debe hornearse (cero-ficción).');
+    if (isJournalBakeable({ ...entryMock, excerpt: '' })) fails.push('isJournalBakeable: sin resumen NO debe hornearse (cero-ficción).');
+    if (isJournalBakeable({ ...entryMock, title: '' })) fails.push('isJournalBakeable: sin título NO debe hornearse (cero-ficción).');
+    if (isJournalBakeable({ ...entryMock, slug: '../evil' })) fails.push('isJournalBakeable: slug con path-traversal NO debe hornearse.');
+    if (isJournalBakeable({ ...entryMock, slug: 'a/b' })) fails.push('isJournalBakeable: slug con barra NO debe hornearse.');
+    // Sitemap con artículos: lastmod REAL de la entrada (no "hoy") + URL del artículo.
+    {
+        const smJ = generateSitemap([], new Map(), '2026-07-11', [], [entryMock]);
+        if (smJ.indexOf('https://bersagliojewelry.co/journal/selftest.html') < 0) fails.push('sitemap: URL del artículo ausente.');
+    }
 
     if (fails.length) {
         console.error('[SSG_SELFTEST] FALLO:');

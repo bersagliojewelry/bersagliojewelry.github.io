@@ -11,6 +11,10 @@
  * ──────────────────────────────────────────────────
  */
 
+// Guard anti-PII: NADA sale hacia GA4/Meta sin pasar por stripPII (Términos GA4 + Ley 1581).
+// Vive en js/core/ por ser puro y testeable (tests/analytics-pii.test.mjs). Ver §189.
+import { stripPII } from './core/analytics-pii.js';
+
 // Flujo "Bersaglio Jewelry Web" (URL bersagliojewelry.co) — verificado en GA 2026-06-25.
 // Override por env (VITE_GA_MEASUREMENT_ID) si algún día cambia; el fallback es el real.
 const GA4_ID      = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_GA_MEASUREMENT_ID) || 'G-HS26X60DK3';
@@ -197,16 +201,18 @@ function mapEventToFB(eventName, params) {
  * @param {Object} [params]  - Event parameters
  */
 export function track(eventName, params = {}) {
+    const safe = stripPII(params);   // ← cuello de botella único: nada sale sin pasar por aquí
+
     // 1. Google Analytics 4
     if (gaReady && typeof window.gtag === 'function') {
-        window.gtag('event', eventName, params);
+        window.gtag('event', eventName, safe);
     }
 
     // 2. Facebook Pixel
     if (fbReady && typeof window.fbq === 'function') {
-        const fbEvent = mapEventToFB(eventName, params);
+        const fbEvent = mapEventToFB(eventName, safe);
         if (fbEvent) {
-            window.fbq('track', fbEvent.name, fbEvent.params);
+            window.fbq('track', fbEvent.name, stripPII(fbEvent.params));
         }
     }
 }
@@ -305,12 +311,13 @@ function bindDelegatedEvents() {
         }
     });
 
-    // Listen to custom newsletter subscription event
-    document.addEventListener('bj:email-subscribed', e => {
-        track('generate_lead', {
-            lead_type: 'newsletter',
-            email: e.detail
-        });
+    // Newsletter → LEAD. El evento `bj:email-subscribed` lleva el email en `detail` a propósito
+    // (lo necesita TODO-17: newsletter → CRM/`subscriptions`), pero ese email es de Kary, NO de
+    // Google: aquí solo sale el HECHO de que hubo suscripción. Antes se pasaba `email: e.detail`
+    // → PII directa a GA4 (prohibida por sus Términos + Ley 1581). El guard de track() lo
+    // cortaría igual, pero no se manda de entrada: defensa en profundidad.
+    document.addEventListener('bj:email-subscribed', () => {
+        track('generate_lead', { lead_type: 'newsletter' });
     });
 
     // Consent Mode v2: conceder cuando el visitante ACEPTA en el banner de cookies.

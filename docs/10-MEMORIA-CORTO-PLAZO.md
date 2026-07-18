@@ -20,7 +20,7 @@
 | ID | Item | Estado | Bloqueo |
 |---|---|---|---|
 | TODO-03/04 | (baja) headers `99`→`## NN.` · anomalías 🔧 en `skills/` | 🔲 | baja |
-| TODO-78 | **F-TESORERÍA — SPEC CERRADA, lista para Opus**: `docs/superpowers/specs/2026-07-18-f-tesoreria-DISENO.md` (D1-D9 + **§0.6 V1-V16 comité vinculantes** + B0-B6 + tests) + PROMPT-CONSEJO (mismo dir) + mockup (artifact 🏦). **Gates**: B0 = lista real de cuentas de Kary · **B1 NO arranca sin consejo externo incorporado** · V1 = zona caliente R3. | 🟢 | Daniel: cuentas + consejo |
+| TODO-78 | **F-TESORERÍA — SPEC CERRADA para Opus**: `docs/superpowers/specs/2026-07-18-f-tesoreria-DISENO.md` (D1-D9 · §0.6 comité · **§0.7 consejo ✅ incorporado** — prevalece §0.7>§0.6>cuerpo · B0-B6 · 20 tests) + mockup 🏦. **Gate restante: lista real de cuentas de Kary** (nombre·banco·tipo·titular·saldo+foto del corte). Zonas calientes R3: V1/V17. Acción legal Daniel → `42-LEGAL §7`. | 🟢 | Daniel: cuentas |
 | TODO-77 | **SHARD de `30`** (§G.5) — **SUBE (§192)**: el tope duro (44000) ya BLOQUEÓ la captura normal de M-23 (hubo que micro-podar). Extraer categoría a hija (ojo: L-81/1022c tiene su detalle SOLO en `30` → mover, no recortar). Sesión fresca. | 🔲 | poda 30 |
 | TODO-07 | **Contenido real web**: reseñas Maps (Nosotros), Films, feed Redes (`home-media.js`). | 🔲 | cliente entrega datos |
 | TODO-08 | **Hardening Fase 2**: Tier A ✅; pend. CSP/reglas/claims (Tier B/C) → `41-SEGURIDAD §1.5` | 🟡 | Tier B = emulador+deploy gated |
@@ -49,7 +49,7 @@
 
 > 2026-07-18 · **[FABLE-5]** Sinapsis inmob §33-§37: liderazgo ✅ · 15 skills sync (paid-ads/ad-creative v2.2/2.8) · import cars ⛔ tope 30 (TODO-77).
 > 2026-07-17 · **[OPUS-4.8] Jornada SEO + verdad-de-marca → ADRs §188-§191** (PROD, SW v97): og:type + FAQPage retirado §188 · 🔴 PII a GA4 cortada §189 (**TODO-17 SUBE**) · GBP 85/85 §190 · garantía de por vida §191. Palancas SEO: TODO-48 · FAQ visible · GBP fresco · enlaces.
-> 2026-07-18 · **[FABLE-5] F-TESORERÍA DISEÑADA → TODO-78** (spec + comité ×3 con 2 P0 cazados en el borrador: pata bancaria de consignación V1 · GMF irrepresentable V7 · crudos en bóveda · mockup artifact · prompt-consejo listo para Daniel). Patrón F-IA-2: Opus ejecuta B0-B6 sin re-decidir.
+> 2026-07-18 · **[FABLE-5] F-TESORERÍA DISEÑADA → TODO-78** (comité ×3 + consejo externo incorporados: 3 P0 cazados en papel; 1 hallazgo REFUTADO con argumento; crudos en bóveda). Falta solo la lista de cuentas.
 > 2026-07-18 · **[FABLE-5] AUDITORÍA TITULAR + Nivel-2 → §192** (interinato: calidad de titular, B1-B5 validado vivo, 2 fix APP v54 · M-23 reincidente · propuestas kernel → TODO-71). deepAudit 18-jul.
 > 2026-07-17 · **[OPUS-4.8] Guard anti-demo → `js/pages/*-defaults`** (12/12). Destapó **cifras sin cuadrar** (TODO-47): home 5.000+ ≠ Nosotros-en-vivo 12.000/43 años; default viejo. NO toqué números (esperan canónicas + verificar certs JA/RJC/Muzo).
 > 2026-07-17 · **[OPUS-4.8]** Journal §186/§187 · entregable ALTORRA (`docs/superpowers/specs/2026-07-17-aprendizajes-SEO-AEO-GEO-para-skills.md`). **[FABLE-5] §181-183 prod · 1ª APPROVED ✅**. `[[feedback_opus_interino]]`

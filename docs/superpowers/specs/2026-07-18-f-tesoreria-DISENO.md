@@ -135,6 +135,33 @@ por-libro (replay no duplica movCaja) · (18) "Retiro de banco" crea ambas patas
 (19) reabrir cuadre: owner sí / admin no / mes siguiente sellado → rechazo · (20) gasto sin
 categoria → rechazo; margen: Σ pago_proveedor separable de Σ gasto en el export.
 
+## §0.8 — DIRECTIVA DEL DUEÑO (2026-07-18) — **prevalece sobre TODO (§0.8 > §0.7 > §0.6 > cuerpo)**
+
+> Daniel: *"eso lo carga Kary; la idea es dejarle la plataforma lista y confiable para que
+> ella cargue toda su información."* Misma filosofía del CRM (`[[project_crm_kary_sole_operator]]`:
+> Kary crea vendedoras/clientes y registra todo). Consecuencias VINCULANTES:
+
+- **V21 · CERO seed de datos por Claude**: se elimina el gate "Daniel/Kary entregan la lista
+  de cuentas" (D1/B0). El ÚNICO seed es ESTRUCTURAL: las 2 cuentas virtuales (caja/bóveda).
+  Las cuentas reales las crea KARY por la UI cuando la plataforma se le entregue.
+- **V22 · Alta de cuenta = flujo de primera clase con onboarding**: el estado-cero de
+  "Cuentas y bancos" GUÍA ("Aún no has agregado tus cuentas. Agrega la primera →"). El modal
+  de crear cuenta pide, en lenguaje de Kary: nombre para reconocerla · banco/Nequi · de quién
+  es (con el aviso de socia si aplica) · **"¿cuánta plata hay hoy según tu extracto?"**
+  (saldoInicial) + fecha + **foto del extracto** (V10: el soporte del corte se sube AQUÍ,
+  ya no es runbook). Microcopy: "desde hoy el sistema lleva la cuenta contigo".
+- **V23 · saldoInicial/fechaCorte INMUTABLES tras el primer movimiento** de la cuenta
+  (antes: editables — un error de digitación se corrige recreando la cuenta vacía). Con
+  movimientos, corregir el arranque = `ajuste_conciliacion` aprobado. Cierra el doble-conteo
+  que V10 vigilaba, ahora en modo autoservicio.
+- **V24 · El gate de entrega es CONFIABILIDAD, no datos**: B0 pierde su gate externo → Opus
+  puede arrancar YA (consejo §0.7 ya incorporado). La fase termina con B6 (rompimiento) +
+  auditoría del titular; SOLO entonces se le presenta a Kary — el gate vigente de Daniel
+  ("Kary NO usa hasta confiabilidad 100%") aplica tal cual. La captura de sus cuentas será
+  su primer acto de adopción, con la plataforma ya probada.
+- **B0 REDEFINIDO**: fundación técnica pura — reglas + índices + seed estructural de las 2
+  virtuales + `tesoreria-core.js` esqueleto. Sin dependencia de nadie.
+
 ## §0 — Qué es (y qué NO es)
 
 **Es**: el libro auxiliar de tesorería de Kary — las cuentas reales donde vive la plata
@@ -294,11 +321,10 @@ Reglas: `firestore-rules.test.mjs` gana casos: write directo a las 2 colecciones
 
 ## §6 — Bloques de ejecución (cada uno: build+tests verdes · SW/APP bump · checklist con evidencia · validación Chrome propia del camino completo, caza-bugs §2b)
 
-- **B0 · Fundación + DATO REAL** — gate: **Daniel/Kary entregan la lista de cuentas** (runbook
-  de captura en este doc: nombre·banco·tipo·titular·¿de socia?·saldo al corte·fecha corte).
-  Reglas + índices + seed de cuentas (script ADC dry-run, patrón backfill) + virtuales.
-  SIN UI aún. *Si Daniel no ha corrido el consejo externo, B0 puede avanzar (es captura);
-  B1 NO arranca sin el veredicto del consejo incorporado por el titular o Daniel.*
+- **B0 · Fundación técnica** (**redefinido por §0.8 V21/V24 — sin gate externo**): reglas +
+  índices + seed ESTRUCTURAL de las 2 cuentas virtuales + esqueleto `tesoreria-core.js`.
+  SIN UI aún. Las cuentas reales las creará Kary por la UI (V22) al recibir la plataforma.
+  *Gate del consejo externo: ✅ CUMPLIDO e incorporado (§0.7) — B1 desbloqueado.*
 - **B1 · Núcleo de dinero**: `tesoreria-core.js` puro + CFs 1-6 + trigger + tests §5 (1-8)
   + casos de reglas. CERO UI. Gate de salida: suites verdes en emulador.
 - **B2 · Página "Cuentas y bancos"**: lista+saldos+registrar+trasladar+rail. Gate: Chrome

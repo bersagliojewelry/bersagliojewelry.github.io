@@ -18,7 +18,7 @@ allowed-tools: Read Write Edit Glob Grep Bash
 >
 > **PORTABLE:** cero rutas de un repo concreto. Adapta al stack activo (lee su cerebro/CLAUDE.md si
 > existe). **VIVA:** cuando descubras una técnica o gotcha nuevo aplicándola a una página, **añádelo**
-> al §3 o a `references/` — el sistema mejora con cada página optimizada.
+> al §3 o crea `references/<tema>.md` (el directorio aún no existe — créalo con el primer caso) — el sistema mejora con cada página optimizada.
 >
 > ⚔️ **Postura:** perf sin medición es superstición, y "se ve rápido" no es evidencia. Cada cambio
 > trae **número antes/número después** y **verificación live** (hermana: `validacion-live-chrome`).
@@ -181,7 +181,7 @@ Esta skill es la **espina**; delega en las hermanas:
 
 Cada página a la que aplicas el bucle deja aprendizaje. Al cerrar una optimización:
 - Registra el **antes→después** y la técnica en el cerebro del proyecto (ADR/lección).
-- Si descubriste una técnica o gotcha **reutilizable**, **edítala aquí** (§3 o `references/`) — con
+- Si descubriste una técnica o gotcha **reutilizable**, **edítala aquí** (§3 o creando `references/<tema>.md`) — con
   disparador y el número que la respalda. Así la próxima página parte de más arriba.
 - Mantén un checklist por-página (fuentes ✅ · JS ✅ · CSS · imágenes · red/SW · terceros) para saber
   qué falta en cada superficie.

@@ -38,6 +38,6 @@ Un campo sin dato REAL se **omite**, no se rellena. Vacío > inventado.
 | Proyecto | vertical | 7 skills en `skills/` | tenant_config | implementado |
 |---|---|---|---|---|
 | altorracars (HUB) | AutoDealer | ✅ | pend | pend (fábrica SSG previa existe) |
-| bersaglio | JewelryStore | ✅ (2026-06-25) | pend | pend (sesión bersaglio) |
+| bersaglio | JewelryStore | ✅ (2026-06-25) | ✅ (2026-06-25; geo 2026-07-17) | ✅ parcial (`scripts/generate-pieces.mjs` STANDALONE — sin el core compartido) |
 | inmobiliaria | RealEstateAgent | ✅ (2026-06-25) | pend | pend |
 | insema | (definir) | ✅ (2026-06-25) | pend | pend |

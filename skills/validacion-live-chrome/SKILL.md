@@ -1,11 +1,11 @@
 ---
 name: validacion-live-chrome
-description: Usar DESPUÉS de un merge/deploy cuando los cambios YA están EN VIVO y hace falta EVIDENCIA REAL del comportamiento (no localhost, no opinión). Genero un PROMPT autocontenido + esquema de observabilidad para la extensión "Claude in Chrome" del dueño: él abre la web y mete sus credenciales (Claude NUNCA las maneja), la extensión recorre el camino vivo y emite OBSERVABILIDAD (consola, network, DOM, respuestas literales, transiciones de estado); el dueño la pega aquí y YO actúo (diagnostico, fix, re-validar). Cubre el hueco de verificacion live (L-08: no hay E2E en localhost; el dueño verifica al final). Casos: bot logueado vs NO logueado, finalizar/iniciar/recargar conversacion, formularios, flujos con sesion. CRITICO ADVERSARIAL: refuta, no confirma. Complementa caza-bugs. Triggers: "ya se mergeo, valida en vivo", "pruebalo en la web desplegada", "lanzale un prompt a la extension de Chrome", "valida adversarial", "evidencia real post-merge", "observabilidad del sitio live".
+description: Usar DESPUÉS de un merge/deploy cuando los cambios YA están EN VIVO y hace falta EVIDENCIA REAL del comportamiento (no localhost, no opinión). Modo DIRECTO = DEFAULT (desde 2026-06-24): YO conduzco la extensión "Claude in Chrome" (mcp__claude-in-chrome__) y entrego el REPORTE con OBSERVABILIDAD real (consola, network, DOM, respuestas literales, transiciones de estado); las credenciales las mete el dueño (Claude NUNCA las maneja). FALLBACK sin extensión conectada: genero un PROMPT autocontenido que el dueño ejecuta y pega aquí. Cubre el hueco de verificación live (doctrina: no hay E2E en localhost — la verificación final es contra producción). Casos: bot logueado vs NO logueado, finalizar/iniciar/recargar conversacion, formularios, flujos con sesion. CRITICO ADVERSARIAL: refuta, no confirma. Complementa caza-bugs. TAMBIÉN decide QUÉ superficie de navegador usar (§0.5): navegador INTEGRADO de Claude Code (`mcp__Claude_Browser__*` — sin las sesiones del dueño; DEFAULT para nuestro dev server, staging público, URLs públicas y descargas de assets públicos) vs EXTENSIÓN Chrome (`mcp__claude-in-chrome__*` — el Chrome REAL logueado del dueño; SOLO cuando el camino exige una credencial/sesión suya). Triggers: "ya se mergeo, valida en vivo", "pruebalo en la web desplegada", "lanzale un prompt a la extension de Chrome", "valida adversarial", "evidencia real post-merge", "observabilidad del sitio live", "¿navegador integrado o extensión?", "abre/descarga/previsualiza en el navegador".
 ---
 
 # 🔭 Validación Live vía extensión "Claude in Chrome" (post-merge)
 
-> El dueño hace la **verificación final en vivo** (memoria + L-08: E2E solo contra producción, nunca
+> El dueño hace la **verificación final en vivo** (doctrina: E2E solo contra producción, nunca
 > localhost). Esta skill convierte ese paso manual en un **protocolo con evidencia**: yo redacto el
 > prompt, la extensión Chrome lo ejecuta en la sesión REAL del dueño, y me devuelve **observabilidad**
 > que YO interpreto. Es un APOYO para CAZAR EVIDENCIAS, no para que Claude opere credenciales ni mueva dinero.
@@ -26,6 +26,22 @@ description: Usar DESPUÉS de un merge/deploy cuando los cambios YA están EN VI
 - **Relación con `caza-bugs`**: caza-bugs DECIDE *qué* recorrer (camino vivo desde estado-cero: vacío→1 y
   N→vacío + recarga); esta skill es *cómo* recorrerlo en PRODUCCIÓN cuando la sesión es del dueño.
 
+## 0.5 — QUÉ superficie de navegador usar (integrado vs extensión vs preview) — decidir SIEMPRE primero
+Hay **tres** superficies de navegador con límites distintos. Elegir mal = fricción o fallo. La pregunta
+madre: **¿el camino necesita una CREDENCIAL/SESIÓN del dueño?**
+
+| Superficie | Tools | Qué es / límite | USAR para |
+|---|---|---|---|
+| **Navegador INTEGRADO** (default) | `mcp__Claude_Browser__*` (`navigate`/`read_page`/`computer`/`get_page_text`/`read_network_requests`/`preview_*`) | Navegador DENTRO de Claude Code. **YO lo conduzco 100%**. Límite: **NO tiene las sesiones logueadas del dueño** — es un navegador limpio y aislado de su Chrome real. | Previsualizar/verificar **nuestro dev server** (`preview_start`), **staging** público (`*.workers.dev`), **URLs públicas** (docs, competencia, referentes), **descargar assets PÚBLICOS**, inspeccionar DOM/red/consola de cualquier sitio **sin login**. Es el DEFAULT. |
+| **Extensión "Claude in Chrome"** | `mcp__claude-in-chrome__*` (cargar con ToolSearch si están deferred) | El **Chrome REAL del dueño** con SUS sesiones. Límite: requiere que la extensión esté **conectada** (`list_connected_browsers`) y el dueño logueado; opero en su navegador real → más cautela, nada irreversible sin OK. | SOLO cuando el camino **exige una sesión suya**: el **panel admin del producto**, dashboards autenticados (**Firebase console, Search Console, GBP, Cloudflare, Meta**), o validar el **producto desplegado** tal como lo ve él/un usuario en su entorno real. Es el gate de `proceso-decision-fuerte` §7. |
+| **`preview_*`** (subconjunto del integrado) | `mcp__Claude_Browser__preview_*` | Arranca/gestiona **nuestro dev server local**. | Cambios **locales no-deployados** (antes del merge). |
+
+**Regla de una línea:** ¿necesita login/sesión del dueño? → **extensión Chrome**. ¿No? → **navegador integrado** (default). ¿Es nuestro código local sin deploy? → **`preview_*`** en el integrado.
+
+**Descargas (ej. imágenes/assets públicos):** un asset PÚBLICO se baja con el integrado o con `WebFetch`/curl (más directo); NUNCA hace falta la extensión para algo público. ⚠️ Barandas globales siguen rigiendo: descargar un archivo pide permiso explícito (nombre·fuente·tamaño), y **JAMÁS descargar/usar imágenes de terceros con derechos** (Google Images, stock sin licencia) para el producto — usar placeholders libres de regalías o stock licenciado (L-O10).
+
+**No confundir superficies:** el integrado NO ve lo que el dueño tiene logueado (si necesito su panel admin real, es la extensión); la extensión NO sirve para previsualizar nuestro código local sin deploy (eso es `preview_*`). Ante la duda: empiezo por el integrado (no toca su navegador) y solo escalo a la extensión si choco con un muro de login que solo su sesión abre.
+
 ## 1. División de trabajo (innegociable)
 1. **Dueño**: abre la web en vivo y **mete él mismo las credenciales/login**. Claude NO maneja credenciales.
 2. **Yo (Claude-dev)**: entrego el **PROMPT autocontenido** (§2) — qué recorrer, qué observar, qué reportar.
@@ -34,7 +50,7 @@ description: Usar DESPUÉS de un merge/deploy cuando los cambios YA están EN VI
 
 > Dos modos: **(b) DIRECTO = DEFAULT cuando el navegador del dueño está conectado** (verificado
 > 2026-06-24: `list_connected_browsers` → conectado): **Claude maneja la extensión** vía
-> `mcp__Claude_in_Chrome__*` (navega, lee DOM/consola/red, clicks) — tras merge+~5min de deploy el dueño
+> `mcp__claude-in-chrome__*` (navega, lee DOM/consola/red, clicks) — tras merge+~5min de deploy el dueño
 > avisa y Claude conduce la validación SOLO (es los OJOS), caza diseño/bugs/regresiones por su cuenta.
 > Login/credenciales = solo el dueño (el admin exige sesión ya iniciada); acciones irreversibles, OK
 > explícito. **(a) relay humano** (el dueño pega prompt→respuesta) = fallback si el navegador NO está

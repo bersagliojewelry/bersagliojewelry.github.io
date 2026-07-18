@@ -78,7 +78,7 @@ it's the heart of this skill. The dimensions:
 | Bypass blocks | 2.4.1 | A "skip to content" link before the nav |
 | Headings & labels | 2.4.6 | One `<h1>`, logical heading order, descriptive labels |
 | Focus visible | 2.4.7 | A clear focus indicator on every focusable element |
-| Animation | 2.3.3 | Motion respects `prefers-reduced-motion` |
+| Animation | 2.3.3 (AAA/best-practice) | Motion respects `prefers-reduced-motion` |
 | Target size | 2.5.8 | Touch targets ≥ 24×24 px |
 | Language | 3.1.1 | `<html lang>` set correctly |
 | Name, role, value | 4.1.2 | Custom/ARIA widgets expose name + role + state |

@@ -141,6 +141,8 @@ if (BOOT_CHARS_TARGET) {
   // al cumplirse ×3, este gate sube a warn EN EL KERNEL, no por manifest).
   if (bootChars > Math.round(BOOT_CHARS_TARGET * 1.1))
     info(`BOOT always-on = ${bootChars}c (~${bootTok} tok) vs objetivo ${BOOT_CHARS_TARGET}c — destilar/diferir (informativo)`);
+  else if (bootChars > BOOT_CHARS_TARGET) // fix TODO-28 #2: antes imprimía ✅ falso en este tramo
+    info(`BOOT always-on = ${bootChars}c (~${bootTok} tok) > objetivo ${BOOT_CHARS_TARGET}c (leve exceso — destilar)`);
   else say(`  ✅ BOOT always-on = ${bootChars}c (~${bootTok} tok) ≤ objetivo ${BOOT_CHARS_TARGET}c`);
 }
 

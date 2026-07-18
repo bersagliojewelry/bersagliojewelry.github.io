@@ -12,7 +12,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -120,4 +120,71 @@ test('cero-ficción: data/journal.js sin array baked de respaldo (artículos fic
         /Array\.isArray\(live\)[\s\S]*?live\.map\([\s\S]*?:\s*\[\]/.test(src),
         'entries() debe devolver [] sin entradas publicadas (sin fallback baked)',
     );
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cero-ficción en los DEFAULTS de página (js/pages/*-defaults.js) — cierra el hueco §191/TODO-47.
+//
+// Los defaults de página SÍ hornean copy de marca legítimo (hero, valores, faqs, timeline…):
+// ese es su diseño (§5-G — pre-llenan el form del admin desde el texto ACTUAL). PERO las
+// secciones de EVIDENCIA de TERCEROS —reseñas/testimonios— deben nacer VACÍAS: el contenido
+// real llega del CMS (Firestore / colección `reviews`), nunca horneado en código. Un testimonio
+// con nombre + texto en el default es ficticio por definición (`feedback_no_demo_en_index`).
+//
+// Motivo: `nosotros-defaults.js` tuvo 4 reseñas INVENTADAS ("Valentina Restrepo", etc.) durante
+// MESES sin que ningún test las viera — el guard de `js/home/` (arriba) NO cubre `js/pages/`,
+// y solo se ocultaban en prod por un override de Firestore (`resenas.items:[]` + hide-when-empty).
+//
+// Alcance DELIBERADO: solo testimonios. `equipo`/`certificaciones`/`cifras` son CLAIMS de marca
+// cuya veracidad es verificación HUMANA (verdad-de-marca / TODO-47), no algo que un test
+// determine — forzarlos vacíos rompería contenido legítimo. Un grep no distingue "real" de
+// "inventado" en una persona o una cifra; sí puede exigir que los TESTIMONIOS no se horneen.
+
+const TESTIMONIAL_KEY = /rese[nñ]a|review|testimoni/i;
+
+// Recorre un objeto de defaults y devuelve las rutas de secciones-testimonio con `items` no vacío.
+function bakedTestimonials(root) {
+    const hits = [];
+    const visit = (val, path) => {
+        if (!val || typeof val !== 'object') return;
+        for (const [k, v] of Object.entries(val)) {
+            const p = path ? `${path}.${k}` : k;
+            if (TESTIMONIAL_KEY.test(k) && v && Array.isArray(v.items) && v.items.length > 0) hits.push(p);
+            if (v && typeof v === 'object') visit(v, p);
+        }
+    };
+    visit(root, '');
+    return hits;
+}
+
+test('cero-ficción: el detector de testimonios horneados funciona (self-check)', () => {
+    // Caso ficticio → se marca.
+    assert.deepEqual(
+        bakedTestimonials({ resenas: { items: [{ n: 'Fulano de Tal', t: 'Todo excelente' }] } }),
+        ['resenas'],
+        'debe marcar una sección de reseñas con items horneados',
+    );
+    // Copy editorial legítimo → NO se marca (no sobre-alcanza a faqs/valores ni a reseñas vacías).
+    assert.deepEqual(
+        bakedTestimonials({ resenas: { items: [] }, faqs: { items: [{ q: '¿?', a: '.' }] }, valores: { items: [{ t: 'X', d: 'Y' }] } }),
+        [],
+        'NO debe marcar reseñas vacías ni copy editorial (faqs/valores)',
+    );
+});
+
+test('cero-ficción: js/pages/*-defaults.js no hornea reseñas/testimonios (deben venir del CMS)', async () => {
+    const dir = join(ROOT, 'js/pages');
+    const files = readdirSync(dir).filter(f => f.endsWith('-defaults.js'));
+    assert.ok(files.length > 0, 'no se encontró ningún *-defaults.js en js/pages (¿ruta cambió?)');
+    for (const f of files) {
+        const mod = await import(pathToFileURL(join(dir, f)).href);
+        for (const exported of Object.values(mod)) {
+            if (!exported || typeof exported !== 'object') continue;   // funciones/primitivos → fuera
+            const hits = bakedTestimonials(exported);
+            assert.deepEqual(
+                hits, [],
+                `js/pages/${f} hornea testimonios en [${hits.join(', ')}] — las reseñas deben venir del CMS, no del código (feedback_no_demo_en_index)`,
+            );
+        }
+    }
 });

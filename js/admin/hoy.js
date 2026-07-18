@@ -330,8 +330,12 @@ function initSenalAvisos(grid, esOwner) {
         c.val.textContent = String(total);
         c.val.style.color = total > 0 ? 'var(--adm-danger)' : '';
         const partes = [];
-        if (solOk) partes.push(`${solicitudes} aprobación${solicitudes === 1 ? '' : 'es'}`);
-        if (esOwner && falOk) partes.push(`${fallos} fallas del sistema`);
+        // Plural correcto: "aprobación" → "aprobaciones" (la tilde CAE en plural; concatenar 'es'
+        // producía "aprobaciónes"). Y "avisos del sistema" == el nombre que Salud le da a lo mismo
+        // (B5 renombró "Registro de fallos" → "Avisos del sistema"; la tarjeta debe hablar igual —
+        // "fallas del sistema" alarmaba por avisos operativos normales). Auditoría titular §192.
+        if (solOk) partes.push(`${solicitudes} ${solicitudes === 1 ? 'aprobación' : 'aprobaciones'}`);
+        if (esOwner && falOk) partes.push(`${fallos} aviso${fallos === 1 ? '' : 's'} del sistema`);
         c.sub.textContent = total === 0 ? ((solOk || (esOwner && falOk)) ? 'Todo en orden' : 'Cargando…') : partes.join(' · ');
     };
     render();

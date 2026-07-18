@@ -235,8 +235,7 @@ Una fila **"TOTAL"** del Excel entró como un cliente más → cartera al doble 
 
 ## 🧠 Meta-lecciones del cerebro/proceso (M-NN) — DETALLE → hoja [`34-LECCIONES-META`](34-LECCIONES-META.md)
 
-> Cómo opera/falla el cerebro mismo (Reflejo de Autocrítica §G.4). Sharded a `34` (§161/TODO-66);
-> aquí quedan los stub-headers (el kernel lee `### M-NN` solo de `30`, M-06). Gobernanza ×4 cerebros 2026-06-24 → también en `34`.
+> Cómo opera/falla el cerebro (Autocrítica §G.4). Sharded a `34` (§161); stubs aquí (kernel lee `### M-NN` de `30`, M-06).
 
 ### M-01: No imprimir un campo de estado del manifest como "hecho" sin gate que verifique su artefacto → 34
 ### M-02: Una lección sobre estado verificable-por-comando (git/build) debe volverse GATE, no prosa [HONOR] → 34
@@ -244,6 +243,7 @@ Una fila **"TOTAL"** del Excel entró como un cliente más → cartera al doble 
 ### M-04: La memoria del harness deriva en silencio (fuera de `docs/`, el linter no la cubre) → 34
 ### M-05: Edité un subsistema bajo UNA lente y lo di por bueno sin probar el camino vivo (§89 · caza-bugs/W-10) → 34
 ### M-06: El kernel acopla `### L-NN` a `30` → shard = stub-en-30 + detalle-en-hija (§96) [HONOR] → 34
-### M-08: Un TABLERO (`05`) no FIJA a mano un hecho verificable-por-comando (hash/PR PROD) — stale ×3, git = SSoT (§114) [HONOR] → 34
+### M-08: El `05` no FIJA a mano hechos verificables-por-comando (hash PROD) — stale ×3, git=SSoT (§114) [HONOR] → 34
 ### M-07: Los node:tests NO corren en CI (solo `test:rules`) → test-rot silencioso tras refactor de render (§104) [HONOR] → 34
 ### M-09: Muestrear ≠ contar — extrapolé de la 1ª pág de una lista paginada (GBP: "mayoría de 85 sin responder"; real 74/85 sí) [HONOR] → 34
+### M-23: Sello del 05 caducó ×2 (A2-§175 reincidente §192) — re-sellar ≠ fix; gate kernel sello-vs-git → TODO-71 → 34

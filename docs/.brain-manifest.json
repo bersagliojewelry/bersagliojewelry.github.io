@@ -52,8 +52,33 @@
     "docs/32-LECCIONES-CARGA.md": {
       "lines": 60,
       "chars": 13000
+    },
+    "docs/15-CONSEJO-EXTERNO.md": {
+      "lines": 200,
+      "chars": 16000
+    },
+    "docs/21-ESPACIAL-ADMIN.md": {
+      "lines": 120,
+      "chars": 16000
+    },
+    "docs/33-DOCTRINAS-CSS.md": {
+      "lines": 60,
+      "chars": 6000
+    },
+    "docs/34-LECCIONES-META.md": {
+      "lines": 90,
+      "chars": 12000
+    },
+    "docs/50-ARQUITECTURA.md": {
+      "lines": 120,
+      "chars": 20000
+    },
+    "docs/60-WORKFLOWS.md": {
+      "lines": 100,
+      "chars": 12000
     }
   },
+  "_caps_hijas_192": "Auditoría §192 (MF-2, voz adversarial): las hijas nacían sin cap → sharding lavaba topes. Caps = tamaño real + headroom (trinquete §56). 21 ya declaraba ~16000 en su propio header.",
   "archiveDir": "../brain-private/bersaglio/research-archive",
   "_caps_trinquete": "ADR §56/comité v6: caps bajados al tamaño post-GC + headroom (trinquete: bajar libre; SUBIR exige ADR). bootCharsTarget 31500 = aspiracional (resta cirugía del router, gated por cuidado-de-canon). ADR §92: 00-INDICE 16k→24k (ratchet ↑ justificado — el índice es on-demand, NO se comprime con pérdida; doctrina §228 de cars §229). TODO-32 (2026-06-24): 00-INDICE 24k→28k (mismo motivo — creció a §115; range-shard 00a/00b = futuro a ~28k). EJECUTADO 2026-06-27 (ADR §140, kernel-change cars-operador): range-shard §1–§115 → 00a-INDICE-HIST (00 a ~9.3k); el kernel lee el índice como SET (00 + 00[a-z]-INDICE*) — byte-idéntico ×4 peers. 2º range-shard 2026-07-08 (ADR §174): §116–§157 → 00b-INDICE (00 madre 30.8k→15.6k = ruteo + §158+); 00b tiene cap propio; próximo rango → 00c. 30-LECCIONES NO se ratchetea: shardeó el clúster carga/render → 32-LECCIONES-CARGA (las lecciones SE SHARDEAN).",
   "staleDays": 10,
@@ -70,8 +95,8 @@
   "_ssotFacts_note": "Vacío desde la auditoría §114 (2026-06-24): el único ssotFact (cartera 506.510.780) se RETIRÓ porque el RESET-A-CERO (Daniel 2026-06-20) vuelve ese número desechable y se quitó de 05/10 → el gate quedaba sin owner. Re-añadir un ssotFact si emerge un hecho-vivo duplicado entre always-on.",
   "ssotFacts": [],
   "deepAudit": {
-    "last": "2026-07-08",
-    "coveredHeaderCount": 177,
+    "last": "2026-07-18",
+    "coveredHeaderCount": 194,
     "maxAdrGap": 12,
     "maxDays": 30
   }

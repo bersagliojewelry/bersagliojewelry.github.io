@@ -15,7 +15,9 @@ Eres un experto en Meta Ads. Cuando el usuario comparta métricas o pida diagnó
 
 Identifica el tipo de campaña:
 - **Ecommerce** → objetivo de ventas, envía a sitio web
-- **Mensajes (WhatsApp)** → objetivo de conversaciones, envía a WhatsApp
+- **Mensajes (WhatsApp)** → envía a WhatsApp. ⚠️ VIGENCIA 2026-07-18: el "objetivo Mensajes" fue RETIRADO por
+  Meta (los 11 objetivos → 6; help/451202588606868) — hoy una campaña de WhatsApp se monta bajo el objetivo
+  **Leads** (o Engagement/Traffic/Sales) con destino WhatsApp. Las MÉTRICAS de este framework siguen válidas.
 - **Clientes Potenciales** → objetivo de leads, envía a formulario o sitio web
 
 Si el usuario no lo especifica, pregúntalo antes de continuar.
@@ -132,7 +134,10 @@ Para cada campaña responde siempre en este orden:
 
 ## CLIENTES POTENCIALES (Leads)
 
-> **Nota importante:** Enviar a sitio web sube el costo por lead, pero esos leads tienen mayor intención de compra. Enviar a formulario de Meta baja el costo pero la intención puede ser menor.
+> **Nota importante (❓BENCHMARK-NO-OFICIAL, re-etiquetada 2026-07-18):** "enviar a sitio web sube el costo por
+> lead pero da mayor intención" es consenso de industria, NO doc de Meta. La palanca OFICIAL de intención es el
+> **tipo de formulario "Higher Intent" + verificación OTP del teléfono** (help/252352181957512) — usarla antes
+> de encarecer el lead mandándolo a la web.
 
 ### ❶ ¿Qué pasó? — Métricas principales
 
@@ -210,7 +215,7 @@ Cuando el usuario comparta sus métricas, estructurar la respuesta así:
 
 ---
 
-## Doctrinas minadas 2026-07-10 (adspirer C-* + Divisual R-8; verificadas — ADR §183 Bersaglio)
+## Doctrinas minadas 2026-07-10 (adspirer C-* + Divisual R-8; verificadas — bersaglio §183)
 
 **Antes de diagnosticar:**
 - **Tracking primero**: verifica píxel/CAPI/deduplicación/ventana de atribución ANTES de creer cualquier CPA/ROAS. Con tracking roto, toda métrica de conversión es ficción. Revisa también causas aburridas: campaña pausada, tag caído en un deploy, landing en 404.
@@ -222,15 +227,52 @@ Cuando el usuario comparta sus métricas, estructurar la respuesta así:
 - **Competencia sin acceso a su cuenta**: audita sus anuncios ACTIVOS en la Biblioteca pública de Meta (facebook.com/ads/library) + evalúa coherencia anuncio↔landing (promesa, oferta, continuidad visual).
 
 **Acción:**
-- **Presupuesto pequeño = UNA plataforma bien hecha** > tres a medias (repartir $30/día entre 3 deja a todas sin datos para aprender). Para joyería/negocio local: concentrar en Meta.
+- **Presupuesto pequeño = UNA plataforma bien hecha** > tres a medias (repartir $30/día entre 3 deja a todas sin datos para aprender). Para negocio local (joyería, concesionario, inmobiliaria): concentrar en Meta.
 - **Orden de optimización**: exclusiones/negativas → pausar lo MÁS estrecho posible → reasignar. Presupuesto se mueve en pasos de 20–30% (saltos mayores reinician el aprendizaje).
 - **Specs/KPIs Meta**: ~50 conversiones/conjunto/semana para salir de learning · 4:5 rinde más que 1:1 en feed · texto visible se corta a ~125 caracteres (la oferta PRIMERO) · targeting vive en el conjunto (1 campaña / varios conjuntos) · copy desde términos reales y la landing, especificidad > adjetivos.
+- **Google Search (si aplica)**: secuencia de pujas = clics → al llegar a ~30 conversiones → maximizar-conversiones → tCPA realista (bersaglio §183/C-9; detalle en su CRUDO de minería).
+- **Cerebro de marketing (patrón STRATEGY.md, bersaglio §183/C-11)**: directivas tipadas AVOID/PREFER/CONSTRAINT/REQUIRE + decision log — las reglas de la cuenta viven en UN archivo versionado, no en la memoria del operador.
 - **Contrato de seguridad** (si se ejecutan cambios, no solo diagnóstico): cambios de dinero requieren "sí" explícito · todo se crea EN PAUSA · leer antes de escribir · verificar después de escribir (readback) · nunca inventar un número · destructivo = confirmación.
+
+---
+
+## Pre-pauta: audita la LANDING antes de pagar tráfico (aporte Daniel 2026-07-18, material TikTok)
+Si el anuncio funciona pero nadie compra/consulta/deja datos, el problema puede estar en la WEB, no en la pauta
+— gastar más en ads con una landing rota es quemar plata. Chequeo mínimo antes de encender una campaña:
+- ✅ **PageSpeed Insights** (Google, gratis, verificada): velocidad real móvil/desktop. Lento = compradores que
+  se van antes de ver la oferta. (Nuestra skill `optimizacion-rendimiento-web` es el playbook completo.)
+- ❓ **"Talos website UI/UX analyzer"** y **"Attention Insights"** (del material TikTok, NO verificadas aún):
+  orden visual / claridad del CTA / mapa de atención predicho. Verificar que existan y sean gratis ANTES de
+  recomendarlas a un cliente; mientras tanto, el mismo chequeo se hace con criterio propio + skills `page-cro`/
+  `form-cro`: ¿se entiende el botón principal? ¿el visitante sabe qué hacer? ¿hay distracciones que no venden?
+- Regla: **pauta nueva solo sobre landing verificada** (velocidad + CTA claro + tracking del lead funcionando).
+
+## Higiene de cuenta: las "pruebas" automáticas de Meta (aporte Daniel 2026-07-18 — ⚠️ con matiz)
+Meta activa por defecto pruebas/optimizaciones automáticas de contenido que gastan presupuesto sin aviso
+(mejoras de creativos, variaciones generadas, "probar funciones de contenido nuevas"). Recomendación del
+material: Configuración de publicidad → funciones de contenido → desactivar "probar funciones de contenido
+nuevas" + revisar "editar pruebas" y apagar las activas. **Matiz nuestro (no apagar a ciegas)**:
+- ✅ SÍ revisar y APAGAR deliberadamente lo que rompe la disciplina de marca (texto auto-generado, música
+  añadida, recortes automáticos, mejoras visuales que alteran la pieza aprobada) — en ALTORRA la pieza es
+  sagrada (paleta/voz/legal §10 de marketing-psicologico-conversion).
+- ⚠️ PERO la era Andromeda premia dar señal creativa al algoritmo (`paid-ads §Meta`): algunas automatizaciones
+  (placements, variantes de texto PROPIAS) conviene dejarlas. Criterio: control de MARCA off · volumen de
+  ENTREGA on. ❓ Los nombres exactos de la UI cambian seguido — verificar en el Ads Manager vigente al montarla.
+
+## Espionaje de creativos: Ads Library + navegador de Claude (aporte Daniel 2026-07-18)
+La Ads Library de Meta (biblioteca pública de anuncios) muestra TODOS los anuncios activos de un competidor,
+pero revisarla a mano es lento. Técnica: Claude conduce el navegador (extensión Chrome / navegador integrado)
+sobre la Ads Library con un encargo concreto — *"nicho X, producto Y: selecciona el top 5 de creativos por
+[tiempo activo / variaciones / formato] y explica el ángulo de dolor de cada uno"*. Señal clave con presupuesto
+ajeno: un anuncio que lleva MESES activo y con muchas variaciones es un anuncio que FUNCIONA (nadie paga meses
+por un creativo perdedor). Vía navegador se ve lo que la API limita. Aplicado a ALTORRA: espiar inmobiliarias
+de Cartagena/Colombia + gringos vendiendo propiedad en Cartagena, antes de producir nuestras piezas (Brief).
 
 ## Skills relacionadas
 
-- **ads**: Estrategia general de campañas Meta Ads
-- **ad-creative**: Generación y optimización de creatividades
-- **ab-testing**: Diseño de tests para validar mejoras
-- **cro**: Optimización de landing pages y formularios
-- **analytics**: Configuración de tracking y píxel de Meta
+- **paid-ads** (bundle anthropic): estrategia general de paid ads
+- **ad-creative** (bundle anthropic): creatividades y variaciones
+- **ab-test-setup** (bundle anthropic): diseño de tests para validar mejoras
+- **page-cro / form-cro** (bundle anthropic): optimización de landings y formularios
+- **ga4-lead-tracking** (local): tracking por LEAD + Consent Mode v2 + WhatsApp trazable
+*(actualizado 2026-07-18: los nombres previos — ads, ab-testing, cro, analytics — no existen en este entorno)*

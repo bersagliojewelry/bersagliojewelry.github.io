@@ -47,6 +47,7 @@
 
 ## 📝 Bitácora (efímera)
 
+> 2026-07-18 · **[FABLE-5]** Sinapsis inmob §33-§37: liderazgo ✅ · 15 skills sync (paid-ads/ad-creative v2.2/2.8) · import cars ⛔ tope 30 (TODO-77).
 > 2026-07-17 · **[OPUS-4.8] Jornada SEO + verdad-de-marca → ADRs §188-§191** (todo en PROD, SW v97): A4 `og:type=product` + **FAQPage retirado** (rich result muerto 07-may) §188 · 🔴 **fuga PII a GA4 cortada** (`stripPII` en `track()`, `test:analytics` 10/10) §189 → **TODO-17 SUBE** · **GBP 11 reseñas → 85/85** §190 · **garantía DE POR VIDA en Términos** (Ley 1480, alcance vía AskUserQuestion) §191. Palancas SEO restantes: **TODO-48 reseñas en web** · **FAQ visible verificable** (desbloqueada) · GBP fresco · precios · enlaces.
 > 2026-07-17 · **[OPUS-4.8] Guard anti-demo → `js/pages/*-defaults`** (`no-demo-home` 12/12; testimonios deben nacer `[]`; atrapa fakes end-to-end). Destapó: **CIFRAS sin cuadrar** (TODO-47) — Nosotros-en-vivo 43 años/1983/+12.000 piezas/equipo real, pero código default VIEJO (13/2013/1.200) y **home 5.000+ ≠ Nosotros 12.000**. NO toqué números (precisión; esperan cifras canónicas + verificar certs JA/RJC/Muzo).
 > 2026-07-17 · **[OPUS-4.8]** Journal §186/§187 · ENTREGABLE ALTORRA (skill SEO, SSoT `.../2026-07-17-aprendizajes-SEO-AEO-GEO-para-skills.md`) · F-IA-2 B0-B5 ✅ CODE-COMPLETE (SW v93, ⏳ funcional-con-sesión, Fable audita). **[FABLE-5] §181-183 prod · 1ª APPROVED ✅**. `[[feedback_opus_interino]]`

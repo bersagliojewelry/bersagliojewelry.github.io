@@ -66,7 +66,7 @@ concatenado = "1234-1610641025-49201" + "APPROVED" + "4490000" + "1530291411" + 
 SHA256(concatenado) = 3476DDA50F64CD7CBD160689640506FEBEA93239BC524FC0469B2C68A3CC8BD0
 ```
 
-Si la firma NO hace match, el evento debe registrarse con estado `ERROR_SIGNATURE`, lanzar una alerta crítica al equipo de soporte y **detener el flujo inmediatamente (retornar 422 o 400)**.
+Si la firma NO hace match, el evento debe registrarse con estado `ERROR_SIGNATURE`, lanzar una alerta crítica al equipo de soporte, **NO procesar el evento y responder `HTTP 200`** (⚠️ unificado 2026-07-18 con `wompi-webhooks-validator`: responder 4xx quema los 3 reintentos de Wompi en un evento falsificado y le da señal al atacante).
 
 ## 3. Reglas de Negocio (Edge Cases y Arquitectura)
 
@@ -76,7 +76,7 @@ Si la firma NO hace match, el evento debe registrarse con estado `ERROR_SIGNATUR
 
 ### Regla 2: Idempotencia (At-Least-Once Delivery)
 - Wompi puede enviar el mismo Webhook varias veces. Mientras tu endpoint no responda `HTTP 200` (por timeout o cualquier respuesta != 200), Wompi reintentará la notificación un **máximo de 3 veces** distribuidas en las siguientes 24 h (aprox. a los 30 min, 3 h y 24 h), tras lo cual **deja de reintentar**. La reentrega **NO es infinita**: un job de respaldo que consulte `GET /transactions/{id}` es **obligatorio** (no opcional) para reconciliar eventos perdidos.
-- Antes de procesar el evento, se debe verificar en base de datos si el `transaction.id` o `event.id` ya fue procesado. 
+- Antes de procesar el evento, verificar en base de datos si ya fue procesado usando el **`event.id` o la combinación `transaction.id` + `status`** (⚠️ 2026-07-18: NUNCA `transaction.id` a secas — una misma transacción emite varios eventos, p.ej. PENDING y luego APPROVED, y descartarías el APPROVED como duplicado).
 - Si ya fue procesado, responder inmediatamente con un `HTTP 200` y NO ejecutar ninguna acción (para evitar duplicación de facturas o reservas).
 
 ### Regla 3: Manejo de Concurrencia (Venta Doble)

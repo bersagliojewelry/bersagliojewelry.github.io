@@ -1,6 +1,6 @@
 ---
 name: anti-codigo-muerto
-description: Usar SIEMPRE al estrenar/fix/mejorar código que REEMPLAZA algo viejo — antes de cerrar el cambio. Evita el síndrome Knight Capital (el "8º servidor": $460M en 45 min por código muerto de 10 años que un flag reutilizado revivió). Garantiza que lo nuevo RETIRE lo viejo (no apile): detectar código muerto/huérfano (funciones desplegadas sin source, paths/JS sin referencia, flags reutilizados, deploy incompleto ×N targets), cuarentenarlo (`_legacy/` / revocar IAM — nunca borrar a ciegas) y verificar el camino vivo con el MOTOR ACTUAL (no el planeado). Incluye el gate mecánico `deadcode:check` y la política cuarentena>borrado. NO es para depurar un bug (systematic-debugging) ni el gate del claim final (verification-before-completion). Triggers — "estreno código que reemplaza X", "esto deja código viejo", "deploy de functions", "reutilicé un flag", "¿quedó algo viejo molestando?", "una línea mal puesta cuesta millones", "lo que no testeas te quiebra".
+description: Usar SIEMPRE al estrenar/fix/mejorar código que REEMPLAZA algo viejo — antes de cerrar el cambio. Evita el síndrome Knight Capital (el "8º servidor": $460M en 45 min por código muerto de 10 años que un flag reutilizado revivió). Garantiza que lo nuevo RETIRE lo viejo (no apile): detectar código muerto/huérfano (funciones desplegadas sin source, paths/JS sin referencia, flags reutilizados, deploy incompleto ×N targets), cuarentenarlo (`_legacy/` / revocar IAM — nunca borrar a ciegas) y verificar el camino vivo con el MOTOR ACTUAL (no el planeado). Incluye el gate mecánico `deadcode:check` (hoy existe SOLO en cars — en otro repo créalo cuando haya functions propias) y la política cuarentena>borrado. NO es para depurar un bug (systematic-debugging) ni el gate del claim final (verification-before-completion). Triggers — "estreno código que reemplaza X", "esto deja código viejo", "deploy de functions", "reutilicé un flag", "¿quedó algo viejo molestando?", "una línea mal puesta cuesta millones", "lo que no testeas te quiebra".
 ---
 
 # 🧟 Anti-código-muerto — lo nuevo REEMPLAZA lo viejo, no se apila (anti Knight Capital)
@@ -28,7 +28,7 @@ en un PR con logs limpios. El gate REPORTA + BLOQUEA; nunca borra solo (guardiá
 4. **Sin test/rollback que lo cace** → ¿recorriste el camino vivo con el **MOTOR ACTUAL** (no el planeado)?
 
 ## 3. Detección por stack (no hay bala de plata)
-- **Cloud Functions huérfanas (el 8º servidor — MECANIZABLE)** → gate `deadcode:check`: diff POR NOMBRE
+- **Cloud Functions huérfanas (el 8º servidor — MECANIZABLE)** → gate `deadcode:check` (script de cars; en un repo sin él, créalo primero): diff POR NOMBRE
   de `firebase functions:list --json` ↔ `exports.X` del source. Desplegada ∉ source = huérfana → FALLA.
   (Parse ESTÁTICO, NO `require` — side-effects. Por NOMBRE, no región: los triggers de la BD viven en su
   región a propósito; un diff por-región da falsos positivos.)
@@ -54,7 +54,7 @@ en un PR con logs limpios. El gate REPORTA + BLOQUEA; nunca borra solo (guardiá
 ## 5. Distribución máquina vs humano (anti sobre-ingeniería — L-50)
 - **Gate mecánico (determinista, automatizado, FALLA)**: `deadcode:check` (functions diff) · tombstones de flags · (con ESM, knip).
 - **Juicio humano/agente**: revisar logs de cuarentena · la DECISIÓN de borrado (en un PR). NUNCA borrado automático.
-- El workflow de agentes (`auditoria-codigo-viejo`) corre **BOUNDED** (roles foreground, NO fan-out que cuelga): la maquinaria anti-fallos no puede ser ella misma una fuente de fallos.
+- El workflow de agentes (`auditoria-codigo-viejo`, definido en el repo cars) corre **BOUNDED** (roles foreground, NO fan-out que cuelga): la maquinaria anti-fallos no puede ser ella misma una fuente de fallos.
 
 ## 6. Procedimiento al estrenar (la rutina, cada cambio)
 1. ¿Qué código VIEJO reemplaza esto? Lístalo (IAP §3.4.C).

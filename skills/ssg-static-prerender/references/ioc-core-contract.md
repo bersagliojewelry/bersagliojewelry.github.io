@@ -1,5 +1,10 @@
 # Contrato del Core Library (IoC) — `scripts/visibility-core/`
 
+> ⚠️ **ESTADO REAL (2026-07-18): el core `scripts/visibility-core/` AÚN NO está materializado en NINGÚN repo.**
+> La única implementación viva del paquete (bersaglio) es STANDALONE (`scripts/generate-pieces.mjs`, sin core).
+> Este contrato describe el DISEÑO OBJETIVO — extraer el core desde la implementación de bersaglio cuando se
+> sume el 2º tenant. No busques el módulo: todavía no existe.
+
 > El core compartido = **funciones PURAS** (entran datos, salen strings/objetos). **JAMÁS lee un template,
 > jamás toca el FS de un proyecto, jamás hardcodea un nombre de proyecto.** Cada tenant ORQUESTA. Distribución
 > = **D′ vendored**: el HUB (cars-operador) escribe el core canónico y lo replica byte-idéntico a cada repo

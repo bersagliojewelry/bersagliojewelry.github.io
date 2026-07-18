@@ -49,12 +49,13 @@ Marca `generate_lead`/`whatsapp_click` como **Key Events** en GA4. Máx 2-3 (no 
 Genera el link de WA en el build/cliente con UTM + hash de sesión + **contexto del ítem en el texto prerelleno**:
 ```js
 function waLink(cfg, item, sessionHash) {
-  const text = `Hola, me interesa: ${item.title} (ref ${item.id}). Vi esto en ${cfg.baseUrl}`;
-  const utm = `utm_source=web&utm_medium=whatsapp&utm_campaign=ficha&item=${item.id}&s=${sessionHash}`;
-  // el contexto va en el TEXTO (lo lee el asesor), los UTM en el evento GA (no en PII)
+  // ⚠️ fix 2026-07-18: la versión previa construía una variable `utm` que NUNCA se usaba (código muerto) —
+  // el hash no llegaba a ningún lado. El mecanismo real: el hash viaja EN EL TEXTO (el asesor lo ve y lo
+  // liga a la conversación) y como parámetro del evento GA4. Los UTM clásicos no aplican a wa.me (no es tu dominio).
+  const text = `Hola, me interesa: ${item.title} (ref ${item.id} · sesión ${sessionHash}). Vi esto en ${cfg.baseUrl}`;
   return `https://wa.me/${cfg.nap.phone.replace(/\D/g,'')}?text=${encodeURIComponent(text)}`;
 }
-// onclick → trackEvent('whatsapp_click', {...}) ANTES de abrir wa.me
+// onclick → trackEvent('whatsapp_click', { item_id: item.id, session_hash: sessionHash }) ANTES de abrir wa.me
 ```
 Así: GA4 cuenta el lead + el asesor recibe el contexto del ítem (sabe qué carro/joya sin preguntar). El hash de
 sesión liga la conversación al recorrido web SIN mandar PII a GA4.

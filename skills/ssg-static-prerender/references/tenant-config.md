@@ -25,7 +25,7 @@
     "openingHours": []                       // ⛔ dueño. ej ["Mo-Sa 08:00-18:00"]
   },
   "sameAs": [],                              // ⛔ dueño: URLs REALES de redes (FB/IG/YT/TikTok/LinkedIn). cero-demo: vacío > inventado
-  "priceDisplay": "consulta",               // "real" (priceRange/priceSpecification) | "consulta" (PreOrder/InquireAction)
+  "priceDisplay": "consulta",               // "real" (Offer con price) | "consulta" (⚠️ 2026-07-17: se OMITE el bloque offers — un Offer SIN price es INVÁLIDO en GSC; nunca PreOrder-sin-price ni price:0)
 
   // ── Medición ──
   "ga4MeasurementId": "",                    // ⛔ dueño (G-XXXX) o vacío ⇒ skill ga4 no inyecta

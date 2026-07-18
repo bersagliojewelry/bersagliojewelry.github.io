@@ -37,13 +37,43 @@ vendored + `VERSION`**, sin lockstep; reusa la replicación-kernel del HUB; migr
    `<script>window.PRERENDERED_<TYPE>_ID = safeJsonLd(id)</script>` para que el JS hidrate sin query param.
 4. **Guards** (§3). 5. **`buildSitemap()`** → `sitemap.xml` + `data/*-slugs.json`.
 
+## 2bis. Patrón cáscara-noindex + horneada-canónica (✅ verificado en prod, 2026-07-17)
+- La cáscara SPA (`pieza.html?id=`, `entrada.html?e=`) queda **`noindex`**; el SSG hornea la URL bonita e
+  indexable (`/pieza/<slug>.html`, `/journal/<slug>.html`) **reusando esa misma cáscara como template**:
+  `robots: index, follow` + **canonical autorreferencial** + `<base href="/">` (la horneada vive en subdir →
+  las rutas relativas deben resolver a la raíz) + OG/Twitter/JSON-LD propios. **Cero duplicado**: la cáscara
+  noindex nunca compite con la horneada.
+- **Compatibilidad hacia atrás**: la horneada inyecta `window.PRERENDERED_<T>_SLUG`; el JS lo lee **con
+  fallback al `?param=`** → los enlaces viejos ya compartidos (WhatsApp/redes) siguen funcionando, quedan
+  noindex y su canonical apunta a la horneada. **Migrar URLs sin romper nada.**
+- 🏆 **Regla de oro: contenido real SIN URL indexable = trabajo perdido.** *(Caso real: 6 guías escritas y
+  publicadas eran INVISIBLES para Google porque solo vivían en `entrada.html?e=<slug>` noindex — el hub era
+  indexable pero cada artículo era un callejón sin salida.)*
+- Para artículos, el **`<noscript>` lleva el CUERPO COMPLETO** (breadcrumb + H1 + imagen + párrafos + CTA),
+  no solo el resumen: el texto ES el activo SEO. No es cloaking — es idéntico a lo que el usuario ve hidratado.
+- ❓ **HIPÓTESIS (no medido — NO convertir en regla)**: "el hub indexado arrastra las fichas en cascada".
+  Observado lo contrario en prod: hubs indexados y las 27 fichas enlazadas NO, tras ~2 meses. El hub ayuda al
+  *descubrimiento*, pero **descubrir ≠ indexar**: el juicio de valor de Google es por-página.
+
+## 2ter. Title/meta keyword-first SIN sacrificar la voz de marca (✅ verificado en prod)
+- Desacoplar **meta (SEO)** de **og (social)**: `<title>` + `<meta description>` → keyword de
+  **PRODUCTO + CATEGORÍA + CIUDAD** (lo que Google lee y rankea) · **H1 y copy VISIBLE** → voz editorial
+  intacta · `og:description`/`twitter:description` → el copy de marca (preview social).
+- Nombre de producto poético ("Puro Albor") → **derivar el tipo de producto del slug** para el título:
+  *"Anillo de Diamante · Puro Albor · <Marca> <Ciudad>"*.
+- Reproyectar el posicionamiento (ej. "atelier exclusivo" → "ecommerce con envíos a todo el país") se hace en
+  **meta description + schema description**, SIN tocar el copy visible de la marca.
+
 ## 3. Guards anti-fail-silent (NO negociables — una página rota NUNCA llega a prod)
 - **`REQUIRED_ANCHORS`** (por-tenant, en `tenant-build.mjs`): array de marcadores que el template DEBE tener;
   si falta uno → **THROW ruidoso** (no 27 páginas con SEO roto en silencio).
 - **bake-integrity**: cada página horneada DEBE cerrar `</html>` y pesar ≥ `MIN_BAKE_BYTES` (ej. 5000); si no →
   **ABORTA el build** (el workflow no commitea → prod queda en el último build bueno). Patrón fail-loud.
-- **`SSG_SELFTEST`** (gate DEV con mocks): inyecta payloads de breakout (`</script>`, `"><img onerror>`) y
-  verifica que `safeJsonLd`/`escapeAttr` los neutralizan → gate anti-stored-XSS con dientes (no teatro).
+- **`SSG_SELFTEST`** (gate DEV con mocks): inyecta payloads de breakout (`</script>`, `"><img onerror>`,
+  `U+2028/U+2029`) y verifica: sin breakout crudo, JSON-LD y globals inyectados PARSEAN, `robots index`
+  presente, canonical correcto, **determinismo** (misma entrada → misma salida). Sin red — gate de CI.
+- **Puerta cero-ficción**: hornear **solo** lo `published` **Y COMPLETO** (título + imagen + resumen) +
+  **slug seguro** (regex anti path-traversal: sin `/`, sin `..`) — espejo de la regla server-side.
 - **`safeJsonLd(obj)`**: neutraliza `</script>` + U+2028/U+2029 en sinks JSON-LD/PRERENDERED. **`escapeAttr`/
   `escapeHtml`/`escapeXml`** por contexto (defensa-en-profundidad ante campos editables de un CMS).
 
@@ -52,7 +82,14 @@ vendored + `VERSION`**, sin lockstep; reusa la replicación-kernel del HUB; migr
   horneado+indexación (no indexar "PRUEBA"). · **slug inmutable** (slugify una vez + sufijo del id; sin SSR no
   hay 301 dinámico — cambiar slug = romper links/ranking). · **cero-demo**: solo data REAL (nunca rating/sameAs/
   origen inventado). · `sitemap`: lastmod **FIJO** en estáticas (Google ignora si todo es "hoy"), `updatedAt` en ítems.
+- **Ciclo precio → re-indexación** (✅ verificado): el `<lastmod>` del ítem sale de su `updatedAt` → el update
+  del admin DEBE sellarlo **server-side** (`serverTimestamp`). Con el cron diario, un cambio de precio se
+  refleja en ≤24h; para inmediatez el día del cambio → rebuild manual (`workflow_dispatch`).
 - Corre en **GitHub Actions** on-push (deploy) + diario (refresca lastmod/altas) — repos públicos = Actions gratis.
+- **Verificar en PRODUCCIÓN, no en local**: tras cada deploy, `curl + grep` sobre la URL real (robots,
+  canonical, JSON-LD, sitemap). Un build verde no prueba que prod esté bien. ⚠️ Limitación conocida: los
+  navegadores headless/sandbox **no siempre completan la conexión de Firestore** → el contenido dinámico no
+  hidrata ahí; NO confundirlo con un bug del sitio (verificar el HTML servido con `curl` + test determinista).
 
 ## 5. Anti-contaminación por vertical (`validateTenant`, fail-fast — clave del HUB multi-proyecto)
 Validador **a mano** (sin Zod — build node-plano, dep-free, estilo REQUIRED_ANCHORS): asegura que `config.vertical`

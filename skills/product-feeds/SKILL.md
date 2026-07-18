@@ -31,7 +31,7 @@ const items = allItems.filter(i => i.status === 'published');
 for (const feedType of cfg.feeds) {
   const feedStr = buildFeed(feedType, items, cfg);   // core: mapea vertical→formato del destino, escapeXml
   bakeIntegrity(feedStr, MIN_FEED_BYTES);            // guard: feed vacío/roto NO se publica
-  writeFile(`feeds/${feedType}.xml`, feedStr);       // se sube a GH Pages; el destino lo lee por URL
+  writeFile(`feeds/${feedType}.${ext}`, feedStr);    // ext segun formato REAL del destino (tsv|xml) — no hardcodear .xml
 }
 ```
 - **IDs estables** = `slug`/`codigoUnico` inmutable (si el id cambia, el destino crea un duplicado/pierde histórico).

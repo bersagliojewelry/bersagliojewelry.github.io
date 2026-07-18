@@ -127,14 +127,13 @@ export const NOSOTROS_DEFAULTS = {
         ],
     },
 
-    // 10. RESEÑAS — lista (4 cards) — TODO(contenido real): Kary pega reseñas reales de Google Maps.
+    // 10. RESEÑAS — DEFAULT VACÍO a propósito (`[[feedback_no_demo_en_index]]`): antes tenía 4
+    // testimonios FICTICIOS de demo. En prod ya se ocultan (Firestore `resenas.items:[]` →
+    // hide-when-empty), pero se retiran del código para eliminar el riesgo latente de que un
+    // reset de Firestore publique testimonios falsos. Poblar con las reseñas REALES (85 ★5,0 del
+    // GBP) es TODO-48 — decisión de curaduría + aristas legales de republicar reseñas de Google.
     resenas: {
-        items: [
-            { n: 'Valentina Restrepo', t: 'Llegué sin saber muy bien qué quería y salí con la pieza de mis sueños. Kary entendió mi historia mejor que yo. El trato es de otro nivel.', loc: 'Reseña en Google Maps' },
-            { n: 'Andrés Mejía',       t: 'Mandé hacer el anillo de compromiso y superó todo lo que imaginaba. Se siente el amor por el oficio en cada detalle. Mil gracias.', loc: 'Reseña en Google Maps' },
-            { n: 'Camila Tordecilla',  t: 'Un lugar precioso en el Centro Histórico. Te reciben con un café y una paciencia que ya no se ve. La esmeralda quedó espectacular.', loc: 'Reseña en Google Maps' },
-            { n: 'Juan Pablo Vergara', t: 'Calidad real y honestidad. Me explicaron cada piedra con su certificado. Volveré sin duda para la próxima ocasión especial.', loc: 'Reseña en Google Maps' },
-        ],
+        items: [],
     },
 
     // 11. FAQS — lista (6 preguntas)

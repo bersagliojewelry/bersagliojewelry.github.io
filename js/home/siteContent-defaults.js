@@ -36,9 +36,11 @@ export const HOME_DEFAULTS = {
         title2:     'más que una joya, un legado familiar.',
         lead:       'Entendemos la esmeralda y el oro de 18 quilates como portadores de la memoria humana. Nos convertimos en cómplices silenciosos de los instantes que definen una vida: promesas que trascienden el tiempo, hitos de amor incondicional y el recuerdo indeleble de quienes somos.',
         quote:      '"Nuestras esmeraldas colombianas de Muzo y Chivor no son meras pertenencias; son fragmentos de tierra viva custodiados por almas sensibles para ser entregados a la siguiente generación."',
-        stat1Num:   '12+',  stat1Lab: 'Años',
-        stat2Num:   '800+', stat2Lab: 'Piezas únicas',
-        stat3Num:   'JA',   stat3Lab: 'Certificado',
+        // Valores REALES (confirmados por Daniel 2026-07-17): el 12+/800+/JA anterior era DEMO
+        // (`[[feedback_no_demo_en_index]]`). Sincronizados con siteContent/home.editorial (en vivo).
+        stat1Num:   '40+',    stat1Lab: 'Años',
+        stat2Num:   '5000+',  stat2Lab: 'Piezas únicas',
+        stat3Num:   'Piezas', stat3Lab: 'Certificadas',
     },
     atelier: {
         chip:       'Atelier Bersaglio',

@@ -87,6 +87,54 @@ aviso/pendiente · (13) fechaEfectiva: aprobar tras el cierre del mes NO cae en 
 sellado · (14) `abono_cartera` MANUAL ⇒ rechazo · (15) ajuste_conciliacion direccion
 entrada/salida suma correcto en paridad.
 
+## §0.7 — CONSEJO EXTERNO (2026-07-18) · deliberación del titular — **VINCULANTE, prevalece sobre §0.6 y el cuerpo**
+
+> Daniel corrió el PROMPT-CONSEJO (gate de B1 ✅ CUMPLIDO). 7 hallazgos → 4 aceptados (V17-V20),
+> 2 ya cubiertos por el comité, 1 REFUTADO. Crudo + deliberación → bóveda. El consejero confirmó
+> como intocables: recompute CF-única, ledger append-only+opId, pata atómica cartera↔tesorería, SoD.
+
+- **V17 [P0·aceptado] Efectivo de abonos ENTRA al alcance** (supersede el "límite conocido" de
+  D9 y su fila en §8): un abono de cartera en EFECTIVO reduce la deuda pero el billete no
+  existía en ningún libro → arqueo "cuadra" aunque el billete se vaya al bolsillo. **Fix**: la
+  CF del abono, cuando `medio=efectivo`, escribe en la MISMA tx la pata en el módulo de caja
+  (`movsCaja` tipo nuevo `abono_cartera`) → entra al esperado del arqueo automáticamente
+  (los movs ya suman en el esperado split-aware). **Exige turno abierto**: sin turno, la UI
+  dice "abre el turno en el Mostrador para recibir efectivo". ⚠️ Toca caja = **zona caliente
+  R3**: test del escenario PRIMERO (abono efectivo → arqueo lo espera → sin registro = descuadre
+  visible), cambio mínimo, bloque B5, alerta en bitácora. Idempotencia por-libro (V4) aplica.
+- **V18 [P0·aceptado ADAPTADO] Circuito banco↔efectivo SIEMPRE vía bóveda** (el consejero pedía
+  traslados mixtos directos banco→cajón; se adapta a un diseño más simple y con mejor control):
+  banco→bóveda = flujo NUEVO "Retiro de banco" en el módulo de bóveda (espejo exacto de la
+  Consignación V1: una CF, dos patas — `retiro_efectivo_out` en la cuenta real + ingreso en
+  bóveda); bóveda→cajón = flujo EXISTENTE intacto. **NUNCA banco→cajón directo**: un solo
+  punto de entrada del efectivo (la bóveda), un solo conjunto de controles.
+- **V19 [P1·aceptado] Sello en dos etapas**: los ✓ de conciliación son BORRADOR editable
+  (persistible) hasta "Guardar cuadre" (V13 confirma y sella). Tras sellar: acción
+  **"Reabrir cuadre de {mes}"** OWNER-only con motivo + audit trail, permitida SOLO mientras
+  el mes siguiente no esté sellado. Mata el missclick sin llenar el ledger de inversos basura.
+- **V20 [P2·aceptado ADAPTADO] Tipología para margen bruto**: se RETIRA el tipo
+  `servicio_publico` (pasa a `gasto{categoria:'servicios_publicos'}`); `categoria` se vuelve
+  OBLIGATORIA en `gasto` con lista cerrada: `{gmf, comision_bancaria, comision_pasarela,
+  arriendo, nomina, servicios_publicos, papeleria, otros}`; `pago_proveedor` = COSTO DE VENTA
+  (etiqueta: "Pago a proveedor (mercancía/taller)") — separado de gasto operativo para que
+  F-REPORTES compute margen bruto. El modal V14 pide la categoría en un 2º select humano.
+- **[ya cubierto] Riesgo UIAF/exógena** = V9 (acumulado anual + advertencia + lenguaje "titular
+  del RUT"). NUEVO para Daniel (acción LEGAL, no software): formalizar con abogado/contador un
+  **contrato de cuentas en participación (o mandato)** con las socias mientras se migran las
+  cuentas — registrado en `42-LEGAL §7` como pendiente del dueño.
+- **[ya cubierto] Wompi neto/GMF** = V7+V11; refuerzo: el helper del cuadre crea ingreso BRUTO
+  + `gasto{comision_pasarela}` en UNA sola llamada de CF (no dos pasos manuales).
+- **[REFUTADO] "Editor de reglas sin audit trail"**: viola SoD (inv.6 — quien opera no
+  reescribe los parámetros de su propio control: limiteCajon/enforceTurno/tasas son parámetros
+  de DINERO). La CF de D6 es ~30 líneas y el audit trail ES el control. Se mantiene D6 tal cual
+  (ya es mínima: una tarjeta en página existente, sin UI nueva).
+
+**Tests que se SUMAN** (además de §5 y §0.6): (16) abono efectivo con turno abierto → movCaja
+nace y el arqueo lo espera; sin turno → rechazo con mensaje · (17) abono efectivo idempotente
+por-libro (replay no duplica movCaja) · (18) "Retiro de banco" crea ambas patas en una tx ·
+(19) reabrir cuadre: owner sí / admin no / mes siguiente sellado → rechazo · (20) gasto sin
+categoria → rechazo; margen: Σ pago_proveedor separable de Σ gasto en el export.
+
 ## §0 — Qué es (y qué NO es)
 
 **Es**: el libro auxiliar de tesorería de Kary — las cuentas reales donde vive la plata
@@ -275,7 +323,7 @@ Reglas: `firestore-rules.test.mjs` gana casos: write directo a las 2 colecciones
 - [ ] Consolidación: ADR + `21-ESPACIAL` + `31-LECCIONES` si hay gotchas + `05`/`10`
 
 ## §8 — Cola del titular (NO ejecutar sin Fable/Daniel)
-- Efectivo de abonos de cartera → caja/arqueo (D9 límite conocido; toca zona caliente).
+- ~~Efectivo de abonos → caja~~ **ENTRÓ al alcance como V17 (§0.7)** — ya no es cola.
 - Capacidades-flag T-16/18/19 + rol `caja` (F2.0 matiz).
 - Auto-posting Wompi→tesorería (F-REPORTES).
 - Decisión Daniel pendiente del v5 §8: destino de los 344 clientes en la limpieza.

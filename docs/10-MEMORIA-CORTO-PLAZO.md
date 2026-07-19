@@ -8,10 +8,9 @@
 
 ## 🎯 Foco actual
 
-> 🟣 **INTERINATO #3 — OPUS 4.8 OPERA** (desde 2026-07-10). Cargar SIEMPRE `opus-interino-protocolo` + `asesor-critico-honesto` + `caza-bugs`. **Frentes**: TODO-76 (F-IA-2 ✅ code-complete) **+ TODO-35 visibilidad/SEO** (ampliado por Daniel 17jul — la regla vieja "único frente = TODO-76" quedó superada). Decisiones Fuertes/dinero nuevo → cola del titular. Fable audita por `git log --grep="[OPUS-4.8]"`.
+> 🟣 **INTERINATO #4 — OPUS 4.8 OPERA** (abierto 2026-07-18; #3 F-IA-2 cerrado y auditado §192). **Al arrancar sesión nueva: cargar SIEMPRE `opus-interino-protocolo` + `asesor-critico-honesto` + `caza-bugs`.** **FRENTE ÚNICO = F-TESORERÍA (TODO-78)** con spec cerrada: leer `docs/superpowers/specs/2026-07-18-f-tesoreria-DISENO.md` COMPLETA (prevalencia §0.8>§0.7>§0.6>cuerpo) y ejecutar **B0→B6 sin re-decidir** (R2: TDD por escenario en el MISMO commit; R3 zonas calientes bóveda-V1/caja-V17 = test primero; R4 validación viva). Decisiones Fuertes/dinero nuevo distinto → cola del titular. Fable audita al volver por `git log --grep="[OPUS-4.8]"`.
 >
-> **🧭 FOCO = plan maestro v5** (F1→F2.2 + POS-pro ✅ EN PROD §165-§182): **F-IA-2 ✅ CODE-COMPLETE (TODO-76, interino Opus — B0-B5)** → F-TESORERIA → F-COMPRAS → F-REPORTES → apartados (TODO-39, pend Daniel) → 2.3 térmica → limpieza → rompimiento → **lanzamiento (ahí: precios reales)**. `[[project_comercio_pagos]]`
-> _MCP Firebase=escritura prod · **push+merge a main=Claude sin preguntar** (`[[feedback_claude_deploy_autorizado]]`) · consejo externo read-only · Claude valida en Chrome (`[[feedback_validacion_chrome_directa]]`)._
+> **🧭 Roadmap** (detalle → `05`): …F-IA-2 ✅ → **F-TESORERÍA (B0)** → F-COMPRAS → F-REPORTES → apartados → limpieza → rompimiento → lanzamiento. _MCP Firebase=prod · push+merge a main=Claude · consejo read-only · valida en Chrome._ `[[project_comercio_pagos]]`
 
 ---
 

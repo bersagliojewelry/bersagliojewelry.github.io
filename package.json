@@ -47,7 +47,8 @@
     "test:hoy": "node --test tests/hoy-format.test.mjs",
     "test:codigo-pedido": "node --test functions/pedidos-codigo.test.mjs",
     "test:avanzar": "node --test functions/avanzar-pedido.test.mjs",
-    "brain:diff": "node scripts/brain-diff.mjs"
+    "brain:diff": "node scripts/brain-diff.mjs",
+    "brain:pull": "node ../brain-private/kernel/pull.mjs"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.1",

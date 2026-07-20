@@ -134,6 +134,12 @@ before(async () => {
         await setDoc(doc(db, 'boveda/main/checkpoints/2026-07'), { mes: '2026-07', saldo: 0 });
         await setDoc(doc(db, 'bovedaMovimientos/bm1'), { tipo: 'saldo_inicial', monto: 0, autor: 'ownerUid' });      // asiento fundacional $0 (§8.1.1)
 
+        // ─── F-TESORERÍA B0: cuentas + movimientos (CF-only; seed con reglas off) ──
+        // SSoT: docs/superpowers/specs/2026-07-18-f-tesoreria-DISENO.md (§1 · D2/D8).
+        await setDoc(doc(db, 'cuentasTesoreria/caja'), { nombre: 'Caja', tipo: 'caja', titular: 'empresa', esDeSocia: false, activa: true }); // virtual (seed B0)
+        await setDoc(doc(db, 'cuentasTesoreria/tesBanco'), { nombre: 'Bancolombia', banco: 'Bancolombia', tipo: 'banco', titular: 'kary', esDeSocia: false, activa: true, saldoInicial: { monto: 500000, moneda: 'COP' }, fechaCorte: '2026-07-01' });
+        await setDoc(doc(db, 'movimientosTesoreria/tmov1'), { cuentaId: 'tesBanco', tipo: 'ingreso_venta', monto: { monto: 100000, moneda: 'COP' }, fecha: '2026-07-05', estado: 'activo' });
+
         // ─── F2.2: catálogo de servicios (owner-write acotado, POS-read, soft-delete) ──
         await setDoc(doc(db, 'servicios/srvSeed'), { codigo: 'GRAB', nombre: 'Grabado láser', precio: 20000, activo: true, naturaleza: 'servicio' });
         await setDoc(doc(db, 'servicios/srvSeed/historial/h1'), { precioAntes: 15000, precioDespues: 20000, cambiadoPor: 'ownerUid', cambiadoEn: new Date() });
@@ -420,6 +426,24 @@ test('B0b · bovedaMovimientos (ledger APPEND-ONLY ESTRICTO): CF-only; ni el own
     await assertFails(setDoc(doc(asUser('ownerUid'),    'bovedaMovimientos/bm2'), { tipo: 'cajon_a_boveda', monto: 100 })); // create CF-only
     await assertFails(updateDoc(doc(asUser('ownerUid'), 'bovedaMovimientos/bm1'), { monto: 0 }));                  // inmutable: corregir = reverso, no editar
     await assertFails(deleteDoc(doc(asUser('ownerUid'), 'bovedaMovimientos/bm1')));                                // jamás se borra
+});
+
+// ─── F-TESORERÍA B0: cuentas + movimientos = CF-only, read admin/owner (D8) ───
+test('F-TESO · cuentasTesoreria: admin/owner leen; la cajera y editor NO; nadie escribe por fuera (CF-only)', async () => {
+    await assertSucceeds(getDoc(doc(asUser('adminUid'), 'cuentasTesoreria/tesBanco')));
+    await assertSucceeds(getDoc(doc(asUser('ownerUid'), 'cuentasTesoreria/tesBanco')));
+    await assertFails(getDoc(doc(asClaim('cajT', 'caja'), 'cuentasTesoreria/tesBanco')));         // la cajera no ve tesorería
+    await assertFails(getDoc(doc(asUser('editorUid'), 'cuentasTesoreria/tesBanco')));             // editor tampoco (es admin+)
+    await assertFails(setDoc(doc(asUser('adminUid'), 'cuentasTesoreria/hack'), { nombre: 'x', tipo: 'banco', activa: true })); // create CF-only
+    await assertFails(setDoc(doc(asUser('ownerUid'), 'cuentasTesoreria/tesBanco'), { saldoActual: { monto: 9 } }, { merge: true })); // saldo = recompute CF-only
+});
+test('F-TESO · movimientosTesoreria (ledger append-only): admin/owner leen; CF-only; ni el owner edita/borra', async () => {
+    await assertSucceeds(getDoc(doc(asUser('adminUid'), 'movimientosTesoreria/tmov1')));
+    await assertSucceeds(getDoc(doc(asUser('ownerUid'), 'movimientosTesoreria/tmov1')));
+    await assertFails(getDoc(doc(asClaim('cajT', 'caja'), 'movimientosTesoreria/tmov1')));        // la cajera no ve el ledger
+    await assertFails(setDoc(doc(asUser('ownerUid'), 'movimientosTesoreria/tmov2'), { cuentaId: 'tesBanco', tipo: 'gasto', monto: { monto: 100 } })); // create CF-only
+    await assertFails(updateDoc(doc(asUser('ownerUid'), 'movimientosTesoreria/tmov1'), { estado: 'rechazado' }));  // inmutable
+    await assertFails(deleteDoc(doc(asUser('ownerUid'), 'movimientosTesoreria/tmov1')));          // jamás se borra
 });
 
 // ─── CMS · Journal: lectura pública, escritura editor con hasOnly tipado ──────

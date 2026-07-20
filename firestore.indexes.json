@@ -40,6 +40,31 @@
         { "fieldPath": "estado", "order": "ASCENDING" },
         { "fieldPath": "reservaExpira", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "movimientosTesoreria",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "cuentaId", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "movimientosTesoreria",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "cuentaId", "order": "ASCENDING" },
+        { "fieldPath": "conciliado", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "movimientosTesoreria",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "estado", "order": "ASCENDING" },
+        { "fieldPath": "tipo", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

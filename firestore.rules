@@ -784,6 +784,25 @@ service cloud.firestore {
       allow write: if false;                    // SOLO Admin SDK; sin update/delete = inmutable
     }
 
+    // ─── F-TESORERÍA · Cuentas y bancos (libro auxiliar de tesorería, B0) ────────
+    // SSoT del diseño: docs/superpowers/specs/2026-07-18-f-tesoreria-DISENO.md (§1 · D2 · D8).
+    // TODO el ledger de tesorería lo ESCRIBE solo la CF `registrarMovimientoTesoreria` (Admin SDK,
+    // que IGNORA estas reglas): registro/traslado/aprobación/conciliación en runTransaction
+    // (invariantes de dinero #1-#7). El cliente NUNCA escribe (write:false, patrón bóveda). read
+    // admin/owner (D8: Kary registra, el owner aprueba). La cajera (`caja`) NO ve tesorería —
+    // parámetros del negocio = admin+, misma discreción que config/cartera.
+    match /cuentasTesoreria/{cuentaId} {
+      allow read:  if isAdmin();
+      allow write: if false;                    // SOLO Admin SDK (crearCuentaTesoreria); saldoActual = recompute CF-only (D5)
+    }
+    // Ledger de movimientos — APPEND-ONLY ESTRICTO (§1): CF-only + NUNCA update/delete (ni el
+    // owner). Un movimiento conciliado es INMUTABLE (corregir = ajuste_inverso NUEVO con doble
+    // rastro, jamás editar/borrar el asiento). read admin/owner (auditoría).
+    match /movimientosTesoreria/{opId} {
+      allow read:  if isAdmin();
+      allow write: if false;                    // SOLO Admin SDK; sin update/delete = inmutable
+    }
+
     // ─── Collections (categories) ──────────────────────────────────────────────
 
     match /collections/{colId} {

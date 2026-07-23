@@ -261,6 +261,14 @@ exports.reversoTraslado = require('./pedidos').reversoTraslado;     // isCaja: r
 exports.ajusteBoveda = require('./pedidos').ajusteBoveda;           // isCaja: ajuste faltante/sobrante (pendiente + alerta)
 exports.aprobarEventoCaja = require('./pedidos').aprobarEventoCaja; // isOwner: aprueba reverso/ajuste (SoD §9.1)
 exports.recalcBoveda = require('./pedidos').recalcBoveda;           // trigger: mantiene boveda/main fresco (backstop)
+// F-TESORERÍA B1 (spec 2026-07-18): libro auxiliar "Cuentas y bancos" — CF única escritora (D2).
+exports.crearCuentaTesoreria = require('./tesoreria').crearCuentaTesoreria;             // admin: alta de cuenta real (V22)
+exports.registrarMovimientoTesoreria = require('./tesoreria').registrarMovimientoTesoreria; // admin: única puerta manual del ledger
+exports.trasladarEntreCuentas = require('./tesoreria').trasladarEntreCuentas;           // admin: par atómico out+in (D3)
+exports.aprobarMovimientoTesoreria = require('./tesoreria').aprobarMovimientoTesoreria; // owner: SoD retiros/ajustes (D4, V5)
+exports.marcarConciliado = require('./tesoreria').marcarConciliado;                     // admin: sella el cuadre mensual (B3)
+exports.repararSaldoTesoreria = require('./tesoreria').repararSaldoTesoreria;           // admin: recompute forzado (patrón §64)
+exports.recalcSaldoTesoreria = require('./tesoreria').recalcSaldoTesoreria;             // trigger D5: ledger → saldoActual
 exports.ajustarStock = require('./inventario').ajustarStock;         // TODO-40 F1: merma/reabasto/corrección (delta + ledger)
 exports.cambiarTipoPieza = require('./inventario').cambiarTipoPieza; // TODO-40 F1: transición de tipo (purga cantidad, D6)
 // F2.1 · identidad del cliente (contrato legalIdKey; índice clientesPorDoc CF-only, pepper Secret Manager)

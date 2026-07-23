@@ -81,6 +81,6 @@ que el skeleton ya disimula con dignidad.
 ## Checklist
 
 - [x] Capa B skeleton implementada, build verde, cache v84 — evidencia: commit `f5d4858`.
-- [x] Validada live en prod (Chrome holístico) — evidencia: skeleton→contenido real + secciones vacías colapsadas, 2026-07-08.
+- [x] Validada live en prod (Chrome holístico) — evidencia: skeleton→contenido real + secciones vacías colapsadas, 2026-07-08. · ADR §178
 - [x] Consejo externo (Antigravity) integrado — Capa A live-upgrade ABORTADA (bait-and-switch); "Vitrina diaria" diferida a datos. Evidencia: ADR §178.5/§178.7 + sección "Consejo externo" de este doc.
 - [x] Cierre TODO-74: ADR §178 (`99`) + fila `00` + lección L-82 (`30` stub + `32` detalle).

@@ -25,7 +25,7 @@
 //   (7) archiveDir íntegro [warn, --full]               (16) Fiabilidad M-22: `verificado-vivo` stale [info, --full]
 //       + 7b) bóveda: commits ≠ origin vía fs [warn]
 // ===========================================================
-const KERNEL_VERSION = '1.5.1';
+const KERNEL_VERSION = '1.6.0';
 import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -485,12 +485,17 @@ else {
   if (da && da.last) {
     const days = Math.floor((new Date() - new Date(da.last)) / 86400000);
     let due = da.maxDays && days > da.maxDays ? `hace ${days} días (> ${da.maxDays})` : null;
+    let gap = 0;
     if (!BOOT && da.maxAdrGap && existsSync(histPath)) {
       const headers = (read(histPath).match(/^##\s+/gm) || []).length;
-      if (da.coveredHeaderCount && headers - da.coveredHeaderCount >= da.maxAdrGap)
-        due = (due ? due + ' y ' : '') + `${headers - da.coveredHeaderCount} ADRs nuevos (≥ ${da.maxAdrGap})`;
+      gap = da.coveredHeaderCount ? headers - da.coveredHeaderCount : 0;
+      if (gap >= da.maxAdrGap) due = (due ? due + ' y ' : '') + `${gap} ADRs nuevos (≥ ${da.maxAdrGap})`;
     }
-    if (due) info(`🔬 auditoría Nivel-2 VENCIDA: última ${da.last}, ${due} → correr skill auditoria-cerebro (§173)`);
+    // v1.6 F3 §53 (escalación con GRACIA — el nudge info se ignoró semanas; el warn BLOQUEA commits
+    // del cerebro vía pre-commit): vencida dentro de gracia (maxDays+7 / gap+6) = info; pasada = WARN.
+    const pastGrace = (da.maxDays && days > da.maxDays + 7) || (da.maxAdrGap && gap >= da.maxAdrGap + 6);
+    if (due && pastGrace) warn(`🔬 auditoría Nivel-2 MUY vencida (${due}; gracia agotada) → correr skill auditoria-cerebro / mantenimiento-general AHORA`);
+    else if (due) info(`🔬 auditoría Nivel-2 VENCIDA: última ${da.last}, ${due} → correr skill auditoria-cerebro (§173)`);
     // v1.3 §50: la tabla de la auditoría debe EXISTIR (sin ella la Sonda 0 no puede diffear).
     if (!BOOT && da.tableFile && archiveDir && existsSync(archiveDir) && !existsSync(join(archiveDir, da.tableFile)))
       warn(`deepAudit.tableFile "${da.tableFile}" NO existe en archiveDir → la Sonda 0 de la próxima auditoría no tiene input`);

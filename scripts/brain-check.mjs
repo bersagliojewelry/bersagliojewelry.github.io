@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // ===========================================================
-// 🧠 brain-check v1.3 — Linter de integridad del cerebro neuronal (CANÓNICO · portable)
+// 🧠 brain-check v1.5 — Linter de integridad del cerebro neuronal (CANÓNICO · portable)
 // ===========================================================
 // KERNEL del cerebro multi-proyecto (ADR §170/§171/§173; v1.3 = kill-list F0 Cerebro v2, inmobiliaria §50).
 // Este archivo es IDÉNTICO en los 4 repos — escritor único = operador-inmobiliaria (§41).
@@ -25,7 +25,7 @@
 //   (7) archiveDir íntegro [warn, --full]               (16) Fiabilidad M-22: `verificado-vivo` stale [info, --full]
 //       + 7b) bóveda: commits ≠ origin vía fs [warn]
 // ===========================================================
-const KERNEL_VERSION = '1.4.0';
+const KERNEL_VERSION = '1.5.0';
 import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -218,7 +218,7 @@ if (hasSwSection && swFile) {
         const nv = (s) => String(s).replace(/^v/, '');
         if (nv(vig) === nv(swVer)) ok(`05 cache vigente == SW ("${swVer}")`);
         else warn(`05 STALE: declara "${vig}" pero SW="${swVer}" → actualizar 05`);
-      } else info('05 sin "Cache version vigente" parseable');
+      } else if (!existsSync(join(DOCS, '.estado-auto.md'))) info('05 sin "Cache version vigente" parseable (y sin heartbeat §52 — en era-heartbeat el campo vive en el sidecar)');
     }
   }
 } else head('  ℹ️  sin service-worker o sin §4 — omitido');

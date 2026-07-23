@@ -19,7 +19,7 @@ import core from './tesoreria-core.js';
 const {
     seedCuentasVirtuales, TIPOS_VIRTUALES, TesoreriaError,
     crearCuentaTesoreriaCore, registrarMovimientoTesoreriaCore, trasladarEntreCuentasCore,
-    aprobarMovimientoTesoreriaCore, marcarConciliadoCore, recalcularSaldoCuentaCore,
+    aprobarMovimientoTesoreriaCore, marcarConciliadoCore, reabrirCuadreCore, recalcularSaldoCuentaCore,
 } = core;
 
 initializeApp({ projectId: 'demo-bersaglio' });
@@ -257,4 +257,39 @@ test('test 20 (V20) · gasto sin categoría (o con una inventada) ⇒ rechazo; p
     // V8: egreso deducible sin contraparte ⇒ rechazo
     await assert.rejects(reg({ opId: 'g5', cuentaId: 'A', tipo: 'gasto', monto: 1000, categoria: 'otros' }),
         esTesoError('invalid-argument'));
+});
+
+// ─── B3 · Reabrir cuadre (V19: sello en dos etapas) ──────────────────────────
+test('B3 reabrir · owner reabre un mes sellado (conciliado→false); admin no; sin motivo no; audit', async () => {
+    await cuenta('A');
+    await reg({ opId: 'i1', cuentaId: 'A', tipo: 'ingreso_venta', monto: 40000, fecha: '2026-07-05' });
+    await marcarConciliadoCore(db, { cuentaId: 'A', periodo: '2026-07', opIds: ['i1'], actor: 'adminUid' });
+    assert.equal((await db.doc('movimientosTesoreria/i1').get()).data().conciliado, true);
+    // admin no puede reabrir
+    await assert.rejects(reabrirCuadreCore(db, { cuentaId: 'A', periodo: '2026-07', motivo: 'x', actor: 'adminUid', rol: 'admin' }), esTesoError('permission-denied'));
+    // owner sin motivo tampoco
+    await assert.rejects(reabrirCuadreCore(db, { cuentaId: 'A', periodo: '2026-07', actor: 'ownerUid', rol: 'owner' }), esTesoError('invalid-argument'));
+    // owner con motivo → reabre
+    const r = await reabrirCuadreCore(db, { cuentaId: 'A', periodo: '2026-07', motivo: 'me equivoqué de mes', actor: 'ownerUid', rol: 'owner' });
+    assert.equal(r.reabiertos, 1);
+    const m = (await db.doc('movimientosTesoreria/i1').get()).data();
+    assert.equal(m.conciliado, false);
+    assert.equal('periodoConciliado' in m, false, 'quita periodoConciliado');
+    assert.equal(m.reabiertoPor.motivo, 'me equivoqué de mes');   // audit trail
+    // reabrir un mes sin cuadre → not-found
+    await assert.rejects(reabrirCuadreCore(db, { cuentaId: 'A', periodo: '2026-05', motivo: 'x', actor: 'ownerUid', rol: 'owner' }), esTesoError('not-found'));
+});
+
+test('B3 reabrir · bloqueado si el mes SIGUIENTE ya está sellado (se reabre el más reciente primero)', async () => {
+    await cuenta('A');
+    await reg({ opId: 'jul', cuentaId: 'A', tipo: 'ingreso_venta', monto: 10000, fecha: '2026-07-10' });
+    await reg({ opId: 'ago', cuentaId: 'A', tipo: 'ingreso_venta', monto: 20000, fecha: '2026-08-10' });
+    await marcarConciliadoCore(db, { cuentaId: 'A', periodo: '2026-07', opIds: ['jul'], actor: 'adminUid' });
+    await marcarConciliadoCore(db, { cuentaId: 'A', periodo: '2026-08', opIds: ['ago'], actor: 'adminUid' });
+    // reabrir julio con agosto sellado → rechazo (rollover diciembre cubierto por periodoSiguiente)
+    await assert.rejects(reabrirCuadreCore(db, { cuentaId: 'A', periodo: '2026-07', motivo: 'x', actor: 'ownerUid', rol: 'owner' }), esTesoError('failed-precondition'));
+    // reabrir agosto (el más reciente) sí se puede; luego julio queda libre
+    await reabrirCuadreCore(db, { cuentaId: 'A', periodo: '2026-08', motivo: 'orden correcto', actor: 'ownerUid', rol: 'owner' });
+    const r = await reabrirCuadreCore(db, { cuentaId: 'A', periodo: '2026-07', motivo: 'ahora sí', actor: 'ownerUid', rol: 'owner' });
+    assert.equal(r.reabiertos, 1);
 });

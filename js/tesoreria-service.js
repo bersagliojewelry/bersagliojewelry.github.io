@@ -44,6 +44,11 @@ export async function marcarConciliado(input) {
     const fn = await _callable('marcarConciliado');
     return (await fn(input)).data;
 }
+/** Reabre un cuadre sellado (V19). SOLO owner (motivo obligatorio). @param {{cuentaId,periodo,motivo}} input */
+export async function reabrirCuadre(input) {
+    const fn = await _callable('reabrirCuadre');
+    return (await fn(input)).data;
+}
 /** Fuerza el recompute del saldo de una cuenta (reparación §64). admin. @param {{cuentaId}} input */
 export async function repararSaldoTesoreria(input) {
     const fn = await _callable('repararSaldoTesoreria');
@@ -72,6 +77,6 @@ export function onMovsCuentaChange(cuentaId, cb, max = 200, onErr) {
 
 export default {
     crearCuentaTesoreria, registrarMovimientoTesoreria, trasladarEntreCuentas,
-    aprobarMovimientoTesoreria, marcarConciliado, repararSaldoTesoreria,
+    aprobarMovimientoTesoreria, marcarConciliado, reabrirCuadre, repararSaldoTesoreria,
     onCuentasTesoreriaChange, onMovsCuentaChange,
 };

@@ -467,6 +467,52 @@ async function marcarConciliadoCore(db, input = {}) {
     });
 }
 
+// Mes calendario siguiente a 'YYYY-MM' (rollover de diciembre).
+function periodoSiguiente(periodo) {
+    const [y, m] = periodo.split('-').map(Number);
+    const ny = m === 12 ? y + 1 : y;
+    const nm = m === 12 ? 1 : m + 1;
+    return `${ny}-${String(nm).padStart(2, '0')}`;
+}
+
+/**
+ * CF 5b · Reabre el cuadre de un mes (V19: sello en dos etapas). OWNER-only con motivo + audit.
+ * Des-concilia los movimientos sellados de ESE período+cuenta (conciliado→false, quita
+ * periodoConciliado) para poder re-cuadrar. Bloqueada si el mes SIGUIENTE ya está sellado en esa
+ * cuenta (no se reabre un mes con otro posterior ya cerrado — se reabre el más reciente primero).
+ * Es la ÚNICA vía por la que la CF toca un conciliado (la excepción sancionada al inv. de inmutabilidad).
+ * @param db Firestore (admin). @param input { cuentaId, periodo:'YYYY-MM', motivo, actor, rol }
+ */
+async function reabrirCuadreCore(db, input = {}) {
+    const { FieldValue } = require('firebase-admin/firestore');
+    const cuentaId = String(input.cuentaId || '').trim();
+    const periodo = String(input.periodo || '').trim();
+    const motivo = input.motivo ? String(input.motivo).slice(0, 500) : '';
+    if (!cuentaId) throw new TesoreriaError('invalid-argument', 'cuentaId es obligatorio.');
+    if (!/^\d{4}-\d{2}$/.test(periodo)) throw new TesoreriaError('invalid-argument', "periodo debe ser 'YYYY-MM'.");
+    if (input.rol !== 'owner') throw new TesoreriaError('permission-denied', 'Solo el dueño (owner) puede reabrir un cuadre.');
+    if (!motivo) throw new TesoreriaError('invalid-argument', 'Reabrir un cuadre exige un motivo (audit).');
+    const sig = periodoSiguiente(periodo);
+
+    return db.runTransaction(async (tx) => {
+        // periodoConciliado es campo simple → auto-indexado; se filtra la cuenta en JS (mes acotado).
+        const [thisSnap, nextSnap] = await Promise.all([
+            tx.get(db.collection('movimientosTesoreria').where('periodoConciliado', '==', periodo)),
+            tx.get(db.collection('movimientosTesoreria').where('periodoConciliado', '==', sig)),
+        ]);
+        if (nextSnap.docs.some((d) => d.data().cuentaId === cuentaId)) {
+            throw new TesoreriaError('failed-precondition', `No puedes reabrir ${periodo}: el mes ${sig} ya está cuadrado. Reabre primero el más reciente.`);
+        }
+        const docs = thisSnap.docs.filter((d) => d.data().cuentaId === cuentaId);
+        if (!docs.length) throw new TesoreriaError('not-found', `No hay un cuadre sellado de ${periodo} en esta cuenta.`);
+        const sello = { uid: (input.actor && input.actor.uid) || input.actor || null, at: FieldValue.serverTimestamp(), motivo };
+        for (const d of docs) {
+            tx.update(d.ref, { conciliado: false, periodoConciliado: FieldValue.delete(), reabiertoPor: sello });
+        }
+        return { cuentaId, periodo, reabiertos: docs.length };
+    });
+}
+
 /**
  * CF 6 · Recompute AUTORIDAD del saldo de una cuenta real (D5, patrón recalcSaldoCliente §43).
  * saldo = computeSaldoCuenta(saldoInicial, TODOS sus movimientos) — la fórmula excluye pendientes/
@@ -499,5 +545,5 @@ module.exports = {
     ESTADOS_MOV, TIPOS_PENDIENTES, CATEGORIAS_GASTO, DIRECCIONES, TIPOS_SOLO_SISTEMA, SOCIAS, TIPOS_SOCIA,
     TesoreriaError, entero, signoDeMovimiento, computeSaldoCuenta, seedCuentasVirtuales,
     crearCuentaTesoreriaCore, registrarMovimientoTesoreriaCore, trasladarEntreCuentasCore,
-    aprobarMovimientoTesoreriaCore, marcarConciliadoCore, recalcularSaldoCuentaCore,
+    aprobarMovimientoTesoreriaCore, marcarConciliadoCore, reabrirCuadreCore, recalcularSaldoCuentaCore,
 };

@@ -267,6 +267,7 @@ exports.registrarMovimientoTesoreria = require('./tesoreria').registrarMovimient
 exports.trasladarEntreCuentas = require('./tesoreria').trasladarEntreCuentas;           // admin: par atómico out+in (D3)
 exports.aprobarMovimientoTesoreria = require('./tesoreria').aprobarMovimientoTesoreria; // owner: SoD retiros/ajustes (D4, V5)
 exports.marcarConciliado = require('./tesoreria').marcarConciliado;                     // admin: sella el cuadre mensual (B3)
+exports.reabrirCuadre = require('./tesoreria').reabrirCuadre;                           // owner: reabre un cuadre sellado (B3, V19)
 exports.repararSaldoTesoreria = require('./tesoreria').repararSaldoTesoreria;           // admin: recompute forzado (patrón §64)
 exports.recalcSaldoTesoreria = require('./tesoreria').recalcSaldoTesoreria;             // trigger D5: ledger → saldoActual
 exports.ajustarStock = require('./inventario').ajustarStock;         // TODO-40 F1: merma/reabasto/corrección (delta + ledger)

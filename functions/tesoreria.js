@@ -90,6 +90,15 @@ exports.marcarConciliado = onCall({ region: 'us-central1', invoker: 'public' }, 
     } catch (e) { lanzar(e); }
 });
 
+exports.reabrirCuadre = onCall({ region: 'us-central1', invoker: 'public' }, async (request) => {
+    const db = getFirestore();
+    const rol = await rolDe(db, request.auth, ['owner'], 'Solo el dueño (owner) puede reabrir un cuadre.');
+    try {
+        const d = request.data || {};
+        return await core.reabrirCuadreCore(db, { cuentaId: d.cuentaId, periodo: d.periodo, motivo: d.motivo, actor: actorDe(request.auth), rol });
+    } catch (e) { lanzar(e); }
+});
+
 // Callable de REPARACIÓN (patrón repararSaldo §64): fuerza el recompute de una cuenta.
 exports.repararSaldoTesoreria = onCall({ region: 'us-central1', invoker: 'public' }, async (request) => {
     const db = getFirestore();

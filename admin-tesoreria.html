@@ -68,12 +68,52 @@
                     <!-- Aviso de cuenta de socia (V9): riesgo tributario -->
                     <p class="tes-socia-warn" id="tes-socia-warn" hidden></p>
 
-                    <ul class="bov-mov-list" id="tes-ledger"></ul>
-                    <div class="adm-empty" id="tes-ledger-empty" hidden>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="40" height="40"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg>
-                        <p>Esta cuenta aún no tiene movimientos. Registra el primero con el botón de arriba.</p>
+                    <!-- Pestañas: Movimientos | Cuadrar mes (§3) -->
+                    <div class="tes-tabs" role="tablist">
+                        <button class="tes-tab is-active" id="tab-movs" type="button" role="tab">Movimientos</button>
+                        <button class="tes-tab" id="tab-cuadre" type="button" role="tab">Cuadrar mes</button>
                     </div>
-                    <p class="pos-hint">El historial no se puede borrar: para corregir un movimiento se crea una corrección que lo reversa (el original queda registrado). Un movimiento ya cuadrado con el extracto queda bloqueado.</p>
+
+                    <!-- Panel: movimientos -->
+                    <div id="tes-tab-movs">
+                        <ul class="bov-mov-list" id="tes-ledger"></ul>
+                        <div class="adm-empty" id="tes-ledger-empty" hidden>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="40" height="40"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg>
+                            <p>Esta cuenta aún no tiene movimientos. Registra el primero con el botón de arriba.</p>
+                        </div>
+                        <p class="pos-hint">El historial no se puede borrar: para corregir un movimiento se crea una corrección que lo reversa (el original queda registrado). Un movimiento ya cuadrado con el extracto queda bloqueado.</p>
+                    </div>
+
+                    <!-- Panel: cuadrar mes (conciliación B3) -->
+                    <div id="tes-tab-cuadre" hidden>
+                        <ol class="tes-cua-steps">
+                            <li>Abre tu extracto del banco de ese mes.</li>
+                            <li>Marca abajo los movimientos que también aparezcan allá.</li>
+                            <li>Escribe el saldo final que muestra tu extracto y guarda.</li>
+                        </ol>
+                        <div class="tes-cua-bar">
+                            <div class="adm-field adm-field--inline">
+                                <label for="cua-mes">Mes</label>
+                                <input class="adm-input" id="cua-mes" type="month">
+                            </div>
+                            <button class="adm-btn adm-btn--ghost adm-btn--sm" id="cua-reabrir" type="button" hidden>Reabrir este cuadre</button>
+                        </div>
+                        <ul class="bov-mov-list" id="cua-list"></ul>
+                        <p class="pos-hint" id="cua-empty" hidden>No hay movimientos firmes en este mes.</p>
+                        <div class="tes-cua-summary">
+                            <div class="adm-calc-line"><span>Según el sistema (saldo al cierre del mes)</span><strong class="adm-money" id="cua-sistema">$0</strong></div>
+                            <div class="adm-field">
+                                <label for="cua-extracto">Saldo final según tu extracto (COP)</label>
+                                <input class="adm-input" id="cua-extracto" type="number" min="0" inputmode="numeric" placeholder="Escríbelo de tu extracto">
+                            </div>
+                            <div class="adm-calc-line adm-calc-total"><span id="cua-diff-label">Diferencia</span><strong id="cua-diff">$0</strong></div>
+                        </div>
+                        <p class="pos-hint" id="cua-diff-hint" hidden></p>
+                        <div class="tes-cua-actions">
+                            <button class="adm-btn adm-btn--primary adm-btn--sm" id="cua-guardar" type="button">Guardar cuadre</button>
+                            <button class="adm-btn adm-btn--ghost adm-btn--sm" id="cua-ajuste" type="button" hidden>Registrar ajuste del cuadre</button>
+                        </div>
+                    </div>
                 </section>
 
             </div>

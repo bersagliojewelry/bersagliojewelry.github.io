@@ -1871,3 +1871,20 @@ select.adm-input { cursor: pointer; appearance: none; -webkit-appearance: none; 
     color: #9a7730; background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.3); border-radius: var(--adm-radius);
 }
 .tes-clip { font-size: 13px; }
+
+/* Cuadre (B3): pestañas + panel de conciliación */
+.tes-tabs { display: flex; gap: 4px; margin: 6px 0 12px; border-bottom: 1px solid var(--adm-border); }
+.tes-tab {
+    padding: 8px 14px; font: inherit; font-size: 13.5px; font-weight: 500; color: var(--adm-muted);
+    background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; margin-bottom: -1px;
+}
+.tes-tab:hover { color: var(--adm-text); }
+.tes-tab.is-active { color: var(--adm-accent); border-bottom-color: var(--adm-accent); }
+.tes-cua-steps { margin: 0 0 12px; padding-left: 20px; font-size: 12.5px; color: var(--adm-muted); line-height: 1.6; }
+.tes-cua-bar { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.adm-field--inline { flex-direction: row; align-items: center; gap: 8px; margin: 0; }
+.adm-field--inline label { margin: 0; white-space: nowrap; }
+.tes-cua-summary { margin-top: 12px; padding: 12px 14px; background: var(--adm-bg, #f7f7f5); border: 1px solid var(--adm-border); border-radius: var(--adm-radius); }
+.tes-cua-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.tes-cua-cb { width: 17px; height: 17px; cursor: pointer; accent-color: var(--adm-accent); }
+.tes-cua-done { opacity: .72; }

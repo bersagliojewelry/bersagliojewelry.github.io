@@ -10,12 +10,12 @@
  * salen del espejo puro `tesoreria-format.js` (paridad con el servidor, inv.2).
  */
 import adminDb from './db.js';
-import { admToast, admConfirm, initSidebar, requireAuth, errorMessage, fmtDate } from './shared.js';
+import { admToast, admConfirm, initSidebar, requireAuth, errorMessage, fmtDate, hasRole } from './shared.js';
 import {
     crearCuentaTesoreria, registrarMovimientoTesoreria, trasladarEntreCuentas,
-    onCuentasTesoreriaChange, onMovsCuentaChange,
+    marcarConciliado, reabrirCuadre, onCuentasTesoreriaChange, onMovsCuentaChange,
 } from '../tesoreria-service.js';
-import { ETIQUETAS_TIPO, signoDeMovimiento, entero, TIPOS_VIRTUALES } from './tesoreria-format.js';
+import { ETIQUETAS_TIPO, signoDeMovimiento, computeSaldoCuenta, entero, TIPOS_VIRTUALES } from './tesoreria-format.js';
 
 // COP con signo (el saldo PUEDE ser negativo — V6 lo grita, sin clamp).
 const cop = (n) => { const v = Math.round(Number(n) || 0); return (v < 0 ? '-$' : '$') + Math.abs(v).toLocaleString('es-CO'); };
@@ -35,6 +35,10 @@ let _movsUnsub = null;
 let _movOpId = null;   // idempotencia: opId perezoso del modal de registrar (reintento tras fallo reusa)
 let _traOpId = null;   // idempotencia: opId perezoso del modal de traslado
 let _ctaOpId = null;   // idempotencia: opId perezoso del modal de crear cuenta
+let _isOwner = false;  // el botón "Reabrir cuadre" es owner-only (V19)
+let _tab = 'movs';     // 'movs' | 'cuadre'
+let _cuaMes = '';      // 'YYYY-MM' del cuadre
+let _cuaChecked = new Set();   // borrador de los ✓ del cuadre (persistible en localStorage, V19)
 
 // ─── DOM builder seguro (sin innerHTML) ──────────────────────────────────────
 function el(tag, attrs = {}, kids = []) {
@@ -57,6 +61,7 @@ const cuentasRealesActivas = () => cuentasReales().filter(c => c.activa !== fals
 
 async function init() {
     await requireAuth('admin');      // Kary (admin) registra; owner aprueba. La cajera NO ve tesorería.
+    _isOwner = hasRole('owner');     // owner puede reabrir un cuadre sellado (V19)
     await adminDb.init();
     initSidebar();
 
@@ -90,6 +95,15 @@ async function init() {
     document.getElementById('tra-cancel').addEventListener('click', closeTraslado);
     document.getElementById('tra-submit').addEventListener('click', handleTraslado);
     document.getElementById('tra-modal').addEventListener('click', e => { if (e.target.id === 'tra-modal') closeTraslado(); });
+
+    // Pestañas + cuadre (B3)
+    document.getElementById('tab-movs').addEventListener('click', () => switchTab('movs'));
+    document.getElementById('tab-cuadre').addEventListener('click', () => switchTab('cuadre'));
+    document.getElementById('cua-mes').addEventListener('change', (e) => { _cuaMes = e.target.value; loadCuaDraft(); renderCuadre(); });
+    document.getElementById('cua-extracto').addEventListener('input', updateCuaDiff);
+    document.getElementById('cua-guardar').addEventListener('click', handleGuardarCuadre);
+    document.getElementById('cua-ajuste').addEventListener('click', handleAjusteCuadre);
+    document.getElementById('cua-reabrir').addEventListener('click', handleReabrir);
 }
 
 // ─── Cuentas: tarjetas + total ────────────────────────────────────────────────
@@ -163,11 +177,12 @@ function selectCuenta(id) {
     const card = document.getElementById('tes-movs-card');
     if (!id) { card.hidden = true; return; }
     card.hidden = false;
+    switchTab('movs');   // al cambiar de cuenta, arranca en Movimientos
     renderMovsHeader();
     renderLedger();
     _movsUnsub = onMovsCuentaChange(
         id,
-        (m) => { _movs = m; renderLedger(); },
+        (m) => { _movs = m; renderLedger(); if (_tab === 'cuadre') renderCuadre(); },
         200,
         (e) => admToast(errorMessage(e, 'No se pudieron leer los movimientos.'), 'danger', 4000),
     );
@@ -387,6 +402,165 @@ async function handleTraslado() {
             } catch (err) {
                 admToast((BUSINESS_ERR.includes(err?.code) && err?.message) ? err.message : errorMessage(err, 'No se pudo trasladar.'), 'danger', 4500);
                 submit.disabled = false; submit.textContent = 'Trasladar';
+            }
+        },
+    );
+}
+
+// ─── Cuadrar mes (conciliación B3 · V13/V15/V19) ──────────────────────────────
+function byIdOf(arr) { const o = {}; for (const m of arr) if (m && m.id != null) o[m.id] = m; return o; }
+const draftKey = () => `tes-cua-${_selectedId}-${_cuaMes}`;
+function loadCuaDraft() {
+    _cuaChecked = new Set();
+    try { const raw = localStorage.getItem(draftKey()); if (raw) JSON.parse(raw).forEach(id => _cuaChecked.add(id)); } catch { /* storage off */ }
+}
+function saveCuaDraft() { try { localStorage.setItem(draftKey(), JSON.stringify([..._cuaChecked])); } catch { /* storage off */ } }
+
+function switchTab(tab) {
+    _tab = tab;
+    document.getElementById('tab-movs').classList.toggle('is-active', tab === 'movs');
+    document.getElementById('tab-cuadre').classList.toggle('is-active', tab === 'cuadre');
+    document.getElementById('tes-tab-movs').hidden = tab !== 'movs';
+    document.getElementById('tes-tab-cuadre').hidden = tab !== 'cuadre';
+    if (tab === 'cuadre') {
+        if (!_cuaMes) { _cuaMes = hoyISO().slice(0, 7); document.getElementById('cua-mes').value = _cuaMes; }
+        document.getElementById('cua-extracto').value = '';
+        loadCuaDraft();
+        renderCuadre();
+    }
+}
+
+const movsDelMes = () => _movs.filter(m => String(m.fecha || '').startsWith(_cuaMes));
+
+function renderCuadre() {
+    const c = cuentaById(_selectedId);
+    if (!c) return;
+    const list = document.getElementById('cua-list');
+    const empty = document.getElementById('cua-empty');
+    list.textContent = '';
+    const mes = movsDelMes();
+    empty.hidden = mes.length > 0;
+    const byId = byIdOf(_movs);
+
+    for (const m of mes) {
+        const activo = (m.estado || 'activo') === 'activo';
+        let signo = 0; try { signo = signoDeMovimiento(m, byId); } catch { signo = 0; }
+        const val = signo * entero(m.monto);
+        const montoEl = el('strong', { class: 'adm-money', text: (val > 0 ? '+' : val < 0 ? '−' : '') + cop(Math.abs(val)).replace('-', '') });
+        montoEl.classList.add(val > 0 ? 'adm-money--favor' : (val < 0 ? 'adm-money--debe' : 'adm-money--cero'));
+
+        const info = el('div', { class: 'bov-mov-info' }, [
+            el('span', { class: 'bov-mov-tipo', text: ETIQUETAS_TIPO[m.tipo] || m.tipo }),
+            el('span', { class: 'bov-mov-time', text: fmtDate(m.fecha) }),
+        ]);
+        const right = [montoEl];
+        if (m.conciliado) {
+            right.push(el('span', { class: 'adm-pill adm-pill--green', text: '✓ cuadrado' }));
+        } else if (!activo) {
+            right.push(el('span', { class: 'adm-pill adm-pill--gold', text: m.estado === 'rechazado' ? 'rechazado' : 'pendiente' }));
+        } else {
+            const cb = el('input', { type: 'checkbox', class: 'tes-cua-cb' });
+            cb.checked = _cuaChecked.has(m.id);
+            cb.addEventListener('change', () => { cb.checked ? _cuaChecked.add(m.id) : _cuaChecked.delete(m.id); saveCuaDraft(); });
+            right.unshift(cb);
+        }
+        list.appendChild(el('li', { class: 'bov-mov' + (m.conciliado ? ' tes-cua-done' : '') }, [info, el('div', { class: 'bov-mov-right' }, right)]));
+    }
+
+    // $A = saldo del sistema al cierre del mes (movs activos con fecha ≤ fin del mes; V15).
+    const movsHasta = _movs.filter(m => String(m.fecha || '') <= _cuaMes + '-31');
+    const sistema = computeSaldoCuenta(c.saldoInicial, movsHasta);
+    const sisEl = document.getElementById('cua-sistema');
+    sisEl.textContent = cop(sistema);
+    sisEl.dataset.val = String(sistema);
+    sisEl.classList.toggle('adm-money--debe', sistema < 0);
+    updateCuaDiff();
+
+    // Reabrir (owner): visible si este mes tiene movimientos sellados.
+    const selladoEsteMes = mes.some(m => m.conciliado && m.periodoConciliado === _cuaMes);
+    document.getElementById('cua-reabrir').hidden = !(_isOwner && selladoEsteMes);
+}
+
+function updateCuaDiff() {
+    const sistema = Number(document.getElementById('cua-sistema').dataset.val || 0);
+    const raw = document.getElementById('cua-extracto').value;
+    const diffEl = document.getElementById('cua-diff');
+    const lbl = document.getElementById('cua-diff-label');
+    const hint = document.getElementById('cua-diff-hint');
+    const ajusteBtn = document.getElementById('cua-ajuste');
+    if (raw === '') { diffEl.textContent = '—'; lbl.textContent = 'Diferencia'; diffEl.style.color = ''; hint.hidden = true; ajusteBtn.hidden = true; return; }
+    const diff = sistema - montoPos(raw);
+    diffEl.textContent = cop(diff);
+    if (diff === 0) { lbl.textContent = 'Cuadra ✓'; diffEl.style.color = 'var(--adm-success)'; hint.hidden = true; ajusteBtn.hidden = true; }
+    else {
+        lbl.textContent = 'Diferencia'; diffEl.style.color = 'var(--adm-danger)';
+        hint.hidden = false;
+        hint.textContent = 'No cuadra. Registra los movimientos que falten (p. ej. el 4×1.000 o la comisión del banco) con "Registrar movimiento", o crea un ajuste. No puedes guardar hasta que quede en cero.';
+        ajusteBtn.hidden = false;
+    }
+}
+
+async function handleGuardarCuadre() {
+    if (!_selectedId) return;
+    const checked = [..._cuaChecked];
+    const sistema = Number(document.getElementById('cua-sistema').dataset.val || 0);
+    const raw = document.getElementById('cua-extracto').value;
+    if (raw === '') { admToast('Escribe el saldo final de tu extracto.', 'danger'); return; }
+    if (sistema - montoPos(raw) !== 0) { admToast('El cuadre no está en cero. Resuelve la diferencia antes de guardar.', 'danger', 4500); return; }
+    if (!checked.length) { admToast('Marca al menos un movimiento que aparezca en tu extracto.', 'danger'); return; }
+    admConfirm(
+        `Vas a sellar ${checked.length} movimiento(s) de ${_cuaMes}. Sistema: ${cop(sistema)} · tu extracto: ${cop(montoPos(raw))} · diferencia: ${cop(0)}. Lo sellado queda bloqueado (solo el dueño puede reabrir). ¿Guardar el cuadre?`,
+        async () => {
+            const btn = document.getElementById('cua-guardar');
+            btn.disabled = true; btn.textContent = 'Guardando…';
+            try {
+                const r = await marcarConciliado({ cuentaId: _selectedId, periodo: _cuaMes, opIds: checked });
+                _cuaChecked.clear(); saveCuaDraft();
+                admToast(`✓ Cuadre guardado (${r.conciliados} sellados)`, 'success');
+            } catch (err) {
+                admToast((BUSINESS_ERR.includes(err?.code) && err?.message) ? err.message : errorMessage(err, 'No se pudo guardar el cuadre.'), 'danger', 4500);
+            }
+            btn.disabled = false; btn.textContent = 'Guardar cuadre';
+        },
+    );
+}
+
+async function handleAjusteCuadre() {
+    if (!_selectedId) return;
+    const sistema = Number(document.getElementById('cua-sistema').dataset.val || 0);
+    const raw = document.getElementById('cua-extracto').value;
+    if (raw === '') { admToast('Escribe el saldo de tu extracto primero.', 'danger'); return; }
+    const diff = sistema - montoPos(raw);
+    if (diff === 0) { admToast('Ya cuadra: no hace falta ajuste.', 'default'); return; }
+    // sistema > extracto ⇒ el sistema tiene de MÁS ⇒ el ajuste RESTA (salida); al revés, entrada.
+    const direccion = diff > 0 ? 'salida' : 'entrada';
+    const monto = Math.abs(diff);
+    admConfirm(
+        `Crear un ajuste del cuadre de ${cop(monto)} (${direccion === 'salida' ? 'baja' : 'sube'} el saldo del sistema para cuadrar con tu extracto). Queda PENDIENTE de aprobación del dueño; podrás guardar el cuadre cuando lo apruebe. ¿Continuar?`,
+        async () => {
+            try {
+                await registrarMovimientoTesoreria({ opId: uid(), cuentaId: _selectedId, tipo: 'ajuste_conciliacion', monto, fecha: _cuaMes + '-28', direccion, descripcion: `Ajuste del cuadre de ${_cuaMes}` });
+                admToast('✓ Ajuste registrado · pendiente de aprobación del dueño', 'success', 4000);
+            } catch (err) {
+                admToast((BUSINESS_ERR.includes(err?.code) && err?.message) ? err.message : errorMessage(err, 'No se pudo registrar el ajuste.'), 'danger', 4500);
+            }
+        },
+    );
+}
+
+function handleReabrir() {
+    if (!_selectedId) return;
+    const motivo = window.prompt(`Motivo para reabrir el cuadre de ${_cuaMes} (queda en el registro):`, '');
+    if (motivo === null) return;
+    if (!motivo.trim()) { admToast('Reabrir un cuadre exige un motivo.', 'danger'); return; }
+    admConfirm(
+        `Reabrir el cuadre de ${_cuaMes} desbloquea sus movimientos para volver a cuadrar. ¿Continuar?`,
+        async () => {
+            try {
+                const r = await reabrirCuadre({ cuentaId: _selectedId, periodo: _cuaMes, motivo: motivo.trim() });
+                admToast(`✓ Cuadre reabierto (${r.reabiertos} movimientos)`, 'success');
+            } catch (err) {
+                admToast((BUSINESS_ERR.includes(err?.code) && err?.message) ? err.message : errorMessage(err, 'No se pudo reabrir el cuadre.'), 'danger', 4500);
             }
         },
     );

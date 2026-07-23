@@ -8,11 +8,11 @@
 
 ## 🎯 Foco actual
 
-> 🟣 **RELEVO CURADO → PRÓXIMA SESIÓN ARRANCA EN B2** (F-TESORERÍA, TODO-78). **Hecho: B0 ✅ (Opus, auditado 0 sorpresas) + B1 ✅ (Fable)** — suites 15+5+13+245 verde; commits `b4b5c13`/`6862c2c`. **YA construido (no re-explorar)**: `functions/tesoreria-core.js` (puro + 6 cores + seed) · `functions/tesoreria.js` (wrappers + trigger→saludEventos) · 7 exports en `index.js` · espejo `js/admin/tesoreria-format.js` (fórmula + etiquetas V14) · reglas/índices · npm `test:tesoreria`/`test:teso-paridad`/`test:tesoreria:integration`.
+> 🟣 **F-TESORERÍA (TODO-78) · B0+B1+B2 ✅ EN CÓDIGO (no en prod)**. **Hecho**: B0 (Opus, auditado 0 sorpresas) · B1 (Fable, 6 CFs+trigger+espejo) · **B2 (Opus): página "Cuentas y bancos"** — `admin-tesoreria.html` + `js/admin/tesoreria.js` + `js/tesoreria-service.js` + rail Finanzas + CSS `.tes-*` (gates offline verde, detalle en bitácora). **Falta gate E2E vivo** → **necesita DEPLOY + login** (L-05: headless no pinta dinámico).
 >
-> **B2 = página "Cuentas y bancos"** (QUÉ/CÓMO exactos → spec §3 + gate §6-B2): `admin-tesoreria.html` + `js/admin/tesoreria.js` + rail Finanzas (actualizar `test:sidebar`) · estado-cero V22 = onboarding de Kary (modal crear cuenta → CF `crearCuentaTesoreria`) · el core YA devuelve `saldoOrigen/DestinoDespues` para el confirm V16. **ANTES del gate Chrome: deploy MANUAL (L-22, comando → flag 🟠 del `05`)** rules+índices+functions + seed virtuales prod (`seedCuentasVirtuales`, idempotente) + **SW/APP bump** (B2 toca el shell). Luego B3 (cuadre) → B4 (Bandeja/Hoy/socias) → B5 (zonas V1/V17 = test primero) → B6 (rompimiento + entrega).
+> **SIGUE — decisión de Daniel**: (a) **DEPLOY MANUAL de B2** para E2E ya [`firebase deploy --only firestore:rules,firestore:indexes,functions` + seed virtuales prod (`seedCuentasVirtuales`, idempotente); SW ya en v98] — ⚠️ deja `retiro_socia` sin UI de aprobación hasta B4 (Bandeja); **o** (b) seguir a **B3 (cuadre/conciliación)** + **B4 (Bandeja/Hoy/socias)** y desplegar el bundle coherente. Luego B5 (zonas V1/V17 = test primero) → B6 (rompimiento + entrega).
 >
-> **Protocolo por sesión**: cargar `asesor-critico-honesto` + `caza-bugs` + `auditoria-financiera`; spec COMPLETA `docs/superpowers/specs/2026-07-18-f-tesoreria-DISENO.md` (§0.8>§0.7>§0.6>cuerpo, sin re-decidir; TDD en el MISMO commit). **Modelo lo decide Daniel** (`/model`): Opus → + `opus-interino-protocolo`, marca `[OPUS-4.8]`; Fable → `[FABLE-5]`.
+> **Protocolo por sesión**: `asesor-critico-honesto` + `caza-bugs` + `auditoria-financiera`; spec COMPLETA (§0.8>§0.7>§0.6>cuerpo, sin re-decidir; TDD en el MISMO commit). Modelo lo decide Daniel (`/model`): Opus → + `opus-interino-protocolo`, marca `[OPUS-4.8]`; Fable → `[FABLE-5]`.
 >
 > **🧭 Roadmap** (detalle → `05`): …F-IA-2 ✅ → **F-TESORERÍA (B2)** → F-COMPRAS → F-REPORTES → apartados → limpieza → rompimiento → lanzamiento. _MCP Firebase=prod · push+merge a main=Claude · consejo read-only · valida en Chrome._ `[[project_comercio_pagos]]`
 
@@ -23,7 +23,7 @@
 | ID | Item | Estado | Bloqueo |
 |---|---|---|---|
 | TODO-03/04 | (baja) headers `99`→`## NN.` · anomalías 🔧 en `skills/` | 🔲 | baja |
-| TODO-78 | **F-TESORERÍA — SPEC CERRADA, Opus puede ARRANCAR YA**: `docs/superpowers/specs/2026-07-18-f-tesoreria-DISENO.md` (D1-D9 · §0.6 comité · §0.7 consejo ✅ · **§0.8 directiva del dueño: CERO seed, Kary carga sus cuentas por la UI; gate = confiabilidad, no datos** — prevalece §0.8>§0.7>§0.6>cuerpo · B0-B6 · 20 tests) + mockup 🏦. Zonas calientes: V1/V17. Legal Daniel → `42-LEGAL §7`. **B0+B1 ✅ · SIGUE B2 (relevo en Foco)** · deploy prod pend. (B2). | 🟢 | B2 |
+| TODO-78 | **F-TESORERÍA — SPEC CERRADA, Opus puede ARRANCAR YA**: `docs/superpowers/specs/2026-07-18-f-tesoreria-DISENO.md` (D1-D9 · §0.6 comité · §0.7 consejo ✅ · **§0.8 directiva del dueño: CERO seed, Kary carga sus cuentas por la UI; gate = confiabilidad, no datos** — prevalece §0.8>§0.7>§0.6>cuerpo · B0-B6 · 20 tests) + mockup 🏦. Zonas calientes: V1/V17. Legal Daniel → `42-LEGAL §7`. **B0+B1+B2 ✅ en código · SIGUE: deploy+E2E de B2 O B3-B4 (decisión Daniel, ver Foco)** · deploy prod pend. | 🟢 | B3/deploy |
 | TODO-77 | **SHARD de `30`** (§G.5) — **SUBE (§192)**: el tope duro (44000) ya BLOQUEÓ la captura normal de M-23 (hubo que micro-podar). Extraer categoría a hija (ojo: L-81/1022c tiene su detalle SOLO en `30` → mover, no recortar). Sesión fresca. | 🔲 | poda 30 |
 | TODO-07 | **Contenido real web**: reseñas Maps (Nosotros), Films, feed Redes (`home-media.js`). | 🔲 | cliente entrega datos |
 | TODO-08 | **Hardening Fase 2**: Tier A ✅; pend. CSP/reglas/claims (Tier B/C) → `41-SEGURIDAD §1.5` | 🟡 | Tier B = emulador+deploy gated |
@@ -50,6 +50,7 @@
 
 ## 📝 Bitácora (efímera)
 
-> 2026-07-23 · **[FABLE-5] B1 ✅ + auditoría B0 ✅ (0 sorpresas; costuras del inverso CERRADAS en B1)** + 25 ticks legacy anclados a sus ADRs (kernel v1.6 check #13: §81 · §83/§84 · §167 · §169 · §178 · §179 · §192). Detalle técnico → relevo del Foco. SIN cache bump (cero UI aún).
+> 2026-07-23 · **[OPUS-4.8] B2 ✅ en código (página "Cuentas y bancos")**: HTML+controlador+servicio+rail+CSS `.tes-*`; etiquetas humanas V14 · onboarding V22 · aviso socia V9 · traslado confirm V16 · negativo grita V6. Gates offline verde (build·sidebar 14/14·IDs 49/49). **E2E vivo pendiente de deploy** (L-05). SW v98/APP v55.
+> 2026-07-23 · **[FABLE-5] B1 ✅ + auditoría B0 ✅ (0 sorpresas; costuras inverso cerradas)** + 25 ticks legacy anclados (kernel v1.6 #13). Detalle → Foco.
 > 2026-07-18 · **[OPUS-4.8] B0 ✅** (auditado): core puro + reglas CF-only + índices + seed virtuales; `servicio_publico` RETIRADO (V20>cuerpo). *(Auditoría interinato #3 → §192 · sinapsis inmob → TODO-77.)*
 > **Pend Daniel/no-gate**: llenar "Datos del negocio" en el panel (§192 I-03; datos = identidad LEGAL-08) · marcar 7 avisos test-era en Salud (I-04) · consejo+abogado apartados (39) · instructivo Kary · push A.6 · fotos (67). ADC gcloud caducado (CLI OK). **Precios = paso FINAL.**

@@ -8,9 +8,9 @@
 
 ## 🎯 Foco actual
 
-> 🟣 **F-TESORERÍA (TODO-78) · B0+B1+B2 ✅ EN CÓDIGO (no en prod)**. **Hecho**: B0 (Opus, auditado 0 sorpresas) · B1 (Fable, 6 CFs+trigger+espejo) · **B2 (Opus): página "Cuentas y bancos"** — `admin-tesoreria.html` + `js/admin/tesoreria.js` + `js/tesoreria-service.js` + rail Finanzas + CSS `.tes-*` (gates offline verde, detalle en bitácora). **Falta gate E2E vivo** → **necesita DEPLOY + login** (L-05: headless no pinta dinámico).
+> 🟣 **F-TESORERÍA (TODO-78) · B0+B1+B2+B3 ✅ EN CÓDIGO (no en prod)**. Daniel eligió (2026-07-23) seguir B3→B4 y desplegar el BUNDLE coherente al final (no B2 suelto). **Hecho**: B0 (auditado) · B1 (6 CFs+trigger+espejo) · B2 (página "Cuentas y bancos") · **B3 (cuadre "Cuadrar mes")**. Piezas (detalle en bitácora): `functions/tesoreria-core.js` (8 CFs) · `tesoreria.js` · `js/admin/tesoreria.js`+`.html`+`tesoreria-service.js`+CSS. **Falta gate E2E vivo del bundle** → DEPLOY + login (L-05).
 >
-> **SIGUE — decisión de Daniel**: (a) **DEPLOY MANUAL de B2** para E2E ya [`firebase deploy --only firestore:rules,firestore:indexes,functions` + seed virtuales prod (`seedCuentasVirtuales`, idempotente); SW ya en v98] — ⚠️ deja `retiro_socia` sin UI de aprobación hasta B4 (Bandeja); **o** (b) seguir a **B3 (cuadre/conciliación)** + **B4 (Bandeja/Hoy/socias)** y desplegar el bundle coherente. Luego B5 (zonas V1/V17 = test primero) → B6 (rompimiento + entrega).
+> **SIGUE B4 (Bandeja/Hoy/socias, §3)**: sección "Tesorería" en `admin-aprobaciones.html`+`bandeja.js` (patrón B4 bóveda) — owner aprueba/rechaza pendientes vía `aprobarMovimientoTesoreria` + `aprob-badge` los suma · "Plata total" en Hoy (fila owner). Luego B5 (costuras D9/D6 + zonas V1/V17 test primero) → B6 (rompimiento) → **DEPLOY MANUAL del bundle** (`firebase deploy --only firestore:rules,firestore:indexes,functions` + seed virtuales prod; SW ya v98) + E2E holístico Chrome.
 >
 > **Protocolo por sesión**: `asesor-critico-honesto` + `caza-bugs` + `auditoria-financiera`; spec COMPLETA (§0.8>§0.7>§0.6>cuerpo, sin re-decidir; TDD en el MISMO commit). Modelo lo decide Daniel (`/model`): Opus → + `opus-interino-protocolo`, marca `[OPUS-4.8]`; Fable → `[FABLE-5]`.
 >
@@ -23,7 +23,7 @@
 | ID | Item | Estado | Bloqueo |
 |---|---|---|---|
 | TODO-03/04 | (baja) headers `99`→`## NN.` · anomalías 🔧 en `skills/` | 🔲 | baja |
-| TODO-78 | **F-TESORERÍA — SPEC CERRADA, Opus puede ARRANCAR YA**: `docs/superpowers/specs/2026-07-18-f-tesoreria-DISENO.md` (D1-D9 · §0.6 comité · §0.7 consejo ✅ · **§0.8 directiva del dueño: CERO seed, Kary carga sus cuentas por la UI; gate = confiabilidad, no datos** — prevalece §0.8>§0.7>§0.6>cuerpo · B0-B6 · 20 tests) + mockup 🏦. Zonas calientes: V1/V17. Legal Daniel → `42-LEGAL §7`. **B0+B1+B2 ✅ en código · SIGUE: deploy+E2E de B2 O B3-B4 (decisión Daniel, ver Foco)** · deploy prod pend. | 🟢 | B3/deploy |
+| TODO-78 | **F-TESORERÍA** (SSoT spec `2026-07-18-f-tesoreria-DISENO.md`, prevalencia §0.8>§0.7>§0.6>cuerpo; zonas calientes V1/V17; legal Daniel → `42-LEGAL §7`). **B0-B3 ✅ en código · SIGUE B4 → B5-B6 → deploy bundle+E2E** (detalle → Foco). | 🟢 | B4 |
 | TODO-77 | **SHARD de `30`** (§G.5) — **SUBE (§192)**: el tope duro (44000) ya BLOQUEÓ la captura normal de M-23 (hubo que micro-podar). Extraer categoría a hija (ojo: L-81/1022c tiene su detalle SOLO en `30` → mover, no recortar). Sesión fresca. | 🔲 | poda 30 |
 | TODO-07 | **Contenido real web**: reseñas Maps (Nosotros), Films, feed Redes (`home-media.js`). | 🔲 | cliente entrega datos |
 | TODO-08 | **Hardening Fase 2**: Tier A ✅; pend. CSP/reglas/claims (Tier B/C) → `41-SEGURIDAD §1.5` | 🟡 | Tier B = emulador+deploy gated |
@@ -50,7 +50,7 @@
 
 ## 📝 Bitácora (efímera)
 
-> 2026-07-23 · **[OPUS-4.8] B2 ✅ en código (página "Cuentas y bancos")**: HTML+controlador+servicio+rail+CSS `.tes-*`; etiquetas humanas V14 · onboarding V22 · aviso socia V9 · traslado confirm V16 · negativo grita V6. Gates offline verde (build·sidebar 14/14·IDs 49/49). **E2E vivo pendiente de deploy** (L-05). SW v98/APP v55.
+> 2026-07-23 · **[OPUS-4.8] B2+B3 ✅ en código**: B2 página "Cuentas y bancos" (cuentas/movimientos V14/traslado V16/onboarding V22/socia V9/negativo V6) · B3 cuadre "Cuadrar mes" (marcarConciliado + reabrirCuadre CF V19; pestaña borrador-localStorage/$A-$B-$C/confirm V13/ajuste_conciliacion). Gates offline verde (build·sidebar 14/14·IDs 64/64·núcleo 15/15·paridad 5/5·integración 15/15). E2E vivo del bundle pend. deploy (L-05). SW v98/APP v55.
 > 2026-07-23 · **[FABLE-5] B1 ✅ + auditoría B0 ✅ (0 sorpresas; costuras inverso cerradas)** + 25 ticks legacy anclados (kernel v1.6 #13). Detalle → Foco.
 > 2026-07-18 · **[OPUS-4.8] B0 ✅** (auditado): core puro + reglas CF-only + índices + seed virtuales; `servicio_publico` RETIRADO (V20>cuerpo). *(Auditoría interinato #3 → §192 · sinapsis inmob → TODO-77.)*
 > **Pend Daniel/no-gate**: llenar "Datos del negocio" en el panel (§192 I-03; datos = identidad LEGAL-08) · marcar 7 avisos test-era en Salud (I-04) · consejo+abogado apartados (39) · instructivo Kary · push A.6 · fotos (67). ADC gcloud caducado (CLI OK). **Precios = paso FINAL.**

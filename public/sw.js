@@ -82,7 +82,9 @@
 // v93 = [OPUS-4.8] F-IA-2 B5: Salud legible ("Avisos del sistema", semáforos con nombre humano) +
 // "Cierre de mes" reescrito IN SITU (D4) + pasada de microcopy GLOBAL (lead→interesado, jerga
 // contable→llano, CSV→Excel). SOLO texto: cero cambio de lógica/ids.
-const CACHE_NAME    = 'bersaglio-v97';
+// v98 = [OPUS-4.8] F-TESORERÍA B2: nueva página admin "Cuentas y bancos" (admin-tesoreria.html +
+// tesoreria.js) + ítem en el rail Finanzas (sidebar-data.js, shell admin) → bump del shell.
+const CACHE_NAME    = 'bersaglio-v98';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

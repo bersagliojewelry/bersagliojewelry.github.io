@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuentas y bancos — Bersaglio Admin</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..500&family=Cormorant+Garamond:ital,wght@0,300..600;1,300..400&family=Manrope:wght@300..700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/admin.css">
+    <script type="module" src="js/admin/tesoreria.js"></script>
+</head>
+<body style="display:none">
+<script>try{if(sessionStorage.getItem('bj_auth')){document.body.style.display=''}else{location.replace('admin-login.html')}}catch(e){location.replace('admin-login.html')}</script>
+<div class="adm-layout">
+
+    <aside class="adm-sidebar"></aside>
+    <div class="adm-sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <main class="adm-main">
+        <header class="adm-topbar">
+            <button class="adm-hamburger" id="hamburger-btn" aria-label="Menú">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="22" height="22"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <h1>Cuentas y bancos</h1>
+        </header>
+
+        <div class="adm-content">
+            <div class="bov-grid">
+
+                <!-- ── Total + cuentas ──────────────────────────────────── -->
+                <section class="pos-card">
+                    <div class="tes-head">
+                        <div>
+                            <h2 class="pos-card-title">Tus cuentas</h2>
+                            <p class="pos-hint">Cada cuenta donde vive la plata del negocio: bancos, Nequi, y la Caja y la Bóveda (que se manejan desde su propio módulo).</p>
+                        </div>
+                        <button class="adm-btn adm-btn--primary adm-btn--sm" id="tes-nueva" type="button">+ Agregar cuenta</button>
+                    </div>
+
+                    <div class="tes-total-box">
+                        <span class="pos-label">Total en cuentas y bancos</span>
+                        <strong class="tes-total adm-money" id="tes-total">$0</strong>
+                        <p class="pos-hint" id="tes-total-hint">Suma de tus cuentas activas (no incluye el efectivo del cajón ni la bóveda — eso vive en su módulo).</p>
+                    </div>
+
+                    <!-- Estado-cero (L-42: la sección SIEMPRE se monta; el onboarding guía la 1ª cuenta) -->
+                    <div class="adm-empty" id="tes-empty" hidden>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="40" height="40"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+                        <p><strong>Aún no has agregado tus cuentas.</strong><br>Agrega la primera (tu banco, tu Nequi…) y desde hoy el sistema lleva la cuenta contigo.</p>
+                        <button class="adm-btn adm-btn--primary adm-btn--sm" id="tes-empty-cta" type="button">Agregar la primera cuenta →</button>
+                    </div>
+
+                    <div class="tes-cards" id="tes-cards"></div>
+                </section>
+
+                <!-- ── Movimientos de la cuenta seleccionada ────────────── -->
+                <section class="pos-card" id="tes-movs-card" hidden>
+                    <div class="tes-head">
+                        <h2 class="pos-card-title" id="tes-movs-title">Movimientos</h2>
+                        <div class="tes-movs-actions">
+                            <button class="adm-btn adm-btn--primary adm-btn--sm" id="tes-registrar" type="button">Registrar movimiento</button>
+                            <button class="adm-btn adm-btn--ghost adm-btn--sm" id="tes-trasladar" type="button">Trasladar entre cuentas</button>
+                        </div>
+                    </div>
+
+                    <!-- Aviso de cuenta de socia (V9): riesgo tributario -->
+                    <p class="tes-socia-warn" id="tes-socia-warn" hidden></p>
+
+                    <ul class="bov-mov-list" id="tes-ledger"></ul>
+                    <div class="adm-empty" id="tes-ledger-empty" hidden>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="40" height="40"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg>
+                        <p>Esta cuenta aún no tiene movimientos. Registra el primero con el botón de arriba.</p>
+                    </div>
+                    <p class="pos-hint">El historial no se puede borrar: para corregir un movimiento se crea una corrección que lo reversa (el original queda registrado). Un movimiento ya cuadrado con el extracto queda bloqueado.</p>
+                </section>
+
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Confirm (lo usa admConfirm de shared.js) -->
+<div class="adm-confirm" id="confirm-dialog" hidden>
+    <div class="adm-confirm-box">
+        <h3>Confirmar</h3>
+        <p id="confirm-msg">—</p>
+        <div class="adm-confirm-actions">
+            <button class="adm-btn adm-btn--ghost" id="confirm-cancel">Cancelar</button>
+            <button class="adm-btn adm-btn--primary" id="confirm-ok">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Agregar cuenta (onboarding V22) -->
+<div class="adm-modal" id="cta-modal" hidden>
+    <div class="adm-modal-box adm-modal-box--sm">
+        <div class="adm-modal-head">
+            <h2>Agregar una cuenta</h2>
+            <button class="adm-modal-close" id="cta-close" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="adm-modal-body">
+            <p class="pos-hint">Desde que la agregues, el sistema lleva la cuenta contigo. Escribe cuánta plata hay hoy según tu extracto: ese es el punto de partida.</p>
+            <div class="adm-field">
+                <label for="cta-nombre">¿Cómo quieres reconocer esta cuenta?</label>
+                <input class="adm-input" id="cta-nombre" type="text" maxlength="60" placeholder="Ej. Bancolombia ahorros · Nequi Kary">
+            </div>
+            <div class="adm-field">
+                <label for="cta-tipo">¿Qué es?</label>
+                <select class="adm-input" id="cta-tipo">
+                    <option value="banco">Cuenta de banco</option>
+                    <option value="nequi">Nequi / billetera</option>
+                </select>
+            </div>
+            <div class="adm-field">
+                <label for="cta-banco">Banco / entidad (opcional)</label>
+                <input class="adm-input" id="cta-banco" type="text" maxlength="80" placeholder="Ej. Bancolombia, Nequi, Davivienda…">
+            </div>
+            <div class="adm-field">
+                <label for="cta-titular">¿De quién es la cuenta?</label>
+                <select class="adm-input" id="cta-titular">
+                    <option value="empresa">El negocio (titular del RUT)</option>
+                    <option value="kary">Kary (cuenta personal)</option>
+                    <option value="daniela">Daniela (cuenta personal)</option>
+                    <option value="veronica">Verónica (cuenta personal)</option>
+                </select>
+            </div>
+            <p class="tes-socia-warn" id="cta-socia-warn" hidden>Esta es una cuenta personal. El sistema ordena y documenta cada peso, pero mezclar plata personal y del negocio tiene riesgos tributarios para ella. La meta es migrar todo a la cuenta del negocio.</p>
+            <div class="adm-field">
+                <label for="cta-saldo">¿Cuánta plata hay hoy según tu extracto? (COP)</label>
+                <input class="adm-input" id="cta-saldo" type="number" min="0" inputmode="numeric" placeholder="Ej. 3500000">
+            </div>
+            <div class="adm-field">
+                <label for="cta-fecha">Fecha de ese saldo (corte)</label>
+                <input class="adm-input" id="cta-fecha" type="date">
+            </div>
+            <div class="adm-field">
+                <label for="cta-soporte">Foto/enlace del extracto de ese corte (opcional)</label>
+                <input class="adm-input" id="cta-soporte" type="text" maxlength="1000" placeholder="Enlace al soporte (opcional)">
+                <p class="pos-hint">El saldo y la fecha de arranque no se podrán cambiar después del primer movimiento (para no descuadrar). Revísalos bien.</p>
+            </div>
+        </div>
+        <div class="adm-modal-foot">
+            <button class="adm-btn adm-btn--ghost" id="cta-cancel">Cancelar</button>
+            <button class="adm-btn adm-btn--primary" id="cta-submit">Agregar cuenta</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Registrar movimiento (etiquetas humanas V14) -->
+<div class="adm-modal" id="mov-modal" hidden>
+    <div class="adm-modal-box adm-modal-box--sm">
+        <div class="adm-modal-head">
+            <h2>Registrar movimiento</h2>
+            <button class="adm-modal-close" id="mov-close" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="adm-modal-body">
+            <p class="pos-hint" id="mov-cuenta-hint">—</p>
+            <div class="adm-field">
+                <label for="mov-tipo">¿Qué pasó con la plata?</label>
+                <select class="adm-input" id="mov-tipo">
+                    <optgroup label="Entró plata">
+                        <option value="ingreso_venta">Entró plata de una venta</option>
+                    </optgroup>
+                    <optgroup label="Salió plata">
+                        <option value="pago_proveedor">Pago a proveedor (mercancía/taller)</option>
+                        <option value="gasto">Gasto</option>
+                    </optgroup>
+                    <optgroup label="Plata de socia">
+                        <option value="aporte_socia">Aporte de socia</option>
+                        <option value="reembolso_socia">Devolución a socia (pide aprobación)</option>
+                        <option value="retiro_socia">Retiro de socia (pide aprobación)</option>
+                    </optgroup>
+                </select>
+            </div>
+            <!-- 2º select: categoría del gasto (V20, solo tipo=gasto) -->
+            <div class="adm-field" id="mov-cat-field" hidden>
+                <label for="mov-categoria">¿Qué tipo de gasto?</label>
+                <select class="adm-input" id="mov-categoria">
+                    <option value="arriendo">Arriendo</option>
+                    <option value="nomina">Nómina / pago a empleada</option>
+                    <option value="servicios_publicos">Servicios públicos</option>
+                    <option value="papeleria">Papelería / insumos</option>
+                    <option value="gmf">4×1.000 (GMF del banco)</option>
+                    <option value="comision_bancaria">Comisión del banco</option>
+                    <option value="comision_pasarela">Comisión de pasarela (Wompi)</option>
+                    <option value="otros">Otros</option>
+                </select>
+            </div>
+            <!-- Contraparte socia (aporte/reembolso/retiro) -->
+            <div class="adm-field" id="mov-socia-field" hidden>
+                <label for="mov-socia">¿Cuál socia?</label>
+                <select class="adm-input" id="mov-socia">
+                    <option value="kary">Kary</option>
+                    <option value="daniela">Daniela</option>
+                    <option value="veronica">Verónica</option>
+                </select>
+            </div>
+            <!-- Contraparte nombre (proveedor/gasto, V8) -->
+            <div class="adm-field" id="mov-contraparte-field" hidden>
+                <label for="mov-contraparte">¿A quién se le pagó?</label>
+                <input class="adm-input" id="mov-contraparte" type="text" maxlength="120" placeholder="Nombre del proveedor o beneficiario">
+                <p class="pos-hint">Sin este dato tu contador no puede usar el egreso.</p>
+            </div>
+            <div class="adm-field">
+                <label for="mov-monto">Monto (COP)</label>
+                <input class="adm-input" id="mov-monto" type="number" min="0" inputmode="numeric" placeholder="Ej. 250000">
+            </div>
+            <div class="adm-field">
+                <label for="mov-fecha">Fecha</label>
+                <input class="adm-input" id="mov-fecha" type="date">
+            </div>
+            <div class="adm-field">
+                <label for="mov-desc">Descripción (opcional)</label>
+                <input class="adm-input" id="mov-desc" type="text" maxlength="500" placeholder="Detalle del movimiento">
+            </div>
+            <div class="adm-field">
+                <label for="mov-soporte">Foto/enlace del soporte (opcional)</label>
+                <input class="adm-input" id="mov-soporte" type="text" maxlength="1000" placeholder="Enlace al comprobante (opcional)">
+            </div>
+        </div>
+        <div class="adm-modal-foot">
+            <button class="adm-btn adm-btn--ghost" id="mov-cancel">Cancelar</button>
+            <button class="adm-btn adm-btn--primary" id="mov-submit">Registrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Trasladar entre cuentas -->
+<div class="adm-modal" id="tra-modal" hidden>
+    <div class="adm-modal-box adm-modal-box--sm">
+        <div class="adm-modal-head">
+            <h2>Trasladar entre cuentas</h2>
+            <button class="adm-modal-close" id="tra-close" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="adm-modal-body">
+            <p class="pos-hint">Mueve plata de una cuenta a otra (no cambia el total, solo dónde está). Caja y Bóveda se mueven desde su propio módulo.</p>
+            <div class="adm-field">
+                <label for="tra-origen">Sale de</label>
+                <select class="adm-input" id="tra-origen"></select>
+            </div>
+            <div class="adm-field">
+                <label for="tra-destino">Entra a</label>
+                <select class="adm-input" id="tra-destino"></select>
+            </div>
+            <div class="adm-field">
+                <label for="tra-monto">Monto (COP)</label>
+                <input class="adm-input" id="tra-monto" type="number" min="0" inputmode="numeric" placeholder="Ej. 500000">
+            </div>
+            <div class="adm-field">
+                <label for="tra-fecha">Fecha</label>
+                <input class="adm-input" id="tra-fecha" type="date">
+            </div>
+            <div class="adm-field">
+                <label for="tra-desc">Descripción (opcional)</label>
+                <input class="adm-input" id="tra-desc" type="text" maxlength="500" placeholder="Detalle del traslado">
+            </div>
+        </div>
+        <div class="adm-modal-foot">
+            <button class="adm-btn adm-btn--ghost" id="tra-cancel">Cancelar</button>
+            <button class="adm-btn adm-btn--primary" id="tra-submit">Trasladar</button>
+        </div>
+    </div>
+</div>
+
+<div class="adm-toast-wrap" id="toast-wrap"></div>
+</body>
+</html>

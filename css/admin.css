@@ -1843,3 +1843,31 @@ select.adm-input { cursor: pointer; appearance: none; -webkit-appearance: none; 
 .aud-ev--traslado { border-left-color: #b8860b; }
 .aud-ev--muerta   { opacity: .55; }
 .aud-ev--muerta .bov-mov-tipo { text-decoration: line-through; }
+
+/* ── F-TESORERÍA · Cuentas y bancos (B2) — reusa .pos-card / .bov-mov* / .adm-pill ── */
+.tes-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.tes-movs-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.tes-total-box { display: flex; flex-direction: column; gap: 2px; margin: 14px 0 10px; padding: 12px 14px; background: var(--adm-bg, #f7f7f5); border: 1px solid var(--adm-border); border-radius: var(--adm-radius); }
+.tes-total { font-size: 22px; }
+.tes-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-top: 6px; }
+.tes-card {
+    display: flex; flex-direction: column; gap: 5px;
+    padding: 13px 14px; background: #fff; border: 1px solid var(--adm-border); border-radius: var(--adm-radius);
+    cursor: pointer; transition: border-color .12s ease, background-color .12s ease;
+}
+.tes-card:hover { border-color: var(--adm-accent); }
+.tes-card.is-selected { border-color: var(--adm-accent); background: var(--adm-accent-light); }
+.tes-card--virtual { cursor: default; background: var(--adm-bg, #f7f7f5); }
+.tes-card--virtual:hover { border-color: var(--adm-border); }
+.tes-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.tes-card-name { font-weight: 600; color: var(--adm-text); font-size: 14px; overflow-wrap: anywhere; }
+.tes-card-chips { display: flex; gap: 4px; flex-shrink: 0; flex-wrap: wrap; }
+.tes-card-bank { font-size: 12px; color: var(--adm-muted); }
+.tes-card-saldo { font-size: 18px; white-space: nowrap; }
+.tes-card-link { font-size: 12px; color: var(--adm-accent); text-decoration: none; margin-top: 2px; }
+.tes-card-link:hover { text-decoration: underline; }
+.tes-socia-warn {
+    margin: 4px 0 10px; padding: 9px 12px; font-size: 12.5px; line-height: 1.45;
+    color: #9a7730; background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.3); border-radius: var(--adm-radius);
+}
+.tes-clip { font-size: 13px; }

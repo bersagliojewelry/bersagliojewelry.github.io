@@ -82,6 +82,7 @@ async function init() {
 
     // Acciones (owner)
     document.getElementById('bov-consignar').addEventListener('click', () => openSalida('boveda_a_banco'));
+    document.getElementById('bov-retiro').addEventListener('click', () => openSalida('banco_a_boveda'));   // V18
     document.getElementById('bov-reponer').addEventListener('click', () => openSalida('boveda_a_cajon'));
     document.getElementById('bov-conteo').addEventListener('click', openConteo);
 
@@ -197,15 +198,18 @@ function openSalida(tipo) {
     // para que un reintento tras fallo de red sea idempotente. El opId se acuña PEREZOSO en handleSalida.
     if (tipo !== _accionTipo) _salidaOpId = null;
     _accionTipo = tipo;
-    const esBanco = tipo === 'boveda_a_banco';
-    document.getElementById('sal-title').textContent = esBanco ? 'Consignar al banco' : 'Reponer cambio al cajón';
-    document.getElementById('sal-hint').textContent = esBanco
-        ? 'Registra el efectivo que sacas de la bóveda para consignarlo. Anota el número de consignación en la nota.'
-        : 'Registra el efectivo que sacas de la bóveda para reponer el cambio del cajón del mostrador.';
+    // 3 flujos por el mismo modal: 2 salidas de bóveda + la ENTRADA de efectivo desde el banco (V18).
+    const COPY = {
+        boveda_a_banco: { titulo: 'Consignar al banco', hint: 'Registra el efectivo que sacas de la bóveda para consignarlo. Anota el número de consignación en la nota.' },
+        boveda_a_cajon: { titulo: 'Reponer cambio al cajón', hint: 'Registra el efectivo que sacas de la bóveda para reponer el cambio del cajón del mostrador.' },
+        banco_a_boveda: { titulo: 'Retiro de banco', hint: 'Registra el efectivo que sacaste del banco y guardaste en la bóveda. La plata baja de esa cuenta y entra a la bóveda en un solo paso.' },
+    }[tipo] || { titulo: 'Movimiento de bóveda', hint: '' };
+    document.getElementById('sal-title').textContent = COPY.titulo;
+    document.getElementById('sal-hint').textContent = COPY.hint;
     document.getElementById('sal-saldo').textContent = cop(_saldo);
     document.getElementById('sal-monto').value = '';
     document.getElementById('sal-nota').value = '';
-    renderSalidaCuenta(esBanco);
+    renderSalidaCuenta(tipo);
     const submit = document.getElementById('sal-submit');
     submit.disabled = false; submit.textContent = 'Registrar';
     document.getElementById('sal-modal').hidden = false;
@@ -216,20 +220,27 @@ function closeSalida() { document.getElementById('sal-modal').hidden = true; }
 // V1 · "¿A qué cuenta entró?" — solo en la consignación al banco. Con cuentas cargadas es
 // OBLIGATORIO (si no, la plata sale de la bóveda y no entra a ningún libro: el bug P0). Si Kary
 // todavía no ha creado sus cuentas, se explica y se permite seguir (no bloquear la operación).
-function renderSalidaCuenta(esBanco) {
+function renderSalidaCuenta(tipo) {
     const campo = document.getElementById('sal-cuenta-field');
     const sel = document.getElementById('sal-cuenta');
     const aviso = document.getElementById('sal-cuenta-aviso');
+    const label = document.querySelector('label[for="sal-cuenta"]');
     if (!campo || !sel || !aviso) return;
-    campo.hidden = !esBanco;
+    const esRetiro = tipo === 'banco_a_boveda';          // V18: la plata SALE de la cuenta
+    const llevaCuenta = esRetiro || tipo === 'boveda_a_banco';
+    campo.hidden = !llevaCuenta;
     aviso.hidden = true;
     sel.textContent = '';
-    if (!esBanco) return;
+    if (!llevaCuenta) return;
+    if (label) label.textContent = esRetiro ? '¿De qué cuenta sacaste la plata?' : '¿A qué cuenta entró la plata?';
 
     if (!_cuentasReales.length) {
         campo.hidden = true;
         aviso.hidden = false;
-        aviso.textContent = 'Aún no tienes cuentas cargadas en “Cuentas y bancos”. Puedes registrar la consignación, pero esta plata no quedará sumada al saldo de ningún banco hasta que agregues la cuenta.';
+        // El retiro de banco EXIGE la cuenta (flujo nuevo): sin cuentas no se puede registrar.
+        aviso.textContent = esRetiro
+            ? 'Primero agrega la cuenta en “Cuentas y bancos”: sin ella no se puede registrar de dónde salió este efectivo.'
+            : 'Aún no tienes cuentas cargadas en “Cuentas y bancos”. Puedes registrar la consignación, pero esta plata no quedará sumada al saldo de ningún banco hasta que agregues la cuenta.';
         return;
     }
     for (const c of [..._cuentasReales].sort((a, b) => String(a.nombre).localeCompare(String(b.nombre), 'es'))) {
@@ -240,7 +251,8 @@ async function handleSalida() {
     const monto = entero(document.getElementById('sal-monto').value);
     const nota = document.getElementById('sal-nota').value.trim();
     if (!(monto > 0)) { admToast('El monto debe ser mayor a 0.', 'danger'); return; }
-    if (monto > _saldo) { admToast('No hay saldo suficiente en la bóveda para esa salida.', 'danger'); return; }
+    // El retiro de banco (V18) ENTRA a la bóveda → no se mide contra su saldo (solo las salidas).
+    if (_accionTipo !== 'banco_a_boveda' && monto > _saldo) { admToast('No hay saldo suficiente en la bóveda para esa salida.', 'danger'); return; }
     // Reponer cambio (bóveda→cajón) SOLO con turno abierto: el cierre necesita el turnoId para sumar
     // +bovedaACajon a su ecuación (§8.1.7); sin él, el arqueo del turno mostraría un "sobra" falso.
     if (_accionTipo === 'boveda_a_cajon' && !_turnoAbiertoId) {
@@ -250,7 +262,12 @@ async function handleSalida() {
     // V1: la consignación exige la cuenta destino CUANDO hay cuentas cargadas (si no, la plata
     // saldría de la bóveda sin entrar a ningún libro). Sin cuentas creadas aún → se permite.
     let cuentaId;
-    if (_accionTipo === 'boveda_a_banco' && _cuentasReales.length) {
+    if (_accionTipo === 'banco_a_boveda') {
+        // V18: flujo nuevo ⇒ la cuenta es OBLIGATORIA (el core también lo exige).
+        if (!_cuentasReales.length) { admToast('Primero agrega la cuenta en “Cuentas y bancos”.', 'danger', 5000); return; }
+        cuentaId = document.getElementById('sal-cuenta').value || '';
+        if (!cuentaId) { admToast('Elige de qué cuenta sacaste la plata.', 'danger'); return; }
+    } else if (_accionTipo === 'boveda_a_banco' && _cuentasReales.length) {
         cuentaId = document.getElementById('sal-cuenta').value || '';
         if (!cuentaId) { admToast('Elige a qué cuenta entró la plata.', 'danger'); return; }
     }

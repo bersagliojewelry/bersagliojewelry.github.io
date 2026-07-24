@@ -8,13 +8,13 @@
 
 ## 🎯 Foco actual
 
-> 🟣 **F-TESORERÍA (TODO-78) · B0+B1+B2+B3 ✅ EN CÓDIGO (no en prod)**. Daniel eligió (2026-07-23) seguir B3→B4 y desplegar el BUNDLE coherente al final (no B2 suelto). **Hecho**: B0 (auditado) · B1 (6 CFs+trigger+espejo) · B2 (página "Cuentas y bancos") · **B3 (cuadre "Cuadrar mes")**. Piezas (detalle en bitácora): `functions/tesoreria-core.js` (8 CFs) · `tesoreria.js` · `js/admin/tesoreria.js`+`.html`+`tesoreria-service.js`+CSS. **Falta gate E2E vivo del bundle** → DEPLOY + login (L-05).
+> 🟣 **RELEVO CURADO → NUEVA SESIÓN ARRANCA EN B4** · **F-TESORERÍA (TODO-78) · B0+B1+B2+B3 ✅ EN CÓDIGO (no en prod)**. Daniel eligió (2026-07-23) seguir B3→B4 y desplegar el BUNDLE coherente al final (no B2 suelto). **Hecho**: B0 (auditado) · B1 (6 CFs+trigger+espejo) · B2 (página "Cuentas y bancos") · **B3 (cuadre "Cuadrar mes")**. Piezas (detalle en bitácora): `functions/tesoreria-core.js` (8 CFs) · `tesoreria.js` · `js/admin/tesoreria.js`+`.html`+`tesoreria-service.js`+CSS. **Falta gate E2E vivo del bundle** → DEPLOY + login (L-05).
 >
 > **SIGUE B4 (Bandeja/Hoy/socias, §3)**: sección "Tesorería" en `admin-aprobaciones.html`+`bandeja.js` (patrón B4 bóveda) — owner aprueba/rechaza pendientes vía `aprobarMovimientoTesoreria` + `aprob-badge` los suma · "Plata total" en Hoy (fila owner). Luego B5 (costuras D9/D6 + zonas V1/V17 test primero) → B6 (rompimiento) → **DEPLOY MANUAL del bundle** (`firebase deploy --only firestore:rules,firestore:indexes,functions` + seed virtuales prod; SW ya v98) + E2E holístico Chrome.
 >
 > **Protocolo por sesión**: `asesor-critico-honesto` + `caza-bugs` + `auditoria-financiera`; spec COMPLETA (§0.8>§0.7>§0.6>cuerpo, sin re-decidir; TDD en el MISMO commit). Modelo lo decide Daniel (`/model`): Opus → + `opus-interino-protocolo`, marca `[OPUS-4.8]`; Fable → `[FABLE-5]`.
 >
-> **🧭 Roadmap** (detalle → `05`): …F-IA-2 ✅ → **F-TESORERÍA (B2)** → F-COMPRAS → F-REPORTES → apartados → limpieza → rompimiento → lanzamiento. _MCP Firebase=prod · push+merge a main=Claude · consejo read-only · valida en Chrome._ `[[project_comercio_pagos]]`
+> **🧭 Roadmap** (detalle → `05`): …F-IA-2 ✅ → **F-TESORERÍA (B4)** → F-COMPRAS → F-REPORTES → apartados → limpieza → rompimiento → lanzamiento. _MCP Firebase=prod · push+merge a main=Claude · consejo read-only · valida en Chrome._ `[[project_comercio_pagos]]`
 
 ---
 

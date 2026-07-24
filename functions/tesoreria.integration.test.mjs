@@ -20,6 +20,7 @@ const {
     seedCuentasVirtuales, TIPOS_VIRTUALES, TesoreriaError,
     crearCuentaTesoreriaCore, registrarMovimientoTesoreriaCore, trasladarEntreCuentasCore,
     aprobarMovimientoTesoreriaCore, marcarConciliadoCore, reabrirCuadreCore, recalcularSaldoCuentaCore,
+    actualizarConfigSistemaCore, CAMPOS_CONFIG,
 } = core;
 
 initializeApp({ projectId: 'demo-bersaglio' });
@@ -292,4 +293,99 @@ test('B3 reabrir · bloqueado si el mes SIGUIENTE ya está sellado (se reabre el
     await reabrirCuadreCore(db, { cuentaId: 'A', periodo: '2026-08', motivo: 'orden correcto', actor: 'ownerUid', rol: 'owner' });
     const r = await reabrirCuadreCore(db, { cuentaId: 'A', periodo: '2026-07', motivo: 'ahora sí', actor: 'ownerUid', rol: 'owner' });
     assert.equal(r.reabiertos, 1);
+});
+
+// ─── B5 · D6 · Editor "Reglas del sistema" (owner-only + rangos + audit trail) ────────────────
+// SoD inv.6: quien OPERA no reescribe los parámetros de su propio control (limiteCajon/enforceTurno/
+// tasas son parámetros de DINERO). El audit trail ES el control (§0.7 REFUTADO: por eso no hay
+// "editor sin audit"). Whitelist cerrada: un `campo` fuera de ella NO escribe nada.
+async function limpiarConfig() {
+    for (const col of ['config', 'saludEventos']) {
+        const snap = await db.collection(col).get();
+        await Promise.all(snap.docs.map((d) => d.ref.delete()));
+    }
+}
+const cfg = async (doc) => (await db.doc(`config/${doc}`).get()).data() || {};
+const eventosConfig = async () => (await db.collection('saludEventos').where('tipo', '==', 'config-cambiada').get()).docs.map((d) => d.data());
+const setCfg = (campo, valor, extra = {}) => actualizarConfigSistemaCore(db, { campo, valor, actor: { uid: 'ownerUid', nombre: 'Daniel' }, rol: 'owner', ...extra });
+
+test('D6 · owner edita enforceTurno/limiteCajon → escribe config/caja + audit con valor anterior y nuevo', async () => {
+    await limpiarConfig();
+    await db.doc('config/caja').set({ enforceTurno: true, limiteCajon: 2000000, fondoTrabajo: 200000 });
+
+    const r = await setCfg('enforceTurno', false);
+    assert.equal(r.doc, 'caja');
+    assert.equal((await cfg('caja')).enforceTurno, false);
+
+    const evs = await eventosConfig();
+    assert.equal(evs.length, 1, 'un evento de auditoría por cambio');
+    assert.equal(evs[0].campo, 'enforceTurno');
+    assert.equal(evs[0].anterior, true);           // el audit prueba QUÉ cambió
+    assert.equal(evs[0].nuevo, false);
+    assert.equal(evs[0].actor.uid, 'ownerUid');
+    // COSTURA: el Hoy cuenta los saludEventos NO resueltos como "avisos del sistema" → un cambio
+    // de config es REGISTRO, no falla; debe nacer resuelto o le enciende una alarma falsa al dueño.
+    assert.equal(evs[0].resuelto, true, 'auditoría, no alarma');
+});
+
+test('D6 · MERGE: cambiar un campo NO borra el resto del doc de config', async () => {
+    await limpiarConfig();
+    await db.doc('config/caja').set({ enforceTurno: true, limiteCajon: 2000000, fondoTrabajo: 200000 });
+    await setCfg('limiteCajon', 3500000);
+    const c = await cfg('caja');
+    assert.equal(c.limiteCajon, 3500000);
+    assert.equal(c.enforceTurno, true, 'preserva enforceTurno');
+    assert.equal(c.fondoTrabajo, 200000, 'preserva fondoTrabajo (campo ajeno a D6)');
+});
+
+test('D6 · SoD: admin NO puede editar (permission-denied) y NADA cambia', async () => {
+    await limpiarConfig();
+    await db.doc('config/caja').set({ limiteCajon: 2000000 });
+    await assert.rejects(setCfg('limiteCajon', 9999999, { rol: 'admin' }), esTesoError('permission-denied'));
+    assert.equal((await cfg('caja')).limiteCajon, 2000000, 'el valor sigue intacto');
+    assert.equal((await eventosConfig()).length, 0, 'sin audit de un cambio que no ocurrió');
+});
+
+test('D6 · whitelist cerrada: un campo desconocido se rechaza y no escribe nada', async () => {
+    await limpiarConfig();
+    await assert.rejects(setCfg('rutaDeEscape', 'lo-que-sea'), esTesoError('invalid-argument'));
+    await assert.rejects(setCfg('diasPlazo', 90), esTesoError('invalid-argument'));   // existe en config/negocio, NO es de D6
+    assert.equal((await db.collection('config').get()).size, 0, 'ningún doc de config creado');
+});
+
+test('D6 · rangos: limiteCajon entero > 0 · enforceTurno booleano estricto', async () => {
+    await limpiarConfig();
+    for (const malo of [0, -5, 1500.75, 'mucho', null]) {
+        await assert.rejects(setCfg('limiteCajon', malo), esTesoError('invalid-argument'), `limiteCajon ${malo}`);
+    }
+    for (const malo of ['true', 1, null]) {
+        await assert.rejects(setCfg('enforceTurno', malo), esTesoError('invalid-argument'), `enforceTurno ${malo}`);
+    }
+    // válidos
+    await setCfg('limiteCajon', 1);
+    assert.equal((await cfg('caja')).limiteCajon, 1);
+});
+
+test('D6 · tasas fiscales: fracciones 0-1; reteIcaXMil es POR MIL (‰), no fracción', async () => {
+    await limpiarConfig();
+    for (const malo of [1.5, -0.1, 'gratis']) {
+        await assert.rejects(setCfg('wompiPct', malo), esTesoError('invalid-argument'), `wompiPct ${malo}`);
+    }
+    await setCfg('wompiPct', 0.0265);
+    await setCfg('reteFuentePct', 0.025);
+    assert.equal((await cfg('fiscal')).wompiPct, 0.0265);
+    assert.equal((await cfg('fiscal')).reteFuentePct, 0.025);
+    // reteIcaXMil: 7‰ es un valor REAL y válido (validarlo como 0-1 rompería la tarifa del contador)
+    await setCfg('reteIcaXMil', 7);
+    assert.equal((await cfg('fiscal')).reteIcaXMil, 7);
+    await assert.rejects(setCfg('reteIcaXMil', 500), esTesoError('invalid-argument'), 'tope de cordura ‰');
+    // wompiFijo es COP entero, no fracción
+    await setCfg('wompiFijo', 700);
+    assert.equal((await cfg('fiscal')).wompiFijo, 700);
+    await assert.rejects(setCfg('wompiFijo', 700.5), esTesoError('invalid-argument'));
+});
+
+test('D6 · la whitelist cubre exactamente los campos de caja + fiscal que D6 gobierna', () => {
+    assert.deepEqual(Object.keys(CAMPOS_CONFIG).sort(),
+        ['enforceTurno', 'limiteCajon', 'reteFuentePct', 'reteIcaXMil', 'wompiFijo', 'wompiIvaPct', 'wompiPct'].sort());
 });

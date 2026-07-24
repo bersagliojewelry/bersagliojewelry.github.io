@@ -17,7 +17,8 @@
  * XSS: todo valor dinámico se pinta con textContent (createElement), nunca innerHTML.
  */
 
-import { requireAuth, initSidebar, admToast, hasRole } from './shared.js';
+import { requireAuth, initSidebar, admToast, hasRole, errorMessage } from './shared.js';
+import { actualizarConfigSistema } from '../tesoreria-service.js';
 import adminDb from './db.js';
 import { currentUser } from '../auth.js';
 import {
@@ -66,31 +67,126 @@ function wireTabs(isOwner) {
     });
 }
 
-// ─── Tarjeta "Reglas del sistema" (solo lectura, owner · §0.7 D1) ─────────────
+// ─── Tarjeta "Reglas del sistema" (EDITABLE owner-only · §0.7 D1 → F-TESORERÍA D6) ─────────────
+// SoD inv.6: quien OPERA bajo los límites no los reescribe → la escritura va por la callable
+// `actualizarConfigSistema` (owner-only, whitelist + rangos + audit trail), NUNCA por setConfig.
+// El dueño NO piensa en fracciones: los % se muestran y se piden en % humano (2,65) y se guardan
+// como fracción (0,0265). `reteIcaXMil` ya viene en ‰ → se muestra tal cual.
 function pct(n) { return `${(Number(n) * 100).toLocaleString('es-CO', { maximumFractionDigits: 2 })}%`; }
+
+const REGLAS_D6 = [
+    { campo: 'enforceTurno',  doc: 'caja',   tipo: 'bool',   label: 'Turno de caja obligatorio',      hint: 'Si está en Sí, el Mostrador exige abrir el turno antes de vender.' },
+    { campo: 'limiteCajon',   doc: 'caja',   tipo: 'cop',    label: 'Máximo de efectivo en el cajón', hint: 'Al pasarse, el Mostrador pide llevar plata a la bóveda.' },
+    { campo: 'wompiPct',      doc: 'fiscal', tipo: 'pct',    label: 'Comisión de Wompi',              hint: 'Lo que Wompi cobra por cada venta cobrada en línea.' },
+    { campo: 'wompiFijo',     doc: 'fiscal', tipo: 'cop',    label: 'Comisión fija de Wompi',         hint: 'Valor fijo que Wompi suma a cada transacción.' },
+    { campo: 'wompiIvaPct',   doc: 'fiscal', tipo: 'pct',    label: 'IVA sobre la comisión' },
+    { campo: 'reteFuentePct', doc: 'fiscal', tipo: 'pct',    label: 'ReteFuente',                     hint: 'La define tu contador. Déjala en 0 si no aplica.' },
+    { campo: 'reteIcaXMil',   doc: 'fiscal', tipo: 'permil', label: 'ReteICA (por mil)',              hint: 'En “por mil”: 7 significa 7‰. La define tu contador.' },
+];
+const BUSINESS_ERR = ['failed-precondition', 'invalid-argument', 'not-found', 'already-exists', 'permission-denied'];
+let _cfgD6 = { caja: null, fiscal: null };
+
+// Valor guardado → texto humano. `null` (aún sin configurar) se dice, no se inventa.
+function valorTexto(r) {
+    const raw = (_cfgD6[r.doc] || {})[r.campo];
+    if (raw == null) return '—';
+    if (r.tipo === 'bool') return raw ? 'Sí' : 'No';
+    if (r.tipo === 'cop') return fmtCOP(raw);
+    if (r.tipo === 'pct') return pct(raw);
+    return `${Number(raw).toLocaleString('es-CO', { maximumFractionDigits: 2 })}‰`;
+}
+// Valor guardado → lo que se escribe en el input (en unidades humanas).
+function valorInput(r) {
+    const raw = (_cfgD6[r.doc] || {})[r.campo];
+    if (raw == null) return '';
+    if (r.tipo === 'pct') return String(Math.round(Number(raw) * 1000000) / 10000);   // 0,0265 → 2,65
+    return String(raw);
+}
+
+async function cargarCfgD6() {
+    // Tolerante a permisos/ausencia: lo que no se pueda leer queda en null → la fila muestra "—".
+    try { _cfgD6.caja = await getConfig('caja'); } catch (err) { console.warn('[config] getConfig caja:', err); _cfgD6.caja = null; }
+    try { _cfgD6.fiscal = await getConfig('fiscal'); } catch (err) { console.warn('[config] getConfig fiscal:', err); _cfgD6.fiscal = null; }
+    // Defaults de código para lo fiscal aún no configurado (mismos que usa el cálculo bruto→neto).
+    _cfgD6.fiscal = { ...FISCAL_DEFAULT, ..._cfgD6.fiscal };
+}
 
 async function renderReglasSistema() {
     const body = document.getElementById('reglas-sistema-body');
     if (!body) return;
-    // Tolerante a permisos: si una lectura falla, esa fila muestra "—" (no rompe la tarjeta).
-    let caja = null, fiscal = null;
-    try { caja = await getConfig('caja'); } catch (err) { console.warn('[config] getConfig caja:', err); }
-    try { fiscal = await getConfig('fiscal'); } catch (err) { console.warn('[config] getConfig fiscal:', err); }
-    const f = { ...FISCAL_DEFAULT, ...(fiscal || {}) };
-
-    const sinRetenciones = (f.reteFuentePct || 0) === 0 && (f.reteIcaXMil || 0) === 0;
-    const filas = [
-        ['Turno de caja obligatorio', caja == null ? '—' : (caja.enforceTurno ? 'Sí' : 'No')],
-        ['Máximo de efectivo en el cajón', (caja && typeof caja.limiteCajon === 'number') ? fmtCOP(caja.limiteCajon) : '—'],
-        ['Comisión por cobrar con Wompi', `${pct(f.wompiPct)} + ${fmtCOP(f.wompiFijo)} + IVA ${pct(f.wompiIvaPct)}`],
-        ['Retenciones', sinRetenciones ? 'Sin configurar — las define el contador' : `ReteFuente ${pct(f.reteFuentePct)} · ReteICA ${f.reteIcaXMil}‰`],
-    ];
+    await cargarCfgD6();
     body.replaceChildren();
-    for (const [k, v] of filas) {
-        const row = el('div', { cls: 'adm-readonly-row' });
-        row.appendChild(el('span', { text: k }));
-        row.appendChild(el('span', { cls: 'adm-readonly-val', text: v }));
-        body.appendChild(row);
+    for (const r of REGLAS_D6) body.appendChild(filaRegla(r));
+}
+
+function filaRegla(r) {
+    const row = el('div', { cls: 'adm-readonly-row' });
+    const izq = el('div', { css: 'flex:1;min-width:0;' });
+    izq.appendChild(el('span', { text: r.label }));
+    if (r.hint) izq.appendChild(el('span', { cls: 'pos-hint', css: 'display:block;margin:2px 0 0;', text: r.hint }));
+    row.appendChild(izq);
+    row.appendChild(el('span', { cls: 'adm-readonly-val', text: valorTexto(r) }));
+    const btn = el('button', { cls: 'adm-btn adm-btn--ghost adm-btn--sm', text: 'Editar' });
+    btn.type = 'button';
+    btn.addEventListener('click', () => row.replaceWith(filaEdicion(r)));
+    row.appendChild(btn);
+    return row;
+}
+
+function filaEdicion(r) {
+    const row = el('div', { cls: 'adm-readonly-row' });
+    row.appendChild(el('span', { css: 'flex:1;min-width:0;', text: r.label }));
+
+    let campoInput;
+    if (r.tipo === 'bool') {
+        campoInput = el('select', { cls: 'adm-input' });
+        for (const [v, t] of [['true', 'Sí'], ['false', 'No']]) {
+            const o = el('option', { text: t }); o.value = v; campoInput.appendChild(o);
+        }
+        campoInput.value = String(((_cfgD6[r.doc] || {})[r.campo]) === true);
+    } else {
+        campoInput = el('input', { cls: 'adm-input' });
+        campoInput.type = 'number';
+        campoInput.min = '0';
+        campoInput.step = (r.tipo === 'cop') ? '1' : '0.01';
+        campoInput.value = valorInput(r);
+        campoInput.placeholder = r.tipo === 'pct' ? 'Ej. 2,65 (=2,65%)' : (r.tipo === 'permil' ? 'Ej. 7 (=7‰)' : 'Ej. 2000000');
+    }
+    campoInput.style.cssText = 'max-width:180px;';
+    row.appendChild(campoInput);
+
+    const guardar = el('button', { cls: 'adm-btn adm-btn--primary adm-btn--sm', text: 'Guardar' });
+    guardar.type = 'button';
+    const cancelar = el('button', { cls: 'adm-btn adm-btn--ghost adm-btn--sm', text: 'Cancelar' });
+    cancelar.type = 'button';
+    cancelar.addEventListener('click', () => row.replaceWith(filaRegla(r)));
+    guardar.addEventListener('click', () => guardarRegla(r, campoInput, guardar, row));
+    row.appendChild(guardar);
+    row.appendChild(cancelar);
+    return row;
+}
+
+async function guardarRegla(r, campoInput, btn, row) {
+    // Unidades HUMANAS → unidades de dominio. El rango REAL lo valida la CF (server-side).
+    let valor;
+    if (r.tipo === 'bool') {
+        valor = campoInput.value === 'true';
+    } else {
+        const n = Number(campoInput.value);
+        if (campoInput.value === '' || !Number.isFinite(n)) { admToast('Escribe un número.', 'danger'); return; }
+        if (r.tipo === 'pct') valor = Math.round((n / 100) * 1000000) / 1000000;   // 2,65 → 0,0265 (sin ruido de coma flotante)
+        else valor = n;
+    }
+    btn.disabled = true; btn.textContent = 'Guardando…';
+    try {
+        await actualizarConfigSistema({ campo: r.campo, valor });
+        admToast('✓ Regla actualizada', 'success');
+        await cargarCfgD6();
+        row.replaceWith(filaRegla(r));
+    } catch (err) {
+        const msg = (BUSINESS_ERR.includes(err?.code) && err?.message) ? err.message : errorMessage(err, 'No se pudo guardar la regla.');
+        admToast(msg, 'danger', 4500);
+        btn.disabled = false; btn.textContent = 'Guardar';
     }
 }
 

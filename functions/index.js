@@ -269,6 +269,7 @@ exports.aprobarMovimientoTesoreria = require('./tesoreria').aprobarMovimientoTes
 exports.marcarConciliado = require('./tesoreria').marcarConciliado;                     // admin: sella el cuadre mensual (B3)
 exports.reabrirCuadre = require('./tesoreria').reabrirCuadre;                           // owner: reabre un cuadre sellado (B3, V19)
 exports.repararSaldoTesoreria = require('./tesoreria').repararSaldoTesoreria;           // admin: recompute forzado (patrón §64)
+exports.actualizarConfigSistema = require('./tesoreria').actualizarConfigSistema;       // owner: reglas del sistema (D6, whitelist+audit)
 exports.recalcSaldoTesoreria = require('./tesoreria').recalcSaldoTesoreria;             // trigger D5: ledger → saldoActual
 exports.ajustarStock = require('./inventario').ajustarStock;         // TODO-40 F1: merma/reabasto/corrección (delta + ledger)
 exports.cambiarTipoPieza = require('./inventario').cambiarTipoPieza; // TODO-40 F1: transición de tipo (purga cantidad, D6)

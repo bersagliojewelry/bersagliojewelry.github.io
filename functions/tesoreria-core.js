@@ -540,10 +540,90 @@ async function recalcularSaldoCuentaCore(db, cuentaId) {
     return { cuentaId: id, saldo };
 }
 
+/**
+ * CF 7 · D6 · WHITELIST de las "Reglas del sistema" editables por el DUEÑO (B5).
+ * Lista CERRADA: `campo` → dónde vive y qué rango acepta. Un campo fuera de aquí NO se escribe
+ * (cierra la puerta a que la callable se vuelva un `setDoc` arbitrario sobre `config/*`).
+ * Tipos: `bool` · `int` (entero ≥ min) · `frac` (fracción 0-1) · `permil` (POR MIL, 0-100 — ojo:
+ * `reteIcaXMil` NO es fracción; 7‰ es un valor real del contador y 0-1 lo rechazaría).
+ */
+const CAMPOS_CONFIG = Object.freeze({
+    enforceTurno:  { doc: 'caja',   tipo: 'bool',                label: 'Turno de caja obligatorio' },
+    limiteCajon:   { doc: 'caja',   tipo: 'int',   min: 1,       label: 'Máximo de efectivo en el cajón' },
+    wompiPct:      { doc: 'fiscal', tipo: 'frac',                label: 'Comisión de Wompi (porcentaje)' },
+    wompiFijo:     { doc: 'fiscal', tipo: 'int',   min: 0,       label: 'Comisión de Wompi (fijo en COP)' },
+    wompiIvaPct:   { doc: 'fiscal', tipo: 'frac',                label: 'IVA sobre la comisión' },
+    reteFuentePct: { doc: 'fiscal', tipo: 'frac',                label: 'ReteFuente' },
+    reteIcaXMil:   { doc: 'fiscal', tipo: 'permil', max: 100,    label: 'ReteICA (por mil)' },
+});
+
+/** Valida y NORMALIZA el valor según su tipo. Fail-red: ante duda, rechaza (es dinero). */
+function validarValorConfig(campo, spec, valor) {
+    const malo = (detalle) => new TesoreriaError('invalid-argument', `${spec.label}: ${detalle}`);
+    if (spec.tipo === 'bool') {
+        if (typeof valor !== 'boolean') throw malo('debe ser sí o no (booleano).');
+        return valor;
+    }
+    const n = Number(valor);
+    if (valor === null || valor === '' || !Number.isFinite(n)) throw malo('debe ser un número.');
+    if (spec.tipo === 'int') {
+        if (!Number.isInteger(n)) throw malo('debe ser un número entero (sin decimales).');
+        if (n < (spec.min ?? 0)) throw malo(`no puede ser menor que ${spec.min ?? 0}.`);
+        return n;
+    }
+    if (spec.tipo === 'frac') {
+        if (n < 0 || n > 1) throw malo('debe ser una fracción entre 0 y 1 (ej. 0,0265 = 2,65%).');
+        return n;
+    }
+    if (spec.tipo === 'permil') {
+        if (n < 0 || n > (spec.max ?? 100)) throw malo(`debe estar entre 0 y ${spec.max ?? 100} por mil.`);
+        return n;
+    }
+    throw malo('tipo de parámetro desconocido.');
+}
+
+/**
+ * CF 7 · D6 · Edita UN parámetro de las "Reglas del sistema". OWNER-only (SoD inv.6: quien opera
+ * bajo los límites no los reescribe) + rango validado + AUDIT TRAIL (el audit ES el control — por
+ * eso §0.7 REFUTÓ el "editor sin audit trail"). MERGE: no pisa el resto del doc de config.
+ * @param db Firestore (admin). @param input { campo, valor, actor, rol }
+ */
+async function actualizarConfigSistemaCore(db, input = {}) {
+    const { FieldValue } = require('firebase-admin/firestore');
+    if (input.rol !== 'owner') {
+        throw new TesoreriaError('permission-denied', 'Solo el dueño (owner) puede cambiar las reglas del sistema.');
+    }
+    const campo = String(input.campo || '').trim();
+    const spec = CAMPOS_CONFIG[campo];
+    if (!spec) throw new TesoreriaError('invalid-argument', `Ese parámetro no se edita desde aquí: ${campo || '(vacío)'}.`);
+    const valor = validarValorConfig(campo, spec, input.valor);
+    const actor = (input.actor && typeof input.actor === 'object')
+        ? { uid: input.actor.uid || null, nombre: input.actor.nombre || null }
+        : { uid: input.actor || null, nombre: null };
+
+    return db.runTransaction(async (tx) => {
+        const ref = db.doc(`config/${spec.doc}`);
+        const snap = await tx.get(ref);
+        const anterior = snap.exists ? snap.data()[campo] : undefined;
+        tx.set(ref, { [campo]: valor }, { merge: true });
+        // Audit trail en saludEventos. `resuelto: true` A PROPÓSITO: el Hoy cuenta como "avisos del
+        // sistema" los eventos NO resueltos (hoy.js initSenalAvisos) — un cambio de config es un
+        // REGISTRO, no una falla; sin esta bandera cada edición encendería una alarma falsa.
+        tx.set(db.collection('saludEventos').doc(), {
+            tipo: 'config-cambiada', doc: spec.doc, campo, label: spec.label,
+            anterior: anterior === undefined ? null : anterior, nuevo: valor,
+            actor, at: FieldValue.serverTimestamp(), resuelto: true,
+        });
+        return { campo, doc: spec.doc, valor, anterior: anterior === undefined ? null : anterior };
+    });
+}
+
 module.exports = {
     SIGNO_TESORERIA, TIPOS_DERIVADOS, TIPOS_MOV, TIPOS_CUENTA, TIPOS_VIRTUALES, TITULARES,
     ESTADOS_MOV, TIPOS_PENDIENTES, CATEGORIAS_GASTO, DIRECCIONES, TIPOS_SOLO_SISTEMA, SOCIAS, TIPOS_SOCIA,
+    CAMPOS_CONFIG,
     TesoreriaError, entero, signoDeMovimiento, computeSaldoCuenta, seedCuentasVirtuales,
     crearCuentaTesoreriaCore, registrarMovimientoTesoreriaCore, trasladarEntreCuentasCore,
     aprobarMovimientoTesoreriaCore, marcarConciliadoCore, reabrirCuadreCore, recalcularSaldoCuentaCore,
+    actualizarConfigSistemaCore,
 };

@@ -99,6 +99,17 @@ exports.reabrirCuadre = onCall({ region: 'us-central1', invoker: 'public' }, asy
     } catch (e) { lanzar(e); }
 });
 
+// CF 7 · D6 (B5): edita UN parámetro de las "Reglas del sistema". OWNER-only (SoD inv.6) —
+// la whitelist + los rangos + el audit trail viven en el core.
+exports.actualizarConfigSistema = onCall({ region: 'us-central1', invoker: 'public' }, async (request) => {
+    const db = getFirestore();
+    const rol = await rolDe(db, request.auth, ['owner'], 'Solo el dueño (owner) puede cambiar las reglas del sistema.');
+    try {
+        const d = request.data || {};
+        return await core.actualizarConfigSistemaCore(db, { campo: d.campo, valor: d.valor, actor: actorDe(request.auth), rol });
+    } catch (e) { lanzar(e); }
+});
+
 // Callable de REPARACIÓN (patrón repararSaldo §64): fuerza el recompute de una cuenta.
 exports.repararSaldoTesoreria = onCall({ region: 'us-central1', invoker: 'public' }, async (request) => {
     const db = getFirestore();

@@ -49,6 +49,11 @@ export async function reabrirCuadre(input) {
     const fn = await _callable('reabrirCuadre');
     return (await fn(input)).data;
 }
+/** Edita UN parámetro de las "Reglas del sistema" (D6). SOLO owner; whitelist+rangos+audit en la CF. @param {{campo,valor}} input */
+export async function actualizarConfigSistema(input) {
+    const fn = await _callable('actualizarConfigSistema');
+    return (await fn(input)).data;
+}
 /** Fuerza el recompute del saldo de una cuenta (reparación §64). admin. @param {{cuentaId}} input */
 export async function repararSaldoTesoreria(input) {
     const fn = await _callable('repararSaldoTesoreria');
@@ -86,5 +91,6 @@ export function onMovimientosPendientesChange(cb, onErr) {
 export default {
     crearCuentaTesoreria, registrarMovimientoTesoreria, trasladarEntreCuentas,
     aprobarMovimientoTesoreria, marcarConciliado, reabrirCuadre, repararSaldoTesoreria,
+    actualizarConfigSistema,
     onCuentasTesoreriaChange, onMovsCuentaChange, onMovimientosPendientesChange,
 };

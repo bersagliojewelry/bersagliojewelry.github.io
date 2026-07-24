@@ -98,3 +98,45 @@ export function computeSaldoCuenta(saldoInicial, movs) {
     }
     return base + suma;
 }
+
+// ─── Agregaciones de VISTA (B4) ────────────────────────────────────────────────
+// NO tienen espejo en el servidor a propósito: son sumas de tablero, no el recompute D5 (ese sí
+// vive en la CF y se espeja arriba). PURAS. El test que las cubre es de unidad, no de paridad.
+
+/**
+ * Σ `saldoActual` de las cuentas REALES ACTIVAS (excluye las virtuales caja/bóveda —que no tienen
+ * saldo propio, D1— y las inactivas). Lo comparten la página "Cuentas y bancos" (su "Total en
+ * cuentas y bancos") y el "Plata total" de Hoy (inv.2: la parte de cuentas es UN solo número). El
+ * resultado PUEDE ser negativo (una cuenta en rojo) — sin clamp (V6).
+ */
+export function sumaSaldosReales(cuentas) {
+    const lista = Array.isArray(cuentas) ? cuentas : [];
+    let s = 0;
+    for (const c of lista) {
+        if (!c) continue;
+        if (TIPOS_VIRTUALES.includes(c.tipo)) continue;   // caja/bóveda: sin saldo propio (D1)
+        if (c.activa === false) continue;                 // inactivas no suman
+        s += entero(c.saldoActual);
+    }
+    return s;
+}
+
+/**
+ * V9 · Cuánto "pasó por" una cuenta en un año = Σ |monto| de sus movimientos FIRMES ('activo') de
+ * ese año. Es un HEADS-UP tributario para cuentas de socia (exógena/594-3, SARLAFT) — NO una cifra
+ * fiscal oficial. PURA. `anio` = número o 'YYYY'. Pendientes/rechazados no movieron plata → no
+ * cuentan. Quien la llama debe pasar los movimientos del año COMPLETO; si la lista viene truncada
+ * (tope del listener), la vista lo señala ("o más") en vez de mentir con un exacto.
+ */
+export function throughputAnio(movs, anio) {
+    const lista = Array.isArray(movs) ? movs : [];
+    const y = String(anio);
+    let s = 0;
+    for (const m of lista) {
+        if (!m) continue;
+        if ((m.estado || 'activo') !== 'activo') continue;
+        if (!String(m.fecha || '').startsWith(y)) continue;
+        s += Math.abs(entero(m.monto));
+    }
+    return s;
+}

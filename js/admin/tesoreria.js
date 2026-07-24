@@ -15,7 +15,7 @@ import {
     crearCuentaTesoreria, registrarMovimientoTesoreria, trasladarEntreCuentas,
     marcarConciliado, reabrirCuadre, onCuentasTesoreriaChange, onMovsCuentaChange,
 } from '../tesoreria-service.js';
-import { ETIQUETAS_TIPO, signoDeMovimiento, computeSaldoCuenta, entero, TIPOS_VIRTUALES } from './tesoreria-format.js';
+import { ETIQUETAS_TIPO, signoDeMovimiento, computeSaldoCuenta, entero, TIPOS_VIRTUALES, sumaSaldosReales, throughputAnio } from './tesoreria-format.js';
 
 // COP con signo (el saldo PUEDE ser negativo — V6 lo grita, sin clamp).
 const cop = (n) => { const v = Math.round(Number(n) || 0); return (v < 0 ? '-$' : '$') + Math.abs(v).toLocaleString('es-CO'); };
@@ -112,7 +112,8 @@ function onCuentasLoaded() {
     document.getElementById('tes-empty').hidden = reales.length > 0;
 
     // Total = Σ saldoActual de cuentas REALES activas (las virtuales no tienen saldo propio, D1).
-    const total = cuentasRealesActivas().reduce((s, c) => s + entero(c.saldoActual), 0);
+    // Helper compartido con el "Plata total" de Hoy (inv.2: la parte de cuentas es UN solo número).
+    const total = sumaSaldosReales(_cuentas);
     const totalEl = document.getElementById('tes-total');
     totalEl.textContent = cop(total);
     totalEl.classList.toggle('adm-money--debe', total < 0);
@@ -182,7 +183,7 @@ function selectCuenta(id) {
     renderLedger();
     _movsUnsub = onMovsCuentaChange(
         id,
-        (m) => { _movs = m; renderLedger(); if (_tab === 'cuadre') renderCuadre(); },
+        (m) => { _movs = m; renderLedger(); updateSociaAnio(); if (_tab === 'cuadre') renderCuadre(); },
         200,
         (e) => admToast(errorMessage(e, 'No se pudieron leer los movimientos.'), 'danger', 4000),
     );
@@ -195,10 +196,26 @@ function renderMovsHeader() {
     const warn = document.getElementById('tes-socia-warn');
     if (c.esDeSocia) {
         warn.hidden = false;
-        warn.textContent = `Esta es una cuenta personal de ${TITULAR_LABEL[c.titular] || 'la socia'}. El sistema ordena y documenta cada peso, pero mezclar plata personal y del negocio tiene riesgos tributarios para ella. La meta es migrar todo a la cuenta del negocio.`;
+        warn.textContent = `Esta es una cuenta personal de ${TITULAR_LABEL[c.titular] || 'la socia'}. El sistema ordena y documenta cada peso, pero mezclar plata personal y del negocio tiene riesgos tributarios para ella. La meta es migrar todo a una cuenta a nombre del negocio (el RUT).`;
     } else {
         warn.hidden = true;
     }
+    updateSociaAnio();
+}
+
+// V9 · Heads-up tributario: cuánto pasó por la cuenta de la socia este año (Σ|monto| firmes del
+// año). Se recomputa también cuando llegan/cambian los movimientos. `_movs` viene topeado (200):
+// si toca el tope, avisamos "o más" en vez de mentir con un exacto que podría estar truncado.
+function updateSociaAnio() {
+    const anioEl = document.getElementById('tes-socia-anio');
+    if (!anioEl) return;
+    const c = cuentaById(_selectedId);
+    if (!c || !c.esDeSocia) { anioEl.hidden = true; return; }
+    const anio = new Date().getFullYear();
+    const pasado = throughputAnio(_movs, anio);
+    const truncado = _movs.length >= 200 ? ' o más' : '';
+    anioEl.hidden = false;
+    anioEl.textContent = `Este año (${anio}) pasó por esta cuenta ${cop(pasado)}${truncado}. Si se acerca a los topes de la DIAN, coméntalo con tu contador.`;
 }
 
 function renderLedger() {

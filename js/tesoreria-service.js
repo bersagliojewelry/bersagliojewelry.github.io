@@ -74,9 +74,17 @@ export function onMovsCuentaChange(cuentaId, cb, max = 200, onErr) {
         snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
         'movsTesoreria', onErr);
 }
+/** TODOS los movimientos pendientes de aprobación (Bandeja B4). Query por igualdad de campo único
+ *  → SIN índice compuesto; el orden por fecha lo hace la vista (lista corta). read admin/owner. */
+export function onMovimientosPendientesChange(cb, onErr) {
+    return subscribeWithRetry(
+        () => query(collection(firestoreDb, 'movimientosTesoreria'), where('estado', '==', 'pendiente_aprobacion')),
+        snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+        'movsPendTesoreria', onErr);
+}
 
 export default {
     crearCuentaTesoreria, registrarMovimientoTesoreria, trasladarEntreCuentas,
     aprobarMovimientoTesoreria, marcarConciliado, reabrirCuadre, repararSaldoTesoreria,
-    onCuentasTesoreriaChange, onMovsCuentaChange,
+    onCuentasTesoreriaChange, onMovsCuentaChange, onMovimientosPendientesChange,
 };

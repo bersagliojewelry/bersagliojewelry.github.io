@@ -82,14 +82,14 @@
 **Orden de build (corregido)**: P1.1 categorías (mínimo riesgo, sin colección/regla/listener nuevos — solo +hue/pos/img a collections) → JOURNAL (valida el motor+agente, antes que el singleton sin precedente; incluir fix del consumo eager `journal-preview.js:13` + cablear los 3 consumidores en el MISMO commit) → siteContent/home (primer singleton). Pre-commit: `onJournalChange`/`onSiteContentChange` SIN gatear el first-paint + getters con fallback.
 
 ## Checklist
-- [x] Auditoría multi-agente del estado actual (escaneo `whppptwso`)
+- [x] Auditoría multi-agente del estado actual (escaneo `whppptwso`) · consolidado en §84
 - [x] Diagnóstico de causa raíz del sync + fix P0 (`47b07b8`, test 5/5)
 - [x] Diseño de arquitectura validado por comité → §5 (`wrpym7h3p`)
 - [x] Comité de validación del modelo de datos + skill (6 lentes, REFINAR) → §5 (`wrpym7h3p`)
 - [x] safeUrl() cimiento de seguridad (BLOQUEANTE #1) → `39983f2`
 - [x] Factorizar motor CRUD genérico (BLOQUEANTE #2) + grupo UX `Contenido web` (#3) → `8b507cb` (servicio: createTypedDoc) + `67fc21e` (UI: createResourceAdmin + admin-contenido + grupo sidebar)
 - [x] P1.1 categorías dinámicas (Home dock deriva de `collections`) → `d4caaf6`
-- [x] Skill `cms-dinamico` creada (user-global, catalogada en skills-inventory) · [ ] agente content-section-builder (pendiente)
+- [x] Skill `cms-dinamico` creada (user-global, catalogada en skills-inventory) · [ ] agente content-section-builder (pendiente) · catálogo: docs/skills-inventory.md
 - [x] P1.3 journal dinámico — admin (`67fc21e`; reglas journal en emulador 151/151) + público lectura con fallback baked + fix bug "eager" (`66dfd04`)
 - [x] P1.2 siteContent/home + admin — scaffold singleton (form→setDoc merge) + textos hero/editorial editables (`c98f77d` base + `905330c` UI). Resto de singletons (nosotros/contacto/global) = P2; UNDO = P2.
 - [ ] P2.x nosotros/reviews, films/social, footer/sitemap

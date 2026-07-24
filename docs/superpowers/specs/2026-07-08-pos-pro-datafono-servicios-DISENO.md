@@ -115,7 +115,7 @@ UNIFICA el modelo: el medio deja de ser un escalar → el pedido lleva `pagos[]`
 - [x] Decisiones del dueño: anular-tarjeta (se reversa en terminal) + pago dividido (SÍ) — §9
 - [x] Núcleo `pagos[]` + datáfono + sin-pieza (TDD, `pedidos-core.js`) verde — commit `d6a5728`
 - [x] `cerrarTurnoCore` split-aware + vouchers (TDD, `caja-core.js`) verde — commit `d6a5728`
-- [x] Tests escritos + verdes — `f2-3-pos-pro.integration.test.mjs` 16/16
+- [x] Tests escritos + verdes — `f2-3-pos-pro.integration.test.mjs` 16/16 · ADR §179
 - [x] 3a datáfono (core + POS) verde — gate Chrome prod (§179.4): venta datáfono → Entregado
 - [x] 3b vouchers al cierre (core + UI) verde — ADR §179.4 (gate prod: 2 vouchers $110k, Monto cuadra + Cantidad coinciden)
 - [x] 3c venta sin pieza (core + POS) verde — ADR §179.4 (gate prod: sin-pieza $50k, nombre legible)

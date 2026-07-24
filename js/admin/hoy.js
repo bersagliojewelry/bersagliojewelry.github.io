@@ -28,6 +28,8 @@ import {
     onPedidosChange, onTurnosChange, onVentasTurnoChange, onMovsCajaChange, onBovedaChange,
 } from '../pedidos-service.js';
 import { estadoCuenta, hoyISO } from '../crm-estado-cuenta.js';
+import { onCuentasTesoreriaChange } from '../tesoreria-service.js';
+import { sumaSaldosReales } from './tesoreria-format.js';
 import { estadoPedido, idVisible } from './pedidos-format.js';
 import { efectivoEnCajon, ventasEfectivoTurno } from './caja-format.js';
 import { rangoDia, ventasDeHoy, pedidosPorEntregar, cuotaEnVentana } from './hoy-format.js';
@@ -344,24 +346,31 @@ function initSenalAvisos(grid, esOwner) {
     if (esOwner) onSaludEventosChange((evs) => { fallos = evs.filter((e) => e.resuelto !== true).length; falOk = true; render(); });
 }
 
-// ─── Fila OWNER: efectivo total (cajón + bóveda) + último arqueo ───────────────────────────────
+// ─── Fila OWNER: plata total (cajón + bóveda + cuentas) + último arqueo ─────────────────────────
 function initSenalOwner(grid, cajaLive) {
-    const plata  = statCard({ icon: '🏦', tone: 'emerald', label: 'Efectivo total (cajón + bóveda)' });
+    const plata  = statCard({ icon: '🏦', tone: 'emerald', label: 'Plata total' });
     const arqueo = statCard({ icon: '⚖️', tone: 'gold', label: 'Último arqueo' });
     grid.append(plata.card, arqueo.card);
 
-    cajaLive.onChange((s) => {
-        // Efectivo total = estimado del cajón (0 si la caja está cerrada) + saldo de la bóveda.
+    // Plata total = cajón (0 si la caja está cerrada) + bóveda + Σ cuentas reales activas de
+    // tesorería (F-TESORERÍA B4). La parte de cuentas usa el MISMO helper `sumaSaldosReales` que la
+    // página "Cuentas y bancos" (inv.2: un solo número). Dos fuentes vivas → render combinado.
+    let cajaState = null, cuentasTeso = [];
+
+    const render = () => {
+        const s = cajaState;
+        if (!s) return;
         const bov = Number(s.boveda?.saldo) || 0;
+        const enCuentas = sumaSaldosReales(cuentasTeso);
         if (s.turno && !s.cajonListo) {
             plata.val.textContent = 'Calculando…'; plata.val.style.color = '';
-            plata.sub.textContent = `Bóveda ${copSigned(bov)}`;
+            plata.sub.textContent = `Bóveda ${copSigned(bov)} · Cuentas ${copSigned(enCuentas)}`;
         } else {
             const cajon = s.turno ? s.cajon : 0;
-            const total = cajon + bov;
+            const total = cajon + bov + enCuentas;
             plata.val.textContent = copSigned(total);
             plata.val.style.color = total < 0 ? 'var(--adm-danger)' : '';
-            plata.sub.textContent = `Cajón ${copSigned(cajon)} · Bóveda ${copSigned(bov)}`;
+            plata.sub.textContent = `Cajón ${copSigned(cajon)} · Bóveda ${copSigned(bov)} · Cuentas ${copSigned(enCuentas)}`;
         }
 
         // Último arqueo (descuadre del último cierre, sin clamp).
@@ -370,7 +379,11 @@ function initSenalOwner(grid, cajaLive) {
         else if (d === 0)   { arqueo.val.textContent = 'Cuadró';           arqueo.val.style.color = 'var(--adm-success)';  arqueo.sub.textContent = 'El último cierre cuadró ✓'; }
         else if (d > 0)     { arqueo.val.textContent = `Sobró ${copSigned(d)}`;  arqueo.val.style.color = 'var(--adm-accent)'; arqueo.sub.textContent = 'Revisa el último cierre'; }
         else                { arqueo.val.textContent = `Faltó ${copSigned(-d)}`; arqueo.val.style.color = 'var(--adm-danger)'; arqueo.sub.textContent = 'Revisa el último cierre'; }
-    });
+    };
+
+    cajaLive.onChange((s) => { cajaState = s; render(); });
+    // Cuentas de tesorería (owner puede leerlas). Fallo → cuentas=0, el total cae a cajón+bóveda (honesto).
+    onCuentasTesoreriaChange((cuentas) => { cuentasTeso = cuentas; render(); }, () => { cuentasTeso = []; render(); });
 }
 
 init();

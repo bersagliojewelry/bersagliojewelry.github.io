@@ -112,6 +112,6 @@ Push FCM A.6 (venta-web-pagada → notificación al celular de Kary; deep-link `
 - [x] avanzarPedidoCore + wrapper + historial/dayKey/flete/merma/POD (TDD) — evidencia: `avanzar-pedido.integration` verde en emulador (commit `994776a`)
 - [x] Ruta corta POS + requiereEnvio (crearPedido/confirmarPago) — evidencia: integración (`pAv1-7`) + E2E prod: venta con checkbox nace `pagado`, sin checkbox nace `entregado` (§167.4)
 - [x] Costuras items[]/costoSnapshot:null/clienteId:null — evidencia: asserts de doc en integración (commit `994776a`)
-- [x] Deploy manual functions + suites verdes + SW/APP bump + 05 — evidencia: deploy 4 CFs 2026-07-06 + SW v74/APP v37 verificados live (`caches.keys()`)
+- [x] Deploy manual functions + suites verdes + SW/APP bump + 05 — evidencia: deploy 4 CFs 2026-07-06 + SW v74/APP v37 verificados live (`caches.keys()`) · ADR §167
 - [x] UI: filtros+totales+colas+acciones+historial — evidencia: Chrome prod (§167.4; commits `d12be6f`+`8ff3100`)
 - [x] Gate F1: E2E de los 3 flujos de entrega EN PROD + validación Chrome + ADR — evidencia: BJ-KP4S-A6HX (nacional) · BJ-Z5W5-2MZS (local) · BJ-CBXQ-ZJ9T (retiro, rechazo sin cédula probado); 3 anulados al cierre; ADR **§167**

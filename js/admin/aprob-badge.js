@@ -9,14 +9,15 @@
  */
 import { onSolicitudesPendientesChange } from '../crm-service.js';
 import { onBovedaMovsChange } from '../pedidos-service.js';
+import { onMovimientosPendientesChange } from '../tesoreria-service.js';
 import { esDestructivo } from './caja-format.js';
 
-let _sol = 0, _caja = 0, _wired = false;
+let _sol = 0, _caja = 0, _teso = 0, _wired = false;
 
 function paint() {
     const badge = document.getElementById('aprob-badge');
     if (!badge) return;
-    const n = _sol + _caja;
+    const n = _sol + _caja + _teso;
     badge.textContent = n > 9 ? '9+' : String(n);
     badge.hidden = n === 0;
 }
@@ -27,4 +28,5 @@ export function initAprobBadge() {
     _wired = true;
     onSolicitudesPendientesChange((list) => { _sol = list.length; paint(); }, () => { _sol = 0; paint(); });
     onBovedaMovsChange((movs) => { _caja = movs.filter(esDestructivo).length; paint(); }, 200, () => { _caja = 0; paint(); });
+    onMovimientosPendientesChange((movs) => { _teso = movs.length; paint(); }, () => { _teso = 0; paint(); });
 }

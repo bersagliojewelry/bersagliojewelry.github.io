@@ -353,3 +353,44 @@ Reglas: `firestore-rules.test.mjs` gana casos: write directo a las 2 colecciones
 - Capacidades-flag T-16/18/19 + rol `caja` (F2.0 matiz).
 - Auto-posting Wompi→tesorería (F-REPORTES).
 - Decisión Daniel pendiente del v5 §8: destino de los 344 clientes en la limpieza.
+
+## §9 — Mapa de ejecución B5 [OPUS-4.8, mapeo del 2026-07-23 · pura ubicación, sin re-diseño]
+
+> B0-B4 ✅ (código). B5 pendiente. Orden sugerido por RIESGO CRECIENTE: **D6 → V1 → V18 → V17 → D9**
+> → microcopy/Salud. Cada sub-paso: test-PRIMERO (R2/R3), commit atómico, alerta en bitácora.
+
+- **D6 (menor riesgo, self-contained)**: tarjeta "Reglas del sistema" hoy SOLO-LECTURA en
+  `js/admin/config.js` (`renderReglasSistema`, body `#reglas-sistema-body`) + `admin-config.html`.
+  Lee `config/caja` (`enforceTurno`, `limiteCajon`) y `config/fiscal` (tasas). **CF nueva
+  `actualizarConfigSistema`** (owner-only) en `functions/tesoreria.js`+core (CF 7 §2): valida rangos
+  (`enforceTurno` bool · `limiteCajon` int>0 · tasas 0-1), escribe el doc `config/*`, estampa actor +
+  evento en `saludEventos`. Hacer editables (owner) al menos `enforceTurno`+`limiteCajon` (SoD inv.6:
+  el ejemplo exacto del REFUTADO §0.7). Nota diseño abierta: firma `{campo,valor}` (spec §2) vs
+  `{seccion,patch}` — decidir al implementar. Config se escribe hoy por cliente vía `setConfig`
+  (crm-service) para `config/negocio`; las reglas de dinero deben ir por la CF, NO por `setConfig`.
+- **V1 + V18 (HOT · `functions/pedidos.js`)**: el traslado de bóveda vive en **`registrarTraslado`**
+  (index.js:259); tipos de bóveda en `js/admin/caja-format.js:34-42` (`boveda_a_banco` = consignación,
+  `boveda_a_cajon`, etc.). V1: cuando el traslado sea `boveda_a_banco` a una cuenta REAL, la MISMA tx
+  escribe la pata `consignacion_in` en `movimientosTesoreria` (vía `registrarMovimientoTesoreriaCore`
+  con `fuente:'SISTEMA'` — puerta interna, NO la CF pública que fuerza MANUAL, ver `tesoreria.js:48`).
+  Exige que la consignación ELIJA cuenta de tesorería (cambio UI en `js/admin/boveda.js`). V18 = flujo
+  nuevo banco→bóveda espejo (pata `retiro_efectivo_out`). Tests §5.9/§5.18.
+- **V17 + D9 (HOT · caja + abono CRM)**: ubicar la CF de abono del CRM (F2.1 vínculo cliente; NO está
+  en el mapa de exports como "abono" — buscar en `functions/` el escritor de `movimientos` de cartera).
+  V17: abono en EFECTIVO → pata en `movsCaja` (tipo nuevo `abono_cartera`), exige turno abierto,
+  idempotente por-libro (V4). D9: form de abono gana `cuentaId` opcional → misma CF crea la pata
+  `abono_cartera` en tesorería con el MISMO opId (flag off hasta test verde). Tests §5.10/§5.16/§5.17.
+- **Cierre B5**: microcopy global + extender el cuadre diario 3:30 (`functions/salud.js`
+  `reconciliacionDiaria`, index.js:288) para comparar `saldoActual` vs recompute de cada cuenta.
+
+**✅ D6 HECHO (2026-07-24, [OPUS-5])** — `CAMPOS_CONFIG` (whitelist cerrada de 7 campos) +
+`actualizarConfigSistemaCore` owner-only con rangos/MERGE/audit; UI editable en `config.js`;
+7 tests → integración **22/22**. Dos precisiones que valen para el resto de B5:
+1. **`reteIcaXMil` es POR MIL (0-100), no fracción 0-1** — el cuerpo de la spec decía "tasas 0-1"
+   y aplicado literal habría rechazado el 7‰ real del contador. Validar cada tasa en SU unidad.
+2. **⚠️ `saludEventos` tiene DOS semánticas y el Hoy las distingue por `resuelto`**: la tarjeta
+   "Avisos" cuenta los eventos con `resuelto !== true` como FALLAS del sistema (`hoy.js`
+   `initSenalAvisos`). Un evento de **auditoría** (config cambiada, y lo que V1/V18/V17 registren
+   como traza, no como fallo) debe nacer **`resuelto: true`** o le enciende una alarma falsa al
+   dueño; los fallos REALES del recompute siguen naciendo `resuelto: false` (patrón §64). Fijado
+   con test. *(Lección pendiente de anclar en `30` cuando se haga su shard — TODO-77.)*

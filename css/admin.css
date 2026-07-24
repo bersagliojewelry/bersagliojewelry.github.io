@@ -1843,3 +1843,48 @@ select.adm-input { cursor: pointer; appearance: none; -webkit-appearance: none; 
 .aud-ev--traslado { border-left-color: #b8860b; }
 .aud-ev--muerta   { opacity: .55; }
 .aud-ev--muerta .bov-mov-tipo { text-decoration: line-through; }
+
+/* ── F-TESORERÍA · Cuentas y bancos (B2) — reusa .pos-card / .bov-mov* / .adm-pill ── */
+.tes-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.tes-movs-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.tes-total-box { display: flex; flex-direction: column; gap: 2px; margin: 14px 0 10px; padding: 12px 14px; background: var(--adm-bg, #f7f7f5); border: 1px solid var(--adm-border); border-radius: var(--adm-radius); }
+.tes-total { font-size: 22px; }
+.tes-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-top: 6px; }
+.tes-card {
+    display: flex; flex-direction: column; gap: 5px;
+    padding: 13px 14px; background: #fff; border: 1px solid var(--adm-border); border-radius: var(--adm-radius);
+    cursor: pointer; transition: border-color .12s ease, background-color .12s ease;
+}
+.tes-card:hover { border-color: var(--adm-accent); }
+.tes-card.is-selected { border-color: var(--adm-accent); background: var(--adm-accent-light); }
+.tes-card--virtual { cursor: default; background: var(--adm-bg, #f7f7f5); }
+.tes-card--virtual:hover { border-color: var(--adm-border); }
+.tes-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.tes-card-name { font-weight: 600; color: var(--adm-text); font-size: 14px; overflow-wrap: anywhere; }
+.tes-card-chips { display: flex; gap: 4px; flex-shrink: 0; flex-wrap: wrap; }
+.tes-card-bank { font-size: 12px; color: var(--adm-muted); }
+.tes-card-saldo { font-size: 18px; white-space: nowrap; }
+.tes-card-link { font-size: 12px; color: var(--adm-accent); text-decoration: none; margin-top: 2px; }
+.tes-card-link:hover { text-decoration: underline; }
+.tes-socia-warn {
+    margin: 4px 0 10px; padding: 9px 12px; font-size: 12.5px; line-height: 1.45;
+    color: #9a7730; background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.3); border-radius: var(--adm-radius);
+}
+.tes-clip { font-size: 13px; }
+
+/* Cuadre (B3): pestañas + panel de conciliación */
+.tes-tabs { display: flex; gap: 4px; margin: 6px 0 12px; border-bottom: 1px solid var(--adm-border); }
+.tes-tab {
+    padding: 8px 14px; font: inherit; font-size: 13.5px; font-weight: 500; color: var(--adm-muted);
+    background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; margin-bottom: -1px;
+}
+.tes-tab:hover { color: var(--adm-text); }
+.tes-tab.is-active { color: var(--adm-accent); border-bottom-color: var(--adm-accent); }
+.tes-cua-steps { margin: 0 0 12px; padding-left: 20px; font-size: 12.5px; color: var(--adm-muted); line-height: 1.6; }
+.tes-cua-bar { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.adm-field--inline { flex-direction: row; align-items: center; gap: 8px; margin: 0; }
+.adm-field--inline label { margin: 0; white-space: nowrap; }
+.tes-cua-summary { margin-top: 12px; padding: 12px 14px; background: var(--adm-bg, #f7f7f5); border: 1px solid var(--adm-border); border-radius: var(--adm-radius); }
+.tes-cua-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.tes-cua-cb { width: 17px; height: 17px; cursor: pointer; accent-color: var(--adm-accent); }
+.tes-cua-done { opacity: .72; }

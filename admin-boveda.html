@@ -101,6 +101,14 @@
                 <label for="sal-monto">Monto (COP)</label>
                 <input class="adm-input" id="sal-monto" type="number" min="0" inputmode="numeric" placeholder="Ej. 2000000">
             </div>
+            <!-- V1 (F-TESORERÍA B5): a qué cuenta REAL entra la consignación → su pata bancaria se
+                 escribe en el mismo acto, para que la plata no desaparezca de la vista consolidada. -->
+            <div class="adm-field" id="sal-cuenta-field" hidden>
+                <label for="sal-cuenta">¿A qué cuenta entró la plata?</label>
+                <select class="adm-input" id="sal-cuenta"></select>
+                <p class="pos-hint">Así el saldo de esa cuenta sube solo y el cuadre del banco te va a cerrar.</p>
+            </div>
+            <p class="pos-hint" id="sal-cuenta-aviso" hidden></p>
             <div class="adm-field">
                 <label for="sal-nota">Nota (nº de consignación, referencia…)</label>
                 <input class="adm-input" id="sal-nota" type="text" maxlength="500" placeholder="Nota (opcional)">

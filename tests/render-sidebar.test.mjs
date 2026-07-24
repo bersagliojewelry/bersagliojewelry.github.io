@@ -76,6 +76,19 @@ test('F-IA-2 B4: Aprobaciones (owner-only) con badge vivo bajo Finanzas', () => 
   assert.doesNotMatch(adminHtml, /id="aprob-badge"/);
 });
 
+test('F-TESORERÍA B2: "Cuentas y bancos" bajo Finanzas, visible para admin y owner', () => {
+  for (const role of ['admin', 'owner']) {
+    const html = renderSidebar(NAV, { role, activePage: 'admin.html' });
+    assert.match(html, /href="admin-tesoreria\.html"/, `rol ${role} debe ver Cuentas y bancos`);
+    const m = html.match(/adm-nav-label">Finanzas<\/span>([\s\S]*?)<\/div>/);
+    assert.ok(m, 'debe existir el grupo Finanzas');
+    assert.match(m[1], /href="admin-tesoreria\.html"/, 'vive bajo Finanzas');
+  }
+  // La cajera (rol caja, por debajo de admin) NO ve tesorería (parámetros del negocio = admin+).
+  const cajaHtml = renderSidebar(NAV, { role: 'caja', activePage: 'admin.html' });
+  assert.doesNotMatch(cajaHtml, /href="admin-tesoreria\.html"/);
+});
+
 test('rail v2: Negocio y equipo (ex Configuración, incluye Vendedoras) visible para admin', () => {
   const html = renderSidebar(NAV, { role: 'admin', activePage: 'admin.html' });
   assert.match(html, /Negocio y equipo/);

@@ -19,6 +19,8 @@ import {
     onBovedaChange, onBovedaMovsChange, onCajaEstadoChange,
 } from '../pedidos-service.js';
 import { tipoBovedaLabel, aprobacionInfo, esDestructivo } from './caja-format.js';
+import { onCuentasTesoreriaChange } from '../tesoreria-service.js';   // V1: cuentas reales para la consignación
+import { TIPOS_VIRTUALES } from './tesoreria-format.js';
 
 // Bóveda: el saldo PUEDE ser negativo (anomalía real) → formateo con signo, sin clamp.
 const cop = (n) => { const v = Math.round(Number(n) || 0); return (v < 0 ? '-$' : '$') + Math.abs(v).toLocaleString('es-CO'); };
@@ -36,6 +38,11 @@ let _salidaOpId = null;  // consignar / reponer (modal de salida)
 let _conteoOpId = null;  // conteo físico → ajuste
 let _accionTipo = null;  // 'boveda_a_banco' | 'boveda_a_cajon' (modal de salida)
 let _turnoAbiertoId = null;  // turno abierto (para atribuir la reposición de cambio al cierre)
+// V1 (F-TESORERÍA B5): cuentas REALES activas. La consignación elige a cuál entra la plata para que
+// la MISMA tx escriba su pata bancaria; sin eso el dinero salía de la bóveda y no entraba a ningún
+// libro (desaparecía de la consolidada). Si Kary aún no ha cargado cuentas, se permite sin elegir
+// (retrocompatible) — el aviso del modal lo explica.
+let _cuentasReales = [];
 
 // ─── DOM builder seguro (sin innerHTML) ──────────────────────────────────────
 function el(tag, attrs = {}, kids = []) {
@@ -66,6 +73,12 @@ async function init() {
     );
     // Turno abierto (owner lee caja/estado): la reposición de cambio se atribuye a ESE turno.
     onCajaEstadoChange((est) => { _turnoAbiertoId = est?.turnoAbiertoId || null; }, () => { _turnoAbiertoId = null; });
+
+    // V1: cuentas reales activas (banco/Nequi) para elegir destino de la consignación.
+    onCuentasTesoreriaChange(
+        (cuentas) => { _cuentasReales = cuentas.filter((c) => !TIPOS_VIRTUALES.includes(c.tipo) && c.activa !== false); },
+        () => { _cuentasReales = []; },   // sin lectura → el modal cae al modo retrocompatible
+    );
 
     // Acciones (owner)
     document.getElementById('bov-consignar').addEventListener('click', () => openSalida('boveda_a_banco'));
@@ -192,12 +205,37 @@ function openSalida(tipo) {
     document.getElementById('sal-saldo').textContent = cop(_saldo);
     document.getElementById('sal-monto').value = '';
     document.getElementById('sal-nota').value = '';
+    renderSalidaCuenta(esBanco);
     const submit = document.getElementById('sal-submit');
     submit.disabled = false; submit.textContent = 'Registrar';
     document.getElementById('sal-modal').hidden = false;
     document.getElementById('sal-monto').focus();
 }
 function closeSalida() { document.getElementById('sal-modal').hidden = true; }
+
+// V1 · "¿A qué cuenta entró?" — solo en la consignación al banco. Con cuentas cargadas es
+// OBLIGATORIO (si no, la plata sale de la bóveda y no entra a ningún libro: el bug P0). Si Kary
+// todavía no ha creado sus cuentas, se explica y se permite seguir (no bloquear la operación).
+function renderSalidaCuenta(esBanco) {
+    const campo = document.getElementById('sal-cuenta-field');
+    const sel = document.getElementById('sal-cuenta');
+    const aviso = document.getElementById('sal-cuenta-aviso');
+    if (!campo || !sel || !aviso) return;
+    campo.hidden = !esBanco;
+    aviso.hidden = true;
+    sel.textContent = '';
+    if (!esBanco) return;
+
+    if (!_cuentasReales.length) {
+        campo.hidden = true;
+        aviso.hidden = false;
+        aviso.textContent = 'Aún no tienes cuentas cargadas en “Cuentas y bancos”. Puedes registrar la consignación, pero esta plata no quedará sumada al saldo de ningún banco hasta que agregues la cuenta.';
+        return;
+    }
+    for (const c of [..._cuentasReales].sort((a, b) => String(a.nombre).localeCompare(String(b.nombre), 'es'))) {
+        sel.appendChild(el('option', { value: c.id, text: c.banco ? `${c.nombre} · ${c.banco}` : c.nombre }));
+    }
+}
 async function handleSalida() {
     const monto = entero(document.getElementById('sal-monto').value);
     const nota = document.getElementById('sal-nota').value.trim();
@@ -209,13 +247,20 @@ async function handleSalida() {
         admToast('Abre la caja del mostrador antes de reponer el cambio: así este dinero queda sumado al turno que está abierto.', 'danger', 5000);
         return;
     }
+    // V1: la consignación exige la cuenta destino CUANDO hay cuentas cargadas (si no, la plata
+    // saldría de la bóveda sin entrar a ningún libro). Sin cuentas creadas aún → se permite.
+    let cuentaId;
+    if (_accionTipo === 'boveda_a_banco' && _cuentasReales.length) {
+        cuentaId = document.getElementById('sal-cuenta').value || '';
+        if (!cuentaId) { admToast('Elige a qué cuenta entró la plata.', 'danger'); return; }
+    }
     if (!_salidaOpId) _salidaOpId = uid();
     const turnoId = _accionTipo === 'boveda_a_cajon' ? _turnoAbiertoId : undefined;
 
     const submit = document.getElementById('sal-submit');
     submit.disabled = true; submit.textContent = 'Registrando…';
     try {
-        await registrarTraslado({ opId: _salidaOpId, tipo: _accionTipo, monto, turnoId, nota: nota || undefined });
+        await registrarTraslado({ opId: _salidaOpId, tipo: _accionTipo, monto, turnoId, nota: nota || undefined, cuentaId });
         _salidaOpId = null;
         admToast('✓ Movimiento registrado', 'success');
         closeSalida();

@@ -33,6 +33,9 @@ export const NAV = [
     // desde el Mostrador (patrón Odoo/Shopify POS); aquí se AUDITA.
     { label: 'Caja y turnos', href: 'admin-auditoria.html', icon: 'receipt', role: 'owner' },
     { label: 'Bóveda',        href: 'admin-boveda.html',    icon: 'shield',  role: 'owner' },
+    // F-TESORERÍA B2 (§3): cuentas y bancos (bancos/Nequi + virtuales caja/bóveda). admin: Kary
+    // registra/traslada (read admin/owner por reglas); owner aprueba retiros/ajustes (Bandeja, B4).
+    { label: 'Cuentas y bancos', href: 'admin-tesoreria.html', icon: 'card', role: 'admin' },
     // F-IA-2 B4 (D5): bandeja ÚNICA de aprobaciones (cartera M2b + bóveda/caja). Owner-only: sus
     // fuentes son owner-read (bóveda `read isOwner`) y las callables validan owner. badge vivo.
     { label: 'Aprobaciones',  href: 'admin-aprobaciones.html', icon: 'invoice', role: 'owner', badgeId: 'aprob-badge' },
@@ -63,4 +66,4 @@ export const NAV_FOOTER = { label: 'Ver sitio', href: 'index.html', icon: 'exter
 // Versión visible del panel (criterio de deploy para no-técnicos, spec §9.1): Kary
 // confirma que está en la versión nueva tras un despliegue. Se bumpea JUNTO al
 // CACHE_NAME del Service Worker (`public/sw.js`) en cada cambio del shell admin.
-export const APP_VERSION = 'v54 · 2026-07-18';   // [FABLE-5] Auditoría titular: tarjeta Avisos del Hoy — plural "aprobaciones" + "avisos del sistema" (costura B3↔B5)
+export const APP_VERSION = 'v55 · 2026-07-23';   // [OPUS-4.8] F-TESORERÍA B2: nueva página "Cuentas y bancos" en el rail Finanzas

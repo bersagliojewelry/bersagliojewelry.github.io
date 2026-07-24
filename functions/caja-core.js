@@ -17,6 +17,7 @@
  */
 const { FieldValue } = require('firebase-admin/firestore');
 const { entero, PedidoError, MEDIOS, ESTADOS_CON_DINERO } = require('./pedidos-core.js');
+const tesoreria = require('./tesoreria-core.js');   // V1: constructor de la pata bancaria (sin ciclo: tesoreria no requiere caja)
 
 const ESTADO_REF = 'caja/estado';
 
@@ -199,6 +200,11 @@ async function cerrarTurnoCore(db, input = {}) {
 // El CHECKPOINT mensual (boveda/main/checkpoints/{YYYY-MM}, sellado por `sellTs`) ACOTA el recompute a
 // [checkpoint, ahora] → no O(n) a 2-3 años (§8.3).
 const SIGNO_BOVEDA = { cajon_a_boveda: 1, boveda_a_cajon: -1, boveda_a_banco: -1 };   // traslados que acepta registrarTraslado
+// V1 (F-TESORERÍA B5): traslados que CRUZAN a una cuenta real → su pata en el ledger de tesorería.
+// La bóveda es el ÚNICO punto de entrada/salida del efectivo (V18): nunca banco↔cajón directo.
+const PATA_POR_TIPO = { boveda_a_banco: 'consignacion_in' };
+// Fecha de la pata en la zona del negocio (el ledger de tesorería indexa por 'YYYY-MM-DD', no por ts).
+const hoyBogota = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
 
 // Guard duro de montos (§8.3): entero seguro y positivo (COP sin centavos). NO usa entero() (que coacciona).
 function guardMonto(monto) {
@@ -242,7 +248,12 @@ async function saldoBovedaDesdeLedger(db, tx = null) {
 /**
  * Registra un traslado de dinero físico de/hacia la bóveda. Recompute SÍNCRONO en la tx (gate §8.1.3):
  * una salida no puede dejar la bóveda negativa. Idempotente por opId. Escribe el ledger + boveda/main atómico.
- * @param db Firestore (admin). @param input { opId, tipo, monto, turnoId?, autor, nota? }
+ *
+ * **V1 (F-TESORERÍA B5)**: si el traslado toca una cuenta REAL (`boveda_a_banco` con `cuentaId`),
+ * esta MISMA tx escribe la pata `consignacion_in` en `movimientosTesoreria/{opId}-teso`. Sin ella la
+ * plata salía de la bóveda sin entrar a ningún libro → desaparecía de la consolidada (P0 del comité).
+ * `cuentaId` es OPCIONAL: sin él, el comportamiento es EXACTAMENTE el de antes (cero regresión).
+ * @param db Firestore (admin). @param input { opId, tipo, monto, turnoId?, autor, nota?, cuentaId?, fecha? }
  */
 async function registrarTrasladoCore(db, input = {}) {
     const opId = String(input.opId || '').trim();
@@ -259,14 +270,42 @@ async function registrarTrasladoCore(db, input = {}) {
     const CAMPO_ACUM = { cajon_a_boveda: 'cajonABoveda', boveda_a_cajon: 'bovedaACajon' };
     const turnoId = input.turnoId ? String(input.turnoId) : null;
 
+    // V1 · pata bancaria: SOLO los traslados que cruzan a una cuenta real la llevan.
+    const cuentaId = input.cuentaId ? String(input.cuentaId).trim() : null;
+    const pataTipo = cuentaId ? PATA_POR_TIPO[tipo] : null;
+    if (cuentaId && !pataTipo) {
+        throw new PedidoError('invalid-argument', 'Ese traslado no va a una cuenta bancaria (Caja↔Bóveda se mueve entre ellas).');
+    }
+    const fechaPata = String(input.fecha || hoyBogota());
+
     return db.runTransaction(async (tx) => {
         const movRef = db.doc(`bovedaMovimientos/${opId}`);
         const turnoRef = (turnoId && CAMPO_ACUM[tipo]) ? db.doc(`turnos/${turnoId}`) : null;
+        const pataRef = pataTipo ? db.doc(`movimientosTesoreria/${opId}-teso`) : null;
         // Todas las lecturas ANTES de escribir (regla de las transacciones Firestore).
         const existing = await tx.get(movRef);
         const turnoSnap = turnoRef ? await tx.get(turnoRef) : null;
+        const pataSnap = pataRef ? await tx.get(pataRef) : null;
+        const cuentaSnap = pataRef ? await tx.get(db.doc(`cuentasTesoreria/${cuentaId}`)) : null;
         const base = await saldoBovedaDesdeLedger(db, tx);   // recompute autoridad (movimientos ya commiteados)
-        if (existing.exists) return { opId, saldo: base, yaExistia: true };   // IDEMPOTENTE: no re-suma
+
+        // Construir la pata VALIDA la cuenta destino y lanza si no sirve → aborta TODO el traslado
+        // (jamás se descuenta la bóveda hacia una cuenta inválida).
+        const pataDoc = pataRef ? tesoreria.construirPataSistema({
+            cuentaSnap, cuentaId, tipo: pataTipo, monto, fecha: fechaPata,
+            refDocumento: opId, autor, descripcion: input.nota,
+        }) : null;
+
+        if (existing.exists) {
+            // IDEMPOTENTE, pero POR-LIBRO (V4): si el traslado ya está y la pata bancaria FALTA
+            // (traslado viejo, anterior a V1, o fallo parcial), el replay la crea — jamás
+            // "éxito previo" global que dejaría la plata fuera del libro del banco.
+            if (pataRef && !pataSnap.exists) {
+                tx.set(pataRef, pataDoc);
+                return { opId, saldo: base, yaExistia: true, pataCreada: true };
+            }
+            return { opId, saldo: base, yaExistia: true };
+        }
 
         // Un traslado atribuido a un turno exige que el turno exista y siga ABIERTO: uno tardío contra un
         // turno sellado jamás entraría a su ecuación de cierre (drift silencioso, §traslado-duplicado).
@@ -284,7 +323,8 @@ async function registrarTrasladoCore(db, input = {}) {
         tx.set(movRef, mov);
         if (turnoRef) tx.update(turnoRef, { [CAMPO_ACUM[tipo]]: FieldValue.increment(monto) });
         tx.set(db.doc('boveda/main'), { saldo: nuevoSaldo, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
-        return { opId, saldo: nuevoSaldo, tipo, delta, yaExistia: false };
+        if (pataRef && !pataSnap.exists) tx.set(pataRef, pataDoc);   // V1: la pata entra en la MISMA tx
+        return { opId, saldo: nuevoSaldo, tipo, delta, yaExistia: false, pataCreada: !!pataRef };
     });
 }
 

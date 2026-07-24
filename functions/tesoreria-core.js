@@ -540,6 +540,58 @@ async function recalcularSaldoCuentaCore(db, cuentaId) {
     return { cuentaId: id, saldo };
 }
 
+// ─── V1/V18 · PATA de sistema para la frontera bóveda↔banco (B5, zona caliente) ────────────────
+// Las escribe OTRA CF (la de traslado de bóveda) DENTRO DE SU PROPIA transacción — por eso esto es
+// un CONSTRUCTOR puro (valida + devuelve el doc), no una función que abra tx: las tx no se anidan.
+// La puerta MANUAL sigue rechazando estos tipos (TIPOS_SOLO_SISTEMA) — una sola vía para cada cosa.
+const PATA_TIPOS = Object.freeze(['consignacion_in', 'retiro_efectivo_out']);
+
+/**
+ * Valida la cuenta REAL destino y construye el asiento de la pata bancaria. Lanza (⇒ aborta la tx
+ * del llamador, invariante de atomicidad) si la cuenta no sirve: inexistente, virtual, inactiva, o
+ * con fecha anterior a su corte inicial (V10 double-count).
+ * @param input { cuentaSnap (DocumentSnapshot leído DENTRO de la tx), cuentaId, tipo, monto, fecha,
+ *                refDocumento, autor, descripcion? }
+ */
+function construirPataSistema(input = {}) {
+    const { FieldValue } = require('firebase-admin/firestore');
+    const tipo = input.tipo;
+    if (!PATA_TIPOS.includes(tipo)) throw new TesoreriaError('invalid-argument', `Pata de sistema inválida: ${tipo}.`);
+    const cuentaId = String(input.cuentaId || '').trim();
+    if (!cuentaId) throw new TesoreriaError('invalid-argument', 'La pata bancaria exige la cuenta.');
+    const monto = entero(input.monto);
+    if (!(monto > 0)) throw new TesoreriaError('invalid-argument', 'El monto debe ser mayor a 0.');
+    const fecha = String(input.fecha || '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) throw new TesoreriaError('invalid-argument', "La fecha debe ser 'YYYY-MM-DD'.");
+
+    const snap = input.cuentaSnap;
+    if (!snap || !snap.exists) throw new TesoreriaError('not-found', 'La cuenta a la que consignas no existe.');
+    const cuenta = snap.data();
+    if (TIPOS_VIRTUALES.includes(cuenta.tipo)) {
+        throw new TesoreriaError('failed-precondition', 'Caja y Bóveda no son cuentas bancarias: elige el banco o Nequi donde entró la plata.');
+    }
+    if (cuenta.activa !== true) throw new TesoreriaError('failed-precondition', 'Esa cuenta está inactiva.');
+    if (cuenta.fechaCorte && fecha < cuenta.fechaCorte) {
+        throw new TesoreriaError('failed-precondition', `La fecha es anterior al corte inicial de la cuenta (${cuenta.fechaCorte}): eso ya está dentro del saldo de arranque.`);
+    }
+
+    const mov = {
+        cuentaId, tipo, fecha,
+        monto: { monto, moneda: 'COP' },                    // T-3: jamás number desnudo
+        estado: 'activo',                                   // el movimiento físico YA ocurrió (no pide firma)
+        conciliado: false,
+        creadoPor: {
+            uid: (input.autor && input.autor.uid) || input.autor || null,
+            nombre: (input.autor && input.autor.nombre) || null,
+            fuente: 'SISTEMA',                              // la escribió otra CF, no la puerta manual
+        },
+        creadoEn: FieldValue.serverTimestamp(),
+    };
+    if (input.refDocumento) mov.refDocumento = String(input.refDocumento).trim();   // trazable al mov de bóveda
+    if (input.descripcion) mov.descripcion = String(input.descripcion).slice(0, 500);
+    return mov;
+}
+
 /**
  * CF 7 · D6 · WHITELIST de las "Reglas del sistema" editables por el DUEÑO (B5).
  * Lista CERRADA: `campo` → dónde vive y qué rango acepta. Un campo fuera de aquí NO se escribe
@@ -621,7 +673,7 @@ async function actualizarConfigSistemaCore(db, input = {}) {
 module.exports = {
     SIGNO_TESORERIA, TIPOS_DERIVADOS, TIPOS_MOV, TIPOS_CUENTA, TIPOS_VIRTUALES, TITULARES,
     ESTADOS_MOV, TIPOS_PENDIENTES, CATEGORIAS_GASTO, DIRECCIONES, TIPOS_SOLO_SISTEMA, SOCIAS, TIPOS_SOCIA,
-    CAMPOS_CONFIG,
+    CAMPOS_CONFIG, PATA_TIPOS, construirPataSistema,
     TesoreriaError, entero, signoDeMovimiento, computeSaldoCuenta, seedCuentasVirtuales,
     crearCuentaTesoreriaCore, registrarMovimientoTesoreriaCore, trasladarEntreCuentasCore,
     aprobarMovimientoTesoreriaCore, marcarConciliadoCore, reabrirCuadreCore, recalcularSaldoCuentaCore,

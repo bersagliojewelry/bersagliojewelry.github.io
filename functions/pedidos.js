@@ -190,7 +190,9 @@ const registrarTraslado = onCall({ region: 'us-central1', invoker: 'public' }, a
     await rolDeCaja(db, request.auth);
     try {
         const d = request.data || {};
-        return await registrarTrasladoCore(db, { opId: d.opId, tipo: d.tipo, monto: d.monto, turnoId: d.turnoId, nota: d.nota, autor: request.auth.uid }, { notificar: notificarCaja(db) });
+        // `cuentaId` (V1, F-TESORERÍA B5): solo en `boveda_a_banco` — la consignación escribe su
+        // pata bancaria en la MISMA tx. Opcional: sin él, comportamiento idéntico al anterior.
+        return await registrarTrasladoCore(db, { opId: d.opId, tipo: d.tipo, monto: d.monto, turnoId: d.turnoId, nota: d.nota, cuentaId: d.cuentaId, autor: request.auth.uid }, { notificar: notificarCaja(db) });
     } catch (e) { if (e instanceof PedidoError) throw new HttpsError(e.code, e.message); throw e; }
 });
 const reversoTraslado = onCall({ region: 'us-central1', invoker: 'public' }, async (request) => {

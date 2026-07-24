@@ -389,3 +389,99 @@ test('D6 · la whitelist cubre exactamente los campos de caja + fiscal que D6 go
     assert.deepEqual(Object.keys(CAMPOS_CONFIG).sort(),
         ['enforceTurno', 'limiteCajon', 'reteFuentePct', 'reteIcaXMil', 'wompiFijo', 'wompiIvaPct', 'wompiPct'].sort());
 });
+
+// ─── B5 · V1 (P0) · Frontera virtual↔real: la consignación bóveda→banco lleva PATA BANCARIA ────
+// El bug que el comité cazó en papel: la bóveda ya consignaba al banco (`boveda_a_banco`) y esa
+// plata SALÍA de la bóveda sin ENTRAR a ninguna cuenta → desaparecía de la consolidada y el cuadre
+// del banco nunca cerraba. Fix: la MISMA tx del traslado escribe la pata `consignacion_in`.
+// ⚠️ ZONA CALIENTE R3 (toca la CF de bóveda, ya en producción): estos tests van ANTES del código.
+import cajaCore from './caja-core.js';
+const { registrarTrasladoCore } = cajaCore;
+
+async function limpiarBoveda() {
+    const snap = await db.collection('bovedaMovimientos').get();
+    await Promise.all(snap.docs.map((d) => d.ref.delete()));
+    await db.doc('boveda/main').delete().catch(() => {});
+}
+// Siembra saldo en la bóveda por su LEDGER (el saldo es recompute, no un campo que se escriba).
+const sembrarBoveda = (monto) => db.doc('bovedaMovimientos/seed').set({ tipo: 'cajon_a_boveda', monto, delta: monto, ts: new Date('2026-07-01') });
+const saldoBoveda = async () => (await db.doc('boveda/main').get()).data()?.saldo ?? 0;
+const pataDe = async (opId) => (await db.doc(`movimientosTesoreria/${opId}-teso`).get());
+const trasladar = (input) => registrarTrasladoCore(db, { autor: 'karyUid', fecha: HOY, ...input });
+
+test('V1 · consignación bóveda→banco: UNA tx crea el asiento de bóveda Y la pata bancaria; la plata NO desaparece', async () => {
+    await limpiarBoveda();
+    await cuenta('BANCO', { saldoInicial: 0 });
+    await sembrarBoveda(1000000);
+    const consolidadaAntes = 1000000 + (await saldoDe('BANCO'));
+
+    const r = await trasladar({ opId: 'TR1', tipo: 'boveda_a_banco', monto: 400000, cuentaId: 'BANCO' });
+    assert.equal(r.saldo, 600000, 'la bóveda baja');
+
+    const pata = await pataDe('TR1');
+    assert.ok(pata.exists, 'nace la pata bancaria en el MISMO acto');
+    const p = pata.data();
+    assert.equal(p.tipo, 'consignacion_in');
+    assert.equal(p.cuentaId, 'BANCO');
+    assert.equal(p.estado, 'activo');
+    assert.equal(p.creadoPor.fuente, 'SISTEMA', 'la escribe el sistema, no la puerta manual');
+    assert.equal(p.refDocumento, 'TR1', 'trazable al movimiento de bóveda');
+    assert.equal(await saldoDe('BANCO'), 400000, 'el banco recibe');
+    assert.equal(600000 + (await saldoDe('BANCO')), consolidadaAntes, 'CONSERVACIÓN: la consolidada no cambia');
+});
+
+test('V1 · atomicidad: cuenta inválida (inexistente / inactiva / virtual) ⇒ la tx ABORTA y la bóveda NO baja', async () => {
+    await limpiarBoveda();
+    await sembrarBoveda(500000);
+    await seedCuentasVirtuales(db);                                   // caja/boveda virtuales
+    await cuenta('OFF'); await db.doc('cuentasTesoreria/OFF').set({ activa: false }, { merge: true });
+
+    for (const [cuentaId, etiqueta] of [['noExiste', 'inexistente'], ['OFF', 'inactiva'], ['caja', 'virtual']]) {
+        await assert.rejects(trasladar({ opId: `TX-${cuentaId}`, tipo: 'boveda_a_banco', monto: 100000, cuentaId }),
+            (e) => e instanceof Error, `cuenta ${etiqueta} debe rechazar`);
+        assert.equal((await db.doc(`bovedaMovimientos/TX-${cuentaId}`).get()).exists, false, `sin asiento de bóveda huérfano (${etiqueta})`);
+    }
+    assert.equal(await saldoBoveda(), 0, 'boveda/main jamás se escribió');   // ninguna tx llegó a commitear
+});
+
+test('V1 · retrocompatible: sin cuentaId el traslado se comporta EXACTO como hoy (sin pata)', async () => {
+    await limpiarBoveda();
+    await sembrarBoveda(300000);
+    const r = await trasladar({ opId: 'TR-SIN', tipo: 'boveda_a_banco', monto: 100000 });
+    assert.equal(r.saldo, 200000);
+    assert.equal((await pataDe('TR-SIN')).exists, false, 'sin cuenta elegida no inventa la pata');
+    // y los traslados que NO tocan banco no aceptan cuenta (no tienen pata bancaria posible)
+    await assert.rejects(trasladar({ opId: 'TR-MAL', tipo: 'cajon_a_boveda', monto: 50000, cuentaId: 'BANCO' }), (e) => e instanceof Error);
+});
+
+test('V1 · idempotencia POR-LIBRO (V4): replay no duplica; si la pata FALTA, el replay la crea', async () => {
+    await limpiarBoveda();
+    await cuenta('BANCO');
+    await sembrarBoveda(1000000);
+
+    // 1er intento SIN cuenta (como los traslados viejos, anteriores a V1) → solo bóveda
+    await trasladar({ opId: 'TR2', tipo: 'boveda_a_banco', monto: 200000 });
+    assert.equal((await pataDe('TR2')).exists, false);
+
+    // replay del MISMO opId AHORA con cuenta → NO re-descuenta la bóveda, pero SÍ crea la pata faltante
+    const r = await trasladar({ opId: 'TR2', tipo: 'boveda_a_banco', monto: 200000, cuentaId: 'BANCO' });
+    assert.equal(r.yaExistia, true);
+    assert.equal(await saldoBoveda(), 800000, 'la bóveda NO se descuenta dos veces');
+    assert.ok((await pataDe('TR2')).exists, 'la pata que faltaba nace en el replay (V4)');
+    assert.equal(await saldoDe('BANCO'), 200000);
+
+    // un segundo replay ya no cambia nada (ambos libros completos)
+    await trasladar({ opId: 'TR2', tipo: 'boveda_a_banco', monto: 200000, cuentaId: 'BANCO' });
+    assert.equal(await saldoDe('BANCO'), 200000, 'sin doble asiento en tesorería');
+    assert.equal((await db.collection('movimientosTesoreria').get()).size, 1);
+});
+
+test('V1 · saldo insuficiente en bóveda ⇒ no hay asiento NI pata (el gate existente sigue mandando)', async () => {
+    await limpiarBoveda();
+    await cuenta('BANCO');
+    await sembrarBoveda(50000);
+    await assert.rejects(trasladar({ opId: 'TR3', tipo: 'boveda_a_banco', monto: 400000, cuentaId: 'BANCO' }), (e) => e instanceof Error);
+    assert.equal((await db.doc('bovedaMovimientos/TR3').get()).exists, false);
+    assert.equal((await pataDe('TR3')).exists, false);
+    assert.equal(await saldoDe('BANCO'), 0);
+});

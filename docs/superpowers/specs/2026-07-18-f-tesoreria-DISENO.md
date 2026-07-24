@@ -382,3 +382,15 @@ Reglas: `firestore-rules.test.mjs` gana casos: write directo a las 2 colecciones
   `abono_cartera` en tesorería con el MISMO opId (flag off hasta test verde). Tests §5.10/§5.16/§5.17.
 - **Cierre B5**: microcopy global + extender el cuadre diario 3:30 (`functions/salud.js`
   `reconciliacionDiaria`, index.js:288) para comparar `saldoActual` vs recompute de cada cuenta.
+
+**✅ D6 HECHO (2026-07-24, [OPUS-5])** — `CAMPOS_CONFIG` (whitelist cerrada de 7 campos) +
+`actualizarConfigSistemaCore` owner-only con rangos/MERGE/audit; UI editable en `config.js`;
+7 tests → integración **22/22**. Dos precisiones que valen para el resto de B5:
+1. **`reteIcaXMil` es POR MIL (0-100), no fracción 0-1** — el cuerpo de la spec decía "tasas 0-1"
+   y aplicado literal habría rechazado el 7‰ real del contador. Validar cada tasa en SU unidad.
+2. **⚠️ `saludEventos` tiene DOS semánticas y el Hoy las distingue por `resuelto`**: la tarjeta
+   "Avisos" cuenta los eventos con `resuelto !== true` como FALLAS del sistema (`hoy.js`
+   `initSenalAvisos`). Un evento de **auditoría** (config cambiada, y lo que V1/V18/V17 registren
+   como traza, no como fallo) debe nacer **`resuelto: true`** o le enciende una alarma falsa al
+   dueño; los fallos REALES del recompute siguen naciendo `resuelto: false` (patrón §64). Fijado
+   con test. *(Lección pendiente de anclar en `30` cuando se haga su shard — TODO-77.)*

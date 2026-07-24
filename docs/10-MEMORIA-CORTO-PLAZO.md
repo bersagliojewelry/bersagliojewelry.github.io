@@ -8,13 +8,13 @@
 
 ## 🎯 Foco actual
 
-> 🟣 **F-TESORERÍA (TODO-78) · B0-B4 ✅ EN CÓDIGO (no en prod)**. Daniel: desplegar el BUNDLE coherente al final (no bloque suelto). **Hecho**: B0 (auditado) · B1 (6 CFs+trigger+espejo) · B2 (página "Cuentas y bancos") · B3 (cuadre "Cuadrar mes") · **B4 (Bandeja sección "Tesorería" aprobar/rechazar-con-motivo + `aprob-badge` suma · "Plata total" en Hoy = cajón+bóveda+cuentas vía `sumaSaldosReales` · V9 socias "pasó por esta cuenta este año")**. **Falta gate E2E vivo del bundle** → DEPLOY + login (L-05).
+> 🟣 **RELEVO CURADO → LA NUEVA SESIÓN ARRANCA EN B5·V1** (zona caliente: test PRIMERO). **F-TESORERÍA (TODO-78) · B0-B4 + B5·D6 ✅ EN CÓDIGO (no en prod)**. Daniel: desplegar el BUNDLE coherente al final (no bloque suelto). **Hecho**: B0 (auditado) · B1 (CFs+trigger+espejo) · B2 (página "Cuentas y bancos") · B3 (cuadre) · B4 (Bandeja "Tesorería" + badge · "Plata total" en Hoy · V9 socias) · **D6 (editor "Reglas del sistema", owner + audit)**. Suites verdes offline (integración 22/22). **Falta gate E2E vivo del bundle** → DEPLOY + login (L-05).
 >
-> **B5 EN CURSO (costuras finales, §6)**: **D6 ✅** (editor "Reglas del sistema", owner). SIGUE: D9 (abono del CRM→cuenta, flag off hasta test verde) + microcopy global + extensión del cuadre diario 3:30 en Salud. **⚠️ Zonas calientes R3 = test PRIMERO** (V1 bóveda↔banco · V17 abono efectivo→caja · V18 retiro de banco; **mapa de ejecución + orden sugerido D6→V1→V18→V17→D9 → spec §9** [OPUS mapeó 2026-07-23]). Luego B6 (rompimiento adversarial read-only + Chrome holístico) → **DEPLOY MANUAL del bundle** (`firebase deploy --only firestore:rules,firestore:indexes,functions` + seed virtuales prod; SW ya v98) + E2E holístico Chrome.
+> **B5 EN CURSO (costuras, §6)**: D6 ✅. **SIGUE `V1`** → V18 → V17 → D9 + microcopy + cuadre diario 3:30 en Salud. **⚠️ Zonas calientes R3 = test PRIMERO** (V1 bóveda→banco · V18 retiro de banco · V17 abono efectivo→caja · D9 abono→cuenta con flag off). **Mapa de ejecución (dónde vive cada cosa) + las 2 precisiones de D6 → spec §9.** Luego B6 (rompimiento adversarial read-only + Chrome holístico) → **DEPLOY MANUAL del bundle** (`firebase deploy --only firestore:rules,firestore:indexes,functions` + seed virtuales prod; SW ya v98) + E2E holístico Chrome.
 >
 > **Protocolo por sesión**: `asesor-critico-honesto` + `caza-bugs` + `auditoria-financiera`; spec COMPLETA (§0.8>§0.7>§0.6>cuerpo, sin re-decidir; TDD en el MISMO commit). Modelo lo decide Daniel (`/model`): Opus → + `opus-interino-protocolo`, marca **`[OPUS-5]`** (desde 2026-07-24); Fable → `[FABLE-5]`. ⚠️ B2-B4 quedaron firmados `[OPUS-4.8]` por error → auditar por AMBOS (→ `05`).
 >
-> **🧭 Roadmap** (detalle → `05`): …F-IA-2 ✅ → **F-TESORERÍA (B4)** → F-COMPRAS → F-REPORTES → apartados → limpieza → rompimiento → lanzamiento. _MCP Firebase=prod · push+merge a main=Claude · consejo read-only · valida en Chrome._ `[[project_comercio_pagos]]`
+> **🧭 Roadmap** (detalle → `05`): …F-IA-2 ✅ → **F-TESORERÍA (B5)** → F-COMPRAS → F-REPORTES → apartados → limpieza → rompimiento → lanzamiento. _MCP Firebase=prod · push+merge a main=Claude · consejo read-only · valida en Chrome._ `[[project_comercio_pagos]]`
 
 ---
 

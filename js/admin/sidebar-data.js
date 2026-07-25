@@ -66,4 +66,4 @@ export const NAV_FOOTER = { label: 'Ver sitio', href: 'index.html', icon: 'exter
 // Versión visible del panel (criterio de deploy para no-técnicos, spec §9.1): Kary
 // confirma que está en la versión nueva tras un despliegue. Se bumpea JUNTO al
 // CACHE_NAME del Service Worker (`public/sw.js`) en cada cambio del shell admin.
-export const APP_VERSION = 'v55 · 2026-07-23';   // [OPUS-4.8] F-TESORERÍA B2: nueva página "Cuentas y bancos" en el rail Finanzas
+export const APP_VERSION = 'v56 · 2026-07-25';   // [OPUS-5] B5·V17: el abono en efectivo entra al arqueo + los rechazos del servidor llegan con su motivo (TODO-79)

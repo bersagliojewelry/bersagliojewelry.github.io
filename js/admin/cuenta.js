@@ -6,12 +6,13 @@
  * movimientos y se observa el resultado. Solo admin/owner.
  */
 
-import { requireAuth, initSidebar, admToast, esc, fmtDateTime } from './shared.js';
+import { requireAuth, initSidebar, admToast, esc, fmtDateTime, errorMessage } from './shared.js';
 import adminDb from './db.js';
 import { currentUser } from '../auth.js';
 import {
     getCliente, onClienteChange, onMovimientosChange,
     addMovimiento, anularMovimiento, updateCliente, fetchVendedoras, fmtCOP, getConfig,
+    registrarAbonoCartera, anularAbonoCartera, nuevoOpId,
     crearSolicitud, corregirMovimientoBatch, onSolicitudesChange, cancelarSolicitud,
     registrarGestion, onGestionesChange,
     pactarAcuerdo, anularAcuerdo, onAcuerdosChange,
@@ -314,9 +315,14 @@ function reSolicitarSaldo(s) {
 
 // ─── Modal movimiento ─────────────────────────────────────────────────────────
 let _vencTocado = false;   // Kary editó el acuerdo a mano → no pisarlo al cambiar la fecha
+// V17: idempotencia del abono. Se acuña al ABRIR el modal (no al enviar) → un reintento tras un
+// timeout reusa el MISMO opId y el servidor devuelve el abono ya creado en vez de duplicar la
+// bajada de la deuda. Una por apertura del formulario.
+let _opIdAbono = null;
 
 function openMovModal(tipo) {
     _tipo = tipo;
+    _opIdAbono = tipo === 'abono' ? nuevoOpId() : null;
     document.getElementById('mov-form').reset();
     document.getElementById('mov-fecha').value = hoyISO();   // default: hoy (Kary puede cambiarla)
     document.getElementById('mov-modal-title').textContent = `Registrar ${TIPO_LABEL[tipo].toLowerCase()}`;
@@ -501,6 +507,18 @@ function wireModal() {
                     creadoPor: uid, rolAlCrear: currentRole(),
                 }, { factura: { tipo: 'factura', monto, fecha, descripcion, registradoPor: uid } });
                 admToast('Factura y plan de cuotas registrados. El saldo se actualizará en un momento.');
+            } else if (_tipo === 'abono') {
+                // V17: el abono va por el SERVIDOR (el navegador no puede escribir el libro de
+                // caja). Si es en EFECTIVO, la misma transacción mete el billete al arqueo del
+                // turno abierto — y si no hay turno, rechaza: sin caja abierta no hay quién
+                // custodie ni cuente ese billete.
+                const r = await registrarAbonoCartera({
+                    opId: _opIdAbono, clienteId: CLIENTE_ID, monto, fecha, medioPago, descripcion,
+                });
+                admToast(r?.pataCaja
+                    ? `Abono de ${fmtCOP(monto)} registrado. El saldo baja y esos ${fmtCOP(monto)} entraron a la caja de hoy: el arqueo de esta noche los espera.`
+                    : `Abono de ${fmtCOP(monto)} registrado. El saldo se actualizará en un momento.`,
+                    'success', 6000);
             } else {
                 await addMovimiento(CLIENTE_ID, {
                     tipo: _tipo,
@@ -515,8 +533,12 @@ function wireModal() {
             }
             closeMovModal();
         } catch (err) {
-            console.error('[cuenta] addMovimiento:', err);
-            admToast('No se pudo registrar. Intenta de nuevo; si sigue, avísale a Daniel.', 'danger', 5000);
+            // El modal NO se cierra y conserva lo escrito: si el rechazo es "abre la caja", Kary
+            // la abre en otra pestaña y reenvía con el MISMO opId (sin riesgo de duplicar).
+            // `errorMessage` ya trae el motivo REAL del servidor (TODO-79) — nada de genéricos
+            // en dinero: el mensaje debe decir qué pasó con la plata y qué hacer.
+            console.error('[cuenta] registrar movimiento:', err);
+            admToast(errorMessage(err, 'No se pudo registrar. Intenta de nuevo; si sigue, avísale a Daniel.'), 'danger', 7000);
         } finally {
             btn.disabled = false;
         }
@@ -554,14 +576,30 @@ function wireAnular() {
         const btn = document.getElementById('anular-confirm');
         btn.disabled = true;
         try {
-            await anularMovimiento(CLIENTE_ID, anularId, currentUser()?.user?.uid, motivo, categoria);
-            admToast('Movimiento anulado.');
+            const mov = _movsById.get(anularId);
+            if (mov?.tipo === 'abono') {
+                // V17: el abono se anula por el SERVIDOR para NETEAR también su pata en la caja.
+                // Sin ese neteo, el arqueo seguiría pidiendo un billete que ya no existe (un
+                // descuadre falso, permanente y sin explicación).
+                const r = await anularAbonoCartera({
+                    clienteId: CLIENTE_ID, movId: anularId, motivo, motivoCategoria: categoria,
+                });
+                admToast(r?.pataAnulada
+                    ? `Abono anulado. El saldo vuelve a subir y esos pesos salieron de la caja de hoy: si el billete está en el cajón, devuélvelo antes de cerrar el turno.`
+                    : 'Abono anulado.', 'success', 7000);
+            } else {
+                await anularMovimiento(CLIENTE_ID, anularId, currentUser()?.user?.uid, motivo, categoria);
+                admToast('Movimiento anulado.');
+            }
             close();
         } catch (err) {
-            console.error('[cuenta] anularMovimiento:', err);
+            console.error('[cuenta] anular:', err);
+            // `permission-denied` SIN prefijo = candado de las REGLAS (M2b): el camino correcto es
+            // la solicitud a Daniel, no reintentar. Los rechazos de la CF (`functions/…`) ya llegan
+            // con su motivo real gracias a errorMessage (TODO-79).
             admToast(err?.code === 'permission-denied'
                 ? 'Esta operación necesita aprobación de Daniel.'
-                : 'No se pudo anular.', 'danger');
+                : errorMessage(err, 'No se pudo anular.'), 'danger', 7000);
         } finally {
             btn.disabled = false;
         }
@@ -733,6 +771,13 @@ function wireCorregirMov() {
         if (!btn) return;
         const orig = _movsById.get(btn.getAttribute('data-corregir'));
         if (!orig) { admToast('No se encontró el movimiento.', 'danger'); return; }
+        // V17: corregir = anular + RECREAR, y el par lo escribe el navegador → el abono recreado
+        // nacería sin la pata del billete en la caja, dejando el arqueo pidiendo un fantasma.
+        // Para un abono en efectivo ya contado: anular (netea la caja) y registrar de nuevo.
+        if (orig.pataCaja) {
+            admToast('Este abono en efectivo ya está contado en la caja del turno. Anúlalo y regístralo de nuevo para que la caja quede bien.', 'danger', 7000);
+            return;
+        }
         abrir(orig);
     });
     document.getElementById('corregirmov-close').addEventListener('click', close);

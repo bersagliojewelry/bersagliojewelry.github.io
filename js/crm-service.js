@@ -145,6 +145,44 @@ export async function addMovimiento(clienteId, datos) {
     return { id: ref.id, ...payload };
 }
 
+// ─── V17 (F-TESORERÍA B5) · el ABONO pasa por el SERVIDOR ─────────────────────
+// Un abono en EFECTIVO bajaba la deuda, pero el billete no entraba a NINGÚN libro de efectivo → el
+// arqueo del turno no lo esperaba y un billete desaparecido "cuadraba" igual. La CF escribe, en la
+// MISMA transacción, el abono y su pata en `turnos/{id}/movsCaja` — colección CF-only (`allow write:
+// if false`), así que el navegador NO puede hacerlo: por eso el abono ya no usa `addMovimiento`.
+// El resto de tipos (factura/apertura/ajuste) sigue por el camino de siempre.
+// El transporte reusa el `_callable` de este módulo (definido abajo, import LAZY de
+// firebase/functions: la ficha de la clienta solo paga ese peso al registrar el primer abono).
+
+/**
+ * opId de idempotencia. Se genera al ABRIR el formulario, NUNCA al enviarlo: si se generara al
+ * enviar, un reintento tras un timeout crearía un abono GEMELO (la deuda bajaría dos veces).
+ */
+export function nuevoOpId() {
+    try { if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID(); } catch { /* no-op */ }
+    return `op-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+/**
+ * Registra un abono (admin). Si `medioPago==='efectivo'` EXIGE turno de caja abierto y crea la pata
+ * del billete en el arqueo; si falla algo, no queda ni abono ni pata (atomicidad).
+ * @param {{opId:string, clienteId:string, monto:number, fecha:string, medioPago:string, descripcion?:string}} input
+ */
+export async function registrarAbonoCartera({ opId, clienteId, monto, fecha, medioPago, descripcion }) {
+    const fn = await _callable('registrarAbonoCartera');
+    return (await fn({ opId, clienteId, monto, fecha, medioPago, descripcion })).data;
+}
+
+/**
+ * Anula un abono y NETEA su pata de caja en la misma tx (owner). Sin esto, el arqueo seguiría
+ * pidiendo un billete que ya no existe. Si el turno de la pata ya cerró, el servidor rechaza.
+ * @param {{clienteId:string, movId:string, motivo:string, motivoCategoria?:string}} input
+ */
+export async function anularAbonoCartera({ clienteId, movId, motivo, motivoCategoria }) {
+    const fn = await _callable('anularAbonoCartera');
+    return (await fn({ clienteId, movId, motivo, motivoCategoria })).data;
+}
+
 /**
  * Suscripción EN VIVO a TODOS los movimientos de todos los clientes (collectionGroup)
  * para calcular la mora/aging de la lista CxC (norte §10.2-F2: en vivo, sin materializar

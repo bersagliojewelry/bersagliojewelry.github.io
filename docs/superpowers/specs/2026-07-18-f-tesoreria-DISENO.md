@@ -436,6 +436,27 @@ código, no en la prosa:
    turno muestra "Ingreso · **Abono de clienta**" (la etiqueta cruda `abono_cartera` fue un hallazgo
    del E2E anterior). **V17 CERRADO.**
 
+**✅ D9 HECHO (2026-07-25, [OPUS-5])** — la otra costura del abono: por TRANSFERENCIA entra al banco
+en la MISMA tx (pata `abono_cartera` en `movimientosTesoreria/{opId}-teso`, fuente SISTEMA; `PATA_TIPOS`
+la admite). Precisiones que valen para lo que sigue:
+1. **Solo transferencia** acepta cuenta. El efectivo va al cajón (V17) y el datáfono llega NETO de
+   comisión con su propio cuadre de vouchers — meterlo en bruto descuadraría el banco. Pedir cuenta
+   con efectivo ⇒ rechazo explícito.
+2. **"Todavía no sé" se cierra, no se olvida** (V12): el movimiento queda `sinCuentaAsignada:true`,
+   la lista sale en "Cuadrar mes" y la CF nueva `asignarCuentaAbono` (admin) crea la pata DESPUÉS.
+   Sin esa lista la opción era un agujero: plata fuera del libro del banco para siempre. NO deja
+   CAMBIAR una cuenta ya asignada — eso es un traslado, no una corrección de dato.
+3. **Anular netea el banco**: la pata se sella `estado:'anulado'` (nace ese estado; el recompute solo
+   suma 'activo'). Si ya se CUADRÓ contra el extracto, anular se RECHAZA — misma doctrina que el
+   turno sellado y que `aprobarMovimientoTesoreria`.
+4. **Idempotencia por-libro sobre TRES libros** (cartera · caja · banco), cada uno verificado por
+   separado. El destino del banco es DETERMINISTA (queda anclado) → reponerlo es seguro, a diferencia
+   del turno, que es temporal (L-85).
+5. ⚠️ **E2E vivo PENDIENTE de la 1ª cuenta REAL de Kary**: prod tiene 0 cuentas reales a propósito
+   (V21/§0.8). Verificado en prod hasta donde permite (con 0 cuentas la pregunta NO aparece — correcto:
+   no se pregunta lo que no tiene respuesta; el abono sin cuenta pasa y el toast lo dice). Evidencia
+   entretanto: 26 tests de integración.
+
 **⚠️ `saludEventos` tiene DOS semánticas y el Hoy las distingue por `resuelto`**: la tarjeta
    "Avisos" cuenta los eventos con `resuelto !== true` como FALLAS del sistema (`hoy.js`
    `initSenalAvisos`). Un evento de **auditoría** (config cambiada, y lo que V1/V18/V17 registren

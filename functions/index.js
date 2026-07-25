@@ -271,6 +271,13 @@ exports.reabrirCuadre = require('./tesoreria').reabrirCuadre;                   
 exports.repararSaldoTesoreria = require('./tesoreria').repararSaldoTesoreria;           // admin: recompute forzado (patrón §64)
 exports.actualizarConfigSistema = require('./tesoreria').actualizarConfigSistema;       // owner: reglas del sistema (D6, whitelist+audit)
 exports.recalcSaldoTesoreria = require('./tesoreria').recalcSaldoTesoreria;             // trigger D5: ledger → saldoActual
+
+// F-TESORERÍA B5 · V17: el abono de cartera gana puerta de SERVIDOR. En efectivo escribe, en la
+// MISMA tx, su pata en `turnos/{id}/movsCaja` (CF-only) → el arqueo espera ese billete. Antes el
+// abono lo escribía el navegador y el efectivo no entraba a ningún libro (robo enmascarable).
+exports.registrarAbonoCartera = require('./cartera').registrarAbonoCartera;  // admin: abono + pata de caja (atómico)
+exports.anularAbonoCartera = require('./cartera').anularAbonoCartera;        // owner: anula abono Y netea su pata
+
 exports.ajustarStock = require('./inventario').ajustarStock;         // TODO-40 F1: merma/reabasto/corrección (delta + ledger)
 exports.cambiarTipoPieza = require('./inventario').cambiarTipoPieza; // TODO-40 F1: transición de tipo (purga cantidad, D6)
 // F2.1 · identidad del cliente (contrato legalIdKey; índice clientesPorDoc CF-only, pepper Secret Manager)

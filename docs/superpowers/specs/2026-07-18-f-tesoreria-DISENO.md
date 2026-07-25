@@ -424,10 +424,17 @@ código, no en la prosa:
 4. **La anulación entró al alcance** (era la mitad del control): anular un abono con pata netea AMBOS
    libros en una tx; si el turno de la pata ya cerró, RECHAZA. *Cola del titular*: el compensatorio en
    el turno abierto con aprobación del owner (patrón reverso de bóveda).
-5. **FALTA para cerrar V17** (sin esto el control es parcial): **negar en reglas el create client-side
-   de `tipo=='abono' && medioPago=='efectivo'`** — hoy `corregirMovimientoBatch` puede recrear un abono
-   en efectivo sin pata (mitigado con guard de UI, que no alcanza a pestañas viejas). ⚠️ Dependencia: el
-   carril de corrección debe pasar por la CF antes o con ese cierre.
+5. **✅ CIERRE EN REGLAS (2026-07-25, desplegado)** — sin esto el control era teatro: la UI ya no usaba
+   el camino viejo, pero las reglas seguían aceptándolo. `movimientoValido` niega
+   `tipo=='abono' && medioPago=='efectivo'` desde el CLIENTE — **ni el owner**: no es un tema de rol,
+   el efectivo exige la pata en `movsCaja` (CF-only) en la misma tx. Una sola regla cubre también
+   `corregirMovimientoBatch`, que HEREDA el `medioPago` del original (por eso no hubo que migrar el
+   carril de corrección a CF: se bloquea en la UI con "anúlalo y regístralo de nuevo", guard puesto
+   DENTRO de `abrir()` para cubrir además el re-solicitar y los abonos LEGADOS sin `pataCaja`).
+   Los demás medios entran igual que siempre (cero regresión); anular no se toca. Reglas **248/248**.
+   Verificado en prod: la CF sigue pasando (Admin SDK), el guard habla claro, y la línea de tiempo del
+   turno muestra "Ingreso · **Abono de clienta**" (la etiqueta cruda `abono_cartera` fue un hallazgo
+   del E2E anterior). **V17 CERRADO.**
 
 **⚠️ `saludEventos` tiene DOS semánticas y el Hoy las distingue por `resuelto`**: la tarjeta
    "Avisos" cuenta los eventos con `resuelto !== true` como FALLAS del sistema (`hoy.js`

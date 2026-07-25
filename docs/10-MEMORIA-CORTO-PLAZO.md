@@ -8,11 +8,11 @@
 
 ## 🎯 Foco actual
 
-> 🟣 **F-TESORERÍA (TODO-78) · B0-B4 + B5(D6·V1·V18·**V17**) ✅ EN PROD.** V17 desplegado 2026-07-25 (CFs `registrarAbonoCartera`/`anularAbonoCartera` + merge a main). **Validación en vivo ✅ (25jul, prod, login owner). FALTA para cerrarlo: el cierre en REGLAS.**
+> 🟣 **F-TESORERÍA (TODO-78) · B0-B4 + B5(D6·V1·V18·**V17**) ✅ EN PROD.** **V17 CERRADO** ✅ 25jul: CFs `registrarAbonoCartera`/`anularAbonoCartera` + cierre en REGLAS + verificado en vivo (login owner).
 >
-> **V17 (3 commits [OPUS-5])**: el abono en EFECTIVO escribe, en la MISMA tx, su pata en `movsCaja` → el arqueo espera el billete (antes cuadraba igual = robo enmascarable). TDD 16/16 · caja 38/38. Premisas FALSAS de la spec + desvío `tipo:'ingreso'`+`concepto` + ancla del turno (L-85) → **spec §9**; lo que quedó en cola del titular → **spec §8**.
+> **V17**: el abono en EFECTIVO escribe su pata en `movsCaja` en la MISMA tx → el arqueo espera el billete (antes cuadraba igual = robo enmascarable). TDD 16/16 · reglas 248/248. Premisas falsas de la spec, desvío y ancla del turno (L-85) → **spec §9**; cola del titular → **§8**.
 >
-> **SIGUE, en orden**: (1) **REGLAS: negar create client-side de `tipo=='abono' && medioPago=='efectivo'`** — sin eso es teatro (`corregirMovimientoBatch` recrea sin pata); ⚠️ **dependencia**: el carril de corrección debe pasar por la CF antes o con ese cierre · (2) **D9** (`cuentaId` → pata de tesorería; falta `abono_cartera` en `PATA_TIPOS`) · (3) microcopy + cuadre 3:30 en Salud → **B6**.
+> **SIGUE, en orden**: (1) **D9** (`cuentaId` → pata de tesorería; falta `abono_cartera` en `PATA_TIPOS`) · (2) microcopy + cuadre 3:30 en Salud → **B6**.
 >
 > **Protocolo por sesión**: `asesor-critico-honesto` + `caza-bugs` + `auditoria-financiera`; spec COMPLETA (§0.8>§0.7>§0.6>cuerpo, sin re-decidir; TDD en el MISMO commit). Modelo lo decide Daniel (`/model`): Opus → + `opus-interino-protocolo`, marca **`[OPUS-5]`**; Fable → `[FABLE-5]`. ⚠️ B2-B4 quedaron firmados `[OPUS-4.8]` por error → auditar por AMBOS (→ `05`).
 >
@@ -25,7 +25,7 @@
 | ID | Item | Estado | Bloqueo |
 |---|---|---|---|
 | TODO-03/04 | (baja) headers `99`→`## NN.` · anomalías 🔧 en `skills/` | 🔲 | baja |
-| TODO-78 | **F-TESORERÍA** (SSoT spec `2026-07-18-f-tesoreria-DISENO.md`, prevalencia §0.8>§0.7>§0.6>cuerpo; legal Daniel → `42-LEGAL §7`). **B0-B5(D6·V1·V18·V17) ✅ EN PROD · SIGUE: validación Chrome + REGLAS → D9 → B6** (detalle → Foco). | 🟢 | reglas |
+| TODO-78 | **F-TESORERÍA** (SSoT spec `2026-07-18-f-tesoreria-DISENO.md`, prevalencia §0.8>§0.7>§0.6>cuerpo; legal Daniel → `42-LEGAL §7`). **B0-B5(D6·V1·V18·V17✅CERRADO) EN PROD · SIGUE: D9 → B6** (detalle → Foco). | 🟢 | D9 |
 | TODO-07 | **Contenido real web**: reseñas Maps (Nosotros), Films, feed Redes (`home-media.js`). | 🔲 | cliente entrega datos |
 | TODO-08 | **Hardening Fase 2**: Tier A ✅; pend. CSP/reglas/claims (Tier B/C) → `41-SEGURIDAD §1.5` | 🟡 | Tier B = emulador+deploy gated |
 | TODO-09 | **Fase M** M0→M6 ✅ EN PROD (§78-§80); ACUERDOS R1-R5+A8 GATEADOS/inertes — encender=Daniel. Restan: M7·M2c·ASESOR/RBAC (19). | 🟡 | encender R6 |
@@ -51,6 +51,6 @@
 
 ## 📝 Bitácora (efímera)
 
-> 2026-07-25 · **[OPUS-5] TODO-79 ✅ + B5·V17 ✅ → DESPLEGADO (sin validar en vivo)**. TODO-79 PRIMERO a propósito: un rechazo "abre la caja" que llega como "Ocurrió un error" empuja a marcar otro medio de pago — el control necesita voz antes que dientes. **Comité ×3 por iniciativa propia (§3.7)** + 2 peer reviews → 4 veredictos (spec §9). Verifiqué y **REFUTÉ** el "punto ciego fatal" que dieron: ningún reporte suma los `ingresos` del turno como venta (único lector `hoy.js:166`) → sin inflar revenue. **E2E vivo (prod, owner)**: sin caja → rechazo con el motivo REAL y el modal conserva lo escrito · abono $1.000 → saldo $2.000→$1.000 y Mostrador Ingresos/Efectivo $1.000 · anular → los DOS libros netean · cierre $0=$0 **Cuadra ✓**. Cazó 1 defecto que ningún test ve (clave cruda `abono_cartera` en la auditoría → etiqueta + test). **Dudas declaradas (R7)**: sin flag de apagado a propósito (apagarlo REABRE el agujero; rollback = revert + CI) · el modal no pre-avisa "no hay turno" (el rechazo del server ya instruye) · abonos efectivo HISTÓRICOS sin pata = **línea de corte declarada, sin backfill** (inyectar efectivo en arqueos firmados = fabricar evidencia).
+> 2026-07-25 · **[OPUS-5] TODO-79 ✅ + B5·V17 ✅ CERRADO (código + reglas + vivo)**. TODO-79 PRIMERO a propósito: un rechazo "abre la caja" que llega como "Ocurrió un error" empuja a marcar otro medio de pago — el control necesita voz antes que dientes. **Comité ×3 por iniciativa propia (§3.7)** + 2 peer reviews → 4 veredictos (spec §9). Verifiqué y **REFUTÉ** su "punto ciego fatal": ningún reporte suma los `ingresos` del turno como venta (único lector `hoy.js:166`). **E2E vivo (prod, owner)**: rechazo sin caja con motivo real (el modal conserva lo escrito) · abono $1.000 → el Mostrador lo espera · anular netea los DOS libros · cierre **Cuadra ✓**. Cazó 1 defecto que ningún test ve (clave cruda `abono_cartera` en la auditoría → etiqueta + test). **Cierre en REGLAS (2ª tanda)**: `movimientoValido` niega `abono+efectivo` desde el cliente (ni el owner: una sola puerta, la CF) — cubre también `corregirMovimientoBatch`, que HEREDA el medio; guard de UI dentro de `abrir()` (cubre los abonos LEGADOS, sin `pataCaja`). Reglas 248/248; los 2 rojos que salieron eran míos y reales (un test mutaba el seed compartido). Re-verificado en prod: la CF sigue pasando (Admin SDK), el guard habla claro y la auditoría del turno ya muestra "Abono de clienta". **Dudas declaradas (R7)**: sin flag de apagado a propósito (apagarlo REABRE el agujero; rollback = revert + CI) · abonos efectivo HISTÓRICOS sin pata = **línea de corte declarada, sin backfill** (inyectar efectivo en arqueos firmados = fabricar evidencia).
 > 2026-07-24 · **[OPUS-5] B4·D6·V1(P0)·V18 ✅ → desplegado + E2E vivo ✅**. Pata `{opId}-teso` en la misma tx; cuenta inválida ⇒ aborta todo. Dudas (R7): V9 informativo, no fiscal. → **spec §9**. *(B0-B3: commits + §192.)*
 > **Pend Daniel/no-gate**: llenar "Datos del negocio" en el panel (§192 I-03; datos = identidad LEGAL-08) · marcar 7 avisos test-era en Salud (I-04) · consejo+abogado apartados (39) · instructivo Kary · push A.6 · fotos (67). ADC gcloud caducado (CLI OK). **Precios = paso FINAL.**

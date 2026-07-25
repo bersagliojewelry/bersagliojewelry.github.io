@@ -170,7 +170,12 @@ export function nuevoOpId() {
  */
 export async function registrarAbonoCartera({ opId, clienteId, monto, fecha, medioPago, descripcion, cuentaId }) {
     const fn = await _callable('registrarAbonoCartera');
-    return (await fn({ opId, clienteId, monto, fecha, medioPago, descripcion, cuentaId })).data;
+    // `cuentaId` se OMITE cuando no hay cuenta ("todavía no sé"), en vez de viajar como `undefined`:
+    // así el payload no depende de cómo el SDK serialice un valor ausente.
+    return (await fn({
+        opId, clienteId, monto, fecha, medioPago, descripcion,
+        ...(cuentaId ? { cuentaId } : {}),
+    })).data;
 }
 
 /**

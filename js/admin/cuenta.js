@@ -748,6 +748,17 @@ function wireCorregirMov() {
     const close = () => { modal.hidden = true; original = null; };
     // opener reutilizable (botón Corregir y re-solicitar desde una rechazada).
     const abrir = (orig, prefill) => {
+        // V17: un abono en EFECTIVO no se corrige. Corregir = anular + RECREAR, y el par lo escribe
+        // el navegador; las reglas niegan crear un abono en efectivo desde el cliente (solo la CF,
+        // que mete la pata del billete en la caja del turno). El guard vive AQUÍ —no en el click—
+        // porque el modal también se abre al re-solicitar una corrección rechazada.
+        if (orig?.tipo === 'abono' && orig?.medioPago === 'efectivo') {
+            admToast(orig.pataCaja
+                ? 'Este abono en efectivo ya está contado en la caja del turno. Anúlalo y regístralo de nuevo para que la caja quede bien.'
+                : 'Un abono en efectivo no se corrige: anúlalo y regístralo de nuevo, así el billete queda contado en la caja del turno.',
+                'danger', 7000);
+            return;
+        }
         original = orig;
         document.getElementById('corregirmov-form').reset();
         const conAcuerdo = original.tipo === 'factura' && !!fmtFecha(original.vencimiento);
@@ -771,14 +782,7 @@ function wireCorregirMov() {
         if (!btn) return;
         const orig = _movsById.get(btn.getAttribute('data-corregir'));
         if (!orig) { admToast('No se encontró el movimiento.', 'danger'); return; }
-        // V17: corregir = anular + RECREAR, y el par lo escribe el navegador → el abono recreado
-        // nacería sin la pata del billete en la caja, dejando el arqueo pidiendo un fantasma.
-        // Para un abono en efectivo ya contado: anular (netea la caja) y registrar de nuevo.
-        if (orig.pataCaja) {
-            admToast('Este abono en efectivo ya está contado en la caja del turno. Anúlalo y regístralo de nuevo para que la caja quede bien.', 'danger', 7000);
-            return;
-        }
-        abrir(orig);
+        abrir(orig);   // el guard de V17 (abono en efectivo) vive DENTRO de abrir()
     });
     document.getElementById('corregirmov-close').addEventListener('click', close);
     document.getElementById('corregirmov-cancel').addEventListener('click', close);

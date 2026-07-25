@@ -66,4 +66,4 @@ export const NAV_FOOTER = { label: 'Ver sitio', href: 'index.html', icon: 'exter
 // Versión visible del panel (criterio de deploy para no-técnicos, spec §9.1): Kary
 // confirma que está en la versión nueva tras un despliegue. Se bumpea JUNTO al
 // CACHE_NAME del Service Worker (`public/sw.js`) en cada cambio del shell admin.
-export const APP_VERSION = 'v56 · 2026-07-25';   // [OPUS-5] B5·V17: el abono en efectivo entra al arqueo + los rechazos del servidor llegan con su motivo (TODO-79)
+export const APP_VERSION = 'v57 · 2026-07-25';   // [OPUS-5] B5·V17 cierre: el abono en efectivo solo nace en el servidor (reglas) + guard de corrección

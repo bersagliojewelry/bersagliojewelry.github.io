@@ -695,8 +695,10 @@ test('CRM clientes · saldoActual NO se puede sembrar (hasOnly)', async () => {
     await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliHack'), { nombre: 'H', saldoActual: 999 }));
 });
 test('CRM mov · admin crea abono y apertura positiva (contract M3); tipo inválido rechazado', async () => {
+    // V17: el abono en EFECTIVO ya NO se escribe desde el cliente (test propio abajo) — el que
+    // pasa por esta puerta es el que no mueve billetes.
     await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mA'), {
-        tipo: 'abono', monto: 5000, fecha: '2026-06-07', medioPago: 'efectivo',
+        tipo: 'abono', monto: 5000, fecha: '2026-06-07', medioPago: 'transferencia',
         registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false }));
     // M0-H (§69): la apertura NEGATIVA pasó a owner-only (test propio abajo); la positiva sigue admin.
     await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/mAp'), {
@@ -1240,6 +1242,36 @@ test('M3 abono · sin medioPago / fuera de lista / medioPago en factura → rech
         { tipo: 'factura', monto: 1000, fecha: '2026-06-07', medioPago: 'efectivo',
           registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false }));
 });
+// ─── V17 · el abono en EFECTIVO solo nace en el SERVIDOR (una sola puerta) ────────────
+// El cliente ya no puede crear un abono en efectivo: la CF `registrarAbonoCartera` es la única
+// puerta, porque es la única que puede escribir —en la MISMA tx— la pata del billete en
+// `turnos/{id}/movsCaja` (CF-only). Sin este cierre el control era TEATRO: bastaba el camino viejo
+// (o `corregirMovimientoBatch`, que HEREDA el medioPago del original) para meter un abono en
+// efectivo sin pata → el arqueo volvía a no esperar ese billete.
+test('V17 · abono en EFECTIVO desde el CLIENTE → DENEGADO (admin y owner); la CF no pasa por reglas', async () => {
+    const base = { tipo: 'abono', monto: 50000, fecha: '2026-06-07', registradoEn: serverTimestamp(), anulado: false };
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/v17Efec'),
+        { ...base, medioPago: 'efectivo', registradoPor: 'adminUid' }));
+    // Ni el OWNER: no es un tema de rol, es que el efectivo EXIGE la pata en la caja del turno.
+    await assertFails(setDoc(doc(asUser('ownerUid'), 'clientes/cliV/movimientos/v17EfecOwner'),
+        { ...base, medioPago: 'efectivo', registradoPor: 'ownerUid' }));
+});
+test('V17 · los demás medios siguen entrando por el cliente (cero regresión en el camino diario)', async () => {
+    const base = { tipo: 'abono', monto: 50000, fecha: '2026-06-07', registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false };
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/v17Transf'), { ...base, medioPago: 'transferencia' }));
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/v17Data'), { ...base, medioPago: 'datafono' }));
+    await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/v17Otro'), { ...base, medioPago: 'otro' }));
+});
+test('V17 · CORREGIR un abono en efectivo desde el cliente también queda cerrado (hereda el medio)', async () => {
+    // Espeja `corregirMovimientoBatch`: el reemplazo lleva `correccionDe` + el medioPago heredado.
+    await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/v17Corr'), {
+        tipo: 'abono', monto: 70000, fecha: '2026-06-07', medioPago: 'efectivo',
+        correccionDe: 'mAbonoCorr', registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false }));
+});
+// ANULAR un abono en efectivo sigue permitido (owner) — lo cubre ya
+// «M3 anulación · ABONO: admin NO, owner SÍ» sobre `mAbonoSem`: el cierre de V17 es del CREATE,
+// no del sello de anulación (que no escribe plata nueva; la pata la netea la CF).
+
 test('M3 ajuste · sin nota o motivo fuera de lista → rechazado (también para el OWNER)', async () => {
     await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3SinNota'),
         { tipo: 'ajuste', monto: -1000, fecha: '2026-06-07', motivo: 'ERROR_REGISTRO',
@@ -1478,9 +1510,10 @@ test('M3 anti-lockout · config ausente: abono PASA, ajuste negativo admin FALLA
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
         await deleteDoc(doc(ctx.firestore(), 'config/cartera'));
     });
-    // El camino DIARIO (abono) jamás lee config → sigue vivo.
+    // El camino DIARIO (abono) jamás lee config → sigue vivo. (Medio ≠ efectivo: desde V17 el
+    // efectivo entra por la CF, que ni pasa por reglas — el punto aquí es el anti-lockout.)
     await assertSucceeds(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3LockAbono'),
-        { tipo: 'abono', monto: 2000, fecha: '2026-06-07', medioPago: 'efectivo',
+        { tipo: 'abono', monto: 2000, fecha: '2026-06-07', medioPago: 'transferencia',
           registradoPor: 'adminUid', registradoEn: serverTimestamp(), anulado: false }));
     // La rama gateada del admin FALLA CERRADA (get a doc ausente → error → deny).
     await assertFails(setDoc(doc(asUser('adminUid'), 'clientes/cliV/movimientos/m3LockAjuste'),

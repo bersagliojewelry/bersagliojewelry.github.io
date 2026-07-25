@@ -163,6 +163,15 @@ service cloud.firestore {
           // decisión C2 §69); en los demás tipos el campo NO viaja.
           && (d.tipo != 'abono' || d.medioPago in ['efectivo', 'transferencia', 'datafono', 'otro'])
           && (!('medioPago' in d) || d.tipo == 'abono')
+          // V17 (F-TESORERÍA B5): el abono en EFECTIVO solo nace en el SERVIDOR. Lo escribe la CF
+          // `registrarAbonoCartera` (Admin SDK → ignora estas reglas), la única que puede meter en
+          // la MISMA transacción la pata del billete en `turnos/{id}/movsCaja` (colección CF-only)
+          // para que el arqueo del turno lo espere. Desde el cliente queda CERRADO — y no es un
+          // tema de ROL (ni el owner): sin este gate bastaba el camino viejo, o
+          // `corregirMovimientoBatch` (que HEREDA el medioPago del original), para bajar la deuda
+          // sin que ningún libro de efectivo registrara el billete = robo enmascarable. Corregir un
+          // abono en efectivo = anularlo (la CF netea su pata) y registrarlo de nuevo.
+          && !(d.tipo == 'abono' && d.medioPago == 'efectivo')
           && (!('motivo' in d) || (nonEmptyStr(d.motivo) && d.motivo.size() <= 500))
           && (!('nota' in d) || (d.nota is string && d.nota.size() <= 500))
           && (!('correccionDe' in d) || d.correccionDe is string)

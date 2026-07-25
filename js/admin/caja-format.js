@@ -27,6 +27,11 @@ export const CONCEPTO_LABEL = {
     retiro_socio:      'Retiro de socio',
     reembolso_cliente: 'Reembolso a cliente (venta de un turno anterior)',
     otro:              'Otro (con nota)',
+    // V17: concepto de SISTEMA — lo escribe la CF del abono, nunca la puerta manual (por eso NO
+    // está en CONCEPTOS_CAJA, que alimenta el selector y el guard de `movimientoCajaCore`). Vive
+    // aquí porque el detalle del turno lo MUESTRA: sin su etiqueta, la auditoría le enseñaba a
+    // Kary la clave cruda `abono_cartera` (jerga; cazado en la validación en vivo del 25jul).
+    abono_cartera:     'Abono de clienta',
 };
 export const conceptoLabel = (c) => CONCEPTO_LABEL[c] || c || '—';
 

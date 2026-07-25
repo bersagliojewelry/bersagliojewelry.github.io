@@ -76,6 +76,10 @@ test('conceptos de caja: lista cerrada + etiquetas + fallback', () => {
     assert.equal(conceptoLabel('retiro_socio'), 'Retiro de socio');
     assert.equal(conceptoLabel('reembolso_cliente'), 'Reembolso a cliente (venta de un turno anterior)');
     assert.equal(conceptoLabel('desconocido'), 'desconocido');   // fallback nunca rompe la UI
+    // V17: la pata del abono en efectivo se MUESTRA en el detalle del turno, pero NO es una opción
+    // del selector manual (una sola puerta la crea: la CF del abono). Etiqueta sí, lista no.
+    assert.equal(conceptoLabel('abono_cartera'), 'Abono de clienta');
+    assert.ok(!CONCEPTOS_CAJA.includes('abono_cartera'), 'jamás en el selector de caja manual');
 });
 
 test('tipos de bóveda + estado de aprobación', () => {

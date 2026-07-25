@@ -34,7 +34,10 @@ const TIPOS_CUENTA = Object.freeze(['banco', 'nequi', 'caja', 'boveda']);
 const TIPOS_VIRTUALES = Object.freeze(['caja', 'boveda']);   // sin saldoInicial/ledger propio (D1)
 const TITULARES = Object.freeze(['empresa', 'kary', 'daniela', 'veronica']);
 
-const ESTADOS_MOV = Object.freeze(['activo', 'pendiente_aprobacion', 'rechazado']);
+// 'anulado' (D9): lo sella la CF del abono cuando se anula el abono que originó la pata —
+// append-only (no se borra) y el recompute solo suma 'activo', así que deja de contar solo.
+// Distinto de 'rechazado', que significa "el dueño lo negó" en el flujo de aprobación.
+const ESTADOS_MOV = Object.freeze(['activo', 'pendiente_aprobacion', 'rechazado', 'anulado']);
 // Nacen `pendiente_aprobacion` (D4 + V2 + V3): toda plata que sale a una socia o toca el saldo por
 // ajuste pide firma del owner antes de contar.
 const TIPOS_PENDIENTES = Object.freeze(['retiro_socia', 'reembolso_socia', 'ajuste_inverso', 'ajuste_conciliacion']);
@@ -544,7 +547,9 @@ async function recalcularSaldoCuentaCore(db, cuentaId) {
 // Las escribe OTRA CF (la de traslado de bóveda) DENTRO DE SU PROPIA transacción — por eso esto es
 // un CONSTRUCTOR puro (valida + devuelve el doc), no una función que abra tx: las tx no se anidan.
 // La puerta MANUAL sigue rechazando estos tipos (TIPOS_SOLO_SISTEMA) — una sola vía para cada cosa.
-const PATA_TIPOS = Object.freeze(['consignacion_in', 'retiro_efectivo_out']);
+// D9 (B5): `abono_cartera` se suma como pata de SISTEMA — la escribe la CF del abono en su misma tx
+// (functions/cartera-core.js). La puerta MANUAL sigue rechazándola (V12, línea ~231): una sola puerta.
+const PATA_TIPOS = Object.freeze(['consignacion_in', 'retiro_efectivo_out', 'abono_cartera']);
 
 /**
  * Valida la cuenta REAL destino y construye el asiento de la pata bancaria. Lanza (⇒ aborta la tx

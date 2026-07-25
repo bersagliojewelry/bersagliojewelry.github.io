@@ -29,6 +29,7 @@
  */
 const { FieldValue } = require('firebase-admin/firestore');
 const { PedidoError } = require('./pedidos-core.js');
+const tesoreria = require('./tesoreria-core.js');   // D9: constructor de la pata bancaria (sin ciclo)
 
 const ESTADO_REF = 'caja/estado';
 
@@ -40,6 +41,9 @@ const MEDIO_EFECTIVO = 'efectivo';
 // caja debe seguir rechazándolo — una sola puerta lo crea, la del abono (V12 análogo).
 const CONCEPTO_ABONO = 'abono_cartera';
 const SUFIJO_PATA = '-caja';   // `movsCaja/{opId}-caja`, espejo de `{opId}-teso` de V1/V18
+// D9 · pata en el libro de TESORERÍA (banco/Nequi) del abono por transferencia.
+const SUFIJO_TESO = '-teso';
+const TIPO_PATA_TESO = 'abono_cartera';
 // Espejo de `anulacionValida` (firestore.rules): lista CERRADA, en mayúsculas.
 const MOTIVOS_ANULACION = ['ERROR_REGISTRO', 'DUPLICADO', 'CORRECCION', 'CORRECCION_FECHA',
     'DEVOLUCION_PIEZA', 'ABONO_NO_REGISTRADO', 'DESCUENTO_AUTORIZADO', 'OTRO'];
@@ -64,6 +68,15 @@ function guardFecha(fecha) {
 }
 
 const uidDe = (autor) => (autor && typeof autor === 'object' ? autor.uid : autor) || null;
+
+/**
+ * Texto de la pata bancaria. El ledger de tesorería lo lee alguien cuadrando el extracto: "Abono de
+ * María Gómez" le dice de dónde salió esa entrada; un id de cliente no le dice nada.
+ */
+function descripcionPata(clienteSnap) {
+    const nombre = clienteSnap && clienteSnap.exists ? (clienteSnap.data().nombre || '').trim() : '';
+    return nombre ? `Abono de ${nombre}`.slice(0, 500) : 'Abono de clienta';
+}
 
 /**
  * Doc de la pata en el libro de CAJA. `tipo:'ingreso'` a propósito (ver cabecera): así los 3
@@ -121,29 +134,63 @@ async function registrarAbonoCarteraCore(db, input = {}, opts = {}) {
     const fecha = guardFecha(input.fecha);
     const esEfectivo = medioPago === MEDIO_EFECTIVO;
 
+    // D9 · ¿a qué CUENTA entró? Solo tiene sentido en TRANSFERENCIA (incluye Nequi): el efectivo va
+    // al cajón (V17) y el datáfono llega neto de comisión y con su propio cuadre de vouchers —
+    // meterlos aquí en bruto descuadraría el banco. `cuentaId` es OPCIONAL a propósito (V12:
+    // "todavía no sé" es una respuesta legítima y no se castiga con un bloqueo).
+    const cuentaId = input.cuentaId ? String(input.cuentaId).trim() : null;
+    if (cuentaId && medioPago !== 'transferencia') {
+        throw new PedidoError('invalid-argument',
+            'Solo las transferencias entran a una cuenta bancaria: el efectivo entra a la caja del turno.');
+    }
+    const idTeso = `${opId}${SUFIJO_TESO}`;
+
     const res = await db.runTransaction(async (tx) => {
         const movRef = db.doc(`clientes/${clienteId}/movimientos/${opId}`);
         const movSnap = await tx.get(movRef);
 
-        // ── REPLAY: el abono ya está. Se verifica el OTRO libro (idempotencia por-libro).
+        // ── REPLAY: el abono ya está. Se verifica CADA libro por separado (idempotencia por-libro,
+        // V4): jamás "éxito previo" global — el que falte se crea, el que esté se respeta.
         if (movSnap.exists) {
             const m = movSnap.data();
             const ancla = m.pataCaja && m.pataCaja.turnoId ? String(m.pataCaja.turnoId) : null;
-            if (!ancla) return { yaExistia: true, pataCaja: null };   // abono sin pata (no-efectivo o legado)
+            const ctaAncla = m.pataTeso && m.pataTeso.cuentaId ? String(m.pataTeso.cuentaId) : null;
+            const out = { yaExistia: true, pataCaja: null, pataTeso: null };
 
-            const pataRef = db.doc(`turnos/${ancla}/movsCaja/${idPata(opId)}`);
-            const turnoRef = db.doc(`turnos/${ancla}`);
-            const [pataSnap, turnoSnap] = await Promise.all([tx.get(pataRef), tx.get(turnoRef)]);
-            const pataCaja = { turnoId: ancla, movId: idPata(opId) };
-            if (pataSnap.exists) return { yaExistia: true, pataCaja };
-
-            // La pata falta: solo se puede reponer si SU turno sigue abierto — un arqueo sellado
-            // ya se firmó sin ella y meterle plata después es fabricar evidencia.
-            if (!turnoSnap.exists || turnoSnap.data().estado !== 'abierto') {
-                return { yaExistia: true, pataCaja, pataFaltante: true, turnoAnclado: ancla };
+            // (a) libro del BANCO: destino DETERMINISTA (la cuenta quedó anclada en el movimiento),
+            // así que reponerlo es seguro — a diferencia del turno, que es temporal (L-85).
+            if (ctaAncla) {
+                out.pataTeso = { cuentaId: ctaAncla, movId: idTeso };
+                const tesoRef = db.doc(`movimientosTesoreria/${idTeso}`);
+                const [tesoSnap, ctaSnap, cliSnap] = await Promise.all([
+                    tx.get(tesoRef), tx.get(db.doc(`cuentasTesoreria/${ctaAncla}`)), tx.get(db.doc(`clientes/${clienteId}`)),
+                ]);
+                if (!tesoSnap.exists) {
+                    tx.set(tesoRef, tesoreria.construirPataSistema({
+                        cuentaSnap: ctaSnap, cuentaId: ctaAncla, tipo: TIPO_PATA_TESO, monto: m.monto,
+                        fecha: m.fecha, refDocumento: opId, autor: m.registradoPor,
+                        descripcion: descripcionPata(cliSnap),
+                    }));
+                    out.pataTesoCreada = true;
+                }
             }
-            tx.set(pataRef, construirPataCaja({ opId, clienteId, monto: m.monto, autor: m.registradoPor, descripcion: m.descripcion }));
-            return { yaExistia: true, pataCaja, pataCreada: true };
+            // (b) libro de la CAJA.
+            if (ancla) {
+                const pataRef = db.doc(`turnos/${ancla}/movsCaja/${idPata(opId)}`);
+                const [pataSnap, turnoSnap] = await Promise.all([tx.get(pataRef), tx.get(db.doc(`turnos/${ancla}`))]);
+                out.pataCaja = { turnoId: ancla, movId: idPata(opId) };
+                if (!pataSnap.exists) {
+                    // Solo se repone si SU turno sigue abierto — un arqueo sellado ya se firmó sin
+                    // ella y meterle plata después es fabricar evidencia.
+                    if (!turnoSnap.exists || turnoSnap.data().estado !== 'abierto') {
+                        out.pataFaltante = true; out.turnoAnclado = ancla;
+                    } else {
+                        tx.set(pataRef, construirPataCaja({ opId, clienteId, monto: m.monto, autor: m.registradoPor, descripcion: m.descripcion }));
+                        out.pataCreada = true;
+                    }
+                }
+            }
+            return out;
         }
 
         // ── ALTA. Todas las lecturas ANTES de escribir (regla de las tx de Firestore).
@@ -168,6 +215,19 @@ async function registrarAbonoCarteraCore(db, input = {}, opts = {}) {
             pataRef = db.doc(`turnos/${turnoId}/movsCaja/${idPata(opId)}`);
         }
 
+        // D9 · pata del BANCO. Construirla VALIDA la cuenta (existe · no virtual · activa · fecha ≥
+        // su corte inicial, V10) y lanza si no sirve ⇒ aborta TODO el abono: la deuda jamás baja
+        // apuntando a una cuenta que no puede recibir esa plata (espejo de V1 en la bóveda).
+        let tesoRef = null, tesoDoc = null;
+        if (cuentaId) {
+            const ctaSnap = await tx.get(db.doc(`cuentasTesoreria/${cuentaId}`));
+            tesoDoc = tesoreria.construirPataSistema({
+                cuentaSnap: ctaSnap, cuentaId, tipo: TIPO_PATA_TESO, monto, fecha,
+                refDocumento: opId, autor, descripcion: descripcionPata(clienteSnap),
+            });
+            tesoRef = db.doc(`movimientosTesoreria/${idTeso}`);
+        }
+
         const mov = {
             tipo: 'abono',
             monto,
@@ -178,12 +238,21 @@ async function registrarAbonoCarteraCore(db, input = {}, opts = {}) {
             anulado: false,
         };
         if (descripcion) mov.descripcion = descripcion;
-        // ANCLA de la idempotencia por-libro: en qué turno vive el billete de ESTE abono.
+        // ANCLAS de la idempotencia por-libro: dónde vive la plata de ESTE abono en cada libro.
         if (pataRef) mov.pataCaja = { turnoId, movId: idPata(opId) };
+        if (tesoRef) mov.pataTeso = { cuentaId, movId: idTeso };
+        // V12: "todavía no sé" no se pierde en el silencio — queda listable en "Cuadrar mes" para
+        // cerrarlo después (sin esta bandera, el abono sin cuenta sería invisible).
+        else if (medioPago === 'transferencia') mov.sinCuentaAsignada = true;
 
         tx.set(movRef, mov);
         if (pataRef) tx.set(pataRef, construirPataCaja({ opId, clienteId, monto, autor, descripcion }));
-        return { yaExistia: false, pataCaja: pataRef ? { turnoId, movId: idPata(opId) } : null };
+        if (tesoRef) tx.set(tesoRef, tesoDoc);
+        return {
+            yaExistia: false,
+            pataCaja: pataRef ? { turnoId, movId: idPata(opId) } : null,
+            pataTeso: tesoRef ? { cuentaId, movId: idTeso } : null,
+        };
     });
 
     if (res.pataFaltante) {
@@ -237,6 +306,23 @@ async function anularAbonoCarteraCore(db, input = {}, opts = {}) {
             }
         }
 
+        // D9 · pata del BANCO. Misma doctrina que el turno sellado: lo que YA se cuadró contra el
+        // extracto es intocable (espejo de `aprobarMovimientoTesoreria`); corregirlo es un ajuste
+        // nuevo, no una edición del pasado. Si aún no se cuadró, se SELLA `estado:'anulado'` —
+        // append-only, no se borra — y el recompute deja de contarlo (solo suma 'activo').
+        const ctaAncla = m.pataTeso && m.pataTeso.cuentaId ? String(m.pataTeso.cuentaId) : null;
+        let tesoRef = null, hayTeso = false;
+        if (ctaAncla) {
+            tesoRef = db.doc(`movimientosTesoreria/${movId}${SUFIJO_TESO}`);
+            const tesoSnap = await tx.get(tesoRef);
+            const t = tesoSnap.exists ? tesoSnap.data() : null;
+            if (t && t.conciliado === true) {
+                throw new PedidoError('failed-precondition',
+                    `Ese abono ya quedó CUADRADO con el extracto de ${t.periodoConciliado || 'un mes cerrado'}: no se puede anular. Registra un ajuste del cuadre (pide aprobación del dueño).`);
+            }
+            hayTeso = !!t && t.estado === 'activo';
+        }
+
         const patch = {
             anulado: true,
             anuladoPor: uidDe(autor),
@@ -250,7 +336,16 @@ async function anularAbonoCarteraCore(db, input = {}, opts = {}) {
                 anulado: true, anuladoPor: uidDe(autor), anuladoEn: FieldValue.serverTimestamp(), motivoAnulacion: motivo,
             });
         }
-        return { pataAnulada: hayPata, pataHuerfana: !!ancla && !hayPata };
+        if (hayTeso) {
+            tx.update(tesoRef, {
+                estado: 'anulado', anuladoPor: { uid: uidDe(autor), at: FieldValue.serverTimestamp() },
+                motivoAnulacion: motivo,
+            });
+        }
+        return {
+            pataAnulada: hayPata, pataHuerfana: !!ancla && !hayPata,
+            pataTesoAnulada: hayTeso, pataTesoHuerfana: !!ctaAncla && !hayTeso,
+        };
     });
 
     // La pata debía estar y no está (borrada/ya anulada por otra vía): el arqueo puede quedar

@@ -60,7 +60,9 @@ exports.registrarAbonoCartera = onCall({ region: 'us-central1', invoker: 'public
         const d = request.data || {};
         return await core.registrarAbonoCarteraCore(db, {
             opId: d.opId, clienteId: d.clienteId, monto: d.monto, fecha: d.fecha,
-            medioPago: d.medioPago, descripcion: d.descripcion, autor: actorDe(request.auth),
+            medioPago: d.medioPago, descripcion: d.descripcion,
+            cuentaId: d.cuentaId,   // D9: solo transferencia; ausente = "todavía no sé" (V12)
+            autor: actorDe(request.auth),
         }, { notificar: notificarAbono(db) });
     } catch (e) { lanzar(e); }
 });

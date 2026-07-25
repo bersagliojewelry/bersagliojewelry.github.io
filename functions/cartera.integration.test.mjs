@@ -30,6 +30,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import core from './cartera-core.js';
 import cajaCore from './caja-core.js';
 import saldoMod from './saldo.js';
+import tesoCore from './tesoreria-core.js';
 
 const { computeSaldo } = saldoMod;
 const { registrarAbonoCarteraCore, anularAbonoCarteraCore, MEDIOS_ABONO, CONCEPTO_ABONO } = core;
@@ -65,6 +66,14 @@ async function resetCliente() {
 async function saldoDe(clienteId = CLI) {
     const snap = await db.collection(`clientes/${clienteId}/movimientos`).get();
     return computeSaldo(snap.docs.map((d) => d.data()));
+}
+
+/** Limpia el libro de tesorería y sus cuentas entre escenarios de D9. */
+async function limpiarTesoreria() {
+    for (const col of ['cuentasTesoreria', 'movimientosTesoreria']) {
+        const snap = await db.collection(col).get();
+        await Promise.all(snap.docs.map((d) => d.ref.delete()));
+    }
 }
 
 const autor = { uid: 'kary', nombre: 'Kary' };
@@ -284,4 +293,131 @@ test('validaciones: medio inválido · monto no entero positivo · fecha mal · 
 
 test('MEDIOS_ABONO es espejo EXACTO de la lista literal de firestore.rules', () => {
     assert.deepEqual(MEDIOS_ABONO, ['efectivo', 'transferencia', 'datafono', 'otro']);
+});
+
+// ═══ D9 · la otra costura: ¿a qué CUENTA entró la transferencia? ═══════════════════════════════
+// El abono en efectivo entra a la caja (V17); el que llega por TRANSFERENCIA entra a un banco, y
+// hasta ahora tampoco aparecía en ningún libro: el saldo del banco no lo veía y el cuadre mensual
+// nunca cerraba. Misma doctrina: la MISMA tx escribe la pata `abono_cartera` en
+// `movimientosTesoreria/{opId}-teso` (fuente SISTEMA; la puerta MANUAL la rechaza — V12, ya probado
+// en tesoreria.integration test 14). `cuentaId` es OPCIONAL a propósito (V12: "todavía no sé" es una
+// respuesta legítima), y esos abonos quedan listables para cerrarlos en "Cuadrar mes".
+async function cuentaBanco(id, extra = {}) {
+    await tesoCore.crearCuentaTesoreriaCore(db, {
+        opId: id, nombre: `Cuenta ${id}`, banco: 'Bancolombia', tipo: 'banco', titular: 'kary',
+        saldoInicial: extra.saldoInicial ?? 0, fechaCorte: extra.fechaCorte ?? '2026-01-01',
+        esDeSocia: false, autor: 'testUid',
+    });
+    return id;
+}
+const saldoCuenta = async (id) => {
+    const cta = (await db.doc(`cuentasTesoreria/${id}`).get()).data();
+    const movs = await db.collection('movimientosTesoreria').where('cuentaId', '==', id).get();
+    return tesoCore.computeSaldoCuenta(cta.saldoInicial?.monto ?? 0,
+        movs.docs.map((d) => ({ id: d.id, ...d.data() })));
+};
+
+test('D9 · abono por TRANSFERENCIA con cuenta → la plata entra al banco en la MISMA tx', async () => {
+    await limpiarTesoreria();
+    await cuentaBanco('BCO1');
+    const r = await registrarAbonoCarteraCore(db, {
+        opId: 'D9A', clienteId: CLI, monto: 400000, fecha: '2026-07-25',
+        medioPago: 'transferencia', cuentaId: 'BCO1', autor,
+    }, opts);
+    assert.deepEqual(r.pataTeso, { cuentaId: 'BCO1', movId: 'D9A-teso' });
+    assert.equal(r.pataCaja, null, 'una transferencia NO toca la caja del turno');
+    assert.equal(await saldoDe(), 1600000);
+    const pata = (await db.doc('movimientosTesoreria/D9A-teso').get()).data();
+    assert.equal(pata.tipo, 'abono_cartera');
+    assert.equal(pata.cuentaId, 'BCO1');
+    assert.equal(pata.monto.monto, 400000);
+    assert.equal(pata.estado, 'activo');
+    assert.equal(pata.creadoPor.fuente, 'SISTEMA', 'la puerta MANUAL rechaza este tipo (V12)');
+    assert.equal(pata.refDocumento, 'D9A', 'trazable al movimiento de cartera');
+    assert.equal(await saldoCuenta('BCO1'), 400000, 'el banco YA ve la plata');
+});
+
+test('D9 · "todavía no sé" (sin cuenta) → se registra igual y queda LISTABLE para el cuadre', async () => {
+    await limpiarTesoreria();
+    const r = await registrarAbonoCarteraCore(db, {
+        opId: 'D9B', clienteId: CLI, monto: 300000, fecha: '2026-07-25', medioPago: 'transferencia', autor,
+    }, opts);
+    assert.equal(r.pataTeso, null);
+    assert.equal(await saldoDe(), 1700000, 'la deuda baja igual: no se castiga decir la verdad');
+    const mov = (await db.doc(`clientes/${CLI}/movimientos/D9B`).get()).data();
+    assert.equal(mov.pataTeso, undefined);
+    assert.equal(mov.sinCuentaAsignada, true, 'bandera para la lista "abonos sin cuenta" del cuadre');
+});
+
+test('D9 · el EFECTIVO no acepta cuenta bancaria (su destino es el cajón, no el banco)', async () => {
+    await limpiarTesoreria();
+    await cuentaBanco('BCO2');
+    await abrirTurnoCore(db, { opId: 'TD9', fondoApertura: 0, autor: 'kary' });
+    await assert.rejects(registrarAbonoCarteraCore(db, {
+        opId: 'D9C', clienteId: CLI, monto: 100000, fecha: '2026-07-25',
+        medioPago: 'efectivo', cuentaId: 'BCO2', autor,
+    }, opts), (e) => e.code === 'invalid-argument');
+    assert.equal(await saldoDe(), 2000000, 'no queda ni abono ni pata');
+});
+
+test('D9 · cuenta inválida (inexistente/virtual) ⇒ aborta TODO (la deuda no baja)', async () => {
+    await limpiarTesoreria();
+    await tesoCore.seedCuentasVirtuales(db);   // crea caja/bóveda virtuales
+    await assert.rejects(registrarAbonoCarteraCore(db, {
+        opId: 'D9D', clienteId: CLI, monto: 100000, fecha: '2026-07-25',
+        medioPago: 'transferencia', cuentaId: 'noExiste', autor,
+    }, opts), (e) => e.code === 'not-found');
+    assert.equal(await saldoDe(), 2000000);
+    const virtual = (await db.collection('cuentasTesoreria').where('tipo', '==', 'caja').get()).docs[0];
+    await assert.rejects(registrarAbonoCarteraCore(db, {
+        opId: 'D9E', clienteId: CLI, monto: 100000, fecha: '2026-07-25',
+        medioPago: 'transferencia', cuentaId: virtual.id, autor,
+    }, opts), (e) => e.code === 'failed-precondition');
+    assert.equal(await saldoDe(), 2000000, 'Caja/Bóveda no son cuentas bancarias');
+});
+
+test('D9 · idempotencia POR-LIBRO: si falta la pata del banco, el replay la crea (y no duplica cartera)', async () => {
+    await limpiarTesoreria();
+    await cuentaBanco('BCO3');
+    const p = { opId: 'D9F', clienteId: CLI, monto: 250000, fecha: '2026-07-25', medioPago: 'transferencia', cuentaId: 'BCO3', autor };
+    await registrarAbonoCarteraCore(db, p, opts);
+    await db.doc('movimientosTesoreria/D9F-teso').delete();          // fallo parcial
+    const r = await registrarAbonoCarteraCore(db, p, opts);
+    assert.equal(r.yaExistia, true);
+    assert.equal(r.pataTesoCreada, true);
+    assert.equal(await saldoCuenta('BCO3'), 250000);
+    assert.equal(await saldoDe(), 1750000, 'la cartera NO se duplica');
+});
+
+test('D9 · anular el abono NETEA el banco (la pata deja de contar) si el mes no está cuadrado', async () => {
+    await limpiarTesoreria();
+    await cuentaBanco('BCO4');
+    await registrarAbonoCarteraCore(db, {
+        opId: 'D9G', clienteId: CLI, monto: 500000, fecha: '2026-07-25', medioPago: 'transferencia', cuentaId: 'BCO4', autor,
+    }, opts);
+    assert.equal(await saldoCuenta('BCO4'), 500000);
+    const r = await anularAbonoCarteraCore(db, {
+        clienteId: CLI, movId: 'D9G', motivo: 'no entró la transferencia', motivoCategoria: 'ERROR_REGISTRO', autor,
+    }, opts);
+    assert.equal(r.pataTesoAnulada, true);
+    assert.equal(await saldoDe(), 2000000);
+    assert.equal(await saldoCuenta('BCO4'), 0, 'el banco ya no cuenta esa plata');
+    const pata = (await db.doc('movimientosTesoreria/D9G-teso').get()).data();
+    assert.equal(pata.estado, 'anulado', 'append-only: no se borra, se sella');
+    assert.ok(pata.anuladoPor, 'queda quién y cuándo');
+});
+
+test('D9 · si la pata YA está CUADRADA con el extracto, anular se RECHAZA (lo sellado no se reescribe)', async () => {
+    await limpiarTesoreria();
+    await cuentaBanco('BCO5');
+    await registrarAbonoCarteraCore(db, {
+        opId: 'D9H', clienteId: CLI, monto: 500000, fecha: '2026-07-25', medioPago: 'transferencia', cuentaId: 'BCO5', autor,
+    }, opts);
+    await tesoCore.marcarConciliadoCore(db, { cuentaId: 'BCO5', periodo: '2026-07', opIds: ['D9H-teso'], actor: 'ownerUid' });
+    await assert.rejects(
+        anularAbonoCarteraCore(db, { clienteId: CLI, movId: 'D9H', motivo: 'tarde', autor }, opts),
+        (e) => e.code === 'failed-precondition' && /cuadrad/i.test(e.message),
+    );
+    assert.equal(await saldoDe(), 1500000, 'la cartera tampoco se movió');
+    assert.equal(await saldoCuenta('BCO5'), 500000);
 });

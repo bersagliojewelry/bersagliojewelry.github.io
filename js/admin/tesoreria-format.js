@@ -22,7 +22,9 @@ export const TIPOS_MOV = Object.freeze([...Object.keys(SIGNO_TESORERIA), ...TIPO
 export const TIPOS_CUENTA = Object.freeze(['banco', 'nequi', 'caja', 'boveda']);
 export const TIPOS_VIRTUALES = Object.freeze(['caja', 'boveda']);   // sin saldoInicial/ledger propio (D1)
 
-export const ESTADOS_MOV = Object.freeze(['activo', 'pendiente_aprobacion', 'rechazado']);
+// 'anulado' (D9): lo sella la CF del abono al anularlo — append-only, y el recompute solo suma
+// 'activo', así que deja de contar sin borrar nada. Distinto de 'rechazado' (lo negó el dueño).
+export const ESTADOS_MOV = Object.freeze(['activo', 'pendiente_aprobacion', 'rechazado', 'anulado']);
 export const TIPOS_PENDIENTES = Object.freeze(['retiro_socia', 'reembolso_socia', 'ajuste_inverso', 'ajuste_conciliacion']);
 export const CATEGORIAS_GASTO = Object.freeze(['gmf', 'comision_bancaria', 'comision_pasarela', 'arriendo',
     'nomina', 'servicios_publicos', 'papeleria', 'otros']);

@@ -8,9 +8,9 @@
 
 ## 🎯 Foco actual
 
-> 🟣 **RELEVO → LA NUEVA SESIÓN ARRANCA EN (a) E2E de UI en prod, (b) B5·V17** (zona caliente: test PRIMERO). **F-TESORERÍA (TODO-78) · B0-B4 + B5(D6·V1·V18) ✅ EN PROD (2026-07-24: merge a main + `firebase deploy` de functions/reglas/índices + seed de las 2 virtuales).** ⚠️ **E2E con login PENDIENTE**: se verificó el DEPLOY (9 CFs listadas, reglas OK, docs creados), NO la pantalla. **Hecho**: B0-B3 · B4 (Bandeja "Tesorería" + badge · "Plata total" en Hoy · V9 socias) · D6 (editor de reglas) · V1 · V18. Suites verdes (teso 31/31 · caja 38/38).
+> 🟣 **RELEVO → LA NUEVA SESIÓN ARRANCA EN B5·V17** (zona caliente: test PRIMERO). **F-TESORERÍA (TODO-78) · B0-B4 + B5(D6·V1·V18) ✅ EN PROD Y VERIFICADO EN VIVO** (2026-07-24: merge + `firebase deploy` functions/reglas/índices + seed virtuales; **E2E Chrome con login owner ✅**: Hoy "Plata total" · Cuentas y bancos (estado-cero + 2 virtuales) · Bandeja sección Tesorería · editor D6 (escribe ✅ y el server RECHAZA fuera de rango) · Bóveda "Retiro de banco" con su guía. Consola limpia).
 >
-> **B5 EN CURSO (costuras, §6)**: D6 ✅ · V1 ✅ · V18 ✅. **SIGUE `V17`** (abono en EFECTIVO → pata en `movsCaja` tipo nuevo `abono_cartera`, EXIGE turno abierto; idempotencia por-libro V4) → D9 (abono→`cuentaId`, flag off hasta verde) + microcopy + cuadre diario 3:30 en Salud. **⚠️ Zona caliente R3 = test PRIMERO. Pista: la CF del abono del CRM aún NO está localizada** (buscar el escritor de `movimientos` de cartera). **Mapa de ejecución + precisiones → spec §9.** Luego B6 (rompimiento adversarial read-only + Chrome holístico) → **DEPLOY MANUAL del bundle** (`firebase deploy --only firestore:rules,firestore:indexes,functions` + seed virtuales prod; SW ya v98) + E2E holístico Chrome.
+> **B5 EN CURSO (costuras, §6)**: D6 ✅ · V1 ✅ · V18 ✅. **SIGUE `V17`** (abono en EFECTIVO → pata en `movsCaja` tipo nuevo `abono_cartera`, EXIGE turno abierto; idempotencia por-libro V4) → D9 (abono→`cuentaId`, flag off hasta verde) + microcopy + cuadre diario 3:30 en Salud. **⚠️ Zona caliente R3 = test PRIMERO. Pista: la CF del abono del CRM aún NO está localizada** (buscar el escritor de `movimientos` de cartera). **Mapa + precisiones → spec §9.** Luego B6 (rompimiento adversarial) → desplegar lo nuevo (`firebase deploy --only firestore:rules,firestore:indexes,functions`) + E2E.
 >
 > **Protocolo por sesión**: `asesor-critico-honesto` + `caza-bugs` + `auditoria-financiera`; spec COMPLETA (§0.8>§0.7>§0.6>cuerpo, sin re-decidir; TDD en el MISMO commit). Modelo lo decide Daniel (`/model`): Opus → + `opus-interino-protocolo`, marca **`[OPUS-5]`** (desde 2026-07-24); Fable → `[FABLE-5]`. ⚠️ B2-B4 quedaron firmados `[OPUS-4.8]` por error → auditar por AMBOS (→ `05`).
 >
@@ -23,7 +23,8 @@
 | ID | Item | Estado | Bloqueo |
 |---|---|---|---|
 | TODO-03/04 | (baja) headers `99`→`## NN.` · anomalías 🔧 en `skills/` | 🔲 | baja |
-| TODO-78 | **F-TESORERÍA** (SSoT spec `2026-07-18-f-tesoreria-DISENO.md`, prevalencia §0.8>§0.7>§0.6>cuerpo; zonas calientes V1/V17; legal Daniel → `42-LEGAL §7`). **B0-B4 ✅ en código · SIGUE B5 → B6 → deploy bundle+E2E** (detalle → Foco). | 🟢 | B5 |
+| TODO-79 | **Errores de callables NO llegan al usuario (TODO el panel, PREEXISTENTE)** — cazado en el E2E de D6 (24jul): el server rechaza bien pero el toast muestra el genérico, no el motivo. Causa: el SDK prefija `functions/` en `err.code` y `ERROR_MESSAGES` (`shared.js:194`) + los `BUSINESS_ERR` de cada módulo usan claves SIN prefijo. Fix central: normalizar el code en `errorMessage`. | 🔲 | 1 fix |
+| TODO-78 | **F-TESORERÍA** (SSoT spec `2026-07-18-f-tesoreria-DISENO.md`, prevalencia §0.8>§0.7>§0.6>cuerpo; zona caliente V17; legal Daniel → `42-LEGAL §7`). **B0-B5(D6·V1·V18) ✅ EN PROD · SIGUE V17 → D9 → B6** (detalle → Foco). | 🟢 | V17 |
 | TODO-77 | **SHARD de `30`** (§G.5) — **SUBE (§192)**: el tope duro (44000) ya BLOQUEÓ la captura normal de M-23 (hubo que micro-podar). Extraer categoría a hija (ojo: L-81/1022c tiene su detalle SOLO en `30` → mover, no recortar). Sesión fresca. | 🔲 | poda 30 |
 | TODO-07 | **Contenido real web**: reseñas Maps (Nosotros), Films, feed Redes (`home-media.js`). | 🔲 | cliente entrega datos |
 | TODO-08 | **Hardening Fase 2**: Tier A ✅; pend. CSP/reglas/claims (Tier B/C) → `41-SEGURIDAD §1.5` | 🟡 | Tier B = emulador+deploy gated |
@@ -50,7 +51,6 @@
 
 ## 📝 Bitácora (efímera)
 
-> 2026-07-24 · **[OPUS-5] B5: D6 ✅ · V1 ✅ (P0) · V18 ✅** (TDD estricto; el rojo de V1 REPRODUJO el P0 en vivo). D6 = "Reglas del sistema" editable owner (whitelist+rangos+audit). V1/V18 = frontera bóveda↔banco: la MISMA tx escribe la pata (`{opId}-teso`, fuente SISTEMA); cuenta inválida ⇒ aborta TODO; V4 por-libro (el replay crea la faltante); V1 retrocompatible sin `cuentaId`, V18 la EXIGE (flujo nuevo). Gates: teso **31/31** · **caja 38/38 SIN regresión** · resto verde. **Detalle → spec §9 + commits.**
-> 2026-07-23 · **B4 ✅**: Bandeja "Tesorería" (aprobar/rechazar) + badge · "Plata total" en Hoy (`sumaSaldosReales`) · V9 socias (`throughputAnio`). **Dudas (R7)**: V9 informativo (tope 200 → "o más"), NO cifra fiscal · rechazo por `prompt` · E2E vivo → deploy (L-05).
-> 2026-07-18/23 · **B0-B3 ✅** (detalle → Foco/commits): B0 fundación [OPUS] (`servicio_publico` retirado V20) · B1+auditoría-B0 [FABLE] · B2 página · B3 cuadre (V19). Auditoría interinato #3 → §192.
+> 2026-07-24 · **[OPUS-5] B4 · D6 · V1(P0) · V18 ✅ → DESPLEGADO + E2E vivo ✅** (TDD; el rojo de V1 reprodujo el P0). V1/V18 = frontera bóveda↔banco: la MISMA tx escribe la pata (`{opId}-teso`, SISTEMA); cuenta inválida ⇒ aborta TODO; V4 por-libro; V1 retrocompatible, V18 exige cuenta. Gates: teso 31/31 · caja 38/38 sin regresión. **Dudas (R7)**: V9 = informativo (tope 200 → "o más"), NO cifra fiscal · rechazo por `prompt`. **Detalle → spec §9 + commits.**
+> 2026-07-18/23 · **B0-B3 ✅** (→ commits): fundación [OPUS] · núcleo+auditoría [FABLE] · página · cuadre. Auditoría interinato #3 → §192.
 > **Pend Daniel/no-gate**: llenar "Datos del negocio" en el panel (§192 I-03; datos = identidad LEGAL-08) · marcar 7 avisos test-era en Salud (I-04) · consejo+abogado apartados (39) · instructivo Kary · push A.6 · fotos (67). ADC gcloud caducado (CLI OK). **Precios = paso FINAL.**

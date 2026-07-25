@@ -8,11 +8,13 @@
 
 ## 🎯 Foco actual
 
-> 🟣 **RELEVO → LA NUEVA SESIÓN ARRANCA EN B5·V17** (zona caliente: test PRIMERO). **F-TESORERÍA (TODO-78) · B0-B4 + B5(D6·V1·V18) ✅ EN PROD Y VERIFICADO EN VIVO** (2026-07-24: merge + `firebase deploy` functions/reglas/índices + seed virtuales; **E2E Chrome con login owner ✅**: Hoy "Plata total" · Cuentas y bancos (estado-cero + 2 virtuales) · Bandeja sección Tesorería · editor D6 (escribe ✅ y el server RECHAZA fuera de rango) · Bóveda "Retiro de banco" con su guía. Consola limpia).
+> 🟣 **F-TESORERÍA (TODO-78) · B0-B4 + B5(D6·V1·V18·**V17**) ✅ EN PROD.** V17 desplegado 2026-07-25 (CFs `registrarAbonoCartera`/`anularAbonoCartera` + merge a main). **FALTA cerrarlo: (a) validación en vivo en Chrome del camino completo, (b) el cierre en REGLAS.**
 >
-> **B5 EN CURSO (costuras, §6)**: D6 ✅ · V1 ✅ · V18 ✅. **SIGUE `V17`** (abono en EFECTIVO → pata en `movsCaja` tipo nuevo `abono_cartera`, EXIGE turno abierto; idempotencia por-libro V4) → D9 (abono→`cuentaId`, flag off hasta verde) + microcopy + cuadre diario 3:30 en Salud. **⚠️ Zona caliente R3 = test PRIMERO. Pista: la CF del abono del CRM aún NO está localizada** (buscar el escritor de `movimientos` de cartera). **Mapa + precisiones → spec §9.** Luego B6 (rompimiento adversarial) → desplegar lo nuevo (`firebase deploy --only firestore:rules,firestore:indexes,functions`) + E2E.
+> **V17 (3 commits [OPUS-5])**: el abono en EFECTIVO escribe, en la MISMA tx, su pata en `movsCaja` → el arqueo espera el billete (antes cuadraba igual = robo enmascarable). TDD 16/16 · caja 38/38. Premisas FALSAS de la spec + desvío `tipo:'ingreso'`+`concepto` + ancla del turno (L-85) → **spec §9**; lo que quedó en cola del titular → **spec §8**.
 >
-> **Protocolo por sesión**: `asesor-critico-honesto` + `caza-bugs` + `auditoria-financiera`; spec COMPLETA (§0.8>§0.7>§0.6>cuerpo, sin re-decidir; TDD en el MISMO commit). Modelo lo decide Daniel (`/model`): Opus → + `opus-interino-protocolo`, marca **`[OPUS-5]`** (desde 2026-07-24); Fable → `[FABLE-5]`. ⚠️ B2-B4 quedaron firmados `[OPUS-4.8]` por error → auditar por AMBOS (→ `05`).
+> **SIGUE, en orden**: (1) **validación Chrome** (abrir turno → abono efectivo → el arqueo lo espera → anular → netea) · (2) **REGLAS: negar create client-side de `tipo=='abono' && medioPago=='efectivo'`** — sin eso es teatro (`corregirMovimientoBatch` recrea sin pata); ⚠️ **dependencia**: el carril de corrección debe pasar por la CF antes o con ese cierre · (3) **D9** (`cuentaId` → pata de tesorería; falta `abono_cartera` en `PATA_TIPOS`) · (4) microcopy + cuadre 3:30 en Salud → **B6**.
+>
+> **Protocolo por sesión**: `asesor-critico-honesto` + `caza-bugs` + `auditoria-financiera`; spec COMPLETA (§0.8>§0.7>§0.6>cuerpo, sin re-decidir; TDD en el MISMO commit). Modelo lo decide Daniel (`/model`): Opus → + `opus-interino-protocolo`, marca **`[OPUS-5]`**; Fable → `[FABLE-5]`. ⚠️ B2-B4 quedaron firmados `[OPUS-4.8]` por error → auditar por AMBOS (→ `05`).
 >
 > **🧭 Roadmap** (detalle → `05`): …F-IA-2 ✅ → **F-TESORERÍA (B5)** → F-COMPRAS → F-REPORTES → apartados → limpieza → rompimiento → lanzamiento. _MCP Firebase=prod · push+merge a main=Claude · consejo read-only · valida en Chrome._ `[[project_comercio_pagos]]`
 
@@ -23,9 +25,7 @@
 | ID | Item | Estado | Bloqueo |
 |---|---|---|---|
 | TODO-03/04 | (baja) headers `99`→`## NN.` · anomalías 🔧 en `skills/` | 🔲 | baja |
-| TODO-79 | **Errores de callables NO llegan al usuario (TODO el panel, PREEXISTENTE)** — cazado en el E2E de D6 (24jul): el server rechaza bien pero el toast muestra el genérico, no el motivo. Causa: el SDK prefija `functions/` en `err.code` y `ERROR_MESSAGES` (`shared.js:194`) + los `BUSINESS_ERR` de cada módulo usan claves SIN prefijo. Fix central: normalizar el code en `errorMessage`. | 🔲 | 1 fix |
-| TODO-78 | **F-TESORERÍA** (SSoT spec `2026-07-18-f-tesoreria-DISENO.md`, prevalencia §0.8>§0.7>§0.6>cuerpo; zona caliente V17; legal Daniel → `42-LEGAL §7`). **B0-B5(D6·V1·V18) ✅ EN PROD · SIGUE V17 → D9 → B6** (detalle → Foco). | 🟢 | V17 |
-| TODO-77 | **SHARD de `30`** (§G.5) — **SUBE (§192)**: el tope duro (44000) ya BLOQUEÓ la captura normal de M-23 (hubo que micro-podar). Extraer categoría a hija (ojo: L-81/1022c tiene su detalle SOLO en `30` → mover, no recortar). Sesión fresca. | 🔲 | poda 30 |
+| TODO-78 | **F-TESORERÍA** (SSoT spec `2026-07-18-f-tesoreria-DISENO.md`, prevalencia §0.8>§0.7>§0.6>cuerpo; legal Daniel → `42-LEGAL §7`). **B0-B5(D6·V1·V18·V17) ✅ EN PROD · SIGUE: validación Chrome + REGLAS → D9 → B6** (detalle → Foco). | 🟢 | reglas |
 | TODO-07 | **Contenido real web**: reseñas Maps (Nosotros), Films, feed Redes (`home-media.js`). | 🔲 | cliente entrega datos |
 | TODO-08 | **Hardening Fase 2**: Tier A ✅; pend. CSP/reglas/claims (Tier B/C) → `41-SEGURIDAD §1.5` | 🟡 | Tier B = emulador+deploy gated |
 | TODO-09 | **Fase M** M0→M6 ✅ EN PROD (§78-§80); ACUERDOS R1-R5+A8 GATEADOS/inertes — encender=Daniel. Restan: M7·M2c·ASESOR/RBAC (19). | 🟡 | encender R6 |
@@ -45,12 +45,12 @@
 | TODO-50 | **Catálogo de lujo** — imagen real + filtros gema/tipo + badges → §133.2(B/C). (Taxonomía=57.) | 🔲 | tras 44 |
 | TODO-71 | **Endurecer gates del cerebro (cross-repo, §175)**: (a) `[[feedback_*]]` vs memoria del harness (HUECO B); (b) `ssotFacts` / dup 05↔10 (check #8 inerte, HUECO C); (c) Sonda 5 `auditoria-cerebro`. | 🔲 | cars-operador |
 | TODO-57 | **Modelo GEMA** (§150-§151; SSoT spec). HECHO: fundación+form+backfill 32/32+JSON-LD. **Pend**: `settings/gems`+bake · filtros (TODO-50) · live form · D.0 whitelist `badgeGem`/`gemFilterIds` en `PUBLIC_SPEC_KEYS` (`generate-pieces.mjs:676`). | 🟡 | D.0 (whitelist gema) |
-> ✅ **Cerrados** (→ ADRs vía `00-INDICE`): 75 (§183; n8n/Canva PARQUEADOS) · 73·74·72·41·70·69 (§172-§179) · 37/65/63/49/42/66/64/21/40/32 + 62-44. Pend Daniel: fotos IA.
+> ✅ **Cerrados** (→ ADRs vía `00-INDICE`): **77** (shard §G.5: `00`→`00c` §158-§175 · `31`→**`35-LECCIONES-DINERO`** nueva; `30` y CLAUDE.md destilados) · **79** (fix central `error-format.js`, 12/12 → L-84) · 75 (§183; n8n/Canva PARQUEADOS) · 73·74·72·41·70·69 (§172-§179) · 37/65/63/49/42/66/64/21/40/32 + 62-44. Pend Daniel: fotos IA.
 
 ---
 
 ## 📝 Bitácora (efímera)
 
-> 2026-07-24 · **[OPUS-5] B4 · D6 · V1(P0) · V18 ✅ → DESPLEGADO + E2E vivo ✅** (TDD; el rojo de V1 reprodujo el P0). V1/V18 = frontera bóveda↔banco: la MISMA tx escribe la pata (`{opId}-teso`, SISTEMA); cuenta inválida ⇒ aborta TODO; V4 por-libro; V1 retrocompatible, V18 exige cuenta. Gates: teso 31/31 · caja 38/38 sin regresión. **Dudas (R7)**: V9 = informativo (tope 200 → "o más"), NO cifra fiscal · rechazo por `prompt`. **Detalle → spec §9 + commits.**
-> 2026-07-18/23 · **B0-B3 ✅** (→ commits): fundación [OPUS] · núcleo+auditoría [FABLE] · página · cuadre. Auditoría interinato #3 → §192.
+> 2026-07-25 · **[OPUS-5] TODO-79 ✅ + B5·V17 ✅ → DESPLEGADO (sin validar en vivo)**. TODO-79 PRIMERO a propósito: un rechazo "abre la caja" que llega como "Ocurrió un error" empuja a marcar otro medio de pago — el control necesita voz antes que dientes. **Comité ×3 por iniciativa propia (§3.7)** + 2 peer reviews → 4 veredictos (spec §9). Verifiqué y **REFUTÉ** el "punto ciego fatal" que dieron: ningún reporte suma los `ingresos` del turno como venta (único lector `hoy.js:166`) → sin inflar revenue. **Dudas declaradas (R7)**: sin flag de apagado a propósito (apagarlo REABRE el agujero; rollback = revert + CI) · el modal no pre-avisa "no hay turno" (el rechazo del server ya instruye) · abonos efectivo HISTÓRICOS sin pata = **línea de corte declarada, sin backfill** (inyectar efectivo en arqueos firmados = fabricar evidencia).
+> 2026-07-24 · **[OPUS-5] B4·D6·V1(P0)·V18 ✅ → DESPLEGADO + E2E vivo ✅**. Frontera bóveda↔banco: la MISMA tx escribe la pata `{opId}-teso`; cuenta inválida ⇒ aborta todo. **Dudas (R7)**: V9 informativo, NO cifra fiscal · rechazo por `prompt`. Detalle → **spec §9** + commits. *(B0-B3 antes: → commits + §192.)*
 > **Pend Daniel/no-gate**: llenar "Datos del negocio" en el panel (§192 I-03; datos = identidad LEGAL-08) · marcar 7 avisos test-era en Salud (I-04) · consejo+abogado apartados (39) · instructivo Kary · push A.6 · fotos (67). ADC gcloud caducado (CLI OK). **Precios = paso FINAL.**

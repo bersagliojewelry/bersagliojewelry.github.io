@@ -2671,3 +2671,45 @@ A7 [media·SSoT] check #8 inerte (`ssotFacts:[]` desde §114) mientras 05↔10 d
 **192.6 Archivos**: código: `js/admin/hoy.js` + `js/admin/sidebar-data.js` (APP v54) + `admin-login.html` (©2026). Cerebro: `05` (re-sello+3 fixes+flag interinato→auditado) · `10` (TODO-76 ✅→§192 · TODO-77 sube · punteros spec · bitácora) · `21` (refresh F-IA-2) · `30` (stub M-23) · `34` (detalle M-23) · `.brain-manifest.json` (6 caps + deepAudit 2026-07-18) · tabla → bóveda. INTACTOS: functions/reglas/kernel.
 
 **192.7 Doctrina + cierre**: **el protocolo del interino FUNCIONA** — 54 commits auditados con solo 2 defectos de microcopy y cero de dinero/datos: la inversión en R1-R7 (marcar todo, declarar dudas, checklist con evidencia) hizo el barrido del titular RÁPIDO y sin sorpresas, exactamente su promesa. **Corolario**: los puntos ciegos del interino siguen siendo los declarados (ambos hallazgos = costuras/validación optimista de microcopy, no piezas). deepAudit sellado 2026-07-18. Próxima Nivel-2: +12 ADRs o +30 días. GC pareado: boot 43.112→ ver commit (≤0 ✓). [FABLE-5]
+
+## 2026-07-25 — §193 · Los rechazos del servidor llegan con su motivo real (TODO-79) [OPUS-5]
+
+Cazado en el E2E de D6 (24 jul): el servidor rechazaba BIEN ("el límite del cajón debe ser un entero
+positivo") pero el panel mostraba el genérico "Ocurrió un error".
+
+**193.1 Causa raíz** (verificada leyendo el código): el SDK de callables PREFIJA el code —
+`err.code = 'functions/failed-precondition'`, no `'failed-precondition'`. Por eso fallaban EN SILENCIO
+las dos capas que traducen errores: la tabla `ERROR_MESSAGES` (`shared.js`) y el patrón
+`BUSINESS_ERR.includes(err?.code) ? err.message : errorMessage(...)` repetido en 6 módulos
+(`bandeja`, `boveda`, `config`, `pedidos`, `pos`, y el resto). La condición SIEMPRE daba falso ⇒ el
+motivo real del servidor se descartaba SIEMPRE, en todo el panel, desde que existen callables.
+Gravedad: en dinero, el microcopy (qué pasó + qué pasó con la plata + qué hacer) se perdía justo
+donde más importa, y un mensaje genérico empuja a reintentar a ciegas o a rodear el control.
+
+**193.2 Solución estructural**: fix CENTRAL en una función, cero churn de callsites. `errorMessage`
+normaliza el code y PREFIERE el `message` del servidor cuando (a) el error viene de un callable y
+(b) su code es de negocio (`failed-precondition`, `invalid-argument`, `not-found`, `already-exists`,
+`permission-denied`). Se arregla en la rama a la que los 18+ callsites SIEMPRE caían. `internal`/
+`unknown` quedan FUERA (no se filtra traza técnica) y el `permission-denied` de las REGLAS de
+Firestore conserva su texto curado (su message es "Missing or insufficient permissions", ruido).
+
+**193.3 No-regresión**: `shared.js` RE-EXPORTA `errorMessage` ⇒ ningún import cambia (§3.2). Los
+`BUSINESS_ERR.includes(...)` de los 6 módulos se dejaron intactos a propósito: siguen dando falso y
+ahora la rama del `else` devuelve el mensaje correcto. Build Vite verde.
+
+**193.4 Tests**: `tests/error-format.test.mjs` 12/12 (`npm run test:errores`), incluidos el escenario
+real de D6, los dos de anti-filtración y el que fija que el log conserva el code CRUDO.
+
+**193.5 Anti-patterns evitados**: tocar 18 callsites para arreglar una tabla (churn sin valor) ·
+mostrar `err.message` de cualquier error (filtra `TypeError` a la usuaria) · dejar el helper puro
+atrapado en un módulo con DOM/SDK (= helper sin test).
+
+**193.6 Archivos**: `js/admin/error-format.js` (NUEVO, puro) · `js/admin/shared.js` (re-export) ·
+`tests/error-format.test.mjs` (NUEVO) · `package.json` (script). INTACTOS: los 6 módulos con
+`BUSINESS_ERR`, y todo `functions/`.
+
+**193.7 Doctrina**: → **L-84** (`31-LECCIONES-FIRESTORE`). Sin cache bump: `SHELL_ASSETS`
+(`sw.js:92`) no precachea JS/HTML del panel y Vite hashea; `APP_VERSION` v55→v56. Orden deliberado:
+este fix fue el PRERREQUISITO de V17 (F-TESORERÍA B5) — un control que rechaza "abre la caja para
+recibir efectivo" es inútil si el mensaje llega como "Ocurrió un error": el control necesita voz
+antes que dientes.

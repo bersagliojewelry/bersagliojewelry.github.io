@@ -350,6 +350,14 @@ Reglas: `firestore-rules.test.mjs` gana casos: write directo a las 2 colecciones
 
 ## §8 — Cola del titular (NO ejecutar sin Fable/Daniel)
 - ~~Efectivo de abonos → caja~~ **ENTRÓ al alcance como V17 (§0.7)** — ya no es cola.
+- **De la sesión de V17 (2026-07-25, comité ×3)**: (a) compensatorio en el turno ABIERTO, con
+  aprobación del owner, al anular un abono de un turno YA sellado (hoy: rechazo honesto) —
+  patrón reverso de bóveda; (b) prohibir `otro` como medio de abono (vector de evasión #1 según el
+  auditor de fraude: declarar otro medio y quedarse el billete); (c) consecutivo de recibos por turno
+  — el único testigo EXTERNO de un abono jamás registrado; (d) "dientes" al descuadre (hoy nunca
+  bloquea, decisión de Daniel); (e) botón "Abrir caja y guardar abono" dentro del modal (UX: hoy el
+  rechazo la manda al Mostrador; ⚠️ el fondo de apertura NO se debe pre-cargar del último cierre —
+  sería una base que nadie contó).
 - Capacidades-flag T-16/18/19 + rol `caja` (F2.0 matiz).
 - Auto-posting Wompi→tesorería (F-REPORTES).
 - Decisión Daniel pendiente del v5 §8: destino de los 344 clientes en la limpieza.
@@ -388,7 +396,40 @@ Reglas: `firestore-rules.test.mjs` gana casos: write directo a las 2 colecciones
 7 tests → integración **22/22**. Dos precisiones que valen para el resto de B5:
 1. **`reteIcaXMil` es POR MIL (0-100), no fracción 0-1** — el cuerpo de la spec decía "tasas 0-1"
    y aplicado literal habría rechazado el 7‰ real del contador. Validar cada tasa en SU unidad.
-2. **⚠️ `saludEventos` tiene DOS semánticas y el Hoy las distingue por `resuelto`**: la tarjeta
+2. **⚠️ `saludEventos` tiene DOS semánticas y el Hoy las distingue por `resuelto`** (detalle al final
+   de esta sección) — un evento de AUDITORÍA nace `resuelto:true`; un FALLO real, `resuelto:false`.
+
+**✅ V17 HECHO (2026-07-25, [OPUS-5])** — 3 commits: TODO-79 (prerrequisito) + core/CF con TDD 16/16 +
+UI. **DOS premisas de esta spec resultaron FALSAS al verificarlas** (§3.3), y la corrección está en el
+código, no en la prosa:
+1. **NO existía "la CF del abono del CRM"** (§9 mandaba ubicarla): el abono lo escribía el NAVEGADOR
+   (`js/crm-service.js addMovimiento` → `addDoc`), validado solo por reglas. Y `movsCaja` es CF-only
+   (`allow write: if false`) ⇒ la pata del efectivo SOLO puede nacer en servidor. Por eso el abono gana
+   puerta propia: `functions/cartera-core.js` + `cartera.js` (`registrarAbonoCartera` admin ·
+   `anularAbonoCartera` owner, espejando `anulacionValida`: NO amplía permisos).
+2. **«los movs ya suman en el esperado» es falso para un tipo nuevo**: la ecuación suma SOLO
+   `ingreso`/`egreso` y está COPIADA en 3 sitios (`caja-core cerrarTurnoCore` · `pos.js movsSums` ·
+   `auditoria.js`, que rotula lo desconocido como "Ingreso"). ⇒ **DESVÍO DELIBERADO de la letra de
+   §0.7** (§G.4 Desafío Crítico, con evidencia — patrón L-73): la pata nace `tipo:'ingreso'` +
+   `concepto:'abono_cartera'`, no `tipo:'abono_cartera'`. Así entra al esperado en los 3 espejos SIN
+   tocar la ecuación — que es LITERALMENTE lo que §0.7 pide que ocurra. Se cumple la intención; la
+   palabra no. `CONCEPTOS_CAJA` NO lo incluye a propósito: la puerta manual de caja debe seguir
+   rechazándolo (una sola puerta, V12 análogo; con test).
+3. **Hallazgo del comité ×3** (lo caro): la idempotencia por-libro de V1/V18 **no transfiere** — allá
+   el destino es determinista, aquí es TEMPORAL ("el turno abierto"). Sin ancla, un replay tardío mete
+   la plata en el turno equivocado o en uno sellado. Fix: `pataCaja.turnoId` ANCLADO en el movimiento;
+   el replay se resuelve contra ESE turno; si ya cerró y la pata falta, NO se reescribe el arqueo
+   firmado → se reporta + ALERTA (`resuelto:false`). El turno se lee DENTRO de la tx → serializa contra
+   el cierre. → **L-85**.
+4. **La anulación entró al alcance** (era la mitad del control): anular un abono con pata netea AMBOS
+   libros en una tx; si el turno de la pata ya cerró, RECHAZA. *Cola del titular*: el compensatorio en
+   el turno abierto con aprobación del owner (patrón reverso de bóveda).
+5. **FALTA para cerrar V17** (sin esto el control es parcial): **negar en reglas el create client-side
+   de `tipo=='abono' && medioPago=='efectivo'`** — hoy `corregirMovimientoBatch` puede recrear un abono
+   en efectivo sin pata (mitigado con guard de UI, que no alcanza a pestañas viejas). ⚠️ Dependencia: el
+   carril de corrección debe pasar por la CF antes o con ese cierre.
+
+**⚠️ `saludEventos` tiene DOS semánticas y el Hoy las distingue por `resuelto`**: la tarjeta
    "Avisos" cuenta los eventos con `resuelto !== true` como FALLAS del sistema (`hoy.js`
    `initSenalAvisos`). Un evento de **auditoría** (config cambiada, y lo que V1/V18/V17 registren
    como traza, no como fallo) debe nacer **`resuelto: true`** o le enciende una alarma falsa al

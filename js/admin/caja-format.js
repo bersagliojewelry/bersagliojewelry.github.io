@@ -36,6 +36,7 @@ export const TIPO_BOVEDA_LABEL = {
     cajon_a_boveda:  'Cajón → Bóveda',
     boveda_a_cajon:  'Bóveda → Cajón (reponer cambio)',
     boveda_a_banco:  'Bóveda → Banco (consignación)',
+    banco_a_boveda:  'Banco → Bóveda (retiro de efectivo)',   // V18: el efectivo entra por la bóveda
     reverso:         'Reversa',
     ajuste_faltante: 'Ajuste · faltante',
     ajuste_sobrante: 'Ajuste · sobrante',

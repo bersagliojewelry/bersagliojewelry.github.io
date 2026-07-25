@@ -199,10 +199,14 @@ async function cerrarTurnoCore(db, input = {}) {
 // ledger es INMUTABLE ESTRICTO (§9.3): corregir = asiento `reverso` (delta=−original), jamás editar/borrar.
 // El CHECKPOINT mensual (boveda/main/checkpoints/{YYYY-MM}, sellado por `sellTs`) ACOTA el recompute a
 // [checkpoint, ahora] → no O(n) a 2-3 años (§8.3).
-const SIGNO_BOVEDA = { cajon_a_boveda: 1, boveda_a_cajon: -1, boveda_a_banco: -1 };   // traslados que acepta registrarTraslado
-// V1 (F-TESORERÍA B5): traslados que CRUZAN a una cuenta real → su pata en el ledger de tesorería.
-// La bóveda es el ÚNICO punto de entrada/salida del efectivo (V18): nunca banco↔cajón directo.
-const PATA_POR_TIPO = { boveda_a_banco: 'consignacion_in' };
+// Traslados que acepta registrarTraslado. `banco_a_boveda` (+1) = V18 "Retiro de banco": el efectivo
+// SIEMPRE entra y sale por la BÓVEDA (nunca banco↔cajón directo → un solo punto de control).
+const SIGNO_BOVEDA = { cajon_a_boveda: 1, boveda_a_cajon: -1, boveda_a_banco: -1, banco_a_boveda: 1 };
+// V1/V18 (F-TESORERÍA B5): traslados que CRUZAN a una cuenta real → su pata en el ledger de tesorería.
+const PATA_POR_TIPO = { boveda_a_banco: 'consignacion_in', banco_a_boveda: 'retiro_efectivo_out' };
+// Flujos NACIDOS con la pata (sin legado que preservar) ⇒ la cuenta es OBLIGATORIA. `boveda_a_banco`
+// NO está aquí: existe desde antes y debe seguir aceptando el camino sin cuenta (retrocompatible).
+const EXIGE_CUENTA = ['banco_a_boveda'];
 // Fecha de la pata en la zona del negocio (el ledger de tesorería indexa por 'YYYY-MM-DD', no por ts).
 const hoyBogota = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
 
@@ -275,6 +279,9 @@ async function registrarTrasladoCore(db, input = {}) {
     const pataTipo = cuentaId ? PATA_POR_TIPO[tipo] : null;
     if (cuentaId && !pataTipo) {
         throw new PedidoError('invalid-argument', 'Ese traslado no va a una cuenta bancaria (Caja↔Bóveda se mueve entre ellas).');
+    }
+    if (EXIGE_CUENTA.includes(tipo) && !cuentaId) {
+        throw new PedidoError('invalid-argument', 'Elige de qué cuenta sacaste el efectivo.');
     }
     const fechaPata = String(input.fecha || hoyBogota());
 

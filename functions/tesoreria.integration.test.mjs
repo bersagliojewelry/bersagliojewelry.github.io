@@ -485,3 +485,57 @@ test('V1 · saldo insuficiente en bóveda ⇒ no hay asiento NI pata (el gate ex
     assert.equal((await pataDe('TR3')).exists, false);
     assert.equal(await saldoDe('BANCO'), 0);
 });
+
+// ─── B5 · V18 · "Retiro de banco" (banco→bóveda) = espejo exacto de la consignación ────────────
+// Circuito ADAPTADO del consejo externo: el efectivo entra y sale SIEMPRE por la BÓVEDA (un solo
+// punto de control). banco→bóveda es flujo NUEVO (una CF, dos patas); bóveda→cajón sigue intacto;
+// banco→cajón directo NO EXISTE a propósito. Al ser nuevo NO hay legado que preservar → la cuenta
+// es OBLIGATORIA (no se puede "retirar del banco" sin decir de cuál).
+test('V18 · retiro de banco: la bóveda sube y la cuenta baja en UNA tx; la consolidada se conserva', async () => {
+    await limpiarBoveda();
+    await cuenta('BANCO', { saldoInicial: 2000000 });
+    await sembrarBoveda(100000);
+    const consolidadaAntes = 100000 + (await saldoDe('BANCO'));
+
+    const r = await trasladar({ opId: 'RB1', tipo: 'banco_a_boveda', monto: 500000, cuentaId: 'BANCO' });
+    assert.equal(r.saldo, 600000, 'la bóveda recibe el efectivo');
+
+    const p = (await pataDe('RB1')).data();
+    assert.equal(p.tipo, 'retiro_efectivo_out', 'la pata SALE de la cuenta bancaria');
+    assert.equal(p.cuentaId, 'BANCO');
+    assert.equal(p.creadoPor.fuente, 'SISTEMA');
+    assert.equal(p.refDocumento, 'RB1');
+    assert.equal(await saldoDe('BANCO'), 1500000, '2.000.000 − 500.000');
+    assert.equal(600000 + (await saldoDe('BANCO')), consolidadaAntes, 'CONSERVACIÓN: solo cambió DÓNDE está');
+});
+
+test('V18 · flujo NUEVO ⇒ la cuenta es OBLIGATORIA (sin legado que preservar) y no queda asiento', async () => {
+    await limpiarBoveda();
+    await sembrarBoveda(100000);
+    await assert.rejects(trasladar({ opId: 'RB-SIN', tipo: 'banco_a_boveda', monto: 200000 }), (e) => e instanceof Error);
+    assert.equal((await db.doc('bovedaMovimientos/RB-SIN').get()).exists, false, 'sin asiento de bóveda');
+    assert.equal(await saldoBoveda(), 0, 'la bóveda no se movió');
+});
+
+test('V18 · atomicidad + idempotencia por-libro (mismo blindaje que V1)', async () => {
+    await limpiarBoveda();
+    await cuenta('BANCO', { saldoInicial: 1000000 });
+    await sembrarBoveda(0);
+    // cuenta inválida ⇒ aborta TODO (la bóveda no recibe plata de la nada)
+    await assert.rejects(trasladar({ opId: 'RB-MAL', tipo: 'banco_a_boveda', monto: 100000, cuentaId: 'noExiste' }), (e) => e instanceof Error);
+    assert.equal((await db.doc('bovedaMovimientos/RB-MAL').get()).exists, false);
+    // replay del MISMO opId ⇒ un solo asiento en cada libro
+    await trasladar({ opId: 'RB2', tipo: 'banco_a_boveda', monto: 300000, cuentaId: 'BANCO' });
+    const r2 = await trasladar({ opId: 'RB2', tipo: 'banco_a_boveda', monto: 300000, cuentaId: 'BANCO' });
+    assert.equal(r2.yaExistia, true);
+    assert.equal(await saldoBoveda(), 300000, 'la bóveda no recibe dos veces');
+    assert.equal(await saldoDe('BANCO'), 700000, 'la cuenta no se descuenta dos veces');
+    assert.equal((await db.collection('movimientosTesoreria').get()).size, 1);
+});
+
+test('V18 · el efectivo SIEMPRE pasa por la bóveda: no existe un traslado banco→cajón directo', async () => {
+    await limpiarBoveda();
+    await cuenta('BANCO', { saldoInicial: 1000000 });
+    await assert.rejects(trasladar({ opId: 'BC', tipo: 'banco_a_cajon', monto: 100000, cuentaId: 'BANCO' }), (e) => e instanceof Error,
+        'banco→cajón directo NO es un tipo válido (un solo punto de entrada del efectivo)');
+});

@@ -33,7 +33,7 @@ import saldoMod from './saldo.js';
 import tesoCore from './tesoreria-core.js';
 
 const { computeSaldo } = saldoMod;
-const { registrarAbonoCarteraCore, anularAbonoCarteraCore, MEDIOS_ABONO, CONCEPTO_ABONO } = core;
+const { registrarAbonoCarteraCore, anularAbonoCarteraCore, asignarCuentaAbonoCore, MEDIOS_ABONO, CONCEPTO_ABONO } = core;
 const { abrirTurnoCore, cerrarTurnoCore, movimientoCajaCore } = cajaCore;
 
 initializeApp({ projectId: 'demo-bersaglio' });
@@ -420,4 +420,59 @@ test('D9 · si la pata YA está CUADRADA con el extracto, anular se RECHAZA (lo 
     );
     assert.equal(await saldoDe(), 1500000, 'la cartera tampoco se movió');
     assert.equal(await saldoCuenta('BCO5'), 500000);
+});
+
+// ─── D9 · cerrar el ciclo: asignar la cuenta DESPUÉS ("todavía no sé" no es un agujero) ────────
+test('D9 · asignar la cuenta más tarde crea la pata y quita la bandera de pendiente', async () => {
+    await limpiarTesoreria();
+    await cuentaBanco('BCO6');
+    await registrarAbonoCarteraCore(db, {
+        opId: 'D9I', clienteId: CLI, monto: 200000, fecha: '2026-07-25', medioPago: 'transferencia', autor,
+    }, opts);
+    const r = await asignarCuentaAbonoCore(db, { clienteId: CLI, movId: 'D9I', cuentaId: 'BCO6', autor }, opts);
+    assert.deepEqual(r.pataTeso, { cuentaId: 'BCO6', movId: 'D9I-teso' });
+    assert.equal(await saldoCuenta('BCO6'), 200000, 'la plata YA cuenta en el banco');
+    const mov = (await db.doc(`clientes/${CLI}/movimientos/D9I`).get()).data();
+    assert.equal(mov.pataTeso.cuentaId, 'BCO6');
+    assert.equal(mov.sinCuentaAsignada, false, 'sale de la lista del cuadre');
+    assert.equal(await saldoDe(), 1800000, 'la deuda NO se vuelve a mover');
+});
+
+test('D9 · asignar dos veces → idempotente; y no se re-asigna una cuenta ya puesta', async () => {
+    await limpiarTesoreria();
+    await cuentaBanco('BCO7'); await cuentaBanco('BCO8');
+    await registrarAbonoCarteraCore(db, {
+        opId: 'D9J', clienteId: CLI, monto: 200000, fecha: '2026-07-25', medioPago: 'transferencia', autor,
+    }, opts);
+    await asignarCuentaAbonoCore(db, { clienteId: CLI, movId: 'D9J', cuentaId: 'BCO7', autor }, opts);
+    const r2 = await asignarCuentaAbonoCore(db, { clienteId: CLI, movId: 'D9J', cuentaId: 'BCO7', autor }, opts);
+    assert.equal(r2.yaExistia, true);
+    assert.equal(await saldoCuenta('BCO7'), 200000, 'no se duplica');
+    await assert.rejects(
+        asignarCuentaAbonoCore(db, { clienteId: CLI, movId: 'D9J', cuentaId: 'BCO8', autor }, opts),
+        (e) => e.code === 'failed-precondition',
+    );
+    assert.equal(await saldoCuenta('BCO8'), 0, 'cambiar de cuenta NO es asignar: eso es un traslado');
+});
+
+test('D9 · no se asigna cuenta a un abono ANULADO ni a uno que no es transferencia', async () => {
+    await limpiarTesoreria();
+    await cuentaBanco('BCO9');
+    await registrarAbonoCarteraCore(db, {
+        opId: 'D9K', clienteId: CLI, monto: 100000, fecha: '2026-07-25', medioPago: 'transferencia', autor,
+    }, opts);
+    await anularAbonoCarteraCore(db, { clienteId: CLI, movId: 'D9K', motivo: 'x', autor }, opts);
+    await assert.rejects(
+        asignarCuentaAbonoCore(db, { clienteId: CLI, movId: 'D9K', cuentaId: 'BCO9', autor }, opts),
+        (e) => e.code === 'failed-precondition',
+    );
+    await abrirTurnoCore(db, { opId: 'TD9b', fondoApertura: 0, autor: 'kary' });
+    await registrarAbonoCarteraCore(db, {
+        opId: 'D9L', clienteId: CLI, monto: 100000, fecha: '2026-07-25', medioPago: 'efectivo', autor,
+    }, opts);
+    await assert.rejects(
+        asignarCuentaAbonoCore(db, { clienteId: CLI, movId: 'D9L', cuentaId: 'BCO9', autor }, opts),
+        (e) => e.code === 'invalid-argument',
+    );
+    assert.equal(await saldoCuenta('BCO9'), 0);
 });

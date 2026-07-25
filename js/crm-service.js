@@ -168,9 +168,30 @@ export function nuevoOpId() {
  * del billete en el arqueo; si falla algo, no queda ni abono ni pata (atomicidad).
  * @param {{opId:string, clienteId:string, monto:number, fecha:string, medioPago:string, descripcion?:string}} input
  */
-export async function registrarAbonoCartera({ opId, clienteId, monto, fecha, medioPago, descripcion }) {
+export async function registrarAbonoCartera({ opId, clienteId, monto, fecha, medioPago, descripcion, cuentaId }) {
     const fn = await _callable('registrarAbonoCartera');
-    return (await fn({ opId, clienteId, monto, fecha, medioPago, descripcion })).data;
+    return (await fn({ opId, clienteId, monto, fecha, medioPago, descripcion, cuentaId })).data;
+}
+
+/**
+ * D9 · abonos por transferencia registrados con "todavía no sé": la lista que los cierra desde
+ * "Cuadrar mes". Sin ella, la opción sería un agujero (plata fuera del libro del banco, para
+ * siempre). Índice de GRUPO declarado en `firestore.indexes.json` (sinCuentaAsignada + fecha).
+ */
+export function onAbonosSinCuentaChange(cb, onErr) {
+    return subscribeWithRetry(
+        () => query(collectionGroup(firestoreDb, 'movimientos'),
+            where('sinCuentaAsignada', '==', true), orderBy('fecha', 'desc'), limit(100)),
+        (snap) => cb(snap.docs
+            .filter((d) => d.data().anulado !== true)     // un abono anulado ya no hay que ubicarlo
+            .map((d) => ({ id: d.id, clienteId: d.ref.parent.parent?.id || null, ...d.data() }))),
+        'abonosSinCuenta', onErr);
+}
+
+/** D9 · asigna la cuenta a un abono "todavía no sé" y crea su pata en el banco (admin). */
+export async function asignarCuentaAbono({ clienteId, movId, cuentaId }) {
+    const fn = await _callable('asignarCuentaAbono');
+    return (await fn({ clienteId, movId, cuentaId })).data;
 }
 
 /**

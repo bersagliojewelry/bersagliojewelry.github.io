@@ -114,6 +114,14 @@
                             <button class="adm-btn adm-btn--primary adm-btn--sm" id="cua-guardar" type="button">Guardar cuadre</button>
                             <button class="adm-btn adm-btn--ghost adm-btn--sm" id="cua-ajuste" type="button" hidden>Registrar ajuste del cuadre</button>
                         </div>
+
+                        <!-- D9 · abonos que se registraron con "todavía no sé": aquí se cierran.
+                             Sin esta lista, esa plata quedaría fuera del libro del banco para siempre. -->
+                        <div class="tes-cua-sincuenta" id="cua-sincuenta" hidden>
+                            <h3 class="adm-card-title">Abonos sin cuenta asignada</h3>
+                            <p class="pos-hint">Estas transferencias bajaron la deuda de la clienta, pero todavía no sabemos a qué cuenta entraron. Búscalas en tu extracto y asígnalas: ahí entran al saldo de esa cuenta.</p>
+                            <ul class="bov-mov-list" id="cua-sincuenta-list"></ul>
+                        </div>
                     </div>
                 </section>
 

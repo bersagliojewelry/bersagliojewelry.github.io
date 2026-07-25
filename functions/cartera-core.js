@@ -356,7 +356,59 @@ async function anularAbonoCarteraCore(db, input = {}, opts = {}) {
     return { clienteId, movId, ...res };
 }
 
+/**
+ * D9 · asigna la cuenta a un abono que se registró con "todavía no sé" y crea su pata bancaria.
+ * Sin esto, la opción "todavía no sé" sería un agujero: la plata quedaría fuera del libro del banco
+ * para siempre y el cuadre del mes nunca cerraría. Con esto es solo un aplazamiento honesto.
+ *
+ * NO permite CAMBIAR una cuenta ya asignada: mover plata de un banco a otro es un traslado, no una
+ * corrección de dato (si se asignó mal, se anula el abono y se registra de nuevo).
+ *
+ * @param input { clienteId, movId, cuentaId, autor }
+ * @returns { clienteId, movId, pataTeso:{cuentaId,movId}, yaExistia }
+ */
+async function asignarCuentaAbonoCore(db, input = {}, opts = {}) {
+    const clienteId = String(input.clienteId || '').trim();
+    const movId = String(input.movId || '').trim();
+    const cuentaId = String(input.cuentaId || '').trim();
+    const autor = input.autor || null;
+    if (!clienteId || !movId) throw new PedidoError('invalid-argument', 'Falta la clienta o el abono.');
+    if (!cuentaId) throw new PedidoError('invalid-argument', 'Elige la cuenta a la que entró la plata.');
+
+    return db.runTransaction(async (tx) => {
+        const movRef = db.doc(`clientes/${clienteId}/movimientos/${movId}`);
+        const [movSnap, ctaSnap, cliSnap] = await Promise.all([
+            tx.get(movRef), tx.get(db.doc(`cuentasTesoreria/${cuentaId}`)), tx.get(db.doc(`clientes/${clienteId}`)),
+        ]);
+        if (!movSnap.exists) throw new PedidoError('not-found', 'Ese abono ya no existe.');
+        const m = movSnap.data();
+        if (m.tipo !== 'abono' || m.medioPago !== 'transferencia') {
+            throw new PedidoError('invalid-argument', 'Solo los abonos por transferencia entran a una cuenta bancaria.');
+        }
+        if (m.anulado === true) throw new PedidoError('failed-precondition', 'Ese abono está anulado: no se le asigna cuenta.');
+
+        const idTeso = `${movId}${SUFIJO_TESO}`;
+        const yaCta = m.pataTeso && m.pataTeso.cuentaId ? String(m.pataTeso.cuentaId) : null;
+        if (yaCta && yaCta !== cuentaId) {
+            throw new PedidoError('failed-precondition',
+                'Ese abono ya está asignado a otra cuenta. Si entró donde no era, anúlalo y regístralo de nuevo.');
+        }
+        const tesoRef = db.doc(`movimientosTesoreria/${idTeso}`);
+        const tesoSnap = await tx.get(tesoRef);
+        const pataTeso = { cuentaId, movId: idTeso };
+        if (tesoSnap.exists) return { clienteId, movId, pataTeso, yaExistia: true };   // idempotente
+
+        // Construir VALIDA la cuenta (existe · no virtual · activa · fecha ≥ su corte) y aborta si no sirve.
+        tx.set(tesoRef, tesoreria.construirPataSistema({
+            cuentaSnap: ctaSnap, cuentaId, tipo: TIPO_PATA_TESO, monto: m.monto, fecha: m.fecha,
+            refDocumento: movId, autor, descripcion: descripcionPata(cliSnap),
+        }));
+        tx.update(movRef, { pataTeso, sinCuentaAsignada: false });
+        return { clienteId, movId, pataTeso, yaExistia: false };
+    });
+}
+
 module.exports = {
     MEDIOS_ABONO, MEDIO_EFECTIVO, CONCEPTO_ABONO, MOTIVOS_ANULACION,
-    registrarAbonoCarteraCore, anularAbonoCarteraCore,
+    registrarAbonoCarteraCore, anularAbonoCarteraCore, asignarCuentaAbonoCore,
 };

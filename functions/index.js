@@ -277,6 +277,7 @@ exports.recalcSaldoTesoreria = require('./tesoreria').recalcSaldoTesoreria;     
 // abono lo escribía el navegador y el efectivo no entraba a ningún libro (robo enmascarable).
 exports.registrarAbonoCartera = require('./cartera').registrarAbonoCartera;  // admin: abono + pata de caja (atómico)
 exports.anularAbonoCartera = require('./cartera').anularAbonoCartera;        // owner: anula abono Y netea su pata
+exports.asignarCuentaAbono = require('./cartera').asignarCuentaAbono;        // admin: D9, la cuenta asignada tarde
 
 exports.ajustarStock = require('./inventario').ajustarStock;         // TODO-40 F1: merma/reabasto/corrección (delta + ledger)
 exports.cambiarTipoPieza = require('./inventario').cambiarTipoPieza; // TODO-40 F1: transición de tipo (purga cantidad, D6)

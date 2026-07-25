@@ -22,6 +22,7 @@ import { estadoCuenta, hoyISO, vencimientoDefaultISO, acuerdoEsValido } from '..
 import { generarCuotas, resumenCuotas } from '../crm-acuerdos.js';
 import { currentRole } from '../auth.js';
 import { planearCorreccionSaldo, planearCorreccionMovimiento, PREGUNTAS_CORRECCION } from '../crm-correccion.js';
+import { onCuentasTesoreriaChange } from '../tesoreria-service.js';   // D9: ¿a qué cuenta entró la transferencia?
 import {
     TIPOS_GESTION, RESULTADOS_GESTION, tipoGestionLabel, resultadoGestionLabel,
     validarGestion, ordenarGestiones, esEnlaceSeguro,
@@ -63,6 +64,7 @@ const SIGNO = { factura: 1, apertura: 1, ajuste: 1, abono: -1 };
 // no cargó. La frontera real son las reglas; estas listas son la UI de Kary.
 let _motivosAnulacion = ['ERROR_REGISTRO', 'DUPLICADO', 'CORRECCION', 'CORRECCION_FECHA', 'DEVOLUCION_PIEZA', 'OTRO'];
 let _mediosPago = ['efectivo', 'transferencia', 'datafono', 'otro'];
+let _cuentasTeso = [];   // D9: cuentas REALES activas (bancos/Nequi) para el abono por transferencia
 let _motivosAjuste = ['ERROR_REGISTRO', 'ABONO_NO_REGISTRADO', 'RECLASIFICACION', 'DEVOLUCION_PIEZA', 'DESCUENTO_AUTORIZADO', 'CASTIGO', 'OTRO'];
 let _cfgCartera = null;   // config/cartera completa (autoAprobacionMax, motivosNeutros) para el gate
 const AJUSTE_LABEL = {
@@ -348,6 +350,24 @@ function openMovModal(tipo) {
     } else {
         mpRow.hidden = true; mpSel.required = false; mpSel.value = '';
     }
+    // D9 · la cuenta bancaria solo aplica a TRANSFERENCIA (el efectivo entra al cajón por V17 y el
+    // datáfono llega neto, con su propio cuadre). Se puebla al abrir y se muestra/oculta según el
+    // medio elegido; "Todavía no sé" (valor vacío) es una opción legítima, no un olvido (V12).
+    const ctaRow = document.getElementById('mov-cuenta-row');
+    const ctaSel = document.getElementById('mov-cuenta');
+    ctaRow.hidden = true; ctaSel.value = '';
+    if (tipo === 'abono') {
+        ctaSel.replaceChildren();
+        const noSe = document.createElement('option');
+        noSe.value = ''; noSe.textContent = 'Todavía no sé';
+        ctaSel.appendChild(noSe);
+        for (const c of _cuentasTeso) {
+            const o = document.createElement('option');
+            o.value = c.id;
+            o.textContent = c.banco ? `${c.nombre} · ${c.banco}` : c.nombre;
+            ctaSel.appendChild(o);
+        }
+    }
     // Plan de CUOTAS (spec acuerdos §1.5): solo facturas, con la bandera activa y
     // SIN otra deuda vencida — a esa clienta el instrumento es la renegociación
     // 'saldo' (el FIFO global haría figurar impagas las cuotas de la venta nueva).
@@ -389,6 +409,15 @@ function wireModal() {
     document.getElementById('mov-cancel').addEventListener('click', closeMovModal);
     document.getElementById('mov-modal').addEventListener('click', (e) => {
         if (e.target.id === 'mov-modal') closeMovModal();
+    });
+
+    // D9: la pregunta de la cuenta aparece SOLO al elegir transferencia (y se limpia al cambiar de
+    // medio, para no mandar una cuenta que ya no corresponde — el servidor la rechazaría).
+    document.getElementById('mov-mediopago').addEventListener('change', (e) => {
+        const esTransfer = e.target.value === 'transferencia';
+        const row = document.getElementById('mov-cuenta-row');
+        row.hidden = !(esTransfer && _cuentasTeso.length);
+        if (!esTransfer) document.getElementById('mov-cuenta').value = '';
     });
 
     // El acuerdo sigue a la fecha del hecho MIENTRAS Kary no lo haya tocado
@@ -512,13 +541,16 @@ function wireModal() {
                 // caja). Si es en EFECTIVO, la misma transacción mete el billete al arqueo del
                 // turno abierto — y si no hay turno, rechaza: sin caja abierta no hay quién
                 // custodie ni cuente ese billete.
+                // D9: la cuenta solo viaja con transferencia; vacío = "todavía no sé" (V12).
+                const cuentaId = (medioPago === 'transferencia'
+                    && document.getElementById('mov-cuenta').value) || undefined;
                 const r = await registrarAbonoCartera({
-                    opId: _opIdAbono, clienteId: CLIENTE_ID, monto, fecha, medioPago, descripcion,
+                    opId: _opIdAbono, clienteId: CLIENTE_ID, monto, fecha, medioPago, descripcion, cuentaId,
                 });
-                admToast(r?.pataCaja
-                    ? `Abono de ${fmtCOP(monto)} registrado. El saldo baja y esos ${fmtCOP(monto)} entraron a la caja de hoy: el arqueo de esta noche los espera.`
-                    : `Abono de ${fmtCOP(monto)} registrado. El saldo se actualizará en un momento.`,
-                    'success', 6000);
+                const dondeEntro = r?.pataCaja
+                    ? ` y esos ${fmtCOP(monto)} entraron a la caja de hoy: el arqueo de esta noche los espera`
+                    : (r?.pataTeso ? ` y esos ${fmtCOP(monto)} ya cuentan en el saldo de esa cuenta` : '');
+                admToast(`Abono de ${fmtCOP(monto)} registrado. El saldo baja${dondeEntro}.`, 'success', 6000);
             } else {
                 await addMovimiento(CLIENTE_ID, {
                     tipo: _tipo,
@@ -1175,6 +1207,13 @@ async function init() {
     } catch (err) {
         console.warn('[cuenta] getConfig cartera:', err);
     }
+
+    // D9: cuentas donde puede caer una transferencia. Solo las REALES y activas — las virtuales
+    // (Caja/Bóveda) no reciben transferencias, tienen su propio módulo. Fail-open: si no cargan, el
+    // abono se registra igual sin cuenta ("todavía no sé") en vez de bloquear el cobro.
+    onCuentasTesoreriaChange(
+        (lista) => { _cuentasTeso = lista.filter((c) => c.activa !== false && !['caja', 'boveda'].includes(c.tipo)); },
+        (err) => console.warn('[cuenta] cuentas de tesorería no legibles:', err?.code || err));
 
     const cli = await getCliente(CLIENTE_ID);
     if (!cli) { showError('Cliente no encontrado.'); return; }

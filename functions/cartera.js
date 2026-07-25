@@ -68,6 +68,21 @@ exports.registrarAbonoCartera = onCall({ region: 'us-central1', invoker: 'public
 });
 
 /**
+ * D9 · asigna la cuenta a un abono registrado con "todavía no sé" y crea su pata bancaria. ADMIN:
+ * es el cierre natural del cuadre mensual, que hace Kary; no mueve plata nueva, solo la ubica.
+ */
+exports.asignarCuentaAbono = onCall({ region: 'us-central1', invoker: 'public' }, async (request) => {
+    const db = getFirestore();
+    await rolDe(db, request.auth, ADMIN, 'No tienes permiso para asignar la cuenta de un abono.');
+    try {
+        const d = request.data || {};
+        return await core.asignarCuentaAbonoCore(db, {
+            clienteId: d.clienteId, movId: d.movId, cuentaId: d.cuentaId, autor: actorDe(request.auth),
+        }, { notificar: notificarAbono(db) });
+    } catch (e) { lanzar(e); }
+});
+
+/**
  * V17 · anula un abono y netea su pata de caja en la misma tx. OWNER-only: espeja la regla vigente
  * (firestore.rules `anulacionValida` deja al admin anular SOLO factura/apertura/ajuste bajo tope —
  * los abonos siempre fueron del dueño, directo o vía solicitud de corrección aprobada). Esta puerta

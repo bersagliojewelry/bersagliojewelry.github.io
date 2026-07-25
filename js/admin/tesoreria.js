@@ -10,6 +10,7 @@
  * salen del espejo puro `tesoreria-format.js` (paridad con el servidor, inv.2).
  */
 import adminDb from './db.js';
+import { onAbonosSinCuentaChange, asignarCuentaAbono, fmtCOP } from '../crm-service.js';   // D9
 import { admToast, admConfirm, initSidebar, requireAuth, errorMessage, fmtDate, hasRole } from './shared.js';
 import {
     crearCuentaTesoreria, registrarMovimientoTesoreria, trasladarEntreCuentas,
@@ -29,6 +30,7 @@ const TIPOS_CONTRAPARTE = new Set(['pago_proveedor', 'gasto']);
 const MODULO_VIRTUAL = { caja: { href: 'admin-auditoria.html', label: 'Caja y turnos' }, boveda: { href: 'admin-boveda.html', label: 'Bóveda' } };
 
 let _cuentas = [];
+let _sinCuenta = [];   // D9: abonos por transferencia registrados con "todavía no sé"
 let _selectedId = null;
 let _movs = [];
 let _movsUnsub = null;
@@ -68,6 +70,13 @@ async function init() {
     onCuentasTesoreriaChange(
         (cuentas) => { _cuentas = cuentas; onCuentasLoaded(); },
         (e) => admToast(errorMessage(e, 'No se pudieron leer las cuentas.'), 'danger', 4000),
+    );
+
+    // D9: los abonos que quedaron con "todavía no sé" se cierran desde el cuadre. Fail-open: si la
+    // consulta falla (índice aún construyéndose), el cuadre sigue funcionando sin la lista.
+    onAbonosSinCuentaChange(
+        (lista) => { _sinCuenta = lista; if (_tab === 'cuadre') renderSinCuenta(); },
+        (e) => console.warn('[tesoreria] abonos sin cuenta no legibles:', e?.code || e),
     );
 
     // Botones de "agregar cuenta" (cabecera + estado-cero)
@@ -444,10 +453,52 @@ function switchTab(tab) {
         document.getElementById('cua-extracto').value = '';
         loadCuaDraft();
         renderCuadre();
+        renderSinCuenta();   // D9
     }
 }
 
 const movsDelMes = () => _movs.filter(m => String(m.fecha || '').startsWith(_cuaMes));
+
+/**
+ * D9 · lista "abonos sin cuenta asignada". Cada fila deja ELEGIR la cuenta y cerrarla ahí mismo:
+ * la CF crea la pata en el banco (misma idempotencia por-libro). Es lo que convierte "todavía no sé"
+ * en un aplazamiento honesto en vez de un agujero.
+ */
+function renderSinCuenta() {
+    const box = document.getElementById('cua-sincuenta');
+    const list = document.getElementById('cua-sincuenta-list');
+    if (!box || !list) return;
+    box.hidden = _sinCuenta.length === 0;
+    list.textContent = '';
+    const cuentas = cuentasRealesActivas();
+
+    for (const a of _sinCuenta) {
+        const sel = el('select', { class: 'adm-input adm-input--sm' });
+        sel.appendChild(el('option', { value: '', text: 'Elige la cuenta…' }));
+        for (const c of cuentas) sel.appendChild(el('option', { value: c.id, text: c.banco ? `${c.nombre} · ${c.banco}` : c.nombre }));
+
+        const btn = el('button', { class: 'adm-btn adm-btn--ghost adm-btn--sm', type: 'button', text: 'Asignar' });
+        btn.addEventListener('click', async () => {
+            if (!sel.value) { admToast('Elige a qué cuenta entró esa transferencia.', 'danger'); return; }
+            btn.disabled = true;
+            try {
+                await asignarCuentaAbono({ clienteId: a.clienteId, movId: a.id, cuentaId: sel.value });
+                admToast(`Listo. Esos ${fmtCOP(a.monto)} ya cuentan en el saldo de esa cuenta.`, 'success', 5000);
+            } catch (err) {
+                console.error('[tesoreria] asignarCuentaAbono:', err);
+                admToast(errorMessage(err, 'No se pudo asignar la cuenta.'), 'danger', 6000);
+            } finally { btn.disabled = false; }
+        });
+
+        list.appendChild(el('li', { class: 'bov-mov' }, [
+            el('div', { class: 'bov-mov-info' }, [
+                el('span', { class: 'bov-mov-tipo', text: 'Abono de clienta' }),
+                el('span', { class: 'bov-mov-meta', text: `${fmtDate(a.fecha) || a.fecha || ''} · ${fmtCOP(a.monto)}` }),
+            ]),
+            el('div', { class: 'bov-mov-actions' }, [sel, btn]),
+        ]));
+    }
+}
 
 function renderCuadre() {
     const c = cuentaById(_selectedId);

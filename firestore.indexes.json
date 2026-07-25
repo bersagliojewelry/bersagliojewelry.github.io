@@ -4,66 +4,134 @@
       "collectionGroup": "inquiries",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "read", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
+        {
+          "fieldPath": "read",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "reviews",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "pieceId", "order": "ASCENDING" },
-        { "fieldPath": "approved", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
+        {
+          "fieldPath": "pieceId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "approved",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "solicitudes",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
-        { "fieldPath": "estado", "order": "ASCENDING" },
-        { "fieldPath": "creadoEn", "order": "ASCENDING" }
+        {
+          "fieldPath": "estado",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "creadoEn",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "acuerdos",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
-        { "fieldPath": "estado", "order": "ASCENDING" },
-        { "fieldPath": "creadoEn", "order": "ASCENDING" }
+        {
+          "fieldPath": "estado",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "creadoEn",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "pedidos",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "estado", "order": "ASCENDING" },
-        { "fieldPath": "reservaExpira", "order": "ASCENDING" }
+        {
+          "fieldPath": "estado",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "reservaExpira",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "movimientosTesoreria",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "cuentaId", "order": "ASCENDING" },
-        { "fieldPath": "fecha", "order": "DESCENDING" }
+        {
+          "fieldPath": "cuentaId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "fecha",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "movimientosTesoreria",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "cuentaId", "order": "ASCENDING" },
-        { "fieldPath": "conciliado", "order": "ASCENDING" },
-        { "fieldPath": "fecha", "order": "ASCENDING" }
+        {
+          "fieldPath": "cuentaId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "conciliado",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "fecha",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "movimientosTesoreria",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "estado", "order": "ASCENDING" },
-        { "fieldPath": "tipo", "order": "ASCENDING" }
+        {
+          "fieldPath": "estado",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tipo",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "movimientos",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "sinCuentaAsignada",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "fecha",
+          "order": "DESCENDING"
+        }
       ]
     }
   ],

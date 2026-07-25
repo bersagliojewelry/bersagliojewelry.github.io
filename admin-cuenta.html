@@ -171,6 +171,17 @@
                         </select>
                     </div>
                 </div>
+                <!-- D9 · solo TRANSFERENCIA: ¿a qué cuenta entró la plata? "Todavía no sé" es una
+                     respuesta válida (V12) y queda listada en "Cuadrar mes" para cerrarla después. -->
+                <div class="adm-form-row adm-col-1" id="mov-cuenta-row" hidden>
+                    <div class="adm-field">
+                        <label for="mov-cuenta">¿A qué cuenta entró?</label>
+                        <select id="mov-cuenta" class="adm-input">
+                            <option value="">Todavía no sé</option>
+                        </select>
+                        <p class="adm-hint" id="mov-cuenta-hint">Si eliges la cuenta, el abono entra al saldo de ese banco y aparece en el cuadre del mes.</p>
+                    </div>
+                </div>
                 <div class="adm-form-row adm-col-1">
                     <div class="adm-field">
                         <label for="mov-desc">Descripción</label>

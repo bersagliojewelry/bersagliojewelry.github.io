@@ -8,11 +8,13 @@
 
 ## 🎯 Foco actual
 
-> 🟣 **RELEVO AL TITULAR (Daniel 27jul: la sesión nueva es con FABLE).** Arranca en el **comité ×3 de F-COMPRAS (TODO-81)** sobre las preguntas **P1-P5** de su spec — la spec ya trae las decisiones A1-A6 cerradas y la directiva §0.8 del dueño; **no re-decidir el cuerpo, refutar P1-P5**. La cara: **P1 = cómo se paga en EFECTIVO a un proveedor**, que choca con V18 (el efectivo entra y sale SIEMPRE por la bóveda) ⇒ zona caliente R3.
+> 🟣 **EL RELEVO NO OCURRIÓ: Fable agotó su cuota (Daniel 27jul) ⇒ el interinato #4 de `[OPUS-5]` SIGUE.** El comité ×3 de F-COMPRAS (TODO-81) **ya se corrió** (inline, 4 expertos, sobre código verificado) → **P1-P5 resueltos como R1-R5** en la spec §2. **SIGUE: consejo externo** (prompt listo: `2026-07-27-f-compras-PROMPT-CONSEJO-EXTERNO.md`, lo corre Daniel — **gate de C1**) + mockup; C0 puede avanzar sin él.
 >
-> **Cola de Fable, además del comité**: (a) **auditoría del titular al interinato #4** (B0→B6 de F-TESORERÍA, §194 incluido — Fable audita al volver, patrón §158/§161); (b) los **6 P2** de B6 (spec tesorería §8) son juicio suyo, NO se tocaron; (c) los 2 nits de UI del barrido Chrome (subtítulo de "Plata total" cortado · "Cuentas y bancos" con 0 cuentas deja la derecha vacía sin estado-cero, L-42).
+> **El comité refutó 3 puntos del propio borrador del interino** (detalle+evidencia → spec §1 A4/A7 y §2 R1-R5). El que importa para el código: **A7** — el guard de "no se corrige a mano" (§194) debe mirar el **ORIGEN** (`fuente:'SISTEMA'`), no el TIPO; hoy acierta por accidente y falla en cuanto un tipo tenga dos puertas (que es lo que trae F-COMPRAS). A7 = **C0 paso 0a, test primero**, zona caliente R3.
 >
-> **F-TESORERÍA (TODO-78) COMPLETA: B0→B6 ✅ EN PROD** (§194). B6 = rompimiento adversarial de los 4 libros: **P0** — V1/V18 dieron un TERCER libro al traslado de bóveda y DESHACER se quedó con dos ⇒ reversar una consignación **inventaba** plata en la consolidada; invisible para el cuadre 3:30 y sin cobertura. **P1 acoplado** — corregir a mano una pata restaba dos veces. Ambos con test-primero (teso 31→38), desplegados. 5 áreas SANAS declaradas. Doctrina → **L-86**. ⚠️ El E2E vivo de D9/V1 espera la 1ª cuenta REAL de Kary (V21); lo sostienen 38 tests.
+> **Cola pendiente del TITULAR (no la toca el interino)**: (a) **auditoría al interinato #4** (B0→B6 de F-TESORERÍA + §194, patrón §158/§161) — ahora ADEMÁS cubre este comité; (b) los **6 P2** de B6 (spec tesorería §8); (c) 2 nits de UI del barrido Chrome (subtítulo de "Plata total" cortado · "Cuentas y bancos" con 0 cuentas deja la derecha vacía sin estado-cero, L-42).
+>
+> **F-TESORERÍA (TODO-78) COMPLETA: B0→B6 ✅ EN PROD** — detalle consolidado en **§194** + **L-86** (no se repite aquí). ⚠️ El E2E vivo de D9/V1 espera la 1ª cuenta REAL de Kary (V21); lo sostienen 38 tests.
 >
 > **Protocolo por sesión**: `asesor-critico-honesto` + `caza-bugs` + `auditoria-financiera`; spec COMPLETA (§0.8>§0.7>§0.6>cuerpo, sin re-decidir; TDD en el MISMO commit). Modelo lo decide Daniel (`/model`): Opus → + `opus-interino-protocolo`, marca **`[OPUS-5]`**; Fable → `[FABLE-5]`.
 >
@@ -24,9 +26,9 @@
 
 | ID | Item | Estado | Bloqueo |
 |---|---|---|---|
-| TODO-78 | **F-TESORERÍA** (SSoT spec `2026-07-18-f-tesoreria-DISENO.md`, prevalencia §0.8>§0.7>§0.6>cuerpo; legal Daniel → `42-LEGAL §7`). **B0→B6 ✅ COMPLETA EN PROD (§194)** · SIGUE: **auditoría del titular** (§4-protocolo) → luego F-COMPRAS. 6 P2 de B6 en la cola (spec §8). | 🟢 | titular |
-| TODO-81 | **F-COMPRAS "Proveedores"** (SSoT spec `2026-07-27-f-compras-DISENO.md` = BORRADOR; decisiones A1-A6 y preguntas P1-P5 allí). **§0.8 Daniel: TODAS las posibilidades abiertas** (fiado·contado·anticipo·parcial·quedar debiendo) — la UI no exige flujo. SIGUE: **comité ×3 sobre P1-P5** (P1 = pago en EFECTIVO, choca con V18) + consejo + mockup → C0-C5. | 🟡 | comité ×3 |
-| TODO-80 | **PURGA de datos de prueba** (Daniel 27jul): **TODO el panel es PRUEBA salvo COLECCIONES y PIEZAS** (incluida la cartera migrada — cierra la decisión del v5 §8). Panel + Firebase, con runbook (base → v5 §8), **AL FINAL**. ⚠️ **NO reparar/migrar/backfillear**: basura. `[[project_purga_datos_prueba]]` | 🔲 | al final |
+| TODO-78 | **F-TESORERÍA** (SSoT spec `2026-07-18-f-tesoreria-DISENO.md`; legal → `42-LEGAL §7`). **B0→B6 ✅ COMPLETA EN PROD (§194)**. Restan del TITULAR: auditoría del interinato + los 6 P2 de B6 (spec §8). | 🟢 | titular |
+| TODO-81 | **F-COMPRAS "Proveedores"** (SSoT spec `2026-07-27-f-compras-DISENO.md`; A1-A7 + §2 R1-R5). **§0.8 Daniel: TODAS las posibilidades abiertas** (fiado·contado·anticipo·parcial·quedar debiendo) — la UI no exige flujo. **Comité ×3 ✅** (R1-R5 + A7 + deuda A2 declarada). SIGUE: **consejo externo** (prompt listo — **gate de C1**) + mockup; **C0 (0a = guard A7 con test primero) puede arrancar ya**. | 🟡 | consejo (C1) |
+| TODO-80 | **PURGA de datos de prueba** (Daniel 27jul): TODO el panel es PRUEBA salvo COLECCIONES y PIEZAS (incluida la cartera migrada). Panel + Firebase con runbook (v5 §8), **AL FINAL**. ⚠️ NO reparar/migrar/backfillear: es basura. `[[project_purga_datos_prueba]]` | 🔲 | al final |
 | TODO-07 | **Contenido real web**: reseñas Maps (Nosotros), Films, feed Redes (`home-media.js`). | 🔲 | cliente entrega datos |
 | TODO-08 | **Hardening Fase 2**: Tier A ✅; pend. CSP/reglas/claims (Tier B/C) → `41-SEGURIDAD §1.5` | 🟡 | Tier B = emulador+deploy gated |
 | TODO-09 | **Fase M** M0→M6 ✅ EN PROD (§78-§80); ACUERDOS R1-R5+A8 GATEADOS/inertes — encender=Daniel. Restan: M7·M2c·ASESOR/RBAC (19). | 🟡 | encender R6 |
@@ -52,7 +54,8 @@
 
 ## 📝 Bitácora (efímera)
 
-> 2026-07-27 · **[OPUS-5] B6 CERRADO — F-TESORERÍA completa** (detalle → **§194** + **L-86**). El P0 vivía en la costura que el PROPIO interinato creó en B5 (V1/V18 dieron un libro nuevo al traslado y el UNDO no lo heredó); sellar la pata destapó un P1 acoplado. Desplegado + push. **SANO con evidencia** (no por silencio): 5 áreas declaradas en §194.1-2. **Dudas declaradas**: el E2E vivo con cuenta espera la 1ª cuenta REAL de Kary (V21; lo sostienen 38 tests) · los 6 P2 NO se tocaron a propósito (juicio del titular, no fugas). Chrome holístico (Bóveda·Cuentas·Hoy): consola limpia; **2 nits** → subtítulo de "Plata total" cortado · "Cuentas y bancos" con 0 cuentas deja la derecha vacía sin estado-cero (L-42).
+> 2026-07-27 · **[OPUS-5] F-COMPRAS · comité ×3 → R1-R5 + A7 + prompt de consejo listo** (spec §2). INLINE, 4 expertos con tensión, sobre código verificado esta sesión (`[[feedback_workflows_acotados]]`). **Dudas declaradas**: (a) A7 toca la costura que §194 acaba de estabilizar ⇒ test primero + auditoría prioritaria del titular; (b) la deuda A2 (1 transferencia que paga 3 facturas = 3 pagos ⇒ 3 líneas vs 1 del extracto) se ACEPTA en v1 y está ESCRITA, no descubierta después; (c) el comité NO sustituye al consejo: C1 sigue gateado.
+> 2026-07-27 · **[OPUS-5] B6 CERRADO — F-TESORERÍA completa** (detalle → **§194** + **L-86**; dudas y nits de Chrome ya recogidos arriba en el Foco).
 > 2026-07-25 · **[FABLE-5 · líder de pautas]** Meta Business de Bersaglio CONFIGURADO (portfolio renombrado, socio Altorra con acceso, mapa de cuentas y saldos). Detalle + pendientes de Daniel/Kary → **`44-PAUTA-META`** (lóbulo nuevo).
 > _(B5 consolidado: su detalle vive en spec §9 + §194; entradas del 25jul podadas por GC.)_
 > **Pend Daniel/no-gate**: llenar "Datos del negocio" en el panel (§192 I-03; datos = identidad LEGAL-08) · marcar 7 avisos test-era en Salud (I-04) · consejo+abogado apartados (39) · instructivo Kary · push A.6 · fotos (67). ADC gcloud caducado (CLI OK). **Precios = paso FINAL.**

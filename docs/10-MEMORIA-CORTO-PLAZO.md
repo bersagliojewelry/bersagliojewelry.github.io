@@ -10,9 +10,9 @@
 
 > 🟣 **F-TESORERÍA (TODO-78) COMPLETA: B0→B6 ✅ EN PROD.** B6 cerrado el 27jul (**§194**): campaña adversarial read-only sobre los 4 libros (cartera·caja·bóveda·banco). Todo desplegado (functions MANUAL, L-22) y con la suite verde.
 >
-> **Lo que encontró B6** — **P0**: V1/V18 le dieron al traslado de bóveda un TERCER libro (el banco), pero DESHACER se quedó con dos: reversar una consignación devolvía la plata a la bóveda sin quitarla del banco ⇒ la consolidada **inventaba** ese monto (y el retiro V18 lo desaparecía). Invisible para el cuadre 3:30 —compara cada libro CONSIGO MISMO, nunca entre libros— y con CERO cobertura (`reverso` no aparecía en la suite de tesorería). **P1 acoplado**: corregir a mano una pata de sistema restaba dos veces. Ambos arreglados con test-primero (teso 31→38). 5 áreas SANAS declaradas · **6 P2 reportados sin tocar** (→ cola del titular, spec §8). Doctrina → **L-86**.
+> **Lo que encontró B6** (detalle → §194): **P0** = V1/V18 dieron un TERCER libro al traslado de bóveda y DESHACER se quedó con dos ⇒ reversar una consignación **inventaba** plata en la consolidada; invisible para el cuadre 3:30 y sin cobertura. **P1 acoplado** = corregir a mano una pata restaba dos veces. Ambos con test-primero (teso 31→38). 5 áreas SANAS · 6 P2 sin tocar (cola §8). Doctrina → **L-86**.
 >
-> **SIGUE — auditoría del titular (§4-protocolo)** antes de presentarle nada a Kary (gate de Daniel: "Kary NO usa hasta confiabilidad 100%"). Luego: **F-COMPRAS**. ⚠️ Pendientes externos que NO bloquean: el E2E vivo de D9/V1 espera la **1ª cuenta REAL de Kary** (prod tiene 0 a propósito, V21 — con 0 cuentas la consignación avisa honestamente que la plata no sumará a ningún banco); lo sostienen los 38 tests.
+> **AHORA: F-COMPRAS (TODO-81)** — borrador del arquitecto listo; sigue el comité ×3 sobre P1-P5. La auditoría del titular a F-TESORERÍA queda pendiente pero **no bloquea** (Daniel 27jul: *"hacemos toda la prueba al final, sigamos con todo"*). ⚠️ El E2E vivo de D9/V1 espera la 1ª cuenta REAL de Kary (V21); lo sostienen 38 tests.
 >
 > **Protocolo por sesión**: `asesor-critico-honesto` + `caza-bugs` + `auditoria-financiera`; spec COMPLETA (§0.8>§0.7>§0.6>cuerpo, sin re-decidir; TDD en el MISMO commit). Modelo lo decide Daniel (`/model`): Opus → + `opus-interino-protocolo`, marca **`[OPUS-5]`**; Fable → `[FABLE-5]`.
 >
@@ -25,6 +25,7 @@
 | ID | Item | Estado | Bloqueo |
 |---|---|---|---|
 | TODO-78 | **F-TESORERÍA** (SSoT spec `2026-07-18-f-tesoreria-DISENO.md`, prevalencia §0.8>§0.7>§0.6>cuerpo; legal Daniel → `42-LEGAL §7`). **B0→B6 ✅ COMPLETA EN PROD (§194)** · SIGUE: **auditoría del titular** (§4-protocolo) → luego F-COMPRAS. 6 P2 de B6 en la cola (spec §8). | 🟢 | titular |
+| TODO-81 | **F-COMPRAS "Proveedores"** (SSoT spec `2026-07-27-f-compras-DISENO.md` = BORRADOR; decisiones A1-A6 y preguntas P1-P5 allí). **§0.8 Daniel: TODAS las posibilidades abiertas** (fiado·contado·anticipo·parcial·quedar debiendo) — la UI no exige flujo. SIGUE: **comité ×3 sobre P1-P5** (P1 = pago en EFECTIVO, choca con V18) + consejo + mockup → C0-C5. | 🟡 | comité ×3 |
 | TODO-80 | **PURGA de datos de prueba** (Daniel 27jul): **TODO el panel es PRUEBA salvo COLECCIONES y PIEZAS** (incluida la cartera migrada — cierra la decisión abierta del v5 §8). Depurar panel + Firebase, con runbook, **AL FINAL**. ⚠️ **NO reparar/migrar/backfillear** datos del panel: basura. Runbook base → plan v5 §8 · `[[project_purga_datos_prueba]]` | 🔲 | al final |
 | TODO-07 | **Contenido real web**: reseñas Maps (Nosotros), Films, feed Redes (`home-media.js`). | 🔲 | cliente entrega datos |
 | TODO-08 | **Hardening Fase 2**: Tier A ✅; pend. CSP/reglas/claims (Tier B/C) → `41-SEGURIDAD §1.5` | 🟡 | Tier B = emulador+deploy gated |

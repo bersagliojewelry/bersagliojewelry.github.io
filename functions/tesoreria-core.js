@@ -305,6 +305,13 @@ async function registrarMovimientoTesoreriaCore(db, input = {}) {
             const orig = refSnap.data();
             if (orig.cuentaId !== cuentaId) throw new TesoreriaError('failed-precondition', 'La corrección debe ser en la misma cuenta del movimiento original.');
             if (orig.tipo === 'ajuste_inverso') throw new TesoreriaError('failed-precondition', 'No se puede reversar una corrección.');
+            // B6 · una pata de SISTEMA se deshace por su ORIGEN (anular el abono / reversar el
+            // traslado de bóveda), jamás por corrección manual: las dos vías juntas restan DOS veces
+            // (el inverso netea, y deshacer el origen sella la pata `anulado` ⇒ solo queda el inverso).
+            if (PATA_TIPOS.includes(orig.tipo)) {
+                throw new TesoreriaError('failed-precondition',
+                    'Ese movimiento lo creó otra operación (un abono o un traslado de la bóveda). Para corregirlo deshaz esa operación: anula el abono o reversa el traslado.');
+            }
             if ((orig.estado || 'activo') !== 'activo') throw new TesoreriaError('failed-precondition', 'Solo se corrige un movimiento firme (activo).');
             if (entero(orig.monto) !== monto) throw new TesoreriaError('invalid-argument', 'La corrección debe ser por el monto exacto del movimiento original.');
             const vivo = inversosSnap.docs.find((d) => (d.data().estado || 'activo') !== 'rechazado');

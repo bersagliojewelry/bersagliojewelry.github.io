@@ -619,6 +619,40 @@ test('B6 · retrocompatible: reversar un traslado SIN pata bancaria se comporta 
     assert.equal((await db.collection('movimientosTesoreria').get()).size, 0, 'no inventa patas donde no las hay');
 });
 
+// B6 · P1 · Una pata de SISTEMA no se corrige a mano — se deshace su ORIGEN (una sola puerta).
+// Si se pudieran las dos cosas, la plata se resta DOS veces: el `ajuste_inverso` aprobado ya netea
+// la pata, y deshacer el origen (anular el abono / reversar el traslado) la sella `anulado` ⇒ queda
+// solo el inverso restando. El agujero era latente (la corrección manual no tiene UI todavía) y el
+// sellado que introduce el fix de arriba lo dejaba a un paso; se cierra en la puerta de entrada.
+test('B6 · una pata de sistema (abono/consignación) RECHAZA la corrección manual: se deshace su origen', async () => {
+    await limpiarBoveda();
+    await cuenta('BANCO', { saldoInicial: 0 });
+    await sembrarBoveda(1000000);
+    await trasladar({ opId: 'PT1', tipo: 'boveda_a_banco', monto: 400000, cuentaId: 'BANCO' });
+    assert.equal((await pataDe('PT1')).data().tipo, 'consignacion_in');
+
+    await assert.rejects(
+        reg({ opId: 'PT1-INV', cuentaId: 'BANCO', tipo: 'ajuste_inverso', monto: 400000, refDocumento: 'PT1-teso' }),
+        esTesoError('failed-precondition'),
+        'la pata se deshace reversando la consignación, no con una corrección manual');
+    assert.equal(await saldoDe('BANCO'), 400000, 'el banco queda intacto');
+
+    // el camino legítimo (reversar el origen) sigue funcionando
+    await reversar('PT1-REV', 'PT1');
+    await aprobar('PT1-REV');
+    assert.equal(await saldoDe('BANCO'), 0);
+});
+
+test('B6 · la corrección manual SIGUE funcionando sobre un movimiento normal (cero regresión)', async () => {
+    await cuenta('BANCO', { saldoInicial: 1000000 });
+    await reg({ opId: 'M1', cuentaId: 'BANCO', tipo: 'gasto', monto: 300000, categoria: 'otros', contraparte: { nombre: 'Proveedor X' } });
+    assert.equal(await saldoDe('BANCO'), 700000);
+
+    await reg({ opId: 'M1-INV', cuentaId: 'BANCO', tipo: 'ajuste_inverso', monto: 300000, refDocumento: 'M1' });
+    await aprobarMovimientoTesoreriaCore(db, { opId: 'M1-INV', decision: 'aprobar', actor: 'ownerUid', rol: 'owner' });
+    assert.equal(await saldoDe('BANCO'), 1000000, 'el inverso revierte exactamente');
+});
+
 test('B6 · la reversa NO se puede aprobar dos veces (el banco no se netea dos veces)', async () => {
     await limpiarBoveda();
     await cuenta('BANCO', { saldoInicial: 0 });

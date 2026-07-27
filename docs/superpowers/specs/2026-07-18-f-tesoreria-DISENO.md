@@ -358,6 +358,19 @@ Reglas: `firestore-rules.test.mjs` gana casos: write directo a las 2 colecciones
   bloquea, decisión de Daniel); (e) botón "Abrir caja y guardar abono" dentro del modal (UX: hoy el
   rechazo la manda al Mostrador; ⚠️ el fondo de apertura NO se debe pre-cargar del último cierre —
   sería una base que nadie contó).
+- **De B6 (2026-07-27, §194) — 6 P2 REPORTADOS Y NO TOCADOS** (ninguno es una fuga de plata; son
+  juicio del titular). (a) `reabrirCuadreCore` solo mira el mes SIGUIENTE: con un mes sin
+  conciliados en medio se puede reabrir uno viejo teniendo otro posterior sellado (fix: query
+  `periodoConciliado > periodo` en vez de `== periodoSiguiente`). (b) El replay de
+  `registrarTrasladoCore` construye la pata con el `monto`/`fecha` del INPUT, no con los del doc
+  guardado — `cartera-core` lo hace bien; alinear (hoy no es alcanzable por UI, que acuña opId nuevo
+  por operación exitosa). (c) `anularAbonoCarteraCore` emite alerta por `pataHuerfana` (caja) pero
+  NO por `pataTesoHuerfana` (banco) — asimetría del invariante #7. (d) `marcarConciliadoCore` no
+  valida que la fecha del movimiento pertenezca al `periodo` que sella. (e) **Escala**: el recompute
+  de tesorería lee TODOS los movimientos de la cuenta en CADA escritura; la bóveda ya resolvió esto
+  con checkpoints mensuales — replicar el patrón antes de 2-3 años de ledger. (f) **UX**: "Cuentas y
+  bancos" con 0 cuentas deja la mitad derecha en blanco sin estado-cero (L-42 pide montar SIEMPRE la
+  sección); y el subtítulo de "Plata total" en Hoy se corta en pantallas medianas.
 - Capacidades-flag T-16/18/19 + rol `caja` (F2.0 matiz).
 - Auto-posting Wompi→tesorería (F-REPORTES).
 - Decisión Daniel pendiente del v5 §8: destino de los 344 clientes en la limpieza.

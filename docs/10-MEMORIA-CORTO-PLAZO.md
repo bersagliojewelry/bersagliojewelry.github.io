@@ -8,11 +8,11 @@
 
 ## 🎯 Foco actual
 
-> 🟣 **RELEVO → LA SESIÓN NUEVA ARRANCA EN B6.** **F-TESORERÍA (TODO-78): B0-B5 ✅ COMPLETO Y EN PROD** (25jul: TODO-79 · V17 + su cierre en REGLAS · D9 · cuadre 3:30 vigilando las cuentas). Todo desplegado (12 CFs + reglas + índices + hosting) y verificado en vivo con login owner hasta donde prod permite.
+> 🟣 **F-TESORERÍA (TODO-78) COMPLETA: B0→B6 ✅ EN PROD.** B6 cerrado el 27jul (**§194**): campaña adversarial read-only sobre los 4 libros (cartera·caja·bóveda·banco). Todo desplegado (functions MANUAL, L-22) y con la suite verde.
 >
-> **Lo que cierra B5**: el abono en efectivo entra al arqueo y el de transferencia al banco, ambos en la MISMA tx; una sola puerta (las reglas niegan el efectivo desde el cliente); anular netea todos los libros; y el vigilante nocturno compara cada saldo contra su ledger. Detalle COMPLETO —premisas falsas de la spec, desvío documentado, ancla del turno (L-85)— → **spec §9**; cola del titular → **§8**. Verdes: cartera 26/26 · reglas 248/248 · teso 31/31 · caja 38/38 · reconciliación 16/16.
+> **Lo que encontró B6** — **P0**: V1/V18 le dieron al traslado de bóveda un TERCER libro (el banco), pero DESHACER se quedó con dos: reversar una consignación devolvía la plata a la bóveda sin quitarla del banco ⇒ la consolidada **inventaba** ese monto (y el retiro V18 lo desaparecía). Invisible para el cuadre 3:30 —compara cada libro CONSIGO MISMO, nunca entre libros— y con CERO cobertura (`reverso` no aparecía en la suite de tesorería). **P1 acoplado**: corregir a mano una pata de sistema restaba dos veces. Ambos arreglados con test-primero (teso 31→38). 5 áreas SANAS declaradas · **6 P2 reportados sin tocar** (→ cola del titular, spec §8). Doctrina → **L-86**.
 >
-> **SIGUE — B6 (rompimiento acotado, spec §6)**: mini-campaña adversarial READ-ONLY sobre el CÓDIGO (no prod) intentando romper conservación/idempotencia/atomicidad de los 4 libros (cartera·caja·bóveda·banco) + validación Chrome holística final + entrega al titular (§4-protocolo). Al arrancar: flujo ACOTADO (`60-WORKFLOWS` W-11 · `[[feedback_workflows_acotados]]`) y **re-verificar cada hallazgo con ojos propios** antes de tocar nada. ⚠️ Único pendiente externo: **el E2E de D9 espera la 1ª cuenta REAL de Kary** (prod tiene 0 a propósito, V21) — lo sostienen 26 tests.
+> **SIGUE — auditoría del titular (§4-protocolo)** antes de presentarle nada a Kary (gate de Daniel: "Kary NO usa hasta confiabilidad 100%"). Luego: **F-COMPRAS**. ⚠️ Pendientes externos que NO bloquean: el E2E vivo de D9/V1 espera la **1ª cuenta REAL de Kary** (prod tiene 0 a propósito, V21 — con 0 cuentas la consignación avisa honestamente que la plata no sumará a ningún banco); lo sostienen los 38 tests.
 >
 > **Protocolo por sesión**: `asesor-critico-honesto` + `caza-bugs` + `auditoria-financiera`; spec COMPLETA (§0.8>§0.7>§0.6>cuerpo, sin re-decidir; TDD en el MISMO commit). Modelo lo decide Daniel (`/model`): Opus → + `opus-interino-protocolo`, marca **`[OPUS-5]`**; Fable → `[FABLE-5]`.
 >
@@ -24,7 +24,7 @@
 
 | ID | Item | Estado | Bloqueo |
 |---|---|---|---|
-| TODO-78 | **F-TESORERÍA** (SSoT spec `2026-07-18-f-tesoreria-DISENO.md`, prevalencia §0.8>§0.7>§0.6>cuerpo; legal Daniel → `42-LEGAL §7`). **B0-B5 ✅ COMPLETO EN PROD · SIGUE: B6** (detalle → Foco). | 🟢 | B6 |
+| TODO-78 | **F-TESORERÍA** (SSoT spec `2026-07-18-f-tesoreria-DISENO.md`, prevalencia §0.8>§0.7>§0.6>cuerpo; legal Daniel → `42-LEGAL §7`). **B0→B6 ✅ COMPLETA EN PROD (§194)** · SIGUE: **auditoría del titular** (§4-protocolo) → luego F-COMPRAS. 6 P2 de B6 en la cola (spec §8). | 🟢 | titular |
 | TODO-07 | **Contenido real web**: reseñas Maps (Nosotros), Films, feed Redes (`home-media.js`). | 🔲 | cliente entrega datos |
 | TODO-08 | **Hardening Fase 2**: Tier A ✅; pend. CSP/reglas/claims (Tier B/C) → `41-SEGURIDAD §1.5` | 🟡 | Tier B = emulador+deploy gated |
 | TODO-09 | **Fase M** M0→M6 ✅ EN PROD (§78-§80); ACUERDOS R1-R5+A8 GATEADOS/inertes — encender=Daniel. Restan: M7·M2c·ASESOR/RBAC (19). | 🟡 | encender R6 |
@@ -50,7 +50,7 @@
 
 ## 📝 Bitácora (efímera)
 
+> 2026-07-27 · **[OPUS-5] B6 CERRADO — F-TESORERÍA completa** (detalle → **§194** + **L-86**). El P0 vivía en la costura que el PROPIO interinato creó en B5 (V1/V18 dieron un libro nuevo al traslado y el UNDO no lo heredó); sellar la pata destapó un P1 acoplado. Desplegado + push. **SANO con evidencia** (no por silencio): 5 áreas declaradas en §194.1-2. **Dudas declaradas**: el E2E vivo con cuenta espera la 1ª cuenta REAL de Kary (V21; lo sostienen 38 tests) · los 6 P2 NO se tocaron a propósito (juicio del titular, no fugas). Chrome holístico (Bóveda·Cuentas·Hoy): consola limpia; **2 nits** → subtítulo de "Plata total" cortado · "Cuentas y bancos" con 0 cuentas deja la derecha vacía sin estado-cero (L-42).
 > 2026-07-25 · **[FABLE-5 · líder de pautas]** Meta Business de Bersaglio CONFIGURADO (portfolio renombrado, socio Altorra con acceso, mapa de cuentas y saldos). Detalle + pendientes de Daniel/Kary → **`44-PAUTA-META`** (lóbulo nuevo).
-> 2026-07-25 · **[OPUS-5] B5 COMPLETO** (TODO-79 · V17 + cierre en REGLAS · D9 · cuadre 3:30 del banco). Comité ×3 por iniciativa propia + 2 peer reviews (§3.7); refuté su "punto ciego fatal" con evidencia. Detalle → **spec §9** + commits. **Dudas declaradas (R7)**: sin flag de apagado a propósito (apagarlo REABRE el agujero; rollback = revert + CI) · abonos efectivo HISTÓRICOS sin pata = **línea de corte declarada, sin backfill** (inyectar efectivo en arqueos firmados = fabricar evidencia) · el `brain:check` #7 dio 2 falsas alarmas de la bóveda comparando contra una ref `origin/*` STALE (→ TODO-22/29).
-> 2026-07-25 · **[OPUS-5] B5 COMPLETO**: el cuadre diario 3:30 ahora vigila también el saldo de cada CUENTA (comparador puro + 7 tests). De paso: los avisos de dinero en Salud se veían SIN explicación (mostraba `error`, no `detalle`) y el aviso nuevo mandaba a un botón "Reparar" inexistente → ahora existe (DOM seguro, L-79).
+> _(B5 consolidado: su detalle vive en spec §9 + §194; entradas del 25jul podadas por GC.)_
 > **Pend Daniel/no-gate**: llenar "Datos del negocio" en el panel (§192 I-03; datos = identidad LEGAL-08) · marcar 7 avisos test-era en Salud (I-04) · consejo+abogado apartados (39) · instructivo Kary · push A.6 · fotos (67). ADC gcloud caducado (CLI OK). **Precios = paso FINAL.**

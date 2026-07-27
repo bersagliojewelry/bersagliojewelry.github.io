@@ -2713,3 +2713,58 @@ atrapado en un módulo con DOM/SDK (= helper sin test).
 este fix fue el PRERREQUISITO de V17 (F-TESORERÍA B5) — un control que rechaza "abre la caja para
 recibir efectivo" es inútil si el mensaje llega como "Ocurrió un error": el control necesita voz
 antes que dientes.
+
+## 2026-07-27 — §194 · B6 rompimiento: deshacer no neteaba el libro del banco [OPUS-5]
+
+Campaña adversarial READ-ONLY sobre el código de los 4 libros (cartera·caja·bóveda·banco), cierre
+de F-TESORERÍA (TODO-78, spec §6). Se buscó romper conservación / idempotencia / atomicidad. **2
+hallazgos confirmados y arreglados (1 P0 + 1 P1), 5 declarados sanos, 6 P2 reportados sin tocar.**
+
+**194.1 Causa raíz** (verificada leyendo el código, no la intención): **V1/V18 le añadieron al
+traslado de bóveda un TERCER libro (el banco) pero el camino de DESHACER se quedó con dos.**
+`reversoCore` + `aprobarEventoCajaCore` neteaban la bóveda y el acumulador del turno (fix de
+2026-07-10) y **jamás tocaban `movimientosTesoreria`**. Reversar una consignación devolvía la plata
+a la bóveda SIN quitarla del banco ⇒ la consolidada ("Plata total" del Hoy = cajón + bóveda +
+cuentas) **inventaba** ese monto; el retiro de banco (V18) reversado lo **desaparecía**. Es el
+patrón EXACTO del incidente de julio ("la bóveda quedaba bien pero el cierre no la veía"), repetido
+un libro más allá: **cada vez que un flujo gana un libro, el undo hereda la deuda.**
+Agravante: **invisible para el cuadre 3:30** — compara cada libro CONSIGO MISMO (saldoActual vs su
+recompute), nunca ENTRE libros; ambos quedaban internamente consistentes. Y **cero cobertura**:
+`tesoreria.integration.test.mjs` no mencionaba `reverso` ni una vez.
+
+**194.2 Solución estructural**: la misma doctrina ya probada en la anulación del abono (D9) — al
+APROBAR la reversa, la pata bancaria se SELLA `estado:'anulado'` dentro de la MISMA tx (append-only;
+el recompute solo suma `activo`). Lo ya CUADRADO contra el extracto es intocable: se rechaza **al
+crear** la reversa, no después de que el dueño firme en vano. Sin tipos nuevos, sin tocar la
+ecuación de nadie. **P1 acoplado**: sellar la pata dejaba a un paso una doble resta (un
+`ajuste_inverso` aprobado sobre la pata + deshacer su origen restaban dos veces) ⇒
+`registrarMovimientoTesoreriaCore` ahora RECHAZA corregir a mano cualquier `PATA_TIPOS`: una pata de
+sistema se deshace por su ORIGEN (anular el abono / reversar el traslado). Una sola puerta, otra vez.
+
+**194.3 No-regresión**: sin `cuentaId` el traslado y su reversa se comportan EXACTO como antes (test
+explícito); la corrección manual sobre un movimiento normal sigue intacta (test explícito); caja
+38/38 y cartera 26/26 sin cambios. Cero renombres, cero cambios de contrato (§3.2).
+
+**194.4 Tests**: `tesoreria.integration` 31→**38** (+7, escritos ANTES del código — R3 zona caliente;
+4 en rojo reproduciendo la fuga). Escenarios: consignación reversada netea ambos libros · retiro de
+banco espejo · mes cuadrado rechaza la reversa · retrocompatible sin pata · doble aprobación
+idempotente · pata rechaza corrección manual · corrección manual normal intacta. Verdes al cierre:
+teso 38 · caja 38 · cartera 26 · reglas 248 · core 15 · paridad 5 · build Vite OK.
+
+**194.5 Anti-patterns evitados**: arreglar el síntoma en la UI (esconder "Reversar" en las
+consignaciones) en vez de la costura del servidor · crear un tipo nuevo de movimiento (habría que
+enseñárselo a cada espejo) · editar/borrar la pata en vez de sellarla (rompe append-only) · reescribir
+un mes ya cuadrado contra el extracto · declarar el módulo sano por tener 31 tests verdes.
+
+**194.6 Archivos**: `functions/caja-core.js` (`reversoCore` guard + `aprobarEventoCajaCore` sella la
+pata) · `functions/tesoreria-core.js` (guard `PATA_TIPOS` en el inverso) ·
+`functions/tesoreria.integration.test.mjs` (+7). INTACTOS: `cartera-core.js`, `salud.js`,
+`firestore.rules`, índices, y toda la UI. Desplegado a prod (functions, MANUAL L-22); sin cache bump
+(cero cambios de cliente).
+
+**194.7 Doctrina**: → **L-86** (`35-LECCIONES-DINERO`): *cuando un flujo gana un libro nuevo, el
+camino de DESHACER debe ganarlo en el MISMO commit; y un vigilante que compara cada libro consigo
+mismo jamás verá una fuga ENTRE libros.* P2 reportados a la cola del titular (spec §8): mes-hueco en
+`reabrirCuadre` · replay de traslado usa el monto del input y no el guardado · `pataTesoHuerfana` sin
+alerta · `marcarConciliado` no valida fecha∈periodo · recompute de tesorería sin checkpoints (la
+bóveda sí los tiene) · derecha vacía sin estado-cero en "Cuentas y bancos" con 0 cuentas.

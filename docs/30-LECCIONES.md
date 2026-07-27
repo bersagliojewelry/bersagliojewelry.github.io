@@ -48,6 +48,8 @@ window.scrollTo(0, scrollY);
 (1) Decisión AUTOMÁTICA de dinero exige "fuentes listas" — o mejor: agregado denormalizado en UN doc (CF, misma tx = foto atómica); (2) deshacer netea TODAS las vistas del mismo peso (la reversa arreglaba la bóveda pero no el cierre del turno → +$11.2M sellado); (3) formateadores jamás recortan anomalías (`Math.max(0,x)` mudó −$5.4M en "$0"). Método → skill `auditoria-financiera`; checklist → `caza-bugs §2b`. Caso: ADR §181.
 
 ### L-82: HUECO EN BLANCO en carga fría → SKELETON (reusa el componente real, no reserva-en-blanco); NO acelerar con live-upgrade sobre PRECIOS (bait-and-switch). → ADR §178
+### L-86: Cuando un flujo gana un LIBRO nuevo, el camino de DESHACER lo hereda en el MISMO commit — y un vigilante que compara cada libro consigo mismo jamás ve una fuga ENTRE libros. → `35-LECCIONES-DINERO`
+
 ### L-85: Idempotencia con destino TEMPORAL (el "turno abierto") NO se copia de una con destino determinista: hay que ANCLAR el destino en el doc de la 1ª escritura. → `35-LECCIONES-DINERO`
 ### L-84: `err.code` de un callable llega PREFIJADO (`functions/failed-precondition`) → toda tabla/`includes` por code falla en silencio y el motivo real del servidor se pierde. → `35-LECCIONES-DINERO`
 ### L-81: `enforceTurno:false` NO es "suave", es un HUECO — ventas huérfanas fuera del arqueo. → `35-LECCIONES-DINERO` [detalle] · **TODO-70 ✅ §173**

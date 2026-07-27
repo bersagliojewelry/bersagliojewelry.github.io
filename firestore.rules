@@ -812,6 +812,36 @@ service cloud.firestore {
       allow write: if false;                    // SOLO Admin SDK; sin update/delete = inmutable
     }
 
+    // ─── F-COMPRAS · Proveedores (cuentas por pagar, C0) ─────────────────────────
+    // SSoT del diseño: docs/superpowers/specs/2026-07-27-f-compras-DISENO.md (A1/A5 · §2 R1-R5).
+    // Espejo de la cartera del otro lado: "¿a quién le debo, cuánto y cuándo se vence?".
+    // TODO lo escribe la CF (Admin SDK, que IGNORA estas reglas): el cliente NUNCA escribe, ni
+    // siquiera el owner — mismo patrón que tesorería y bóveda. El saldo del proveedor es
+    // recompute server-side (A1), jamás un campo que alguien pueda pisar a mano.
+    // read admin/owner: la deuda con proveedores es información reservada del negocio, la cajera no la ve.
+    match /proveedores/{proveedorId} {
+      allow read:  if isAdmin();
+      allow write: if false;                    // SOLO Admin SDK (CF única escritora, A5)
+
+      // Ledger POR DOCUMENTO (A1) — facturas, anticipos y notas crédito, cada uno con su propio
+      // saldo y su vencimiento. APPEND-ONLY: anular = sellar `anulado`, jamás update/delete.
+      match /comprasDocumentos/{opId} {
+        allow read:  if isAdmin();
+        allow write: if false;
+      }
+      // Pagos y las dos patas del cruce de anticipo (A3). Mismo append-only.
+      match /comprasMovimientos/{opId} {
+        allow read:  if isAdmin();
+        allow write: if false;
+      }
+      // R2a · doc-llave de unicidad "una factura por proveedor". Firestore no tiene unique
+      // constraint: la exclusión la da este doc determinista creado en la MISMA tx del documento.
+      match /facturasLlave/{llave} {
+        allow read:  if isAdmin();
+        allow write: if false;
+      }
+    }
+
     // ─── Collections (categories) ──────────────────────────────────────────────
 
     match /collections/{colId} {

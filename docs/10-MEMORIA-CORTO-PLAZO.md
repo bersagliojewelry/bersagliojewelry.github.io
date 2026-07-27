@@ -8,15 +8,15 @@
 
 ## 🎯 Foco actual
 
-> 🟣 **F-TESORERÍA (TODO-78) COMPLETA: B0→B6 ✅ EN PROD.** B6 cerrado el 27jul (**§194**): campaña adversarial read-only sobre los 4 libros (cartera·caja·bóveda·banco). Todo desplegado (functions MANUAL, L-22) y con la suite verde.
+> 🟣 **RELEVO AL TITULAR (Daniel 27jul: la sesión nueva es con FABLE).** Arranca en el **comité ×3 de F-COMPRAS (TODO-81)** sobre las preguntas **P1-P5** de su spec — la spec ya trae las decisiones A1-A6 cerradas y la directiva §0.8 del dueño; **no re-decidir el cuerpo, refutar P1-P5**. La cara: **P1 = cómo se paga en EFECTIVO a un proveedor**, que choca con V18 (el efectivo entra y sale SIEMPRE por la bóveda) ⇒ zona caliente R3.
 >
-> **Lo que encontró B6** (detalle → §194): **P0** = V1/V18 dieron un TERCER libro al traslado de bóveda y DESHACER se quedó con dos ⇒ reversar una consignación **inventaba** plata en la consolidada; invisible para el cuadre 3:30 y sin cobertura. **P1 acoplado** = corregir a mano una pata restaba dos veces. Ambos con test-primero (teso 31→38). 5 áreas SANAS · 6 P2 sin tocar (cola §8). Doctrina → **L-86**.
+> **Cola de Fable, además del comité**: (a) **auditoría del titular al interinato #4** (B0→B6 de F-TESORERÍA, §194 incluido — Fable audita al volver, patrón §158/§161); (b) los **6 P2** de B6 (spec tesorería §8) son juicio suyo, NO se tocaron; (c) los 2 nits de UI del barrido Chrome (subtítulo de "Plata total" cortado · "Cuentas y bancos" con 0 cuentas deja la derecha vacía sin estado-cero, L-42).
 >
-> **AHORA: F-COMPRAS (TODO-81)** — borrador del arquitecto listo; sigue el comité ×3 sobre P1-P5. La auditoría del titular a F-TESORERÍA queda pendiente pero **no bloquea** (Daniel 27jul: *"hacemos toda la prueba al final, sigamos con todo"*). ⚠️ El E2E vivo de D9/V1 espera la 1ª cuenta REAL de Kary (V21); lo sostienen 38 tests.
+> **F-TESORERÍA (TODO-78) COMPLETA: B0→B6 ✅ EN PROD** (§194). B6 = rompimiento adversarial de los 4 libros: **P0** — V1/V18 dieron un TERCER libro al traslado de bóveda y DESHACER se quedó con dos ⇒ reversar una consignación **inventaba** plata en la consolidada; invisible para el cuadre 3:30 y sin cobertura. **P1 acoplado** — corregir a mano una pata restaba dos veces. Ambos con test-primero (teso 31→38), desplegados. 5 áreas SANAS declaradas. Doctrina → **L-86**. ⚠️ El E2E vivo de D9/V1 espera la 1ª cuenta REAL de Kary (V21); lo sostienen 38 tests.
 >
 > **Protocolo por sesión**: `asesor-critico-honesto` + `caza-bugs` + `auditoria-financiera`; spec COMPLETA (§0.8>§0.7>§0.6>cuerpo, sin re-decidir; TDD en el MISMO commit). Modelo lo decide Daniel (`/model`): Opus → + `opus-interino-protocolo`, marca **`[OPUS-5]`**; Fable → `[FABLE-5]`.
 >
-> **🧭 Roadmap** (detalle → `05`): …F-IA-2 ✅ → **F-TESORERÍA (B5)** → F-COMPRAS → F-REPORTES → apartados → limpieza → rompimiento → lanzamiento. _MCP Firebase=prod · push+merge a main=Claude · consejo read-only · valida en Chrome._ `[[project_comercio_pagos]]`
+> **🧭 Roadmap** (detalle → `05`): …F-IA-2 ✅ → F-TESORERÍA ✅ → **F-COMPRAS (aquí)** → F-REPORTES → apartados → **limpieza (TODO-80)** → rompimiento → lanzamiento. _MCP Firebase=prod · push+merge a main=Claude · consejo read-only · valida en Chrome._ `[[project_comercio_pagos]]`
 
 ---
 
@@ -26,14 +26,14 @@
 |---|---|---|---|
 | TODO-78 | **F-TESORERÍA** (SSoT spec `2026-07-18-f-tesoreria-DISENO.md`, prevalencia §0.8>§0.7>§0.6>cuerpo; legal Daniel → `42-LEGAL §7`). **B0→B6 ✅ COMPLETA EN PROD (§194)** · SIGUE: **auditoría del titular** (§4-protocolo) → luego F-COMPRAS. 6 P2 de B6 en la cola (spec §8). | 🟢 | titular |
 | TODO-81 | **F-COMPRAS "Proveedores"** (SSoT spec `2026-07-27-f-compras-DISENO.md` = BORRADOR; decisiones A1-A6 y preguntas P1-P5 allí). **§0.8 Daniel: TODAS las posibilidades abiertas** (fiado·contado·anticipo·parcial·quedar debiendo) — la UI no exige flujo. SIGUE: **comité ×3 sobre P1-P5** (P1 = pago en EFECTIVO, choca con V18) + consejo + mockup → C0-C5. | 🟡 | comité ×3 |
-| TODO-80 | **PURGA de datos de prueba** (Daniel 27jul): **TODO el panel es PRUEBA salvo COLECCIONES y PIEZAS** (incluida la cartera migrada — cierra la decisión abierta del v5 §8). Depurar panel + Firebase, con runbook, **AL FINAL**. ⚠️ **NO reparar/migrar/backfillear** datos del panel: basura. Runbook base → plan v5 §8 · `[[project_purga_datos_prueba]]` | 🔲 | al final |
+| TODO-80 | **PURGA de datos de prueba** (Daniel 27jul): **TODO el panel es PRUEBA salvo COLECCIONES y PIEZAS** (incluida la cartera migrada — cierra la decisión del v5 §8). Panel + Firebase, con runbook (base → v5 §8), **AL FINAL**. ⚠️ **NO reparar/migrar/backfillear**: basura. `[[project_purga_datos_prueba]]` | 🔲 | al final |
 | TODO-07 | **Contenido real web**: reseñas Maps (Nosotros), Films, feed Redes (`home-media.js`). | 🔲 | cliente entrega datos |
 | TODO-08 | **Hardening Fase 2**: Tier A ✅; pend. CSP/reglas/claims (Tier B/C) → `41-SEGURIDAD §1.5` | 🟡 | Tier B = emulador+deploy gated |
 | TODO-09 | **Fase M** M0→M6 ✅ EN PROD (§78-§80); ACUERDOS R1-R5+A8 GATEADOS/inertes — encender=Daniel. Restan: M7·M2c·ASESOR/RBAC (19). | 🟡 | encender R6 |
 | TODO-14 | **App Check: MONITOREO; Enforce DIFERIDO** (Daniel: sin flujo alto el monitoreo no es representativo → activar SOLO con tráfico alto). Reparado §58. | ⏸️ | flujo alto |
-| TODO-17 | **Toda captura → CRM**: contacto→Bandeja ✅; falta newsletter (`addSubscription`→`subscriptions`). ⚠️ **§189**: el email del suscriptor solo vive en `localStorage` → **el lead se PIERDE**; el evento `bj:email-subscribed` ya lo lleva en `detail`. | 🔲 | tras App Check |
+| TODO-17 | **Toda captura → CRM**: contacto ✅; falta newsletter. ⚠️ **§189**: el email solo vive en `localStorage` ⇒ **el lead se PIERDE** (el evento `bj:email-subscribed` ya lo trae). | 🔲 | tras App Check |
 | TODO-18 | **Plan operación integral §57**: semana 1 + 9 decisiones de Daniel + compuerta de adopción + campaña cartera → bóveda | 🟡 | Daniel (dec. 1-9) |
-| TODO-33 | **Panel admin "tipo app"** — DISEÑADO (`50 §5`); A3 menú+VT ✅ (v29); pend. esqueletos/prefetch/fonts; router SPA CONGELADO. PAUSADO. | 🟡 | tras demo |
+| TODO-33 | **Panel admin "tipo app"** (`50 §5`): A3 ✅; pend. esqueletos/prefetch/fonts; router SPA CONGELADO. PAUSADO. | 🟡 | tras demo |
 | TODO-22/29 | Kernel → cars-operador (L-31): gate-de-git en linter (H-06) · kernel lea `### L-NN` de `3*-LECCIONES*` (hoy M-06). | 🔲 | cars-operador |
 | TODO-23 | **Frase canónica del gate de DINERO** (H-18): Claude=gate experto; Kary=smoke no bloqueante. → Gemini. | 🔲 | Gemini |
 | TODO-28 | **Correcciones web** F1-F5 ✅ EN PROD (§93-§98). Pend: C1 (Daniel) · responsive fino. | 🟡 | C1 |

@@ -14,6 +14,7 @@ import {
     onSaludChange, onSaludEventosChange, marcarEventoResuelto,
     reconciliarAhora, repararSaldoCliente, fmtCOP,
 } from '../crm-service.js';
+import { repararSaldoTesoreria } from '../tesoreria-service.js';   // B5 cierre: reparar UNA cuenta
 import { initAuditoriaCartera } from './auditoria-cartera.js';
 
 const HORAS_BACKUP_AMBAR = 26;   // el backup corre cada 24h; >26h = se saltó una corrida
@@ -79,31 +80,63 @@ function renderEstado() {
         abiertos === 0 ? 'Todo en orden' : `${abiertos} aviso(s) por revisar`;
     setIcono('stat-fallos-icon', abiertos ? 'red' : 'green');
 
+    // B5 (cierre): el mismo control corre para el libro del banco. Si CUALQUIERA falla, la
+    // tarjeta se pone en rojo — a Daniel le importa "¿cuadra el dinero?", no de qué libro.
+    const teso = _salud.reconciliacionTesoreria;
+    if (teso?.ultimaCorrida) {
+        statRecon.textContent += teso.ok
+            ? ` · bancos: ${teso.totalCuentas} cuadrada(s)`
+            : ` · bancos: ${teso.totalDescuadres} descuadre(s)`;
+        if (!teso.ok) setIcono('stat-recon-icon', 'red');
+    }
+
     renderDescuadres(recon);
 }
 
-function renderDescuadres(recon) {
+function renderDescuadres(recon, teso) {
     const sec = document.getElementById('sec-descuadres');
     const tbody = document.getElementById('descuadres-tbody');
     const descuadres = recon?.descuadres || [];
+    // B5 (cierre): las CUENTAS descuadradas van en la MISMA tabla. Para Daniel es el mismo problema
+    // ("este saldo no cuadra") y así el aviso tiene su botón de reparar donde se lee — un aviso que
+    // no se puede accionar en su propia pantalla es un callejón sin salida.
+    const cuentas = teso?.descuadres || [];
 
-    sec.hidden = descuadres.length === 0;
-    if (!descuadres.length) { tbody.innerHTML = ''; return; }
+    sec.hidden = descuadres.length === 0 && cuentas.length === 0;
+    tbody.replaceChildren();                     // DOM seguro (L-79): sin innerHTML ni interpolación
+    if (sec.hidden) return;
 
-    tbody.innerHTML = descuadres.map((d) => `
-        <tr>
-            <td style="font-weight:500;"><a href="admin-cuenta.html?id=${encodeURIComponent(d.clienteId)}">${esc(d.nombre)}</a></td>
-            <td><span class="adm-money">${esc(fmtCOP(d.saldoGuardado))}</span></td>
-            <td><span class="adm-money">${esc(fmtCOP(d.saldoCalculado))}</span></td>
-            <td><span class="adm-money">${esc(fmtCOP(d.diferencia))}</span></td>
-            <td>
-                <button class="adm-btn adm-btn--ghost adm-btn--sm" data-reparar="${esc(d.clienteId)}">Reparar</button>
-            </td>
-        </tr>`).join('');
+    const celda = (kids, negrita) => {
+        const td = document.createElement('td');
+        if (negrita) td.style.fontWeight = '500';
+        for (const k of [].concat(kids)) td.appendChild(typeof k === 'string' ? document.createTextNode(k) : k);
+        return td;
+    };
+    const plata = (v) => { const s = document.createElement('span'); s.className = 'adm-money'; s.textContent = fmtCOP(v); return s; };
+    const enlace = (href, texto) => { const a = document.createElement('a'); a.href = href; a.textContent = texto; return a; };
+    const reparar = (onClick) => {
+        const b = document.createElement('button');
+        b.className = 'adm-btn adm-btn--ghost adm-btn--sm';
+        b.textContent = 'Reparar';
+        b.addEventListener('click', () => onClick(b));
+        return b;
+    };
+    const fila = (celdas) => { const tr = document.createElement('tr'); for (const c of celdas) tr.appendChild(c); tbody.appendChild(tr); };
 
-    tbody.querySelectorAll('[data-reparar]').forEach((btn) => {
-        btn.addEventListener('click', () => handleReparar(btn.dataset.reparar, btn));
-    });
+    for (const d of descuadres) {
+        fila([
+            celda(enlace('admin-cuenta.html?id=' + encodeURIComponent(d.clienteId), d.nombre), true),
+            celda(plata(d.saldoGuardado)), celda(plata(d.saldoCalculado)), celda(plata(d.diferencia)),
+            celda(reparar((btn) => handleReparar(d.clienteId, btn))),
+        ]);
+    }
+    for (const c of cuentas) {
+        fila([
+            celda([enlace('admin-tesoreria.html', c.nombre), ' · cuenta bancaria'], true),
+            celda(plata(c.saldoGuardado)), celda(plata(c.saldoCalculado)), celda(plata(c.diferencia)),
+            celda(reparar((btn) => handleRepararCuenta(c.cuentaId, btn))),
+        ]);
+    }
 }
 
 // ─── Registro de fallos ────────────────────────────────────────────────────────
@@ -111,6 +144,9 @@ function renderDescuadres(recon) {
 const TIPO_LABEL = {
     'recalc-saldo-error': 'Falló el recálculo de un saldo',
     'sync-claim-huerfano': 'Usuario con perfil pero sin cuenta de acceso',
+    'tesoreria-descuadre': 'Una cuenta bancaria no cuadra con sus movimientos',
+    'caja-alerta': 'Movimiento de caja que pide tu atención',
+    'cartera-alerta': 'Abono con una anomalía en su registro',
 };
 
 function renderEventos() {
@@ -125,7 +161,7 @@ function renderEventos() {
             <td class="adm-td-muted" style="font-size:12px;white-space:nowrap;">${fmtDateTime(e.at)}</td>
             <td>${esc(TIPO_LABEL[e.tipo] || e.tipo)}</td>
             <td class="adm-td-muted">${e.clienteId ? `<a href="admin-cuenta.html?id=${encodeURIComponent(e.clienteId)}">${esc(e.clienteId)}</a>` : '—'}</td>
-            <td class="adm-td-muted" style="font-size:12px;max-width:280px;overflow:hidden;text-overflow:ellipsis;" title="${esc(e.error || '')}">${esc(e.error || '—')}</td>
+            <td class="adm-td-muted" style="font-size:12px;max-width:280px;overflow:hidden;text-overflow:ellipsis;" title="${esc(e.detalle || e.error || '')}">${esc(e.detalle || e.error || '—')}</td>
             <td><span class="adm-pill ${e.resuelto ? 'adm-pill--green' : 'adm-pill--red'}">${e.resuelto ? 'Resuelto' : 'Abierto'}</span></td>
             <td>${e.resuelto ? '' : `<button class="adm-btn adm-btn--ghost adm-btn--sm" data-resolver="${esc(e.id)}">Marcar resuelto</button>`}</td>
         </tr>`).join('');
@@ -150,6 +186,30 @@ async function handleReconciliar() {
     } finally {
         btn.disabled = false;
     }
+}
+
+/**
+ * B5 (cierre) · recalcula el saldo de UNA cuenta desde su ledger (CF `repararSaldoTesoreria`, la
+ * MISMA fórmula del trigger). No crea ni borra plata: vuelve a sumar el libro, que es la verdad.
+ */
+function handleRepararCuenta(cuentaId, btn) {
+    admConfirm('¿Recalcular el saldo de esta cuenta desde sus movimientos? Es una operación segura: no crea ni borra plata, solo vuelve a sumar el libro.', async () => {
+        btn.disabled = true;
+        let reparado = false;
+        try {
+            const r = await repararSaldoTesoreria({ cuentaId });
+            reparado = true;
+            admToast('Saldo de la cuenta recalculado: ' + fmtCOP(r?.saldo?.monto ?? r?.saldo ?? 0));
+            await reconciliarAhora();   // refresca la lista en vivo
+        } catch (err) {
+            // Un fallo del REFRESCO no es un fallo de la REPARACIÓN (ya quedó en la base).
+            admToast(reparado
+                ? 'Saldo recalculado, pero no se pudo refrescar la lista. Recarga la página.'
+                : 'No se pudo recalcular: ' + (err?.message || err), reparado ? 'success' : 'danger', 6000);
+        } finally {
+            btn.disabled = false;
+        }
+    });
 }
 
 function handleReparar(clienteId, btn) {

@@ -103,3 +103,75 @@ test('reconciliación · entradas inválidas no rompen', () => {
     assert.equal(compararSaldos(null, null).totalClientes, 0);
     assert.equal(compararSaldos(undefined, undefined).ok, true);
 });
+
+// ─── F-TESORERÍA B5 (cierre) · el mismo control para el libro del BANCO ────────
+const { compararSaldosCuentas } = reconMod;
+const cta = (id, ini, act, extra = {}) => ({
+    id, nombre: `Cuenta ${id}`, tipo: 'banco',
+    saldoInicial: { monto: ini, moneda: 'COP' },
+    ...(act === null ? {} : { saldoActual: { monto: act, moneda: 'COP' } }),
+    ...extra,
+});
+const mov = (cuentaId, tipo, monto, extra = {}) => ({
+    cuentaId, tipo, monto: { monto, moneda: 'COP' }, estado: 'activo', fecha: '2026-07-20', ...extra,
+});
+
+test('tesorería · cuentas cuadradas = sin descuadres', () => {
+    const r = compararSaldosCuentas(
+        [cta('A', 100000, 400000), cta('B', 0, 0)],
+        new Map([['A', [mov('A', 'ingreso_venta', 300000)]]]),
+    );
+    assert.equal(r.ok, true);
+    assert.equal(r.totalCuentas, 2);
+    assert.equal(r.totalDescuadres, 0);
+});
+
+test('tesorería · el trigger falló en silencio → descuadre con la diferencia exacta', () => {
+    const r = compararSaldosCuentas(
+        [cta('A', 0, 0)],                                  // saldoActual quedó viejo
+        new Map([['A', [mov('A', 'abono_cartera', 250000)]]]),
+    );
+    assert.equal(r.ok, false);
+    assert.deepEqual(r.descuadres[0], {
+        cuentaId: 'A', nombre: 'Cuenta A', saldoGuardado: 0, saldoCalculado: 250000, diferencia: 250000,
+    });
+});
+
+test('tesorería · las VIRTUALES (caja/bóveda) se saltan: su plata la cuadra su propio módulo', () => {
+    const r = compararSaldosCuentas(
+        [{ id: 'caja', nombre: 'Caja', tipo: 'caja' }, { id: 'bov', nombre: 'Bóveda', tipo: 'boveda' }, cta('A', 0, 0)],
+        new Map(),
+    );
+    assert.equal(r.totalCuentas, 1, 'solo la cuenta REAL entra al control');
+    assert.equal(r.ok, true);
+});
+
+test('tesorería · cuenta NUEVA sin saldoActual todavía → NO es falsa alarma', () => {
+    // Kary crea la cuenta con $500.000 de arranque; el trigger aún no ha corrido.
+    const r = compararSaldosCuentas([cta('A', 500000, null)], new Map());
+    assert.equal(r.ok, true, 'sin saldoActual se compara contra el saldoInicial, no contra 0');
+});
+
+test('tesorería · lo que NO es plata firme no cuenta (anulado/pendiente/rechazado)', () => {
+    const r = compararSaldosCuentas(
+        [cta('A', 0, 100000)],
+        new Map([['A', [
+            mov('A', 'ingreso_venta', 100000),
+            mov('A', 'abono_cartera', 999000, { estado: 'anulado' }),        // D9: sellado al anular el abono
+            mov('A', 'retiro_socia', 500000, { estado: 'pendiente_aprobacion' }),
+            mov('A', 'ajuste_conciliacion', 700000, { estado: 'rechazado', direccion: 'entrada' }),
+        ]]]),
+    );
+    assert.equal(r.ok, true, 'solo suma lo activo — misma regla que el saldo de la pantalla');
+});
+
+test('tesorería · movimientos huérfanos (su cuenta ya no existe) se ignoran', () => {
+    const r = compararSaldosCuentas([cta('A', 0, 0)], new Map([['ZZZ', [mov('ZZZ', 'ingreso_venta', 999)]]]));
+    assert.equal(r.ok, true);
+});
+
+test('tesorería · sin cuentas → cuadrado (estado-cero honesto, no explota)', () => {
+    const r = compararSaldosCuentas([], new Map());
+    assert.deepEqual({ ok: r.ok, totalCuentas: r.totalCuentas, totalDescuadres: r.totalDescuadres },
+        { ok: true, totalCuentas: 0, totalDescuadres: 0 });
+});

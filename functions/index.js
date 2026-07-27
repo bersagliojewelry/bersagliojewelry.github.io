@@ -365,7 +365,14 @@ exports.generarCorte = onCall({ region: 'us-central1', timeoutSeconds: 300 }, as
 
 exports.reconciliarCartera = onCall({ region: 'us-central1', timeoutSeconds: 300 }, async (request) => {
     await verifyRole(request.auth, 'admin');
-    return require('./salud').runReconciliacion(db, 'manual');
+    const salud = require('./salud');
+    const cartera = await salud.runReconciliacion(db, 'manual');
+    // F-TESORERÍA B5 (cierre): el mismo botón cuadra TAMBIÉN el libro del banco. Aislado: si el de
+    // tesorería falla, el de cartera ya quedó escrito y la respuesta lo dice (no se traga el error).
+    let tesoreria = null;
+    try { tesoreria = await salud.runReconciliacionTesoreria(db, 'manual'); }
+    catch (e) { console.error('[reconciliarCartera] tesorería falló:', e); tesoreria = { error: true }; }
+    return { ...cartera, tesoreria };
 });
 
 // ─── repararSaldo (F6 frente D) ──────────────────────────────────────────────

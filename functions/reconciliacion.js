@@ -63,4 +63,58 @@ function compararSaldos(clientes, movimientosPorCliente) {
     };
 }
 
-module.exports = { compararSaldos };
+/**
+ * F-TESORERÍA B5 (cierre) · el mismo control, para el libro del BANCO. Compara el `saldoActual` de
+ * cada cuenta (lo materializa el trigger `recalcSaldoTesoreria`) contra el recompute desde su ledger
+ * (`computeSaldoCuenta`, la MISMA fórmula que ve la pantalla — inv.2). Un descuadre = el trigger
+ * falló en silencio o hay un dato corrupto: exactamente el fallo que nadie nota hasta que la plata
+ * no aparece.
+ *
+ * Política de bordes (deliberada):
+ *  - Las cuentas VIRTUALES (caja/bóveda) se SALTAN: no tienen ledger propio ni `saldoActual` — su
+ *    plata la controlan el arqueo del turno y el ledger de bóveda, cada uno con su propio cuadre (D1).
+ *  - Cuenta sin movimientos → calculado = su `saldoInicial` (si guarda otra cosa, descuadra).
+ *  - `saldoActual` ausente (cuenta recién creada, antes del primer trigger) → se trata como el
+ *    saldoInicial, no como 0: si no, TODA cuenta nueva con saldo de arranque daría falsa alarma.
+ *  - Movimientos huérfanos (su cuenta ya no existe) se IGNORAN.
+ *
+ * @param {Array<{id:string, nombre?:string, tipo?:string, saldoInicial?:{monto:number}, saldoActual?:{monto:number}}>} cuentas
+ * @param {Map<string, Array<object>>|Object<string, Array<object>>} movsPorCuenta
+ * @returns {{ totalCuentas:number, totalDescuadres:number, ok:boolean, descuadres:Array<object> }}
+ */
+function compararSaldosCuentas(cuentas, movsPorCuenta) {
+    const { computeSaldoCuenta, TIPOS_VIRTUALES } = require('./tesoreria-core.js');
+    const lista = Array.isArray(cuentas) ? cuentas : [];
+    const movsDe = (id) => {
+        if (movsPorCuenta instanceof Map) return movsPorCuenta.get(id) || [];
+        if (movsPorCuenta && typeof movsPorCuenta === 'object') return movsPorCuenta[id] || [];
+        return [];
+    };
+    const monto = (v) => (v && typeof v.monto === 'number' && isFinite(v.monto) ? v.monto : null);
+
+    const reales = lista.filter((c) => c && !TIPOS_VIRTUALES.includes(c.tipo));
+    const descuadres = [];
+    for (const cta of reales) {
+        const inicial = monto(cta.saldoInicial) ?? 0;
+        const guardado = monto(cta.saldoActual) ?? inicial;
+        const calculado = computeSaldoCuenta(inicial, movsDe(cta.id));
+        if (guardado !== calculado) {
+            descuadres.push({
+                cuentaId: cta.id,
+                nombre: cta.nombre || '(sin nombre)',
+                saldoGuardado: guardado,
+                saldoCalculado: calculado,
+                diferencia: calculado - guardado,
+            });
+        }
+    }
+
+    return {
+        totalCuentas: reales.length,
+        totalDescuadres: descuadres.length,
+        ok: descuadres.length === 0,
+        descuadres,
+    };
+}
+
+module.exports = { compararSaldos, compararSaldosCuentas };

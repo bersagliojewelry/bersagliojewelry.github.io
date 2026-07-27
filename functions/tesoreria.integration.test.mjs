@@ -396,7 +396,7 @@ test('D6 · la whitelist cubre exactamente los campos de caja + fiscal que D6 go
 // del banco nunca cerraba. Fix: la MISMA tx del traslado escribe la pata `consignacion_in`.
 // ⚠️ ZONA CALIENTE R3 (toca la CF de bóveda, ya en producción): estos tests van ANTES del código.
 import cajaCore from './caja-core.js';
-const { registrarTrasladoCore } = cajaCore;
+const { registrarTrasladoCore, reversoCore, aprobarEventoCajaCore } = cajaCore;
 
 async function limpiarBoveda() {
     const snap = await db.collection('bovedaMovimientos').get();
@@ -538,4 +538,96 @@ test('V18 · el efectivo SIEMPRE pasa por la bóveda: no existe un traslado banc
     await cuenta('BANCO', { saldoInicial: 1000000 });
     await assert.rejects(trasladar({ opId: 'BC', tipo: 'banco_a_cajon', monto: 100000, cuentaId: 'BANCO' }), (e) => e instanceof Error,
         'banco→cajón directo NO es un tipo válido (un solo punto de entrada del efectivo)');
+});
+
+// ─── B6 · P0-1 · La REVERSA de un traslado con pata bancaria debe netear los DOS libros ─────────
+// Hallazgo del rompimiento (2026-07-27): V1/V18 añadieron un TERCER libro (el banco) al traslado de
+// bóveda, pero el camino de DESHACER —`reversoCore` + su aprobación— seguía neteando solo la bóveda
+// (y el acumulador del turno, fix de 2026-07-10). La pata bancaria quedaba VIVA: reversar una
+// consignación devolvía la plata a la bóveda SIN quitarla del banco ⇒ la consolidada inventaba
+// plata. Invisible para el cuadre 3:30 (compara cada libro CONSIGO MISMO, no entre libros).
+// Doctrina del fix = la MISMA que la anulación del abono (D9): la pata se SELLA `estado:'anulado'`
+// (append-only; el recompute solo suma 'activo') y lo ya CUADRADO contra el extracto es intocable.
+// ⚠️ ZONA CALIENTE R3: estos tests van ANTES del código.
+const reversar = (opId, reversaA) => reversoCore(db, { opId, reversaA, autor: 'karyUid', motivo: 'consignación mal digitada' });
+const aprobar = (opId) => aprobarEventoCajaCore(db, { opId, aprobadoPor: 'ownerUid', rol: 'owner' });
+
+test('B6 · reversar una CONSIGNACIÓN netea AMBOS libros: la plata vuelve a la bóveda y sale del banco', async () => {
+    await limpiarBoveda();
+    await cuenta('BANCO', { saldoInicial: 0 });
+    await sembrarBoveda(1000000);
+    const consolidadaAntes = 1000000 + (await saldoDe('BANCO'));
+
+    await trasladar({ opId: 'RVT1', tipo: 'boveda_a_banco', monto: 400000, cuentaId: 'BANCO' });
+    assert.equal(await saldoDe('BANCO'), 400000, 'la consignación entró al banco');
+
+    await reversar('RVT1-REV', 'RVT1');
+    assert.equal(await saldoDe('BANCO'), 400000, 'SoD: el reverso PENDIENTE todavía no netea nada');
+    assert.equal((await pataDe('RVT1')).data().estado, 'activo');
+
+    await aprobar('RVT1-REV');
+    assert.equal(await saldoBoveda(), 1000000, 'la plata vuelve a la bóveda');
+    const pata = (await pataDe('RVT1')).data();
+    assert.equal(pata.estado, 'anulado', 'la pata bancaria se SELLA (append-only, no se borra)');
+    assert.equal(pata.reversadoPor.opId, 'RVT1-REV', 'queda el rastro de quién la neteó');
+    assert.equal(await saldoDe('BANCO'), 0, 'el banco deja de contarla');
+    assert.equal((await saldoBoveda()) + (await saldoDe('BANCO')), consolidadaAntes,
+        'CONSERVACIÓN: deshacer no puede CREAR plata');
+});
+
+test('B6 · reversar un RETIRO DE BANCO (V18) es el espejo: la bóveda baja y la cuenta la recupera', async () => {
+    await limpiarBoveda();
+    await cuenta('BANCO', { saldoInicial: 2000000 });
+    await sembrarBoveda(100000);
+    const consolidadaAntes = 100000 + (await saldoDe('BANCO'));
+
+    await trasladar({ opId: 'RVT2', tipo: 'banco_a_boveda', monto: 500000, cuentaId: 'BANCO' });
+    assert.equal(await saldoDe('BANCO'), 1500000);
+
+    await reversar('RVT2-REV', 'RVT2');
+    await aprobar('RVT2-REV');
+
+    assert.equal(await saldoBoveda(), 100000, 'el efectivo sale de la bóveda');
+    assert.equal((await pataDe('RVT2')).data().estado, 'anulado');
+    assert.equal(await saldoDe('BANCO'), 2000000, 'la cuenta recupera lo que nunca salió');
+    assert.equal((await saldoBoveda()) + (await saldoDe('BANCO')), consolidadaAntes,
+        'CONSERVACIÓN: deshacer no puede DESAPARECER plata');
+});
+
+test('B6 · lo ya CUADRADO contra el extracto es intocable: la reversa se rechaza (misma doctrina del turno sellado)', async () => {
+    await limpiarBoveda();
+    await cuenta('BANCO', { saldoInicial: 0 });
+    await sembrarBoveda(1000000);
+    await trasladar({ opId: 'RVT3', tipo: 'boveda_a_banco', monto: 400000, cuentaId: 'BANCO' });
+    await marcarConciliadoCore(db, { cuentaId: 'BANCO', periodo: '2026-07', opIds: ['RVT3-teso'], actor: 'karyUid' });
+
+    await assert.rejects(reversar('RVT3-REV', 'RVT3'), /cuadrad|extracto/i,
+        'no se reescribe un mes ya cuadrado: eso es un ajuste nuevo, no una reversa');
+    assert.equal((await db.doc('bovedaMovimientos/RVT3-REV').get()).exists, false, 'sin asiento de reversa huérfano');
+    assert.equal(await saldoDe('BANCO'), 400000, 'el banco queda como estaba');
+});
+
+test('B6 · retrocompatible: reversar un traslado SIN pata bancaria se comporta EXACTO como antes', async () => {
+    await limpiarBoveda();
+    await sembrarBoveda(500000);
+    await trasladar({ opId: 'RVT4', tipo: 'boveda_a_banco', monto: 200000 });   // consignación vieja, sin cuenta
+    assert.equal(await saldoBoveda(), 300000);
+
+    await reversar('RVT4-REV', 'RVT4');
+    await aprobar('RVT4-REV');
+    assert.equal(await saldoBoveda(), 500000, 'la bóveda se netea igual que siempre');
+    assert.equal((await db.collection('movimientosTesoreria').get()).size, 0, 'no inventa patas donde no las hay');
+});
+
+test('B6 · la reversa NO se puede aprobar dos veces (el banco no se netea dos veces)', async () => {
+    await limpiarBoveda();
+    await cuenta('BANCO', { saldoInicial: 0 });
+    await sembrarBoveda(1000000);
+    await trasladar({ opId: 'RVT5', tipo: 'boveda_a_banco', monto: 400000, cuentaId: 'BANCO' });
+    await reversar('RVT5-REV', 'RVT5');
+    await aprobar('RVT5-REV');
+    const r2 = await aprobar('RVT5-REV');
+    assert.equal(r2.yaExistia, true, 'aprobar de nuevo es idempotente');
+    assert.equal(await saldoBoveda(), 1000000);
+    assert.equal(await saldoDe('BANCO'), 0, 'el banco quedó en 0, no en −400.000');
 });

@@ -360,6 +360,16 @@ async function reversoCore(db, input = {}, opts = {}) {
         if (!yaRev.empty) throw new PedidoError('failed-precondition', 'Ese movimiento ya fue reversado.');
 
         const orig = origSnap.data();
+        // V1/V18 (B6) · si el traslado cruzó al BANCO, su pata se netea al APROBAR (abajo). Pero lo
+        // que ya se cuadró contra el extracto es intocable (misma doctrina que el turno sellado y que
+        // `anularAbonoCartera`) → se avisa AQUÍ, no después de que el dueño firme en vano.
+        if (PATA_POR_TIPO[orig.tipo]) {
+            const pataSnap = await tx.get(db.doc(`movimientosTesoreria/${reversaA}-teso`));
+            if (pataSnap.exists && pataSnap.data().conciliado === true) {
+                throw new PedidoError('failed-precondition',
+                    `Ese movimiento ya quedó CUADRADO con el extracto de ${pataSnap.data().periodoConciliado || 'un mes cerrado'}: no se puede reversar. Registra un ajuste del cuadre (pide aprobación del dueño).`);
+            }
+        }
         const delta = -(orig.delta || 0);
         // DESTRUCTIVO (§9.1): nace PENDIENTE → NO escribe boveda/main (no cuenta hasta que el owner apruebe).
         // Hereda turnoId + tipo del original (§traslado-duplicado 2026-07-10): al aprobarse, la ecuación del
@@ -474,11 +484,34 @@ async function aprobarEventoCajaCore(db, input = {}, opts = {}) {
         const CAMPO_ACUM = { cajon_a_boveda: 'cajonABoveda', boveda_a_cajon: 'bovedaACajon' };
         const campoAcum = (ev.tipo === 'reverso' && ev.turnoId && CAMPO_ACUM[ev.reversaTipo]) ? CAMPO_ACUM[ev.reversaTipo] : null;
         const turnoSnap = campoAcum ? await tx.get(db.doc(`turnos/${ev.turnoId}`)) : null;   // lectura antes de escribir
+        // V1/V18 (B6) · el traslado reversado pudo cruzar al BANCO. Deshacer tiene que netear TODOS
+        // los libros, no solo la bóveda: si la pata bancaria sigue viva, la plata queda a la vez en la
+        // bóveda y en el banco (la consolidada inventa plata, y el cuadre 3:30 no lo ve porque compara
+        // cada libro CONSIGO MISMO). Se SELLA `estado:'anulado'` — append-only, igual que D9.
+        const pataRef = (ev.tipo === 'reverso' && PATA_POR_TIPO[ev.reversaTipo])
+            ? db.doc(`movimientosTesoreria/${ev.reversaA}-teso`) : null;
+        const pataSnap = pataRef ? await tx.get(pataRef) : null;   // lectura antes de escribir
         if (ev.estado === 'aprobado') return { opId, estado: 'aprobado', saldo: base, yaExistia: true };   // base ya lo incluye
         if (ev.estado !== 'pendiente_aprobacion') throw new PedidoError('failed-precondition', 'El evento no está pendiente de aprobación.');
         const delta = ev.delta || 0;
         const nuevoSaldo = base + delta;
         if (delta < 0 && nuevoSaldo < 0) throw new PedidoError('failed-precondition', 'Aprobar dejaría la bóveda negativa.');
+        if (pataSnap && pataSnap.exists) {
+            const p = pataSnap.data();
+            // El extracto ya sellado no se reescribe (espejo de `anularAbonoCartera`): corregirlo es
+            // un ajuste del cuadre, no una edición del pasado.
+            if (p.conciliado === true) {
+                throw new PedidoError('failed-precondition',
+                    `Ese movimiento ya quedó CUADRADO con el extracto de ${p.periodoConciliado || 'un mes cerrado'}: no se puede reversar. Registra un ajuste del cuadre (pide aprobación del dueño).`);
+            }
+            if ((p.estado || 'activo') === 'activo') {
+                tx.update(pataRef, {
+                    estado: 'anulado',                       // el recompute solo suma 'activo' ⇒ deja de contar
+                    reversadoPor: { opId, uid: aprobadoPor, at: FieldValue.serverTimestamp() },
+                    motivoAnulacion: ev.motivo || null,
+                });
+            }
+        }
         tx.update(movRef, { estado: 'aprobado', aprobadoPor, aprobadoEn: FieldValue.serverTimestamp() });
         let turnoSellado = false;
         if (campoAcum && turnoSnap) {

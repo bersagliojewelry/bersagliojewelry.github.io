@@ -373,7 +373,7 @@ Reglas: `firestore-rules.test.mjs` gana casos: write directo a las 2 colecciones
   sección); y el subtítulo de "Plata total" en Hoy se corta en pantallas medianas.
 - Capacidades-flag T-16/18/19 + rol `caja` (F2.0 matiz).
 - Auto-posting Wompi→tesorería (F-REPORTES).
-- Decisión Daniel pendiente del v5 §8: destino de los 344 clientes en la limpieza.
+- ~~Decisión Daniel pendiente del v5 §8: destino de los 344 clientes en la limpieza.~~ **RESUELTA 2026-07-27**: se purgan (todo el panel es prueba salvo piezas y colecciones) → **TODO-80**.
 
 ## §9 — Mapa de ejecución B5 [OPUS-4.8, mapeo del 2026-07-23 · pura ubicación, sin re-diseño]
 

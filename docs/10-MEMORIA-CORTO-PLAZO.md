@@ -24,7 +24,6 @@
 
 | ID | Item | Estado | Bloqueo |
 |---|---|---|---|
-| TODO-03/04 | (baja) headers `99`→`## NN.` · anomalías 🔧 en `skills/` | 🔲 | baja |
 | TODO-78 | **F-TESORERÍA** (SSoT spec `2026-07-18-f-tesoreria-DISENO.md`, prevalencia §0.8>§0.7>§0.6>cuerpo; legal Daniel → `42-LEGAL §7`). **B0-B5 ✅ COMPLETO EN PROD · SIGUE: B6** (detalle → Foco). | 🟢 | B6 |
 | TODO-07 | **Contenido real web**: reseñas Maps (Nosotros), Films, feed Redes (`home-media.js`). | 🔲 | cliente entrega datos |
 | TODO-08 | **Hardening Fase 2**: Tier A ✅; pend. CSP/reglas/claims (Tier B/C) → `41-SEGURIDAD §1.5` | 🟡 | Tier B = emulador+deploy gated |
@@ -45,7 +44,7 @@
 | TODO-50 | **Catálogo de lujo** — imagen real + filtros gema/tipo + badges → §133.2(B/C). (Taxonomía=57.) | 🔲 | tras 44 |
 | TODO-71 | **Endurecer gates del cerebro (cross-repo, §175)**: (a) `[[feedback_*]]` vs memoria del harness (HUECO B); (b) `ssotFacts` / dup 05↔10 (check #8 inerte, HUECO C); (c) Sonda 5 `auditoria-cerebro`. | 🔲 | cars-operador |
 | TODO-57 | **Modelo GEMA** (§150-§151; SSoT spec). HECHO: fundación+form+backfill 32/32+JSON-LD. **Pend**: `settings/gems`+bake · filtros (TODO-50) · live form · D.0 whitelist `badgeGem`/`gemFilterIds` en `PUBLIC_SPEC_KEYS` (`generate-pieces.mjs:676`). | 🟡 | D.0 (whitelist gema) |
-> ✅ **Cerrados** (→ ADRs vía `00-INDICE`): **77** (shard §G.5: `00`→`00c` §158-§175 · `31`→**`35-LECCIONES-DINERO`** nueva; `30` y CLAUDE.md destilados) · **79** (fix central `error-format.js`, 12/12 → L-84) · 75 (§183; n8n/Canva PARQUEADOS) · 73·74·72·41·70·69 (§172-§179) · 37/65/63/49/42/66/64/21/40/32 + 62-44. Pend Daniel: fotos IA.
+> ✅ **Cerrados** (→ ADRs vía `00`): **03/04** (nits de formato: se atienden al tocar cada archivo) · **77** (shard §G.5: `00`→`00c` §158-§175 · `31`→**`35-LECCIONES-DINERO`** nueva; `30` y CLAUDE.md destilados) · **79** (fix central `error-format.js`, 12/12 → L-84) · 75 (§183; n8n/Canva PARQUEADOS) · 73·74·72·41·70·69 (§172-§179) · 37/65/63/49/42/66/64/21/40/32 + 62-44. Pend Daniel: fotos IA.
 
 ---
 
@@ -53,6 +52,6 @@
 
 > 2026-07-25 · **[FABLE-5 · líder de pautas]** Meta Business de Bersaglio CONFIGURADO (portfolio renombrado, socio Altorra con acceso, mapa de cuentas y saldos). Detalle + pendientes de Daniel/Kary → **`44-PAUTA-META`** (lóbulo nuevo).
 > 2026-07-25 · **[OPUS-5] TODO-79 ✅ + B5·V17 ✅ CERRADO (código + reglas + vivo)**. TODO-79 PRIMERO a propósito: un rechazo "abre la caja" que llega como "Ocurrió un error" empuja a marcar otro medio de pago — el control necesita voz antes que dientes. **Comité ×3 por iniciativa propia (§3.7)** + 2 peer reviews → 4 veredictos (spec §9). Verifiqué y **REFUTÉ** su "punto ciego fatal" (ningún reporte suma los `ingresos` del turno como venta). **E2E vivo (prod, owner)** de V17 + cierre en REGLAS + D9 → **spec §9**. Cazó defectos que ningún test ve: clave cruda `abono_cartera` en la auditoría · avisos de dinero sin explicación en Salud (mostraba `error`, no `detalle`). El test de PARIDAD cazó que el contrato de estados vive en los DOS lados y yo solo toqué uno. **Dudas declaradas (R7)**: sin flag de apagado a propósito (apagarlo REABRE el agujero; rollback = revert + CI) · abonos efectivo HISTÓRICOS sin pata = **línea de corte declarada, sin backfill** (inyectar efectivo en arqueos firmados = fabricar evidencia).
-> 2026-07-25 · **[OPUS-5] B5 COMPLETO**: el cuadre diario 3:30 ahora vigila también el saldo de cada CUENTA (comparador puro + 7 tests + aviso accionable). De paso: la tabla de avisos de Salud mostraba solo `error` → las alertas de dinero (caja/cartera) se veían SIN explicación; y el aviso nuevo mandaba a un botón "Reparar" que no existía para cuentas → ahora existe (DOM seguro, L-79).
+> 2026-07-25 · **[OPUS-5] B5 COMPLETO**: el cuadre diario 3:30 ahora vigila también el saldo de cada CUENTA (comparador puro + 7 tests). De paso: los avisos de dinero en Salud se veían SIN explicación (mostraba `error`, no `detalle`) y el aviso nuevo mandaba a un botón "Reparar" inexistente → ahora existe (DOM seguro, L-79).
 > 2026-07-24 · **[OPUS-5] B4·D6·V1·V18 ✅ desplegado + E2E vivo**. Pata `{opId}-teso` en la misma tx; cuenta inválida ⇒ aborta todo. → **spec §9**. *(B0-B3: commits + §192.)*
 > **Pend Daniel/no-gate**: llenar "Datos del negocio" en el panel (§192 I-03; datos = identidad LEGAL-08) · marcar 7 avisos test-era en Salud (I-04) · consejo+abogado apartados (39) · instructivo Kary · push A.6 · fotos (67). ADC gcloud caducado (CLI OK). **Precios = paso FINAL.**

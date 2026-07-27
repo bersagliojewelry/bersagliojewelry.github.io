@@ -3,7 +3,7 @@
 > **Lóbulo de dominio** (hijo de `40-LOBULOS-DOMINIO.md`, §G.4 neurogénesis 2026-07-25). Publicidad
 > pagada de Bersaglio: estructura de Meta Business, activos, saldos y quién opera qué.
 >
-> **Quién manda aquí**: el **líder de pautas** (operador-inmobiliaria, `[FABLE-5]`) por mandato de
+> **Quién manda aquí** (CONFIRMADO por Daniel 2026-07-25): el **líder de pautas** (operador-inmobiliaria, `[FABLE-5]`) por mandato de
 > Daniel — opera las pautas de Inmobiliaria **y** de Bersaglio. Las campañas de Bersaglio se montan
 > desde el Business de Altorra. Skills: `pauta-captacion` · voz → `catalogo-voz-bersaglio`.
 >

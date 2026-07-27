@@ -38,8 +38,12 @@ partida doble · multi-moneda. Tampoco toca el módulo de piezas: una compra NO 
 
 - **A1 · El ledger es POR DOCUMENTO, no saldo corriente.** La cartera de clientas lleva saldo
   corriente; aquí NO alcanza: el valor del módulo es *"esta factura vence el viernes"*, y eso exige
-  que cada factura tenga su propio saldo y su vencimiento. `proveedores/{id}/documentos/{opId}`
-  append-only.
+  que cada factura tenga su propio saldo y su vencimiento.
+  `proveedores/{id}/comprasDocumentos/{opId}` append-only (+ `comprasMovimientos` para pagos y
+  cruces). ⚠️ **Nombres con prefijo a propósito** (decidido al implementar C0): C4 necesitará un
+  *collection group query* de vencimientos, y ese barre TODAS las subcolecciones con ese nombre en
+  la base — un genérico `documentos` traería basura ajena el día que otra entidad use la palabra.
+  Renombrar hoy no cuesta nada; después es migración de datos.
 - **A2 · Un pago apunta a UN documento** (`documentoId`), y un documento admite N pagos (pago
   parcial = D0). Sin "aplicaciones" multi-factura en v1: es la complejidad que hunde estos módulos,
   y con el volumen de Kary no paga su costo. El anticipo se cruza con UN cruce explícito (A3).
@@ -152,9 +156,22 @@ que no se descubra como bug.
 
 ## §5 — Bloques de ejecución (propuesta, cada uno con tests del ESCENARIO)
 
-- **C0 · Fundación**: **(0a) el guard por ORIGEN (A7) con test primero — se hace ANTES de todo lo
-  demás, porque es la costura que hace posible la convivencia manual/sistema y toca zona caliente R3.**
-  Luego: modelo + reglas (deny-all write, CF única) + índices + `compras-core.js` puro.
+- **C0 · Fundación** — **PARCIAL ✅ (2026-07-27 `[OPUS-5]`)**, en este orden:
+  - **(0a) el guard por ORIGEN (A7) con test primero** — ⏸️ **NO SE HIZO: espera el veredicto del
+    consejo externo**, que lo interroga explícitamente (pregunta C del prompt). Decisión de Daniel:
+    no construir justo la pieza que se está mandando a refutar. Es la costura que hace posible la
+    convivencia manual/sistema y toca zona caliente R3 ⇒ cuando se haga, test primero.
+  - ✅ **`functions/compras-core.js`** — núcleo PURO (sin firebase-admin, espejable en cliente):
+    signos derivados del tipo · `computeSaldoDocumento`/`computeSaldoProveedor` por recompute ·
+    `estadoVencimiento` · `llaveFactura` (R2a) · `esPagoGemelo` (R2b) · `excedenteDePago` (R4) ·
+    `validarDocumento`/`validarPago` (D0 + R1 + 771-5). **30/30 tests** (`npm run test:compras`).
+  - ✅ **Reglas** `firestore.rules`: `proveedores/{id}` + `comprasDocumentos` + `comprasMovimientos`
+    + `facturasLlave`, todo **`write:false`** (CF única, A5) y `read: isAdmin()` (la cajera no ve la
+    deuda del negocio). **+3 tests de reglas ⇒ suite 248→251 verde**, incluido el que prueba que ni
+    el owner puede borrar la llave de unicidad (borrarla = poder pagar dos veces la misma factura).
+  - ✅ **Índices** (`firestore.indexes.json`, 9→12): vencimientos por collection-group, ficha del
+    proveedor por fecha, movimientos por documento. ⚠️ **Sin desplegar** (deploy = manual, L-22).
+  - Cero regresión verificada: build 4.87s · tesorería 15/15 · paridad 5/5.
 - **C1 · Núcleo**: CFs (crear proveedor · registrar documento · registrar pago con pata · cruzar
   anticipo · anular) + recompute + tests §3. CERO UI.
 - **C2 · Página "Proveedores"**: directorio + ficha con saldo y documentos + estado-cero honesto.

@@ -21,6 +21,7 @@
     "test:caja:integration": "firebase emulators:exec --only firestore --project demo-bersaglio \"node --test functions/caja.integration.test.mjs\"",
     "test:cartera:integration": "firebase emulators:exec --only firestore --project demo-bersaglio \"node --test functions/cartera.integration.test.mjs\"",
     "test:tesoreria": "node --test functions/tesoreria-core.test.mjs",
+    "test:compras": "node --test functions/compras-core.test.mjs",
     "test:teso-paridad": "node --test tests/tesoreria-paridad.test.mjs",
     "test:teso-vista": "node --test tests/tesoreria-vista.test.mjs",
     "test:tesoreria:integration": "firebase emulators:exec --only firestore --project demo-bersaglio \"node --test functions/tesoreria.integration.test.mjs\"",

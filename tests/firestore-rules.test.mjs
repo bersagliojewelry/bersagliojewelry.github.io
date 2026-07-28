@@ -140,6 +140,13 @@ before(async () => {
         await setDoc(doc(db, 'cuentasTesoreria/tesBanco'), { nombre: 'Bancolombia', banco: 'Bancolombia', tipo: 'banco', titular: 'kary', esDeSocia: false, activa: true, saldoInicial: { monto: 500000, moneda: 'COP' }, fechaCorte: '2026-07-01' });
         await setDoc(doc(db, 'movimientosTesoreria/tmov1'), { cuentaId: 'tesBanco', tipo: 'ingreso_venta', monto: { monto: 100000, moneda: 'COP' }, fecha: '2026-07-05', estado: 'activo' });
 
+        // ─── F-COMPRAS C0: proveedores + ledger por documento (CF-only) ──────────
+        // SSoT: docs/superpowers/specs/2026-07-27-f-compras-DISENO.md (A1/A5).
+        await setDoc(doc(db, 'proveedores/provSeed'), { nombre: 'Taller La Esmeralda', nit: '900123456', regimen: 'no_responsable_iva', activo: true });
+        await setDoc(doc(db, 'proveedores/provSeed/comprasDocumentos/cdoc1'), { tipo: 'factura', valor: { monto: 500000, moneda: 'COP' }, fecha: '2026-07-20', venceEl: '2026-08-20', estado: 'activo' });
+        await setDoc(doc(db, 'proveedores/provSeed/comprasMovimientos/cmov1'), { tipo: 'pago', documentoId: 'cdoc1', monto: { monto: 200000, moneda: 'COP' }, fecha: '2026-07-25', estado: 'activo' });
+        await setDoc(doc(db, 'proveedores/provSeed/facturasLlave/900123456__F1'), { documentoId: 'cdoc1' });
+
         // ─── F2.2: catálogo de servicios (owner-write acotado, POS-read, soft-delete) ──
         await setDoc(doc(db, 'servicios/srvSeed'), { codigo: 'GRAB', nombre: 'Grabado láser', precio: 20000, activo: true, naturaleza: 'servicio' });
         await setDoc(doc(db, 'servicios/srvSeed/historial/h1'), { precioAntes: 15000, precioDespues: 20000, cambiadoPor: 'ownerUid', cambiadoEn: new Date() });
@@ -444,6 +451,30 @@ test('F-TESO · movimientosTesoreria (ledger append-only): admin/owner leen; CF-
     await assertFails(setDoc(doc(asUser('ownerUid'), 'movimientosTesoreria/tmov2'), { cuentaId: 'tesBanco', tipo: 'gasto', monto: { monto: 100 } })); // create CF-only
     await assertFails(updateDoc(doc(asUser('ownerUid'), 'movimientosTesoreria/tmov1'), { estado: 'rechazado' }));  // inmutable
     await assertFails(deleteDoc(doc(asUser('ownerUid'), 'movimientosTesoreria/tmov1')));          // jamás se borra
+});
+
+// ─── F-COMPRAS C0: proveedores = CF-only, read admin/owner (A5) ───────────────
+test('F-COMPRAS · proveedores: admin/owner leen; la cajera NO; nadie escribe por fuera (CF-only)', async () => {
+    await assertSucceeds(getDoc(doc(asUser('adminUid'), 'proveedores/provSeed')));
+    await assertSucceeds(getDoc(doc(asUser('ownerUid'), 'proveedores/provSeed')));
+    await assertFails(getDoc(doc(asClaim('cajT', 'caja'), 'proveedores/provSeed')));              // la deuda del negocio no es de la cajera
+    await assertFails(getDoc(doc(asUser('editorUid'), 'proveedores/provSeed')));                  // editor tampoco (es admin+)
+    await assertFails(setDoc(doc(asUser('adminUid'), 'proveedores/hack'), { nombre: 'x', activo: true }));          // create CF-only
+    await assertFails(updateDoc(doc(asUser('ownerUid'), 'proveedores/provSeed'), { saldo: { monto: 0 } }));         // el saldo es recompute, no un campo que se pise
+});
+test('F-COMPRAS · el ledger por documento es append-only: ni el owner lo crea, edita ni borra', async () => {
+    await assertSucceeds(getDoc(doc(asUser('adminUid'), 'proveedores/provSeed/comprasDocumentos/cdoc1')));
+    await assertFails(getDoc(doc(asClaim('cajT', 'caja'), 'proveedores/provSeed/comprasDocumentos/cdoc1')));
+    await assertFails(setDoc(doc(asUser('ownerUid'), 'proveedores/provSeed/comprasDocumentos/cdoc2'), { tipo: 'factura', valor: { monto: 1 } }));
+    await assertFails(updateDoc(doc(asUser('ownerUid'), 'proveedores/provSeed/comprasDocumentos/cdoc1'), { estado: 'anulado' }));  // anular = CF, no edición
+    await assertFails(deleteDoc(doc(asUser('ownerUid'), 'proveedores/provSeed/comprasDocumentos/cdoc1')));                          // jamás se borra
+    await assertFails(updateDoc(doc(asUser('ownerUid'), 'proveedores/provSeed/comprasMovimientos/cmov1'), { monto: { monto: 0 } })); // un pago no se retoca
+    await assertFails(deleteDoc(doc(asUser('ownerUid'), 'proveedores/provSeed/comprasMovimientos/cmov1')));
+});
+test('F-COMPRAS · R2a · la llave de unicidad de factura no se puede falsificar ni borrar desde el cliente', async () => {
+    // Si un cliente pudiera borrar la llave, podría registrar la MISMA factura dos veces y pagarla dos veces.
+    await assertFails(deleteDoc(doc(asUser('ownerUid'), 'proveedores/provSeed/facturasLlave/900123456__F1')));
+    await assertFails(setDoc(doc(asUser('adminUid'), 'proveedores/provSeed/facturasLlave/900123456__F2'), { documentoId: 'x' }));
 });
 
 // ─── CMS · Journal: lectura pública, escritura editor con hasOnly tipado ──────

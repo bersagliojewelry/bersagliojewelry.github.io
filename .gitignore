@@ -56,3 +56,6 @@ legales/
 Legales/
 *.pdf
 
+
+# Reportes de sesión generados por la skill session-report (artefactos locales, no fuente)
+session-report-*.html

@@ -6,6 +6,7 @@
 > `CLAUDE.md §G`).
 >
 > **Mapa de neuronas** (detalle de cada una → `CLAUDE.md §0`): `CLAUDE.md` · `05-ESTADO-GLOBAL` · `10-MEMORIA-CORTO-PLAZO` · `15-CONSEJO-EXTERNO` · `20-MEMORIA-ESPACIAL` (+ hija `21-ESPACIAL-ADMIN`: panel/CRM/POS/Pedidos) · `30-LECCIONES` · `31-LECCIONES-FIRESTORE` (hija de 30) · `32-LECCIONES-CARGA` (hija de 30) · `33-DOCTRINAS-CSS` (hija de 30) · `34-LECCIONES-META` (hija de 30) · `40-LOBULOS-DOMINIO` · `50-ARQUITECTURA` · `60-WORKFLOWS` · este `00-INDICE` (+ hijas `00a-INDICE-HIST` §1–§115 · `00b-INDICE` §116–§157) · `99-HISTORIAL-ADR` · `skills-inventory`.
+> **Mapa de neuronas** (detalle de cada una → `CLAUDE.md §0`): `CLAUDE.md` · `05-ESTADO-GLOBAL` · `10-MEMORIA-CORTO-PLAZO` · `15-CONSEJO-EXTERNO` · `20-MEMORIA-ESPACIAL` (+ hija `21-ESPACIAL-ADMIN`: panel/CRM/POS/Pedidos) · `30-LECCIONES` · `31-LECCIONES-FIRESTORE` (hija de 30) · `32-LECCIONES-CARGA` (hija de 30) · `33-DOCTRINAS-CSS` (hija de 30) · `34-LECCIONES-META` (hija de 30) · `40-LOBULOS-DOMINIO` · `50-ARQUITECTURA` · `60-WORKFLOWS` · este `00-INDICE` (+ hijas `00a-INDICE-HIST` §1–§115 · `00b-INDICE` §116–§157) · `99-HISTORIAL-ADR` · `skills-inventory`.
 >
 > **Cómo usarlo (regla anti-saturación)**: busca aquí el § + su línea → `Read docs/99-HISTORIAL-ADR.md offset=<línea> limit=~150`. NUNCA leas el historial completo (satura al instante). Regenera el mapa: `grep -n "^## " docs/99-HISTORIAL-ADR.md` (o `Select-String`).
 

@@ -104,6 +104,10 @@
     "docs/45-PERFORMANCE.md": {
       "lines": 140,
       "chars": 25000
+    },
+    "docs/11-BACKLOG.md": {
+      "lines": 40,
+      "chars": 4000
     }
   },
   "_caps_hijas_192": "Auditoría §192 (MF-2, voz adversarial): las hijas nacían sin cap → sharding lavaba topes. Caps = tamaño real + headroom (trinquete §56). 21 ya declaraba ~16000 en su propio header.",

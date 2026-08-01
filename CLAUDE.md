@@ -36,6 +36,7 @@ El cerebro se divide en **nodos**. Auto-cargas SOLO `CLAUDE.md` + `05` + `10` (�
 |---|---|---|---|
 | 🧠 **Tronco Encefálico** | `CLAUDE.md` (este) | ✅ Siempre | Router + identidad + doctrinas + gobernanza. |
 | 🩺 **Estado Global (signos vitales)** | `docs/05-ESTADO-GLOBAL.md` | ✅ Siempre (boot) | Snapshot de salud: build, cache, branch, flags. "¿Dónde estoy parado?" antes de tocar nada. |
+| 💓 **Estado DERIVABLE (heartbeat)** | `docs/.estado-auto.md` | ✅ Lo imprime el hook en el boot | La mitad del estado que **se genera sola** en cada arranque: rama, HEAD, sucios, cache del SW, costo del cerebro, deuda de consolidación. **Gitignored y NO se edita**: si contradice al `05`, manda ESTE (el 05 solo guarda JUICIO, no datos volátiles). |
 | ⚡ **Corto Plazo (WIP)** | `docs/10-MEMORIA-CORTO-PLAZO.md` | ✅ Siempre (2ª lectura) | Sprint actual, pendientes (TODO-NN), bitácora (estado técnico → `05`). |
 | 🛰️ **Consejo Externo** | `docs/15-CONSEJO-EXTERNO.md` | ❌ on-demand | Trigger de Decisión Fuerte (lista → §G.2 🛰️): crítica adversarial del **provider externo** (cuándo + tier → `15 §0`). |
 | 🗺️ **Espacial** | `docs/20-MEMORIA-ESPACIAL.md` | ❌ on-demand | Trigger de Desorientación: dónde vive un componente, flujos, arquitectura, layouts. **Hija → `21` (panel/CRM).** |
@@ -204,50 +205,45 @@ La memoria fluye en una sola dirección: Corto Plazo → Largo Plazo.
 
 ### G.4 — Sistema Autónomo de Auto-construcción (neuroplasticidad, bajo TU guía)
 
-El cerebro se mantiene y CRECE solo — pero **nunca sin ti**. Tú, el constructor y guardián, ejecutas estos reflejos con juicio y cuidado para que la red se fortalezca sin dañarse. Son VINCULANTES y se disparan durante el trabajo normal, **sin que el usuario los pida**:
+Reflejos VINCULANTES que disparas con juicio durante el trabajo normal, **sin que el usuario los pida**.
+El cerebro crece solo — pero **nunca sin ti**.
 
-- **Reflejo de Captura (auto-alimentación)**: TODO conocimiento reutilizable que generes o descubras se escribe en su neurona ANTES de cerrar la tarea. Bug / causa-raíz / lección → `30-LECCIONES`. Cambio de arquitectura → `20-ESPACIAL`. WIP / estado → `10-CORTO-PLAZO`. Decisión cerrada → `99-HISTORIAL` (ADR) + fila en `00-INDICE`. **Deliberación** (comité / consejo externo / workflow de agentes, cara de reproducir) → CRUDO al `archiveDir` del manifest (bóveda privada `../brain-private/`) + SÍNTESIS con *callejones probados* ANTES de cerrar (no perder el sacrificio de investigación de los agentes).
-- **Reflejo de Caza-bugs (verificar el camino vivo, no solo el diff)**: al TOCAR o ROZAR un subsistema con estado observable (render/listener/CRUD/flujo), recórrelo END-TO-END antes de cerrar — sobre todo las dos fronteras del estado-cero (crear el 1er ítem: verlo en vivo Y al recargar; borrar el último: colapsar limpio). 'Rozar' = mi diff cambia una entrada/salida/contrato O el estado compartido que otro subsistema lee, aunque no edite su archivo. Escala a maquinaria pesada SOLO si es caro de revertir. Detalle + checklist → skill `caza-bugs`. [HONOR].
-- **Reflejo de Neurogénesis (crear neurona nueva)**: si un conocimiento reutilizable NO encaja en ninguna neurona Y es una categoría que crecerá (no un caso aislado), CREA `docs/NN-NOMBRE.md`. Al nacer una neurona DEBES, en el mismo acto: (1) fila en la tabla §0, (2) registrarla en el mapa de neuronas de `00-INDICE`, (3) anotarla en la bitácora. **Anti-fragmentación**: si dudas, apéndalo a una neurona existente. **Lóbulos de Dominio (`40-LOBULOS-DOMINIO`)**: análisis especializados nacen como lóbulos hijos (`41-SEGURIDAD`, `42-LEGAL`, etc.) bajo Trigger 🔵 §G.2, SOLO con contenido real de una auditoría concreta — nunca archivos vacíos por anticipado.
-- **Reflejo de Frescura**: si mueves/creas/renombras/eliminas un componente, ruta o flujo, actualiza `20-ESPACIAL` (+ hoja de detalle afectada) en el MISMO cambio. Una neurona vieja engaña al próximo "tú" → reproceso/regresión.
-- **Reflejo de Higiene = Garbage Collector (cuantificado, no opcional)**: `10-CORTO-PLAZO` es pizarra (cap ~110, §G.5). **Al cerrar una tarea, si `10` supera su cap → PODA OBLIGATORIA**: (1) consolida cada tarea CERRADA como ADR en `99` + fila en `00-INDICE`, (2) extrae sus lecciones a `30`, (3) actualiza `05` si cambió el estado, (4) recorta `10` dejando SOLO el foco vivo + pendientes abiertos. ⛔ Nunca volcar a `99` sin convertir en ADR (eso es basura, no consolidación).
-- **Reflejo de Auto-auditoría (arranque Y pre-cierre de sesión)**: corre **`npm run brain:check`** (linter: huérfanas, caps, desync del índice, refs colgantes). **Al ARRANCAR** (tras leer CLAUDE.md+`05`+`10`): si reporta problemas o `05`/`10` están viejos / hay tarea sin consolidar, arréglalos ANTES de la tarea. **Antes de CERRAR la sesión o quedar idle — PROACTIVO**: barrido holístico de TODO el cerebro (brain:check + **frescura vs git real** commit/branch + nada huérfano/stale) → que la próxima sesión herede un cerebro impecable.
-- **Reflejo de Auto-mejora**: llena VACÍOS. Si detectas fricción (re-investigaste algo ya sabido, faltó un índice o lección), MEJORA el cerebro ahí mismo: crea lo que faltaba.
-- **Reflejo de Autocrítica (post-mortem reactivo)**: si el cerebro contribuyó a un error → (1) nombra el DEFECTO (neurona stale / regla mala / routing errado / sobre-fragmentación), (2) corrige en su nodo (bajo límite de guardián), (3) registra meta-aprendizaje en `30 §Meta`; si toca gobernanza → ADR en `99` + flag en `05`. Solo ante error/fricción real, NUNCA auto-duda en bucle. *Un cerebro equivocado es peor que uno incompleto.*
-- **Reflejo de Desafío Crítico (proactivo)**: puedes cuestionar una regla/skill/neurona del cerebro si tienes EVIDENCIA verificable (no intuición). Protocolo: (1) nombra la regla, (2) evidencia, (3) propuesta de reemplazo, (4) si convincente y no destructivo → aplica como Auto-mejora; si toca gobernanza → ADR en `99`. **Cuestionar con evidencia ≠ ignorar a voluntad.**
-- **Reflejo de Cierre (anti-patrón "lo documento después")**: una tarea NO está cerrada hasta verificar **concretamente**: ¿`10` refleja el progreso (TODO-NN)? · ¿`05` actualizado si cambió la salud? · ¿decisión cerrada → ADR en `99` + fila en `00`? · ¿lección reutilizable → `30` con disparador? · ¿cambio de comportamiento → cache bumpeado §4 si aplica? · ¿`npm run brain:check` SANO? · **¿hubo deliberación (comité/consejo externo/workflow)? → CRUDO + SÍNTESIS enlazados, o la tarea está INCOMPLETA** (✅ con deliberación no capturada = NO cerrada) · ¿si fue auditoría especializada, lóbulo hijo creado/actualizado + skills consultadas registradas? Si falta cualquiera, vuelve y hazlo ANTES de pasar a la siguiente.
-- **Reflejo de Sugerencia de Skills (§40)**: si aprendes una capacidad/framework REUSABLE y PORTABLE (sirve en cualquier proyecto, NO específica de ESTE proyecto → eso va al cerebro), SUGIERE crear una skill vía `skill-creator`; el cliente decide. **Skill = capacidad general; neurona/lóbulo = conocimiento del proyecto.** Flujo + registro en `40-LOBULOS`.
-- **Reflejo de Catalogación de Skills (auto-detección + documentación)**: si aparece una skill NUEVA en `skills/` o instalada en `~/.claude/skills/` (la añadió el cliente, la instalaste tú, o llegó con el entorno), DEBES auto-detectarla y documentarla en `docs/skills-inventory.md` (name + propósito + Disp. ✅/⚠️/🔧) en el MISMO cambio, **sin que el cliente lo pida**. **Backstop determinista**: `npm run brain:check` (check #6) marca toda carpeta de `skills/` ausente del inventario.
+- **Captura**: TODO conocimiento reutilizable → su neurona ANTES de cerrar (bug/lección → `30`; arquitectura → `20`; WIP → `10`; decisión cerrada → `99` ADR + fila en `00`). **Deliberación** (comité / consejo externo / workflow, cara de reproducir) → CRUDO al `archiveDir` del manifest (bóveda `../brain-private/`) + SÍNTESIS con *callejones probados* ANTES de cerrar: el sacrificio de investigación ES conocimiento; perderlo = re-investigar.
+- **Caza-bugs (el camino vivo, no solo el diff)**: al TOCAR o ROZAR un subsistema con estado observable (render/listener/CRUD/flujo), recórrelo END-TO-END antes de cerrar, en especial las dos fronteras del estado-cero (crear el 1er ítem y verlo en vivo Y al recargar; borrar el último y ver colapsar limpio). "Rozar" = mi diff cambia una entrada/salida/contrato O el estado compartido que otro lee, aunque no edite su archivo. Escala a maquinaria pesada SOLO si es caro de revertir. Skill `caza-bugs`. [HONOR]
+- **Neurogénesis**: conocimiento reutilizable que no encaja y crecerá → crea `docs/NN-NOMBRE.md` + en el MISMO acto (1) fila en §0, (2) registro en `00`, (3) bitácora. Anti-fragmentación: si dudas, apéndalo. Lóbulos hijos de `40` (`41-SEGURIDAD`…) nacen bajo Trigger 🔵 §G.2 SOLO con contenido real — nunca vacíos por anticipado.
+- **Frescura**: si mueves/creas/renombras/eliminas un componente, ruta o flujo → actualiza `20` (+ su hoja) en el MISMO cambio. Una neurona vieja engaña al próximo "tú".
+- **Higiene = GC (cuantificado)**: `10` es pizarra (cap ~110, §G.5). Al cerrar tarea, si supera el cap → PODA: (1) cada tarea CERRADA a ADR en `99` + fila en `00`, (2) lecciones a `30`, (3) `05` si cambió la salud, (4) recorta `10` al foco vivo + pendientes abiertos. ⛔ Nunca volcar a `99` sin convertir en ADR.
+- **Auto-auditoría (arranque Y pre-cierre)**: corre **`npm run brain:check`**. Al ARRANCAR: si reporta problemas, o `05`/`10` están viejos, o hay tarea sin consolidar → arréglalo ANTES. Antes de cerrar/idle — PROACTIVO: barrido holístico (brain:check + **frescura vs git real** de commit/branch) → cerebro impecable para el próximo "tú".
+- **Auto-mejora / Autocrítica / Desafío Crítico**: llena vacíos donde hubo fricción (re-investigar algo ya sabido = falta un índice o una lección). Si el cerebro contribuyó a un error: nombra el DEFECTO (stale / regla mala / routing errado / sobre-fragmentación), corrígelo en su nodo y registra el meta-aprendizaje en `30 §Meta`; si toca gobernanza → ADR + flag en `05`. Solo ante error real, nunca auto-duda en bucle. Puedes cuestionar cualquier regla **con EVIDENCIA verificable** (regla → evidencia → reemplazo → aplicar o ADR): cuestionar con evidencia ≠ ignorar a voluntad. *Un cerebro equivocado es peor que uno incompleto.*
+- **Cierre (anti "lo documento después")**: una tarea NO está cerrada hasta verificar: ¿`10` refleja el progreso? ¿`05` si cambió la salud? ¿decisión → ADR en `99` + `00`? ¿lección → `30` con su disparador? ¿cache bumpeado (§4) si cambió el comportamiento? ¿`brain:check` SANO? **¿hubo deliberación → CRUDO + SÍNTESIS enlazados, o la tarea está INCOMPLETA** (✅ con deliberación no capturada = NO cerrada)? ¿auditoría especializada → lóbulo hijo + skills usadas registradas? Si falta algo, vuelve y hazlo.
+- **Skills (§40)**: capacidad REUSABLE y PORTABLE (sirve en cualquier proyecto; lo específico de ESTE va al cerebro) → sugiere crearla vía `skill-creator`; decide el cliente. **Skill = capacidad general; neurona/lóbulo = conocimiento del proyecto.** Y toda skill nueva en `skills/` o `~/.claude/skills/` se documenta en `docs/skills-inventory.md` en el MISMO cambio, sin que la pidan. Backstop: `brain:check` #6.
 
-**Regla de ADMISIÓN (anti-teatro)**: cada regla/reflejo cita su gate (linter) o es `[HONOR]` — el linter solo mecaniza caps/huérfanas/desync/skills/archiveDir; el resto de §G.4 es honor. No fingir mecanización.
+**Regla de ADMISIÓN (anti-teatro)**: cada regla cita su gate del linter o lleva `[HONOR]` — el linter solo mecaniza caps/huérfanas/desync/skills/archiveDir; el resto de §G.4 es honor. No fingir mecanización.
 
-**🛡️ Límite de guardián (cuidado ante todo)**: los reflejos ENRIQUECEN, nunca borran a la ligera. Eliminar o reescribir conocimiento histórico exige certeza verificada (§3.3). Ante la duda: **apendar, no sobrescribir; cuarentenar en `_legacy/`, no borrar.** Proteger la red es prioritario sobre alimentarla.
+**🛡️ Límite de guardián**: los reflejos ENRIQUECEN, nunca borran a la ligera. Eliminar o reescribir conocimiento histórico exige certeza verificada (§3.3). Ante la duda: **apendar, no sobrescribir; cuarentenar en `_legacy/`, no borrar.**
 
 ### G.5 — Capacidad de neuronas y Sharding (economía de contexto)
 
-Una neurona sobrecargada satura el contexto. Cada neurona tiene un TOPE BLANDO (señal, no muro):
+Una neurona sobrecargada satura el contexto. Cada una tiene un TOPE BLANDO (señal, no muro).
+📏 **Los topes NO se listan aquí**: viven en `docs/.brain-manifest.json` (`caps`, en **chars** — la unidad
+real de contexto) y `brain:check` los valida en cada corrida. Copiarlos a este archivo los desincroniza.
 
-| Neurona | Carga | Tope | Al acercarse al tope |
-|---|---|---|---|
-| `CLAUDE.md` | 🔴 auto (siempre) | ~320 líneas | Núcleo de gobernanza. Más crecimiento DEBE desplazar detalle a una neurona, NO subir el tope. Jamás historial/tareas/cache. |
-| `05-ESTADO-GLOBAL` | 🔴 auto (siempre) | ~25 líneas | Es un tablero, no bitácora. Solo señales vitales actuales (pisar, no apilar). |
-| `10-CORTO-PLAZO` | 🔴 auto (siempre) | ~110 líneas | Higiene §G.4 (GC): consolidar a `99`/`30`, recortar al foco vivo. |
-| `20-ESPACIAL` | 🟡 on-demand entera | ~280 líneas | Shard: extraer sub-área a neurona hermana (ej. `21-ESPACIAL-ADMIN.md`). |
-| `30-LECCIONES` | 🟡 on-demand entera | ~350 líneas | Índice de lecciones: el kernel lee **todos** los `### L-NN` AQUÍ (stub-header) y el detalle vive en la hija (`31` backend · `32` carga · `35` dinero). |
-| `31-LECCIONES-FIRESTORE` | 🟡 on-demand entera | ~16000 chars | Hija de `30`: detalle backend (reglas/CF/deploy). |
-| `35-LECCIONES-DINERO` | 🟡 on-demand entera | ~16000 chars | Hija de `30`: detalle de dinero/tx/idempotencia (§193). Crece con F-COMPRAS/F-REPORTES. |
-| `32-LECCIONES-CARGA` | 🟡 on-demand entera | ~12000 chars | Hija de `30`: detalle de lecciones carga/render/caché web (§100-§113). Stub-header en `30`. |
-| `33-DOCTRINAS-CSS` | 🟡 on-demand entera | ~6000 chars | Hija de `30`: doctrinas de diseño CSS / Liquid Glass / tipografía (no `L-NN`). |
-| `34-LECCIONES-META` | 🟡 on-demand entera | ~12000 chars | Hija de `30`: detalle M-NN (stub `### M-NN` en `30`). |
-| `00-INDICE` | 🟡 on-demand | ~28000 chars | Tabla escaneable; range-shard al crecer (viejos → `00a`/`00b`/…). Ruteo + §158+. |
-| `00a`/`00b`/`00c` (hijas de `00`) | 🟡 on-demand | ~28000 chars | Range-shards §1–§115·§116–§157·§158–§175 (§140/§174/§193); al llenarse → `00d`. Kernel lee como SET (`00`+`00[a-z]-INDICE*`). |
-| `40-LOBULOS-DOMINIO` | 🟡 on-demand | ~280 líneas | Registry; shard por meta-categorías si crece. |
-| `99-HISTORIAL` | 🟢 on-demand por offset | sin tope* | *NUNCA leer entero (solo `offset/limit` vía índice). Si >50k líneas, shard en volúmenes `99a/99b` por rango de §. |
-| hojas de detalle | 🟡 on-demand | ~300 c/u | Shard. |
+Lo que el manifest no puede guardar es **cómo** se poda cada una:
 
-**Reflejo de Sharding (neurogénesis por SATURACIÓN)**: cuando una neurona se acerca a su tope, NO la dejes engordar. Extrae una sub-categoría coherente a una neurona hermana nueva `docs/NN-NOMBRE.md`. Como toda neurona nueva (§G.4 Neurogénesis): (1) fila en la tabla §0, (2) registro en `00-INDICE`, (3) **deja en la neurona MADRE un puntero a la hija**. 🔗 **Nada huérfano: si una neurona existe y `CLAUDE.md` no la conoce, el cerebro está roto.** La conexión ES tan importante como el contenido.
+- **`CLAUDE.md` · `05` · `10`** (always-on, el boot): no se engordan. `CLAUDE.md` es núcleo de gobernanza —
+  todo crecimiento DESPLAZA detalle a una neurona, jamás sube el tope; `05` es tablero (pisar, no apilar);
+  `10` se poda con el GC de §G.4. Nunca historial, tareas ni cache en el router.
+- **`20`**: shard por sub-área (`21-ESPACIAL-ADMIN`).
+- **`30`**: es el ÍNDICE de lecciones — el kernel lee **todos** los `### L-NN`/`### M-NN` AQUÍ (stub-header)
+  y el detalle vive en la hija: `31` backend · `32` carga/render · `33` doctrinas CSS · `34` meta · `35` dinero.
+- **`00`**: range-shard por rangos de § (`00a`/`00b`/…); el kernel lo lee como SET (`00`+`00[a-z]-INDICE*`).
+- **`99`**: sin tope, pero **NUNCA se lee entero** — solo `offset/limit` vía índice. Si supera ~50k líneas,
+  se parte en volúmenes `99a`/`99b` por rango de §.
 
----
+**Reflejo de Sharding (neurogénesis por SATURACIÓN)**: al acercarse al tope NO la dejes engordar — extrae una
+sub-categoría coherente a una hermana `docs/NN-NOMBRE.md` y, como toda neurona nueva (§G.4): (1) fila en §0,
+(2) registro en `00`, (3) **puntero desde la MADRE a la hija**. 🔗 **Nada huérfano: si una neurona existe y
+`CLAUDE.md` no la conoce, el cerebro está roto.** La conexión ES tan importante como el contenido.
 
 ## §7 — Cómo retomar (recap)
 

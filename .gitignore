@@ -59,3 +59,8 @@ Legales/
 
 # Reportes de sesión generados por la skill session-report (artefactos locales, no fuente)
 session-report-*.html
+
+# Sidecars GENERADOS por session-handoff.mjs (estado derivable, §52) — nunca fuente
+docs/.handoff-auto.md
+docs/.boot-marker
+docs/.estado-auto.md

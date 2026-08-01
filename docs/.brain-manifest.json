@@ -76,6 +76,10 @@
     "docs/60-WORKFLOWS.md": {
       "lines": 100,
       "chars": 12000
+    },
+    "docs/35-LECCIONES-DINERO.md": {
+      "lines": 90,
+      "chars": 16000
     }
   },
   "_caps_hijas_192": "Auditoría §192 (MF-2, voz adversarial): las hijas nacían sin cap → sharding lavaba topes. Caps = tamaño real + headroom (trinquete §56). 21 ya declaraba ~16000 en su propio header.",
@@ -84,9 +88,13 @@
   "staleDays": 10,
   "kernelFiles": [
     "scripts/brain-check.mjs",
-    "scripts/brain-diff.mjs"
+    "scripts/brain-diff.mjs",
+    "scripts/session-handoff.mjs"
   ],
-  "orphanAllowlist": [],
+  "orphanAllowlist": [
+    ".handoff-auto.md",
+    ".estado-auto.md"
+  ],
   "peers": [
     "../altorracars.github.io",
     "../altorrainmobiliaria.github.io"
@@ -99,5 +107,6 @@
     "coveredHeaderCount": 194,
     "maxAdrGap": 12,
     "maxDays": 30
-  }
+  },
+  "_orphanAllowlist_que": "Sidecars GENERADOS por session-handoff (gitignored). Van en allowlist porque el gate #10 NO PUEDE verlos: su regex de aristas exige que el nombre empiece por caracter de palabra y estos empiezan por punto. El RUTEO real si existe: fila en el §0 de CLAUDE.md. Arreglo de fondo (kernel #17-bis): admitir el punto inicial en edgeRe."
 }

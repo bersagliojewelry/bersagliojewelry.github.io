@@ -10,7 +10,7 @@
   ],
   "caps": {
     "CLAUDE.md": {
-      "lines": 320,
+      "lines": 260,
       "chars": 27000
     },
     "docs/05-ESTADO-GLOBAL.md": {
@@ -18,35 +18,35 @@
       "chars": 4300
     },
     "docs/10-MEMORIA-CORTO-PLAZO.md": {
-      "lines": 110,
+      "lines": 60,
       "chars": 8000
     },
     "docs/20-MEMORIA-ESPACIAL.md": {
-      "lines": 280,
+      "lines": 230,
       "chars": 16000
     },
     "docs/30-LECCIONES.md": {
-      "lines": 350,
+      "lines": 240,
       "chars": 40000
     },
     "docs/00-INDICE.md": {
-      "lines": 450,
+      "lines": 110,
       "chars": 28000
     },
     "docs/00a-INDICE-HIST.md": {
-      "lines": 450,
+      "lines": 180,
       "chars": 28000
     },
     "docs/00b-INDICE.md": {
-      "lines": 450,
+      "lines": 120,
       "chars": 28000
     },
     "docs/40-LOBULOS-DOMINIO.md": {
-      "lines": 280,
+      "lines": 220,
       "chars": 16000
     },
     "docs/31-LECCIONES-FIRESTORE.md": {
-      "lines": 90,
+      "lines": 70,
       "chars": 16000
     },
     "docs/32-LECCIONES-CARGA.md": {
@@ -58,7 +58,7 @@
       "chars": 16000
     },
     "docs/21-ESPACIAL-ADMIN.md": {
-      "lines": 120,
+      "lines": 70,
       "chars": 16000
     },
     "docs/33-DOCTRINAS-CSS.md": {
@@ -66,11 +66,11 @@
       "chars": 6000
     },
     "docs/34-LECCIONES-META.md": {
-      "lines": 90,
+      "lines": 70,
       "chars": 12000
     },
     "docs/50-ARQUITECTURA.md": {
-      "lines": 120,
+      "lines": 90,
       "chars": 20000
     },
     "docs/60-WORKFLOWS.md": {
@@ -78,7 +78,7 @@
       "chars": 12000
     },
     "docs/35-LECCIONES-DINERO.md": {
-      "lines": 90,
+      "lines": 180,
       "chars": 16000
     },
     "docs/00c-INDICE.md": {
@@ -140,5 +140,5 @@
     "docs/PENDIENTES-Y-HALLAZGOS.md": "No es neurona: documento de trabajo (plan/manual/handoff) que se abre dirigido, no por trigger del router. Candidato a mudarse fuera de docs/.",
     "docs/skills-inventory.md": "Registro 1:1 con las carpetas de skills/ — su tamaño lo fija el inventario real, no una decisión editorial. Lo vigila el gate #6."
   },
-  "_caps_que": "Topes por-repo. Cada neurona tiene cap MEDIDO (tamano real + ~35% de holgura) o entrada en noCap CON RAZON — nunca por omision (chequeo #23, kernel v1.7.0). Los caps NO se inventan: inmobiliaria ADR §74.3/§75.4 documenta como una cifra a ojo creo dos veces un gate bloqueante falso."
+  "_caps_que": "Topes por-repo. Cada neurona tiene cap MEDIDO (tamano real + ~35% de holgura) o entrada en noCap CON RAZON — nunca por omision (chequeo #23, kernel v1.7.0). Los caps NO se inventan: inmobiliaria ADR §74.3/§75.4 documenta como una cifra a ojo creo dos veces un gate bloqueante falso. Los dos ejes se derivan uno del otro (lines = chars/densidad-real) para que ambos aprieten en el mismo punto: un par incoherente hace que dispare el eje equivocado (N2-13 de la auditoria de insemastereo, inmobiliaria §77.5). El cap de CHARS es el vinculante y NO se toca."
 }

@@ -52,8 +52,8 @@
 
 ## 📝 Bitácora (efímera)
 
-> 2026-07-27 · **[OPUS-5] F-COMPRAS · comité ×3 (R1-R5+A7, spec §2) + C0 ✅ parcial (spec §5).** Comité INLINE, 4 expertos con tensión, sobre código verificado (`[[feedback_workflows_acotados]]`). C0: `compras-core.js` puro 30/30 · reglas CF-only (+3 ⇒ **251/251**) · 3 índices **sin desplegar** (L-22); build 4.87s + teso 15/15 + paridad 5/5 = cero regresión. Al implementar se renombró `documentos`→`comprasDocumentos` (un collection-group genérico habría barrido subcolecciones ajenas en C4). **Dudas declaradas**: (a) **A7 NO se implementó a propósito** (Daniel) — el consejo lo interroga en su pregunta C; toca la costura que §194 acaba de estabilizar ⇒ cuando se haga, test primero + auditoría prioritaria del titular; (b) la deuda A2 (1 transferencia que paga 3 facturas = 3 pagos ⇒ 3 líneas vs 1 del extracto) se ACEPTA en v1 y está ESCRITA, no descubierta después; (c) el comité NO sustituye al consejo: C1 sigue gateado.
-> 2026-07-27 · **[OPUS-5] B6 CERRADO — F-TESORERÍA completa** (detalle → **§194** + **L-86**; dudas y nits de Chrome ya recogidos arriba en el Foco).
-> 2026-07-25 · **[FABLE-5 · líder de pautas]** Meta Business de Bersaglio CONFIGURADO (portfolio renombrado, socio Altorra con acceso, mapa de cuentas y saldos). Detalle + pendientes de Daniel/Kary → **`44-PAUTA-META`** (lóbulo nuevo).
+> 2026-07-27 · **[OPUS-5] F-COMPRAS**: comité ×3 (R1-R5+A7) + **C0 ✅ parcial** → spec §2/§5. Vivo: **3 índices SIN desplegar** (L-22) · **C1 gateado por el consejo externo**.
+> 2026-07-27 · **[OPUS-5] B6 CERRADO — F-TESORERÍA completa** → §194 + L-86.
+> 2026-07-25 · **[FABLE-5]** Meta Business de Bersaglio configurado → lóbulo `44-PAUTA-META` (ahí viven los pendientes de Daniel/Kary).
 > _(B5 consolidado: su detalle vive en spec §9 + §194; entradas del 25jul podadas por GC.)_
 > **Pend Daniel/no-gate**: llenar "Datos del negocio" en el panel (§192 I-03; datos = identidad LEGAL-08) · marcar 7 avisos test-era en Salud (I-04) · consejo+abogado apartados (39) · instructivo Kary · push A.6 · fotos (67). ADC gcloud caducado (CLI OK). **Precios = paso FINAL.**

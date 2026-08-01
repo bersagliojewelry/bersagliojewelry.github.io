@@ -25,7 +25,7 @@
 //   (7) archiveDir íntegro [warn, --full]               (16) Fiabilidad M-22: `verificado-vivo` stale [info, --full]
 //       + 7b) bóveda: commits ≠ origin vía fs [warn]
 // ===========================================================
-const KERNEL_VERSION = '1.6.0';
+const KERNEL_VERSION = '1.7.0';
 import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -64,6 +64,7 @@ const KNOWN_KEYS = new Set([
   'brainTemplateVersion', 'repo', 'bootCharsTarget', 'alwaysOn', 'caps', 'archiveDir',
   'deepAudit', 'peers', 'kernelFiles', 'ssotFacts', 'specsDir', 'staleDays', 'ignoreDirs',
   'downgrades', 'orphanAllowlist', 'verifiedLiveStaleDays', 'verifiedLiveScan', 'lastOffsiteBackup',
+  'noCap', // v1.7 (#23): { "docs/X.md": "razón" } — declarar SIN tope es una decisión, no un olvido
 ]);
 for (const k of Object.keys(manifest)) {
   if (!k.startsWith('_') && !KNOWN_KEYS.has(k)) warn(`manifest: clave desconocida "${k}" (¿typo? un typo apaga gates en silencio) — schema v1.2`);
@@ -524,6 +525,96 @@ else {
   }
   if (total && !stale) ok(`${total} claim(s) \`verificado-vivo\` vigentes (≤ ${vlStaleDays}d)`);
   else if (!total) ok('check de fiabilidad activo (sin marcadores `verificado-vivo:` aún — opt-in M-22/§257)');
+}
+
+// 17) Git del PROPIO repo (auditoría Nivel-2 insemastereo 2026-08-01, N2-01) [--boot y --full]
+//     Punto ciego de diseño hasta v1.6: el único bloque git del kernel (#7b) mira la BÓVEDA.
+//     Del repo que audita, el linter no sabía nada — así que el `05` de insemastereo pudo
+//     declarar «main == origin/main, pusheado ✓, 3 commits» durante 42 días con el HEAD en otra
+//     rama y `main` 24 commits detrás, y los 16 gates seguían dando SANO. Cinco sondas de la
+//     auditoría lo reportaron por separado; ninguno de los gates podía.
+//     Solo fs, sin child_process (mismo criterio que #7b): no dispara procesos en cada boot.
+head('\n17) Git del PROPIO repo (¿el cerebro dice la verdad sobre dónde estás?):');
+{
+  const gitDir = join(ROOT, '.git');
+  if (!existsSync(gitDir)) info('sin .git — gate omitido');
+  else {
+    const refSha = (name) => {
+      const direct = join(gitDir, name);
+      if (existsSync(direct)) return read(direct).trim().slice(0, 40);
+      const packed = join(gitDir, 'packed-refs');
+      if (existsSync(packed)) { const l = read(packed).split('\n').find((x) => x.endsWith(' ' + name)); if (l) return l.slice(0, 40); }
+      return null;
+    };
+    const headRef = (read(join(gitDir, 'HEAD')).match(/ref:\s*(\S+)/) || [])[1];
+    const branch = headRef ? headRef.replace('refs/heads/', '') : '(detached)';
+    const local = headRef ? refSha(headRef) : null;
+    const remote = headRef ? refSha(headRef.replace('refs/heads/', 'refs/remotes/origin/')) : null;
+
+    // (a) el hecho, para que el boot lo tenga sin adivinar
+    if (!remote) info(`rama \`${branch}\` — sin \`origin/${branch}\` local: o no está pusheada, o falta \`git fetch\``);
+    else if (local !== remote) info(`rama \`${branch}\`: local ${String(local).slice(0, 7)} ≠ origin ${String(remote).slice(0, 7)} → hay push o pull pendiente`);
+    else ok(`rama \`${branch}\` == origin`);
+
+    // (b) el gate que importa: ¿algún nodo always-on declara OTRA rama?
+    //     Se recorre LÍNEA a línea y solo se miran las que hablan de git; de esas se extraen los
+    //     tokens con forma de rama (`backticked` y origin/<x>).
+    //     ⚠️ La v1 buscaba solo "rama X"/"branch X" y NO cazaba el caso real que motivó el gate
+    //     —el 05 de insemastereo decía «Local `main` == `origin/main`»—: era teatro hasta que se
+    //     probó restituyendo la mentira y viendo que NO disparaba. Un gate se verifica encendido.
+    //     Se evalúa POR ARCHIVO, no en bolsa común: el defecto real era que el `05` —el nodo que
+    //     se lee primero— mentía, mientras el `10` sí nombraba la rama buena. Sumar los tokens de
+    //     todos los always-on daba por sana la mentira. Cada nodo responde de lo que él declara.
+    if (headRef) {
+      // Ruido a descartar: palabras sueltas, y sobre todo los NOMBRES DE NEURONA (`05`, `10`, `99`,
+      // `30-LECCIONES`…) — en un cerebro los backticks son casi siempre punteros a nodos, no ramas.
+      // Sin este filtro el gate acusaba a CLAUDE.md de «declarar la rama `05`»: un gate ruidoso se
+      // acaba ignorando, que es como muere un gate.
+      const RUIDO = (r) => /^(única|activa|actual|de|del|la|el|en|y|o|prod|producción|git|origin)$/i.test(r)
+        || /^\d+[a-z]?$/.test(r)            // `05`, `10`, `99`, `00a`
+        || /^\d{2}[-_]/.test(r)             // `30-LECCIONES`, `00-INDICE`
+        || /\.(md|mjs|json|js|html|css|ps1|yml)$/i.test(r);
+      for (const rel of (manifest.alwaysOn || [])) {
+        const p = join(ROOT, rel);
+        if (!existsSync(p)) continue;
+        const declara = new Set();
+        for (const linea of read(p).split('\n')) {
+          if (!/rama|branch|origin\/|pushead|mergea/i.test(linea)) continue;
+          for (const m of linea.matchAll(/origin\/([\w.-][\w./-]{0,39})/g)) declara.add(m[1]);
+          for (const m of linea.matchAll(/`([\w.-][\w./-]{0,39})`/g)) declara.add(m[1]);
+        }
+        const otras = [...declara].filter((r) => r !== branch && !RUIDO(r));
+        // Si el archivo nombra varias ramas y una es la real, es un flujo declarado (dev→main), no una mentira.
+        if (otras.length && !declara.has(branch))
+          warn(`\`${rel}\` declara la rama ${otras.map((r) => '`' + r + '`').join(' / ')} pero estás en \`${branch}\` → el nodo que se lee primero miente sobre dónde estás (N2-01). El dato volátil se GENERA (heartbeat), no se copia al 05.`);
+      }
+    }
+  }
+}
+
+// 23) Neuronas SIN cap declarado (ADR inmobiliaria §74) [--full]
+//     El linter solo vigila lo que el manifest declara, y el manifest callaba sobre el resto:
+//     así `32-LECCIONES-META` de cars llegó a 27k sin que ningún gate la mirara. La ausencia
+//     de cap dejaba de ser una decisión y pasaba a ser un olvido silencioso. Ahora se declara
+//     un cap, o se declara en `noCap` CON RAZÓN — pero se decide.
+head('\n23) Neuronas con techo declarado (el silencio no es una decisión):');
+if (BOOT) head('  ⏭️  omitido en --boot');
+else {
+  const caps = manifest.caps || {};
+  const noCap = manifest.noCap || {};                 // { "docs/99-HISTORIAL-ADR.md": "razón" }
+  const sinDecidir = [];
+  for (const f of readdirSync(DOCS).filter((x) => x.endsWith('.md') && !x.startsWith('.'))) {
+    const rel = 'docs/' + f;
+    if (caps[rel] || noCap[rel]) continue;
+    sinDecidir.push([rel, read(join(DOCS, f)).length]);
+  }
+  if (!sinDecidir.length) ok(`${Object.keys(caps).length} neurona(s) con cap + ${Object.keys(noCap).length} declarada(s) sin tope`);
+  else {
+    sinDecidir.sort((a, b) => b[1] - a[1]);
+    const top = sinDecidir.slice(0, 6).map(([r, n]) => `${r.replace('docs/', '')} (${Math.round(n / 1000)}k)`).join(' · ');
+    info(`${sinDecidir.length} neurona(s) sin \`caps\` ni \`noCap\` en el manifest → crecen sin techo y ningún gate las mira: ${top}${sinDecidir.length > 6 ? ' …' : ''}`);
+    info('   decide cada una: cap medido (NO inventado — §74.3) o `noCap` con su razón (p.ej. 99: nunca se lee entero)');
+  }
 }
 
 // ---- salida (presupuesto de stdout en --boot) ----

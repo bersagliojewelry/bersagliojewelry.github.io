@@ -8,6 +8,45 @@
             "command": "node scripts/brain-check.mjs --boot",
             "timeout": 30,
             "statusMessage": "Auto-auditoria del cerebro (brain:check --boot)…"
+          },
+          {
+            "type": "command",
+            "command": "node scripts/session-handoff.mjs --boot-echo",
+            "timeout": 30,
+            "statusMessage": "💓 Heartbeat + handoff de la sesión anterior…"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/session-handoff.mjs --precompact",
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/session-handoff.mjs --end",
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/session-handoff.mjs --end",
+            "timeout": 20
           }
         ]
       }

@@ -80,6 +80,30 @@
     "docs/35-LECCIONES-DINERO.md": {
       "lines": 90,
       "chars": 16000
+    },
+    "docs/00c-INDICE.md": {
+      "lines": 50,
+      "chars": 21000
+    },
+    "docs/41-SEGURIDAD.md": {
+      "lines": 30,
+      "chars": 2000
+    },
+    "docs/42-LEGAL.md": {
+      "lines": 180,
+      "chars": 30000
+    },
+    "docs/43-UX.md": {
+      "lines": 130,
+      "chars": 11000
+    },
+    "docs/44-PAUTA-META.md": {
+      "lines": 60,
+      "chars": 5000
+    },
+    "docs/45-PERFORMANCE.md": {
+      "lines": 140,
+      "chars": 25000
     }
   },
   "_caps_hijas_192": "Auditoría §192 (MF-2, voz adversarial): las hijas nacían sin cap → sharding lavaba topes. Caps = tamaño real + headroom (trinquete §56). 21 ya declaraba ~16000 en su propio header.",
@@ -108,5 +132,13 @@
     "maxAdrGap": 12,
     "maxDays": 30
   },
-  "_orphanAllowlist_que": "Sidecars GENERADOS por session-handoff (gitignored). Van en allowlist porque el gate #10 NO PUEDE verlos: su regex de aristas exige que el nombre empiece por caracter de palabra y estos empiezan por punto. El RUTEO real si existe: fila en el §0 de CLAUDE.md. Arreglo de fondo (kernel #17-bis): admitir el punto inicial en edgeRe."
+  "_orphanAllowlist_que": "Sidecars GENERADOS por session-handoff (gitignored). Van en allowlist porque el gate #10 NO PUEDE verlos: su regex de aristas exige que el nombre empiece por caracter de palabra y estos empiezan por punto. El RUTEO real si existe: fila en el §0 de CLAUDE.md. Arreglo de fondo (kernel #17-bis): admitir el punto inicial en edgeRe.",
+  "noCap": {
+    "docs/99-HISTORIAL-ADR.md": "Largo Plazo: NUNCA se lee entero, solo offset/limit vía el índice. Un cap aquí no significaría nada.",
+    "docs/INSTALACION-CEREBRO.md": "No es neurona: documento de trabajo (plan/manual/handoff) que se abre dirigido, no por trigger del router. Candidato a mudarse fuera de docs/.",
+    "docs/mineria-recursos-2026-07-10.md": "No es neurona: documento de trabajo (plan/manual/handoff) que se abre dirigido, no por trigger del router. Candidato a mudarse fuera de docs/.",
+    "docs/PENDIENTES-Y-HALLAZGOS.md": "No es neurona: documento de trabajo (plan/manual/handoff) que se abre dirigido, no por trigger del router. Candidato a mudarse fuera de docs/.",
+    "docs/skills-inventory.md": "Registro 1:1 con las carpetas de skills/ — su tamaño lo fija el inventario real, no una decisión editorial. Lo vigila el gate #6."
+  },
+  "_caps_que": "Topes por-repo. Cada neurona tiene cap MEDIDO (tamano real + ~35% de holgura) o entrada en noCap CON RAZON — nunca por omision (chequeo #23, kernel v1.7.0). Los caps NO se inventan: inmobiliaria ADR §74.3/§75.4 documenta como una cifra a ojo creo dos veces un gate bloqueante falso."
 }

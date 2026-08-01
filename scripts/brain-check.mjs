@@ -16,7 +16,8 @@
 //
 // Checks (fija) · v1.3 F0-§50: #1→#10 · #6b/#11 QUITADOS · #13 endurecida · +5c/+7b/+tableFile:
 //   (2) Caps chars+líneas [warn] · pre-shard ≥90% [info] (8) SSoT: hecho duplicado fuera del nodo dueño [warn, --full]
-//       · boot-budget [info: condición ×3 no cumplida]   (9) Consolidado-aún-en-10: fila ✅+§NN indexado [warn, --full]
+//       · 🔒 boot-budget [WARN desde v1.8.0 — ×4 bajo   (9) Consolidado-aún-en-10: fila ✅+§NN indexado [warn, --full]
+//         presupuesto, §81] (24) 🐤 canario de boot [warn, --full]
 //   (3) Desync 00→99 [warn, --full]                     (10) Huérfanas: BFS 2º orden + neurona NN- sin registro directo [warn, --full]
 //   (4) Frescura cache SW↔05 [warn, opcional]           (12) Fechas stale en 05/10 [info, --boot]
 //   (5) Refs cruzadas ADR/L-M/hojas [warn]              (13) Specs: checklist con evidencia RESOLUBLE [warn, --full]
@@ -25,8 +26,8 @@
 //   (7) archiveDir íntegro [warn, --full]               (16) Fiabilidad M-22: `verificado-vivo` stale [info, --full]
 //       + 7b) bóveda: commits ≠ origin vía fs [warn]
 // ===========================================================
-const KERNEL_VERSION = '1.7.2';
-import { readFileSync, readdirSync, existsSync } from 'fs';
+const KERNEL_VERSION = '1.8.0';
+import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { createHash } from 'crypto';
@@ -160,12 +161,13 @@ if (BOOT && okCaps) say(`  ✅ ${okCaps}/${capCount} neuronas dentro de tope`);
 if (preShard.length) info(`pre-shard: ${preShard.length} neurona(s) ≥90% de su cap (${preShard.join(', ')}) — planear shard/GC ANTES de reventar`);
 if (BOOT_CHARS_TARGET) {
   const bootTok = Math.round(bootChars / 3.5);
-  // INFORMATIVO por diseño MIENTRAS los 3 repos no estén bajo presupuesto (condición §173;
-  // al cumplirse ×3, este gate sube a warn EN EL KERNEL, no por manifest).
-  if (bootChars > Math.round(BOOT_CHARS_TARGET * 1.1))
-    info(`BOOT always-on = ${bootChars}c (~${bootTok} tok) vs objetivo ${BOOT_CHARS_TARGET}c — destilar/diferir (informativo)`);
-  else if (bootChars > BOOT_CHARS_TARGET) // fix TODO-28 #2: antes imprimía ✅ falso en este tramo
-    info(`BOOT always-on = ${bootChars}c (~${bootTok} tok) > objetivo ${BOOT_CHARS_TARGET}c (leve exceso — destilar)`);
+  // 🔒 GATE DE BOOT — BLOQUEANTE desde v1.8.0 (inmobiliaria ADR §81).
+  // Fue INFORMATIVO por diseño mientras algún repo estuviera sobre presupuesto (condición §173);
+  // la condición se cumplió ×4 el 2026-08-01 (inmo 31448 · cars 29715 · bersaglio 31448 · insema
+  // 27546). One-in-one-out: el `scripts/boot-gate.mjs` instance-side de inmobiliaria se RETIRA en
+  // este mismo cambio, y su canario de boot baja al chequeo #24 de aquí.
+  if (bootChars > BOOT_CHARS_TARGET)
+    warn(`BOOT always-on = ${bootChars}c (~${bootTok} tok) > objetivo ${BOOT_CHARS_TARGET}c (exceso ${bootChars - BOOT_CHARS_TARGET}c) → PODA antes de commitear. One-in-one-out (§G.5): toda regla nueva DESPLAZA o fusiona una existente; subir el techo NO es cerrar (M-05).`);
   else say(`  ✅ BOOT always-on = ${bootChars}c (~${bootTok} tok) ≤ objetivo ${BOOT_CHARS_TARGET}c`);
 }
 
@@ -621,6 +623,51 @@ else {
     const top = sinDecidir.slice(0, 6).map(([r, n]) => `${r.replace('docs/', '')} (${Math.round(n / 1000)}k)`).join(' · ');
     info(`${sinDecidir.length} neurona(s) sin \`caps\` ni \`noCap\` en el manifest → crecen sin techo y ningún gate las mira: ${top}${sinDecidir.length > 6 ? ' …' : ''}`);
     info('   decide cada una: cap medido (NO inventado — §74.3) o `noCap` con su razón (p.ej. 99: nunca se lee entero)');
+  }
+}
+
+// 24) 🐤 Canario de boot (bajado del `boot-gate.mjs` instance-side, v1.8.0) [--full]
+//     session-handoff --boot-echo escribe docs/.boot-marker en CADA SessionStart. Si nadie lo
+//     escribió en 48h, los hooks del harness están MUERTOS (máquina nueva, settings.json roto,
+//     node fuera de PATH): el cerebro arranca sin signos vitales y NADA lo detecta (A-03).
+//     Kernel-safe ×repos: solo aplica donde el contrato está INSTALADO (settings.json con
+//     session-handoff) — un repo sin ese hook no debe bloquearse por un marker que nada escribe.
+head('\n24) Canario de boot (¿los hooks del harness siguen vivos?):');
+if (BOOT) head('  ⏭️  omitido en --boot (lo está escribiendo esta misma sesión)');
+else {
+  const settingsP = join(ROOT, '.claude', 'settings.json');
+  const wired = existsSync(settingsP) && read(settingsP).includes('session-handoff');
+  if (!wired) info('sin hook `session-handoff` en .claude/settings.json — canario no aplica en este repo');
+  else {
+    const markerP = join(DOCS, '.boot-marker');
+    const ageH = existsSync(markerP) ? (Date.now() - statSync(markerP).mtimeMs) / 3.6e6 : Infinity;
+    if (ageH > 48 && !process.env.BOOT_CANARY_SKIP)
+      warn(`ningún SessionStart escribió docs/.boot-marker en 48h (${ageH === Infinity ? 'nunca' : Math.round(ageH) + 'h'}) — los hooks del harness pueden estar MUERTOS. Verifica .claude/settings.json y arranca una sesión (o: node scripts/session-handoff.mjs --boot-echo). Intencional → BOOT_CANARY_SKIP=1.`);
+    else ok(`canario vivo (marker de hace ${Math.round(ageH)}h)`);
+  }
+}
+
+// 25) ¿Alguien me INVOCA? — cableado del propio linter (inmobiliaria ADR §81, lección M-07) [--full]
+//     Un gate compartido tiene DOS mitades: el código (kernel, byte-idéntico ×repos) y el CABLEADO
+//     (instance: core.hooksPath + githooks/pre-commit). La mitad instance es la que se olvida y falla
+//     en SILENCIO: `insemastereo` corrió semanas sin pre-commit y ninguna corrida lo delató, porque
+//     este linter validaba el CONTENIDO del kernel, nunca si alguien lo LLAMA. Sin child_process:
+//     se lee .git/config con fs, igual que el resto del kernel.
+head('\n25) Cableado del linter (un gate que nadie invoca no protege nada):');
+if (BOOT) head('  ⏭️  omitido en --boot');
+else {
+  const gitCfg = join(ROOT, '.git', 'config');
+  if (!existsSync(gitCfg)) info('sin .git/config legible (¿worktree o submódulo?) — cableado no verificable aquí');
+  else {
+    const cfg = read(gitCfg);
+    const m = cfg.match(/^\s*hooksPath\s*=\s*(.+)$/m);
+    const hooksDir = m ? m[1].trim() : join('.git', 'hooks');
+    const hookP = join(ROOT, hooksDir, 'pre-commit');
+    if (!existsSync(hookP))
+      warn(`no hay pre-commit en "${hooksDir}/" → este linter NO corre solo: los commits del cerebro pasan sin mirar. Cablea: cp githooks/pre-commit + \`git config core.hooksPath githooks\` (M-07).`);
+    else if (!read(hookP).includes('brain-check'))
+      warn(`"${hooksDir}/pre-commit" existe pero NO invoca brain-check.mjs → gate decorativo (M-06/M-07).`);
+    else ok(`pre-commit cableado en "${hooksDir}/" e invoca este linter`);
   }
 }
 

@@ -74,7 +74,8 @@ NUNCA leas `docs/99-HISTORIAL-ADR.md` completo (puede llegar a 40k+ líneas = mu
 - **Project IDs / namespaces**: Firebase project `bersaglio-jewelry` (`.firebaserc`; config en `js/firebase-config.js` vía vars `VITE_*`).
 - **Áreas**: (1) **Sitio público** (`index`, `colecciones`, `pieza`, `nosotros`, `contacto`, `carrito`, `journal`, `lista-deseos`, legales); (2) **Panel admin privado** (`admin*.html`, `js/admin/` — estilo oscuro, auth + versionado); (3) **Backend Firebase** (`functions/`, `firestore.rules`, `storage.rules`, `firestore.indexes.json`).
 - **Secretos** (lista completa en `.env.example` — NO re-preguntar): `VITE_FIREBASE_*` + `VITE_VAPID_KEY` (FCM). El `.env` real existe local; NUNCA commitearlo.
-- **Características clave** (inventario vivo → `05` §Sub-sistemas): staggered · checkout 3 pasos · drawers cart/wishlist · live sync `onSnapshot` · SW offline-first. (Entorno → §7.)
+- **Características clave**: inventario vivo → `05` §Sub-sistemas (dueño único, no se duplica aquí).
+- **Entorno**: Windows 11 · PowerShell · raíz del repo · `Ctrl+Shift+R` tras bump de SW.
 
 Detalle profundo de cualquier subsistema → `docs/20-MEMORIA-ESPACIAL.md` + ADRs vía `docs/00-INDICE.md`.
 
@@ -154,8 +155,8 @@ Antes de CUALQUIER commit no-trivial: 5 secciones → (A) archivos a modificar, 
 
 Bersaglio TIENE service worker (`public/sw.js`). Al cambiar comportamiento o archivos estáticos del shell:
 
-- Incrementar `CACHE_NAME` en `public/sw.js` (bump siempre MAYOR). **La versión vigente vive en `docs/05-ESTADO-GLOBAL.md`** (`brain:check` valida 05 == sw.js); tras bumpear, actualiza el 05. Cliente invalida con **Ctrl+Shift+R**.
-- Estrategia SW: HTML network-first → cache → `/offline.html`; CSS/JS cache-first (Vite hashea; solo `SHELL_ASSETS` se precachea). Cada shell lleva **Critical CSS inline** anti-FOUC (L-02).
+- Incrementar `CACHE_NAME` en `public/sw.js` (bump siempre MAYOR). **El nº vigente NO se copia al `05`**: lo reporta el heartbeat en `docs/.estado-auto.md` (duplicarlo lo desincroniza). Cliente invalida con **Ctrl+Shift+R**.
+- Estrategia SW: HTML network-first → cache → `/offline.html`; CSS/JS cache-first (Vite hashea; solo `SHELL_ASSETS` precachea). Cada shell lleva **Critical CSS inline** anti-FOUC (L-02).
 - **Conflicto merge ↔ cache**: resolver → re-bump MAYOR → build OK → commit merge.
 
 ---
@@ -178,11 +179,11 @@ pida. No leas el historial por si acaso.
 Cuando un trigger se dispara, leer su nodo deja de ser opcional:
 
 - **🔴 Error / Saturación**: si fallas **2 veces** con el mismo bug, DETENTE y lee el Largo Plazo (`00` → tramo de `99`) buscando el § o un bug análogo ANTES de la 3ª solución (prohibido adivinar, §3.3). Loops o contexto saturado: consolida `10` (con 🚫 callejones) y ofrece relevo curado.
-- **🟡 Desorientación**: dudas de DÓNDE vive un componente, ruta o flujo de datos → **Memoria Espacial** (`20`) ANTES de tocar nada.
-- **🧪 Experiencia**: ANTES de una op riesgosa o repetitiva (mover/renombrar archivos, merge/rebase, tocar el SW o la caché, refactor CSS, deploy de rules/functions) → **Memoria Procedimental** (`30` y su hija). Si un síntoma te suena, ahí está la receta.
+- **🟡 Desorientación**: dudas de DÓNDE vive un componente, ruta o flujo → **Espacial** (`20`) ANTES de tocar nada.
+- **🧪 Experiencia**: ANTES de op riesgosa/repetitiva (mover/renombrar, merge/rebase, tocar SW o caché, refactor CSS, deploy de rules/functions) → **Procedimental** (`30` + hija). Si un síntoma te suena, ahí está la receta.
 - **🟢 Historia**: el porqué de una decisión o el detalle de un § → Índice → Largo Plazo.
-- **🔵 Auditoría/Dominio**: análisis especializado (seguridad/legal/UX/SEO/perf/a11y) → (1) skill relevante (catálogo `skills-inventory`); (2) `40-LOBULOS`; (3) neurogénesis del hijo con contenido REAL (§G.4); (4) capturar hallazgos + qué skill usaste.
-- **🛰️ Decisión Fuerte**: ANTES de algo caro de revertir (arquitectura, modelo de datos, seguridad/legal, fork 50/50, op irreversible) considera crítica adversarial del **provider externo** (`15`; otra familia, no-Claude). **Asesora, NUNCA edita**: el comité y el provider DEBATEN; tú deliberas, decides e implementas. Sin provider → sigues solo y marcas la decisión como NO revisada.
+- **🔵 Auditoría/Dominio**: análisis especializado (seguridad/legal/UX/SEO/perf/a11y) → (1) skill relevante (`skills-inventory`); (2) `40-LOBULOS`; (3) neurogénesis del hijo con contenido REAL (§G.4); (4) capturar hallazgos + qué skill usaste.
+- **🛰️ Decisión Fuerte**: ANTES de algo caro de revertir (arquitectura, modelo de datos, seguridad/legal, op irreversible) considera crítica adversarial del **provider externo** (`15`; otra familia, no-Claude). **Asesora, NUNCA edita**: el comité y el provider DEBATEN; tú deliberas, decides e implementas. Sin provider → sigues solo y marcas la decisión como NO revisada.
 
 **Enrutamiento semántico**: ante una duda, NO escanees el cerebro. Ve al `docs/00-INDICE.md` (capa síntoma → neurona).
 
@@ -196,18 +197,17 @@ NUNCA historial ni tareas en este `CLAUDE.md`.
 
 ### G.4 — Sistema Autónomo de Auto-construcción (neuroplasticidad, bajo TU guía)
 
-Reflejos VINCULANTES que disparas con juicio durante el trabajo normal, **sin que el usuario los pida**.
-El cerebro crece solo — pero **nunca sin ti**.
+Reflejos VINCULANTES que disparas con juicio en el trabajo normal, **sin que el usuario los pida**. El cerebro crece solo — pero **nunca sin ti**.
 
-- **Captura**: TODO conocimiento reutilizable → su neurona ANTES de cerrar (bug/lección → `30`; arquitectura → `20`; WIP → `10`; decisión cerrada → `99` ADR + fila en `00`). **Deliberación** (comité / consejo externo / workflow, cara de reproducir) → CRUDO al `archiveDir` del manifest (bóveda `../brain-private/`) + SÍNTESIS con *callejones probados* ANTES de cerrar: el sacrificio de investigación ES conocimiento; perderlo = re-investigar.
-- **Caza-bugs (el camino vivo, no solo el diff)**: al TOCAR o ROZAR un subsistema con estado observable (render/listener/CRUD/flujo), recórrelo END-TO-END antes de cerrar, en especial las dos fronteras del estado-cero (crear el 1er ítem y verlo en vivo Y al recargar; borrar el último y ver colapsar limpio). "Rozar" = mi diff cambia una entrada/salida/contrato O el estado compartido que otro lee, aunque no edite su archivo. Escala a maquinaria pesada SOLO si es caro de revertir. Skill `caza-bugs`. [HONOR]
-- **Neurogénesis**: conocimiento reutilizable que no encaja y crecerá → crea `docs/NN-NOMBRE.md` + en el MISMO acto (1) fila en §0, (2) registro en `00`, (3) bitácora. Anti-fragmentación: si dudas, apéndalo. Lóbulos hijos de `40` (`41-SEGURIDAD`…) nacen bajo Trigger 🔵 §G.2 SOLO con contenido real — nunca vacíos por anticipado.
+- **Captura**: TODO conocimiento reutilizable → su neurona ANTES de cerrar (bug/lección → `30`; arquitectura → `20`; WIP → `10`; decisión cerrada → ADR en `99` + fila en `00`). **Deliberación** (comité / consejo externo / workflow, cara de reproducir) → CRUDO al `archiveDir` del manifest (bóveda `../brain-private/`) + SÍNTESIS con *callejones probados* ANTES de cerrar: el sacrificio de investigación ES conocimiento; perderlo = re-investigar.
+- **Caza-bugs (el camino vivo, no solo el diff)**: al TOCAR o ROZAR un subsistema con estado observable (render/listener/CRUD/flujo), recórrelo END-TO-END antes de cerrar, sobre todo las fronteras del estado-cero (crear el 1er ítem y verlo en vivo Y al recargar; borrar el último y ver colapsar limpio). "Rozar" = mi diff cambia una entrada/salida/contrato o el estado que otro lee, aunque no edite su archivo. Maquinaria pesada SOLO si es caro de revertir. Skill `caza-bugs`. [HONOR]
+- **Neurogénesis**: conocimiento reutilizable que no encaja y crecerá → crea `docs/NN-NOMBRE.md` + en el MISMO acto (1) fila en §0, (2) registro en `00`, (3) bitácora. Si dudas, apéndalo (anti-fragmentación). Lóbulos hijos de `40` nacen bajo Trigger 🔵 SOLO con contenido real, nunca vacíos por anticipado.
 - **Frescura**: si mueves/creas/renombras/eliminas un componente, ruta o flujo → actualiza `20` (+ su hoja) en el MISMO cambio. Una neurona vieja engaña al próximo "tú".
-- **Higiene = GC (cuantificado)**: `10` es pizarra (cap ~110, §G.5). Al cerrar tarea, si supera el cap → PODA: (1) cada tarea CERRADA a ADR en `99` + fila en `00`, (2) lecciones a `30`, (3) `05` si cambió la salud, (4) recorta `10` al foco vivo + pendientes abiertos. ⛔ Nunca volcar a `99` sin convertir en ADR.
-- **Auto-auditoría (arranque Y pre-cierre)**: corre **`npm run brain:check`**. Al ARRANCAR: si reporta problemas, o `05`/`10` están viejos, o hay tarea sin consolidar → arréglalo ANTES. Antes de cerrar/idle — PROACTIVO: barrido holístico (brain:check + **frescura vs git real** de commit/branch) → cerebro impecable para el próximo "tú".
-- **Auto-mejora / Autocrítica / Desafío Crítico**: llena vacíos donde hubo fricción (re-investigar algo ya sabido = falta un índice o una lección). Si el cerebro contribuyó a un error: nombra el DEFECTO (stale / regla mala / routing errado / sobre-fragmentación), corrígelo en su nodo y registra el meta-aprendizaje en `30 §Meta`; si toca gobernanza → ADR + flag en `05`. Solo ante error real, nunca auto-duda en bucle. Puedes cuestionar cualquier regla **con EVIDENCIA verificable** (regla → evidencia → reemplazo → aplicar o ADR): cuestionar con evidencia ≠ ignorar a voluntad. *Un cerebro equivocado es peor que uno incompleto.*
-- **Cierre (anti "lo documento después")**: una tarea NO está cerrada hasta verificar: ¿`10` refleja el progreso? ¿`05` si cambió la salud? ¿decisión → ADR en `99` + `00`? ¿lección → `30` con su disparador? ¿cache bumpeado (§4) si cambió el comportamiento? ¿`brain:check` SANO? **¿hubo deliberación → CRUDO + SÍNTESIS enlazados, o la tarea está INCOMPLETA** (✅ con deliberación no capturada = NO cerrada)? ¿auditoría especializada → lóbulo hijo + skills usadas registradas? Si falta algo, vuelve y hazlo.
-- **Skills (§40)**: capacidad REUSABLE y PORTABLE (sirve en cualquier proyecto; lo específico de ESTE va al cerebro) → sugiere crearla vía `skill-creator`; decide el cliente. **Skill = capacidad general; neurona/lóbulo = conocimiento del proyecto.** Y toda skill nueva en `skills/` o `~/.claude/skills/` se documenta en `docs/skills-inventory.md` en el MISMO cambio, sin que la pidan. Backstop: `brain:check` #6.
+- **Higiene = GC**: `10` es pizarra (cap → manifest). Al cerrar tarea, si supera el cap → PODA: cada tarea CERRADA a ADR en `99` + fila en `00`, lecciones a `30`, `05` si cambió la salud, recorta `10` al foco vivo + pendientes abiertos. ⛔ Nunca volcar a `99` sin convertir en ADR.
+- **Auto-auditoría (arranque Y pre-cierre)**: corre **`npm run brain:check`**. Al ARRANCAR: si reporta problemas, o `05`/`10` están viejos, o hay tarea sin consolidar → arréglalo ANTES. Antes de cerrar/idle — PROACTIVO: barrido holístico (brain:check + **frescura vs git real**) → cerebro impecable para el próximo "tú".
+- **Auto-mejora / Autocrítica / Desafío Crítico**: llena vacíos donde hubo fricción (re-investigar algo ya sabido = falta un índice o una lección). Si el cerebro contribuyó a un error: nombra el DEFECTO (stale / regla mala / routing errado / sobre-fragmentación), corrígelo en su nodo y registra el meta-aprendizaje en `30 §Meta` (detalle → `34`); si toca gobernanza → ADR + flag en `05`. Solo ante error real, nunca auto-duda en bucle. Cuestiona cualquier regla **con EVIDENCIA verificable** (regla → evidencia → reemplazo → aplicar o ADR): con evidencia ≠ a voluntad. *Un cerebro equivocado es peor que uno incompleto.*
+- **Cierre (anti "lo documento después")**: NO está cerrada hasta verificar: ¿`10` al día? ¿`05` si cambió la salud? ¿decisión → ADR en `99` + `00`? ¿lección → `30` con su disparador? ¿cache §4? ¿`brain:check` SANO? **¿hubo deliberación → CRUDO + SÍNTESIS enlazados, o la tarea está INCOMPLETA** (✅ sin deliberación capturada = NO cerrada)? ¿auditoría → lóbulo hijo + skills registradas? Si falta algo, vuelve y hazlo.
+- **Skills (§40)**: capacidad REUSABLE y PORTABLE (lo específico de ESTE proyecto va al cerebro) → sugiere crearla vía `skill-creator`; decide el cliente. **Skill = capacidad general; neurona/lóbulo = conocimiento del proyecto.** Skill nueva en `skills/` o `~/.claude/skills/` → `docs/skills-inventory.md` en el MISMO cambio. Backstop: `brain:check` #6.
 
 **Regla de ADMISIÓN (anti-teatro)**: cada regla cita su gate del linter o lleva `[HONOR]` — el linter solo mecaniza caps/huérfanas/desync/skills/archiveDir; el resto de §G.4 es honor. No fingir mecanización.
 
@@ -216,28 +216,11 @@ El cerebro crece solo — pero **nunca sin ti**.
 ### G.5 — Capacidad de neuronas y Sharding (economía de contexto)
 
 Una neurona sobrecargada satura el contexto. Cada una tiene un TOPE BLANDO (señal, no muro).
-📏 **Los topes NO se listan aquí**: viven en `docs/.brain-manifest.json` (`caps`, en **chars** — la unidad
-real de contexto) y `brain:check` los valida en cada corrida. Copiarlos a este archivo los desincroniza.
+📏 **Los topes NO se listan aquí**: viven en `docs/.brain-manifest.json` (`caps`, en **chars** — la unidad real de contexto) y `brain:check` los valida en cada corrida. Copiarlos aquí los desincroniza.
 
-Lo que el manifest no puede guardar es **cómo** se poda cada una:
+🔻 **CÓMO se poda cada neurona** (mapa por nodo: `20` · `30`+hijas · `00`+shards · `99`) → `docs/60-WORKFLOWS.md §Mapa de PODA`.
 
-- **`CLAUDE.md` · `05` · `10`** (always-on, el boot): no se engordan. `CLAUDE.md` es núcleo de gobernanza —
-  todo crecimiento DESPLAZA detalle a una neurona, jamás sube el tope; `05` es tablero (pisar, no apilar);
-  `10` se poda con el GC de §G.4. Nunca historial, tareas ni cache en el router.
-- **`20`**: shard por sub-área (`21-ESPACIAL-ADMIN`).
-- **`30`**: es el ÍNDICE de lecciones — el kernel lee **todos** los `### L-NN`/`### M-NN` AQUÍ (stub-header)
-  y el detalle vive en la hija: `31` backend · `32` carga/render · `33` doctrinas CSS · `34` meta · `35` dinero.
-- **`00`**: range-shard por rangos de § (`00a`/`00b`/…); el kernel lo lee como SET (`00`+`00[a-z]-INDICE*`).
-- **`99`**: sin tope, pero **NUNCA se lee entero** — solo `offset/limit` vía índice. Si supera ~50k líneas,
-  se parte en volúmenes `99a`/`99b` por rango de §.
+- **Always-on (`CLAUDE.md` · `05` · `10`) = el boot**: no se engordan. **One-in-one-out**: toda regla nueva en el router DESPLAZA o fusiona una existente, jamás sube el tope — gate determinista: el kernel BLOQUEA el commit si el always-on supera `bootCharsTarget`. `05` se PISA (tablero, no bitácora); `10` se poda con el GC de §G.4. Nunca historial, tareas ni cache en el router.
 
-**Reflejo de Sharding (neurogénesis por SATURACIÓN)**: al acercarse al tope NO la dejes engordar — extrae una
-sub-categoría coherente a una hermana `docs/NN-NOMBRE.md` y, como toda neurona nueva (§G.4): (1) fila en §0,
-(2) registro en `00`, (3) **puntero desde la MADRE a la hija**. 🔗 **Nada huérfano: si una neurona existe y
-`CLAUDE.md` no la conoce, el cerebro está roto.** La conexión ES tan importante como el contenido.
+**Reflejo de Sharding (neurogénesis por SATURACIÓN)**: al acercarse al tope NO la dejes engordar — extrae una sub-categoría coherente a una hermana `docs/NN-NOMBRE.md` y, como toda neurona nueva (§G.4): (1) fila en §0, (2) registro en `00`, (3) **puntero desde la MADRE a la hija**. 🔗 **Nada huérfano: si una neurona existe y `CLAUDE.md` no la conoce, el cerebro está roto.**
 
-## §7 — Cómo retomar (recap)
-
-1. **Boot** (§G.1): `CLAUDE.md`+`05`+`10` + `brain:check`; imprime signos vitales; pendientes → TODO-NN.
-2. **Triggers** §G.2 · antes de código: IAP §3.4 · antes de commit: §2 · tras CADA tarea: §G.4 + cache §4.
-3. **Entorno**: Windows 11 · PowerShell · raíz del repo · `Ctrl+Shift+R` tras bump de SW.

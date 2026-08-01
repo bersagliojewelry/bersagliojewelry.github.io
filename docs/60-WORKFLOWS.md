@@ -72,3 +72,21 @@
   en su `30 §L-NN` o ADR; aquí va el **patrón reutilizable**.
 - Patrón general de un workflow de detección: **(1) disparador claro → (2) fan-out de lentes/agentes
   independientes que buscan el fallo → (3) síntesis/veredicto → (4) capturar lo aprendido**.
+
+## 📏 Mapa de PODA por neurona (bajado del router, 2026-08-01)
+
+> Disparador: una neurona se acerca a su `cap` del manifest, o `brain:check` marca `↗ leve exceso`.
+> Vivía en `CLAUDE.md §G.5`; se DESPLAZÓ aquí (one-in-one-out del boot) porque solo se necesita en el
+> momento de podar/shardear, no en cada arranque. La regla que SÍ es always-on sigue en `§G.5`.
+
+- **`CLAUDE.md` · `05` · `10`** (always-on = el boot): no se engordan. Crecer en el router DESPLAZA
+  detalle a una neurona (como hizo esta sección); jamás sube el tope. `05` se PISA, no se apila;
+  `10` se poda con el GC de `§G.4`. Nunca historial, tareas ni cache en el router.
+- **`20`**: shard por sub-área (así nació `21-ESPACIAL-ADMIN`).
+- **`30`**: es el ÍNDICE de lecciones — el kernel lee **todos** los `### L-NN`/`### M-NN` AQUÍ
+  (stub-header) y el detalle vive en la hija: `31` backend · `32` carga/render · `33` doctrinas CSS ·
+  `34` meta · `35` dinero. Podar `30` = mover CUERPO a la hija dejando el stub, nunca borrar el stub.
+- **`00`**: range-shard por rangos de § (`00a`/`00b`/`00c`); el kernel lo lee como SET
+  (`00` + `00[a-z]-INDICE*`), así que la madre debe quedarse con el ruteo y los § recientes.
+- **`99`**: sin tope, pero **NUNCA se lee entero** — solo `offset/limit` vía índice. Si supera
+  ~50k líneas, se parte en volúmenes `99a`/`99b` por rango de §.

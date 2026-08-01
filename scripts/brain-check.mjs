@@ -25,7 +25,7 @@
 //   (7) archiveDir íntegro [warn, --full]               (16) Fiabilidad M-22: `verificado-vivo` stale [info, --full]
 //       + 7b) bóveda: commits ≠ origin vía fs [warn]
 // ===========================================================
-const KERNEL_VERSION = '1.7.0';
+const KERNEL_VERSION = '1.7.2';
 import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -219,8 +219,13 @@ if (hasSwSection && swFile) {
     const estadoPath = join(DOCS, '05-ESTADO-GLOBAL.md');
     if (existsSync(estadoPath)) {
       const estado = read(estadoPath);
-      const vigLine = estado.split('\n').find((l) => /Cache version vigente|Versi[oó]n.*Cache/i.test(l)) || '';
-      const vig = (vigLine.match(/`([^`]+)`/) || [])[1] || (vigLine.match(/v\d{14}/) || [])[0] || null;
+      const vigLine = estado.split('\n').find((l) => /Cache version vigente|Versi[oó]n.*Cache|\*\*Cache\*\*/i.test(l)) || '';
+      // El candidato debe PARECER una versión de caché, no cualquier backtick: en la era-heartbeat
+      // esta fila es un PUNTERO (`docs/.estado-auto.md`) y tomarlo por versión disparaba un
+      // "05 STALE" falso justo en los repos que ya hicieron lo correcto (soltar el dato derivable).
+      const esVersion = (s) => s && !s.includes('/') && !/\.(md|json|mjs|js)$/i.test(s) && /\d/.test(s) && s.length <= 40;
+      const vig = [...vigLine.matchAll(/`([^`]+)`/g)].map((m) => m[1]).find(esVersion)
+        || (vigLine.match(/v\d{14}/) || [])[0] || null;
       if (vig) {
         const nv = (s) => String(s).replace(/^v/, '');
         if (nv(vig) === nv(swVer)) ok(`05 cache vigente == SW ("${swVer}")`);
@@ -566,11 +571,12 @@ head('\n17) Git del PROPIO repo (¿el cerebro dice la verdad sobre dónde estás
     //     se lee primero— mentía, mientras el `10` sí nombraba la rama buena. Sumar los tokens de
     //     todos los always-on daba por sana la mentira. Cada nodo responde de lo que él declara.
     if (headRef) {
-      // Ruido a descartar: palabras sueltas, y sobre todo los NOMBRES DE NEURONA (`05`, `10`, `99`,
-      // `30-LECCIONES`…) — en un cerebro los backticks son casi siempre punteros a nodos, no ramas.
-      // Sin este filtro el gate acusaba a CLAUDE.md de «declarar la rama `05`»: un gate ruidoso se
-      // acaba ignorando, que es como muere un gate.
-      const RUIDO = (r) => /^(única|activa|actual|de|del|la|el|en|y|o|prod|producción|git|origin)$/i.test(r)
+      // PRECISIÓN sobre recall: solo cuentan DOS señales inequívocas —`origin/<x>`, que nadie escribe
+      // salvo para hablar de una rama, y un token pegado a la palabra rama/branch—. La v3 recogía
+      // CUALQUIER backtick de una línea git-ish y en bersaglio acusó al `05` de «declarar la rama
+      // `arquitecto-software` / `OPUS-5`» (una skill y un tag de modelo). Un gate ruidoso se acaba
+      // ignorando: perder una mentira rara cuesta menos que perder la confianza en el gate ([[M-05]]).
+      const RUIDO = (r) => /^(única|activa|actual|de|del|la|el|en|y|o|prod|producción|git|origin|main-.*)$/i.test(r)
         || /^\d+[a-z]?$/.test(r)            // `05`, `10`, `99`, `00a`
         || /^\d{2}[-_]/.test(r)             // `30-LECCIONES`, `00-INDICE`
         || /\.(md|mjs|json|js|html|css|ps1|yml)$/i.test(r);
@@ -579,9 +585,10 @@ head('\n17) Git del PROPIO repo (¿el cerebro dice la verdad sobre dónde estás
         if (!existsSync(p)) continue;
         const declara = new Set();
         for (const linea of read(p).split('\n')) {
-          if (!/rama|branch|origin\/|pushead|mergea/i.test(linea)) continue;
+          if (!/rama|branch|origin\//i.test(linea)) continue;
           for (const m of linea.matchAll(/origin\/([\w.-][\w./-]{0,39})/g)) declara.add(m[1]);
-          for (const m of linea.matchAll(/`([\w.-][\w./-]{0,39})`/g)) declara.add(m[1]);
+          // token INMEDIATAMENTE tras rama/branch (con los calificativos que se usan en estos cerebros)
+          for (const m of linea.matchAll(/\b(?:rama|branch)\s+(?:única\s+|activa\s+|de trabajo\s+|prod\s+)?[`*]{1,2}([\w.-][\w./-]{0,39})[`*]{1,2}/gi)) declara.add(m[1]);
         }
         const otras = [...declara].filter((r) => r !== branch && !RUIDO(r));
         // Si el archivo nombra varias ramas y una es la real, es un flujo declarado (dev→main), no una mentira.

@@ -42,11 +42,7 @@ El cerebro se divide en **nodos**. Auto-cargas SOLO `CLAUDE.md` + `05` + `10` (�
 | 🗺️ **Espacial** | `docs/20-MEMORIA-ESPACIAL.md` | ❌ on-demand | Trigger de Desorientación: dónde vive un componente, flujos, arquitectura, layouts. **Hija → `21` (panel/CRM).** |
 | 🗺️ **Espacial · Admin/CRM** (hija de `20`) | `docs/21-ESPACIAL-ADMIN.md` | ❌ on-demand | Desorientación en el PANEL: `js/admin/*`, CRM/cartera, POS, Pedidos, colecciones/roles. |
 | 🧪 **Procedimental (experiencia)** | `docs/30-LECCIONES.md` | ❌ on-demand | Trigger de Experiencia: ANTES de una op riesgosa/repetitiva (refactor CSS, tocar caché/SW) o si un síntoma "te suena". Gotchas + recetas + doctrinas Liquid Glass. **Hija → `31`.** |
-| 🔥 **Procedimental · Backend** (hija de `30`) | `docs/31-LECCIONES-FIRESTORE.md` | ❌ on-demand | Experiencia BACKEND: ANTES de tocar `firestore.rules`, CF, índices, claims o el emulador (stub-headers en `30`). |
-| 🌫️ **Procedimental · Carga web** (hija de `30`) | `docs/32-LECCIONES-CARGA.md` | ❌ on-demand | Experiencia: carga fluida/LQIP/View Transitions/caché SWR del sitio público (stub-headers en `30`). |
-| 🎨 **Doctrinas CSS / Diseño** (hija de `30`) | `docs/33-DOCTRINAS-CSS.md` | ❌ on-demand | Trigger de Experiencia: doctrinas de diseño CSS / Liquid Glass / tipografía. NO contiene `L-NN` (kernel los lee de `30`). |
-| 🧠 **Procedimental · Meta** (hija de `30`) | `docs/34-LECCIONES-META.md` | ❌ on-demand | Autocrítica: detalle M-NN + gobernanza ×4 (stubs en `30`). |
-| 💰 **Procedimental · Dinero** (hija de `30`) | `docs/35-LECCIONES-DINERO.md` | ❌ on-demand | Experiencia con PLATA: ANTES de tocar una CF que escriba dinero, una idempotencia por opId, el arqueo/turno o una "pata" en otro libro (stub-headers en `30`). |
+| 🧩 **Hojas hijas de `30`** | `docs/31-LECCIONES-FIRESTORE.md` · `32-LECCIONES-CARGA.md` · `33-DOCTRINAS-CSS.md` · `34-LECCIONES-META.md` · `35-LECCIONES-DINERO.md` | ❌ on-demand | Ramas de la procedimental: **backend** (rules/CF/deploy) · **carga web** · **doctrinas CSS/diseño** · **meta** (`M-NN`) · **dinero** (tx/idempotencia). El stub `### L-NN`/`### M-NN` vive en `30` —ahí los lee el kernel—; el detalle, en la hija. |
 | 🗂️ **Índice sináptico** | `docs/00-INDICE.md` | ❌ on-demand | ANTES de leer el historial (offset exacto) Y para el enrutamiento semántico (síntoma → neurona). Mapa § → línea de **§176+** + ruteo. |
 | 🗂️ **Índice histórico** (hijas de `00`) | `docs/00a-INDICE-HIST.md` · `00b` · `00c` | ❌ on-demand | Range-shards (§140/§174/§193): §1–§115→`00a`; §116–§157→`00b`; §158–§175→`00c`. Madre `00` = ruteo + §176+. |
 | 📚 **Largo Plazo** | `docs/99-HISTORIAL-ADR.md` | ❌ on-demand | Trigger de Error / detalle histórico de un §. NUNCA completo — usa offset/limit. |
@@ -137,22 +133,22 @@ Antes de CUALQUIER commit no-trivial: 5 secciones → (A) archivos a modificar, 
 - Selectores substring `[class*="x"]` son peligrosos — matchean clases hijas; excluir namespaces con `:not()`.
 
 ### 3.6 🏛️ REGLA DE ORO — Piensa como arquitecto (SIEMPRE, antes de tocar nada)
-> Directiva fuerte del cliente (2026-06-05, **reafirmada 2026-06-06**). **Tu trabajo va MÁS ALLÁ del código: tomas decisiones técnicas que impactan TODO el sistema** (cómo se conecta, escala, se mantiene, se asegura, evoluciona). **Piensa en el sistema completo, no en una sola función.** (Manifiesto completo con aforismos → `50 §0`.)
-- **Sistema completo**: cada cambio se decide por impacto en negocio · escalabilidad · seguridad-por-diseño · costo · mantenibilidad · integración.
-- **Escala (miles de usuarios)**: diseña hoy para el crecimiento de mañana — desacoplar, paginar/cachear, distribuir carga, evitar cuellos de botella, sin perder rendimiento ni estabilidad.
-- **Seguridad por diseño** (desde el inicio, NO al final): autenticación · autorización (RBAC least-privilege) · datos cifrados en tránsito/reposo · validación server-side · secretos fuera del código · monitoreo/auditoría.
-- **Costo = impacto técnico-financiero** (infra · rendimiento · mantenibilidad · equipo · escala): no es gastar menos, sino invertir mejor.
-- **UX/IA como arquitectura**: el panel/producto se diseña **segmentado y ordenado** (estados, filtros, jerarquía clara), no features sueltas mezcladas ni un menú plano.
-- **Cero monolitos**: módulos desacoplados, límites claros, despliegues independientes, bajo acoplamiento. **Integración** deliberada (APIs/eventos/colas/webhooks).
-- **Zero-budget/serverless (Firebase)**: escala gestionada + límites de módulo limpios + event-driven; **NO** microservicios/gRPC/k8s por moda. Manifiesto completo + charter → `docs/50-ARQUITECTURA.md §0`.
+> Tu trabajo va MÁS ALLÁ del código: decides cómo el sistema se conecta, escala, se asegura, cuesta y
+> evoluciona. *El código hace que funcione; la arquitectura hace que sobreviva.*
+- Cada cambio se decide por: **negocio · escalabilidad · seguridad-por-diseño · costo · mantenibilidad ·
+  integración**. Escala = desacoplar, paginar/cachear, distribuir. Seguridad DESDE EL INICIO (authn · authz
+  RBAC least-privilege · validación en servidor · datos en reposo), nunca al final. Costo = impacto
+  técnico-financiero, no solo la factura. La UX del panel también es arquitectura: segmentado y ordenado.
+- **Cero monolitos**: módulos desacoplados, límites claros, bajo acoplamiento. **Zero-budget/serverless**
+  (Firebase): escala gestionada + event-driven — **NO** microservicios ni k8s por moda.
 
 ### 3.7 🧠 Calidad por defecto — auto-crítica SIEMPRE · Comité ×3 por iniciativa propia
-> Directiva de Daniel (2026-06-08): *"no debería tener que pedir el comité; Claude da su mejor respuesta por defecto."* Mecánica completa → skill `comite-expertos`.
-- **Auto-crítica SIEMPRE (casi gratis)**: antes de entregar CUALQUIER respuesta sustantiva, una pasada interna — *"¿qué falla? ¿asumí algo falso? ¿se puede mejorar?"* — y corrige. No esperes a que lo pidan.
-- **Comité ×3 por INICIATIVA PROPIA (caro)**: dispara `comite-expertos` SIN que el usuario lo pida cuando la respuesta sea una DECISIÓN con consecuencias, tenga incertidumbre genuina / varias opciones válidas, sea cara de revertir (arquitectura/datos/seguridad/legal/dinero) o un entregable importante (plan/diseño/copy clave/texto legal). **Anuncia que lo activaste.** En Decisión Fuerte, suma 2ª opinión externa (`docs/15-CONSEJO-EXTERNO.md`). **Flujo fuerte COMPLETO** (Decisión Fuerte **o** Diseño/UI no trivial) = **W-11** (`docs/60-WORKFLOWS.md`) / skill `proceso-decision-fuerte`: se aplica COMPLETO o no se aplicó — **3 artefactos** al dueño sin que los pida: mockup + prompt de consejo + prompt de Chrome.
-- **NO lo dispares en lo trivial**: datos/hechos, estados, ediciones mecánicas, ejecutar un plan ya decidido, charla. Un comité sobre "¿cuántos clientes hay?" gasta peor (costo/latencia) → viola §3.6. *Mejor calidad ≠ más proceso: es el proceso correcto para cada caso.*
-
----
+- **Auto-crítica SIEMPRE (casi gratis)**: antes de entregar CUALQUIER respuesta sustantiva, una pasada
+  interna — *¿qué falla? ¿asumí algo falso? ¿se puede mejorar?* — y corrige.
+- **Comité ×3 por INICIATIVA PROPIA (caro)**: dispara `comite-expertos` SIN que lo pidan cuando la respuesta
+  sea una DECISIÓN con consecuencias, tenga incertidumbre genuina, sea cara de revertir o un entregable
+  importante. Anúncialo. En Decisión Fuerte suma la 2ª opinión externa (§G.2 🛰️).
+- **NO en lo trivial**: datos, estados, ediciones mecánicas, ejecutar un plan ya decidido, charla.
 
 ## §4 — Cache bump (Service Worker · `public/sw.js`)
 
@@ -171,37 +167,32 @@ consolidas. **Es vinculante.**
 
 ### G.1 — Directiva de Ignorancia Selectiva (arranque de sesión)
 
-Al iniciar una conversación nueva estás **estrictamente obligado** a leer SOLO:
-
-1. `CLAUDE.md` (este — auto-cargado): quién eres + cómo operar.
-2. `docs/05-ESTADO-GLOBAL.md`: en qué estado está el sistema AHORA.
-3. `docs/10-MEMORIA-CORTO-PLAZO.md` (el WIP vivo): en qué estabas trabajando.
-
-Al arrancar, **imprime 2-3 líneas de signos vitales** (build, cache version, branch, flags) de `05` — procesarlos te obliga a saber dónde estás parado antes de tocar código.
-
-**IGNORA el resto** (Espacial/Índice/Largo Plazo/hojas) para ahorrar tokens, salvo que un trigger (§G.2) o el usuario lo pida. No leas el historial "por si acaso".
+Al iniciar una conversación estás **estrictamente obligado** a leer SOLO: (1) `CLAUDE.md` (auto-cargado);
+(2) `docs/05-ESTADO-GLOBAL.md`; (3) `docs/10-MEMORIA-CORTO-PLAZO.md` (el WIP vivo). Al arrancar, **imprime
+2-3 líneas de signos vitales** de `05` — procesarlas te obliga a saber dónde estás parado antes de tocar
+código. **IGNORA el resto** (Espacial/Índice/Largo Plazo/hojas) salvo que un trigger (§G.2) o el usuario lo
+pida. No leas el historial por si acaso.
 
 ### G.2 — Triggers de Recuperación (Escalation Path)
 
-Cuando se dispara un trigger, leer el nodo correspondiente deja de ser opcional:
+Cuando un trigger se dispara, leer su nodo deja de ser opcional:
 
-- **🔴 Trigger de Error / Saturación**: si fallas **2 veces** corrigiendo el mismo bug, estás OBLIGADO a DETENERTE y leer el **Largo Plazo** (`docs/00-INDICE.md` → tramo de `docs/99-HISTORIAL-ADR.md`) buscando el § o un bug análogo ANTES de la 3ª solución (prohibido adivinar, §3.3). Y si detectas **loops circulares o contexto saturado** (atención degradada): igual DETENTE, consolida `10` (con sus 🚫 callejones sin salida) y ofrece un **relevo curado** (sesión nueva > `/compact` para lógica compleja). Medir por SÍNTOMA, no por contador de turnos.
-- **🟡 Trigger de Desorientación**: si dudas de DÓNDE vive un componente, una ruta, un flujo de datos o cómo interactúan los módulos, estás OBLIGADO a consultar la **Memoria Espacial** (`docs/20-MEMORIA-ESPACIAL.md`) antes de tocar nada.
-- **🧪 Trigger de Experiencia**: ANTES de una operación riesgosa o repetitiva (mover/renombrar archivos, merge/rebase, tocar el SW o la cache, refactor CSS), consulta la **Memoria Procedimental** (`docs/30-LECCIONES.md`). Si un síntoma "te suena a algo ya visto", ahí está la receta. No tropieces dos veces con la misma piedra.
-- **🟢 Trigger de Historia**: si el usuario pregunta el "por qué" de una decisión pasada o el detalle de un §, ve al Índice → Largo Plazo (regla de oro §0).
-- **🔵 Trigger de Auditoría/Dominio**: si el cliente pide análisis especializado (seguridad/legal/UX/SEO/perf/escalabilidad/copy/a11y/etc.) → (1) skill relevante vía tool Skill (catálogo `docs/skills-inventory.md`); (2) `40-LOBULOS` por lóbulo; (3) si no existe, neurogénesis del hijo (`41`,`42`…) CON contenido REAL, nunca vacío (§G.4); (4) capturar findings + QUÉ skill usé. Persiste.
-- **🛰️ Trigger de Decisión Fuerte**: ANTES de una decisión cara de revertir (arquitectura, modelo de datos, seguridad/legal, fork 50/50, op irreversible) considera crítica del **provider externo** (`docs/15-CONSEJO-EXTERNO.md §0`; otra familia, no-Claude — **asesora, NUNCA edita; YO delibero/decido/implemento**). Allí: cuándo + tier + anti-anclaje. Sin provider/tokens → sigo solo + marco como NO revisada externamente.
+- **🔴 Error / Saturación**: si fallas **2 veces** con el mismo bug, DETENTE y lee el Largo Plazo (`00` → tramo de `99`) buscando el § o un bug análogo ANTES de la 3ª solución (prohibido adivinar, §3.3). Loops o contexto saturado: consolida `10` (con 🚫 callejones) y ofrece relevo curado.
+- **🟡 Desorientación**: dudas de DÓNDE vive un componente, ruta o flujo de datos → **Memoria Espacial** (`20`) ANTES de tocar nada.
+- **🧪 Experiencia**: ANTES de una op riesgosa o repetitiva (mover/renombrar archivos, merge/rebase, tocar el SW o la caché, refactor CSS, deploy de rules/functions) → **Memoria Procedimental** (`30` y su hija). Si un síntoma te suena, ahí está la receta.
+- **🟢 Historia**: el porqué de una decisión o el detalle de un § → Índice → Largo Plazo.
+- **🔵 Auditoría/Dominio**: análisis especializado (seguridad/legal/UX/SEO/perf/a11y) → (1) skill relevante (catálogo `skills-inventory`); (2) `40-LOBULOS`; (3) neurogénesis del hijo con contenido REAL (§G.4); (4) capturar hallazgos + qué skill usaste.
+- **🛰️ Decisión Fuerte**: ANTES de algo caro de revertir (arquitectura, modelo de datos, seguridad/legal, fork 50/50, op irreversible) considera crítica adversarial del **provider externo** (`15`; otra familia, no-Claude). **Asesora, NUNCA edita**: el comité y el provider DEBATEN; tú deliberas, decides e implementas. Sin provider → sigues solo y marcas la decisión como NO revisada.
 
-**Enrutamiento semántico**: ante una duda, NO escanees el cerebro. Ve al `docs/00-INDICE.md` (capa "síntoma/tema → neurona") que te dice EXACTAMENTE qué neurona consultar. Es tu sinapsis de recuperación rápida.
+**Enrutamiento semántico**: ante una duda, NO escanees el cerebro. Ve al `docs/00-INDICE.md` (capa síntoma → neurona).
 
 ### G.3 — Protocolo de Consolidación (sinapsis)
 
-La memoria fluye en una sola dirección: Corto Plazo → Largo Plazo.
-**Regla de PROPIEDAD (SSoT)**: un hecho = UN nodo dueño; el resto APUNTA (estado actual→`05` · dominio→lóbulo · WIP→`10` · decisión→`99`). Duplicar estado = divergencia garantizada.
-
-- **Por cada commit / tarea finalizada**: actualiza `docs/10-MEMORIA-CORTO-PLAZO.md` (foco actual, bitácora, estado de TODO-NN).
-- **Cuando una tarea se cierra por completo**: MUEVE ese recuerdo del Corto Plazo al Largo Plazo — apéndalo como ADR al final de `docs/99-HISTORIAL-ADR.md` (formato canónico §2), añade su fila en `docs/00-INDICE.md`, marca su `TODO-NN` como ✅ con link al §, y retíralo de la tabla de pendientes del Corto Plazo.
-- **Regla de Oro**: NUNCA documentes historial ni tareas en este `CLAUDE.md`. Cada pieza de información tiene su nodo. Este archivo solo cambia si cambia algo always-on.
+La memoria fluye en UNA dirección: Corto Plazo → Largo Plazo. **Por cada tarea finalizada**: actualiza `10`.
+**Cuando se cierra por completo**: MUEVE el recuerdo a `99` (ADR, formato §2) + fila en `00`, marca su TODO ✅
+y **retíralo de `10`**. **Regla de PROPIEDAD (SSoT)**: un hecho = UN nodo dueño; el resto APUNTA (estado→`05`
+· dominio→lóbulo · WIP→`10` · decisión→`99`). Duplicar estado = divergencia garantizada. **Regla de Oro**:
+NUNCA historial ni tareas en este `CLAUDE.md`.
 
 ### G.4 — Sistema Autónomo de Auto-construcción (neuroplasticidad, bajo TU guía)
 

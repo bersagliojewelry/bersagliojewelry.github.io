@@ -26,7 +26,7 @@
 //   (7) archiveDir íntegro [warn, --full]               (16) Fiabilidad M-22: `verificado-vivo` stale [info, --full]
 //       + 7b) bóveda: commits ≠ origin vía fs [warn]
 // ===========================================================
-const KERNEL_VERSION = '1.8.0';
+const KERNEL_VERSION = '1.9.0';
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -69,6 +69,19 @@ const KNOWN_KEYS = new Set([
 ]);
 for (const k of Object.keys(manifest)) {
   if (!k.startsWith('_') && !KNOWN_KEYS.has(k)) warn(`manifest: clave desconocida "${k}" (¿typo? un typo apaga gates en silencio) — schema v1.2`);
+}
+// v1.9.0 (§83) — el schema vigilaba las claves de MÁS y era ciego a las de MENOS. Cada gate
+// abajo hace `if (manifest.X)`, así que BORRAR una clave no rompe nada: apaga el gate y el
+// linter sigue imprimiendo verde. Es la vía de escape perfecta para el candado de boot que
+// acaba de volverse bloqueante — se desactiva con una tecla de suprimir y sin dejar rastro.
+const REQUIRED_KEYS = {
+  bootCharsTarget: 'el CANDADO DE BOOT (#2, bloqueante)',
+  alwaysOn: 'el CANDADO DE BOOT (#2, bloqueante)',
+  caps: 'los topes de neurona (#2)',
+  deepAudit: 'el vencimiento de la auditoría Nivel-2 (#14)',
+};
+for (const [k, gate] of Object.entries(REQUIRED_KEYS)) {
+  if (manifest[k] === undefined) warn(`manifest SIN "${k}" → ${gate} está APAGADO, y en silencio. Un gate que se desactiva borrando una clave no es un gate: declara la clave o documenta el downgrade.`);
 }
 if (Array.isArray(manifest.downgrades) && manifest.downgrades.length) {
   for (const d of manifest.downgrades) info(`DOWNGRADE activo: ${typeof d === 'string' ? d : JSON.stringify(d)} (visible por diseño — exige ADR)`);
@@ -169,6 +182,15 @@ if (BOOT_CHARS_TARGET) {
   if (bootChars > BOOT_CHARS_TARGET)
     warn(`BOOT always-on = ${bootChars}c (~${bootTok} tok) > objetivo ${BOOT_CHARS_TARGET}c (exceso ${bootChars - BOOT_CHARS_TARGET}c) → PODA antes de commitear. One-in-one-out (§G.5): toda regla nueva DESPLAZA o fusiona una existente; subir el techo NO es cerrar (M-05).`);
   else say(`  ✅ BOOT always-on = ${bootChars}c (~${bootTok} tok) ≤ objetivo ${BOOT_CHARS_TARGET}c`);
+  // v1.9.0 (§83): el gate mide los 3 archivos EDITABLES, pero el SessionStart tambien inyecta
+  // los sidecars del heartbeat. No entran al candado a proposito -- se GENERAN, nadie puede
+  // podarlos y bloquear un commit por ellos seria inaccionable-- pero callarlos hacia que el
+  // numero del boot fuera menor que el boot real. Se publica, no se castiga.
+  const sidecars = ['.estado-auto.md', '.handoff-auto.md'].map((f) => join(DOCS, f)).filter(existsSync);
+  if (sidecars.length && !BOOT) {
+    const extra = sidecars.reduce((a, p) => a + read(p).length, 0);
+    info(`+ sidecars del heartbeat: ${extra}c no medidos por el candado (se generan, no se podan) → boot REAL ≈ ${bootChars + extra}c`);
+  }
 }
 
 // 3) Desync índice → 99 [--full]
@@ -199,6 +221,7 @@ head('\n4) Frescura (cache SW ↔ 05) — OPCIONAL:');
 const hasSwSection = /##\s*§4\s*—\s*Cache bump/i.test(claude);
 const swCandidates = ['service-worker.js', 'public/sw.js', 'sw.js', 'public/service-worker.js'];
 let swFile = null;
+let cacheCruces = 0, swVerGlobal = null;   // v1.9.0: el ✅ del boot exige cruces REALES (§83)
 for (const c of swCandidates) { if (existsSync(join(ROOT, c))) { swFile = c; break; } }
 if (hasSwSection && swFile) {
   const swSrc = read(join(ROOT, swFile));
@@ -207,14 +230,18 @@ if (hasSwSection && swFile) {
     (swSrc.match(/CACHE_(?:NAME|VERSION)\s*=\s*['"]([^'"]+)['"]/) || [])[1] || null;
   if (!swVer) info(`${swFile} sin CACHE_NAME/CACHE_VERSION parseable`);
   else {
+    swVerGlobal = swVer;
     head(`  ℹ️  service-worker: ${swFile} → cache "${swVer}"`);
-    const cmCandidates = ['js/core/cache-manager.js', 'src/cache-manager.js', 'src/lib/cache-manager.js'];
+    // v1.9.0 (§83): faltaba `js/cache-manager.js` — la ruta REAL de inmobiliaria. El cruce
+    // SW↔manager llevaba meses sin ejecutarse y el boot igual imprimia su ✅ (ver abajo).
+    const cmCandidates = ['js/cache-manager.js', 'js/core/cache-manager.js', 'src/cache-manager.js', 'src/lib/cache-manager.js'];
     let cmVer = null, cmPath = null;
     for (const c of cmCandidates) {
       const p = join(ROOT, c);
       if (existsSync(p)) { const v = (read(p).match(/APP_VERSION\s*=\s*'v?(\d{14})'/) || [])[1]; if (v) { cmVer = v; cmPath = c; break; } }
     }
     if (cmVer) {
+      cacheCruces++;
       if (swVer === cmVer || swVer === 'v' + cmVer) ok(`cache SW == ${cmPath} (${swVer})`);
       else warn(`cache DESYNC: SW=${swVer} ≠ ${cmPath}=v${cmVer} → bumpear AMBOS (§4)`);
     }
@@ -230,13 +257,21 @@ if (hasSwSection && swFile) {
         || (vigLine.match(/v\d{14}/) || [])[0] || null;
       if (vig) {
         const nv = (s) => String(s).replace(/^v/, '');
+        cacheCruces++;
         if (nv(vig) === nv(swVer)) ok(`05 cache vigente == SW ("${swVer}")`);
         else warn(`05 STALE: declara "${vig}" pero SW="${swVer}" → actualizar 05`);
       } else if (!existsSync(join(DOCS, '.estado-auto.md'))) info('05 sin "Cache version vigente" parseable (y sin heartbeat §52 — en era-heartbeat el campo vive en el sidecar)');
     }
   }
 } else head('  ℹ️  sin service-worker o sin §4 — omitido');
-if (BOOT && swFile) say('  ✅ cache verificada (SW↔manager↔05)');
+// v1.9.0 (§83): este ✅ se imprimia SIEMPRE que existiera un service-worker, aunque no se
+// hubiera cruzado NADA — y no se cruzaba, porque la ruta del manager estaba mal y en la
+// era-heartbeat el 05 ya no declara la cache. Un ✅ que no depende de haber comparado algo
+// es la 1a forma de mentir de un gate (M-06): no dispara, y encima tranquiliza.
+if (BOOT && swFile) {
+  if (cacheCruces > 0) say(`  ✅ cache verificada (${cacheCruces} cruce(s))`);
+  else say(`  ℹ️  cache: SW dice "${swVerGlobal || '?'}" — sin contraparte que cruzar (nada verificado)`);
+}
 
 // 5) Referencias cruzadas
 head('\n5) Referencias cruzadas (huecos en el cerebro):');
@@ -404,6 +439,11 @@ else if (existsSync(cortoP) && indexPaths.length) {
     if (!cells.some((c) => /^✅/.test(c))) continue;
     const secs = [...l.matchAll(/§(\d+)/g)].map((m) => m[1]);
     if (secs.some((s) => idxNums.has(s))) { warn(`fila con estado ✅ ya consolidada (§${secs.join(',§')}) sigue en la tabla del 10 → retirarla en la poda (GC §G.4)`); flagged++; }
+    // v1.9.0 (§83) — POLARIDAD INVERTIDA, el caso GRAVE que este gate no veía: una fila ✅ que
+    // no cita NINGÚN § indexado. La de arriba dice "ya está en 99, retírala del 10" (benigna,
+    // es higiene). Esta dice "la diste por cerrada y no hay ADR en ninguna parte" — el trabajo
+    // se pierde entero y ninguna corrida lo delataba, porque sin § el `some()` daba false.
+    else { warn(`fila con estado ✅ SIN § indexado que la respalde → o se consolidó y falta el puntero, o NUNCA se consolidó y el trabajo no está en ${'`99`'} (§G.3). Cita el §NN o abre el ADR: ${l.slice(0, 90).trim()}`); flagged++; }
   }
   if (!flagged) ok('tabla TODO del 10 sin filas ✅ ya consolidadas');
 }
@@ -668,6 +708,31 @@ else {
     else if (!read(hookP).includes('brain-check'))
       warn(`"${hooksDir}/pre-commit" existe pero NO invoca brain-check.mjs → gate decorativo (M-06/M-07).`);
     else ok(`pre-commit cableado en "${hooksDir}/" e invoca este linter`);
+  }
+}
+
+// 26) Longitud de fila del INDICE (la regla escrita que nadie medía) [--full]
+//     El manifest de inmobiliaria declara "objetivo <=200c por fila" y "revisar hacia los ~100
+//     ADRs"; al medirlo, las 13 filas mas recientes lo incumplian TODAS (§71 = 449c) y el cap
+//     reventaba hacia los ~83 ADRs, no los ~100. Una regla sin gate es una intencion: el indice
+//     es la capa de RUTEO -- si cada fila cuenta la historia, deja de enrutar y pasa a narrar.
+head('\n26) Longitud de fila del índice (ruteo, no narración):');
+if (BOOT) head('  ⏭️  omitido en --boot');
+else if (!indexPaths.length) info('sin índice');
+else {
+  const LIMITE = 200, RUIDO = 260;   // avisa desde 260c para no ahogar por 10 chars de mas
+  const gordas = [];
+  for (const p of indexPaths) {
+    read(p).split('\n').forEach((l, i) => {
+      const m = l.match(/^\|\s*§(\d+)\b/);
+      if (m && l.length > RUIDO) gordas.push({ f: p.split(/[\\/]/).pop(), n: i + 1, s: m[1], c: l.length });
+    });
+  }
+  if (!gordas.length) ok(`filas §NN del índice dentro de ${LIMITE}c (+holgura)`);
+  else {
+    gordas.sort((a, b) => b.c - a.c);
+    const top = gordas.slice(0, 5).map((g) => `§${g.s} (${g.c}c)`).join(' · ');
+    info(`${gordas.length} fila(s) §NN por encima de ${RUIDO}c (objetivo ${LIMITE}c): ${top}${gordas.length > 5 ? ' …' : ''} → el detalle va al ADR; la fila enruta`);
   }
 }
 

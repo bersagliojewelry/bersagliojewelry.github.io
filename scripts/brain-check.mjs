@@ -26,7 +26,7 @@
 //   (7) archiveDir íntegro [warn, --full]               (16) Fiabilidad M-22: `verificado-vivo` stale [info, --full]
 //       + 7b) bóveda: commits ≠ origin vía fs [warn]
 // ===========================================================
-const KERNEL_VERSION = '1.9.1';
+const KERNEL_VERSION = '1.9.2';
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -181,7 +181,15 @@ if (BOOT_CHARS_TARGET) {
   // este mismo cambio, y su canario de boot baja al chequeo #24 de aquí.
   if (bootChars > BOOT_CHARS_TARGET)
     warn(`BOOT always-on = ${bootChars}c (~${bootTok} tok) > objetivo ${BOOT_CHARS_TARGET}c (exceso ${bootChars - BOOT_CHARS_TARGET}c) → PODA antes de commitear. One-in-one-out (§G.5): toda regla nueva DESPLAZA o fusiona una existente; subir el techo NO es cerrar (M-05).`);
-  else say(`  ✅ BOOT always-on = ${bootChars}c (~${bootTok} tok) ≤ objetivo ${BOOT_CHARS_TARGET}c`);
+  else {
+    say(`  ✅ BOOT always-on = ${bootChars}c (~${bootTok} tok) ≤ objetivo ${BOOT_CHARS_TARGET}c`);
+    // v1.9.2 (§83, TODO-37): el candado era un MURO sin acera — se pasaba de ✅ a commit bloqueado
+    // sin aviso, y el ✅ se daba igual con el 99,8% gastado. Quien escribe no sabe que va al filo
+    // hasta que choca, y entonces poda con prisa (que es como se poda mal). Banda de pre-aviso:
+    const margen = BOOT_CHARS_TARGET - bootChars;
+    const pct = Math.round((bootChars / BOOT_CHARS_TARGET) * 1000) / 10;
+    if (pct >= 97) info(`⚠️ boot al ${pct}% — solo ${margen}c de margen: la PRÓXIMA regla que entre al router bloquea el commit. Poda AHORA, con calma, no cuando choques.`);
+  }
   // v1.9.0 (§83): el gate mide los 3 archivos EDITABLES, pero el SessionStart tambien inyecta
   // los sidecars del heartbeat. No entran al candado a proposito -- se GENERAN, nadie puede
   // podarlos y bloquear un commit por ellos seria inaccionable-- pero callarlos hacia que el

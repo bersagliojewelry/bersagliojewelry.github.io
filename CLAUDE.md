@@ -30,27 +30,26 @@ el próximo "tú" (sin memoria) depende de lo que escribas hoy.
 
 ## §0 — Mapa de nodos de memoria (índice de enrutamiento)
 
-El cerebro se divide en **nodos**. Auto-cargas SOLO `CLAUDE.md` + `05` + `10` (§G.1); el resto se lee on-demand por trigger (§G.2). Así no quemas contexto.
+Auto-cargas SOLO `CLAUDE.md` + `05` + `10` (§G.1). Esta tabla dice **QUÉ contiene** cada nodo; **CUÁNDO leerlo lo deciden los triggers de §G.2** (no se repite aquí).
 
-| Nodo neuronal | Archivo | Auto-carga | Cuándo leerlo |
+| Nodo neuronal | Archivo | Auto | Qué contiene |
 |---|---|---|---|
 | 🧠 **Tronco Encefálico** | `CLAUDE.md` (este) | ✅ Siempre | Router + identidad + doctrinas + gobernanza. |
-| 🩺 **Estado Global (signos vitales)** | `docs/05-ESTADO-GLOBAL.md` | ✅ Siempre (boot) | Snapshot de salud: build, cache, branch, flags. "¿Dónde estoy parado?" antes de tocar nada. |
-| 💓 **Estado DERIVABLE** | `docs/.estado-auto.md` | ✅ lo imprime el hook | Rama, HEAD, sucios, caché del SW, costo y deuda de consolidación: **se generan en cada arranque**. Gitignored, NO se edita; si contradice al `05`, manda ESTE. |
-| ⚡ **Corto Plazo (WIP)** | `docs/10-MEMORIA-CORTO-PLAZO.md` | ✅ Siempre (2ª lectura) | Sprint actual, pendientes (TODO-NN), bitácora (estado técnico → `05`). |
-| 🗃️ **Backlog** | `docs/11-BACKLOG.md` | ❌ on-demand | Los pendientes **SIN EMPEZAR** (🔲). Fuera del boot (01/08, dueño): el `10` es la pizarra del SPRINT. Vuelven al `10` al entrar en sprint; ninguno está cerrado. |
-| 🛰️ **Consejo Externo** | `docs/15-CONSEJO-EXTERNO.md` | ❌ on-demand | Trigger de Decisión Fuerte (lista → §G.2 🛰️): crítica adversarial del **provider externo** (cuándo + tier → `15 §0`). |
-| 🗺️ **Espacial** | `docs/20-MEMORIA-ESPACIAL.md` | ❌ on-demand | Trigger de Desorientación: dónde vive un componente, flujos, arquitectura, layouts. **Hija → `21` (panel/CRM).**  Hija: **`21-ESPACIAL-ADMIN.md`** (admin/CRM). |
-| 🧪 **Procedimental (experiencia)** | `docs/30-LECCIONES.md` | ❌ on-demand | Trigger de Experiencia: ANTES de una op riesgosa/repetitiva (refactor CSS, tocar caché/SW) o si un síntoma "te suena". Gotchas + recetas + doctrinas Liquid Glass. **Hija → `31`.** |
-| 🧩 **Hojas hijas de `30`** | `docs/31-LECCIONES-FIRESTORE.md` · `docs/32-LECCIONES-CARGA.md` · `docs/33-DOCTRINAS-CSS.md` · `docs/34-LECCIONES-META.md` · `docs/35-LECCIONES-DINERO.md` | ❌ on-demand | Backend · carga web · CSS/diseño · meta (`M-NN`) · dinero. El stub vive en `30` (ahí lo lee el kernel); el detalle, en la hija. |
-| 🗂️ **Índice sináptico** | `docs/00-INDICE.md` | ❌ on-demand | ANTES de leer el historial (offset exacto) Y para el enrutamiento semántico (síntoma → neurona). Mapa § → línea de **§176+** + ruteo. |
-| 🗂️ **Índice histórico** (hijas de `00`) | `docs/00a-INDICE-HIST.md` · `00b` · `00c` | ❌ on-demand | Range-shards (§140/§174/§193): §1–§115→`00a`; §116–§157→`00b`; §158–§175→`00c`. Madre `00` = ruteo + §176+. |
-| 📚 **Largo Plazo** | `docs/99-HISTORIAL-ADR.md` | ❌ on-demand | Trigger de Error / detalle histórico de un §. NUNCA completo — usa offset/limit. |
-| 🎯 **Lóbulos de Dominio** | `docs/40-LOBULOS-DOMINIO.md` | ❌ on-demand | Trigger 🔵 §G.2: registry de dominios; lóbulos hijos (`41-SEGURIDAD`/`42-LEGAL`/`43-UX`/`45-PERFORMANCE`…) nacen on-demand con contenido real. |
-| 🏛️ **Arquitectura** | `docs/50-ARQUITECTURA.md` | ❌ on-demand | North-star técnico + **charter del CRM** (Fase 3). Léelo ante Decisión Fuerte o al diseñar/extender módulos. Resumen en §3.6. |
-| 🔁 **Workflows reutilizables** | `docs/60-WORKFLOWS.md` | ❌ on-demand | Catálogo de recetas que detectan las MISMAS inconsistencias/errores (red-team de reglas, auditoría por dimensiones, verif. post-subagente, comité ×3…). Léelo antes de una revisión/auditoría/op repetitiva. |
-| 🛠️ **Skills externas** | `skills/` + tool Skill | ❌ on-demand | Expertise de terceros (NO neurona; recurso paralelo). Consultar PRIMERO al disparar Trigger 🔵. **Catálogo → `docs/skills-inventory.md`**. |
-| 📖 **Manual del cerebro** | `docs/INSTALACION-CEREBRO.md` | ❌ on-demand | Protocolo de instalación + reinstalación + migración entre versiones del template. Consulta al actualizar la versión del cerebro. |
+| 🩺 **Estado Global** | `docs/05-ESTADO-GLOBAL.md` | ✅ boot | Signos vitales: build, cache, branch, flags de riesgo. |
+| 💓 **Estado DERIVABLE** | `docs/.estado-auto.md` | ✅ hook | Rama, HEAD, sucios, caché del SW, costo, deuda de consolidación — GENERADOS en cada arranque. Gitignored, no se edita; **si contradice al `05`, manda ESTE**. |
+| ⚡ **Corto Plazo (WIP)** | `docs/10-MEMORIA-CORTO-PLAZO.md` | ✅ 2ª | Sprint actual, pendientes (TODO-NN), bitácora. |
+| 🗃️ **Backlog** | `docs/11-BACKLOG.md` | ❌ | Los pendientes **SIN EMPEZAR** (🔲) — fuera del boot por decisión del dueño; el `10` es la pizarra del SPRINT. Ninguno está cerrado. |
+| 🛰️ **Consejo Externo** | `docs/15-CONSEJO-EXTERNO.md` | ❌ | Crítica adversarial del **provider externo** (otra familia, no-Claude): cuándo pedirla + tier, en `15 §0`. |
+| 🗺️ **Espacial** | `docs/20-MEMORIA-ESPACIAL.md` (+ hija `21-ESPACIAL-ADMIN.md`) | ❌ | Dónde vive cada componente, flujo, layout y estrategia del SW; la hija cubre admin/CRM. |
+| 🧪 **Procedimental** | `docs/30-LECCIONES.md` | ❌ | Gotchas y recetas ya pagados (`L-NN`). |
+| 🧩 **Hojas hijas de `30`** | `docs/31-LECCIONES-FIRESTORE.md` · `docs/32-LECCIONES-CARGA.md` · `docs/33-DOCTRINAS-CSS.md` · `docs/34-LECCIONES-META.md` · `docs/35-LECCIONES-DINERO.md` | ❌ | Backend · carga web · 🖥️ **CSS, diseño, performance de render y observadores (LÉELA ANTES de tocar CSS/JS de UI)** · meta (`M-NN`) · dinero. El stub vive en `30`; el detalle, en la hija. |
+| 🗂️ **Índice sináptico** | `docs/00-INDICE.md` (+ shards `00a`/`00b`/`00c`) | ❌ | Ruteo semántico + mapa §→línea de §176+. Los shards guardan §1–§175; el kernel los lee como UNO. |
+| 📚 **Largo Plazo** | `docs/99-HISTORIAL-ADR.md` | ❌ | El "por qué" de cada decisión. NUNCA completo — offset/limit. |
+| 🎯 **Lóbulos de Dominio** | `docs/40-LOBULOS-DOMINIO.md` | ❌ | Registry de dominios; los hijos (`41-SEGURIDAD`/`42-LEGAL`/`43-UX`/`45-PERFORMANCE`…) nacen con contenido REAL. |
+| 🏛️ **Arquitectura** | `docs/50-ARQUITECTURA.md` | ❌ | North-star técnico + **charter del CRM** (Fase 3). Resumen en §3.6. |
+| 🔁 **Workflows** | `docs/60-WORKFLOWS.md` | ❌ | Recetas que cazan las MISMAS inconsistencias (red-team, auditoría por dimensiones, comité ×3…) + **mapa de PODA** por nodo. |
+| 🛠️ **Skills externas** | `skills/` + tool Skill | ❌ | Expertise portable de terceros; NO es neurona. Catálogo → `docs/skills-inventory.md`. |
+| 📖 **Manual del cerebro** | `docs/INSTALACION-CEREBRO.md` | ❌ | Instalación, reinstalación y migración entre versiones del template. |
 
 **Hojas de detalle** (enlazadas desde su neurona madre, on-demand): nacen cuando hay contenido. Convención de nombre: `docs/<tema>.md`. Cada hoja queda referenciada desde la neurona madre — nada huérfano (§G.5).
 
@@ -109,15 +108,11 @@ Encabezado `## <fecha> — <título>` (convención por fecha de este cerebro) + 
 
 ## §3 — Doctrinas always-on (resumen ejecutable)
 
-### 3.1 Performance
-- NUNCA `transition: all` ni `* { transition }` global.
-- NUNCA animar layout props (width/height/top/left/margin/padding) — solo `transform`/`opacity`.
-- NUNCA `backdrop-filter` en listas de N elementos (solo superficies estructurales del cristal).
-- Imágenes: `loading="lazy"` + `decoding="async"` below-fold; `fetchpriority="high"` solo LCP; servir webp/avif.
+> **§3.1 (performance de render) y §3.5 (observadores) ya NO viven aquí**: se mudaron a `docs/33-DOCTRINAS-CSS.md` con el resto de la doctrina de CSS (poda del router, §195). Los números se conservan allá para no romper las citas.
 
-### 3.2 HTML/CSS / API estable
-- NUNCA renombrar IDs/clases CSS/endpoints/funciones exportadas existentes sin migración. Cambios aditivos.
-- Re-uso estricto de `renderPieceCardHTML` (`js/components/piece-card.js`) — único renderer de tarjetas de producto (L-03).
+### 3.2 API estable — contrato que NO se rompe · detalle → `docs/33-DOCTRINAS-CSS.md`
+El router guarda solo lo irreversible; **lee `33` ANTES de tocar CSS o JS de UI** [HONOR: sin gate].
+- NUNCA renombrar IDs/clases CSS/endpoints/funciones exportadas existentes sin migración. Cambios **aditivos**.
 - Para sustituir un campo manteniendo callsites: alias + deprecación gradual.
 
 ### 3.3 Verifica, no asumas — evidencia antes de afirmar (UNIVERSAL)
@@ -128,20 +123,11 @@ Encabezado `## <fecha> — <título>` (convención por fecha de este cerebro) + 
 ### 3.4 IAP — Impact Analysis Previo
 Antes de CUALQUIER commit no-trivial: 5 secciones → (A) archivos a modificar, (B) archivos INTACTOS verificados, (C) código muerto identificado, (D) refactor scope, (E) riesgos + rollback + tests.
 
-### 3.5 Observadores y eventos globales
-- CERO `MutationObserver` global con `subtree:true` que ejecute ops DOM (causa clicks bloqueados / loops). Usar refresh explícito desde el callsite.
-- CERO `pointermove` persistente global (solo durante drag activo).
-- Selectores substring `[class*="x"]` son peligrosos — matchean clases hijas; excluir namespaces con `:not()`.
-
 ### 3.6 🏛️ REGLA DE ORO — Piensa como arquitecto (SIEMPRE, antes de tocar nada)
 > Tu trabajo va MÁS ALLÁ del código: decides cómo el sistema se conecta, escala, se asegura, cuesta y
 > evoluciona. *El código hace que funcione; la arquitectura hace que sobreviva.*
-- Cada cambio se decide por: **negocio · escalabilidad · seguridad-por-diseño · costo · mantenibilidad ·
-  integración**. Escala = desacoplar, paginar/cachear, distribuir. Seguridad DESDE EL INICIO (authn · authz
-  RBAC least-privilege · validación en servidor · datos en reposo), nunca al final. Costo = impacto
-  técnico-financiero, no solo la factura. La UX del panel también es arquitectura: segmentado y ordenado.
-- **Cero monolitos**: módulos desacoplados, límites claros, bajo acoplamiento. **Zero-budget/serverless**
-  (Firebase): escala gestionada + event-driven — **NO** microservicios ni k8s por moda.
+- Cada cambio se decide por: **negocio · escalabilidad · seguridad-por-diseño · costo · mantenibilidad · integración**. Escala = desacoplar, paginar/cachear, distribuir. Seguridad DESDE EL INICIO (authn · authz RBAC least-privilege · validación en servidor · datos en reposo), nunca al final. Costo = impacto técnico-financiero, no la factura. La UX del panel también es arquitectura.
+- **Cero monolitos**: módulos desacoplados, límites claros. **Zero-budget/serverless** (Firebase): escala gestionada + event-driven — **NO** microservicios ni k8s por moda.
 
 ### 3.7 🧠 Calidad por defecto — auto-crítica SIEMPRE · Comité ×3 por iniciativa propia
 - **Auto-crítica SIEMPRE (casi gratis)**: antes de entregar CUALQUIER respuesta sustantiva, una pasada
@@ -156,7 +142,6 @@ Antes de CUALQUIER commit no-trivial: 5 secciones → (A) archivos a modificar, 
 Bersaglio TIENE service worker (`public/sw.js`). Al cambiar comportamiento o archivos estáticos del shell:
 
 - Incrementar `CACHE_NAME` en `public/sw.js` (bump siempre MAYOR). **El nº vigente NO se copia al `05`**: lo reporta el heartbeat en `docs/.estado-auto.md` (duplicarlo lo desincroniza). Cliente invalida con **Ctrl+Shift+R**.
-- Estrategia SW: HTML network-first → cache → `/offline.html`; CSS/JS cache-first (Vite hashea; solo `SHELL_ASSETS` precachea). Cada shell lleva **Critical CSS inline** anti-FOUC (L-02).
 - **Conflicto merge ↔ cache**: resolver → re-bump MAYOR → build OK → commit merge.
 
 ---
@@ -197,7 +182,7 @@ NUNCA historial ni tareas en este `CLAUDE.md`.
 
 ### G.4 — Sistema Autónomo de Auto-construcción (neuroplasticidad, bajo TU guía)
 
-Reflejos VINCULANTES que disparas con juicio en el trabajo normal, **sin que el usuario los pida**. El cerebro crece solo — pero **nunca sin ti**.
+Reflejos VINCULANTES que disparas con juicio en el trabajo normal, **sin que el usuario los pida**.
 
 - **Captura**: TODO conocimiento reutilizable → su neurona ANTES de cerrar (bug/lección → `30`; arquitectura → `20`; WIP → `10`; decisión cerrada → ADR en `99` + fila en `00`). **Deliberación** (comité / consejo externo / workflow, cara de reproducir) → CRUDO al `archiveDir` del manifest (bóveda `../brain-private/`) + SÍNTESIS con *callejones probados* ANTES de cerrar: el sacrificio de investigación ES conocimiento; perderlo = re-investigar.
 - **Caza-bugs (el camino vivo, no solo el diff)**: al TOCAR o ROZAR un subsistema con estado observable (render/listener/CRUD/flujo), recórrelo END-TO-END antes de cerrar, sobre todo las fronteras del estado-cero (crear el 1er ítem y verlo en vivo Y al recargar; borrar el último y ver colapsar limpio). "Rozar" = mi diff cambia una entrada/salida/contrato o el estado que otro lee, aunque no edite su archivo. Maquinaria pesada SOLO si es caro de revertir. Skill `caza-bugs`. [HONOR]
@@ -205,9 +190,9 @@ Reflejos VINCULANTES que disparas con juicio en el trabajo normal, **sin que el 
 - **Frescura**: si mueves/creas/renombras/eliminas un componente, ruta o flujo → actualiza `20` (+ su hoja) en el MISMO cambio. Una neurona vieja engaña al próximo "tú".
 - **Higiene = GC**: `10` es pizarra (cap → manifest). Al cerrar tarea, si supera el cap → PODA: cada tarea CERRADA a ADR en `99` + fila en `00`, lecciones a `30`, `05` si cambió la salud, recorta `10` al foco vivo + pendientes abiertos. ⛔ Nunca volcar a `99` sin convertir en ADR.
 - **Auto-auditoría (arranque Y pre-cierre)**: corre **`npm run brain:check`**. Al ARRANCAR: si reporta problemas, o `05`/`10` están viejos, o hay tarea sin consolidar → arréglalo ANTES. Antes de cerrar/idle — PROACTIVO: barrido holístico (brain:check + **frescura vs git real**) → cerebro impecable para el próximo "tú".
-- **Auto-mejora / Autocrítica / Desafío Crítico**: llena vacíos donde hubo fricción (re-investigar algo ya sabido = falta un índice o una lección). Si el cerebro contribuyó a un error: nombra el DEFECTO (stale / regla mala / routing errado / sobre-fragmentación), corrígelo en su nodo y registra el meta-aprendizaje en `30 §Meta` (detalle → `34`); si toca gobernanza → ADR + flag en `05`. Solo ante error real, nunca auto-duda en bucle. Cuestiona cualquier regla **con EVIDENCIA verificable** (regla → evidencia → reemplazo → aplicar o ADR): con evidencia ≠ a voluntad. *Un cerebro equivocado es peor que uno incompleto.*
+- **Auto-mejora / Desafío Crítico**: llena vacíos donde hubo fricción (re-investigar algo ya sabido = falta un índice o una lección). Si el cerebro contribuyó a un error, nombra el DEFECTO (stale / regla mala / routing errado / sobre-fragmentación), corrígelo en su nodo y registra el meta-aprendizaje en `30 §Meta` (detalle → `34`); si toca gobernanza → ADR + flag en `05`. Solo ante error real, nunca auto-duda en bucle. Cuestiona cualquier regla **con EVIDENCIA verificable** — *un cerebro equivocado es peor que uno incompleto*.
 - **Cierre (anti "lo documento después")**: NO está cerrada hasta verificar: ¿`10` al día? ¿`05` si cambió la salud? ¿decisión → ADR en `99` + `00`? ¿lección → `30` con su disparador? ¿cache §4? ¿`brain:check` SANO? **¿hubo deliberación → CRUDO + SÍNTESIS enlazados, o la tarea está INCOMPLETA** (✅ sin deliberación capturada = NO cerrada)? ¿auditoría → lóbulo hijo + skills registradas? Si falta algo, vuelve y hazlo.
-- **Skills (§40)**: capacidad REUSABLE y PORTABLE (lo específico de ESTE proyecto va al cerebro) → sugiere crearla vía `skill-creator`; decide el cliente. **Skill = capacidad general; neurona/lóbulo = conocimiento del proyecto.** Skill nueva en `skills/` o `~/.claude/skills/` → `docs/skills-inventory.md` en el MISMO cambio. Backstop: `brain:check` #6.
+- **Skills**: capacidad REUSABLE y PORTABLE → sugiérela vía `skill-creator`; decide el cliente (**skill = capacidad general; neurona = conocimiento del proyecto**). Skill nueva en `skills/` o `~/.claude/skills/` → `docs/skills-inventory.md` en el MISMO cambio. Backstop: `brain:check` #6.
 
 **Regla de ADMISIÓN (anti-teatro)**: cada regla cita su gate del linter o lleva `[HONOR]` — el linter solo mecaniza caps/huérfanas/desync/skills/archiveDir; el resto de §G.4 es honor. No fingir mecanización.
 
@@ -215,12 +200,10 @@ Reflejos VINCULANTES que disparas con juicio en el trabajo normal, **sin que el 
 
 ### G.5 — Capacidad de neuronas y Sharding (economía de contexto)
 
-Una neurona sobrecargada satura el contexto. Cada una tiene un TOPE BLANDO (señal, no muro).
-📏 **Los topes NO se listan aquí**: viven en `docs/.brain-manifest.json` (`caps`, en **chars** — la unidad real de contexto) y `brain:check` los valida en cada corrida. Copiarlos aquí los desincroniza.
+Cada neurona tiene un TOPE BLANDO (señal, no muro). 📏 **Los topes NO se listan aquí**: viven en `docs/.brain-manifest.json` (`caps`, en **chars**) y `brain:check` los valida — copiarlos aquí los desincroniza. 🔻 **CÓMO podar cada nodo** → `docs/60-WORKFLOWS.md §Mapa de PODA`.
 
-🔻 **CÓMO se poda cada neurona** (mapa por nodo: `20` · `30`+hijas · `00`+shards · `99`) → `docs/60-WORKFLOWS.md §Mapa de PODA`.
+- **Always-on (`CLAUDE.md` · `05` · `10`) = el boot**: no se engordan. **One-in-one-out**: toda regla nueva en el router DESPLAZA o fusiona una existente, jamás sube el tope — el kernel BLOQUEA el commit si el boot excede. `05` se PISA (tablero, no bitácora); `10` se poda con el GC de §G.4.
+- **Qué se GANA el always-on** (criterio, no capricho): **frecuencia de uso × costo de omitirlo**. Caro aunque sea raro (romper un contrato, un bump de caché olvidado) → se queda. Importante pero episódico (cómo animar un CSS) → **hoja hija + puntero + trigger**: sigue siendo vinculante y deja de cobrar renta en cada arranque.
 
-- **Always-on (`CLAUDE.md` · `05` · `10`) = el boot**: no se engordan. **One-in-one-out**: toda regla nueva en el router DESPLAZA o fusiona una existente, jamás sube el tope — gate determinista: el kernel BLOQUEA el commit si el always-on supera `bootCharsTarget`. `05` se PISA (tablero, no bitácora); `10` se poda con el GC de §G.4. Nunca historial, tareas ni cache en el router.
-
-**Reflejo de Sharding (neurogénesis por SATURACIÓN)**: al acercarse al tope NO la dejes engordar — extrae una sub-categoría coherente a una hermana `docs/NN-NOMBRE.md` y, como toda neurona nueva (§G.4): (1) fila en §0, (2) registro en `00`, (3) **puntero desde la MADRE a la hija**. 🔗 **Nada huérfano: si una neurona existe y `CLAUDE.md` no la conoce, el cerebro está roto.**
+**Sharding (neurogénesis por SATURACIÓN)**: al acercarse al tope NO la dejes engordar — extrae una sub-categoría coherente a una hermana `docs/NN-NOMBRE.md` y, como toda neurona nueva (§G.4): (1) fila en §0, (2) registro en `00`, (3) **puntero desde la MADRE a la hija**. 🔗 **Nada huérfano: si una neurona existe y `CLAUDE.md` no la conoce, el cerebro está roto.**
 

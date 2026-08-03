@@ -62,8 +62,9 @@
       "chars": 16000
     },
     "docs/33-DOCTRINAS-CSS.md": {
-      "lines": 60,
-      "chars": 6000
+      "_comment": "2026-08-03 (§195): cap re-MEDIDO 6000->8000 / 60->90L porque la neurona ABSORBIO contenido del router (performance de render §3.1, observadores §3.5 y el renderer unico §3.2, ~1.4k). Esa es una de las razones VALIDAS de M-05 para mover un techo — no es que hoy no se cumpla, es que el nodo cambio de alcance; el router pago 1.814c de always-on a cambio. Medido sobre el real (5874c / 67L) + 35%, con lines derivado de la densidad real (~88 c/linea) para que ambos ejes aprieten juntos.",
+      "lines": 90,
+      "chars": 8000
     },
     "docs/34-LECCIONES-META.md": {
       "lines": 70,

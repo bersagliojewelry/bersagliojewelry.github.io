@@ -2768,3 +2768,41 @@ mismo jamás verá una fuga ENTRE libros.* P2 reportados a la cola del titular (
 `reabrirCuadre` · replay de traslado usa el monto del input y no el guardado · `pataTesoHuerfana` sin
 alerta · `marcarConciliado` no valida fecha∈periodo · recompute de tesorería sin checkpoints (la
 bóveda sí los tiene) · derecha vacía sin estado-cero en "Cuentas y bancos" con 0 cuentas.
+
+## 2026-08-03 — §195 · El router estaba a 17 chars de bloquear el repo: poda por criterio, no por tijera [OPUS-5]
+
+**195.1 — Causa raíz.** Al propagar el kernel v1.10.3 desde inmobiliaria, el pre-aviso de este repo saltó
+al **99,9% del presupuesto de boot: 17 chars de margen**. El siguiente cambio de cerebro —cualquiera—
+habría quedado BLOQUEADO por el candado #2, y este es el repo de la pauta viva. No era un problema de
+redacción: el always-on **tenía criterio de entrada y ninguno de salida**, así que todo lo importante
+entraba y nada salía nunca.
+
+**195.2 — El criterio (importado de inmobiliaria §84, [[M-09]]).** Lo que se queda en el always-on se
+decide por **frecuencia de uso × costo de omitirlo**, no por importancia. Caro aunque sea raro (romper un
+contrato de API, un bump de caché olvidado) → se queda. Importante pero episódico (cómo animar un CSS) →
+hoja hija + puntero + trigger: **sigue siendo vinculante** y deja de cobrar renta en cada arranque.
+
+**195.3 — Qué se movió.** A `33-DOCTRINAS-CSS` (que ya era la hoja que se lee ANTES de tocar CSS):
+**§3.1 performance de render** (`transition: all`, layout props, `backdrop-filter` en listas, imágenes),
+**§3.5 observadores** (`MutationObserver` global, `pointermove`, selectores substring) y el **renderer único
+`renderPieceCardHTML`** (L-03). El router conserva de §3.2 solo la regla irreversible: **no renombrar
+IDs/clases/endpoints/exports sin migración**. La estrategia interna del SW (network-first, `SHELL_ASSETS`,
+Critical CSS) bajó de §4 al nodo espacial; **la regla del bump se queda**, que es la que cuesta dinero si
+se olvida. Y la tabla de §0 **dejó de duplicar los triggers de §G.2**: ahora dice QUÉ contiene cada nodo, y
+el CUÁNDO vive en un solo sitio.
+
+**195.4 — No-regresión.** Ninguna regla se perdió: todas se movieron **con puntero**. La numeración `§3.x`
+NO se tocó (§3.3 y §3.6 están citados desde varias neuronas); §3.1 y §3.5 desaparecen como secciones pero
+§3 declara adónde fueron. Se persiguieron los **punteros vivos** que apuntaban a lo movido y se corrigieron
+en el mismo cambio: `40-LOBULOS:43`, `43-UX:12`, `32-LECCIONES-CARGA:26` y el manual
+`INSTALACION-CEREBRO:334`. Un puntero roto es una regla apagada en silencio.
+
+**195.5 — Verificación.** `brain:check` **SANO**. **Boot 31.483c → 29.669c (−1.814c)**, del **99,9% al
+94,2%**, sin mover el `bootCharsTarget`. `CLAUDE.md` 21.949 → 20.135c. El único cap que se movió fue el de
+`33` (6.000 → 8.000), y por la razón que [[M-05]] admite explícitamente: **la neurona absorbió contenido de
+otro nodo**; el router pagó 1.814c de always-on a cambio de 1.417c on-demand.
+
+**195.6 — Doctrina.** [[M-09]] (criterio de permanencia en el always-on) · [[M-05]] (un cap se mueve por
+cambio de alcance, jamás para caber) · §G.4 Frescura de punteros · §3.3 (cada mudanza se decidió con
+`grep`, no de memoria). Sin comité ni consejo externo: instrucción de sesión del dueño de no lanzar agentes
+ni workflows → decisión marcada como **NO revisada por terceros**.

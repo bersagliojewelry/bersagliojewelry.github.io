@@ -37,3 +37,30 @@
 *   **Motion**: `prefers-reduced-motion` OBLIGATORIO con alternativa (crossfade/instante) por CADA animación. **Reveal-safety**: NUNCA gatear la visibilidad del contenido a una transición por clase (en tabs ocultos/headless queda la sección EN BLANCO) — aplica a nuestro `.reveal`.
 *   **Z-index semántico**: escala nombrada dropdown→sticky→modal→toast→tooltip; nunca 999/9999 sueltos.
 *   ⚠️ **Guardia de marca**: el detector "slop" de impeccable marca nuestras firmas deliberadas (Liquid Glass, itálica serif display, Fraunces, paleta perla, dark-glow). La estética Bersaglio es color/estilo **comprometido, declarado** — no slop. Si algún día se corre `detect.mjs` como gate (W-11), pre-cargar allow-list de marca.
+
+---
+
+## §Performance de render — ex `CLAUDE.md §3.1` (poda del router, §195)
+
+> Bajaron aquí porque se auto-cargaban en CADA sesión y solo aplican cuando se escribe CSS/JS de UI
+> (criterio: frecuencia de uso × costo de omisión). **Siguen siendo VINCULANTES.**
+
+- NUNCA `transition: all` ni `* { transition }` global.
+- NUNCA animar layout props (width/height/top/left/margin/padding) — solo `transform` / `opacity`.
+- NUNCA `backdrop-filter` en listas de N elementos: solo en las superficies **estructurales** del cristal.
+- Imágenes: `loading="lazy"` + `decoding="async"` below-fold; `fetchpriority="high"` **solo** en el LCP;
+  servir **webp/avif**.
+
+## §Observadores y eventos globales — ex `CLAUDE.md §3.5`
+
+- CERO `MutationObserver` global con `subtree:true` que ejecute ops DOM (causa clicks bloqueados y loops):
+  refresh **explícito** desde el callsite.
+- CERO `pointermove` persistente global — solo durante un drag activo.
+- Los selectores substring `[class*="x"]` son **peligrosos**: matchean clases hijas; excluye namespaces
+  ajenos con `:not()`.
+
+## §Un solo renderer de tarjeta — ex `CLAUDE.md §3.2`
+
+- Re-uso **estricto** de `renderPieceCardHTML` (`js/components/piece-card.js`): es el ÚNICO renderer de
+  tarjetas de producto (**L-03**). El router conserva la regla de contrato hermana —no renombrar
+  IDs/clases/endpoints/exports sin migración—, que es la irreversible.

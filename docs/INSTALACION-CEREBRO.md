@@ -331,7 +331,7 @@ Detalle profundo de cualquier subsistema → `docs/20-MEMORIA-ESPACIAL.md` + ADR
 ### 3.3 — `CLAUDE.md §3` (Doctrinas) — adaptación al stack
 
 Las doctrinas actuales de la plantilla son universales pero algunas tienen sabor "web frontend":
-- §3.1 (Performance) habla de `transition:all`, `<picture>`, etc. → solo aplica si hay frontend web. Si el proyecto es backend puro o CLI, REEMPLAZA §3.1 con doctrinas equivalentes del stack (ej. para Python: "evitar `from x import *`", "no `eval`/`exec` con input no validado"; para Go: "no `interface{}` cuando se puede tipar"; etc.).
+- §3.1 (Performance) habla de `transition:all`, `<picture>`, etc. → solo aplica si hay frontend web. Si el proyecto es backend puro o CLI, REEMPLAZA las doctrinas de render (hoy en `33-DOCTRINAS-CSS`, ex `§3.1`) con las equivalentes del stack (ej. para Python: "evitar `from x import *`", "no `eval`/`exec` con input no validado"; para Go: "no `interface{}` cuando se puede tipar"; etc.).
 - §3.2 (HTML/CSS) → renombra a "API/contratos estables" si no hay HTML.
 - §3.3 (Verifica no asumas), §3.4 (IAP) → **UNIVERSALES, nunca borrar**.
 - §3.5 (anti-MO/pointermove) → solo si hay DOM. Si no, borrar.

@@ -26,7 +26,7 @@
 //   (7) archiveDir íntegro [warn, --full]               (16) Fiabilidad M-22: `verificado-vivo` stale [info, --full]
 //       + 7b) bóveda: commits ≠ origin vía fs [warn]
 // ===========================================================
-const KERNEL_VERSION = '1.10.1';
+const KERNEL_VERSION = '1.10.2';
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -654,6 +654,12 @@ head('\n17) Git del PROPIO repo (¿el cerebro dice la verdad sobre dónde estás
           for (const m of linea.matchAll(/origin\/([\w.-][\w./-]{0,39})/g)) declara.add(m[1]);
           // token INMEDIATAMENTE tras rama/branch (con los calificativos que se usan en estos cerebros)
           for (const m of linea.matchAll(/\b(?:rama|branch)\s+(?:única\s+|activa\s+|de trabajo\s+|prod\s+)?[`*]{1,2}([\w.-][\w./-]{0,39})[`*]{1,2}/gi)) declara.add(m[1]);
+          // v1.10.2: la excepción de «flujo declarado» de abajo existía pero NUNCA se activaba,
+          // porque solo se capturaba el lado IZQUIERDO. cars declara «rama ÚNICA `dev` · merge
+          // `dev`→`main`»: el gate veía `dev`, no veía `main`, y acusaba de mentir a un `05` que
+          // dice la verdad —una REGLA durable, no una afirmación sobre el checkout de ahora—.
+          // 4ª corrección de este chequeo por la misma clase: distinguir la regla del dato volátil.
+          for (const m of linea.matchAll(/[`*]{1,2}([\w.-][\w./-]{0,39})[`*]{1,2}\s*(?:→|->|=>)\s*[`*]{1,2}([\w.-][\w./-]{0,39})[`*]{1,2}/g)) { declara.add(m[1]); declara.add(m[2]); }
         }
         const otras = [...declara].filter((r) => r !== branch && !RUIDO(r));
         // Si el archivo nombra varias ramas y una es la real, es un flujo declarado (dev→main), no una mentira.

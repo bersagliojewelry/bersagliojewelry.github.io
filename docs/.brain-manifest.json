@@ -132,7 +132,7 @@
   "_ssotFacts_note": "Vacío desde la auditoría §114 (2026-06-24): el único ssotFact (cartera 506.510.780) se RETIRÓ porque el RESET-A-CERO (Daniel 2026-06-20) vuelve ese número desechable y se quitó de 05/10 → el gate quedaba sin owner. Re-añadir un ssotFact si emerge un hecho-vivo duplicado entre always-on.",
   "ssotFacts": [
     {
-      "regex": "[Kk]ernel\\s+v?\\d+\\.\\d+\\.\\d+",
+      "regex": "[Kk]ernel\\s*\\**\\s*v?\\d+\\.\\d+\\.\\d+",
       "owner": "scripts/.kernel-version.json",
       "scan": [
         "CLAUDE.md",
@@ -140,7 +140,7 @@
         "docs/10-MEMORIA-CORTO-PLAZO.md",
         "docs/20-MEMORIA-ESPACIAL.md"
       ],
-      "_que": "version del kernel (ADR inmobiliaria 83, TODO-37): el dueno es el STAMP que escribe brain:pull. Copiarla a un nodo always-on la desincroniza en el primer bump — paso 2 veces el mismo dia (insema declaraba v1.6.0 con el stamp en v1.9.0). El gate #8 lo caza solo si el hecho esta DECLARADO: no era un gate inutil, era un gate sin datos."
+      "_que": "version del kernel (ADR inmobiliaria 83, TODO-37): el dueno es el STAMP que escribe brain:pull. Copiarla a un nodo always-on la desincroniza en el primer bump — paso 2 veces el mismo dia (insema declaraba v1.6.0 con el stamp en v1.9.0). El gate #8 lo caza solo si el hecho esta DECLARADO: no era un gate inutil, era un gate sin datos. | 2026-08-03: la regex nacio CIEGA a las negritas — `kernel **v1.7.2**` no matcheaba y el 05 de bersaglio llevaba un dato stale que el gate no veia. Corolario de LD-07: quitar/tolerar el markdown antes de comparar prosa."
     }
   ],
   "deepAudit": {
@@ -157,5 +157,6 @@
     "docs/PENDIENTES-Y-HALLAZGOS.md": "No es neurona: documento de trabajo (plan/manual/handoff) que se abre dirigido, no por trigger del router. Candidato a mudarse fuera de docs/.",
     "docs/skills-inventory.md": "Registro 1:1 con las carpetas de skills/ — su tamaño lo fija el inventario real, no una decisión editorial. Lo vigila el gate #6."
   },
-  "_caps_que": "Topes por-repo. Cada neurona tiene cap MEDIDO (tamano real + ~35% de holgura) o entrada en noCap CON RAZON — nunca por omision (chequeo #23, kernel v1.7.0). Los caps NO se inventan: inmobiliaria ADR §74.3/§75.4 documenta como una cifra a ojo creo dos veces un gate bloqueante falso. Los dos ejes se derivan uno del otro (lines = chars/densidad-real) para que ambos aprieten en el mismo punto: un par incoherente hace que dispare el eje equivocado (N2-13 de la auditoria de insemastereo, inmobiliaria §77.5). El cap de CHARS es el vinculante y NO se toca."
+  "_caps_que": "Topes por-repo. Cada neurona tiene cap MEDIDO (tamano real + ~35% de holgura) o entrada en noCap CON RAZON — nunca por omision (chequeo #23, kernel v1.7.0). Los caps NO se inventan: inmobiliaria ADR §74.3/§75.4 documenta como una cifra a ojo creo dos veces un gate bloqueante falso. Los dos ejes se derivan uno del otro (lines = chars/densidad-real) para que ambos aprieten en el mismo punto: un par incoherente hace que dispare el eje equivocado (N2-13 de la auditoria de insemastereo, inmobiliaria §77.5). El cap de CHARS es el vinculante y NO se toca.",
+  "lastOffsiteBackup": "2026-07-23"
 }

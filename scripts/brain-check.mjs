@@ -26,7 +26,7 @@
 //   (7) archiveDir íntegro [warn, --full]               (16) Fiabilidad M-22: `verificado-vivo` stale [info, --full]
 //       + 7b) bóveda: commits ≠ origin vía fs [warn]
 // ===========================================================
-const KERNEL_VERSION = '1.10.0';
+const KERNEL_VERSION = '1.10.1';
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -704,8 +704,23 @@ else {
   else {
     const markerP = join(DOCS, '.boot-marker');
     const ageH = existsSync(markerP) ? (Date.now() - statSync(markerP).mtimeMs) / 3.6e6 : Infinity;
-    if (ageH > 48 && !process.env.BOOT_CANARY_SKIP)
-      warn(`ningún SessionStart escribió docs/.boot-marker en 48h (${ageH === Infinity ? 'nunca' : Math.round(ageH) + 'h'}) — los hooks del harness pueden estar MUERTOS. Verifica .claude/settings.json y arranca una sesión (o: node scripts/session-handoff.mjs --boot-echo). Intencional → BOOT_CANARY_SKIP=1.`);
+    // v1.10.1: el canario comparaba el marker contra el RELOJ, y un repo en PAUSA lo incumple
+    // siempre — insema lleva semanas parado a propósito y el gate gritaba «hooks muertos» cada
+    // corrida. Un guardián que ladra a un repo que nadie tocó enseña a ignorarlo, y entonces no
+    // avisa el día que importa. Ahora compara contra la ACTIVIDAD REAL del repo (`.git/logs/HEAD`,
+    // leído con fs, sin child_process): si hubo commits DESPUÉS del último marker, estuviste
+    // trabajando aquí y los hooks no dispararon → eso sí es la avería. Sin actividad → informativo.
+    const reflog = join(ROOT, '.git', 'logs', 'HEAD');
+    const actividadH = existsSync(reflog) ? (Date.now() - statSync(reflog).mtimeMs) / 3.6e6 : Infinity;
+    const trabajandoAqui = actividadH < ageH;         // hubo git DESPUÉS del último arranque
+    // Umbral CRÓNICO (168h), no agudo: un repo hermano se mantiene a ráfagas desde la sesión de
+    // OTRO —ahí el pre-commit sí corre; lo que no dispara es el SessionStart, que no existe— y con
+    // 48h eso gritaba en cada mantenimiento cruzado. Una semana de actividad sin un solo arranque
+    // ya no es un patrón de trabajo: es el contrato roto.
+    if (ageH > 168 && trabajandoAqui && !process.env.BOOT_CANARY_SKIP)
+      warn(`una SEMANA de actividad git (última hace ${Math.round(actividadH)}h) sin que ningún SessionStart escriba docs/.boot-marker (${ageH === Infinity ? 'NUNCA' : Math.round(ageH) + 'h'}) — los hooks del harness NO disparan aquí. Verifica .claude/settings.json (o: node scripts/session-handoff.mjs --boot-echo). Intencional → BOOT_CANARY_SKIP=1.`);
+    else if (ageH > 48)
+      info(`canario en reposo: marker de hace ${ageH === Infinity ? 'nunca' : Math.round(ageH) + 'h'}${trabajandoAqui ? ' (mantenido desde otra sesión: el pre-commit sí corre)' : ' y sin actividad git posterior'}`);
     else ok(`canario vivo (marker de hace ${Math.round(ageH)}h)`);
   }
 }

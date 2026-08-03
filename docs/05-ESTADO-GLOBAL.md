@@ -1,7 +1,7 @@
 # 🩺 05 — ESTADO GLOBAL (Heartbeat · Snapshot de salud del sistema)
 
 > **Nodo: signos vitales.** AUTO-CARGA (con `CLAUDE.md` + `10`): *"¿en qué estado está el sistema AHORA,
-> antes de tocar nada?"*. Tablero, no bitácora — se PISA, no se apila (**tope ~25 líneas**, §G.5); se
+> antes de tocar nada?"*. Tablero, no bitácora — se PISA, no se apila (su tope lo fija el manifest, §G.5 — no se copia aquí); se
 > actualiza al cambiar cache/branch/riesgo (Frescura §G.4).
 > **NUNCA el hash/PR exacto de PROD** (se vuelve stale — lo cazó la auditoría §114 ×3): el commit vivo lo
 > dice `git fetch` (§3.3); aquí el estado va por CONTENIDO.
@@ -13,7 +13,7 @@
 | **PROD / branch** | ⚙️ Alineación de ramas y commit vivo → `docs/.estado-auto.md` + `git fetch` (§114: el hash exacto NUNCA se escribe aquí). Reglas: **merge a main = Claude** · deploy functions/rules **MANUAL** (el CI solo hace Pages/Hosting, L-22): `firebase deploy --only firestore:rules,firestore:indexes,functions` — Node 22 + ff v7 ✅ (§48) · **MCP Firebase escribe en PROD** · `arquitecto-software` SIEMPRE. **EN PROD hasta §192** `verificado-vivo:2026-07-18`: rail v2 · POS-pro · F2.2 · 32 piezas v3 · SEO A1-A4+B2 · garantía de por vida (§191) · legal. **Precios reales = PASO FINAL** (Daniel: al lanzar a Kary, no es gate intermedio). |
 | **Backend / Firebase** | CRM + Fase M (M0→M6) EN PROD (§47-§82). **🔄 RESET-A-CERO** (Daniel 2026-06-20): cartera/clientes históricos = **DESECHABLES**. Vendedoras = dato (Kary crea); CRM admin/owner-only. ⚠️ Reglas/functions = deploy MANUAL (L-22). **WOMPI WEB OPERATIVO Y VERIFICADO EN PROD (§164)**. Falta OPERATIVO: **cargar precios reales** (Daniel/Kary) + **monitorear 1ª venta APPROVED**. |
 | **Hosting** | GitHub Pages (`bersagliojewelry.co` / `.github.io`), auto-deploy por Actions on-push-a-`main` (+ paso SSG `generate` + gate `SSG_SELFTEST` + cron diario, §116) · **GEMELO** `bersaglio-gemelo.web.app` (Spark, aula/banco de pruebas/restore, §61). |
-| **Cerebro** | 🧠 kernel **v1.7.2** (byte-idéntico ×4) · template v1.1.0 · cerebros INDEPENDIENTES · skills catalogadas · caps → manifest. Auditoría Nivel-2 → §175. |
+| **Cerebro** | 🧠 kernel byte-idéntico ×4 (versión → su stamp) · template v1.1.0 · cerebros INDEPENDIENTES · skills catalogadas · caps → manifest. Auditoría Nivel-2 → §175. |
 
 ## ⚠️ Flags de riesgo activos (→ hardening F6 · detalle `docs/41-SEGURIDAD.md`)
 - 🟠 **F6**: App Check REPARADO (§58) — **TODO-14 Enforce DIFERIDO** hasta flujo alto de clientes (Daniel 2026-06-23); queda en monitoreo. 🏁 F6 técnico COMPLETO (§68): RBAC claims (§65/§66) + alerta de truncado (§68). Resto del programa: App Check Enforce + compuerta de adopción → Fase M; política cartera APROBADA → config en Fase M.

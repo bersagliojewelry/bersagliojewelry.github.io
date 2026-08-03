@@ -26,7 +26,7 @@
 //   (7) archiveDir íntegro [warn, --full]               (16) Fiabilidad M-22: `verificado-vivo` stale [info, --full]
 //       + 7b) bóveda: commits ≠ origin vía fs [warn]
 // ===========================================================
-const KERNEL_VERSION = '1.9.3';
+const KERNEL_VERSION = '1.10.0';
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -757,6 +757,65 @@ else {
     const top = gordas.slice(0, 5).map((g) => `§${g.s} (${g.c}c)`).join(' · ');
     info(`${gordas.length} fila(s) §NN por encima de ${RUIDO}c (objetivo ${LIMITE}c): ${top}${gordas.length > 5 ? ' …' : ''} → el detalle va al ADR; la fila enruta`);
   }
+}
+
+// 27) Rutas FANTASMA en las neuronas (mecaniza la "Frescura" de §G.4, que era [HONOR]) [--full]
+//     La doctrina dice "si mueves/renombras/eliminas un componente, actualiza el nodo en el MISMO
+//     cambio" — y no había gate. Al medirlo a mano, el nodo espacial de inmobiliaria citaba
+//     `render.js` con una función `renderPropertyCard()` que NO EXISTE en ninguna parte, y un
+//     `toast.js` cuyo código vive en `utils.js`. Una neurona que manda a leer un archivo inexistente
+//     es peor que una incompleta: gasta el turno del que confió en ella.
+head('\n27) Rutas fantasma en las neuronas (frescura mecanizada):');
+if (BOOT) head('  ⏭️  omitido en --boot');
+else {
+  const SKIP_DIR = new Set(['node_modules', '.git', 'dist', '.astro', '.wrangler', '_legacy', 'coverage', '.next']);
+  const porNombre = new Set();
+  let visitados = 0;
+  (function walk(d) {
+    if (visitados > 20000) return;                       // cota dura: el linter no se cuelga por un repo enorme
+    let ents = []; try { ents = readdirSync(d, { withFileTypes: true }); } catch { return; }
+    for (const e of ents) {
+      if (SKIP_DIR.has(e.name) || e.name.startsWith('.')) continue;
+      visitados++;
+      if (e.isDirectory()) walk(join(d, e.name)); else porNombre.add(e.name);
+    }
+  })(ROOT);
+  // MISMA excepción que aprendió el kit ([[LD-07]]): una ruta puede citarse legítimamente para
+  // decir que YA NO existe. Sin esta ventana, el gate acusa justo a quien documentó la corrección.
+  // La ventana de negación incluye `ex \`X\`` porque así es como el cerebro marca un nombre viejo
+  // en la práctica ("`js/admin/hoy.js` (ex `dashboard.js`)") — sin ella el gate acusa justo a la
+  // línea que YA documentó el renombre, que es el caso mejor documentado de todos.
+  const NEGACION = /no existe|NO existe|fantasma|inexistente|eliminad|borrad|retirad|ya no |obsolet|antes (se |era|dec)|renombrad|movid|\bex\s+`|\bantiguo|\bviejo/i;
+  // ÁMBITO acotado a las neuronas cuyo oficio ES describir el PRESENTE (estado · WIP · espacial ·
+  // config). La primera versión escaneó todo `docs/` y acusó a 137 inocentes en cars: el historial
+  // `99` y el índice `00` citan el pasado POR DISEÑO —un ADR es un registro fechado, no una
+  // afirmación sobre hoy— y las lecciones usan rutas-plantilla (`admin-X.js`). Acusar a la historia
+  // por envejecer es lo que convierte un gate en ruido, y el ruido lo apaga en una semana.
+  const AMBITO = /^(05|10|20|21|22|50)[-.]/;
+  const PLANTILLA = /(^|[/_-])[A-Z]([./_-]|$)|^[-.]/;   // `admin-X.js`, `X.ui.js`, `.dc.html`: patrón, no ruta
+  const fantasmas = [];
+  for (const f of readdirSync(DOCS).filter((x) => AMBITO.test(x) && x.endsWith('.md'))) {
+    const lineas = read(join(DOCS, f)).split('\n');
+    // Contexto EXTERNO: una neurona describe legítimamente cosas que viven fuera del repo (la
+    // bóveda, un prototipo en otra carpeta, un repo hermano). El contexto que lo establece suele
+    // estar en la línea anterior —«`PROTOTIPO/` (en `Desktop/`, repo aparte)»— así que leer
+    // línea-a-línea acusa al nodo mejor escrito. Ventana de 2 líneas hacia atrás.
+    const EXTERNO = /\.\.\/|repo aparte|b[oó]veda|Desktop|fuera del repo|otro repo|hermano|canon del kernel/i;
+    lineas.forEach((l, i) => {
+      if (NEGACION.test(l)) return;
+      if (EXTERNO.test(l) || EXTERNO.test(lineas[i - 1] || '') || EXTERNO.test(lineas[i - 2] || '')) return;
+      for (const m of l.matchAll(/`([A-Za-z0-9_/.-]+\.(?:js|mjs|ts|astro|css|html))`/g)) {
+        const ruta = m[1];
+        if (ruta.startsWith('..') || /^[A-Za-z]:/.test(ruta)) continue;   // cross-repo: no es asunto de este linter
+        if (PLANTILLA.test(ruta)) continue;                               // ruta-plantilla, no ruta real
+        if (existsSync(join(ROOT, ruta))) continue;
+        if (porNombre.has(ruta.split('/').pop())) continue;               // existe, aunque el nodo cite otra ruta
+        fantasmas.push(`${f}:${i + 1} → \`${ruta}\``);
+      }
+    });
+  }
+  if (!fantasmas.length) ok('ninguna neurona cita archivos inexistentes');
+  else { warn(`${fantasmas.length} ruta(s) FANTASMA citadas por neuronas (el archivo no existe en el repo): ${fantasmas.slice(0, 6).join(' · ')}${fantasmas.length > 6 ? ' …' : ''} → corregir el nodo o marcar la ruta como retirada`); }
 }
 
 // ---- salida (presupuesto de stdout en --boot) ----

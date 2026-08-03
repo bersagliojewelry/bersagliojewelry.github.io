@@ -84,7 +84,7 @@
 ### 1. Inicialización y Enrutamiento (`boot.js` ➔ `router.js`)
 *   Al cargar la página, `js/core/boot.js` lee el atributo `<body data-page="[key]">`.
 *   Carga dinámicamente el módulo correspondiente en `js/pages/[key].js` y ejecuta su función `init()`.
-*   El header pill flotante y componentes compartidos se inicializan globalmente desde `js/components.js`.
+*   El header pill flotante y los componentes compartidos viven en `js/components/` (el header, en `js/components/header.js`). NO existe un `components.js` suelto en la raíz de `js/`: el nodo lo afirmó durante meses.
 
 ### 2. Sincronización en Tiempo Real (`data.js` ➔ UI)
 *   `js/core/data.js` suscribe a Firestore (`onSnapshot`) para `pieces` y `collections`.

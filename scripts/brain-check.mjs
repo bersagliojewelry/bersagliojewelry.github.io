@@ -24,9 +24,10 @@
 //       + 5c) cita viva a lección ⚰️ cuarentenada [warn] (14) deepAudit Nivel-2 vencida [info] + tableFile existe [warn]
 //   (6) Skills↔inventario [warn, --full]                (15) Schema del manifest: clave desconocida [warn]
 //   (7) archiveDir íntegro [warn, --full]               (16) Fiabilidad M-22: `verificado-vivo` stale [info, --full]
+//       (0-canónico, 7, 7b, 14-tableFile) DEGRADAN si la bóveda o el canónico no están clonados
 //       + 7b) bóveda: commits ≠ origin vía fs [warn]
 // ===========================================================
-const KERNEL_VERSION = '1.10.2';
+const KERNEL_VERSION = '1.10.3';
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -42,6 +43,13 @@ const say = (m) => { lines.push(m); };
 const warn = (m) => { say('  ⚠️  ' + m); problems++; };
 const ok = (m) => { if (!BOOT) say('  ✅ ' + m); };
 const info = (m) => say('  ℹ️  ' + m);
+// v1.10.3 (inmobiliaria ADR 85, U-04): un gate que NO PUEDE correr (boveda sin clonar,
+// canonico ausente) se anunciaba con info() y el veredicto final seguia diciendo CEREBRO
+// SANO. Es la tercera forma de M-06: el gate no miente, miente el RESUMEN. degrade() no
+// bloquea -no hay nada que arreglar en el repo- pero se cuenta y cambia el veredicto:
+// integro no es lo mismo que verificado.
+let degraded = 0;
+const degrade = (m) => { say('  🟠 [DEGRADADO] ' + m); degraded++; };
 const head = (m) => { if (!BOOT) say(m); };
 const read = (p) => readFileSync(p, 'utf-8');
 
@@ -65,6 +73,7 @@ const KNOWN_KEYS = new Set([
   'brainTemplateVersion', 'repo', 'bootCharsTarget', 'alwaysOn', 'caps', 'archiveDir',
   'deepAudit', 'peers', 'kernelFiles', 'ssotFacts', 'specsDir', 'staleDays', 'ignoreDirs',
   'downgrades', 'orphanAllowlist', 'verifiedLiveStaleDays', 'verifiedLiveScan', 'lastOffsiteBackup',
+  'harnessCanary', // v1.10.3 (#24): declara si este repo DEBE tener el SessionStart cableado
   'noCap', // v1.7 (#23): { "docs/X.md": "razón" } — declarar SIN tope es una decisión, no un olvido
 ]);
 for (const k of Object.keys(manifest)) {
@@ -79,6 +88,7 @@ const REQUIRED_KEYS = {
   alwaysOn: 'el CANDADO DE BOOT (#2, bloqueante)',
   caps: 'los topes de neurona (#2)',
   deepAudit: 'el vencimiento de la auditoría Nivel-2 (#14)',
+  harnessCanary: 'el CANARIO DE BOOT (#24)',
 };
 for (const [k, gate] of Object.entries(REQUIRED_KEYS)) {
   if (manifest[k] === undefined) warn(`manifest SIN "${k}" → ${gate} está APAGADO, y en silencio. Un gate que se desactiva borrando una clave no es un gate: declara la clave o documenta el downgrade.`);
@@ -117,6 +127,7 @@ if (mMajor !== REQUIRED_MANIFEST_MAJOR) warn(`manifest brainTemplateVersion "${m
       const c = join(vault, 'kernel', name), l = join(ROOT, 'scripts', name);
       if (existsSync(c) && existsSync(l) && shaHex(c) !== shaHex(l)) { warn(`kernel: ${name} difiere del CANÓNICO aun con versión igual (edición canónica sin bump / pull a medias) → npm run brain:pull`); bad++; break; }
     }
+    if (stamp && !canonVer) degrade('kernel: el CANÓNICO no está clonado en esta máquina → la comparación vs canónico (stale de versión + diff de contenido) NO corrió; solo se validó el stamp local');
     if (stamp && !bad) {
       if (BOOT) say(`  ✅ kernel v${stamp.version} íntegro${canonVer ? ' == canónico' : ''}`);
       else ok(`kernel v${stamp.version} íntegro (${Object.keys(stamp.files || {}).length} archivos)${canonVer ? ' == canónico v' + canonVer : ' (canónico no clonado en esta máquina)'}`);
@@ -195,7 +206,11 @@ if (BOOT_CHARS_TARGET) {
   // podarlos y bloquear un commit por ellos seria inaccionable-- pero callarlos hacia que el
   // numero del boot fuera menor que el boot real. Se publica, no se castiga.
   const sidecars = ['.estado-auto.md', '.handoff-auto.md'].map((f) => join(DOCS, f)).filter(existsSync);
-  if (sidecars.length && !BOOT) {
+  // v1.10.3 (ADR 85, U-02): la linea existia pero se ocultaba en --boot con && !BOOT, que es
+  // exactamente el momento en que uno decide si le cabe una regla mas. Se publica siempre.
+  // NO entra al umbral del pre-aviso: nadie puede podar un sidecar GENERADO, y un guardian
+  // que ladra por algo inaccionable ensena a ignorarlo (la leccion del canario, v1.10.1).
+  if (sidecars.length) {
     const extra = sidecars.reduce((a, p) => a + read(p).length, 0);
     info(`+ sidecars del heartbeat: ${extra}c no medidos por el candado (se generan, no se podan) → boot REAL ≈ ${bootChars + extra}c`);
   }
@@ -363,8 +378,8 @@ else if (existsSync(SKILLS_DIR) && existsSync(invPath)) {
 head('\n7) Integridad de archiveDir (deliberación capturada ↔ conectada):');
 const archiveDir = manifest.archiveDir ? join(ROOT, manifest.archiveDir) : null;
 if (BOOT) head('  ⏭️  omitido en --boot');
-else if (!archiveDir) info('manifest sin archiveDir — gate omitido (declararlo, §G.4)');
-else if (!existsSync(archiveDir)) info(`archiveDir no existe en esta máquina (${manifest.archiveDir}) — bóveda no clonada; gate omitido`);
+else if (!archiveDir) degrade('manifest SIN archiveDir → gates 7 y 7b OFF (declararlo, §G.4)');
+else if (!existsSync(archiveDir)) degrade(`archiveDir no existe en esta máquina (${manifest.archiveDir}) — bóveda no clonada → gates 7 y 7b OFF`);
 else {
   // v1.9.1 (§83, TODO-37): el filtro solo miraba ficheros sueltos .json/.md, así que las
   // deliberaciones más CARAS —las que se guardan como CARPETA con su 00-LEEME y sus crudos—
@@ -570,6 +585,8 @@ else {
     // v1.3 §50: la tabla de la auditoría debe EXISTIR (sin ella la Sonda 0 no puede diffear).
     if (!BOOT && da.tableFile && archiveDir && existsSync(archiveDir) && !existsSync(join(archiveDir, da.tableFile)))
       warn(`deepAudit.tableFile "${da.tableFile}" NO existe en archiveDir → la Sonda 0 de la próxima auditoría no tiene input`);
+    else if (!BOOT && da.tableFile && (!archiveDir || !existsSync(archiveDir)))
+      degrade(`deepAudit.tableFile "${da.tableFile}" NO verificable — bóveda no clonada`);
   } else info('manifest sin deepAudit — la auditoría Nivel-2 no tiene disparador (declararlo, §173)');
 }
 
@@ -706,7 +723,15 @@ if (BOOT) head('  ⏭️  omitido en --boot (lo está escribiendo esta misma ses
 else {
   const settingsP = join(ROOT, '.claude', 'settings.json');
   const wired = existsSync(settingsP) && read(settingsP).includes('session-handoff');
-  if (!wired) info('sin hook `session-handoff` en .claude/settings.json — canario no aplica en este repo');
+  // v1.10.3 (ADR 85, U-13): el gate le preguntaba al PROPIO archivo vigilado si debia
+  // vigilarlo. Borra el hook de settings.json y el canario contestaba 'no aplica en este
+  // repo': falla ABIERTO ante justo la regresion que existe para cazar. La declaracion sube
+  // al manifest (como bootCharsTarget en #15), asi apagarlo es una decision EXPLICITA.
+  const declared = manifest.harnessCanary === true;
+  if (!declared) info(manifest.harnessCanary === false
+    ? 'canario de boot APAGADO por declaración EXPLÍCITA (harnessCanary:false) — su razón debe estar en el manifest'
+    : 'canario de boot no declarado en el manifest (harnessCanary) — no aplica en este repo');
+  else if (!wired) warn('el manifest declara harnessCanary pero .claude/settings.json NO invoca session-handoff → el hook SessionStart está roto o borrado y el cerebro arranca SIN signos vitales. Recablea el hook, o pon harnessCanary:false con su razón.');
   else {
     const markerP = join(DOCS, '.boot-marker');
     const ageH = existsSync(markerP) ? (Date.now() - statSync(markerP).mtimeMs) / 3.6e6 : Infinity;
@@ -840,7 +865,9 @@ else {
 }
 
 // ---- salida (presupuesto de stdout en --boot) ----
-lines.push(`\n${problems === 0 ? '✅ CEREBRO SANO (estructura íntegra' + (manifest.deepAudit && manifest.deepAudit.last ? ' · auditoría semántica: ' + manifest.deepAudit.last : '') + ')' : '⚠️  ' + problems + ' problema(s) — revisar antes de avanzar'}\n`);
+const sano = '✅ CEREBRO SANO (estructura íntegra' + (manifest.deepAudit && manifest.deepAudit.last ? ' · auditoría semántica: ' + manifest.deepAudit.last : '') + ')';
+const parcial = `🟠 ESTRUCTURA ÍNTEGRA, pero ${degraded} gate(s) DEGRADADOS (no pudieron correr) — NO es un cerebro verificado: clona la bóveda / el canónico y re-corre`;
+lines.push(`\n${problems ? '⚠️  ' + problems + ' problema(s) — revisar antes de avanzar' : (degraded ? parcial : sano)}\n`);
 let out = lines;
 if (BOOT && out.join('\n').length > 2000) {
   // presupuesto duro: cada línea del boot se re-inyecta como contexto en CADA sesión

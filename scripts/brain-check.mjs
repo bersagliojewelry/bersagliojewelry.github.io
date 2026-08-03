@@ -26,7 +26,7 @@
 //   (7) archiveDir íntegro [warn, --full]               (16) Fiabilidad M-22: `verificado-vivo` stale [info, --full]
 //       + 7b) bóveda: commits ≠ origin vía fs [warn]
 // ===========================================================
-const KERNEL_VERSION = '1.9.2';
+const KERNEL_VERSION = '1.9.3';
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -428,6 +428,12 @@ else if (!Array.isArray(manifest.ssotFacts) || !manifest.ssotFacts.length) info(
 else {
   let hits = 0;
   for (const fact of manifest.ssotFacts) {
+    // v1.9.3 (§83, TODO-37): una regex con los escapes COMIDOS sigue siendo VÁLIDA — no cae en el
+    // catch— pero no matchea nada, así que el gate imprime ✅ en falso. Me pasó al declarar la
+    // versión del kernel: quedó "[Kk]ernels+v?d+.d+.d+" tras cruzar bash→node→JSON, y el chequeo
+    // dio verde. Un ssotFact roto es peor que no declararlo: promete vigilancia que no existe.
+    if (/(^|[^\\])\b[dswDSWbB]\+/.test(fact.regex) || /(^|[^\\])\b[dswDSW]\{/.test(fact.regex))
+      warn(`ssotFacts: la regex "${fact.regex}" parece tener los escapes COMIDOS (\\d/\\s/\\w sin barra invertida). Es válida pero no matchea nada → el gate daría ✅ en falso.`), hits++;
     try {
       const re = new RegExp(fact.regex, 'g');
       for (const rel of fact.scan || []) {

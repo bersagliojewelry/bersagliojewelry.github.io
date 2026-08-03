@@ -130,7 +130,18 @@
   ],
   "specsDir": "docs/superpowers/specs",
   "_ssotFacts_note": "Vacío desde la auditoría §114 (2026-06-24): el único ssotFact (cartera 506.510.780) se RETIRÓ porque el RESET-A-CERO (Daniel 2026-06-20) vuelve ese número desechable y se quitó de 05/10 → el gate quedaba sin owner. Re-añadir un ssotFact si emerge un hecho-vivo duplicado entre always-on.",
-  "ssotFacts": [],
+  "ssotFacts": [
+    {
+      "regex": "[Kk]ernel\\s+v?\\d+\\.\\d+\\.\\d+",
+      "owner": "scripts/.kernel-version.json",
+      "scan": [
+        "CLAUDE.md",
+        "docs/05-ESTADO-GLOBAL.md",
+        "docs/10-MEMORIA-CORTO-PLAZO.md"
+      ],
+      "_que": "version del kernel (ADR inmobiliaria 83, TODO-37): el dueno es el STAMP que escribe brain:pull. Copiarla a un nodo always-on la desincroniza en el primer bump — paso 2 veces el mismo dia (insema declaraba v1.6.0 con el stamp en v1.9.0). El gate #8 lo caza solo si el hecho esta DECLARADO: no era un gate inutil, era un gate sin datos."
+    }
+  ],
   "deepAudit": {
     "last": "2026-07-18",
     "coveredHeaderCount": 194,

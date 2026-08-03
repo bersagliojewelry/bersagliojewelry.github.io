@@ -26,7 +26,7 @@
 //   (7) archiveDir íntegro [warn, --full]               (16) Fiabilidad M-22: `verificado-vivo` stale [info, --full]
 //       + 7b) bóveda: commits ≠ origin vía fs [warn]
 // ===========================================================
-const KERNEL_VERSION = '1.9.0';
+const KERNEL_VERSION = '1.9.1';
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -358,7 +358,16 @@ if (BOOT) head('  ⏭️  omitido en --boot');
 else if (!archiveDir) info('manifest sin archiveDir — gate omitido (declararlo, §G.4)');
 else if (!existsSync(archiveDir)) info(`archiveDir no existe en esta máquina (${manifest.archiveDir}) — bóveda no clonada; gate omitido`);
 else {
-  const files = readdirSync(archiveDir).filter((f) => /\.(json|md)$/i.test(f) && !/^README/i.test(f) && f !== 'runs.log');
+  // v1.9.1 (§83, TODO-37): el filtro solo miraba ficheros sueltos .json/.md, así que las
+  // deliberaciones más CARAS —las que se guardan como CARPETA con su 00-LEEME y sus crudos—
+  // no las veía ninguna corrida. El gate decía "80 crudos indexados" ignorando justo las tres
+  // que costaron millones de tokens. Una carpeta cuenta como UNA entrada y debe estar en el README.
+  const entries = readdirSync(archiveDir, { withFileTypes: true });
+  const files = entries
+    .filter((e) => e.isFile() && /\.(json|md)$/i.test(e.name) && !/^README/i.test(e.name) && e.name !== 'runs.log')
+    .map((e) => e.name);
+  const dirs = entries.filter((e) => e.isDirectory() && !/^[._]/.test(e.name)).map((e) => e.name);
+  files.push(...dirs);
   const readmePath = join(archiveDir, 'README.md');
   const readme = existsSync(readmePath) ? read(readmePath) : '';
   let bad = 0;

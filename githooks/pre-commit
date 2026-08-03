@@ -14,8 +14,13 @@ staged=$(git diff --cached --name-only)
 echo "$staged" | grep -qE '^(CLAUDE\.md|docs/)' || exit 0   # nada del cerebro staged → no aplica
 
 if ! command -v node >/dev/null 2>&1; then
-  echo "⚠️  pre-commit: 'node' no está en PATH → salto brain:check (commit permitido)."
-  exit 0
+  echo ""
+  echo "❌ COMMIT BLOQUEADO: 'node' no está en PATH, así que brain:check NO puede correr."
+  echo "   Antes esto dejaba pasar el commit en SILENCIO mientras el chequeo #25 seguía"
+  echo "   declarando el hook 'cableado': el gate existía y no miraba nada. Falla CERRADO"
+  echo "   a propósito (auditoría Nivel-2 #6)."
+  echo "   Arregla el PATH, o salta a conciencia: git commit --no-verify"
+  exit 1
 fi
 
 echo "🧠 brain:check (pre-commit)…"

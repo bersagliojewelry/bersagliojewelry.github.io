@@ -30,7 +30,7 @@
 //       (el ✅ INMERECIDO, §120) · (26) trinquete de filas gordas del índice
 //       + 7b) bóveda: commits ≠ origin vía fs [warn]
 // ===========================================================
-const KERNEL_VERSION = '1.17.0';
+const KERNEL_VERSION = '1.19.0';
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -87,6 +87,9 @@ const KNOWN_KEYS = new Set([
   // v1.17.0 (#7c · K-05): deuda CONGELADA de deliberaciones declaradas SIN crudo enlazado.
   // Trinquete igual que #26: solo puede bajar; una nueva bloquea.
   'delibAnchorBaseline',
+  // v1.19.0 (§143): un sello de frescura envejece con los COMMITS, no con el calendario. Umbral
+  // doble: se marca stale por lo que llegue ANTES (días o commits).
+  'staleCommits', 'verifiedLiveStaleCommits',
   'countableFacts',
 ]);
 // v1.14.0: prefijo `x-` para la config de gates PROPIOS de un repo (como las cabeceras de
@@ -417,6 +420,26 @@ else if (existsSync(SKILLS_DIR) && existsSync(invPath)) {
   warn('skills/ existe pero docs/skills-inventory.md NO → crear el catálogo (§G.4)');
 } else head('  ℹ️  skills/ no existe — omitido');
 
+// v1.19.0 (§143 · §221): «umbrales en DÍAS en un repo que corre en COMMITS». Un sello de hace 7 días
+// puede llevar 327 commits detrás: por calendario está fresco y por trabajo real es una fósil. Se
+// cuenta con el reflog leído por fs (sin child_process), igual que el canario del #24.
+// ⚠️ El sello tiene granularidad de DÍA, así que se cuenta desde el FINAL del día sellado: nunca
+// sobre-cuenta lo que se selló esa misma tarde. Es la dirección segura del error.
+const reflogPath = join(ROOT, '.git', 'logs', 'HEAD');
+const reflogTxt = existsSync(reflogPath) ? read(reflogPath) : null;
+function commitsDesde(fechaISO) {
+  if (!reflogTxt) return null;
+  const t0 = Date.parse(`${fechaISO}T23:59:59Z`) / 1000;
+  if (!Number.isFinite(t0)) return null;
+  let n = 0;
+  for (const l of reflogTxt.split('\n')) {
+    const m = l.match(/>\s(\d{9,})\s[+-]\d{4}\t(\w+)/);
+    if (m && Number(m[1]) > t0 && m[2].startsWith('commit')) n++;
+  }
+  return n;
+}
+
+
 // 7) Integridad de archiveDir (deliberaciones) [--full]
 head('\n7) Integridad de archiveDir (deliberación capturada ↔ conectada):');
 const archiveDir = manifest.archiveDir ? join(ROOT, manifest.archiveDir) : null;
@@ -629,7 +652,9 @@ else {
   }
   if (oldest) {
     const days = Math.floor((today - oldest) / 86400000);
-    if (days > staleDays) info(`frescura: ${oldestWhere} sellado hace ${days} días (> ${staleDays}) → re-verificar vs git real y re-sellar`);
+    const csFecha = commitsDesde(oldest.toISOString().slice(0, 10));
+    if (days > staleDays || (csFecha !== null && csFecha > (manifest.staleCommits || 120)))
+      info(`frescura: ${oldestWhere} sellado hace ${days} día(s)${csFecha !== null ? ` y ${csFecha} commit(s)` : ''} (umbral ${staleDays}d / ${manifest.staleCommits || 120} commits) → re-verificar vs git real y re-sellar`);
   }
   // v1.16.0 (K-01+K-04, §208.3): el gate tomaba la fecha MÁS VIEJA de los nodos que la tuvieran, y
   // al que no aportaba ninguna lo saltaba EN SILENCIO. Justo el `10` —la pizarra del WIP, el nodo
@@ -714,7 +739,12 @@ else {
     for (const m of read(p).matchAll(/verificado-vivo:\s*(\d{4}-\d{2}-\d{2})/gi)) {
       total++;
       const days = Math.floor((today - new Date(m[1])) / 86400000);
-      if (days > vlStaleDays) { info(`claim "verificado-vivo: ${m[1]}" en ${rel} tiene ${days}d (> ${vlStaleDays}) → re-verificar contra realidad o retirar la afirmación (M-22)`); stale++; }
+      const cs = commitsDesde(m[1]);
+      const vlStaleCommits = manifest.verifiedLiveStaleCommits || 100;
+      if (days > vlStaleDays || (cs !== null && cs > vlStaleCommits)) {
+        info(`claim "verificado-vivo: ${m[1]}" en ${rel}: ${days}d${cs !== null ? ` y ${cs} commit(s)` : ''} (umbral ${vlStaleDays}d / ${vlStaleCommits} commits) → re-verificar contra realidad o retirar la afirmación (M-22)`);
+        stale++;
+      }
     }
   }
   if (total && !stale) ok(`${total} claim(s) \`verificado-vivo\` vigentes (≤ ${vlStaleDays}d)`);
@@ -960,7 +990,11 @@ head('\n27) Rutas fantasma en las neuronas (frescura mecanizada):');
 if (BOOT) head('  ⏭️  omitido en --boot');
 else {
   const SKIP_DIR = new Set(['node_modules', '.git', 'dist', '.astro', '.wrangler', '_legacy', 'coverage', '.next']);
-  const porNombre = new Set();
+  // v1.18.0 (§143): el walk guardaba solo NOMBRES, y por eso la única alternativa a la ruta exacta
+  // era perdonar por basename. Guardando la ruta relativa se puede resolver por SUFIJO, que es lo
+  // que de verdad hace el cerebro al citar («`src/lib/x.ts`» desde el mapa del portal = `portal/src/lib/x.ts`).
+  const todasRutas = [];
+  const porNombre = new Map();
   let visitados = 0;
   (function walk(d) {
     if (visitados > 20000) return;                       // cota dura: el linter no se cuelga por un repo enorme
@@ -968,7 +1002,11 @@ else {
     for (const e of ents) {
       if (SKIP_DIR.has(e.name) || e.name.startsWith('.')) continue;
       visitados++;
-      if (e.isDirectory()) walk(join(d, e.name)); else porNombre.add(e.name);
+      if (e.isDirectory()) { walk(join(d, e.name)); continue; }
+      const rel = join(d, e.name).slice(ROOT.length + 1).replace(/\\/g, "/");
+      todasRutas.push(rel);
+      if (!porNombre.has(e.name)) porNombre.set(e.name, []);
+      porNombre.get(e.name).push(rel);
     }
   })(ROOT);
   // MISMA excepción que aprendió el kit ([[LD-07]]): una ruta puede citarse legítimamente para
@@ -985,7 +1023,8 @@ else {
   const AMBITO = /^(05|10|20|21|22|50)[-.]/;
   const PLANTILLA = /(^|[/_-])[A-Z]([./_-]|$)|^[-.]/;   // `admin-X.js`, `X.ui.js`, `.dc.html`: patrón, no ruta
   const fantasmas = [];
-  let comparadas = 0, perdonadas = 0;
+  let comparadas = 0, exactas = 0, porSufijo = 0, porBase = 0;
+  const ambiguas = [];
   for (const f of readdirSync(DOCS).filter((x) => AMBITO.test(x) && x.endsWith('.md'))) {
     const lineas = read(join(DOCS, f)).split('\n');
     // Contexto EXTERNO: una neurona describe legítimamente cosas que viven fuera del repo (la
@@ -999,22 +1038,31 @@ else {
       for (const m of l.matchAll(/`([A-Za-z0-9_/.-]+\.(?:js|mjs|ts|astro|css|html))`/g)) {
         const ruta = m[1];
         if (ruta.startsWith('..') || /^[A-Za-z]:/.test(ruta)) continue;   // cross-repo: no es asunto de este linter
+        // v1.18.0: `/invertir.html` con barra inicial es una URL del sitio, no un fichero del repo.
+        // Sin esta línea el gate acusaba a un nodo de config por citar correctamente una ruta web.
+        if (ruta.startsWith('/')) continue;
         if (PLANTILLA.test(ruta)) continue;                               // ruta-plantilla, no ruta real
         comparadas++;
-        if (existsSync(join(ROOT, ruta))) continue;
-        // v1.12.0 (§120): perdonar por BASENAME es una comparación DÉBIL — dice «existe un archivo
-        // que se llama así en alguna parte», no «la ruta que citas es correcta». Se sigue
-        // perdonando (un nodo puede citar `utils.js` sin su carpeta), pero se CUENTA y se dice:
-        // un ✅ que calla cuántas veces bajó el listón no es un ✅, es una media verdad.
-        if (porNombre.has(ruta.split('/').pop())) { perdonadas++; continue; }
+        if (existsSync(join(ROOT, ruta))) { exactas++; continue; }
+        // v1.18.0 (§143 · §221): antes había UNA sola alternativa —«existe un fichero que se llama
+        // así en alguna parte»— y el gate la contaba en bloque avisando de que «la ruta puede estar
+        // mal». Al medirlo sobre los cuatro repos, 119 de 123 de esas «perdonadas» resolvían por
+        // SUFIJO ÚNICO: abreviaturas legítimas y sin ambigüedad. El contador alarmaba sin informar.
+        // Ahora la resolución tiene grados, y solo se nombra lo que un lector NO podría resolver.
+        const porSuf = todasRutas.filter((t) => t.endsWith('/' + ruta));
+        if (porSuf.length === 1) { porSufijo++; continue; }
+        if (porSuf.length > 1) { ambiguas.push(`${f}:${i + 1} \`${ruta}\` → ${porSuf.length} candidatos (${porSuf.slice(0, 2).join(', ')}…)`); continue; }
+        const mismos = porNombre.get(ruta.split('/').pop()) || [];
+        if (mismos.length === 1) { porBase++; continue; }
+        if (mismos.length > 1) { ambiguas.push(`${f}:${i + 1} \`${ruta}\` → ${mismos.length} ficheros con ese nombre (${mismos.slice(0, 2).join(', ')}…)`); continue; }
         fantasmas.push(`${f}:${i + 1} → \`${ruta}\``);
       }
     });
   }
   if (!comparadas) degrade('rutas fantasma: 0 rutas citadas en el ámbito (05/10/20/21/22/50) → este gate NO comparó nada');
   else if (!fantasmas.length) {
-    ok(`ninguna de las ${comparadas} ruta(s) citadas es fantasma`);
-    if (perdonadas) info(`${perdonadas} de esas ${comparadas} se aceptaron solo por COINCIDENCIA DE NOMBRE (existe un archivo así, pero en otra carpeta) → la ruta del nodo puede estar mal aunque el gate pase`);
+    ok(`ninguna de las ${comparadas} ruta(s) citadas es fantasma (${exactas} exacta(s) · ${porSufijo} por sufijo ÚNICO · ${porBase} por nombre único)`);
+    if (ambiguas.length) info(`${ambiguas.length} cita(s) AMBIGUAS: el fichero existe, pero hay más de un candidato y el lector no puede saber cuál — ${ambiguas.slice(0, 4).join(" · ")}${ambiguas.length > 4 ? " …" : ""} → añade la carpeta que las distingue`);
   } else { warn(`${fantasmas.length} ruta(s) FANTASMA citadas por neuronas (el archivo no existe en el repo): ${fantasmas.slice(0, 6).join(' · ')}${fantasmas.length > 6 ? ' …' : ''} → corregir el nodo o marcar la ruta como retirada`); }
 }
 

@@ -30,7 +30,7 @@
 //       (el ✅ INMERECIDO, §120) · (26) trinquete de filas gordas del índice
 //       + 7b) bóveda: commits ≠ origin vía fs [warn]
 // ===========================================================
-const KERNEL_VERSION = '1.15.0';
+const KERNEL_VERSION = '1.16.0';
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -579,16 +579,27 @@ else {
   const staleDays = manifest.staleDays || 10;
   const today = new Date();
   let oldest = null, oldestWhere = '';
-  for (const rel of ['docs/05-ESTADO-GLOBAL.md', 'docs/10-MEMORIA-CORTO-PLAZO.md']) {
+  const NODOS_FECHA = ['docs/05-ESTADO-GLOBAL.md', 'docs/10-MEMORIA-CORTO-PLAZO.md'];
+  const sinFecha = [];
+  for (const rel of NODOS_FECHA) {
     const p = join(ROOT, rel);
     if (!existsSync(p)) continue;
     const m = read(p).match(/(?:última actualización[:* ]*|\(al |actualizado )\**(\d{4}-\d{2}-\d{2})/i);
     if (m) { const d = new Date(m[1]); if (!oldest || d < oldest) { oldest = d; oldestWhere = rel; } }
+    else sinFecha.push(rel);
   }
   if (oldest) {
     const days = Math.floor((today - oldest) / 86400000);
     if (days > staleDays) info(`frescura: ${oldestWhere} sellado hace ${days} días (> ${staleDays}) → re-verificar vs git real y re-sellar`);
   }
+  // v1.16.0 (K-01+K-04, §208.3): el gate tomaba la fecha MÁS VIEJA de los nodos que la tuvieran, y
+  // al que no aportaba ninguna lo saltaba EN SILENCIO. Justo el `10` —la pizarra del WIP, el nodo
+  // que más rápido caduca— no usa ninguno de los formatos, así que llevaba un año fuera del gate
+  // sin que nada lo dijera. El arreglo NO es teclearle una fecha (eso sería jugar con el gate, que
+  // es lo que K-04 denunciaba): es que la COBERTURA se publique, para que un nodo cayéndose en
+  // silencio se VEA. M-27 mecanizada.
+  if (sinFecha.length)
+    info(`frescura — COBERTURA: ${NODOS_FECHA.length - sinFecha.length}/${NODOS_FECHA.length} nodo(s) always-on aportan fecha legible; NO la aportan → ${sinFecha.join(" · ")}. El «sellado hace N días» de arriba NO los cubre. Formatos que lee: «última actualización: YYYY-MM-DD» · «(al YYYY-MM-DD» · «actualizado YYYY-MM-DD».`);
 }
 
 // 13) Specs: checklist con evidencia [--full]
@@ -656,9 +667,11 @@ else {
   const vlScan = manifest.verifiedLiveScan || ['docs/05-ESTADO-GLOBAL.md', 'docs/10-MEMORIA-CORTO-PLAZO.md'];
   const today = new Date();
   let total = 0, stale = 0;
+  const sinMarcador = [];
   for (const rel of vlScan) {
     const p = join(ROOT, rel);
     if (!existsSync(p)) continue;
+    if (!/verificado-vivo:/i.test(read(p))) sinMarcador.push(rel);
     for (const m of read(p).matchAll(/verificado-vivo:\s*(\d{4}-\d{2}-\d{2})/gi)) {
       total++;
       const days = Math.floor((today - new Date(m[1])) / 86400000);
@@ -666,6 +679,12 @@ else {
     }
   }
   if (total && !stale) ok(`${total} claim(s) \`verificado-vivo\` vigentes (≤ ${vlStaleDays}d)`);
+  // v1.16.0 (K-01, §208.2): el otro lado del mismo hueco. Un nodo con CERO marcadores no producía
+  // hallazgos, así que el gate pasaba en verde sin haberlo mirado nunca. No se EXIGE marcador —no
+  // todo nodo afirma sobre realidad externa—, pero la cobertura se PUBLICA: es lo que distingue
+  // «no tiene claims que verificar» de «se cayó del gate y nadie lo vio».
+  if (total && sinMarcador.length)
+    info(`fiabilidad — COBERTURA: ${vlScan.length - sinMarcador.length}/${vlScan.length} nodo(s) escaneados llevan algún «verificado-vivo»; CERO en → ${sinMarcador.join(" · ")} (a esos este gate no los compara con nada).`);
   // v1.12.0 (§120): sin marcadores este gate imprimía «check activo» — un ✅ por CERO comparaciones.
   // Y encima mide solo la EDAD del marcador, nunca el hecho: por eso el 05 pudo sostener «CF 9»
   // contra 11 exports reales con el claim fresquísimo. Que no verificó nada tiene que verse.
@@ -801,7 +820,23 @@ else {
     // trabajando aquí y los hooks no dispararon → eso sí es la avería. Sin actividad → informativo.
     const reflog = join(ROOT, '.git', 'logs', 'HEAD');
     const actividadH = existsSync(reflog) ? (Date.now() - statSync(reflog).mtimeMs) / 3.6e6 : Infinity;
-    const trabajandoAqui = actividadH < ageH;         // hubo git DESPUÉS del último arranque
+    // v1.16.0 (§216.9): la premisa «hubo commits ⇒ alguien trabajó AQUÍ en sesión» la rompió una
+    // práctica adoptada DESPUÉS de escribir el gate: la distribución del kernel compartido, que
+    // commitea en un repo hermano desde la sesión de OTRO. En un repo congelado eso deja al canario
+    // gritando para siempre y bloqueando cada commit. No se apaga (BOOT_CANARY_SKIP es ceguera
+    // permanente): se MIDE. El reflog lleva el mensaje de cada entrada, así que se puede preguntar
+    // si TODO lo posterior al marker fue distribución de kernel — y entonces no es trabajo aquí.
+    // El predicado NO se adivinó: se MIDIÓ sobre los cuatro repos hermanos. Esos commits usan tres
+    // prefijos distintos —`chore(kernel)`, `chore(cerebro)`, `docs(cerebro)`— y lo ÚNICO que los 15
+    // comparten es la palabra «kernel» en el mensaje. La primera versión de este gate casó solo con
+    // `chore(kernel)` (una convención recordada de memoria) y dejó fuera al repo que más lo
+    // necesitaba. La guarda `length > 0` importa: `[].every()` es true y convertiría «sin actividad»
+    // en «solo kernel».
+    const marcaMs = existsSync(markerP) ? statSync(markerP).mtimeMs : 0;
+    const posteriores = (existsSync(reflog) ? read(reflog).split('\n') : [])
+      .filter((l) => { const t = l.match(/>\s(\d{9,})\s[+-]\d{4}\t/); return t && Number(t[1]) * 1000 > marcaMs; });
+    const soloKernel = posteriores.length > 0 && posteriores.every((l) => /\bkernel\b/i.test(l));
+    const trabajandoAqui = actividadH < ageH && !soloKernel;   // git posterior al arranque Y no es distribución
     // Umbral CRÓNICO (168h), no agudo: un repo hermano se mantiene a ráfagas desde la sesión de
     // OTRO —ahí el pre-commit sí corre; lo que no dispara es el SessionStart, que no existe— y con
     // 48h eso gritaba en cada mantenimiento cruzado. Una semana de actividad sin un solo arranque
@@ -809,7 +844,7 @@ else {
     if (ageH > 168 && trabajandoAqui && !process.env.BOOT_CANARY_SKIP)
       warn(`una SEMANA de actividad git (última hace ${Math.round(actividadH)}h) sin que ningún SessionStart escriba docs/.boot-marker (${ageH === Infinity ? 'NUNCA' : Math.round(ageH) + 'h'}) — los hooks del harness NO disparan aquí. Verifica .claude/settings.json (o: node scripts/session-handoff.mjs --boot-echo). Intencional → BOOT_CANARY_SKIP=1.`);
     else if (ageH > 48)
-      info(`canario en reposo: marker de hace ${ageH === Infinity ? 'nunca' : Math.round(ageH) + 'h'}${trabajandoAqui ? ' (mantenido desde otra sesión: el pre-commit sí corre)' : ' y sin actividad git posterior'}`);
+      info(`canario en reposo: marker de hace ${ageH === Infinity ? "nunca" : Math.round(ageH) + "h"}${soloKernel ? ` — las ${posteriores.length} entrada(s) de git posteriores son SOLO distribución de kernel (no es trabajo en este repo, §216.9)` : trabajandoAqui ? " (mantenido desde otra sesión: el pre-commit sí corre)" : " y sin actividad git posterior"}`);
     else ok(`canario vivo (marker de hace ${Math.round(ageH)}h)`);
   }
 }

@@ -30,7 +30,7 @@
 //       (el ✅ INMERECIDO, §120) · (26) trinquete de filas gordas del índice
 //       + 7b) bóveda: commits ≠ origin vía fs [warn]
 // ===========================================================
-const KERNEL_VERSION = '1.16.0';
+const KERNEL_VERSION = '1.17.0';
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -84,6 +84,9 @@ const KNOWN_KEYS = new Set([
   // v1.12.0 (#26): deuda CONGELADA de filas gordas del índice. Trinquete: solo puede bajar.
   'indexRowOverLimitBaseline',
   // v1.13.0 (#29): cifras que el cerebro afirma y el kernel puede CONTAR en el repo.
+  // v1.17.0 (#7c · K-05): deuda CONGELADA de deliberaciones declaradas SIN crudo enlazado.
+  // Trinquete igual que #26: solo puede bajar; una nueva bloquea.
+  'delibAnchorBaseline',
   'countableFacts',
 ]);
 // v1.14.0: prefijo `x-` para la config de gates PROPIOS de un repo (como las cabeceras de
@@ -456,6 +459,42 @@ else {
     }
   }
   if (!bad) ok(`archiveDir íntegro (${files.length} crudos indexados; anclas resuelven)`);
+  // 7c) v1.17.0 (K-05): hasta aquí el #7 valida las anclas que EXISTEN —que resuelvan, y que todo
+  //     crudo esté indexado—. Lo que estructuralmente no podía ver es la que FALTA: un ADR que
+  //     declara haber corrido un comité, un consejo externo o una tanda de subagentes y NO enlaza su
+  //     crudo pasa en verde, porque no hay ancla que validar. Ésa es la dirección afirmación→ancla, y
+  //     sin ella el reflejo de captura de §G.4 seguía siendo [HONOR] puro.
+  //     El patrón se MIDIÓ antes de escribirlo: la primera versión incluía «panel de …», que en
+  //     castellano casa con «el panel de gestión» y daba ~90 % de falsos positivos.
+  const inventario = new Set();
+  for (const f of files) { inventario.add(f); inventario.add(f.replace(/\.[^.]+$/, '')); }
+  const DELIB = /comit[ée]\s*[x×]\s*\d|comit[ée] de expertos|consejo externo|\bsubagentes\b|workflow de \d+\s*agentes?/gi;
+  const NEG = /\b(?:sin|nunca|no)\b[^.]{0,40}$/i;
+  const secDelib = existsSync(histPath)
+    ? read(histPath).split(/(?=^## \d+\. )/m).filter((x) => /^## \d+\. /.test(x)) : [];
+  const huerfanas = [];
+  for (const sec of secDelib) {
+    const ms = [...sec.matchAll(DELIB)];
+    if (!ms.length) continue;
+    // «Sin comité ×3 ni consejo externo» DECLARA que no se corrió: es lo contrario de una deuda.
+    if (ms.every((m) => NEG.test(sec.slice(Math.max(0, m.index - 45), m.index)))) continue;
+    if (/research-archive\/|brain-private\//.test(sec)) continue;
+    // un token entre backticks que EXISTA en el archiveDir también es ancla (así se citaba antes)
+    if ([...sec.matchAll(/`([\w][\w.-]{6,})`/g)]
+      .some((m) => inventario.has(m[1]) || inventario.has(m[1].replace(/\.[^.]+$/, '')))) continue;
+    huerfanas.push('§' + sec.match(/^## (\d+)\./)[1]);
+  }
+  const baseDelib = manifest.delibAnchorBaseline;
+  if (!secDelib.length) info('7c: sin historial de ADRs que barrer (afirmación→ancla omitido)');
+  else if (!huerfanas.length) ok('deliberaciones declaradas: TODAS enlazan su crudo (afirmación→ancla)');
+  else if (baseDelib === undefined)
+    info(`${huerfanas.length} ADR(s) declaran deliberación EJECUTADA y no enlazan su crudo: ${huerfanas.join(' · ')} → captúralo (§G.4), o declara \`delibAnchorBaseline\` en el manifest para congelar esta deuda y bloquear las nuevas.`);
+  else if (huerfanas.length > baseDelib)
+    warn(`deliberación declarada SIN crudo enlazado por encima de la deuda congelada (${baseDelib}): ahora ${huerfanas.length} → ${huerfanas.join(' · ')}. Lo nuevo se CAPTURA (§G.4), no se suma al montón.`);
+  else if (huerfanas.length < baseDelib)
+    info(`deliberación sin crudo: ${huerfanas.length} (< ${baseDelib} congelados) → baja \`delibAnchorBaseline\` a ${huerfanas.length}: el trinquete solo sirve si se aprieta.`);
+  else
+    info(`deliberación sin crudo: ${huerfanas.length}, exactamente la deuda CONGELADA (${baseDelib}) → ${huerfanas.join(' · ')}. Una nueva bloquea el commit.`);
   // 7b) Bóveda vía fs (M-03 §50): commits ≠ origin. Lo no-commiteado lo cubre session-handoff.
   let vaultGit = archiveDir;
   for (let i = 0; i < 4 && !existsSync(join(vaultGit, '.git')); i++) vaultGit = join(vaultGit, '..');

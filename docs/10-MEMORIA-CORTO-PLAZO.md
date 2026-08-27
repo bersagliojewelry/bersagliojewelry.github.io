@@ -51,4 +51,4 @@
 > 🔬 **Auditoría N2 del 26-ago** (tabla en la bóveda): 🔴 **B-01 — 45 scripts `test:*` y el CI no
 > corría NINGUNO** — ✅ **CERRADO el 26-ago**: `npm test` corre las 540 en 0,85 s y va en `deploy.yml` ANTES del build. Las pruebas de tesorería, caja, cartera,
 > pedidos y wompi —lo que mueve DINERO— solo existen si alguien las teclea. ✅ **B-02 cerrado**: ya hay `test` agregado (y `test:emulador` para las 14 que lo piden). 🟡 **B-03**:
-> tres worktrees de agente abandonadas (623 MB). 🟡 **B-04**: `30-LECCIONES` sobre su tope.
+> tres worktrees de agente abandonadas (623 MB). 🟡 **B-04**: `30-LECCIONES` **MEDIDO 27-ago**: líneas YA arregladas (254→217, 37 blancos recuperados); quedan chars (43,4k/40k). Sin duplicación que quitar. ⛔ Agrupar por regex dio un cajón de sastre: el corte exige LEER las 72 lecciones vivas.

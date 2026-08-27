@@ -49,7 +49,6 @@ window.scrollTo(0, scrollY);
 
 ### L-82: HUECO EN BLANCO en carga fría → SKELETON (reusa el componente real, no reserva-en-blanco); NO acelerar con live-upgrade sobre PRECIOS (bait-and-switch). → ADR §178
 ### L-86: Cuando un flujo gana un LIBRO nuevo, el camino de DESHACER lo hereda en el MISMO commit — y un vigilante que compara cada libro consigo mismo jamás ve una fuga ENTRE libros. → `35-LECCIONES-DINERO`
-
 ### L-85: Idempotencia con destino TEMPORAL (el "turno abierto") NO se copia de una con destino determinista: hay que ANCLAR el destino en el doc de la 1ª escritura. → `35-LECCIONES-DINERO`
 ### L-84: `err.code` de un callable llega PREFIJADO (`functions/failed-precondition`) → toda tabla/`includes` por code falla en silencio y el motivo real del servidor se pierde. → `35-LECCIONES-DINERO`
 ### L-81: `enforceTurno:false` NO es "suave", es un HUECO — ventas huérfanas fuera del arqueo. → `35-LECCIONES-DINERO` [detalle] · **TODO-70 ✅ §173**
@@ -62,29 +61,17 @@ window.scrollTo(0, scrollY);
 ### L-74: Invariante "SOLO UNO abierto/activo" (turno de caja, sesión única…) = **puntero singleton transaccional**, NO `query where estado=='abierto'` (TOCTOU: dos aperturas concurrentes leen "ninguno" y crean dos). Un doc `caja/estado {turnoAbiertoId}`: la CF lo lee+escribe en la MISMA `runTransaction` que crea/cierra → Firestore serializa por ese doc (1 gana, la otra reintenta y falla `failed-precondition`). O(1), sin índice. Idempotencia: `opId == docId` (create-if-not-exists). SIEMPRE un test de carrera (`Promise.allSettled` de 2 → exactamente 1 fulfilled). → F2.0 B1 `functions/caja-core.js`
 ### L-73: Un nombre de subcolección alimenta un `collectionGroup` GLOBAL. Antes de reusar un nombre (`movimientos`, `pagos`…) para un subsistema NUEVO, `grep collectionGroup('<nombre>')`: si existe un consumidor (aging CxC = corte/salud/reconciliación agrupan por `parent.parent.id`), tu colección lo contamina/infla su full-scan aunque el grouping "salve" hoy. Nombre DISTINTO por dominio (`movsCaja` ≠ `movimientos`). Reglas: cada match explícito basta; añade un match `collectionGroup` SOLO si el dominio necesita cross-doc. → F2.0 B0b
 ### L-72: El mapa de estados es SSoT COMPARTIDO: toda vista que pinte estados (POS, Pedidos, exports) importa `estadoPedido()` de pedidos-format — un mapping local ("trinario") se pudre en silencio cuando el backend suma estados Y ofrece acciones imposibles ("Confirmar pago" sobre un entregado/expirado). Al añadir estados: grep de quién mapea estados a mano. Cazado en el gate E2E. → §167
-
 ### L-71: MCP Firebase `firestore_query_collection` NO matchea campos timestamp con `string_value` — devuelve `[]` SIN error (falso "no hay datos": trampa en monitoreo de `pedidos`/ventas). Para consultas por fecha usar `firestore_list_documents` con `orderBy: "createdAt desc"` + mask; ante un `[]` sospechoso, re-probar con ventana amplia ANTES de concluir "0 resultados". → monitoreo post-§164
-
 ### L-70: Un caché local (localStorage/SDK) solo mata el flash de contenido CMS en visitas REPETIDAS — la 1ª visita de un dispositivo nuevo exige HORNEAR el contenido en el HTML del build (SSG re-hornea por push+cron); y el preload debe re-apuntarse a lo que el renderer pintará con los DATOS reales (semilla: memoria > localStorage > horneado > defaults). → §163
-
 ### L-69: El "LCP real" se verifica contra el RENDERER vivo (quién pinta qué), no contra un preload/etiqueta heredada — un preload huérfano descarga con `fetchpriority=high` algo que jamás se pinta Y compite con el LCP; precachearlo consagra el error. → §161
-
 ### L-68: Path IDEMPOTENTE que retorna el recurso reusado debe REFRESCAR el input mutable del reintento (shipping/entrega) — descartarlo en silencio pierde correcciones del usuario (pedido pagado con datos viejos). Lo derivado del recurso (total/firma) queda intacto. → §161
-
 ### L-67: Fechas en negocio = reloj INYECTABLE (`opts.hoy`, default fecha real). Fixture de fechas fijas + código con reloj real = bomba de tiempo (test se pone rojo sin commit — `corte-insumos` R6 murió jun→jul). → §160.2
-
 ### L-66: Redirect de login = DETERMINISTA (`sessionReady()` resuelve TRAS escribir `bj_auth`), NUNCA timeout. Rol insuficiente → SU landing, no al login. Pestaña nueva = 1 rebote esperado (sessionStorage por-pestaña; NO localStorage). → §159
-
 ### L-65: `secrets:set` (gen2) NO re-empaqueta `functions/.env` → tras cambiar env vars no-secretos, `deploy --only functions` COMPLETO → 31
-
 ### L-64: Proveedor que contrata el transporte = obligación de RESULTADO → trasladar al consumidor el riesgo de TRÁNSITO es cláusula abusiva (Ley 1480 Art.43, se asume no escrita); solo el riesgo ADUANERO es del comprador. Texto legal: verificar AMENDMENTS vigentes (Ley 2439/2024: reembolso retracto 30→15 días cal), no solo la ley base. → §157.11-13
-
 ### L-63: Dos flotantes `fixed` en la misma esquina (cookie banner ↔ FAB asesoría) se pisan → el consentimiento manda; bandera `body.bj-cookie-active` + el FAB cede por CSS (regla después de `.is-revealed` gana por orden) + banner z-210 > FAB z-200 → §156.19
-
 ### L-62: crash pinch-zoom iOS = MEMORIA; fix = RESTAR capas en móvil (content-visibility + quitar `filter:blur`), NUNCA promover GPU → §156.18
-
 ### L-61: Artefactos del SSG (`dist/`) → verificar con `vite preview`, NO el dev server (sirve la fuente). → `32-LECCIONES-CARGA`
-
 ### L-05: Preview headless (Claude Preview MCP) no recalcula estilos dinámicos
 Síntoma: `getComputedStyle` da el snapshot inicial; IntersectionObserver y **`requestAnimationFrame` NO disparan si la pestaña está `hidden`** (→ el código en rAF, p.ej. wiring, no auto-corre; `renderAll()` síncrono SÍ pinta); `preview_screenshot` hace timeout. **Receta**: verifica lo dinámico por CÓDIGO + DOM (`preview_eval`) o invoca el handler a mano (`import()`+call); **layout/fit** con `preview_resize` + `scrollWidth-clientWidth`/`getBoundingClientRect`/`getComputedStyle.display` (determinista, sin captura — así se refutó "la caja no cabe en el header", §155); NO por screenshot ni post-mutación. Lo visual real, en `npm run dev`/deploy.
 
@@ -119,15 +106,10 @@ Cada shell HTML duplica tokens en su `<style>` critical inline (radii, colores, 
 `firebase.json` puede tener un bloque `hosting` (headers, rewrites) que **NO se usa** si el sitio se sirve por **GitHub Pages** (deploy vía `actions/deploy-pages`, no `firebase deploy --only hosting`). Caso real (Fase 2): la S8 "añadir CSP/headers a `firebase.json`" era **moot** — GitHub Pages ignora esos headers. En GitHub Pages, CSP/headers solo via `<meta http-equiv>` en el HTML (o un CDN delante). Receta: confirma quién sirve mirando `.github/workflows/*.yml` (`upload-pages-artifact`/`deploy-pages` = GitHub Pages) antes de tocar headers. Corolario seguridad: las **API keys web de Firebase son públicas por diseño** (van en el bundle cliente); la protección real es App Check + restricción de key + reglas, no ocultar la key.
 
 ### L-12: Testear Firestore rules sin Java local — vía CI (zero-budget; JDK ya local Temurin 25). → detalle en `31-LECCIONES-FIRESTORE`
-
 ### L-13: Reglas `validate` tolerantes a merge updates — idiom `!('x' in d) || d.x is T` (presencia primero). → `31-LECCIONES-FIRESTORE`
-
 ### L-14: NO quitar el fallback de config PÚBLICA de Firebase sin confirmar secrets de CI (tumbó prod). → `31-LECCIONES-FIRESTORE`
-
 ### L-16: Reglas de seguridad — los tests "felices" no bastan; revisar adversarialmente el PAYLOAD de create (`hasOnly`, rol, pertenencia, list≠get). → `31-LECCIONES-FIRESTORE`
-
 ### L-17: Testear Cloud Functions — lógica pura (sin emulador) + integración (con emulador); recompute idempotente. → `31-LECCIONES-FIRESTORE`
-
 ### L-18: En DEV la app conecta a los emuladores Firebase → cómo verificar UI auth-gated
 `firebase-config.js` conecta Auth/Firestore/Storage a los **emuladores** cuando corre en `npm run dev` (la consola lo confirma: "Connected to emulators"). Implicaciones para verificar una pantalla admin (auth + datos):
 - **Verificación funcional real**: `firebase emulators:start --only firestore,auth` (JDK, `30 §L-12`) + sembrar un usuario con rol + datos, luego `npm run dev` + login. Sin emuladores corriendo, el dev queda "offline" (listeners fallan, 0 datos) — los warnings "Could not reach Cloud Firestore backend" son ESO, no un bug del código.
@@ -156,32 +138,20 @@ Los scripts de migración/seed (`functions/*.mjs` con `firebase-admin`) autentic
 **Disparador**: añadir un rol a una jerarquía numérica de roles. **Lección (rol "catálogo" §115, 2 bugs cazados EN VIVO)**: (1) el nivel del rol vive DUPLICADO en N mapas que DEBEN concordar — en bersaglio son **3**: `js/auth.js ROLE_LEVELS` (guard de páginas), `functions/index.js ROLE_LEVEL` (`verifyRole`+`syncRoleClaim`), `js/admin/render-sidebar.js ROLE_RANK` (filtro del menú). El plan olvidó el 3º → al añadir un rol, `grep` TODOS los `ROLE_LEVEL*`/`ROLE_RANK` + whitelists `role in [...]` (reglas/CFs) ANTES de cerrar. (2) **El rango 0 es FALSY**: un rol con nivel 0 (catálogo, por debajo de editor) rompe los defaults `|| 0`/`|| 1` (`0 || 1` = 1) → el ítem 'catalogo' quedaba OCULTO incluso para catálogo. Usar **`??`** (nullish, respeta el 0), nunca `||`, en cualquier comparación de rango con defaults. (3) Lo cazó la prueba EN VIVO (el emulador valida REGLAS, no el render del menú — L-05/§101). Detalle build → ADR §115.
 
 ### L-56: Callable v2 que falla con 403 (no se ejecuta) = falta el invoker público; firebase-tools no lo re-aplica en update → delete+recreate (ADR §115) → 31
-
 ### L-57: Admin MPA "fluido" — mostrar el shell de inmediato (el `body display:none` hasta requireAuth hace que la View Transition cruce a un body OCULTO=blanco); la fluidez REAL = panel tipo app (ADR §115) → 32
-
 ### L-53: Firebase Storage SIN `cacheControl` → servido `private,max-age=0` = re-fetch por visita; fix `cacheControl` 1 año en `_upload` + backfill (ADR §112) → 32
-
 ### L-52: "Instante + fresco" = SWR NATIVO (Firestore `persistentLocalCache`) + diff-gate, NO un SWR a mano; caché SOLO-público + feature-detect + firma `id+_version+URL` (ADR §108) → 32
-
 ### L-51: MPA "app-like" — empieza por `@view-transition` cross-document (barato/nativo), no por el router falso-SPA (caro) (ADR §107) → 32
-
 ### L-50: Un placeholder solo MEJORA si PRECEDE a la imagen — en MPA estático el LQIP llega con el `getDoc` y SUMA un 3er estado; resuelto con cache-first §111 (ADR §106) → 32
-
 ### L-49: "Imágenes que cambian de zoom al cargar" rara vez es resize — mídelo; suele ser la animación `.reveal` replay en recarga (capa GPU difumina) (ADR §105) → 32
-
 ### L-47: LQIP "blur-up" del CMS — doble fondo CSS + campo compañero `<campo>Lqip` + `safeLqip()` (data: no pasa por safeUrl) (ADR §104) → 32
-
 ### L-48: Reglas `siteContent` — whitelist a nivel de SECCIÓN, no de clave → campo interno aditivo = 0 cambio de reglas → 31
-
 ### L-46: Placeholder de CARGA = invisible (neutro casi-blanco `oklch(94% 0.02 150)`), NUNCA un color saturado; separar *vacío permanente* vs *cargando* (ADR §102) → 32
-
 ### L-45: Cero-demo → cazar los fallbacks horneados en CSS (`background:url`), no solo defaults/Firestore (`grep url(/img/...)`); verificar en navegador REAL no headless (ADR §100) → 32
-
 ### L-44: ⚠️ SUPERSEDED por L-45/§100 — RCA ERRADA del "flash de imagen" en Nosotros (ADR §99)
 El §99 creyó que el flash "vieja→nueva" era doble-paint defaults→Firestore y aplicó un gate `_siteReady`/`withoutImages` que lo EMPEORÓ; la causa real era un fondo CSS demo (`earrings-travertino`). **Lección conservada**: verificar solo en preview headless (L-05) ocultó la causa → usar navegador real. Detalle → **L-45 / §100**.
 
 ### L-43: Google Fonts — pesos en RANGO `..` (no lista discreta) = fuente variable → ~½ archivos, cero cambio visual. Detalle → `45` PERF-06 · §94.
-
 ### L-42: Sección dinámica rellenada por listener → monta SIEMPRE su `<section>` (ADR §89)
 **Disparador**: una sección que se llena con datos async (onSnapshot/onChange) y puede estar vacía al primer paint. **Lección (bug Categorías)**: si `renderX()` devuelve '' sin datos, la sección NUNCA entra al DOM, y un `refreshX()` que solo ACTUALIZA (querySelector + salir si no existe) no puede CREARLA → el contenido jamás aparece (ni en vivo ni al recargar: el primer paint SIEMPRE es sin datos, `data.load()` es async). **Patrón correcto** (films/social/journal/featured): `renderX()` devuelve SIEMPRE `<section class="home-X">${xInner()}</section>`; `refreshX()` hace `mount(sec, xInner())`. La vacía se colapsa por **CSS `:empty{padding:0}`** (0px, anti-CLS), NO omitiendo el nodo. Bug latente: solo aparece al partir de CERO ítems. Desconfía de comentarios "aparecerá al recargar" sin verificar.
 
@@ -195,17 +165,11 @@ El §99 creyó que el flash "vieja→nueva" era doble-paint defaults→Firestore
 **Disparador**: verificar una UI que ESCRIBE dinero (correcciones de saldo/movimientos) antes de publicarla. **Lección**: el gate correcto NO es "el operador no-técnico hace 5 clics" (Kary es dueña no-experta; no detecta un asiento de $0 ni un doble-ajuste). Es una **revisión adversarial multi-agente por dimensiones** (conformidad con reglas DESPLEGADAS · lógica de dinero/signo · wiring/edge-cases) que TRAZA cada escritura contra las reglas reales. En M2a atrapó 2 bugs de dinero BLOQUEANTES (ajustes duplicados sin guard → doble ajuste; corregir con monto vacío → asiento de $0 silencioso) + 1 del spec (rechazo sin botón) que clics manuales jamás verían. **Patrón**: las pruebas (módulo + reglas) cubren la LÓGICA; la revisión adversarial cubre el WIRING y los caminos que producen un dato incorrecto SIN error. Claude es el experto que verifica → [[feedback_claude_experto_verifica]].
 
 ### L-54: CMS con LISTAS repetibles (`list` en singleton): reindex PURO (`reindexItemSf`), cap server-side (`siteListOk`), MODELO PLANO (aplanar ANTES de prod = migración cero), guard anti poison-pill. → spec §P4. *(renum. de L-39 dup, §114)*
-
 ### L-38: Reglas Firestore — guard `(A || B)` + `hasOnly` que whitelista B = estado contradictorio; atar campo↔estado por PRESENCIA. → `31-LECCIONES-FIRESTORE`
-
 ### L-37: CI con toolchain SIN PIN = bomba de tiempo · emulador Firestore exige Java 21; verde-local ≠ verde-CI (leer el run real). → `31-LECCIONES-FIRESTORE`
-
 ### L-36: "Desactivar" debe DESHABILITAR la cuenta de Auth (`updateUser{disabled:true}` vía CF) — un campo en un doc NO es credencial. → `31-LECCIONES-FIRESTORE`
-
 ### L-35: Custom claims de Firebase — el espejo doc→claim es un RECONCILIADOR convergente (deriva del doc actual), no un copista; la frontera es donde escribe el cliente. → `31-LECCIONES-FIRESTORE`
-
 ### L-34: Transacciones Firestore (reset del estado capturado fuera, se re-ejecuta en contención) y `esc(safeUrl())` en href/src del admin. → `31-LECCIONES-FIRESTORE`
-
 ### L-33: firebase CLI multi-cuenta — deploy con 403 "caller does not have permission" = cuenta activa equivocada
 **Disparador**: `firebase deploy` (o el MCP de Firebase) falla con 403 en cualquier API de Google (firebaserules, etc.). **Lección (ADR §59)**: esta máquina alterna 3 proyectos (cars / inmobiliaria / bersaglio) con cuentas Google distintas y el CLI guarda UNA cuenta activa — una sesión en otro repo la cambia. ANTES de diagnosticar permisos/IAM: `firebase login:list` → si la activa no es la del proyecto, `firebase login:use <cuenta>` (fija el default POR DIRECTORIO → la cura persiste y previene la recaída en los 3 repos). El 403 de deploy en este setup casi nunca es IAM real: es la cuenta.
 
@@ -216,7 +180,6 @@ El §99 creyó que el flash "vieja→nueva" era doble-paint defaults→Firestore
 El hueco de escritura pública (`create:if true`+apiKey pública → spam agota cuota) NO se cierra reescribiendo cada form a callable (eso es defensa posterior). Core fix: `initializeAppCheck(app,{provider:ReCaptchaV3Provider(key)})` en UN punto (`firebase-config.js`) → adjunta token a CADA petición, sin tocar forms ni reglas. Rollout: (1) gatear por la key (ausente → no-op, misma red que L-14); (2) skip en dev; (3) el init NO bloquea por sí solo (el bloqueo es el Enforcement de consola); (4) monitor→enforce solo cuando el tráfico legítimo ya llega tokenizado. Regla: cierra el hueco con la pieza mínima; la robustez extra es follow-up.
 
 ### L-29: Aging/mora "en vivo" sin infra — FIFO puro + `collectionGroup` SIN filtros (evita índice/`FAILED_PRECONDITION`) + fecha round-trip; trampas de calendario JS. → `31-LECCIONES-FIRESTORE`
-
 ### L-28: El Consejo Externo puede SIMPLIFICAR — a veces lo correcto es menos máquina (ADR §50)
 Gemini (Consejo Externo) refutó un hardening interno para la escala real (344 clientes): saldo síncrono O(M) en la tx (no incremental+cronjob), sin backfill (COP ya entero exacto; migrar $506M cuadrados = riesgo), DIAN por Adapter (no acoplar el schema a UBL) → más simple y correcto. Regla: una 2ª opinión adversarial puede QUITAR sobre-ingeniería, no solo añadir rigor. Evaluar como peer review (adoptar/refutar CON razón, nunca en bloque). EXT (CMS WYSIWYG): también puede CONFIRMAR sumar complejidad (iframe) — pero se ADOPTA por TU evidencia en código, refutando su retórica ("Game Over" XSS del editor de confianza).
 

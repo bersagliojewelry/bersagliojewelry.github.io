@@ -29,6 +29,13 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      # 🛡️ LA SUITE, ANTES DE CONSTRUIR (auditoria Nivel-2 del 26-ago, hallazgo B-01). Habia 43
+      # scripts test:* y ningun `test` agregado, asi que el CI no corria NINGUNO: las pruebas de
+      # tesoreria, caja, cartera, pedidos, saldo, reconciliacion y wompi —todo lo que mueve dinero—
+      # solo existian si alguien las tecleaba. Son 540 pruebas en 0,85 s; no habia excusa.
+      # Va ANTES del build a proposito: una prueba rota no debe llegar a desplegarse.
+      - name: Suite de pruebas (540, sin emulador)
+        run: npm test
       - run: npm run build
         env:
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}

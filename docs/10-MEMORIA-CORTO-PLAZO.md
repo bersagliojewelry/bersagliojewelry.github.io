@@ -49,7 +49,6 @@
 > **Pend Daniel/no-gate**: llenar "Datos del negocio" en el panel (§192 I-03; datos = identidad LEGAL-08) · marcar 7 avisos test-era en Salud (I-04) · consejo+abogado apartados (39) · instructivo Kary · push A.6 · fotos (67). ADC gcloud caducado (CLI OK). **Precios = paso FINAL.**
 
 > 🔬 **Auditoría N2 del 26-ago** (tabla en la bóveda): 🔴 **B-01 — 45 scripts `test:*` y el CI no
-> corre NINGUNO**; solo `build`/`generate` y las reglas. Las pruebas de tesorería, caja, cartera,
-> pedidos y wompi —lo que mueve DINERO— solo existen si alguien las teclea. 🔴 **B-02**: no hay
-> script `test` agregado, así que «suite verde» no se puede comprobar con un comando. 🟡 **B-03**:
+> corría NINGUNO** — ✅ **CERRADO el 26-ago**: `npm test` corre las 540 en 0,85 s y va en `deploy.yml` ANTES del build. Las pruebas de tesorería, caja, cartera,
+> pedidos y wompi —lo que mueve DINERO— solo existen si alguien las teclea. ✅ **B-02 cerrado**: ya hay `test` agregado (y `test:emulador` para las 14 que lo piden). 🟡 **B-03**:
 > tres worktrees de agente abandonadas (623 MB). 🟡 **B-04**: `30-LECCIONES` sobre su tope.

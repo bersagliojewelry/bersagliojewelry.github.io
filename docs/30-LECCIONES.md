@@ -94,7 +94,7 @@ El sitio en dev conecta SOLO a emuladores (`firebase-config.js`, hostname localh
 ### L-59: Desplegar reglas `read` row-level — la query pública DEBE igualar el set legible (ADR §131)
 Regla `read` POR-FILA (`visibilidad != 'privada'`) sobre una colección pública. 3 trampas: (1) una query que devuelva UN doc denegado FALLA ENTERA → la query pública filtra EXACTAMENTE al set legible (`where` espeja la regla) Y backfill/borra los legacy sin el campo ANTES de desplegar (si no, catálogo roto). (2) catálogo legítimamente VACÍO NO aborta el build/SSG (distínguelo del fallo "se leyeron pero la proyección las perdió"). (3) escribir/borrar prod exige consentimiento explícito; ADC ≠ auth del CLI/MCP (puede dar PERMISSION_DENIED con el CLI logueado).
 
-### L-60: Landing pages de FACETA (SEO categoría/gema) — detalle ADR §184
+### L-87: Landing pages de FACETA (SEO categoría/gema) — detalle ADR §184
 Hornea `/coleccion/<slug>`+`/gema/<slug>` reusando el shell del catálogo capturado ANTES de que `injectListingPage` voltee robots (si no, falla el anclaje `noindex`); umbral ≥N piezas (anti-thin); cero-demo; `__BJ_FACET` hidrata la grilla pre-filtrada (gema=`tieneGema`); SIN cache bump. **Gotcha**: la hidratación visual no se ve en headless (L-05) ni en Chrome de automatización (ambiental) → verifica con L-58 o visitante real; filtro por lógica vs `catalogo.json`.
 
 ### L-60: Importar datos reales de fuente externa (certificados QR → SPA) — pipeline reusable (ADR §132)

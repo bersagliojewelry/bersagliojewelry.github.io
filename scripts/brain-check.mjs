@@ -30,7 +30,7 @@
 //       (el ✅ INMERECIDO, §120) · (26) trinquete de filas gordas del índice
 //       + 7b) bóveda: commits ≠ origin vía fs [warn]
 // ===========================================================
-const KERNEL_VERSION = '1.19.0';
+const KERNEL_VERSION = '1.20.0';
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -362,16 +362,36 @@ if (!BOOT && existsSync(leccionesPath)) {
   const estadoPath = join(DOCS, '05-ESTADO-GLOBAL.md');
   const histText = existsSync(histPath) ? read(histPath) : '';
   const indiceText = indexPaths.length ? readIndex() : '';
-  const defined = new Set([...leccionesText.matchAll(/^###\s+([LM]-\d{2})\b/gm)].map((m) => m[1]));
+  const defined = new Set([...leccionesText.matchAll(/^###\s+([LM]-\d{2,})\b/gm)].map((m) => m[1]));
   const allBrain = [claude, indiceText, existsSync(estadoPath) ? read(estadoPath) : '', leccionesText, histText,
     existsSync(cortoPath) ? read(cortoPath) : '', existsSync(espacialPath) ? read(espacialPath) : ''].join('\n');
-  const referenced = new Set([...allBrain.matchAll(/\b([LM]-\d{2})\b/g)].map((m) => m[1]));
+  const referenced = new Set([...allBrain.matchAll(/\b([LM]-\d{2,})\b/g)].map((m) => m[1]));
   const dangling = [...referenced].filter((r) => !defined.has(r)).sort();
   if (!referenced.size) info('sin refs L-NN/M-NN aún');
   else if (!dangling.length) ok(`refs L-/M- (${referenced.size} usadas / ${defined.size} def) resuelven en 30`);
   else warn(`refs L-/M- COLGANTES: ${dangling.join(', ')}`);
+
+  /*
+   * 5b-bis) IDs REPETIDOS dentro de un MISMO fichero (bersaglio 2026-08-26: dos lecciones
+   * distintas reclamaban `L-60`, y `[[L-60]]` resolvia a la primera que apareciera).
+   * POR QUE no lo cazaba nadie: `defined` es un Set — colapsa el duplicado, asi que el
+   * contador decia «96 definidas» donde habia 97 encabezados. La estructura elegida para
+   * deduplicar es la que vuelve INVISIBLE la duplicacion. Aqui se cuenta sobre un ARRAY.
+   * POR FICHERO a proposito: madre-puntero + hija-cuerpo comparten ID por DISENO (§G.5);
+   * el choque real es el intra-fichero. Barre todo `docs/*.md` para cubrir a las hijas sin
+   * mantener una lista a mano — la lista se DERIVA, no se enumera.
+   */
+  const colisiones = [];
+  for (const f of readdirSync(DOCS).filter((x) => x.endsWith('.md')).sort()) {
+    const ids = [...read(join(DOCS, f)).matchAll(/^###\s+([LM]-\d{2,})\b/gm)].map((m) => m[1]);
+    const vistos = new Set();
+    const rep = [...new Set(ids.filter((i) => (vistos.has(i) ? true : (vistos.add(i), false))))].sort();
+    if (rep.length) colisiones.push(`${f} → ${rep.join(', ')}`);
+  }
+  if (colisiones.length) warn(`IDs L-/M- REPETIDOS en un mismo fichero (la ref resuelve al primero): ${colisiones.join(' · ')}`);
+  else if (defined.size) ok(`sin IDs L-/M- repetidos dentro de un fichero`);
   // 5c) Tombstones-lite (v1.3 §50): lección ⚰️ citada desde nodos VIVOS (99 puede: es historia).
-  const quarantined = new Set([...leccionesText.matchAll(/^###\s+([LM]-\d{2})\b[^\n]*⚰️/gm)].map((m) => m[1]));
+  const quarantined = new Set([...leccionesText.matchAll(/^###\s+([LM]-\d{2,})\b[^\n]*⚰️/gm)].map((m) => m[1]));
   if (quarantined.size) {
     const liveText = [claude, existsSync(estadoPath) ? read(estadoPath) : '',
       existsSync(cortoPath) ? read(cortoPath) : '', existsSync(espacialPath) ? read(espacialPath) : ''].join('\n');

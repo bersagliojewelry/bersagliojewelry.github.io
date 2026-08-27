@@ -1,8 +1,8 @@
 {
   "version": "1.19.0",
-  "date": "2026-08-26",
+  "date": "2026-08-27",
   "files": {
-    "brain-check.mjs": "b2d0a6526aae0ea7d9cf78db1fc03a4cba98383fc4e3a192245f931920909204",
+    "brain-check.mjs": "9df517387860ec4eb69a5309f02d4406ea882ce3990e76f164cfbe634fd49e11",
     "brain-diff.mjs": "3b99d025e23109019d68898ba9c020ef6d98ffccd01bb9aba5357f57ab191e08",
     "session-handoff.mjs": "f3a80e7536a75144b2082c0d0b9f504cda7a0db734018244f7c0e49fe19b62db"
   }

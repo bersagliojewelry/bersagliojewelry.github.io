@@ -30,8 +30,9 @@
 //       (el ✅ INMERECIDO, §120) · (26) trinquete de filas gordas del índice
 //       + 7b) bóveda: commits ≠ origin vía fs [warn]
 // ===========================================================
-const KERNEL_VERSION = '1.20.0';
+const KERNEL_VERSION = '1.22.0';
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
+import { homedir } from 'os';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { createHash } from 'crypto';
@@ -219,7 +220,11 @@ for (const [rel, cap] of Object.entries(CAPS)) {
   }
   if (over) warn(`${rel}: ${tag} → SHARD/poda (excede tope)`);
   else if (nudge) say(`  ↗  ${rel}: ${tag} (leve exceso — destilar)`);
-  else { ok(`${rel}: ${tag}`); okCaps++; if (near) preShard.push(rel); }
+  else { ok(`${rel}: ${tag}`); okCaps++; }
+  // (N16-04, auditoria #16) preShard se llenaba SOLO en la rama else: cruzar el 100% te hacia
+  // DESAPARECER del resumen de saturacion mientras uno al 95% si salia — el gate escondia justo
+  // los peores. Ahora entra todo nodo >=90%, marcado con su estado real.
+  if (near || nudge || over) preShard.push(over ? `${rel} ‼️>110%` : nudge ? `${rel} ⚠️>100%` : rel);
 }
 if (BOOT && okCaps) say(`  ✅ ${okCaps}/${capCount} neuronas dentro de tope`);
 if (preShard.length) info(`pre-shard: ${preShard.length} neurona(s) ≥90% de su cap (${preShard.join(', ')}) — planear shard/GC ANTES de reventar`);
@@ -435,7 +440,33 @@ else if (existsSync(SKILLS_DIR) && existsSync(invPath)) {
     if (!catalogued) { warn(`skill '${d.name}' NO está en skills-inventory.md → catalogar (§G.4)`); uncat++; }
   }
   if (!uncat) ok(`${dirs.length} carpetas de skills/ catalogadas`);
-  // (6b QUITADO en v1.3 — sentencia G-11: 0 señal en 3 auditorías, puro ruido.)
+  // (El 6b de v1.3 se QUITO por ruido — G-11. Este es OTRO, y con senal demostrada.)
+  //
+  // 6b (v1.22.0, N16-11): una skill PORTABLE vive en DOS sitios por diseno (§33) y nada comparaba
+  // su CONTENIDO. `auditoria-cerebro` llego a tener TRES versiones a la vez: la cargada tenia las
+  // dos lecciones nacidas de auditar (M-31 y §206), la de este repo solo una, y los tres hermanos
+  // NINGUNA. Es decir, tres cerebros auditaban con el auditor al que le faltaban justo las
+  // lecciones que sabe porque audita. El 6a compara NOMBRES de carpeta y no ve nada de esto.
+  // Medido al cablearlo: 36 skills en ambos sitios, las 36 identicas → deuda CERO.
+  const SKILLS_USUARIO = join(homedir(), '.claude', 'skills');
+  if (existsSync(SKILLS_USUARIO)) {
+    const derivadas = [];
+    let comparadas = 0;
+    for (const d of dirs) {
+      const aqui = join(SKILLS_DIR, d.name, 'SKILL.md');
+      const cargada = join(SKILLS_USUARIO, d.name, 'SKILL.md');
+      if (!existsSync(aqui) || !existsSync(cargada)) continue;
+      comparadas++;
+      if (read(aqui) !== read(cargada)) {
+        derivadas.push(`${d.name} (${statSync(aqui).size}b aqui / ${statSync(cargada).size}b cargada)`);
+      }
+    }
+    if (derivadas.length) {
+      warn(`skill(s) con copia DERIVADA de la que se carga: ${derivadas.join(' · ')} → manda la de ~/.claude (§33)`);
+    } else if (comparadas) {
+      ok(`${comparadas} skill(s) portables coinciden byte a byte con la que se carga`);
+    }
+  }
 } else if (existsSync(SKILLS_DIR)) {
   warn('skills/ existe pero docs/skills-inventory.md NO → crear el catálogo (§G.4)');
 } else head('  ℹ️  skills/ no existe — omitido');

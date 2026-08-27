@@ -110,6 +110,11 @@
     "docs/11-BACKLOG.md": {
       "lines": 40,
       "chars": 4000
+    },
+    "docs/44a-PAUTA-DESENLACE-2026-08.md": {
+      "chars": 6390,
+      "lines": 100,
+      "_comment": "Cap MEDIDO el 2026-08-27 (real +25%, §74.3: medido, no inventado). Nacio sin techo y ningun gate lo miraba — el linter lo canta como «crecen sin techo». Es la hija de 44-PAUTA-META con el desenlace de agosto: cerrada por fecha, no deberia crecer mucho; si crece, es que esta absorbiendo lo que le toca a la madre."
     }
   },
   "_caps_hijas_192": "Auditoría §192 (MF-2, voz adversarial): las hijas nacían sin cap → sharding lavaba topes. Caps = tamaño real + headroom (trinquete §56). 21 ya declaraba ~16000 en su propio header.",

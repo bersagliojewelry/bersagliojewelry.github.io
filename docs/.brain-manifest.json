@@ -137,20 +137,23 @@
     {
       "regex": "[Kk]ernel\\s*\\**\\s*v?\\d+\\.\\d+\\.\\d+",
       "owner": "scripts/.kernel-version.json",
+      "ownerRegex": "\"version\"\\s*:\\s*\"\\d+\\.\\d+\\.\\d+\"",
       "scan": [
         "CLAUDE.md",
         "docs/05-ESTADO-GLOBAL.md",
         "docs/10-MEMORIA-CORTO-PLAZO.md",
         "docs/20-MEMORIA-ESPACIAL.md"
       ],
-      "_que": "version del kernel (ADR inmobiliaria 83, TODO-37): el dueno es el STAMP que escribe brain:pull. Copiarla a un nodo always-on la desincroniza en el primer bump — paso 2 veces el mismo dia (insema declaraba v1.6.0 con el stamp en v1.9.0). El gate #8 lo caza solo si el hecho esta DECLARADO: no era un gate inutil, era un gate sin datos. | 2026-08-03: la regex nacio CIEGA a las negritas — `kernel **v1.7.2**` no matcheaba y el 05 de bersaglio llevaba un dato stale que el gate no veia. Corolario de LD-07: quitar/tolerar el markdown antes de comparar prosa."
+      "_que": "version del kernel (ADR inmobiliaria 83, TODO-37): el dueno es el STAMP que escribe brain:pull. Copiarla a un nodo always-on la desincroniza en el primer bump — paso 2 veces el mismo dia (insema declaraba v1.6.0 con el stamp en v1.9.0). El gate #8 lo caza solo si el hecho esta DECLARADO: no era un gate inutil, era un gate sin datos. | 2026-08-03: la regex nacio CIEGA a las negritas — `kernel **v1.7.2**` no matcheaba y el 05 de bersaglio llevaba un dato stale que el gate no veia. Corolario de LD-07: quitar/tolerar el markdown antes de comparar prosa. | 2026-08-26: el gate DEGRADABA aqui («el dueno ya NO contiene …») porque el stamp guarda {\"version\":\"1.19.0\"} y la regex busca la PROSA «kernel v1.19.0». El kernel ya preveia el caso con `ownerRegex`, y este repo no lo declaraba: el fact estaba VIVO y el gate lo daba por muerto. Inmobiliaria si lo tenia — la correccion no se propago a las hermanas (ADR 226)."
     }
   ],
   "deepAudit": {
-    "last": "2026-07-18",
-    "coveredHeaderCount": 194,
+    "last": "2026-08-26",
+    "coveredHeaderCount": 197,
     "maxAdrGap": 12,
-    "maxDays": 30
+    "maxDays": 30,
+    "tableFile": "2026-08-26-auditoria-cerebro-nivel2-bersaglio.md",
+    "_que": "Nivel-2 del 26-ago, PARCIAL y declarada (sondas 3/4/5/7 exigen subagentes y la sesion los tiene prohibidos). Corrida desde la sesion de ALTORRA Inmobiliaria, que lidera el cerebro x4, porque el gate llevaba 40 dias vencido y BLOQUEABA los commits de este repo. Hallazgo principal B-01: 45 scripts test:* y el CI no corre NINGUNO —solo build/generate y las reglas—, en un repo cuyas pruebas cubren tesoreria, caja, cartera, pedidos y wompi. B-02: no existe script test agregado, asi que «suite local verde» no es comprobable con un comando. B-03: tres worktrees de agente abandonadas, 623 MB. B-04: 30-LECCIONES sobre su tope. Verificado en positivo: el sitio vive (HTTP 200) y el 05 apunta al sidecar en vez de copiar cache/rama."
   },
   "_orphanAllowlist_que": "Sidecars GENERADOS por session-handoff (gitignored). Van en allowlist porque el gate #10 NO PUEDE verlos: su regex de aristas exige que el nombre empiece por caracter de palabra y estos empiezan por punto. El RUTEO real si existe: fila en el §0 de CLAUDE.md. Arreglo de fondo (kernel #17-bis): admitir el punto inicial en edgeRe.",
   "noCap": {

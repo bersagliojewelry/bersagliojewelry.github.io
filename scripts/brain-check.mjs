@@ -30,7 +30,7 @@
 //       (el ✅ INMERECIDO, §120) · (26) trinquete de filas gordas del índice
 //       + 7b) bóveda: commits ≠ origin vía fs [warn]
 // ===========================================================
-const KERNEL_VERSION = '1.24.0';
+const KERNEL_VERSION = '1.25.0';
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 import { homedir } from 'os';
 import { join, dirname } from 'path';
@@ -55,7 +55,22 @@ const info = (m) => say('  ℹ️  ' + m);
 let degraded = 0;
 const degrade = (m) => { say('  🟠 [DEGRADADO] ' + m); degraded++; };
 const head = (m) => { if (!BOOT) say(m); };
-const read = (p) => readFileSync(p, 'utf-8');
+/*
+ * ⚠️ NORMALIZA CRLF, y no es cosmética: este lector alimenta CADA medición del linter (§259).
+ *
+ * En Windows, git convierte los finales de línea al hacer checkout, así que un fichero que acaba de
+ * pasar por un commit gana **un byte por línea** sin que su contenido cambie ni un carácter. Medido
+ * el 28-ago: `CLAUDE.md` +150 y el `10` +117 = **267 chars fantasma en el presupuesto de arranque**,
+ * suficiente para que el gate ordenara PODAR un boot que estaba por debajo del objetivo. Y `05`, que
+ * lo genera el heartbeat, tenía CERO: o sea que el número bailaba según qué fichero hubiera tocado
+ * git el último.
+ *
+ * El propio kernel ya lo sabía —el gate #1 hace este mismo `replace` desde hace versiones— pero lo
+ * arregló en SU línea y dejó los otros 55 usos midiendo `\r` como si fuera conocimiento. 🎯 *Un
+ * arreglo puesto en el sitio donde dolió, en vez de en el instrumento, deja el fallo vivo en todos
+ * los demás.* Normalizar solo puede RELAJAR: ninguna medida crece, así que no bloquea a nadie.
+ */
+const read = (p) => readFileSync(p, 'utf-8').replace(/\r\n/g, '\n');
 
 say(`\n🧠 BRAIN-CHECK v${KERNEL_VERSION}${BOOT ? ' --boot (liviano+silencioso)' : ' --full'} — integridad del cerebro\n`);
 

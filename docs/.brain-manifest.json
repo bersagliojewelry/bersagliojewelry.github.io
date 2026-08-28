@@ -169,7 +169,7 @@
     "docs/skills-inventory.md": "Registro 1:1 con las carpetas de skills/ — su tamaño lo fija el inventario real, no una decisión editorial. Lo vigila el gate #6."
   },
   "_caps_que": "Topes por-repo. Cada neurona tiene cap MEDIDO (tamano real + ~35% de holgura) o entrada en noCap CON RAZON — nunca por omision (chequeo #23, kernel v1.7.0). Los caps NO se inventan: inmobiliaria ADR §74.3/§75.4 documenta como una cifra a ojo creo dos veces un gate bloqueante falso. Los dos ejes se derivan uno del otro (lines = chars/densidad-real) para que ambos aprieten en el mismo punto: un par incoherente hace que dispare el eje equivocado (N2-13 de la auditoria de insemastereo, inmobiliaria §77.5). El cap de CHARS es el vinculante y NO se toca.",
-  "lastOffsiteBackup": "2026-07-23",
+  "lastOffsiteBackup": "2026-08-28",
   "skillDriftBaseline": 15,
   "_skillDriftBaseline_que": "Deuda CONGELADA de skills portables con contenido DERIVADO de la copia que se carga (~/.claude), medida el 2026-08-27 con el fin de linea NORMALIZADO —como la mide el gate 6b desde v1.24.0—. Trinquete: solo puede bajar; una NUEVA bloquea. Al tocar una skill portable re-copia AMBAS (§33) y baja este numero: subirlo es rendirse."
 }

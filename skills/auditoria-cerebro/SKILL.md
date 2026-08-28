@@ -28,6 +28,16 @@ Para cada hallazgo previo: ¿cerrado con evidencia, abierto-tracked, o REINCIDEN
 > un fichero, ábrelo. Y cuando resulte falso, **se RETIRA, no se cierra**: cerrar afirma que hubo algo
 > que arreglar.
 >
+> 🎯 **Y la prueba concreta, porque «re-verifica la premisa» es demasiado blando para
+> ejecutarlo**: *todo hallazgo que apele a una REGLA del cerebro (SSoT, formato canónico, frescura,
+> ruteo) tiene que citar la línea del linter o del manifest que la implementa. Si esa línea no
+> existe, el hallazgo es una OPINIÓN.* Medido en la #16 de inmobiliaria: de 13 abiertos, **3 eran
+> falsos y los 3 fallaban por esto**. El peor decía que un dato violaba el SSoT — pero el único
+> mecanismo SSoT es el gate #8, que solo vigila lo declarado en `ssotFacts`, y el dato no estaba
+> ahí; además su cifra fallaba ×28 y «arreglarlo» habría puesto el linter en rojo permanente
+> contra cuatro documentos que por ley deben llevar ese dato. Suena a disciplina, se apoya en un
+> ADR real y su cifra pequeña parece cuidadosa: por eso nadie lo abre.
+>
 > ⚠️ **Y re-verifica el OBJETO del remedio, no solo la premisa** (M-31, 27-ago-2026). Un hallazgo que
 > propone actuar sobre algo concreto —*«hay que partir el nodo X»*, *«hay que arreglar el gate Y»*—
 > hereda el foco del turno que lo escribió. Caso real: la auditoría anterior cerró diciendo que tocaba

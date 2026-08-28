@@ -30,7 +30,7 @@
 //       (el ✅ INMERECIDO, §120) · (26) trinquete de filas gordas del índice
 //       + 7b) bóveda: commits ≠ origin vía fs [warn]
 // ===========================================================
-const KERNEL_VERSION = '1.22.0';
+const KERNEL_VERSION = '1.24.0';
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 import { homedir } from 'os';
 import { join, dirname } from 'path';
@@ -88,6 +88,10 @@ const KNOWN_KEYS = new Set([
   // v1.17.0 (#7c · K-05): deuda CONGELADA de deliberaciones declaradas SIN crudo enlazado.
   // Trinquete igual que #26: solo puede bajar; una nueva bloquea.
   'delibAnchorBaseline',
+  // v1.23.0 (#6b): deuda CONGELADA de skills portables ya derivadas. Mismo trinquete que #26:
+  // solo puede bajar; una NUEVA bloquea. Nace porque el 6b se midio en UN repo y se repartio a
+  // cuatro — los hermanos tenian 13-15 derivadas y el gate les bloqueaba el commit de golpe.
+  'skillDriftBaseline',
   // v1.19.0 (§143): un sello de frescura envejece con los COMMITS, no con el calendario. Umbral
   // doble: se marca stale por lo que llegue ANTES (días o commits).
   'staleCommits', 'verifiedLiveStaleCommits',
@@ -457,12 +461,19 @@ else if (existsSync(SKILLS_DIR) && existsSync(invPath)) {
       const cargada = join(SKILLS_USUARIO, d.name, 'SKILL.md');
       if (!existsSync(aqui) || !existsSync(cargada)) continue;
       comparadas++;
-      if (read(aqui) !== read(cargada)) {
+      // Se NORMALIZA el fin de linea: CRLF vs LF es un artefacto del checkout de git
+      // (autocrlf), no deriva de contenido. Sin esto el gate contaba 22 donde habia 14 —
+      // medir lo que no es la pregunta ([[L-66]] regla 4), esta vez del lado del gate.
+      const mismo = (p) => read(p).replace(/\r\n/g, '\n');
+      if (mismo(aqui) !== mismo(cargada)) {
         derivadas.push(`${d.name} (${statSync(aqui).size}b aqui / ${statSync(cargada).size}b cargada)`);
       }
     }
-    if (derivadas.length) {
-      warn(`skill(s) con copia DERIVADA de la que se carga: ${derivadas.join(' · ')} → manda la de ~/.claude (§33)`);
+    const baseDrift = Number.isInteger(manifest.skillDriftBaseline) ? manifest.skillDriftBaseline : 0;
+    if (derivadas.length > baseDrift) {
+      warn(`skill(s) DERIVADAS: ${derivadas.length} > deuda congelada (${baseDrift}) → ${derivadas.slice(0, 3).join(' · ')}${derivadas.length > 3 ? ' …' : ''}. Manda la de ~/.claude (§33): re-copia la nueva, no subas la linea base.`);
+    } else if (derivadas.length) {
+      info(`skill(s) portables derivadas: ${derivadas.length}, exactamente la deuda CONGELADA (${baseDrift}) de ${comparadas} comunes → ${derivadas.slice(0, 3).join(' · ')}${derivadas.length > 3 ? ' …' : ''}. Una NUEVA bloquea.`);
     } else if (comparadas) {
       ok(`${comparadas} skill(s) portables coinciden byte a byte con la que se carga`);
     }

@@ -9,6 +9,7 @@
     "generate": "node scripts/generate-pieces.mjs",
     "preview": "vite preview --host",
     "brain:check": "node scripts/brain-check.mjs",
+    "verify:secretos": "node scripts/verify-secretos.mjs",
     "test:rules": "firebase emulators:exec --only firestore --project demo-bersaglio \"node --test tests/firestore-rules.test.mjs\"",
     "test:rules:run": "node --test tests/firestore-rules.test.mjs",
     "test:saldo": "node --test functions/saldo.test.mjs",

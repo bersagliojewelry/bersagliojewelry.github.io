@@ -11,17 +11,27 @@
 # Saltar (intencional): git commit --no-verify
 # ===========================================================
 staged=$(git diff --cached --name-only)
-echo "$staged" | grep -qE '^(CLAUDE\.md|docs/)' || exit 0   # nada del cerebro staged → no aplica
 
+# ── Puerta de node para TODO el hook ─────────────────────────────────────────────
+# Antes vivía abajo, tapando solo a brain:check, y ahora hay un gate POR ENCIMA que se
+# saltaría EN SILENCIO cuando faltara node. Falla CERRADO y de una vez para todos: un
+# gate que no pudo mirar no puede salir en verde.
 if ! command -v node >/dev/null 2>&1; then
   echo ""
-  echo "❌ COMMIT BLOQUEADO: 'node' no está en PATH, así que brain:check NO puede correr."
-  echo "   Antes esto dejaba pasar el commit en SILENCIO mientras el chequeo #25 seguía"
-  echo "   declarando el hook 'cableado': el gate existía y no miraba nada. Falla CERRADO"
-  echo "   a propósito (auditoría Nivel-2 #6)."
+  echo "❌ COMMIT BLOQUEADO: 'node' no está en PATH, así que los gates NO pueden correr."
   echo "   Arregla el PATH, o salta a conciencia: git commit --no-verify"
   exit 1
 fi
+
+# ── Credenciales en un repo PÚBLICO ────────────────────────────────────────────────
+# SIN predicado de rutas, y ESE es el punto: en el repo hermano de inmobiliaria se midió
+# que un barrido condicionado a una carpeta no corre en 55 de cada 100 commits — y un SA
+# JSON en `functions/`, `scripts/`, `docs/` o la raíz entraba sin escáner a un repo que
+# GitHub indexa. Un secreto no pide permiso por carpeta; el gate tampoco.
+node scripts/verify-secretos.mjs || exit 1
+
+# ── De aquí abajo, solo si el commit toca el cerebro ──────────────────────────────────
+echo "$staged" | grep -qE '^(CLAUDE\.md|docs/)' || exit 0   # nada del cerebro staged → no aplica
 
 echo "🧠 brain:check (pre-commit)…"
 if ! node scripts/brain-check.mjs; then

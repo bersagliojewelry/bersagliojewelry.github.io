@@ -10,6 +10,7 @@
     "preview": "vite preview --host",
     "brain:check": "node scripts/brain-check.mjs",
     "test": "node ./scripts/test-suite.mjs",
+    "verify:secretos": "node scripts/verify-secretos.mjs",
     "test:emulador": "firebase emulators:exec --only firestore --project demo-bersaglio \"node ./scripts/test-suite.mjs --emulador\"",
     "test:rules": "firebase emulators:exec --only firestore --project demo-bersaglio \"node --test tests/firestore-rules.test.mjs\"",
     "test:rules:run": "node --test tests/firestore-rules.test.mjs",

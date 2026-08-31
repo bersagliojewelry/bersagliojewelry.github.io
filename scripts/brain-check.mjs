@@ -30,7 +30,7 @@
 //       (el ✅ INMERECIDO, §120) · (26) trinquete de filas gordas del índice
 //       + 7b) bóveda: commits ≠ origin vía fs [warn]
 // ===========================================================
-const KERNEL_VERSION = '1.25.0';
+const KERNEL_VERSION = '1.26.0';
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 import { homedir } from 'os';
 import { join, dirname } from 'path';
@@ -717,21 +717,21 @@ else {
 {
   const staleDays = manifest.staleDays || 10;
   const today = new Date();
-  let oldest = null, oldestWhere = '';
+  let oldest = null, oldestWhere = '', oldestSeal = '';
   const NODOS_FECHA = ['docs/05-ESTADO-GLOBAL.md', 'docs/10-MEMORIA-CORTO-PLAZO.md'];
   const sinFecha = [];
   for (const rel of NODOS_FECHA) {
     const p = join(ROOT, rel);
     if (!existsSync(p)) continue;
     const m = read(p).match(/(?:última actualización[:* ]*|\(al |actualizado )\**(\d{4}-\d{2}-\d{2})/i);
-    if (m) { const d = new Date(m[1]); if (!oldest || d < oldest) { oldest = d; oldestWhere = rel; } }
+    if (m) { const d = new Date(m[1]); if (!oldest || d < oldest) { oldest = d; oldestWhere = rel; oldestSeal = m[0].trim(); } }
     else sinFecha.push(rel);
   }
   if (oldest) {
     const days = Math.floor((today - oldest) / 86400000);
     const csFecha = commitsDesde(oldest.toISOString().slice(0, 10));
     if (days > staleDays || (csFecha !== null && csFecha > (manifest.staleCommits || 120)))
-      info(`frescura: ${oldestWhere} sellado hace ${days} día(s)${csFecha !== null ? ` y ${csFecha} commit(s)` : ''} (umbral ${staleDays}d / ${manifest.staleCommits || 120} commits) → re-verificar vs git real y re-sellar`);
+      info(`frescura: ${oldestWhere} sellado hace ${days} día(s)${csFecha !== null ? ` y ${csFecha} commit(s)` : ''} (umbral ${staleDays}d / ${manifest.staleCommits || 120} commits) → re-verificar vs git real y re-sellar «${oldestSeal}» — ESE sello, el del NODO. Los «verificado-vivo:» de dentro son OTRA cosa (los mide el #16) y actualizarlos NO apaga este aviso: pasó de verdad (§272).`);
   }
   // v1.16.0 (K-01+K-04, §208.3): el gate tomaba la fecha MÁS VIEJA de los nodos que la tuvieran, y
   // al que no aportaba ninguna lo saltaba EN SILENCIO. Justo el `10` —la pizarra del WIP, el nodo

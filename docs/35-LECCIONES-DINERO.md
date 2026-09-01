@@ -10,20 +10,7 @@
 > Categoría en crecimiento: F-COMPRAS, F-REPORTES y apartados escribirán aquí.
 
 ### L-84: El `code` de un callable llega PREFIJADO — toda tabla por `code` falla en SILENCIO (TODO-79)
-
-El SDK de callables entrega `err.code = 'functions/failed-precondition'`, no `'failed-precondition'`.
-Consecuencia real en Bersaglio: la tabla `ERROR_MESSAGES` y los `BUSINESS_ERR.includes(err.code)`
-repetidos en 6 módulos del panel NUNCA acertaron → **todo rechazo de negocio de una CF se mostró como
-el genérico "Ocurrió un error"** durante meses, incluidos los de DINERO (el microcopy "qué pasó + qué
-pasó con la plata + qué hacer" se perdía justo donde más importa, y empuja a la usuaria a reintentar a
-ciegas o a mentirle al sistema). Lo cazó el E2E de D6 (F-TESORERÍA B5), no los tests.
-Doctrina: **normaliza el code en UN solo lugar** y prefiere el `message` del servidor cuando el
-rechazo es de negocio Y viene de un callable — pero jamás para `internal`/`unknown` (traza técnica)
-ni para el `permission-denied` de las REGLAS de Firestore (su message es "Missing or insufficient
-permissions", ruido). Fix central en `js/admin/error-format.js` (`errorMessage`), cero churn de
-callsites: la condición prefijada seguía dando falso, así que el arreglo va en la rama a la que
-SIEMPRE se cae. Corolario portable: un helper puro atrapado dentro de un módulo con DOM/SDK es un
-helper sin test → extraerlo (`*-format.js`) es parte del fix.
+⇒ **Migrada al maestro** (F2 lote 2): [[BERS:L-84]] · cuerpo íntegro en `_legacy/LECCIONES-MIGRADAS-MAESTRO.md`.
 
 ### L-85: Idempotencia con destino TEMPORAL — ancla el destino, no lo re-resuelvas
 

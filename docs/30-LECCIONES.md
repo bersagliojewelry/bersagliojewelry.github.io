@@ -14,23 +14,8 @@ Las doctrinas de diseño/CSS (arquitectura CSS modular · estética editorial pr
 
 ## 💻 Gotchas Técnicas y Reglas de Código
 
-### L-01: iOS Safari Scroll Lock en Drawers
-Para bloquear el scroll de fondo en iOS Safari al abrir el Mobile Menu o el Cart Drawer, `overflow: hidden` es insuficiente. Se debe usar la técnica:
-```js
-// Bloquear
-const scrollY = window.scrollY;
-document.body.style.position = 'fixed';
-document.body.style.width = '100%';
-document.body.style.top = `-${scrollY}px`;
-document.body.classList.add('menu-open');
-
-// Desbloquear
-document.body.style.position = '';
-document.body.style.width = '';
-document.body.style.top = '';
-document.body.classList.remove('menu-open');
-window.scrollTo(0, scrollY);
-```
+### L-01: iOS Safari Scroll Lock en Drawers ⇒ **migrada al maestro**: [[BERS:L-01]]
+Cuerpo íntegro en `_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (punto de retorno del ABORT).
 
 ### L-02: Caché del Service Worker y Evitación de FOUC
 *   La versión de caché se incrementa en `public/sw.js` (ej. `bersaglio-v3` ➔ `bersaglio-v4`).
@@ -44,13 +29,13 @@ window.scrollTo(0, scrollY);
 *   El header pill flotante tiene `position: fixed; pointer-events: none` para no bloquear los clicks debajo de su área transparente lateral. El elemento interno `.header-aqua-pill` tiene `pointer-events: auto` para que el menú sí sea clickable.
 *   Si se altera esta estructura, se pueden bloquear clicks en toda la parte superior del sitio web.
 
-### L-83: Dinero + listeners = jamás decidir en automático sobre foto incompleta (traslado duplicado $5.6M)
-(1) Decisión AUTOMÁTICA de dinero exige "fuentes listas" — o mejor: agregado denormalizado en UN doc (CF, misma tx = foto atómica); (2) deshacer netea TODAS las vistas del mismo peso (la reversa arreglaba la bóveda pero no el cierre del turno → +$11.2M sellado); (3) formateadores jamás recortan anomalías (`Math.max(0,x)` mudó −$5.4M en "$0"). Método → skill `auditoria-financiera`; checklist → `caza-bugs §2b`. Caso: ADR §181.
+### L-83: Dinero + listeners = jamás decidir en automático sobre foto incompleta (traslado duplicado $5.6M) ⇒ **migrada al maestro**: [[BERS:L-83]]
+Cuerpo íntegro en `_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (punto de retorno del ABORT).
 
 ### L-82: HUECO EN BLANCO en carga fría → SKELETON (reusa el componente real, no reserva-en-blanco); NO acelerar con live-upgrade sobre PRECIOS (bait-and-switch). → ADR §178
 ### L-86: Cuando un flujo gana un LIBRO nuevo, el camino de DESHACER lo hereda en el MISMO commit — y un vigilante que compara cada libro consigo mismo jamás ve una fuga ENTRE libros. → `35-LECCIONES-DINERO`
 ### L-85: Idempotencia con destino TEMPORAL (el "turno abierto") NO se copia de una con destino determinista: hay que ANCLAR el destino en el doc de la 1ª escritura. → `35-LECCIONES-DINERO`
-### L-84: `err.code` de un callable llega PREFIJADO (`functions/failed-precondition`) → toda tabla/`includes` por code falla en silencio y el motivo real del servidor se pierde. → `35-LECCIONES-DINERO`
+### L-84: `err.code` de un callable llega PREFIJADO (`functions/failed-precondition`) → toda tabla/`includes` por code falla en silencio y el motivo real del servidor se pierde. → `35-LECCIONES-DINERO` ⇒ **migrada al maestro**: [[BERS:L-84]]
 ### L-81: `enforceTurno:false` NO es "suave", es un HUECO — ventas huérfanas fuera del arqueo. → `35-LECCIONES-DINERO` [detalle] · **TODO-70 ✅ §173**
 ### L-80: En una superficie del panel donde el usuario espera la VERDAD del dinero/estado (ventas recientes, caja, cartera), NUNCA la alimentes con una lectura de-UNA-vez (`getDocs`/`ultimasVentas`) re-disparada por acciones locales (`loadX()` imperativo): se pudre ante cambios de OTRA sesión o del cierre del turno → exige refrescar (F5) — inaceptable con dinero. Usa un listener robusto (`subscribeWithRetry`/`onSnapshot`) que re-pinta solo; el `getDocs` de una vez queda solo para exports on-demand. Corolario (puntero encadenado): si pintar un estado espera 2 snapshots secuenciales (p.ej. `caja/estado`→`onTurnoChange`), siembra el estado OPTIMISTA con el dato que devuelve la CF y deja que el listener reconcilie — pero NO pre-fijes la clave del puntero (`_cajaEstado.turnoAbiertoId`), porque `id===prev` cancelaría el re-cableado de los listeners de turno. → §172 `js/admin/pos.js`+`auditoria.js`
 ### L-79: Un panel/acción SECUNDARIA tras una acción de DINERO nunca puede impedir el cierre del estado de esa acción. POS F2.1: abrir el panel "adjuntar cliente" ANTES de `resetSale()` podía, si lanzaba (DOM/dato faltante), dejar `_pedidoId` sin rotar → la venta SIGUIENTE reusa el UUID → `crearPedido` devuelve `yaExistia` → **venta perdida EN SILENCIO con toast de éxito** (lo cazó el comité de regresión, no los tests). Regla: en el handler de éxito corre reset/limpieza PRIMERO (o en `finally`); lo secundario (banner/panel) DESPUÉS en `try/catch`, con su estado capturado POR VALOR (nunca el global que el reset regenera). El botón por fila (`data-id`) = camino AUTORITATIVO (sin traslape A/B). Corolario UI: para lo dinámico NUEVO usa DOM seguro (`createElement`/`textContent`) — el hook de seguridad bloquea `innerHTML` con interpolación aunque uses `esc()`. → F2.1 §171 `js/admin/pos.js`

@@ -18,10 +18,12 @@
 //   (2) Caps chars+líneas [warn] · pre-shard ≥90% [info] (8) SSoT: hecho duplicado fuera del nodo dueño [warn, --full]
 //       · 🔒 boot-budget [WARN desde v1.8.0 — ×4 bajo   (9) Consolidado-aún-en-10: fila ✅+§NN indexado [warn, --full]
 //         presupuesto, §81] (24) 🐤 canario de boot [warn, --full]
-//   (3) Desync 00→99 [warn, --full]                     (10) Huérfanas: BFS 2º orden + neurona NN- sin registro directo [warn, --full]
+//       · 🔒 2b) BOOT REAL = alwaysOn+sidecars+C0+MEMORY.md vs `bootRealTarget` [warn si declarado · v1.27.0, D6]
+//   (3) Desync 00→99 [warn, --full]                     (10) Huérfanas: BFS 2º orden + neurona NN[a-z]- sin registro directo [warn, --full]
 //   (4) Frescura cache SW↔05 [warn, opcional]           (12) Fechas stale en 05/10 [info, --boot]
 //   (5) Refs cruzadas ADR/L-M/hojas [warn]              (13) Specs: checklist con evidencia RESOLUBLE [warn, --full]
 //       + 5c) cita viva a lección ⚰️ cuarentenada [warn] (14) deepAudit Nivel-2 vencida [info] + tableFile existe [warn]
+//       · v1.29.0 (F2): 5b y 5c IGNORAN refs cualificadas `PREFIJO:ID` — las valida el maestro
 //   (6) Skills↔inventario [warn, --full]                (15) Schema del manifest: clave desconocida [warn]
 //   (7) archiveDir íntegro [warn, --full]               (16) Fiabilidad M-22: `verificado-vivo` stale [info, --full]
 //       (0-canónico, 7, 7b, 14-tableFile) DEGRADAN si la bóveda o el canónico no están clonados
@@ -30,7 +32,7 @@
 //       (el ✅ INMERECIDO, §120) · (26) trinquete de filas gordas del índice
 //       + 7b) bóveda: commits ≠ origin vía fs [warn]
 // ===========================================================
-const KERNEL_VERSION = '1.26.0';
+const KERNEL_VERSION = '1.29.0';
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 import { homedir } from 'os';
 import { join, dirname } from 'path';
@@ -111,6 +113,11 @@ const KNOWN_KEYS = new Set([
   // doble: se marca stale por lo que llegue ANTES (días o commits).
   'staleCommits', 'verifiedLiveStaleCommits',
   'countableFacts',
+  // v1.27.0 (dictamen F2 · D6): TECHO del arranque REAL (always-on + sidecars + C0 + MEMORY.md).
+  // NO sustituye a `bootCharsTarget` —ese sigue siendo la palanca de poda de lo que el repo
+  // controla— sino que techa lo que antes ni se CONTABA. Opcional a propósito: sin la clave el
+  // gate #2 solo informa, para no romperle el commit a los hermanos que aún no la han adoptado.
+  'bootRealTarget',
 ]);
 // v1.14.0: prefijo `x-` para la config de gates PROPIOS de un repo (como las cabeceras de
 // extensión de HTTP). Sin él había dos malas salidas: meter una clave de un solo proyecto en
@@ -280,10 +287,53 @@ if (BOOT_CHARS_TARGET) {
   // exactamente el momento en que uno decide si le cabe una regla mas. Se publica siempre.
   // NO entra al umbral del pre-aviso: nadie puede podar un sidecar GENERADO, y un guardian
   // que ladra por algo inaccionable ensena a ignorarlo (la leccion del canario, v1.10.1).
+  const extraSidecars = sidecars.reduce((a, p) => a + read(p).length, 0);
   if (sidecars.length) {
-    const extra = sidecars.reduce((a, p) => a + read(p).length, 0);
-    info(`+ sidecars del heartbeat: ${extra}c no medidos por el candado (se generan, no se podan) → boot REAL ≈ ${bootChars + extra}c`);
+    info(`+ sidecars del heartbeat: ${extraSidecars}c no medidos por el candado (se generan, no se podan) → boot REAL ≈ ${bootChars + extraSidecars}c`);
   }
+
+  // 🔒 2b) BOOT REAL — la contabilidad COMPLETA del arranque (v1.27.0 · dictamen F2, D6).
+  // El candado de arriba mide los 3 always-on del repo, que es lo único que ESTE repo puede podar,
+  // y por eso se queda intacto: es la palanca que funciona (los 533c de triple copia se podaron
+  // porque mordía). Pero una sesión real arranca con tres cosas más que nadie contaba: los
+  // sidecars del heartbeat, el ROUTER GLOBAL `~/.claude/CLAUDE.md` (C0) y el `MEMORY.md` que el
+  // harness inyecta por proyecto. Resultado: «31485/31500 ✅» describía un arranque que pesa ~43k.
+  // Un número que no miente pero tampoco CUENTA es de la familia `38-GATES-QUE-MIENTEN`, y la
+  // cura no es bajar el candado viejo: es techar lo que antes ni se medía.
+  const C0_PATH = join(homedir(), '.claude', 'CLAUDE.md');
+  const c0Chars = existsSync(C0_PATH) ? read(C0_PATH).length : 0;
+  // El slug de `~/.claude/projects/` lo DERIVA el harness de la ruta absoluta del cwd cambiando
+  // todo lo no-alfanumérico por "-". Se deriva (jamás se hardcodea un repo en el kernel canónico)
+  // y, si la derivación no acierta, se BUSCA en projects/ antes de rendirse; la ausencia se DICE,
+  // porque un 0 silencioso sería exactamente la ficción que este bloque viene a matar.
+  const PROJECTS = join(homedir(), '.claude', 'projects');
+  const memOf = (slug) => join(PROJECTS, slug, 'memory', 'MEMORY.md');
+  const slug = ROOT.replace(/[^A-Za-z0-9]/g, '-');
+  let memPath = memOf(slug);
+  if (!existsSync(memPath) && existsSync(PROJECTS)) {
+    const hit = readdirSync(PROJECTS).find((d) => d.toLowerCase() === slug.toLowerCase());
+    if (hit) memPath = memOf(hit);
+  }
+  const memChars = existsSync(memPath) ? read(memPath).length : 0;
+  const COMPONENTES = {
+    'los always-on del repo': bootChars, 'los sidecars del heartbeat': extraSidecars,
+    'el router global C0': c0Chars, 'el MEMORY.md del harness': memChars,
+  };
+  const bootRealTotal = Object.values(COMPONENTES).reduce((a, b) => a + b, 0);
+  const desglose = `alwaysOn ${bootChars}c + sidecars ${extraSidecars}c + C0 ${c0Chars}c + MEMORY.md ${memChars}c`;
+  if (!c0Chars) info(`BOOT REAL: sin router global en ${C0_PATH} → C0 suma 0c (no es un cero medido: es un archivo ausente).`);
+  if (!memChars) info(`BOOT REAL: sin MEMORY.md del harness para este repo (buscado en ${memPath}) → suma 0c.`);
+  const BOOT_REAL_TARGET = manifest.bootRealTarget || null;
+  if (!BOOT_REAL_TARGET)
+    info(`BOOT REAL = ${bootRealTotal}c (${desglose}) — manifest SIN "bootRealTarget": este repo aún no adoptó el techo (D6), así que solo se INFORMA.`);
+  else if (bootRealTotal > BOOT_REAL_TARGET) {
+    const [peor, peso] = Object.entries(COMPONENTES).sort((a, b) => b[1] - a[1])[0];
+    warn(`BOOT REAL = ${bootRealTotal}c > techo ${BOOT_REAL_TARGET}c (exceso ${bootRealTotal - BOOT_REAL_TARGET}c) · ${desglose}. El componente que más pesa es ${peor} (${peso}c) → poda AHÍ. "bootRealTarget" es un TECHO DE CRECIMIENTO: subirlo NO es cerrar (M-05), la meta es BAJARLO.`);
+  } else say(`  ✅ BOOT REAL = ${bootRealTotal}c ≤ techo ${BOOT_REAL_TARGET}c (${desglose})`);
+  // Sin banda de pre-aviso al 97%, a diferencia del candado de arriba, y a propósito: D6 fija el
+  // techo sobre lo MEDIDO + 800c de holgura, así que un "vas al 97%" saltaría en la PRIMERA
+  // corrida y en todas las siguientes. Un guardián que ladra desde el día uno enseña a ignorarlo
+  // (la lección del canario, v1.10.1). El desglose entero ya se publica en cada corrida.
 }
 
 // 3) Desync índice → 99 [--full]
@@ -389,7 +439,24 @@ if (!BOOT && existsSync(leccionesPath)) {
   const defined = new Set([...leccionesText.matchAll(/^###\s+([LM]-\d{2,})\b/gm)].map((m) => m[1]));
   const allBrain = [claude, indiceText, existsSync(estadoPath) ? read(estadoPath) : '', leccionesText, histText,
     existsSync(cortoPath) ? read(cortoPath) : '', existsSync(espacialPath) ? read(espacialPath) : ''].join('\n');
-  const referenced = new Set([...allBrain.matchAll(/\b([LM]-\d{2,})\b/g)].map((m) => m[1]));
+  /*
+   * ⚠️ El lookbehind NO es cosmético (v1.29.0 · F2, `ENSAYO-ROLLBACK-F2.md` §4): una cita
+   * CUALIFICADA `[[CARS:L-01]]` no es una ref de ESTE repo — la valida el linter del MAESTRO
+   * (F2-DISEÑO §6), porque `L-01` significa cuatro cosas distintas en los cuatro repos. Con solo
+   * `\b`, el límite casaba DETRÁS de los dos puntos y el gate leía `L-01` a secas. Dos fallos, y
+   * el segundo es peor: con un número AJENO (`BERS:L-84`) inventaba un colgante —ruido visible—;
+   * con un número que TAMBIÉN existe aquí (`CARS:L-01`) lo resolvía en silencio contra OTRA
+   * lección y estampaba ✅. Ese verde no se distingue del verde correcto por su salida
+   * ([[L-74]], `38-GATES-QUE-MIENTEN`).
+   * `{2,}` y no `{4}`: los cuatro prefijos de `origenes.json` (INMO/CARS/BERS/INSE) miden 4, pero
+   * un quinto repo con otra longitud volvería a mentir EN VERDE — que es justo lo que esto cura.
+   * Y el tope se escribe ABIERTO porque MEDIDO no existe: en un lookbehind, `{2,6}` casa igual
+   * contra `MAESTRO:` (le basta el sufijo `ESTRO:`), así que el único límite real es el de abajo
+   * — publicar un `6` que no rechaza nada sería un número que no significa lo que parece ([[L-58]]).
+   * El MISMO guarda se repite abajo en 5c: son dos parsers distintos del mismo ID, y el de 5c
+   * mentía igual (una cita `[[BERS:L-05]]` acusaba a la `L-05` ⚰️ de ESTE repo).
+   */
+  const referenced = new Set([...allBrain.matchAll(/(?<![A-Z]{2,}:)\b([LM]-\d{2,})\b/g)].map((m) => m[1]));
   const dangling = [...referenced].filter((r) => !defined.has(r)).sort();
   if (!referenced.size) info('sin refs L-NN/M-NN aún');
   else if (!dangling.length) ok(`refs L-/M- (${referenced.size} usadas / ${defined.size} def) resuelven en 30`);
@@ -419,7 +486,7 @@ if (!BOOT && existsSync(leccionesPath)) {
   if (quarantined.size) {
     const liveText = [claude, existsSync(estadoPath) ? read(estadoPath) : '',
       existsSync(cortoPath) ? read(cortoPath) : '', existsSync(espacialPath) ? read(espacialPath) : ''].join('\n');
-    const cited = [...quarantined].filter((id) => new RegExp(`\\b${id}\\b`).test(liveText)).sort();
+    const cited = [...quarantined].filter((id) => new RegExp(`(?<![A-Z]{2,}:)\\b${id}\\b`).test(liveText)).sort();
     if (cited.length) warn(`nodo VIVO cita lección ⚰️ cuarentenada: ${cited.join(', ')} → apuntar al reemplazo o retirar la cita`);
     else ok(`${quarantined.size} lección(es) ⚰️ sin citas desde nodos vivos`);
   }
@@ -701,12 +768,22 @@ else {
   const orphans = universe.filter((f) => !reachable.has(f) && !allow.has(f));
   if (orphans.length) warn(`huérfanas de 2º ORDEN (existen pero ningún nodo de ruteo llega a ellas): ${orphans.join(', ')} → conectar o allowlist con razón`);
   // registro DIRECTO (regla §G.5 "si CLAUDE.md no la conoce, el cerebro está roto" — ex-#1):
+  // v1.27.0 (dictamen F2 · D4): el filtro era `/^\d{2}-/` y por eso las neuronas con SUFIJO DE
+  // LETRA no existían para este chequeo — `00a`…`00g`, `33a`, `38a`: 9 nodos en inmobiliaria que
+  // el BFS de arriba SÍ alcanzaba (de ahí el ✅) mientras el registro no los auditaba jamás. Es
+  // la firma de `38-GATES-QUE-MIENTEN`: no fallaba, es que ni miraba. Y una hija con sufijo se
+  // registra en su MADRE (`NN-*.md`, §G.5 "SIEMPRE referenciadas desde su neurona madre"), no en
+  // el router — misma excepción estructural que ya tenían los lóbulos hijos contra `40`.
   let unregistered = 0;
-  for (const n of universe.filter((f) => /^\d{2}-/.test(f))) {
-    const isChildLobe = /^4[1-9]-/.test(n);
+  const madreDe = (n, num) => universe.some((m) => m !== n && m.startsWith(`${num}-`) && fileText(m).includes(n));
+  for (const n of universe.filter((f) => /^\d{2}[a-z]?-/.test(f))) {
+    const isChildLobe = /^4[1-9][a-z]?-/.test(n);
+    const sufijo = n.match(/^(\d{2})[a-z]-/);
     if (claude.includes(n)) continue;
     if (isChildLobe && lobeRegistry.includes(n)) continue;
-    warn(`neurona ${n} sin registro DIRECTO en ${isChildLobe ? '40-LOBULOS' : 'CLAUDE.md §0'} (§G.5)`); unregistered++;
+    if (sufijo && madreDe(n, sufijo[1])) continue;
+    const donde = isChildLobe ? '40-LOBULOS' : sufijo ? `su neurona MADRE ${sufijo[1]}-* (ni en CLAUDE.md §0)` : 'CLAUDE.md §0';
+    warn(`neurona ${n} sin registro DIRECTO en ${donde} (§G.5)`); unregistered++;
   }
   if (!orphans.length && !unregistered) ok(`${universe.length} docs alcanzables y neuronas registradas`);
 }
@@ -992,6 +1069,31 @@ else {
     else if (ageH > 48)
       info(`canario en reposo: marker de hace ${ageH === Infinity ? "nunca" : Math.round(ageH) + "h"}${soloKernel ? ` — las ${posteriores.length} entrada(s) de git posteriores son SOLO distribución de kernel (no es trabajo en este repo, §216.9)` : trabajandoAqui ? " (mantenido desde otra sesión: el pre-commit sí corre)" : " y sin actividad git posterior"}`);
     else ok(`canario vivo (marker de hace ${Math.round(ageH)}h)`);
+  }
+}
+
+// 30) 🚩 El TOKEN de consolidación: ¿la orden se CUMPLE, o solo se dispara? (v1.28.0 · §291) [--full]
+//     La medición D8a dejó claro que «el hook disparó» es la métrica del gate que miente: PreCompact
+//     llevaba 44 días emitiendo un JSON que el harness rechazaba en la raíz — 0/15 entregas, y 13 de
+//     los 15 fallos sin UNA sola línea visible. Lo que se mide aquí no es el disparo sino la VIDA del
+//     pendiente que dejó: el flag nace en PreCompact, se convierte en orden en el SessionStart y solo
+//     lo mata un commit a docs/10 o docs/99 (pre-commit).
+//     INFORMA y NO bloquea, a propósito: un flag viejo no es un defecto del repo que alguien pueda
+//     arreglar editando un fichero — es la evidencia de que la orden se ignoró, y cortarle el commit
+//     a quien por fin viene a consolidar sería castigar justo el comportamiento que se quiere.
+head('\n30) Token de consolidación pendiente (¿se cumple la orden del PreCompact?):');
+if (BOOT) head('  ⏭️  omitido en --boot (el propio SessionStart ya inyecta la orden, si la hay)');
+else {
+  const flagP = join(DOCS, '.consolidacion-pendiente');
+  if (!existsSync(flagP)) ok('sin consolidación pendiente (nadie compactó sin consolidar)');
+  else {
+    const txt = read(flagP);
+    const ts = (txt.match(/^ts=(.+)$/m) || [])[1];
+    const hd = (txt.match(/^head=(.+)$/m) || [])[1] || '?';
+    const ageH = ts && !isNaN(new Date(ts)) ? (Date.now() - new Date(ts)) / 3.6e6
+                                            : (Date.now() - statSync(flagP).mtimeMs) / 3.6e6;
+    if (ageH > 24) info(`⚠️ consolidación PENDIENTE desde hace ${Math.round(ageH)}h (corte en ${hd}): la orden del SessionStart lleva más de un DÍA sin cumplirse. Pon al día docs/10 y consolida a docs/99 — el flag muere solo al commitearlos. No bloquea a propósito: su VIDA es la métrica (§291).`);
+    else info(`consolidación pendiente de hace ${ageH.toFixed(1)}h (corte en ${hd}) — se cierra commiteando docs/10 o docs/99.`);
   }
 }
 

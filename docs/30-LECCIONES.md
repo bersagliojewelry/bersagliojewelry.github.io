@@ -2,7 +2,7 @@
 
 > **Nodo neuronal: Memoria Procedimental.** Se consulta on-demand ante el **Trigger de Experiencia (`CLAUDE.md §G.2`)** ANTES de realizar refactorizaciones CSS, editar el Service Worker o depurar comportamientos de renderizado.
 >
-> **Mantenimiento (Frescura §G.4)**: registra aquí cada causa raíz de bug complejo o doctrina visual. **Tope ~350 líneas (§G.5)**. 🔗 **Hija [`31-LECCIONES-FIRESTORE`](31-LECCIONES-FIRESTORE.md)** (Firestore/CF/reglas/backend): L-12/13/14/16/17/29/34/35/36/37/38 en DETALLE allá (el kernel lee las defs `### L-NN` SOLO de `30`, L-31 → el **stub de 1 línea DEBE quedar aquí**). 🔗 **Hija [`32-LECCIONES-CARGA`](32-LECCIONES-CARGA.md)** (carga/LQIP/View Transitions/caché SWR público): L-45/46/47/49/50/51/52/53/61 en DETALLE; stub aquí. 🔗 **Hija [`33-DOCTRINAS-CSS`](33-DOCTRINAS-CSS.md)** (doctrinas de diseño CSS / Liquid Glass / tipografía — NO `L-NN`). **Nuevas lecciones backend→`31`, carga→`32`, + stub aquí; doctrinas de diseño→`33`.**
+> **Mantenimiento (Frescura §G.4)**: registra aquí cada causa raíz de bug complejo o doctrina visual. **Tope ~350 líneas (§G.5)**. 🔗 **Hija [`31-LECCIONES-FIRESTORE`](31-LECCIONES-FIRESTORE.md)** (Firestore/CF/reglas/backend): L-29/34/35/36/37/38 en DETALLE allá; L-12/13/14/16/17 **migradas al maestro** (allá queda su stub) (el kernel lee las defs `### L-NN` SOLO de `30`, L-31 → el **stub de 1 línea DEBE quedar aquí**). 🔗 **Hija [`32-LECCIONES-CARGA`](32-LECCIONES-CARGA.md)** (carga/LQIP/View Transitions/caché SWR público): L-45/46/47/49/50/51/52/53/61 en DETALLE; stub aquí. 🔗 **Hija [`33-DOCTRINAS-CSS`](33-DOCTRINAS-CSS.md)** (doctrinas de diseño CSS / Liquid Glass / tipografía — NO `L-NN`). **Nuevas lecciones backend→`31`, carga→`32`, + stub aquí; doctrinas de diseño→`33`.**
 
 ---
 
@@ -72,52 +72,49 @@ Hornea `/coleccion/<slug>`+`/gema/<slug>` reusando el shell del catálogo captur
 ### L-60: Importar datos reales de fuente externa (certificados QR → SPA) — pipeline reusable (ADR §132)
 Cargar inventario masivo desde fotos con QR a una página de terceros. Receta (32 piezas TrueLab): (1) **QR de fotos** = `jsqr`+`sharp` (RGBA raw; upscale ×2-3+sharpen+recortes; varias variantes); `jsqr`/`tesseract` se instalan `--no-save` y se podan → reinstalar. (2) **Página SPA** (WebFetch da cáscara) → Chrome MCP navegando como usuario (`history.pushState`+`PopStateEvent` recorre N rutas en 1 `evaluate_script`; el SPA se autentica solo — NUNCA replicar su credencial). (3) **OCR** (tesseract) NO fiable para un código exacto → usa el id EXACTO del SPA. (4) clasificación = montage etiquetado (1 lectura por N). (5) carga a prod = MCP Firestore. (6) no inventar lo no certificado.
 
-### L-06: Reveal-on-scroll robusto (anti-invisibilidad)
-`.reveal { opacity:0 }` activado solo por JS es single-point-of-failure: si el activador falla, el contenido queda invisible. `js/core/reveal.js` = IntersectionObserver primario + red de robustez (revelar lo ya visible al cargar + listener scroll/resize pasivo auto-removible) + `prefers-reduced-motion`. Patrón reusable.
+### L-06: Reveal-on-scroll robusto (anti-invisibilidad) ⇒ **migrada al maestro**: [[BERS:L-06]]
+Cuerpo íntegro en `/_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (raíz del repo · punto de retorno del ABORT).
 
-### L-07: Optimizar PNG pesados del handoff antes de servir
-PNG del handoff venían a 1.3–1.9 MB para mostrarse a 34–140px. `sharp` (en devDeps) → webp: emerald-gem 1833→13.5KB, cart-gems 1284→69.8KB. Receta: `sharp(src).resize(N,{fit:'inside'}).webp({quality:82})`. Borrar el PNG pesado tras migrar.
+### L-07: Optimizar PNG pesados del handoff antes de servir ⇒ **migrada al maestro**: [[BERS:L-07]]
+Cuerpo íntegro en `/_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (raíz del repo · punto de retorno del ABORT).
 
-### L-08: Mirror ≠ rebuild — auditar el estado real antes de "reconstruir"
-Ante "rehacer todo", auditar primero el estado real (el rebuild PLAN-NOVO YA estaba hecho); pulir > re-demoler si la base es sana ("invertir mejor, no gastar por gastar").
+### L-08: Mirror ≠ rebuild — auditar el estado real antes de "reconstruir" ⇒ **migrada al maestro**: [[BERS:L-08]]
+Cuerpo íntegro en `/_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (raíz del repo · punto de retorno del ABORT).
 
-### L-09: Preview headless — los screenshots mueren con CUALQUIER blur pesado (amplía L-05)
-Síntoma: `preview_screenshot` hace timeout (30s) en desktop **incluso tras desactivar `backdrop-filter`** por inyección. Causa: el `filter: blur()` de las capas decorativas (`.bj-world` aurora `blur(60px)` fija + hero blobs `blur(40-50px)`) y sobre todo el **modal email-capture que auto-abre** con backdrop `backdrop-filter: blur(8px)` a pantalla completa saturan el renderer del sandbox. Recetas: (1) el PRIMER screenshot tras carga fresca suele funcionar (antes de que el modal abra); editar un `.html` dispara reload de Vite → ventana limpia para 1 shot. (2) Para todo lo demás NO pelear con screenshots → `preview_eval`/`preview_inspect` (computed values, fiables) + lectura de CSS. (3) **Verificar fuentes sin screenshot**: medir ancho de render de un `<span>` por familia vs su fallback (si difieren >2px, la fuente está activa); `document.fonts.check()` da falsos negativos con el subsetting `unicode-range` de Google Fonts.
+### L-09: Preview headless — los screenshots mueren con CUALQUIER blur pesado (amplía L-05) ⇒ **migrada al maestro**: [[BERS:L-09]]
+Cuerpo íntegro en `/_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (raíz del repo · punto de retorno del ABORT).
 
-### L-10: El critical-CSS inline puede driftear de los tokens externos
-Cada shell HTML duplica tokens en su `<style>` critical inline (radii, colores, fuentes) para evitar FOUC (L-02). Si cambias un token en `liquid-glass.css` y NO en el inline de los 12 shells, hay drift: above-the-fold usa el valor viejo hasta que carga la hoja async. Caso real (corregido en ADR §41): radii inline `10/16/22/32/44` vs sistema `12/18/24/34/48`. Receta: al tocar tokens del design-system, propágalos al critical inline de TODOS los shells — reemplazo literal por script sobre `*.html` (auto-scopear a los que contienen el valor viejo).
+### L-10: El critical-CSS inline puede driftear de los tokens externos ⇒ **migrada al maestro**: [[BERS:L-10]]
+Cuerpo íntegro en `/_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (raíz del repo · punto de retorno del ABORT).
 
-### L-11: Verifica el HOSTING real antes de escribir headers/CSP/redirects
-`firebase.json` puede tener un bloque `hosting` (headers, rewrites) que **NO se usa** si el sitio se sirve por **GitHub Pages** (deploy vía `actions/deploy-pages`, no `firebase deploy --only hosting`). Caso real (Fase 2): la S8 "añadir CSP/headers a `firebase.json`" era **moot** — GitHub Pages ignora esos headers. En GitHub Pages, CSP/headers solo via `<meta http-equiv>` en el HTML (o un CDN delante). Receta: confirma quién sirve mirando `.github/workflows/*.yml` (`upload-pages-artifact`/`deploy-pages` = GitHub Pages) antes de tocar headers. Corolario seguridad: las **API keys web de Firebase son públicas por diseño** (van en el bundle cliente); la protección real es App Check + restricción de key + reglas, no ocultar la key.
+### L-11: Verifica el HOSTING real antes de escribir headers/CSP/redirects ⇒ **migrada al maestro**: [[BERS:L-11]]
+Cuerpo íntegro en `/_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (raíz del repo · punto de retorno del ABORT).
 
-### L-12: Testear Firestore rules sin Java local — vía CI (zero-budget; JDK ya local Temurin 25). → detalle en `31-LECCIONES-FIRESTORE`
-### L-13: Reglas `validate` tolerantes a merge updates — idiom `!('x' in d) || d.x is T` (presencia primero). → `31-LECCIONES-FIRESTORE`
-### L-14: NO quitar el fallback de config PÚBLICA de Firebase sin confirmar secrets de CI (tumbó prod). → `31-LECCIONES-FIRESTORE`
-### L-16: Reglas de seguridad — los tests "felices" no bastan; revisar adversarialmente el PAYLOAD de create (`hasOnly`, rol, pertenencia, list≠get). → `31-LECCIONES-FIRESTORE`
-### L-17: Testear Cloud Functions — lógica pura (sin emulador) + integración (con emulador); recompute idempotente. → `31-LECCIONES-FIRESTORE`
-### L-18: En DEV la app conecta a los emuladores Firebase → cómo verificar UI auth-gated
-`firebase-config.js` conecta Auth/Firestore/Storage a los **emuladores** cuando corre en `npm run dev` (la consola lo confirma: "Connected to emulators"). Implicaciones para verificar una pantalla admin (auth + datos):
-- **Verificación funcional real**: `firebase emulators:start --only firestore,auth` (JDK, `30 §L-12`) + sembrar un usuario con rol + datos, luego `npm run dev` + login. Sin emuladores corriendo, el dev queda "offline" (listeners fallan, 0 datos) — los warnings "Could not reach Cloud Firestore backend" son ESO, no un bug del código.
-- **Mostrar SOLO el diseño** (sin auth/datos, p.ej. para que el cliente apruebe la dirección): crear un **mock estático** `_preview-*.html` (mismo `css/admin.css`, datos hardcodeados, sin imports de JS), renderizarlo en el preview, capturar, y BORRARLO (no commitear). Sortea el guard de auth y L-05.
-- ⚠️ Screenshots del preview se **cuelgan** con el CSS de cristal del admin (L-09): la 1ª captura tras carga fresca a veces pasa; si insiste en timeout, NO pelear — describir + confiar en build/estructura + reuso de componentes ya validados. Caso real: ADR §44.
+### L-12: Testear Firestore rules sin Java local — vía CI (zero-budget; JDK ya local Temurin 25). → detalle en `31-LECCIONES-FIRESTORE` ⇒ **migrada al maestro**: [[BERS:L-12]]
+### L-13: Reglas `validate` tolerantes a merge updates — idiom `!('x' in d) || d.x is T` (presencia primero). → `31-LECCIONES-FIRESTORE` ⇒ **migrada al maestro**: [[BERS:L-13]]
+### L-14: NO quitar el fallback de config PÚBLICA de Firebase sin confirmar secrets de CI (tumbó prod). → `31-LECCIONES-FIRESTORE` ⇒ **migrada al maestro**: [[BERS:L-14]]
+### L-16: Reglas de seguridad — los tests "felices" no bastan; revisar adversarialmente el PAYLOAD de create (`hasOnly`, rol, pertenencia, list≠get). → `31-LECCIONES-FIRESTORE` ⇒ **migrada al maestro**: [[BERS:L-16]]
+### L-17: Testear Cloud Functions — lógica pura (sin emulador) + integración (con emulador); recompute idempotente. → `31-LECCIONES-FIRESTORE` ⇒ **migrada al maestro**: [[BERS:L-17]]
+### L-18: En DEV la app conecta a los emuladores Firebase → cómo verificar UI auth-gated ⇒ **migrada al maestro**: [[BERS:L-18]]
+Cuerpo íntegro en `/_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (raíz del repo · punto de retorno del ABORT).
 
-### L-19: Roles que no son jerárquicos — no forzarlos en la escala de niveles
-`vendedora` NO es "más/menos que" owner/admin/editor: es un **eje distinto** (CRM scoped vs contenido web). Meterla en `ROLE_LEVELS={owner:3,admin:2,editor:1}` con nivel 1 le daría acceso a páginas de `editor` (`hasMinRole('vendedora','editor')` = 1>=1 = true → piezas/colecciones). Solución: dejarla **FUERA** de la escala (queda nivel 0 → bloqueada de las páginas jerárquicas) + un guard por **membresía exacta** `requireAuthExact(['vendedora','admin','owner'])` para sus propias páginas. Regla general: si un rol no encaja en un "≥ que" limpio, NO lo metas en la jerarquía numérica; usa allow-list exacta. (En `functions/index.js` sí está `vendedora:1` pero ahí `ROLE_LEVEL` solo valida que el CALLER tenga ≥ owner para crear usuarios — no concede acceso.) Caso: ADR §45.
+### L-19: Roles que no son jerárquicos — no forzarlos en la escala de niveles ⇒ **migrada al maestro**: [[BERS:L-19]]
+Cuerpo íntegro en `/_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (raíz del repo · punto de retorno del ABORT).
 
-### L-20: Una escritura secundaria (telemetría) no debe tumbar un flujo crítico (login)
-`signIn` hacía `await setDoc({lastLogin})` en el doc del propio usuario SIN try/catch; como las reglas de `users` no dejan auto-actualizarse (solo owner/admin), una vendedora/editor era **denegada** y el LOGIN entero fallaba. Regla: una escritura **secundaria** (telemetría, contadores, lastLogin, analytics) va en **best-effort** (try/catch) — nunca bloquea el flujo principal. Corolario: si una regla restringe `users` a admin, "el usuario actualiza su propio lastLogin" choca → best-effort en cliente (elegido) o permitir self-update de campos no-sensibles en reglas. **Lo cazó el E2E con emuladores** (los tests de reglas no cubrían el write de `lastLogin` de signIn) — recordatorio de que el E2E ve lo que el unit test no. Caso: ADR §46.
+### L-20: Una escritura secundaria (telemetría) no debe tumbar un flujo crítico (login) ⇒ **migrada al maestro**: [[BERS:L-20]]
+Cuerpo íntegro en `/_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (raíz del repo · punto de retorno del ABORT).
 
-### L-21: Verificar la estructura de CADA hoja de un Excel heredado (no extrapolar)
-El supuesto "1 fila = 1 cliente con saldo" valió para la hoja de Kary (por cliente) pero NO para la de vendedoras (**por factura**: cada fila = una compra) → el extractor produjo basura ("#REF! de clientas" eran descripciones de producto). Regla: ante un Excel heredado, **verifica CADA hoja con un volcado crudo ANTES de escribir el extractor**; no extrapoles de una hoja a otra ni confíes en un análisis previo. Caso: Bloque 5 / ADR §47.
+### L-21: Verificar la estructura de CADA hoja de un Excel heredado (no extrapolar) ⇒ **migrada al maestro**: [[BERS:L-21]]
+Cuerpo íntegro en `/_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (raíz del repo · punto de retorno del ABORT).
 
-### L-15: Datos privados del negocio NUNCA al repo (sobre todo si es público)
-GitHub Pages en cuentas Free sirve desde repos **públicos** → TODO el repo (incl. `docs/`) es visible en internet. Un Excel/CSV con saldos, nombres de clientes o deudas en la raíz = **fuga de datos** al commitear. Receta: `.gitignore` para `*.xlsx`/`*.xls`/`*.csv` (datos operativos ≠ código); en docs de diseño **anonimizar** nombres reales (`[Nombre]`, "Vendedora N"). Los datos reales viven LOCAL o en Firestore (privado, con reglas), nunca en el repo. Caso real (2026-06-06): el Kardex `*.xlsx` se gitignoró + el análisis se anonimizó.
+### L-15: Datos privados del negocio NUNCA al repo (sobre todo si es público) ⇒ **migrada al maestro**: [[BERS:L-15]]
+Cuerpo íntegro en `/_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (raíz del repo · punto de retorno del ABORT).
 
 ### L-22: El CI de este repo NO despliega reglas/índices/functions — solo Hosting/Pages
 `firebase-deploy.yml` usa `FirebaseExtended/action-hosting-deploy` = **Hosting only**; `deploy.yml` = GitHub Pages. Ambos en push a `main`. NINGUNO despliega `firestore.rules`, `firestore.indexes.json` ni Cloud Functions → **mergear a `main` NO los despliega**; hay que `firebase deploy --only firestore:rules,firestore:indexes,functions` **manual** (CLI logueado). Corolario crítico: **código en `main` ≠ desplegado** — las reglas/functions del CRM estaban en el código pero `recalcSaldoCliente` NO existía en prod (`firebase functions:list` lo confirmó) hasta el deploy manual. Verificar el estado real de prod (`functions:list` / `git fetch`), no el playbook (§3.3). Orden de lanzamiento: **desplegar functions ANTES de migrar** (el cargador hace poll esperando a `recalcSaldoCliente`). Caso: ADR §47 (corrigió un supuesto erróneo del playbook de `10`).
 
-### L-23: Un script Admin SDK (`node`) necesita ADC — `firebase login` NO sirve
-Los scripts de migración/seed (`functions/*.mjs` con `firebase-admin`) autentican por **Application Default Credentials**, no por el login del Firebase CLI. Resolución ADC: (1) `GOOGLE_APPLICATION_CREDENTIALS` → service-account JSON, o (2) `gcloud auth application-default login` (user creds; el owner del proyecto tiene permisos). Fijar quota project: `gcloud auth application-default set-quota-project <proyecto>` (evita "quota exceeded"/"API not enabled"). El test en emulador NO ejercita ADC (auth bypasseada) → ese camino queda sin verificar hasta correrlo contra prod. **Antes de la escritura irreversible**: preflight READ-ONLY (count + marca de migración) que confirma ADC y que la colección está limpia. En PowerShell, `CUTOFF=x node ...` (sintaxis bash) NO setea la var → usar `$env:CUTOFF='x'; node ...`. Caso: ADR §47.
+### L-23: Un script Admin SDK (`node`) necesita ADC — `firebase login` NO sirve ⇒ **migrada al maestro**: [[BERS:L-23]]
+Cuerpo íntegro en `/_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (raíz del repo · punto de retorno del ABORT).
 
 ### L-55: RBAC por niveles — TODOS los mapas de rol deben incluir el rol nuevo Y manejar el rango 0 (`??`, no `||`) (ADR §115)
 **Disparador**: añadir un rol a una jerarquía numérica de roles. **Lección (rol "catálogo" §115, 2 bugs cazados EN VIVO)**: (1) el nivel del rol vive DUPLICADO en N mapas que DEBEN concordar — en bersaglio son **3**: `js/auth.js ROLE_LEVELS` (guard de páginas), `functions/index.js ROLE_LEVEL` (`verifyRole`+`syncRoleClaim`), `js/admin/render-sidebar.js ROLE_RANK` (filtro del menú). El plan olvidó el 3º → al añadir un rol, `grep` TODOS los `ROLE_LEVEL*`/`ROLE_RANK` + whitelists `role in [...]` (reglas/CFs) ANTES de cerrar. (2) **El rango 0 es FALSY**: un rol con nivel 0 (catálogo, por debajo de editor) rompe los defaults `|| 0`/`|| 1` (`0 || 1` = 1) → el ítem 'catalogo' quedaba OCULTO incluso para catálogo. Usar **`??`** (nullish, respeta el 0), nunca `||`, en cualquier comparación de rango con defaults. (3) Lo cazó la prueba EN VIVO (el emulador valida REGLAS, no el render del menú — L-05/§101). Detalle build → ADR §115.
@@ -171,17 +168,17 @@ Gemini (Consejo Externo) refutó un hardening interno para la escala real (344 c
 ### L-31: Kernel del cerebro compartido ×3 — escape del pre-commit + salvamento de deliberaciones por transcript *(renumerada 2026-06-09: era L-28 duplicada)*
 Lección de gobernanza del kernel ×3 repos (escape del pre-commit + salvar deliberaciones por transcript). **Detalle completo → [`34-LECCIONES-META`](34-LECCIONES-META.md) §L-31** (movida por capacidad §G.5, 2026-07-10).
 
-### L-27: Verificar el REPO tras un subagente — no fiarse del reporte (truncado/socket/pasos omitidos)
-**Disparador**: ejecutar un plan con subagentes (F-CHASIS-A, ADR §50). **Lección**: 3 incidentes en una sesión — un subagente reportó progreso pero su salida se **truncó** y NO llegó a commitear ni añadió el script a `package.json`; otro murió por **socket closed** (0 cambios persistidos); un tercero requirió contraste. **Regla**: tras CADA subagente, el controlador VERIFICA en el repo real (`git log`/`git status`, Grep, build, tests) ANTES de marcar la tarea hecha — el reporte es pista, no evidencia (§3.3). Bonus: `grep` de Bash con `\|` dio **falso negativo** buscando un hex; usar la herramienta **Grep** (ripgrep), no `grep` por shell, para checks de verdad/ausencia.
+### L-27: Verificar el REPO tras un subagente — no fiarse del reporte (truncado/socket/pasos omitidos) ⇒ **migrada al maestro**: [[BERS:L-27]]
+Cuerpo íntegro en `/_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (raíz del repo · punto de retorno del ABORT).
 
 ### L-26: Daniel mergea Desarrollo→main por PR en GitHub durante la sesión — `git fetch` SIEMPRE
 Dos veces (lanzamiento PR #189; Fase R PR #191) `origin/main` avanzó **solo** mientras yo trabajaba: Daniel ve los commits en `Desarrollo` y mergea el PR en GitHub. Implicación: el estado de `main`/deploy NO es lo que dice mi ref local → `git fetch` antes de afirmar nada (§3.3). El **sitio** se despliega por ese merge (CI on-push-a-main), pero **reglas/functions NO** (L-22) → esas las despliego yo a mano. Patrón: yo commiteo en `Desarrollo` (conviene pushear para que él vea/mergee el PR); el merge a `main` + deploy del sitio lo dispara su PR; el deploy de reglas/functions es manual mío. Caso: ADR §47, §49. **EXT (§75)**: Daniel puede mergear `Desarrollo→main` ANTES de que termines de verificar → publica UI con bugs (caso PR #223: M2a con 2 bugs de dinero antes de mis fixes). **UI de dinero: verificar ANTES de pushear a `Desarrollo` o avisar "no mergees aún"; tras su merge, comprobar el bundle EN PROD y rushear el fix.**
 
-### L-25: Subir un major de dependencia crítica — verificar, no asumir (firebase-functions v6→v7)
-Para actualizar un major de una dep que corre en prod (functions con dinero real): (1) el **`package.json` instalado** en `node_modules` es fuente AUTORITATIVA offline de `engines` (Node mín) + `peerDependencies` (compat) + `exports` (subpaths/imports válidos) — para esas preguntas no hace falta el changelog; (2) el **test de integración con emulador** prueba "¿funciona nuestro código con vX?" mejor que leer notas de versión (carga las functions igual que el deploy y ejercita el trigger); (3) **smoke test en prod** tras desplegar (doc temp marcado + cleanup) confirma que el trigger dispara de verdad; (4) si un agente de research queda sin red, NO inventar el changelog (§3.3) — usar el paquete instalado + WebFetch del release oficial. firebase-functions v7 solo cambió: Node mín 18, quita `functions.config()`, renombra v1 Event→LegacyEvent; la API v2 (onCall/HttpsError/onDocument*) NO cambió. Relacionado con **L-17** (testing de CFs). Caso: ADR §48.
+### L-25: Subir un major de dependencia crítica — verificar, no asumir (firebase-functions v6→v7) ⇒ **migrada al maestro**: [[BERS:L-25]]
+Cuerpo íntegro en `/_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (raíz del repo · punto de retorno del ABORT).
 
-### L-24: Verificar SIEMPRE los datos tras una migración (la fila "TOTAL" del Excel se cuela)
-Una fila **"TOTAL"** del Excel entró como un cliente más → cartera al doble ($1.012M vs $506M real). Receta: tras migrar, **leer total + top-N saldos + conteos** (un total se delata: ≈ suma de los demás) + filtro `NON_CLIENT_RE` anclado al inicio. **Testear el regex con casos** (`totales?` no matchea "TOTAL"; usar `total(es)?`) — regex sin probar = suposición (§3.3). Caso: ADR §47.
+### L-24: Verificar SIEMPRE los datos tras una migración (la fila "TOTAL" del Excel se cuela) ⇒ **migrada al maestro**: [[BERS:L-24]]
+Cuerpo íntegro en `/_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (raíz del repo · punto de retorno del ABORT).
 
 ---
 

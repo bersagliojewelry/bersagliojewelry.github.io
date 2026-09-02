@@ -43,7 +43,7 @@
 
 ## 📝 Bitácora (efímera)
 
-> 2026-08-03 · **[OPUS-5] Poda del router (§195)** — el pre-aviso saltó al **99,9% del boot (17c de margen)** al propagar el kernel: el siguiente cambio de cerebro aquí quedaba BLOQUEADO. Boot **31.483→29.669c** sin mover el tope. Performance de render, observadores y el renderer único bajaron a `33-DOCTRINAS-CSS` (siguen VINCULANTES; se leen antes de tocar CSS/JS de UI). Criterio nuevo: lo que se queda en el always-on se gana por **frecuencia × costo de omisión**, no por importancia (**M-09**, de inmobiliaria).
+> 2026-08-03 · **[OPUS-5] Poda del router (§195)** — el pre-aviso saltó al **99,9% del boot (17c de margen)** al propagar el kernel: el siguiente cambio de cerebro aquí quedaba BLOQUEADO. Boot **31.483→29.669c** sin mover el tope. Performance de render, observadores y el renderer único bajaron a `33-DOCTRINAS-CSS` (siguen VINCULANTES; se leen antes de tocar CSS/JS de UI). Criterio nuevo: lo que se queda en el always-on se gana por **frecuencia × costo de omisión**, no por importancia (**INMO:M-09**, de inmobiliaria).
 > 2026-07-27 · **[OPUS-5] B6 CERRADO — F-TESORERÍA completa** → §194 + L-86.
 > 2026-07-25 · **[FABLE-5]** Meta Business de Bersaglio configurado → lóbulo `44-PAUTA-META` (ahí viven los pendientes de Daniel/Kary).
 > **Pend Daniel/no-gate**: llenar "Datos del negocio" en el panel (§192 I-03; datos = identidad LEGAL-08) · marcar 7 avisos test-era en Salud (I-04) · consejo+abogado apartados (39) · instructivo Kary · push A.6 · fotos (67). ADC gcloud caducado (CLI OK). **Precios = paso FINAL.**

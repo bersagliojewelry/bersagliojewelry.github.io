@@ -390,3 +390,128 @@ Cargar inventario masivo desde fotos con QR a una página de terceros. Receta (3
 > Origen: BERS `docs/30-LECCIONES.md` (titular y cuerpo en la MISMA línea) · sin §NN de ADR: su cuerpo ancla el caso en el frente F2.0 B1 (spec), no en un ADR · migrado 2026-09-02 lote 12
 
 ### L-74: Invariante "SOLO UNO abierto/activo" (turno de caja, sesión única…) = **puntero singleton transaccional**, NO `query where estado=='abierto'` (TOCTOU: dos aperturas concurrentes leen "ninguno" y crean dos). Un doc `caja/estado {turnoAbiertoId}`: la CF lo lee+escribe en la MISMA `runTransaction` que crea/cierra → Firestore serializa por ese doc (1 gana, la otra reintenta y falla `failed-precondition`). O(1), sin índice. Idempotencia: `opId == docId` (create-if-not-exists). SIEMPRE un test de carrera (`Promise.allSettled` de 2 → exactamente 1 fulfilled). → F2.0 B1 `functions/caja-core.js`
+
+---
+
+> Lote 13 · migrado 2026-09-02 · 18 lecciones.
+
+---
+
+> Origen: BERS `docs/30-LECCIONES.md` (titular y cuerpo en la MISMA línea) · sin §NN de ADR: su cuerpo ancla el caso en el frente F2.0 B2 (spec), no en un ADR · migrado 2026-09-02 lote 13
+
+### L-75: Tests de integración que comparten un CONTADOR global (`contadores/pedidos`) se contaminan si dos `*.integration.test.mjs` corren en el MISMO emulador (`node --test a.mjs b.mjs`) → los `numero` correlativos chocan (falso fallo con pinta de regresión). Cada `test:X:integration` asume su emulador limpio (los scripts npm lo aíslan). Ante un fallo de correlativo al combinar suites: correr por SEPARADO antes de gritar "regresión". → F2.0 B2
+
+> Origen: BERS `docs/30-LECCIONES.md` (titular y cuerpo en la MISMA línea) · pagada en BERS §169 (F2.0 B3) · migrado 2026-09-02 lote 13
+
+### L-76: Test de idempotencia con `opId==docId` (create-if-not-exists): NO uses `Promise.all` + XOR `a.yaExistia!==b.yaExistia` — el emulador aborta una de las dos tx bajo contención extrema (en prod el cliente reintenta) → falso rojo flaky. Como el docId único hace la duplicación IMPOSIBLE por construcción, usa `Promise.allSettled` + asera el ESTADO FINAL (1 solo doc · saldo no duplicado · puntero correcto), tolerando 1 abort. La carrera concurrente pura pruébala aparte con opId DISTINTOS (tolera rechazos). → F2.0 B3
+
+> Origen: BERS `docs/30-LECCIONES.md` (titular y cuerpo en la MISMA línea) · pagada en BERS §169 (F2.0 B5b-1) · migrado 2026-09-02 lote 13
+
+### L-77: Un rol que NO puede LEER una colección (bóveda = owner-only, discreción D7) no puede derivar su estado client-side. Para una métrica OPERATIVA (efectivo del cajón), el operador con permiso (owner) usa el ledger real (listener exacto y reload-proof); el rol sin permiso cae a un contador EN MEMORIA por sesión — NUNCA localStorage (invariante del comité: "nada de dinero/PII en storage"). La AUTORIDAD del dinero es siempre el recompute server (el cierre), jamás la vista estimada. → F2.0 B5b-1 `js/admin/pos.js`
+
+> Origen: BERS `docs/30-LECCIONES.md` (titular y cuerpo en la MISMA línea) · pagada en BERS §169 (F2.0 B5b-1) · migrado 2026-09-02 lote 13
+
+### L-78: Habilitar un rol NUEVO end-to-end es un FRENTE completo, no la CF nueva sola. `caja` (F2.0) quedó a medias: reglas + `rolDeCaja` lo distinguen para turno/bóveda, pero `crearPedido` usa `rolDeVentas` y `pedidos`-read = `isVentas` (sin `caja`), y el cliente (`ROLE_LEVELS`/`roleLanding` de `auth.js`) no lo conoce → el usuario del rol NO opera (no vende, no lee, mal landing). Checklist al crear un rol: (1) reglas, (2) TODOS los gates de las CF que debe invocar, (3) read-rules de lo que lee, (4) jerarquía + landing del cliente. Bug adyacente: calcular el rol en tiempo de IMPORT del módulo (antes de `requireAuth`) da `null` → calcularlo TRAS la auth (en init). → F2.0 B5b-1
+
+> Origen: BERS `docs/30-LECCIONES.md` (titular y cuerpo en la MISMA línea) · pagada en BERS §171 (F2.1) · migrado 2026-09-02 lote 13
+
+### L-79: Un panel/acción SECUNDARIA tras una acción de DINERO nunca puede impedir el cierre del estado de esa acción. POS F2.1: abrir el panel "adjuntar cliente" ANTES de `resetSale()` podía, si lanzaba (DOM/dato faltante), dejar `_pedidoId` sin rotar → la venta SIGUIENTE reusa el UUID → `crearPedido` devuelve `yaExistia` → **venta perdida EN SILENCIO con toast de éxito** (lo cazó el comité de regresión, no los tests). Regla: en el handler de éxito corre reset/limpieza PRIMERO (o en `finally`); lo secundario (banner/panel) DESPUÉS en `try/catch`, con su estado capturado POR VALOR (nunca el global que el reset regenera). El botón por fila (`data-id`) = camino AUTORITATIVO (sin traslape A/B). Corolario UI: para lo dinámico NUEVO usa DOM seguro (`createElement`/`textContent`) — el hook de seguridad bloquea `innerHTML` con interpolación aunque uses `esc()`. → F2.1 §171 `js/admin/pos.js`
+
+> Origen: BERS `docs/30-LECCIONES.md` (titular y cuerpo en la MISMA línea) · pagada en BERS §172 · migrado 2026-09-02 lote 13
+
+### L-80: En una superficie del panel donde el usuario espera la VERDAD del dinero/estado (ventas recientes, caja, cartera), NUNCA la alimentes con una lectura de-UNA-vez (`getDocs`/`ultimasVentas`) re-disparada por acciones locales (`loadX()` imperativo): se pudre ante cambios de OTRA sesión o del cierre del turno → exige refrescar (F5) — inaceptable con dinero. Usa un listener robusto (`subscribeWithRetry`/`onSnapshot`) que re-pinta solo; el `getDocs` de una vez queda solo para exports on-demand. Corolario (puntero encadenado): si pintar un estado espera 2 snapshots secuenciales (p.ej. `caja/estado`→`onTurnoChange`), siembra el estado OPTIMISTA con el dato que devuelve la CF y deja que el listener reconcilie — pero NO pre-fijes la clave del puntero (`_cajaEstado.turnoAbiertoId`), porque `id===prev` cancelaría el re-cableado de los listeners de turno. → §172 `js/admin/pos.js`+`auditoria.js`
+
+> Origen: BERS `docs/30-LECCIONES.md` (titular y cuerpo en la MISMA línea) · pagada en BERS §178 · migrado 2026-09-02 lote 13
+
+### L-82: HUECO EN BLANCO en carga fría → SKELETON (reusa el componente real, no reserva-en-blanco); NO acelerar con live-upgrade sobre PRECIOS (bait-and-switch). → ADR §178
+
+> Origen: BERS `docs/35-LECCIONES-DINERO.md` (titular en `docs/30-LECCIONES.md`) · sin §NN de ADR: su cuerpo ancla el caso en el diseño de V17 (F-TESORERÍA B5), que vive en la spec · migrado 2026-09-02 lote 13
+
+### L-85: Idempotencia con destino TEMPORAL — ancla el destino, no lo re-resuelvas
+
+Una pata "en el otro libro" con destino DETERMINISTA (sale del propio doc, p.ej. la cuenta bancaria de
+un traslado, V1/V18) es idempotente por-libro sin más: al replay se verifica y se crea la que falte.
+Pero si el destino es **temporal** —"el turno de caja ABIERTO"— re-resolverlo en el replay mete la
+plata en el turno EQUIVOCADO (otro turno ya abierto) o en uno ya SELLADO, cuyo arqueo se firmó sin
+ella. Doctrina: **guarda el destino en el doc de la primera escritura** (`pataCaja.turnoId`) y
+resuelve el replay contra ESE destino; si el destino ya se cerró y la pata falta, **NO lo reescribas**
+(un arqueo firmado no se re-abre: sería fabricar evidencia) → reporta + ALERTA al dueño (invariante #7:
+la anomalía grita, no se traga). Y lee el doc del destino DENTRO de la transacción: eso serializa
+contra su cierre, y evita la carrera "abono entra mientras la caja se cierra".
+Lo encontró el comité ×3 revisando el diseño de V17; los tests lo fijan
+(`functions/cartera.integration.test.mjs`: "ANCLADA al turno").
+
+> Origen: BERS `docs/35-LECCIONES-DINERO.md` (titular en `docs/30-LECCIONES.md`) · pagada en BERS §194 · migrado 2026-09-02 lote 13
+
+### L-86: Cuando un flujo gana un LIBRO nuevo, el camino de DESHACER lo hereda en el MISMO commit
+
+Un flujo de dinero que empieza tocando 2 libros y luego gana un 3º casi siempre extiende el camino de
+IDA (la operación) y olvida el de VUELTA (anular / reversar / cancelar). Pasó dos veces seguidas aquí:
+el traslado de bóveda ganó el acumulador del turno (jul-10) y hubo que arreglar la reversa; después
+ganó el libro del BANCO (V1/V18) y la reversa volvió a quedarse corta — devolvía la plata a la bóveda
+sin quitarla del banco, **inventando** plata en la consolidada. Doctrina: **al añadir una pata, el
+mismo commit toca las N puertas de deshacer del flujo, y el test es del ESCENARIO completo
+(hacer → deshacer → sumar TODOS los libros), no del paso.** Regla de detección barata: `grep` del
+nombre del libro nuevo en la suite del flujo — si el camino de deshacer no aparece ni una vez, el
+undo está sin cubrir (aquí `reverso` no aparecía en la suite de tesorería: 31 tests verdes y la fuga
+viva).
+
+Dos corolarios que valen más que la lección:
+1. **Un vigilante que compara cada libro CONSIGO MISMO jamás ve una fuga ENTRE libros.** El cuadre
+   3:30 valida `saldoActual` vs el recompute de ESE ledger; con la plata duplicada en bóveda y banco
+   los dos libros quedan internamente perfectos. Un control de conservación necesita una suma
+   TRANSVERSAL (la consolidada antes == después), que es justo lo que afirman los tests nuevos.
+2. **Sellar una pata abre la puerta a la doble resta**: si además existe una vía manual de corregirla
+   (`ajuste_inverso`), inverso + deshacer-el-origen restan dos veces. Una pata de SISTEMA se deshace
+   por su ORIGEN y solo por ahí (una sola puerta, mismo principio que V12).
+→ §194 · `functions/caja-core.js` (`reversoCore`/`aprobarEventoCajaCore`) · `tesoreria-core.js` (`PATA_TIPOS`)
+
+> Origen: BERS `docs/34-LECCIONES-META.md` (titular en `docs/30-LECCIONES.md`) · pagada en BERS §82 · migrado 2026-09-02 lote 13
+
+### M-01: No imprimir un campo de estado del manifest como "hecho" sin gate que verifique su artefacto
+`brain:check` anunciaba "auditoría 2026-06-09" (de `deepAudit.last`) sin tabla de hallazgos = fachada → aplica la Regla de ADMISIÓN al propio linter. Detalle → ADR §82.
+
+> Origen: BERS `docs/34-LECCIONES-META.md` (titular en `docs/30-LECCIONES.md`) · pagada en BERS §82 · migrado 2026-09-02 lote 13
+
+### M-02: Una lección sobre estado verificable-por-comando (git/build) debe volverse GATE, no prosa [HONOR]
+`05` repitió "==main" falso pese a L-26 porque NINGÚN gate lee git (→ TODO-22).
+
+> Origen: BERS `docs/34-LECCIONES-META.md` (titular en `docs/30-LECCIONES.md`) · pagada en BERS §82 · migrado 2026-09-02 lote 13
+
+### M-03: Un campo `last` de tracking nace null/baseline, nunca con fecha que finja una ejecución
+§56 selló `deepAudit.last=2026-06-09` (instalación) sin corrida → fachada (rel. M-01).
+
+> Origen: BERS `docs/34-LECCIONES-META.md` (titular en `docs/30-LECCIONES.md`) · pagada en BERS §82 · migrado 2026-09-02 lote 13
+
+### M-04: La memoria del harness deriva en silencio (fuera de `docs/`, el linter no la cubre)
+Ruta de repo stale tras mudanza + memoria de 72d que contradecía la gobernanza → necesita repaso de frescura propio.
+
+> Origen: BERS `docs/34-LECCIONES-META.md` (titular en `docs/30-LECCIONES.md`) · pagada en BERS §90 · migrado 2026-09-02 lote 13
+
+### M-05: Edité un subsistema bajo UNA lente y lo di por bueno sin probar el camino vivo (§89)
+Di `categories.js` por OK con la lente cero-ficción sin probar el **estado-cero** del camino vivo (*"1ª categoría → ¿aparece?"*). Causa técnica [[L-42]]; meta-falla de PROCESO → reflejo CAZA-BUGS / **W-10**; gate real = test estado-cero ([HONOR]). Detalle → ADR §90.
+
+> Origen: BERS `docs/34-LECCIONES-META.md` (titular en `docs/30-LECCIONES.md`) · pagada en BERS §96 · migrado 2026-09-02 lote 13
+
+### M-06: El kernel acopla las definiciones `### L-NN` a `30` → shard de lecciones = stub-en-30 + detalle-en-hija (§96)
+`brain-check.mjs` lee `defined` SOLO de `30` y `referenced` de todo el cerebro MENOS las hijas. Mover una lección referenciada en `99` a una hija (`31`) la deja COLGANTE. → el shard TODO-27/§96 deja el **header-stub `### L-NN` en `30`** (defined lo cuenta, refs resuelven) y el CUERPO en `31`. Soporte real multi-archivo (que `defined` lea `3*-LECCIONES*.md`) = cambio de KERNEL → cars-operador (L-31), NO unilateral desde bersaglio; aporte para la pasada Gemini (con TODO-22/23). [HONOR]
+
+> Origen: BERS `docs/34-LECCIONES-META.md` (titular en `docs/30-LECCIONES.md`) · pagada en BERS §114 · migrado 2026-09-02 lote 13
+
+### M-08: Un TABLERO (`05`) no debe FIJAR a mano un hecho verificable-por-comando (hash/PR de PROD) — se vuelve stale y CONTRADICE §3.3 (§114) [HONOR]
+HA-01 (estado git stale en `05`) reincidió **3 veces** (H-01→HA-01→§114) porque `05` pinneaba el commit/PR exacto de PROD, que caduca en cada deploy de Daniel (L-26) y NINGÚN gate lee git (TODO-22 = kernel/cars-operador, nunca construido). El **retrieval-drill frío lo probó**: una sesión nueva entrega el hash viejo como "verificado". **Regla**: un tablero describe el estado por CONTENIDO (qué features están live); el dato volátil verificable-por-comando (commit exacto) se DELEGA a `git fetch` (git = SSoT), NO se copia a mano. Quitar el hecho stale en su origen es más barato y robusto que un gate que lo vigile. Complementa [[M-02]] (la lección verificable-por-comando debe ser gate, no prosa) — aquí: si no puede ser gate aún, ELIMINA la prosa stale. Detalle → ADR §114.
+
+> Origen: BERS `docs/34-LECCIONES-META.md` (titular en `docs/30-LECCIONES.md`) · sin §NN de ADR: nace de la auditoría del GBP del 2026-07-17; el `99` no la cita por su ID · migrado 2026-09-02 lote 13
+
+### M-09: Muestrear ≠ contar — extrapolé de la 1ª página de una lista PAGINADA y lo afirmé como hecho (2026-07-17)
+**Disparador**: vas a afirmar una proporción/total ("la mayoría", "casi todas", "N de M") sobre una lista larga que ves en una UI.
+**El fallo**: auditando el GBP vi 5 reseñas (las de la 1ª página, ordenadas por recientes), 4 sin responder → afirmé *"la mayoría de tus 85 reseñas están sin responder"* y lo escribí en `10` **y lo commiteé**. El dueño me corrigió. Al CONTAR de verdad (9 págs × 10, `navigate_next`): **74/85 respondidas (87%) / 11 sin responder**, y las 11 eran TODAS recientes (págs 1-2; págs 3-9 = 10/10 respondidas). La lista era **paginada de 10**, no scroll infinito: la 1ª página era el peor sesgo posible (lo más nuevo = lo aún no atendido).
+**Lección**: (1) una muestra de la 1ª página de una lista **ordenada** (por fecha/relevancia) NO es representativa — está sesgada POR el orden; (2) antes de afirmar una proporción, **cuenta el universo** (paginar/JS) y **valida la suma contra un contador independiente** (aquí: 85 contadas == 85 del panel público → método verificado); (3) si no puedes contar, di "en la muestra que vi (N=5)…" y NO generalices; (4) daño extra: un claim falso commiteado al cerebro contamina a todos los "yo" futuros → al corregir, corregir el NODO, no solo la conversación.
+**Regla**: §3.3 no es solo para código — aplica a CUALQUIER hecho, incluidos los que lees en una UI. "Mayoría/casi todos" es un CLAIM CUANTITATIVO: exige conteo, no impresión.
+
+> Origen: BERS `docs/34-LECCIONES-META.md` (titular en `docs/30-LECCIONES.md`) · pagada en BERS §192 · migrado 2026-09-02 lote 13
+
+### M-23: El sello "(al fecha)" del 05 caduca en silencio — REINCIDENTE (A2-§175 → §192): re-sellar no arregla el mecanismo (2026-07-18)
+**Disparador**: editas cualquier celda del `05` (o del `10`) — ¿moviste el sello del encabezado? Nadie lo hace.
+**El fallo (×2 documentado)**: §175-A2 encontró el `05` sellado "(al 2026-06-28)" con cuerpo del 07-08; se "resolvió" re-sellando. El §192 encontró EXACTAMENTE lo mismo: sello "(al 2026-07-08)" con cuerpo del 17-jul — más dos contradicciones internas gemelas ("EN PROD hasta §188" junto a "v97 = §189"; "APP v53" con v54 real en código). El patrón: el 05 se edita POR CELDAS y cada editor actualiza su celda sin mirar las vecinas ni el sello. La disciplina "muévelo en cada edición" ya demostró ×2 que no se sostiene por honor.
+**Lección**: (1) reincidencia = el fix anterior atacó el SÍNTOMA (fecha vieja) y no el MECANISMO (nada compara sello vs contenido); (2) el gate correcto es del kernel y es barato: comparar el sello contra la fecha del último commit de git del archivo (sello < git-date = "contenido más nuevo que el sello") + detectar contradicción interna "EN PROD hasta §NN" vs "vXX = (§MM)" con MM>NN — propuesto a la cola del kernel (TODO-71, escritor = inmobiliaria-operador, L-31.3); (3) mientras el gate no exista, la auditoría Nivel-2 es el único barrido que lo caza → no espaciarla; (4) hermana de M-08 (no fijar hechos-por-comando a mano): el sello ES un hecho-por-comando (git lo sabe) fijado a mano.

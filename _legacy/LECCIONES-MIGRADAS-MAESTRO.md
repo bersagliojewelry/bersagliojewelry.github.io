@@ -294,3 +294,99 @@ El hueco de escritura pública (`create:if true`+apiKey pública → spam agota 
 
 ### L-51: MPA "app-like" — empieza por `@view-transition` cross-document (barato/nativo), no por el router falso-SPA (caro) (ADR §107)
 **Disparador**: pedir navegación "tipo app" (sin flash/parpadeo entre páginas) en un sitio multi-página. **Lección (§103 F2)**: hay 2 niveles. (1) **View Transitions cross-document** (`@view-transition{navigation:auto}` en un CSS global cargado por TODAS las shells): ~3 líneas, cross-fade nativo entre páginas del mismo origen, **cero JS, degrada solo, no toca la nav** (el `location.href` cross-shell ya lo dispara), respeta "sin caché pegajoso" (cada página carga fresca) → quita el flash blanco = ~80% de la molestia. (2) **router falso-SPA** (intercepta, `fetch`+swap `<main>`, contenido en memoria): nav INSTANTÁNEA real, pero exige **`destroy()`/teardown en cada page-handler** (listeners/`onSnapshot`/observers, `33-DOCTRINAS-CSS §Observadores` —ex §3.5— anti-zombi) → refactor grande/frágil si los handlers asumen carga fresca. **Regla**: ship (1) primero y EVALÚA; construye (2) solo si (1) no basta (no precluye nada). Verifica soporte (`document.startViewTransition`) + que la regla esté en una hoja cargada. Relacionado §103.1/.2.
+
+---
+
+> Lote 12 · migrado 2026-09-02 · 20 lecciones.
+
+---
+
+> Origen: BERS `docs/32-LECCIONES-CARGA.md` (titular en `docs/30-LECCIONES.md`) · pagada en BERS §108 (su EXT del comité, en el mismo §108.7-.12) · migrado 2026-09-02 lote 12
+
+### L-52: "Instante + fresco" = SWR NATIVO de la plataforma (Firestore `persistentLocalCache`) + diff-gate, NO un SWR a mano (ADR §108)
+**Disparador**: pedir "carga instantánea pero siempre fresca" de contenido dinámico/CMS en sitio estático. **Lección (idea Daniel + research)**: el patrón estándar es **stale-while-revalidate** (web.dev; Google en ads). NO lo hagas a mano con localStorage (parpadea → lo descartó §103). Firestore lo trae **nativo**: `persistentLocalCache` → `onSnapshot` sirve la copia local AL INSTANTE y revalida (`metadata.fromCache`). Anti-parpadeo = **diff-gate**: re-pinta SOLO si el dato cambió (igual→no toca el DOM). Respeta "ver cambios en vivo" (onSnapshot live). 1ª visita sin caché carga normal; el resto instantáneo. **Matiz**: el §103 generalizó de más al decir "CERO SWR" — era contra el localStorage a mano, NO contra el caché NATIVO + diff-gate. Implementar SIEMPRE con workflow/comité (Decisión Fuerte, capa de datos). Relacionado §103.2, [[L-50]].
+> **EXT (2026-06-23 · workflow comité×5+Gemini → 4 bloqueantes; F1 ✅; detalle §108.7-.12 + bóveda).** (1) caché GLOBAL contagia el CRM (I3/I6) ⇒ SOLO-público. (2) fallback ≠ try/catch (fallo async) ⇒ feature-detect. (3) diff-gate puede ocultar cambio (I1) ⇒ firma `id+_version+StorageURL`. (4) gatear MOUNT no basta (§105) ⇒ +`observeReveals`. `getDoc` server-first online ⇒ `siteContent` ok. [[feedback_workflows_acotados]].
+
+> Origen: BERS `docs/32-LECCIONES-CARGA.md` (titular en `docs/30-LECCIONES.md`) · pagada en BERS §112 · migrado 2026-09-02 lote 12
+
+### L-53: Firebase Storage SIN `cacheControl` → servido `private, max-age=0` = re-fetch por visita (ADR §112)
+**Disparador**: blur-up/caché de imagen del CMS que se ve en CADA visita, no solo la 1ª. **Lección**: sin `cacheControl`, Storage sirve `private, max-age=0` → el navegador revalida siempre → nunca instantáneo de caché. Fix: `cacheControl:'public, max-age=31536000'` en la subida (`_upload`) + backfill `setMetadata` (`migrate-cache-control.mjs`, no re-subir). Seguro cachear largo: la downloadURL se versiona por TOKEN. **Mídelo** (`curl -I`), no asumas que "ya cachea". [[L-47]]/[[L-52]].
+
+> Origen: BERS `docs/30-LECCIONES.md` (cuerpo Y titular en la MADRE, sin hoja hija) · pagada en BERS §115 · migrado 2026-09-02 lote 12
+
+### L-55: RBAC por niveles — TODOS los mapas de rol deben incluir el rol nuevo Y manejar el rango 0 (`??`, no `||`) (ADR §115)
+**Disparador**: añadir un rol a una jerarquía numérica de roles. **Lección (rol "catálogo" §115, 2 bugs cazados EN VIVO)**: (1) el nivel del rol vive DUPLICADO en N mapas que DEBEN concordar — en bersaglio son **3**: `js/auth.js ROLE_LEVELS` (guard de páginas), `functions/index.js ROLE_LEVEL` (`verifyRole`+`syncRoleClaim`), `js/admin/render-sidebar.js ROLE_RANK` (filtro del menú). El plan olvidó el 3º → al añadir un rol, `grep` TODOS los `ROLE_LEVEL*`/`ROLE_RANK` + whitelists `role in [...]` (reglas/CFs) ANTES de cerrar. (2) **El rango 0 es FALSY**: un rol con nivel 0 (catálogo, por debajo de editor) rompe los defaults `|| 0`/`|| 1` (`0 || 1` = 1) → el ítem 'catalogo' quedaba OCULTO incluso para catálogo. Usar **`??`** (nullish, respeta el 0), nunca `||`, en cualquier comparación de rango con defaults. (3) Lo cazó la prueba EN VIVO (el emulador valida REGLAS, no el render del menú — L-05/§101). Detalle build → ADR §115.
+
+> Origen: BERS `docs/31-LECCIONES-FIRESTORE.md` (titular en `docs/30-LECCIONES.md`) · pagada en BERS §115 · migrado 2026-09-02 lote 12
+
+### L-56: Callable v2 que falla con 403 (no se ejecuta) = falta el invoker público — delete+recreate (ADR §115) [stub-header en 30]
+**Disparador**: una callable v2 (`onCall`) falla con 403/error opaco sin que el código corra. **Lección (`createUser` §115)**: Cloud Run debe permitir invocación PÚBLICA (`allUsers`→`run.invoker`); la seguridad real es `verifyRole` DENTRO. **Causa**: la fn se creó pero nunca se invocó → el binding `allUsers` no se concedió, y **firebase-tools NO re-aplica el invoker en UPDATE** (solo en CREATE). **Fix**: `functions:delete <fn> --force` + `deploy --only functions:<fn>` + `invoker:'public'` en opciones. **Diagnóstico** (`curl -X POST` sin auth): 403 HTML = NO público; 401 JSON = SÍ público. El firebase CLI tiene la identidad correcta (no ADC, §110.3). Relacionado [[L-33]], [[L-23]].
+
+> Origen: BERS `docs/32-LECCIONES-CARGA.md` (titular en `docs/30-LECCIONES.md`) · pagada en BERS §115 · migrado 2026-09-02 lote 12
+
+### L-57: Admin MPA "fluido" — mostrar el shell de inmediato; el `body display:none` hasta requireAuth cruza la VT a un body OCULTO=blanco (ADR §115)
+**Disparador**: parpadeo/blanco largo al navegar entre páginas de un panel admin MPA con auth-gate. **Lección (§115, Daniel en vivo)**: las shells admin ocultan `<body style="display:none">` hasta que `requireAuth` lo muestra (tras cargar el bundle Firebase ~636KB + resolver auth) → aunque haya `@view-transition` (heredada vía `@import liquid-glass.css`, §107), la VT cruza hacia un body OCULTO = **blanco largo**. **Fix barato**: el guard inline (ya sabe si hay sesión por `sessionStorage.bj_auth`) MUESTRA el shell de inmediato si autenticado (`document.body.style.display=''`) → la VT cruza al shell REAL; la seguridad sigue intacta (`requireAuth` valida ROL y redirige; los DATOS cargan DESPUÉS, el shell no es dato). **Límite**: quita el blanco pero NO el retraso de armar menú+contenido en cada nav (el MPA recarga TODO: HTML+bundle+auth+fetch). **La fluidez REAL = panel tipo app / router falso-SPA** (menú persistente + datos cacheados en memoria de sesión + nav instantánea) = **Decisión Fuerte** ([[L-51]] nivel 2; diseño → `50-ARQUITECTURA`). **Seguridad (pregunta de Daniel, 2026-06-24)**: cachear en memoria de la SESIÓN los datos que el servidor YA autorizó NO expone nada — el candado es server-side (reglas Firestore), independiente de la velocidad del cliente; fluidez y seguridad son ortogonales.
+
+> Origen: BERS `docs/30-LECCIONES.md` (cuerpo Y titular en la MADRE, sin hoja hija) · pagada en BERS §131 · migrado 2026-09-02 lote 12
+
+### L-59: Desplegar reglas `read` row-level — la query pública DEBE igualar el set legible (ADR §131)
+Regla `read` POR-FILA (`visibilidad != 'privada'`) sobre una colección pública. 3 trampas: (1) una query que devuelva UN doc denegado FALLA ENTERA → la query pública filtra EXACTAMENTE al set legible (`where` espeja la regla) Y backfill/borra los legacy sin el campo ANTES de desplegar (si no, catálogo roto). (2) catálogo legítimamente VACÍO NO aborta el build/SSG (distínguelo del fallo "se leyeron pero la proyección las perdió"). (3) escribir/borrar prod exige consentimiento explícito; ADC ≠ auth del CLI/MCP (puede dar PERMISSION_DENIED con el CLI logueado).
+
+> Origen: BERS `docs/30-LECCIONES.md` (cuerpo Y titular en la MADRE, sin hoja hija) · pagada en BERS §132 · migrado 2026-09-02 lote 12
+
+### L-60: Importar datos reales de fuente externa (certificados QR → SPA) — pipeline reusable (ADR §132)
+Cargar inventario masivo desde fotos con QR a una página de terceros. Receta (32 piezas TrueLab): (1) **QR de fotos** = `jsqr`+`sharp` (RGBA raw; upscale ×2-3+sharpen+recortes; varias variantes); `jsqr`/`tesseract` se instalan `--no-save` y se podan → reinstalar. (2) **Página SPA** (WebFetch da cáscara) → Chrome MCP navegando como usuario (`history.pushState`+`PopStateEvent` recorre N rutas en 1 `evaluate_script`; el SPA se autentica solo — NUNCA replicar su credencial). (3) **OCR** (tesseract) NO fiable para un código exacto → usa el id EXACTO del SPA. (4) clasificación = montage etiquetado (1 lectura por N). (5) carga a prod = MCP Firestore. (6) no inventar lo no certificado.
+
+> Origen: BERS `docs/32-LECCIONES-CARGA.md` (titular en `docs/30-LECCIONES.md`) · sin §NN de ADR: su cuerpo ancla el caso en TODO-58 (links compartibles), no en un ADR · migrado 2026-09-02 lote 12
+
+### L-61: Los artefactos del SSG viven SOLO en `dist/` — verifícalos con `vite preview`, NO con el dev server
+**Disparador**: probar en navegador algo que produce el SSG. **Lección**: el SSG hornea `dist/pieza/*`, `dist/p/<code>.html` (links compartibles TODO-58), `catalogo.json`, `sitemap.xml` tras `vite build`. `npm run dev` sirve la FUENTE → ahí dan 404. Verifícalos con `vite build && npm run generate && npm run preview` (:4173 sirve `dist/`). Con [[L-05]] (headless no pinta lo dinámico → el `<title>` horneado es la prueba, no el `h1` hidratado). **Stub `/p/<code>`**: `noindex,follow` + `canonical` + redirect doble (meta refresh + JS) → los bots leen los `og:*` sin redirigir (preview), el humano salta; código→archivo con whitelist `[A-Za-z0-9_-]` (anti path-traversal); sin cache bump.
+
+> Origen: BERS `docs/30-LECCIONES.md` (titular y cuerpo en la MISMA línea) · pagada en BERS §156.18 · migrado 2026-09-02 lote 12
+
+### L-62: crash pinch-zoom iOS = MEMORIA; fix = RESTAR capas en móvil (content-visibility + quitar `filter:blur`), NUNCA promover GPU → §156.18
+
+> Origen: BERS `docs/30-LECCIONES.md` (titular y cuerpo en la MISMA línea) · pagada en BERS §156.19 · migrado 2026-09-02 lote 12
+
+### L-63: Dos flotantes `fixed` en la misma esquina (cookie banner ↔ FAB asesoría) se pisan → el consentimiento manda; bandera `body.bj-cookie-active` + el FAB cede por CSS (regla después de `.is-revealed` gana por orden) + banner z-210 > FAB z-200 → §156.19
+
+> Origen: BERS `docs/31-LECCIONES-FIRESTORE.md` (titular en `docs/30-LECCIONES.md`) · sin §NN de ADR: su cuerpo ancla el caso en el go-live de Wompi del 2026-06-30 · migrado 2026-09-02 lote 12
+
+### L-65: `secrets:set` ≠ deploy de `.env` (Cloud Functions gen2) [stub-header en 30]
+**Disparador**: cambiar un env var no-secreto en `functions/.env` (`WOMPI_PUBLIC_KEY`/`WOMPI_API_BASE`). **Lección (Wompi go-live 2026-06-30)**: el auto-redeploy de `firebase functions:secrets:set` actualiza el binding del secreto pero **NO re-lee `functions/.env`** → quedan los env vars del último deploy COMPLETO. Síntoma: `.env` ya con `pub_prod`+`production.wompi.co` pero el Widget abría en **"modo pruebas"** (la CF devolvía `pub_test` del deploy sandbox) → un pago real habría fallado. **Fix**: tras cambiar `.env`, `firebase deploy --only functions` completo (log: *"Loaded environment variables from .env"*). Relacionado [[L-56]], [[L-22]].
+
+> Origen: BERS `docs/30-LECCIONES.md` (titular y cuerpo en la MISMA línea) · pagada en BERS §159 · migrado 2026-09-02 lote 12
+
+### L-66: Redirect de login = DETERMINISTA (`sessionReady()` resuelve TRAS escribir `bj_auth`), NUNCA timeout. Rol insuficiente → SU landing, no al login. Pestaña nueva = 1 rebote esperado (sessionStorage por-pestaña; NO localStorage). → §159
+
+> Origen: BERS `docs/30-LECCIONES.md` (titular y cuerpo en la MISMA línea) · pagada en BERS §160.2 · migrado 2026-09-02 lote 12
+
+### L-67: Fechas en negocio = reloj INYECTABLE (`opts.hoy`, default fecha real). Fixture de fechas fijas + código con reloj real = bomba de tiempo (test se pone rojo sin commit — `corte-insumos` R6 murió jun→jul). → §160.2
+
+> Origen: BERS `docs/30-LECCIONES.md` (titular y cuerpo en la MISMA línea) · pagada en BERS §161 · migrado 2026-09-02 lote 12
+
+### L-68: Path IDEMPOTENTE que retorna el recurso reusado debe REFRESCAR el input mutable del reintento (shipping/entrega) — descartarlo en silencio pierde correcciones del usuario (pedido pagado con datos viejos). Lo derivado del recurso (total/firma) queda intacto. → §161
+
+> Origen: BERS `docs/30-LECCIONES.md` (titular y cuerpo en la MISMA línea) · pagada en BERS §161 · migrado 2026-09-02 lote 12
+
+### L-69: El "LCP real" se verifica contra el RENDERER vivo (quién pinta qué), no contra un preload/etiqueta heredada — un preload huérfano descarga con `fetchpriority=high` algo que jamás se pinta Y compite con el LCP; precachearlo consagra el error. → §161
+
+> Origen: BERS `docs/30-LECCIONES.md` (titular y cuerpo en la MISMA línea) · pagada en BERS §163 · migrado 2026-09-02 lote 12
+
+### L-70: Un caché local (localStorage/SDK) solo mata el flash de contenido CMS en visitas REPETIDAS — la 1ª visita de un dispositivo nuevo exige HORNEAR el contenido en el HTML del build (SSG re-hornea por push+cron); y el preload debe re-apuntarse a lo que el renderer pintará con los DATOS reales (semilla: memoria > localStorage > horneado > defaults). → §163
+
+> Origen: BERS `docs/30-LECCIONES.md` (titular y cuerpo en la MISMA línea) · pagada en BERS §164+ (su cuerpo se ancla como «monitoreo post-§164») · migrado 2026-09-02 lote 12
+
+### L-71: MCP Firebase `firestore_query_collection` NO matchea campos timestamp con `string_value` — devuelve `[]` SIN error (falso "no hay datos": trampa en monitoreo de `pedidos`/ventas). Para consultas por fecha usar `firestore_list_documents` con `orderBy: "createdAt desc"` + mask; ante un `[]` sospechoso, re-probar con ventana amplia ANTES de concluir "0 resultados". → monitoreo post-§164
+
+> Origen: BERS `docs/30-LECCIONES.md` (titular y cuerpo en la MISMA línea) · pagada en BERS §167 · migrado 2026-09-02 lote 12
+
+### L-72: El mapa de estados es SSoT COMPARTIDO: toda vista que pinte estados (POS, Pedidos, exports) importa `estadoPedido()` de pedidos-format — un mapping local ("trinario") se pudre en silencio cuando el backend suma estados Y ofrece acciones imposibles ("Confirmar pago" sobre un entregado/expirado). Al añadir estados: grep de quién mapea estados a mano. Cazado en el gate E2E. → §167
+
+> Origen: BERS `docs/30-LECCIONES.md` (titular y cuerpo en la MISMA línea) · sin §NN de ADR: su cuerpo ancla el caso en el frente F2.0 B0b (spec), no en un ADR · migrado 2026-09-02 lote 12
+
+### L-73: Un nombre de subcolección alimenta un `collectionGroup` GLOBAL. Antes de reusar un nombre (`movimientos`, `pagos`…) para un subsistema NUEVO, `grep collectionGroup('<nombre>')`: si existe un consumidor (aging CxC = corte/salud/reconciliación agrupan por `parent.parent.id`), tu colección lo contamina/infla su full-scan aunque el grouping "salve" hoy. Nombre DISTINTO por dominio (`movsCaja` ≠ `movimientos`). Reglas: cada match explícito basta; añade un match `collectionGroup` SOLO si el dominio necesita cross-doc. → F2.0 B0b
+
+> Origen: BERS `docs/30-LECCIONES.md` (titular y cuerpo en la MISMA línea) · sin §NN de ADR: su cuerpo ancla el caso en el frente F2.0 B1 (spec), no en un ADR · migrado 2026-09-02 lote 12
+
+### L-74: Invariante "SOLO UNO abierto/activo" (turno de caja, sesión única…) = **puntero singleton transaccional**, NO `query where estado=='abierto'` (TOCTOU: dos aperturas concurrentes leen "ninguno" y crean dos). Un doc `caja/estado {turnoAbiertoId}`: la CF lo lee+escribe en la MISMA `runTransaction` que crea/cierra → Firestore serializa por ese doc (1 gana, la otra reintenta y falla `failed-precondition`). O(1), sin índice. Idempotencia: `opId == docId` (create-if-not-exists). SIEMPRE un test de carrera (`Promise.allSettled` de 2 → exactamente 1 fulfilled). → F2.0 B1 `functions/caja-core.js`

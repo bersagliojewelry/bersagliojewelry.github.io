@@ -6,7 +6,7 @@
 > LQIP/blur-up, placeholders de imagen, View Transitions, caché SWR de Firestore o `reveal.js`.
 > La madre `30` deja un **stub de 1 línea por cada L-NN** aquí movida (para que `[[L-NN]]` siga
 > resolviendo en `30`, donde el kernel lee las definiciones, L-31/M-06); el DETALLE vive aquí, salvo
-> el de las **migradas al maestro** (F2 lote 11: `L-45/46/47/49/50/51`), que dejan su stub aquí.
+> el de las **migradas al maestro** (F2 lote 11: `L-45/46/47/49/50/51` · lote 12: `L-52/53/57/61`), que dejan su stub aquí.
 >
 > **Mantenimiento (Reflejo de Frescura §G.4)**: nuevas lecciones de carga/render/caché web se
 > escriben aquí, dejando su stub `### L-NN: <título> → 32` en `30`. Lecciones del sprint §100-§113.
@@ -14,14 +14,13 @@
 ---
 
 ### L-61: Los artefactos del SSG viven SOLO en `dist/` — verifícalos con `vite preview`, NO con el dev server
-**Disparador**: probar en navegador algo que produce el SSG. **Lección**: el SSG hornea `dist/pieza/*`, `dist/p/<code>.html` (links compartibles TODO-58), `catalogo.json`, `sitemap.xml` tras `vite build`. `npm run dev` sirve la FUENTE → ahí dan 404. Verifícalos con `vite build && npm run generate && npm run preview` (:4173 sirve `dist/`). Con [[L-05]] (headless no pinta lo dinámico → el `<title>` horneado es la prueba, no el `h1` hidratado). **Stub `/p/<code>`**: `noindex,follow` + `canonical` + redirect doble (meta refresh + JS) → los bots leen los `og:*` sin redirigir (preview), el humano salta; código→archivo con whitelist `[A-Za-z0-9_-]` (anti path-traversal); sin cache bump.
+⇒ **Migrada al maestro** (F2 lote 12): [[BERS:L-61]] · cuerpo íntegro en `/_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (raíz del repo).
 
 ### L-53: Firebase Storage SIN `cacheControl` → servido `private, max-age=0` = re-fetch por visita (ADR §112)
-**Disparador**: blur-up/caché de imagen del CMS que se ve en CADA visita, no solo la 1ª. **Lección**: sin `cacheControl`, Storage sirve `private, max-age=0` → el navegador revalida siempre → nunca instantáneo de caché. Fix: `cacheControl:'public, max-age=31536000'` en la subida (`_upload`) + backfill `setMetadata` (`migrate-cache-control.mjs`, no re-subir). Seguro cachear largo: la downloadURL se versiona por TOKEN. **Mídelo** (`curl -I`), no asumas que "ya cachea". [[L-47]]/[[L-52]].
+⇒ **Migrada al maestro** (F2 lote 12): [[BERS:L-53]] · cuerpo íntegro en `/_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (raíz del repo).
 
 ### L-52: "Instante + fresco" = SWR NATIVO de la plataforma (Firestore `persistentLocalCache`) + diff-gate, NO un SWR a mano (ADR §108)
-**Disparador**: pedir "carga instantánea pero siempre fresca" de contenido dinámico/CMS en sitio estático. **Lección (idea Daniel + research)**: el patrón estándar es **stale-while-revalidate** (web.dev; Google en ads). NO lo hagas a mano con localStorage (parpadea → lo descartó §103). Firestore lo trae **nativo**: `persistentLocalCache` → `onSnapshot` sirve la copia local AL INSTANTE y revalida (`metadata.fromCache`). Anti-parpadeo = **diff-gate**: re-pinta SOLO si el dato cambió (igual→no toca el DOM). Respeta "ver cambios en vivo" (onSnapshot live). 1ª visita sin caché carga normal; el resto instantáneo. **Matiz**: el §103 generalizó de más al decir "CERO SWR" — era contra el localStorage a mano, NO contra el caché NATIVO + diff-gate. Implementar SIEMPRE con workflow/comité (Decisión Fuerte, capa de datos). Relacionado §103.2, [[L-50]].
-> **EXT (2026-06-23 · workflow comité×5+Gemini → 4 bloqueantes; F1 ✅; detalle §108.7-.12 + bóveda).** (1) caché GLOBAL contagia el CRM (I3/I6) ⇒ SOLO-público. (2) fallback ≠ try/catch (fallo async) ⇒ feature-detect. (3) diff-gate puede ocultar cambio (I1) ⇒ firma `id+_version+StorageURL`. (4) gatear MOUNT no basta (§105) ⇒ +`observeReveals`. `getDoc` server-first online ⇒ `siteContent` ok. [[feedback_workflows_acotados]].
+⇒ **Migrada al maestro** (F2 lote 12): [[BERS:L-52]] · cuerpo íntegro en `/_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (raíz del repo).
 
 ### L-51: MPA "app-like" — empieza por `@view-transition` cross-document (barato/nativo), no por el router falso-SPA (caro) (ADR §107)
 ⇒ **Migrada al maestro** (F2 lote 11): [[BERS:L-51]] · cuerpo íntegro en `/_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (raíz del repo).
@@ -42,7 +41,7 @@
 ⇒ **Migrada al maestro** (F2 lote 11): [[BERS:L-45]] · cuerpo íntegro en `/_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (raíz del repo).
 
 ### L-57: Admin MPA "fluido" — mostrar el shell de inmediato; el `body display:none` hasta requireAuth cruza la VT a un body OCULTO=blanco (ADR §115)
-**Disparador**: parpadeo/blanco largo al navegar entre páginas de un panel admin MPA con auth-gate. **Lección (§115, Daniel en vivo)**: las shells admin ocultan `<body style="display:none">` hasta que `requireAuth` lo muestra (tras cargar el bundle Firebase ~636KB + resolver auth) → aunque haya `@view-transition` (heredada vía `@import liquid-glass.css`, §107), la VT cruza hacia un body OCULTO = **blanco largo**. **Fix barato**: el guard inline (ya sabe si hay sesión por `sessionStorage.bj_auth`) MUESTRA el shell de inmediato si autenticado (`document.body.style.display=''`) → la VT cruza al shell REAL; la seguridad sigue intacta (`requireAuth` valida ROL y redirige; los DATOS cargan DESPUÉS, el shell no es dato). **Límite**: quita el blanco pero NO el retraso de armar menú+contenido en cada nav (el MPA recarga TODO: HTML+bundle+auth+fetch). **La fluidez REAL = panel tipo app / router falso-SPA** (menú persistente + datos cacheados en memoria de sesión + nav instantánea) = **Decisión Fuerte** ([[L-51]] nivel 2; diseño → `50-ARQUITECTURA`). **Seguridad (pregunta de Daniel, 2026-06-24)**: cachear en memoria de la SESIÓN los datos que el servidor YA autorizó NO expone nada — el candado es server-side (reglas Firestore), independiente de la velocidad del cliente; fluidez y seguridad son ortogonales.
+⇒ **Migrada al maestro** (F2 lote 12): [[BERS:L-57]] · cuerpo íntegro en `/_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (raíz del repo).
 
 ### L-54: Gate empírico de checkout web — contrato de datos VIVO ≠ SSG · Wompi exige redirect HTTPS · prod-Firestore por LAN-IP (ADR §147)
 **Disparador**: ANTES de un gate live de cobro web (Wompi) o de tocar elegibilidad/disponibilidad de pieza en el front público. **Lección (§147, gate live Wompi F2)**:

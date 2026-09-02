@@ -31,8 +31,11 @@
 //       (29) v1.13.0: cifras CONTABLES del cerebro vs el código (cura «CF 9» contra 11 reales)
 //       (el ✅ INMERECIDO, §120) · (26) trinquete de filas gordas del índice
 //       + 7b) bóveda: commits ≠ origin vía fs [warn]
+//       v1.30.0 (PLAN-CIERRE §5, capa 2): `session-handoff --boot-echo` COBRA el flag 🚨
+//       `docs/.vigia-alerta` que levanta el vigía de la bóveda. Aquí NO cambia ni un chequeo: el
+//       bump es del KERNEL, que se reparte entero, y su sello tiene UN dueño — esta constante.
 // ===========================================================
-const KERNEL_VERSION = '1.29.0';
+const KERNEL_VERSION = '1.30.0';
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 import { homedir } from 'os';
 import { join, dirname } from 'path';

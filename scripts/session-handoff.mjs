@@ -11,7 +11,9 @@
  *                al fallar en la RAIZ descartaba el objeto entero — 0/15 entregas en 44 dias (§291).
  *   --boot-echo  SessionStart: escribe el marker del canario + 💓 HEARTBEAT (F2 §52: sidecar
  *                docs/.estado-auto.md con la mitad DERIVABLE del estado — solo-local, SIN red,
- *                degradación RUIDOSA) + imprime foto/estado/nags (entra al contexto).
+ *                degradación RUIDOSA) + imprime foto/estado/nags (entra al contexto). Y COBRA los
+ *                dos flags: 🚨 docs/.vigia-alerta (v1.30.0) primero y ⛔ docs/.consolidacion-pendiente
+ *                después — un cerebro roto invalida el trabajo; uno sin consolidar solo lo retrasa.
  * Kill-switch heartbeat (§52): si falla 2×/mes y su ausencia no cuesta nada medible → borrarlo.
  */
 import { execFileSync } from 'node:child_process';
@@ -26,6 +28,12 @@ const MARKER = join(ROOT, 'docs', '.boot-marker'); // canario de boot (TODO-31b 
 // es el canal medido 15/15) y lo BORRA el pre-commit al commitear docs/10 o docs/99. Su VIDA es la
 // métrica de cumplimiento: un token que envejece dice que la orden se ignoró; un disparo no dice nada.
 const FLAG = join(ROOT, 'docs', '.consolidacion-pendiente');
+// 🚨 El flag del VIGÍA (PLAN-CIERRE §5, capa 2). Lo levanta `scripts/vigia.mjs` de la bóveda cuando
+// algo del cerebro sale ROJO sin nadie delante (tarea diaria de Windows, 07:00); lo COBRA este
+// SessionStart —el único canal medido 15/15— y lo BORRA el pre-commit cuando el vigía vuelve a dar
+// verde. Solo existe donde el vigía lo pone (hoy, INMO): en los demás repos esta línea es inerte, y
+// esa es la forma correcta de repartir un kernel compartido — no un `if (repo === …)`.
+const VIGIA = join(ROOT, 'docs', '.vigia-alerta');
 const mode = process.argv[2] || '--end';
 
 const git = (args, cwd = ROOT) => {
@@ -87,6 +95,21 @@ try {
     writeFileSync(MARKER, new Date().toISOString(), 'utf8'); // el canario: boot-gate exige este marker fresco
     const hb = heartbeat();
     writeFileSync(join(ROOT, 'docs', '.estado-auto.md'), hb + '\n', 'utf8');
+    // 🚨 EL VIGÍA VA ANTES QUE TODO, incluida la consolidación, y el orden es deliberado: un cerebro
+    // ROTO invalida el trabajo que se haga encima, mientras que uno sin consolidar solo lo retrasa.
+    // Si los dos flags están puestos, se imprimen los dos y el texto dice cuál manda.
+    if (existsSync(VIGIA)) {
+      const v = readFileSync(VIGIA, 'utf8');
+      const campo = (k) => (v.match(new RegExp(`^${k}=(.+)$`, 'm')) || [])[1] || '?';
+      const ts = campo('ts');
+      const edad = /^\d{4}-/.test(ts) ? `${((Date.now() - new Date(ts)) / 3.6e6).toFixed(1)}h` : 'edad ?';
+      const resumen = v.split(/^resumen:$/m)[1] || '';
+      console.log(`🚨 ORDEN DEL CEREBRO — EL VIGÍA ENCONTRÓ ${campo('rojos')} PIEZA(S) EN ROJO (hace ${edad}, modo ${campo('modo')})
+Algo del cerebro se rompió SIN NADIE DELANTE. ANTES de cualquier otra cosa —antes incluso de consolidar—: arréglalo o, si no se puede, déjalo DIAGNOSTICADO por escrito.${resumen.trimEnd()}
+Informe completo: ${campo('informe')}
+Este flag NO se borra solo ni lo borra el vigía: lo borra el pre-commit de este repo cuando \`node ../brain-private/scripts/vigia.mjs --recheck\` vuelva a dar verde (docs/.vigia-alerta).
+`);
+    }
     // ⛔ LA ORDEN, por el canal que SÍ entrega (§291). Medido: SessionStart entra al contexto 15/15
     // —también con source=compact, justo después del corte— y PreCompact 0/15. Va la PRIMERA y corta:
     // lo que se lee al final de un volcado de 6k no es una orden, es un pie de página.

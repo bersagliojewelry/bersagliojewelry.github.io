@@ -40,7 +40,7 @@ Cuando el cliente solicita un análisis o auditoría de un dominio especializado
 **Mapa rápido skill → dominio** (al disparar Trigger 🔵):
 - 🎨 **UX/Diseño** (43) → `frontend-design`, `impeccable`, `redesign-existing-projects`, `emil-design-eng`.
 - 🔍 **SEO** (44) → `seo-audit`, `ai-seo`, `schema-markup`.
-- ⚡ **Performance** (45) → análisis directo + `CLAUDE.md §3.1`.
+- ⚡ **Performance** (45) → análisis directo + doctrina de render en `33-DOCTRINAS-CSS §Performance` (salió del router en §195).
 - ✍️ **Copywriting** (47) → `copywriting`, `copy-editing`, `marketing-psychology`.
 - ♿ **Accesibilidad** (48) → `accessibility-audit` (WCAG 2.2 AA — usar PRIMERO).
 - 🛒 **E-commerce / pagos** → `ecommerce` (PSE/Wompi/Stripe, DIAN, SIC).

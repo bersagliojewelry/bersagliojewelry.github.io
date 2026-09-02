@@ -6,7 +6,9 @@
  *
  * Modos:
  *   --end        SessionEnd/Stop: escribe la foto en silencio (exit 0 siempre — jamás bloquear).
- *   --precompact PreCompact: escribe la foto Y emite JSON con la ORDEN de consolidar docs/10 AHORA.
+ *   --precompact PreCompact: escribe la foto Y deja el 🚩 flag docs/.consolidacion-pendiente.
+ *                NO emite JSON: el esquema del harness no admite hookSpecificOutput en PreCompact y
+ *                al fallar en la RAIZ descartaba el objeto entero — 0/15 entregas en 44 dias (§291).
  *   --boot-echo  SessionStart: escribe el marker del canario + 💓 HEARTBEAT (F2 §52: sidecar
  *                docs/.estado-auto.md con la mitad DERIVABLE del estado — solo-local, SIN red,
  *                degradación RUIDOSA) + imprime foto/estado/nags (entra al contexto).
@@ -20,6 +22,10 @@ import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'docs', '.handoff-auto.md');
 const MARKER = join(ROOT, 'docs', '.boot-marker'); // canario de boot (TODO-31b §49): prueba de que SessionStart corrió
+// 🚩 El TOKEN de consolidación (§291): lo PONE PreCompact, lo COBRA el SessionStart siguiente (que
+// es el canal medido 15/15) y lo BORRA el pre-commit al commitear docs/10 o docs/99. Su VIDA es la
+// métrica de cumplimiento: un token que envejece dice que la orden se ignoró; un disparo no dice nada.
+const FLAG = join(ROOT, 'docs', '.consolidacion-pendiente');
 const mode = process.argv[2] || '--end';
 
 const git = (args, cwd = ROOT) => {
@@ -81,6 +87,19 @@ try {
     writeFileSync(MARKER, new Date().toISOString(), 'utf8'); // el canario: boot-gate exige este marker fresco
     const hb = heartbeat();
     writeFileSync(join(ROOT, 'docs', '.estado-auto.md'), hb + '\n', 'utf8');
+    // ⛔ LA ORDEN, por el canal que SÍ entrega (§291). Medido: SessionStart entra al contexto 15/15
+    // —también con source=compact, justo después del corte— y PreCompact 0/15. Va la PRIMERA y corta:
+    // lo que se lee al final de un volcado de 6k no es una orden, es un pie de página.
+    if (existsSync(FLAG)) {
+      const f = readFileSync(FLAG, 'utf8');
+      const ts = (f.match(/^ts=(.+)$/m) || [])[1] || '';
+      const hd = (f.match(/^head=(.+)$/m) || [])[1] || '?';
+      const edad = ts ? `${((Date.now() - new Date(ts)) / 3.6e6).toFixed(1)}h` : 'edad ?';
+      console.log(`⛔ ORDEN DEL CEREBRO — CONSOLIDACIÓN PENDIENTE (hace ${edad}, corte en ${hd})
+La sesión anterior COMPACTÓ SIN CONSOLIDAR. ANTES de cualquier otra cosa: pon al día docs/10 (foco, avances, callejones) y consolida a docs/99 lo que ya esté cerrado.
+Este flag NO se borra solo: lo borra el pre-commit cuando commitees docs/10 o docs/99 (docs/.consolidacion-pendiente).
+`);
+    }
     console.log(hb);
     if (existsSync(OUT)) {
       const ageH = (Date.now() - statSync(OUT).mtimeMs) / 3.6e6;
@@ -109,13 +128,27 @@ try {
   writeFileSync(OUT, foto, 'utf8');
 
   if (mode === '--precompact') {
-    console.log(JSON.stringify({
-      systemMessage: '🧠 PreCompact: foto de sesión escrita en docs/.handoff-auto.md',
-      hookSpecificOutput: {
-        hookEventName: 'PreCompact',
-        additionalContext: 'ORDEN DEL CEREBRO (hook PreCompact, TODO-28 #1): el contexto está por compactarse. ANTES de seguir con la tarea, consolida el estado vivo AHORA en docs/10-MEMORIA-CORTO-PLAZO.md (foco, avances no documentados, callejones) y si cambió la salud, docs/05. La foto real de git quedó en docs/.handoff-auto.md.',
-      },
-    }));
+    // 🚩 Aquí ya NO se le habla al modelo, y esa es toda la corrección (§291). El bloque que vivía
+    // aquí emitía `hookSpecificOutput`, que el esquema del harness NO admite para PreCompact: la
+    // validación falla en la RAÍZ y descarta el objeto entero — `systemMessage` incluido, aunque
+    // fuera válido por su cuenta. Medido: 0/15 entregas en 44 días, 5 copias byte-idénticas, y 13 de
+    // los 15 fallos SIN una sola línea visible (las 2 visibles fueron `/compact` manuales).
+    // Este modo pasa a DEJAR RASTRO en vez de HABLAR, y no emite JSON ninguno: cero contrato con el
+    // esquema = cero forma de violarlo en silencio ([[L-73]]).
+    // ⚠️ preTokens NO se registra: el contrato de PreCompact no lo entrega (la medición D8a lo sacó
+    // del `compact_boundary` del transcript, que se escribe DESPUÉS). Leer stdin para buscarlo
+    // arriesgaba colgar el hook 15 s por un dato que no está; el identificador del token es el HEAD.
+    writeFileSync(FLAG, [
+      '# 🚩 CONSOLIDACIÓN PENDIENTE — la escribió session-handoff --precompact (§291).',
+      '# La orden la da el SIGUIENTE SessionStart; este fichero lo BORRA el pre-commit al commitear docs/10 o docs/99.',
+      `ts=${new Date().toISOString()}`,
+      `head=${git(['log', '-1', '--format=%h'])}`,
+      'preTokens=n/d (el contrato PreCompact del harness no lo entrega)',
+      '',
+    ].join('\n'), 'utf8');
+    // stdout PLANO, sin estructura: en PreCompact no entra al contexto haga lo que haga, así que no
+    // se le pide que entregue nada — solo deja huella para quien lea el transcript.
+    console.log('🧠 PreCompact: foto en docs/.handoff-auto.md + 🚩 flag de consolidación pendiente (la orden la dará el próximo SessionStart).');
   }
   process.exit(0);
 } catch {

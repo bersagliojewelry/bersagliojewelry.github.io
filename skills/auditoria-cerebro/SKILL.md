@@ -18,6 +18,36 @@ description: Auditoría profunda Nivel-2 del cerebro documental del proyecto act
 Localiza la tabla de hallazgos de la auditoría anterior (en el `archiveDir` del manifest).
 Para cada hallazgo previo: ¿cerrado con evidencia, abierto-tracked, o REINCIDENTE?
 **Reincidente = regresión del lazo → meta-lección M-NN obligatoria en el nodo de lecciones.**
+> ⚠️ **Y re-verifica su PREMISA, no solo su estado** (ADR §206). Un hallazgo heredado dice DOS cosas:
+> que existe un problema y que sigue abierto. La sonda 0 comprueba la segunda por diseño y **la
+> primera no la comprueba nadie**. Caso real: un hallazgo afirmaba *«el umbral es de 90 días y eso es
+> laxo»*; medido dos auditorías después, el umbral era **30** y siempre lo había sido — no había nada
+> que apretar, y la auditoría intermedia lo había listado como «sigue abierto» sin mirarlo.
+> 🎯 **Un hallazgo abierto es una afirmación sin sello como cualquier otra, y cuantas más auditorías
+> sobreviva, más cierto parece y menos lo es.** Si su premisa cita una cifra, un nombre de chequeo o
+> un fichero, ábrelo. Y cuando resulte falso, **se RETIRA, no se cierra**: cerrar afirma que hubo algo
+> que arreglar.
+>
+> 🎯 **Y la prueba concreta, porque «re-verifica la premisa» es demasiado blando para
+> ejecutarlo**: *todo hallazgo que apele a una REGLA del cerebro (SSoT, formato canónico, frescura,
+> ruteo) tiene que citar la línea del linter o del manifest que la implementa. Si esa línea no
+> existe, el hallazgo es una OPINIÓN.* Medido en la #16 de inmobiliaria: de 13 abiertos, **3 eran
+> falsos y los 3 fallaban por esto**. El peor decía que un dato violaba el SSoT — pero el único
+> mecanismo SSoT es el gate #8, que solo vigila lo declarado en `ssotFacts`, y el dato no estaba
+> ahí; además su cifra fallaba ×28 y «arreglarlo» habría puesto el linter en rojo permanente
+> contra cuatro documentos que por ley deben llevar ese dato. Suena a disciplina, se apoya en un
+> ADR real y su cifra pequeña parece cuidadosa: por eso nadie lo abre.
+>
+> ⚠️ **Y re-verifica el OBJETO del remedio, no solo la premisa** (M-31, 27-ago-2026). Un hallazgo que
+> propone actuar sobre algo concreto —*«hay que partir el nodo X»*, *«hay que arreglar el gate Y»*—
+> hereda el foco del turno que lo escribió. Caso real: la auditoría anterior cerró diciendo que tocaba
+> partir el nodo cuyo techo se había subido dos veces esa noche; medido al día siguiente, ese nodo
+> estaba al **79 %** y ni entraba en el top-12 de saturación, mientras otro llevaba días **clavado en su
+> cap de líneas**, bloqueado. No se eligió el peor: se eligió **el que estaba entre las manos**.
+> 🎯 **Todo hallazgo que nombre un objeto declara la medición que lo eligió — con su denominador — o no
+> lo eligió nadie.** Un remedio sin denominador es una corazonada con formato de tabla, y sobrevive
+> auditorías porque nadie vuelve a preguntarse *por qué ESE*. Sospecha sobre todo del hallazgo escrito
+> **al final** de una sesión larga: es cuando el foco pesa más y medir cuesta más.
 
 ### Sonda 1 — Fidelidad de estado (la clase "App-Check ×3 estados")
 Toma 3-5 hechos de estado declarados en los nodos always-on (05/10): versión desplegada, qué está

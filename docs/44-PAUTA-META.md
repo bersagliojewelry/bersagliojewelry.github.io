@@ -78,3 +78,21 @@ socio del portfolio de Bersaglio: **el riesgo lo paga un activo que no es de Ber
 ese anuncio se retira definitivo** (jamás re-enviarlo); **2ª señal = pausar la campaña completa** y evaluar
 desvincular la operación del Business de Altorra. Prohibida cualquier fórmula tipo "los diseños que ya
 reconoces" y el nombre "Anillo Clavo". Lo publicado orgánicamente **lo baja Daniel** — no se tocan sus redes.
+
+## 🏁 DESENLACE — la pauta de Cartagena murió sin venta (2026-08-20)
+
+**Criterio de muerte cumplido en sus DOS mitades: 0 ventas y 0 visitas al local.** La campaña S2
+(`120251090001200439`) trajo **26 conversaciones a $2.812** y gastó **$73.099**; el periodo cerró en
+**$78.139** sobre un saldo de ~$78.147 ⇒ **se quemó hasta el último peso**. Acumulado de la prueba:
+**63 conversaciones → 0 ventas** con dos configuraciones opuestas. ⇒ **Meta NO es el canal para este
+producto a este precio.** La corrección técnica SÍ funcionó (costo/conversación $1.233 → $2.812, justo
+lo predicho): lo que no hay es comprador a $2.280.000 de piso en este canal.
+
+⚠️ **La campaña no se apagó: se quedó sin plata** (~9-ago). Las 2 revisiones pactadas nunca se hicieron.
+🧟 **"Sin saldo" ≠ "apagado"**: quedaron **6 campañas ACTIVAS** en *"Error en el pago"* (boosts de
+marzo/junio incluidos, ≥$32.000/día armados). **Las 6 se apagaron el 20-ago** con autorización de Daniel.
+🔌 Esta cuenta **solo se lee por navegador**: el Ads-MCP no la ve (verificado, no supuesto).
+
+📄 **Cifras, IDs, veredicto completo, la regla nueva y los pendientes → hoja hija
+`docs/44a-PAUTA-DESENLACE-2026-08.md`.** Pendiente vivo: **26 conversaciones sin leer** (9+ días) en el
+WhatsApp `573013752592` — lo único recuperable de los $73.099 — y **avisarle a Kary** que se tocó su cuenta.

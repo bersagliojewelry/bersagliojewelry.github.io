@@ -62,8 +62,9 @@
       "chars": 16000
     },
     "docs/33-DOCTRINAS-CSS.md": {
-      "lines": 60,
-      "chars": 6000
+      "_comment": "2026-08-03 (§195): cap re-MEDIDO 6000->8000 / 60->90L porque la neurona ABSORBIO contenido del router (performance de render §3.1, observadores §3.5 y el renderer unico §3.2, ~1.4k). Esa es una de las razones VALIDAS de M-05 para mover un techo — no es que hoy no se cumpla, es que el nodo cambio de alcance; el router pago 1.814c de always-on a cambio. Medido sobre el real (5874c / 67L) + 35%, con lines derivado de la densidad real (~88 c/linea) para que ambos ejes aprieten juntos.",
+      "lines": 90,
+      "chars": 8000
     },
     "docs/34-LECCIONES-META.md": {
       "lines": 70,
@@ -109,12 +110,19 @@
     "docs/11-BACKLOG.md": {
       "lines": 40,
       "chars": 4000
+    },
+    "docs/44a-PAUTA-DESENLACE-2026-08.md": {
+      "chars": 6390,
+      "lines": 100,
+      "_comment": "Cap MEDIDO el 2026-08-27 (real +25%, §74.3: medido, no inventado). Nacio sin techo y ningun gate lo miraba — el linter lo canta como «crecen sin techo». Es la hija de 44-PAUTA-META con el desenlace de agosto: cerrada por fecha, no deberia crecer mucho; si crece, es que esta absorbiendo lo que le toca a la madre."
     }
   },
   "_caps_hijas_192": "Auditoría §192 (MF-2, voz adversarial): las hijas nacían sin cap → sharding lavaba topes. Caps = tamaño real + headroom (trinquete §56). 21 ya declaraba ~16000 en su propio header.",
   "archiveDir": "../brain-private/bersaglio/research-archive",
   "_caps_trinquete": "ADR §56/comité v6: caps bajados al tamaño post-GC + headroom (trinquete: bajar libre; SUBIR exige ADR). bootCharsTarget 31500 = aspiracional (resta cirugía del router, gated por cuidado-de-canon). ADR §92: 00-INDICE 16k→24k (ratchet ↑ justificado — el índice es on-demand, NO se comprime con pérdida; doctrina §228 de cars §229). TODO-32 (2026-06-24): 00-INDICE 24k→28k (mismo motivo — creció a §115; range-shard 00a/00b = futuro a ~28k). EJECUTADO 2026-06-27 (ADR §140, kernel-change cars-operador): range-shard §1–§115 → 00a-INDICE-HIST (00 a ~9.3k); el kernel lee el índice como SET (00 + 00[a-z]-INDICE*) — byte-idéntico ×4 peers. 2º range-shard 2026-07-08 (ADR §174): §116–§157 → 00b-INDICE (00 madre 30.8k→15.6k = ruteo + §158+); 00b tiene cap propio; próximo rango → 00c. 30-LECCIONES NO se ratchetea: shardeó el clúster carga/render → 32-LECCIONES-CARGA (las lecciones SE SHARDEAN).",
   "staleDays": 10,
+  "harnessCanary": true,
+  "_harnessCanary_que": "v1.10.3 (#24, inmobiliaria ADR 85 U-13): declara que ESTE repo debe tener el hook SessionStart (session-handoff) cableado en .claude/settings.json. Antes el gate se lo preguntaba al propio archivo vigilado, asi que borrar el hook lo apagaba en silencio (fallo ABIERTO). Verificado 2026-08-03: los 4 repos lo tienen cableado. Un repo nuevo del brain-kit pone false CON su razon.",
   "kernelFiles": [
     "scripts/brain-check.mjs",
     "scripts/brain-diff.mjs",
@@ -134,20 +142,23 @@
     {
       "regex": "[Kk]ernel\\s*\\**\\s*v?\\d+\\.\\d+\\.\\d+",
       "owner": "scripts/.kernel-version.json",
+      "ownerRegex": "\"version\"\\s*:\\s*\"\\d+\\.\\d+\\.\\d+\"",
       "scan": [
         "CLAUDE.md",
         "docs/05-ESTADO-GLOBAL.md",
         "docs/10-MEMORIA-CORTO-PLAZO.md",
         "docs/20-MEMORIA-ESPACIAL.md"
       ],
-      "_que": "version del kernel (ADR inmobiliaria 83, TODO-37): el dueno es el STAMP que escribe brain:pull. Copiarla a un nodo always-on la desincroniza en el primer bump — paso 2 veces el mismo dia (insema declaraba v1.6.0 con el stamp en v1.9.0). El gate #8 lo caza solo si el hecho esta DECLARADO: no era un gate inutil, era un gate sin datos. | 2026-08-03: la regex nacio CIEGA a las negritas — `kernel **v1.7.2**` no matcheaba y el 05 de bersaglio llevaba un dato stale que el gate no veia. Corolario de LD-07: quitar/tolerar el markdown antes de comparar prosa."
+      "_que": "version del kernel (ADR inmobiliaria 83, TODO-37): el dueno es el STAMP que escribe brain:pull. Copiarla a un nodo always-on la desincroniza en el primer bump — paso 2 veces el mismo dia (insema declaraba v1.6.0 con el stamp en v1.9.0). El gate #8 lo caza solo si el hecho esta DECLARADO: no era un gate inutil, era un gate sin datos. | 2026-08-03: la regex nacio CIEGA a las negritas — `kernel **v1.7.2**` no matcheaba y el 05 de bersaglio llevaba un dato stale que el gate no veia. Corolario de LD-07: quitar/tolerar el markdown antes de comparar prosa. | 2026-08-26: el gate DEGRADABA aqui («el dueno ya NO contiene …») porque el stamp guarda {\"version\":\"1.19.0\"} y la regex busca la PROSA «kernel v1.19.0». El kernel ya preveia el caso con `ownerRegex`, y este repo no lo declaraba: el fact estaba VIVO y el gate lo daba por muerto. Inmobiliaria si lo tenia — la correccion no se propago a las hermanas (ADR 226)."
     }
   ],
   "deepAudit": {
-    "last": "2026-07-18",
-    "coveredHeaderCount": 194,
+    "last": "2026-08-26",
+    "coveredHeaderCount": 197,
     "maxAdrGap": 12,
-    "maxDays": 30
+    "maxDays": 30,
+    "tableFile": "2026-08-26-auditoria-cerebro-nivel2-bersaglio.md",
+    "_que": "Nivel-2 del 26-ago, PARCIAL y declarada (sondas 3/4/5/7 exigen subagentes y la sesion los tiene prohibidos). Corrida desde la sesion de ALTORRA Inmobiliaria, que lidera el cerebro x4, porque el gate llevaba 40 dias vencido y BLOQUEABA los commits de este repo. Hallazgo principal B-01: 45 scripts test:* y el CI no corre NINGUNO —solo build/generate y las reglas—, en un repo cuyas pruebas cubren tesoreria, caja, cartera, pedidos y wompi. B-02: no existe script test agregado, asi que «suite local verde» no es comprobable con un comando. B-03: tres worktrees de agente abandonadas, 623 MB. B-04: 30-LECCIONES sobre su tope. Verificado en positivo: el sitio vive (HTTP 200) y el 05 apunta al sidecar en vez de copiar cache/rama."
   },
   "_orphanAllowlist_que": "Sidecars GENERADOS por session-handoff (gitignored). Van en allowlist porque el gate #10 NO PUEDE verlos: su regex de aristas exige que el nombre empiece por caracter de palabra y estos empiezan por punto. El RUTEO real si existe: fila en el §0 de CLAUDE.md. Arreglo de fondo (kernel #17-bis): admitir el punto inicial en edgeRe.",
   "noCap": {
@@ -158,5 +169,7 @@
     "docs/skills-inventory.md": "Registro 1:1 con las carpetas de skills/ — su tamaño lo fija el inventario real, no una decisión editorial. Lo vigila el gate #6."
   },
   "_caps_que": "Topes por-repo. Cada neurona tiene cap MEDIDO (tamano real + ~35% de holgura) o entrada en noCap CON RAZON — nunca por omision (chequeo #23, kernel v1.7.0). Los caps NO se inventan: inmobiliaria ADR §74.3/§75.4 documenta como una cifra a ojo creo dos veces un gate bloqueante falso. Los dos ejes se derivan uno del otro (lines = chars/densidad-real) para que ambos aprieten en el mismo punto: un par incoherente hace que dispare el eje equivocado (N2-13 de la auditoria de insemastereo, inmobiliaria §77.5). El cap de CHARS es el vinculante y NO se toca.",
-  "lastOffsiteBackup": "2026-07-23"
+  "lastOffsiteBackup": "2026-08-28",
+  "skillDriftBaseline": 15,
+  "_skillDriftBaseline_que": "Deuda CONGELADA de skills portables con contenido DERIVADO de la copia que se carga (~/.claude), medida el 2026-08-27 con el fin de linea NORMALIZADO —como la mide el gate 6b desde v1.24.0—. Trinquete: solo puede bajar; una NUEVA bloquea. Al tocar una skill portable re-copia AMBAS (§33) y baja este numero: subirlo es rendirse."
 }

@@ -55,3 +55,14 @@ permissions", ruido). Fix central en `js/admin/error-format.js` (`errorMessage`)
 callsites: la condición prefijada seguía dando falso, así que el arreglo va en la rama a la que
 SIEMPRE se cae. Corolario portable: un helper puro atrapado dentro de un módulo con DOM/SDK es un
 helper sin test → extraerlo (`*-format.js`) es parte del fix.
+
+---
+
+> Lote 9 · migrado 2026-09-01 · 1 lección.
+
+---
+
+> Origen: BERS `docs/30-LECCIONES.md` (cuerpo Y titular en la MADRE, sin hoja hija) · §155 es el único §NN que cita su cuerpo (allí se refutó «la caja no cabe en el header» con esta receta) · migrado 2026-09-01 lote 9
+
+### L-05: Preview headless (Claude Preview MCP) no recalcula estilos dinámicos
+Síntoma: `getComputedStyle` da el snapshot inicial; IntersectionObserver y **`requestAnimationFrame` NO disparan si la pestaña está `hidden`** (→ el código en rAF, p.ej. wiring, no auto-corre; `renderAll()` síncrono SÍ pinta); `preview_screenshot` hace timeout. **Receta**: verifica lo dinámico por CÓDIGO + DOM (`preview_eval`) o invoca el handler a mano (`import()`+call); **layout/fit** con `preview_resize` + `scrollWidth-clientWidth`/`getBoundingClientRect`/`getComputedStyle.display` (determinista, sin captura — así se refutó "la caja no cabe en el header", §155); NO por screenshot ni post-mutación. Lo visual real, en `npm run dev`/deploy.

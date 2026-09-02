@@ -15,7 +15,7 @@ Las doctrinas de diseño/CSS (arquitectura CSS modular · estética editorial pr
 ## 💻 Gotchas Técnicas y Reglas de Código
 
 ### L-01: iOS Safari Scroll Lock en Drawers ⇒ **migrada al maestro**: [[BERS:L-01]]
-Cuerpo íntegro en `_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (punto de retorno del ABORT).
+Cuerpo íntegro en `/_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (raíz del repo · punto de retorno del ABORT).
 
 ### L-02: Caché del Service Worker y Evitación de FOUC
 *   La versión de caché se incrementa en `public/sw.js` (ej. `bersaglio-v3` ➔ `bersaglio-v4`).
@@ -30,7 +30,7 @@ Cuerpo íntegro en `_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (punto de retorno del
 *   Si se altera esta estructura, se pueden bloquear clicks en toda la parte superior del sitio web.
 
 ### L-83: Dinero + listeners = jamás decidir en automático sobre foto incompleta (traslado duplicado $5.6M) ⇒ **migrada al maestro**: [[BERS:L-83]]
-Cuerpo íntegro en `_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (punto de retorno del ABORT).
+Cuerpo íntegro en `/_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (raíz del repo · punto de retorno del ABORT).
 
 ### L-82: HUECO EN BLANCO en carga fría → SKELETON (reusa el componente real, no reserva-en-blanco); NO acelerar con live-upgrade sobre PRECIOS (bait-and-switch). → ADR §178
 ### L-86: Cuando un flujo gana un LIBRO nuevo, el camino de DESHACER lo hereda en el MISMO commit — y un vigilante que compara cada libro consigo mismo jamás ve una fuga ENTRE libros. → `35-LECCIONES-DINERO`
@@ -57,8 +57,8 @@ Cuerpo íntegro en `_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (punto de retorno del
 ### L-63: Dos flotantes `fixed` en la misma esquina (cookie banner ↔ FAB asesoría) se pisan → el consentimiento manda; bandera `body.bj-cookie-active` + el FAB cede por CSS (regla después de `.is-revealed` gana por orden) + banner z-210 > FAB z-200 → §156.19
 ### L-62: crash pinch-zoom iOS = MEMORIA; fix = RESTAR capas en móvil (content-visibility + quitar `filter:blur`), NUNCA promover GPU → §156.18
 ### L-61: Artefactos del SSG (`dist/`) → verificar con `vite preview`, NO el dev server (sirve la fuente). → `32-LECCIONES-CARGA`
-### L-05: Preview headless (Claude Preview MCP) no recalcula estilos dinámicos
-Síntoma: `getComputedStyle` da el snapshot inicial; IntersectionObserver y **`requestAnimationFrame` NO disparan si la pestaña está `hidden`** (→ el código en rAF, p.ej. wiring, no auto-corre; `renderAll()` síncrono SÍ pinta); `preview_screenshot` hace timeout. **Receta**: verifica lo dinámico por CÓDIGO + DOM (`preview_eval`) o invoca el handler a mano (`import()`+call); **layout/fit** con `preview_resize` + `scrollWidth-clientWidth`/`getBoundingClientRect`/`getComputedStyle.display` (determinista, sin captura — así se refutó "la caja no cabe en el header", §155); NO por screenshot ni post-mutación. Lo visual real, en `npm run dev`/deploy.
+### L-05: Preview headless (Claude Preview MCP) no recalcula estilos dinámicos ⇒ **migrada al maestro**: [[BERS:L-05]]
+Cuerpo íntegro en `/_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (raíz del repo · punto de retorno del ABORT).
 
 ### L-58: Verificar UI dinámica con EMULADOR + seed (prod vacío o L-05 te limita)
 El sitio en dev conecta SOLO a emuladores (`firebase-config.js`, hostname localhost). Receta: (1) `firebase emulators:start --only firestore`; (2) `FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 node functions/seed-piezas.mjs` (seed idempotente doc-id=slug, aborta sin la env var); (3) `npm run dev` + `preview_eval` lee CTAs/hrefs/dataLayer. **Gotcha carrera §123.4**: el 1er snapshot de `data.load()` puede resolver ANTES de suscribir `onChange(refresh)` → home/ficha en skeleton; para VERIFICAR fuerza un refresh (toggle wishlist/`refreshFeatured()`); en prod no pasa. Piezas `seedDemo:true` vivieron en prod (excepción §121) hasta 2026-06-27 BORRADAS. **Alternativa sin emulador (§143)**: Chrome REAL → `import('/js/core/data.js')` → `data._pieces=[…]`+`_loaded=true`+`data._notify()`. → ADR §120 · `[[feedback_no_demo_en_index]]`

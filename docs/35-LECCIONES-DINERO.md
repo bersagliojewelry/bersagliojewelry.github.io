@@ -10,7 +10,7 @@
 > Categoría en crecimiento: F-COMPRAS, F-REPORTES y apartados escribirán aquí.
 
 ### L-84: El `code` de un callable llega PREFIJADO — toda tabla por `code` falla en SILENCIO (TODO-79)
-⇒ **Migrada al maestro** (F2 lote 2): [[BERS:L-84]] · cuerpo íntegro en `_legacy/LECCIONES-MIGRADAS-MAESTRO.md`.
+⇒ **Migrada al maestro** (F2 lote 2): [[BERS:L-84]] · cuerpo íntegro en `/_legacy/LECCIONES-MIGRADAS-MAESTRO.md` (raíz del repo).
 
 ### L-85: Idempotencia con destino TEMPORAL — ancla el destino, no lo re-resuelvas
 

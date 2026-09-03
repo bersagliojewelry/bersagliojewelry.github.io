@@ -37,8 +37,13 @@
 //       v1.31.0 (C4-2 · D-C4-5): el schema (#15) conoce `skillFiles` — la lista explícita de skills
 //       gobernadas que `brain:pull` reparte desde el canon de la bóveda. Sin esta línea, los cuatro
 //       repos avisarían «clave desconocida» en cada commit, que es como se apaga un gate por hartazgo.
+//       v1.32.0 (C4-3/§7): (24) el canario deja de INFERIR el arranque de los commits y MIDE el
+//       CABLEADO del SessionStart (settings.json + core.hooksPath + pre-commit que llama a
+//       brain-check); `BOOT_CANARY_SKIP` retirado. Y `pull.mjs` —que viaja junto al canónico, no
+//       dentro de los repos— reparte skills con exit 1 si dejó alguna sin repartir (D-C4-8) y
+//       rechaza en ROJO un `manifest.repo` que no sea una punta conocida (D-C4-12).
 // ===========================================================
-const KERNEL_VERSION = '1.31.0';
+const KERNEL_VERSION = '1.32.0';
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 import { homedir } from 'os';
 import { join, dirname } from 'path';
@@ -1024,63 +1029,81 @@ else {
   }
 }
 
-// 24) 🐤 Canario de boot (bajado del `boot-gate.mjs` instance-side, v1.8.0) [--full]
-//     session-handoff --boot-echo escribe docs/.boot-marker en CADA SessionStart. Si nadie lo
-//     escribió en 48h, los hooks del harness están MUERTOS (máquina nueva, settings.json roto,
-//     node fuera de PATH): el cerebro arranca sin signos vitales y NADA lo detecta (A-03).
-//     Kernel-safe ×repos: solo aplica donde el contrato está INSTALADO (settings.json con
-//     session-handoff) — un repo sin ese hook no debe bloquearse por un marker que nada escribe.
-head('\n24) Canario de boot (¿los hooks del harness siguen vivos?):');
+// 24) 🐤 Canario de boot — el CABLEADO del SessionStart, MEDIDO (v1.32.0) [--full]
+//     Existe por A-03: si los hooks del harness están muertos (máquina nueva, settings.json roto,
+//     node fuera de PATH), el cerebro arranca sin signos vitales y NADA lo detecta.
+//
+//     LO QUE CAMBIÓ EN v1.32.0, Y POR QUÉ. Desde v1.8.0 este gate INFERÍA el arranque a partir de
+//     los commits: «hubo actividad git posterior al marker ⇒ alguien trabajó aquí en sesión ⇒ los
+//     hooks no dispararon». La premisa era falsa y se rompió dos veces. La primera, con la
+//     distribución del kernel compartido (§216.9), que se parcheó filtrando los mensajes con la
+//     palabra «kernel». La segunda, el 2-sep-2026, con la orden de merges del dueño: 54 entradas de
+//     reflog en CARS —merges, no kernel— dejaron el canario en rojo en tres repos a la vez. Y la
+//     salida que se propuso entonces —correr `session-handoff --boot-echo` a mano— compra siete días
+//     y no arregla nada (INMO:M-25: sin mecanismo, «ya lo hicimos» es una nota).
+//
+//     El canario NO se apaga: deja de INFERIR y pasa a MEDIR exactamente lo que quería saber, que es
+//     si el contrato está CABLEADO. Son tres mitades verificables con `fs`, sin adivinar intención:
+//       (1) `.claude/settings.json` invoca `session-handoff`   → el SessionStart existe;
+//       (2) `core.hooksPath` apunta a una carpeta con `pre-commit` → los hooks de git están cableados;
+//       (3) ese `pre-commit` invoca `brain-check`               → y el linter corre de verdad.
+//     El marcador (`docs/.boot-marker`) pasa a ser INFORMACIÓN —cuándo arrancó por última vez una
+//     sesión aquí— y deja de ser el veredicto: un repo que nadie abre en un mes, con el cableado
+//     intacto, NO tiene una avería. Con esto `BOOT_CANARY_SKIP` sobra y se retira: era ceguera
+//     permanente para tapar una premisa mala, y la única forma de apagar el canario vuelve a ser la
+//     explícita —`harnessCanary: false` con su razón en el manifest—.
+head('\n24) Canario de boot (¿está CABLEADO el SessionStart? — se mide, no se infiere):');
 if (BOOT) head('  ⏭️  omitido en --boot (lo está escribiendo esta misma sesión)');
 else {
-  const settingsP = join(ROOT, '.claude', 'settings.json');
-  const wired = existsSync(settingsP) && read(settingsP).includes('session-handoff');
-  // v1.10.3 (ADR 85, U-13): el gate le preguntaba al PROPIO archivo vigilado si debia
-  // vigilarlo. Borra el hook de settings.json y el canario contestaba 'no aplica en este
-  // repo': falla ABIERTO ante justo la regresion que existe para cazar. La declaracion sube
-  // al manifest (como bootCharsTarget en #15), asi apagarlo es una decision EXPLICITA.
+  // v1.10.3 (ADR 85, U-13): el gate le preguntaba al PROPIO archivo vigilado si debía vigilarlo.
+  // Borra el hook de settings.json y el canario contestaba «no aplica en este repo»: falla ABIERTO
+  // ante justo la regresión que existe para cazar. La declaración vive en el manifest.
   const declared = manifest.harnessCanary === true;
   if (!declared) info(manifest.harnessCanary === false
     ? 'canario de boot APAGADO por declaración EXPLÍCITA (harnessCanary:false) — su razón debe estar en el manifest'
     : 'canario de boot no declarado en el manifest (harnessCanary) — no aplica en este repo');
-  else if (!wired) warn('el manifest declara harnessCanary pero .claude/settings.json NO invoca session-handoff → el hook SessionStart está roto o borrado y el cerebro arranca SIN signos vitales. Recablea el hook, o pon harnessCanary:false con su razón.');
   else {
+    const settingsP = join(ROOT, '.claude', 'settings.json');
+    const sessionStart = existsSync(settingsP) && read(settingsP).includes('session-handoff');
+    const gitCfg = join(ROOT, '.git', 'config');
+    // En un worktree (o un submódulo) `.git` es un FICHERO y no hay `config` que leer: la mitad de
+    // git NO se puede medir aquí. Eso sale DEGRADADO, nunca rojo — un gate que acusa por no poder
+    // mirar es el mismo error que el que absuelve por no poder mirar, con el signo cambiado. Es la
+    // misma salida que ya da el #25, y por lo mismo.
+    const cfg = existsSync(gitCfg) ? read(gitCfg) : null;
+    const mHooks = cfg && cfg.match(/^\s*hooksPath\s*=\s*(.+)$/m);
+    const hooksDir = mHooks ? mHooks[1].trim() : join('.git', 'hooks');
+    const hookP = join(ROOT, hooksDir, 'pre-commit');
+    const preCommit = existsSync(hookP);
+    const preCommitLlama = preCommit && read(hookP).includes('brain-check');
+    const roto = [];
+    if (!sessionStart) roto.push('.claude/settings.json NO invoca session-handoff (no hay hook SessionStart)');
+    if (cfg !== null) {
+      if (!preCommit) roto.push(`no hay pre-commit en "${hooksDir}/"`);
+      else if (!preCommitLlama) roto.push(`"${hooksDir}/pre-commit" existe pero NO invoca brain-check`);
+    }
+
+    // El marcador es INFORMACIÓN, no veredicto. Lo escribe el `SessionStart` (`session-handoff
+    // --boot-echo`) en cada arranque y lo refresca el vigía de la bóveda en los repos cuyo cableado
+    // acaba de verificar — así que su edad dice «cuándo se supo por última vez que esto vivía», no
+    // «cuándo trabajó alguien aquí». Se nombra tal cual para que nadie lea de más.
     const markerP = join(DOCS, '.boot-marker');
     const ageH = existsSync(markerP) ? (Date.now() - statSync(markerP).mtimeMs) / 3.6e6 : Infinity;
-    // v1.10.1: el canario comparaba el marker contra el RELOJ, y un repo en PAUSA lo incumple
-    // siempre — insema lleva semanas parado a propósito y el gate gritaba «hooks muertos» cada
-    // corrida. Un guardián que ladra a un repo que nadie tocó enseña a ignorarlo, y entonces no
-    // avisa el día que importa. Ahora compara contra la ACTIVIDAD REAL del repo (`.git/logs/HEAD`,
-    // leído con fs, sin child_process): si hubo commits DESPUÉS del último marker, estuviste
-    // trabajando aquí y los hooks no dispararon → eso sí es la avería. Sin actividad → informativo.
-    const reflog = join(ROOT, '.git', 'logs', 'HEAD');
-    const actividadH = existsSync(reflog) ? (Date.now() - statSync(reflog).mtimeMs) / 3.6e6 : Infinity;
-    // v1.16.0 (§216.9): la premisa «hubo commits ⇒ alguien trabajó AQUÍ en sesión» la rompió una
-    // práctica adoptada DESPUÉS de escribir el gate: la distribución del kernel compartido, que
-    // commitea en un repo hermano desde la sesión de OTRO. En un repo congelado eso deja al canario
-    // gritando para siempre y bloqueando cada commit. No se apaga (BOOT_CANARY_SKIP es ceguera
-    // permanente): se MIDE. El reflog lleva el mensaje de cada entrada, así que se puede preguntar
-    // si TODO lo posterior al marker fue distribución de kernel — y entonces no es trabajo aquí.
-    // El predicado NO se adivinó: se MIDIÓ sobre los cuatro repos hermanos. Esos commits usan tres
-    // prefijos distintos —`chore(kernel)`, `chore(cerebro)`, `docs(cerebro)`— y lo ÚNICO que los 15
-    // comparten es la palabra «kernel» en el mensaje. La primera versión de este gate casó solo con
-    // `chore(kernel)` (una convención recordada de memoria) y dejó fuera al repo que más lo
-    // necesitaba. La guarda `length > 0` importa: `[].every()` es true y convertiría «sin actividad»
-    // en «solo kernel».
-    const marcaMs = existsSync(markerP) ? statSync(markerP).mtimeMs : 0;
-    const posteriores = (existsSync(reflog) ? read(reflog).split('\n') : [])
-      .filter((l) => { const t = l.match(/>\s(\d{9,})\s[+-]\d{4}\t/); return t && Number(t[1]) * 1000 > marcaMs; });
-    const soloKernel = posteriores.length > 0 && posteriores.every((l) => /\bkernel\b/i.test(l));
-    const trabajandoAqui = actividadH < ageH && !soloKernel;   // git posterior al arranque Y no es distribución
-    // Umbral CRÓNICO (168h), no agudo: un repo hermano se mantiene a ráfagas desde la sesión de
-    // OTRO —ahí el pre-commit sí corre; lo que no dispara es el SessionStart, que no existe— y con
-    // 48h eso gritaba en cada mantenimiento cruzado. Una semana de actividad sin un solo arranque
-    // ya no es un patrón de trabajo: es el contrato roto.
-    if (ageH > 168 && trabajandoAqui && !process.env.BOOT_CANARY_SKIP)
-      warn(`una SEMANA de actividad git (última hace ${Math.round(actividadH)}h) sin que ningún SessionStart escriba docs/.boot-marker (${ageH === Infinity ? 'NUNCA' : Math.round(ageH) + 'h'}) — los hooks del harness NO disparan aquí. Verifica .claude/settings.json (o: node scripts/session-handoff.mjs --boot-echo). Intencional → BOOT_CANARY_SKIP=1.`);
-    else if (ageH > 48)
-      info(`canario en reposo: marker de hace ${ageH === Infinity ? "nunca" : Math.round(ageH) + "h"}${soloKernel ? ` — las ${posteriores.length} entrada(s) de git posteriores son SOLO distribución de kernel (no es trabajo en este repo, §216.9)` : trabajandoAqui ? " (mantenido desde otra sesión: el pre-commit sí corre)" : " y sin actividad git posterior"}`);
-    else ok(`canario vivo (marker de hace ${Math.round(ageH)}h)`);
+    const edad = ageH === Infinity ? 'sin marcador: nadie ha arrancado ni verificado esto todavía'
+      : ageH < 48 ? `último latido (SessionStart o vigía) hace ${Math.round(ageH)}h`
+      : `último latido (SessionStart o vigía) hace ${Math.round(ageH / 24)}d`;
+
+    if (roto.length) {
+      warn(`el manifest declara harnessCanary pero el cableado del arranque está ROTO (${roto.length}/${cfg === null ? 1 : 3} mitades medibles): ${roto.join(' · ')}. El cerebro arrancaría SIN signos vitales y nadie lo notaría. Recablea (settings.json + \`git config core.hooksPath githooks\` + cp githooks/pre-commit), o pon harnessCanary:false con su razón. [${edad}]`);
+    } else if (cfg === null) {
+      // Un worktree (o un submódulo) no tiene `.git/config`: la mitad de git NO se puede medir aquí.
+      // Sale DEGRADADO, jamás verde y jamás rojo — acusar por no poder mirar es el mismo error que
+      // absolver por no poder mirar, con el signo cambiado. Misma salida que el #25, y por lo mismo.
+      info(`canario DEGRADADO — el SessionStart SÍ está en settings.json, pero sin .git/config legible (¿worktree o submódulo?) el cableado de los hooks de git no se puede verificar desde aquí. [${edad}]`);
+    } else {
+      // Las tres mitades presentes: el contrato está instalado. El marcador se DICE, no juzga.
+      ok(`cableado COMPLETO (SessionStart + core.hooksPath="${hooksDir}" + pre-commit que llama a brain-check) — ${edad}`);
+    }
   }
 }
 

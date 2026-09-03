@@ -48,6 +48,7 @@
 | `search-console-setup-y-diagnostico` | Alta GSC + árbol de diagnóstico "no salgo en Google" + bucle mensual + API histórico. | ✅ |
 | `product-feeds` | Feeds en el build por vertical (Merchant/Vehicle+Local Inventory/FincaRaíz-Metrocuadrado) — empujar catálogo. | ✅ |
 | `image-pipeline` | WebP/AVIF + srcset + `width/height` (CWV) + `ImageObject` + alt real + EXIF geo opcional. NUNCA upscaling. | ✅ |
+| `image` | Generación IA de imágenes de marketing (piezas del Brief; default Canva MCP). ≠ `image-pipeline` (optimización build — no duplicar). | ✅ |
 | `optimizacion-rendimiento-web` | **Playbook agéntico de rendimiento web** (medir→priorizar→implementar réplica-EXACTA→verificar LIVE→iterar por página): self-host fuentes+`unicode-range` · dieta JS · critical-path CSS · imágenes/LCP · SW/cache · diferir terceros. ORQUESTA las hermanas (SEO/imágenes/`validacion-live-chrome`/`caza-bugs`), no las duplica. VIVA (cada página enriquece el catálogo) + script `fetch-fonts.mjs`. Portable ×4. Origen §297 cars (self-host fonts → 0 req a Google, verif live). | ✅ repo+user |
 | `seo-auditor` *(agente)* | Auditor read-only de visibilidad: verifica el HTML del build vs las reglas (schema-en-HTML, cero-demo, noindex, NAP, CWV). | ✅ agente |
 

@@ -4,6 +4,7 @@ description: Hornear HTML estático REAL por ítem en el BUILD para hosting est�
 actualizada: 2026-09-02
 reglas: 11
 lecciones: []
+origen: propia
 ---
 
 # 🏭 SSG Static Prerender — hornear HTML real en el build (la base de la visibilidad)

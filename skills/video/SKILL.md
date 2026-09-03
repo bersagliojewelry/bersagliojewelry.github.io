@@ -6,6 +6,7 @@ metadata:
 actualizada: 2026-09-02
 reglas: 31
 lecciones: []
+origen: coreyhaines31/marketingskills@2.8.12
 ---
 
 > **⚠️ VENDORIZADA 2026-07-18 (ADR §35)** del repo *marketingskills* de Corey Haines (licencia MIT — ver

@@ -4,6 +4,7 @@ description: Auditoría profunda Nivel-2 del cerebro documental del proyecto act
 actualizada: 2026-09-02
 reglas: 11
 lecciones: [G:G-001, G:G-002, G:G-004, G:G-005, G:G-010, G:G-011, G:G-013, G:G-014]
+origen: propia
 ---
 
 # 🔬 Auditoría de Cerebro — Nivel 2 (semántica)

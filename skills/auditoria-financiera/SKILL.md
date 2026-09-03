@@ -4,6 +4,7 @@ description: Usar cuando haya que AUDITAR flujos de dinero de un sistema (POS/ca
 actualizada: 2026-09-02
 reglas: 13
 lecciones: []
+origen: propia
 ---
 
 # 🔍 Auditoría financiera de sistemas — método forense anti-fugas

@@ -4,6 +4,7 @@ description: Usar SIEMPRE al estrenar/fix/mejorar código que REEMPLAZA algo vie
 actualizada: 2026-09-02
 reglas: 19
 lecciones: []
+origen: propia
 ---
 
 # 🧟 Anti-código-muerto — lo nuevo REEMPLAZA lo viejo, no se apila (anti Knight Capital)

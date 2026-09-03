@@ -1,9 +1,10 @@
 ---
 name: session-report
 description: Generate an explorable HTML report of Claude Code session usage (tokens, cache, subagents, skills, expensive prompts) from ~/.claude/projects transcripts.
-actualizada: 2026-09-02
-reglas: 5
+actualizada: 2026-09-03
+reglas: 6
 lecciones: []
+origen: anthropics/claude-plugins-official@2026-04-10
 ---
 
 # Session Report
@@ -43,3 +44,16 @@ Produce a self-contained HTML report of Claude Code usage and save it to the cur
 - Keep commentary terse and specific — reference actual project names, numbers, timestamps from the JSON.
 - `top_prompts` already includes subagent tokens and rolls task-notification continuations into the originating prompt.
 - If the JSON is >2MB, trim `top_prompts` to 100 entries and `cache_breaks` to 100 before embedding (they should already be capped).
+
+## Regla propia — riesgo por CÓDIGO (C4-4 · DICTAMEN-C4 §8 D-C4-20, 2026-09-03)
+
+1. **Todo refresco de `analyze-sessions.mjs` se lee LÍNEA A LÍNEA antes de adoptarlo, y se ejecuta después.**
+   Ésta es la ÚNICA skill del canon con código ejecutable propio, y ese código **lee todo
+   `~/.claude/projects`** —los transcripts completos de todas las sesiones de este PC, de los cuatro
+   proyectos— y embebe `top_prompts` (texto literal de esos prompts) en el HTML que genera. O sea: el peor
+   sitio del canon para un `git pull` de confianza. Antes de aceptar una versión nueva del `.mjs` desde
+   cualquier upstream: se lee entero, se comprueba que **no sale nada a la red** (`fetch`, `http`,
+   `child_process`, endpoints de telemetría), que **no escribe fuera del cwd**, y que sigue sin subir el HTML
+   a ningún sitio. Un informe con transcripts dentro es un fichero con secretos dentro: **no se commitea, no
+   se publica y no se comparte** sin leer qué acabó en él. *(procedencia: DICTAMEN-C4 §8 D-C4-20 — el riesgo
+   ALTO medido por C4-4, el mayor de las 43.)*

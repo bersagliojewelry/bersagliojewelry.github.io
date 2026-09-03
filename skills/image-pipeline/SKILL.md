@@ -4,6 +4,7 @@ description: Optimizar imágenes en el BUILD para velocidad (Core Web Vitals) + 
 actualizada: 2026-09-02
 reglas: 8
 lecciones: []
+origen: propia
 ---
 
 # 🖼️ Image Pipeline — imágenes rápidas + indexables + locales

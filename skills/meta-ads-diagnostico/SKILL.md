@@ -8,6 +8,7 @@ metadata:
 actualizada: 2026-09-02
 reglas: 3
 lecciones: []
+origen: propia
 ---
 
 # Diagnóstico de Campañas Meta Ads

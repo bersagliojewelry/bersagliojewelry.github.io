@@ -3,9 +3,10 @@ name: ad-creative
 description: "When the user wants to generate, iterate, or scale ad creative — headlines, descriptions, primary text, or full ad variations — for any paid advertising platform. Also use when the user mentions 'ad copy variations,' 'ad creative,' 'generate headlines,' 'RSA headlines,' 'bulk ad copy,' 'ad iterations,' 'creative testing,' 'ad performance optimization,' 'write me some ads,' 'Facebook ad copy,' 'Google ad headlines,' 'LinkedIn ad text,' 'static ads,' 'static ad concepts,' 'ad templates,' 'iMessage ad,' 'chat reveal ad,' 'fake DM ad,' 'ChatGPT ad,' 'Apple Notes ad,' 'AirDrop ad,' 'creative strategy,' 'creative roadmap,' 'creative retro,' 'hook writing,' 'creative review page,' 'present ad creative for approval,' 'motion video ad,' 'faceless video ad,' 'animated explainer ad,' 'motion collage ad,' or 'I need more ad variations.' Use this whenever someone needs to produce ad copy at scale or iterate on existing ads. For campaign strategy and targeting, see ads. For landing page copy, see copywriting."
 metadata:
   version: 2.8.0
-actualizada: 2026-09-02
-reglas: 17
+actualizada: 2026-09-03
+reglas: 20
 lecciones: []
+origen: coreyhaines31/marketingskills@v2.11.0
 ---
 
 > **⚠️ VENDORIZADA 2026-07-18 (ADR §35)** del repo *marketingskills* de Corey Haines (licencia MIT — ver
@@ -15,6 +16,9 @@ lecciones: []
 > **Capa ALTORRA obligatoria**: español · inmobiliaria B2C Cartagena · $0/free-tier · voz = catalogo-voz-altorra ·
 > compliance = COLOMBIA (Ley 1581/2012, SIC; NO portar CAN-SPAM/TCPA/GDPR como si aplicaran) · pauta → guardarraíles
 > de marketing-psicologico-conversion §10 (RNT/matrícula/sin cifras inventadas/Housing verificado §34).
+> **C4-4 (2026-09-03, D-C4-13)**: entran del upstream v2.8.2 `references/meta-creative-formats.md` (taxonomía S→F
+> de ~51 formatos Meta) y `references/short-form-video-specs.md` (spec vertical 9:16 + librería creator/UGC), ambos con
+> su cabecera de procedencia. Reglas propias nuevas al final → **§ Puente ALTORRA**.
 > REFRESH v1.x→2.8.0. Lo nuevo clave: generación GROUNDED anti-invención (alineado con L-29: cero specs/cifras inventadas), hook-system (sirve también para TikTok/IG orgánico), 15 plantillas estáticas, motion-video faceless de bajo costo, página HTML de aprobación de creativos.
 
 # Ad Creative
@@ -431,3 +435,35 @@ node tools/clis/google-ads.js reports get --type ad_performance --date-range las
 - **ab-testing**: For structuring creative tests with statistical rigor
 - **marketing-psychology**: For psychological principles behind high-performing creative
 - **copy-editing**: For polishing ad copy before launch
+
+## Puente ALTORRA — reglas propias (C4-4 · DICTAMEN-C4 §8 D-C4-13, 2026-09-03)
+
+Las tres reglas de abajo son las **3 métricas de evaluación nuevas** que el upstream v2.8.2 añadió a su
+`evals` (nuestro fichero tenía 11 casos; el del origen, 15) — convertidas aquí en reglas ejecutables porque
+son el criterio con el que el propio origen juzga si esta skill contestó bien. Se adoptan **solo las tres
+que apoyan los dos `references` que sí vendorizamos**; la cuarta (eval 13, tiers dentro de
+`static-ad-templates.md`) NO entra: ese fichero se quedó en v2.8.0 y una regla que apunte a contenido que no
+tenemos es una regla que miente. *(procedencia de las tres: upstream `skills/ad-creative/evals/evals.json`,
+tag `v2.11.0`, consultado el 2026-09-03 — MIT © 2025 Corey Haines.)*
+
+1. **Un vídeo 9:16 no se entrega sin la BANDA SEGURA ni sin la decisión de audio.** Toda pieza vertical para
+   Reels/TikTok se compone dentro de los **720×1200 centrados** (220 px libres arriba, 500 abajo, 180 a cada
+   lado): fuera de ahí la UI de la app tapa el texto y el anuncio se entregó roto sin que nadie lo viera.
+   Subtítulos **estáticos**, relleno blanco con contorno negro y sin píldora de fondo — los animados se leen
+   como «hecho por una marca». Y con cada entrega va la decisión explícita **orgánico vs. pauta**: en orgánico
+   se exporta SIN música incrustada y el sonido de tendencia se pega en la app; en pauta se incrusta.
+   Responder «sí, hacemos un vertical» sin estas tres cosas es una respuesta incompleta.
+   *(→ `references/short-form-video-specs.md` Parte 1.)*
+2. **«¿Qué formato hago ahora?» se contesta con la taxonomía, no con una lluvia de ideas.** Antes de escribir
+   una sola línea de copy, sitúa la petición en el mapa: ¿hace falta un **unicorn scaler** (abre público frío
+   nuevo) o un **supporting cast** (convierte a quien ya te conoce)? Nombra los de tier S/A que aplican y
+   **nombra explícitamente los que NO** (press, podcast salvo show conocido, notes-app/UX falso-nativo: no
+   convierten y confunden al algoritmo). Si el alcance mensual viene cayendo, la respuesta lleva formatos con
+   creador delante — ahí el formato ES la segmentación. *(→ `references/meta-creative-formats.md`.)*
+3. **Para escalar en frío se eligen por TIER y por nicho, y el gate legal va ANTES del guion, no después.**
+   En nichos de confianza (salud, finanzas, inmobiliaria, joyería) los formatos que escalan son VSL (educa
+   antes de vender) y Authority (un experto real) — y los dos son justo los que más cerca están del riesgo
+   regulatorio: credenciales inventadas, promesas de resultado o cifras sin fuente. Aquí eso no es «cuidado
+   con las claims»: es **gate `legal-colombia` + cero cifras inventadas** (`marketing-psicologico-conversion`
+   §10, RNT/matrícula) antes de redactar. El fundador puede protagonizar (suele ser el primer ganador), con
+   los arcos de vlog del reference. *(→ `references/short-form-video-specs.md` Parte 2 + Founder.)*

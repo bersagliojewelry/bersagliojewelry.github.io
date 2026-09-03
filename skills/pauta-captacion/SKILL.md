@@ -4,6 +4,7 @@ description: "ORQUESTADORA de la pauta de captación de propietarios de ALTORRA 
 actualizada: 2026-09-02
 reglas: 12
 lecciones: []
+origen: propia
 ---
 
 # 📣 Pauta de Captación ALTORRA — orquestadora (Meta → Google)

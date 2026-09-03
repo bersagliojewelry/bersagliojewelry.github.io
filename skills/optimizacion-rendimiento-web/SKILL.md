@@ -9,6 +9,7 @@ allowed-tools: Read Write Edit Glob Grep Bash
 actualizada: 2026-09-02
 reglas: 10
 lecciones: []
+origen: propia
 ---
 
 # ⚡ Optimización de Rendimiento Web — playbook agéntico, medible y verificado en vivo

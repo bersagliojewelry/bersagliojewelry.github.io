@@ -4,6 +4,7 @@ description: "Piensa como ARQUITECTO DE SOFTWARE ANTES de escribir o corregir c�
 actualizada: 2026-09-02
 reglas: 24
 lecciones: []
+origen: propia
 ---
 
 # 🏛️ Arquitecto de Software — decide antes de codear

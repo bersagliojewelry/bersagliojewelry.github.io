@@ -4,6 +4,7 @@ description: El cerebro semántico de la visibilidad — qué structured data (J
 actualizada: 2026-09-02
 reglas: 8
 lecciones: []
+origen: propia
 ---
 
 # 🧠 Semantic Schema + AEO — structured data + ser citado por la IA

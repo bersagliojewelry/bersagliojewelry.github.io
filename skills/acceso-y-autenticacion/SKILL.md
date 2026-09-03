@@ -4,6 +4,7 @@ description: Diseñar o auditar el sistema de ingreso de una aplicación — pue
 actualizada: 2026-09-02
 reglas: 24
 lecciones: []
+origen: propia
 ---
 
 # 🚪 Acceso y autenticación

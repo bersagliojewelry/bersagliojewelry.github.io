@@ -4,6 +4,7 @@ description: Activar cuando el usuario pida ayuda recibiendo, procesando o valid
 actualizada: 2026-09-02
 reglas: 8
 lecciones: []
+origen: propia
 ---
 
 # Skill: Wompi Webhooks Validator

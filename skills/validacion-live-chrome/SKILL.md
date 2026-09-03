@@ -4,6 +4,7 @@ description: Usar DESPUÉS de un merge/deploy cuando los cambios YA están EN VI
 actualizada: 2026-09-02
 reglas: 26
 lecciones: []
+origen: propia
 ---
 
 # 🔭 Validación Live vía extensión "Claude in Chrome" (post-merge)

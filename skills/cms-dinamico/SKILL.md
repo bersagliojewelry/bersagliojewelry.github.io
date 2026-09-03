@@ -4,6 +4,7 @@ description: Usar al construir o EXTENDER un CMS donde el contenido de la web p�
 actualizada: 2026-09-02
 reglas: 11
 lecciones: []
+origen: propia
 ---
 
 # 🧩 CMS dinámico — convertir contenido hardcoded en administrable

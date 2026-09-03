@@ -16,6 +16,7 @@ description: >-
 actualizada: 2026-09-02
 reglas: 5
 lecciones: []
+origen: propia
 ---
 
 # Accessibility Audit (WCAG 2.2 AA)

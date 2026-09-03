@@ -1,3 +1,10 @@
+> **⚠️ REFRESCO 2026-09-03 (C4-4 · DICTAMEN-C4 §8 D-C4-16)** — fichero traído del upstream tal cual.
+> Repo: `github.com/anthropics/claude-plugins-official` · ruta:
+> `plugins/claude-code-setup/skills/claude-automation-recommender/references/mcp-servers.md`
+> licencia **Apache 2.0** · último cambio upstream de esta ruta: **2026-05-28** · consultado el **2026-09-03**.
+> Delta real respecto a nuestra copia: **Convex** (sección + fila de detección). Nada nuestro se pisó — esta
+> copia no llevaba capa local. Nota: aquí el backend es **Firebase**, no Convex ni Supabase.
+
 # MCP Server Recommendations
 
 MCP (Model Context Protocol) servers extend Claude's capabilities by connecting to external tools and services.
@@ -71,6 +78,18 @@ MCP (Model Context Protocol) servers extend Claude's capabilities by connecting 
 | Real-time features | Live data sync |
 
 **Value**: Claude can query tables, manage auth, and interact with Supabase storage directly.
+
+### Convex MCP
+**Best for**: Projects using Convex as the backend (reactive database + server functions + auth + storage + scheduling, all on one platform)
+
+| Recommend When | Examples |
+|----------------|----------|
+| Convex project detected | `convex` in deps, `convex/` directory present, `convex.json` at repo root |
+| Real-time / reactive UI | `useQuery` / `useMutation` / `useAction` from `convex/react` |
+| Mobile + Convex | `convex/react-native` in deps |
+| AI / chat / agent features on Convex | `@convex-dev/agent` in deps |
+
+**Value**: Claude can introspect the live deployment (tables, function specs, env vars, logs) and execute queries/mutations against it via tools like `tables`, `function-spec`, `data`, `run-once-query`, `logs`, `env list/set/get`. Run via `npx convex mcp start`.
 
 ### PostgreSQL MCP
 **Best for**: Direct PostgreSQL database access
@@ -253,6 +272,7 @@ MCP (Model Context Protocol) servers extend Claude's capabilities by connecting 
 | Popular npm packages | context7 |
 | React/Vue/Next.js | Playwright MCP |
 | `@supabase/supabase-js` | Supabase MCP |
+| `convex` in deps, `convex/` directory, or `convex.json` | Convex MCP |
 | `pg` or `postgres` | PostgreSQL MCP |
 | GitHub remote | GitHub MCP |
 | `.linear` or Linear refs | Linear MCP |

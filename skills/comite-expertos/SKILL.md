@@ -1,9 +1,10 @@
 ---
 name: comite-expertos
 description: "Monta un comité de expertos que MEJORA ×3 la última respuesta de Claude. Infiere SOLO qué expertos convienen según el tema (no son fijos), los hace criticar y debatir, y un presidente sintetiza una versión mejor en 3 rondas. En decisiones caras de revertir, suma 2ª opinión externa (provider configurado en docs/15-CONSEJO-EXTERNO.md). GATILLOS OBLIGATORIOS: monta el comité, comité de expertos, mejora esto x3, mejórala x3, aplícale el comité, pásale el comité, tribunal de expertos, que debatan esto, mejora tu respuesta, mejora la respuesta anterior, puedes mejorar esa respuesta. GATILLOS ligeros: mejórala un poco (1 ronda), piensa críticamente y asume que cometiste un error (auto-crítica). Úsala SIEMPRE que pidan mejorar/criticar/pulir/profundizar una respuesta ya dada, o cuando una respuesta importante merezca segundo par de ojos. NO disparar para datos triviales ni tareas mecánicas."
-actualizada: 2026-09-02
-reglas: 14
+actualizada: 2026-09-03
+reglas: 15
 lecciones: []
+origen: propia
 ---
 
 # 🧠 Comité de Expertos — mejora ×3 de una respuesta
@@ -57,7 +58,25 @@ Ejemplos (orientativos, no fijos):
 (su trabajo es encontrar el fallo fatal) y **al menos uno ejecutor** (su pregunta es "¿se puede hacer
 de verdad? ¿cuál es el primer paso?"). Sin tensión, el comité solo se da palmadas y no mejora nada.
 
-Anuncia en el chat, en 1 línea, qué expertos convocaste y por qué (transparencia).
+### 0b. Los expertos se diferencian también por MÉTODO de razonamiento, no solo por tema
+
+Elegirlos por dominio (Paso 0) reparte el CONOCIMIENTO, pero no el razonamiento: tres especialistas
+distintos que razonan igual —los tres listan pros y contras, los tres ponderan igual el riesgo— producen
+tres versiones del mismo dictamen y el comité **parece** plural sin serlo. Por eso, al convocar, asigna
+también un **método** distinto a cada uno y escríbelo en su encargo. Repertorio orientativo (no fijo):
+
+- **Diagnóstico** — «¿cuál es de verdad la causa raíz?»: no acepta el problema como se lo plantean.
+- **Medición** — «¿con qué dato se comprueba esto?»: convierte cada afirmación en algo verificable.
+- **Análisis de alternativas** — «¿qué otras tres opciones había y por qué se descartaron?».
+- **Decisión bajo restricción** — «¿qué se hace con este presupuesto, este plazo y este equipo?».
+- **Premortem** — «es dentro de seis meses y esto salió mal: cuenta cómo».
+
+La **regla de tensión** de abajo (un escéptico + un ejecutor) sigue siendo obligatoria y es
+independiente: cubre la POSTURA. Ésta cubre el PROCEDIMIENTO. Un comité con tres temas y un solo método
+es un comité de uno. *(procedencia: DICTAMEN-C4 §8 D-C4-17 — idea del análogo público `council-review`
+(linaje LLM Council), que diferencia por método y no por dominio; **texto propio, cero código ajeno**.)*
+
+Anuncia en el chat, en 1 línea, qué expertos convocaste, **con qué método cada uno** y por qué (transparencia).
 
 ### Paso 1 — Ronda de expertos (subagentes en paralelo)
 

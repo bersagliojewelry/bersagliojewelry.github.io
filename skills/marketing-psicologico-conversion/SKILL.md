@@ -4,6 +4,7 @@ description: Activar cuando el usuario quiera crear guiones de video, piezas gr�
 actualizada: 2026-09-02
 reglas: 36
 lecciones: []
+origen: propia
 ---
 
 # Psicología de Conversión, Estructura de Contenido y Diseño (Marketing Avanzado)

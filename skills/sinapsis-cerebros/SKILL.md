@@ -4,6 +4,7 @@ description: Usar ANTES de re-investigar un problema TRANSVERSAL (Firebase/Fires
 actualizada: 2026-09-02
 reglas: 19
 lecciones: [G:G-001, G:G-005, G:G-007, G:G-008, G:G-009, G:G-012, G:G-013]
+origen: propia
 ---
 
 # 🧠🔗 Sinapsis cross-cerebros — consulta a los hermanos antes de re-aprender

@@ -4,6 +4,7 @@ description: Medir lo que importa en un negocio offline/bajo-consulta (joya, car
 actualizada: 2026-09-02
 reglas: 5
 lecciones: []
+origen: propia
 ---
 
 # 📊 GA4 Lead Tracking — medir el lead, no la compra (negocio offline Colombia)

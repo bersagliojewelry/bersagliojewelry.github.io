@@ -4,6 +4,7 @@ description: Activar cuando el usuario pide feedback, evalúa una idea, comparte
 actualizada: 2026-09-02
 reglas: 9
 lecciones: []
+origen: propia
 ---
 
 # Asesor crítico honesto — v2 (método, no solo tono)

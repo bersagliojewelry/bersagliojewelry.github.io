@@ -4,6 +4,7 @@ description: Skill maestro para la integración completa de la API v1 de Wompi C
 actualizada: 2026-09-02
 reglas: 7
 lecciones: []
+origen: propia
 ---
 
 # Integración Wompi Colombia API v1

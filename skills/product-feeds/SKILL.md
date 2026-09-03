@@ -4,6 +4,7 @@ description: Generar feeds de producto/inventario en el BUILD para EMPUJAR tu ca
 actualizada: 2026-09-02
 reglas: 4
 lecciones: []
+origen: propia
 ---
 
 # 📤 Product Feeds — empujar el catálogo (no esperar el rastreo)

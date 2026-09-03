@@ -4,6 +4,7 @@ description: Usar al TOCAR o ROZAR un subsistema con estado observable (render, 
 actualizada: 2026-09-02
 reglas: 66
 lecciones: [G:G-001, G:G-004, G:G-010, G:G-011, G:G-013]
+origen: propia
 ---
 
 # 🐛 Caza-bugs — recorrer el camino vivo de lo que tocas, no solo tu diff

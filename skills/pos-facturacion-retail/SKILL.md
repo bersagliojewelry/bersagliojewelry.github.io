@@ -4,6 +4,7 @@ description: Usar al DISEÑAR, auditar o explicar un sistema POS / facturación 
 actualizada: 2026-09-02
 reglas: 6
 lecciones: []
+origen: propia
 ---
 
 # POS y facturación de retail — cómo funcionan los sistemas reales

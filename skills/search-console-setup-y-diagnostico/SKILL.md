@@ -4,6 +4,7 @@ description: Dar de alta Google Search Console (GSC) y diagnosticar por qué un 
 actualizada: 2026-09-02
 reglas: 12
 lecciones: []
+origen: propia
 ---
 
 # 🔎 Search Console — alta + diagnóstico "no salgo en Google"

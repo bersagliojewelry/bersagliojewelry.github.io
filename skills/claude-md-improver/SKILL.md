@@ -2,9 +2,10 @@
 name: claude-md-improver
 description: Audit and improve CLAUDE.md files in repositories. Use when user asks to check, audit, update, improve, or fix CLAUDE.md files. Scans for all CLAUDE.md files, evaluates quality against templates, outputs quality report, then makes targeted updates. Also use when the user mentions "CLAUDE.md maintenance" or "project memory optimization".
 tools: Read, Glob, Grep, Bash, Edit
-actualizada: 2026-09-02
-reglas: 11
+actualizada: 2026-09-03
+reglas: 12
 lecciones: []
+origen: anthropics/claude-plugins-official@2026-01-16
 ---
 
 # CLAUDE.md Improver
@@ -180,3 +181,17 @@ When presenting recommendations, remind users:
 - Testing (commands, patterns)
 - Gotchas (quirks, common mistakes)
 - Workflow (when to do what)
+
+## Regla propia — esta skill ESCRIBE (C4-4 · DICTAMEN-C4 §8 D-C4-20, 2026-09-03)
+
+1. **Jamás toca `~/.claude/CLAUDE.md`, jamás rompe un techo, y corre `brain:check` después.** Es la única de
+   su grupo que MODIFICA ficheros (`Edit` sobre `CLAUDE.md`), y aquí eso cruza tres líneas rojas que no
+   están en el texto del origen: **(a)** `~/.claude/CLAUDE.md` es el **router global C0**, orden permanente
+   del dueño y **de solo lectura para toda sesión** — si esta skill lo lista como candidato, se salta y se
+   dice, no se edita ni «se mejora»; **(b)** el `CLAUDE.md` de cada repo es un nodo **always-on con techo
+   declarado** en su `docs/.brain-manifest.json`: toda propuesta se mide en caracteres contra ese tope ANTES
+   de aplicarla, y si no cabe, **desplaza** otra regla (one-in-one-out) en vez de engordar; **(c)** tras
+   cualquier escritura se corre `npm run brain:check` en ese repo y se deja SANO — un router «mejorado» que
+   deja el linter en rojo es una regresión, no una mejora. Y como siempre: el informe de calidad se presenta
+   y **el dueño aprueba** antes de escribir. *(procedencia: DICTAMEN-C4 §8 D-C4-20 + órdenes permanentes del
+   router global.)*

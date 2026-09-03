@@ -4,6 +4,7 @@ description: Activar cuando el usuario quiera crear, leer, o gestionar transacci
 actualizada: 2026-09-02
 reglas: 3
 lecciones: []
+origen: propia
 ---
 
 # Skill: Wompi API Core

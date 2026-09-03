@@ -4,6 +4,7 @@ description: Pipeline de validación multi-capa para DECISIONES FUERTES (arquite
 actualizada: 2026-09-02
 reglas: 17
 lecciones: []
+origen: propia
 ---
 
 # 🛡️ Proceso de Decisión Fuerte — Pipeline de Validación Multi-Capa

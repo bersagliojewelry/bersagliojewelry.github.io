@@ -4,6 +4,7 @@ description: Cargar SIEMPRE al inicio de sesión cuando el modelo activo NO es e
 actualizada: 2026-09-02
 reglas: 14
 lecciones: []
+origen: propia
 ---
 
 # Protocolo del modelo interino — convertir falencias en fortalezas

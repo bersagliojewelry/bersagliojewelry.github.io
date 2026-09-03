@@ -2,9 +2,10 @@
 name: claude-automation-recommender
 description: Analyze a codebase and recommend Claude Code automations (hooks, subagents, skills, plugins, MCP servers). Use when user asks for automation recommendations, wants to optimize their Claude Code setup, mentions improving Claude Code workflows, asks how to first set up Claude Code for a project, or wants to know what Claude Code features they should use.
 tools: Read, Glob, Grep, Bash
-actualizada: 2026-09-02
+actualizada: 2026-09-03
 reglas: 0
 lecciones: []
+origen: anthropics/claude-plugins-official@2026-05-28
 ---
 
 # Claude Automation Recommender

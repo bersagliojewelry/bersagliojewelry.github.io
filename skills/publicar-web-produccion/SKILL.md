@@ -19,6 +19,7 @@ allowed-tools: Read Write Edit Glob Grep Bash WebFetch WebSearch
 actualizada: 2026-09-02
 reglas: 13
 lecciones: []
+origen: propia
 ---
 
 # Publicar una web a producción (checklist + go/no-go + plataforma)

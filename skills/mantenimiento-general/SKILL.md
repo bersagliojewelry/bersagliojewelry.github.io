@@ -4,6 +4,7 @@ description: EJECUTOR del mantenimiento mensual del cerebro ×4 (Cerebro v2 F3, 
 actualizada: 2026-09-02
 reglas: 6
 lecciones: []
+origen: propia
 ---
 
 # 🔄 Mantenimiento General (resonancia mensual ×4) — EJECUTOR, no disparador

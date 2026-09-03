@@ -4,6 +4,7 @@ description: "Guardrail + método para CUALQUIER tarea legal de un negocio COLOM
 actualizada: 2026-09-02
 reglas: 6
 lecciones: []
+origen: propia
 ---
 
 # ⚖️ Legal Colombia — guardrail + método

@@ -17,6 +17,7 @@ description: >-
 actualizada: 2026-09-02
 reglas: 13
 lecciones: []
+origen: propia
 ---
 
 # CRM Builder

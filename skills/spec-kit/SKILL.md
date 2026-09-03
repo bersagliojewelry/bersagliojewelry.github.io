@@ -1,9 +1,10 @@
 ---
 name: spec-kit
 description: Spec-Driven Development (SDD) — el método de GitHub spec-kit para construir software CON IA con rigor. Úsalo ANTES de codear una funcionalidad o proyecto NUEVO no trivial: convierte una idea vaga en spec ejecutable → plan técnico → tareas ordenadas → implementación verificable, en vez de saltar directo a código. El flujo de 7 fases (constitution → specify → clarify → plan → tasks → analyze → implement) separa el QUÉ/POR-QUÉ (spec, estable, sin tecnología) del CÓMO (plan, tecnología+arquitectura) de las TAREAS (unidades ejecutables [P]-paralelizables), marca lo ambiguo con [NEEDS CLARIFICATION] (no adivinar), y mete gates de constitución (test-first, simplicidad, anti-abstracción). Triggers — "armemos una spec", "spec-driven", "planeemos bien esta feature antes de codear", "convierte este requerimiento en plan/tareas", "constitution del proyecto", "quiero specs ejecutables", construir algo nuevo desde cero con calidad. NO uses para: fixes triviales, ediciones de una línea, hacking exploratorio, o depurar un bug ya reproducible (eso es systematic-debugging). Portable: cero rutas de un repo; adapta al stack del proyecto activo.
-actualizada: 2026-09-02
-reglas: 16
+actualizada: 2026-09-03
+reglas: 20
 lecciones: []
+origen: github/spec-kit@1.0.4
 ---
 
 # 🧭 Spec-Kit — Spec-Driven Development (SDD)
@@ -84,8 +85,9 @@ comando-por-comando + checklists → `references/workflow.md`.
 7. **implement** → ejecuta las tareas en orden, TDD donde aplique. Al tocar estado observable,
    recorre el **camino vivo** (`caza-bugs`). Verifica contra los criterios de éxito de la spec.
 
-Extras de spec-kit: `converge` (medir código vs spec → tareas faltantes), `checklist` (checklist de
-calidad por dominio), `taskstoissues` (tasks → GitHub issues).
+Extras de spec-kit: `converge` (medir código vs spec → tareas faltantes; **método completo en español →
+`references/converge.md`**), `checklist` (checklist de calidad por dominio), `taskstoissues` (tasks →
+GitHub issues). Cómo se usan aquí → §9.
 
 ## 5. Plantilla-como-prompt (por qué las plantillas son el truco)
 Las plantillas no son formularios: son *prompts que restringen al LLM hacia calidad* —
@@ -114,6 +116,36 @@ Dos subagentes read-only (en `~/.claude/agents/`; fuente versionada en `agents/`
 - **`spec-analyze`** — chequeo CRUZADO spec↔plan↔tasks ANTES de implementar (FR sin tarea, tareas
   huérfanas, `[NEEDS CLARIFICATION]` abiertos, violaciones de constitución). Veredicto READY/NOT.
 Ambos REPORTAN, no editan (fiel a "analyze no edita"). Invócalos por nombre vía Task.
+
+## 9. Método traído del upstream 1.0.4 (C4-4 · DICTAMEN-C4 §8 D-C4-14, 2026-09-03)
+
+Del refresco de `github/spec-kit` (plantillas `templates/commands/`, release **1.0.4**, consultadas el
+**2026-09-03**, MIT) se adopta **solo el MÉTODO, en español**. **JAMÁS el CLI `specify` ni sus scripts
+bash/PowerShell**: el port evita el CLI a propósito (§6) y así sigue. Tampoco entran sus hooks de
+`.specify/extensions.yml` ni `taskstoissues` (nadie abre issues aquí sin permiso, §2 de los repos).
+
+1. **En `clarify`, una pregunta es una pregunta: interrogativa completa que termine en `?` y que se
+   entienda sola.** Está PROHIBIDO usar una etiqueta de tema, un título de sección o un id de requisito
+   como si fuera la pregunta — `Matriz de dispositivos de aceptación (FR-023)` **no es una pregunta**, es un
+   rótulo, y el dueño no puede contestarlo. Cada pregunta lleva además su *«por qué importa»* antes de las
+   opciones, se responde con opción múltiple (2–5) o con ≤5 palabras, y el presupuesto es **5 preguntas
+   como máximo** por sesión, elegidas por impacto × incertidumbre sobre las áreas *Parcial* o *Ausente* —
+   nunca sobre lo que ya está claro. Cada respuesta aceptada se integra en la spec y se registra en una
+   sección `## Clarifications` con su fecha. *(procedencia: upstream `templates/commands/clarify.md` 1.0.4.)*
+2. **`checklist` = test unitario de la REDACCIÓN de los requisitos, no de la implementación.** Cada ítem
+   pregunta si el requisito está completo, claro, consistente, medible y con sus escenarios cubiertos, con
+   su dimensión entre corchetes (`[Completitud]`, `[Ambigüedad]`, `[Medibilidad]`…) y su referencia a la
+   spec. Está PROHIBIDO el ítem que verifica comportamiento — nada de «Verificar que el botón…», «Probar que
+   la API devuelve 200», ni verbos de acción de usuario: eso es QA y vive en otro sitio. La prueba del nueve:
+   *«¿Está especificado el número de tarjetas de la portada?»* es un ítem válido; *«Verificar que la portada
+   muestra 3 tarjetas»* no lo es. *(procedencia: upstream `templates/commands/checklist.md` 1.0.4.)*
+3. **`converge` es `39-ESCRITO-NO-ES-VIGENTE` hecho procedimiento, y solo APENDA.** Mide el **código que ya
+   existe** contra spec/plan/tasks —no es un `diff`, no mira git—, clasifica cada hueco en `falta` /
+   `parcial` / `contradice` / `no pedido` con evidencia `fichero:línea`, presenta la tabla ANTES de escribir,
+   y entonces **apenda** una única `## Fase N: Convergencia` a `tasks.md`. Nunca reescribe la spec ni el
+   plan, nunca renumera ni borra tareas, y si no hay huecos **`tasks.md` no se toca ni un byte** (nada de
+   cabecera vacía). Método completo → `references/converge.md`.
+   *(procedencia: upstream `templates/commands/converge.md` 1.0.4.)*
 
 > Crédito: método y plantillas derivados de **github/spec-kit** (MIT). Esta skill es una adaptación
 > portable; la fuente canónica del CLI/commands evoluciona en el repo original.

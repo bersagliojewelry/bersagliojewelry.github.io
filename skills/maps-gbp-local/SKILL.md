@@ -4,6 +4,7 @@ description: Rankear #1 en el local pack de Google Maps / Google Business Profil
 actualizada: 2026-09-02
 reglas: 10
 lecciones: []
+origen: propia
 ---
 
 # 📍 Maps / GBP Local — ganar el local pack #1

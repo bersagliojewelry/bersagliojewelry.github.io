@@ -64,3 +64,11 @@ session-report-*.html
 docs/.handoff-auto.md
 docs/.boot-marker
 docs/.estado-auto.md
+
+# Rastros de la pieza B (falencias del modelo, 2026-09-03). Efimeros y por-maquina:
+#  .guard-log    lo escribe el hook PreToolUse scripts/guard-destructivo.mjs (B2) con cada
+#                decision deny/ask — su CONTADOR es la medicion del mecanismo.
+#  .promesas-log lo escribe session-handoff --end (B7) cuando un turno cierra prometiendo el
+#                siguiente paso en vez de ejecutarlo. Se mide 30 dias antes de decidir si se queda.
+docs/.guard-log
+docs/.promesas-log

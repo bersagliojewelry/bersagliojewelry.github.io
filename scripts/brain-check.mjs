@@ -42,8 +42,18 @@
 //       brain-check); `BOOT_CANARY_SKIP` retirado. Y `pull.mjs` —que viaja junto al canónico, no
 //       dentro de los repos— reparte skills con exit 1 si dejó alguna sin repartir (D-C4-8) y
 //       rechaza en ROJO un `manifest.repo` que no sea una punta conocida (D-C4-12).
+//       v1.33.0 (FALENCIAS DEL MODELO · pieza B): (31) inventario de EJECUTOR — cada viñeta
+//       imperativa del router declara su gate o `[HONOR]`, y la cifra «sin declarar» se PUBLICA
+//       con trinquete (`ejecutorBaseline`); INFORMATIVO en esta versión, a la espera de ver la
+//       cifra en los 4 repos (B4 · F-13). (16) amplía vocabulario: «verificado/medido/probado/
+//       corrido/tests verdes/✅» en `05`, `10` y el ÚLTIMO ADR exigen ANCLA resoluble en su
+//       párrafo — y se dice lo que mide: PRESENCIA DE ANCLA, NO EL ACTO (B5 · F-01/F-08).
+//       (24) el marcador gana TOKEN: `--boot-echo` deriva `BOOT-OK <sha7>` del eco que imprime y
+//       lo escribe; aquí se RE-DERIVA del sidecar y se COMPARA, en vez de creerle a la fecha
+//       (B6 · F-10). Y el schema (#15) conoce `egressAllowlist` (hosts a los que el guard
+//       `PreToolUse` deja escribir · B2) y `ejecutorBaseline`.
 // ===========================================================
-const KERNEL_VERSION = '1.32.0';
+const KERNEL_VERSION = '1.33.0';
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 import { homedir } from 'os';
 import { join, dirname } from 'path';
@@ -135,6 +145,20 @@ const KNOWN_KEYS = new Set([
   // declarada y no un olvido — que es justo lo que C4-1 midió (kit 5 · inmo 8 · cars 14 · bers 13 ·
   // inse 16 ausencias, ninguna de ellas decidida por nadie).
   'skillFiles',
+  // v1.33.0 (B2 · F-14): hosts a los que el hook `PreToolUse` (`scripts/guard-destructivo.mjs`)
+  // deja ESCRIBIR por red sin preguntar. Sin la clave, el guard usa su lista por defecto; con
+  // ella, cada repo declara sus destinos legítimos y el resto se para. Nombrarla aquí es lo que
+  // impide que un `egressAllowList` mal escrito apague el filtro en silencio.
+  'egressAllowlist',
+  // v1.33.0 (B4 · F-13): línea base CONGELADA de viñetas imperativas del router SIN ejecutor
+  // declarado (ni `#NN`/`brain:check`/`pre-commit`/`verify-`/`gate`, ni `[HONOR]`). Trinquete
+  // igual que #26 y #7c: solo puede BAJAR. Informativo en esta versión — bloquear es una decisión
+  // que se toma con la cifra de los 4 repos delante, no antes de tenerla.
+  'ejecutorBaseline',
+  // v1.33.0 (B5 · F-01/F-08): línea base CONGELADA de afirmaciones de verificación SIN ancla
+  // resoluble en su párrafo (`05`, `10` y el ÚLTIMO ADR de `99`). Mismo trinquete. Y la mitad que
+  // NO cubre se imprime en cada corrida: mide PRESENCIA DE ANCLA, no el acto de verificar.
+  'anclaBaseline',
 ]);
 // v1.14.0: prefijo `x-` para la config de gates PROPIOS de un repo (como las cabeceras de
 // extensión de HTTP). Sin él había dos malas salidas: meter una clave de un solo proyecto en
@@ -929,6 +953,68 @@ else {
   // Y encima mide solo la EDAD del marcador, nunca el hecho: por eso el 05 pudo sostener «CF 9»
   // contra 11 exports reales con el claim fresquísimo. Que no verificó nada tiene que verse.
   else if (!total) degrade('fiabilidad: 0 marcadores `verificado-vivo:` en los nodos escaneados → este gate NO comparó nada. Marca los claims sobre realidad externa (desplegado/live/datos) o retíralos.');
+
+  // ── 16b) ANCLA O NADA (v1.33.0 · B5 · F-01/F-08) ────────────────────────────────────────────
+  // El bloque de arriba mide la EDAD de un marcador que alguien decidió poner. Este mira el otro
+  // lado: el vocabulario con el que el cerebro AFIRMA haber verificado algo. La falencia F-01 del
+  // modelo es «afirma trabajo/verificaciones que no ejecutó (también de subagentes)», y su
+  // razonamiento visible no sirve de auditoría — así que lo único mecanizable es exigir que la
+  // afirmación venga con algo que un tercero pueda ABRIR: una ruta que existe, un `§NN` indexado,
+  // un sha resoluble en el reflog, o una cifra con su denominador.
+  // ⚠️ LO QUE ESTE GATE MIDE, DICHO SIN ADORNOS: **mide presencia de ancla, no el acto**. Una ruta
+  // que existe satisface el gate sin que la verificación haya ocurrido — es literalmente F-03
+  // (satisfacer el gate aportando el texto que el gate pide). No lo hace inútil: sube el coste de
+  // afirmar en falso y publica la mitad que no cubre ([[INMO:M-10]]). Informativo con trinquete:
+  // bloquear se decide con la cifra de los 4 repos delante, no antes de tenerla.
+  {
+    const VOCAB = /\b(verificad[oa]s?|medid[oa]s?|probad[oa]s?|corrid[oa]s?|comprobad[oa]s?)\b|tests?\s+(verdes|pasan|en verde)|✅/i;
+    const fuentes = [];
+    for (const rel of ['docs/05-ESTADO-GLOBAL.md', 'docs/10-MEMORIA-CORTO-PLAZO.md']) {
+      const p = join(ROOT, rel);
+      if (existsSync(p)) fuentes.push([rel, read(p)]);
+    }
+    if (existsSync(histPath)) {
+      // El ÚLTIMO ADR y solo ese: el histórico entero es deuda de otra época y exigirle anclas
+      // retroactivas sería un rojo inaccionable de 299 filas. Lo que se vigila es lo que se ESCRIBE.
+      const txt = read(histPath);
+      const cortes = [...txt.matchAll(/^##\s+\d+\.\s.*$/gm)];
+      if (cortes.length) {
+        const ult = cortes[cortes.length - 1];
+        fuentes.push([`docs/99-HISTORIAL-ADR.md (último ADR: ${ult[0].slice(0, 60).trim()})`, txt.slice(ult.index)]);
+      }
+    }
+    const indiceTxt = indexPaths.length ? readIndex() : '';
+    const EXT = /\b[\w./@-]+\.(?:md|mjs|js|cjs|json|html|css|ts|tsx|astro|ya?ml|sh|txt|svg|webp)\b/g;
+    const ancla = (parrafo) => {
+      for (const m of parrafo.matchAll(EXT)) {          // (a) ruta que EXISTE
+        const r = m[0].replace(/^\.\//, '');
+        const base = r.split('/').pop();
+        if (existsSync(join(ROOT, r)) || existsSync(join(DOCS, base)) || existsSync(join(ROOT, base))) return true;
+      }
+      for (const m of parrafo.matchAll(/§\s?(\d+[a-z]?)/g))  // (b) §NN INDEXADO (no cualquier §)
+        if (indiceTxt.includes(`§${m[1]}`)) return true;
+      for (const m of parrafo.matchAll(/\b([0-9a-f]{7,40})\b/g)) { // (c) sha resoluble en el reflog
+        if (!reflogTxt) break;
+        if (reflogTxt.includes(m[1])) return true;
+      }
+      if (/\b\d+\s*\/\s*\d+\b/.test(parrafo)) return true;   // (d) cifra CON denominador ([[INMO:L-58]])
+      return false;
+    };
+    let afirma = 0; const sinAncla = [];
+    for (const [rel, txt] of fuentes) {
+      for (const parrafo of txt.split(/\n\s*\n/)) {
+        if (!VOCAB.test(parrafo)) continue;
+        afirma++;
+        if (!ancla(parrafo)) sinAncla.push(`${rel} → «${parrafo.replace(/\s+/g, ' ').trim().slice(0, 70)}…»`);
+      }
+    }
+    const base = Number.isInteger(manifest.anclaBaseline) ? manifest.anclaBaseline : null;
+    const cab = `ancla-o-nada (B5): ${afirma - sinAncla.length}/${afirma} afirmación(es) de verificación llevan ancla resoluble en su párrafo; ${sinAncla.length} SIN ancla`;
+    if (!afirma) degrade('ancla-o-nada (B5): CERO párrafos con vocabulario de verificación en 05/10/último-ADR → este gate no comparó nada. O el cerebro no afirma haber verificado nada, o el vocabulario se le escapa.');
+    else if (base === null) info(`${cab}. Sin \`anclaBaseline\` en el manifest: este repo aún no congeló la línea base → CONGÉLALA en ${sinAncla.length} para que solo pueda bajar. ⚠️ Mide PRESENCIA DE ANCLA, NO EL ACTO de verificar.${sinAncla.length ? ' Ejemplos: ' + sinAncla.slice(0, 3).join(' · ') : ''}`);
+    else if (sinAncla.length > base) warn(`${cab}, por encima de la deuda CONGELADA (${base}) → una afirmación NUEVA sin ancla. Pon la ruta/§/sha que la respalda, o retira la afirmación. ⚠️ El gate mide PRESENCIA DE ANCLA, NO EL ACTO. Ejemplos: ${sinAncla.slice(0, 3).join(' · ')}`);
+    else info(`${cab} (deuda congelada ${base}; una nueva bloquea). ⚠️ Mide PRESENCIA DE ANCLA, NO EL ACTO de verificar.${sinAncla.length < base ? ` Bajó de ${base} a ${sinAncla.length}: baja el trinquete en el manifest.` : ''}`);
+  }
 }
 
 // 17) Git del PROPIO repo (auditoría Nivel-2 insemastereo 2026-08-01, N2-01) [--boot y --full]
@@ -1092,6 +1178,26 @@ else {
     const edad = ageH === Infinity ? 'sin marcador: nadie ha arrancado ni verificado esto todavía'
       : ageH < 48 ? `último latido (SessionStart o vigía) hace ${Math.round(ageH)}h`
       : `último latido (SessionStart o vigía) hace ${Math.round(ageH / 24)}d`;
+
+    // 🎟️ TOKEN DE ENTREGA (v1.33.0 · B6 · F-10). Una FECHA en un fichero prueba que alguien
+    // escribió una fecha. Desde v1.33.0 `--boot-echo` deriva el token del CONTENIDO que imprime
+    // (`BOOT-OK <sha7>` = sha256 del heartbeat) y escribe ese mismo texto en `docs/.estado-auto.md`.
+    // Aquí se RE-DERIVA del sidecar y se COMPARA con el `token=` del marcador: si cuadran, el eco
+    // se EMITIÓ de verdad; si no, alguien puso el marcador sin que hubiera eco. Distingue emitir de
+    // entregar ([[INMO:L-73]]) sin creerle a un `includes` ni a un `touch`.
+    // Un marcador SIN `token=` no es un fallo: lo escribe el vigía de la bóveda cuando verifica el
+    // cableado desde fuera, y lo escribían los kernels < v1.33.0. Se DICE, no se acusa.
+    if (existsSync(markerP)) {
+      const tok = (read(markerP).match(/^token=([0-9a-f]{7})$/m) || [])[1];
+      const sidecarP = join(DOCS, '.estado-auto.md');
+      if (!tok) info(`canario — marcador SIN token de entrega: lo escribió el vigía de la bóveda o un kernel anterior a v1.33.0. Mide EDAD, no entrega; el próximo \`--boot-echo\` de este repo pondrá el token.`);
+      else if (!existsSync(sidecarP)) degrade(`canario — el marcador trae token \`${tok}\` pero no hay \`docs/.estado-auto.md\` con qué compararlo (¿clon recién hecho?): la ENTREGA no se puede verificar aquí.`);
+      else {
+        const esperado = createHash('sha256').update(read(sidecarP).replace(/\n$/, '')).digest('hex').slice(0, 7);
+        if (esperado === tok) ok(`canario — ENTREGA verificada: el token del marcador (\`${tok}\`) es el sha del eco que quedó en docs/.estado-auto.md. El SessionStart no solo disparó: entregó.`);
+        else warn(`canario — el token del marcador (\`${tok}\`) NO es el del eco guardado (\`${esperado}\`): el marcador se escribió SIN que ese eco se emitiera, o el sidecar se editó después. Un marcador que no corresponde a ningún eco es justo la ficción que este token existe para matar — corre \`node scripts/session-handoff.mjs --boot-echo\` y vuelve a mirar.`);
+      }
+    }
 
     if (roto.length) {
       warn(`el manifest declara harnessCanary pero el cableado del arranque está ROTO (${roto.length}/${cfg === null ? 1 : 3} mitades medibles): ${roto.join(' · ')}. El cerebro arrancaría SIN signos vitales y nadie lo notaría. Recablea (settings.json + \`git config core.hooksPath githooks\` + cp githooks/pre-commit), o pon harnessCanary:false con su razón. [${edad}]`);
@@ -1349,6 +1455,51 @@ else {
     warn(`${sueltos.length} documento(s) de trabajo que NINGÚN nodo cita → INVISIBLES al arrancar en frío: ${sueltos.slice(0, 6).join(' · ')}${sueltos.length > 6 ? ' …' : ''} → cítalos desde su nodo dueño, o decláralos en manifest.workAllowlist CON razón`);
   else if (total) ok(`${total} documento(s) de trabajo citados desde el cerebro`);
   else head('  ℹ️  sin directorios de trabajo declarados (manifest.workDirs)');
+}
+
+// 31) INVENTARIO DE EJECUTOR — ¿quién hace cumplir cada regla del router? [info, --full]
+//     (v1.33.0 · B4 · falencia F-13 del modelo: «lo escrito no es restricción dura».)
+//     El router ya tiene la regla correcta —«Regla de ADMISIÓN (anti-teatro): toda regla nueva
+//     declara su gate del linter o lleva [HONOR] explícito»— y hasta hoy NADIE la ejecutaba: no
+//     había cifra de cuántas viñetas imperativas tienen gate, cuántas llevan [HONOR] y cuántas no
+//     declaran nada. Esa tercera categoría es justo la que un modelo racionaliza saltarse («es un
+//     cambio pequeño», «preserva el comportamiento»). Es [[INMO:M-10]] literal: el ✅ se lee como
+//     cobertura total porque la mitad no cubierta NO SE PUBLICA. Este gate la publica.
+//     INFORMATIVO A PROPÓSITO EN ESTA VERSIÓN: bloquear con una cifra que nadie ha visto todavía
+//     en los cuatro repos sería fijar el techo antes de medir. Primero la cifra; la decisión de
+//     subirlo a bloqueante se toma con las cuatro delante.
+//     ⚠️ Y lo que NO mide: que el ejecutor citado exista de verdad ni que muerda. Mide DECLARACIÓN.
+head('\n31) Inventario de ejecutor (¿quién hace cumplir cada regla del router?):');
+if (BOOT) head('  ⏭️  omitido en --boot');
+else {
+  const IMPERATIVO = /NUNCA|SIEMPRE|OBLIGATORI|jam[áa]s|\bdebe[nr]?\b|prohibid[oa]s?/i;
+  const EJECUTOR = /#\d+|brain:check|brain-check|pre-commit|verify-|\bgates?\b|\[HONOR\]/i;
+  const HONOR = /\[HONOR\]/;
+  // Una viñeta NO es una línea: es la línea que la abre MÁS sus continuaciones (el router envuelve
+  // a ~110 columnas, y el `[HONOR]` o el `#NN` caen a menudo en la segunda línea). Contar por línea
+  // suelta daba «1 [HONOR]» donde hay cuatro — el mismo error de medir la superficie equivocada.
+  const bloques = []; let actual = null;
+  claude.split('\n').forEach((l, i) => {
+    if (/^\s{0,6}(?:[-*+]|\d+[.)])\s+\S/.test(l)) { actual = { linea: i + 1, txt: l }; bloques.push(actual); return; }
+    if (actual && /^\s{2,}\S/.test(l)) { actual.txt += ' ' + l.trim(); return; }  // continuación
+    actual = null;                                                                // corta el bloque
+  });
+  let conGate = 0, honor = 0; const sinDeclarar = [];
+  for (const b of bloques) {
+    if (!IMPERATIVO.test(b.txt)) continue;
+    if (HONOR.test(b.txt)) { honor++; continue; }
+    if (EJECUTOR.test(b.txt)) { conGate++; continue; }
+    sinDeclarar.push(`L${b.linea}: «${b.txt.replace(/\s+/g, ' ').trim().slice(0, 62)}…»`);
+  }
+  const totalImp = conGate + honor + sinDeclarar.length;
+  const base = Number.isInteger(manifest.ejecutorBaseline) ? manifest.ejecutorBaseline : null;
+  if (!totalImp) degrade('inventario de ejecutor: CERO viñetas imperativas en CLAUDE.md → este gate no contó nada (¿el router no manda, o el patrón no lo ve?).');
+  else {
+    const cab = `inventario de ejecutor: ${totalImp} viñeta(s) imperativa(s) en CLAUDE.md → ${conGate} con ejecutor citado · ${honor} [HONOR] · ${sinDeclarar.length} SIN DECLARAR`;
+    if (base === null) info(`${cab}. Sin \`ejecutorBaseline\` en el manifest: congélalo en ${sinDeclarar.length} y solo podrá bajar. INFORMATIVO en v1.33.0 (no bloquea). ⚠️ Mide la DECLARACIÓN, no que el ejecutor exista ni que muerda.${sinDeclarar.length ? ' Las primeras: ' + sinDeclarar.slice(0, 3).join(' · ') : ''}`);
+    else if (sinDeclarar.length > base) info(`${cab} — POR ENCIMA de la deuda congelada (${base}): ha entrado al router una regla imperativa sin ejecutor. Cítale su gate (\`#NN\`) o márcala \`[HONOR]\`; si no cabe por el candado del boot, la que sale es una regla DEL ROUTER (§G.5, one-in-one-out). INFORMATIVO en v1.33.0, a propósito. Nuevas: ${sinDeclarar.slice(0, 4).join(' · ')}`);
+    else info(`${cab} (deuda congelada ${base}${sinDeclarar.length < base ? ` — BAJÓ a ${sinDeclarar.length}: baja también el trinquete en el manifest` : ''}). ⚠️ Mide la DECLARACIÓN, no que el ejecutor muerda.`);
+  }
 }
 
 const sano = '✅ CEREBRO SANO (estructura íntegra' + (manifest.deepAudit && manifest.deepAudit.last ? ' · auditoría semántica: ' + manifest.deepAudit.last : '') + ')';

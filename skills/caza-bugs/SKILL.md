@@ -1,8 +1,8 @@
 ---
 name: caza-bugs
 description: Usar al TOCAR o ROZAR un subsistema con estado observable (render, listener/onSnapshot, CRUD, flujo de pasos) — editarlo, refactorizarlo con cambio de comportamiento, o cambiar el estado compartido (doc de base de datos, sessionStorage, caché) que otro flujo lee — ANTES de darlo por bueno. Recorre su CAMINO VIVO end-to-end, en especial las dos fronteras del estado-cero (crear el 1er ítem y verlo aparecer; borrar el último y ver colapsar limpio), no solo el cambio puntual. Encapsula el reflejo barato siempre-on y la escalera de escalado calibrada (revisión adversarial + comité + consejo externo) sin gastar de más en lo trivial. NO es para depurar un fallo ya reproducible (eso es systematic-debugging) ni para el gate de evidencia del claim final (verification-before-completion). Triggers — "verifica que no rompí nada", "probé el cambio pero no el flujo", "edité X y lo di por bueno", "esto se rozó con Y", "antes de cerrar/commitear esta funcionalidad".
-actualizada: 2026-09-02
-reglas: 66
+actualizada: 2026-09-03
+reglas: 70
 lecciones: [G:G-001, G:G-004, G:G-010, G:G-011, G:G-013]
 origen: propia
 ---
@@ -896,6 +896,36 @@ infinitamente más barata de mantener que uno que hay que recordar limpiar antes
   consecuencias. El criterio de "cuándo comité" lo manda la doctrina del proyecto, no esta skill.
 - **Freno**: 2 fallos en el MISMO bug → DETENTE, busca el caso análogo en el historial antes del
   3er intento (prohibido adivinar).
+
+## 5b. 🛑 TECHO de verificación — una pasada por artefacto, y la segunda exige artefacto NUEVO
+
+*(Procedencia: falencia **F-07** del modelo —«bucles de auto-verificación que agotan el
+presupuesto», CONFIRMADA en doc oficial de Anthropic para Opus 5; en Fable 5.1 el veredicto alcanza
+al COSTE a effort alto—, cualificada por [[G:G-013]]. Dictamen:
+`brain-private/cerebro-maestro/DICTAMEN-FALENCIAS-MODELO.md` §2, mitigación B9, 2026-09-03.)*
+
+Esta skill manda **recorrer el camino vivo**, y esa orden tiene un borde que hasta hoy no estaba
+escrito: **recorrerlo otra vez sobre lo mismo no añade información, solo gasta**. La falencia no es
+verificar poco — es re-verificar en bucle el mismo artefacto esperando que la tercera lectura diga
+algo que la primera no dijo. Tres reglas:
+
+1. **Una pasada por ARTEFACTO, no por inquietud.** El presupuesto se cuenta en artefactos mirados
+   (un fichero, una salida de gate, una pantalla, una fila de la base), no en minutos de duda.
+   Mirado una vez con la lente correcta, ese artefacto está mirado. Si la duda persiste sin dato
+   nuevo, la duda es sobre TU criterio — y eso no se cura releyendo: se cura escribiendo qué falta.
+2. **La segunda pasada exige un artefacto NUEVO.** Vale re-verificar cuando aparece algo que antes
+   no existía: un fichero que acabas de cambiar, una salida de gate POSTERIOR a tu edición, un dato
+   que contradice al anterior. No vale «por si acaso», ni «para estar seguro», ni releer el mismo
+   diff con otras palabras. Sin artefacto nuevo, no hay pasada nueva.
+3. **Sin certeza y sin artefacto nuevo, DILO en la salida en vez de gastar otra pasada.**
+   «Verificado A, B y C; NO verifiqué D porque haría falta X» vale más —y cuesta menos— que una
+   cuarta lectura de A. Es la misma regla de §6: veredicto concreto y citable, incluida la mitad
+   que no cubriste ([[INMO:M-10]]).
+
+⚠️ **Frontera, para que no se lea al revés**: esto NO recorta el checklist de §2 ni la escalera de
+§5 — el reflejo barato sigue siendo obligatorio y la maquinaria pesada sigue disponible cuando el
+caso la pide. Recorta la REPETICIÓN, que es otra cosa. Y sigue siendo **[HONOR]**: esta skill no se
+auto-carga, así que ningún gate puede comprobar que la aplicaste.
 
 ## 6. Salida
 Un veredicto **concreto y citable**, no un "OK" genérico:

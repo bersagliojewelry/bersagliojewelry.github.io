@@ -6,6 +6,9 @@
  *
  * Modos:
  *   --end        SessionEnd/Stop: escribe la foto en silencio (exit 0 siempre — jamás bloquear).
+ *                v1.33.0 (B7 · F-06): además mira el ÚLTIMO mensaje del asistente y, si cierra
+ *                prometiendo el siguiente paso o pidiendo un permiso ya dado, emite UN
+ *                `systemMessage` y deja línea en docs/.promesas-log. Exhortación, no puerta.
  *   --precompact PreCompact: escribe la foto Y deja el 🚩 flag docs/.consolidacion-pendiente.
  *                NO emite JSON: el esquema del harness no admite hookSpecificOutput en PreCompact y
  *                al fallar en la RAIZ descartaba el objeto entero — 0/15 entregas en 44 dias (§291).
@@ -14,10 +17,17 @@
  *                degradación RUIDOSA) + imprime foto/estado/nags (entra al contexto). Y COBRA los
  *                dos flags: 🚨 docs/.vigia-alerta (v1.30.0) primero y ⛔ docs/.consolidacion-pendiente
  *                después — un cerebro roto invalida el trabajo; uno sin consolidar solo lo retrasa.
+ *                v1.33.0: imprime `BOOT-OK <sha7>` (token DERIVADO del eco, que el #24 compara con
+ *                docs/.boot-marker · B6) y el 🧠 sidecar de FALENCIAS del maestro (A2), pagado con
+ *                el recorte del bloque de commits del handoff (26 → 8 líneas).
+ *   --boot-echo --compact  la rama `matcher:"compact"` del SessionStart: además RE-INYECTA
+ *                `docs/05` + `docs/10` enteros, porque tras compactar el harness solo garantiza el
+ *                CLAUDE.md de raíz (B11 · F-17).
  * Kill-switch heartbeat (§52): si falla 2×/mes y su ausencia no cuesta nada medible → borrarlo.
  */
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync, existsSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, appendFileSync, existsSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -34,7 +44,15 @@ const FLAG = join(ROOT, 'docs', '.consolidacion-pendiente');
 // verde. Solo existe donde el vigía lo pone (hoy, INMO): en los demás repos esta línea es inerte, y
 // esa es la forma correcta de repartir un kernel compartido — no un `if (repo === …)`.
 const VIGIA = join(ROOT, 'docs', '.vigia-alerta');
+// 📣 El log de PROMESAS (B7 · F-06). Lo escribe `--end` cuando el último mensaje del asistente
+// cierra prometiendo el siguiente paso o pidiendo un permiso ya dado, sin haberlo ejecutado.
+// Gitignored. Se declara lo que es: un mecanismo que ENTREGA UNA EXHORTACIÓN, no una puerta —
+// su tasa de conversión (avisos → paso ejecutado en el turno siguiente) está por medir, 30 días
+// desde el 2026-09-03. Hasta entonces NO se afirma que funcione: solo que dispara y deja rastro.
+const PROMESAS = join(ROOT, 'docs', '.promesas-log');
 const mode = process.argv[2] || '--end';
+const FLAGS = process.argv.slice(2);
+const esCompact = FLAGS.includes('--compact'); // lo pasa la rama `matcher:"compact"` del SessionStart
 
 const git = (args, cwd = ROOT) => {
   try { return execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); }
@@ -56,6 +74,20 @@ const boveda = () => {
   } catch { return null; }
 };
 
+// 🧠 SIDECAR DE FALENCIAS (A2 · dictamen `DICTAMEN-FALENCIAS-MODELO.md` §2): las cinco falencias
+// del MODELO que más error cuestan hoy, escritas en la bóveda y leídas aquí. Vive fuera del repo a
+// propósito —es conocimiento del maestro, no de este proyecto— y por eso se paga con el recorte del
+// bloque «Últimos commits (24h)»: el arranque real tiene que quedar MÁS BAJO, no más alto.
+// Si la bóveda no está clonada, se DICE (una línea), jamás se calla: un sidecar ausente en silencio
+// es exactamente la ficción que el heartbeat existe para matar (§52).
+const sidecarFalencias = () => {
+  const rel = join('maestro', 'dominios', 'modelo-claude', 'SIDECAR.md');
+  const b = boveda();
+  const candidatos = [b && join(b.root, rel), join(ROOT, '..', 'brain-private', rel)].filter(Boolean);
+  for (const p of candidatos) { try { if (existsSync(p)) return readFileSync(p, 'utf8').trimEnd(); } catch { /* siguiente */ } }
+  return '🧠 FALENCIAS: sidecar NO disponible (bóveda sin clonar en esta máquina) → maestro/dominios/modelo-claude/SIDECAR.md';
+};
+
 // 💓 HEARTBEAT (F2 §52) — la mitad DERIVABLE del estado se GENERA en cada boot (el 05 ya no la
 // escribe a mano: no puede mentir sobre lo que no contiene). SOLO lectura local, CERO red.
 // Cada sonda degrada RUIDOSA: fallo = "❌ NO VERIFICADO (motivo)", jamás un valor viejo con sello fresco.
@@ -74,7 +106,7 @@ const heartbeat = () => {
     `- SW cache vigente: ${swP ? probe(() => (readFileSync(swP, 'utf8').match(/CACHE_(?:NAME|VERSION)\s*=\s*['"]([^'"]+)['"]/) || [])[1]) + ` (${swP.split(/[\\/]/).pop()})` : '(sin service worker)'}`,
     `- CNAME: ${probe(() => existsSync(join(ROOT, 'CNAME')) ? readFileSync(join(ROOT, 'CNAME'), 'utf8').trim() : '(no aplica)')}`,
     `- 🧮 costo-cerebro 30d: ${probe(() => { const out = git(['log', '--since=30.days', '--name-only', '--format=%x01']); const cs = out.split('\x01').map((c) => c.trim()).filter(Boolean); if (!cs.length) return 'sin commits en 30d'; const brain = cs.filter((c) => { const fs_ = c.split('\n').map((l) => l.trim()).filter(Boolean); return fs_.length && fs_.every((f) => BRAIN_RE.test(f)); }).length; costoPct = Math.round((brain / cs.length) * 100); return `${costoPct}% (${brain}/${cs.length} commits solo-cerebro, por paths)${costoPct > 30 ? ' 🔴 > bandera 30% (TODO-28 #6: recortar doctrina, no añadir)' : ' ✅ ≤ 30%'}`; })}`,
-    `- 🧊 consolidación: ${probe(() => { const last99 = git(['log', '-1', '--format=%ct', '--', 'docs/99-HISTORIAL-ADR.md']); if (!/^\d+$/.test(last99)) return 'sin 99 trackeado'; const prod = git(['log', `--since=${new Date(+last99 * 1000).toISOString()}`, '--name-only', '--format=%x01']).split('\x01').map((c) => c.trim()).filter(Boolean).filter((c) => c.split('\n').map((l) => l.trim()).filter(Boolean).some((f) => f && !BRAIN_RE.test(f))).length; return prod >= 3 ? `⚠️ ${prod} commits de PRODUCTO sin ADR desde el último toque a 99 → CONSOLIDAR EN FRÍO es la 1ª tarea de ESTA sesión (contexto fresco > saturado, M-02; fontanería: npm run brain:archive)` : `al día (${prod} commit(s) de producto desde el último ADR)`; })}`,
+    `- 🧊 consolidación: ${probe(() => { const last99 = git(['log', '-1', '--format=%ct', '--', 'docs/99-HISTORIAL-ADR.md']); if (!/^\d+$/.test(last99)) return 'sin 99 trackeado'; const prod = git(['log', `--since=${new Date(+last99 * 1000).toISOString()}`, '--name-only', '--format=%x01']).split('\x01').map((c) => c.trim()).filter(Boolean).filter((c) => c.split('\n').map((l) => l.trim()).filter(Boolean).some((f) => f && !BRAIN_RE.test(f))).length; return prod >= 3 ? `⚠️ PENDIENTE #${prod}: ${prod} commits de producto sin ADR (npm run brain:archive)` : `al día (${prod} commit(s) de producto desde el último ADR)`; })}`,
   ];
   // 🧭 Banner EN CRISTIANO (F3 §53 — primer entregable visible para el dueño; el calendario vive
   // en el tool, no en el humano: cuando algo dice TOCA, un mensaje suyo dispara el mantenimiento).
@@ -87,14 +119,21 @@ const heartbeat = () => {
     `   · Mantenimiento del cerebro: ${costoPct != null ? costoPct + '% del trabajo del mes (meta: menos del 30%)' : 'sin medir aún'}${costoPct > 30 ? ' 🔴' : ''}`,
     `   · Copia de seguridad externa: ${backup != null ? `hace ${backup} día(s)${backup > 35 ? ' ⚠️ TOCA renovarla' : ' ✅'}` : '⚠️ NUNCA hecha'}`,
     `   · Revisión profunda del cerebro: ${audDias != null ? (audToca ? `⚠️ TOCA (última hace ${audDias} días)` : `al día (hace ${audDias} días)`) : '⚠️ nunca'}${audToca || (backup != null && backup > 35) ? ' → di: "haz el mantenimiento mensual"' : ''}`);
+  lines.push('', sidecarFalencias());
   return lines.join('\n');
 };
 
 try {
   if (mode === '--boot-echo') {
-    writeFileSync(MARKER, new Date().toISOString(), 'utf8'); // el canario: boot-gate exige este marker fresco
     const hb = heartbeat();
     writeFileSync(join(ROOT, 'docs', '.estado-auto.md'), hb + '\n', 'utf8');
+    // 🎟️ TOKEN DE ENTREGA (B6 · F-10). El marcador decía «alguien arrancó aquí» y el #24 lo creía
+    // por `includes`: un fichero con la fecha puesta a mano satisfacía el gate sin que el hook
+    // hubiera EMITIDO nada. Ahora el token se DERIVA del contenido que este eco imprime, se
+    // publica en stdout (`BOOT-OK <sha7>`) y se escribe aquí; el #24 COMPARA los dos. Distingue
+    // emitir de entregar ([[INMO:L-73]]): un token escrito sin eco no coincide con ninguno.
+    const token = createHash('sha256').update(hb).digest('hex').slice(0, 7);
+    writeFileSync(MARKER, `${new Date().toISOString()}\ntoken=${token}\n`, 'utf8');
     // 🚨 EL VIGÍA VA ANTES QUE TODO, incluida la consolidación, y el orden es deliberado: un cerebro
     // ROTO invalida el trabajo que se haga encima, mientras que uno sin consolidar solo lo retrasa.
     // Si los dos flags están puestos, se imprimen los dos y el texto dice cuál manda.
@@ -123,7 +162,29 @@ La sesión anterior COMPACTÓ SIN CONSOLIDAR. ANTES de cualquier otra cosa: pon 
 Este flag NO se borra solo: lo borra el pre-commit cuando commitees docs/10 o docs/99 (docs/.consolidacion-pendiente).
 `);
     }
+    console.log(`BOOT-OK ${token}`);
     console.log(hb);
+    // ♻️ RE-INYECCIÓN TRAS COMPACTAR (B11 · F-17). Medido en la doc oficial de compaction (leída el
+    // 2026-09-03): tras un compact el harness re-inyecta el `CLAUDE.md` de RAÍZ, pero los ficheros
+    // leídos vuelven como mucho los CINCO más recientes, y uno de más de 5 000 tokens vuelve como
+    // REFERENCIA, sin contenido. O sea: el arranque que §G.1 exige —`05` + `10`— puede no sobrevivir
+    // al primer corte. Aquí se paga a propósito: el stdout de SessionStart SÍ entra al contexto (doc
+    // oficial de hooks, misma consulta), así que en la rama `compact` se vuelven a poner los dos
+    // nodos ENTEROS. No es gasto extra: es el presupuesto de arranque que el repo ya tiene medido.
+    if (esCompact) {
+      const nodos = ['docs/05-ESTADO-GLOBAL.md', 'docs/10-MEMORIA-CORTO-PLAZO.md'];
+      let coste = 0;
+      const trozos = [];
+      for (const rel of nodos) {
+        const p = join(ROOT, rel);
+        if (!existsSync(p)) { trozos.push(`\n### ${rel} — NO EXISTE en este repo.`); continue; }
+        const txt = readFileSync(p, 'utf8');
+        coste += txt.length;
+        trozos.push(`\n### ${rel} (${txt.length}c, re-inyectado entero)\n\n${txt.trimEnd()}`);
+      }
+      console.log(`\n♻️ RE-INYECCIÓN POST-COMPACT (§G.1): el harness devuelve el CLAUDE.md de raíz, pero NO garantiza \`docs/05\` ni \`docs/10\`. Van enteros aquí abajo (${coste}c — es el presupuesto de arranque, no un extra). Si aun así no los ves, LÉELOS por ruta antes de seguir.`);
+      console.log(trozos.join('\n'));
+    }
     if (existsSync(OUT)) {
       const ageH = (Date.now() - statSync(OUT).mtimeMs) / 3.6e6;
       if (ageH < 48) {
@@ -137,6 +198,15 @@ Este flag NO se borra solo: lo borra el pre-commit cuando commitees docs/10 o do
   }
 
   const b = boveda();
+  // 💸 EL PAGO DEL SIDECAR (B11 · A2). El bloque de commits llegó a 26 líneas y es lo MENOS denso
+  // del handoff: quien arranca necesita saber POR DÓNDE va, no el diario entero — para eso está
+  // `git log`. Se recorta a 8 y se DICE cuántos había: el sidecar de falencias entra pagado, y el
+  // arranque real queda por debajo de donde estaba (medido por el #2, no prometido).
+  const TOPE_COMMITS = 8;
+  const todos = (git(['log', '--since=24hours', '--format=- %h %s']) || '').split('\n').filter(Boolean);
+  const commits = todos.length
+    ? todos.slice(0, TOPE_COMMITS).join('\n') + (todos.length > TOPE_COMMITS ? `\n- … y ${todos.length - TOPE_COMMITS} commit(s) más en 24h (\`git log --since=24hours\`)` : '')
+    : '- (ninguno)';
   const foto = [
     `# 🕹️ Handoff automático (escrito por hook, no por Claude) — ${new Date().toISOString()}`,
     `> Foto REAL de git al cierre/compactación. Si contradice a docs/10, ESTA es la verdad (M-01).`,
@@ -145,10 +215,49 @@ Este flag NO se borra solo: lo borra el pre-commit cuando commitees docs/10 o do
     `- Sucios sin commit: ${git(['status', '--porcelain']) || '(limpio)'}`,
     `- Bóveda (brain-private): ${b ? (b.dirty ? `⚠️ SUCIA — ${b.dirty} archivo(s) sin commitear (M-03: commitear+pushear)` : 'limpia ✅') : '(no accesible)'}`,
     ``,
-    `## Últimos commits (24h)`,
-    git(['log', '--since=24hours', '--format=- %h %s']) || '- (ninguno)',
+    `## Últimos commits (24h · ${todos.length}, se listan ${Math.min(todos.length, TOPE_COMMITS)})`,
+    commits,
   ].join('\n');
   writeFileSync(OUT, foto, 'utf8');
+
+  // 📣 B7 · F-06 — «cierra prometiendo el siguiente paso o pidiendo un permiso ya dado».
+  // MECANISMO QUE ENTREGA UNA EXHORTACIÓN, no una puerta: NO se emite `permissionDecision:"block"`
+  // (eso forzaría un turno más y la fuente avisa del trade-off), sino un `systemMessage` que ve el
+  // dueño + una línea en `docs/.promesas-log`. Lo medible es el LOG; la tasa de conversión —¿el
+  // turno siguiente ejecuta el paso?— se mide 30 días antes de decidir si esto se queda.
+  // El último texto del asistente llega en `last_assistant_message` (doc oficial de hooks, 2026-09-03:
+  // «Hooks that need the final assistant text of the current turn should use `last_assistant_message`
+  // on Stop and SubagentStop instead of reading the transcript»); si no viene, se cae al transcript.
+  if (mode === '--end' && !process.stdin.isTTY) {
+    try {
+      const ev = JSON.parse(readFileSync(0, 'utf8'));
+      let ultimo = typeof ev.last_assistant_message === 'string' ? ev.last_assistant_message : '';
+      if (!ultimo && ev.transcript_path && existsSync(ev.transcript_path)) {
+        const filas = readFileSync(ev.transcript_path, 'utf8').split('\n').filter(Boolean);
+        for (let i = filas.length - 1; i >= 0 && !ultimo; i--) {
+          try {
+            const j = JSON.parse(filas[i]);
+            if (j.type === 'assistant' && j.message && Array.isArray(j.message.content))
+              ultimo = j.message.content.filter((c) => c.type === 'text').map((c) => c.text).join('\n');
+          } catch { /* fila no-JSON: se salta */ }
+        }
+      }
+      const cola = ultimo.trim().split(/\n{2,}/).pop() || '';
+      const PATRONES = [
+        /\bahora\s+(voy|procedo|paso|sigo|aplico|hago)\b/i, /\ba continuación\b/i,
+        /\bvoy a\s/i, /\bel siguiente paso\b/i, /\bprocedo a\b/i, /\bpaso a\b/i,
+        /¿\s*(aplico|procedo|sigo|continúo|lo hago|quieres que|te parece si|empiezo)\b/i,
+        /\bNext,? I'?ll\b/i, /\bI'?ll (now|go ahead and|proceed)\b/i, /\bShall I\b/i,
+      ];
+      const pega = PATRONES.filter((re) => re.test(cola)).length;
+      if (pega && cola.length < 900) {
+        appendFileSync(PROMESAS, `${new Date().toISOString()}\t${pega}\t${cola.replace(/\s+/g, ' ').slice(0, 200)}\n`, 'utf8');
+        process.stdout.write(JSON.stringify({
+          systemMessage: '📣 F-06: el turno cierra PROMETIENDO el siguiente paso (o pidiendo un permiso ya dado) sin haberlo ejecutado. Si el paso estaba autorizado, hazlo ahora en vez de anunciarlo. [aviso, no puerta — registrado en docs/.promesas-log]',
+        }));
+      }
+    } catch { /* sin stdin, JSON malo o transcript ilegible: el handoff ya está escrito */ }
+  }
 
   if (mode === '--precompact') {
     // 🚩 Aquí ya NO se le habla al modelo, y esa es toda la corrección (§291). El bloque que vivía

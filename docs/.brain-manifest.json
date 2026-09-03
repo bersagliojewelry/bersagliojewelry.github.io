@@ -126,7 +126,8 @@
   "kernelFiles": [
     "scripts/brain-check.mjs",
     "scripts/brain-diff.mjs",
-    "scripts/session-handoff.mjs"
+    "scripts/session-handoff.mjs",
+    "scripts/guard-destructivo.mjs"
   ],
   "_skillFiles_que": "Las skills GOBERNADAS que este repo consume del canon de la boveda (brain-private/skills/), repartidas por `npm run brain:pull` igual que `kernelFiles` (C4-2 - D-C4-5). La lista es EXPLICITA a proposito: una ausencia aqui es una decision declarada, no un olvido. C4-1 midio 51 ausencias entre las cuatro puntas y ninguna la habia decidido nadie. En C4-2 ningun repo declaro nada fuera de su alcance: las 43 van a los cuatro. Para sacar una, borra su linea Y escribe por que.",
   "skillFiles": [
@@ -218,5 +219,27 @@
   "_caps_que": "Topes por-repo. Cada neurona tiene cap MEDIDO (tamano real + ~35% de holgura) o entrada en noCap CON RAZON — nunca por omision (chequeo #23, kernel v1.7.0). Los caps NO se inventan: inmobiliaria ADR §74.3/§75.4 documenta como una cifra a ojo creo dos veces un gate bloqueante falso. Los dos ejes se derivan uno del otro (lines = chars/densidad-real) para que ambos aprieten en el mismo punto: un par incoherente hace que dispare el eje equivocado (N2-13 de la auditoria de insemastereo, inmobiliaria §77.5). El cap de CHARS es el vinculante y NO se toca.",
   "lastOffsiteBackup": "2026-08-28",
   "skillDriftBaseline": 1,
-  "_skillDriftBaseline_que": "Deuda CONGELADA de skills portables con contenido DERIVADO de la copia que se carga (~/.claude), con el fin de linea NORMALIZADO —como la mide el gate 6b desde v1.24.0—. Trinquete: solo puede bajar; una NUEVA bloquea. Al tocar una skill portable re-copia AMBAS (§33) y baja este numero: subirlo es rendirse. 15 el 2026-08-27; **1 el 2026-09-02**: C4-2 repartio el canon de las 43 GOBERNADAS a las seis puntas y con eso cayeron 14. La que queda es `catalogo-voz-bersaglio` (8572b aqui / 8604b cargada), y NO la cubre C4: el dictamen D-C4-2 la deja LOCAL a proposito —la voz de UNA marca no se generifica— asi que su dueno es este repo y su union no la decide ningun reparto. Es deuda REAL, medida, con nombre."
+  "_skillDriftBaseline_que": "Deuda CONGELADA de skills portables con contenido DERIVADO de la copia que se carga (~/.claude), con el fin de linea NORMALIZADO —como la mide el gate 6b desde v1.24.0—. Trinquete: solo puede bajar; una NUEVA bloquea. Al tocar una skill portable re-copia AMBAS (§33) y baja este numero: subirlo es rendirse. 15 el 2026-08-27; **1 el 2026-09-02**: C4-2 repartio el canon de las 43 GOBERNADAS a las seis puntas y con eso cayeron 14. La que queda es `catalogo-voz-bersaglio` (8572b aqui / 8604b cargada), y NO la cubre C4: el dictamen D-C4-2 la deja LOCAL a proposito —la voz de UNA marca no se generifica— asi que su dueno es este repo y su union no la decide ningun reparto. Es deuda REAL, medida, con nombre.",
+  "_kernelFiles_que": "Los archivos del kernel canonico que ESTE repo consume (`npm run brain:pull` los baja y el gate #0 compara su sha). `guard-destructivo.mjs` entra el 2026-09-03 con v1.33.0: es el hook PreToolUse de la pieza B (B2), y sin declararlo aqui el repo tendria el hook cableado en .claude/settings.json apuntando a un fichero que nadie reparte.",
+  "egressAllowlist": [
+    "github.com",
+    "api.github.com",
+    "*.github.com",
+    "*.googleapis.com",
+    "*.firebaseio.com",
+    "wa.me",
+    "docs.wompi.co",
+    "*.wompi.co",
+    "platform.claude.com",
+    "code.claude.com",
+    "anthropic.com",
+    "*.anthropic.com",
+    "localhost",
+    "127.0.0.1"
+  ],
+  "_egressAllowlist_que": "B2 (falencia F-14): hosts a los que el hook PreToolUse `scripts/guard-destructivo.mjs` deja ESCRIBIR por red. Todo lo demas se DENIEGA con motivo y se registra en docs/.guard-log. Leer no se toca: un GET no exfiltra.",
+  "ejecutorBaseline": 16,
+  "_ejecutorBaseline_que": "B4 (falencia F-13, chequeo #31): deuda CONGELADA de vinetas imperativas de CLAUDE.md sin ejecutor declarado (#NN / brain:check / pre-commit / verify- / gate) ni [HONOR]. MEDIDA en ESTE repo el 2026-09-03: 16 imperativas = 0 con gate + 0 [HONOR] + 16 sin declarar. TRINQUETE: solo puede BAJAR. INFORMATIVO en v1.33.0 — la decision de hacerlo bloqueante se toma con las cuatro cifras delante.",
+  "anclaBaseline": 2,
+  "_anclaBaseline_que": "B5 (falencias F-01/F-08, chequeo #16b): deuda CONGELADA de parrafos de docs/05, docs/10 y el ULTIMO ADR de docs/99 con vocabulario de verificacion SIN ancla resoluble en su parrafo. MEDIDA el 2026-09-03: 2 sin ancla. TRINQUETE: solo puede BAJAR. Mide PRESENCIA DE ANCLA, NO EL ACTO de verificar."
 }

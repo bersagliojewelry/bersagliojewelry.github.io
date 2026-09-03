@@ -1,8 +1,8 @@
 ---
 name: auditoria-cerebro
 description: Auditoría profunda Nivel-2 del cerebro documental del proyecto activo — lo que el linter estructural NO puede medir (fidelidad, frescura, función). Sondas FALSABLES sin puntaje numérico; cierra con GC pareado (masa-neta ≤0) y actualiza deepAudit en el manifest. Disparo - cuando brain-check imprime "auditoría Nivel-2 VENCIDA", antes de exportar el template a un repo nuevo, o a pedido ("audita el cerebro").
-actualizada: 2026-09-02
-reglas: 11
+actualizada: 2026-09-03
+reglas: 14
 lecciones: [G:G-001, G:G-002, G:G-004, G:G-005, G:G-010, G:G-011, G:G-013, G:G-014]
 origen: propia
 ---
@@ -133,6 +133,32 @@ en el 10 que ya es ADR? (El linter da números; tú juzgas si el CONTENIDO que q
 Un subagente pregunta: "¿qué falla de este cerebro NO está cubierta por ninguna sonda ni gate?"
 Lo que encuentre alimenta la próxima versión de esta skill (anti-engorde: también propone QUITAR
 gates que no cazaron nada en 2 auditorías).
+
+### Sonda 8 — Falencias del MODELO (tres ítems FIJOS, con procedencia)
+*(Del `DICTAMEN-FALENCIAS-MODELO.md` §2, mitigación **B10**, 2026-09-03. Los tres miran al operador,
+no al cerebro: son las falencias del modelo que ninguna otra sonda puede ver.)*
+
+⚠️ **Lo que el gate cubre y lo que no, dicho antes de la lista**: el chequeo **#14** del kernel mide
+que **la auditoría CORRIÓ** (`deepAudit.last` fresco), **NO que estos tres ítems se hicieran**. La
+mitad ejecutada es el calendario; el contenido es **[HONOR] dentro de una rutina gateada**. Se
+escribe aquí para que quien la corra no crea que un ✅ del linter respalda estos tres.
+
+1. **Poda de instrucciones heredadas de «verificar» (F-05).** Barre el router, las skills que este
+   repo consume y las rutinas en busca de órdenes de verificación escritas para modelos anteriores
+   («verifica siempre», «re-lee antes de cada paso», «comprueba dos veces»). La fuente oficial dice
+   que una instrucción así **degrada la salida** en la familia 5, que ensancha el alcance y se
+   sobre-verifica por defecto. Entrega: la lista de las que sobran, con su nodo:línea, y la poda
+   propuesta — no un «revisado, está bien».
+2. **Tag `[MODELO]` del commit vs modelo REAL del transcript (F-15).** Toma los commits del periodo
+   auditado y compara el tag del título (`[OPUS-5]`, `[FABLE-5.1]`…) con el modelo que de verdad
+   corrió, leído del transcript de la sesión — no de la memoria de nadie. Hoy ese tag es una
+   **declaración del propio modelo**, y el fallback silencioso a otro modelo la haría falsa sin que
+   nada chirriara. Entrega: cuántos comparaste, cuántos cuadran, y los que no.
+3. **Sonda de régimen: fan-outs, compactaciones y prueba ES/EN (F-16).** La evidencia publicada NO
+   cubre el régimen de esta casa (trayectorias largas con compactación, multi-agente, español).
+   Cuenta en el periodo: fan-outs lanzados, compactaciones sufridas, y corre el MISMO prompt/gate en
+   español y en inglés para ver si la salida cambia. Entrega: las tres cifras y el diff ES/EN. Si no
+   se pudieron recolectar, se dice cuál faltó — **una cifra ausente no se estima**.
 
 ## Cierre (obligatorio — la auditoría que no cierra es teatro)
 

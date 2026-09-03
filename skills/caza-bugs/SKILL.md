@@ -2,8 +2,8 @@
 name: caza-bugs
 description: Usar al TOCAR o ROZAR un subsistema con estado observable (render, listener/onSnapshot, CRUD, flujo de pasos) — editarlo, refactorizarlo con cambio de comportamiento, o cambiar el estado compartido (doc de base de datos, sessionStorage, caché) que otro flujo lee — ANTES de darlo por bueno. Recorre su CAMINO VIVO end-to-end, en especial las dos fronteras del estado-cero (crear el 1er ítem y verlo aparecer; borrar el último y ver colapsar limpio), no solo el cambio puntual. Encapsula el reflejo barato siempre-on y la escalera de escalado calibrada (revisión adversarial + comité + consejo externo) sin gastar de más en lo trivial. NO es para depurar un fallo ya reproducible (eso es systematic-debugging) ni para el gate de evidencia del claim final (verification-before-completion). Triggers — "verifica que no rompí nada", "probé el cambio pero no el flujo", "edité X y lo di por bueno", "esto se rozó con Y", "antes de cerrar/commitear esta funcionalidad".
 actualizada: 2026-09-02
-reglas: 62
-lecciones: []
+reglas: 66
+lecciones: [G:G-001, G:G-004, G:G-010, G:G-011, G:G-013]
 ---
 
 # 🐛 Caza-bugs — recorrer el camino vivo de lo que tocas, no solo tu diff
@@ -538,6 +538,11 @@ mensaje. En todos, cada parte se declara «dentro de su límite» hasta el día 
    un error — **repartir la culpa entre partes no tiene respuesta objetiva**: si una parte se pasa y otra
    va sobrada, ningún criterio mecánico dice cuál recorta. Eso lo decide una persona. Y tres avisos
    diciendo lo mismo no dan el triple de seguridad: enseñan a ignorar los tres.
+   ⚠️ Y la frontera de esta regla: vale para límites **derivados** del global (repartir la culpa entre
+   partes no tiene respuesta objetiva). Un presupuesto **por-elemento independiente** —longitud de
+   fila, tamaño por fichero, deuda congelada que solo puede bajar— **sí debe bloquear**, y su verde
+   agregado responde a otra pregunta: el contenedor puede estar al 65 % y el commit bloquearse igual.
+   *(cualificación por [[G:G-013]], 2026-09-02.)*
 3. **No recalibres a una partición exacta sólo para que cuadre.** Si el reparto exacto deja a cada parte
    con margen cero, el gate muerde en cada cambio y acabas desactivándolo. El diagnóstico honesto no es
    *«hay que ajustar los límites»*: es *«el sistema está al 99 % y no hay sitio»*. Dilo así.
@@ -659,6 +664,40 @@ despliegue a producción porque una nota decía que algo no estaba desplegado; y
 días antes. *La documentación es memoria, no verdad.* Antes de que una frase escrita te haga tocar
 producción —desplegar, borrar, migrar, enviar— mide el estado real. El coste de mirar es un comando;
 el de no mirar, un cambio que ya no puedes retirar.
+
+### 4m-ter. 🔖 El SELLO que decide el próximo reparto — y los dos procesos que se lo pasan
+
+Especie nueva, medida el 2026-09-02 sobre el reparto de skills gobernadas: el gate comparaba las seis
+copias contra el canon, imprimía «las 43 idénticas al canon» y salía ✅ — y el reparto estaba **roto en
+las 172 combinaciones repo×skill**, porque lo que decide el reparto de mañana no son las copias, es un
+**sello** (`_reparto-baseline.json`) que ningún gate abría.
+
+1. **Un recuento impreso no valida la pregunta.** «Desconfía de un ✅ que no dice cuánto miró» (§4j-bis)
+   no basta: este ✅ decía cuánto miró —43 de 43— y aun así no medía nada, porque **lo contado no era
+   lo que decide**. Ante cualquier verde con denominador, la pregunta siguiente es *«¿este número es el
+   que gobierna el comportamiento futuro, o solo el estado de hoy?»*. Un agregado en verde suele ser la
+   respuesta a otra pregunta. *(procedencia: [[G:G-013]]; enlaza §4j-bis → §4m.)*
+2. **El gate que decide con un dato tiene que ABRIR ese dato.** Un sello que solo se compara consigo
+   mismo no mide nada: el testigo va fuera. Si un mecanismo mantiene N copias iguales usando un
+   registro de «qué repartí la última vez», ese registro es **el sujeto de la auditoría**, no un
+   detalle de implementación — y su ausencia en el gate es exactamente por qué el fallo sale en verde.
+   Comprobación de bolsillo: `grep` del nombre del fichero de estado dentro del gate; si da **0**, el
+   gate es ciego a lo que gobierna. *(procedencia: [[G:G-001]].)*
+3. **Cuando dos procesos se pasan un estado de control, pregunta quién lo escribe DESPUÉS de cada
+   transición.** Mover algo son **dos efectos** —se escribió allí · se selló aquí— y el segundo sale
+   bien aunque el primero falle, o al revés. Si la respuesta es «ninguno de los dos: se sella aparte»,
+   el orden correcto es una regla [HONOR] que nadie recordará, y basta con que alguien mejore la fuente
+   antes de sellar para que el sistema entre en un bloqueo sin salida documentada. **La guarda va sobre
+   el EFECTO**: sella lo que acabas de escribir, no lo que ya coincidía. *(procedencia: [[G:G-010]]
+   síntoma 3 — la guarda sobre el EFECTO, y «mover algo son DOS efectos».)*
+4. **Si no puedes escribir en el sistema, CLÓNALO — la sonda que no se puede ejecutar es una opinión.**
+   «Ejecutar > razonar» no tiene salida cuando el árbol vivo está prohibido, y ahí se abandona el
+   método justo donde más falta hace. Patrón portable y barato: `git clone --local` a un scratch +
+   hermanos falsos con sus manifests reales + las variables de entorno que localizan las rutas
+   (`HOME`/`USERPROFILE`) redirigidas al scratch, y **se declara qué NO se pudo probar con el paso
+   exacto que faltaría**. Así se ejercitan las dos fronteras del estado-cero de un subsistema sin
+   pantalla: «la pieza nueva que aún no está en ninguna punta» y «la última que desaparece».
+   *(procedencia: [[G:G-004]] regla 1 — sin el par conocido no tienes instrumento.)*
 
 ## 4n. 🗺️ El censo que mide la superficie EQUIVOCADA — medir no es lo mismo que medir lo que importa
 

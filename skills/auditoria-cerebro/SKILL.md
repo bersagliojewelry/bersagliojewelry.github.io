@@ -2,8 +2,8 @@
 name: auditoria-cerebro
 description: Auditoría profunda Nivel-2 del cerebro documental del proyecto activo — lo que el linter estructural NO puede medir (fidelidad, frescura, función). Sondas FALSABLES sin puntaje numérico; cierra con GC pareado (masa-neta ≤0) y actualiza deepAudit en el manifest. Disparo - cuando brain-check imprime "auditoría Nivel-2 VENCIDA", antes de exportar el template a un repo nuevo, o a pedido ("audita el cerebro").
 actualizada: 2026-09-02
-reglas: 5
-lecciones: []
+reglas: 11
+lecciones: [G:G-001, G:G-002, G:G-004, G:G-005, G:G-010, G:G-011, G:G-013, G:G-014]
 ---
 
 # 🔬 Auditoría de Cerebro — Nivel 2 (semántica)
@@ -16,6 +16,53 @@ lecciones: []
 > **KPIs del lazo**: hallazgos REINCIDENTES (vs auditoría anterior) + tasa de re-investigación.
 
 ## Protocolo (en orden; cada sonda = subagente o verificación directa)
+
+## Reglas transversales de toda sonda (se aplican ANTES de escribir un hallazgo)
+
+1. **Prueba tu instrumento con un caso conocido antes de acusar a un nodo.** Un rojo de TU sonda se
+   sospecha ANTES que el dato auditado, y más si es redondo o unánime: mide un caso que SABES bien y
+   uno que SABES mal; si tu instrumento no los separa, no tienes medida, tienes una opinión con
+   números. Medido en esta misma corrida: contar los stubs por TAMAÑO dio 54 contra los 53 declarados
+   y se iba a abrir un hallazgo de fidelidad contra un `05` correcto; contados por CONTENIDO (el
+   centinela `http-equiv="refresh"`) salen 53·7·6 = 66, exacto. **Un hallazgo de más contra un nodo
+   correcto es peor que uno de menos**, porque empuja a «arreglar» lo que estaba bien.
+   *(procedencia: [[G:G-004]] reglas 1 y 2.)*
+2. **Toda sonda declara su MARCO, su umbral y su denominador; el veredicto declara lo que NO midió.**
+   «Toma 3-5 hechos» sin marco es «los que tenía entre las manos» (M-31). Escribe de qué conjunto
+   saliste (p. ej.: *todas las filas de `05` + todas las TODO de `10` comprobables desde disco o git;
+   descartadas las que exigen mundo exterior*) y publica el reparto (4 pasan / 4 fallan). Estados
+   admitidos, además de cerrado/abierto/reincidente/retirado: **`⏳ NO VERIFICABLE este turno` con el
+   motivo escrito** (exige red, vive fuera del repo, exige otra sonda) y **`🟡 PARCIAL` con las dos
+   listas enumeradas** cuando el hallazgo nombra varios objetos — un veredicto atómico sobre un
+   hallazgo compuesto cierra de más o deja abierto de más. *(procedencia: [[G:G-001]] corolario del
+   denominador; [[G:G-005]] regla 1 — la regla viaja escrita junto al dato.)*
+3. **Re-verificar la premisa incluye el caso «premisa a MEDIAS».** La regla dura dice que un hallazgo
+   sin la línea que lo implementa es una OPINIÓN; falta el caso intermedio: **la línea existe y dice
+   otra cosa, o dice más**. Abre la línea y **cuenta cuántos ejes mide**: un gate de frescura que mide
+   días **y** commits calla por el eje que no miraste (medido: sello a 2 días de antigüedad —bajo el
+   umbral de 10— y 89 commits —bajo un umbral de 120 que en un repo de 26 commits/día no dispara
+   jamás). Veredicto: **«premisa CORREGIDA»**, ni cerrado ni abierto tal cual estaba escrito.
+   *(procedencia: [[G:G-002]] receta; [[G:G-013]] — cuántos límites hay y sobre qué mide cada uno.)*
+4. **La cita `archivo:línea` se re-ancla por CONTENIDO, y publicas el par viejo→nuevo.** El fichero se
+   mueve debajo de la auditoría: en esta corrida **5 de 18** citas heredadas habían derivado en dos
+   días (`:93→:101`, `:571→:650`, `:1198→:1313`, `:314/:319/:359→:376/:421`). Una comprobación
+   mecánica «¿la línea 571 dice eso?» habría RETIRADO cinco hallazgos vivos — un instrumento que falla
+   **por clases**, no al azar. La línea es una pista; el ancla es el texto. *(procedencia: [[G:G-004]]
+   regla 3 «declara, no descubras»; [[G:G-011]] regla 1 — dos fronteras y de qué objeto es cada una.)*
+5. **Un hallazgo CERRADO declara qué superficie cambió su arreglo, y esa superficie se re-mide en la
+   misma pasada.** El residuo del remedio no es reincidencia (el viejo está bien cerrado) ni es
+   independiente: es hijo suyo, y se cuelga de su fila. Medido: cerrar «el escáner de secretos no ve
+   los dotfiles» dejó `_legacy/` declarado FUERA con el motivo «código retirado que no se sirve» —y el
+   mismo día la migración escribió ahí 146 KB en un repo PÚBLICO. El motivo escrito dejó de describir
+   el contenido y **ningún gate mira un motivo**. *(procedencia: [[G:G-014]] — todo enunciado
+   auto-referencial es un puntero SIN gate; cuéntalo y reescríbelo en el mismo cambio.)*
+6. **Mide con el instrumento del kernel, y escribe la unidad junto al número.** Dos instrumentos son
+   DOS series aunque midan «lo mismo»: `wc -c` cuenta **bytes** y el linter cuenta **caracteres** —en
+   un cerebro lleno de emojis y acentos eso da 3455 contra 3303 sobre el mismo fichero—, y `git show`
+   normaliza CRLF mientras el disco no. Antes de comparar contra un tope, un porcentaje o una serie
+   histórica, di con qué regla se tomó cada número; si normalizas, di **qué descartas**.
+   *(procedencia: [[G:G-005]] regla 1 y [[G:G-010]] — lo que una normalización descarta es lo que su
+   gate no puede ver.)*
 
 ### Sonda 0 — Diff vs auditoría anterior (SIEMPRE primero)
 Localiza la tabla de hallazgos de la auditoría anterior (en el `archiveDir` del manifest).
@@ -99,6 +146,15 @@ gates que no cazaron nada en 2 auditorías).
 5. Hallazgos accionables → filas TODO-NN en el nodo 10 (ledger único). NO crear docs de estado nuevos.
 
 ## Modo sin-tokens (fallback)
-Sin presupuesto para subagentes: corre las sondas 0-2 y 6 tú mismo (verificación directa), marca
-3-5 como `[PENDIENTE: requiere subagentes]` en la tabla, y actualiza deepAudit igual — una
-auditoría parcial HONESTA vale más que una completa fingida.
+Sin presupuesto para subagentes: corre las sondas 0-2 y 6 tú mismo (verificación directa) y marca 3-5
+como `[PENDIENTE: requiere subagentes]` en la tabla. **`deepAudit.last` solo se mueve cuando la
+auditoría está COMPLETA**; en una parcial se escribe `deepAudit.parcial: ["3","4","5","7"]` junto al
+`last` ANTERIOR, y el nudge sigue encendido a propósito — es un aviso que no debe apagarse mientras
+falte lo que mide. Una auditoría parcial honesta vale más que una completa fingida, y la forma de ser
+honesta es **no darle al gate el dato que le falta**.
+*(`parcial` es una sub-clave de `deepAudit`: medido el 2026-09-02 en `scripts/brain-check.mjs` —el
+schema del manifest solo valida las claves de PRIMER nivel—, así que no hace falta tocar `KNOWN_KEYS`
+en los 4 repos; el mecanismo que sostiene la regla es que `last` NO se mueve, no la clave nueva.)*
+> ⛔ derogada (G-002 · 2026-09-02): «…marca 3-5 como `[PENDIENTE: requiere subagentes]` en la tabla, y
+> **actualiza deepAudit igual**». Apagaba el nudge con la auditoría a medias: green-tuning del propio
+> gate que dispara esta skill.

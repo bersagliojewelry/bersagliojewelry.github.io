@@ -272,3 +272,14 @@ Paquete desarrollado por el dueño (Antigravity) para integraciones de pago Womp
 | Skill | Qué aporta | Disp. |
 |---|---|---|
 | `attribution` 🆕 | Qué canal produjo DE VERDAD la venta cuando la conversión ocurre **fuera del píxel**: los 6 modelos y cómo miente cada uno, los 3 paradigmas (MTA/MMM/incrementalidad), cómo reconciliar paneles que se contradicen (y por qué NUNCA se suman) y la pista first-party. Ataca el techo ya medido de la pauta — la venta se cierra por WhatsApp. **Capa propia**: gate `legal-colombia` (Ley 1581 sobre el Pilar B) + cero cifras inventadas. | ✅ repo+user |
+
+## 🆕 Gobernadas nº 45 y nº 46 — llegadas con C4-6 (2026-09-03)
+
+> **Dueño único: `brain-private/skills/`** (D-C4-1) — no se editan aquí. Dictaminadas en
+> `cerebro-maestro/DICTAMEN-C4-SKILLS.md` §10 (**D-C4-27** y **D-C4-29**), tras probarse en frío sobre
+> tareas REALES del portafolio, y declaradas en `skillFiles` de los **4** repos.
+
+| Skill | Qué aporta | Disp. |
+|---|---|---|
+| `firebase-security-rules-auditor` 🆕 | Audita `firestore.rules` / `storage.rules` / `database.rules.json` como red-team: update-bypass, fuente de autoridad, abuso de almacenamiento, type-safety y `hasOnly` vs pertenencia. **Vendorizada** de `firebase/agent-skills@a0b4e143` (Apache-2.0, texto puro, cero ejecución, 3.848 B) — la propiedad del org la confirma la doc oficial de `firebase.google.com`. **Capa nuestra de 10 puntos POR DELANTE**, sin la cual vale menos aquí que en cualquier sitio: su punto ciego es que audita el TEXTO y nunca pregunta si está DESPLEGADO. | ✅ repo+user |
+| `guia-web-moderna` 🆕 | Skill **PROPIA** de envoltura: qué API nativa del navegador existe hoy (container queries, `popover`, `<dialog>`, View Transitions, `content-visibility`, `:has()`…) y, sobre todo, **quién manda** — `tokens.css` y la disciplina de color (JAMÁS modo oscuro), `img.ts` + srcset, `@container` al final de la hoja, y nada declarado mejorado sin medir en vivo. Envuelve al plugin `modern-web-guidance` (Google Chrome, marketplace): se CONSULTA, no manda, y su CLI **nunca** se vendoriza. Trae `references/baseline-2026-09.md` (foto fechada del soporte). | ✅ repo+user |

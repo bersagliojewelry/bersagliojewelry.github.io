@@ -1,8 +1,8 @@
 ---
 name: semantic-schema-aeo
 description: El cerebro semántico de la visibilidad — qué structured data (JSON-LD) inyectar por tipo de página + cómo ser CITADO/RECOMENDADO #1 por buscadores e IA (AEO). FUSIÓN deliberada de SEO-técnico (schema) + AEO (answer-engine) porque ambos viven en el mismo `<head>` y separarlos colisiona. Úsala al construir `buildSchema()` del core o al decidir el schema/meta de un sitio: Product/Offer/AggregateRating/Review/Organization/LocalBusiness/BreadcrumbList/FAQPage/Article/Person/ImageObject con sus props requeridas vs recomendadas + plantillas parametrizables por vertical (JewelryStore/AutoDealer/RealEstateAgent). Incluye CWV 2026 (LCP/INP/CLS), E-E-A-T, y el playbook AEO (=20% código / 80% off-page: el código referencia el consenso externo —sameAs/reseñas/FAQ citable—, NO lo genera). Regla dura: schema en el HTML del build (curl+grep), cero-demo (NUNCA AggregateRating/sameAs/reseñas inventadas = spam penalizado), NAP maestro. Triggers — "qué schema pongo", "structured data", "rich results", "que la IA me recomiende", "AEO", "FAQ schema", "aparecer en AI Overviews/ChatGPT/Perplexity", "Organization/LocalBusiness JSON-LD". Pareja de `ssg-static-prerender`. Lee `tenant_config.json`.
-actualizada: 2026-09-02
-reglas: 8
+actualizada: 2026-09-03
+reglas: 10
 lecciones: []
 origen: propia
 ---
@@ -105,6 +105,30 @@ gov/health de 2023; la doc se retiró el 15-jun-2026 y GSC eliminó el informe/f
   evitar long tasks; **CLS** = `width`/`height` en img + `font-display:swap`; **LCP** = preload + critical CSS +
   `fetchpriority="high"` SOLO en el LCP. (Encaja con la doctrina de performance del proyecto.)
 - **E-E-A-T**: página Nosotros/autor (`Person`), políticas/garantías, reseñas reales. Demuestra experiencia real.
+
+## 4bis. «Agentic browsing» — una categoría MEDIBLE, separada del SEO
+
+> **Procedencia**: la categoría y su nombre vienen de `addyosmani/web-quality-skills@afa8da94` (**MIT**,
+> fichero `LICENSE` del repo; HEAD 2026-08-24, consultado el **2026-09-03**), ruta `skills/seo/SKILL.md` —
+> vía DICTAMEN-C4 §10 **D-C4-28**. De su `references/STRUCTURED-DATA.md` **no entra NADA**: el §1 y el §2 de
+> esta skill son superiores (saben de Colombia, de la prohibición de meter reseñas del GBP en el schema
+> propio, de que `Offer` sin `price` es inválido y de la muerte del rich result de `FAQPage`).
+
+Un agente que navega tu página no es un crawler y no es un usuario: **no ve tu CSS y no ejecuta tu
+onboarding**. Lee el árbol de accesibilidad, los nombres programáticos y el HTML servido. `lighthouse_audit`
+la puntúa aparte (auditorías tipo `agent-accessibility-tree`, `crawlable-anchors`, `link-text`,
+`paste-preventing-inputs`), y por eso conviene mirarla como una tercera columna junto a SEO y a11y.
+
+1. **Trátala como una comprobación de MÁQUINA-LECTORA, no como una señal de ranking.** Que un panel diga
+   «Agentic Browsing 100» **no es evidencia de que te citen** en AI Overviews, ChatGPT o Perplexity: eso lo
+   decide el consenso externo (§3, el 80 % off-page). Es una condición necesaria y barata, no un resultado.
+   Reportarla como logro de AEO es exactamente el ✅ que miente.
+2. **Lo que sí arregla, arréglalo — porque es lo mismo que ya pide el §1 y la `accessibility-audit`.**
+   Anclas rastreables (`<a href>` real, no `<div onclick>`), texto de enlace que signifique algo fuera de su
+   contexto visual, nombres programáticos en los controles, el JSON-LD **en el HTML del build** (no por JS),
+   y no bloquear el pegado en los formularios. Cero trabajo nuevo: es la intersección de tres skills, y por
+   eso vale la pena nombrarla una vez.
+
 
 ## 5. Red-team (errores que HUNDEN el ranking — evítalos)
 AggregateRating inventado · **reseñas del GBP/terceros en el schema propio** (self-serving) · `Offer` sin

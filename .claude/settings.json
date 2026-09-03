@@ -1,4 +1,8 @@
 {
+  "env": {
+    "_que": "Variables de entorno de ESTE proyecto. DISABLE_TELEMETRY apaga la telemetria del CLI del plugin modern-web-guidance (Google Chrome), que por defecto envia a Google las consultas que el agente escribe sobre NUESTRO codigo (README del paquete, medido 2026-09-03). Condicion 1 de DICTAMEN-C4 §10 D-C4-29.",
+    "DISABLE_TELEMETRY": "1"
+  },
   "permissions": {
     "deny": [
       "Bash(* --no-verify*)",

@@ -13,9 +13,9 @@ description: >-
   accessibility — NOT building a11y features (e.g. a high-contrast toggle), writing alt-text
   content, editing photo contrast, restyling focus rings for looks, translating copy, or
   Lighthouse/perf work.
-actualizada: 2026-09-02
-reglas: 5
-lecciones: []
+actualizada: 2026-09-03
+reglas: 9
+lecciones: [G:G-005]
 origen: propia
 ---
 
@@ -86,6 +86,40 @@ it's the heart of this skill. The dimensions:
 | Target size | 2.5.8 | Touch targets ≥ 24×24 px |
 | Language | 3.1.1 | `<html lang>` set correctly |
 | Name, role, value | 4.1.2 | Custom/ARIA widgets expose name + role + state |
+
+### 4bis. WCAG 2.2 criteria the table above doesn't carry, and the rule that catches what axe misses
+
+> **Provenance**: the five 2.2 criteria and the explicit 24×24 floor come from
+> `addyosmani/web-quality-skills@afa8da94` (**MIT**, repo `LICENSE`; HEAD 2026-08-24, read **2026-09-03**),
+> path `skills/accessibility/SKILL.md` — via DICTAMEN-C4 §10 **D-C4-28**. Rule 3 below is **ours**, measured
+> the same day. Nothing above this block was rewritten: §3's contrast formula and `references/wcag-checklist.md`
+> stay the source of truth.
+
+| Area | WCAG 2.2 (AA) | Quick check |
+|---|---|---|
+| Focus not obscured (minimum) | 2.4.11 | A focused element is never fully hidden behind a sticky header, cookie bar or drawer |
+| Focus appearance | 2.4.12 (AAA) | The focus indicator is thick enough and contrasts ≥ 3:1 against both states |
+| Consistent help | 3.2.6 | Help affordances (contact, chat, FAQ link) sit in the same relative place on every page |
+| Redundant entry | 3.3.7 | Information already given in a flow is auto-filled or offered, never retyped |
+| Accessible authentication (minimum) | 3.3.8 | No cognitive-function test (puzzle, memorised code) without an alternative; allow paste into password fields |
+
+1. **Target size is 24×24 CSS px MINIMUM (2.5.8 AA), and 48×48 is the comfort target.** State both numbers
+   and measure the *hit area*, not the glyph: padding counts, `line-height` does not. A control that only
+   passes because two adjacent targets are spaced apart must say so.
+2. **`:focus` / `:focus-visible` with ZERO rules in the whole stylesheet is itself a finding.** Falling back
+   to the UA ring keeps 2.4.7 alive by accident, but leaves **1.4.11 (indicator ≥ 3:1) unverified** — report
+   it as 🟡 medium and *pending*, never as a pass. Walk `document.styleSheets` to prove the zero.
+3. **ALWAYS cross the automated tool with the formula by hand — they disagree, and the gap is where the
+   brand lives.** Measured on a live home page (2026-09-03): axe (Lighthouse 13.4.1) reported **1** contrast
+   failure; the per-node formula found **3**. The two axe skipped were both the **brand gold** on white at
+   **2.95:1** — the slogan and a headline. Two instruments, one series, both conditions written down
+   ([[G:G-005]]). Corollary: text painted with `background-clip: text` over a gradient is **not measurable by
+   formula** — declare it pending visual inspection instead of approving it, and composite `rgba()` text over
+   its real background before computing (a naive reader that ignores alpha reports a fake 1:1).
+4. **Automated categories are not the audit.** A tool score of 92 can coexist with three real AA failures.
+   Screen-reader pass, keyboard focus order, 200 % zoom and Windows high contrast stay **Pending** unless a
+   human ran them — say it in the report (see "Scope honesty").
+
 
 ### 5. Classify and write the report
 Use the severity rubric in the reference. Then produce the report in the format below.

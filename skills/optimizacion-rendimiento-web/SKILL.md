@@ -6,9 +6,9 @@ metadata:
   author: operador-cars
   version: "1.0.0"
 allowed-tools: Read Write Edit Glob Grep Bash
-actualizada: 2026-09-02
-reglas: 10
-lecciones: []
+actualizada: 2026-09-03
+reglas: 18
+lecciones: [G:G-004, G:G-005, G:G-013, G:G-016]
 origen: propia
 ---
 
@@ -200,6 +200,68 @@ Cada página a la que aplicas el bucle deja aprendizaje. Al cerrar una optimizac
   disparador y el número que la respalda. Así la próxima página parte de más arriba.
 - Mantén un checklist por-página (fuentes ✅ · JS ✅ · CSS · imágenes · red/SW · terceros) para saber
   qué falta en cada superficie.
+
+## 7. Medir con `chrome-devtools-mcp` (el instrumento, y cuándo miente)
+
+> **Procedencia**: método y tablas adaptados de `addyosmani/web-quality-skills@afa8da94` (**MIT**, fichero
+> `LICENSE` del repo; HEAD 2026-08-24, consultado el **2026-09-03**), rutas
+> `skills/performance/references/MEASUREMENT.md` y `skills/core-web-vitals/SKILL.md` — vía DICTAMEN-C4 §10
+> **D-C4-28**. **Lo NUESTRO manda**: §2 y §3 de esta skill no se tocan ni se duplican; sus casos llevan
+> número pagado y ganan a cualquier catálogo genérico. Aquí entra solo lo que NO teníamos: el enrutamiento
+> del instrumento, la disciplina de la serie, los presupuestos por recurso y el cero que miente.
+
+**Ruta preferida por lo que quieres saber** (no uses una sola herramienta para todo):
+
+| Qué mides | Ruta preferida | Fallback declarado |
+|---|---|---|
+| Rendimiento / CWV | `performance_start_trace` + `performance_analyze_insight` | Lighthouse CLI · PageSpeed Insights (§2) |
+| A11y · SEO · Best practices · agentic browsing | `lighthouse_audit` (**excluye rendimiento a propósito**) | Lighthouse CLI + comprobación manual (`accessibility-audit`) |
+| Semántica renderizada | `take_snapshot` + `evaluate_script` acotado | inspección directa del código |
+| Humo estático sobre el HTML del build | grep (doctype, `charset`, `viewport`, `lang`, `<title>`, `img` sin `alt`, `http://`) | inspección directa |
+
+1. **Tres navegaciones equivalentes, mediana + rango — y la REGLA de medida viaja junto al dato.** Una
+   corrida no es una medida. Reporta mediana y rango de al menos **n=3** navegaciones equivalentes, y
+   escribe AL LADO las condiciones exactas: viewport y DPR, emulación de dispositivo, throttling de CPU y
+   de red, estado de caché, y desde dónde se sirvió (edge/POP). Sin la regla, la serie no se puede repetir
+   ni comparar, y el número siguiente medirá otra cosa ([[G:G-005]]). Cabecera válida de ejemplo: *móvil
+   412×915 @2.625 · CPU 4× · Slow 4G · caché ignorada · n=3*.
+2. **`lighthouse_audit` en `mode:"navigation"` puede devolver `0/0/0/0`: un cero que MIENTE.** Si la
+   ventana que levanta el MCP no queda en primer plano, el renderer no pinta y Lighthouse aborta con
+   `runtimeError: { code: "NO_FCP" }` — el resumen dice `Accessibility 0 · Best Practices 0 · SEO 0 ·
+   Passed 0 · Failed 0`, y un agente que se quede ahí **reporta un desastre inexistente**. Antes de creerte
+   un cero, abre el `report.json` y busca `runtimeError`. Rodeo medido y reproducible: `mode:"snapshot"`
+   (analiza el DOM actual, no recarga) sí funciona —20 auditorías pasadas en 1,48 s—, y **emular móvil
+   fuerza al compositor a pintar**: sin emulación, `PerformanceObserver` devolvió `lcp:null, fcp:null` pese
+   a `visibilityState:"visible"`. Sospecha del instrumento antes que de los datos ([[G:G-004]]): es
+   `36-LECCIONES-UTILLAJE` + `38-GATES-QUE-MIENTEN` en estado puro.
+3. **Si no lo mediste, dilo: «no medido» no es «0».** INP no sale de una traza de carga (necesita
+   interacción real), y un agregado en verde no dice nada del elemento concreto ([[G:G-013]]). Declarar la
+   métrica ausente vale más que rellenarla.
+4. **Presupuesto POR RECURSO, no solo el agregado.** El total en verde esconde el recurso que te está
+   matando. Punto de partida (adáptalo al proyecto y deja escrito por qué):
+
+   | Recurso | Presupuesto | Por qué |
+   |---|---|---|
+   | JavaScript (transferido) | < 300 KB | por encima, el TBT/INP se va aunque el LCP salga bien |
+   | CSS (transferido) | < 100 KB | el critical path se paga entero antes del primer píxel |
+   | CSS crítico en línea | < 14 KB | cabe en el primer round-trip |
+   | Peso total de la primera visita | < 1,5 MB | en Slow 4G cada 100 KB son décimas de segundo |
+   | TTFB | < 800 ms | por encima, ninguna optimización de front lo salva |
+
+   Y mide **cuánto pesa CADA recurso frente al hueco que ocupa**: un solo fichero puede ser a la vez el
+   elemento LCP y casi todo el peso de la primera visita, y entonces optimizar cualquier otra cosa es ruido.
+5. **Lo que la herramienta dice de tu INFRA no siempre es un defecto a pelear.** En GitHub Pages, el TTL de
+   600 s y la ausencia de `strict-transport-security` / CSP / `x-content-type-options` son **el techo del
+   hosting**, no un fallo del código: se REGISTRA, y el cache-bust por query-string sigue siendo la
+   respuesta correcta, no un parche ([[G:G-016]]). No abras un pendiente contra algo que no controlas.
+6. **Los comandos de instalación de la fuente son OPCIONALES y NO ejecutables sin permiso.**
+   `npm install @axe-core/cli -g`, `npx lighthouse <url>`, `axe <url>`, `npm audit` y el paquete `web-vitals`
+   para RUM se citan como referencia. Aquí no se instala nada permanente sin que el dueño lo pida: la ruta
+   por defecto es el MCP que ya está cargado. (Mismo trato que el CLI de `spec-kit`.)
+7. **Esto MIDE; no verifica el camino vivo.** Una mejora medida sigue sin estar cerrada hasta que
+   `validacion-live-chrome` la confirma en producción y `caza-bugs` recorre el flujo end-to-end. El
+   instrumento da números; la no-regresión es otra pasada.
+
 
 ## Ground rules
 

@@ -34,8 +34,11 @@
 //       v1.30.0 (PLAN-CIERRE §5, capa 2): `session-handoff --boot-echo` COBRA el flag 🚨
 //       `docs/.vigia-alerta` que levanta el vigía de la bóveda. Aquí NO cambia ni un chequeo: el
 //       bump es del KERNEL, que se reparte entero, y su sello tiene UN dueño — esta constante.
+//       v1.31.0 (C4-2 · D-C4-5): el schema (#15) conoce `skillFiles` — la lista explícita de skills
+//       gobernadas que `brain:pull` reparte desde el canon de la bóveda. Sin esta línea, los cuatro
+//       repos avisarían «clave desconocida» en cada commit, que es como se apaga un gate por hartazgo.
 // ===========================================================
-const KERNEL_VERSION = '1.30.0';
+const KERNEL_VERSION = '1.31.0';
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 import { homedir } from 'os';
 import { join, dirname } from 'path';
@@ -121,6 +124,12 @@ const KNOWN_KEYS = new Set([
   // controla— sino que techa lo que antes ni se CONTABA. Opcional a propósito: sin la clave el
   // gate #2 solo informa, para no romperle el commit a los hermanos que aún no la han adoptado.
   'bootRealTarget',
+  // v1.31.0 (C4-2 · D-C4-5): lista EXPLÍCITA de las skills gobernadas que este repo consume, igual
+  // que `kernelFiles` con el kernel. La reparte `brain:pull` desde el canon de la bóveda
+  // (`brain-private/skills/`). Es explícita a propósito: así una skill AUSENTE aquí es una decisión
+  // declarada y no un olvido — que es justo lo que C4-1 midió (kit 5 · inmo 8 · cars 14 · bers 13 ·
+  // inse 16 ausencias, ninguna de ellas decidida por nadie).
+  'skillFiles',
 ]);
 // v1.14.0: prefijo `x-` para la config de gates PROPIOS de un repo (como las cabeceras de
 // extensión de HTTP). Sin él había dos malas salidas: meter una clave de un solo proyecto en

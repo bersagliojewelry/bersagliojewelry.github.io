@@ -1,6 +1,9 @@
 ---
 name: wompi-colombia-api-v1
 description: Skill maestro para la integración completa de la API v1 de Wompi Colombia. Úsalo cuando necesites implementar pagos en Colombia, Wompi, Bancolombia, o transacciones para tu plataforma (tarjetas, PSE, Nequi, efectivo).
+actualizada: 2026-09-02
+reglas: 7
+lecciones: []
 ---
 
 # Integración Wompi Colombia API v1

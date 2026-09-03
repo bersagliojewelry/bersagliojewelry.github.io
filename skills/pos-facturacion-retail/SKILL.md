@@ -1,6 +1,9 @@
 ---
 name: pos-facturacion-retail
 description: Usar al DISEÑAR, auditar o explicar un sistema POS / facturación / caja de retail (joyería, tienda, concesionario, restaurante) — para que el sistema se comporte como los POS profesionales reales (Square, Odoo POS, Alegra POS, Siigo) y no como una app de "botones que mueven números". Cubre semántica de anulación vs devolución, sesiones de caja y arqueo, pagos divididos, notas crédito y el contexto colombiano (DIAN, POS electrónico). Triggers — "¿por qué se puede anular una venta entregada?", "cómo funciona un POS de verdad", "diseña el flujo de devoluciones", "arqueo/cierre de caja", "factura electrónica DIAN".
+actualizada: 2026-09-02
+reglas: 6
+lecciones: []
 ---
 
 # POS y facturación de retail — cómo funcionan los sistemas reales
@@ -13,7 +16,7 @@ description: Usar al DISEÑAR, auditar o explicar un sistema POS / facturación 
 | Camino | Cuándo | Ventana | Quién | Efecto |
 |---|---|---|---|---|
 | **VOID (anular)** | Error de REGISTRO inmediato: se digitó mal, el cliente se arrepintió antes de irse | SOLO el turno/sesión de caja ABIERTO (antes del arqueo) | La cajera | Reverso completo: venta marcada anulada (nunca borrada), stock repuesto, el dinero no salió o se devuelve en el acto; el arqueo del turno ya no la espera |
-| **DEVOLUCIÓN (return/refund)** | El cliente REGRESA con el producto después (horas/días) | Post-cierre, según política (retracto Ley 1480 CO: 5 días en ventas a distancia; garantía) | Supervisor/dueño (aprobación) | Documento NUEVO (nota crédito / reembolso) enlazado a la venta original — la venta original NO se toca; el dinero sale HOY (egreso trazable o reversa de pasarela); el stock vuelve por alta consciente si el producto está apto |
+| **DEVOLUCIÓN (return/refund)** | El cliente REGRESA con el producto después (horas/días) | Post-cierre, según política (retracto Ley 1480 Art. 47 CO: 5 días HÁBILES en ventas a distancia (igual que legal-colombia); garantía) | Supervisor/dueño (aprobación) | Documento NUEVO (nota crédito / reembolso) enlazado a la venta original — la venta original NO se toca; el dinero sale HOY (egreso trazable o reversa de pasarela); el stock vuelve por alta consciente si el producto está apto |
 | **CORRECCIÓN contable** | La venta fue real pero mal clasificada (medio/monto) | Cualquier momento | Dueño (doble aprobación) | Asiento inverso + asiento correcto — jamás editar el original |
 Regla de oro: **una venta con dinero ingresado y mercancía entregada NUNCA se "anula"** — se
 devuelve o se corrige, cada una con su documento, su motivo y su aprobación. Si tu UI muestra

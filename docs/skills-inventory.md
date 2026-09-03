@@ -235,3 +235,29 @@ Paquete desarrollado por el dueño (Antigravity) para integraciones de pago Womp
 | `wompi-webhooks-validator` | skill | Validación criptográfica (SHA-256) + idempotencia de webhooks |
 | `wompi_support_agent` | agente | Diagnóstico errores HTTP/transaccionales (401/404/422, DECLINED, webhooks) |
 | `wompi_qa_agent` | agente | Planes de prueba + edge cases (idempotencia, doble-gasto, firma falsa) |
+
+---
+
+## 🧷 Skills GOBERNADAS por el canon — llegadas con el reparto C4-2 (2026-09-02)
+
+> **Dueño único: `brain-private/skills/`** (D-C4-1). Estas 9 skills no vivían en este repo:
+> no porque alguien decidiera que no aplicaban, sino porque **nadie repartía** — C4-1 midió 51
+> ausencias así entre las cuatro puntas y ninguna estaba decidida. Ahora la lista de lo que este
+> repo consume es explícita (`skillFiles` en `docs/.brain-manifest.json`) y las reparte
+> `npm run brain:pull`, igual que el kernel.
+>
+> ⚠️ **No se editan aquí.** Una mejora hecha en esta copia se pierde en el siguiente reparto — y el
+> reparto se NIEGA a pisarla: la deposita en `brain-private/maestro/_inbox/` como candidata. Lo que
+> valga se sube al canon y baja a las seis puntas.
+
+| Skill | Qué hace (de su propio `description`) |
+|---|---|
+| `acceso-y-autenticacion` | Diseñar o auditar el sistema de ingreso de una aplicación — puerta única, segundo factor, sesión, alta y baja de usuarios, bitácora, recuperación. |
+| `mantenimiento-general` | EJECUTOR del mantenimiento mensual del cerebro ×4 (Cerebro v2 F3, ADR §53 inmobiliaria). |
+| `marketing-loops` | When the user wants to set up a recurring, self-running marketing workflow — a repeatable loop an AI agent runs on a cadence (weekly, daily, on a trigger) rather than a one-off task. |
+| `marketing-psicologico-conversion` | Activar cuando el usuario quiera crear guiones de video, piezas gráficas, copywriting para anuncios o estrategia de contenido — en especial piezas de CAPTACIÓN y pauta (Meta/IG/TikTok) de ALTORRA. |
+| `offers` | When the user wants to design, construct, or improve an offer — the thing they actually sell — including value framing, bonus stacking, guarantee design, scarcity/urgency, naming, and payment structure. |
+| `pauta-captacion` | ORQUESTADORA de la pauta de captación de propietarios de ALTORRA (Meta primero, Google fase 2). |
+| `publicar-web-produccion` | Guía GENÉRICA para decidir CUÁNDO, CÓMO y DÓNDE publicar cualquier web a producción de forma segura, rápida y bien indexada (sirve para cualquier repositorio o proyecto). |
+| `sinapsis-cerebros` | Usar ANTES de re-investigar un problema TRANSVERSAL (Firebase/Firestore/functions/rules, git/CI/CRLF, dinero/caja/CRM, rendimiento web, proceso de verificación) en cualquiera de los 4 proyectos del dueño (altorracars · bersagliojewelry ·… |
+| `video` | When the user wants to create, generate, or produce video content using AI tools or programmatic frameworks. |

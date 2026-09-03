@@ -1,6 +1,9 @@
 ---
 name: comite-expertos
 description: "Monta un comité de expertos que MEJORA ×3 la última respuesta de Claude. Infiere SOLO qué expertos convienen según el tema (no son fijos), los hace criticar y debatir, y un presidente sintetiza una versión mejor en 3 rondas. En decisiones caras de revertir, suma 2ª opinión externa (provider configurado en docs/15-CONSEJO-EXTERNO.md). GATILLOS OBLIGATORIOS: monta el comité, comité de expertos, mejora esto x3, mejórala x3, aplícale el comité, pásale el comité, tribunal de expertos, que debatan esto, mejora tu respuesta, mejora la respuesta anterior, puedes mejorar esa respuesta. GATILLOS ligeros: mejórala un poco (1 ronda), piensa críticamente y asume que cometiste un error (auto-crítica). Úsala SIEMPRE que pidan mejorar/criticar/pulir/profundizar una respuesta ya dada, o cuando una respuesta importante merezca segundo par de ojos. NO disparar para datos triviales ni tareas mecánicas."
+actualizada: 2026-09-02
+reglas: 14
+lecciones: []
 ---
 
 # 🧠 Comité de Expertos — mejora ×3 de una respuesta

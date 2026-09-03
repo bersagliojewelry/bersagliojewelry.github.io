@@ -1,6 +1,9 @@
 ---
 name: auditoria-financiera
 description: Usar cuando haya que AUDITAR flujos de dinero de un sistema (POS/caja, pagos online, stock con valor, arqueos, saldos, reembolsos) buscando fugas, duplicados, robos enmascarables o estados imposibles — antes de un lanzamiento, tras un incidente de plata perdida, o como barrido periódico. También al DISEÑAR un flujo de dinero nuevo (usar las invariantes como checklist de diseño). Triggers — "hay pérdida de dinero", "el arqueo no cuadra", "audita la caja/pagos", "¿por dónde se puede fugar plata?", "revisa el flujo de dinero antes de lanzar". NO es para depurar un bug puntual ya reproducible (systematic-debugging) ni para contabilidad tributaria (eso es del contador).
+actualizada: 2026-09-02
+reglas: 13
+lecciones: []
 ---
 
 # 🔍 Auditoría financiera de sistemas — método forense anti-fugas
@@ -16,6 +19,15 @@ Toda fuga viola al menos una. Recórrelas contra el código real, no contra la i
 1. **Conservación**: el dinero ni aparece ni desaparece — cada peso que entra/sale tiene
    exactamente UN asiento. Busca: caminos que cuentan 2× (carrera + id nuevo), caminos que
    cuentan 0× (estados excluidos del arqueo, medios descartados con `continue`).
+   · 🔑 **Y la TÉCNICA que la sostiene, no solo el principio**: en un reparto (comisión, IVA,
+     retenciones, cuota a un tercero), **el residuo se calcula por DIFERENCIA, nunca con fórmula
+     propia**. Si cada componente se redondea por su lado y el residuo también, la suma no cuadra
+     por 1-2 unidades en las cifras feas — y ese peso alguien tiene que explicárselo a un cliente.
+     Calculado por diferencia, el redondeo no puede abrir un hueco: solo mover un peso de sitio.
+     *Pruébalo*: sustituye la diferencia por una fórmula y mira si tu test de conservación cae. Si
+     no cae, tu test no vigila la conservación (caso real: 65 de 135 pruebas al hacerlo).
+   · Y prueba con **números feos** (1, 7, 999, 1.333.333, primos grandes), no con 1.000.000: el
+     redondeo solo falla donde no hay divisiones limpias, que es justo lo que nadie escribe a mano.
 2. **Mismo número en TODAS las vistas**: estimado de UI, ecuación/sello del servidor y
    ledger deben dar idéntico. Tres vistas = tres implementaciones = deriva garantizada si
    no hay tests de paridad. La fuga clásica vive en la vista que "nadie mira".
@@ -23,6 +35,12 @@ Toda fuga viola al menos una. Recórrelas contra el código real, no contra la i
    Ojo con la idempotencia por-ámbito (id único POR turno/período): el mismo id en otro
    ámbito crea un fantasma. Y ojo al guard que traga eventos DISTINTOS del mismo id
    (una REVERSA llega con el mismo txId que el cobro — no es un replay).
+   · 🔑 **Y el ORDEN respecto de la autenticación es parte de la seguridad**: primero se valida la
+     FIRMA, después se consulta la clave idempotente. Al revés, cualquiera puede enviar basura
+     llevando la clave de un evento legítimo y conseguir que el evento **de verdad** se descarte
+     luego como duplicado — una denegación de servicio dirigida contra un cobro concreto, gratis.
+     *Un guardia que apunta en la lista antes de mirar el carnet no es un guardia.* Corolario: la
+     clave se marca como vista **cuando el evento se procesó**, no cuando se recibió.
 4. **Deshacer netea TODO**: anular/reversar/cancelar debe restar en TODAS las vistas de la
    invariante 2, no solo en una. Y deshacer dos veces debe estar bloqueado (flag que se
    APAGA en el mismo commit de la reposición — cinturón estructural, no gate de estado).
@@ -30,12 +48,40 @@ Toda fuga viola al menos una. Recórrelas contra el código real, no contra la i
    (anulado/cancelado/expirado/reembolsado) debe ser LA MISMA en cada módulo que la usa.
    Un estado intermedio (p.ej. "por verificar" con porción en efectivo YA cobrada) debe
    tener dueño explícito: ¿cuenta o no cuenta? Documentado y testeado.
+   · 🔴 **Y el mismo estado terminal puede significar DOS cosas distintas.** «Reversado antes de
+     pagar» y «reversado después de pagar» se ven idénticos en el campo `estado` y no lo son: en el
+     segundo hay **plata fuera** que alguien tiene que recuperar. *Un estado que oculta una deuda es
+     peor que no tener el estado.* Test de bolsillo: por cada estado terminal, pregunta *«¿puedo
+     llegar aquí por dos caminos con consecuencias económicas distintas?»* — si sí, hace falta un
+     campo derivado (`saldoEnContra`, `pendienteDeRecuperar`) que los separe, y la bandeja de trabajo
+     debe ordenarse por ÉL, no por el estado.
+   · ⚠️ Y la tentación contraria: **prohibir la transición «porque no debería ocurrir»** (pagado →
+     reversado). Prohibirla no evita el contracargo: solo evita verlo. Modela lo que pasa de verdad y
+     hazlo ruidoso.
 6. **SoD (segregación de funciones)**: quien opera no aprueba lo destructivo, no reescribe
    los parámetros de su propio reporte (tasas, límites, config fiscal) y no edita el ledger.
    Ledger inmutable: corregir = asiento inverso con doble rastro, jamás editar/borrar.
 7. **Anomalías que GRITAN**: un negativo imposible, un descuadre ausente o un evento sin
    dueño se muestran en rojo — nunca `Math.max(0, x)`, `|| 0` ni catch vacío que los
    convierta en "todo bien". Una herramienta de auditoría falla en rojo, no en verde.
+
+### 1b. 🎭 La constante que en realidad es CONDICIONAL
+
+La fuga más silenciosa de un cálculo fiscal no es una tarifa equivocada: es una tarifa **correcta
+aplicada siempre**, cuando la norma la condiciona a *quién es la contraparte*. Caso real: una nota
+de operación decía «retención del 3,5 % sobre el canon, la practica el mandatario». Leída rápido,
+constante. Leída bien, solo hay retención **si quien paga es agente de retención** — y el caso
+mayoritario del negocio (una familia arrendando vivienda) no retiene nada. Codificada fija, le habría
+puesto a cada cliente un descuento que nadie le practicó.
+
+- **Cómo se detecta**: por cada tasa del cálculo, pregunta *«¿de quién depende que aplique?»*. Si la
+  respuesta menciona una **calidad de una de las partes** (agente de retención, responsable de IVA,
+  régimen, residencia, umbral de ingresos), **no es una constante: es una bandera**.
+- **Cómo se codifica**: bandera explícita en la entrada, **default en el caso mayoritario** y el
+  nombre diciendo de quién es la calidad (`arrendatarioEsAgenteRetencion`, no `retiene`).
+- **Y el error inverso**, igual de caro: heredar la obligación de la contraparte sin decirlo. En un
+  mandato, el mandatario practica las retenciones *teniendo en cuenta la calidad del mandante* — la
+  obligación **se hereda, no se inventa**. Modela de quién es cada obligación, no quién la ejecuta.
 
 ## 2. El método (4 fases)
 **Fase A — Mapa del dinero (30 min)**: dibuja cada lugar donde el dinero/stock cambia de

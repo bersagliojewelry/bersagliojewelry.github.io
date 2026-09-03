@@ -1,6 +1,9 @@
 ---
 name: ga4-lead-tracking
 description: Medir lo que importa en un negocio offline/bajo-consulta (joya, carro, inmueble) con GA4 — el LEAD, no `purchase` — con Consent Mode v2 (Ley 1581 Colombia) y links de WhatsApp trazables (dark-social). Úsala al instrumentar analítica en cualquier sitio del paquete de visibilidad: GA4 por EVENTOS (no es factor de ranking, pero te dice QUÉ optimizar), key events `generate_lead`/`contact`/`whatsapp_click`/`view_item`, un solo helper `trackEvent(name,params)` (DRY, lee los mismos datos del ítem que el SSG), y un generador de links WhatsApp con UTM + hash de sesión + contexto del ítem prerelleno. Reglas duras: Consent Mode v2 default DENIED antes del config → update granted al aceptar el banner; NUNCA PII (tel/email/cédula) a GA4 ni en URL; verificar EN VIVO en DebugView (cero-demo); vincular GA4↔Search Console↔Ads. Portable por `tenant_config.json` (ga4MeasurementId). Triggers — "instalar GA4", "medir conversiones/leads", "consent mode", "trackear clicks de WhatsApp", "qué eventos mido", "analítica sin romper privacidad", "lead funnel". NO uses para e-commerce con checkout online (ahí sí `purchase`).
+actualizada: 2026-09-02
+reglas: 5
+lecciones: []
 ---
 
 # 📊 GA4 Lead Tracking — medir el lead, no la compra (negocio offline Colombia)

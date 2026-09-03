@@ -1,6 +1,9 @@
 ---
 name: opus-interino-protocolo
 description: Cargar SIEMPRE al inicio de sesión cuando el modelo activo NO es el titular del proyecto (p.ej. Opus 4.8 operando como interino mientras Fable 5 no tiene cuota). Convierte las limitaciones del interino en fortalezas mediante protocolo — más verificación, más humildad calibrada, más rastro auditable — para que el titular pueda auditar rápido al volver. Triggers — "interinato", "Fable no está disponible", "opera como interino", flag de interinato en el estado global del cerebro.
+actualizada: 2026-09-02
+reglas: 14
+lecciones: []
 ---
 
 # Protocolo del modelo interino — convertir falencias en fortalezas

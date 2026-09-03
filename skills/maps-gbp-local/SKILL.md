@@ -1,6 +1,9 @@
 ---
 name: maps-gbp-local
 description: Rankear #1 en el local pack de Google Maps / Google Business Profile (GBP) para un negocio con ubicación (joyería, concesionario, inmobiliaria) — donde se gana o pierde la mayoría del tráfico local de alta intención. Úsala al optimizar la presencia local de cualquier proyecto del paquete de visibilidad: los 3 ejes (relevancia = categoría principal específica + secundarias reales + perfil 100%; distancia = no controlable; prominencia = velocidad/recencia de reseñas + respuestas 24-48h + fotos frescas + citaciones), el NAP maestro (un formato canónico idéntico en sitio/JSON-LD/GBP/directorios/redes), la plantilla LocalBusiness→subtipo (address+geo+openingHours+sameAs+aggregateRating de reseñas REALES), answer capsules 40-60 palabras + FAQPage, y distinguir lo OPERATIVO (lo hace el dueño en GBP) de lo CODIFICABLE (schema/robots/API). Reglas duras: cero-demo (NUNCA aggregateRating inventado, categorías falsas, NAP inconsistente), Colombia (+57 E.164, addressCountry CO, festivos). Triggers — "aparecer en Maps", "local pack", "Google Business Profile/GBP", "reseñas", "NAP", "negocio local en Google", "LocalBusiness schema", "que me encuentren en el mapa". Lee `tenant_config.json` (nap, sameAs, vertical). Pareja de `semantic-schema-aeo`.
+actualizada: 2026-09-02
+reglas: 10
+lecciones: []
 ---
 
 # 📍 Maps / GBP Local — ganar el local pack #1

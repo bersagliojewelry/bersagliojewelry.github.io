@@ -1,6 +1,9 @@
 ---
 name: proceso-decision-fuerte
 description: Pipeline de validación multi-capa para DECISIONES FUERTES (arquitectura, modelo de datos, seguridad/legal, operaciones irreversibles, cambios multi-subsistema). Orquesta verificación → comité acotado → consejo externo (Gemini) → análisis crítico que VERIFICA cada claim → revalidación → veredicto → implementación verificada por fase. Usar cuando la tarea es cara de revertir y un fallo sería costoso. NO usar para lo trivial/reversible/mecánico (sería derroche y se cuelga, lección cars-L-50).
+actualizada: 2026-09-02
+reglas: 17
+lecciones: []
 ---
 
 # 🛡️ Proceso de Decisión Fuerte — Pipeline de Validación Multi-Capa
@@ -53,7 +56,8 @@ OPINIÓN — ninguna opinión corre sobre aire** (basura entra, basura sale).
 **FASE B — DELIBERACIÓN (sobre la evidencia de Fase A):**
 5. **COMITÉ** acotado (`comite-expertos`) razona sobre el diagnóstico verificado (lógica/trade-offs).
 6. **CONSEJO** (Gemini/Antigravity, `docs/15`) crítica adversarial externa → **YO verifico cada claim**
-   (la gema, paso 4). → **VEREDICTO** (yo) → **implementar por fase** → **EXTENSIÓN (gate empírico live)**
+   (la gema, paso 4). ⚠️ **NO es una consulta de una ronda: es un DEBATE — ver §🥊 abajo.**
+   → **VEREDICTO** (yo) → **implementar por fase** → **EXTENSIÓN (gate empírico live)**
    cierra con Pruebas de Estado.
 
 **Por qué "nunca falla":** evidencia (2-4) SIEMPRE antes que opinión (5-6), y el gate empírico (extensión
@@ -132,6 +136,60 @@ dispara SOLO si su gatillo aplica (meter `legal-colombia` en una decisión de ca
 
 > **Fuera del pipeline de decisión:** `auditoria-cerebro` / `claude-md-improver` = mantenimiento de cerebro
 > POST-cierre, no capas de validación. No los metas como etapa.
+
+## 🥊 El consejo externo es un DEBATE de 3 rondas, no una consulta *(probado en los contratos ALTORRA, 2026-07-28)*
+
+Una sola ronda desperdicia el instrumento. El valor NO está en la opinión externa: está en el **desacuerdo
+más la fuente leída**. Estructura probada:
+
+- **R1 — ojos frescos (anti-anclaje).** No revelar mi postura ni los hallazgos del comité. Pregunta abierta
+  sobre el artefacto, apuntando a rutas reales.
+- **R2 — DEBATE.** Le muestro qué adopté, **qué le refuto y por qué**, y la decisión que tomé; le pido que
+  defienda, conceda o ataque. **Aquí es donde piensa de verdad**: en la prueba real concedió 3 de 3
+  refutaciones y aportó 4 mejoras que no habían salido en R1 (incluida la mejor idea de toda la sesión).
+- **R3 — caza de REGRESIONES sobre el texto final**, entregándole el registro de cambios. Es un trabajo
+  distinto —no opinar, sino encontrar lo que rompió la reescritura— y es obligatorio tras una reescritura
+  grande ([[LD-01]]: los defectos nuevos nacen de las correcciones).
+- **Criterio de cierre**: se para cuando una ronda completa no produce **ningún hallazgo CRÍTICO ni MAYOR
+  confirmado**. Sin criterio de parada el debate gira para siempre y empieza a añadir ruido, no seguridad.
+
+**⚠️ El riesgo real, con evidencia de esa sesión**: el asesor externo no solo puede equivocarse — puede
+recomendar con total seguridad algo **ILEGAL y accionable** (propuso entrar al inmueble con dos testigos =
+vía de hecho prohibida por la Ley 820 y el art. 384 CGP; la habríamos firmado). Y en la misma sesión **yo
+también fallé** (una palabra —"indemnización"— que anulaba el mérito ejecutivo). Conclusión operativa:
+la verificación corre en **ambas direcciones**, ninguna cita entra sin fuente leída ESE turno (§3.3), y el
+asesor se trata como insumo, jamás como oráculo. Si comité y consejo quedan frontalmente enfrentados →
+**tercera familia** de modelo como desempate (`docs/15` §0b).
+
+**Entrega**: el prompt de cada ronda va **en el chat, en bloque copiable** — archivarlo es para el cerebro,
+dárselo es para el dueño. Nunca mandarlo a abrir una carpeta.
+
+### 🪜 Cuando el desacuerdo PERSISTE (comité vs. yo · consejo vs. yo)
+
+El desacuerdo es **información, no ruido** — pero cada tipo se resuelve distinto. **Clasificar antes de
+discutir**; casi todo el tiempo perdido viene de debatir en la categoría equivocada:
+
+1. **¿Es un HECHO?** (qué dice la norma, el código, el dato) → **no se debate: decide la fuente leída**.
+   Quien no puede citar, no gana. La mayoría de los desacuerdos mueren aquí, y rápido.
+2. **¿Es APETITO DE RIESGO?** (cuánto exponerse, cuánto pagar, qué se sacrifica) → **no es mío: es del
+   dueño**. Yo entrego las dos opciones con su consecuencia y su precio; él elige. Disfrazar esto de
+   discusión técnica —y decidirlo yo— es el error más caro de todos.
+3. **¿Es INCERTIDUMBRE GENUINA?** (la fuente no lo resuelve; no hay jurisprudencia) → **nadie gana**.
+   Salida: posición **conservadora** + riesgo **declarado y cuantificado**; y si existe un trámite que
+   convierta la duda en respuesta escrita de la autoridad (p. ej. derecho de petición), proponerlo.
+4. **¿Es criterio de DISEÑO y siguen empatados?** → **tercera familia** de modelo como desempate
+   (`docs/15` §0b). Si el empate persiste: gana **la opción más barata de revertir**, no la mejor
+   argumentada. La reversibilidad es el criterio, no la elocuencia.
+
+**Si el consejo mantiene su postura al final, NO se entierra**: se documenta como **disenso abierto** en el
+ADR o en el propio entregable — *"el consejo sostiene X por estas razones; se adoptó Y por estas otras"*—
+para que el humano que revise después (abogado, auditor, socio) lo vea marcado. **Un consenso falso es peor
+que un disenso anotado.**
+
+**⚠️ Anti-teatro**: si yo "decido" siempre a mi favor, el debate es decoración cara. Contramedida: **toda
+refutación mía va escrita con su razón** (sección "lo que NO hay que tocar" de la síntesis), auditable por
+el dueño. Señales de que estoy racionalizando y no razonando: refuto sin citar fuente · la razón es "no me
+convence" · adopté cero hallazgos que contradijeran mi propio trabajo previo.
 
 ## 🎯 Cada capa caza un error DISTINTO (regla anti-solape)
 Plugins-MCP→**realidad del backend** (lo que el sistema vivo HACE vs lo que el código dice) · Extensión→**realidad

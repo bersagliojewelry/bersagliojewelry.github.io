@@ -1,6 +1,9 @@
 ---
 name: semantic-schema-aeo
 description: El cerebro semántico de la visibilidad — qué structured data (JSON-LD) inyectar por tipo de página + cómo ser CITADO/RECOMENDADO #1 por buscadores e IA (AEO). FUSIÓN deliberada de SEO-técnico (schema) + AEO (answer-engine) porque ambos viven en el mismo `<head>` y separarlos colisiona. Úsala al construir `buildSchema()` del core o al decidir el schema/meta de un sitio: Product/Offer/AggregateRating/Review/Organization/LocalBusiness/BreadcrumbList/FAQPage/Article/Person/ImageObject con sus props requeridas vs recomendadas + plantillas parametrizables por vertical (JewelryStore/AutoDealer/RealEstateAgent). Incluye CWV 2026 (LCP/INP/CLS), E-E-A-T, y el playbook AEO (=20% código / 80% off-page: el código referencia el consenso externo —sameAs/reseñas/FAQ citable—, NO lo genera). Regla dura: schema en el HTML del build (curl+grep), cero-demo (NUNCA AggregateRating/sameAs/reseñas inventadas = spam penalizado), NAP maestro. Triggers — "qué schema pongo", "structured data", "rich results", "que la IA me recomiende", "AEO", "FAQ schema", "aparecer en AI Overviews/ChatGPT/Perplexity", "Organization/LocalBusiness JSON-LD". Pareja de `ssg-static-prerender`. Lee `tenant_config.json`.
+actualizada: 2026-09-02
+reglas: 8
+lecciones: []
 ---
 
 # 🧠 Semantic Schema + AEO — structured data + ser citado por la IA
@@ -110,10 +113,36 @@ title/meta/copy/schema, esconder más = riesgo sin ganancia — hidden-text/cloa
 canonical roto · NAP inconsistente · schema solo por JS (invisible al bot) · **un contenido en 2+ URLs sin
 canonical único** (cáscara SPA noindex + canonical → la horneada; ver `ssg-static-prerender §2bis`).
 
+## 5bis. La PRECISIÓN también se inventa — cuatro trampas del markup «correcto»
+No hace falta escribir una reseña falsa para mentirle a una máquina. Un campo válido con el dato
+equivocado dentro es peor: valida, no lo cuestiona ninguna herramienta, y afirma con precisión algo
+que no sabes.
+
+- **Coordenadas aproximadas declaradas como exactas.** Si tus `lat/lng` son el centroide de un barrio
+  —lo normal en inmobiliaria, y lo correcto para no publicar la dirección— NO las emitas como
+  `geo`/`GeoCoordinates` del ítem: la página puede decir «ubicación aproximada» al lado del mapa, pero
+  el JSON-LD no tiene asteriscos. **Omite el campo.**
+- **`addressLocality` es la CIUDAD, no el barrio.** Meter el barrio ahí borra la ciudad del address
+  estructurado y le enseña al motor una localidad que no existe. El barrio va en el nombre y en el
+  texto, donde significa lo que significa.
+- **Propiedades colgadas del tipo equivocado.** `numberOfRooms` y `numberOfBathroomsTotal` son de
+  `Accommodation`. Si para un local comercial eliges `Place` (que es lo honesto), esas props no
+  aplican: markup que valida y no significa nada. Cada tipo se declara con lo que ese tipo admite.
+- **La misma cifra con dos significados.** Un canon mensual y un precio de venta son ambos un número:
+  distínguelos con `businessFunction` (`#Sell` vs `#LeaseOut`) y usa `UnitPriceSpecification` con
+  `unitText` para lo recurrente. Con `price` a secas, desde fuera son idénticos.
+
+**Regla que los cubre a los cuatro**: en structured data, **omitir es gratis y afirmar de más es
+caro**. Antes de emitir un campo pregúntate si podrías defender ese valor exacto ante quien lo lea;
+si la respuesta lleva un «bueno, aproximadamente», el campo no va.
+
 ## ✅ Checklist de cierre
 - [ ] `curl -s <url> | grep 'application/ld+json'` muestra el JSON-LD (en el build, no JS).
 - [ ] Rich Results Test sin errores · cero AggregateRating/review sin reseñas propias on-site.
-- [ ] `offers` solo con `price` real (sin precio → sin bloque offers; nunca price:0).
+- [ ] `offers` solo con `price` real (sin precio → sin bloque offers; nunca price:0), y lo recurrente
+      con `UnitPriceSpecification` + `businessFunction` (un canon y un precio de venta no son el mismo dato).
+- [ ] cero campos de PRECISIÓN que no puedas sostener: sin `geo` si las coordenadas son aproximadas,
+      sin `streetAddress` si no publicas la dirección, `addressLocality` = ciudad (no barrio).
 - [ ] `sameAs` solo con redes REALES (o vacío) · NAP idéntico web↔schema↔GBP.
 - [ ] Respuesta-directa <150 palabras + FAQ **visible** en páginas clave (FAQPage opcional, sin rich result).
 - [ ] robots habilita los bots IA · `dateModified` fresco · un contenido = UNA URL canónica.

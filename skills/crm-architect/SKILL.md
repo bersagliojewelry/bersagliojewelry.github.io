@@ -14,6 +14,9 @@ description: >-
   customers, properties, vehicles or deals; also adding CRM modules to an app.
   Not for merely recommending CRM tools or building plain marketing pages. Be
   eager: most "manage clients/leads/sales" requests are CRM requests.
+actualizada: 2026-09-02
+reglas: 13
+lecciones: []
 ---
 
 # CRM Builder

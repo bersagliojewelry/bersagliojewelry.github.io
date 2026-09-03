@@ -1,6 +1,9 @@
 ---
 name: validacion-live-chrome
 description: Usar DESPUÉS de un merge/deploy cuando los cambios YA están EN VIVO y hace falta EVIDENCIA REAL del comportamiento (no localhost, no opinión). Modo DIRECTO = DEFAULT (desde 2026-06-24): YO conduzco la extensión "Claude in Chrome" (mcp__claude-in-chrome__) y entrego el REPORTE con OBSERVABILIDAD real (consola, network, DOM, respuestas literales, transiciones de estado); las credenciales las mete el dueño (Claude NUNCA las maneja). FALLBACK sin extensión conectada: genero un PROMPT autocontenido que el dueño ejecuta y pega aquí. Cubre el hueco de verificación live (doctrina: no hay E2E en localhost — la verificación final es contra producción). Casos: bot logueado vs NO logueado, finalizar/iniciar/recargar conversacion, formularios, flujos con sesion. CRITICO ADVERSARIAL: refuta, no confirma. Complementa caza-bugs. TAMBIÉN decide QUÉ superficie de navegador usar (§0.5): navegador INTEGRADO de Claude Code (`mcp__Claude_Browser__*` — sin las sesiones del dueño; DEFAULT para nuestro dev server, staging público, URLs públicas y descargas de assets públicos) vs EXTENSIÓN Chrome (`mcp__claude-in-chrome__*` — el Chrome REAL logueado del dueño; SOLO cuando el camino exige una credencial/sesión suya). Triggers: "ya se mergeo, valida en vivo", "pruebalo en la web desplegada", "lanzale un prompt a la extension de Chrome", "valida adversarial", "evidencia real post-merge", "observabilidad del sitio live", "¿navegador integrado o extensión?", "abre/descarga/previsualiza en el navegador".
+actualizada: 2026-09-02
+reglas: 26
+lecciones: []
 ---
 
 # 🔭 Validación Live vía extensión "Claude in Chrome" (post-merge)
@@ -137,6 +140,88 @@ Por cada escenario, exijo:
    - **Dominio especializado** (legal/seguridad/UX/SEO/perf) → **skill** relevante (`legal-colombia` para datos personales/Ley 1581, etc.) + lóbulo `40`.
    - **SIEMPRE BOUNDED** (memoria `feedback-agent-machinery-bounded`): los fan-outs grandes cuelgan en esta máquina; la maquinaria anti-fallos no puede ser fuente de fallos. Defectos de DISEÑO → al backlog del rediseño, no al fix inmediato.
 4. Fix (directo o vía la maquinaria elegida) → re-emito el prompt (§2) con el escenario que falló → confirmo ✅ en vivo antes de cerrar.
+
+## 5bis. Mide el nodo que verá el usuario, no el que escribiste
+
+Un chequeo sobre el markup estático **no prueba nada** del contenido que pinta el JS: son dos
+poblaciones distintas de nodos y pueden tener estilos distintos sin que nada avise (ver
+`ssg-static-prerender` §4bis). Reglas de método:
+
+1. **Inyecta datos de prueba y mide el resultado**, no la plantilla. Una tabla vacía se ve perfecta.
+2. **Compara contra un control.** Duplica el nodo, ponle a mano lo que el framework le habría puesto
+   y mide los dos: «53px de alto contra 157, sin fondo, sin borde, sin padding» es un hallazgo;
+   «se ve raro» no. El control convierte una sospecha en evidencia.
+3. **La geometría es el instrumento cuando no hay captura de pantalla.** `getBoundingClientRect` +
+   `getComputedStyle` cazan lo que el ojo perdona y sobreviven a que el panel del navegador no esté
+   visible. Cuatro medidas que pagan siempre: (a) `left` de cabecera vs de fila — si no cuadran, la
+   rejilla no se aplicó; (b) `scrollWidth > clientWidth` — texto recortado; (c) `top` de un hermano
+   contra el `bottom` del anterior — solapes; (d) `body.scrollWidth` vs `clientWidth` — desborde.
+4. **El texto recortado se juzga por lo que ES, no por si cabe.** Un identificador o una fecha
+   aguantan puntos suspensivos; una INSTRUCCIÓN («Preaviso de terminación por mora. Escrito, con
+   constancia de entrega») cortada a la mitad deja al operador sin la parte que le dice qué hacer.
+   Esa envuelve.
+5. **Si la pantalla está tras una puerta de acceso que no puedes abrir**, no la des por buena:
+   sírvete el HTML de la ruta y renderízalo sin sus `<script>`. Se pierde el comportamiento, pero el
+   layout y el CSS son reales — y es exactamente lo que estás juzgando.
+
+6. **Guarda de medibilidad: una comparación de ceros no es una comparación.** Si el contenedor está
+   oculto todo mide 0, y `[0,0,0] === [0,0,0]` da verde — te has dado un ✅ sin comparar nada. Antes
+   de emitir veredicto exige que la medida exista (`medible = cabecera.some(x => x > 0) &&
+   altos.every(h => h > 0)`) y devuelve «SIN MEDIR» si no. Comprueba también que la cadena de padres
+   hasta `body` está visible, no solo que el elemento existe.
+
+7. **Cuando tu arreglo de CSS «no hace nada», la primera pregunta es ¿GANA?, no ¿ESTÁ?** Una regla
+   puede compilarse, servirse y perder en silencio. Tres trampas, por frecuencia: (a) `@media` **no
+   aporta especificidad** — empata con la regla que quiere vencer, y entre iguales decide el ORDEN DE
+   APARICIÓN, así que las overrides van al FINAL del bloque; los frameworks que acotan por atributo
+   (Astro `[data-astro-cid-…]`, Vue `[data-v-…]`) suben los DOS lados por igual, con lo que el empate
+   es la norma y no la excepción. (b) No concluyas «no se compiló» de un `grep` del BUILD hecho con la
+   sintaxis del FUENTE: los minificadores reescriben (`max-width: 900px` → `width<=900px`), y ese
+   vacío se lee como ausencia cuando la regla llevaba ahí desde el principio. Busca lo que el
+   compilador no puede reescribir —el nombre de clase— o pregúntale al CSSOM vivo. (c) Los selectores
+   se sacan de la cadena del DOM **medida**, no de tu memoria del marcado. Las tres se zanjan de una
+   vez recorriendo `document.styleSheets` y listando qué reglas casan con el nodo y en qué orden.
+
+8. **Un campo por debajo de 16 px es un fallo medible en móvil, no una preferencia tipográfica.**
+   Safari en iOS amplía la página al enfocar cualquier campo con letra menor y **no deshace ese zoom**
+   al salir: quien toca el buscador se queda con la página ampliada. Cabe en una línea de todo barrido
+   móvil: `[...document.querySelectorAll('input,select,textarea')].filter(x =>
+   parseFloat(getComputedStyle(x).fontSize) < 16)`. Y el arreglo **nunca** es `maximum-scale=1`: eso
+   apaga la lupa a quien la necesita para leer. Se arregla el tamaño, no se quita el zoom.
+
+9. **La geometría NO dice si algo está oculto — y eso limita la regla 3.** Un `<details>` cerrado, o
+   cualquier elemento bajo `content-visibility: hidden`, **conserva su caja de layout**: Chrome se
+   salta el pintado, no el tamaño. Medido en vivo, un panel devolvía `getBoundingClientRect().height
+   = 158` **cerrado y abierto por igual**, y estuve a un paso de apuntar un panel que se escapaba —
+   un bug que no existía. El instrumento correcto es **`el.checkVisibility()`**, que dio `false`
+   cerrado y `true` abierto. Regla: la geometría mide **cuánto ocupa**; la visibilidad se pregunta
+   con `checkVisibility()`, y `display`/`visibility` computados tampoco bastan (los dos decían
+   `grid` / `visible` con el panel cerrado). ⚠️ Y `elementFromPoint` devuelve `null` cuando el panel
+   integrado reporta un viewport de 0×0: si vas a usarlo, **imprime `innerWidth` primero** o estarás
+   leyendo un `null` que no significa «no hay nada ahí».
+
+10. **🧊 En el panel integrado el renderer está CONGELADO — y eso decide QUÉ puedes medir ahí.** No
+    hay frames: no avanzan las transiciones ni las animaciones, `scrollTo`/`scrollTop` **desde el
+    script de la página** no se aplican, y `await requestAnimationFrame(...)` **cuelga la
+    herramienta hasta el timeout** (45 s tirados). Tres antídotos concretos, todos verificados:
+    - **Para medir una propiedad con `transition`**, apágalas y lee: inyecta un
+      `<style>*,*::before,*::after{transition:none!important;animation:none!important}</style>` y
+      luego `getComputedStyle`, que fuerza el recálculo síncrono — sin esperas, que no hay frames que
+      esperar. Sin esto leerás el valor **INICIAL** y creerás que tu regla no aplica. Caso real: la
+      variable del `:root` decía `0px` y el `top` computado decía `66.99px`; el `transform` de otro
+      elemento estaba en `-0.008px` en vez de `-100%`. Los dos al 0,8% de su recorrido — a un paso de
+      apuntar un bug que no existía.
+    - **Para hacer scroll de verdad, usa el scroll DEL PANEL** (`computer{action:'scroll'}`), no el
+      del script: ese sí desplaza y **sí dispara los manejadores** (medido: `scrollY` 0 → 47 → 809, y
+      un header con auto-ocultar alternó su clase). La distinción importa: no es que el panel no
+      haga scroll, es que no lo hace desde `window.scrollTo`.
+    - **Para que la geometría signifique algo, emula un viewport primero** (`resize_window`). Sin
+      eso `innerWidth` puede ser **0**, y entonces `elementFromPoint` devuelve `null` y toda medida
+      relativa al viewport es humo. Con viewport emulado se pueden medir solapes reales — un bug
+      anotado como «no medible aquí, hace falta el Chrome del dueño» se midió aquí.
+    ⚠️ Y el meta-aviso: esto no se descubre, **se consulta**. Si tu cerebro tiene una lección sobre
+    el panel congelado, léela ANTES de abrir el navegador. Un disparador redactado sobre operaciones
+    «riesgosas» no alcanza a medir, que no se siente riesgoso — y ahí se pierden las sondas.
 
 ## 6. Conexiones (doble vía)
 - **Hacia mí** (qué recorrer / cómo cerrar): `caza-bugs` · `verification-before-completion` · `anti-codigo-muerto` (que lo nuevo no dejó lo viejo roto EN VIVO).

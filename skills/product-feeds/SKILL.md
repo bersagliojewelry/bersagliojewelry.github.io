@@ -1,6 +1,9 @@
 ---
 name: product-feeds
 description: Generar feeds de producto/inventario en el BUILD para EMPUJAR tu catálogo a Google y portales en vez de esperar el rastreo — la palanca de visibilidad #1 que casi todos olvidan. Úsala cuando un negocio con catálogo (joyería, concesionario, inmobiliaria) quiere que su inventario aparezca en superficies de alto valor: Google Merchant Center (productos/joyas → Shopping/free listings), Google Vehicle Ads + Local Inventory (autos), portales inmobiliarios CO (FincaRaíz/Metrocuadrado). El feed se genera como una salida MÁS del mismo build SSG (consume la misma data Firestore + tenant_config), por vertical. Reglas duras: solo ítems `status:published`, datos REALES (cero-demo — precio/disponibilidad reales o el campo apropiado para "bajo consulta"), formato exacto que exige cada destino (TSV/XML), IDs estables = slug/codigoUnico inmutable. Triggers — "feed de productos", "Google Merchant Center", "Shopping", "vehicle ads", "local inventory", "publicar inventario en FincaRaíz/Metrocuadrado", "empujar catálogo a Google", "free product listings". Lee `tenant_config.json` (vertical, feeds[], nap). Salida del mismo build que `ssg-static-prerender`. NUEVA en el paquete (gap real: la mayoría no tiene feeds).
+actualizada: 2026-09-02
+reglas: 4
+lecciones: []
 ---
 
 # 📤 Product Feeds — empujar el catálogo (no esperar el rastreo)

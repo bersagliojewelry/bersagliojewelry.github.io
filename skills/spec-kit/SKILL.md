@@ -1,6 +1,9 @@
 ---
 name: spec-kit
 description: Spec-Driven Development (SDD) — el método de GitHub spec-kit para construir software CON IA con rigor. Úsalo ANTES de codear una funcionalidad o proyecto NUEVO no trivial: convierte una idea vaga en spec ejecutable → plan técnico → tareas ordenadas → implementación verificable, en vez de saltar directo a código. El flujo de 7 fases (constitution → specify → clarify → plan → tasks → analyze → implement) separa el QUÉ/POR-QUÉ (spec, estable, sin tecnología) del CÓMO (plan, tecnología+arquitectura) de las TAREAS (unidades ejecutables [P]-paralelizables), marca lo ambiguo con [NEEDS CLARIFICATION] (no adivinar), y mete gates de constitución (test-first, simplicidad, anti-abstracción). Triggers — "armemos una spec", "spec-driven", "planeemos bien esta feature antes de codear", "convierte este requerimiento en plan/tareas", "constitution del proyecto", "quiero specs ejecutables", construir algo nuevo desde cero con calidad. NO uses para: fixes triviales, ediciones de una línea, hacking exploratorio, o depurar un bug ya reproducible (eso es systematic-debugging). Portable: cero rutas de un repo; adapta al stack del proyecto activo.
+actualizada: 2026-09-02
+reglas: 16
+lecciones: []
 ---
 
 # 🧭 Spec-Kit — Spec-Driven Development (SDD)

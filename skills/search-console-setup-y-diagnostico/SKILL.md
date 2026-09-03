@@ -1,6 +1,9 @@
 ---
 name: search-console-setup-y-diagnostico
 description: Dar de alta Google Search Console (GSC) y diagnosticar por qué un sitio "no sale en Google" — la herramienta gratis que dice qué indexó Google, con qué queries apareces y qué está roto. Úsala al lanzar/auditar la indexación de cualquier sitio del paquete de visibilidad: alta (propiedad Dominio + TXT DNS, fallback HTML/meta), checklist pre-deploy que el SSG ya garantiza (title/desc únicos, canonical autorreferencial, JSON-LD válido, robots con Sitemap:, cero noindex residual), envío de sitemap + URL Inspection en home+2-3 fichas (sembrar), el ÁRBOL de diagnóstico "no aparezco" (site: → URL Inspection → Page Indexing → Manual Actions/Security → latencia), el bucle mensual (Performance: CTR bajo+impresiones altas→reescribir meta; striking distance pos 8-20; Rich Results; CWV), y la API GSC (service account + Action programada) para histórico >16 meses. Regla clave: GSC NO indexa automáticamente vía API; es diagnóstico+envío. Triggers — "no aparezco en Google", "Search Console", "indexación", "enviar sitemap", "por qué no me indexa", "URL Inspection", "cobertura/coverage", "queries de búsqueda", "rich results errores". Lee `tenant_config.json` (baseUrl, gscVerification). Cuenta GSC del dueño = ⛔.
+actualizada: 2026-09-02
+reglas: 12
+lecciones: []
 ---
 
 # 🔎 Search Console — alta + diagnóstico "no salgo en Google"
@@ -17,10 +20,44 @@ description: Dar de alta Google Search Console (GSC) y diagnosticar por qué un 
 - Vincular **GA4 ↔ GSC** (y Google Ads) para cruzar datos.
 
 ## 2. Pre-deploy (lo GARANTIZA el SSG — verifícalo antes de pedir indexación)
+- [ ] 🔴 **Si el canonical se calcula en un layout, comprueba QUÉ parte de la URL usa.** El patrón
+  habitual es `new URL(url.pathname, site)` — y `pathname` **ignora el query string**. Si una plantilla
+  sirve N contenidos distintos por parámetro (`/ficha?id=1`, `/ficha?id=2`…), las N páginas emiten el
+  **mismo** canonical y el buscador indexa UNA. La página se ve perfecta, el HTML valida, y el catálogo
+  entero es invisible. *(Cazado en revisión, ALTORRA 2026-08-21, antes de llegar a producción.)*
+  **Arreglo bueno**: que el contenido viva en un path propio (`/inmueble/<slug>`), que además se puede
+  leer y compartir. **Arreglo mínimo**: que el layout acepte un canonical explícito y que cada página
+  que sea alcanzable por más de una URL lo pase. **Cómo se caza**: pide dos URLs distintas de la misma
+  plantilla y compara su `<link rel="canonical">`; si coinciden, tienes el fallo.
+- [ ] **Etiquetas de tarjeta de enlace (Open Graph + Twitter) en TODAS las páginas.** No es SEO
+  clásico y por eso se olvida: no cambia el ranking, cambia si alguien ABRE el enlace que le
+  compartieron. En mercados donde el producto se comparte por WhatsApp —inmobiliaria, retail, servicios
+  en LatAm— un enlace sin foto ni título es tráfico que se pierde antes de existir. Mínimo: `og:title`,
+  `og:description`, `og:url`, `og:image` **absoluta** (las relativas no se resuelven: simplemente no se
+  muestra nada) y `twitter:card`. La imagen la manda cada página; la ficha de producto manda la SUYA.
 - [ ] title + meta description **únicos** por página (no duplicados).
 - [ ] **canonical autorreferencial** correcto (cada ficha apunta a sí misma).
 - [ ] JSON-LD **válido** (Rich Results Test sin errores).
 - [ ] `robots.txt` con `Sitemap: <baseUrl>/sitemap.xml` + habilita bots IA.
+- [ ] 🔴 **Si la indexabilidad depende de una VARIABLE DE ENTORNO, verifica que alguien la DECLARE.**
+  El patrón «indexo solo si `SITE_ENV=production`» es correcto —protege al staging de competir con el
+  dominio— y a la vez un arma cargada: si nadie pone la variable en el deploy de producción, el sitio
+  nuevo sale pidiendo su propia desindexación **y se ve perfecto**. *(Caso real 2026-08-21, ALTORRA:
+  la variable se LEÍA en 2 archivos y no se DECLARABA en ninguno —ni CI, ni wrangler, ni `.env`— así
+  que todo build de la historia del repo era `noindex`, incluido el que iba al cutover.)*
+  **Cómo se caza**: `grep -rn VARIABLE` y comprueba que haya al menos una ASIGNACIÓN, no solo lecturas.
+  **Cómo se blinda**: una verificación en el build que **falle** si en producción sobrevive un `noindex`
+  o un `Disallow: /`, **y avise** cuando no es producción. Un gate que solo mira una dirección deja
+  pasar la otra en silencio.
+- [ ] **Antes de un cutover de dominio, el archivo de verificación de propiedad debe seguir dando 200.**
+  Si la propiedad se verificó por archivo HTML (no por TXT en DNS), ese archivo vive en el hosting VIEJO:
+  al mover el DNS deja de ser alcanzable y se pierde la propiedad —y con ella el histórico—. Cópialo al
+  sitio nuevo y **pruébalo con `curl`**; y NUNCA lo metas en el mapa de 301 (un redirect no lo valida).
+- [ ] **El mapa de 301 se hace por INTENCIÓN, no en bloque a la home.** Un 301 masivo a `/` Google lo
+  trata como soft-404 y no transfiere señal. Si la página destino ideal aún no existe, apunta al destino
+  real más cercano y deja anotado a qué re-apuntarlo: re-apuntar un 301 luego es barato; mandarlo hoy a
+  un 404 pierde la señal para siempre. Y deja escrito qué rutas NO se redirigen **y por qué**, o alguien
+  las «completará» por simetría.
 - [ ] **CERO `noindex` residual** (el bug clásico: un `noindex` global de "en construcción" que nadie quitó →
   Google obedece y NO indexa NADA). Búscalo: `curl -s <url> | grep -i noindex` debe salir vacío.
 

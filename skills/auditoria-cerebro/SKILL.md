@@ -1,6 +1,9 @@
 ---
 name: auditoria-cerebro
 description: Auditoría profunda Nivel-2 del cerebro documental del proyecto activo — lo que el linter estructural NO puede medir (fidelidad, frescura, función). Sondas FALSABLES sin puntaje numérico; cierra con GC pareado (masa-neta ≤0) y actualiza deepAudit en el manifest. Disparo - cuando brain-check imprime "auditoría Nivel-2 VENCIDA", antes de exportar el template a un repo nuevo, o a pedido ("audita el cerebro").
+actualizada: 2026-09-02
+reglas: 5
+lecciones: []
 ---
 
 # 🔬 Auditoría de Cerebro — Nivel 2 (semántica)

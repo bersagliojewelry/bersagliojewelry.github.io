@@ -6,6 +6,9 @@ metadata:
   author: operador-cars
   version: "1.0.0"
 allowed-tools: Read Write Edit Glob Grep Bash
+actualizada: 2026-09-02
+reglas: 10
+lecciones: []
 ---
 
 # ⚡ Optimización de Rendimiento Web — playbook agéntico, medible y verificado en vivo
@@ -127,6 +130,17 @@ El JS bloquea el render y el hilo principal (TBT). Por orden:
 - Formatos modernos (AVIF/WebP), `<picture>` con `srcset` responsive, `loading="lazy"`+`decoding="async"`
   below-fold, `fetchpriority="high"` SOLO en el LCP, `width`/`height` para no generar CLS.
 - **Verifica FÍSICAMENTE** que cada variante del `srcset` existe (los optimizers no hacen upscaling).
+- 🔴 **`srcset` puede EMPEORAR el peso — MÍDELO, no lo asumas** (caso propio 2026-08-20): si la misma
+  imagen se reutiliza en huecos de tamaños muy distintos, el navegador baja **2-3 variantes del mismo
+  archivo** en vez de una. Medido en un portal con 7 fotos en 66 huecos: **desktop +63%, móvil +21%**.
+  Gana cuando cada imagen se usa en **1-2 tamaños**; con imágenes compartidas, mide y prepárate a NO
+  aplicarlo. Lo que gana **siempre**: logos/íconos pintados pequeños (248px → 30px: 33 KB → 8 KB, −76%).
+- **Recomprimir un WebP/AVIF ya lossy no da nada**: a fidelidad equivalente (~40 dB PSNR) el peso queda
+  igual, y convertir a AVIF **desde** un WebP lossy puede pesar MÁS (518 KB vs 438 KB). La ganancia de
+  formato exige partir del ORIGINAL sin pérdidas.
+- ⚠️ **Trampa al medir**: forzar `loading="eager"` para "ver todo cargado" hace que los elementos ocultos
+  (slides de carrusel) elijan variantes con anchos equivocados → falsos ahorros. Mide con el layout real
+  o calcula la elección: `ancho_css × dpr` → primer candidato ≥ ese valor.
 - Detalle y pipeline reproducible → skill `image-pipeline`.
 
 ### 3.5 Red / cache / service-worker

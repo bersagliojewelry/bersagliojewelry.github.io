@@ -1,6 +1,9 @@
 ---
 name: image-pipeline
 description: Optimizar imágenes en el BUILD para velocidad (Core Web Vitals) + SEO de imagen + señal local — porque en joyería/autos/inmuebles la imagen ES el producto y pesa el LCP. Úsala al procesar las fotos de cualquier sitio del paquete de visibilidad: generar WebP/AVIF (con fallback), dimensiones responsivas (`srcset`), `width`/`height` para matar CLS, `loading="lazy"`+`decoding="async"` below-fold y `fetchpriority="high"` SOLO en el LCP, `alt` descriptivo real, `ImageObject` JSON-LD, y EXIF geo (señal local menor/opcional). Corre en el build (Sharp/equivalente), como módulo del SSG. Reglas duras: NUNCA upscaling (verificar que la variante exista físicamente antes de referenciarla en `srcset`), `alt` real (cero-demo, no relleno), imágenes absolutas para feeds/OG. Triggers — "optimizar imágenes", "WebP/AVIF", "imágenes lentas/LCP", "srcset responsive", "alt text", "ImageObject schema", "EXIF geo", "fotos pesadas". Lee `tenant_config.json` (imageFormats, imageGeoExif). Fusionable con `ssg-static-prerender`. NUEVA en el paquete (Altorra ya usa `sharp` → se amplía).
+actualizada: 2026-09-02
+reglas: 8
+lecciones: []
 ---
 
 # 🖼️ Image Pipeline — imágenes rápidas + indexables + locales

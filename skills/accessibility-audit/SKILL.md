@@ -13,6 +13,9 @@ description: >-
   accessibility — NOT building a11y features (e.g. a high-contrast toggle), writing alt-text
   content, editing photo contrast, restyling focus rings for looks, translating copy, or
   Lighthouse/perf work.
+actualizada: 2026-09-02
+reglas: 5
+lecciones: []
 ---
 
 # Accessibility Audit (WCAG 2.2 AA)

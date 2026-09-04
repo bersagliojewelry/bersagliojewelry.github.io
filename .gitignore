@@ -72,3 +72,8 @@ docs/.estado-auto.md
 #                siguiente paso en vez de ejecutarlo. Se mide 30 dias antes de decidir si se queda.
 docs/.guard-log
 docs/.promesas-log
+
+# Carpetas que escriben plugins de terceros dentro del repo (incidente 2026-09-03).
+# No son nuestras y una de ellas llevaba un id de telemetria dentro.
+.semgrep/
+.remember/

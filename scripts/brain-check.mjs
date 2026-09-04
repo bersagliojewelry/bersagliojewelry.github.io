@@ -53,7 +53,7 @@
 //       (B6 · F-10). Y el schema (#15) conoce `egressAllowlist` (hosts a los que el guard
 //       `PreToolUse` deja escribir · B2) y `ejecutorBaseline`.
 // ===========================================================
-const KERNEL_VERSION = '1.34.0';
+const KERNEL_VERSION = '1.34.1';
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 // ⚠️ v1.34.0 (R-03) LEVANTA la vieja regla «sin child_process», y dice por qué. El eje de COMMITS
 // del #12 le preguntaba al REFLOG (`.git/logs/HEAD`), que es un fichero LOCAL: se poda, no viaja en
@@ -1103,6 +1103,23 @@ else {
     }
     const indiceTxt = indexPaths.length ? readIndex() : '';
     const EXT = /\b[\w./@-]+\.(?:md|mjs|js|cjs|json|html|css|ts|tsx|astro|ya?ml|sh|txt|svg|webp)\b/g;
+    // (c) un sha que RESUELVE en este repo. v1.33 lo buscaba en el reflog (.git/logs/HEAD); v1.34.0 (R-03)
+    // borró esa lectura —el reflog es un diario LOCAL que no viaja con el clon— pero dejó vivo su uso, y
+    // el linter moría con `ReferenceError: reflogTxt is not defined` en cuanto un párrafo con vocabulario
+    // de verificación citaba un sha que no resolvía por (a) ni (b). INSEMA lo pisó a la primera; los tres
+    // repos densos nunca llegaban a esta rama (estreno del reparto, 2026-09-04 · v1.34.1). Ahora se
+    // pregunta a los OBJETOS (`git cat-file -e <sha>^{commit}`), que sí viajan con el clon; si git no
+    // contestó antes (GIT_MUDO), la rama degrada a «no resuelve» y deciden (d) o el sinAncla — nunca un crash.
+    const shaCache = new Map();
+    const shaResuelve = (sha) => {
+      if (shaCache.has(sha)) return shaCache.get(sha);
+      let ok = false;
+      if (GIT_MUDO === null) {
+        try { execFileSync('git', ['-C', ROOT, 'cat-file', '-e', `${sha}^{commit}`], { stdio: 'ignore' }); ok = true; } catch { ok = false; }
+      }
+      shaCache.set(sha, ok);
+      return ok;
+    };
     const ancla = (parrafo) => {
       for (const m of parrafo.matchAll(EXT)) {          // (a) ruta que EXISTE
         const r = m[0].replace(/^\.\//, '');
@@ -1111,10 +1128,8 @@ else {
       }
       for (const m of parrafo.matchAll(/§\s?(\d+[a-z]?)/g))  // (b) §NN INDEXADO (no cualquier §)
         if (indiceTxt.includes(`§${m[1]}`)) return true;
-      for (const m of parrafo.matchAll(/\b([0-9a-f]{7,40})\b/g)) { // (c) sha resoluble en el reflog
-        if (!reflogTxt) break;
-        if (reflogTxt.includes(m[1])) return true;
-      }
+      for (const m of parrafo.matchAll(/\b([0-9a-f]{7,40})\b/g)) // (c) sha que RESUELVE en el repo (objetos, no reflog)
+        if (shaResuelve(m[1])) return true;
       if (/\b\d+\s*\/\s*\d+\b/.test(parrafo)) return true;   // (d) cifra CON denominador ([[INMO:L-58]])
       return false;
     };

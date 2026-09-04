@@ -150,7 +150,13 @@ esperando un permiso que nadie aprueba (cars L-50). Shell en foreground funciona
    la bóveda y, 40 minutos después, el commit del `10` de inmobiliaria salió BLOQUEADO por dos avisos
    que no eran suyos. Regla: quien sube la versión reparte en la MISMA sesión (un agente por repo,
    inmobiliaria primero como estreno y las hermanas con sus lecciones), o no sube la versión — el bump
-   sin reparto no es «hecho», es una avería programada en cuatro sitios. *(procedencia: sesión
+   sin reparto no es «hecho», es una avería programada en cuatro sitios.
+   **Y antes de repartir, SONDA**: corre el linter NUEVO en solo-lectura en los CUATRO repos (30 s
+   cada uno) antes de tocar hook ni manifest — el repo más rico no prueba los caminos que solo recorre el
+   más pobre (v1.34.0 completó en inmobiliaria, cars y bersaglio y MURIÓ en insema). El EOL se respeta POR
+   FICHERO (bersaglio es CRLF por decisión documentada, cars es mixto) y se MIDE con node contando bytes
+   13/10 — `grep -c` con `$'\r'` miente en Git Bash. Restaurar ficheros del kernel = escribir los
+   bytes del blob, nunca `git restore` (con `autocrlf` deja CRLF y el gate de espejo grita «difiere»). *(procedencia: sesión
    2026-09-04, `cerebro-maestro/DICTAMEN-ENCENDIDO.md §9`.)*
 
 ## 4. Importaciones pendientes por cerebro (auditoría 2026-07-10 — cada operador ejecuta la suya y actualiza esta lista)

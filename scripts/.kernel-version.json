@@ -1,8 +1,8 @@
 {
-  "version": "1.33.0",
-  "date": "2026-09-03",
+  "version": "1.34.0",
+  "date": "2026-09-04",
   "files": {
-    "brain-check.mjs": "8aa2304e2e00281b52e320f349c189f775b9c303e03eb2fc62d32750b265df81",
+    "brain-check.mjs": "d6058a9bd01d5a35738d8b9b234d9276e346d8a0876d87591d1a963bd601bd9b",
     "brain-diff.mjs": "3b99d025e23109019d68898ba9c020ef6d98ffccd01bb9aba5357f57ab191e08",
     "session-handoff.mjs": "3472bbb2139525504ded11edd7f723ab17f156f4cd8a15897f918e4b29835809",
     "guard-destructivo.mjs": "1956f41141a50461ce60547b3eb76a8bd72dbe71d59cb6f50bc6d746b3a37bca"

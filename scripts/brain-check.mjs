@@ -53,8 +53,17 @@
 //       (B6 · F-10). Y el schema (#15) conoce `egressAllowlist` (hosts a los que el guard
 //       `PreToolUse` deja escribir · B2) y `ejecutorBaseline`.
 // ===========================================================
-const KERNEL_VERSION = '1.33.0';
+const KERNEL_VERSION = '1.34.0';
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
+// ⚠️ v1.34.0 (R-03) LEVANTA la vieja regla «sin child_process», y dice por qué. El eje de COMMITS
+// del #12 le preguntaba al REFLOG (`.git/logs/HEAD`), que es un fichero LOCAL: se poda, no viaja en
+// un clone y no apunta como `commit` lo que entra por pull/merge/reset. Medido en INMO el
+// 2026-09-04: el reflog daba 52 commits desde el sello donde `git rev-list` ve 386 en 10 días — el
+// instrumento veía el 13 % de lo que había pasado. Portabilidad NUNCA fue «no llamar a git»: era
+// «no depender de que git conteste». Toda llamada va por `gitOut()`, en try/catch, y si git no
+// responde el gate lo DICE (degrade) en vez de devolver un número inventado. El fichero sigue
+// siendo byte-idéntico ×repos y sigue sin escribir nada.
+import { execFileSync } from 'child_process';
 import { homedir } from 'os';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -64,6 +73,11 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DOCS = join(ROOT, 'docs');
 let problems = 0;
 const BOOT = process.argv.includes('--boot');
+// v1.34.0 (R-04): `--pre-commit` NO cambia NI UN chequeo. Declara que este veredicto va a decidir si
+// un commit entra, y por eso «árbol en movimiento» degrada aquí a ROJO en vez de limitarse a avisar.
+// `GIT_INDEX_FILE` lo pone git en TODO hook: es el respaldo para los repos cuyo `githooks/pre-commit`
+// todavía no pasa el flag (el reparto de v1.34.0 lo añade). Dos señales, ninguna adivinada.
+const PRECOMMIT = process.argv.includes('--pre-commit') || !!process.env.GIT_INDEX_FILE;
 // Presupuesto de stdout en --boot (el SessionStart re-inyecta CADA línea como contexto).
 const lines = [];
 const say = (m) => { lines.push(m); };
@@ -93,7 +107,38 @@ const head = (m) => { if (!BOOT) say(m); };
  * arreglo puesto en el sitio donde dolió, en vez de en el instrumento, deja el fallo vivo en todos
  * los demás.* Normalizar solo puede RELAJAR: ninguna medida crece, así que no bloquea a nadie.
  */
-const read = (p) => readFileSync(p, 'utf-8').replace(/\r\n/g, '\n');
+/*
+ * ── 🌀 ÁRBOL EN MOVIMIENTO (v1.34.0 · R-04) ────────────────────────────────────────────────────
+ * Por qué existe, con reloj: el 2026-09-03 el MISMO comando sobre el MISMO repo dio **❌ 6
+ * bloqueantes a las 17:23:35Z y ✅ 15 verdes a las 17:46:51Z** — 23 minutos, cero ediciones del
+ * lector. Otra sesión estaba reescribiendo el árbol mientras el linter lo leía
+ * (`scripts/skills-canon.mjs` reescrito a las 17:42:38). El daño NO es el rojo: es que un LECTOR
+ * —una auditoría, el vigía, otro agente— publique como avería del sistema lo que era otro escritor,
+ * y ese informe ENTRE AL CEREBRO como conocimiento. Búsqueda previa de mecanismo:
+ * `grep -rn '\.lock|flock|single-writer'` sobre `scripts/` y `githooks/` → 2 aciertos, ambos
+ * COMENTARIOS; **0 cerrojos**.
+ * Cómo: `read()` apunta el mtime de CADA fichero en el instante en que lo lee —es el único lector
+ * de contenido del linter (§259), así que la cobertura es total sin listar nada a mano— y al final
+ * se re-comprueban todos; en paralelo se compara el `git status --porcelain` de antes y después.
+ * No bloquea a nadie mientras corre ni escribe un cerrojo: sólo se NIEGA A FIRMAR un veredicto
+ * sobre un disco que se movió. Con `--pre-commit` eso es ROJO, porque ese veredicto decide si
+ * entra un commit y un veredicto no fiable no puede dejar pasar nada.
+ */
+const vistos = new Map();                       // ruta → mtimeMs en el instante en que se leyó
+const mtimeDe = (p) => { try { return statSync(p).mtimeMs; } catch { return null; } };
+const read = (p) => { if (!vistos.has(p)) vistos.set(p, mtimeDe(p)); return readFileSync(p, 'utf-8').replace(/\r\n/g, '\n'); };
+// Único punto por el que este linter le habla a git (v1.34.0 · R-03/R-04). Falla ABIERTO y lo DICE:
+// si git no contesta devuelve null, y quien llama degrada en vez de inventarse un número.
+let GIT_MUDO = null;                            // primer motivo por el que git no contestó, si pasó
+const gitOut = (args) => {
+  try {
+    return execFileSync('git', ['-C', ROOT, ...args], { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 }).trim();
+  } catch (e) {
+    if (!GIT_MUDO) GIT_MUDO = (e && e.message ? String(e.message).split('\n')[0] : 'git no respondió');
+    return null;
+  }
+};
+const STATUS_INI = gitOut(['status', '--porcelain']);   // foto del árbol ANTES de mirar nada
 
 say(`\n🧠 BRAIN-CHECK v${KERNEL_VERSION}${BOOT ? ' --boot (liviano+silencioso)' : ' --full'} — integridad del cerebro\n`);
 
@@ -122,6 +167,15 @@ const KNOWN_KEYS = new Set([
   'workDirs', 'workAllowlist', 'workAllowlistRazon',
   // v1.12.0 (#26): deuda CONGELADA de filas gordas del índice. Trinquete: solo puede bajar.
   'indexRowOverLimitBaseline',
+  // v1.34.0 (#26 · R-02): la MITAD SEMÁNTICA del mismo trinquete — las filas de tabla del índice
+  // que NO empiezan por `| §NN`, que son justamente la capa «síntoma → neurona» con la que se
+  // enruta a un agente frío. Se congela APARTE del `§NN` a propósito: son dos poblaciones con
+  // dueños distintos (una crece con cada ADR, la otra con cada síntoma aprendido) y mezclarlas
+  // dejaría que una financiara la deuda de la otra. Medido en la cartera el 2026-09-04: 153 filas
+  // semánticas, de las que 2 pasan del RUIDO — INMO 1 · CARS 1 · BERS 0 · INSE 0.
+  // ⚠️ Si NO se declara, esta mitad CUENTA e IMPRIME pero solo AVISA (info): así ningún repo nace
+  // en rojo el día del reparto. Declararla es lo que la convierte en trinquete.
+  'indexSemanticRowOverLimitBaseline',
   // v1.13.0 (#29): cifras que el cerebro afirma y el kernel puede CONTAR en el repo.
   // v1.17.0 (#7c · K-05): deuda CONGELADA de deliberaciones declaradas SIN crudo enlazado.
   // Trinquete igual que #26: solo puede bajar; una nueva bloquea.
@@ -133,6 +187,11 @@ const KNOWN_KEYS = new Set([
   // v1.19.0 (§143): un sello de frescura envejece con los COMMITS, no con el calendario. Umbral
   // doble: se marca stale por lo que llegue ANTES (días o commits).
   'staleCommits', 'verifiedLiveStaleCommits',
+  // v1.34.0 (#12 · R-03): QUÉ nodos vigila el gate de frescura. Estaba HARDCODEADO como dos rutas
+  // literales dentro del kernel: la lista de lo que caduca en ESTE cerebro era una constante del
+  // código COMPARTIDO. Con la clave, un repo suma el nodo que se le pudre rápido sin forkear el
+  // kernel; sin ella rige el par de siempre (`docs/05` + `docs/10`) y el gate lo DICE.
+  'staleNodes',
   'countableFacts',
   // v1.27.0 (dictamen F2 · D6): TECHO del arranque REAL (always-on + sidecars + C0 + MEMORY.md).
   // NO sustituye a `bootCharsTarget` —ese sigue siendo la palanca de poda de lo que el repo
@@ -606,21 +665,32 @@ else if (existsSync(SKILLS_DIR) && existsSync(invPath)) {
 } else head('  ℹ️  skills/ no existe — omitido');
 
 // v1.19.0 (§143 · §221): «umbrales en DÍAS en un repo que corre en COMMITS». Un sello de hace 7 días
-// puede llevar 327 commits detrás: por calendario está fresco y por trabajo real es una fósil. Se
-// cuenta con el reflog leído por fs (sin child_process), igual que el canario del #24.
+// puede llevar 327 commits detrás: por calendario está fresco y por trabajo real es una fósil.
 // ⚠️ El sello tiene granularidad de DÍA, así que se cuenta desde el FINAL del día sellado: nunca
 // sobre-cuenta lo que se selló esa misma tarde. Es la dirección segura del error.
-const reflogPath = join(ROOT, '.git', 'logs', 'HEAD');
-const reflogTxt = existsSync(reflogPath) ? read(reflogPath) : null;
+//
+// v1.34.0 (R-03) — SE CAMBIA LA FUENTE, no la semántica. Hasta hoy esto contaba líneas del REFLOG
+// (`.git/logs/HEAD`). El reflog es un diario LOCAL de hacia dónde se movió HEAD en ESTE clon: se
+// poda solo (`gc.reflogExpire`, 90 días), no viaja en un `git clone` —un cerebro recién clonado
+// contaba CERO— y no marca como `commit` lo que llega por `pull`, `merge` o `reset`. Medido en INMO
+// el 2026-09-04: desde el sello del `05`, el reflog contaba **52** donde `git rev-list` ve **386**
+// en 10 días. El gate no estaba midiendo el trabajo del repo: medía el trayecto de un clon.
+// Ahora se resuelve el sello a un SHA (`rev-list -1 --before`) y se cuenta `<sha>..HEAD`, que es la
+// historia real y la misma en cualquier clon. Si git no contesta, devuelve null y quien llama lo
+// DICE — un eje que no pudo mirar no puede salir en verde.
+const cacheCommitsDesde = new Map();          // el #16 llama una vez por marcador: se cachea por fecha
 function commitsDesde(fechaISO) {
-  if (!reflogTxt) return null;
-  const t0 = Date.parse(`${fechaISO}T23:59:59Z`) / 1000;
-  if (!Number.isFinite(t0)) return null;
-  let n = 0;
-  for (const l of reflogTxt.split('\n')) {
-    const m = l.match(/>\s(\d{9,})\s[+-]\d{4}\t(\w+)/);
-    if (m && Number(m[1]) > t0 && m[2].startsWith('commit')) n++;
+  if (cacheCommitsDesde.has(fechaISO)) return cacheCommitsDesde.get(fechaISO);
+  let n = null;
+  if (Number.isFinite(Date.parse(`${fechaISO}T23:59:59Z`))) {
+    // El commit MÁS RECIENTE que ya existía al cerrar el día sellado. '' = no había ninguno todavía.
+    const sha = gitOut(['rev-list', '-1', `--before=${fechaISO}T23:59:59Z`, 'HEAD']);
+    if (sha !== null) {
+      const c = sha === '' ? gitOut(['rev-list', '--count', 'HEAD']) : gitOut(['rev-list', '--count', `${sha}..HEAD`]);
+      if (c !== null && /^\d+$/.test(c)) n = Number(c);
+    }
   }
+  cacheCommitsDesde.set(fechaISO, n);
   return n;
 }
 
@@ -831,12 +901,35 @@ else {
 
 // (11 QUITADO v1.3: peer-hash warn no cazó 3 kernels divergentes; F1 = hash-gate BLOQUEANTE vs canónico.)
 
-// 12) Fechas stale en 05/10 [info · corre también en --boot]
+// 12) Fechas stale en los nodos que caducan [info · corre también en --boot]
+//     v1.34.0 (R-03) — RE-ARMADO, sin renumerar nada. Tenía dos ejes y ninguno podía disparar:
+//     (a) la LISTA de nodos vigilados era una constante literal del kernel (`docs/05` y `docs/10`),
+//         o sea que «qué caduca aquí» lo decidía el código compartido y no cada cerebro. Ahora sale
+//         al manifest (`staleNodes`), con el par de siempre como fallback: nadie pierde cobertura.
+//     (b) el eje de COMMITS venía del REFLOG, que es local (ver `commitsDesde` arriba: 52 contra
+//         386 medidos en INMO), y su umbral implícito era 120 — inalcanzable antes que el eje de
+//         días en 3 de los 4 repos. Ritmos reales medidos con `git rev-list` el 2026-09-04, en la
+//         ventana de `staleDays`=10: INMO 386 commits (38,6/día) · CARS 51 (5,1) · BERS 41 (4,1) ·
+//         INSE 32 (3,2). Con 120 el eje llegaba el día ~3,1 / ~23,5 / ~29,3 / ~37,5: sólo INMO lo
+//         alcanzaba. Con **30** llega el día ~0,8 / ~5,9 / ~7,3 / ~9,4 — antes del día 10 en LOS
+//         CUATRO. Ese es el default nuevo, y es una cifra medida, no un número redondo bonito.
+//     (c) el bloque no tenía `head()`: no se podía citar ni ver dónde empieza. Ahora lo tiene.
+//     ⚠️ Sigue siendo `info`: no bloquea. Lo que cambia es que ya no puede quedarse MUDO por
+//        construcción, y que el silencio del manifest se DECLARA (degrade) en vez de asumirse.
+head('\n12) Frescura de los nodos que caducan (sello vs días Y commits reales):');
 {
   const staleDays = manifest.staleDays || 10;
+  // El default de 30 no es un tope estético: es la cifra que los cuatro ritmos medidos alcanzan
+  // ANTES que `staleDays`. Un umbral que el repo no puede alcanzar es un eje decorativo [[M-05]].
+  const STALE_COMMITS_DEFAULT = 30;
+  const staleCommits = typeof manifest.staleCommits === 'number' ? manifest.staleCommits : STALE_COMMITS_DEFAULT;
   const today = new Date();
   let oldest = null, oldestWhere = '', oldestSeal = '';
-  const NODOS_FECHA = ['docs/05-ESTADO-GLOBAL.md', 'docs/10-MEMORIA-CORTO-PLAZO.md'];
+  // v1.34.0 (R-03a): la lista sale del manifest. `staleNodes` es de cada cerebro; el par histórico
+  // es el fallback, para que un repo que no la declare mida exactamente lo que medía ayer.
+  const NODOS_FECHA = Array.isArray(manifest.staleNodes) && manifest.staleNodes.length
+    ? manifest.staleNodes
+    : ['docs/05-ESTADO-GLOBAL.md', 'docs/10-MEMORIA-CORTO-PLAZO.md'];
   const sinFecha = [];
   for (const rel of NODOS_FECHA) {
     const p = join(ROOT, rel);
@@ -848,9 +941,28 @@ else {
   if (oldest) {
     const days = Math.floor((today - oldest) / 86400000);
     const csFecha = commitsDesde(oldest.toISOString().slice(0, 10));
-    if (days > staleDays || (csFecha !== null && csFecha > (manifest.staleCommits || 120)))
-      info(`frescura: ${oldestWhere} sellado hace ${days} día(s)${csFecha !== null ? ` y ${csFecha} commit(s)` : ''} (umbral ${staleDays}d / ${manifest.staleCommits || 120} commits) → re-verificar vs git real y re-sellar «${oldestSeal}» — ESE sello, el del NODO. Los «verificado-vivo:» de dentro son OTRA cosa (los mide el #16) y actualizarlos NO apaga este aviso: pasó de verdad (§272).`);
+    if (days > staleDays || (csFecha !== null && csFecha > staleCommits))
+      // El --boot lleva versión CORTA: cada char de esta salida se re-inyecta como contexto en cada
+      // arranque, y desde v1.34.0 el eje de commits sí dispara, así que esta línea aparece a menudo.
+      info(BOOT
+        ? `frescura: ${oldestWhere} sellado hace ${days}d${csFecha !== null ? ` y ${csFecha} commit(s)` : ''} (umbral ${staleDays}d / ${staleCommits}) → re-verificar y re-sellar el NODO.`
+        : `frescura: ${oldestWhere} sellado hace ${days} día(s)${csFecha !== null ? ` y ${csFecha} commit(s)` : ''} (umbral ${staleDays}d / ${staleCommits} commits · FUENTE: git rev-list, no el reflog) → re-verificar vs git real y re-sellar «${oldestSeal}» — ESE sello, el del NODO. Los «verificado-vivo:» de dentro son OTRA cosa (los mide el #16) y actualizarlos NO apaga este aviso: pasó de verdad (§272).`);
+    // El «todo en orden» es COBERTURA (distingue «miré y está fresco» de «no miré»), pero no vale
+    // los chars del arranque: el SessionStart re-inyecta cada línea del --boot como contexto.
+    else if (!BOOT) info(`frescura: ${oldestWhere} es el sello más viejo — ${days}d${csFecha !== null ? ` y ${csFecha} commit(s)` : ''} de ${staleDays}d / ${staleCommits} commits (FUENTE: git rev-list). Los dos ejes por debajo del umbral.`);
+    // Un eje que no pudo mirar no se cuenta como eje que dijo que sí. v1.34.0 (R-03b).
+    if (csFecha === null) degrade(`frescura: el eje de COMMITS no pudo contarse${GIT_MUDO ? ` (${GIT_MUDO})` : ''} → este gate decidió SOLO con el calendario. Es media medición, no una verde.`);
   }
+  // v1.34.0 (R-03c): el manifest callado ya no es una decisión invisible. No bloquea (nadie nace en
+  // rojo por esto), pero el veredicto deja de ser «íntegro» hasta que el repo declare su cifra.
+  if (typeof manifest.staleCommits !== 'number')
+    degrade(BOOT
+      ? `frescura: manifest sin \`staleCommits\` → rige el default medido ${STALE_COMMITS_DEFAULT}. Declárala.`
+      : `frescura: el manifest NO declara \`staleCommits\` → rige el default medido ${STALE_COMMITS_DEFAULT} (ritmos de 2026-09-04, ventana de ${staleDays}d: INMO 38,6 · CARS 5,1 · BERS 4,1 · INSE 3,2 commits/día). Declárala con su \`_comment\`: el silencio no es una decisión.`);
+  // v1.34.0 (R-03a): si la lista sale del código y no del manifest, dilo — es cobertura, no detalle.
+  // Fuera del --boot por el mismo motivo que arriba: es un recordatorio de configuración, no una alarma.
+  if (!BOOT && !(Array.isArray(manifest.staleNodes) && manifest.staleNodes.length))
+    info(`frescura — LISTA: el manifest no declara \`staleNodes\`; se vigilan los ${NODOS_FECHA.length} de siempre (${NODOS_FECHA.join(' · ')}). Un cerebro con más nodos que caducan rápido los añade ahí, sin tocar el kernel.`);
   // v1.16.0 (K-01+K-04, §208.3): el gate tomaba la fecha MÁS VIEJA de los nodos que la tuvieran, y
   // al que no aportaba ninguna lo saltaba EN SILENCIO. Justo el `10` —la pizarra del WIP, el nodo
   // que más rápido caduca— no usa ninguno de los formatos, así que llevaba un año fuera del gate
@@ -891,6 +1003,12 @@ else {
 }
 
 // 14) deepAudit — auditoría Nivel-2 vigente [nudge info; días en --boot, headers solo en --full]
+//     v1.34.0 (R-03d): tenía el mismo defecto que el #12 y por el mismo motivo — ningún `head()`.
+//     Su salida aparecía colgando del cuerpo del #13, así que TODA cita a «#14» era inverificable
+//     por bloque: `FALENCIAS.md` lo nombra y no había forma de resolver dónde empieza. Un mapa de
+//     mecanismos con anclas que no resuelven convierte cada verificación futura en re-investigación.
+//     ⛔ NO se renumera: `FALENCIAS.md` lo cita por ESE número. Gana cabecera, no identidad.
+head('\n14) Auditoría Nivel-2 vigente (deepAudit: plazo y ADRs sin cubrir):');
 {
   const da = manifest.deepAudit;
   if (da && da.last) {
@@ -1267,18 +1385,36 @@ else {
 //     ADRs"; al medirlo, las 13 filas mas recientes lo incumplian TODAS (§71 = 449c) y el cap
 //     reventaba hacia los ~83 ADRs, no los ~100. Una regla sin gate es una intencion: el indice
 //     es la capa de RUTEO -- si cada fila cuenta la historia, deja de enrutar y pasa a narrar.
+//     v1.34.0 (R-02): la ceguera de este gate NO era de grado, era de CLASE. El regex `^\|\s*§(\d+)`
+//     solo miraba las filas de ADR; la capa «sintoma -> neurona» —la que de verdad enruta a un agente
+//     FRIO, que es quien mas depende del indice— no se contaba A NINGUNA LONGITUD. Medido el
+//     2026-09-04 en los cuatro repos: 858 filas `§NN` (216 por encima del RUIDO, con su trinquete)
+//     frente a 153 filas semanticas de las que se median CERO; 28 pasan de 200c y 2 pasan de 260c
+//     (peor: CARS docs/00-INDICE.md:54 = 665c). Ahora el gate entra en TODA fila de tabla y publica
+//     su COBERTURA con denominador [[M-27]]: una sonda que enumera y no dice sobre cuantos, miente.
 head('\n26) Longitud de fila del índice (ruteo, no narración):');
 if (BOOT) head('  ⏭️  omitido en --boot');
 else if (!indexPaths.length) info('sin índice');
 else {
   const LIMITE = 200, RUIDO = 260;   // avisa desde 260c para no ahogar por 10 chars de mas
-  const gordas = [];
+  const ES_FILA = /^\|/;                       // fila de tabla markdown
+  const ES_SEP = /^\|[\s:|-]+\|?\s*$/;         // la fila `|---|---|` no es contenido, es sintaxis
+  const gordas = [];        // filas `| §NN` — la poblacion vieja, con su trinquete de siempre
+  const gordasSem = [];     // filas de tabla que NO son `| §NN` — la capa semantica (R-02)
+  let filasNN = 0, filasSem = 0;
   for (const p of indexPaths) {
+    const f = p.split(/[\\/]/).pop();
     read(p).split('\n').forEach((l, i) => {
+      if (!ES_FILA.test(l) || ES_SEP.test(l)) return;
       const m = l.match(/^\|\s*§(\d+)\b/);
-      if (m && l.length > RUIDO) gordas.push({ f: p.split(/[\\/]/).pop(), n: i + 1, s: m[1], c: l.length });
+      if (m) { filasNN++; if (l.length > RUIDO) gordas.push({ f, n: i + 1, s: m[1], c: l.length }); return; }
+      filasSem++;
+      if (l.length > RUIDO) gordasSem.push({ f, n: i + 1, c: l.length });
     });
   }
+  // COBERTURA primero, siempre: cuantas filas MIRO cada mitad. Sin esto, «0 gordas» y «no miré
+  // ninguna fila» se imprimen igual, que es el modo de fallo que este bloque estrena arreglado.
+  info(`cobertura del #26 — §NN: ${gordas.length}/${filasNN} por encima de ${RUIDO}c · semánticas: ${gordasSem.length}/${filasSem}${filasSem ? '' : ' ⚠️ esta mitad no vio NI UNA fila: el índice no tiene capa semántica en tabla, o el patrón dejó de casar'}`);
   // v1.12.0 (§120, TODO-45c): era `info` puro, así que la regla «≤200c» llevaba 52 filas
   // incumpliéndose sin que nada pasara — una intención con impresora. Ahora es un TRINQUETE: la
   // deuda vieja se congela en un número declarado y una fila gorda NUEVA lo supera y BLOQUEA.
@@ -1296,6 +1432,29 @@ else {
     } else {
       if (gordas.length < baseline) info(`${detalle} → por DEBAJO de la deuda congelada (${baseline}): baja \`indexRowOverLimitBaseline\` a ${gordas.length} para que el trinquete no se afloje.`);
       else info(`${detalle} → deuda congelada en ${baseline}; una fila gorda nueva bloquea.`);
+    }
+  }
+  // ── La MITAD SEMÁNTICA (v1.34.0 · R-02) ────────────────────────────────────────────────────
+  // Mismo LIMITE y mismo RUIDO que la mitad `§NN`: es la misma regla escrita del manifest, aplicada
+  // a la población que hasta hoy nadie contaba. Trinquete PROPIO (`indexSemanticRowOverLimitBaseline`)
+  // porque las dos poblaciones crecen por motivos distintos. Y con una diferencia deliberada: si el
+  // manifest NO la declara, esto AVISA pero no bloquea — el reparto de v1.34.0 congela cada repo en
+  // su cifra medida, y hasta entonces ningún cerebro nace en rojo por un gate que acaba de abrir los
+  // ojos. Un gate nuevo que bloquea el día que llega no se estrena: se desactiva ([[M-05]]).
+  const baseSem = manifest.indexSemanticRowOverLimitBaseline;
+  if (!gordasSem.length) ok(`filas semánticas del índice (${filasSem}) dentro de ${LIMITE}c (+holgura)`);
+  else {
+    gordasSem.sort((a, b) => b.c - a.c);
+    const topS = gordasSem.slice(0, 5).map((g) => `${g.f}:${g.n} (${g.c}c)`).join(' · ');
+    const detS = `${gordasSem.length} fila(s) SEMÁNTICA(S) de ${filasSem} por encima de ${RUIDO}c (objetivo ${LIMITE}c): ${topS}${gordasSem.length > 5 ? ' …' : ''}`;
+    if (typeof baseSem !== 'number') {
+      info(`${detS} → la capa síntoma→neurona es la que lee un agente FRÍO: una fila que narra deja de enrutar. (Declara \`indexSemanticRowOverLimitBaseline\`: ${gordasSem.length} congela lo de hoy y bloquea lo nuevo.)`);
+    } else if (gordasSem.length > baseSem) {
+      warn(`${detS} → son ${gordasSem.length - baseSem} MÁS que la deuda congelada (${baseSem}). Acorta la fila nueva: el síntoma enruta, el detalle vive en la neurona.`);
+    } else if (gordasSem.length < baseSem) {
+      info(`${detS} → por DEBAJO de la deuda congelada (${baseSem}): baja \`indexSemanticRowOverLimitBaseline\` a ${gordasSem.length} para que el trinquete no se afloje.`);
+    } else {
+      info(`${detS} → deuda congelada en ${baseSem}; una fila semántica gorda nueva bloquea.`);
     }
   }
 }
@@ -1502,9 +1661,41 @@ else {
   }
 }
 
+// ── 🌀 ÁRBOL EN MOVIMIENTO — la re-comprobación (v1.34.0 · R-04) ──────────────────────────────
+// Va AQUÍ, después del último chequeo y antes del veredicto, porque lo que decide no es ningún
+// hallazgo: es si este veredicto se puede firmar. Dos sondas independientes, ninguna adivinada.
+let ARBOL_MOVIDO = false;
+{
+  const movidos = [];
+  for (const [p, antes] of vistos) {
+    const ahora = mtimeDe(p);
+    if (antes === null && ahora === null) continue;              // no existía y sigue sin existir
+    if (antes === null || ahora === null || ahora !== antes) movidos.push(p.slice(ROOT.length + 1).replace(/\\/g, '/'));
+  }
+  const statusFin = gitOut(['status', '--porcelain']);
+  const statusCambio = STATUS_INI !== null && statusFin !== null && STATUS_INI !== statusFin;
+  if (movidos.length || statusCambio) {
+    const detalle = [
+      movidos.length ? `${movidos.length} fichero(s) que este linter LEYÓ cambiaron mientras corría: ${movidos.slice(0, 5).join(' · ')}${movidos.length > 5 ? ' …' : ''}` : '',
+      statusCambio ? '`git status --porcelain` NO es el mismo al empezar y al terminar' : '',
+    ].filter(Boolean).join(' · ');
+    const msg = `🌀 ÁRBOL EN MOVIMIENTO: ${detalle}. VEREDICTO NO FIABLE — otra sesión (o un script) estaba escribiendo. NO publiques este resultado como avería del sistema hasta re-correrlo con el árbol quieto (§ el 2026-09-03 el mismo comando dio ❌6 y ✅15 con 23 min de diferencia y cero ediciones).`;
+    ARBOL_MOVIDO = true;
+    if (PRECOMMIT) warn(`${msg} En pre-commit esto es ROJO: un veredicto que no se puede firmar no puede dejar pasar un commit.`);
+    else degrade(msg);
+  } else if (!BOOT && STATUS_INI === null) {
+    degrade(`🌀 árbol en movimiento: no se pudo comparar \`git status\`${GIT_MUDO ? ` (${GIT_MUDO})` : ''} → esta mitad NO miró. Queda la de mtime, sobre ${vistos.size} fichero(s) leídos.`);
+  } else if (!BOOT) {
+    ok(`árbol estable durante la corrida: ${vistos.size} fichero(s) leídos sin cambiar de mtime y \`git status\` idéntico al empezar y al terminar`);
+  }
+}
+
 const sano = '✅ CEREBRO SANO (estructura íntegra' + (manifest.deepAudit && manifest.deepAudit.last ? ' · auditoría semántica: ' + manifest.deepAudit.last : '') + ')';
 const parcial = `🟠 ESTRUCTURA ÍNTEGRA, pero ${degraded} gate(s) DEGRADADOS (no pudieron correr) — NO es un cerebro verificado: clona la bóveda / el canónico y re-corre`;
-lines.push(`\n${problems ? '⚠️  ' + problems + ' problema(s) — revisar antes de avanzar' : (degraded ? parcial : sano)}\n`);
+// v1.34.0 (R-04): un ✅ y un «veredicto no fiable» en la misma pantalla es el modo de fallo que este
+// cambio ataca — el lector se queda con el ✅. Si el árbol se movió, el titular lo dice y manda.
+const movido = `🌀 VEREDICTO NO FIABLE — el árbol cambió mientras este linter lo leía${problems ? ` (y ${problems} hallazgo[s] colgando de esa lectura)` : ''}. Ni ✅ ni ❌: no se pudo mirar quieto. NO publiques este resultado como avería del sistema; re-corre con el árbol parado.`;
+lines.push(`\n${ARBOL_MOVIDO ? movido : (problems ? '⚠️  ' + problems + ' problema(s) — revisar antes de avanzar' : (degraded ? parcial : sano))}\n`);
 let out = lines;
 if (BOOT && out.join('\n').length > 2000) {
   // presupuesto duro: cada línea del boot se re-inyecta como contexto en CADA sesión

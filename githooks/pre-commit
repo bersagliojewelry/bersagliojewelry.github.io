@@ -2,8 +2,8 @@
 # ===========================================================
 # 🧠 pre-commit — guardián determinista del cerebro
 # ===========================================================
-# Corre brain:check cuando el commit toca CLAUDE.md o docs/ y BLOQUEA
-# el commit si el cerebro tiene problemas. Convierte el Reflejo de
+# Corre brain:check cuando el commit toca el CEREBRO o su MAQUINARIA y
+# BLOQUEA el commit si el cerebro tiene problemas. Convierte el Reflejo de
 # Auto-auditoría (CLAUDE.md §G.4) de doctrina-que-debo-recordar a
 # garantía determinista (lo verificable va al linter que falla).
 #
@@ -31,10 +31,30 @@ fi
 node scripts/verify-secretos.mjs || exit 1
 
 # ── De aquí abajo, solo si el commit toca el cerebro ──────────────────────────────────
-echo "$staged" | grep -qE '^(CLAUDE\.md|docs/)' || exit 0   # nada del cerebro staged → no aplica
+# ── El predicado que decide si los gates llegan a MIRAR (v1.34.0 · R-01) ────────
+# Hasta hoy esta línea decía `'^(CLAUDE\.md|docs/)'`, y ESA línea desarmaba de golpe a
+# todos los chequeos que pueden bloquear: viven DEBAJO de ella. Medido el 2026-09-04 con
+# una réplica del predicado sobre `git log --since=30.days --name-only` de los cuatro
+# repos (721 commits): con el predicado viejo llegaban a correr brain:check **389 (54 %)**
+# —INMO 330/576 · CARS 21/71 · BERS 23/42 · INSE 15/32— y de los **332** que salían por
+# aquí sin un solo gate, **80 tocaban `scripts/`, `skills/`, `.claude/` o `githooks/`**:
+# la MAQUINARIA del propio cerebro. Se editaba `scripts/brain-check.mjs` sin que ningún
+# gate mirara. Con las seis rutas: **469 de 721 (65 %)** y **0** commits de maquinaria
+# sin gate (INMO 368/576 · CARS 36/71 · BERS 38/42 · INSE 27/32).
+# Es la segunda cara de [[INMO:L-70]] —«lee el predicado ANTES que el cuerpo, y mídelo
+# contra la historia real»—, ya aplicada al escáner de secretos (`secretos.yml:12` dice
+# «Por eso aquí NO hay `paths:`») y NO aplicada al linter del propio cerebro.
+# ⚠️ Regla 4 de esa lección: un motivo para NO correr un gate CADUCA. Lo que queda fuera
+# —código de producto, imágenes, `functions/`— se excluye porque este linter mide el
+# CEREBRO y no el producto; el día que eso deje de ser cierto, se re-mide y se reescribe
+# aquí, con fecha. Latencia medida: 0,278 s por corrida.
+echo "$staged" | grep -qE '^(CLAUDE\.md|docs/|scripts/|skills/|githooks/|\.claude/)' || exit 0
 
 echo "🧠 brain:check (pre-commit)…"
-if ! node scripts/brain-check.mjs; then
+# `--pre-commit` NO cambia ni un chequeo (v1.34.0 · R-04): le dice al linter que su veredicto va a
+# ABORTAR un commit, y por eso el detector de «árbol en movimiento» degrada aquí a ROJO en vez de
+# limitarse a avisar. Un veredicto que no se puede firmar no puede dejar pasar un commit.
+if ! node scripts/brain-check.mjs --pre-commit; then
   echo ""
   echo "❌ COMMIT BLOQUEADO: el cerebro tiene problemas (ver arriba)."
   echo "   Corrígelos, o usa 'git commit --no-verify' si es intencional."

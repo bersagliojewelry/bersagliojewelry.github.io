@@ -2,7 +2,7 @@
 name: sinapsis-cerebros
 description: Usar ANTES de re-investigar un problema TRANSVERSAL (Firebase/Firestore/functions/rules, git/CI/CRLF, dinero/caja/CRM, rendimiento web, proceso de verificación) en cualquiera de los 4 proyectos del dueño (altorracars · bersagliojewelry · altorrainmobiliaria · insemastereo) — los 4 cerebros aprendieron AISLADOS y re-descubrieron la misma lección ≥6 veces; hoy lo TRANSFERIBLE vive en el corpus común `brain-private/maestro/` y las skills en su canon `brain-private/skills/`. Enruta un grep a las lecciones de los cerebros HERMANOS en el mismo disco y al corpus del maestro. También al PROPAGAR una lección portable entre cerebros (protocolo anti copy-ciego). Triggers — "este síntoma me suena pero no está en mis lecciones", "gotcha de Firebase/git/dinero", "¿otro proyecto ya vivió esto?", "propaga esta lección a los otros cerebros".
 actualizada: 2026-09-02
-reglas: 19
+reglas: 20
 lecciones: [G:G-001, G:G-005, G:G-007, G:G-008, G:G-009, G:G-012, G:G-013]
 origen: propia
 ---
@@ -143,6 +143,15 @@ esperando un permiso que nadie aprueba (cars L-50). Shell en foreground funciona
    solo para lo repo-específico. Revisa §4 en cada sinapsis: lo aplicado se archiva en `references/`
    con su puntero. *(procedencia: [[G:G-001]] corolario del DENOMINADOR — un sello de completitud
    declara contra qué conjunto es cierto; medido: 46 días de bloqueo sin que nada avisara.)*
+12. **El bump del kernel y su reparto son UN solo cierre — desde que sube `KERNEL_VERSION`, las hojas se
+   quedan mudas.** El gate de kernel de cada repo compara contra el canónico y marca `STALE` en cuanto la
+   versión del maestro cambia; como el pre-commit corre el linter en todo commit de cerebro, **ninguna
+   hoja puede commitear ni una línea de `docs/` hasta su pull**. Medido 2026-09-04: K1 cerró v1.34.0 en
+   la bóveda y, 40 minutos después, el commit del `10` de inmobiliaria salió BLOQUEADO por dos avisos
+   que no eran suyos. Regla: quien sube la versión reparte en la MISMA sesión (un agente por repo,
+   inmobiliaria primero como estreno y las hermanas con sus lecciones), o no sube la versión — el bump
+   sin reparto no es «hecho», es una avería programada en cuatro sitios. *(procedencia: sesión
+   2026-09-04, `cerebro-maestro/DICTAMEN-ENCENDIDO.md §9`.)*
 
 ## 4. Importaciones pendientes por cerebro (auditoría 2026-07-10 — cada operador ejecuta la suya y actualiza esta lista)
 

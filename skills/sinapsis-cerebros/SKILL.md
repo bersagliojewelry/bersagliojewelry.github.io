@@ -151,9 +151,12 @@ esperando un permiso que nadie aprueba (cars L-50). Shell en foreground funciona
    que no eran suyos. Regla: quien sube la versión reparte en la MISMA sesión (un agente por repo,
    inmobiliaria primero como estreno y las hermanas con sus lecciones), o no sube la versión — el bump
    sin reparto no es «hecho», es una avería programada en cuatro sitios.
-   **Y antes de repartir, SONDA**: corre el linter NUEVO en solo-lectura en los CUATRO repos (30 s
-   cada uno) antes de tocar hook ni manifest — el repo más rico no prueba los caminos que solo recorre el
-   más pobre (v1.34.0 completó en inmobiliaria, cars y bersaglio y MURIÓ en insema). El EOL se respeta POR
+   **Y antes de repartir, SONDA**: en cada uno de los CUATRO repos, `git clone --local` a un directorio
+   temporal, copia el `brain-check.mjs` nuevo en `<clon>/scripts/` y córrelo DESDE el clon — el linter fija
+   su raíz desde su propia carpeta, así que correrlo desde la bóveda audita la bóveda. El criterio es
+   «¿COMPLETÓ y dio veredicto?», no «¿salió verde?»: el clon miente siempre igual (#0 stamp viejo, #6 skill,
+   #24/#25 sin `hooksPath`, #27 fantasmas de carpetas gitignoradas). El repo más rico no prueba los caminos
+   que solo recorre el más pobre (v1.34.0 completó en tres y MURIÓ en insema). El EOL se respeta POR
    FICHERO (bersaglio es CRLF por decisión documentada, cars es mixto) y se MIDE con node contando bytes
    13/10 — `grep -c` con `$'\r'` miente en Git Bash. Restaurar ficheros del kernel = escribir los
    bytes del blob, nunca `git restore` (con `autocrlf` deja CRLF y el gate de espejo grita «difiere»). *(procedencia: sesión

@@ -29,6 +29,18 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      # Las deps de functions/ TAMBIEN, o la suite ni arranca. El `npm ci` de arriba solo instala
+      # las del raiz, y `functions/node_modules` esta gitignored: en el PC del dueño EXISTE (por eso
+      # alli `npm test` sale verde) y en el runner NO. Dos pruebas del corte mensual —
+      # tests/aging-paridad.test.mjs:70 y tests/corte-insumos.test.mjs:19— hacen
+      # `require('../functions/corte.js')`, que a su vez pide `firebase-functions/v2/scheduler`
+      # (functions/package.json), dependencia que el package.json del raiz NO tiene. Sin este paso
+      # revientan con «Cannot find module» y el workflow queda en ROJO en cada push Y en cada cron.
+      # Medido: rojo desde la corrida #735 (merge 9ec3ebf, 2-sep), la primera vez que `npm test`
+      # corrio en main. Es `npm ci` porque functions/package-lock.json existe y esta en sincronia.
+      - name: Deps de functions/ (las que necesita la suite)
+        working-directory: functions
+        run: npm ci
       # 🛡️ LA SUITE, ANTES DE CONSTRUIR (auditoria Nivel-2 del 26-ago, hallazgo B-01). Habia 43
       # scripts test:* y ningun `test` agregado, asi que el CI no corria NINGUNO: las pruebas de
       # tesoreria, caja, cartera, pedidos, saldo, reconciliacion y wompi —todo lo que mueve dinero—

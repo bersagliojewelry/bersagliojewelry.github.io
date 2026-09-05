@@ -14,7 +14,7 @@
 3. **Catalogar** en `docs/skills-inventory.md` del destino → sección §Paquete de Visibilidad (reconciliar si el
    repo ya pre-anotó; **nunca duplicar** la sección).
 4. **L-48**: `git status` ANTES de tocar el git del repo destino (sesiones concurrentes). Commitear SOLO los
-   paths nuevos (JAMÁS `git add -A`); push a la rama de trabajo del repo; el **dueño mergea a `main` en web**.
+   paths nuevos (JAMÁS `git add -A`); push a la rama de trabajo del repo; **Claude mergea a `main`** (C0 orden nº 2, 4-sep-2026; ⛔ nunca abrir PR sin permiso).
 
 ## B. Implementación — la ejecuta la sesión del proyecto (pide datos al dueño)
 1. `tenant_config.json` en la raíz → esquema en `tenant-config.md`. Fijar `vertical`

@@ -90,8 +90,6 @@ Detalle profundo de cualquier subsistema → `docs/20-MEMORIA-ESPACIAL.md` + ADR
 
 ### Cómo documentar (formato canónico ADR)
 
-Cada cambio funcional se documenta con una sección numerada (§NN) que incluye:
-
 Encabezado `## <fecha> — <título>` (convención por fecha de este cerebro) + cita del cliente si reportó, y 7 puntos:
 **NN.1** Causa raíz (RCA §3.3, verificada leyendo código) · **NN.2** Solución estructural (de fondo) ·
 **NN.3** No-regresión (IDs/funciones/callsites intactos, build OK) · **NN.4** Tests / verificación ·
@@ -100,7 +98,7 @@ Encabezado `## <fecha> — <título>` (convención por fecha de este cerebro) + 
 
 ### Reglas git
 
-- **Quién commitea Y despliega: Claude, por defecto** (cliente 2026-06-06). **Commits**: `git add` ESPECÍFICO (nunca `-A`/`.`), footer `Co-Authored-By: <modelo Claude VIGENTE de la sesión> <noreply@anthropic.com>` (no copiar de commits viejos), separados por tipo (código vs cerebro). **Deploys**: solo con build/tests VERDES, anunciando qué (incidente L-14). Prod = merge `Desarrollo→main` (Pages) + `firebase deploy --only functions,firestore:rules`.
+- **Git delegado a Claude — C0 orden nº 2 (4-sep-2026)**: commit + push + **merge** + deploy en los CUATRO repos, INSEMA incluido; ⛔ nunca abrir PR sin permiso. **Commits**: `git add` ESPECÍFICO (nunca `-A`/`.`), footer `Co-Authored-By: <modelo Claude VIGENTE de la sesión> <noreply@anthropic.com>`, separados por tipo (código vs cerebro). **Deploys**: solo con build/tests VERDES, anunciando qué (incidente L-14). Prod = merge `Desarrollo→main` (Pages) + `firebase deploy --only functions,firestore:rules`.
 - NUNCA `--amend`/`--no-verify`/`--no-gpg-sign` sin pedido. NUNCA commitear secretos/datos privados (`.env`, credentials, `*.pem`, `*.xlsx`, `.claude/settings.local.json`).
 - Al cerrar un pendiente, marcar su `TODO-NN` como ✅ + link al §X. Mantén este CLAUDE.md liviano.
 

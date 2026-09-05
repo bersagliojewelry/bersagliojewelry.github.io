@@ -8,7 +8,6 @@
     "build": "vite build",
     "generate": "node scripts/generate-pieces.mjs",
     "preview": "vite preview --host",
-    "brain:check": "node scripts/brain-check.mjs",
     "test": "node ./scripts/test-suite.mjs",
     "verify:secretos": "node scripts/verify-secretos.mjs",
     "test:emulador": "firebase emulators:exec --only firestore --project demo-bersaglio \"node ./scripts/test-suite.mjs --emulador\"",
@@ -54,9 +53,7 @@
     "test:hoy": "node --test tests/hoy-format.test.mjs",
     "test:errores": "node --test tests/error-format.test.mjs",
     "test:codigo-pedido": "node --test functions/pedidos-codigo.test.mjs",
-    "test:avanzar": "node --test functions/avanzar-pedido.test.mjs",
-    "brain:diff": "node scripts/brain-diff.mjs",
-    "brain:pull": "node ../brain-private/kernel/pull.mjs"
+    "test:avanzar": "node --test functions/avanzar-pedido.test.mjs"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.1",

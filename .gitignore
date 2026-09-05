@@ -60,18 +60,9 @@ Legales/
 # Reportes de sesión generados por la skill session-report (artefactos locales, no fuente)
 session-report-*.html
 
-# Sidecars GENERADOS por session-handoff.mjs (estado derivable, §52) — nunca fuente
-docs/.handoff-auto.md
-docs/.boot-marker
-docs/.estado-auto.md
-
-# Rastros de la pieza B (falencias del modelo, 2026-09-03). Efimeros y por-maquina:
-#  .guard-log    lo escribe el hook PreToolUse scripts/guard-destructivo.mjs (B2) con cada
-#                decision deny/ask — su CONTADOR es la medicion del mecanismo.
-#  .promesas-log lo escribe session-handoff --end (B7) cuando un turno cierra prometiendo el
-#                siguiente paso en vez de ejecutarlo. Se mide 30 dias antes de decidir si se queda.
-docs/.guard-log
-docs/.promesas-log
+# (F8, 2026-09-05) El cerebro documental (docs/, _legacy/, el kernel de scripts/ y skills/) ya no vive aqui:
+# esta en ../brain-private/bersaglio/ con su historia. Sus sidecars (docs/.estado-auto.md, .guard-log,
+# .sesiones/...) los ignora el .gitignore de la boveda.
 
 # Carpetas que escriben plugins de terceros dentro del repo (incidente 2026-09-03).
 # No son nuestras y una de ellas llevaba un id de telemetria dentro.

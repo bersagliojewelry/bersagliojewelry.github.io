@@ -1,10 +1,10 @@
 {
-  "version": "1.34.1",
-  "date": "2026-09-04",
+  "version": "1.34.2",
+  "date": "2026-09-05",
   "files": {
-    "brain-check.mjs": "667059e4003c52702e51f0d1da60dfd0a56b95fdcdec9bf7e2450d372a8edcf9",
+    "brain-check.mjs": "05576618c0204e5079a4348001b57e31bc9c8096e7a1379c3f236b2dbd96ac7b",
     "brain-diff.mjs": "3b99d025e23109019d68898ba9c020ef6d98ffccd01bb9aba5357f57ab191e08",
-    "session-handoff.mjs": "3472bbb2139525504ded11edd7f723ab17f156f4cd8a15897f918e4b29835809",
+    "session-handoff.mjs": "0d15e7fb2f1effbda0d4e1e0a3c79781180e45963218892bca12a5a66c8439e1",
     "guard-destructivo.mjs": "1956f41141a50461ce60547b3eb76a8bd72dbe71d59cb6f50bc6d746b3a37bca"
   }
 }

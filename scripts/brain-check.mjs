@@ -53,7 +53,7 @@
 //       (B6 · F-10). Y el schema (#15) conoce `egressAllowlist` (hosts a los que el guard
 //       `PreToolUse` deja escribir · B2) y `ejecutorBaseline`.
 // ===========================================================
-const KERNEL_VERSION = '1.34.1';
+const KERNEL_VERSION = '1.34.2';
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 // ⚠️ v1.34.0 (R-03) LEVANTA la vieja regla «sin child_process», y dice por qué. El eje de COMMITS
 // del #12 le preguntaba al REFLOG (`.git/logs/HEAD`), que es un fichero LOCAL: se poda, no viaja en
@@ -784,7 +784,16 @@ else {
       if (existsSync(packed)) { const l = read(packed).split('\n').find((x) => x.endsWith(' ' + name)); if (l) return l.slice(0, 40); }
       return null;
     };
-    const headRef = (read(join(vaultGit, '.git', 'HEAD')).match(/ref:\s*(\S+)/) || [])[1];
+    // v1.34.2 (N2b · insema): el `if` de arriba solo prueba que existe `.git`, y de ahí se leía
+    // `HEAD` a pelo. Una bóveda ESPEJO con `.git/` vacío (el sandbox de reparto que se usa para
+    // estrenar el kernel sin tocar el clon real) mata el linter entero con ENOENT antes de dar
+    // veredicto. Un linter NUNCA muere por un fichero ausente: falla ABIERTO y lo dice. Sin `HEAD`
+    // no hay `headRef` y el gate degrada por el mismo camino que ya recorre cuando la ref no
+    // resuelve (`local`/`remote` a null → ni ✅ ni ⚠️, silencio); se añade la línea que lo NOMBRA
+    // para que el silencio no se confunda con «respaldo al día».
+    const headP = join(vaultGit, '.git', 'HEAD');
+    if (!existsSync(headP)) info('bóveda: `.git` existe pero SIN HEAD (repo vacío o espejo de prueba) → el cotejo local↔origin NO corrió');
+    const headRef = existsSync(headP) ? (read(headP).match(/ref:\s*(\S+)/) || [])[1] : undefined;
     const local = headRef ? refSha(headRef) : null;
     const remote = headRef ? refSha(headRef.replace('refs/heads/', 'refs/remotes/origin/')) : null;
     if (local && remote && local !== remote)

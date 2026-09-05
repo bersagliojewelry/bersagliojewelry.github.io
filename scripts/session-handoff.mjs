@@ -95,7 +95,36 @@ const heartbeat = () => {
   const probe = (fn) => { try { const v = fn(); return (v == null || v === '' || v === '(git no disponible)') ? '❌ NO VERIFICADO' : v; } catch (e) { return `❌ NO VERIFICADO (${String(e && e.message || e).slice(0, 40)})`; } };
   let costoPct = null; // lo llena la sonda de costo; el banner en cristiano lo reusa (F3 §53)
   let manifest = {}; try { manifest = JSON.parse(readFileSync(join(ROOT, 'docs', '.brain-manifest.json'), 'utf8')); } catch { /* banner degrada */ }
-  const BRAIN_RE = /^(docs\/|CLAUDE\.md$|skills\/|scripts\/(brain|boot-gate|session-handoff)|_legacy\/)/;
+  // 🧭 CLASIFICADOR v2 (v1.34.2 · N2b-01/N2b-09 de la Nivel-2 #2 de insema). El viejo `BRAIN_RE`
+  // tenía DOS clases —cerebro y «todo lo demás»— y ese «todo lo demás» se llamaba PRODUCTO en el
+  // banner. Medido el 2026-09-04 en insema: «8 commits de producto sin ADR» y NINGUNO tocaba el
+  // producto (la landing no cambia desde junio); eran `scripts/.kernel-version.json`,
+  // `githooks/pre-commit`, `.claude/settings.json`, `.gitignore`, `.github/workflows/` y
+  // `scripts/guard-destructivo.mjs` —un kernelFile DECLARADO que el regex viejo no reconocía—.
+  // Un banner que nombra producto lo que es fontanería del propio cerebro manda a consolidar lo
+  // que no existe. Ahora hay TRES clases y UNA función; si algún día `brain-check.mjs` clasifica
+  // rutas (hoy, v1.34.2, NO lo hace: no tiene ningún regex de este tipo), copia esta función o
+  // estos literales, no invente los suyos.
+  //   · cerebro  = docs/ · CLAUDE.md · skills/ · _legacy/ · githooks/ · .claude/ + los kernelFiles
+  //                declarados en el manifest (con regex de respaldo si el manifest no se leyó).
+  //   · infra    = .gitignore · .gitattributes · .github/ · package(-lock).json · .editorconfig · CNAME.
+  //   · producto = todo lo demás.
+  const KERNEL_RE = /^scripts\/(brain|boot-gate|session-handoff|guard-destructivo|verify-|\.kernel-version)/;
+  const CEREBRO_RE = /^(docs\/|CLAUDE\.md$|skills\/|_legacy\/|githooks\/|\.claude\/)/;
+  const INFRA_RE = /^(\.gitignore$|\.gitattributes$|\.github\/|package\.json$|package-lock\.json$|\.editorconfig$|CNAME$)/;
+  const KERNEL_DECL = new Set(Array.isArray(manifest.kernelFiles) ? manifest.kernelFiles : []);
+  const clasificarRuta = (ruta) => {
+    const r = String(ruta).replace(/\\/g, '/').trim();
+    if (!r) return 'infra';
+    if (CEREBRO_RE.test(r) || KERNEL_DECL.has(r) || KERNEL_RE.test(r)) return 'cerebro';
+    if (INFRA_RE.test(r)) return 'infra';
+    return 'producto';
+  };
+  // Un commit se clasifica por sus rutas: PRODUCTO si toca ≥1 ruta de producto; si no, CEREBRO si
+  // toca ≥1 de cerebro; si no, INFRA. Un commit sin rutas (merge vacío) cae en infra y no cuenta.
+  const clasificarCommit = (rutas) => rutas.some((f) => clasificarRuta(f) === 'producto') ? 'producto'
+    : rutas.some((f) => clasificarRuta(f) === 'cerebro') ? 'cerebro' : 'infra';
+  const rutasDe = (c) => c.split('\n').map((l) => l.trim()).filter(Boolean);
   const swP = ['service-worker.js', 'public/sw.js', 'sw.js', 'public/service-worker.js'].map((c) => join(ROOT, c)).find((p) => existsSync(p));
   const lines = [
     '# 💓 Estado DERIVABLE (⚙️ GENERADO por heartbeat en cada boot — NO editar; sidecar gitignored, §52)',
@@ -105,8 +134,8 @@ const heartbeat = () => {
     `- origin visto hace: ${probe(() => { const p = join(ROOT, '.git', 'FETCH_HEAD'); if (!existsSync(p)) return 'NUNCA → git fetch antes de afirmar deploy (§3.3)'; const h = (Date.now() - statSync(p).mtimeMs) / 3.6e6; return `${h.toFixed(1)}h${h > 24 ? ' ⚠️ refs remotas VIEJAS → git fetch antes de afirmar deploy (§3.3)' : ''}`; })}`,
     `- SW cache vigente: ${swP ? probe(() => (readFileSync(swP, 'utf8').match(/CACHE_(?:NAME|VERSION)\s*=\s*['"]([^'"]+)['"]/) || [])[1]) + ` (${swP.split(/[\\/]/).pop()})` : '(sin service worker)'}`,
     `- CNAME: ${probe(() => existsSync(join(ROOT, 'CNAME')) ? readFileSync(join(ROOT, 'CNAME'), 'utf8').trim() : '(no aplica)')}`,
-    `- 🧮 costo-cerebro 30d: ${probe(() => { const out = git(['log', '--since=30.days', '--name-only', '--format=%x01']); const cs = out.split('\x01').map((c) => c.trim()).filter(Boolean); if (!cs.length) return 'sin commits en 30d'; const brain = cs.filter((c) => { const fs_ = c.split('\n').map((l) => l.trim()).filter(Boolean); return fs_.length && fs_.every((f) => BRAIN_RE.test(f)); }).length; costoPct = Math.round((brain / cs.length) * 100); return `${costoPct}% (${brain}/${cs.length} commits solo-cerebro, por paths)${costoPct > 30 ? ' 🔴 > bandera 30% (TODO-28 #6: recortar doctrina, no añadir)' : ' ✅ ≤ 30%'}`; })}`,
-    `- 🧊 consolidación: ${probe(() => { const last99 = git(['log', '-1', '--format=%ct', '--', 'docs/99-HISTORIAL-ADR.md']); if (!/^\d+$/.test(last99)) return 'sin 99 trackeado'; const prod = git(['log', `--since=${new Date(+last99 * 1000).toISOString()}`, '--name-only', '--format=%x01']).split('\x01').map((c) => c.trim()).filter(Boolean).filter((c) => c.split('\n').map((l) => l.trim()).filter(Boolean).some((f) => f && !BRAIN_RE.test(f))).length; return prod >= 3 ? `⚠️ PENDIENTE #${prod}: ${prod} commits de producto sin ADR (npm run brain:archive)` : `al día (${prod} commit(s) de producto desde el último ADR)`; })}`,
+    `- 🧮 costo-cerebro 30d: ${probe(() => { const out = git(['log', '--since=30.days', '--name-only', '--format=%x01']); const cs = out.split('\x01').map((c) => c.trim()).filter(Boolean); if (!cs.length) return 'sin commits en 30d'; const clases = cs.map((c) => clasificarCommit(rutasDe(c))); const brain = clases.filter((k) => k === 'cerebro').length; const infra = clases.filter((k) => k === 'infra').length; costoPct = Math.round((brain / cs.length) * 100); return `${costoPct}% (${brain}/${cs.length} commits de cerebro · ${infra} de infra · clasificador v2)${costoPct > 30 ? ' 🔴 > bandera 30% (TODO-28 #6: recortar doctrina, no añadir)' : ' ✅ ≤ 30%'}`; })}`,
+    `- 🧊 consolidación: ${probe(() => { const last99 = git(['log', '-1', '--format=%ct', '--', 'docs/99-HISTORIAL-ADR.md']); if (!/^\d+$/.test(last99)) return 'sin 99 trackeado'; const prod = git(['log', `--since=${new Date(+last99 * 1000).toISOString()}`, '--name-only', '--format=%x01']).split('\x01').map((c) => c.trim()).filter(Boolean).filter((c) => clasificarCommit(rutasDe(c)) === 'producto').length; return prod >= 3 ? `⚠️ PENDIENTE #${prod}: ${prod} commits de producto sin ADR (npm run brain:archive · clasificador v2)` : `al día (${prod} commit(s) de producto desde el último ADR · clasificador v2)`; })}`,
   ];
   // 🧭 Banner EN CRISTIANO (F3 §53 — primer entregable visible para el dueño; el calendario vive
   // en el tool, no en el humano: cuando algo dice TOCA, un mensaje suyo dispara el mantenimiento).

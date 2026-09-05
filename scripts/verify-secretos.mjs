@@ -130,11 +130,14 @@ for (const rel of archivos()) {
 /*
  * ANTI-VACÍO. Un ✅ sobre cero ficheros es la forma de mentir que más veces ha cazado este cerebro:
  * si el barrido deja de encontrar el árbol —una ruta mal resuelta, un `FUERA` de más— el gate pasa
- * en verde precisamente cuando ha dejado de mirar. El umbral es holgado a propósito (medido: 819
- * ficheros de texto el 31-ago-2026): no vigila un número exacto, vigila que el barrido SIGA
- * OCURRIENDO.
+ * en verde precisamente cuando ha dejado de mirar. El umbral es holgado a propósito: no vigila un
+ * número exacto, vigila que el barrido SIGA OCURRIENDO.
+ * RE-MEDIDO el 5-sep-2026 tras F8 (el cerebro documental se mudó a la bóveda privada y este repo
+ * quedó solo con el sitio): 337 ficheros de texto barridos (antes 819, medidos el 31-ago-2026 con
+ * docs/, skills/ y el kernel dentro). El piso viejo de 400 hizo fallar el escáner en el primer
+ * intento tras adelgazar: un umbral se calibra contra el árbol que existe. Piso nuevo = la mitad.
  */
-if (mirados < 400) {
+if (mirados < 168) {
   console.error('');
   console.error(`❌ verify:secretos — solo ${mirados} fichero(s) barridos: el escaneo dejó de ver el árbol.`);
   console.error('   Con tan pocos, un ✅ no significaría «limpio» sino «no miré». Arregla la ruta o');

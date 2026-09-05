@@ -1,4 +1,6 @@
 {
+  "_puente_f8": "El cerebro de este proyecto vive en ../brain-private/bersaglio/ (F8, 2026-09-05). Este repo es solo el sitio: los hooks llaman al kernel CANONICO de la boveda con --root (cerebro) y --sitio (este repo), en rutas RELATIVAS al cwd (Claude Code corre los hooks con cwd = raiz del proyecto; medido en insema y cars con un arranque real). Sin la boveda clonada al lado, los hooks fallan y la sesion arranca ciega: el CLAUDE.md-puente dice por ruta donde leer.",
+  "_por_que_dos_raices": "El kernel v1.36.0 separa el CEREBRO (--root: docs/, manifest, registro de sesiones, sidecars) del SITIO (--sitio: git, CNAME, service worker, rutas del producto). Sin --sitio, los gates del sitio se declaran OMITIDOS y el veredicto sale DEGRADADO: nunca un ✅ por no haber mirado. El manifest del cerebro puede declarar `siteRoot` y entonces --sitio es redundante aquí, pero se pasa igual: el que lee estos hooks tiene que ver las dos raíces sin abrir otro fichero.",
   "env": {
     "_que": "Variables de entorno de ESTE proyecto. DISABLE_TELEMETRY apaga la telemetria del CLI del plugin modern-web-guidance (Google Chrome), que por defecto envia a Google las consultas que el agente escribe sobre NUESTRO codigo (README del paquete, medido 2026-09-03). Condicion 1 de DICTAMEN-C4 §10 D-C4-29.",
     "DISABLE_TELEMETRY": "1"
@@ -51,15 +53,15 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node scripts/brain-check.mjs --boot",
+            "command": "node ../brain-private/kernel/brain-check.mjs --boot --root ../brain-private/bersaglio --sitio .",
             "timeout": 30,
-            "statusMessage": "Auto-auditoria del cerebro (brain:check --boot)…"
+            "statusMessage": "Auto-auditoría del cerebro (brain:check --boot)…"
           },
           {
             "type": "command",
-            "command": "node scripts/session-handoff.mjs --boot-echo",
+            "command": "node ../brain-private/kernel/session-handoff.mjs --boot-echo --root ../brain-private/bersaglio --sitio .",
             "timeout": 30,
-            "statusMessage": "💓 Heartbeat + handoff de la sesión anterior…"
+            "statusMessage": "💓 Heartbeat + router del cerebro (vive en la bóveda)…"
           }
         ]
       },
@@ -68,15 +70,37 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node scripts/brain-check.mjs --boot",
+            "command": "node ../brain-private/kernel/brain-check.mjs --boot --root ../brain-private/bersaglio --sitio .",
             "timeout": 30,
-            "statusMessage": "Auto-auditoria del cerebro (brain:check --boot)…"
+            "statusMessage": "Auto-auditoría del cerebro (brain:check --boot)…"
           },
           {
             "type": "command",
-            "command": "node scripts/session-handoff.mjs --boot-echo --compact",
+            "command": "node ../brain-private/kernel/session-handoff.mjs --boot-echo --compact --root ../brain-private/bersaglio --sitio .",
             "timeout": 30,
             "statusMessage": "💓 Heartbeat + re-inyección del arranque tras compactar…"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ../brain-private/kernel/session-handoff.mjs --tick --root ../brain-private/bersaglio",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ../brain-private/kernel/session-handoff.mjs --tick --root ../brain-private/bersaglio",
+            "timeout": 5
           }
         ]
       }
@@ -87,7 +111,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node scripts/guard-destructivo.mjs",
+            "command": "node ../brain-private/kernel/guard-destructivo.mjs --root ../brain-private/bersaglio",
             "timeout": 5,
             "statusMessage": "🛡️ guard-destructivo (2ª capa)…"
           }
@@ -99,9 +123,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node scripts/session-handoff.mjs --precompact",
+            "command": "node ../brain-private/kernel/session-handoff.mjs --precompact --root ../brain-private/bersaglio --sitio .",
             "timeout": 30,
-            "statusMessage": "Caja negra: volcando foto de sesión (TODO-28 #1)…"
+            "statusMessage": "Caja negra: volcando foto de sesión…"
           }
         ]
       }
@@ -111,7 +135,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node scripts/session-handoff.mjs --end",
+            "command": "node ../brain-private/kernel/session-handoff.mjs --end --root ../brain-private/bersaglio --sitio .",
             "timeout": 30
           }
         ]
@@ -122,7 +146,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node scripts/session-handoff.mjs --end",
+            "command": "node ../brain-private/kernel/session-handoff.mjs --end --root ../brain-private/bersaglio --sitio .",
             "timeout": 30
           }
         ]

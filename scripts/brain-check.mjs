@@ -53,7 +53,7 @@
 //       (B6 · F-10). Y el schema (#15) conoce `egressAllowlist` (hosts a los que el guard
 //       `PreToolUse` deja escribir · B2) y `ejecutorBaseline`.
 // ===========================================================
-const KERNEL_VERSION = '1.34.2';
+const KERNEL_VERSION = '1.34.3';
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 // ⚠️ v1.34.0 (R-03) LEVANTA la vieja regla «sin child_process», y dice por qué. El eje de COMMITS
 // del #12 le preguntaba al REFLOG (`.git/logs/HEAD`), que es un fichero LOCAL: se poda, no viaja en
@@ -776,6 +776,8 @@ else {
   // 7b) Bóveda vía fs (M-03 §50): commits ≠ origin. Lo no-commiteado lo cubre session-handoff.
   let vaultGit = archiveDir;
   for (let i = 0; i < 4 && !existsSync(join(vaultGit, '.git')); i++) vaultGit = join(vaultGit, '..');
+  // v1.34.3: si no hay `.git` en ninguno de los 4 niveles, el 7b degradaba en SILENCIO (K5 lo midio); ahora lo dice.
+  if (!existsSync(join(vaultGit, '.git'))) info('bóveda: no se encontró `.git` subiendo 4 niveles desde archiveDir → el cotejo local↔origin NO corrió');
   if (existsSync(join(vaultGit, '.git'))) {
     const refSha = (name) => {
       const direct = join(vaultGit, '.git', name);

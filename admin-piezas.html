@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piezas — Bersaglio Admin</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..500&family=Cormorant+Garamond:ital,wght@0,300..600;1,300..400&family=Manrope:wght@300..700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/admin.css">
+    <script type="module" src="js/admin/piezas.js"></script>
+</head>
+<body style="display:none">
+<script>try{if(sessionStorage.getItem('bj_auth')){document.body.style.display=''}else{location.replace('admin-login.html')}}catch(e){location.replace('admin-login.html')}</script>
+<div class="adm-layout">
+
+    <!-- Sidebar (se rellena desde datos por js/admin/shared.js → renderSidebar) -->
+    <aside class="adm-sidebar"></aside>
+    <div class="adm-sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <!-- Main -->
+    <main class="adm-main">
+        <header class="adm-topbar">
+            <button class="adm-hamburger" id="hamburger-btn" aria-label="Menú">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="22" height="22"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <h1>Piezas</h1>
+            <div class="adm-topbar-actions">
+                <button class="adm-btn adm-btn--ghost" id="btn-calc">🧮 Calculadora</button>
+                <button class="adm-btn adm-btn--ghost" id="btn-export-csv">↓ Exportar CSV</button>
+                <button class="adm-btn adm-btn--primary" id="btn-new-piece">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+                    Nueva pieza
+                </button>
+            </div>
+        </header>
+
+        <div class="adm-content">
+
+            <!-- Toolbar -->
+            <div class="adm-toolbar">
+                <div class="adm-search">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
+                    <input type="search" id="search-input" placeholder="Buscar por nombre o colección…">
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <select class="adm-input" id="filter-collection" style="width:auto;padding:6px 10px;">
+                        <option value="">Todas las colecciones</option>
+                    </select>
+                    <select class="adm-input" id="filter-featured" style="width:auto;padding:6px 10px;">
+                        <option value="">Todas</option>
+                        <option value="yes">Destacadas</option>
+                        <option value="no">No destacadas</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="adm-table-wrap">
+                <table class="adm-table">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Colección</th>
+                            <th>Badge</th>
+                            <th>Destacada</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="pieces-tbody"></tbody>
+                </table>
+            </div>
+            <div id="pieces-empty" class="adm-empty" hidden>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="48" height="48"><polygon points="12,2 22,8.5 12,22 2,8.5"/><line x1="2" y1="8.5" x2="22" y2="8.5"/><polyline points="7,2 12,8.5 17,2"/></svg>
+                <p>No se encontraron piezas con ese criterio.</p>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- Modal: Agregar / Editar pieza -->
+<div class="adm-modal" id="piece-modal" hidden>
+    <div class="adm-modal-box">
+        <div class="adm-modal-head">
+            <h2 id="modal-title">Nueva pieza</h2>
+            <button class="adm-modal-close" id="modal-close" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="adm-modal-body">
+            <form id="piece-form" novalidate>
+                <input type="hidden" name="id">
+
+                <!-- Información básica -->
+                <div class="adm-form-section">
+                    <h3>Información básica</h3>
+                    <div class="adm-form-row">
+                        <div class="adm-field">
+                            <label for="f-code">Código <span style="color:var(--adm-danger)">*</span></label>
+                            <input class="adm-input" id="f-code" name="code" required placeholder="Ej. BJ-A-001" autocomplete="off" spellcheck="false">
+                            <small style="color:var(--adm-muted);font-size:11px;margin-top:2px;">Identificador único de la pieza (manual)</small>
+                        </div>
+                        <div class="adm-field">
+                            <label for="f-name">Nombre <span style="color:var(--adm-danger)">*</span></label>
+                            <input class="adm-input" id="f-name" name="name" required placeholder="Ej. Anillo Muzo Imperial">
+                        </div>
+                    </div>
+                    <!-- Slug URL: se AUTOGENERA del nombre (piezas.js) y se preserva al editar. Oculto a
+                         Kary (TODO-45a): editarlo a mano generaba slugs que no concuerdan con la categoría
+                         y rompía enlaces del catálogo. El input permanece en el DOM para que el
+                         autogenerado lo siga poblando; no es editable a mano. -->
+                    <div class="adm-form-row" style="margin-top:12px;" hidden>
+                        <div class="adm-field">
+                            <label for="f-slug">Slug URL</label>
+                            <input class="adm-input" id="f-slug" name="slug" placeholder="anillo-muzo-imperial">
+                        </div>
+                    </div>
+                    <div class="adm-form-row" style="margin-top:12px;">
+                        <div class="adm-field">
+                            <label for="f-collection">Colección <span style="color:var(--adm-danger)">*</span></label>
+                            <select class="adm-input" id="f-collection" name="collection" required>
+                                <option value="">— Seleccionar —</option>
+                            </select>
+                        </div>
+                        <div class="adm-field">
+                            <label for="f-badge">Badge <span class="adm-opt">(opcional)</span></label>
+                            <input class="adm-input" id="f-badge" name="badge" placeholder="Pieza Única">
+                        </div>
+                    </div>
+                    <div class="adm-form-row adm-col-1" style="margin-top:12px;">
+                        <div class="adm-field">
+                            <label for="f-desc">Descripción</label>
+                            <textarea class="adm-input" id="f-desc" name="description" rows="3" placeholder="Descripción detallada de la pieza…"></textarea>
+                        </div>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <label class="adm-checkbox-row">
+                            <input type="checkbox" name="featured" id="f-featured">
+                            <span>Pieza destacada (aparece en la home)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Precio -->
+                <div class="adm-form-section">
+                    <h3>Precio</h3>
+                    <div class="adm-form-row">
+                        <div class="adm-field">
+                            <label for="f-price">Precio en pesos (COP) <span class="adm-opt">(opcional)</span></label>
+                            <input class="adm-input" id="f-price" name="price" type="number" min="0" placeholder="0">
+                            <small style="color:var(--adm-muted);font-size:11px;margin-top:2px;">Siempre en pesos colombianos (nunca dólares). Déjalo VACÍO y la web (tarjetas) muestra el rótulo estándar "Consultar precio". En la ficha, sin precio, no se muestra nada.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inventario y clasificación (TODO-40 v3) -->
+                <div class="adm-form-section">
+                    <h3>Inventario y clasificación</h3>
+                    <div class="adm-form-row">
+                        <div class="adm-field">
+                            <label for="f-stocktype">Tipo de stock</label>
+                            <select class="adm-input" id="f-stocktype" name="stockType">
+                                <option value="finito">Pieza física (stock limitado)</option>
+                                <option value="finito_refabricable">Física re-fabricable (si se agota, se vuelve a fabricar)</option>
+                                <option value="encargo">Por encargo (se fabrica al pedir)</option>
+                            </select>
+                        </div>
+                        <div class="adm-field">
+                            <label for="f-visibilidad">Visibilidad</label>
+                            <select class="adm-input" id="f-visibilidad" name="visibilidad">
+                                <option value="publica">Pública (aparece en el catálogo web)</option>
+                                <option value="privada">Privada (solo para facturar, fuera del catálogo)</option>
+                            </select>
+                            <small style="color:var(--adm-muted);font-size:11px;margin-top:2px;">Una pieza privada existe para vender/facturar pero NO se publica en la web (ej. a medida con cliente).</small>
+                        </div>
+                    </div>
+                    <div class="adm-form-row" style="margin-top:12px;">
+                        <div class="adm-field">
+                            <label for="f-cantidad">Cantidad disponible</label>
+                            <input class="adm-input" id="f-cantidad" name="cantidad" type="number" min="0" step="1" placeholder="1">
+                            <small id="f-cantidad-hint" style="color:var(--adm-muted);font-size:11px;margin-top:2px;"></small>
+                        </div>
+                        <div class="adm-field">
+                            <label for="f-gender">Género <span class="adm-opt">(opcional)</span></label>
+                            <select class="adm-input" id="f-gender" name="gender">
+                                <option value="">— Sin especificar —</option>
+                                <option value="mujer">Mujer</option>
+                                <option value="hombre">Hombre</option>
+                                <option value="unisex">Unisex</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Ajuste de stock (solo edición de pieza física ya guardada). La cantidad NO se edita
+                         a mano: se mueve por la Cloud Function (queda auditada en el historial). -->
+                    <div id="stock-adjust" class="adm-stock-adjust" hidden style="margin-top:14px;padding:12px;border:1px solid var(--adm-border);border-radius:8px;background:rgba(201,169,110,0.04);">
+                        <strong style="display:block;font-size:13px;margin-bottom:8px;">Mover el stock <span style="font-weight:400;color:var(--adm-muted);">(reabastecer, merma, corrección…)</span></strong>
+                        <div class="adm-form-row adm-col-3" style="align-items:end;">
+                            <div class="adm-field">
+                                <label for="f-ajuste-delta">Cambio en unidades</label>
+                                <input class="adm-input" id="f-ajuste-delta" type="number" step="1" placeholder="Ej. +2 o -1">
+                            </div>
+                            <div class="adm-field">
+                                <label for="f-ajuste-motivo">Motivo</label>
+                                <select class="adm-input" id="f-ajuste-motivo">
+                                    <option value="reabasto">Reabastecer (entraron unidades)</option>
+                                    <option value="merma">Merma / pérdida</option>
+                                    <option value="dano">Daño</option>
+                                    <option value="robo">Robo</option>
+                                    <option value="correccion">Corrección de conteo</option>
+                                </select>
+                            </div>
+                            <div class="adm-field">
+                                <button type="button" class="adm-btn adm-btn--ghost" id="btn-ajustar-stock">Aplicar movimiento</button>
+                            </div>
+                        </div>
+                        <small style="color:var(--adm-muted);font-size:11px;margin-top:6px;display:block;">Positivo suma, negativo resta. Cada movimiento queda registrado con su motivo. La cantidad nunca queda negativa.</small>
+                    </div>
+                </div>
+
+                <!-- Especificaciones -->
+                <div class="adm-form-section">
+                    <h3>Especificaciones de gema y metal</h3>
+                    <div class="adm-form-row">
+                        <div class="adm-field">
+                            <label for="f-badge-gem">Gema principal <span class="adm-opt">(pinta el color del badge)</span></label>
+                            <select class="adm-input" id="f-badge-gem" name="specs.badgeGem"></select>
+                            <small style="color:var(--adm-muted);font-size:11px;margin-top:2px;">Elige de la lista (cero typos). Define el color del badge y el filtro principal.</small>
+                        </div>
+                        <div class="adm-field">
+                            <label for="f-carat">Quilates</label>
+                            <input class="adm-input" id="f-carat" name="specs.carat" placeholder="3.2 ct">
+                        </div>
+                    </div>
+                    <div class="adm-form-row" style="margin-top:12px;">
+                        <div class="adm-field" style="grid-column:1 / -1;">
+                            <label>Otras gemas presentes <span class="adm-opt">(para filtros · opcional)</span></label>
+                            <div id="f-gem-filters" class="adm-gem-filters" style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:4px;"></div>
+                            <small style="color:var(--adm-muted);font-size:11px;margin-top:2px;">Marca todas las gemas que lleva la pieza (además de la principal). El cliente podrá filtrar por cualquiera.</small>
+                        </div>
+                    </div>
+                    <div class="adm-form-row" style="margin-top:12px;">
+                        <div class="adm-field" style="grid-column:1 / -1;">
+                            <label for="f-stone">Descripción de la piedra <span class="adm-opt">(carta · texto libre)</span></label>
+                            <input class="adm-input" id="f-stone" name="specs.stone" placeholder="Esmeralda colombiana talla esmeralda 2.1 ct">
+                            <small style="color:var(--adm-muted);font-size:11px;margin-top:2px;">Describe la piedra para la ficha. NO pinta el color (eso lo hace "Gema principal").</small>
+                        </div>
+                    </div>
+                    <div class="adm-form-row" style="margin-top:12px;">
+                        <div class="adm-field">
+                            <label for="f-metal">Metal</label>
+                            <input class="adm-input" id="f-metal" name="specs.metal" placeholder="Oro 18k">
+                            <select class="adm-input" id="f-metal-color" name="specs.metalColor" style="margin-top:6px;">
+                                <option value="">Color del oro — (sin especificar)</option>
+                                <option value="amarillo">Oro amarillo</option>
+                                <option value="blanco">Oro blanco</option>
+                                <option value="rosa">Oro rosa</option>
+                            </select>
+                            <small style="color:var(--adm-muted);font-size:11px;margin-top:2px;">El "Metal" es el material (ej. Oro 18k); el color elige si es amarillo, blanco o rosa → se muestra "Oro blanco 18k".</small>
+                        </div>
+                        <div class="adm-field">
+                            <label for="f-accent">Acentos</label>
+                            <input class="adm-input" id="f-accent" name="specs.accent" placeholder="Diamantes 0.8 ct total">
+                        </div>
+                    </div>
+                    <div class="adm-form-row adm-col-3" style="margin-top:12px;">
+                        <div class="adm-field">
+                            <label for="f-cut">Talla</label>
+                            <input class="adm-input" id="f-cut" name="specs.cut" placeholder="Brillante redondo">
+                        </div>
+                        <div class="adm-field">
+                            <label for="f-color">Color</label>
+                            <input class="adm-input" id="f-color" name="specs.color" placeholder="D">
+                        </div>
+                        <div class="adm-field">
+                            <label for="f-clarity">Calidad</label>
+                            <input class="adm-input" id="f-clarity" name="specs.clarity" placeholder="VVS1">
+                        </div>
+                    </div>
+                    <div class="adm-form-row" style="margin-top:12px;">
+                        <div class="adm-field">
+                            <label for="f-certificate">Certificado</label>
+                            <input class="adm-input" id="f-certificate" name="specs.certificate" placeholder="La Verde / Jewelers of America">
+                        </div>
+                        <div class="adm-field">
+                            <label for="f-weight">Peso</label>
+                            <input class="adm-input" id="f-weight" name="specs.weight" placeholder="48g">
+                        </div>
+                    </div>
+                    <div class="adm-form-row" style="margin-top:12px;">
+                        <div class="adm-field">
+                            <label for="f-origin">Origen <span class="adm-opt">(opcional)</span></label>
+                            <input class="adm-input" id="f-origin" name="specs.origin" placeholder="Muzo, Colombia">
+                            <small style="color:var(--adm-muted);font-size:11px;margin-top:2px;">Se muestra solo si lo llenas. Vacío = no se muestra (nunca se inventa).</small>
+                        </div>
+                        <div class="adm-field">
+                            <label for="f-delivery">Entrega <span class="adm-opt">(opcional)</span></label>
+                            <input class="adm-input" id="f-delivery" name="specs.delivery" placeholder="2-3 semanas">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Disponibilidad / Tallas -->
+                <div class="adm-form-section">
+                    <h3>Disponibilidad</h3>
+                    <div class="adm-form-row adm-col-1">
+                        <div class="adm-field">
+                            <label for="f-sizes">Tallas disponibles <span class="adm-opt">(opcional)</span></label>
+                            <input class="adm-input" id="f-sizes" name="sizes" placeholder="6, 7, 8  —  o déjalo vacío">
+                            <small style="color:var(--adm-muted);font-size:11px;margin-top:2px;">Separa las tallas con coma. Vacío = se muestra "Talla a medida" (sin ofrecer tallas que no existen).</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fotos -->
+                <div class="adm-form-section">
+                    <h3>Fotografías</h3>
+                    <div class="adm-upload-zone" id="upload-zone">
+                        <input type="file" id="f-images" accept="image/*" multiple>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" width="40" height="40"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <strong>Arrastra fotos o haz clic para subir</strong>
+                        <p>JPG, PNG, WebP — máx. 10 MB cada una</p>
+                        <div class="adm-upload-progress" id="upload-progress" hidden>
+                            <div class="adm-upload-progress-bar" id="upload-progress-bar"></div>
+                        </div>
+                    </div>
+                    <div class="adm-image-preview" id="image-preview"></div>
+                </div>
+            </form>
+        </div>
+        <div class="adm-modal-foot">
+            <button class="adm-btn adm-btn--ghost" id="modal-cancel">Cancelar</button>
+            <button class="adm-btn adm-btn--primary" id="modal-save">Guardar pieza</button>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm delete -->
+<div class="adm-confirm" id="confirm-dialog" hidden>
+    <div class="adm-confirm-box">
+        <h3>¿Eliminar pieza?</h3>
+        <p id="confirm-msg">Esta acción no se puede deshacer.</p>
+        <div class="adm-confirm-actions">
+            <button class="adm-btn adm-btn--ghost" id="confirm-cancel">Cancelar</button>
+            <button class="adm-btn adm-btn--danger" id="confirm-ok">Eliminar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Calculadora de precio (B1 paso 2) -->
+<div class="adm-modal" id="calc-modal" hidden>
+    <div class="adm-modal-box adm-modal-box--sm">
+        <div class="adm-modal-head">
+            <h2>Calculadora de precio</h2>
+            <button class="adm-modal-close" id="calc-close" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="adm-modal-body">
+            <p class="adm-calc-hint">El precio del oro varía: ingresa el <strong>valor del gramo de hoy</strong>, el <strong>peso</strong> de la pieza y la <strong>mano de obra</strong>.</p>
+            <div class="adm-form-row">
+                <div class="adm-field">
+                    <label for="calc-gramo">Valor del gramo (COP)</label>
+                    <input class="adm-input" id="calc-gramo" type="number" min="0" inputmode="numeric" placeholder="Ej. 350000">
+                </div>
+                <div class="adm-field">
+                    <label for="calc-peso">Peso (gramos)</label>
+                    <input class="adm-input" id="calc-peso" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Ej. 5.2">
+                </div>
+            </div>
+            <div class="adm-form-row" style="margin-top:12px;">
+                <div class="adm-field">
+                    <label for="calc-mano">Mano de obra (COP)</label>
+                    <input class="adm-input" id="calc-mano" type="number" min="0" inputmode="numeric" placeholder="Ej. 200000">
+                </div>
+            </div>
+            <div class="adm-calc-result">
+                <div class="adm-calc-line"><span>Oro (peso × gramo)</span><strong id="calc-oro">$0</strong></div>
+                <div class="adm-calc-line"><span>Mano de obra</span><strong id="calc-manoout">$0</strong></div>
+                <div class="adm-calc-line adm-calc-total"><span>Total</span><strong id="calc-total">$0</strong></div>
+            </div>
+        </div>
+        <div class="adm-modal-foot">
+            <button class="adm-btn adm-btn--ghost" id="calc-copy">Copiar total</button>
+            <button class="adm-btn adm-btn--primary" id="calc-close2">Listo</button>
+        </div>
+    </div>
+</div>
+
+<div class="adm-toast-wrap" id="toast-wrap"></div>
+</body>
+</html>

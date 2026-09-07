@@ -1,0 +1,788 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   BERSAGLIO JEWELRY · Pieza detail styles (Phase G)
+   Mirror exacto de BERSAGLIO NOVO/project/js/pages.jsx (Producto L98-193)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.pz-page { padding-top: 120px; padding-bottom: 56px; }
+@media (max-width: 680px) { .pz-page { padding-top: 100px; padding-bottom: 36px; } }
+
+/* ═══════════════════════════════════════════════════════════════════
+   BREADCRUMB
+   ═══════════════════════════════════════════════════════════════════ */
+.pz-breadcrumb {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px;
+    color: var(--bj-ink-mute);
+    margin-bottom: 18px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    flex-wrap: wrap;
+}
+.pz-crumb {
+    background: transparent;
+    padding: 0;
+    color: inherit;
+    transition: color 0.2s;
+}
+.pz-crumb:hover { color: var(--bj-emerald-700); }
+.pz-crumb-current { color: var(--bj-emerald-800); }
+.pz-crumb-sep { opacity: 0.6; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   LAYOUT 1.1fr 1fr
+   ═══════════════════════════════════════════════════════════════════ */
+.pz-layout {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 36px;
+    align-items: stretch;   /* columnas igualan altura → pies alineados, sin hueco bajo la imagen */
+}
+@media (max-width: 920px) {
+    .pz-layout { grid-template-columns: 1fr; gap: 32px; align-items: start; }
+}
+/* Desktop: la galería llena la altura de la columna (= altura de la info) para que la imagen
+   y la ficha terminen alineadas SIN importar cuánta info haya ("responsive inteligente",
+   Daniel 2026-06-25). La imagen scrollea con el contenido (no sticky). */
+@media (min-width: 921px) {
+    .pz-gallery { display: flex; flex-direction: column; }
+    /* min-height bajo (300) → la imagen IGUALA la altura de la info por poca que sea, sin dejar
+       hueco en piezas con poca información (caso argolla, Daniel 2026-06-25). Con info abundante
+       crece (flex). Nunca rompe el "responsive inteligente". */
+    .pz-main { flex: 1 1 auto; aspect-ratio: auto; min-height: 300px; margin-bottom: 0; }
+    .pz-dots { margin-top: 16px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   GALLERY
+   ═══════════════════════════════════════════════════════════════════ */
+/* Galería: NO sticky. El sticky (top:110px) quedaba roto por `body{overflow-x:hidden}`
+   (un ancestro con overflow != visible rompe position:sticky) y desfasaba la imagen
+   respecto a la ficha al hacer scroll (Daniel 2026-06-25). Estática → ambas columnas
+   scrollean juntas y quedan SIEMPRE alineadas (delta 0). */
+.pz-gallery {
+    position: static;
+}
+
+.pz-main {
+    border-radius: 36px;
+    overflow: hidden;
+    aspect-ratio: 4/5;
+    position: relative;
+    margin-bottom: 14px;
+}
+.pz-main-img {
+    position: absolute; inset: 0;
+    background: oklch(94% 0.02 150) center/cover;
+    transition: background-image 0.5s, transform 0.6s cubic-bezier(.2,.9,.2,1);
+}
+.pz-main:hover .pz-main-img { transform: scale(1.03); }
+
+.pz-main-chips {
+    position: absolute;
+    top: 20px; right: 20px;
+    display: flex; gap: 8px;
+    z-index: 2;
+}
+.pz-cert-chip {
+    background: oklch(100% 0 0 / 0.8);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+.pz-cert-chip svg { color: var(--bj-emerald-700); }
+
+/* Carrusel: flechas izq/der — TRANSLÚCIDAS y AL BORDE para no taparle protagonismo al
+   producto (Daniel §143). En escritorio (hover real) viven casi invisibles y se vuelven
+   nítidas al pasar el cursor por la foto o al enfocar con teclado; en táctil quedan
+   discretas pero siempre visibles. */
+.pz-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    z-index: 3;
+    width: 42px; height: 42px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: oklch(100% 0 0 / 0.30);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border: 1px solid oklch(100% 0 0 / 0.42);
+    color: var(--bj-emerald-700);
+    cursor: pointer;
+    opacity: 0.5;   /* discreto por defecto (táctil) */
+    transition: background 0.25s, opacity 0.3s, transform 0.2s;
+}
+.pz-nav-prev { left: 8px; }
+.pz-nav-next { right: 8px; }
+.pz-nav:active { transform: translateY(-50%) scale(0.92); }
+@media (hover: hover) {
+    .pz-nav { opacity: 0; }                       /* en reposo no le quitan visibilidad a la foto */
+    .pz-main:hover .pz-nav,
+    .pz-nav:focus-visible { opacity: 1; }         /* nítidas al pasar el cursor / enfocar (a11y) */
+    .pz-nav:hover { background: oklch(100% 0 0 / 0.6); }
+}
+
+/* Carrusel: contador "n / total" (esquina superior izq — no choca con el sello cert top-right). */
+.pz-counter {
+    position: absolute; top: 20px; left: 20px;
+    z-index: 3;
+    font-size: 12px; font-variant-numeric: tabular-nums;
+    color: var(--bj-emerald-700);
+    background: oklch(100% 0 0 / 0.55);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid oklch(100% 0 0 / 0.45);
+    border-radius: 20px; padding: 3px 11px;
+}
+
+/* Affordancia "Ampliar" (lupa) — discreta abajo-derecha; en escritorio aparece al pasar el
+   cursor por la foto, señalando que la imagen abre el visor de zoom. pointer-events:none
+   para que el clic atraviese a la imagen (data-action="zoom-open"). */
+.pz-zoom-cue {
+    position: absolute; bottom: 16px; right: 16px; z-index: 3;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; letter-spacing: 0.06em;
+    color: var(--bj-emerald-800);
+    background: oklch(100% 0 0 / 0.55);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid oklch(100% 0 0 / 0.5);
+    border-radius: 20px; padding: 5px 11px;
+    opacity: 0.62;
+    pointer-events: none;
+    transition: opacity 0.25s;
+}
+@media (hover: hover) {
+    .pz-zoom-cue { opacity: 0; }
+    .pz-main:hover .pz-zoom-cue { opacity: 0.9; }
+}
+
+/* Carrusel: puntos de navegación (reemplazan la tira de miniaturas, Daniel §141). */
+.pz-dots {
+    display: flex; justify-content: center; align-items: center;
+    gap: 8px; margin-top: 16px;
+    flex-wrap: wrap;
+}
+.pz-dot {
+    width: 8px; height: 8px; padding: 0;
+    border: none; border-radius: 50%;
+    background: var(--bj-emerald-700);
+    opacity: 0.28; cursor: pointer;
+    transition: opacity 0.25s, width 0.25s, border-radius 0.25s;
+}
+.pz-dot:hover { opacity: 0.55; }
+.pz-dot.is-active { opacity: 1; width: 22px; border-radius: 5px; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   VISOR DE ZOOM (lightbox) — clic en la foto abre la pieza a pantalla
+   completa para inspección: zoom (rueda/pinch/doble-clic), arrastrar para
+   mover, flechas para cambiar de imagen, ✕/Esc/clic-al-fondo para cerrar.
+   Fondo LIMPIO luminoso perla→esmeralda (NO oscuro, NO blur): las fotos de
+   producto son transparentes (§142) → sobre fondo limpio se ven nítidas;
+   oscuro/borroso las haría "sangrar". Controles = cristal claro (Liquid Glass).
+   ═══════════════════════════════════════════════════════════════════ */
+.pz-zoom {
+    position: fixed; inset: 0; z-index: 1200;
+    display: none;
+    background:
+        radial-gradient(120% 90% at 50% 16%,
+            oklch(99% 0.006 150) 0%,
+            oklch(96% 0.018 150) 46%,
+            oklch(93% 0.03 152) 100%);
+    touch-action: none;
+    overscroll-behavior: contain;
+    cursor: grab;
+    /* §147 (Daniel): arrastrar el visor NO debe seleccionar el contador "1/1" ni ningún texto.
+       touch-action cubre el táctil; user-select cubre el mouse (arrastre = selección nativa). */
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+.pz-zoom.is-open { display: block; }
+.pz-zoom.is-grabbing { cursor: grabbing; }
+/* 1 sola imagen → sin flechas Y sin el contador "1 / 1" (redundante, y era lo que se seleccionaba). */
+.pz-zoom[data-single] .pz-zoom-nav,
+.pz-zoom[data-single] .pz-zoom-counter { display: none; }
+
+/* Capa de la imagen: se mueve/escala SOLO con transform (§3.1). */
+.pz-zoom-stage {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    transform-origin: center center;
+    will-change: transform;
+}
+.pz-zoom-img {
+    max-width: 92vw; max-height: 84vh;
+    width: auto; height: auto;
+    object-fit: contain;
+    user-select: none; -webkit-user-select: none; -webkit-user-drag: none;
+    /* sombra suave: despega la pieza del fondo perla sin un marco duro (la sombra calca
+       la silueta real de la joya transparente, §142) */
+    filter: drop-shadow(0 24px 48px oklch(34% 0.11 155 / 0.18));
+    pointer-events: none;   /* los clics caen al fondo → arrastrar / cerrar */
+}
+
+/* Controles del visor — cristal claro sobre el fondo perla. */
+.pz-zoom-btn {
+    position: absolute; z-index: 2;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: oklch(100% 0 0 / 0.6);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border: 1px solid oklch(100% 0 0 / 0.55);
+    color: var(--bj-emerald-800);
+    cursor: pointer;
+    box-shadow: 0 6px 20px -8px oklch(34% 0.11 155 / 0.3);
+    transition: background 0.2s, transform 0.18s;
+}
+.pz-zoom-btn:hover { background: oklch(100% 0 0 / 0.85); }
+.pz-zoom-btn:active { transform: scale(0.93); }
+.pz-zoom-close { top: 22px; right: 22px; width: 50px; height: 50px; }
+.pz-zoom-nav {
+    top: 50%; transform: translateY(-50%);
+    width: 52px; height: 52px;
+    color: var(--bj-emerald-700);
+}
+.pz-zoom-nav:active { transform: translateY(-50%) scale(0.93); }
+.pz-zoom-prev { left: 22px; }
+.pz-zoom-next { right: 22px; }
+
+.pz-zoom-counter {
+    position: absolute; top: 28px; left: 24px; z-index: 2;
+    pointer-events: none;   /* §147: nunca captura el arrastre (solo informa) */
+    font-family: var(--font-mono);
+    font-size: 13px; letter-spacing: 0.05em; font-variant-numeric: tabular-nums;
+    color: var(--bj-emerald-800);
+    background: oklch(100% 0 0 / 0.55);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid oklch(100% 0 0 / 0.5);
+    border-radius: 22px; padding: 6px 14px;
+}
+
+/* Hint de marca abajo (se desvanece al hacer zoom — lo apaga el JS). */
+.pz-zoom-hint {
+    position: absolute; left: 0; right: 0; bottom: 24px; z-index: 2;
+    text-align: center;
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--bj-ink-mute);
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+@media (max-width: 680px) {
+    .pz-zoom-close { top: 14px; right: 14px; width: 44px; height: 44px; }
+    .pz-zoom-nav { width: 44px; height: 44px; }
+    .pz-zoom-prev { left: 10px; }
+    .pz-zoom-next { right: 10px; }
+    .pz-zoom-counter { top: 18px; left: 14px; }
+    .pz-zoom-img { max-width: 94vw; max-height: 78vh; }
+    .pz-zoom-hint { bottom: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .pz-zoom-btn, .pz-zoom-hint { transition: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   INFO COLUMN
+   ═══════════════════════════════════════════════════════════════════ */
+.pz-info {
+    display: flex;
+    flex-direction: column;
+}
+.pz-info-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.pz-info-eyebrow { margin-bottom: 0; }
+.pz-badge {
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600;
+    padding: 5px 12px; border-radius: 999px;
+    color: var(--bj-gold-900);
+    background: linear-gradient(180deg, oklch(96% 0.05 88 / 0.92), oklch(92% 0.07 85 / 0.85));
+    border: 1px solid oklch(82% 0.10 85 / 0.5);
+}
+.pz-info-name {
+    font-size: clamp(38px, 4vw, 56px);
+    font-weight: 300;
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+    margin-bottom: 14px;
+    color: var(--bj-ink-emerald);
+}
+
+.pz-price-row {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+}
+.pz-price {
+    font-size: 28px; font-weight: 600;
+    color: var(--bj-emerald-800);
+}
+.pz-iva {
+    font-size: 11px;
+    color: var(--bj-ink-mute);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+/* TODO-56 + §149 (Daniel): pieza única VENDIDA — banda esmeralda con sello, CLARA pero elegante
+   (antes pasaba desapercibida). No precio/carrito; invita a asesor (botones aparte). */
+.pz-vendida {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 18px 20px;
+    margin-bottom: 28px;
+    background: var(--bj-emerald-100);
+    border: 1px solid var(--bj-emerald-300);
+    border-left: 3px solid var(--bj-emerald-600);
+    border-radius: 16px;
+}
+.pz-vendida-seal {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    margin-top: 1px;
+    border-radius: 50%;
+    background: var(--bj-emerald-700);
+    color: var(--bj-pearl);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.pz-vendida-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.pz-vendida-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--bj-emerald-800);
+}
+.pz-vendida-tag {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--bj-emerald-700);
+    border: 1px solid var(--bj-emerald-400);
+    border-radius: 999px;
+    padding: 2px 9px;
+}
+.pz-vendida-note {
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--bj-ink-soft);
+    margin: 0;
+}
+/* "Por encargo": pieza pedible que se fabrica (refabricable agotada / encargo) — ocupa el lugar del precio. */
+.pz-price--encargo {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--bj-ink-soft);
+    letter-spacing: 0.01em;
+}
+
+.pz-info-desc {
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--bj-ink-soft);
+    margin-bottom: 32px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FICHA "CARTA GEMOLÓGICA" — un panel de cristal; la gema protagonista (TODO-34)
+   Reemplaza la grilla de cuadritos. Estructura adaptativa (hero + grupos): escala
+   de 2 a 11 specs sin huecos. Reusa .glass/.glass-iridescent (backdrop + canto).
+   ═══════════════════════════════════════════════════════════════════ */
+.pz-ficha {
+    position: relative;
+    overflow: hidden;
+    border-radius: 22px;
+    padding: 24px 24px 22px;
+    margin-bottom: 32px;
+    /* Tinte esmeralda-perla sobre el backdrop-filter de .glass */
+    background: linear-gradient(180deg, oklch(99% 0.006 150 / 0.62), oklch(95% 0.025 152 / 0.46));
+}
+/* Filigrana: gema (octágono talla esmeralda) grande y tenue, detrás del contenido */
+.pz-ficha-watermark {
+    position: absolute;
+    top: -54px; right: -58px;
+    width: 220px; height: 220px;
+    color: var(--bj-emerald-700);
+    opacity: 0.07;
+    pointer-events: none;
+}
+.pz-ficha .pz-ficha-watermark { z-index: 0; }   /* gana a .glass > * { z-index:2 } */
+.pz-ficha-watermark svg { width: 100%; height: 100%; display: block; }
+
+/* Marcador octágono (talla esmeralda) — viñeta de marca. Esmeralda (no oro): la web usa
+   poco dorado y en los títulos se sentía fuerte (Daniel 2026-06-25). */
+.pz-ficha-mark {
+    width: 6px; height: 6px; flex: none;
+    background: var(--bj-emerald-600);
+    clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+    display: inline-block;
+}
+
+/* Título de la card (jerarquía superior): encabezado con línea divisoria que enmarca
+   todo lo de abajo como "su" contenido — distinto de las subsecciones (Daniel 2026-06-25). */
+.pz-ficha-head {
+    margin-bottom: 20px;
+    padding-bottom: 13px;
+    border-bottom: 1px solid oklch(45% 0.06 155 / 0.18);
+}
+.pz-ficha-head-label {
+    font-family: var(--font-mono);
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--bj-emerald-800);
+}
+
+/* Héroe: la gema (protagonista, SIN ícono — la gema verde se quitó a pedido de Daniel;
+   queda la filigrana grabada en la esquina de la card) */
+.pz-ficha-hero {
+    padding-bottom: 22px; margin-bottom: 4px;
+    border-bottom: 1px solid oklch(45% 0.06 155 / 0.16);
+}
+.pz-ficha-hero-text { min-width: 0; }
+.pz-ficha-hero-name {
+    font-family: var(--font-display);
+    font-size: 28px; font-weight: 500; line-height: 1.05;
+    letter-spacing: -0.015em;
+    color: var(--bj-ink-emerald);
+    margin-bottom: 7px;
+}
+.pz-ficha-hero-sub {
+    font-family: var(--font-mono);
+    font-size: 12px; font-weight: 400; letter-spacing: 0.03em;
+    color: var(--bj-emerald-800);
+}
+
+/* Grupos de specs (2 columnas, SIN líneas — "placard de museo") */
+.pz-ficha-group { margin-top: 26px; }
+.pz-ficha-group-title { display: flex; align-items: center; gap: 9px; margin-bottom: 15px; }
+.pz-ficha-group-label {
+    font-family: var(--font-mono);
+    font-size: 8px; font-weight: 700;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--bj-ink-mute);   /* subordinadas: más pequeñas y apagadas vs el título */
+    white-space: nowrap;
+}
+.pz-ficha-rule {
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, oklch(45% 0.06 155 / 0.22), transparent);
+}
+.pz-ficha-rows {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px 40px;
+}
+.pz-ficha-k {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 9px; font-weight: 400;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--bj-ink-mute);
+    margin-bottom: 6px;
+}
+.pz-ficha-v {
+    font-family: var(--font-display);
+    font-size: 22px; font-weight: 600; line-height: 1.05;
+    color: var(--bj-ink-emerald);
+}
+/* Certificación: pastilla (sello) — esmeralda sutil, alineada a la marca (sin oro fuerte) */
+.pz-ficha-pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 6px 13px 6px 11px;
+    border-radius: 999px;
+    background: oklch(62% 0.16 155 / 0.10);
+    border: 1px solid oklch(55% 0.14 155 / 0.30);
+    font-family: var(--font-ui);
+    font-size: 11.5px; font-weight: 600; letter-spacing: 0.03em;
+    color: var(--bj-emerald-800);
+    white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+    .pz-ficha-rows { grid-template-columns: 1fr; }
+    .pz-ficha-hero-name { font-size: 25px; }
+}
+
+/* Talla selector */
+.pz-talla {
+    margin-bottom: 32px;
+}
+.pz-talla-label { margin-bottom: 12px; text-align: center; }
+.pz-talla-pills {
+    display: flex; gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;   /* centradas: pocas pills no se ven feas alineadas a la izq (Daniel) */
+}
+.pz-talla-pill {
+    min-width: 48px; height: 48px; padding: 0 14px;
+    border-radius: 999px;
+    font-size: 13px; font-weight: 500;
+    color: var(--bj-ink-emerald);
+    cursor: pointer;
+    /* §3.1: NUNCA transition:all — solo lo que cambia (transform/color/sombra/borde) */
+    transition: transform 0.25s cubic-bezier(.2,.9,.2,1), background-color 0.25s, box-shadow 0.25s, color 0.25s, border-color 0.25s;
+    display: flex; align-items: center; justify-content: center;
+}
+.pz-talla-pill:hover { transform: translateY(-2px); }
+.pz-talla-pill.is-active {
+    background: linear-gradient(180deg, oklch(62% 0.18 155), oklch(42% 0.14 155));
+    color: #fff;
+    border-color: oklch(62% 0.18 155);
+    text-shadow: 0 1px 1px oklch(20% 0.05 155 / 0.4);
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 0.5) inset,
+        0 4px 12px -4px oklch(42% 0.14 155 / 0.45);
+}
+.pz-talla-custom {
+    width: auto; padding: 0 18px;
+    font-size: 12px;
+    color: var(--bj-ink-soft);
+}
+/* (§139: .pz-price--consulta eliminado — la ficha sin precio ya no muestra texto en ese espacio.) */
+/* Talla a medida (honesto, sin pills falsas) — título + explicación en 2 líneas centradas */
+.pz-talla--medida { margin-bottom: 32px; }
+.pz-talla-medida-title { margin-bottom: 8px; }
+.pz-talla-medida-note {
+    font-size: 14px; line-height: 1.6;
+    color: var(--bj-ink-soft);
+    max-width: 46ch;
+    margin: 0 auto;
+    text-align: center;
+}
+.pz-talla--medida { text-align: center; }
+/* Referencia discreta de la pieza */
+.pz-ref {
+    margin-top: 14px;
+    font-size: 11px; letter-spacing: 0.1em;
+    color: var(--bj-ink-mute);
+}
+/* "Bajo consulta" en card relacionada (texto, no número) */
+.pz-related-price--consulta {
+    font-family: var(--font-display); font-style: italic;
+    font-size: 16px; color: var(--bj-emerald-800);
+}
+
+/* Actions */
+.pz-actions {
+    display: flex; gap: 12px;
+    margin-bottom: 24px;
+}
+.pz-cart-btn {
+    padding: 18px 32px;
+    font-size: 14px;
+    flex: 1;
+}
+.pz-wish-btn {
+    padding: 18px;
+    width: 58px;
+    flex-shrink: 0;
+    color: var(--bj-emerald-800);
+    transition: color 0.25s;
+}
+.pz-wish-btn.is-saved {
+    color: oklch(62% 0.20 25);
+    background: linear-gradient(180deg, oklch(99% 0.04 25 / 0.95) 0%, oklch(96% 0.06 25 / 0.85) 50%, oklch(94% 0.08 25 / 0.9) 100%);
+}
+
+.pz-asesor-btn {
+    padding: 16px 28px;
+    font-size: 13px;
+    width: 100%;
+    text-align: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RELATED PIECES
+   ═══════════════════════════════════════════════════════════════════ */
+.pz-related {
+    margin-top: 64px;
+    padding-top: 32px;
+    border-top: 1px solid oklch(70% 0.04 90 / 0.3);
+}
+.pz-related-header {
+    text-align: center;
+    margin-bottom: 28px;
+}
+.pz-related-header .eyebrow { margin-bottom: 10px; }
+.pz-related-title {
+    font-size: clamp(28px, 3vw, 40px);
+    font-weight: 300;
+    letter-spacing: -0.02em;
+}
+.pz-related-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;       /* fila incompleta centrada (sin huérfana a la izquierda) */
+    --cols: var(--n, 4);           /* el JS escribe --n; el media query recorta --cols en tablet/móvil */
+    --gap: 18px;
+    gap: var(--gap);
+}
+.pz-related-grid > .pz-related-card {
+    flex: 0 1 calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));
+    max-width: 340px;
+}
+.pz-related-card {
+    text-decoration: none;
+    color: inherit;
+    border-radius: 22px;
+    overflow: hidden;
+    padding: 0;
+    display: flex; flex-direction: column;
+    transition: transform 0.4s cubic-bezier(.2,.9,.2,1), box-shadow 0.4s;
+}
+.pz-related-card:hover {
+    transform: translateY(-6px);
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 0.9) inset,
+        0 25px 50px -16px oklch(42% 0.14 155 / 0.3);
+}
+.pz-related-imgwrap {
+    aspect-ratio: 1;
+    overflow: hidden;
+    position: relative;
+}
+.pz-related-img {
+    position: absolute; inset: 0;
+    background: oklch(94% 0.02 150) center/cover;
+    transition: transform 0.5s cubic-bezier(.2,.9,.2,1);
+}
+.pz-related-card:hover .pz-related-img { transform: scale(1.06); }
+.pz-related-body {
+    padding: 14px 14px 16px;
+    display: flex; flex-direction: column; gap: 4px;
+}
+.pz-related-name {
+    font-family: var(--font-display);
+    font-size: 16px; font-weight: 500;
+    color: var(--bj-ink-emerald);
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    min-height: 2.4em;
+}
+.pz-related-price {
+    font-size: 13px; font-weight: 600;
+    color: var(--bj-emerald-800);
+}
+@media (max-width: 920px) { .pz-related-grid { --cols: 2; } }
+@media (max-width: 480px) { .pz-related-grid { --cols: 2; --gap: 12px; } }
+
+/* ═══════════════════════════════════════════════════════════════════
+   NOT FOUND
+   ═══════════════════════════════════════════════════════════════════ */
+.pz-notfound {
+    border-radius: 36px;
+    padding: 80px 40px;
+    text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+}
+.pz-notfound-icon {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: oklch(95% 0.03 150);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--bj-emerald-700);
+    margin-bottom: 4px;
+}
+.pz-notfound-title {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 3.5vw, 40px);
+    font-weight: 300;
+    color: var(--bj-ink-emerald);
+}
+.pz-notfound-sub {
+    font-size: 14px;
+    color: var(--bj-ink-soft);
+    max-width: 420px;
+    margin-bottom: 16px;
+}
+.pz-notfound-actions {
+    display: flex; gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SKELETON
+   ═══════════════════════════════════════════════════════════════════ */
+.pz-skeleton {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 36px;
+}
+@media (max-width: 920px) {
+    .pz-skeleton { grid-template-columns: 1fr; }
+}
+.pz-skeleton-gallery {
+    aspect-ratio: 4/5;
+    border-radius: 36px;
+    background: linear-gradient(110deg,
+        oklch(94% 0.02 150) 30%,
+        oklch(98% 0.005 90) 50%,
+        oklch(94% 0.02 150) 70%);
+    background-size: 200% 100%;
+    animation: pz-shimmer 1.6s ease-in-out infinite;
+}
+.pz-skeleton-info {
+    display: flex; flex-direction: column; gap: 16px;
+    padding-top: 20px;
+}
+.pz-skeleton-row {
+    height: 16px;
+    border-radius: 8px;
+    background: linear-gradient(110deg,
+        oklch(94% 0.02 150) 30%,
+        oklch(98% 0.005 90) 50%,
+        oklch(94% 0.02 150) 70%);
+    background-size: 200% 100%;
+    animation: pz-shimmer 1.6s ease-in-out infinite;
+}
+.pz-skeleton-row--sm   { width: 30%; }
+.pz-skeleton-row--md   { width: 60%; height: 28px; }
+.pz-skeleton-row--lg   { width: 80%; height: 56px; }
+.pz-skeleton-row--full { width: 100%; height: 80px; }
+@keyframes pz-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Apaga el shimmer del skeleton en equipos modestos (.bj-lite): el gradiente animado
+   (background-position) es intensivo en repintado y reintroduciría jank en gama baja durante
+   la carga (consejo Gemini 2026-06-21). Queda un placeholder estático tenue. */
+.bj-lite .pz-skeleton-gallery,
+.bj-lite .pz-skeleton-row { animation: none; }
+
+@media (prefers-reduced-motion: reduce) {
+    .pz-skeleton-gallery,
+    .pz-skeleton-row { animation: none; }
+    .pz-related-card:hover,
+    .pz-thumb:hover,
+    .pz-talla-pill:hover,
+    .pz-main:hover .pz-main-img { transform: none; }
+}
+
+/* ── Form flotante de lead (Daniel 2026-06-26): "Prefiero dejar mis datos" ──
+   Modal en la MISMA ficha (no navega a contacto). Reusa .glass para el cristal. */
+.pz-lead-modal { position: fixed; inset: 0; z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; }
+.pz-lead-modal.is-open { display: flex; }
+.pz-lead-backdrop { position: absolute; inset: 0; background: oklch(22% 0.03 160 / 0.46); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+.pz-lead-card { position: relative; z-index: 1; width: 100%; max-width: 440px; padding: 30px 26px 26px; border-radius: 24px; max-height: calc(100vh - 40px); overflow-y: auto; }
+.pz-lead-x { position: absolute; top: 12px; right: 14px; width: 34px; height: 34px; border: none; background: transparent; font-size: 26px; line-height: 1; color: var(--bj-ink-mute); cursor: pointer; border-radius: 999px; transition: color .15s, background .15s; }
+.pz-lead-x:hover { color: var(--bj-emerald-800); background: oklch(94% 0.02 150 / 0.6); }
+.pz-lead-eyebrow { margin-bottom: 6px; }
+.pz-lead-title { font-family: var(--font-display); font-size: 1.35rem; line-height: 1.2; color: var(--bj-ink-emerald); margin: 0 0 6px; }
+.pz-lead-sub { font-size: 0.9rem; color: var(--bj-ink-soft); margin: 0 0 16px; }
+.pz-lead-form { display: flex; flex-direction: column; gap: 10px; }
+.pz-lead-input { box-sizing: border-box; width: 100%; padding: 12px 14px; border-radius: 14px; border: 1px solid oklch(85% 0.02 150); background: oklch(100% 0 0 / 0.72); font-family: inherit; font-size: 0.95rem; color: var(--bj-ink-emerald); transition: border-color .15s; }
+.pz-lead-input::placeholder { color: var(--bj-ink-mute); }
+.pz-lead-input:focus { outline: none; border-color: var(--bj-emerald-600); }
+.pz-lead-textarea { resize: vertical; min-height: 56px; }
+.pz-lead-submit { margin-top: 6px; }
+.pz-lead-success { text-align: center; padding: 10px 0 4px; }
+.pz-lead-success-icon { width: 64px; height: 64px; margin: 0 auto 14px; display: grid; place-items: center; border-radius: 999px; color: var(--bj-emerald-700); background: oklch(94% 0.04 150 / 0.7); }
+.pz-lead-done { margin-top: 16px; }
+@media (prefers-reduced-motion: reduce) { .pz-lead-x, .pz-lead-input { transition: none; } }

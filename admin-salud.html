@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salud del sistema — Bersaglio Admin</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..500&family=Cormorant+Garamond:ital,wght@0,300..600;1,300..400&family=Manrope:wght@300..700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/admin.css">
+    <script type="module" src="js/admin/salud.js"></script>
+</head>
+<body style="display:none">
+<script>try{if(sessionStorage.getItem('bj_auth')){document.body.style.display=''}else{location.replace('admin-login.html')}}catch(e){location.replace('admin-login.html')}</script>
+<div class="adm-layout">
+
+    <!-- Sidebar (se rellena desde datos por js/admin/shared.js → renderSidebar) -->
+    <aside class="adm-sidebar"></aside>
+    <div class="adm-sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <!-- Main -->
+    <main class="adm-main">
+        <header class="adm-topbar">
+            <button class="adm-hamburger" id="hamburger-btn" aria-label="Menú">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="22" height="22"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <h1>Salud del sistema</h1>
+            <div class="adm-topbar-actions">
+                <button class="adm-btn adm-btn--primary" id="btn-reconciliar">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/></svg>
+                    Reconciliar ahora
+                </button>
+            </div>
+        </header>
+
+        <div class="adm-content">
+
+            <!-- Semáforo: backup · reconciliación · fallos -->
+            <div class="adm-stats">
+                <div class="adm-stat-card">
+                    <div class="adm-stat-icon" id="stat-backup-icon">
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="20" height="20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"/></svg>
+                    </div>
+                    <div class="adm-stat-body">
+                        <div class="adm-stat-value" id="stat-backup-valor">—</div>
+                        <div class="adm-stat-label">Copia de seguridad diaria</div>
+                    </div>
+                </div>
+                <div class="adm-stat-card">
+                    <div class="adm-stat-icon" id="stat-recon-icon">
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="20" height="20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    </div>
+                    <div class="adm-stat-body">
+                        <div class="adm-stat-value" id="stat-recon-valor">—</div>
+                        <div class="adm-stat-label">Cuadre de saldos</div>
+                    </div>
+                </div>
+                <div class="adm-stat-card">
+                    <div class="adm-stat-icon" id="stat-fallos-icon">
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="20" height="20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                    </div>
+                    <div class="adm-stat-body">
+                        <div class="adm-stat-value" id="stat-fallos-valor">—</div>
+                        <div class="adm-stat-label">Procesos automáticos</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aprobaciones MUDADAS a la Bandeja (F-IA-2 B4 · D2/D5): la 4ª tarjeta-semáforo y la
+                 sección "Aprobaciones pendientes" (con su banner y su modal de rechazo) viven ahora
+                 en admin-aprobaciones.html. El pulso queda en: Bandeja + badge del rail + Avisos del Hoy. -->
+
+            <!-- Vigilancia de la cartera — mes en curso (auditoría detectiva · Fase M · M4).
+                 B5 (D4): solo se reescribió el texto; los ids (audit-degradado/audit-cont) y la
+                 mecánica de auditoria-cartera.js quedan INTACTOS. -->
+            <div class="adm-section" id="sec-auditoria" style="margin-top:20px;">
+                <div class="adm-section-head">
+                    <h2>Vigilancia de la cartera (mes en curso)</h2>
+                </div>
+                <div class="adm-section-body">
+                    <div id="audit-degradado" hidden
+                         style="padding:12px 14px;border-radius:12px;margin-bottom:12px;background:var(--adm-danger-light,#fdecea);color:var(--adm-danger);font-weight:700;font-size:13px;"></div>
+                    <p style="font-size:13px;color:var(--adm-muted);margin:0 0 12px;">
+                        Aquí el sistema marca lo del mes que conviene mirar con calma: descuentos y
+                        anulaciones por clienta frente al tope permitido, un "no" que reaparece como
+                        ajuste directo, y el recaudo del mes por medio de pago. Todo se ordena por la
+                        fecha REAL en que se registró (cambiar la fecha del movimiento no lo esconde).
+                    </p>
+                    <div id="audit-cont"></div>
+                </div>
+            </div>
+
+            <!-- Cierre de mes: foto de cartera (corte inmutable) + acta de conciliación (Fase M).
+                 B5 (D4): reescritura IN SITU de la presentación; los ids (audit-corte/acta-cont) que
+                 puebla auditoria-cartera.js NO cambian → cero cambio de mecánica. -->
+            <div class="adm-section" id="sec-cierre-mes" style="margin-top:20px;">
+                <div class="adm-section-head">
+                    <h2>Cierre de mes</h2>
+                </div>
+                <div class="adm-section-body">
+                    <p style="font-size:13px;color:var(--adm-muted);margin:0 0 12px;">
+                        Al cerrar cada mes, el sistema guarda una foto de la cartera y comprueba que el
+                        banco y el efectivo cuadren con lo registrado. Esa foto queda fija: es el
+                        respaldo del mes.
+                    </p>
+                    <div id="audit-corte" style="font-size:13px;color:var(--adm-muted);margin-top:4px;"></div>
+                    <div style="margin-top:14px;padding:14px 16px;border-radius:14px;background:var(--adm-soft,#f5f3ef);">
+                        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--adm-muted);margin-bottom:8px;font-weight:700;">Acta del mes cerrado</div>
+                        <div id="acta-cont"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Descuadres de saldo (solo si hay) -->
+            <div class="adm-section" id="sec-descuadres" hidden style="margin-top:20px;">
+                <div class="adm-section-head"><h2>Saldos descuadrados</h2></div>
+                <div class="adm-section-body">
+                    <p style="font-size:13px;color:var(--adm-muted);margin:0 0 12px;">
+                        El saldo guardado de estos clientes no coincide con la suma real de sus
+                        movimientos. "Reparar" lo recalcula desde cero (operación segura).
+                    </p>
+                    <div class="adm-table-wrap">
+                        <table class="adm-table">
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>Saldo guardado</th>
+                                    <th>Saldo real</th>
+                                    <th>Diferencia</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="descuadres-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Eventos de fallo -->
+            <div class="adm-section" style="margin-top:20px;">
+                <div class="adm-section-head"><h2>Avisos del sistema</h2></div>
+                <div class="adm-section-body">
+                    <p style="font-size:13px;color:var(--adm-muted);margin:0 0 12px;">
+                        Si un proceso automático falla o un saldo no cuadra, aparece aquí para revisarlo.
+                        Vacío = todo en orden.
+                    </p>
+                    <div class="adm-table-wrap">
+                        <table class="adm-table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Qué pasó</th>
+                                    <th>Cliente</th>
+                                    <th>Detalle</th>
+                                    <th>Estado</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="eventos-tbody"></tbody>
+                        </table>
+                    </div>
+                    <div id="eventos-empty" class="adm-empty" hidden>
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="48" height="48" style="opacity:0.2"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        <p>✅ Sin avisos — todo en orden.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Qué es esta pantalla -->
+            <div class="adm-section" style="margin-top:20px;">
+                <div class="adm-section-head"><h2>¿Qué vigila esta pantalla?</h2></div>
+                <div class="adm-section-body">
+                    <p style="font-size:13px;color:var(--adm-muted);line-height:1.6;margin:0;">
+                        1. <strong>Copia de seguridad diaria</strong>: cada madrugada (3:00 AM) se guarda una copia completa de toda la base de datos, por si hay que restaurar.<br>
+                        2. <strong>Cuadre de saldos</strong>: cada madrugada (3:30 AM) el sistema re-verifica que el saldo de cada cliente coincida con la suma de sus movimientos — como cuadrar la caja.<br>
+                        3. <strong>Procesos automáticos</strong>: si alguno de estos cálculos falla, no pasa en silencio: queda como <strong>aviso</strong> abajo para que lo revises.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- (Modal de rechazo mudado a admin-aprobaciones.html — F-IA-2 B4 · D2/D5.) -->
+
+<!-- Confirm dialog -->
+<div class="adm-confirm" id="confirm-dialog" hidden>
+    <div class="adm-confirm-box">
+        <h3>Confirmar acción</h3>
+        <p id="confirm-msg"></p>
+        <div class="adm-confirm-actions">
+            <button class="adm-btn adm-btn--ghost" id="confirm-cancel">Cancelar</button>
+            <button class="adm-btn adm-btn--danger" id="confirm-ok">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<div class="adm-toast-wrap" id="toast-wrap"></div>
+</body>
+</html>

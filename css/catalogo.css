@@ -1,0 +1,361 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   BERSAGLIO JEWELRY · Catálogo styles (Phase F)
+   Mirror exacto de BERSAGLIO NOVO/project/js/pages.jsx (Catalogo L7-93)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* §156 (B): el top era 116px SOBRE los 92px de `main` (despeje del header fijo) = ~208px → "contenido
+   muy abajo". `main` ya despeja el header; aquí solo respiramos (≈156px al eyebrow, airy sin exceso). */
+.cat-page { padding-top: 64px; padding-bottom: 40px; }
+@media (max-width: 680px) { .cat-page { padding-top: 40px; } }
+
+/* ═══════════════════════════════════════════════════════════════════
+   HEADER — eyebrow + display title + lead
+   ═══════════════════════════════════════════════════════════════════ */
+.cat-page-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+.cat-page-eyebrow { margin-bottom: 10px; }
+.cat-page-title {
+    font-size: clamp(48px, 6vw, 88px);
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+.cat-page-lead {
+    font-size: 16px;
+    color: var(--bj-ink-soft);
+    max-width: 560px;          /* §156 (B): lead a ~2 líneas, ceñido bajo el h1 */
+    margin: 14px auto 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CONTROLS — filter pills + sort dropdown
+   ═══════════════════════════════════════════════════════════════════ */
+.cat-controls {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.cat-pills {
+    padding: 6px;
+    border-radius: 999px;
+    display: flex;
+    gap: 2px;
+    flex-wrap: wrap;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+.cat-pills::-webkit-scrollbar { display: none; }
+
+.cat-pill {
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 999px;
+    color: var(--bj-ink-soft);
+    background: transparent;
+    transition:
+        color 0.3s,
+        background 0.3s,
+        box-shadow 0.3s,
+        transform 0.2s;
+    white-space: nowrap;
+    cursor: pointer;
+    text-transform: capitalize;
+}
+.cat-pill:hover { background: oklch(100% 0 0 / 0.5); color: var(--bj-emerald-800); }
+.cat-pill.is-active {
+    color: #fff;
+    background: linear-gradient(180deg, oklch(62% 0.18 155), oklch(42% 0.14 155));
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 0.5) inset,
+        0 4px 12px -4px oklch(42% 0.14 155 / 0.45);
+    text-shadow: 0 1px 1px oklch(20% 0.05 155 / 0.4);
+}
+
+.cat-sort {
+    padding: 8px 8px 8px 16px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.cat-sort-label {
+    font-size: 12px;
+    color: var(--bj-ink-mute);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+.cat-sort-select {
+    background: oklch(100% 0 0 / 0.6);
+    border: 1px solid oklch(100% 0 0 / 0.5);
+    padding: 8px 36px 8px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    color: var(--bj-ink-emerald);
+    font-family: inherit;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23295040' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 14px;
+}
+.cat-sort-select:focus {
+    outline: none;
+    border-color: oklch(62% 0.18 155 / 0.5);
+    box-shadow: 0 0 0 3px oklch(62% 0.18 155 / 0.18);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BUSCADOR COMPACTO (§156 C) — el filtro vivo vive AHORA dentro de
+   `.cat-controls` (campo compacto, pill de cristal como el sort). Se quitó
+   la "banda" suelta: duplicaba el buscador global del header (§155). Los
+   `.bc*` base (input/msg/recientes/chip) siguen en components.css (DRY/L-03);
+   aquí solo el contenedor compacto + la tira de mensajes/recientes.
+   ═══════════════════════════════════════════════════════════════════ */
+.cat-controls-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.cat-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 16px;
+    border-radius: 999px;
+    min-width: 230px;
+    transition: box-shadow 0.3s;
+}
+.cat-search:focus-within { box-shadow: 0 0 0 3px oklch(62% 0.18 155 / 0.18); }
+.cat-search-ico {
+    width: 16px; height: 16px;
+    color: oklch(62% 0.18 155);
+    flex-shrink: 0;
+}
+/* Reusa la clase `.bc-input` (hook del JS: filtro en vivo + Enter) pero, dentro
+   del pill de cristal, sin borde/fondo/anillo propios — el pill ya ES la superficie. */
+.cat-search .bc-input {
+    border: none;
+    background: transparent;
+    border-radius: 0;
+    padding: 9px 2px;
+    font-size: 13px;
+}
+.cat-search .bc-input:focus { box-shadow: none; }
+/* Tira fina bajo los controles: conteo en vivo (q activo) o recientes (q vacío). */
+.cat-search-extra {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.cat-search-extra .bc-msg { margin: 0; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   GRID — auto-fit cards
+   ═══════════════════════════════════════════════════════════════════ */
+.cat-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;       /* fila incompleta centrada (sin huérfana a la izquierda) */
+    --cols: var(--n, 4);           /* el JS escribe --n; el media query recorta --cols en móvil */
+    --gap: 22px;
+    gap: var(--gap);
+}
+.cat-grid > .cat-card {
+    flex: 0 1 calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));
+    max-width: 360px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CARD
+   ═══════════════════════════════════════════════════════════════════ */
+.cat-card {
+    padding: 0;
+    border-radius: 30px;
+    overflow: hidden;
+    text-align: left;
+    text-decoration: none;
+    color: inherit;
+    display: flex; flex-direction: column;
+    transition:
+        transform 0.5s cubic-bezier(.2,.9,.2,1),
+        box-shadow 0.5s;
+    /* PERF Fase 4 (look IDÉNTICO): el navegador omite renderizar las tarjetas fuera de
+       pantalla (incl. su efecto cristal) → scroll fluido + menos RAM en listas largas, sin
+       quitar ningún efecto. `auto` recuerda el tamaño real tras 1er render; 480px reserva el
+       hueco off-screen para que el scroll no salte. Property segura (se ignora si no se soporta). */
+    content-visibility: auto;
+    contain-intrinsic-size: auto 480px;
+}
+.cat-card:hover {
+    transform: translateY(-8px);
+    box-shadow:
+        0 1px 0 oklch(100% 0 0 / 0.9) inset,
+        0 30px 60px -16px oklch(42% 0.14 155 / 0.3);
+}
+
+.cat-card-imgwrap {
+    position: relative;
+    aspect-ratio: 4/5;
+    overflow: hidden;
+}
+.cat-card-img {
+    position: absolute; inset: 0;
+    background: oklch(94% 0.02 150) center/cover;
+    transition: transform 0.7s cubic-bezier(.2,.9,.2,1);
+}
+.cat-card:hover .cat-card-img { transform: scale(1.04); }
+
+/* ── Esqueleto de carga (TODO-72, Daniel): shimmer mientras Firestore responde ──
+   Reusa .cat-card/.cat-card-imgwrap → mismo alto que la tarjeta real (cero salto al llegar el dato).
+   El shimmer se apaga en equipos modestos (.bj-lite) y con prefers-reduced-motion (§3.1). */
+.cat-card--skeleton { pointer-events: none; cursor: default; }
+.cat-card--skeleton:hover { transform: none; }
+.cat-sk-shimmer {
+    background: linear-gradient(100deg,
+        oklch(94% 0.01 150) 30%, oklch(97% 0.006 150) 50%, oklch(94% 0.01 150) 70%);
+    background-size: 200% 100%;
+    animation: cat-shimmer 1.5s ease-in-out infinite;
+}
+.cat-card--skeleton .cat-card-imgwrap { background: oklch(94% 0.01 150); }
+.cat-sk-line { height: 12px; border-radius: 7px; margin-top: 12px; }
+.cat-sk-line--sm { width: 38%; }
+.cat-sk-line--md { width: 55%; }
+.cat-sk-line--lg { width: 78%; height: 18px; }
+@keyframes cat-shimmer {
+    from { background-position: 200% 0; }
+    to   { background-position: -200% 0; }
+}
+.bj-lite .cat-sk-shimmer { animation: none; }
+@media (prefers-reduced-motion: reduce) { .cat-sk-shimmer { animation: none; } }
+
+.cat-card-vignette {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, oklch(92% 0.06 150 / 0.15), transparent 40%);
+}
+.cat-card-tag {
+    position: absolute;
+    top: 14px; left: 14px;
+}
+.cat-card-tag .chip {
+    background: oklch(20% 0.05 155 / 0.5);
+    color: #fff;
+    border: 1px solid oklch(100% 0 0 / 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+.cat-card-tag .chip-dot { background: var(--bj-gold-500); }
+
+.cat-card-body {
+    padding: 20px 22px 22px;
+}
+.cat-card-cat {
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--bj-ink-mute);
+    margin-bottom: 6px;
+}
+.cat-card-name {
+    font-family: var(--font-display);
+    font-size: 20px; font-weight: 500;
+    color: var(--bj-ink-emerald);
+    margin-bottom: 6px;
+    line-height: 1.2;
+}
+.cat-card-meta {
+    font-size: 12px;
+    color: var(--bj-ink-soft);
+    margin-bottom: 14px;
+}
+.cat-card-foot {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid oklch(100% 0 0 / 0.5);
+}
+.cat-card-price {
+    font-size: 14px; font-weight: 600;
+    color: var(--bj-emerald-800);
+}
+.cat-card-arrow {
+    font-size: 11px;
+    color: var(--bj-ink-mute);
+    display: inline-flex; align-items: center; gap: 4px;
+}
+.cat-card-arrow svg { vertical-align: middle; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   EMPTY
+   ═══════════════════════════════════════════════════════════════════ */
+.cat-empty {
+    flex: 1 1 100%;                /* ocupa todo el ancho del flex (antes grid-column: 1 / -1) */
+    display: flex; flex-direction: column;
+    align-items: center; gap: 14px;
+    padding: 80px 24px;
+    text-align: center;
+}
+.cat-empty-icon {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: oklch(95% 0.03 150);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--bj-emerald-700);
+    margin-bottom: 4px;
+}
+.cat-empty-title {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 300;
+    color: var(--bj-ink-emerald);
+}
+.cat-empty-sub {
+    font-size: 13px;
+    color: var(--bj-ink-soft);
+    max-width: 360px;
+    margin-bottom: 8px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 680px) {
+    .cat-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .cat-pills {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        justify-content: flex-start;
+    }
+    .cat-sort {
+        align-self: flex-end;
+    }
+    .cat-controls-right { width: 100%; }
+    .cat-search { flex: 1 1 auto; min-width: 0; }
+    .cat-grid {
+        --cols: 2;
+        --gap: 14px;
+    }
+    .cat-card-body { padding: 16px 18px 18px; }
+    .cat-card-name { font-size: 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cat-card,
+    .cat-card-img,
+    .cat-pill { transition: none; }
+    .cat-card:hover { transform: none; }
+}

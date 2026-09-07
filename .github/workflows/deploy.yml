@@ -1,0 +1,88 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # Re-hornea el catálogo a diario: recoge las piezas que Kary agrega vía admin
+  # (escrituras a Firestore NO disparan un build) → sus páginas /pieza/<slug>.html
+  # aparecen sin tener que pushear código. (SSG · TODO-35.)
+  schedule:
+    - cron: '0 7 * * *'   # 07:00 UTC (~02:00 Colombia)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      # Las deps de functions/ TAMBIEN, o la suite ni arranca. El `npm ci` de arriba solo instala
+      # las del raiz, y `functions/node_modules` esta gitignored: en el PC del dueño EXISTE (por eso
+      # alli `npm test` sale verde) y en el runner NO. Dos pruebas del corte mensual —
+      # tests/aging-paridad.test.mjs:70 y tests/corte-insumos.test.mjs:19— hacen
+      # `require('../functions/corte.js')`, que a su vez pide `firebase-functions/v2/scheduler`
+      # (functions/package.json), dependencia que el package.json del raiz NO tiene. Sin este paso
+      # revientan con «Cannot find module» y el workflow queda en ROJO en cada push Y en cada cron.
+      # Medido: rojo desde la corrida #735 (merge 9ec3ebf, 2-sep), la primera vez que `npm test`
+      # corrio en main. Es `npm ci` porque functions/package-lock.json existe y esta en sincronia.
+      - name: Deps de functions/ (las que necesita la suite)
+        working-directory: functions
+        run: npm ci
+      # 🛡️ LA SUITE, ANTES DE CONSTRUIR (auditoria Nivel-2 del 26-ago, hallazgo B-01). Habia 43
+      # scripts test:* y ningun `test` agregado, asi que el CI no corria NINGUNO: las pruebas de
+      # tesoreria, caja, cartera, pedidos, saldo, reconciliacion y wompi —todo lo que mueve dinero—
+      # solo existian si alguien las tecleaba. Son 540 pruebas en 0,85 s; no habia excusa.
+      # Va ANTES del build a proposito: una prueba rota no debe llegar a desplegarse.
+      - name: Suite de pruebas (540, sin emulador)
+        run: npm test
+      - run: npm run build
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
+          VITE_RECAPTCHA_SITE_KEY: ${{ secrets.VITE_RECAPTCHA_SITE_KEY }}
+      # Gate anti-stored-XSS de los sinks JSON-LD/PRERENDERED (sin red). Si safeJsonLd
+      # fallara, el build se cae ANTES de hornear → prod queda en el último build bueno.
+      - name: SSG self-test (gate anti-XSS)
+        run: SSG_SELFTEST=1 node scripts/generate-pieces.mjs
+      # Hornea /pieza/<slug>.html (Product+Breadcrumb+OG+noscript) + sitemap real (TODO-35).
+      # Lee Firestore en el build; aborta si alguna página sale rota (bake-integrity).
+      - name: Generate baked piece pages + sitemap (SSG)
+        run: npm run generate
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment

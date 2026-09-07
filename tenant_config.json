@@ -1,0 +1,33 @@
+{
+  "_comment": "Identidad de negocio CANÓNICA (SSoT NAP + sameAs) para el SSG/visibilidad (TODO-35). La lee scripts/generate-pieces.mjs para hornear el JSON-LD de marca/Local en dist/index.html. Datos REALES de Daniel (2026-06-25) — cero-demo. Mantener idéntico al display del cliente (js/core/global-defaults.js). NO se sirve (build-time only). `geo` = coords del pin REAL del GBP (leídas de la URL de Maps del place /g/11z12mf6kd, 2026-07-17) — A4.",
+  "vertical": "JewelryStore",
+  "brand": "Bersaglio Jewelry",
+  "legalName": "Bersaglio Jewelry",
+  "baseUrl": "https://bersagliojewelry.co",
+  "logo": "https://bersagliojewelry.co/favicon-192.png",
+  "image": "https://bersagliojewelry.co/img/og-image.jpg",
+  "description": "Joyería en Cartagena de Indias: anillos, aretes, argollas y dijes en oro 18K con esmeraldas colombianas y diamantes certificados. Tienda física en el Centro Histórico y compra online con envíos a toda Colombia.",
+  "nap": {
+    "streetAddress": "Calle 36 # 6-32, San Agustín Chiquita, Centro Histórico",
+    "addressLocality": "Cartagena de Indias",
+    "addressRegion": "Bolívar",
+    "addressCountry": "CO",
+    "telephone": "+573013752592"
+  },
+  "areaServed": "Cartagena de Indias",
+  "hasMap": "https://share.google/dg6nfdgIHaFanKVYe",
+  "geo": { "latitude": 10.4251642, "longitude": -75.5492068 },
+  "openingHours": [
+    {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+      "opens": "08:00",
+      "closes": "19:00"
+    }
+  ],
+  "sameAs": [
+    "https://www.instagram.com/bersaglio_jewelry/",
+    "https://www.facebook.com/profile.php?id=61583793442626",
+    "https://www.tiktok.com/@bersaglio_jewelry"
+  ]
+}

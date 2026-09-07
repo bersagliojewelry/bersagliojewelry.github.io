@@ -1,0 +1,156 @@
+{
+  "_puente_f8": "El cerebro de este proyecto vive en ../brain-private/bersaglio/ (F8, 2026-09-05). Este repo es solo el sitio: los hooks llaman al kernel CANONICO de la boveda con --root (cerebro) y --sitio (este repo), en rutas RELATIVAS al cwd (Claude Code corre los hooks con cwd = raiz del proyecto; medido en insema y cars con un arranque real). Sin la boveda clonada al lado, los hooks fallan y la sesion arranca ciega: el CLAUDE.md-puente dice por ruta donde leer.",
+  "_por_que_dos_raices": "El kernel v1.36.0 separa el CEREBRO (--root: docs/, manifest, registro de sesiones, sidecars) del SITIO (--sitio: git, CNAME, service worker, rutas del producto). Sin --sitio, los gates del sitio se declaran OMITIDOS y el veredicto sale DEGRADADO: nunca un ✅ por no haber mirado. El manifest del cerebro puede declarar `siteRoot` y entonces --sitio es redundante aquí, pero se pasa igual: el que lee estos hooks tiene que ver las dos raíces sin abrir otro fichero.",
+  "env": {
+    "_que": "Variables de entorno de ESTE proyecto. DISABLE_TELEMETRY apaga la telemetria del CLI del plugin modern-web-guidance (Google Chrome), que por defecto envia a Google las consultas que el agente escribe sobre NUESTRO codigo (README del paquete, medido 2026-09-03). Condicion 1 de DICTAMEN-C4 §10 D-C4-29.",
+    "DISABLE_TELEMETRY": "1"
+  },
+  "permissions": {
+    "deny": [
+      "Bash(* --no-verify*)",
+      "Bash(* --no-verify)",
+      "Bash(* --amend*)",
+      "Bash(* --amend)",
+      "Bash(* --no-gpg-sign*)",
+      "Bash(* --no-gpg-sign)",
+      "Bash(git push --force*)",
+      "Bash(git push * --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push * -f*)",
+      "Bash(git reset --hard*)",
+      "Bash(git reset --hard)",
+      "Bash(git reset * --hard*)",
+      "Bash(git reset * --hard)",
+      "Bash(git clean *)",
+      "Bash(git clean)",
+      "Bash(rm -rf*)",
+      "Bash(rm -fr*)",
+      "Bash(rm -Rf*)",
+      "Bash(rm -rF*)",
+      "Bash(rm -r -f*)",
+      "Bash(rm -f -r*)",
+      "Bash(rm --recursive --force*)",
+      "Bash(git config core.hooksPath*)",
+      "Bash(git config * core.hooksPath*)",
+      "PowerShell(* --no-verify*)",
+      "PowerShell(* --amend*)",
+      "PowerShell(git push --force*)",
+      "PowerShell(git push * --force*)",
+      "PowerShell(git push -f*)",
+      "PowerShell(git reset --hard*)",
+      "PowerShell(git clean *)",
+      "PowerShell(rm -rf*)",
+      "PowerShell(Remove-Item * -Recurse*)",
+      "PowerShell(* -Recurse * -Force*)",
+      "PowerShell(git config core.hooksPath*)",
+      "PowerShell(git config * core.hooksPath*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|fork",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ../brain-private/kernel/brain-check.mjs --boot --root ../brain-private/bersaglio --sitio .",
+            "timeout": 30,
+            "statusMessage": "Auto-auditoría del cerebro (brain:check --boot)…"
+          },
+          {
+            "type": "command",
+            "command": "node ../brain-private/kernel/session-handoff.mjs --boot-echo --root ../brain-private/bersaglio --sitio .",
+            "timeout": 30,
+            "statusMessage": "💓 Heartbeat + router del cerebro (vive en la bóveda)…"
+          }
+        ]
+      },
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ../brain-private/kernel/brain-check.mjs --boot --root ../brain-private/bersaglio --sitio .",
+            "timeout": 30,
+            "statusMessage": "Auto-auditoría del cerebro (brain:check --boot)…"
+          },
+          {
+            "type": "command",
+            "command": "node ../brain-private/kernel/session-handoff.mjs --boot-echo --compact --root ../brain-private/bersaglio --sitio .",
+            "timeout": 30,
+            "statusMessage": "💓 Heartbeat + re-inyección del arranque tras compactar…"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ../brain-private/kernel/session-handoff.mjs --tick --root ../brain-private/bersaglio",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ../brain-private/kernel/session-handoff.mjs --tick --root ../brain-private/bersaglio",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ../brain-private/kernel/guard-destructivo.mjs --root ../brain-private/bersaglio",
+            "timeout": 5,
+            "statusMessage": "🛡️ guard-destructivo (2ª capa)…"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ../brain-private/kernel/session-handoff.mjs --precompact --root ../brain-private/bersaglio --sitio .",
+            "timeout": 30,
+            "statusMessage": "Caja negra: volcando foto de sesión…"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ../brain-private/kernel/session-handoff.mjs --end --root ../brain-private/bersaglio --sitio .",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ../brain-private/kernel/session-handoff.mjs --end --root ../brain-private/bersaglio --sitio .",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

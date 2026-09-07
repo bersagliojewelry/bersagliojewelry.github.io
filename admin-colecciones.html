@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colecciones — Bersaglio Admin</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..500&family=Cormorant+Garamond:ital,wght@0,300..600;1,300..400&family=Manrope:wght@300..700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/admin.css">
+    <script type="module" src="js/admin/colecciones.js"></script>
+</head>
+<body style="display:none">
+<script>try{if(sessionStorage.getItem('bj_auth')){document.body.style.display=''}else{location.replace('admin-login.html')}}catch(e){location.replace('admin-login.html')}</script>
+<div class="adm-layout">
+
+    <!-- Sidebar (se rellena desde datos por js/admin/shared.js → renderSidebar) -->
+    <aside class="adm-sidebar"></aside>
+    <div class="adm-sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <!-- Main -->
+    <main class="adm-main">
+        <header class="adm-topbar">
+            <button class="adm-hamburger" id="hamburger-btn" aria-label="Menú">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="22" height="22"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <h1>Colecciones</h1>
+            <div class="adm-topbar-actions">
+                <button class="adm-btn adm-btn--primary" id="btn-new-col">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+                    Nueva colección
+                </button>
+            </div>
+        </header>
+
+        <div class="adm-content">
+
+            <!-- Table -->
+            <div class="adm-table-wrap">
+                <table class="adm-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Slug</th>
+                            <th>Subtítulo</th>
+                            <th>Piezas</th>
+                            <th>Destacada</th>
+                            <th>Banner URL</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="col-tbody"></tbody>
+                </table>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- Modal: Colección -->
+<div class="adm-modal" id="col-modal" hidden>
+    <div class="adm-modal-box">
+        <div class="adm-modal-head">
+            <h2 id="col-modal-title">Nueva colección</h2>
+            <button class="adm-modal-close" id="col-modal-close" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="adm-modal-body">
+            <form id="col-form" novalidate>
+                <input type="hidden" name="id">
+                <div class="adm-form-section">
+                    <h3>Información</h3>
+                    <div class="adm-form-row">
+                        <div class="adm-field">
+                            <label for="cf-name">Nombre <span style="color:var(--adm-danger)">*</span></label>
+                            <input class="adm-input" id="cf-name" name="name" required placeholder="Esmeraldas Colombianas">
+                        </div>
+                        <div class="adm-field">
+                            <label for="cf-slug">Slug URL</label>
+                            <input class="adm-input" id="cf-slug" name="slug" placeholder="auto-generado desde el nombre">
+                        </div>
+                    </div>
+                    <div class="adm-form-row adm-col-1" style="margin-top:12px;">
+                        <div class="adm-field">
+                            <label for="cf-subtitle">Subtítulo</label>
+                            <input class="adm-input" id="cf-subtitle" name="subtitle" placeholder="El verde más puro del mundo">
+                        </div>
+                    </div>
+                    <div class="adm-form-row adm-col-1" style="margin-top:12px;">
+                        <div class="adm-field">
+                            <label for="cf-desc">Descripción</label>
+                            <textarea class="adm-input" id="cf-desc" name="description" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="adm-form-row" style="margin-top:12px;">
+                        <div class="adm-field">
+                            <label for="cf-pieces">Número de piezas</label>
+                            <input class="adm-input" id="cf-pieces" name="pieces" type="number" min="0" placeholder="0" readonly disabled style="opacity:0.7;cursor:not-allowed;">
+                            <small style="color:var(--adm-muted);font-size:11px;margin-top:2px;">Se calcula automáticamente</small>
+                        </div>
+                        <div class="adm-field" style="justify-content:flex-end;">
+                            <label class="adm-checkbox-row" style="margin-top:auto;">
+                                <input type="checkbox" name="featured" id="cf-featured">
+                                <span>Destacar en la home</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="adm-form-section">
+                    <h3>Banner de colección</h3>
+                    <input type="hidden" name="bannerUrl" id="cf-banner-url">
+                    <div id="cf-banner-upload-zone" class="adm-upload-zone" style="margin-bottom:12px;padding:24px;border:2px dashed rgba(201,169,110,0.25);border-radius:var(--adm-radius);text-align:center;cursor:pointer;transition:border-color 0.2s;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" width="36" height="36" style="margin-bottom:8px;opacity:0.5;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <p style="margin:0;font-size:13px;color:var(--adm-muted);">Arrastra una imagen aquí o <strong>haz clic</strong> para subir el banner</p>
+                        <p style="margin:6px 0 0;font-size:11px;color:var(--adm-muted);opacity:0.7;">Se convertirá automáticamente a WebP</p>
+                        <div style="margin-top:10px;padding:8px 12px;background:rgba(201,169,110,0.08);border-radius:6px;font-size:11px;color:var(--adm-muted);line-height:1.5;">
+                            <strong style="color:var(--adm-accent);">Dimensiones recomendadas:</strong><br>
+                            <span style="opacity:0.85;">1920 × 800 px (ratio 2.4:1) — Hero de colección</span><br>
+                            <span style="opacity:0.85;">Se adapta automáticamente a miniaturas (16:9) y paneles (4:3)</span><br>
+                            <span style="opacity:0.65;">Formatos: JPG, PNG o WebP · Máx. 10 MB</span>
+                        </div>
+                        <input type="file" id="cf-banner-file" accept="image/*" style="display:none;">
+                    </div>
+                    <div id="cf-banner-progress" hidden style="margin-bottom:12px;">
+                        <div style="background:var(--adm-border);border-radius:4px;height:4px;overflow:hidden;">
+                            <div id="cf-banner-progress-bar" style="height:100%;background:var(--adm-accent);width:0%;transition:width 0.2s;"></div>
+                        </div>
+                    </div>
+                    <div id="cf-banner-preview" style="margin-top:8px;"></div>
+                </div>
+            </form>
+        </div>
+        <div class="adm-modal-foot">
+            <button class="adm-btn adm-btn--ghost" id="col-modal-cancel">Cancelar</button>
+            <button class="adm-btn adm-btn--primary" id="col-modal-save">Guardar colección</button>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm delete -->
+<div class="adm-confirm" id="confirm-dialog" hidden>
+    <div class="adm-confirm-box">
+        <h3>¿Eliminar colección?</h3>
+        <p id="confirm-msg">Las piezas de esta colección no serán eliminadas.</p>
+        <div class="adm-confirm-actions">
+            <button class="adm-btn adm-btn--ghost" id="confirm-cancel">Cancelar</button>
+            <button class="adm-btn adm-btn--danger" id="confirm-ok">Eliminar</button>
+        </div>
+    </div>
+</div>
+
+<div class="adm-toast-wrap" id="toast-wrap"></div>
+</body>
+</html>

@@ -1,0 +1,70 @@
+node_modules/
+dist/
+.env
+.env.local
+.DS_Store
+Thumbs.db
+.mcp.json
+
+# Datos privados del negocio — NUNCA subir al repo (saldos/clientes reales)
+*.xlsx
+*.xls
+*.csv
+
+# Salidas de migración con datos reales (privadas, NUNCA al repo)
+tools/migracion-*.json
+tools/*.local.*
+
+# Artefactos de los emuladores de Firebase (ruido local, no versionar)
+*-debug.log
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+.firebase/
+
+# Mockups efímeros del compañero visual de brainstorming (no versionar)
+.superpowers/
+
+# Artefactos de verificación con Playwright MCP (capturas/snapshots locales, no versionar)
+.playwright-mcp/
+
+# Claves de cuenta de servicio Firebase/GCP (SECRETO — para migraciones; NUNCA al repo)
+*serviceAccount*.json
+*-sa-key.json
+*-adminsdk-*.json
+gcp-key*.json
+
+# Permisos LOCALES del harness de Claude Code (por máquina, no versionar; CLAUDE.md §2).
+# `settings.json` (compartido) SÍ se versiona; `settings.local.json` NO.
+.claude/settings.local.json
+
+# Clon de REFERENCIA de un ERP de TERCEROS (github.com/fouronesys/fouronesysERP, RD/DGII),
+# quedó anidado aquí (con su propio .git) el 2026-06-12. NO es de Bersaglio. Ignorado para que
+# no ensucie git ni se commitee por accidente. Reubicar/borrar fuera del repo cuando se libere
+# el lock de GitHub Desktop (mover a ../fouronesysERP o eliminar: está sincronizado con su origin).
+/_temp_fouronesysERP/
+
+# Modelo de OCR de Tesseract (idioma español) — herramienta LOCAL usada para leer los
+# certificados TrueLab al cargar inventario (§132). NO es del sitio (binario 3.3M). No versionar.
+*.traineddata
+
+# 🔐 DATOS PERSONALES / LEGALES SENSIBLES — NUNCA al repo público (cédula, RUT, Cámara de
+# Comercio de la comerciante). Repo = GitHub Pages PÚBLICO → commitearlos = exposición/suplantación.
+# Carpeta dejada por Daniel 2026-06-30 (§157). El hogar correcto es la bóveda brain-private.
+LEGALES/
+legales/
+Legales/
+*.pdf
+
+
+# Reportes de sesión generados por la skill session-report (artefactos locales, no fuente)
+session-report-*.html
+
+# (F8, 2026-09-05) El cerebro documental (docs/, _legacy/, el kernel de scripts/ y skills/) ya no vive aqui:
+# esta en ../brain-private/bersaglio/ con su historia. Sus sidecars (docs/.estado-auto.md, .guard-log,
+# .sesiones/...) los ignora el .gitignore de la boveda.
+
+# Carpetas que escriben plugins de terceros dentro del repo (incidente 2026-09-03).
+# No son nuestras y una de ellas llevaba un id de telemetria dentro.
+.semgrep/
+.remember/

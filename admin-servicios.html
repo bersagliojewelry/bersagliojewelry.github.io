@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de servicios — Bersaglio Admin</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..500&family=Cormorant+Garamond:ital,wght@0,300..600;1,300..400&family=Manrope:wght@300..700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/admin.css">
+    <script type="module" src="js/admin/servicios.js"></script>
+</head>
+<body style="display:none">
+<script>try{if(sessionStorage.getItem('bj_auth')){document.body.style.display=''}else{location.replace('admin-login.html')}}catch(e){location.replace('admin-login.html')}</script>
+<div class="adm-layout">
+
+    <aside class="adm-sidebar"></aside>
+    <div class="adm-sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <main class="adm-main">
+        <header class="adm-topbar">
+            <button class="adm-hamburger" id="hamburger-btn" aria-label="Menú">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="22" height="22"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <h1>Catálogo de servicios</h1>
+            <div class="adm-topbar-actions">
+                <span class="adm-pill adm-pill--gold" title="Solo el dueño puede editar el catálogo (regla del servidor)">Solo dueño</span>
+            </div>
+        </header>
+
+        <div class="adm-content">
+            <p style="font-size:13px;color:var(--adm-muted);margin:0 0 18px;max-width:720px;line-height:1.6;">
+                Los servicios y modificaciones (grabado, ajuste de talla, reparación…) que el mostrador
+                cobra <strong>junto con la pieza</strong>. El precio que fijes aquí es el que cobra la caja.
+                Retirar un servicio no borra las ventas viejas: solo deja de aparecer en el mostrador.
+                <strong>Cada cambio de precio queda registrado con fecha.</strong>
+            </p>
+
+            <!-- Crear servicio -->
+            <div class="serv-cms-card">
+                <h2 class="serv-cms-title">Nuevo servicio</h2>
+                <div class="adm-form-row">
+                    <div class="adm-field" style="max-width:120px;">
+                        <label for="serv-codigo">Código</label>
+                        <input class="adm-input" id="serv-codigo" type="text" maxlength="20" placeholder="GRAB" autocomplete="off">
+                    </div>
+                    <div class="adm-field">
+                        <label for="serv-nombre">Nombre</label>
+                        <input class="adm-input" id="serv-nombre" type="text" maxlength="80" placeholder="Grabado láser" autocomplete="off">
+                    </div>
+                    <div class="adm-field" style="max-width:160px;">
+                        <label for="serv-precio">Precio (COP)</label>
+                        <input class="adm-input" id="serv-precio" type="number" min="0" inputmode="numeric" placeholder="20000">
+                    </div>
+                    <div class="adm-field" style="max-width:150px;">
+                        <label for="serv-naturaleza">Naturaleza</label>
+                        <select class="adm-input" id="serv-naturaleza">
+                            <option value="servicio">Servicio</option>
+                            <option value="bien">Bien (producto)</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="adm-btn adm-btn--primary" id="serv-crear" type="button" style="margin-top:12px;">Crear servicio</button>
+                <p class="pos-hint serv-cms-err" id="serv-crear-err" hidden></p>
+            </div>
+
+            <!-- Lista -->
+            <div class="serv-cms-card" style="margin-top:18px;">
+                <h2 class="serv-cms-title">Servicios del catálogo</h2>
+                <div class="adm-empty" id="servicios-empty" hidden><p>Aún no hay servicios. Crea el primero arriba.</p></div>
+                <ul class="serv-cms-list" id="servicios-list"></ul>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div class="adm-confirm" id="confirm-dialog" hidden>
+    <div class="adm-confirm-box">
+        <h3>Confirmar</h3>
+        <p id="confirm-msg"></p>
+        <div class="adm-confirm-actions">
+            <button class="adm-btn adm-btn--ghost" id="confirm-cancel">Cancelar</button>
+            <button class="adm-btn adm-btn--danger" id="confirm-ok">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<div class="adm-toast-wrap" id="toast-wrap"></div>
+</body>
+</html>

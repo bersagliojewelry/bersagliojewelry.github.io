@@ -1,0 +1,61 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ─── Helpers (B5 · comité 2026-06-14 + consejo externo Gemini) ──────────────
+    // Solo roles de contenido suben (no cualquier autenticado). El claim `role` lo
+    // espeja syncRoleClaim (§65); el backfill garantiza que admin/editor lo tengan.
+    // isContentRole() = editor+ → CMS/assets (NO incluye catálogo, igual que firestore).
+    function isContentRole() {
+      return request.auth != null
+          && request.auth.token.role in ['owner', 'admin', 'editor'];
+    }
+    // isCatalogo() = editor+ ∪ catálogo (Kary, §115). MIRROR de isCatalogo() en
+    // firestore.rules: el rol catálogo gestiona Piezas+Colecciones END-TO-END, incluidas
+    // SUS imágenes. Sin esto, Kary editaba la pieza pero Storage rechazaba la foto
+    // (storage/unauthorized → "Error al subir imagen") = desacople Firestore↔Storage.
+    function isCatalogo() {
+      return request.auth != null
+          && request.auth.token.role in ['owner', 'admin', 'editor', 'catalogo'];
+    }
+    // contentType allowlist EXPLÍCITA: `image/(png|jpeg|webp|avif)` EXCLUYE image/svg+xml
+    // (SVG ejecutable = stored-XSS) y formatos pesados; + cota de tamaño (anti
+    // denial-of-wallet por egress en Spark: 1 GB/día). `image-optimizer.js` exporta AVIF
+    // cuando el navegador lo soporta (canvas→avif) o WebP de fallback — ambos seguros (no
+    // ejecutables). Sin avif aquí, las subidas avif se rechazarían (bug latente en piezas).
+    function validImage(maxBytes) {
+      return request.resource.size < maxBytes
+          && request.resource.contentType.matches('image/(png|jpeg|webp|avif)');
+    }
+
+    // ─── Piece images ─────────────────────────────────────────────────────────
+    // Path: pieces/{pieceId}/{filename}
+    match /pieces/{pieceId}/{allPaths=**} {
+      allow read:          if true;                       // Public: shown on site
+      allow create, update: if isCatalogo() && validImage(10 * 1024 * 1024);   // catálogo (Kary) incluido
+      allow delete:        if isCatalogo();
+    }
+
+    // ─── Collection banners ───────────────────────────────────────────────────
+    // Path: collections/{colId}/{filename}
+    match /collections/{colId}/{allPaths=**} {
+      allow read:          if true;
+      allow create, update: if isCatalogo() && validImage(10 * 1024 * 1024);   // catálogo (Kary) incluido
+      allow delete:        if isCatalogo();
+    }
+
+    // ─── General site assets (CMS: portadas de journal/films/social) ───────────
+    // Path: assets/{filename}. Cota más estricta (5 MB) — son imágenes de contenido
+    // optimizadas; P3.5 añadirá compresión client-side (canvas→webp, <300 KB).
+    match /assets/{allPaths=**} {
+      allow read:          if true;
+      allow create, update: if isContentRole() && validImage(5 * 1024 * 1024);
+      allow delete:        if isContentRole();
+    }
+
+    // Deny everything else by default
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

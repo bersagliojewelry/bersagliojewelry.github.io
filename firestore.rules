@@ -1,0 +1,1166 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper functions ──────────────────────────────────────────────────────
+
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // F6 frente B (RBAC claims): el rol se lee PRIMERO del custom claim del token
+    // (cero lecturas extra, S4) con fallback dual al doc users/{uid} durante la
+    // transición (usuario sin backfill / claim aún no en el token). El claim lo
+    // espeja SOLO la CF syncRoleClaim desde users/{uid}.role (fuente de verdad).
+    // PRECEDENCIA: si el claim existe, MANDA (un claim desactualizado dura ≤1h de
+    // token). Deprecar el fallback a +30 días del backfill (ADR §65).
+    function getUserRole() {
+      let claim = request.auth.token.get('role', null);
+      return claim != null
+          ? claim
+          : get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isOwner() {
+      return isAuth() && getUserRole() == 'owner';
+    }
+
+    function isAdmin() {
+      return isAuth() && getUserRole() in ['owner', 'admin'];
+    }
+
+    function isEditor() {
+      return isAuth() && getUserRole() in ['owner', 'admin', 'editor'];
+    }
+
+    // Rol "catálogo" (TODO-19, §114-build): gestor DEDICADO de Piezas+Colecciones
+    // (Kary). NO es jerárquico (nivel 0, por DEBAJO de editor) → queda AUTO-DENEGADO
+    // en TODO lo demás (clientes/CMS/config/users/vendedoras exigen isEditor/isAdmin/
+    // isOwner, que NO lo incluyen); aquí SOLO se le ABRE pieces/collections.
+    // isCatalogo() = "quien puede gestionar el catálogo" = editor+ ∪ catálogo.
+    function isCatalogo() {
+      return isAuth() && getUserRole() in ['owner', 'admin', 'editor', 'catalogo'];
+    }
+
+    // Rol "caja" (F2.0 B0, §9.9): la CAJERA del mostrador. OPERA el POS (su turno:
+    // abrir/registrar venta/movimientos/cerrar, y el traslado cajón→bóveda) — pero NO
+    // ve el saldo ACUMULADO de bóveda (discreción antirrobo D7). isCaja() = "quien opera
+    // la caja" = admin+ ∪ caja; NO incluye a `catalogo` (un gestor de catálogo no es cajero).
+    // Ver/consignar bóveda, editar config/caja y APROBAR ajustes siguen siendo owner-only.
+    function isCaja() {
+      return isAuth() && getUserRole() in ['owner', 'admin', 'caja'];
+    }
+
+    // ─── CRM (cuentas por cobrar): validadores ───────────────────────────────────
+    // Contenido REAL = no vacío y no solo-espacios (' '.size()==1 pasaría size()>0 →
+    // dejaría publicar campos en blanco-visual: brecha cero-ficción, red-team Fase B).
+    // .trim() ⇒ espejo del `nz` cliente (home-sections.js) que usa .trim().length>0.
+    function nonEmptyStr(v) { return v is string && v.trim().size() > 0; }
+    // Optativos con el idiom seguro `!('campo' in d) || ...` (ver nota de S6: el
+    // acceso a un campo ausente lanza error en reglas → presencia primero).
+    // `hasOnly` = whitelist anti-inyección: bloquea saldoActual (lo escribe SOLO la
+    // Cloud Function vía el movimiento de apertura) y cualquier campo no previsto.
+    function clienteValido() {
+      let d = request.resource.data;
+      return nonEmptyStr(d.nombre)
+          && d.keys().hasOnly(['nombre', 'telefono', 'whatsapp', 'cumpleanos', 'notas',
+                               'vendedoraId', 'asesorId', 'origen', 'activo',
+                               'createdAt', 'createdBy', 'updatedAt'])
+          && (!('vendedoraId' in d) || d.vendedoraId is string)
+          // asesorId (spec acuerdos §1.6): costura para el asesor de cobranza
+          // FUTURO — espejo del patrón vendedoraId (entidad/atributo primero,
+          // usuario después, TODO-19). Sin UI hoy; el campo viaja en este deploy.
+          && (!('asesorId' in d)    || d.asesorId is string)
+          && (!('telefono' in d)    || d.telefono is string);
+    }
+    // Vendedora = entidad de datos que gestiona Kary (no es un usuario auth).
+    function vendedoraValida() {
+      let d = request.resource.data;
+      return nonEmptyStr(d.nombre)
+          && d.keys().hasOnly(['nombre', 'activa', 'createdAt', 'createdBy', 'updatedAt'])
+          && (!('activa' in d) || d.activa is bool);
+    }
+    // ─── Fase M · M3 (candado, §69 + Consejo Externo Gemini 2026-06-11) ──────────
+    // Fecha del HECHO ('YYYY-MM-DD'): formato ISO + cotas. La cota FUTURA cierra la
+    // evasión del aging que halló el Consejo (una factura fechada en 2030 nunca
+    // "vence" → deuda parqueada fuera de la mora); +2 días de tolerancia de huso.
+    // El piso grueso atrapa el dedazo de año. timestamp.date() revienta con fechas
+    // de calendario inválidas (2026-02-30) → error → DENY (falla cerrado).
+    function fechaHechoValida(f) {
+      return f is string && f.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && f >= '2015-01-01'
+          && timestamp.date(int(f.split('-')[0]), int(f.split('-')[1]), int(f.split('-')[2]))
+               <= request.time + duration.value(2, 'd');
+    }
+    // Gate del AJUSTE por su EFECTO en el saldo (política A.2/A.4): motivo de lista
+    // CERRADA + nota SIEMPRE; el negativo del admin solo con motivo NEUTRO y dentro
+    // del tope. El get() a config/cartera vive SOLO aquí, tras el cortocircuito
+    // (el owner JAMÁS depende del doc; el camino diario factura/abono JAMÁS lo lee).
+    // Sin abs() en rules (Consejo M3): el tope negativo se escribe con signo.
+    // La TAXONOMÍA de motivos es literal (contrato estable); el subconjunto NEUTRO
+    // sí se lee de config/cartera (red-team M3: el panel Parámetros owner-only lo
+    // edita y la UI enruta con él — dos fuentes de verdad = falso bloqueo latente).
+    // El get() vive SOLO en la rama del admin (mismo doc que el tope = una lectura);
+    // el owner JAMÁS lo toca (anti-lockout intacto). Default = los 3 canónicos.
+    function ajusteAutorizado(d) {
+      return d.motivo in ['ERROR_REGISTRO', 'ABONO_NO_REGISTRADO', 'RECLASIFICACION',
+                          'DEVOLUCION_PIEZA', 'DESCUENTO_AUTORIZADO', 'CASTIGO', 'OTRO']
+          && nonEmptyStr(d.nota)
+          && (isOwner()
+              || d.monto >= 0
+              || (d.motivo in get(/databases/$(database)/documents/config/cartera).data
+                    .get('motivosNeutros', ['ERROR_REGISTRO', 'ABONO_NO_REGISTRADO', 'RECLASIFICACION'])
+                  && d.monto >= -get(/databases/$(database)/documents/config/cartera).data.autoAprobacionMax));
+    }
+    // COINCIDENCIA solicitud↔asiento (enmienda M2b §76, deferido 4): un asiento que
+    // porta `solicitudId` solo lo crea el OWNER y debe coincidir con la solicitud
+    // PENDIENTE (estado PRE-batch, §69 C3) POR TIPO de solicitud: ajuste → tipo/
+    // monto/motivo idénticos; corrección → contra el REEMPLAZO embebido (el monto
+    // top-level de la solicitud es el DELTA neto, no el monto del asiento). El get()
+    // está ANCLADO al path del MISMO cliente → el hijacking cross-cliente es
+    // imposible por construcción (404 → error → deny; caso rojo del Consejo M3).
+    function asientoCoincideConSolicitud(clienteId, d) {
+      let s = get(/databases/$(database)/documents/clientes/$(clienteId)/solicitudes/$(d.solicitudId)).data;
+      return isOwner()
+          && s.estado == 'pendiente'
+          && (
+            (s.tipo == 'ajuste'
+              && d.tipo == 'ajuste' && d.monto == s.monto && d.motivo == s.motivo)
+            ||
+            (s.tipo == 'correccion'
+              && d.tipo == s.datosCorreccion.reemplazo.tipo
+              && d.monto == s.datosCorreccion.reemplazo.monto
+              && d.correccionDe == s.correccionDe)
+          );
+    }
+    // CREATE endurecido (contract M3): whitelist hasOnly cierra la inyección de
+    // claves; registradoEn == request.time = reloj del SERVIDOR (retrofechar `fecha`
+    // no evade la auditoría); fecha OBLIGATORIA en asientos nuevos (los legacy ya
+    // existentes no pasan por aquí — censo 2026-06-11: 344/344 con fecha ISO sana).
+    // El signo lo da el `tipo` (factura/apertura/ajuste suman; abono resta).
+    function movimientoValido(clienteId) {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['tipo', 'monto', 'descripcion', 'fecha', 'registradoPor',
+                               'registradoEn', 'anulado', 'motivo', 'nota', 'solicitudId',
+                               'correccionDe', 'vencimiento', 'medioPago'])
+          && d.tipo in ['apertura', 'factura', 'abono', 'ajuste']
+          // entero-COP (spec §5.1): pesos SIN centavos. JS envía números enteros como
+          // int; un decimal llega como double y se RECHAZA en la frontera de escritura.
+          && d.monto is int
+          && (d.tipo in ['apertura', 'ajuste'] || d.monto >= 0)
+          // M0-H (§69): apertura NEGATIVA reduce saldo sin motivo ni tope → owner-only.
+          && (d.tipo != 'apertura' || d.monto >= 0 || isOwner())
+          && (!('descripcion' in d) || (d.descripcion is string && d.descripcion.size() <= 500))
+          && fechaHechoValida(d.fecha)
+          // vencimiento (M6, opcional): SOLO facturas; puede ser futuro (es su uso) —
+          // formato + piso, sin cota futura.
+          && (!('vencimiento' in d) || (d.tipo == 'factura' && d.vencimiento is string
+                && d.vencimiento.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$') && d.vencimiento >= '2015-01-01'))
+          && d.registradoPor == request.auth.uid
+          && d.registradoEn == request.time
+          && d.anulado == false
+          // abono: medioPago obligatorio de lista LITERAL (cero get en el camino diario,
+          // decisión C2 §69); en los demás tipos el campo NO viaja.
+          && (d.tipo != 'abono' || d.medioPago in ['efectivo', 'transferencia', 'datafono', 'otro'])
+          && (!('medioPago' in d) || d.tipo == 'abono')
+          // V17 (F-TESORERÍA B5): el abono en EFECTIVO solo nace en el SERVIDOR. Lo escribe la CF
+          // `registrarAbonoCartera` (Admin SDK → ignora estas reglas), la única que puede meter en
+          // la MISMA transacción la pata del billete en `turnos/{id}/movsCaja` (colección CF-only)
+          // para que el arqueo del turno lo espere. Desde el cliente queda CERRADO — y no es un
+          // tema de ROL (ni el owner): sin este gate bastaba el camino viejo, o
+          // `corregirMovimientoBatch` (que HEREDA el medioPago del original), para bajar la deuda
+          // sin que ningún libro de efectivo registrara el billete = robo enmascarable. Corregir un
+          // abono en efectivo = anularlo (la CF netea su pata) y registrarlo de nuevo.
+          && !(d.tipo == 'abono' && d.medioPago == 'efectivo')
+          && (!('motivo' in d) || (nonEmptyStr(d.motivo) && d.motivo.size() <= 500))
+          && (!('nota' in d) || (d.nota is string && d.nota.size() <= 500))
+          && (!('correccionDe' in d) || d.correccionDe is string)
+          && (d.tipo != 'ajuste' || ajusteAutorizado(d))
+          && (!('solicitudId' in d) || asientoCoincideConSolicitud(clienteId, d));
+    }
+    // ─── Fase M (M1 §69): validadores de solicitudes y gestiones ─────────────────
+    // Solicitud de aprobación: nace 'pendiente', con autor y reloj del SERVIDOR
+    // (creadoEn == request.time ⇒ solo serverTimestamp()). `tipo` 'ajuste' = pide
+    // un asiento nuevo; 'correccion' = pide el par anular+crear (datosCorreccion).
+    function solicitudValida() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['tipo', 'monto', 'motivo', 'nota', 'fecha',
+                               'solicitadoPor', 'creadoEn', 'estado',
+                               'correccionDe', 'datosCorreccion', 'saldoAlSolicitar'])
+          && d.estado == 'pendiente'
+          && d.tipo in ['ajuste', 'correccion']
+          && d.monto is int
+          && nonEmptyStr(d.motivo) && d.motivo.size() <= 500
+          && nonEmptyStr(d.nota) && d.nota.size() <= 500
+          && d.solicitadoPor == request.auth.uid
+          && d.creadoEn == request.time
+          && (!('fecha' in d) || (d.fecha is string && d.fecha.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
+          && (!('correccionDe' in d)    || d.correccionDe is string)
+          && (!('datosCorreccion' in d) || d.datosCorreccion is map)
+          && (!('saldoAlSolicitar' in d) || d.saldoAlSolicitar is int);
+    }
+    // Transiciones ONE-WAY desde 'pendiente' (espejo de saludEventos):
+    //  · owner → aprobada/rechazada (sello server-time + autor). Estado y campo van
+    //    ATADOS (ADR §72): rechazo EXIGE motivoRechazo; aprobación NO lo porta — un
+    //    guard `(A || B)` con hasOnly que whitelista B dejaba pasar 'aprobada'+motivoRechazo
+    //    (estado contradictorio que M2b leería); el ternario por presencia lo cierra.
+    //  · la SOLICITANTE → cancelada (nadie cancela solicitudes ajenas)
+    function transicionSolicitudValida() {
+      let d = request.resource.data;
+      return resource.data.estado == 'pendiente'
+          && (
+            (isOwner()
+              && d.estado in ['aprobada', 'rechazada']
+              && d.diff(resource.data).affectedKeys()
+                   .hasOnly(['estado', 'resueltoPor', 'resueltoEn', 'motivoRechazo'])
+              && d.resueltoPor == request.auth.uid
+              && d.resueltoEn == request.time
+              && (d.estado == 'rechazada' ? nonEmptyStr(d.motivoRechazo) : !('motivoRechazo' in d)))
+            ||
+            (d.estado == 'cancelada'
+              && resource.data.solicitadoPor == request.auth.uid
+              && d.diff(resource.data).affectedKeys()
+                   .hasOnly(['estado', 'canceladoPor', 'canceladoEn'])
+              && d.canceladoPor == request.auth.uid
+              && d.canceladoEn == request.time)
+          );
+    }
+    // Gestión de cobro: tipo y resultado de listas LITERALES (cero get() a config
+    // en el camino diario — decisión C2 §69); fecha del hecho + reloj del servidor.
+    // size() en texto libre (deferido verif. M5): docs INMUTABLES no deben poder
+    // cargar strings de cientos de KB que el expediente arrastraría para siempre.
+    function gestionValida() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['tipo', 'nota', 'fecha', 'resultado',
+                               'registradoPor', 'creadoEn', 'soporte'])
+          && d.tipo in ['llamada', 'whatsapp', 'visita', 'otro']
+          && d.resultado in ['promesa_pago', 'sin_acuerdo', 'no_contesto', 'numero_invalido', 'otro']
+          && d.fecha is string && d.fecha.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && (!('nota' in d)    || (d.nota is string && d.nota.size() <= 500))
+          && (!('soporte' in d) || (d.soporte is string && d.soporte.size() <= 500))
+          && d.registradoPor == request.auth.uid
+          && d.creadoEn == request.time;
+    }
+    // ─── Acuerdos de pago v2 (spec 2026-06-12, Consejo Externo): MUTEX ──────────
+    // El acuerdo NO mueve dinero (el libro es `movimientos`, el saldo lo escribe la
+    // CF): pacta CUÁNDO es exigible TODA la deuda actual (solo SALDO — el FIFO
+    // global no atribuye por factura). Cuotas EMBEBIDAS. Las reglas NO iteran
+    // cuotas[]: validan el "sobre"; la verdad la valida acuerdoEsValido() en el
+    // archivo de paridad (inválido = IGNORADO = más vencido = conservador).
+    // CANDADO (mutex): la VERDAD de "cuál acuerdo está vigente" es el puntero
+    // `acuerdoVigenteId` en el doc del cliente. Crear un acuerdo EXIGE que, tras el
+    // batch, el cliente apunte a ESTE id → imposible el "acuerdo suelto" que ocultaba
+    // mora (vector de jineteo del Consejo). getUserRole() no toca el camino diario.
+    function acuerdoValido(clienteId, acuerdoId) {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['fechaPacto', 'cuotas',
+                               'periodicidad', 'primeraCuotaFecha', 'ultimaCuotaFecha',
+                               'saldoAlPactar', 'nota', 'estado', 'reemplazaA',
+                               'creadoPor', 'creadoEn', 'rolAlCrear'])
+          && d.estado == 'vigente'
+          && fechaHechoValida(d.fechaPacto)
+          && d.cuotas is list && d.cuotas.size() >= 1 && d.cuotas.size() <= 36
+          && nonEmptyStr(d.nota) && d.nota.size() <= 500
+          && (!('periodicidad' in d)  || d.periodicidad in ['quincenal', 'mensual', 'fechas'])
+          && (!('saldoAlPactar' in d) || d.saldoAlPactar is int)
+          && d.primeraCuotaFecha is string && d.primeraCuotaFecha.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && d.ultimaCuotaFecha is string && d.ultimaCuotaFecha.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && d.primeraCuotaFecha >= d.fechaPacto
+          && d.ultimaCuotaFecha >= d.primeraCuotaFecha
+          && d.creadoPor == request.auth.uid
+          && d.creadoEn == request.time
+          // Investidura probatoria: el rol DE AQUEL MOMENTO sellado (costura asesor §1.6).
+          && d.rolAlCrear == getUserRole()
+          // MUTEX: el cliente DEBE apuntarme tras el batch (fuerza la actualización
+          // del puntero en la MISMA transacción → no existe el acuerdo suelto).
+          && getAfter(/databases/$(database)/documents/clientes/$(clienteId)).data.get('acuerdoVigenteId', '') == acuerdoId
+          // RENEGOCIACIÓN ATÓMICA: crear con reemplazaA exige que EN EL MISMO BATCH
+          // el viejo quede sellado 'reemplazado' apuntando de vuelta.
+          && (!('reemplazaA' in d) ||
+              (nonEmptyStr(d.reemplazaA)
+               && getAfter(/databases/$(database)/documents/clientes/$(clienteId)/acuerdos/$(d.reemplazaA)).data.estado == 'reemplazado'
+               && getAfter(/databases/$(database)/documents/clientes/$(clienteId)/acuerdos/$(d.reemplazaA)).data.reemplazadoPor == acuerdoId));
+    }
+    // Cierre ONE-WAY desde 'vigente', gobernado por el MUTEX del cliente:
+    //   · vigente→reemplazado: admin, y el puntero del cliente YA NO me apunta
+    //     (se movió al nuevo en el mismo batch — sin sello suelto).
+    //   · vigente→anulado: SOLO OWNER con motivo, y el puntero quedó en null
+    //     ("cancelar" = goma de borrar del cronograma; espejo de anular-abonos).
+    function transicionAcuerdoValida(clienteId, acuerdoId) {
+      let d = request.resource.data;
+      let ptr = getAfter(/databases/$(database)/documents/clientes/$(clienteId)).data.get('acuerdoVigenteId', '');
+      return resource.data.estado == 'vigente'
+          && d.diff(resource.data).affectedKeys()
+               .hasOnly(['estado', 'cerradoPor', 'cerradoEn', 'motivoCierre', 'reemplazadoPor'])
+          && d.cerradoPor == request.auth.uid
+          && d.cerradoEn == request.time
+          && (
+            (d.estado == 'reemplazado' && isAdmin() && nonEmptyStr(d.reemplazadoPor) && ptr != acuerdoId)
+            ||
+            (d.estado == 'anulado' && isOwner()
+             && nonEmptyStr(d.motivoCierre) && d.motivoCierre.size() <= 500 && ptr == '')
+          );
+    }
+    // MUTEX en el doc del cliente: valida la transición del puntero `acuerdoVigenteId`
+    // (el resto de campos del cliente NO la disparan). null='' (ausente o vacío).
+    //   null→new : 1er acuerdo (admin)   — el nuevo queda 'vigente'.
+    //   old →new : renegociación (admin) — nuevo 'vigente' + viejo 'reemplazado'.
+    //   old →null: anulación (OWNER)     — el viejo queda 'anulado'.
+    function mutexAcuerdoValido(clienteId) {
+      let viejo = resource.data.get('acuerdoVigenteId', '');
+      let nuevo = request.resource.data.get('acuerdoVigenteId', '');
+      return viejo == nuevo
+          ? true
+          : (
+            (viejo == '' && nuevo != '' && isAdmin()
+             && getAfter(/databases/$(database)/documents/clientes/$(clienteId)/acuerdos/$(nuevo)).data.estado == 'vigente')
+            ||
+            (viejo != '' && nuevo != '' && isAdmin()
+             && getAfter(/databases/$(database)/documents/clientes/$(clienteId)/acuerdos/$(nuevo)).data.estado == 'vigente'
+             && getAfter(/databases/$(database)/documents/clientes/$(clienteId)/acuerdos/$(viejo)).data.estado == 'reemplazado')
+            ||
+            (viejo != '' && nuevo == '' && isOwner()
+             && getAfter(/databases/$(database)/documents/clientes/$(clienteId)/acuerdos/$(viejo)).data.estado == 'anulado')
+          );
+    }
+
+    // Append-only: el ÚNICO update permitido sobre un movimiento es ANULARLO
+    // (anulado false→true) + sellar auditoría. La validación es del DELTA
+    // (affectedKeys), NUNCA del estado resultante → los asientos legacy "sucios"
+    // siguen siendo anulables (Consejo M3). `.get('anulado', false)` tolera legacy.
+    // M3 (contract, §69-B): motivoCategoria OBLIGATORIO de lista cerrada + GATE por
+    // el EFECTO de revertir, leyendo resource.data (tipo/monto NO están en el delta):
+    //   · anular un ABONO (cualquier monto) → SOLO owner — es la herramienta del
+    //     skimming de efectivo; el "grace period" del Consejo se REFUTÓ (política A.3).
+    //   · factura/apertura/ajuste con monto > 0 y ≤ tope → admin; > tope → owner.
+    //   · monto ≤ 0 o no-entero → owner (anularlo revierte una reducción aprobada;
+    //     falla CERRADO). Cortocircuito anti-lockout: el owner JAMÁS lee config.
+    // `corregidoPor` NO se verifica contra un doc real por diseño (sin cross-doc,
+    // §69; M4 audita "corrección sin enlace" de forma detectiva).
+    function anulacionValida() {
+      let d = request.resource.data;
+      return resource.data.get('anulado', false) == false
+          && d.anulado == true
+          && d.anuladoPor == request.auth.uid
+          && d.anuladoEn == request.time
+          && nonEmptyStr(d.motivoAnulacion)
+          // Lista = UNIÓN de los motivos de anulación pura + los que el flujo de
+          // CORRECCIÓN deriva del mostrador (red-team M3: ABONO_NO_REGISTRADO y
+          // DESCUENTO_AUTORIZADO viajan como motivoCategoria de la pata anulada).
+          && d.motivoCategoria in ['ERROR_REGISTRO', 'DUPLICADO', 'CORRECCION',
+                                   'CORRECCION_FECHA', 'DEVOLUCION_PIEZA',
+                                   'ABONO_NO_REGISTRADO', 'DESCUENTO_AUTORIZADO', 'OTRO']
+          && (!('corregidoPor' in d) || d.corregidoPor is string)
+          && d.diff(resource.data).affectedKeys()
+               .hasOnly(['anulado', 'anuladoPor', 'anuladoEn', 'motivoAnulacion',
+                         'motivoCategoria', 'corregidoPor'])
+          && (isOwner()
+              || (resource.data.tipo in ['factura', 'apertura', 'ajuste']
+                  && resource.data.monto is int && resource.data.monto > 0
+                  && resource.data.monto <= get(/databases/$(database)/documents/config/cartera).data.autoAprobacionMax));
+    }
+
+    // ─── S6: validación de campos (tolerante a merge/partial updates) ────────────
+    // En update con merge, request.resource.data = estado RESULTANTE completo, por
+    // eso en `update` solo validamos TIPOS si el campo está presente (no exigimos
+    // presencia → no rompe patches de imágenes ni docs legacy). En `create` sí
+    // exigimos los obligatorios (name/code que el form de admin garantiza).
+    // NOTA (reglas Firestore): acceder a un campo AUSENTE lanza error de evaluación
+    // ("Property X is undefined on object") → NO usar `d.campo == null` para opcionales.
+    // Idiom correcto: `!('campo' in d) || d.campo is <tipo>` (presencia primero).
+    // B1 paso 1 (TODO-37): inventario/clasificación que controla Kary.
+    //   stockType ∈ {finito,encargo} · cantidad int≥0 · gender ∈ {mujer,hombre,unisex}.
+    // NOTA seguridad: estado/reservaId/reservaExpira (stock TRANSACCIONAL) NO se validan ni
+    // permiten aquí a propósito — los escribe SOLO la Cloud Function del pedido (Admin SDK,
+    // que ignora estas reglas); su candado CF-only se diseña en el paso del pedido (design §1.1/§5).
+    // TODO-40 v3: clasificación que controla Kary (admin). `cantidad` NO va aquí — es STOCK
+    // TRANSACCIONAL (ver pieceCantidad* abajo): permitida al CREAR, INMUTABLE en UPDATE (CF-only).
+    //   stockType ∈ {finito, finito_refabricable, encargo} (enum 3 — reemplaza el bool `refabricable`;
+    //               cierra combos imposibles, comité+Gemini) · visibilidad ∈ {publica, privada}
+    //               (privada = facturable FUERA del catálogo; el `read` de /pieces la blinda) ·
+    //               gender ∈ {mujer, hombre, unisex}.
+    function pieceClassValid(d) {
+      return (!('stockType' in d)   || (d.stockType is string && d.stockType in ['finito', 'finito_refabricable', 'encargo']))
+          && (!('visibilidad' in d) || (d.visibilidad is string && d.visibilidad in ['publica', 'privada']))
+          && (!('gender' in d)      || (d.gender is string && d.gender in ['mujer', 'hombre', 'unisex']));
+    }
+    // B1 paso 3 (candado de stock): estado/reservaId/reservaExpira son STOCK TRANSACCIONAL →
+    // los escribe SOLO la Cloud Function del pedido (Admin SDK, ignora estas reglas). El cliente
+    // (admin/catálogo) NUNCA puede mandarlos: deben estar AUSENTES en su payload. Como el admin
+    // guarda con merge:true, el valor que pone la CF se PRESERVA en cada edición de Kary. Un
+    // cliente que intente inyectar/cambiar el estado de venta = DENY (no puede des-vender a mano).
+    function pieceStockLocked(d) {
+      return !('estado' in d) && !('reservaId' in d) && !('reservaExpira' in d);
+    }
+    // UPDATE (bugfix §152): con merge:true el doc RESULTANTE conserva estado/reservaId/reservaExpira que
+    // puso la CF → un chequeo de PRESENCIA (pieceStockLocked) los DENEGABA (toda pieza ya reservada/vendida
+    // quedaba ineditable). Lo correcto es validar el DELTA: el cliente (admin/catálogo) no puede AÑADIR/
+    // CAMBIAR/QUITAR ninguno; la CF sí (Admin SDK ignora estas reglas). Si no cambian, no aparecen en el diff.
+    function pieceStockUnchanged() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+                .hasAny(['estado', 'reservaId', 'reservaExpira']);
+    }
+    // TODO-40 v3 · `cantidad` = STOCK TRANSACCIONAL (cierra el TOCTOU, Gemini claim 3).
+    //  · CREATE: el admin fija la cantidad INICIAL (int≥0) — alta legítima (un create solo nace en doc
+    //    NUEVO → sin venta concurrente; el ledger `pieces/{id}/movimientos` registra el alta, B3).
+    //    `encargo` → cantidad AUSENTE (no aplica).
+    //  · UPDATE: cantidad INMUTABLE para el cliente (la mueve SOLO la CF: vender/reabastecer/ajustar/
+    //    cambiar-tipo). Por IGUALDAD (no "ausencia", ambigua con merge:true): un update que la cambie =
+    //    DENY → el merge del form de edición (que ya NO la envía, B4) no puede resucitar una unidad vendida.
+    function pieceCantidadCreateOk(d) {
+      return !('cantidad' in d) || (d.cantidad is int && d.cantidad >= 0);
+    }
+    function pieceCantidadUnchanged() {
+      return !('cantidad' in request.resource.data)
+          || (('cantidad' in resource.data) && request.resource.data.cantidad == resource.data.cantidad);
+    }
+    function pieceCreateValid() {
+      let d = request.resource.data;
+      return d.name is string && d.name.size() > 0
+          && d.code is string && d.code.size() > 0
+          && (!('price' in d)    || (d.price is number && d.price >= 0))   // E.6: el total del pedido nace del price
+          && (!('featured' in d) || d.featured is bool)
+          && (!('images' in d)   || d.images is list)
+          && (!('sizes' in d)    || d.sizes is list)
+          && (!('specs' in d)    || d.specs is map)
+          && pieceClassValid(d)
+          && pieceStockLocked(d)
+          && pieceCantidadCreateOk(d);
+    }
+    function pieceTypesValid() {
+      let d = request.resource.data;
+      return (!('name' in d)       || d.name is string)
+          && (!('code' in d)       || d.code is string)
+          && (!('slug' in d)       || d.slug is string)
+          && (!('collection' in d) || d.collection is string)
+          && (!('featured' in d)   || d.featured is bool)
+          && (!('price' in d)      || (d.price is number && d.price >= 0))   // E.6
+          && (!('images' in d)     || d.images is list)
+          && (!('sizes' in d)      || d.sizes is list)
+          && (!('specs' in d)      || d.specs is map)
+          && pieceClassValid(d)
+          && pieceStockUnchanged()
+          && pieceCantidadUnchanged();
+    }
+    function colCreateValid() {
+      let d = request.resource.data;
+      return d.name is string && d.name.size() > 0
+          && (!('featured' in d) || d.featured is bool);
+    }
+    function colTypesValid() {
+      let d = request.resource.data;
+      return (!('name' in d)     || d.name is string)
+          && (!('slug' in d)     || d.slug is string)
+          && (!('subtitle' in d) || d.subtitle is string)
+          && (!('featured' in d) || d.featured is bool);
+    }
+    // ─── F2.2 · Catálogo de servicios/modificaciones (facturación multi-línea) ───
+    // OWNER-only write (comité §8.3 A: el precio de servicio ES dinero → least-privilege;
+    // caja/admin NO editan). hasOnly acotado (anti-inyección L-15) + tipos. El COBRO re-lee
+    // el precio server-side (crearPedidoCore, candado en la tx) → el catálogo NO es el camino
+    // del dinero; por eso write-directo owner-gated es seguro (+ historial inmutable como red).
+    function servicioValido() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['codigo', 'nombre', 'precio', 'activo', 'naturaleza',
+                               'createdAt', 'createdBy', 'updatedAt', 'updatedBy'])
+          && nonEmptyStr(d.codigo) && d.codigo.size() <= 20
+          && nonEmptyStr(d.nombre) && d.nombre.size() <= 80
+          && d.precio is int && d.precio >= 0
+          && (!('activo' in d)     || d.activo is bool)
+          && (!('naturaleza' in d) || d.naturaleza in ['bien', 'servicio']);
+    }
+
+    // ─── CMS · Contenido público (journal/films/social…) — validador genérico ────
+    // Whitelist hasOnly OBLIGATORIA (L-15, repo público): cada recurso declara solo
+    // sus claves de CONTENIDO; este helper añade automáticamente los campos de
+    // auditoría que estampa el motor de servicio (createTypedDoc/updateTypedDoc:
+    // _version + createdAt/updatedAt + createdBy/updatedBy). Cualquier clave fuera
+    // de esa unión = inyección → DENY. NO valida tipos (eso lo hace cada recurso).
+    function publicContentValid(d, contentKeys) {
+      return d.keys().hasOnly(contentKeys.concat(
+          ['_version', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy']));
+    }
+    // Journal (entradas editoriales). El id del doc = slug (URL SEO). Idioms de
+    // opcionales: `!('x' in d) || d.x is tipo` (acceder a campo ausente LANZA).
+    // size-cap en todo string (L-15); `date` ISO opcional; `body` hasta 20k.
+    function journalValid() {
+      let d = request.resource.data;
+      return publicContentValid(d, ['title', 'slug', 'section', 'kicker', 'excerpt',
+                                    'body', 'date', 'read', 'author', 'authorRole',
+                                    'image', 'featured', 'published', 'cover', 'order'])
+          && d.title is string && d.title.size() > 0 && d.title.size() <= 200
+          && (!('slug' in d)       || (d.slug is string       && d.slug.size() <= 200))
+          && (!('section' in d)    || (d.section is string    && d.section.size() <= 80))
+          && (!('kicker' in d)     || (d.kicker is string     && d.kicker.size() <= 200))
+          && (!('excerpt' in d)    || (d.excerpt is string    && d.excerpt.size() <= 2000))
+          && (!('body' in d)       || (d.body is string       && d.body.size() <= 20000))
+          && (!('date' in d)       || (d.date is string       && d.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
+          && (!('read' in d)       || (d.read is string       && d.read.size() <= 40))
+          && (!('author' in d)     || (d.author is string     && d.author.size() <= 120))
+          && (!('authorRole' in d) || (d.authorRole is string && d.authorRole.size() <= 120))
+          && (!('image' in d)      || (d.image is string      && d.image.size() <= 1000))
+          && (!('featured' in d)   || d.featured is bool)
+          && (!('published' in d)  || d.published is bool)
+          // Colocación editorial (CMS §journal): `cover` = portada (la grande);
+          // `featured` = destacada (franja de abajo del home); `order` = posición.
+          && (!('cover' in d)      || d.cover is bool)
+          && (!('order' in d)      || (d.order is number && d.order >= 0 && d.order <= 100000))
+          // PUERTA cero-ficción (Fase B, TODO-24): un doc PUBLICADO exige los campos
+          // reales del render (title ya exigido arriba + imagen + resumen) no vacíos.
+          // `.get(k,'')` evita el throw al acceder a campo ausente (idiom S6) → DENY limpio.
+          && (d.get('published', false) == false
+              || (nonEmptyStr(d.get('image', '')) && nonEmptyStr(d.get('excerpt', ''))));
+    }
+    // Films (videos del home). Espejo del consumidor js/home/films.js + home-sections.js.
+    // CERO-FICCIÓN (barrera #3 del comité): un doc PUBLICADO exige title+thumb+href no
+    // vacíos → imposible publicar un video a-medias (el render del home nunca ve ficción).
+    function filmValid() {
+      let d = request.resource.data;
+      return publicContentValid(d, ['title', 'slug', 'cat', 'thumb', 'href',
+                                    'dur', 'desc', 'badge', 'featured', 'published'])
+          && d.title is string && d.title.size() > 0 && d.title.size() <= 200
+          && (!('slug' in d)      || (d.slug is string  && d.slug.size() <= 200))
+          && (!('cat' in d)       || (d.cat is string   && d.cat.size() <= 80))
+          && (!('thumb' in d)     || (d.thumb is string && d.thumb.size() <= 1000))
+          && (!('href' in d)      || (d.href is string  && d.href.size() <= 1000))
+          && (!('dur' in d)       || (d.dur is string   && d.dur.size() <= 40))
+          && (!('desc' in d)      || (d.desc is string  && d.desc.size() <= 2000))
+          && (!('badge' in d)     || (d.badge is string && d.badge.size() <= 40))
+          && (!('featured' in d)  || d.featured is bool)
+          && (!('published' in d) || d.published is bool)
+          && (d.get('published', false) == false
+              || (nonEmptyStr(d.get('thumb', '')) && nonEmptyStr(d.get('href', ''))));
+    }
+    // SocialPosts (feed de redes del home, CURADO MANUAL por Kary). Espejo de
+    // js/home/social.js. PUBLICADO ⇒ thumb + caption + platform (de la lista de redes
+    // soportadas por el render: fuera de ella, el ícono/filtro no funcionan → ficción).
+    function socialValid() {
+      let d = request.resource.data;
+      return publicContentValid(d, ['platform', 'slug', 'caption', 'thumb', 'href',
+                                    'type', 'published'])
+          && (!('platform' in d)  || (d.platform is string && d.platform.size() <= 40))
+          && (!('slug' in d)      || (d.slug is string     && d.slug.size() <= 200))
+          && (!('caption' in d)   || (d.caption is string  && d.caption.size() <= 2000))
+          && (!('thumb' in d)     || (d.thumb is string    && d.thumb.size() <= 1000))
+          && (!('href' in d)      || (d.href is string     && d.href.size() <= 1000))
+          && (!('type' in d)      || (d.type is string     && d.type.size() <= 40))
+          && (!('published' in d) || d.published is bool)
+          // href OBLIGATORIO al publicar (decisión Daniel 2026-06-20): cada tarjeta de
+          // Redes enlaza al post real → sin enlace es una tarjeta muerta = a-medias.
+          && (d.get('published', false) == false
+              || (nonEmptyStr(d.get('thumb', '')) && nonEmptyStr(d.get('caption', ''))
+                  && nonEmptyStr(d.get('href', ''))
+                  && d.get('platform', '') in ['Instagram', 'Facebook', 'TikTok']));
+    }
+
+    // SiteContent (CMS · textos de página, SINGLETONS): doc por página con sub-mapas
+    // por sección. hasOnly del set de sub-mapas conocidos + auditoría (anti-inyección
+    // L-15); cada sub-mapa es `map` (validación PROFUNDA hoja-por-hoja = cliente +
+    // renderer esc/safeUrl + CSP, gran plan §2.D — las reglas no recursan). El cap de
+    // CARDINALIDAD de las listas (P4) SÍ se valida aquí (siteListOk, anti denial-of-wallet);
+    // el cap por-STRING sigue siendo client-side por diseño (las reglas no recursan en
+    // list-of-map; el rol `editor` es de confianza y el contenido es marketing reconstruible).
+    // Whitelist = sub-mapas del HOME hoy; se amplía por página (nosotros/contacto/global) en P2.
+    // Sub-mapas permitidos POR PÁGINA (anti-inyección hasOnly, L-15). Definidos de una
+    // vez para home/contacto/nosotros/global → no re-editar reglas por cada página.
+    function siteContentKeys(page) {
+      return page == 'home'     ? ['hero', 'editorial', 'atelier', 'cta', 'marquee']
+           : page == 'contacto' ? ['hero', 'proceso', 'faq']
+           : page == 'nosotros' ? ['hero', 'manifiesto', 'maison', 'valores', 'timeline', 'equipo', 'atelier', 'cifras', 'certificaciones', 'resenas', 'faqs', 'cierre']
+           : page == 'global'   ? ['contacto', 'footer', 'redes']
+           : [];
+    }
+    // P4: cap de CARDINALIDAD de una lista dentro de un sub-mapa (techo de seguridad,
+    // desacoplado del max de UX del panel). Opcional + tipada: si la clave existe debe ser
+    // list y no superar `cap`. Las reglas no recursan en los ítems → el string por-hoja
+    // queda al cliente (ver comentario de cabecera). cap=24 (2× el max de UX 6-12) ≪ 1 MiB.
+    function siteListOk(m, key, cap) {
+      return !(key in m) || (m[key] is list && m[key].size() <= cap);
+    }
+    function siteContentValid(page) {
+      let d = request.resource.data;
+      let allowed = siteContentKeys(page);
+      return allowed.size() > 0                       // página conocida (rechaza ids raros)
+          && d.keys().hasOnly(allowed.concat(['_version', '_published', 'createdAt', 'createdBy', 'updatedAt', 'updatedBy']))
+          && (!('hero' in d)       || d.hero is map)
+          && (!('editorial' in d)  || d.editorial is map)
+          && (!('atelier' in d)    || d.atelier is map)
+          && (!('cta' in d)        || d.cta is map)
+          && (!('marquee' in d)    || d.marquee is map)
+          && (!('proceso' in d)    || d.proceso is map)
+          && (!('faq' in d)        || d.faq is map)
+          && (!('maison' in d)          || d.maison is map)
+          && (!('timeline' in d)        || d.timeline is map)
+          && (!('equipo' in d)          || d.equipo is map)
+          && (!('valores' in d)         || d.valores is map)
+          && (!('manifiesto' in d)      || d.manifiesto is map)
+          && (!('cierre' in d)          || d.cierre is map)
+          && (!('cifras' in d)          || d.cifras is map)
+          && (!('certificaciones' in d) || d.certificaciones is map)
+          && (!('resenas' in d)         || d.resenas is map)
+          && (!('faqs' in d)            || d.faqs is map)
+          && (!('contacto' in d)        || d.contacto is map)
+          && (!('footer' in d)          || d.footer is map)
+          && (!('redes' in d)           || d.redes is map)
+          // P4: cardinalidad de las listas de Nosotros (anti denial-of-wallet server-side; cap 24).
+          && (!('valores' in d)         || siteListOk(d.valores, 'items', 24))
+          && (!('timeline' in d)        || siteListOk(d.timeline, 'items', 24))
+          && (!('equipo' in d)          || siteListOk(d.equipo, 'items', 24))
+          && (!('cifras' in d)          || siteListOk(d.cifras, 'items', 24))
+          && (!('certificaciones' in d) || siteListOk(d.certificaciones, 'items', 24))
+          && (!('resenas' in d)         || siteListOk(d.resenas, 'items', 24))
+          && (!('faqs' in d)            || siteListOk(d.faqs, 'items', 24))
+          && (!('_published' in d)      || d._published is bool);
+    }
+
+    // ─── F6 frenos de gasto: forms públicos con forma EXACTA (anti spam / denial-of-wallet) ──
+    // Whitelist de claves + tipos + tamaños máximos + serverTimestamp obligatorio
+    // (`createdAt == request.time` ⇒ solo pasa serverTimestamp(), nunca fechas del cliente).
+    // Payload espejo en js/firestore-service.js (submitReview / addSubscription / saveInquiry).
+    function reviewCreateValida() {
+      let d = request.resource.data;
+      // B.2: `email` FUERA del doc público — al aprobar, el doc completo queda legible por cualquiera
+      // (las reglas no ocultan campos) → cosechable por `query(reviews, approved==true)`, fuga de PII
+      // (Ley 1581). El email de contacto del reseñador se captura aparte cuando TODO-48 active reviews.
+      return d.keys().hasOnly(['pieceSlug', 'pieceName', 'author', 'rating', 'comment', 'approved', 'createdAt'])
+          && nonEmptyStr(d.author)  && d.author.size()  <= 120
+          && nonEmptyStr(d.comment) && d.comment.size() <= 2000
+          && d.rating is number && d.rating >= 1 && d.rating <= 5
+          && d.approved == false
+          && (!('pieceSlug' in d) || (d.pieceSlug is string && d.pieceSlug.size() <= 200))
+          && (!('pieceName' in d) || (d.pieceName is string && d.pieceName.size() <= 200))
+          && d.createdAt == request.time;
+    }
+    function subscriptionCreateValida() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['email', 'source', 'createdAt', 'active'])
+          && d.email is string && d.email.size() >= 5 && d.email.size() <= 254
+          && d.email.matches('^[^@]+@[^@]+[.][^@]+$')
+          && (!('source' in d) || (d.source is string && d.source.size() <= 40))
+          && (!('active' in d) || d.active == true)
+          && d.createdAt == request.time;
+    }
+    function inquiryCreateValida() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['name', 'email', 'phone', 'message', 'pieceSlug', 'source', 'status', 'createdAt'])
+          && nonEmptyStr(d.name)    && d.name.size()    <= 120
+          && nonEmptyStr(d.message) && d.message.size() <= 3000
+          && (!('email' in d) || (d.email is string && d.email.size() <= 254))
+          && (!('phone' in d) || (d.phone is string && d.phone.size() <= 30))
+          && (!('pieceSlug' in d) || d.pieceSlug == null || (d.pieceSlug is string && d.pieceSlug.size() <= 200))
+          && d.source is string && d.source.size() <= 40
+          && d.status == 'nuevo'
+          && d.createdAt == request.time;
+    }
+
+    // ─── Pieces (products) ─────────────────────────────────────────────────────
+
+    match /pieces/{pieceId} {
+      // TODO-40 v3 · D5 BLINDAJE VIP (fail-CLOSED): el público lee SOLO piezas con visibilidad
+      // EXPLÍCITA y NO 'privada'; el staff de catálogo (quien las gestiona) lee todo. Una pieza
+      // 'privada' (a-medida/VIP, facturable fuera del catálogo) NUNCA es legible por el público,
+      // aunque conozca el id. El SSG además la excluye (defensa en profundidad) — pero la BARRERA real
+      // es esta regla (el SSG es oscuridad, no seguridad — Gemini). ⚠️ GATE DE DEPLOY: correr
+      // `migrate-inventario-v3.mjs --apply` (backfill visibilidad='publica' a todo legacy) Y que la
+      // query pública filtre `where('visibilidad','==','publica')` (B5) ANTES de desplegar esta regla;
+      // si no, el catálogo público se oculta (Firestore RECHAZA una query mixta, no la filtra sola).
+      allow read: if (('visibilidad' in resource.data) && resource.data.visibilidad != 'privada') || isCatalogo();
+      allow create: if isCatalogo() && pieceCreateValid(); // editor+/catálogo con campos válidos
+      allow update: if isCatalogo() && pieceTypesValid();  // S6: tolerante a merge/partial
+      allow delete: if isAdmin() || (isAuth() && getUserRole() == 'catalogo'); // admin+ o catálogo (editor NO borra)
+      // TODO-40 v3 · LEDGER de movimientos de stock (C4): lo escribe SOLO la CF (Admin SDK, ignora estas
+      // reglas) — venta/anulación/ajuste/reabasto; el staff de catálogo lo LEE para auditar ("¿por qué
+      // dice 3 y no 4?"). Append-only: el cliente nunca escribe.
+      match /movimientos/{movId} {
+        allow read:  if isCatalogo();
+        allow write: if false;
+      }
+    }
+
+    // ─── F2.2 · Servicios/modificaciones (catálogo del mostrador) ───────────────
+    // READ = staff que OPERA el POS (ventas ∪ caja): el buscador de servicios del mostrador
+    // lo necesita. WRITE = OWNER-only (comité §8.3 A: el precio ES dinero). `codigo` INMUTABLE
+    // en update (llave de facturación rápida). Soft-delete: prohibir delete (solo activo:false)
+    // → las ventas viejas conservan el servicio aunque se retire del catálogo. El COBRO re-lee
+    // el precio en la CF (server-side, candado) → el catálogo NUNCA manipula el cobro.
+    match /servicios/{servicioId} {
+      allow read:   if isVentas() || isCaja();
+      allow create: if isOwner() && servicioValido();
+      allow update: if isOwner() && servicioValido()
+                    && request.resource.data.codigo == resource.data.codigo;   // codigo inmutable
+      allow delete: if false;                       // soft-delete (activo:false), nunca borrar
+      // Historial INMUTABLE del cambio de precio (comité §8.3 A · doc inmutable). Lo escribe el
+      // CMS owner al cambiar el precio; append-only (como movimientos/gestiones del CRM).
+      match /historial/{histId} {
+        allow read:   if isVentas() || isCaja();
+        allow create: if isOwner();
+        allow update, delete: if false;
+      }
+    }
+
+    // ─── Pedidos (ventas — B1 paso 3) ──────────────────────────────────────────
+    // El pedido lo crea/muta SOLO la Cloud Function `crearPedido` (Admin SDK, que IGNORA estas
+    // reglas) → único escritor server-side: total recalculado + snapshot inmutable. El cliente
+    // NUNCA escribe (ni Kary): así nadie manipula precio/estado por fuera de la CF. Read = staff
+    // de ventas (owner/admin/catálogo = Kary); NO público (lleva PII + dinero).
+    function isVentas() { return isAuth() && getUserRole() in ['owner', 'admin', 'catalogo']; }
+    match /pedidos/{pedidoId} {
+      allow read: if isVentas();
+      allow create, update, delete: if false;     // SOLO Admin SDK (la CF)
+      match /{sub=**} {                            // pagos 1..N (futuro) — igual CF-only
+        allow read:  if isVentas();
+        allow write: if false;
+      }
+    }
+    // Contador correlativo de pedidos — colección DEDICADA, deny-all al cliente; la CF la
+    // gestiona con Admin SDK (lee+incrementa dentro de la misma transacción del pedido).
+    match /contadores/{docId} {
+      allow read, write: if false;
+    }
+    // Índice de códigos públicos de pedido (§166: BJ-XXXX-XXXX) — garantiza unicidad ETERNA:
+    // la CF lo lee+reserva DENTRO de la misma transacción que crea el pedido (Admin SDK). El
+    // código viaja en el doc pedido (el staff lo lee de ahí); nadie toca el índice por fuera.
+    match /codigosPedido/{codigo} {
+      allow read, write: if false;
+    }
+    // F2.1 · Índice de IDENTIDAD del cliente (docHash = HMAC(legalIdKey, pepper) → clienteId).
+    // DENY-ALL incluso para admin/owner (comité seguridad): es estructura de integridad interna;
+    // que un cliente lo lea = enumerar documentos, que lo escriba = desincronizar el dedup. SOLO
+    // las CFs de identidad (Admin SDK) lo leen/reservan DENTRO de una transacción. La cédula NUNCA
+    // viaja en la ruta (va hasheada). Los campos `legalIdKey`/`docKeys`/`authUid`/`contacto` de
+    // `clientes` quedan CF-only por EXCLUSIÓN de los whitelists hasOnly de create/update (ausentes
+    // en create, inmutables en update) — no se añaden a esas listas a propósito.
+    match /clientesPorDoc/{docHash} {
+      allow read, write: if false;
+    }
+    // Arqueo / Cierre Z (B1 paso 5) — lo ESCRIBE solo la CF `cierreCaja` (Admin SDK); el staff
+    // de ventas LEE el histórico de cierres, nadie escribe por fuera (el descuadre no se falsea).
+    match /arqueo/{turnoId} {
+      allow read: if isVentas();
+      allow create, update, delete: if false;
+    }
+    // Idempotencia del webhook de Wompi (Wompi F2) — lo ESCRIBE solo la CF `confirmarPagoWompi`
+    // (Admin SDK), 1 doc por transactionId. El staff de ventas LEE para auditoría; nadie escribe por
+    // fuera (un cliente no puede falsificar un "evento procesado" para forzar un pago).
+    match /webhookEvents/{txId} {
+      allow read: if isVentas();
+      allow create, update, delete: if false;
+    }
+
+    // ─── F2.0 · Sesión de caja + Bóveda antirrobo (B0b) ─────────────────────────
+    // SSoT del diseño: docs/superpowers/specs/2026-07-06-f2-0-caja-boveda-DISENO.md (§Bloque B0 · §9.9).
+    // TODO el ledger de dinero de caja lo ESCRIBE solo la CF (Admin SDK, que IGNORA estas
+    // reglas): apertura/movimiento/traslado/cierre en runTransaction (invariantes #2-#6).
+    // El cliente NUNCA escribe (write:false). La cajera (`caja`) LEE su turno; la bóveda es
+    // OWNER-only (discreción D7: ni un atraco ni un vistazo al POS revela el acumulado).
+
+    // Puntero SINGLETON del turno abierto (invariante #4): lo mueve SOLO abrir/cerrarTurno
+    // (CF, tx atómica sobre `caja/estado`). La cajera lo LEE (¿hay caja abierta?).
+    match /caja/{docId} {
+      allow read:  if isCaja();
+      allow write: if false;                    // SOLO Admin SDK (las CF de caja)
+    }
+    // Turnos de caja (ciclo abierto→cerrado) + sus movimientos manuales (ingreso/egreso).
+    // ⚠️ Subcolección `movsCaja`, NO `movimientos`: ese nombre alimenta el collectionGroup de
+    // cartera CxC (corte/salud/reconciliación, functions/*) — reusarlo contaminaría el aging
+    // e infla su full-scan a 2-3 años (§3.6, verificado 2026-07-07). Desvía del §3 de la spec
+    // con evidencia (Reflejo de Desafío Crítico §G.4) → L-73.
+    match /turnos/{turnoId} {
+      allow read:  if isCaja();
+      allow create, update, delete: if false;   // SOLO Admin SDK (abrir/cerrar por puntero)
+      match /movsCaja/{movId} {
+        allow read:  if isCaja();
+        allow write: if false;                  // append-only vía CF (movimientoCaja)
+      }
+    }
+    // Bóveda (caja fuerte) — DISCRECIÓN D7 (§9.9): saldo acumulado + checkpoints = OWNER-only
+    // (la cajera JAMÁS lo ve). `saldo` lo recomputa la CF `recalcBoveda` desde el ledger
+    // (patrón recalcSaldoCliente §50), NUNCA el cliente. El wildcard cubre boveda/main y sus
+    // checkpoints mensuales (boveda/main/checkpoints/{YYYY-MM}, cota del recompute §8.3).
+    match /boveda/{docId} {
+      allow read:  if isOwner();
+      allow write: if false;
+      match /{sub=**} {
+        allow read:  if isOwner();
+        allow write: if false;
+      }
+    }
+    // Ledger de bóveda — APPEND-ONLY ESTRICTO (§9.3): CF-only + NUNCA update/delete (ni el
+    // owner). Corregir = movimiento `reverso` NUEVO con doble rastro, jamás editar/borrar el
+    // asiento (reversing entries: el dinero no se puede ocultar). Lectura owner-only (auditoría).
+    match /bovedaMovimientos/{opId} {
+      allow read:  if isOwner();
+      allow write: if false;                    // SOLO Admin SDK; sin update/delete = inmutable
+    }
+
+    // ─── F-TESORERÍA · Cuentas y bancos (libro auxiliar de tesorería, B0) ────────
+    // SSoT del diseño: docs/superpowers/specs/2026-07-18-f-tesoreria-DISENO.md (§1 · D2 · D8).
+    // TODO el ledger de tesorería lo ESCRIBE solo la CF `registrarMovimientoTesoreria` (Admin SDK,
+    // que IGNORA estas reglas): registro/traslado/aprobación/conciliación en runTransaction
+    // (invariantes de dinero #1-#7). El cliente NUNCA escribe (write:false, patrón bóveda). read
+    // admin/owner (D8: Kary registra, el owner aprueba). La cajera (`caja`) NO ve tesorería —
+    // parámetros del negocio = admin+, misma discreción que config/cartera.
+    match /cuentasTesoreria/{cuentaId} {
+      allow read:  if isAdmin();
+      allow write: if false;                    // SOLO Admin SDK (crearCuentaTesoreria); saldoActual = recompute CF-only (D5)
+    }
+    // Ledger de movimientos — APPEND-ONLY ESTRICTO (§1): CF-only + NUNCA update/delete (ni el
+    // owner). Un movimiento conciliado es INMUTABLE (corregir = ajuste_inverso NUEVO con doble
+    // rastro, jamás editar/borrar el asiento). read admin/owner (auditoría).
+    match /movimientosTesoreria/{opId} {
+      allow read:  if isAdmin();
+      allow write: if false;                    // SOLO Admin SDK; sin update/delete = inmutable
+    }
+
+    // ─── F-COMPRAS · Proveedores (cuentas por pagar, C0) ─────────────────────────
+    // SSoT del diseño: docs/superpowers/specs/2026-07-27-f-compras-DISENO.md (A1/A5 · §2 R1-R5).
+    // Espejo de la cartera del otro lado: "¿a quién le debo, cuánto y cuándo se vence?".
+    // TODO lo escribe la CF (Admin SDK, que IGNORA estas reglas): el cliente NUNCA escribe, ni
+    // siquiera el owner — mismo patrón que tesorería y bóveda. El saldo del proveedor es
+    // recompute server-side (A1), jamás un campo que alguien pueda pisar a mano.
+    // read admin/owner: la deuda con proveedores es información reservada del negocio, la cajera no la ve.
+    match /proveedores/{proveedorId} {
+      allow read:  if isAdmin();
+      allow write: if false;                    // SOLO Admin SDK (CF única escritora, A5)
+
+      // Ledger POR DOCUMENTO (A1) — facturas, anticipos y notas crédito, cada uno con su propio
+      // saldo y su vencimiento. APPEND-ONLY: anular = sellar `anulado`, jamás update/delete.
+      match /comprasDocumentos/{opId} {
+        allow read:  if isAdmin();
+        allow write: if false;
+      }
+      // Pagos y las dos patas del cruce de anticipo (A3). Mismo append-only.
+      match /comprasMovimientos/{opId} {
+        allow read:  if isAdmin();
+        allow write: if false;
+      }
+      // R2a · doc-llave de unicidad "una factura por proveedor". Firestore no tiene unique
+      // constraint: la exclusión la da este doc determinista creado en la MISMA tx del documento.
+      match /facturasLlave/{llave} {
+        allow read:  if isAdmin();
+        allow write: if false;
+      }
+    }
+
+    // ─── Collections (categories) ──────────────────────────────────────────────
+
+    match /collections/{colId} {
+      allow read: if true;                                 // Public
+      allow create: if isCatalogo() && colCreateValid();   // editor+/catálogo
+      allow update: if isCatalogo() && colTypesValid();    // S6: tolerante a merge/partial
+      allow delete: if isAdmin() || (isAuth() && getUserRole() == 'catalogo'); // admin+ o catálogo (editor NO borra)
+    }
+
+    // ─── CMS · Journal (entradas editoriales) ──────────────────────────────────
+    // Contenido público por diseño (read:true; el flag `published` gobierna la
+    // VISUALIZACIÓN en el sitio, no el acceso — es copy de marketing, no dato
+    // sensible). Escritura rol `editor` con validador tipado + hasOnly. El motor
+    // genérico (createTypedDoc) sella la auditoría; el id del doc = slug.
+    match /journal/{entryId} {
+      allow read:   if true;
+      allow create: if isEditor() && journalValid();
+      allow update: if isEditor() && journalValid();
+      allow delete: if isAdmin();
+    }
+
+    // ─── CMS · Films (videos del home) ─────────────────────────────────────────
+    // Igual que journal: lectura pública (el flag `published` gobierna la VISUALIZACIÓN,
+    // no el acceso — es marketing). Escritura `editor` con validador tipado + hasOnly +
+    // PUERTA cero-ficción. El motor genérico (createTypedDoc) sella la auditoría; id = slug.
+    match /films/{filmId} {
+      allow read:   if true;
+      allow create: if isEditor() && filmValid();
+      allow update: if isEditor() && filmValid();
+      allow delete: if isAdmin();
+    }
+
+    // ─── CMS · SocialPosts (feed de redes del home, curado manual) ─────────────
+    match /socialPosts/{postId} {
+      allow read:   if true;
+      allow create: if isEditor() && socialValid();
+      allow update: if isEditor() && socialValid();
+      allow delete: if isAdmin();
+    }
+
+    // ─── CMS · SiteContent (textos de página, singletons) ──────────────────────
+    // read público (copy de marketing). write `editor` con validador hasOnly. Sin
+    // delete (los singletons se vacían/despublican, no se borran). El id = la página.
+    match /siteContent/{page} {
+      allow read:  if true;
+      allow write: if isEditor() && siteContentValid(page);
+    }
+
+    // ─── Reviews ───────────────────────────────────────────────────────────────
+
+    match /reviews/{reviewId} {
+      allow read: if resource.data.approved == true || isAdmin();  // S5: público solo aprobadas; admin ve todas
+      allow create: if reviewCreateValida();   // F6: forma exacta + nunca nace aprobada
+      allow update, delete: if isAdmin();      // Admin+ moderates reviews
+    }
+
+    // ─── Subscriptions (newsletter) ────────────────────────────────────────────
+
+    match /subscriptions/{subId} {
+      allow read: if isAdmin();                // Admin only
+      allow create: if subscriptionCreateValida(); // F6: email válido + forma exacta
+      allow update, delete: if isAdmin();      // Admin manages
+    }
+
+    // ─── Inquiries (contact form leads) ────────────────────────────────────────
+
+    match /inquiries/{inqId} {
+      allow read: if isEditor();               // Editors+ can see leads
+      allow create: if inquiryCreateValida();  // F6: forma exacta + status 'nuevo' forzado
+      // B.3: update SOLO del delta operativo (estado del lead), NO reescribir el contenido (PII del
+      // lead: name/email/phone/message) ni falsear createdAt/_counted. Whitelist de claves + tipos.
+      allow update: if isEditor()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'convertedTo', 'updatedAt'])
+          && (!('status' in request.resource.data)      || request.resource.data.status is string)
+          && (!('convertedTo' in request.resource.data) || request.resource.data.convertedTo is string);
+      allow delete: if isAdmin();              // Admin cleans up
+    }
+
+    // collectionGroup de `movimientos`: lectura para el aging/mora de la lista CxC
+    // (ADR §51). Solo admin. Los WRITES siguen gobernados por el match anidado de
+    // abajo (clientes/{id}/movimientos/{id}); este match SOLO concede lectura de grupo.
+    match /{path=**}/movimientos/{movId} {
+      allow read: if isAdmin();
+    }
+
+    // collectionGroup de `solicitudes`: la cola de aprobación de Daniel (M2b) lee
+    // TODAS las pendientes cruzando clientas. Índice COLLECTION_GROUP declarado en
+    // firestore.indexes.json (estado ASC, creadoEn ASC) — sin él, FAILED_PRECONDITION.
+    match /{path=**}/solicitudes/{solId} {
+      allow read: if isAdmin();
+    }
+
+    // collectionGroup de `gestiones`: conteos del expediente de castigo (M5/M7).
+    match /{path=**}/gestiones/{gestId} {
+      allow read: if isAdmin();
+    }
+
+    // collectionGroup de `acuerdos`: el corte mensual y la agenda de cobro cruzan
+    // clientas (spec 2026-06-12; índice CG en firestore.indexes.json).
+    match /{path=**}/acuerdos/{acuerdoId} {
+      allow read: if isAdmin();
+    }
+
+    // ─── CRM: clientes y movimientos (cuentas por cobrar) — SOLO admin/owner ─────
+    match /clientes/{clienteId} {
+      allow read:   if isAdmin();
+      allow create: if isAdmin() && clienteValido();
+      // M0-H (Fase M §69): whitelist en UPDATE — cierra `saldoActual` (lo escribe
+      // SOLO la CF recalcSaldoCliente; antes un admin podía pisarlo a mano).
+      // `acuerdoVigenteId` (mutex de acuerdos v2): en la whitelist, pero su cambio
+      // SOLO es válido como parte de una transición de acuerdo (mutexAcuerdoValido).
+      allow update: if isAdmin()
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['nombre', 'telefono', 'whatsapp', 'cumpleanos', 'notas',
+                                   'vendedoraId', 'asesorId', 'origen', 'activo',
+                                   'acuerdoVigenteId',
+                                   'createdAt', 'createdBy', 'updatedAt'])
+                    && mutexAcuerdoValido(clienteId);
+      allow delete: if isAdmin();
+
+      match /movimientos/{movId} {
+        allow read:   if isAdmin();
+        allow create: if isAdmin() && movimientoValido(clienteId);
+        allow update: if isAdmin() && anulacionValida();   // append-only: SOLO anular (no editar el asiento)
+        allow delete: if false;                            // libro append-only: NUNCA borrar (ni admin)
+      }
+
+      // ─── Fase M (M1 §69): solicitudes de aprobación — "el asiento nace solo al
+      // aprobarse". Kary crea la solicitud (nace 'pendiente', sellada por el reloj
+      // del SERVIDOR); SOLO Daniel la transiciona a aprobada/rechazada (one-way,
+      // espejo de saludEventos); solo la SOLICITANTE puede cancelar la suya.
+      // El asiento real lo crea Daniel al aprobar (M2b); el saldo no se toca antes.
+      match /solicitudes/{solId} {
+        allow read:   if isAdmin();
+        allow create: if isAdmin() && solicitudValida();
+        allow update: if isAdmin() && transicionSolicitudValida();
+        allow delete: if false;                            // el ciclo completo queda en el libro
+      }
+
+      // ─── Fase M (M1 §69): gestiones de cobro — evidencia del expediente de
+      // castigo (art. 146 ET). INMUTABLES: una equivocación se aclara con OTRA
+      // gestión, nunca editando la anterior.
+      match /gestiones/{gestId} {
+        allow read:   if isAdmin();
+        allow create: if isAdmin() && gestionValida();
+        allow update, delete: if false;
+      }
+
+      // ─── Acuerdos de pago (spec 2026-06-12): el plan de cuotas pactado ─────────
+      // Evidencia art. 146: JAMÁS se borra. Renegociar = batch atómico (nuevo con
+      // reemplazaA + viejo sellado); anular = SOLO owner (la goma de borrar).
+      match /acuerdos/{acuerdoId} {
+        allow read:   if isAdmin();
+        allow create: if isAdmin() && acuerdoValido(clienteId, acuerdoId);
+        allow update: if isAuth() && transicionAcuerdoValida(clienteId, acuerdoId);
+        allow delete: if false;
+      }
+    }
+
+    // ─── CRM: vendedoras (entidad de datos que gestiona Kary) ────────────────────
+    match /vendedoras/{vendedoraId} {
+      allow read:           if isAdmin();
+      allow create, update: if isAdmin() && vendedoraValida();
+      allow delete:         if isAdmin();
+    }
+
+    // ─── CRM: pendientes de configuración / setup (tablero visible para Kary) ────
+    match /pendientes/{id} {
+      allow read:  if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // ─── Users (role management) — SOLO OWNER ──────────────────────────────────
+    // El panel escribe users/{uid} DIRECTO (js/auth.js) → las REGLAS son la única
+    // frontera server-side (las CFs callable con guardas NO están en ese camino;
+    // y las que sí lo están corren con Admin SDK, que SALTA estas reglas).
+    // Gestión de usuarios = OWNER-only (la página es `requireAuth('owner')`). Un
+    // admin NO escribe docs de usuario: así no puede reescribir el `role` de otros
+    // ni tocar al owner (§66) — y sin esto el trigger `syncRoleClaim` sellaría un
+    // claim REAL escalado (§65). `role:'owner'` no se acuña desde la app (seed/consola).
+    // `root:true` = cuenta ROOT del dev (Daniel) — protegida/invisible, sembrada SOLO por consola
+    // (Admin SDK salta reglas). `caja` = rol operador del POS (F2.0 B0). [[project_root_account_daniel]]
+    function usersFieldsValidos() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['email', 'displayName', 'role', 'active', 'root',
+                               'createdAt', 'createdBy', 'updatedAt', 'updatedBy',
+                               'lastLogin', 'deactivatedAt', 'deactivatedBy'])
+          && (!('role' in d)   || d.role in ['owner', 'admin', 'editor', 'catalogo', 'caja'])
+          && (!('active' in d) || d.active is bool)
+          && (!('root' in d)   || d.root is bool);
+    }
+    function esRoot(res) { return res.data.get('root', false) == true; }
+
+    match /users/{userId} {
+      // read: uid propio, o admin/owner — pero un doc ROOT es INVISIBLE para quien no sea él mismo.
+      allow read:   if isAuth() && (request.auth.uid == userId || (isAdmin() && !esRoot(resource)));
+      // create: el owner crea SOLO roles operativos; la app JAMÁS acuña owner (§66) ni root (solo consola).
+      allow create: if isOwner() && usersFieldsValidos()
+                    && request.resource.data.role in ['admin', 'editor', 'catalogo', 'caja']
+                    && request.resource.data.get('root', false) != true;
+      // update: el flag `root` es INMUTABLE desde la app (no se acuña ni se quita). Dos vías:
+      //  (a) el propio ROOT edita su doc (self-service: displayName/lastLogin) sin cambiar su role;
+      //  (b) un owner edita un doc NO-root (gestión normal) sin acuñar owner (E.5). Un doc root es
+      //      INTOCABLE para un owner ajeno (ni Kary lo toca).
+      allow update: if usersFieldsValidos()
+                    && request.resource.data.get('root', false) == resource.data.get('root', false)
+                    && (
+                         (request.auth.uid == userId && esRoot(resource)
+                          && !('role' in request.resource.data.diff(resource.data).affectedKeys()))
+                         || (isOwner() && !esRoot(resource)
+                             && (!('role' in request.resource.data.diff(resource.data).affectedKeys())
+                                 || request.resource.data.role in ['admin', 'editor', 'catalogo', 'caja']))
+                       );
+      // delete: el owner borra usuarios operativos; un doc ROOT JAMÁS se borra desde la app.
+      allow delete: if isOwner() && !esRoot(resource);
+    }
+
+    // ─── Config (site settings, status) ────────────────────────────────────────
+
+    match /config/{docId} {
+      // Solo `config/status` es público (health-check de la web, js/firestore-service.js).
+      // El resto (parámetros del negocio: fechaCorteMigracion, datos fiscales) = admin.
+      // EXCEPCIÓN M0 (Fase M §69): `config/cartera` guarda los LÍMITES que gobiernan
+      // a la operadora (tope de auto-aprobación, motivos, criterios de castigo) —
+      // write OWNER-ONLY: quien opera bajo los límites no puede reescribirlos.
+      // F2.0 B0b: `config/caja` (enforceTurno/fondoTrabajo/limiteCajon/alertas) sigue el mismo
+      // patrón owner-only; PERO la cajera SÍ lo LEE (el POS necesita `limiteCajon` para el modal
+      // de traslado). `config/cartera` sigue vedado a la cajera (parámetros del negocio = admin+).
+      // SoD 2026-07-10 (auditoría): `config/fiscal` (tasas de comisión/retención que alimentan el
+      // reporte al contador) también es OWNER-only — quien opera no reescribe los parámetros de su
+      // propio reporte (misma lógica que cartera/caja).
+      allow read:  if docId == 'status' || (docId == 'caja' && isCaja()) || isAdmin();
+      allow write: if docId in ['cartera', 'caja', 'fiscal'] ? isOwner() : isAdmin();
+    }
+
+    // ─── CMS · System/meta (señal de frescura de cache) ─────────────────────────
+    // B1 (comité 2026-06-14): `signalCacheInvalidation` (firestore-service.js) escribe
+    // system/meta en CADA save del CMS para que las páginas públicas detecten cambios.
+    // FALTABA el match → cada escritura era DENEGADA en silencio (el catch la tragaba).
+    // read público (es solo un timestamp, no dato sensible; lo leerá el modelo de
+    // frescura/pre-render SSG). write `editor` con whitelist: el campo legacy
+    // `lastDataUpdate` + las claves por-página del modelo de cache-bust (§2.C del spec
+    // del gran plan); cualquier otra clave = inyección → DENY (L-15).
+    match /system/{docId} {
+      allow read:  if true;
+      allow write: if isEditor()
+                   && request.resource.data.keys().hasOnly(
+                        ['lastDataUpdate', 'home', 'nosotros', 'contacto', 'global', 'lists']);
+    }
+
+    // ─── Push Tokens ───────────────────────────────────────────────────────────
+
+    // F6 frenos de gasto: NINGÚN código escribe push_tokens hoy (verificado por grep
+    // js/ + functions/ 2026-06-09) — era una puerta pública sin uso legítimo (spam).
+    // Cuando aterrice FCM, reabrir create con validación de forma (como los forms).
+    match /push_tokens/{tokenId} {
+      allow read: if isAdmin();                // Admin sees subscribers
+      allow create, update: if false;          // cerrado: sin writer legítimo en el código
+      allow delete: if isAdmin();
+    }
+
+    // ─── Salud del sistema (F6 frente D): escrita SOLO por Cloud Functions ──────
+    // `salud/backup` + `salud/reconciliacion` (singletons, pisar no apilar). El
+    // Admin SDK de las CFs NO pasa por estas reglas → write:false cierra al cliente.
+    // Acceso ADMIN deliberado (no owner-only): Kary puede operar la red de seguridad
+    // si hace falta; solo la ENTRADA del menú es owner (UI ≠ frontera de seguridad).
+    match /salud/{docId} {
+      allow read:  if isAdmin();
+      allow write: if false;
+    }
+
+    // Eventos de fallo (p.ej. recalc-saldo-error). El panel solo puede MARCARLOS
+    // como resueltos (whitelist de 3 claves + resuelto false→true UNA sola vez +
+    // sello de tiempo del SERVIDOR, espejo de anulacionValida) — el contenido del
+    // evento es testimonio inmutable, como la anulación de movimientos.
+    match /saludEventos/{eventoId} {
+      allow read: if isAdmin();
+      allow create, delete: if false;
+      allow update: if isAdmin()
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['resuelto', 'resueltoEn', 'resueltoPor'])
+          && resource.data.get('resuelto', false) == false
+          && request.resource.data.resuelto == true
+          && request.resource.data.resueltoEn == request.time
+          && request.resource.data.resueltoPor == request.auth.uid;
+    }
+
+    // ─── Fase M · M4 (§69): ACTA mensual de conciliación de recaudo ──────────────
+    // Daniel concilia Σ(transferencias+datáfono) contra el extracto y ARQUEA el
+    // efectivo (Kary no se arquea a sí misma — SoD mínimo); el resultado queda como
+    // acta INMUTABLE one-way: create owner-only, sellada por el reloj del servidor,
+    // docId = 'YYYY-MM'. Toda diferencia se trata por el flujo normal (ajuste/
+    // solicitud), NUNCA editando el acta. update/delete false (testimonio).
+    match /conciliaciones/{mes} {
+      allow read: if isAdmin();
+      allow create: if isOwner()
+          && mes.matches('^[0-9]{4}-[0-9]{2}$')
+          && request.resource.data.keys().hasOnly(['mes', 'totalPorMedio', 'bancoCuadra',
+                                                   'efectivoCuadra', 'diferencias',
+                                                   'creadoPor', 'creadoEn'])
+          && request.resource.data.mes == mes
+          && request.resource.data.totalPorMedio is map
+          && request.resource.data.bancoCuadra is bool
+          && request.resource.data.efectivoCuadra is bool
+          && request.resource.data.diferencias is string
+          && request.resource.data.creadoPor == request.auth.uid
+          && request.resource.data.creadoEn == request.time;
+      allow update, delete: if false;
+    }
+
+    // ─── Fase M · M4 (§69 PR1): CORTE mensual inmutable del aging ────────────────
+    // La foto estable por período (saldo/vencido/buckets/diasMora por clienta) que
+    // soporta provisión (art. 145 ET), expediente de castigo y baseline — el libro
+    // vivo se recomputa retroactivamente; la foto NO. La escribe SOLO la Cloud
+    // Function programada (Admin SDK bypassa reglas); write:false cierra al cliente
+    // (patrón salud/). read admin (la vista de Salud y futuros reportes la leen).
+    match /cortes/{mes} {
+      allow read:  if isAdmin();
+      allow write: if false;
+    }
+  }
+}

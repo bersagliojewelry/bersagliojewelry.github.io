@@ -1,12 +1,47 @@
 name: Deploy to Firebase Hosting
 
+# QUÉ MANTIENE ESTO, medido el 2026-09-08 y escrito aquí para que no haya que volver a medirlo:
+# `bersaglio-jewelry.web.app` es el SEGUNDO host del sitio («Dual Deployment»): GitHub Pages sirve
+# `bersagliojewelry.co` (el primario, con las 16 piezas horneadas por el SSG) y Firebase Hosting sirve
+# una copia del build sin hornear (11 KB contra 103 KB, 0 piezas, `canonical` apuntando a `.co`).
+# NO es el gemelo — el gemelo es otro proyecto (`bersaglio-gemelo`, Spark, aula de Kary y sala de
+# restore). Este apunta a `bersaglio-jewelry`, que es PRODUCCIÓN, y ahí también responde `/admin.html`.
+# Los dos hosts están AUTORIZADOS en Auth y en los referrers de la API key, así que no se apagan a la
+# ligera: apagarlos toca configuración de seguridad, no sólo una web.
+#
+# POR QUÉ EL GUARDIÁN DE ABAJO. El cascarón del 2026-09-07 dejó el repo público nuevo SIN secretos, y
+# `FIREBASE_SERVICE_ACCOUNT` es el único que este workflow necesita de verdad (los ocho `VITE_*` nunca
+# existieron: la config pública de Firebase va comiteada en `js/firebase-config.js`). Sin guardián,
+# cada push a `main` abría un ROJO PERMANENTE. Y un rojo permanente no es un aviso: es un maestro que
+# enseña a ignorar los rojos — en el repo hermano de cars costó 2,5 meses de CI en rojo que nadie miró.
+# Con guardián, el workflow DICE lo que pasa y sale en verde; el día que el secreto exista, sigue solo.
+
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
 jobs:
+  # Un job aparte y baratísimo: el contexto `secrets` no se puede usar en el `if` de un job sin pasar
+  # antes por una salida. Cuesta segundos y evita construir para nada.
+  hay-credencial:
+    runs-on: ubuntu-latest
+    outputs:
+      si: ${{ steps.mirar.outputs.si }}
+    steps:
+      - id: mirar
+        run: echo "si=${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}" >> "$GITHUB_OUTPUT"
+      - name: Decir en voz alta qué implica
+        run: |
+          if [ "${{ steps.mirar.outputs.si }}" = "true" ]; then
+            echo "::notice title=Segundo host::FIREBASE_SERVICE_ACCOUNT presente → se despliega bersaglio-jewelry.web.app."
+          else
+            echo "::warning title=Segundo host CONGELADO::Sin FIREBASE_SERVICE_ACCOUNT no se despliega Firebase Hosting. El sitio PRIMARIO (bersagliojewelry.co, GitHub Pages) se publica igual con deploy.yml y NO depende de esto. Consecuencia real: bersaglio-jewelry.web.app se queda con el build del ultimo despliegue y se va separando de .co push a push — /admin.html incluido. Para reactivarlo: pegar el secreto en Settings > Secrets and variables > Actions. Para jubilarlo: borrar este workflow, como se hizo con deploy-firebase-rules.yml de cars."
+          fi
+
   build-and-deploy:
+    needs: hay-credencial
+    if: needs.hay-credencial.outputs.si == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

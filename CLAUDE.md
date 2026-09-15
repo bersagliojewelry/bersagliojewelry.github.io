@@ -12,8 +12,9 @@ CARPETA»). **Si no los ves, el hook falló: LÉELOS POR RUTA antes de tocar nad
 
 - Cerebro (`docs/`, router, ADRs) → **en la bóveda** `../brain-private/`; su pre-commit corre el linter allí.
   Aquí no hay linter.
-- Sitio (web, `js/`, `functions/`, `public/`, tests) → **aquí**, en `Desarrollo`; `Desarrollo`→`main` solo
-  con build/tests VERDES (push a `main` = deploy a Pages + Firebase). Nunca los dos en el mismo commit.
+- Sitio (web, `js/`, `functions/`, `public/`, tests) → **aquí**, **directo en `main`**, solo con build/tests VERDES
+  (push a `main` = deploy a Pages + Firebase). Nunca los dos en el mismo commit. ⛔ **`Desarrollo` es HISTORIA**
+  (remoto `archivo`) y **JAMÁS se mergea**: no comparte historia con `main` desde el cascarón (`merge-base` exit 1).
 
 ## Reglas de oro DE ESTE SITIO
 

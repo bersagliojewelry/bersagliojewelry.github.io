@@ -78,7 +78,24 @@ const PATRONES = [
   ['AWS access key',            /\bAKIA[0-9A-Z]{16}\b/],
 ];
 
-const TEXTO = /\.(js|mjs|cjs|ts|tsx|astro|json|jsonc|html|md|yml|yaml|txt|env|sh|py|rules)$/i;
+/*
+ * ⛔ 2026-09-15 (S7-01) — ESTO ERA UNA LISTA BLANCA DE EXTENSIONES, Y ESA ES LA FORMA EXACTA EN QUE
+ * UN ESCÁNER DE SECRETOS MIENTE. La bóveda ya había pagado esta lección el 2026-09-08 (`0d53e30d`):
+ * una auditoría adversarial plantó un token con forma real en cuatro ficheros RASTREADOS POR GIT
+ * que la lista no cubría —un hook sin extensión, un `env.example`, un `.toml`, un `.patch`— y el
+ * escáner salió VERDE en los cuatro. El arreglo no cruzó a los repos públicos, que son justo los
+ * que publican. Medido aquí el 15-sep: en bersaglio, 57 de 623 ficheros listados por git caían en
+ * el punto ciego (`.jsx`, `.css`, `.docx`, `.firebaserc`, `.env.example`).
+ *
+ * Ahora se escanea TODO lo que git lista salvo (a) binarios por extensión conocida y (b) lo que
+ * huele a binario por CONTENIDO (un NUL en los primeros 8 KB). No es más cobertura: es otra
+ * DIRECCIÓN DEL FALLO. Antes, olvidar una extensión creaba un punto ciego silencioso; ahora,
+ * olvidar un binario cuesta milisegundos de lectura. Un gate de seguridad falla hacia MIRAR DE
+ * MÁS. Y lo que se salta se CUENTA y se publica, causa por causa, en la línea del verde.
+ *
+ * `svg` NO está en la lista a propósito: es XML, lo escribe gente, y ha llevado claves.
+ */
+const BINARIO = /\.(png|jpe?g|gif|webp|avif|ico|bmp|tiff?|pdf|zip|gz|tgz|bz2|xz|7z|rar|woff2?|ttf|otf|eot|mp[34]|m4a|wav|ogg|webm|mov|avi|exe|dll|so|dylib|node|wasm|class|jar|bin|dat|db|sqlite3?|pyc|ds_store)$/i;
 
 /**
  * La superficie de fuga, en rutas relativas a la raíz. `-z` (NUL como separador) porque sin él git
@@ -104,21 +121,28 @@ function archivos() {
     .split('\0')
     .filter(Boolean)
     .filter((rel) => !rel.split('/').some((seg) => FUERA.has(seg)))
-    .filter((rel) => TEXTO.test(rel));
+    .filter((rel) => !BINARIO.test(rel));
 }
 
 const fallos = [];
 let mirados = 0;
+let binarios = 0;
+let exentos = 0;
+let ilegibles = 0;
 
 for (const rel of archivos()) {
-  if (EXENTOS.has(rel)) continue;
-  mirados++;
+  if (EXENTOS.has(rel)) { exentos++; continue; }
   let src;
   try {
     src = readFileSync(join(RAIZ, rel), 'utf8');
   } catch {
+    ilegibles++;
     continue;
   }
+  // Olfateo de binario por CONTENIDO, no por nombre: un NUL en los primeros 8 KB. Cubre lo que la
+  // denylist de extensiones no anticipó, y sin puntos ciegos nuevos — lo saltado se CUENTA y se dice.
+  if (src.slice(0, 8192).includes('\u0000')) { binarios++; continue; }
+  mirados++;
   for (const [nombre, pat] of PATRONES) {
     const m = src.match(pat);
     if (!m) continue;
@@ -136,8 +160,12 @@ for (const rel of archivos()) {
  * quedó solo con el sitio): 337 ficheros de texto barridos (antes 819, medidos el 31-ago-2026 con
  * docs/, skills/ y el kernel dentro). El piso viejo de 400 hizo fallar el escáner en el primer
  * intento tras adelgazar: un umbral se calibra contra el árbol que existe. Piso nuevo = la mitad.
+ * RE-CALIBRADO el 2026-09-15 (S7-01): con la denylist de binarios en vez de la lista blanca de
+ * extensiones, el barrido pasa de 336 a 390 ficheros. El piso viejo (168) seguia pasando, pero estaba
+ * medido contra un arbol que ya no es el que se escanea, y un piso calibrado bajo es justo lo que
+ * deja pasar un barrido mutilado. Piso nuevo = la mitad de lo medido HOY.
  */
-if (mirados < 168) {
+if (mirados < 195) {
   console.error('');
   console.error(`❌ verify:secretos — solo ${mirados} fichero(s) barridos: el escaneo dejó de ver el árbol.`);
   console.error('   Con tan pocos, un ✅ no significaría «limpio» sino «no miré». Arregla la ruta o');
@@ -159,4 +187,6 @@ if (fallos.length) {
   process.exit(1);
 }
 
-console.log(`✅ verify:secretos — ${mirados} fichero(s) de texto, ${PATRONES.length} patrones: ninguna credencial en el repo público.`);
+const listados = mirados + binarios + exentos + ilegibles;
+console.log(`✅ verify:secretos — ${mirados} de ${listados} fichero(s) listados por git barridos con ${PATRONES.length} patrones: ninguna credencial en el repo público.`);
+console.log(`   saltados ${listados - mirados}: ${binarios} binario(s) por CONTENIDO (NUL en los primeros 8 KB) · ${exentos} exento(s) declarados uno a uno CON motivo · ${ilegibles} ilegible(s). Los binarios por EXTENSIÓN ni siquiera entran en la lista (denylist \`BINARIO\`).`);

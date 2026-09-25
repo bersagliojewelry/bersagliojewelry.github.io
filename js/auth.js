@@ -46,6 +46,21 @@ let _userProfile = null;
 let _authReady   = false;
 const _listeners = [];
 
+// El getDoc del perfil FALLÓ (red caída, Firestore bloqueado) — que NO es lo mismo que "este
+// usuario no tiene perfil". Ambos casos dejaban `_userProfile = null` y el login trataba el
+// fallo transitorio como veredicto: "Tu cuenta no tiene acceso al panel. Contacta al
+// administrador." — falso y alarmante para quien solo tenía mala señal.
+let _perfilIlegible = false;
+
+// Error de acceso ya traducido, con la CAUSA marcada para que la pantalla de login decida qué
+// ofrecer (p. ej. la página de diagnóstico cuando el problema es de conexión). Sin `code`: el
+// login distingue por `bjCausa`, nunca por texto.
+function errorDeAcceso(mensaje, causa) {
+    const err = new Error(mensaje);
+    err.bjCausa = causa;   // 'red' | 'perfil'
+    return err;
+}
+
 // sessionReady() — promesa que resuelve UNA vez, al terminar la PRIMERA resolución del estado de
 // auth (incluido el getDoc del perfil). Se resuelve DESPUÉS de escribir `bj_auth` (cacheAuthHints),
 // así login.js puede redirigir con el rol REAL sin carrera ni timeout mágico (TODO-64 H1). Reemplaza
@@ -56,7 +71,7 @@ const _sessionReadyPromise = new Promise(resolve => { _resolveSessionReady = res
 function settleSessionReady() {
     if (_sessionReadySettled) return;
     _sessionReadySettled = true;
-    _resolveSessionReady({ user: _currentUser, profile: _userProfile });
+    _resolveSessionReady({ user: _currentUser, profile: _userProfile, perfilIlegible: _perfilIlegible });
 }
 
 // Pistas de sesión para PINTAR rápido (NO autorizan nada — el candado real es server-side:
@@ -96,13 +111,16 @@ onAuthStateChanged(auth, async (user) => {
     if (user) {
         try {
             const snap = await getDoc(doc(firestoreDb, 'users', user.uid));
-            _userProfile = snap.exists() ? snap.data() : null;
+            _userProfile    = snap.exists() ? snap.data() : null;
+            _perfilIlegible = false;   // sí lo leímos: `null` aquí SÍ significa "no hay perfil"
             if (_userProfile) cacheAuthHints(_userProfile.role);
         } catch {
-            _userProfile = null;
+            _userProfile    = null;
+            _perfilIlegible = true;    // no sabemos si tiene perfil: no pudimos leerlo
         }
     } else {
-        _userProfile = null;
+        _userProfile    = null;
+        _perfilIlegible = false;
         clearAuthHints();
     }
 
@@ -171,12 +189,27 @@ export async function signIn(email, password) {
         if (err.code === 'auth/too-many-requests') {
             throw new Error('Demasiados intentos. Intenta de nuevo en unos minutos.');
         }
+        // OJO: esto NO significa "no tienes internet". El SDK lo lanza cuando la petición al
+        // servidor de acceso no sale o no vuelve: DNS privado, VPN, bloqueador de anuncios,
+        // navegador embebido o reloj desfasado. Decir "revisa tu internet" mandaba a la gente a
+        // mirar el WiFi (que estaba bien) y hasta a cambiar la contraseña — que tampoco era, porque
+        // esto ocurre ANTES de que Firebase mire la clave. Caso real: 2026-09-25, un teléfono
+        // fallaba con WiFi y con datos mientras otro entraba en la misma red.
         if (err.code === 'auth/network-request-failed') {
-            throw new Error('Sin conexión. Revisa tu internet e intenta de nuevo.');
+            throw errorDeAcceso(
+                'No pudimos conectar con el servidor que valida tu contraseña. Si tu internet funciona, algo en este equipo lo está bloqueando.',
+                'red');
         }
         // Cualquier otro code de Firebase (inglés técnico) → mensaje genérico en español para Kary.
         if (typeof err?.code === 'string' && err.code.startsWith('auth/')) {
             throw new Error('No se pudo iniciar sesión. Intenta de nuevo.');
+        }
+        // FirebaseError que NO es de auth = el getDoc del perfil (Firestore caído o bloqueado). La
+        // contraseña YA quedó validada: culpar a la clave o al internet manda a buscar donde no es.
+        if (typeof err?.code === 'string') {
+            throw errorDeAcceso(
+                'Tu usuario y contraseña son correctos, pero no pudimos cargar tu perfil. Intenta de nuevo en un momento.',
+                'perfil');
         }
         throw err;
     }

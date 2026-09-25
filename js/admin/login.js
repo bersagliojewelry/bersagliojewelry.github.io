@@ -26,8 +26,15 @@ function init() {
 }
 
 async function routeIfLoggedIn(errCode) {
-    const { user, profile } = await sessionReady();
+    const { user, profile, perfilIlegible } = await sessionReady();
 
+    if (user && !profile && perfilIlegible) {
+        // Hay sesión y NO pudimos leer el perfil (red/Firestore), que no es lo mismo que no
+        // tenerlo. Antes caía en el caso de abajo y acusaba "tu cuenta no tiene acceso al panel":
+        // un susto gratis por un bache de red. Se conserva la sesión: no hay nada que expulsar.
+        showError('login-error', 'No pudimos cargar tu perfil. Revisa la conexión de este equipo e intenta de nuevo.', true);
+        return;
+    }
     if (user && profile) {
         // Sesión viva + perfil válido → página del rol, UNA sola redirección (sin rebotes/flashes).
         // Catálogo (Kary) no ve admin.html (requireAuth('editor')) → directo a Piezas.
@@ -65,9 +72,10 @@ async function handleLogin(e) {
         const { profile } = await signIn(email, pass);
         window.location.replace(profile?.role === 'catalogo' ? 'admin-piezas.html' : 'admin.html');
     } catch (err) {
-        // signIn ya traduce todo auth/* a español (Error plano, sin `code`); un FirebaseError NO-auth
-        // (Firestore caído / regla que niega users/{uid}) llega crudo CON `code` → genérico, nunca inglés.
-        showError('login-error', err?.code ? 'No se pudo iniciar sesión. Revisa tu conexión e intenta de nuevo.' : err.message);
+        // signIn traduce TODO (auth/* y el getDoc del perfil) a un Error plano en español y marca
+        // `bjCausa` cuando el fallo es de conexión — ahí ofrecemos la revisión del equipo, que es
+        // lo único que sirve: el mensaje viejo mandaba a mirar el internet y a cambiar la clave.
+        showError('login-error', err.message, err?.bjCausa === 'red');
         btn.disabled    = false;
         btn.textContent = 'Iniciar sesión';
     }
@@ -111,9 +119,24 @@ function showLoginForm() {
     document.getElementById('login-email').focus();
 }
 
-function showError(id, msg) {
+/**
+ * @param {string}  id
+ * @param {string}  msg
+ * @param {boolean} [conDiagnostico=false] - añade el enlace a la revisión de ESTE equipo. Solo
+ *   para fallos de conexión: es la única pista accionable cuando el aparato bloquea el servidor
+ *   de acceso (DNS privado, VPN, bloqueador) y el dueño no tiene forma de adivinarlo.
+ */
+function showError(id, msg, conDiagnostico = false) {
     const el = document.getElementById(id);
-    el.textContent = msg;
+    el.textContent = msg;                       // textContent: el mensaje nunca se interpreta como HTML
+    if (conDiagnostico) {
+        const a = document.createElement('a');
+        a.href        = 'admin-diagnostico.html';
+        a.textContent = 'Revisar este equipo';
+        a.style.cssText = 'display:inline-block;margin-top:8px;font-weight:600;text-decoration:underline;';
+        el.appendChild(document.createElement('br'));
+        el.appendChild(a);
+    }
     el.hidden = false;
 }
 

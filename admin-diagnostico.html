@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Diagnóstico de acceso — Bersaglio</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <!-- Página de SOPORTE, deliberadamente autocontenida: sin Firebase, sin módulos, sin CSS
+         externo. Tiene que funcionar JUSTO cuando el panel no funciona, así que no puede
+         depender de nada de lo que está diagnosticando. -->
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --tinta:   #122820;
+            --suave:   #5e7c70;
+            --borde:   rgba(27, 75, 54, 0.14);
+            --ok:      #2d8653;
+            --mal:     #d94040;
+            --duda:    #d97706;
+            --oro:     #c9a84c;
+            padding-top:    env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        body {
+            font-family: "Manrope", -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            color: var(--tinta);
+            background: #f4f7f3;
+            line-height: 1.5;
+            padding: 20px 16px 40px;
+            max-width: 560px;
+            margin: 0 auto;
+        }
+        header { text-align: center; margin-bottom: 22px; }
+        .marca {
+            font-family: "Cormorant Garamond", Georgia, serif;
+            font-size: 22px; letter-spacing: 0.08em; color: #1b4b36;
+        }
+        .sub { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--suave); margin-top: 2px; }
+        h1 { font-size: 19px; font-weight: 600; margin: 22px 0 6px; }
+        .intro { font-size: 14px; color: var(--suave); margin-bottom: 18px; }
+
+        #veredicto {
+            border-radius: 14px; padding: 16px; margin-bottom: 18px;
+            border: 1px solid var(--borde); background: #fff;
+            font-size: 15px;
+        }
+        #veredicto.ok  { border-color: rgba(45,134,83,0.4);  background: rgba(45,134,83,0.06); }
+        #veredicto.mal { border-color: rgba(217,64,64,0.4);  background: rgba(217,64,64,0.06); }
+        #veredicto .titulo { font-weight: 700; margin-bottom: 6px; display: block; }
+        #veredicto ol { margin: 10px 0 0 18px; }
+        #veredicto li { margin-bottom: 6px; }
+
+        .prueba {
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 12px 14px; border: 1px solid var(--borde);
+            border-radius: 12px; background: #fff; margin-bottom: 8px;
+        }
+        .marcador { font-size: 17px; line-height: 1.3; flex-shrink: 0; width: 20px; text-align: center; }
+        .prueba .nombre { font-size: 14px; font-weight: 600; }
+        .prueba .detalle { font-size: 12.5px; color: var(--suave); margin-top: 2px; word-break: break-word; }
+
+        .acciones { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
+        button {
+            font: inherit; font-weight: 600; font-size: 14px;
+            padding: 12px 20px; min-height: 46px;
+            border-radius: 999px; border: 1px solid transparent;
+            background: #1b4b36; color: #fff; cursor: pointer; flex: 1;
+            -webkit-tap-highlight-color: transparent;
+        }
+        button.secundario { background: #fff; color: #1b4b36; border-color: var(--borde); }
+        button:disabled { opacity: 0.5; }
+
+        .ficha {
+            margin-top: 22px; padding: 14px; border-radius: 12px;
+            background: #fff; border: 1px solid var(--borde);
+            font-size: 12px; color: var(--suave); word-break: break-all;
+        }
+        .ficha b { color: var(--tinta); font-weight: 600; }
+        footer { margin-top: 26px; text-align: center; font-size: 11px; color: var(--suave); }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="marca">BERSAGLIO</div>
+        <div class="sub">Diagnóstico de acceso</div>
+    </header>
+
+    <h1>¿Por qué este teléfono no deja entrar?</h1>
+    <p class="intro">
+        Esta página revisa, desde <em>este mismo aparato</em>, cada cosa que el panel necesita
+        para dejarte entrar. No pide contraseña ni guarda nada.
+    </p>
+
+    <div id="veredicto">
+        <span class="titulo">Revisando…</span>
+        Espera unos segundos.
+    </div>
+
+    <div id="pruebas"></div>
+
+    <div class="acciones">
+        <button id="repetir">Revisar otra vez</button>
+        <button id="copiar" class="secundario">Copiar resultado</button>
+    </div>
+
+    <div class="ficha" id="ficha"></div>
+
+    <footer>Bersaglio Jewelry — página de soporte</footer>
+
+<script>
+(function () {
+    'use strict';
+
+    // Cada prueba: intenta TOCAR un servidor. No nos importa qué responda (puede responder
+    // "404" o "403" y está perfecto): lo único que se mide es si la petición SALE del teléfono
+    // y VUELVE. Por eso va en modo 'no-cors': si el dominio está bloqueado — por un DNS
+    // privado, una VPN o un bloqueador de anuncios — el intento revienta y eso es justo la
+    // señal que buscamos.
+    var LIMITE_MS = 9000;
+
+    function tocar(url) {
+        var ctrl = new AbortController();
+        var reloj = setTimeout(function () { ctrl.abort(); }, LIMITE_MS);
+        return fetch(url, { mode: 'no-cors', cache: 'no-store', signal: ctrl.signal })
+            .then(function () { clearTimeout(reloj); return { ok: true }; })
+            .catch(function (e) {
+                clearTimeout(reloj);
+                return { ok: false, motivo: e && e.name === 'AbortError' ? 'no respondió en 9 segundos' : 'la conexión fue rechazada o bloqueada' };
+            });
+    }
+
+    var PRUEBAS = [
+        {
+            id: 'sitio',
+            nombre: 'La página de Bersaglio carga',
+            bien: 'Este teléfono sí tiene internet.',
+            mal:  'Ni siquiera carga el propio sitio: no hay internet en este momento.',
+            correr: function () { return tocar(location.origin + '/favicon.ico?t=' + Date.now()); }
+        },
+        {
+            id: 'acceso',
+            nombre: 'Llega al servidor que valida la contraseña',
+            bien: 'El servidor de acceso responde.',
+            mal:  'BLOQUEADO. Es exactamente lo que produce el mensaje "Sin conexión. Revisa tu internet".',
+            correr: function () { return tocar('https://identitytoolkit.googleapis.com/v1/accounts:lookup'); }
+        },
+        {
+            id: 'datos',
+            nombre: 'Llega a la base de datos del panel',
+            bien: 'La base de datos responde.',
+            mal:  'BLOQUEADA. Entrarías, pero el panel no podría leer tu perfil ni mostrar nada.',
+            correr: function () { return tocar('https://firestore.googleapis.com/'); }
+        },
+        {
+            id: 'sello',
+            nombre: 'Llega al verificador antirrobots',
+            bien: 'Responde.',
+            mal:  'Bloqueado. Por sí solo no impide entrar hoy, pero confirma que este aparato filtra dominios de Google.',
+            correr: function () { return tocar('https://www.google.com/recaptcha/api.js'); }
+        }
+    ];
+
+    // ── Revisiones locales (no usan la red) ───────────────────────────────────
+    function revisionesLocales() {
+        var lista = [];
+        var ua = navigator.userAgent || '';
+
+        // Navegador embebido: si abre el enlace DESDE un chat, no está en Chrome/Safari sino
+        // dentro de la app, y esos navegadores internos suelen tener el acceso capado.
+        var embebido = /FBAN|FBAV|Instagram|Line\/|MicroMessenger|WhatsApp|\bWV\b/i.test(ua);
+        lista.push({
+            nombre: 'Está en un navegador de verdad',
+            ok: !embebido,
+            duda: false,
+            detalle: embebido
+                ? 'Abriste esto DENTRO de otra app (WhatsApp, Instagram o similar). Ábrelo en Chrome o Safari.'
+                : 'Sí, es un navegador normal.'
+        });
+
+        // Firebase guarda la sesión en el almacenamiento del navegador.
+        var almacen = true;
+        try { localStorage.setItem('__bj', '1'); localStorage.removeItem('__bj'); } catch (e) { almacen = false; }
+        lista.push({
+            nombre: 'El navegador deja guardar la sesión',
+            ok: almacen,
+            duda: false,
+            detalle: almacen
+                ? 'Sí.'
+                : 'No. Modo incógnito o almacenamiento bloqueado: no podrá mantener la sesión abierta.'
+        });
+
+        // Ahorro de datos: algunos navegadores recortan peticiones con esto encendido.
+        var ahorro = !!(navigator.connection && navigator.connection.saveData);
+        lista.push({
+            nombre: 'Ahorro de datos apagado',
+            ok: !ahorro,
+            duda: ahorro,
+            detalle: ahorro
+                ? 'Está ENCENDIDO. Apágalo: puede estar recortando conexiones.'
+                : 'Apagado, como debe ser.'
+        });
+
+        return lista;
+    }
+
+    // El reloj del teléfono: si está muy desfasado, los certificados de seguridad no validan
+    // y las conexiones se caen. Se compara contra la hora que declara el propio servidor.
+    function revisarReloj() {
+        return fetch(location.origin + '/favicon.ico?t=' + Date.now(), { cache: 'no-store' })
+            .then(function (r) {
+                var servidor = r.headers.get('date');
+                if (!servidor) return { nombre: 'La hora del teléfono es correcta', ok: true, duda: true, detalle: 'No se pudo comparar.' };
+                var desfase = Math.abs(new Date(servidor).getTime() - Date.now()) / 1000;
+                return {
+                    nombre: 'La hora del teléfono es correcta',
+                    ok: desfase < 120,
+                    duda: false,
+                    detalle: desfase < 120
+                        ? 'Sí (diferencia de ' + Math.round(desfase) + ' segundos).'
+                        : 'DESFASADA ' + Math.round(desfase / 60) + ' minutos. Ponla en automática: con la hora mal, las conexiones seguras fallan.'
+                };
+            })
+            .catch(function () {
+                return { nombre: 'La hora del teléfono es correcta', ok: true, duda: true, detalle: 'No se pudo comparar.' };
+            });
+    }
+
+    // ── Pintado ───────────────────────────────────────────────────────────────
+    function pintar(r) {
+        var marca = r.duda ? '▲' : (r.ok ? '●' : '✕');
+        var color = r.duda ? 'var(--duda)' : (r.ok ? 'var(--ok)' : 'var(--mal)');
+        return '<div class="prueba">'
+             + '<span class="marcador" style="color:' + color + '">' + marca + '</span>'
+             + '<div><div class="nombre">' + r.nombre + '</div>'
+             + '<div class="detalle">' + r.detalle + '</div></div></div>';
+    }
+
+    function veredicto(res) {
+        var caja = document.getElementById('veredicto');
+        var sitio  = buscar(res, 'La página de Bersaglio carga');
+        var acceso = buscar(res, 'Llega al servidor que valida la contraseña');
+        var datos  = buscar(res, 'Llega a la base de datos del panel');
+        var reloj  = buscar(res, 'La hora del teléfono es correcta');
+        var emb    = buscar(res, 'Está en un navegador de verdad');
+
+        if (sitio && !sitio.ok) {
+            return poner(caja, 'mal', 'Este teléfono no tiene internet ahora mismo.',
+                ['Conéctalo a una red y vuelve a revisar.']);
+        }
+        if (emb && !emb.ok) {
+            return poner(caja, 'mal', 'Estás dentro de otra app, no en el navegador.',
+                ['Toca los tres puntos y elige "Abrir en Chrome" (o Safari).', 'Vuelve a intentar entrar desde ahí.']);
+        }
+        if (acceso && !acceso.ok) {
+            return poner(caja, 'mal', 'Encontrado: este teléfono bloquea el servidor que valida la contraseña.',
+                [
+                    'Internet funciona (el sitio carga), pero <b>este aparato</b> está filtrando el servidor de acceso. Por eso falla igual con WiFi que con datos, y por eso otro teléfono sí entra.',
+                    'Revisa en <b>este</b> teléfono, en este orden: <b>DNS privado</b> (Ajustes → Conexiones → Más ajustes → DNS privado: déjalo en <b>Desactivado</b>).',
+                    '¿Hay una <b>VPN</b> encendida? Apágala.',
+                    '¿Usas Brave, Opera o un navegador con bloqueador de anuncios? Prueba en <b>Chrome</b>.',
+                    '¿Tienes instalada una app de bloqueo (AdGuard, Blokada, NextDNS)? Desactívala y revisa otra vez.'
+                ]);
+        }
+        if (datos && !datos.ok) {
+            return poner(caja, 'mal', 'La contraseña sí se puede validar, pero la base de datos del panel está bloqueada.',
+                ['Entrarías y el panel quedaría vacío. Revisa lo mismo: DNS privado, VPN o bloqueador en este teléfono.']);
+        }
+        if (reloj && !reloj.ok) {
+            return poner(caja, 'mal', 'La hora de este teléfono está mal y eso tumba las conexiones seguras.',
+                ['Ajustes → Fecha y hora → activa <b>Automática</b>, y revisa otra vez.']);
+        }
+        return poner(caja, 'ok', 'Este teléfono pasa todas las revisiones.',
+            ['Si aun así no entra, el problema no es de conexión: es de usuario o contraseña. Usa "¿Olvidaste tu contraseña?" en la pantalla de acceso.']);
+    }
+
+    function buscar(res, nombre) {
+        for (var i = 0; i < res.length; i++) if (res[i].nombre === nombre) return res[i];
+        return null;
+    }
+    function poner(caja, clase, titulo, pasos) {
+        caja.className = clase;
+        caja.innerHTML = '<span class="titulo">' + titulo + '</span><ol><li>' + pasos.join('</li><li>') + '</li></ol>';
+    }
+
+    var ultimo = [];
+
+    function revisar() {
+        var btn = document.getElementById('repetir');
+        btn.disabled = true;
+        btn.textContent = 'Revisando…';
+        document.getElementById('pruebas').innerHTML = '';
+        document.getElementById('veredicto').className = '';
+        document.getElementById('veredicto').innerHTML = '<span class="titulo">Revisando…</span>Espera unos segundos.';
+
+        var red = PRUEBAS.map(function (p) {
+            return p.correr().then(function (r) {
+                return { nombre: p.nombre, ok: r.ok, duda: false, detalle: r.ok ? p.bien : (p.mal + ' (' + r.motivo + ')') };
+            });
+        });
+
+        Promise.all(red.concat([revisarReloj()])).then(function (resultados) {
+            var todo = resultados.concat(revisionesLocales());
+            ultimo = todo;
+            document.getElementById('pruebas').innerHTML = todo.map(pintar).join('');
+            veredicto(todo);
+            ficha();
+            btn.disabled = false;
+            btn.textContent = 'Revisar otra vez';
+        });
+    }
+
+    function ficha() {
+        var c = navigator.connection || {};
+        document.getElementById('ficha').innerHTML =
+              '<b>Para enviarle a soporte</b><br>'
+            + 'Aparato: ' + (navigator.userAgent || '?') + '<br>'
+            + 'Dirección: ' + location.host + '<br>'
+            + 'Hora del teléfono: ' + new Date().toString() + '<br>'
+            + 'Tipo de red: ' + (c.effectiveType || 'desconocido')
+            + (c.saveData ? ' · ahorro de datos ENCENDIDO' : '');
+    }
+
+    document.getElementById('repetir').addEventListener('click', revisar);
+    document.getElementById('copiar').addEventListener('click', function () {
+        var texto = ultimo.map(function (r) {
+            return (r.duda ? '[?] ' : (r.ok ? '[OK] ' : '[FALLA] ')) + r.nombre + ' — ' + r.detalle;
+        }).join('\n');
+        texto += '\n\n' + document.getElementById('ficha').innerText;
+        var btn = this;
+        function listo() { btn.textContent = '¡Copiado!'; setTimeout(function () { btn.textContent = 'Copiar resultado'; }, 2000); }
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(texto).then(listo, function () { respaldo(texto, listo); });
+        } else { respaldo(texto, listo); }
+    });
+
+    // Sin permiso de portapapeles (pasa en algunos navegadores de teléfono): se deja el texto
+    // seleccionado para que lo copie a mano.
+    function respaldo(texto, listo) {
+        var ta = document.createElement('textarea');
+        ta.value = texto;
+        ta.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:200px;z-index:9999';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); listo(); } catch (e) { /* queda seleccionado */ }
+        setTimeout(function () { ta.remove(); }, 200);
+    }
+
+    revisar();
+})();
+</script>
+</body>
+</html>

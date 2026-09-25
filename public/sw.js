@@ -91,7 +91,12 @@
 // una barra de navegador de 60px). Arreglo: dvh + sin min-height + overscroll contenido + el
 // bloque de usuario PEGADO al fondo (sticky, fondo sólido: nada de blur nuevo en móvil, L-62)
 // + página de atrás congelada con el menú abierto. Reportado por Daniel en móvil (2026-09-25).
-const CACHE_NAME    = 'bersaglio-v99';
+// v100 = [OPUS-5] el login deja de mentir: "Sin conexión. Revisa tu internet" salía cuando el
+// aparato bloquea el servidor de acceso (DNS privado/VPN/bloqueador) — mandaba a mirar el WiFi,
+// que estaba bien, y a cambiar la clave, que no era. Ahora nombra la causa real y ofrece
+// admin-diagnostico.html (página nueva, autocontenida) que revisa el aparato y da el veredicto.
+// Además: un fallo de red al leer el perfil ya no se anuncia como "tu cuenta no tiene acceso".
+const CACHE_NAME    = 'bersaglio-v100';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

@@ -66,4 +66,4 @@ export const NAV_FOOTER = { label: 'Ver sitio', href: 'index.html', icon: 'exter
 // Versión visible del panel (criterio de deploy para no-técnicos, spec §9.1): Kary
 // confirma que está en la versión nueva tras un despliegue. Se bumpea JUNTO al
 // CACHE_NAME del Service Worker (`public/sw.js`) en cada cambio del shell admin.
-export const APP_VERSION = 'v59 · 2026-07-25';   // [OPUS-5] B5 cierre: el cuadre diario 3:30 también vigila las cuentas de tesorería + avisos legibles en Salud
+export const APP_VERSION = 'v60 · 2026-09-25';   // [OPUS-5] rail móvil: "Cerrar sesión" alcanzable en teléfono (dvh + bloque de usuario pegado al fondo)

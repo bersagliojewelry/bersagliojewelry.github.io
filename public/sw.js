@@ -85,7 +85,13 @@
 // v98 = [OPUS-4.8] F-TESORERÍA B2+B3: nueva página admin "Cuentas y bancos" (admin-tesoreria.html +
 // tesoreria.js: cuentas/movimientos/traslado + pestaña "Cuadrar mes" conciliación) + ítem en el rail
 // Finanzas (sidebar-data.js, shell admin) → bump del shell. En código; deploy MANUAL pendiente.
-const CACHE_NAME    = 'bersaglio-v98';
+// v99 = [OPUS-5] rail móvil alcanzable: `min-height:100vh` le ganaba al `height:100dvh` de la
+// versión móvil (CSS: min-height vence a height) → la caja quedaba más alta que la pantalla y
+// "Cerrar sesión" caía bajo el borde con el deslizamiento ya en su tope (medido: 47px fuera con
+// una barra de navegador de 60px). Arreglo: dvh + sin min-height + overscroll contenido + el
+// bloque de usuario PEGADO al fondo (sticky, fondo sólido: nada de blur nuevo en móvil, L-62)
+// + página de atrás congelada con el menú abierto. Reportado por Daniel en móvil (2026-09-25).
+const CACHE_NAME    = 'bersaglio-v99';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

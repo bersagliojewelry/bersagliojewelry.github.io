@@ -105,11 +105,20 @@ function wireSidebarToggle(sidebar) {
     const backdrop = document.getElementById('sidebar-backdrop');
     if (!btn || !backdrop || wireSidebarToggle._done) return;
     wireSidebarToggle._done = true;
-    const toggle = () => { sidebar.classList.toggle('is-open'); backdrop.classList.toggle('is-visible'); };
+    // `adm-nav-abierta` en el body CONGELA la página de atrás mientras el rail está abierto
+    // (CSS en la media query móvil). Sin eso, deslizar el rail se propagaba al body: la barra
+    // del navegador móvil aparecía/desaparecía, el rail (fixed) se corría y "Cerrar sesión"
+    // quedaba fuera de pantalla por más que se deslizara (reportado por Daniel, 2026-09-25).
+    const setAbierta = (abierta) => {
+        sidebar.classList.toggle('is-open', abierta);
+        backdrop.classList.toggle('is-visible', abierta);
+        document.body.classList.toggle('adm-nav-abierta', abierta);
+    };
+    const toggle = () => setAbierta(!sidebar.classList.contains('is-open'));
     btn.addEventListener('click', toggle);
     backdrop.addEventListener('click', toggle);
     sidebar.addEventListener('click', (e) => {
-        if (e.target.closest('.adm-nav-link')) { sidebar.classList.remove('is-open'); backdrop.classList.remove('is-visible'); }
+        if (e.target.closest('.adm-nav-link')) setAbierta(false);
     });
 }
 

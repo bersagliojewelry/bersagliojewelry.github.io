@@ -19,6 +19,9 @@
     --adm-sidebar-w:  240px;
     --adm-sidebar-bg: oklch(96% 0.02 150 / 0.65);
     --adm-sidebar-bd: oklch(28% 0.08 155 / 0.12);
+    /* Gemelo OPACO del fondo del rail, para lo que va pegado encima del contenido que se
+       desliza (`.adm-user-info`): sin alpha, así tapa; sin blur nuevo (doctrina móvil L-62). */
+    --adm-sidebar-solid: oklch(97% 0.015 150);
 
     --adm-accent:        #1b4b36;  /* brand emerald deep */
     --adm-accent-hover:  #225d43;
@@ -96,9 +99,16 @@ svg { display: block; flex-shrink: 0; }
 }
 
 /* ─── Sidebar ─────────────────────────────────────────────────────────────── */
+/* Alto = el REALMENTE visible (`dvh`), nunca `100vh`. En móvil `100vh` mide la pantalla
+   SIN la barra del navegador, así que un `min-height:100vh` le ganaba al `height:100dvh`
+   de la versión móvil (CSS: min-height siempre vence a height) y la caja quedaba ~60-110px
+   más alta que la pantalla: el último bloque del rail — `.adm-user-info`, donde vive
+   "Cerrar sesión" — caía DEBAJO del borde visible, con el deslizamiento interno ya en su
+   máximo, o sea inalcanzable. Medido: el botón quedaba a 13px del borde y cualquier barra
+   de navegador se los comía. `min-height` era redundante (height + sticky ya llenan el alto
+   en escritorio, donde dvh == vh). Reportado por Daniel en móvil, 2026-09-25. */
 .adm-sidebar {
     width: var(--adm-sidebar-w);
-    min-height: 100vh;
     background: var(--adm-sidebar-bg);
     backdrop-filter: blur(28px) saturate(180%);
     -webkit-backdrop-filter: blur(28px) saturate(180%);
@@ -107,8 +117,13 @@ svg { display: block; flex-shrink: 0; }
     flex-direction: column;
     position: sticky;
     top: 0;
-    height: 100vh;
+    height: 100vh;    /* fallback: navegadores sin `dvh` */
+    height: 100dvh;
     overflow-y: auto;
+    /* El gesto no se escapa a la página de atrás: sin esto, al llegar al tope el scroll
+       se propagaba al body, la barra del navegador aparecía/desaparecía y el rail (fixed
+       en móvil) se desplazaba — "por más que deslizo no llego". */
+    overscroll-behavior: contain;
     flex-shrink: 0;
 }
 
@@ -1020,6 +1035,13 @@ select.adm-input { cursor: pointer; appearance: none; -webkit-appearance: none; 
         transform: translateX(0);
     }
 
+    /* Menú abierto = página de atrás CONGELADA (la clase la pone wireSidebarToggle en
+       shared.js). Sin esto el deslizamiento se iba al body: la barra del navegador móvil
+       aparecía/desaparecía y el rail se corría, dejando fuera el arriba o el abajo. */
+    body.adm-nav-abierta {
+        overflow: hidden;
+    }
+
     .adm-sidebar.is-open + .adm-sidebar-backdrop,
     .adm-sidebar-backdrop.is-visible {
         display: block;
@@ -1119,7 +1141,8 @@ select.adm-input { cursor: pointer; appearance: none; -webkit-appearance: none; 
 @supports (padding: env(safe-area-inset-bottom)) {
     .adm-content { padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
     .adm-toast-wrap { bottom: calc(16px + env(safe-area-inset-bottom)); }
-    .adm-sidebar { padding-bottom: env(safe-area-inset-bottom); }
+    /* El safe-area del rail lo lleva `.adm-user-info` (el bloque pegado al fondo). Aquí
+       dejaba una franja muerta bajo ese bloque dentro del área que se desliza. */
     .adm-modal-foot { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
 }
 
@@ -1274,8 +1297,19 @@ select.adm-input { cursor: pointer; appearance: none; -webkit-appearance: none; 
 }
 
 /* ─── User role badge in sidebar ─────────────────────────────────────────── */
+/* PEGADO al fondo del rail (`sticky`): es el bloque que contiene "Cerrar sesión", y con el
+   menú completo de dueño el contenido mide ~1273px — en cualquier teléfono hay que deslizar
+   para llegar al final. Salir NO puede depender de deslizar hasta el fondo. Fondo SÓLIDO
+   (no `backdrop-filter`): la doctrina CSS prohíbe sumar blur en móvil (L-62, memoria iOS). */
 .adm-user-info {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    background: var(--adm-sidebar-solid);
     padding: 12px 14px;
+    /* El safe-area vive AQUÍ, no en `.adm-sidebar`: en el contenedor con scroll dejaba una
+       franja muerta por debajo del bloque pegado. */
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
     border-top: 1px solid var(--adm-sidebar-bd);
     display: flex;
     align-items: center;

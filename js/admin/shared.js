@@ -109,10 +109,26 @@ function wireSidebarToggle(sidebar) {
     // (CSS en la media query móvil). Sin eso, deslizar el rail se propagaba al body: la barra
     // del navegador móvil aparecía/desaparecía, el rail (fixed) se corría y "Cerrar sesión"
     // quedaba fuera de pantalla por más que se deslizara (reportado por Daniel, 2026-09-25).
+    //
+    // El congelado es el MISMO patrón que los drawers del sitio público (cart-drawer.js): en
+    // iOS Safari `overflow:hidden` NO basta, hay que sacar el body del flujo con `position:
+    // fixed` y compensar el desplazamiento con `top:-scrollY`, restaurándolo al cerrar —
+    // lección L-01, pagada en 2026-04 y reaplicada en el carrito. Solo en el ancho donde el
+    // rail es un panel deslizante: en escritorio está siempre visible y no hay nada que congelar.
+    let scrollGuardado = 0;
+    const esOverlay = () => window.matchMedia('(max-width: 680px)').matches;
     const setAbierta = (abierta) => {
         sidebar.classList.toggle('is-open', abierta);
         backdrop.classList.toggle('is-visible', abierta);
-        document.body.classList.toggle('adm-nav-abierta', abierta);
+        if (abierta && esOverlay()) {
+            scrollGuardado = window.scrollY;
+            document.body.style.top = `-${scrollGuardado}px`;
+            document.body.classList.add('adm-nav-abierta');
+        } else if (!abierta && document.body.classList.contains('adm-nav-abierta')) {
+            document.body.classList.remove('adm-nav-abierta');
+            document.body.style.top = '';
+            window.scrollTo(0, scrollGuardado);
+        }
     };
     const toggle = () => setAbierta(!sidebar.classList.contains('is-open'));
     btn.addEventListener('click', toggle);

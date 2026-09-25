@@ -96,7 +96,10 @@
 // que estaba bien, y a cambiar la clave, que no era. Ahora nombra la causa real y ofrece
 // admin-diagnostico.html (página nueva, autocontenida) que revisa el aparato y da el veredicto.
 // Además: un fallo de red al leer el perfil ya no se anuncia como "tu cuenta no tiene acceso".
-const CACHE_NAME    = 'bersaglio-v100';
+// v101 = [OPUS-5] el congelado del fondo con el rail abierto pasa a la técnica de iOS (L-01):
+// `overflow:hidden` no congela en iPhone — body a `position:fixed` + `top:-scrollY` y scroll
+// restaurado al cerrar, el mismo patrón ya probado en los drawers del sitio (cart-drawer.js).
+const CACHE_NAME    = 'bersaglio-v101';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

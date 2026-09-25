@@ -1037,8 +1037,14 @@ select.adm-input { cursor: pointer; appearance: none; -webkit-appearance: none; 
 
     /* Menú abierto = página de atrás CONGELADA (la clase la pone wireSidebarToggle en
        shared.js). Sin esto el deslizamiento se iba al body: la barra del navegador móvil
-       aparecía/desaparecía y el rail se corría, dejando fuera el arriba o el abajo. */
+       aparecía/desaparecía y el rail se corría, dejando fuera el arriba o el abajo.
+       `position:fixed` + `width:100%` y NO solo `overflow:hidden`: en iOS Safari el overflow
+       por sí solo NO congela el fondo — lección L-01, ya pagada en los drawers del sitio
+       público (`body.cart-drawer-open`, css/components.css). El `top:-scrollY` y la
+       restauración del scroll los pone el JS, igual que allá. */
     body.adm-nav-abierta {
+        position: fixed;
+        width: 100%;
         overflow: hidden;
     }
 

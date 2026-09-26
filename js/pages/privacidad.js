@@ -19,7 +19,7 @@ const SECTIONS = [
         id: 'compromiso',
         n: '01',
         title: 'Nuestro compromiso',
-        body: `Bersaglio Jewelry trata tus datos personales con el mismo cuidado con el que tratamos una esmeralda Muzo Vieja: con paciencia, con discreción, y con la certeza de que cada decisión sobre tu información debe pasar primero por la pregunta "¿esto es necesario para servirte mejor?".
+        body: `Bersaglio Jewelry trata tus datos personales con el mismo cuidado con el que tratamos una esmeralda: con paciencia, con discreción, y con la certeza de que cada decisión sobre tu información debe pasar primero por la pregunta "¿esto es necesario para servirte mejor?".
 
 Esta política explica qué datos recolectamos, por qué, cómo los protegemos y qué derechos tienes sobre ellos.`,
     },

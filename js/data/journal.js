@@ -45,7 +45,7 @@ export const JOURNAL_ISSUE = {
 
 export const JOURNAL_TICKER = [
     'Alta joyería · Esmeraldas colombianas',
-    'Atelier en Cartagena de Indias · Cita previa',
+    'Atelier en Cartagena de Indias · Centro Histórico',
     'Piezas únicas y series muy limitadas',
     'Oro 18K · Diamantes certificados',
 ];

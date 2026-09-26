@@ -212,7 +212,7 @@ const homeTextsDescriptor = {
             { name: 'stat3Num',   label: 'Dato 3 — número',             type: 'text', max: 8 },
             { name: 'stat3Lab',   label: 'Dato 3 — etiqueta',           type: 'text', max: 18 },
         ]},
-        { key: 'atelier', label: 'Atelier (el viaje de creación)', fields: [
+        { key: 'atelier', label: 'Atelier (tu pieza, paso a paso)', fields: [
             { name: 'chip',       label: 'Chip',                        type: 'text', max: 28 },
             { name: 'title1',     label: 'Título — línea 1',            type: 'text', max: 40 },
             { name: 'title2',     label: 'Título — línea 2 (cursiva)',  type: 'text', max: 36 },
@@ -337,7 +337,7 @@ const nosotrosTextsDescriptor = {
             { name: 'titlePre', label: 'Título — inicio',           type: 'text', max: 48 },
             { name: 'titleEm',  label: 'Título — parte en cursiva', type: 'text', max: 36 },
             { name: 'items', type: 'list', max: 12, addLabel: 'Añadir capítulo', singular: 'Capítulo', itemTitleFrom: 't', itemFields: [
-                { name: 'y', label: 'Año',         type: 'text', max: 8 },
+                { name: 'y', label: 'Capítulo (número)', type: 'text', max: 8 },
                 { name: 't', label: 'Título',      type: 'text', max: 60 },
                 { name: 'd', label: 'Descripción', type: 'textarea', rows: 3, max: 380 },
             ]},

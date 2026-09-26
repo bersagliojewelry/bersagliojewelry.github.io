@@ -4,10 +4,10 @@
 import { html, escape } from '../core/html.js';
 
 const SERVICES = [
-    { t: 'Diseño a medida', d: 'Crea la pieza de tus sueños con nuestro atelier. Desde boceto hasta entrega.', icon: 'pen' },
-    { t: 'Asesoría privada', d: 'Consulta 1:1 con nuestros gemólogos. Virtual o en nuestra casa en Cartagena.', icon: 'user' },
-    { t: 'Certificación GIA', d: 'Cada pieza con diamante incluye certificado del Gemological Institute.', icon: 'gia' },
-    { t: 'Garantía vitalicia', d: 'Mantenimiento, pulido y verificación de piedras de por vida.', icon: 'shield' },
+    { t: 'Diseño a medida', d: 'Si lo que buscas no está en la vitrina, lo creamos contigo.', icon: 'pen' },
+    { t: 'Asesoría privada', d: 'Resolvemos cada duda sobre tu pieza, de forma virtual o en nuestra casa de Cartagena.', icon: 'user' },
+    { t: 'Gemas certificadas', d: 'Cada gema tiene su propio certificado, de laboratorios distintos según la piedra.', icon: 'gia' },
+    { t: 'Garantía comercial de por vida', d: 'Cubre defectos de fabricación mientras el atelier esté en operación.', icon: 'shield' },
 ];
 
 // Iconos de línea estilo Lucide (stroke 1.6). pen-tool · users · GIA badge · shield-check.
@@ -23,10 +23,10 @@ export function renderServices() {
         <section class="home-services">
             <div class="container">
                 <div class="home-services-header">
-                    <div class="eyebrow">El valor de lo excepcional</div>
+                    <div class="eyebrow">Servicios de la casa</div>
                     <h2 class="home-services-title">
-                        Una experiencia a la altura<br>
-                        <span class="italic emerald-text">de tu propia historia</span>
+                        Así te acompañamos<br>
+                        <span class="italic emerald-text">antes y después de elegir</span>
                     </h2>
                 </div>
                 <div class="home-services-grid">

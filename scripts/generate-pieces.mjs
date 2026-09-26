@@ -453,7 +453,7 @@ function renderCategoriesPrerender(collections) {
                         La refracción del <span class="italic emerald-text">alma verde</span>
                     </h2>
                     <p class="home-cats-lead">
-                        Nuestras colecciones son capítulos de una historia compartida. Cada anillo, arete y dije es esculpido pacientemente en oro de 18K, rindiendo homenaje al fuego interno y la mística de la esmeralda colombiana.
+                        Nuestras colecciones son capítulos de una historia compartida. Cada anillo, arete y dije se trabaja con paciencia en oro de 18K, y la esmeralda colombiana es la piedra de nuestra casa.
                     </p>
                 </div>
                 <div class="cat-dock" style="--n:${list.length}">
@@ -562,10 +562,10 @@ function renderEditorialPrerender(c) {
 
 function renderServicesPrerender() {
     const services = [
-        { t: 'Diseño a medida', d: 'Crea la pieza de tus sueños con nuestro atelier. Desde boceto hasta entrega.', icon: 'pen' },
-        { t: 'Asesoría privada', d: 'Consulta 1:1 con nuestros gemólogos. Virtual o en nuestra casa en Cartagena.', icon: 'user' },
-        { t: 'Certificación GIA', d: 'Cada pieza con diamante incluye certificado del Gemological Institute.', icon: 'gia' },
-        { t: 'Garantía vitalicia', d: 'Mantenimiento, pulido y verificación de piedras de por vida.', icon: 'shield' },
+        { t: 'Diseño a medida', d: 'Si lo que buscas no está en la vitrina, lo creamos contigo.', icon: 'pen' },
+        { t: 'Asesoría privada', d: 'Resolvemos cada duda sobre tu pieza, de forma virtual o en nuestra casa de Cartagena.', icon: 'user' },
+        { t: 'Gemas certificadas', d: 'Cada gema tiene su propio certificado, de laboratorios distintos según la piedra.', icon: 'gia' },
+        { t: 'Garantía comercial de por vida', d: 'Cubre defectos de fabricación mientras el atelier esté en operación.', icon: 'shield' },
     ];
     const serviceIcons = {
         pen:    `<path d="m12 19 7-7 3 3-7 7-3-3z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="m2 2 7.586 7.586"/><circle cx="11" cy="11" r="2"/>`,
@@ -589,10 +589,10 @@ function renderServicesPrerender() {
         <section class="home-services">
             <div class="container">
                 <div class="home-services-header">
-                    <div class="eyebrow">El valor de lo excepcional</div>
+                    <div class="eyebrow">Servicios de la casa</div>
                     <h2 class="home-services-title">
-                        Una experiencia a la altura<br>
-                        <span class="italic emerald-text">de tu propia historia</span>
+                        Así te acompañamos<br>
+                        <span class="italic emerald-text">antes y después de elegir</span>
                     </h2>
                 </div>
                 <div class="home-services-grid">
@@ -830,10 +830,10 @@ function gemasDe(p) {
 // Intro evergreen por gema (voz de marca — factual, cero claims fabricados; revisable por Daniel).
 // Se muestra como respuesta-directa <150 palabras (AEO) + meta description keyword-first.
 const GEMA_INTRO = {
-    esmeralda: 'La esmeralda colombiana es el corazón de Bersaglio: un verde con fuego propio, nacido en las montañas de Muzo y Chivor. La engastamos a mano en oro de 18 quilates, en anillos, aretes, dijes y cadenas hechos en nuestro atelier del Centro Histórico de Cartagena. Piezas únicas y certificadas, para acompañar los días que se recuerdan.',
-    diamante: 'El diamante es luz que no se apaga. En Bersaglio lo trabajamos sobre oro de 18 quilates —solo o acompañando una esmeralda, un rubí o un zafiro— en anillos, aretes, dijes y pulseras que atrapan el brillo desde cualquier ángulo. Cada pieza se hace a mano en nuestro atelier de Cartagena, única y certificada.',
-    rubi: 'El rubí lleva el calor del Caribe en su rojo. Lo engastamos a mano en oro de 18 quilates, rodeado de diamantes, en anillos, aretes y dijes forjados en nuestro atelier del Centro Histórico de Cartagena. Piezas únicas y certificadas, pensadas para una historia intensa.',
-    zafiro: 'El zafiro guarda la profundidad del mar en su azul. En Bersaglio lo montamos sobre oro de 18 quilates, realzado con diamantes, en anillos, aretes y dijes hechos a mano en nuestro atelier de Cartagena. Piezas únicas y certificadas, serenas y elegantes a la vez.',
+    esmeralda: 'La esmeralda colombiana es el corazón de Bersaglio. La encuentras en anillos, aretes, dijes y cadenas de oro de 18 quilates, y cada gema tiene su propio certificado. Te la mostramos de cerca en nuestra casa del Centro Histórico de Cartagena.',
+    diamante: 'Los diamantes de Bersaglio van sobre oro de 18 quilates, solos o junto a una esmeralda, un rubí o un zafiro. Los encuentras en anillos, aretes, dijes y pulseras, y cada gema tiene su propio certificado. Si prefieres verlos en persona, te esperamos en nuestra casa de Cartagena.',
+    rubi: 'Los rubíes de Bersaglio van en anillos, aretes y dijes de oro de 18 quilates. Cada gema tiene su propio certificado. Si prefieres ver la pieza en persona, te la mostramos en nuestra casa del Centro Histórico de Cartagena.',
+    zafiro: 'Los zafiros de Bersaglio van sobre oro de 18 quilates en anillos, aretes y dijes. Cada gema tiene su propio certificado, y te mostramos cada pieza de cerca en nuestra casa de Cartagena.',
 };
 
 // H1 keyword-first + <title>/meta description por faceta (keyword de producto/gema + ciudad).
@@ -843,14 +843,14 @@ function facetMeta(f) {
         return {
             h1: `Joyería de ${g} en Cartagena`,
             title: `Joyería de ${g} en Cartagena · Oro 18K · ${BRAND}`,
-            intro: GEMA_INTRO[f.slug] || `${g} engastada a mano en oro de 18 quilates. Alta joyería ${BRAND} en Cartagena de Indias.`,
+            intro: GEMA_INTRO[f.slug] || `${g} sobre oro de 18 quilates. Cada gema tiene su propio certificado. Alta joyería ${BRAND} en Cartagena de Indias.`,
         };
     }
     const name = f.label;   // "Anillos" / "Topos & Aretes"
     return {
         h1: `${name} en Cartagena`,
         title: `${name} en oro 18K · Joyería en Cartagena · ${BRAND}`,
-        intro: (f.description || `${name} de alta joyería en oro de 18 quilates con esmeraldas colombianas y diamantes certificados, hechos a mano en nuestro atelier de Cartagena.`).trim(),
+        intro: (f.description || `${name} de alta joyería en oro de 18 quilates con esmeraldas colombianas y diamantes certificados. Te esperamos en nuestra casa de Cartagena.`).trim(),
     };
 }
 
@@ -1016,7 +1016,7 @@ const JOURNAL_ANCHORS = [
     '<meta property="og:type" content="website">',
     '<meta property="og:url" content="https://bersagliojewelry.co/entrada.html">',
     '<meta property="og:title" content="Journal · Bersaglio Jewelry">',
-    '<meta property="og:description" content="Atelier en Cartagena de Indias. Esmeraldas Muzo, diamantes GIA, oro 18K.">',
+    '<meta property="og:description" content="Atelier en Cartagena de Indias. Esmeraldas colombianas, diamantes y oro 18K.">',
     '<meta property="og:image" content="https://bersagliojewelry.co/img/og-image.jpg">',
     '<meta name="twitter:card" content="summary_large_image">',
     '</head>',
@@ -1107,7 +1107,7 @@ function bakeJournalPage(shell, e) {
         `<meta property="og:url" content="${escapeAttr(canonical)}">`);
     html = html.replace('<meta property="og:title" content="Journal · Bersaglio Jewelry">',
         `<meta property="og:title" content="${escapeAttr(meta.h1)}">`);
-    html = html.replace('<meta property="og:description" content="Atelier en Cartagena de Indias. Esmeraldas Muzo, diamantes GIA, oro 18K.">',
+    html = html.replace('<meta property="og:description" content="Atelier en Cartagena de Indias. Esmeraldas colombianas, diamantes y oro 18K.">',
         `<meta property="og:description" content="${escapeAttr(meta.metaDesc)}">`);
     html = html.replace('<meta property="og:image" content="https://bersagliojewelry.co/img/og-image.jpg">',
         `<meta property="og:image" content="${escapeAttr(image)}">`);
@@ -1152,6 +1152,7 @@ const REQUIRED_ANCHORS = [
     '<meta charset="UTF-8">',
     '<meta name="robots" content="noindex, nofollow">',
     '<title>Pieza · Bersaglio Jewelry</title>',
+    '<meta name="description" content="Detalle de pieza Bersaglio Jewelry. Cada gema tiene su propio certificado.">',
     '<link rel="canonical" href="https://bersagliojewelry.co/pieza.html">',
     '<meta property="og:type" content="website">',
     '<meta property="og:url" content="https://bersagliojewelry.co/pieza.html">',
@@ -1213,7 +1214,7 @@ function generatePage(template, p, slug, collectionsById) {
     // 4. <title> + meta description.
     html = html.replace('<title>Pieza · Bersaglio Jewelry</title>', `<title>${escapeHtml(title)}</title>`);
     html = html.replace(
-        '<meta name="description" content="Detalle de pieza Bersaglio Jewelry — esmeralda colombiana, oro 18K certificado.">',
+        '<meta name="description" content="Detalle de pieza Bersaglio Jewelry. Cada gema tiene su propio certificado.">',
         `<meta name="description" content="${escapeAttr(metaDesc)}">`
     );
 
@@ -1230,7 +1231,7 @@ function generatePage(template, p, slug, collectionsById) {
         `<meta property="og:title" content="${escapeAttr(title)}">`
     );
     html = html.replace(
-        '<meta property="og:description" content="Atelier en Cartagena de Indias. Esmeraldas Muzo, diamantes GIA, oro 18K.">',
+        '<meta property="og:description" content="Atelier en Cartagena de Indias. Esmeraldas colombianas, diamantes y oro 18K.">',
         `<meta property="og:description" content="${escapeAttr(ogDesc)}">`
     );
     html = html.replace(
@@ -2063,7 +2064,7 @@ function runSelfTest() {
     // A3 JOURNAL (/journal/<slug>.html): shell de entrada → artículo indexable. Anti-breakout XSS +
     // robots index + canonical + <base> + og:type=article + PRERENDERED_ENTRY_SLUG + ld+json parsea
     // + determinismo + puerta cero-ficción (isJournalBakeable) + anti path-traversal del slug.
-    const FAKE_ENTRY_SHELL = '<html><head><meta charset="UTF-8"><title>Journal · Bersaglio Jewelry</title><meta name="description" content="Una entrada del journal Bersaglio Jewelry — historias del atelier en Cartagena."><meta name="robots" content="noindex, nofollow"><link rel="canonical" href="https://bersagliojewelry.co/entrada.html"><meta property="og:type" content="website"><meta property="og:url" content="https://bersagliojewelry.co/entrada.html"><meta property="og:title" content="Journal · Bersaglio Jewelry"><meta property="og:description" content="Atelier en Cartagena de Indias. Esmeraldas Muzo, diamantes GIA, oro 18K."><meta property="og:image" content="https://bersagliojewelry.co/img/og-image.jpg"><meta name="twitter:card" content="summary_large_image"></head><body><main id="main-content" data-screen-label="entrada">x</main></body></html>' + ' '.repeat(MIN_BAKE_BYTES);
+    const FAKE_ENTRY_SHELL = '<html><head><meta charset="UTF-8"><title>Journal · Bersaglio Jewelry</title><meta name="description" content="Una entrada del journal Bersaglio Jewelry — historias del atelier en Cartagena."><meta name="robots" content="noindex, nofollow"><link rel="canonical" href="https://bersagliojewelry.co/entrada.html"><meta property="og:type" content="website"><meta property="og:url" content="https://bersagliojewelry.co/entrada.html"><meta property="og:title" content="Journal · Bersaglio Jewelry"><meta property="og:description" content="Atelier en Cartagena de Indias. Esmeraldas colombianas, diamantes y oro 18K."><meta property="og:image" content="https://bersagliojewelry.co/img/og-image.jpg"><meta name="twitter:card" content="summary_large_image"></head><body><main id="main-content" data-screen-label="entrada">x</main></body></html>' + ' '.repeat(MIN_BAKE_BYTES);
     const entryMock = {
         id: 'selftest', slug: 'selftest', title: PAYLOAD, section: PAYLOAD, author: PAYLOAD,
         excerpt: PAYLOAD, body: PAYLOAD + '\n\n' + PAYLOAD, image: 'https://x/y.webp',

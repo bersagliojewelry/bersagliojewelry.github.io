@@ -90,7 +90,7 @@ function headerHtml() {
                 La refracción del <span class="italic emerald-text">alma verde</span>
             </h2>
             <p class="home-cats-lead">
-                Nuestras colecciones son capítulos de una historia compartida. Cada anillo, arete y dije es esculpido pacientemente en oro de 18K, rindiendo homenaje al fuego interno y la mística de la esmeralda colombiana.
+                Nuestras colecciones son capítulos de una historia compartida. Cada anillo, arete y dije se trabaja con paciencia en oro de 18K, y la esmeralda colombiana es la piedra de nuestra casa.
             </p>
         </div>`;
 }

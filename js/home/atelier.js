@@ -1,5 +1,5 @@
 /**
- * Home · Sección 7 — Atelier ("El viaje de creación de una pieza de culto"). DINÁMICO
+ * Home · Sección 7 — Atelier ("Tu pieza a la medida, paso a paso"). DINÁMICO
  * (CMS P2): textos de merge(HOME_DEFAULTS, siteContent/home).atelier, editables desde
  * el panel (Textos del Home → Atelier). Estructura (joya/halo/anillo/líneas) + posición
  * de las 4 tarjetas (corner por índice) = ESTANDARIZADO. Texto por escape(), href por safeUrl().

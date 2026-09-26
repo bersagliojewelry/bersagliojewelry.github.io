@@ -30,8 +30,8 @@ export const NOSOTROS_DEFAULTS = {
         titleL1:      'Un legado',
         titleEm:      'se susurra,',
         titleTail:    'no se compra.',
-        lead:         'Nacimos con una visión clara: acercar piezas únicas a quienes aprecian la elegancia y el valor de una joya auténtica. Nuestro viaje comenzó desde cero, visitando a nuestros clientes en la calidez de sus hogares; hoy esa misma cercanía vive en dos espacios que se complementan: una tienda en línea para comprar tus piezas y recibirlas en todo el país, y nuestra Maison del Centro Histórico de Cartagena de Indias, donde te recibimos en persona.',
-        leadItalic:   'Más que vender joyas, nos apasiona asesorar. Por eso encontrarás colecciones listas para llevar —anillos, aretes, cadenas y dijes en oro de 18K y esmeraldas colombianas, disponibles en nuestro catálogo en línea con envío a todo el país— y también la posibilidad de co-crear contigo una pieza a tu medida: porque una joya no es un simple accesorio, sino el reflejo de tu esencia.',
+        lead:         'Empezamos visitando a nuestros clientes en la calidez de sus hogares, para acercarles piezas únicas. Hoy esa misma cercanía vive en dos espacios que se complementan: una tienda en línea para comprar tus piezas y recibirlas en todo el país, y nuestra Maison del Centro Histórico de Cartagena de Indias, donde te recibimos en persona.',
+        leadItalic:   'Nos apasiona asesorar. En nuestro catálogo en línea encontrarás piezas listas para llevar, como anillos, aretes, cadenas y dijes en oro de 18K y esmeraldas colombianas. Y si lo que buscas no está ahí, creamos contigo una pieza a tu medida, a partir de tu historia.',
         imageEyebrow: 'ATELIER · CARTAGENA DE INDIAS',
         quote:        'Nuestra casa es tu casa.',
         quoteAuthor:  'KARY MENDOZA',
@@ -43,16 +43,16 @@ export const NOSOTROS_DEFAULTS = {
     manifiesto: {
         titlePre: 'Sostenemos que el lujo auténtico carece de estridencias.',
         titleEm:  'Es un secreto compartido entre dos personas',
-        titleTail: ', esbozado en la calidez de nuestro atelier, donde el tiempo se detiene para dar vida a una creación que trascenderá nuestra propia existencia.',
+        titleTail: ', que se cuenta en nuestra casa y se queda contigo en forma de joya.',
         foot:     'MAISON BERSAGLIO · CARTAGENA DE INDIAS',
     },
 
     // 3. MAISON — filosofía Misión / Visión (texto plano)
     maison: {
-        misionTitle: 'Nuestra Promesa',
-        misionDesc:  'Concebir piezas exclusivas mediante una asesoría íntima y cercana. Acompañamos a nuestros clientes en la elección de joyas que representen su distinción y los instantes más valiosos de su vida, asegurando siempre una experiencia de confianza, calidad y emotividad perdurable.',
-        visionTitle: 'El Horizonte',
-        visionDesc:  'Ser el atelier de alta joyería personalizada de referencia en excelencia y discreción, consolidando un acompañamiento generacional que perpetúa el legado emocional de nuestros clientes a través de piezas de autor únicas que vencen al tiempo.',
+        misionTitle: 'Nuestra promesa',
+        misionDesc:  'Crear contigo piezas a tu medida, con una asesoría cercana. Te acompañamos a elegir la joya de un momento importante de tu vida, con el tiempo que esa elección pide.',
+        visionTitle: 'El horizonte',
+        visionDesc:  'Queremos ser la casa de alta joyería a la que vuelvas cada vez que tengas algo que celebrar, y a la que también traigas a los tuyos.',
     },
 
     // 4. VALORES — encabezado editable (B) + lista (el número 01..06 lo deriva el renderer del índice)
@@ -61,35 +61,35 @@ export const NOSOTROS_DEFAULTS = {
         titlePre: 'Seis cosas en las que',
         titleEm:  'no negociamos',
         items: [
-            { t: 'La Elegancia como Silencio', d: 'Entendemos la sofisticación no como un destello ruidoso, sino como un susurro de distinción. Una joya Bersaglio es la expresión poética de tu estilo y de tu esencia.' },
-            { t: 'El Pacto de Credibilidad',   d: 'Construimos relaciones duraderas basadas en la transparencia, la credibilidad y una confianza inquebrantable que custodia tu tranquilidad.' },
-            { t: 'La Asesoría antes del Oficio', d: 'Antes que vender, nos dedicamos a guiarte y asesorarte con paciencia, asegurando que cada cliente encuentre o co-cree la pieza idónea.' },
-            { t: 'Devoción en cada Detalle',   d: 'Cada milímetro esculpido y cada interacción con nosotros está cuidada con devoción, buscando hacer de tu experiencia un recuerdo memorable.' },
-            { t: 'Cómplices de tu Felicidad',  d: 'Nos apasiona ser parte de tus momentos más significativos. Diseñamos con el orgullo de dar forma física a tus emociones y celebraciones sagradas.' },
-            { t: 'Valor e Inversión Eterna',   d: 'Transmitimos a nuestros clientes que una joya no es un gasto efímero, sino una inversión duradera que conserva e incrementa su significado y valor en el tiempo.' },
+            { t: 'La elegancia como silencio', d: 'Para nosotros la elegancia es un susurro. Queremos que tu joya Bersaglio hable de tu estilo con esa misma discreción.' },
+            { t: 'El pacto de credibilidad',   d: 'Construimos relaciones duraderas con transparencia: te contamos lo que sabemos de cada pieza, para que elijas con tranquilidad.' },
+            { t: 'La asesoría antes del oficio', d: 'Te asesoramos con paciencia hasta que encuentres la pieza que buscas o hasta que la creemos juntos.' },
+            { t: 'Devoción en cada detalle',   d: 'Cuidamos con la misma devoción cada milímetro de la pieza y cada conversación contigo.' },
+            { t: 'Cómplices de tu felicidad',  d: 'Nos gusta ser parte de tus días felices y diseñar con orgullo la joya que vas a llevar en ellos.' },
+            { t: 'Una joya que se hereda',     d: 'Queremos que cada joya te acompañe por años y que, algún día, la lleve alguien que quieres.' },
         ],
     },
 
     // 5. TIMELINE — encabezado editable (B) + lista de capítulos (el orden del array = orden cronológico)
     timeline: {
-        titlePre: 'Trece años en',
+        titlePre: 'Nuestra historia en',
         titleEm:  'cinco capítulos',
         items: [
-            { y: '2013', t: 'El Diálogo Inicial', d: 'El taller comenzó con un sueño, dedicación y visitas personalizadas directamente en los hogares de nuestros clientes. Este contacto íntimo nos enseñó que antes que una joya, el huésped busca sentirse seguro, asesorado y acompañado en su elección.' },
-            { y: '2016', t: 'La Consagración del Espacio', d: 'Gracias a esta filosofía de servicio y cercanía, crecimos paso a paso. Abrimos las puertas de nuestro primer atelier privado en el centro histórico de Cartagena, un refugio para mantener esa atención pausada e individual.' },
-            { y: '2020', t: 'Estándares y Confianza', d: 'Consolidamos nuestra reputación basándonos en la transparencia absoluta de cada gema. Cada esmeralda y diamante se entrega con trazabilidad total y certificación ética, reforzando la credibilidad y el valor real de cada inversión.' },
-            { y: '2023', t: 'Una Década de Relaciones', d: 'Cumplimos diez años de trayectoria construyendo vínculos duraderos. El acompañamiento y asesoramiento personalizado se consolidan formalmente como el corazón absoluto de Bersaglio.' },
-            { y: '2026', t: 'La Verde y la Esencia', d: 'Hoy, seguimos conservando intacta la misma esencia con la que iniciamos: ofrecer una experiencia cercana, elegante y completamente personalizada, donde cada cliente se siente especial y cada joya tiene un significado real.' },
+            { y: '01', t: 'El diálogo inicial', d: 'Todo comenzó con visitas personalizadas en los hogares de nuestros clientes. Allí aprendimos que, antes de ver una joya, quien la elige quiere sentirse escuchado y acompañado.' },
+            { y: '02', t: 'La consagración del espacio', d: 'Gracias a esta filosofía de servicio y cercanía, crecimos paso a paso hasta abrir nuestra casa en el Centro Histórico de Cartagena, donde mantenemos esa atención pausada e individual.' },
+            { y: '03', t: 'Estándares y confianza', d: 'Consolidamos nuestra reputación con una costumbre que mantenemos hoy: cada gema tiene su propio certificado.' },
+            { y: '04', t: 'Relaciones que duran', d: 'Acompañar y asesorar a cada cliente sigue siendo el centro de lo que hacemos.' },
+            { y: '05', t: 'Lo que no cambia', d: 'Hoy seguimos como empezamos: te atendemos en persona y elegimos contigo la joya después de escuchar tu historia.' },
         ],
     },
 
     // 6. EQUIPO — lista (avatar = iniciales+gradiente derivado; foto opcional a futuro, aditiva)
     equipo: {
         items: [
-            { n: 'Kary Mendoza',           r: 'Fundadora & Directora',   b: 'Diez años dedicada a escuchar con empatía las historias de nuestros clientes para traducirlas en obras de arte eternas. Su mirada sensible guía la selección de cada gema y supervisa el detalle final de cada pieza.' },
-            { n: 'Maestro Eliécer Patiño', r: 'Orfebre principal',       b: 'Treinta y dos años de maestría y devoción orfebre. Formado bajo la tradición de la filigrana en Mompox y perfeccionado en Cartagena, domina la fundición a cera perdida y el engaste pavé de alta precisión.' },
-            { n: 'Lucía Restrepo',         r: 'Gemóloga GIA',            b: 'Certificada por el prestigioso Gemological Institute of America (GIA). Es la guardiana de la excelencia gemológica de la Maison, analizando la pureza, color y procedencia de cada esmeralda y diamante.' },
-            { n: 'Andrés Beltrán',         r: 'Diseño & dibujo técnico', b: 'Traduce las conversaciones íntimas del atelier en bocetos poéticos a mano alzada, planos técnicos y modelados 3D meticulosos, sirviendo de puente entre el deseo del cliente y el crisol del orfebre.' },
+            { n: 'Kary Mendoza',           r: 'Fundadora',                b: 'Escucha con empatía las historias de nuestros clientes para traducirlas en joyas. Guía la selección de cada gema y revisa el detalle final de cada pieza.' },
+            { n: 'Verónica Barrios',       r: 'Directora Administrativa', b: 'Organiza con atención al detalle los procesos de nuestra casa joyera, para que cada pieza y cada visita reciban el mismo cuidado.' },
+            { n: 'Daniela Mendoza',        r: 'Asesora Comercial',        b: 'Te acompaña con calidez y resuelve contigo cada duda sobre la pieza que te interesa.' },
+            { n: 'Tania Almonte',          r: 'Asesora Comercial',        b: 'Conversa contigo sobre lo que buscas y te ayuda a elegir la joya o el regalo.' },
         ],
     },
 
@@ -97,33 +97,26 @@ export const NOSOTROS_DEFAULTS = {
     atelier: {
         title1:      'Donde el oficio',
         titleEm:     'toma forma',
-        p1:          'En el corazón del Centro Histórico de Cartagena tenemos nuestra casa taller: un espacio abierto al público que trabaja en sintonía con nuestra tienda en línea. Aquí damos forma a mano a cada joya —la que llega a tu puerta y la que soñamos juntos a tu medida—, porque en Bersaglio no revendemos: fabricamos cada pieza desde el oro y la esmeralda, y te recibimos en persona con la misma dedicación con que la creamos.',
-        p2:          'Kary y su equipo acompañan cada paso: desde la primera conversación y el boceto a mano alzada, hasta dar vida a la joya y entregarla firmada. Un proceso cercano, sin prisas y hecho a la medida de tu historia.',
+        p1:          'En el Centro Histórico de Cartagena está nuestra casa, que trabaja en sintonía con nuestra tienda en línea. Allí puedes ver nuestras piezas en persona o sentarte con nosotros a diseñar la tuya. Y si no puedes venir, te la enviamos.',
+        p2:          'Kary y su equipo te acompañan sin prisa en cada paso, desde la primera conversación hasta que la joya llega a tus manos.',
         ubicacionL1: 'Calle 36 # 6-32 · San Agustín Chiquita',
         ubicacionL2: 'Centro Histórico · Cartagena de Indias',
         visitasL1:   'Con o sin cita previa',
-        visitasL2:   'Lun–Sáb · 10:00–19:00',
+        visitasL2:   'Todos los días · 8:00 a.m. – 7:00 p.m.',
         image:       '',   // imagen del atelier custom (Storage); vacío → fondo CSS por defecto
         imageLqip:   '',   // §103 F1: placeholder difuso (data-URI) generado al subir image.
     },
 
     // 8. CIFRAS — lista (4 columnas de stats)
     cifras: {
-        items: [
-            { n: '13',     l: 'años de oficio',    s: 'desde 2013' },
-            { n: '+1.200', l: 'piezas entregadas', s: 'con libreta de origen' },
-            { n: '40',     l: 'países alcanzados', s: 'envíos asegurados' },
-            { n: '100%',   l: 'trazabilidad',      s: 'gema · oro · orfebre' },
-        ],
+        items: [],
     },
 
     // 9. CERTIFICACIONES — lista (4 cards)
     certificaciones: {
         items: [
-            { t: 'Jewelers of America',           d: 'Miembro acreditado desde 2020' },
-            { t: 'GIA',                            d: 'Reportes gemológicos en cada diamante' },
-            { t: 'Muzo Origin',                    d: 'Certificación de mina en cada esmeralda' },
-            { t: 'Responsible Jewellery Council',  d: 'Trazabilidad de oro y prácticas éticas' },
+            { t: 'Gemas certificadas',             d: 'Cada una con su certificado; el laboratorio cambia según la piedra' },
+            { t: 'Garantía comercial de por vida', d: 'Por defectos de fabricación, mientras el atelier esté en operación' },
         ],
     },
 
@@ -139,12 +132,12 @@ export const NOSOTROS_DEFAULTS = {
     // 11. FAQS — lista (6 preguntas)
     faqs: {
         items: [
-            { q: '¿Cuánto tarda una pieza a medida?',      a: 'Entre cuatro y seis semanas desde la aprobación del boceto. La primera conversación, los renders y los ajustes pueden sumar dos semanas adicionales. No aceleramos plazos: el oficio paciente no admite atajos.' },
-            { q: '¿Trabajan con piedras del cliente?',     a: 'Sí. Recibimos gemas heredadas, las evaluamos con nuestra gemóloga, y las integramos en una pieza nueva. Si la talla original tiene daños, ofrecemos retalle previo en taller especializado.' },
-            { q: '¿Hacen envíos internacionales?',         a: 'Sí. Coordinamos el envío internacional con seguro y guía de seguimiento; Bersaglio selecciona el transportador según el destino y confirma contigo los costos antes de despachar. Los aranceles e impuestos del país de destino corren por cuenta del comprador.' },
-            { q: '¿Aceptan financiación?',                 a: 'Sí. A través de la pasarela Wompi puedes diferir tu compra hasta en cuatro cuotas con 0% de interés, según tu entidad bancaria y el medio de pago que elijas. Para condiciones especiales, escríbenos y lo coordinamos contigo.' },
-            { q: '¿Puedo visitar el atelier sin comprar?', a: 'Por supuesto. La cita previa es solo para garantizar que tengamos tiempo para ti. Recibirás un café, te mostraremos el taller, conocerás al maestro orfebre. Sin compromiso de compra.' },
-            { q: '¿Qué garantía tienen las piezas?',       a: 'Garantía de por vida en estructura y engaste. Si una piedra se afloja, la reparamos sin costo. Si una soldadura cede, la rehacemos. Mientras Bersaglio exista, tu pieza tiene casa.' },
+            { q: '¿Cuánto tarda una pieza a medida?',      a: 'Depende del diseño y de las piedras que elijas. Antes de empezar te decimos cuánto tomará.' },
+            { q: '¿Trabajan con piedras del cliente?',     a: 'Sí. Recibimos tus gemas heredadas y creamos contigo una pieza nueva con ellas.' },
+            { q: '¿Hacen envíos internacionales?',         a: 'Sí, caso por caso. Cotizamos el envío internacional por WhatsApp y confirmamos contigo los costos totales antes de despachar; elegimos el transportador según el destino y te compartimos la guía de seguimiento. El flete, los aranceles e impuestos del país de destino corren por cuenta del comprador.' },
+            { q: '¿Aceptan financiación?',                 a: 'Puedes pagar con Wompi o por transferencia. Si usas tarjeta de crédito, las cuotas y sus intereses dependen de tu entidad bancaria. Para piezas a la medida o de mayor valor, coordinamos el pago contigo por WhatsApp.' },
+            { q: '¿Puedo visitar el atelier sin comprar?', a: 'Por supuesto. Puedes venir con o sin cita previa; si la agendas, apartamos ese tiempo para ti y te mostramos las piezas de cerca.' },
+            { q: '¿Qué garantía tienen las piezas?',       a: 'Además de la garantía legal, tienen garantía comercial de por vida por defectos de fabricación, mientras el atelier esté en operación: si una piedra se afloja o una soldadura cede por una falla de fabricación, la reparamos sin costo.' },
         ],
     },
 
@@ -152,8 +145,8 @@ export const NOSOTROS_DEFAULTS = {
     cierre: {
         ctaEyebrow: 'EMPEZAMOS POR UNA CONVERSACIÓN',
         ctaTitle1:  'Tu próxima joya',
-        ctaTitleEm: 'comienza con un café',
-        ctaLead:    'Agenda una visita al atelier o escríbenos. Sin compromiso, sin guion, sin prisas. Solo una conversación.',
+        ctaTitleEm: 'nace de escucharte',
+        ctaLead:    'Agenda una visita a nuestra casa o escríbenos, y hablamos con calma de la pieza que tienes en mente.',
         ctaLabel:   'Hablemos',
     },
 };

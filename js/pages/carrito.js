@@ -187,8 +187,8 @@ function renderEmpty() {
             </div>
             <h3 class="ck-empty-title">Tu carrito espera la primera pieza</h3>
             <p class="ck-empty-sub">
-                Explora la colección. Cada pieza Bersaglio se elige con tiempo,
-                con calma y con un café.
+                Explora la colección con calma. Si quieres ver una pieza de cerca,
+                te esperamos en nuestra casa.
             </p>
             <div class="ck-empty-actions">
                 <a href="/colecciones.html" class="btn-aqua btn-aqua-emerald">Ver el catálogo</a>
@@ -323,7 +323,7 @@ const PAYMENT_OPTIONS = [
     {
         k: 'transferencia',
         t: 'Transferencia bancaria',
-        d: 'Bancolombia o Davivienda. Te enviamos los datos por correo.',
+        d: 'Te compartimos por WhatsApp el número de cuenta o el código QR.',
         icon: html`<path d="M3 9h18v11H3z"/><path d="M3 9l9-6 9 6"/>`,
     },
     {
@@ -419,7 +419,7 @@ function renderSummary(rows) {
                     <span class="mono">${escape(format$(subtotal))}</span>
                 </div>
                 <div class="ck-summary-row">
-                    <span>Envío asegurado</span>
+                    <span>Envío</span>
                     <span class="mono">Cotizar</span>
                 </div>
             </div>

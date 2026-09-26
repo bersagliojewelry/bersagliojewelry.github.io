@@ -20,20 +20,20 @@ import { mergeGlobal, waLink } from '../core/global-defaults.js';   // §164: CT
 const MESSAGES = {
     transferencia: {
         eyebrow: 'TRANSFERENCIA BANCARIA',
-        title: 'Una elección excepcional. Iniciamos la creación de tu <span class="italic emerald-text">pieza</span>.',
-        body: 'En las próximas horas te enviaremos el detalle y la confirmación de tu encargo por correo privado. Al confirmarse la transferencia bancaria, nuestro atelier dará inicio a la confección y coordinaremos el envío asegurado.',
-        nextLabel: 'Bitácora enviada en menos de 24 horas hábiles',
+        title: 'Gracias. Apenas confirmemos tu transferencia, preparamos tu <span class="italic emerald-text">pedido</span>.',
+        body: 'En las próximas horas te compartimos por WhatsApp el número de cuenta o el código QR. Cuando recibamos el pago, coordinamos contigo la entrega.',
+        nextLabel: 'Datos de pago por WhatsApp en las próximas horas',
     },
     asesor: {
         eyebrow: 'ASESOR PRIVADO',
         title: 'Un encuentro en la distancia. Te <span class="italic emerald-text">llamamos</span> pronto.',
-        body: 'Kary Mendoza o un gemólogo del atelier se comunicará contigo de forma confidencial en menos de cuatro horas. Compartiremos referencias, responderemos tus dudas y agendaremos, si lo deseas, una videollamada o cita presencial.',
+        body: 'Kary Mendoza o un asesor del atelier se comunicará contigo de forma confidencial en menos de cuatro horas hábiles. Compartiremos referencias, responderemos tus dudas y agendaremos, si lo deseas, una videollamada o cita presencial.',
         nextLabel: 'Contacto en menos de 4 horas hábiles',
     },
     visita: {
-        eyebrow: 'CITA PRIVADA CONCERTADA',
-        title: 'Cartagena de Indias te espera. El café <span class="italic emerald-text">estará listo</span>.',
-        body: 'Confirmaremos tu cita privada de forma directa. El atelier estará cerrado exclusivamente para ti; Kary Mendoza te recibirá personalmente en Casa San Agustín.',
+        eyebrow: 'CITA PRIVADA SOLICITADA',
+        title: 'Cartagena de Indias te espera. Pronto te <span class="italic emerald-text">confirmamos</span> la cita.',
+        body: 'Te escribiremos de forma directa. El día de tu visita te atendemos en persona en la Calle 36 # 6-32, en el Centro Histórico.',
         nextLabel: 'Confirmación directa en pocas horas',
     },
     llamada: {
@@ -57,7 +57,7 @@ const MESSAGES = {
     default: {
         eyebrow: 'CORTESÍA BERSAGLIO',
         title: 'Te <span class="italic emerald-text">escribimos</span> de manera directa.',
-        body: 'Hemos recibido tu solicitud. Un gemólogo de nuestro atelier se pondrá en contacto contigo a la brevedad. Mientras tanto, te invitamos a explorar el catálogo o leer el Journal.',
+        body: 'Hemos recibido tu solicitud. Un asesor de nuestro atelier se pondrá en contacto contigo a la brevedad. Mientras tanto, te invitamos a explorar el catálogo o leer el Journal.',
         nextLabel: 'Contacto en menos de 24 horas hábiles',
     },
 };
@@ -85,7 +85,7 @@ export function mensajePorEstadoTx(status, codigo) {
         return {
             eyebrow: 'PAGO CONFIRMADO',
             title: 'Confirmado. Tu pieza queda <span class="italic emerald-text">reservada</span> a tu nombre.',
-            body: `Wompi confirmó tu pago${c ? ` del pedido ${c}` : ''}.${c ? ` Guarda ese código: es tu comprobante.` : ''} Te contactaremos por correo y WhatsApp para coordinar la entrega — si elegiste recoger en el atelier de Cartagena, agendamos tu cita; si es envío, gestionamos la guía asegurada.`,
+            body: `Wompi confirmó tu pago${c ? ` del pedido ${c}` : ''}.${c ? ` Guarda ese código: es tu comprobante.` : ''} Te contactaremos por correo y WhatsApp para coordinar la entrega: si elegiste recoger en el atelier de Cartagena, agendamos tu cita; si es envío, gestionamos la guía.`,
             nextLabel: c ? `Tu comprobante: pedido ${c}` : 'Pago confirmado',
             tone: 'ok',
             wa: `Hola, acabo de pagar en la web de Bersaglio${c ? ` (pedido ${c})` : ''} y quiero coordinar la entrega.`,

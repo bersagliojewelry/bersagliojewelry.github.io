@@ -18,11 +18,32 @@ import { stripPII } from './core/analytics-pii.js';
 // Flujo "Bersaglio Jewelry Web" (URL bersagliojewelry.co) — verificado en GA 2026-06-25.
 // Override por env (VITE_GA_MEASUREMENT_ID) si algún día cambia; el fallback es el real.
 const GA4_ID      = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_GA_MEASUREMENT_ID) || 'G-HS26X60DK3';
-const FB_PIXEL_ID = 'PIXEL_ID_PLACEHOLDER'; // ← Reemplazar con ID real del Pixel de Facebook
+// Pixel de Meta (portfolio Bersaglio Jewelry, creado 2026-10-09). Un Pixel ID NO es secreto: viaja
+// en el HTML de cualquier sitio. Va con fallback real igual que GA4 — si dependiera solo de la var
+// de entorno y esta no llegara al build, el pixel quedaría apagado en prod SIN QUE NADIE SE ENTERE.
+const FB_PIXEL_ID = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_FB_PIXEL_ID) || 'PIXEL_ID_PLACEHOLDER';
 const HOTJAR_ID   = 0;                     // ← Reemplazar con Site ID real (0 = deshabilitado)
+
+const CONSENT_KEY = 'bj-cookie-consent';   // dueño: js/components/cookie-banner.js
 
 let gaReady = false;
 let fbReady = false;
+
+/**
+ * ¿El visitante ACEPTÓ las cookies? Única fuente de verdad para los terceros que ponen
+ * identificadores propios y NO tienen modo sin-cookies (Meta, Hotjar).
+ *
+ * GA4 no pasa por aquí a propósito: tiene Consent Mode v2 y arranca DENEGADO (pings sin cookies),
+ * que es lo que la Ley 1581 permite sin consentimiento previo. El pixel no tiene equivalente, así
+ * que para él la única salida correcta es NO CARGARLO hasta que acepten.
+ *
+ * Ojo con los dos valores: el banner GUARDA 'accepted' y EMITE 'accept'. Son palabras distintas en
+ * el mismo flujo; confundirlas deja la compuerta abierta sin que se note.
+ * @returns {boolean}
+ */
+function hasConsent() {
+    try { return localStorage.getItem(CONSENT_KEY) === 'accepted'; } catch { return false; }
+}
 
 /* ─── Google Analytics 4 ─────────────────────────────────────── */
 function loadGA4() {
@@ -75,9 +96,28 @@ function grantConsent() {
     });
 }
 
+// Revocar: el visitante RECHAZA, o cambia de opinión desde "Preferencias de cookies". La política
+// promete poder revocar "en cualquier momento" (privacidad.js §07), así que esto tiene que existir.
+// A Meta no le basta con dejar de llamarlo: si ya se cargó, hay que decírselo con `consent revoke`.
+export function revokeConsent() {
+    if (typeof window.gtag === 'function') {
+        window.gtag('consent', 'update', {
+            ad_storage:         'denied',
+            ad_user_data:       'denied',
+            ad_personalization: 'denied',
+            analytics_storage:  'denied',
+        });
+    }
+    if (typeof window.fbq === 'function') window.fbq('consent', 'revoke');
+}
+
 /* ─── Facebook Meta Pixel ────────────────────────────────────── */
 function loadFBPixel() {
     if (!FB_PIXEL_ID || FB_PIXEL_ID === 'PIXEL_ID_PLACEHOLDER') return;
+    // Re-entrada: el `if(f.fbq)return` del snippet de Meta está DENTRO de su propia función y no
+    // corta a esta, así que una 2.ª llamada repetiría init + PageView (PageView doble).
+    if (fbReady) return;
+    if (!hasConsent()) return;   // compuerta: sin "Aceptar" no se carga nada de Meta.
 
     /* eslint-disable */
     !function(f,b,e,v,n,t,s)
@@ -99,6 +139,10 @@ function loadFBPixel() {
 /* ─── Hotjar ─────────────────────────────────────────────────── */
 function loadHotjar() {
     if (!HOTJAR_ID) return;
+    // Hotjar GRABA LA SESIÓN: es más invasivo que el pixel y hoy solo lo frena que su ID sea 0,
+    // que es un placeholder, no un permiso. Misma compuerta, para que poner el número no abra un
+    // agujero por la puerta de atrás.
+    if (!hasConsent()) return;
 
     /* eslint-disable */
     (function(h, o, t, j, a, r) {
@@ -212,7 +256,11 @@ export function track(eventName, params = {}) {
     if (fbReady && typeof window.fbq === 'function') {
         const fbEvent = mapEventToFB(eventName, safe);
         if (fbEvent) {
-            window.fbq('track', fbEvent.name, stripPII(fbEvent.params));
+            // eventID: la llave con la que Meta deduplica. Hoy evita contar dos veces la misma
+            // compra si la página se recarga, y deja el camino listo para la API de conversiones
+            // (el servidor manda el MISMO eventID y Meta cuenta una sola).
+            const eventID = safe.transaction_id ? String(safe.transaction_id) : undefined;
+            window.fbq('track', fbEvent.name, stripPII(fbEvent.params), eventID ? { eventID } : undefined);
         }
     }
 }
@@ -322,7 +370,15 @@ function bindDelegatedEvents() {
 
     // Consent Mode v2: conceder cuando el visitante ACEPTA en el banner de cookies.
     document.addEventListener('bj:cookie-consent', e => {
-        if (e.detail === 'accept') grantConsent();
+        if (e.detail === 'accept') {
+            grantConsent();
+            // El banner GUARDA 'accepted' antes de emitir el evento (cookie-banner.js:48 → :54),
+            // así que hasConsent() ya es true aquí: Meta arranca en el mismo clic, sin recargar.
+            loadFBPixel();
+            loadHotjar();
+        } else if (e.detail === 'decline') {
+            revokeConsent();
+        }
     });
 }
 
@@ -378,24 +434,6 @@ export function trackBeginCheckout(rows, value) {
     });
 }
 
-/**
- * Track a Purchase event.
- * @param {Array} rows - Cart items with pieces joined
- * @param {number} value - Subtotal value
- * @param {string} paymentMethod
- */
-export function trackPurchase(rows, value, paymentMethod) {
-    track('purchase', {
-        currency: 'COP',
-        value: value,
-        transaction_id: `T-${Date.now()}`,
-        payment_type: paymentMethod,
-        items: rows.map(r => ({
-            item_id:       r.slug,
-            item_name:     r.piece?.name || r.slug,
-            item_category: r.piece?.collection || '',
-            price:         r.piece?.price || 0,
-            quantity:      r.qty || 1
-        }))
-    });
-}
+// `trackPurchase` se retiró el 2026-10-09: generaba `transaction_id: T-${Date.now()}` (id nuevo en
+// cada recarga) y se llamaba desde el carrito, donde todavía no hay compra. La venta se mide ahora
+// en `js/pages/gracias.js` (`medirCompra`) con el APPROVED y la referencia REALES de Wompi.

@@ -16,6 +16,7 @@
 
 import { html, escape, mount } from '../core/html.js';
 import { mergeGlobal, waLink } from '../core/global-defaults.js';   // §164: CTA WhatsApp (concierge, sin cuenta)
+import { track } from '../analytics.js';                            // la COMPRA se mide aquí, no en el carrito
 
 const MESSAGES = {
     transferencia: {
@@ -109,6 +110,11 @@ function ultimoPago() {
     try { return JSON.parse(sessionStorage.getItem('bj-ultimo-pago') || 'null') || {}; } catch { return {}; }
 }
 
+/**
+ * Consulta la transacción en Wompi. Devuelve el objeto `data` COMPLETO (no solo el estado): el
+ * monto hace falta para medir la compra con su valor real. Sigue siendo fail-open: `null` si la
+ * red se cae o Wompi responde 401 — sub-reportar es preferible a inventar una venta.
+ */
 async function consultarTx(txId, env, publicKey) {
     const base = env === 'test' ? 'https://sandbox.wompi.co/v1' : 'https://production.wompi.co/v1';
     const intentos = publicKey
@@ -119,10 +125,39 @@ async function consultarTx(txId, env, publicKey) {
             const r = await fetch(`${base}/transactions/${encodeURIComponent(txId)}`, opts);
             if (!r.ok) continue;
             const j = await r.json();
-            if (j?.data?.status) return j.data.status;
+            if (j?.data?.status) return j.data;
         } catch { /* red caída → fail-open */ }
     }
     return null;
+}
+
+/**
+ * Mide la COMPRA — aquí y en ningún otro sitio. Antes se medía en el carrito al pulsar "confirmar",
+ * lo que contaba como venta el simple hecho de abrir WhatsApp y NO contaba el pago real de Wompi
+ * (`carrito.js` se devuelve antes). La única verdad del pago es el APPROVED de Wompi.
+ *
+ * Candado en sessionStorage por referencia: recargar /gracias.html no debe volver a contar la venta
+ * (GA4 no deduplica por `transaction_id` de forma fiable), y a Meta se le manda el mismo `eventID`
+ * para que pueda deduplicar si mañana la misma compra llega también por la API de conversiones.
+ */
+function medirCompra(tx, stash) {
+    const ref = tx?.reference || stash?.pedidoId;
+    if (!ref) return;
+    const lockKey = `bj-purchase-tracked:${ref}`;
+    try {
+        if (sessionStorage.getItem(lockKey)) return;
+        sessionStorage.setItem(lockKey, '1');
+    } catch { /* sin storage → se mide igual, mejor eso que no medir */ }
+
+    const cents = Number(tx?.amount_in_cents ?? stash?.amountInCents ?? 0);
+    const value = cents > 0 ? cents / 100 : 0;
+    track('purchase', {
+        currency:       tx?.currency || 'COP',
+        value,
+        transaction_id: ref,          // la referencia REAL de Wompi, no un id inventado por recarga
+        payment_type:   'wompi',
+        items: stash?.codigo ? [{ item_id: stash.codigo, quantity: 1, price: value }] : [],
+    });
 }
 
 function renderAll(msg) {
@@ -166,9 +201,11 @@ export async function init() {
     const txId = p.get('id');
     if (method !== 'pago' || !txId) return;
     const stash = ultimoPago();
-    const status = await consultarTx(txId, p.get('env'), stash.publicKey);
-    const real = mensajePorEstadoTx(status, stash.codigo);
+    const tx = await consultarTx(txId, p.get('env'), stash.publicKey);
+    const real = mensajePorEstadoTx(tx?.status, stash.codigo);
     if (real) mount(main, renderAll(real));
+    // La venta se mide SOLO con el APPROVED de Wompi, y solo aquí.
+    if (tx?.status === 'APPROVED') medirCompra(tx, stash);
 }
 
 export default { init };

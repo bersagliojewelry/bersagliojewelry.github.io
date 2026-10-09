@@ -40,7 +40,7 @@ import { data } from '../core/data.js';
 import { pieceUrl, pieceAbsUrl } from '../core/urls.js';
 import { mergeGlobal, waHref } from '../core/global-defaults.js';
 import { saveInquiry } from '../firestore-service.js';
-import { trackBeginCheckout, trackPurchase } from '../analytics.js';
+import { trackBeginCheckout, track } from '../analytics.js';
 import { pagarConWompi, wompiEligible } from '../pago-web.js';
 import { COUNTRIES } from '../core/countries.js';
 import { getEnvioConfig, TIPOS_ENTREGA, DEFAULT_TIPO } from '../core/envio-config.js';
@@ -554,11 +554,25 @@ async function confirmOrder(rows) {
         source:  `carrito-${_payment}`,
     };
 
-    // Track Purchase event for GA4 and Facebook Meta Pixel
+    // Aquí NO hay compra todavía: esto es INTENCIÓN. El pago real (Wompi) se devuelve en la rama de
+    // arriba y se mide en gracias.js cuando Wompi confirma APPROVED. Medir "abrió WhatsApp" como
+    // compra —lo que hacía este bloque, con el subtotal entero— ensuciaba GA4 y, con el pixel
+    // encendido, le enseñaría a Meta que la conversión es abrir un chat.
     try {
-        trackPurchase(rows, subtotal, _payment);
+        if (_payment === 'whatsapp') {
+            track('whatsapp_click', {
+                place: 'carrito',
+                items: rows.map(r => ({
+                    item_id:       r.slug,
+                    item_name:     r.piece?.name || r.slug,
+                    item_category: r.piece?.collection || '',
+                })),
+            });
+        } else {
+            track('generate_lead', { lead_type: _payment });   // transferencia | asesor
+        }
     } catch (err) {
-        console.warn('[carrito] purchase tracking failed:', err);
+        console.warn('[carrito] intent tracking failed:', err);
     }
 
     if (_payment === 'whatsapp') {

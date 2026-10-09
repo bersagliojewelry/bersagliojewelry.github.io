@@ -77,7 +77,10 @@ export async function pagarConWompi({ pieceId, shipping, tipoEntrega, habeas, re
     // §164: el comprador es invitado (sin cuenta) → su COMPROBANTE se deja en sessionStorage para que
     // gracias.html lo muestre al volver de Wompi (misma pestaña). §166: el comprobante es el CÓDIGO
     // público BJ-XXXX-XXXX — la CF ya no expone el correlativo interno al navegador.
-    try { sessionStorage.setItem('bj-ultimo-pago', JSON.stringify({ codigo: res.codigo, pedidoId: res.reference, publicKey: res.publicKey })); } catch {}
+    // `amountInCents` se guarda para que gracias.html pueda medir la compra con su VALOR real: la
+    // consulta a Wompi devuelve el monto, pero si la red falla el stash es el único respaldo. Sin
+    // él la venta se reportaría en 0, que es otra mentira distinta a no reportarla.
+    try { sessionStorage.setItem('bj-ultimo-pago', JSON.stringify({ codigo: res.codigo, pedidoId: res.reference, publicKey: res.publicKey, amountInCents: res.amountInCents })); } catch {}
     const base = redirectBase || (typeof location !== 'undefined' ? location.origin : '');
     const sh = shipping || {};
     const fullName = `${sh.firstName || ''} ${sh.lastName || ''}`.trim();

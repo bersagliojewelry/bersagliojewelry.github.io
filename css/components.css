@@ -587,19 +587,27 @@ body.wishlist-drawer-open {
     cursor: pointer;
     transition: background-color 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
-.bj-cookie-btn--decline {
-    background: oklch(100% 0 0 / 0.45);
-    color: var(--bj-ink-soft);
-    border: 1px solid oklch(100% 0 0 / 0.6);
-}
-.bj-cookie-btn--decline:hover { background: oklch(100% 0 0 / 0.7); }
+/* Las dos puertas pesan IGUAL: mismo fondo, mismo borde, mismo color de letra, mismo tamaño.
+   Antes "Aceptar" era un degradado verde macizo y "Rechazar" un fantasma al 45 % de blanco con
+   letra más clara: eso empuja la decisión.
+   ⚠️ Precisión, para que nadie repita el error de inventar una norma: NINGUNA norma colombiana
+   exige paridad visual del botón de rechazo — eso es europeo (verificado el 2026-10-09 contra la
+   Ley 1581 completa, el Decreto 1377 completo y el Título V de la Circular Única de la SIC). Lo que
+   la ley sí exige es que la autorización sea LIBRE, previa, expresa e informada, y que el silencio
+   no valga. La paridad es DECISIÓN DE BERSAGLIO, no un requisito: se toma porque refuerza que la
+   aceptación fue un acto libre, y porque el mismo criterio rige el control de preferencias de
+   `legal.css`. Hay un test que la guarda. */
+.bj-cookie-btn--decline,
 .bj-cookie-btn--accept {
-    background: linear-gradient(180deg, oklch(62% 0.18 155), oklch(42% 0.14 155));
-    color: #fff;
-    border: 1px solid oklch(62% 0.18 155);
-    text-shadow: 0 1px 1px oklch(20% 0.05 155 / 0.4);
+    background: oklch(100% 0 0 / 0.72);
+    color: var(--bj-ink-emerald);
+    border: 1px solid oklch(55% 0.03 155 / 0.45);
 }
-.bj-cookie-btn--accept:hover { transform: translateY(-1px); box-shadow: 0 4px 12px -2px oklch(42% 0.14 155 / 0.45); }
+.bj-cookie-btn--decline:hover,
+.bj-cookie-btn--accept:hover {
+    background: oklch(100% 0 0 / 0.98);
+    border-color: var(--bj-emerald-700);
+}
 
 @media (max-width: 568px) {
     .bj-cookie-banner {

@@ -141,7 +141,7 @@ function footerHTML(g) {
                     <div class="bj-footer-legal">
                         <a href="/terminos.html">Términos</a>
                         <span aria-hidden="true">·</span>
-                        <a href="/privacidad.html#cookies">Cookies</a>
+                        <a href="/privacidad.html#cookies">Preferencias de cookies</a>
                         <span aria-hidden="true">·</span>
                         <a href="/privacidad.html">Privacidad</a>
                     </div>

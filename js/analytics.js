@@ -15,35 +15,30 @@
 // Vive en js/core/ por ser puro y testeable (tests/analytics-pii.test.mjs). Ver §189.
 import { stripPII } from './core/analytics-pii.js';
 
+// Consentimiento: el estado tiene UN dueño, `core/consent.js` (la llave, la traducción
+// guardado→emitido y el borrado de las cookies de terceros). Antes la llave vivía repetida aquí y
+// en el banner, con dos vocabularios para lo mismo ('accepted' guardado vs 'accept' emitido);
+// confundirlos dejaba esta compuerta abierta sin que se notara.
+import { hasConsent, borrarCookiesDeTerceros } from './core/consent.js';
+
 // Flujo "Bersaglio Jewelry Web" (URL bersagliojewelry.co) — verificado en GA 2026-06-25.
 // Override por env (VITE_GA_MEASUREMENT_ID) si algún día cambia; el fallback es el real.
 const GA4_ID      = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_GA_MEASUREMENT_ID) || 'G-HS26X60DK3';
 // Pixel de Meta (portfolio Bersaglio Jewelry, creado 2026-10-09). Un Pixel ID NO es secreto: viaja
 // en el HTML de cualquier sitio. Va con fallback real igual que GA4 — si dependiera solo de la var
 // de entorno y esta no llegara al build, el pixel quedaría apagado en prod SIN QUE NADIE SE ENTERE.
-const FB_PIXEL_ID = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_FB_PIXEL_ID) || 'PIXEL_ID_PLACEHOLDER';
+const FB_PIXEL_ID = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_FB_PIXEL_ID) || '1574327787292205';
 const HOTJAR_ID   = 0;                     // ← Reemplazar con Site ID real (0 = deshabilitado)
-
-const CONSENT_KEY = 'bj-cookie-consent';   // dueño: js/components/cookie-banner.js
 
 let gaReady = false;
 let fbReady = false;
 
-/**
- * ¿El visitante ACEPTÓ las cookies? Única fuente de verdad para los terceros que ponen
- * identificadores propios y NO tienen modo sin-cookies (Meta, Hotjar).
- *
- * GA4 no pasa por aquí a propósito: tiene Consent Mode v2 y arranca DENEGADO (pings sin cookies),
- * que es lo que la Ley 1581 permite sin consentimiento previo. El pixel no tiene equivalente, así
- * que para él la única salida correcta es NO CARGARLO hasta que acepten.
- *
- * Ojo con los dos valores: el banner GUARDA 'accepted' y EMITE 'accept'. Son palabras distintas en
- * el mismo flujo; confundirlas deja la compuerta abierta sin que se note.
- * @returns {boolean}
- */
-function hasConsent() {
-    try { return localStorage.getItem(CONSENT_KEY) === 'accepted'; } catch { return false; }
-}
+/* `hasConsent()` se importa de `core/consent.js` y es la única verdad para los terceros que ponen
+   identificadores propios y NO tienen modo sin-cookies (Meta, Hotjar).
+
+   GA4 no pasa por esa compuerta a propósito: tiene Consent Mode v2 y arranca DENEGADO (pings sin
+   cookies), que es lo que la Ley 1581 permite sin consentimiento previo. El pixel no tiene
+   equivalente, así que para él la única salida correcta es NO CARGARLO hasta que acepten. */
 
 /* ─── Google Analytics 4 ─────────────────────────────────────── */
 function loadGA4() {
@@ -79,9 +74,7 @@ function loadGA4() {
     gaReady = true;
 
     // Revisita que ya aceptó antes → conceder de inmediato.
-    try {
-        if (localStorage.getItem('bj-cookie-consent') === 'accepted') grantConsent();
-    } catch { /* sin localStorage → permanece en modo denegado */ }
+    if (hasConsent()) grantConsent();   // sin localStorage devuelve false → sigue denegado
 }
 
 // Consent Mode v2: el banner dispara 'bj:cookie-consent' con detail 'accept'/'decline'.
@@ -109,6 +102,10 @@ export function revokeConsent() {
         });
     }
     if (typeof window.fbq === 'function') window.fbq('consent', 'revoke');
+    // Y se borra el IDENTIFICADOR, no solo se cierra el grifo: el `_fbp` de Meta es first-party en
+    // nuestro dominio y sobreviviría meses señalando a esta misma persona. Revocar de verdad es
+    // esto; dejarlo puesto haría de la promesa de la política un gesto.
+    borrarCookiesDeTerceros();
 }
 
 /* ─── Facebook Meta Pixel ────────────────────────────────────── */

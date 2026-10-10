@@ -246,6 +246,66 @@
 .lg-back-btn { padding: 14px 24px; font-size: 13px; }
 
 /* ═══════════════════════════════════════════════════════════════════
+   PREFERENCIAS DE COOKIES (§07 de privacidad)
+   El enlace "Cookies" del pie aterriza aquí, así que el control de cambiar de opinión vive aquí.
+   ═══════════════════════════════════════════════════════════════════ */
+.lg-cookie-prefs {
+    margin-top: 24px;
+    padding: 18px 20px;
+    border: 1px solid oklch(70% 0.04 90 / 0.45);
+    border-radius: 18px;
+    background: oklch(98% 0.012 120 / 0.55);
+}
+.lg-section-body .lg-cookie-state {
+    display: flex; align-items: center; gap: 9px;
+    font-size: 14px;
+    color: var(--bj-ink-emerald);
+    margin-bottom: 14px;
+}
+.lg-cookie-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    flex-shrink: 0;
+    background: oklch(60% 0.02 90);                       /* sin decidir */
+}
+[data-estado="accepted"] .lg-cookie-dot { background: var(--bj-emerald-500); }
+[data-estado="declined"] .lg-cookie-dot { background: oklch(45% 0.02 90); }
+
+.lg-section-body .lg-cookie-contexto {
+    margin: 0 0 14px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--bj-ink-soft);
+}
+.lg-cookie-btns { display: flex; flex-wrap: wrap; gap: 10px; }
+/* Las dos puertas pesan IGUAL: mismo fondo, mismo borde, mismo peso de letra. No convertir ninguno
+   en botón de marca. Es decisión de Bersaglio, NO una exigencia legal colombiana (la paridad visual
+   del rechazo es europea; ver la nota medida en `components.css`): se toma porque un "Aceptar"
+   macizo junto a un "Rechazar" descolorido empuja la decisión, y la ley sí pide que la autorización
+   sea LIBRE, previa, expresa e informada. */
+.lg-cookie-btn {
+    padding: 9px 17px;
+    font-size: 13px; font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--bj-ink-emerald);
+    background: oklch(100% 0 0 / 0.65);
+    border: 1px solid oklch(55% 0.03 155 / 0.45);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+.lg-cookie-btn:hover {
+    background: oklch(100% 0 0 / 0.95);
+    border-color: var(--bj-emerald-700);
+}
+.lg-section-body .lg-cookie-note:empty { display: none; }
+.lg-section-body .lg-cookie-note {
+    margin: 14px 0 0;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--bj-emerald-700);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
    ACCESSIBILITY
    ═══════════════════════════════════════════════════════════════════ */
 @media (prefers-reduced-motion: reduce) {

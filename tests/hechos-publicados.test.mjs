@@ -148,14 +148,26 @@ test('hechos: ningún laboratorio se generaliza a TODAS las piezas', () => {
     // El Instituto Gemológico de Santander certifica la ESMERALDA; otra gema puede llevar otro
     // laboratorio. Lo correcto es «el laboratorio que corresponde según la gema» y, si se nombra
     // uno, que quede atado a SU piedra — nunca «cada pieza sale con su reporte de <laboratorio>».
+    // Y una segunda vuelta, también de Daniel el mismo día: dejé «el de nuestras esmeraldas es
+    // el Instituto Gemológico de Santander» y tampoco vale — «tal vez hayan de otros
+    // laboratorios, entonces es mejor no centrarse en uno solo». Ni siquiera por gema.
+    // 🎯 La regla final: en el copy general se nombra el DOCUMENTO, nunca el laboratorio. El
+    // nombre del laboratorio vive en la FICHA de cada pieza, que es donde sí es cierto.
     const CUANTIFICADOR = '(cada (pieza|joya|gema)|todas las (piezas|joyas|gemas)|every (piece|jewel)|all (our )?(pieces|jewels))';
+    const NUESTRAS_GEMAS = '(nuestr[oa]s?\\s+(esmeraldas?|gemas?|piedras?|joyas?|diamantes?)|our\\s+(emeralds?|gems?|stones?|jewels?))';
     const LABORATORIO = '(Instituto Gemol[oó]gico de Santander|TrueLab|Truelab|\\bGIA\\b|CDTEC)';
-    // Mismo enunciado: del cuantificador al laboratorio sin que medie un punto.
-    const re = new RegExp(`${CUANTIFICADOR}[^.!?]{0,120}${LABORATORIO}`, 'i');
+    const PATRONES = [
+        // (a) un cuantificador y un laboratorio en el mismo enunciado
+        new RegExp(`${CUANTIFICADOR}[^.!?]{0,120}${LABORATORIO}`, 'i'),
+        // (b) «nuestras esmeraldas … <laboratorio>» — atarlo a la gema tampoco lo hace cierto
+        new RegExp(`${NUESTRAS_GEMAS}[^.!?]{0,80}${LABORATORIO}`, 'i'),
+    ];
     const malos = [];
     for (const { ruta, texto } of SITIO) {
-        const m = texto.match(re);
-        if (m) malos.push(`${ruta}: "${m[0].replace(/\s+/g, ' ').slice(0, 110)}…"`);
+        for (const re of PATRONES) {
+            const m = texto.match(re);
+            if (m) malos.push(`${ruta}: "${m[0].replace(/\s+/g, ' ').slice(0, 110)}…"`);
+        }
     }
     assert.deepEqual(malos, [],
         `un laboratorio concreto puesto como si certificara TODO:\n  ${malos.join('\n  ')}\n`

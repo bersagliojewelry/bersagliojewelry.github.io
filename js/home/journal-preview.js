@@ -54,7 +54,7 @@ function journalInner() {
             <div class="container">
                 <div class="hj-masthead">
                     <div class="hj-masthead-brand">
-                        <div class="mono hj-est">EST. 2014</div>
+                        <div class="mono hj-est">EST. 1983</div>
                         <div class="hj-est-divider"></div>
                         <h2 class="hj-masthead-title">
                             The <span class="italic">Bersaglio</span> Journal

@@ -6,7 +6,7 @@
   "baseUrl": "https://bersagliojewelry.co",
   "logo": "https://bersagliojewelry.co/favicon-192.png",
   "image": "https://bersagliojewelry.co/img/og-image.jpg",
-  "description": "Joyería en Cartagena de Indias: anillos, aretes, argollas y dijes en oro 18K con esmeraldas colombianas y diamantes certificados. Tienda física en el Centro Histórico y compra online con envíos a toda Colombia.",
+  "description": "Joyería en Cartagena de Indias: anillos, aretes, argollas y dijes en oro 18K con esmeraldas colombianas certificadas y diamantes. Tienda física en el Centro Histórico y compra online con envíos a toda Colombia.",
   "nap": {
     "streetAddress": "Calle 36 # 6-32, San Agustín Chiquita, Centro Histórico",
     "addressLocality": "Cartagena de Indias",
@@ -21,7 +21,7 @@
     {
       "@type": "OpeningHoursSpecification",
       "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-      "opens": "08:00",
+      "opens": "09:30",
       "closes": "19:00"
     }
   ],

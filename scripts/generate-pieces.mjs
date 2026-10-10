@@ -850,7 +850,7 @@ function facetMeta(f) {
     return {
         h1: `${name} en Cartagena`,
         title: `${name} en oro 18K · Joyería en Cartagena · ${BRAND}`,
-        intro: (f.description || `${name} de alta joyería en oro de 18 quilates con esmeraldas colombianas y diamantes certificados. Te esperamos en nuestra casa de Cartagena.`).trim(),
+        intro: (f.description || `${name} de alta joyería en oro de 18 quilates con esmeraldas colombianas certificadas y diamantes. Te esperamos en nuestra casa de Cartagena.`).trim(),
     };
 }
 
@@ -1778,7 +1778,7 @@ async function main() {
     injectListingPage('colecciones.html', '<main id="main-content" data-screen-label="colecciones">', {
         schemaType: 'CollectionPage',
         name: 'Catálogo · Bersaglio Jewelry',
-        description: 'Anillos, aretes, collares y argollas de alta joyería: esmeralda colombiana, diamantes certificados y oro 18K.',
+        description: 'Anillos, aretes, collares y argollas de alta joyería: esmeralda colombiana certificada, diamantes y oro 18K.',
         // Agotadas FUERA del listado (§10.1 v3): salen de la grilla; su página vive con "Vendida·ver similares".
         // encargo y bajo_pedido (refabricable en 0) SÍ entran (son pedibles). orderable = !agotada.
         items: pieces.filter(p => stockInfo(p).orderable).map(p => ({ name: p.name, url: `${SITE_URL}/pieza/${slugMap.get(String(p.id))}.html` })),

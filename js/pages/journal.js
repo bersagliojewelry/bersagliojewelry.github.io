@@ -2,7 +2,7 @@
  * Bersaglio Jewelry — Journal index page.
  *
  * Extiende la sección de journal del HOME a página completa:
- *   1. Masthead estilo NYT (EST. 2014 · The Bersaglio Journal · Issue Nº · Archivo)
+ *   1. Masthead estilo NYT (EST. 1983 · The Bersaglio Journal · Issue Nº · Archivo)
  *   2. Ticker live "EN VIVO" (mismo de home, infinite marquee)
  *   3. Hero cover (featured entry, mismo layout NYT del home + sidebar más-leídos
  *      + newsletter glass-emerald)

@@ -40,14 +40,14 @@ export function entryHref(slug) {
 export const JOURNAL_ISSUE = {
     number: 'The Journal',
     date: '',
-    est: 'EST. 2014',
+    est: 'EST. 1983',
 };
 
 export const JOURNAL_TICKER = [
     'Alta joyería · Esmeraldas colombianas',
     'Atelier en Cartagena de Indias · Centro Histórico',
     'Piezas únicas y series muy limitadas',
-    'Oro 18K · Diamantes certificados',
+    'Oro 18K · Esmeraldas certificadas',
 ];
 
 /**

@@ -40,7 +40,7 @@ const journalDescriptor = {
         { key: 'published', label: 'Estado',    type: 'badge', on: 'Publicada', off: 'Borrador' },
     ],
     fields: [
-        { name: 'title',      label: 'Título',                       type: 'text',     required: true, slugSource: true, placeholder: 'El alma verde de Muzo' },
+        { name: 'title',      label: 'Título',                       type: 'text',     required: true, slugSource: true, placeholder: 'Cómo se forma el precio de una esmeralda' },
         { name: 'slug',       label: 'Slug (URL)',                   type: 'slug',     hint: 'Se genera del título. Al editar una entrada ya creada, el enlace no cambia.' },
         { name: 'section',    label: 'Sección',                      type: 'text',     placeholder: 'Reportaje · Atelier · Mercado · Diseño…' },
         { name: 'kicker',     label: 'Antetítulo (sobre la imagen)', type: 'text',     placeholder: 'Las gemas que cambiaron Cartagena' },

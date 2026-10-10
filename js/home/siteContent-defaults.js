@@ -36,10 +36,13 @@ export const HOME_DEFAULTS = {
         title2:     'más que una joya, un legado familiar.',
         lead:       'Entendemos la esmeralda y el oro de 18 quilates como portadores de la memoria humana. Nos convertimos en cómplices silenciosos de los instantes que definen una vida, como una promesa de amor o la llegada de un hijo.',
         quote:      '"Una esmeralda colombiana se lleva toda la vida y, algún día, pasa a la siguiente generación."',
-        // stat1 = 32 años de oficio: voz-pauta §4-bis (Daniel, chat 2026-09-23). stat2 (5000+) SIGUE sin confirmar
-        // (TODO-47). El 12+/800+/JA de antes era DEMO (`[[feedback_no_demo_en_index]]`). NO sincronizado: el doc
-        // siteContent/home.editorial en vivo aún dice '40+'/'Años' y gana sobre este default hasta que se escriba.
-        stat1Num:   '32',     stat1Lab: 'Años de oficio',
+        // stat1 = 43 años de oficio, DESDE 1983 (Daniel, 2026-10-10: «desde 1983 corrígelo en todo»). Corrige
+        // el '32' anterior, que convivía con «43 años» en el cuerpo de Nosotros y «40 años» en su línea de
+        // tiempo — tres cifras distintas en el mismo sitio. 2026 − 1983 = 43. stat2 (5000+) SIGUE sin
+        // confirmar (TODO-47). El 12+/800+/JA de antes era DEMO (`[[feedback_no_demo_en_index]]`).
+        // ⚠️ NO sincronizado: el doc `siteContent/home.editorial` en vivo dice '40+' y GANA sobre este
+        // default hasta que se reescriba EN EL PANEL. Cambiar esto solo no cambia la web (lección L-90).
+        stat1Num:   '43',     stat1Lab: 'Años de oficio',
         stat2Num:   '5000+',  stat2Lab: 'Piezas únicas',
         stat3Num:   'Piezas', stat3Lab: 'Certificadas',
     },

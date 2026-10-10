@@ -670,7 +670,58 @@ function renderCtaPrerender(c) {
         </section>`;
 }
 
-function prerenderHomeHtml(html, sc, pieces, collections, slugMap) {
+// Bloque del Journal en la PORTADA (2026-10-10). Medido ese día sobre el HTML SERVIDO: la home
+// (103.158 bytes) no contenía la cadena «journal» ni una sola vez, y su único enlace al Journal
+// vivía en el pie, fuera del <main>. Los seis artículos quedaban huérfanos de la página con más
+// autoridad interna del sitio — entre ellos el del anillo de compromiso, que ya acumula 347
+// impresiones en Search Console con 4 clics. Deliberadamente MÍNIMO (titular + enlaces reales):
+// al hidratar, journal-preview.js lo sustituye por el bloque completo; esto es lo que lee Google.
+function renderJournalPrerender(entries) {
+    // El 10-oct (§211) se retiró de los Textos del Home la frase que situaba nuestras esmeraldas
+    // en «Muzo y Chivor». El artículo del Journal que lleva esos nombres es divulgación sobre las
+    // dos regiones y NO afirma de dónde sale nuestro inventario — pero la portada es justo el
+    // sitio del que esa decisión lo sacó, así que no vuelve por esta puerta sin que lo decida el
+    // dueño. Se excluye solo de la PORTADA: sigue publicado, en /journal.html y en relacionados.
+    const NOMBRA_MINA = /\b(muzo|chivor|coscuez)\b/i;
+    const list = (entries || []).slice()
+        .sort((a, b) => (b.featured === true) - (a.featured === true)
+            || (Number(a.order) || 99) - (Number(b.order) || 99))
+        .filter(e => !NOMBRA_MINA.test(String(e.title || '')))
+        .slice(0, 4);
+
+    const items = list.map((e) => {
+        const slug = journalSlugOf(e);
+        const titulo = String(e.title || '').trim();
+        if (!slug || !titulo) return '';
+        const resumen = String(e.excerpt || '').trim();
+        return `
+                    <li>
+                        <a href="/journal/${encodeURIComponent(slug)}.html">${escapeHtml(titulo)}</a>
+                        ${resumen ? `<p>${escapeHtml(resumen)}</p>` : ''}
+                    </li>`;
+    }).filter(Boolean).join('\n');
+
+    // hide-when-empty: la web en producción NUNCA muestra contenido demo. Sin entradas reales
+    // el bloque no existe, igual que hace journal-preview.js en el cliente.
+    if (!items) return '';
+
+    // Sin clases nuevas a propósito: `.home-journal` y `.container` ya existen y están
+    // estilados (css/home.css §8), y el resto es HTML semántico. Así este bloque no abre
+    // una superficie de CSS que mantener para algo que el cliente sustituye al hidratar.
+    return `
+        <section class="home-journal">
+            <div class="container">
+                <div class="eyebrow">The Bersaglio Journal</div>
+                <h2>Lo que conviene saber <span class="italic emerald-text">antes de elegir</span></h2>
+                <ul>
+${items}
+                </ul>
+                <a href="/journal.html">Ver el Journal</a>
+            </div>
+        </section>`;
+}
+
+function prerenderHomeHtml(html, sc, pieces, collections, slugMap, journal) {
     const c = {
         hero: { ...HOME_DEFAULTS.hero, ...(sc.home?.hero || {}) },
         editorial: { ...HOME_DEFAULTS.editorial, ...(sc.home?.editorial || {}) },
@@ -684,8 +735,11 @@ function prerenderHomeHtml(html, sc, pieces, collections, slugMap) {
     const editHtml = renderEditorialPrerender(c.editorial);
     const serviceHtml = renderServicesPrerender();
     const atelierHtml = renderAtelierPrerender(c.atelier);
+    const journalHtml = renderJournalPrerender(journal);
     const ctaHtml = renderCtaPrerender(c.cta);
 
+    // Mismo orden que el cliente (js/pages/home.js: … atelier → journal → films → social → cta),
+    // para que lo horneado y lo hidratado no se contradigan.
     const fullContent = [
         heroHtml,
         catsHtml,
@@ -693,6 +747,7 @@ function prerenderHomeHtml(html, sc, pieces, collections, slugMap) {
         editHtml,
         serviceHtml,
         atelierHtml,
+        journalHtml,
         ctaHtml,
     ].join('\n');
 
@@ -713,7 +768,7 @@ function prerenderHomeHtml(html, sc, pieces, collections, slugMap) {
     return before + '\n' + fullContent + '\n' + after;
 }
 
-async function injectSiteContentIntoIndex(handle, pieces, collections, slugMap) {
+async function injectSiteContentIntoIndex(handle, pieces, collections, slugMap, journal) {
     const indexPath = join(DIST, 'index.html');
     if (!existsSync(indexPath)) throw new Error('[generate] No existe dist/index.html.');
     const sc = {};
@@ -736,7 +791,7 @@ async function injectSiteContentIntoIndex(handle, pieces, collections, slugMap) 
     let out = bakeSiteContentHtml(html, sc);
     
     try {
-        out = prerenderHomeHtml(out, sc, pieces, collections, slugMap);
+        out = prerenderHomeHtml(out, sc, pieces, collections, slugMap, journal);
     } catch (e) {
         console.warn('[generate] Error en prerenderizado de Home — omitiendo prerender:', e.message);
     }
@@ -1749,7 +1804,7 @@ async function main() {
     injectBusinessIntoIndex(readTenantConfig());
 
     // siteContent del CMS horneado (anti-flash 1ª visita + preload al hero real, §163).
-    await injectSiteContentIntoIndex(handle, pieces, collections, slugMap);
+    await injectSiteContentIntoIndex(handle, pieces, collections, slugMap, journalBakeables);
 
     // Semilla de catálogo (destacadas + colecciones) horneada → hidratación del 1er paint SIN
     // skeleton (fix auditoría Antigravity 2026-07-09). Inyección aislada (read/write propio) para

@@ -406,7 +406,7 @@ function renderHeroPrerender(c) {
                                             </svg>
                                         </span>
                                     </a>
-                                    <a href="https://wa.me/573008142345" class="btn-hero-ghost" target="_blank" rel="noopener">Asesoría privada</a>
+                                    <a href="https://wa.me/573013752592" class="btn-hero-ghost" target="_blank" rel="noopener">Asesoría privada</a>
                                 </div>
                             </div>
                         </div>

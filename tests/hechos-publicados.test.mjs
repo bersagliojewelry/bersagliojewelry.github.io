@@ -142,6 +142,54 @@ test('hechos: «diamantes certificados» y «EST. 2014» no quedan vivos en ning
         + 'el error de ebf7fa8. Se cierran todos en la misma tanda.');
 });
 
+test('hechos: ningún laboratorio se generaliza a TODAS las piezas', () => {
+    // Daniel, 2026-10-10: «aquí generalizaste certificación de todas las piezas a Santander, es
+    // posible que otras piezas tengan otras certificaciones». Tenía razón y el error era mío.
+    // El Instituto Gemológico de Santander certifica la ESMERALDA; otra gema puede llevar otro
+    // laboratorio. Lo correcto es «el laboratorio que corresponde según la gema» y, si se nombra
+    // uno, que quede atado a SU piedra — nunca «cada pieza sale con su reporte de <laboratorio>».
+    const CUANTIFICADOR = '(cada (pieza|joya|gema)|todas las (piezas|joyas|gemas)|every (piece|jewel)|all (our )?(pieces|jewels))';
+    const LABORATORIO = '(Instituto Gemol[oó]gico de Santander|TrueLab|Truelab|\\bGIA\\b|CDTEC)';
+    // Mismo enunciado: del cuantificador al laboratorio sin que medie un punto.
+    const re = new RegExp(`${CUANTIFICADOR}[^.!?]{0,120}${LABORATORIO}`, 'i');
+    const malos = [];
+    for (const { ruta, texto } of SITIO) {
+        const m = texto.match(re);
+        if (m) malos.push(`${ruta}: "${m[0].replace(/\s+/g, ' ').slice(0, 110)}…"`);
+    }
+    assert.deepEqual(malos, [],
+        `un laboratorio concreto puesto como si certificara TODO:\n  ${malos.join('\n  ')}\n`
+        + 'Di «su certificado, del laboratorio que corresponde según la gema». Si nombras uno, '
+        + 'átalo a su piedra: «el de nuestras esmeraldas es…».\n'
+        + '⚠️ Esto tampoco alcanza al panel: la misma frase vivía en siteContent/home y en el '
+        + 'cuerpo del artículo del Journal, y ningún test de este repo los ve.');
+});
+
+test('NAP: el único WhatsApp de Bersaglio es el de tenant_config, y nadie cuela otro', () => {
+    // Daniel, 2026-10-10: «el único whatsapp de bersaglio es +57 301 3752592 no hay más».
+    // Y sin embargo el botón «Asesoría privada» del hero de la PORTADA mandaba a
+    // wa.me/573008142345 — un número que no es suyo, servido en producción. Cada clic ahí era
+    // un cliente escribiéndole a un desconocido: no es un detalle de NAP, es una fuga de ventas.
+    const tenant = JSON.parse(readFileSync(join(ROOT, 'tenant_config.json'), 'utf8'));
+    const canonico = String(tenant.nap.telephone).replace(/\D/g, '');   // 573013752592
+    // Solo números COMPLETOS escritos a mano (10+ dígitos). El panel arma el enlace al WhatsApp
+    // DEL CLIENTE con `wa.me/57${wa}` (js/admin/clientes.js) — ese 57 suelto es un prefijo de
+    // plantilla, no el teléfono de la casa, y no debe hacer fallar este gate.
+    const malos = [];
+    for (const { ruta, texto } of SITIO) {
+        for (const m of texto.matchAll(/wa\.me\/(\d{10,})/g)) {
+            if (m[1] !== canonico) malos.push(`${ruta}: wa.me/${m[1]} — el de la casa es ${canonico}`);
+        }
+        for (const m of texto.matchAll(/https?:\/\/api\.whatsapp\.com\/send\?phone=(\d{10,})/g)) {
+            if (m[1] !== canonico) malos.push(`${ruta}: api.whatsapp phone=${m[1]} — el de la casa es ${canonico}`);
+        }
+    }
+    assert.deepEqual(malos, [],
+        `números de WhatsApp que no son el de la casa:\n  ${malos.join('\n  ')}\n`
+        + 'El NAP vive en tenant_config.json y manda. Si de verdad hay una línea nueva, se cambia '
+        + 'ALLÍ primero y el resto la deriva — no se escribe a mano en un botón.');
+});
+
 test('coherencia: el horario vive en TRES sitios del código y los tres dicen lo mismo', () => {
     // El 2026-10-10 el horario real pasó a 9:30–19:00 y estaba escrito a mano en tres ficheros
     // distintos, los tres con el 8:00 viejo. Este test es el que impide que vuelvan a divergir:

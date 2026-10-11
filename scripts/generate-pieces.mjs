@@ -94,7 +94,16 @@ function bakeFooter(html, sc, facets) {
     if (!html.includes(ancla)) return html;
     try {
         const g = mergeGlobal((sc && sc.global) || null);
-        return replaceOnce(html, ancla, `<div id="footer-mount">${footerHTML(g, facets)}</div>`);
+        let out = replaceOnce(html, ancla, `<div id="footer-mount">${footerHTML(g, facets)}</div>`);
+        // LA SEMILLA DE FACETAS, en la MISMA página que el pie horneado. Sin ella el cliente
+        // vuelve a pintar el pie con `facetHref` sin datos, y entonces los nueve enlaces caen a
+        // `?col=`: el HTML servido diría una cosa y lo hidratado otra. Se detectó así, mirando una
+        // ficha de pieza en el navegador DESPUÉS de desplegar — en el HTML servido estaba bien.
+        if (!out.includes('id="baked-facets"') && out.includes('</head>')) {
+            out = replaceOnce(out, '</head>',
+                `    <script id="baked-facets">window.__BJ_FACETS=${safeJsonLd(facets)};</script>\n</head>`);
+        }
+        return out;
     } catch (e) {
         // Fail-open: un pie sin hornear deja la página como hasta hoy, no la rompe.
         console.warn('[generate] pie no horneado:', e.message);

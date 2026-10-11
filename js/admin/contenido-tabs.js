@@ -50,7 +50,11 @@ const journalDescriptor = {
         { name: 'authorRole', label: 'Cargo del autor',              type: 'text',     placeholder: 'Directora editorial' },
         { name: 'image',      label: 'Imagen de portada',            type: 'image'     },
         { name: 'excerpt',    label: 'Resumen (tarjeta del listado)',type: 'textarea', rows: 2 },
-        { name: 'body',       label: 'Cuerpo del artículo',          type: 'textarea', rows: 12, hint: 'Separa párrafos con una línea en blanco.' },
+        // La pista enseña la sintaxis de subtítulos que estrenó el motor el 2026-10-10. Hasta
+        // entonces el cuerpo se partía por líneas en blanco y TODO salía como párrafo: los seis
+        // artículos del Journal no tenían un solo subtítulo, y los buscadores usan los subtítulos
+        // para entender de qué va cada parte de un texto largo.
+        { name: 'body',       label: 'Cuerpo del artículo',          type: 'textarea', rows: 12, hint: 'Separa párrafos con una línea en blanco. Para un subtítulo, empieza la línea con ## y un espacio — por ejemplo: ## La talla, sin que se entere' },
         { name: 'cover',      label: 'Portada — la entrada grande de arriba',        type: 'checkbox', hint: 'Márcala en UNA sola. Es la que sale grande arriba, en el inicio y en el Journal.' },
         { name: 'featured',   label: 'Destacada — franja de abajo del inicio',       type: 'checkbox', hint: 'Márcala hasta en 3. Salen como tarjetas debajo de la portada, en el inicio.' },
         { name: 'order',      label: 'Orden — posición (menor va primero)',          type: 'number',   hint: 'Un número: 1 va primero, 2 después… Ordena el listado, "Más leídos" y las destacadas.' },

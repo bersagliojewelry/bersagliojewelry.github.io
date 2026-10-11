@@ -3,7 +3,7 @@
  * Dynamically generates and injects schema.org metadata.
  */
 
-import { pieceAbsUrl } from './urls.js';
+import { pieceAbsUrl, facetHref } from './urls.js';
 import { gemDisplayName } from './gem-badge.js';   // §151: gema canónica (badgeGem) para el JSON-LD de la ficha
 import { metalConColor } from './metal.js';        // TODO-59: color del oro (metalColor) en el metal mostrado
 
@@ -110,7 +110,10 @@ export function injectBreadcrumbSchema(piece, getCategoryLabel) {
                 "@type": "ListItem",
                 "position": 2,
                 "name": cat,
-                "item": `https://bersagliojewelry.co/colecciones.html?col=${encodeURIComponent(piece.collection || '')}`
+                // La miga apunta a la página de categoría INDEXABLE cuando existe. Apuntaba a
+                // `?col=`, que canonicaliza a colecciones.html: el BreadcrumbList de las 32 fichas
+                // declaraba un escalón que, para Google, era siempre la misma URL.
+                "item": `https://bersagliojewelry.co${facetHref('col', piece.collection)}`
             },
             {
                 "@type": "ListItem",

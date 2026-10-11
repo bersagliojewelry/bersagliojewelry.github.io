@@ -26,7 +26,7 @@ import { metalConColor } from '../core/metal.js';             // TODO-59: "Oro 1
 import { cart } from '../core/cart.js';
 import { wishlist } from '../core/wishlist.js';
 import { injectProductSchema, injectBreadcrumbSchema } from '../core/schema.js';
-import { pieceUrl, pieceAbsUrl } from '../core/urls.js';
+import { pieceUrl, pieceAbsUrl, facetHref } from '../core/urls.js';
 import { balancedCols } from '../core/grid-balance.js';       // reparto inteligente de columnas
 import { track, trackPieceView } from '../analytics.js';      // medición GA4 (view_item / view_item_list)
 import { mergeGlobal, waLink } from '../core/global-defaults.js';  // WhatsApp directo (fuente única del número)
@@ -312,7 +312,10 @@ function renderInfo(piece) {
                    data-wa-name="${escape(piece.name || 'Pieza')}" data-wa-cat="${escape(cat)}">
                     Hablar con un asesor
                 </a>
-                <a href="/colecciones.html${piece.collection ? '?col=' + encodeURIComponent(piece.collection) : ''}" class="btn-aqua pz-cart-btn">
+                <!-- A la página de categoría INDEXABLE cuando existe (facetHref). Apuntaba a
+                     ?col=, que canonicaliza a colecciones.html: 32 fichas enlazando su categoría
+                     y ninguna le pasaba autoridad. -->
+                <a href="${facetHref('col', piece.collection)}" class="btn-aqua pz-cart-btn">
                     Ver piezas similares
                 </a>
             </div>`
@@ -532,7 +535,7 @@ function renderBreadcrumb(piece) {
         <nav class="pz-breadcrumb" aria-label="Migas de pan">
             <a class="pz-crumb" href="/">Inicio</a>
             <span class="pz-crumb-sep" aria-hidden="true">→</span>
-            <a class="pz-crumb" href="/colecciones.html${piece?.collection ? `?col=${encodeURIComponent(piece.collection)}` : ''}">${escape(cat)}</a>
+            <a class="pz-crumb" href="${facetHref('col', piece?.collection)}">${escape(cat)}</a>
             <span class="pz-crumb-sep" aria-hidden="true">→</span>
             <span class="pz-crumb pz-crumb-current">${escape(piece?.name || 'Pieza')}</span>
         </nav>`;

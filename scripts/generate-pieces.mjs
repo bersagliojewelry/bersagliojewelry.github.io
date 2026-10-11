@@ -1334,7 +1334,13 @@ ${lis}
 
 // Calcula las facetas HORNEABLES (>= FACET_MIN piezas pedibles). Determinista (orden estable → build
 // idempotente): piezas por featured luego nombre; colecciones en el orden de Firestore; gemas alfabético.
-function computeFacets(pieces, collections, slugMap) {
+/**
+ * `avisos` (opcional) sale con el diagnóstico del UMBRAL, que antes era mudo: una faceta que caía
+ * por debajo de FACET_MIN desaparecía en silencio y nadie se enteraba hasta que Google la soltaba.
+ * Se reporta lo que se SALTÓ y lo que está AL FILO (justo en el umbral: una venta y cae). Medido
+ * el 2026-10-11: `cadenas` tenía 2 piezas pedibles y las dos son `finito` con cantidad 1.
+ */
+function computeFacets(pieces, collections, slugMap, avisos = null) {
     const orderable = pieces.filter(p => stockInfo(p).orderable);
     const sortPieces = (a, b) => ((b.featured ? 1 : 0) - (a.featured ? 1 : 0)) || String(a.name || '').localeCompare(String(b.name || ''), 'es');
     const facets = [];
@@ -1350,6 +1356,10 @@ function computeFacets(pieces, collections, slugMap) {
         byCol.get(s).push(p);
     }
     for (const [slug, list] of byCol) {
+        if (avisos) {
+            if (list.length < FACET_MIN && SAFE_SLUG_RE.test(slug)) avisos.push({ tipo: 'saltada', kind: 'col', slug, n: list.length });
+            else if (list.length === FACET_MIN) avisos.push({ tipo: 'al-filo', kind: 'col', slug, n: list.length });
+        }
         if (list.length < FACET_MIN || !SAFE_SLUG_RE.test(slug)) continue;
         const c = colOf.get(slug);
         facets.push({ kind: 'col', slug, label: (c && c.name) || slug, description: (c && c.description) || '', pieces: [...list].sort(sortPieces) });
@@ -1366,6 +1376,10 @@ function computeFacets(pieces, collections, slugMap) {
     const gemSlugs = [...byGem.keys()].sort();
     for (const slug of gemSlugs) {
         const list = byGem.get(slug);
+        if (avisos && gemKnown(slug) && SAFE_SLUG_RE.test(slug)) {
+            if (list.length < FACET_MIN) avisos.push({ tipo: 'saltada', kind: 'gema', slug, n: list.length });
+            else if (list.length === FACET_MIN) avisos.push({ tipo: 'al-filo', kind: 'gema', slug, n: list.length });
+        }
         if (list.length < FACET_MIN || !gemKnown(slug) || !SAFE_SLUG_RE.test(slug)) continue;
         facets.push({ kind: 'gema', slug, label: gemLabel(slug), pieces: [...list].sort(sortPieces) });
     }
@@ -2124,7 +2138,18 @@ async function main() {
     // Facetas indexables (A2b · TODO-35): QUÉ páginas /coleccion/<slug> + /gema/<slug> se hornearán
     // (>= FACET_MIN piezas pedibles). Se calcula aquí para alimentar el sitemap; se hornean más abajo
     // (tras las páginas de listado, reusando el shell dist/colecciones.html ya inyectado).
-    const facets = computeFacets(pieces, collections, slugMap);
+    const avisosFaceta = [];
+    const facets = computeFacets(pieces, collections, slugMap, avisosFaceta);
+    // EL UMBRAL, EN VOZ ALTA. Una faceta que cae por debajo de FACET_MIN deja de existir en el
+    // siguiente build —el cron corre a diario— y hasta hoy eso pasaba sin que nada lo dijera.
+    for (const a of avisosFaceta) {
+        const ruta = `/${a.kind === 'gema' ? 'gema' : 'coleccion'}/${a.slug}.html`;
+        if (a.tipo === 'saltada') {
+            console.warn(`[generate] ⚠️  ${ruta} NO se hornea: ${a.n} pieza(s) pedible(s), hacen falta ${FACET_MIN}. Su página no existe y Google la perderá; el enlace cae en la vista filtrada (public/404.html).`);
+        } else {
+            console.warn(`[generate] ⚠️  ${ruta} está AL FILO: ${a.n} pieza(s) pedible(s), justo el mínimo. UNA venta y su página desaparece. Si esas piezas se pueden volver a fabricar, marcarlas «finito_refabricable» las mantiene pedibles y la página viva.`);
+        }
+    }
     const facetUrls = facets.map(f => `${SITE_URL}/${f.kind === 'gema' ? 'gema' : 'coleccion'}/${f.slug}.html`);
     // QUÉ facetas existen de verdad este build. Es el dato del que se derivan TODOS los enlaces
     // internos a facetas —los azulejos de la portada, el pie, las fichas de pieza— en vez de

@@ -25,9 +25,18 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 /** El año en que arrancó el oficio. Lo confirmó Daniel el 2026-10-10: «desde 1983, corrígelo en todo». */
 const ANIO_FUNDACION = 1983;
 
-/** Ficheros del SITIO que puede leer un visitante o un buscador. Excluye lo que no se publica. */
+/**
+ * Ficheros del SITIO que puede leer un visitante o un buscador. Excluye lo que no se publica.
+ *
+ * ⚠️ `scripts/` ENTRA desde el 2026-10-10, y es un arreglo del propio gate. Estaba excluido por
+ * ser «herramientas de build», pero `scripts/generate-pieces.mjs` hornea PROSA que se publica:
+ * las intros de las facetas, el bloque de servicios de la portada y los textos de gema. O sea que
+ * el único candado que caza afirmaciones falsas no miraba uno de los sitios desde los que se
+ * publican. Mientras estuvo fuera, mover una frase de `js/` a `scripts/` la sacaba del radar sin
+ * que nadie se diera cuenta.
+ */
 function ficherosDelSitio() {
-    const fuera = new Set(['node_modules', 'dist', '.git', 'functions', 'tests', 'scripts',
+    const fuera = new Set(['node_modules', 'dist', '.git', 'functions', 'tests',
         'Bersaglio Jewelry Design System', '.handoff', 'docs', '_legacy', 'snippets']);
     const salida = [];
     (function recorrer(dir) {
@@ -231,6 +240,43 @@ test('coherencia: el horario vive en TRES sitios del código y los tres dicen lo
     assert.ok(global.includes(esperado),
         `global-defaults.js debería decir "${esperado}" y no lo dice. Si cambias el horario, `
         + 'cámbialo en los TRES: tenant_config.json, js/pages/contacto.js y js/core/global-defaults.js.');
+});
+
+test('hechos: ninguna cifra redonda de logro vuelve a entrar sin fuente', () => {
+    // Daniel, 2026-10-10: «creo que las 5 mil piezas difieren de lo que dice en nosotros, revisa
+    // bien todo y corrige con la información real». Tenía razón: el home publicaba «5000+ Piezas
+    // únicas» y Nosotros «+12.000 piezas entregadas» —dos cifras que se contradicen— más «12
+    // países alcanzados» y «100% trazabilidad», ninguna con fuente. Vivían en el panel, que este
+    // gate no ve, y por eso además se retiraron del panel: ahora se derivan del código.
+    //
+    // Este test vigila que no vuelvan POR CÓDIGO. No puede decidir si un número es verdad; lo que
+    // hace es cerrar la puerta a la forma concreta en que entraron: una cifra redonda pegada a una
+    // palabra de logro. Si algún día hay un número real, llevará su fuente al lado y se escribirá
+    // distinto de estos patrones.
+    const PROHIBIDOS = [
+        [/\+?\s?\d[\d.,]*\s*\+?\s*(piezas|joyas)\s+(entregadas|vendidas|creadas)/i,
+            'cuántas piezas se han entregado no está medido en ninguna parte'],
+        [/\d[\d.,]*\s*\+\s*(piezas|joyas)\s+únicas/i,
+            'el «5000+ piezas únicas» del home: sin fuente, y chocaba con el «+12.000 entregadas» de Nosotros'],
+        [/\b\d{1,3}\s*(\+\s*)?pa[ií]ses\b/i,
+            'a cuántos países se ha enviado de verdad no consta: el «12 países» no tenía respaldo'],
+        [/100\s*%\s*(de\s+)?trazabilidad/i,
+            '«100% trazabilidad» suena a sello certificado; el único certificado real es el de cada pieza'],
+        [/\b40\s*\+?\s*años\b/i,
+            'la casa es de 1983: los años se CALCULAN (aniosDeOficio), no se escriben redondeados'],
+    ];
+    const encontrados = [];
+    for (const { ruta, texto } of SITIO) {
+        // El propio gate nombra los patrones para explicarlos: no se audita a sí mismo.
+        if (ruta.replace(/\\/g, '/') === 'tests/hechos-publicados.test.mjs') continue;
+        for (const [re, porque] of PROHIBIDOS) {
+            const m = texto.match(re);
+            if (m) encontrados.push(`${ruta}: "${m[0].trim()}" — ${porque}`);
+        }
+    }
+    assert.deepEqual(encontrados, [],
+        `cifras de logro sin fuente en el código:\n  ${encontrados.join('\n  ')}\n`
+        + '⚠️ Y recuerda: esto NO ve el panel. Si la cifra está en el CMS, hay que quitarla ahí.');
 });
 
 test('hechos: el gate declara EN VOZ ALTA que no alcanza al panel', () => {

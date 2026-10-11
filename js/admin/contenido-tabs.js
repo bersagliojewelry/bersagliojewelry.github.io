@@ -205,12 +205,15 @@ const homeTextsDescriptor = {
             { name: 'title2',     label: 'Título — línea 2 (cursiva)',  type: 'text', max: 56 },
             { name: 'lead',       label: 'Párrafo principal',           type: 'textarea', rows: 4, max: 460 },
             { name: 'quote',      label: 'Cita',                        type: 'textarea', rows: 3, max: 340 },
-            { name: 'stat1Num',   label: 'Dato 1 — número',             type: 'text', max: 8 },
-            { name: 'stat1Lab',   label: 'Dato 1 — etiqueta',           type: 'text', max: 18 },
-            { name: 'stat2Num',   label: 'Dato 2 — número',             type: 'text', max: 8 },
-            { name: 'stat2Lab',   label: 'Dato 2 — etiqueta',           type: 'text', max: 18 },
-            { name: 'stat3Num',   label: 'Dato 3 — número',             type: 'text', max: 8 },
-            { name: 'stat3Lab',   label: 'Dato 3 — etiqueta',           type: 'text', max: 18 },
+            // Los tres «datos» de esta sección ya NO se editan aquí: se calculan en el código, con
+            // la fuente de cada cifra escrita al lado (js/home/siteContent-defaults.js →
+            // cifrasDeLaCasa). Se retiran del formulario a propósito: dejar un campo que ya no
+            // cambia nada sería engañar a quien lo llena. Y el motivo de fondo es el que se pagó
+            // caro — un campo vacío que pide «un número» invita a poner una cifra redonda, y lo
+            // que se teclea en el panel se publica sin que ningún test lo vea. Aquí había
+            // «cuarenta y pico» años y cinco mil piezas únicas: el primero contradecía al «43 · desde
+            // 1983» de Nosotros y el segundo a las doce mil que esa misma página daba por
+            // entregadas. Si aparece una cifra real, con su fuente, se pone en el código, no aquí.
         ]},
         { key: 'atelier', label: 'Atelier (tu pieza, paso a paso)', fields: [
             { name: 'chip',       label: 'Chip',                        type: 'text', max: 28 },
@@ -361,13 +364,12 @@ const nosotrosTextsDescriptor = {
             { name: 'visitasL1',   label: 'Visitas — línea 1',           type: 'text', max: 48 },
             { name: 'visitasL2',   label: 'Visitas — línea 2',           type: 'text', max: 48 },
         ]},
-        { key: 'cifras', label: 'Cifras (lista)', fields: [
-            { name: 'items', type: 'list', max: 6, addLabel: 'Añadir cifra', singular: 'Cifra', itemTitleFrom: 'l', itemFields: [
-                { name: 'n', label: 'Número',   type: 'text', max: 12 },
-                { name: 'l', label: 'Etiqueta', type: 'text', max: 28 },
-                { name: 's', label: 'Detalle',  type: 'text', max: 40 },
-            ]},
-        ]},
+        // Las CIFRAS de Nosotros se retiran del panel por el mismo motivo que las del Home: son
+        // afirmaciones comprobables y ahora viven en el código con su fuente
+        // (js/pages/nosotros-defaults.js → cifrasDeNosotros). Lo que había aquí publicado el
+        // 2026-10-10 eran doce mil piezas entregadas, doce países alcanzados y una trazabilidad «del
+        // cien por cien»: tres números que nadie puede respaldar, en la página que precisamente
+        // existe para que el cliente decida si confía.
         { key: 'certificaciones', label: 'Certificaciones (lista)', fields: [
             { name: 'items', type: 'list', max: 8, addLabel: 'Añadir certificación', singular: 'Certificación', itemTitleFrom: 't', itemFields: [
                 { name: 't', label: 'Título',      type: 'text', max: 48 },

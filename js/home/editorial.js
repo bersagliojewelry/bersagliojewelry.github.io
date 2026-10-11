@@ -7,14 +7,14 @@
 import { html, escape, mount } from '../core/html.js';
 import { data } from '../core/data.js';
 import { lqipBgStyle } from '../core/lqip.js';   // §110.2 F3: blur-up (real+LQIP; safeUrl interno)
-import { mergeHome } from './siteContent-defaults.js';
+import { mergeHome, cifrasDeLaCasa } from './siteContent-defaults.js';
 
 export function editorialInner(c) {
-    const stats = [
-        { num: c.stat1Num, lab: c.stat1Lab },
-        { num: c.stat2Num, lab: c.stat2Lab },
-        { num: c.stat3Num, lab: c.stat3Lab },
-    ];
+    // Las cifras NO salen del panel (ver `cifrasDeLaCasa`): el documento en vivo publicaba
+    // «cuarenta y pico» años contra el «43 · desde 1983» de Nosotros, y cinco mil piezas únicas
+    // que se contradecían con las doce mil ya entregadas de la misma web. Ahora se derivan, con
+    // su fuente escrita al lado.
+    const stats = cifrasDeLaCasa();
     return html`
             <div class="container">
                 <div class="home-editorial-grid">

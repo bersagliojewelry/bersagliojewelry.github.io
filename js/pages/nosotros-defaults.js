@@ -23,6 +23,10 @@
  * malformados (guard por-ítem) para que una escritura corrupta no blanquee la página.
  */
 
+// Los años de oficio se calculan desde 1983 en UN solo sitio del repositorio: si cada página
+// tuviera su cuenta, volverían las tres cifras distintas que había el 2026-10-10.
+import { aniosDeOficio } from '../home/siteContent-defaults.js';
+
 export const NOSOTROS_DEFAULTS = {
     // 1. HERO — copy editorial de portada (texto plano)
     hero: {
@@ -102,14 +106,30 @@ export const NOSOTROS_DEFAULTS = {
         ubicacionL1: 'Calle 36 # 6-32 · San Agustín Chiquita',
         ubicacionL2: 'Centro Histórico · Cartagena de Indias',
         visitasL1:   'Con o sin cita previa',
-        visitasL2:   'Todos los días · 8:00 a.m. – 7:00 p.m.',
+        // 9:30 a 19:00 los SIETE días, festivos y domingos incluidos (dato del dueño, 2026-10-10;
+        // es lo que dicen el Perfil de Empresa, el JSON-LD y Contacto). Este default decía
+        // «8:00 a.m. – 7:00 p.m.», o sea que si el documento del panel faltase, la web habría
+        // vuelto a publicar la hora vieja. Mismo formato que usa el panel hoy, para que coincidan.
+        visitasL2:   'Todos los días · 9:30–19:00',
         image:       '',   // imagen del atelier custom (Storage); vacío → fondo CSS por defecto
         imageLqip:   '',   // §103 F1: placeholder difuso (data-URI) generado al subir image.
     },
 
-    // 8. CIFRAS — lista (4 columnas de stats)
+    // 8. CIFRAS — lista de stats.
+    //
+    // Se derivan del CÓDIGO y el panel ya no las pisa (ver `cifrasDeLaCasa` en
+    // js/home/siteContent-defaults.js y el merge de abajo). Lo que había publicado en el panel el
+    // 2026-10-10, y por qué se retiró:
+    //   «43 · desde 1983 · años de oficio»     → se conserva, y ahora se CALCULA.
+    //   doce mil piezas entregadas «con libreta de origen» → retirada: nadie puede mostrar de
+    //      dónde sale el número, y chocaba con las cinco mil piezas únicas que decía el home.
+    //   doce países alcanzados «con entrega registrada»       → retirada: sin fuente.
+    //   trazabilidad «del cien por cien» de gema, oro y orfebre → retirada: suena a sello
+    //      certificado, y el único certificado real es el de cada pieza.
+    // Si aparece el dato real —el conteo de libretas, los países a los que de verdad se ha
+    // enviado—, vuelve aquí CON su fuente escrita al lado, no en un campo del panel.
     cifras: {
-        items: [],
+        items: [],   // se rellena en mergeNosotros con cifrasDeNosotros()
     },
 
     // 9. CERTIFICACIONES — lista (4 cards)
@@ -166,6 +186,26 @@ function mergeItems(docSec, defSec) {
  * null/parcial. Campos planos por spread; listas por REEMPLAZO (una `[]` explícita se
  * respeta → hide-when-empty). NUNCA fusiona arrays índice-por-índice.
  */
+/**
+ * Las cuatro cifras de Nosotros. Cada una con su FUENTE, y ninguna redonda sin respaldo.
+ * Forma `{n, l, s}` = número, etiqueta, apunte (la que pinta `nosotrosStatsSection`).
+ */
+export function cifrasDeNosotros(hoy = new Date()) {
+    return [
+        // 1983 lo confirmó el dueño y está publicado en el Perfil de Empresa de Google. Se CALCULA
+        // para que no haya que acordarse de subirlo cada 1 de enero.
+        { n: String(aniosDeOficio(hoy)), l: 'años de oficio', s: 'desde 1983' },
+        // tenant_config.json y el campo `metal` de las 32 piezas del catálogo.
+        { n: '18K', l: 'oro de ley', s: 'en cada pieza' },
+        // Palabras del propio negocio en `atelier.p1`: «fabricamos —no revendemos— cada pieza».
+        // Es, además, lo que lo separa de las joyerías del barrio que revenden.
+        { n: 'Propio', l: 'taller', s: 'fabricamos, no revendemos' },
+        // Se nombra el DOCUMENTO, nunca el laboratorio (§212.8): el laboratorio depende de la gema
+        // y vive en la ficha de la pieza, que es donde es cierto.
+        { n: 'Por pieza', l: 'certificado de la gema', s: 'con su número de reporte' },
+    ];
+}
+
 export function mergeNosotros(doc) {
     const d = doc || {};
     const D = NOSOTROS_DEFAULTS;
@@ -177,7 +217,12 @@ export function mergeNosotros(doc) {
         timeline:        { ...D.timeline, ...(d.timeline || {}), items: mergeList(d.timeline && d.timeline.items, D.timeline.items) },
         equipo:          mergeItems(d.equipo,          D.equipo),
         atelier:         { ...D.atelier,   ...(d.atelier || {}) },
-        cifras:          mergeItems(d.cifras,          D.cifras),
+        // Las cifras NO se mergean con el panel: son afirmaciones comprobables sobre el negocio y
+        // se derivan del código, con su fuente. El documento en vivo publicaba tres que nadie
+        // podía respaldar (las piezas entregadas, los países alcanzados y la trazabilidad) y una
+        // que contradecía al home. Un número sin fuente no es un dato (y en Colombia es publicidad
+        // engañosa, Ley 1480): se retira hasta que haya de dónde sacarlo.
+        cifras:          { items: cifrasDeNosotros() },
         certificaciones: mergeItems(d.certificaciones, D.certificaciones),
         resenas:         mergeItems(d.resenas,         D.resenas),
         faqs:            mergeItems(d.faqs,            D.faqs),

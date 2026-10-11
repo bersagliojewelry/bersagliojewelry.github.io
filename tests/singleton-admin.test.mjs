@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { singletonFormHTML, collectSingleton, mergeSections, itemTemplateHTML, reindexItemSf } from '../js/admin/singleton-admin-core.js';
 import { HOME_DEFAULTS, mergeHome } from '../js/home/siteContent-defaults.js';
-import { NOSOTROS_DEFAULTS, mergeNosotros } from '../js/pages/nosotros-defaults.js';
+import { NOSOTROS_DEFAULTS, mergeNosotros, cifrasDeNosotros } from '../js/pages/nosotros-defaults.js';
 import { GLOBAL_DEFAULTS, mergeGlobal, waHref, igHref } from '../js/core/global-defaults.js';
 
 const SECTIONS = [
@@ -256,7 +256,24 @@ test('collectSingleton: sección mixta (plano + lista) recolecta ambos correctam
 
 // ─── P4: mergeNosotros (Fase 0) ────────────────────────────────────────────────
 test('mergeNosotros: doc null → DEFAULTS íntegros (invariante web-idéntica con doc vacío)', () => {
-    assert.deepEqual(mergeNosotros(null), NOSOTROS_DEFAULTS);
+    // Las CIFRAS son la excepción desde el 2026-10-10: no se mergean con el panel ni salen de los
+    // defaults, se DERIVAN del código (cifrasDeNosotros), porque eran afirmaciones sobre el
+    // negocio que nadie podía respaldar. Todo lo demás sigue cumpliendo la invariante.
+    const m = mergeNosotros(null);
+    assert.deepEqual({ ...m, cifras: NOSOTROS_DEFAULTS.cifras }, NOSOTROS_DEFAULTS);
+    assert.deepEqual(m.cifras.items, cifrasDeNosotros());
+});
+
+test('mergeNosotros: las CIFRAS no se pueden pisar desde el panel, ni para bien ni para mal', () => {
+    // El documento en vivo publicaba cuatro cifras sin fuente; se retiraron del formulario y del
+    // merge. Si alguien reactiva el campo o quedan datos viejos en Firestore, esto los ignora.
+    const conBasura = mergeNosotros({ cifras: { items: [{ n: '99.999', l: 'piezas', s: 'inventado' }] } });
+    assert.deepEqual(conBasura.cifras.items, cifrasDeNosotros(),
+        'una cifra escrita en el panel NO debe poder publicarse: va al código, con su fuente');
+    // Y la de los años se calcula desde 1983: no hay ningún número escrito a mano que envejezca.
+    const en2030 = cifrasDeNosotros(new Date('2030-06-01T00:00:00Z'));
+    assert.equal(en2030[0].n, '47');
+    assert.equal(en2030[0].s, 'desde 1983');
 });
 
 test('mergeNosotros: override plano + reemplazo de lista + lista vacía respetada', () => {
@@ -270,12 +287,13 @@ test('mergeNosotros: override plano + reemplazo de lista + lista vacía respetad
 });
 
 test('mergeNosotros: modelo PLANO — sub-mapa solo-lista respeta [] y default; atelier plano intacto', () => {
-    const m = mergeNosotros({ atelier: { title1: 'Z' }, cifras: { items: [] } });
+    // `resenas` hace de sub-mapa solo-lista en lugar de `cifras`, que ya no se mergea.
+    const m = mergeNosotros({ atelier: { title1: 'Z' }, resenas: { items: [] } });
     assert.equal(m.atelier.title1, 'Z');                                          // override plano
     assert.equal(m.atelier.p1, NOSOTROS_DEFAULTS.atelier.p1);                     // flat default intacto
-    assert.deepEqual(m.cifras.items, []);                                         // [] respetado
+    assert.deepEqual(m.resenas.items, []);                                        // [] respetado
     assert.deepEqual(m.certificaciones.items, NOSOTROS_DEFAULTS.certificaciones.items); // lista ausente → default
-    assert.deepEqual(m.resenas.items, NOSOTROS_DEFAULTS.resenas.items);
+    assert.deepEqual(m.equipo.items, NOSOTROS_DEFAULTS.equipo.items);             // otra lista ausente → default
 });
 
 test('mergeNosotros: lista corrupta (no-array) cae al default (robustez)', () => {

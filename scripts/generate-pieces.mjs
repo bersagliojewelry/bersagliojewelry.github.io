@@ -27,7 +27,7 @@ import { derivarEstado, esDisponible, STOCK_TYPES } from '../js/admin/inventario
 import { gemDisplayName } from '../js/core/gem-badge.js';   // §151: gema canónica (badgeGem) para JSON-LD/AEO
 import { gemLabel, gemKnown } from '../js/core/gem-taxonomy.js';   // A2b (TODO-35/57): label + validez de gema para facetas
 import { metalConColor } from '../js/core/metal.js';        // TODO-59: color del oro (metalColor) en el metal mostrado
-import { HOME_DEFAULTS } from '../js/home/siteContent-defaults.js';
+import { HOME_DEFAULTS, cifrasDeLaCasa } from '../js/home/siteContent-defaults.js';
 // Motor de render del artículo del Journal: el MISMO módulo que usa el navegador
 // (js/pages/entrada.js). Un solo motor → lo horneado y lo hidratado son el mismo HTML.
 import { renderArticle, relatedFrom, entryTitleTag } from '../js/data/journal-render.js';
@@ -321,11 +321,29 @@ function injectBusinessIntoIndex(cfg) {
 // imagen REAL del CMS (sin esto se pre-descarga con fetchpriority=high una imagen que nunca
 // se pinta cuando hay override). Fail-open: si Firestore no responde, el build queda como hoy.
 
+/**
+ * Quita de la semilla los campos del panel que el sitio ya NO publica.
+ *
+ * Los tres «datos» de la sección editorial pasaron a derivarse del código con su fuente
+ * (`cifrasDeLaCasa`), pero el documento de Firestore sigue teniendo los valores viejos. Si la
+ * semilla los sigue llevando, las cifras retiradas continúan dentro del HTML de la página más
+ * visitada: no se pintan, pero están, y la próxima auditoría por `grep` las encuentra y no sabrá
+ * si se publicaron o no. Fuera.
+ */
+function limpiarSemillaSiteContent(sc) {
+    if (!sc || !sc.home || !sc.home.editorial) return sc;
+    const editorial = { ...sc.home.editorial };
+    for (const k of Object.keys(editorial)) {
+        if (/^stat\d(Num|Lab)$/.test(k)) delete editorial[k];
+    }
+    return { ...sc, home: { ...sc.home, editorial } };
+}
+
 // PURA (cubierta por SSG_SELFTEST): html + contenido → html horneado. Idempotente.
 function bakeSiteContentHtml(html, sc) {
     if (!sc || !html.includes('</head>') || html.includes('id="baked-sitecontent"')) return html;
     let out = replaceOnce(html, '</head>',
-        `    <script id="baked-sitecontent">window.__BJ_SC=${safeJsonLd(sc)};</script>\n</head>`);
+        `    <script id="baked-sitecontent">window.__BJ_SC=${safeJsonLd(limpiarSemillaSiteContent(sc))};</script>\n</head>`);
     const bg = sc.home && sc.home.hero && sc.home.hero.bgImage;
     // Solo https y sin caracteres de breakout de atributo/URL (espacio, comillas, <>, backslash).
     const urlOk = typeof bg === 'string' && /^https:\/\/[^\s"'<>\\]+$/.test(bg);
@@ -540,11 +558,10 @@ function renderFeaturedPrerender(pieces, slugMap) {
 }
 
 function renderEditorialPrerender(c) {
-    const stats = [
-        { num: c.stat1Num, lab: c.stat1Lab },
-        { num: c.stat2Num, lab: c.stat2Lab },
-        { num: c.stat3Num, lab: c.stat3Lab },
-    ];
+    // Las cifras se derivan del código, igual que en el cliente (js/home/editorial.js): si una
+    // sale del panel y la otra no, lo horneado y lo hidratado dirían números distintos — y es
+    // justo lo que pasaba, con «40+» horneado contra el «43» del default.
+    const stats = cifrasDeLaCasa();
     const statsHtml = stats.map(s => `
         <div class="home-editorial-stat">
             <div class="display home-editorial-stat-num">${escapeHtml(s.num)}</div>

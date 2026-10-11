@@ -11,6 +11,50 @@
  * con DEFAULTS si Firestore está vacío. Cuando Kary guarde, sus valores ganan (override).
  */
 
+/**
+ * El año en que abrió la casa. Lo confirmó Daniel el 2026-10-10 («desde 1983 corrígelo en todo»),
+ * está en el Perfil de Empresa de Google y lo vigila `tests/hechos-publicados.test.mjs`.
+ */
+export const ANIO_FUNDACION = 1983;
+
+/** Años de oficio. Se CALCULA: una cifra escrita a mano envejece sola y cada 1 de enero miente. */
+export function aniosDeOficio(hoy = new Date()) {
+    return hoy.getFullYear() - ANIO_FUNDACION;
+}
+
+/**
+ * LAS CIFRAS DEL HOME — se derivan del código, NO del panel.
+ *
+ * Por qué dejaron de ser editables (Daniel, 2026-10-10: *«creo que las 5 mil piezas difieren de lo
+ * que dice en nosotros, revisa bien todo y corrige con la información real»*). Estaba en lo
+ * cierto, y era peor de lo que parecía. Medido ese día en el documento `siteContent/home` y en
+ * `siteContent/nosotros` del panel, y confirmado en el HTML servido:
+ *   - el home decía «cuarenta y pico» años y Nosotros «43 · desde 1983» → DOS cifras del mismo hecho;
+ *   - el home presumía de cinco mil piezas únicas y Nosotros de doce mil ya entregadas → dos
+ *     cifras que se contradicen, y ninguna con una fuente que nadie haya podido mostrar;
+ *   - y además doce países alcanzados y una trazabilidad «del cien por cien», igual de
+ *     inverificables.
+ *
+ * La lección que ya se pagó aquí (L-91) es que **el panel enseñaba las mentiras**: sus campos
+ * invitaban a teclear una cifra redonda y lo que se teclea ahí se publica sin que ningún test lo
+ * vea. Un número que no se puede comprobar no es un dato: es un riesgo, y en Colombia además es
+ * publicidad engañosa (Ley 1480). Así que las cifras pasan al código, cada una con su fuente
+ * escrita al lado; la de los años se calcula; y si aparece un número real —cuántas piezas
+ * llevan libreta de origen, a cuántos países se ha enviado de verdad— se pone aquí CON su fuente.
+ */
+export function cifrasDeLaCasa(hoy = new Date()) {
+    return [
+        // Fuente: 1983, confirmado por el dueño y publicado en el Perfil de Empresa de Google.
+        { num: String(aniosDeOficio(hoy)), lab: 'Años de oficio' },
+        // Fuente: tenant_config.json («oro 18K») y el campo `metal` de las piezas del catálogo.
+        { num: '18K', lab: 'Oro de ley' },
+        // Fuente: cada gema sale con su certificado, del laboratorio que le corresponde. Es lo que
+        // el negocio sí puede mostrar pieza por pieza — y por eso no se nombra ningún laboratorio
+        // en general (§212.8): el laboratorio vive en la ficha, que es donde es cierto.
+        { num: 'Piezas', lab: 'Certificadas' },
+    ];
+}
+
 export const HOME_DEFAULTS = {
     hero: {
         bgImage:          '',   // P3.5: URL de portada custom (Storage). Vacío → <picture> estático optimizado.
@@ -36,15 +80,9 @@ export const HOME_DEFAULTS = {
         title2:     'más que una joya, un legado familiar.',
         lead:       'Entendemos la esmeralda y el oro de 18 quilates como portadores de la memoria humana. Nos convertimos en cómplices silenciosos de los instantes que definen una vida, como una promesa de amor o la llegada de un hijo.',
         quote:      '"Una esmeralda colombiana se lleva toda la vida y, algún día, pasa a la siguiente generación."',
-        // stat1 = 43 años de oficio, DESDE 1983 (Daniel, 2026-10-10: «desde 1983 corrígelo en todo»). Corrige
-        // el '32' anterior, que convivía con «43 años» en el cuerpo de Nosotros y «40 años» en su línea de
-        // tiempo — tres cifras distintas en el mismo sitio. 2026 − 1983 = 43. stat2 (5000+) SIGUE sin
-        // confirmar (TODO-47). El 12+/800+/JA de antes era DEMO (`[[feedback_no_demo_en_index]]`).
-        // ⚠️ NO sincronizado: el doc `siteContent/home.editorial` en vivo dice '40+' y GANA sobre este
-        // default hasta que se reescriba EN EL PANEL. Cambiar esto solo no cambia la web (lección L-90).
-        stat1Num:   '43',     stat1Lab: 'Años de oficio',
-        stat2Num:   '5000+',  stat2Lab: 'Piezas únicas',
-        stat3Num:   'Piezas', stat3Lab: 'Certificadas',
+        // Las tres cifras ya NO viven aquí ni se leen del panel: salen de `cifrasDeLaCasa()`, con
+        // la fuente de cada una escrita arriba. Los campos `stat*` se quedan vacíos a propósito
+        // para no dejar un valor viejo que alguien pueda volver a enchufar por error.
     },
     atelier: {
         chip:       'Atelier Bersaglio',

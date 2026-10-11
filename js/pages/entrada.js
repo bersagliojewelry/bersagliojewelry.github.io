@@ -20,9 +20,12 @@
  * SEO: sobreescribe document.title, canonical, og:* dinámicamente
  */
 
-import { html, escape, mount } from '../core/html.js';
+import { html, mount } from '../core/html.js';
 import { data } from '../core/data.js';
 import { getEntryBySlug, getRelated, entryHref } from '../data/journal.js';
+// El markup del artículo vive en UN módulo puro que este fichero y el generador del build
+// importan igual: así lo horneado y lo hidratado son el mismo HTML y el repintado no se ve.
+import { renderArticle, entryTitleTag } from '../data/journal-render.js';
 
 let _slug = '';
 
@@ -40,158 +43,9 @@ function getSlugFromURL() {
     return new URL(location.href).searchParams.get('e') || '';
 }
 
-function authorInitials(author) {
-    const clean = String(author || '').replace(/^Por\s+/i, '').trim();
-    const parts = clean.split(/\s+/);
-    return ((parts[0]?.[0] || '') + (parts[parts.length - 1]?.[0] || '')).toUpperCase();
-}
-
 // ═══════════════════════════════════════════════════════════════════
 // RENDER
 // ═══════════════════════════════════════════════════════════════════
-
-function renderBreadcrumb(entry) {
-    return html`
-        <nav class="en-breadcrumb" aria-label="Migas de pan">
-            <a class="en-crumb" href="/">Inicio</a>
-            <span class="en-crumb-sep" aria-hidden="true">→</span>
-            <a class="en-crumb" href="/journal.html">Journal</a>
-            <span class="en-crumb-sep" aria-hidden="true">→</span>
-            <span class="en-crumb en-crumb-current">${escape(entry.section)}</span>
-        </nav>`;
-}
-
-function renderHero(entry) {
-    return html`
-        <header class="en-hero">
-            <div class="en-hero-flags">
-                <span class="mono en-flag-section">${escape(entry.section.toUpperCase())}</span>
-                <span class="en-flag-divider"></span>
-                <span class="mono en-flag-kicker">${escape(entry.kicker)}</span>
-            </div>
-            <h1 class="en-title">${escape(entry.title)}</h1>
-            <div class="en-hero-meta">
-                <div class="en-hero-author-row">
-                    <div class="en-hero-avatar">${escape(authorInitials(entry.author))}</div>
-                    <div>
-                        <div class="en-hero-author">${escape(entry.author)}</div>
-                        <div class="mono en-hero-role">${escape(entry.authorRole)}</div>
-                    </div>
-                </div>
-                <div class="en-hero-meta-right">
-                    <span class="mono en-hero-date">${escape(entry.dateLong)}</span>
-                    <span class="en-hero-meta-divider"></span>
-                    <span class="mono en-hero-read">${escape(entry.read)} de lectura</span>
-                </div>
-            </div>
-        </header>`;
-}
-
-function renderFeaturedImage(entry) {
-    return html`
-        <figure class="glass glass-iridescent en-featured">
-            <img src="${escape(entry.image)}"
-                 alt="${escape(entry.title)}"
-                 class="en-featured-img"
-                 loading="eager"
-                 fetchpriority="high"
-                 decoding="async">
-        </figure>`;
-}
-
-function renderBody(entry) {
-    const paragraphs = String(entry.body || '').split(/\n\s*\n/).filter(Boolean);
-    return html`
-        <article class="en-body">
-            ${paragraphs.map((p, i) => {
-                if (i === 0) {
-                    // First paragraph gets the drop-cap on the first letter
-                    const first = p.charAt(0);
-                    const rest  = p.slice(1);
-                    return html`
-                        <p class="en-body-p en-body-p--lede">
-                            <span class="en-dropcap">${escape(first)}</span>${escape(rest)}
-                        </p>`;
-                }
-                return html`<p class="en-body-p">${escape(p)}</p>`;
-            })}
-        </article>`;
-}
-
-function renderShare(entry) {
-    const url = encodeURIComponent(entryUrlAbs(entry.slug));
-    const title = encodeURIComponent(entry.title);
-    return html`
-        <aside class="en-share" aria-label="Compartir entrada">
-            <div class="mono en-share-label">COMPARTIR</div>
-            <div class="en-share-btns">
-                <a class="en-share-btn"
-                   href="https://wa.me/?text=${title}%20${url}"
-                   target="_blank"
-                   rel="noopener"
-                   aria-label="Compartir por WhatsApp">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                        <path d="M20.5 3.5A11 11 0 0 0 3.4 17l-1.4 5.1 5.2-1.4A11 11 0 1 0 20.5 3.5zM12 20c-1.5 0-3-.4-4.3-1.2l-.3-.2-3.1.8.8-3.1-.2-.3C4.4 14.9 4 13.5 4 12c0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8z"/>
-                    </svg>
-                </a>
-                <a class="en-share-btn"
-                   href="mailto:?subject=${title}&body=${url}"
-                   aria-label="Enviar por correo">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                        <polyline points="22,6 12,13 2,6"/>
-                    </svg>
-                </a>
-                <button class="en-share-btn" type="button" data-action="copy" aria-label="Copiar enlace">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                        <rect x="9" y="9" width="13" height="13" rx="2"/>
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                    </svg>
-                </button>
-                <span class="en-share-feedback" data-feedback aria-live="polite"></span>
-            </div>
-        </aside>`;
-}
-
-function renderRelated(entry) {
-    const related = getRelated(entry.slug, 3);
-    if (related.length === 0) return '';
-    return html`
-        <section class="en-related">
-            <div class="en-related-header">
-                <div class="mono en-related-eyebrow">SEGUIR LEYENDO</div>
-                <h2 class="en-related-title">Más de <span class="italic emerald-text">${escape(entry.section)}</span></h2>
-            </div>
-            <div class="en-related-grid">
-                ${related.map(r => html`
-                    <article class="glass en-related-card">
-                        <a class="en-related-link" href="${entryHref(r.slug)}">
-                            <div class="en-related-imgwrap">
-                                <img src="${escape(r.image)}" alt="${escape(r.title)}" class="en-related-img" loading="lazy" decoding="async">
-                            </div>
-                            <div class="en-related-body">
-                                <div class="mono en-related-meta">
-                                    <span>${escape(r.section)}</span>
-                                    <span class="en-related-meta-dot">·</span>
-                                    <span>${escape(r.read)}</span>
-                                </div>
-                                <h3 class="en-related-headline">${escape(r.title)}</h3>
-                            </div>
-                        </a>
-                    </article>`)}
-            </div>
-        </section>`;
-}
-
-function renderBackToJournal() {
-    return html`
-        <div class="en-back">
-            <a href="/journal.html" class="btn-aqua en-back-btn">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-                Volver al Journal
-            </a>
-        </div>`;
-}
 
 function renderNotFound() {
     return html`
@@ -234,18 +88,7 @@ function renderLoading() {
 }
 
 function renderAll(entry) {
-    return html`
-        <div class="container en-page">
-            ${renderBreadcrumb(entry)}
-            ${renderHero(entry)}
-            ${renderFeaturedImage(entry)}
-            <div class="en-layout">
-                ${renderBody(entry)}
-                ${renderShare(entry)}
-            </div>
-            ${renderRelated(entry)}
-            ${renderBackToJournal()}
-        </div>`;
+    return renderArticle(entry, getRelated(entry.slug, 3));
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -261,6 +104,22 @@ function refresh() {
     if (!main) return;
     const entry = getEntryBySlug(_slug);
     if (!entry) {
+        // LO HORNEADO NO SE PISA (2026-10-10). En `/journal/<slug>.html` el generador deja el
+        // artículo completo dentro del <main> y lo sella con `data-baked`. Mientras Firestore no
+        // responda —o responda sin esta entrada— ese HTML ya es la respuesta correcta: taparlo con
+        // «Cargando la entrada…» es, literalmente, lo que el renderizador de Google fotografió el
+        // 10-oct en Search Console, y el motivo de que el cuerpo del artículo no contara.
+        //
+        // La guarda se ata al sello del generador y NO a `_settled`, porque `_settled` también lo
+        // levantan el watchdog de 8 s y el primer snapshot real; y hay un tercer camino al 404
+        // blando que no necesita reloj: si en el panel se le borra la imagen o el resumen a un
+        // artículo PUBLICADO, `isJournalComplete` lo descarta y `getEntryBySlug` devuelve null con
+        // un snapshot legítimo — eso borraría un artículo vivo en la primera respuesta de la red.
+        //
+        // Precio aceptado, dicho en voz alta: si una entrada se DESPUBLICA, su página horneada
+        // sigue sirviendo el artículo hasta el siguiente build (el cron corre a diario). Se
+        // prefiere eso a blanquear por error una página que hoy funciona.
+        if (main.dataset.baked) return;
         if (!_settled) { mount(main, renderLoading()); return; }   // cargando ≠ 404 (no toca title)
         main.innerHTML = renderNotFound();
         document.title = 'Entrada no encontrada · Bersaglio Jewelry';
@@ -268,8 +127,10 @@ function refresh() {
     }
     main.innerHTML = renderAll(entry);
 
-    // SEO updates
-    document.title = `${entry.title} · The Bersaglio Journal`;
+    // SEO updates. El <title> usa la MISMA fórmula que hornea el generador (ver
+    // journal-render.js): antes se reescribía como «… · The Bersaglio Journal» y eso le quitaba
+    // «Cartagena», que es la palabra con la que la gente busca y la que trae las impresiones.
+    document.title = entryTitleTag(entry.title);
     const canonical = document.querySelector('link[rel="canonical"]');
     const ogUrl = document.querySelector('meta[property="og:url"]');
     const ogTitle = document.querySelector('meta[property="og:title"]');

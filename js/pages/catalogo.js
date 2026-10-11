@@ -50,7 +50,11 @@ function readURLState() {
         cat:  u.searchParams.get('col')  || 'all',
         sort: u.searchParams.get('sort') || 'destacados',
         q:    u.searchParams.get('q')    || '',
-        gema: '',
+        // `?gema=` existe para el RESCATE de `public/404.html`: una faceta /gema/<slug> deja de
+        // hornearse en cuanto su gema baja de FACET_MIN piezas pedibles (y el cron diario puede
+        // hacerlo sin que nadie empuje código). Sin este parámetro el rescate perdería la
+        // intención del visitante y lo dejaría en el catálogo completo.
+        gema: u.searchParams.get('gema') || '',
     };
     // Faceta baked (A2b): siembra el filtro desde window.__BJ_FACET (col → filtro de colección existente;
     // gema → filtro por gema persistente). Consistente en init Y popstate.
@@ -69,6 +73,8 @@ function writeURLState(state) {
     else                              u.searchParams.set('sort', state.sort);
     if (!state.q) u.searchParams.delete('q');
     else           u.searchParams.set('q', state.q);
+    if (!state.gema) u.searchParams.delete('gema');
+    else              u.searchParams.set('gema', state.gema);
     history.replaceState({}, '', u.toString());
 }
 

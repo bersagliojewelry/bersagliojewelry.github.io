@@ -28,6 +28,10 @@ import { gemDisplayName } from '../js/core/gem-badge.js';   // §151: gema canó
 import { gemLabel, gemKnown } from '../js/core/gem-taxonomy.js';   // A2b (TODO-35/57): label + validez de gema para facetas
 import { metalConColor } from '../js/core/metal.js';        // TODO-59: color del oro (metalColor) en el metal mostrado
 import { HOME_DEFAULTS } from '../js/home/siteContent-defaults.js';
+// Motor de render del artículo del Journal: el MISMO módulo que usa el navegador
+// (js/pages/entrada.js). Un solo motor → lo horneado y lo hidratado son el mismo HTML.
+import { renderArticle, relatedFrom, entryTitleTag } from '../js/data/journal-render.js';
+import { normalizeEntry } from '../js/data/journal-normalize.js';
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, unlinkSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -56,6 +60,24 @@ const DEFAULT_OG = `${SITE_URL}/img/og-image.jpg`;
 const MIN_BAKE_BYTES = 5000;
 
 // ===================== Helpers puros (candidatos a visibility-core) =====================
+
+// replaceOnce — sustitución literal de la PRIMERA aparición, sin interpretar `$`.
+//
+// Por qué existe (medido el 2026-10-10, ejecutándolo): `String.prototype.replace` interpreta en la
+// cadena de reemplazo los patrones `$&` (el texto encontrado), `$'`, `` $` `` y `$1`. Todo lo que
+// este generador hornea lleva texto escrito en el PANEL —nombres de pieza, descripciones de
+// colección, el cuerpo de un artículo—, así que un `$&` tecleado ahí (un precio, un «$&nbsp;»
+// pegado de otro sitio) se expandía al ancla encontrada y corrompía la etiqueta: con el cuerpo
+// `Precio $& final` salía `<p>Precio <main id="main-content" …>amp; final</p>`.
+//
+// `prerenderHomeHtml` ya evitaba la trampa con indexOf/substring; esto generaliza ESE patrón a los
+// 42 puntos de inyección del fichero, en vez de dejar la primitiva peligrosa a mano de cada diff
+// futuro. Devuelve el HTML intacto si el ancla no está: el guard de anclajes es quien grita.
+function replaceOnce(haystack, needle, replacement) {
+    const i = String(haystack).indexOf(needle);
+    if (i < 0) return haystack;
+    return haystack.slice(0, i) + replacement + haystack.slice(i + String(needle).length);
+}
 
 // Slug de la pieza: contrato ÚNICO compartido con js/core/urls.js (cliente).
 // Debe coincidir EXACTO o el link del cliente apuntaría a un archivo inexistente.
@@ -281,7 +303,7 @@ function injectBusinessIntoIndex(cfg) {
     if (!html.includes('</head>')) throw new Error('[generate] dist/index.html sin </head> (ancla de inyección).');
     if (html.includes('id="business-jsonld"')) return; // idempotente
     const graph = buildBusinessGraph(cfg);
-    html = html.replace('</head>',
+    html = replaceOnce(html, '</head>',
         `    <script type="application/ld+json" id="business-jsonld">${safeJsonLd(graph)}</script>\n</head>`);
     if (html.length < MIN_BAKE_BYTES || !html.includes('</html>')) {
         throw new Error('[generate] dist/index.html quedó inválido tras inyectar el schema de marca.');
@@ -302,15 +324,17 @@ function injectBusinessIntoIndex(cfg) {
 // PURA (cubierta por SSG_SELFTEST): html + contenido → html horneado. Idempotente.
 function bakeSiteContentHtml(html, sc) {
     if (!sc || !html.includes('</head>') || html.includes('id="baked-sitecontent"')) return html;
-    let out = html.replace('</head>',
+    let out = replaceOnce(html, '</head>',
         `    <script id="baked-sitecontent">window.__BJ_SC=${safeJsonLd(sc)};</script>\n</head>`);
     const bg = sc.home && sc.home.hero && sc.home.hero.bgImage;
     // Solo https y sin caracteres de breakout de atributo/URL (espacio, comillas, <>, backslash).
     const urlOk = typeof bg === 'string' && /^https:\/\/[^\s"'<>\\]+$/.test(bg);
     if (urlOk) {
+        // Reemplazo por REGEX (el ancla del preload cambia de hash en cada build), y con el
+        // reemplazo en forma de FUNCIÓN: la URL viene del CMS y un `$&` en ella se expandiría.
         out = out.replace(
             /<link rel="preload" as="image"[\s\S]*?fetchpriority="high">/,
-            `<link rel="preload" as="image" href="${bg.replace(/&/g, '&amp;')}" fetchpriority="high">`,
+            () => `<link rel="preload" as="image" href="${bg.replace(/&/g, '&amp;')}" fetchpriority="high">`,
         );
     }
     return out;
@@ -329,7 +353,7 @@ function bakeCatalogSeed(html, catalogo) {
         pieces: (catalogo.pieces || []).filter(p => p && p.featured),
         collections: catalogo.collections || [],
     };
-    return html.replace('</head>',
+    return replaceOnce(html, '</head>',
         `    <script id="baked-catalog">window.__BJ_CATALOG=${safeJsonLd(seed)};</script>\n</head>`);
 }
 
@@ -768,12 +792,48 @@ function prerenderHomeHtml(html, sc, pieces, collections, slugMap, journal) {
     return before + '\n' + fullContent + '\n' + after;
 }
 
-async function injectSiteContentIntoIndex(handle, pieces, collections, slugMap, journal) {
-    const indexPath = join(DIST, 'index.html');
-    if (!existsSync(indexPath)) throw new Error('[generate] No existe dist/index.html.');
+// Cuenta las palabras de texto VISIBLE dentro del <main> de una página horneada: lo que de verdad
+// ve el renderizador de Google. Excluye el contenido de <noscript> a propósito —Googlebot ejecuta
+// JS y por tanto lo descarta—, y también <script>/<style>. Es la medida con la que se verifica
+// cualquier horneado de este fichero, la misma que se hace por `curl` contra producción (L-91).
+function palabrasEnMain(html) {
+    const i = String(html).indexOf('<main');
+    if (i < 0) return 0;
+    const j = String(html).indexOf('</main>', i);
+    if (j < 0) return 0;
+    const dentro = String(html).slice(i, j)
+        .replace(/<noscript>[\s\S]*?<\/noscript>/g, ' ')
+        .replace(/<(script|style)[\s\S]*?<\/\1>/g, ' ')
+        .replace(/<[^>]+>/g, ' ');
+    return dentro.split(/\s+/).filter(Boolean).length;
+}
+
+// Umbral de la post-condición de la portada. Medido el 2026-10-10 en el HTML servido: 1.036
+// palabras. 400 deja margen de sobra para que el dueño recorte copy desde el panel sin romper el
+// build, y sigue siendo inalcanzable para el esqueleto de carga, que tiene 2.
+const HOME_MIN_PALABRAS = 400;
+
+function assertHomePrerenderizada(out) {
+    const n = palabrasEnMain(out);
+    if (n < HOME_MIN_PALABRAS) {
+        throw new Error(
+            `[generate] dist/index.html se iba a publicar con ${n} palabras dentro del <main> ` +
+            `(mínimo ${HOME_MIN_PALABRAS}). El prerenderizado de la portada NO se aplicó: ` +
+            `revisa las anclas <main id="main-content" data-screen-label="home"> y </main>, ` +
+            `o el error que el try/catch de prerenderHomeHtml dejó en el log de arriba.`,
+        );
+    }
+}
+
+// Lee los documentos de `siteContent` UNA sola vez por build. Antes vivía dentro de
+// injectSiteContentIntoIndex, que corre DESPUÉS del sitemap; ahora el sitemap necesita sus
+// `updatedAt` para fechar las páginas estáticas, y el horneado de contacto/nosotros necesita su
+// contenido. Fail-open deliberado: si Firestore no responde devuelve {} y el sitio queda como hoy
+// (defaults + refresh en el cliente), nunca a medias.
+async function readSiteContentDocs(handle, paginas) {
     const sc = {};
     try {
-        for (const page of ['home', 'global']) {
+        for (const page of paginas) {
             if (handle.mode === 'admin') {
                 const snap = await handle.db.doc(`siteContent/${page}`).get();
                 if (snap.exists) sc[page] = snap.data();
@@ -784,12 +844,18 @@ async function injectSiteContentIntoIndex(handle, pieces, collections, slugMap, 
         }
     } catch (e) {
         console.warn('[generate] siteContent no legible — bake omitido (el sitio usa defaults + refresh):', e.message);
-        return;
+        return {};
     }
-    if (!Object.keys(sc).length) { console.log('[generate] siteContent vacío — bake omitido.'); return; }
+    return sc;
+}
+
+async function injectSiteContentIntoIndex(sc, pieces, collections, slugMap, journal) {
+    const indexPath = join(DIST, 'index.html');
+    if (!existsSync(indexPath)) throw new Error('[generate] No existe dist/index.html.');
+    if (!sc || !Object.keys(sc).length) { console.log('[generate] siteContent vacío — bake omitido.'); return; }
     let html = readFileSync(indexPath, 'utf-8');
     let out = bakeSiteContentHtml(html, sc);
-    
+
     try {
         out = prerenderHomeHtml(out, sc, pieces, collections, slugMap, journal);
     } catch (e) {
@@ -799,6 +865,14 @@ async function injectSiteContentIntoIndex(handle, pieces, collections, slugMap, 
     if (out.length <= html.length || !out.includes('</html>')) {
         throw new Error('[generate] dist/index.html quedó inválido tras hornear siteContent.');
     }
+    // POST-CONDICIÓN de la portada (2026-10-10). El guard de arriba NO alcanza: `bakeSiteContentHtml`
+    // ya hace crecer el fichero por su cuenta, así que `out.length > html.length` se cumple aunque
+    // el prerender se haya caído en el try/catch o haya devuelto el HTML intacto por no encontrar
+    // sus anclas (devuelve `html` con un console.warn, sin lanzar). La portada es la ÚNICA página
+    // del sitio que hoy llega a Google con texto de verdad: publicarla vacía con el build en verde
+    // sería el peor fallo silencioso del repositorio. Se mide lo que importa —palabras reales
+    // dentro del <main>— y no la presencia de una cadena, que un rediseño renombra.
+    assertHomePrerenderizada(out);
     writeFileSync(indexPath, out);
     const conPreload = (sc.home && sc.home.hero && sc.home.hero.bgImage) ? ' + preload → imagen del CMS' : '';
     console.log(`[generate] siteContent + prerender horneado en dist/index.html (${Object.keys(sc).join('+')})${conPreload}.`);
@@ -818,9 +892,9 @@ function injectListingPage(filename, mainAnchor, opts) {
     }
     const canonical = `${SITE_URL}/${filename}`;
     // robots: noindex → index (página de listado real e indexable).
-    html = html.replace('<meta name="robots" content="noindex, nofollow">', '<meta name="robots" content="index, follow">');
+    html = replaceOnce(html, '<meta name="robots" content="noindex, nofollow">', '<meta name="robots" content="index, follow">');
     // og:url del template apunta a "/" (home) — corregir a la página.
-    html = html.replace(`<meta property="og:url" content="${SITE_URL}/">`, `<meta property="og:url" content="${escapeAttr(canonical)}">`);
+    html = replaceOnce(html, `<meta property="og:url" content="${SITE_URL}/">`, `<meta property="og:url" content="${escapeAttr(canonical)}">`);
 
     const schema = {
         '@context': 'https://schema.org',
@@ -835,7 +909,7 @@ function injectListingPage(filename, mainAnchor, opts) {
             itemListElement: opts.items.map((it, i) => ({ '@type': 'ListItem', position: i + 1, url: it.url, name: it.name })),
         },
     };
-    html = html.replace('</head>',
+    html = replaceOnce(html, '</head>',
         `    <script type="application/ld+json" id="listing-jsonld">${safeJsonLd(schema)}</script>\n</head>`);
 
     const items = opts.items.map(it =>
@@ -849,7 +923,7 @@ function injectListingPage(filename, mainAnchor, opts) {
             <p><a href="${SITE_URL}/contacto.html">Hablar con un asesor</a></p>
         </div>
     </noscript>`;
-    html = html.replace(mainAnchor, mainAnchor + noscript);
+    html = replaceOnce(html, mainAnchor, mainAnchor + noscript);
 
     if (html.length < MIN_BAKE_BYTES || !html.includes('</html>')) {
         throw new Error(`[generate] dist/${filename} quedó inválido tras inyectar el listado.`);
@@ -963,19 +1037,21 @@ function bakeFacetPage(shell, f, slugMap) {
     let html = shell;
     // <base href="/"> — la faceta vive en subdir (/coleccion/, /gema/) → rutas relativas resuelven a la raíz.
     if (!html.includes('<base href="/">')) {
-        html = html.replace('<meta charset="UTF-8">', '<meta charset="UTF-8">\n    <base href="/">');
+        html = replaceOnce(html, '<meta charset="UTF-8">', '<meta charset="UTF-8">\n    <base href="/">');
     }
     // robots noindex → index (esta faceta SÍ se indexa; el shell colecciones.html queda noindex).
-    html = html.replace('<meta name="robots" content="noindex, nofollow">', '<meta name="robots" content="index, follow">');
-    // <title> + meta description keyword-first.
-    html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(meta.title)}</title>`);
-    html = html.replace(/<meta name="description" content="[\s\S]*?">/, `<meta name="description" content="${escapeAttr(meta.intro)}">`);
+    html = replaceOnce(html, '<meta name="robots" content="noindex, nofollow">', '<meta name="robots" content="index, follow">');
+    // <title> + meta description keyword-first. El reemplazo va como FUNCIÓN a propósito: estos
+    // textos llevan `meta.intro`, que es la descripción de la colección escrita en el PANEL, y en
+    // la forma de cadena un `$&` ahí dentro se expande al propio <title> y corrompe la etiqueta.
+    html = html.replace(/<title>[\s\S]*?<\/title>/, () => `<title>${escapeHtml(meta.title)}</title>`);
+    html = html.replace(/<meta name="description" content="[\s\S]*?">/, () => `<meta name="description" content="${escapeAttr(meta.intro)}">`);
     // canonical autorreferencial + OG + Twitter.
-    html = html.replace('<link rel="canonical" href="https://bersagliojewelry.co/colecciones.html">', `<link rel="canonical" href="${escapeAttr(canonical)}">`);
-    html = html.replace('<meta property="og:url" content="https://bersagliojewelry.co/">', `<meta property="og:url" content="${escapeAttr(canonical)}">`);
-    html = html.replace(/<meta property="og:title" content="[\s\S]*?">/, `<meta property="og:title" content="${escapeAttr(meta.title)}">`);
-    html = html.replace(/<meta property="og:description" content="[\s\S]*?">/, `<meta property="og:description" content="${escapeAttr(meta.intro)}">`);
-    html = html.replace('<meta name="twitter:card" content="summary_large_image">',
+    html = replaceOnce(html, '<link rel="canonical" href="https://bersagliojewelry.co/colecciones.html">', `<link rel="canonical" href="${escapeAttr(canonical)}">`);
+    html = replaceOnce(html, '<meta property="og:url" content="https://bersagliojewelry.co/">', `<meta property="og:url" content="${escapeAttr(canonical)}">`);
+    html = html.replace(/<meta property="og:title" content="[\s\S]*?">/, () => `<meta property="og:title" content="${escapeAttr(meta.title)}">`);
+    html = html.replace(/<meta property="og:description" content="[\s\S]*?">/, () => `<meta property="og:description" content="${escapeAttr(meta.intro)}">`);
+    html = replaceOnce(html, '<meta name="twitter:card" content="summary_large_image">',
         '<meta name="twitter:card" content="summary_large_image">\n' +
         `    <meta name="twitter:title" content="${escapeAttr(meta.title)}">\n` +
         `    <meta name="twitter:description" content="${escapeAttr(meta.intro)}">\n` +
@@ -984,7 +1060,7 @@ function bakeFacetPage(shell, f, slugMap) {
     // JSON-LD (CollectionPage + Breadcrumb) + __BJ_FACET (hidratación cliente) antes de </head>.
     const [cp, bc] = buildFacetSchemas(f, canonical, meta, items);
     const facetGlobal = { kind: f.kind, value: f.slug, label: f.label, title: meta.h1, intro: meta.intro };
-    html = html.replace('</head>',
+    html = replaceOnce(html, '</head>',
         `    <script type="application/ld+json" id="facet-collection-jsonld">${safeJsonLd(cp)}</script>\n` +
         `    <script type="application/ld+json" id="facet-breadcrumb-jsonld">${safeJsonLd(bc)}</script>\n` +
         `    <script id="baked-facet">window.__BJ_FACET=${safeJsonLd(facetGlobal)};</script>\n</head>`);
@@ -1003,7 +1079,7 @@ ${lis}
             <p><a href="${SITE_URL}/contacto.html">Hablar con un asesor</a> · <a href="${SITE_URL}/colecciones.html">Ver todo el catálogo</a></p>
         </div>
     </noscript>`;
-    html = html.replace('<main id="main-content" data-screen-label="colecciones">',
+    html = replaceOnce(html, '<main id="main-content" data-screen-label="colecciones">',
         `<main id="main-content" data-screen-label="colecciones">${noscript}`);
     return html;
 }
@@ -1092,11 +1168,14 @@ function isJournalBakeable(e) {
 }
 
 // title/meta keyword-first para Google; el copy VISIBLE del artículo queda INTACTO.
+// El `<title>` sale de `entryTitleTag` (js/data/journal-render.js), la MISMA función que usa el
+// navegador: antes cada lado tenía su fórmula y la del navegador —que corre después— le quitaba
+// «Cartagena» al título horneado.
 function journalMeta(e) {
     const h1 = String(e.title || '').trim();
     return {
         h1,
-        title: `${h1} · Journal · ${BRAND} Cartagena`,
+        title: entryTitleTag(h1),
         metaDesc: String(e.excerpt || '').trim().slice(0, 300),
         seccion: String(e.section || '').trim(),
     };
@@ -1134,7 +1213,8 @@ function buildArticleSchemas(e, canonical, meta) {
 }
 
 // PURA (cubierta por SSG_SELFTEST): shell + entrada → HTML horneado indexable. Idempotente.
-function bakeJournalPage(shell, e) {
+// `todas` = todas las entradas horneables, para calcular las MISMAS relacionadas que el navegador.
+function bakeJournalPage(shell, e, todas = []) {
     for (const a of JOURNAL_ANCHORS) {
         if (!shell.includes(a)) {
             throw new Error(`[generate] ANCLAJE FALTANTE en dist/entrada.html (journal): ${a}\n  → El rediseño de la entrada rompió un punto de inyección.`);
@@ -1148,53 +1228,78 @@ function bakeJournalPage(shell, e) {
     let html = shell;
     // <base href="/"> — la horneada vive en /journal/ → rutas relativas resuelven a la raíz.
     if (!html.includes('<base href="/">')) {
-        html = html.replace('<meta charset="UTF-8">', '<meta charset="UTF-8">\n    <base href="/">');
+        html = replaceOnce(html, '<meta charset="UTF-8">', '<meta charset="UTF-8">\n    <base href="/">');
     }
-    html = html.replace('<meta name="robots" content="noindex, nofollow">', '<meta name="robots" content="index, follow">');
-    html = html.replace('<title>Journal · Bersaglio Jewelry</title>', `<title>${escapeHtml(meta.title)}</title>`);
-    html = html.replace('<meta name="description" content="Una entrada del journal Bersaglio Jewelry — historias del atelier en Cartagena.">',
+    html = replaceOnce(html, '<meta name="robots" content="noindex, nofollow">', '<meta name="robots" content="index, follow">');
+    html = replaceOnce(html, '<title>Journal · Bersaglio Jewelry</title>', `<title>${escapeHtml(meta.title)}</title>`);
+    html = replaceOnce(html, '<meta name="description" content="Una entrada del journal Bersaglio Jewelry — historias del atelier en Cartagena.">',
         `<meta name="description" content="${escapeAttr(meta.metaDesc)}">`);
-    html = html.replace('<link rel="canonical" href="https://bersagliojewelry.co/entrada.html">',
+    html = replaceOnce(html, '<link rel="canonical" href="https://bersagliojewelry.co/entrada.html">',
         `<link rel="canonical" href="${escapeAttr(canonical)}">`);
     // og:type website → article (Google/redes lo tratan como pieza editorial).
-    html = html.replace('<meta property="og:type" content="website">', '<meta property="og:type" content="article">');
-    html = html.replace('<meta property="og:url" content="https://bersagliojewelry.co/entrada.html">',
+    html = replaceOnce(html, '<meta property="og:type" content="website">', '<meta property="og:type" content="article">');
+    html = replaceOnce(html, '<meta property="og:url" content="https://bersagliojewelry.co/entrada.html">',
         `<meta property="og:url" content="${escapeAttr(canonical)}">`);
-    html = html.replace('<meta property="og:title" content="Journal · Bersaglio Jewelry">',
+    html = replaceOnce(html, '<meta property="og:title" content="Journal · Bersaglio Jewelry">',
         `<meta property="og:title" content="${escapeAttr(meta.h1)}">`);
-    html = html.replace('<meta property="og:description" content="Atelier en Cartagena de Indias. Esmeraldas colombianas, diamantes y oro 18K.">',
+    html = replaceOnce(html, '<meta property="og:description" content="Atelier en Cartagena de Indias. Esmeraldas colombianas, diamantes y oro 18K.">',
         `<meta property="og:description" content="${escapeAttr(meta.metaDesc)}">`);
-    html = html.replace('<meta property="og:image" content="https://bersagliojewelry.co/img/og-image.jpg">',
+    html = replaceOnce(html, '<meta property="og:image" content="https://bersagliojewelry.co/img/og-image.jpg">',
         `<meta property="og:image" content="${escapeAttr(image)}">`);
-    html = html.replace('<meta name="twitter:card" content="summary_large_image">',
+    html = replaceOnce(html, '<meta name="twitter:card" content="summary_large_image">',
         '<meta name="twitter:card" content="summary_large_image">\n' +
         `    <meta name="twitter:title" content="${escapeAttr(meta.h1)}">\n` +
         `    <meta name="twitter:description" content="${escapeAttr(meta.metaDesc)}">\n` +
         `    <meta name="twitter:image" content="${escapeAttr(image)}">`);
 
     const [art, bc] = buildArticleSchemas(e, canonical, meta);
-    html = html.replace('</head>',
+    html = replaceOnce(html, '</head>',
         `    <script type="application/ld+json">${safeJsonLd(art)}</script>\n` +
         `    <script type="application/ld+json">${safeJsonLd(bc)}</script>\n` +
         `    <script>window.PRERENDERED_ENTRY_SLUG = ${safeJsonLd(slug)};</script>\n</head>`);
 
-    // <noscript> SEO: el CUERPO REAL del artículo (los bots sin JS leen el texto completo).
-    const paras = String(e.body || '').split(/\n\s*\n/).map(s => s.trim()).filter(Boolean)
-        .map(p => `            <p>${escapeHtml(p)}</p>`).join('\n');
-    const firma = [meta.seccion, String(e.author || '').trim()].filter(Boolean).join(' · ');
-    const noscript = `
-    <noscript>
-        <div style="max-width:820px;margin:96px auto;padding:24px;font-family:Manrope,system-ui,sans-serif;line-height:1.7">
-            <nav style="font-size:14px;opacity:.7;margin-bottom:16px"><a href="${SITE_URL}/">Inicio</a> › <a href="${SITE_URL}/journal.html">Journal</a> › ${escapeHtml(meta.h1)}</nav>
-            <h1>${escapeHtml(meta.h1)}</h1>
-            ${firma ? `<p style="opacity:.7">${escapeHtml(firma)}</p>` : ''}
-            <img src="${escapeAttr(image)}" alt="${escapeAttr(meta.h1 + ' — ' + BRAND)}" style="max-width:100%;height:auto;border-radius:14px">
-${paras}
-            <p><a href="${SITE_URL}/contacto.html">Hablar con un asesor</a> · <a href="${SITE_URL}/journal.html">Ver el Journal</a></p>
-        </div>
-    </noscript>`;
-    html = html.replace('<main id="main-content" data-screen-label="entrada">',
-        `<main id="main-content" data-screen-label="entrada">${noscript}`);
+    // ── EL ARTÍCULO, DENTRO DEL <main> DE VERDAD (TODO-92, 2026-10-10) ──
+    //
+    // Antes el cuerpo se horneaba SOLO dentro de un <noscript> y el <main> se quedaba con el
+    // esqueleto de carga del shell. Medido en Search Console: el renderizador de Google fotografió
+    // «Cargando la entrada…» y las 458 palabras del artículo no contaban. Googlebot ejecuta JS, y
+    // por eso mismo DESCARTA el <noscript>; lo que no llegaba a tiempo era el listener de
+    // Firestore, del que dependía el primer pintado.
+    //
+    // Se SUSTITUYE el interior del <main> (no se añade detrás): dentro vive el esqueleto, y
+    // concatenar dejaría el artículo y el cartel de «Cargando» a la vista a la vez. Es el mismo
+    // patrón de `prerenderHomeHtml`, que ya resolvía esto para la portada.
+    //
+    // El HTML lo escribe `renderArticle`, el MISMO módulo que usa el navegador, con las MISMAS
+    // relacionadas (`relatedFrom`): así el repintado al hidratar no se ve. Y se normaliza SOLO
+    // para la vista —`normalizeEntry` convierte la fecha a 'DD·MM·YY' y añade `dateLong`—
+    // mientras los schemas de arriba siguen leyendo el documento CRUDO, porque `isoDate` necesita
+    // el ISO y con el normalizado `datePublished` se habría quedado vacío.
+    const vista = normalizeEntry(e);
+    const relacionadas = relatedFrom((todas || []).map(normalizeEntry), vista.slug, 3);
+    const articulo = renderArticle(vista, relacionadas);
+
+    // `data-baked` es el sello que hace segura la hidratación: `js/pages/entrada.js` lo lee para
+    // NO tapar este HTML con «Cargando…» ni con el 404 blando mientras Firestore no responda.
+    // Es un booleano estampado por el generador, no un hash del contenido: no puede desincronizarse.
+    const anclaMain = '<main id="main-content" data-screen-label="entrada">';
+    const iMain = html.indexOf(anclaMain);
+    const iFin = html.indexOf('</main>', iMain);
+    if (iMain < 0 || iFin < 0) {
+        throw new Error('[generate] journal: no encontré el <main> del shell de entrada para sustituir su interior.');
+    }
+    html = html.slice(0, iMain)
+        + `<main id="main-content" data-screen-label="entrada" data-baked="${escapeAttr(slug)}">\n`
+        + articulo + '\n    '
+        + html.slice(iFin);
+
+    // El <noscript> ya NO lleva una copia del cuerpo: con el artículo dentro del <main>, duplicarlo
+    // haría que un rastreador sin JS —GPTBot, PerplexityBot y los demás, a los que robots.txt
+    // invita expresamente— leyera el mismo texto dos veces. Lo que sí hace falta sin JS es VER la
+    // página: el CSS crítico del shell deja `body{opacity:0}` hasta que `js/core/boot.js` añade
+    // `.bj-ready`, así que sin JavaScript el artículo estaba ahí y era invisible. Esta línea lo
+    // arregla, y es todo lo que el <noscript> tiene que decir ahora.
+    html = replaceOnce(html, '</head>', '    <noscript><style>body{opacity:1 !important}</style></noscript>\n</head>');
     return html;
 }
 
@@ -1251,24 +1356,24 @@ function generatePage(template, p, slug, collectionsById) {
     // 1. <base href="/"> para que las rutas relativas (css/, manifest.json) resuelvan
     //    desde el subdir /pieza/. Vite emite assets absolutos, pero el base cubre el resto.
     if (!html.includes('<base href="/">')) {
-        html = html.replace('<meta charset="UTF-8">', '<meta charset="UTF-8">\n    <base href="/">');
+        html = replaceOnce(html, '<meta charset="UTF-8">', '<meta charset="UTF-8">\n    <base href="/">');
     }
 
     // 2. robots: noindex → index (esta SÍ se indexa; el shell pieza.html queda noindex).
-    html = html.replace(
+    html = replaceOnce(html, 
         '<meta name="robots" content="noindex, nofollow">',
         '<meta name="robots" content="index, follow">'
     );
 
     // 3. canonical autorreferencial a la URL limpia.
-    html = html.replace(
+    html = replaceOnce(html, 
         '<link rel="canonical" href="https://bersagliojewelry.co/pieza.html">',
         `<link rel="canonical" href="${escapeAttr(canonicalUrl)}">`
     );
 
     // 4. <title> + meta description.
-    html = html.replace('<title>Pieza · Bersaglio Jewelry</title>', `<title>${escapeHtml(title)}</title>`);
-    html = html.replace(
+    html = replaceOnce(html, '<title>Pieza · Bersaglio Jewelry</title>', `<title>${escapeHtml(title)}</title>`);
+    html = replaceOnce(html, 
         '<meta name="description" content="Detalle de pieza Bersaglio Jewelry. Cada gema tiene su propio certificado.">',
         `<meta name="description" content="${escapeAttr(metaDesc)}">`
     );
@@ -1276,26 +1381,26 @@ function generatePage(template, p, slug, collectionsById) {
     // 5. Open Graph.
     // og:type website → product (la ficha ES un producto; el shell pieza.html queda website).
     // El stub /p/<code> ya nace con product; aquí lo alineamos en la página canónica.
-    html = html.replace('<meta property="og:type" content="website">', '<meta property="og:type" content="product">');
-    html = html.replace(
+    html = replaceOnce(html, '<meta property="og:type" content="website">', '<meta property="og:type" content="product">');
+    html = replaceOnce(html, 
         '<meta property="og:url" content="https://bersagliojewelry.co/pieza.html">',
         `<meta property="og:url" content="${escapeAttr(canonicalUrl)}">`
     );
-    html = html.replace(
+    html = replaceOnce(html, 
         '<meta property="og:title" content="Pieza · Bersaglio Jewelry">',
         `<meta property="og:title" content="${escapeAttr(title)}">`
     );
-    html = html.replace(
+    html = replaceOnce(html, 
         '<meta property="og:description" content="Atelier en Cartagena de Indias. Esmeraldas colombianas, diamantes y oro 18K.">',
         `<meta property="og:description" content="${escapeAttr(ogDesc)}">`
     );
-    html = html.replace(
+    html = replaceOnce(html, 
         '<meta property="og:image" content="https://bersagliojewelry.co/img/og-image.jpg">',
         `<meta property="og:image" content="${escapeAttr(image)}">`
     );
 
     // 6. Twitter Card: el template solo trae twitter:card → añadimos title/desc/image.
-    html = html.replace(
+    html = replaceOnce(html, 
         '<meta name="twitter:card" content="summary_large_image">',
         '<meta name="twitter:card" content="summary_large_image">\n' +
         `    <meta name="twitter:title" content="${escapeAttr(title)}">\n` +
@@ -1307,7 +1412,7 @@ function generatePage(template, p, slug, collectionsById) {
     const productSchema = buildProductSchema(p, category, realDesc, canonicalUrl, image);
     const breadcrumbSchema = buildBreadcrumbSchema(p, category, canonicalUrl);
     const prerenderedTag = `<script>window.PRERENDERED_PIECE_SLUG = ${safeJsonLd(slug)};</script>`;
-    html = html.replace(
+    html = replaceOnce(html, 
         '</head>',
         `    <script type="application/ld+json">${safeJsonLd(productSchema)}</script>\n` +
         `    <script type="application/ld+json">${safeJsonLd(breadcrumbSchema)}</script>\n` +
@@ -1342,7 +1447,7 @@ function generatePage(template, p, slug, collectionsById) {
             ${ctaNoscript}
         </div>
     </noscript>`;
-    html = html.replace(
+    html = replaceOnce(html, 
         '<main id="main-content" data-screen-label="pieza">',
         `<main id="main-content" data-screen-label="pieza">${noscript}`
     );
@@ -1419,15 +1524,43 @@ function bakeStubError(code, html) {
 
 // ===================== Sitemap =====================
 
-// Estáticas indexables (index,follow). lastmod FIJO — Google ignora el lastmod si
-// TODAS las páginas dicen "hoy". Colecciones/journal entran cuando se horneen (Fase A2).
+// Estáticas indexables (index,follow).
+//
+// El `lastmod` NO se escribe a mano y NO es "hoy". Estuvo clavado en '2026-06-25' hasta el
+// 2026-10-10, cuando se midió en el sitemap SERVIDO que `/`, `/colecciones.html` y
+// `/journal.html` seguían diciendo junio — o sea que el día siguiente a reescribir
+// `/contacto.html` el sitemap le habría dicho a Google «sin cambios desde junio», justo cuando
+// más interesa que vuelva a rastrear. El motivo original del valor fijo es bueno y se conserva:
+// si TODAS las páginas dicen hoy, Google deja de creer el campo. La salida es la honesta —
+// **derivarlo del contenido que de verdad alimenta cada página**:
+//   `de` = documentos de `siteContent` cuyo `updatedAt` manda sobre esa página;
+//   `conPiezas` / `conJournal` = además se mueve cuando cambia el catálogo o el Journal, porque
+//   esas páginas los listan;
+//   y suelo común `CODIGO_LASTMOD`, para que un cambio que vive solo en el código (hornear el
+//   <main> de contacto, por ejemplo) también mueva la fecha. Ese suelo sí se sube a mano, y es
+//   el único dato de este bloque que hay que recordar: el resto se mueve solo.
+const CODIGO_LASTMOD = '2026-10-10';
 const STATIC_PAGES = [
-    { loc: '/',                 freq: 'weekly',  prio: '1.0', lastmod: '2026-06-25' },
-    { loc: '/colecciones.html', freq: 'weekly',  prio: '0.9', lastmod: '2026-06-25' },
-    { loc: '/journal.html',     freq: 'weekly',  prio: '0.6', lastmod: '2026-06-25' },
-    { loc: '/nosotros.html',    freq: 'monthly', prio: '0.8', lastmod: '2026-06-25' },
-    { loc: '/contacto.html',    freq: 'monthly', prio: '0.8', lastmod: '2026-06-25' },
+    { loc: '/',                 freq: 'weekly',  prio: '1.0', de: ['home', 'global'], conPiezas: true, conJournal: true },
+    { loc: '/colecciones.html', freq: 'weekly',  prio: '0.9', de: [],                 conPiezas: true },
+    { loc: '/journal.html',     freq: 'weekly',  prio: '0.6', de: [],                 conJournal: true },
+    { loc: '/nosotros.html',    freq: 'monthly', prio: '0.8', de: ['nosotros', 'global'] },
+    { loc: '/contacto.html',    freq: 'monthly', prio: '0.8', de: ['contacto', 'global'] },
 ];
+
+// La más reciente de un puñado de fechas ISO, ignorando las vacías. '' si no hay ninguna.
+function isoMax(...fechas) {
+    return fechas.filter(f => typeof f === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(f)).sort().pop() || '';
+}
+
+// lastmod REAL de una página estática: lo más nuevo entre el suelo del código, los documentos del
+// panel que la alimentan y —si la página los lista— el catálogo y el Journal.
+function staticLastmod(sp, sc, pieces, journalEntries) {
+    const delCms = (sp.de || []).map(k => isoDate(sc && sc[k] && sc[k].updatedAt));
+    const delCatalogo = sp.conPiezas ? (pieces || []).map(p => isoDate(p.updatedAt)) : [];
+    const delJournal = sp.conJournal ? (journalEntries || []).map(e => isoDate(e.updatedAt) || isoDate(e.date)) : [];
+    return isoMax(CODIGO_LASTMOD, ...delCms, ...delCatalogo, ...delJournal);
+}
 
 function isoDate(ts) {
     try {
@@ -1444,25 +1577,33 @@ function sitemapUrl(loc, lastmod, freq, prio) {
     return `    <url>\n        <loc>${escapeXml(loc)}</loc>\n        <lastmod>${lastmod}</lastmod>\n        <changefreq>${freq}</changefreq>\n        <priority>${prio}</priority>\n    </url>`;
 }
 
-function generateSitemap(pieces, slugMap, today, facetUrls = [], journalEntries = []) {
+function generateSitemap(pieces, slugMap, today, facetUrls = [], journalEntries = [], sc = {}) {
     const urls = [];
     for (const sp of STATIC_PAGES) {
-        urls.push(sitemapUrl(`${SITE_URL}${sp.loc}`, sp.lastmod, sp.freq, sp.prio));
+        urls.push(sitemapUrl(`${SITE_URL}${sp.loc}`, staticLastmod(sp, sc, pieces, journalEntries), sp.freq, sp.prio));
     }
-    // Facetas /coleccion/<slug> + /gema/<slug> (A2b): cambian con el catálogo → lastmod = hoy.
+    // El `lastmod` de una página horneada es la fecha en que cambió LA PÁGINA, no solo su
+    // documento del panel: cuando cambia la plantilla o el horneado, las 46 páginas cambian de
+    // verdad. Por eso `CODIGO_LASTMOD` es el suelo de todas. Antes esto se pasaba por alto y se
+    // notaba: medido el 2026-10-10, el sitemap decía que el artículo del anillo de compromiso no
+    // cambiaba desde el 11 de julio —su `updatedAt` se quedó atrás— cuando se había reescrito por
+    // completo ese mismo día. Pedirle a Google que reindexe mientras el sitemap le dice «sin
+    // cambios» es trabajar contra uno mismo.
+    const fechaCatalogo = isoMax(...(pieces || []).map(p => isoDate(p.updatedAt)));
     for (const u of facetUrls) {
-        urls.push(sitemapUrl(u, today, 'weekly', '0.7'));
+        // La faceta es una vista del catálogo: cambia cuando cambia una pieza, no cada día. Poner
+        // "hoy" con un cron diario equivale a no decir nada, porque Google deja de creer el campo.
+        urls.push(sitemapUrl(u, isoMax(CODIGO_LASTMOD, fechaCatalogo) || today, 'weekly', '0.7'));
     }
-    // Artículos /journal/<slug>.html (A3): contenido editorial estable → `monthly`, y lastmod REAL
-    // (updatedAt/date de la entrada, no "hoy": Google ignora el lastmod si todo dice hoy).
+    // Artículos /journal/<slug>.html (A3): contenido editorial estable → `monthly`.
     for (const e of journalEntries) {
-        const lastmod = isoDate(e.updatedAt) || isoDate(e.date) || today;
+        const lastmod = isoMax(CODIGO_LASTMOD, isoDate(e.updatedAt), isoDate(e.date)) || today;
         urls.push(sitemapUrl(journalUrlOf(e), lastmod, 'monthly', '0.7'));
     }
     for (const p of pieces) {
         const slug = slugMap.get(String(p.id));
         if (!slug) continue;
-        const lastmod = isoDate(p.updatedAt) || today;
+        const lastmod = isoMax(CODIGO_LASTMOD, isoDate(p.updatedAt)) || today;
         urls.push(sitemapUrl(`${SITE_URL}/pieza/${slug}.html`, lastmod, 'weekly', '0.8'));
     }
     const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`;
@@ -1794,17 +1935,26 @@ async function main() {
     const agotadasCount = pieces.filter(p => stockInfo(p).estado === 'agotada').length;
     console.log(`[generate] catalogo.json: ${catalogo.pieces.length} piezas (${agotadasCount} agotadas, available:false) + ${catalogo.collections.length} colecciones.`);
 
+    // siteContent del CMS: UNA lectura por build, antes del sitemap (necesita sus `updatedAt` para
+    // fechar las estáticas) y antes de los horneados que consumen su contenido.
+    const sc = await readSiteContentDocs(handle, ['home', 'global', 'nosotros', 'contacto']);
+
     // Sitemap (sobrescribe el estático copiado por Vite desde public/).
     const today = isoDate(Date.now()) || '2026-06-25';
-    const sitemap = generateSitemap(pieces, slugMap, today, facetUrls, journalBakeables);
+    const sitemap = generateSitemap(pieces, slugMap, today, facetUrls, journalBakeables, sc);
     writeFileSync(join(DIST, 'sitemap.xml'), sitemap);
     console.log(`[generate] sitemap.xml regenerado (${STATIC_PAGES.length} estáticas + ${facetUrls.length} facetas + ${journalBakeables.length} artículos + ${pieces.length} piezas).`);
 
     // Schema de marca (JewelryStore + WebSite) horneado en dist/index.html desde tenant_config.json.
     injectBusinessIntoIndex(readTenantConfig());
 
-    // siteContent del CMS horneado (anti-flash 1ª visita + preload al hero real, §163).
-    await injectSiteContentIntoIndex(handle, pieces, collections, slugMap, journalBakeables);
+    // siteContent del CMS horneado (anti-flash 1ª visita + preload al hero real, §163). Solo
+    // `home`+`global` viajan en la semilla `__BJ_SC` de la portada: meter ahí `nosotros` y
+    // `contacto` engordaría el HTML de la página más visitada con texto que no pinta.
+    await injectSiteContentIntoIndex(
+        { ...(sc.home ? { home: sc.home } : {}), ...(sc.global ? { global: sc.global } : {}) },
+        pieces, collections, slugMap, journalBakeables,
+    );
 
     // Semilla de catálogo (destacadas + colecciones) horneada → hidratación del 1er paint SIN
     // skeleton (fix auditoría Antigravity 2026-07-09). Inyección aislada (read/write propio) para
@@ -1896,7 +2046,7 @@ async function main() {
             let jCount = 0;
             for (const e of journalBakeables) {
                 const slug = journalSlugOf(e);
-                const html = bakeJournalPage(shell, e);
+                const html = bakeJournalPage(shell, e, journalBakeables);
                 const err = bakeIntegrityError(`journal/${slug}`, html);
                 if (err) { jFailures.push(err); continue; }
                 writeFileSync(join(jDir, `${slug}.html`), html);
@@ -1919,7 +2069,12 @@ async function main() {
 
 function runSelfTest() {
     const U2028 = String.fromCharCode(0x2028), U2029 = String.fromCharCode(0x2029);
-    const PAYLOAD = '</script><script>alert(1)</script>' + U2028 + U2029 + ' raw < & > \' chars';
+    // Los `$&`, `` $` ``, `$'` y `$1` del final NO son adorno: son los patrones que
+    // String.prototype.replace expande en la cadena de reemplazo. Con la primitiva antigua, un
+    // `$&` escrito en el panel se convertía en el ancla encontrada y partía la etiqueta horneada
+    // (medido el 2026-10-10). Van en el payload para que nadie pueda reintroducir `.replace()`
+    // literal sin que el autotest lo cace.
+    const PAYLOAD = '</script><script>alert(1)</script>' + U2028 + U2029 + ' raw < & > \' chars $& $` $\' $1';
     // Template: dist/pieza.html si existe, si no la fuente (los anclajes existen en ambos).
     const tplPath = existsSync(join(DIST, 'pieza.html')) ? join(DIST, 'pieza.html') : join(REPO_ROOT, 'pieza.html');
     const template = readFileSync(tplPath, 'utf-8');
@@ -1966,7 +2121,7 @@ function runSelfTest() {
     }
     // bake-integrity: completa pasa, truncada/diminuta fallan.
     if (bakeIntegrityError('selftest', html)) fails.push('bake-integrity: la página completa NO debería fallar.');
-    if (!bakeIntegrityError('trunc', html.replace('</html>', ''))) fails.push('bake-integrity: sin </html> debería fallar.');
+    if (!bakeIntegrityError('trunc', replaceOnce(html, '</html>', ''))) fails.push('bake-integrity: sin </html> debería fallar.');
     if (!bakeIntegrityError('tiny', '<html></html>')) fails.push('bake-integrity: página diminuta debería fallar.');
     // sitemap válido + escapa.
     const sm = generateSitemap([mockPiece], new Map([[String(mockPiece.id), 'selftest']]), '2026-06-25');
@@ -2125,8 +2280,22 @@ function runSelfTest() {
         excerpt: PAYLOAD, body: PAYLOAD + '\n\n' + PAYLOAD, image: 'https://x/y.webp',
         date: '2026-07-11', published: true,
     };
-    const jh = bakeJournalPage(FAKE_ENTRY_SHELL, entryMock);
+    const jh = bakeJournalPage(FAKE_ENTRY_SHELL, entryMock, [entryMock]);
     if (jh.indexOf('</script><script>alert(1)</script>') >= 0) fails.push('journal: BREAKOUT crudo </script><script> presente.');
+    // EL TECHO TÉCNICO (TODO-92): el cuerpo tiene que llegar DENTRO del <main>, no en un
+    // <noscript> que el renderizador de Google descarta. Se mide lo mismo que se verifica por
+    // `curl` contra producción: palabras de texto visible dentro del <main>, fuera de <noscript>.
+    {
+        const palabras = palabrasEnMain(jh);
+        if (palabras < 40) fails.push(`journal: solo ${palabras} palabras dentro del <main> fuera de <noscript> — el artículo no se horneó (era el fallo medido el 10-oct).`);
+        if (jh.indexOf('data-baked="selftest"') < 0) fails.push('journal: falta el sello data-baked — el cliente taparía el artículo con «Cargando…».');
+        if (jh.indexOf('Cargando') >= 0) fails.push('journal: el esqueleto de carga sobrevivió dentro del <main> (había que SUSTITUIR su interior, no añadir detrás).');
+        if (jh.indexOf('<h1 class="en-title">') < 0) fails.push('journal: falta el H1 del artículo en el HTML horneado.');
+        // Subtítulos: el motor compartido convierte `## ` en <h2> en los DOS renderizadores.
+        const conH2 = bakeJournalPage(FAKE_ENTRY_SHELL, { ...entryMock, body: 'Primero.\n\n## Un subtítulo\n\nSegundo.' }, [entryMock]);
+        if (conH2.indexOf('<h2 class="en-body-h2">Un subtítulo</h2>') < 0) fails.push('journal: `## ` no produjo un <h2> en el cuerpo horneado.');
+        if (conH2.indexOf('<p class="en-body-p">## ') >= 0) fails.push('journal: `## ` salió como párrafo literal.');
+    }
     if (jh.indexOf('<meta name="robots" content="index, follow">') < 0) fails.push('journal: robots index,follow no inyectado.');
     if (jh.indexOf('<link rel="canonical" href="https://bersagliojewelry.co/journal/selftest.html">') < 0) fails.push('journal: canonical del artículo ausente.');
     if (jh.indexOf('<base href="/">') < 0) fails.push('journal: <base href="/"> ausente (subdir /journal/).');
@@ -2152,6 +2321,18 @@ function runSelfTest() {
         if (jn < 2) fails.push(`journal: esperaba >=2 ld+json (Article+Breadcrumb), encontró ${jn}.`);
     }
     if (bakeJournalPage(FAKE_ENTRY_SHELL, entryMock) !== jh) fails.push('journal: no determinista (misma entrada → misma salida).');
+    // INVARIANTE DE LOS PUNTOS DE INYECCIÓN (2026-10-10): cada ancla aparece UNA sola vez en la
+    // página horneada. Si un reemplazo vuelve a hacerse con `.replace()` literal, un `$&` del
+    // panel —que va en el PAYLOAD— se expande al propio ancla y la DUPLICA dentro del texto. Es
+    // la señal que delata el fallo en cualquiera de los cuatro horneadores, no solo aquí.
+    // Se cuenta el PREFIJO de la etiqueta, no el ancla completa: el horneado del Journal le añade
+    // `data-baked` al <main>, y una aserción atada a la cadena exacta se rompería por el motivo
+    // equivocado (como pasó al escribirla) en vez de por el fallo que vigila.
+    for (const [nombre, pagina] of [['journal', jh], ['faceta', fh], ['pieza', html]]) {
+        if (typeof pagina !== 'string') { fails.push(`${nombre}: la página del autotest no es una cadena.`); continue; }
+        const veces = pagina.split('<main id="main-content"').length - 1;
+        if (veces !== 1) fails.push(`${nombre}: la etiqueta <main> aparece ${veces} veces (esperaba 1) — un $& del CMS se expandió al ancla.`);
+    }
     if (bakeIntegrityError('journal/selftest', jh)) fails.push('journal: bake-integrity de un artículo válido NO debería fallar.');
     // Puerta cero-ficción + anti path-traversal (espejo de isJournalComplete y journalValid).
     if (!isJournalBakeable(entryMock)) fails.push('isJournalBakeable: entrada completa+publicada debía ser horneable.');

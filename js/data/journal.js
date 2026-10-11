@@ -20,6 +20,7 @@
 
 import { data } from '../core/data.js';
 import { isoToDisplay, normalizeEntry } from './journal-normalize.js';
+import { entryHref as entryHrefPuro, relatedFrom } from './journal-render.js';
 import { isJournalComplete } from '../core/home-sections.js';   // completitud (SSoT cero-ficción)
 
 // Re-export de los puros (un solo punto de import para los consumers/tests).
@@ -31,8 +32,10 @@ export { isoToDisplay, normalizeEntry };
  * relacionadas. `entrada.html?e=<slug>` sigue funcionando (shell SPA) pero es noindex → NO se
  * enlaza (era un callejón sin salida para Google).
  */
+// El cuerpo vive en `journal-render.js` (puro, importable también desde el build). Aquí se
+// re-exporta para no tocar ni un callsite: lo importan el home, /journal y las relacionadas.
 export function entryHref(slug) {
-    return `/journal/${encodeURIComponent(String(slug || ''))}.html`;
+    return entryHrefPuro(slug);
 }
 
 // Masthead chrome (NO es contenido dinámico; identidad/branding evergreen, sin claims
@@ -105,15 +108,11 @@ export function getEntryBySlug(slug) {
     return entries().find(e => e.slug === slug) || null;
 }
 
-/** Hasta N entradas de la misma sección, excluyendo el slug dado. */
+/**
+ * Hasta N entradas de la misma sección, excluyendo el slug dado. La selección vive en
+ * `relatedFrom` (puro) para que el generador hornee EXACTAMENTE las mismas relacionadas que
+ * pinta el navegador: si difirieran, el repintado al hidratar se vería como un salto.
+ */
 export function getRelated(slug, n = 3) {
-    const all   = entries();
-    const entry = all.find(e => e.slug === slug);
-    if (!entry) return [];
-    let related = all.filter(e => e.section === entry.section && e.slug !== slug);
-    if (related.length < n) {
-        const fillers = all.filter(e => e.slug !== slug && !related.includes(e));
-        related = [...related, ...fillers];
-    }
-    return related.slice(0, n);
+    return relatedFrom(entries(), slug, n);
 }

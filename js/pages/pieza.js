@@ -640,13 +640,22 @@ function refresh() {
 
     const piece = data.getBySlug(_slug);
     if (piece) {
-        document.title = `${piece.name} · Bersaglio Jewelry`;
+        // EL TÍTULO HORNEADO NO SE PISA (2026-10-10, 32 URLs). El generador hornea
+        // «Anillo de Esmeralda · Ecos de Bóvedas · Bersaglio Jewelry Cartagena» —tipo de pieza,
+        // gema, marca y ciudad, que es como la gente busca— y estas dos líneas lo reescribían un
+        // instante después como «Ecos de Bóvedas · Bersaglio Jewelry», perdiendo «Anillo»,
+        // «Esmeralda» y «Cartagena». El nombre de una pieza de esta casa es poético por diseño, así
+        // que solo, sin el tipo ni la ciudad, no dice a Google de qué trata la página.
+        // En el shell SPA `/pieza.html?p=` no hay nada horneado y el JS sigue siendo el único que
+        // puede poner un título, así que ahí se mantiene el de siempre.
+        const horneada = typeof window !== 'undefined' && !!window.PRERENDERED_PIECE_SLUG;
+        if (!horneada) document.title = `${piece.name} · Bersaglio Jewelry`;
         const canonical = document.querySelector('link[rel="canonical"]');
         if (canonical) canonical.setAttribute('href', pieceAbsUrl(_slug));
         const ogUrl = document.querySelector('meta[property="og:url"]');
         if (ogUrl) ogUrl.setAttribute('content', pieceAbsUrl(_slug));
         const ogTitle = document.querySelector('meta[property="og:title"]');
-        if (ogTitle) ogTitle.setAttribute('content', `${piece.name} · Bersaglio Jewelry`);
+        if (ogTitle && !horneada) ogTitle.setAttribute('content', `${piece.name} · Bersaglio Jewelry`);
         const ogImg = document.querySelector('meta[property="og:image"]');
         if (ogImg && (piece.images?.[0] || piece.image)) {
             ogImg.setAttribute('content', piece.images?.[0] || piece.image);

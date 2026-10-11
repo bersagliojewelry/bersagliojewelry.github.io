@@ -25,6 +25,19 @@
         if (pm && pm[1]) {
             var code = encodeURIComponent(decodeURIComponent(pm[1]));
             location.replace(pm[2] ? ('/colecciones.html?q=' + code) : ('/p/' + code + '.html'));
+            return;
+        }
+        /* Rescate de FACETAS. Una faceta /coleccion/<slug> o /gema/<slug> solo se hornea con
+           FACET_MIN piezas pedibles o más (anti thin-content), así que deja de existir en cuanto
+           se venden las piezas que la sostenían — y el build corre por cron diario, de modo que
+           puede desaparecer SIN que nadie empuje código. Medido el 2026-10-10 sobre el catálogo
+           servido: `cadenas` tiene 2 piezas pedibles (una venta de margen) y `pulseras` 3. Sin
+           esta rama, el enlace que el pie y la portada publican en las 52 páginas se convierte en
+           un 404 ese mismo día. Con ella, cae en la vista filtrada, que siempre existe. */
+        var fm = location.pathname.match(/^\/(coleccion|gema)\/(.+?)\.html?$/i);
+        if (fm && fm[2]) {
+            var val = encodeURIComponent(decodeURIComponent(fm[2]));
+            location.replace('/colecciones.html?' + (fm[1].toLowerCase() === 'gema' ? 'gema=' : 'col=') + val);
         }
     })();
     </script>

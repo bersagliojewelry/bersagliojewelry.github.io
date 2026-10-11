@@ -82,6 +82,12 @@ const journalDescriptor = {
         if (v.slug) doc.slug = v.slug;                 // el id ya es el slug; se guarda por trazabilidad
         if (v.date) doc.date = v.date;                 // omitir vacío: '' no pasa el regex ISO de las reglas
         if (typeof v.order === 'number') doc.order = v.order;  // omitir null: '' no pasa `order is number`
+        // Idioma: se omite cuando está vacío o es 'es' (el valor por defecto), para no escribir un
+        // campo que no dice nada; las reglas solo aceptan 'es' o 'en'. Añadir el campo al
+        // formulario NO basta —`toDoc` es quien decide qué viaja al documento— y se vio al
+        // guardar la primera guía en inglés: el selector decía «Inglés» y el documento llegó sin
+        // idioma, así que la página se habría horneado declarándose en español.
+        if (v.lang === 'en' || v.lang === 'es') doc.lang = v.lang;
         return doc;
     },
 };

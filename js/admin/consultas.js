@@ -22,29 +22,7 @@ let _isAdmin = false;
 
 async function init() {
     await requireAuth('editor');
-    await adminDb./** Pinta la lista de suscritos al correo. */
-function renderSubs(list) {
-    const tbody = document.getElementById('subs-tbody');
-    const vacio = document.getElementById('subs-empty');
-    const cuenta = document.getElementById('subs-count');
-    if (!tbody) return;
-    const filas = Array.isArray(list) ? list : [];
-    if (cuenta) cuenta.textContent = filas.length ? String(filas.length) : '';
-    if (vacio) vacio.hidden = filas.length > 0;
-    tbody.innerHTML = filas.map(x => {
-        const autorizo = x.habeasData && x.habeasData.aceptado === true;
-        return `<tr>
-            <td>${esc(fmtDate(x.createdAt))}</td>
-            <td><a href="mailto:${esc(x.email || '')}">${esc(x.email || '')}</a></td>
-            <td>${esc(x.source || '—')}</td>
-            <td>${autorizo
-                ? `Sí · ${esc(fmtDate(x.habeasData.fecha))}`
-                : '<span style="color:var(--adm-danger,#c00)">sin registro</span>'}</td>
-        </tr>`;
-    }).join('');
-}
-
-init();
+    await adminDb.init();
     initSidebar();
     _isAdmin = hasRole('admin');
 
@@ -327,6 +305,28 @@ function wireNuevoLead() {
             btn.disabled = false;
         }
     });
+}
+
+/** Pinta la lista de suscritos al correo. */
+function renderSubs(list) {
+    const tbody = document.getElementById('subs-tbody');
+    const vacio = document.getElementById('subs-empty');
+    const cuenta = document.getElementById('subs-count');
+    if (!tbody) return;
+    const filas = Array.isArray(list) ? list : [];
+    if (cuenta) cuenta.textContent = filas.length ? String(filas.length) : '';
+    if (vacio) vacio.hidden = filas.length > 0;
+    tbody.innerHTML = filas.map(x => {
+        const autorizo = x.habeasData && x.habeasData.aceptado === true;
+        return `<tr>
+            <td>${esc(fmtDate(x.createdAt))}</td>
+            <td><a href="mailto:${esc(x.email || '')}">${esc(x.email || '')}</a></td>
+            <td>${esc(x.source || '—')}</td>
+            <td>${autorizo
+                ? `Sí · ${esc(fmtDate(x.habeasData.fecha))}`
+                : '<span style="color:var(--adm-danger,#c00)">sin registro</span>'}</td>
+        </tr>`;
+    }).join('');
 }
 
 init();

@@ -19,6 +19,7 @@ import {
     fetchInquiries, saveInquiry as fsSaveInquiry,
     deleteInquiry as fsDeleteInquiry, updateInquiry as fsUpdateInquiry,
     onInquiriesChange,
+    onSubscriptionsChange,
     deleteCollection as fsDeleteCollection,
 } from '../firestore-service.js';
 import { esPendiente, leadStatus, LEAD_LABEL, origenLabel } from './lead-format.js';
@@ -27,6 +28,7 @@ const CACHE = {
     pieces:      'bj_cache_pieces',
     collections: 'bj_cache_collections',
     inquiries:   'bj_cache_inquiries',
+    subs:        'bj_cache_subs',
 };
 
 class AdminDatabase {
@@ -35,7 +37,8 @@ class AdminDatabase {
         this._pieces      = [];
         this._collections = [];
         this._inquiries   = [];
-        this._listeners   = { pieces: [], collections: [], inquiries: [], stats: [] };
+        this._subs        = [];
+        this._listeners   = { pieces: [], collections: [], inquiries: [], subs: [], stats: [] };
         this._unsubs      = [];
         this._ready        = false;
     }
@@ -47,6 +50,7 @@ class AdminDatabase {
         this._pieces      = this._cacheGet(CACHE.pieces) || [];
         this._collections = this._cacheGet(CACHE.collections) || [];
         this._inquiries   = this._cacheGet(CACHE.inquiries) || [];
+        this._subs        = this._cacheGet(CACHE.subs) || [];
 
         // Fetch fresh data from Firestore
         try {
@@ -92,6 +96,13 @@ class AdminDatabase {
                 this._cacheSet(CACHE.inquiries, inquiries);
                 this._emit('inquiries', inquiries);
                 this._emit('stats', this.getStats());
+            }),
+            // Suscriptores del newsletter: hasta el 2026-10-11 el correo ni siquiera llegaba a
+            // Firestore. Ahora llega — y tiene que poder VERSE, o seguiría siendo un lead perdido.
+            onSubscriptionsChange(subs => {
+                this._subs = subs;
+                this._cacheSet(CACHE.subs, subs);
+                this._emit('subs', subs);
             }),
         );
     }
@@ -286,6 +297,11 @@ class AdminDatabase {
         return this._inquiries;
     }
 
+    /** Suscriptores del newsletter, del más reciente al más viejo. */
+    getSubscriptions() {
+        return this._subs;
+    }
+
     async addInquiry(data) {
         // `saveInquiry` (firestore-service) fija status:'nuevo' y serverTimestamp.
         await fsSaveInquiry(data);
@@ -331,6 +347,23 @@ class AdminDatabase {
             Cliente:  i.convertedTo || '',
         }));
         AdminDatabase.downloadCSV(rows, 'leads-bersaglio.csv');
+    }
+
+    /** Suscriptores a Excel, con la fecha de su autorización: es la prueba que pide la ley. */
+    exportSubscriptionsCSV() {
+        const fecha = (c) => {
+            const d = c?.toDate ? c.toDate() : (c?.seconds ? new Date(c.seconds * 1000) : new Date(c));
+            return isNaN(d) ? '' : d.toLocaleDateString('es-CO');
+        };
+        const rows = this._subs.map(x => ({
+            Fecha:  fecha(x.createdAt),
+            Email:  x.email || '',
+            Origen: x.source || '',
+            'Autorizo': x.habeasData?.aceptado ? 'Si' : 'No',
+            'FechaAutorizacion': fecha(x.habeasData?.fecha),
+            'VersionPolitica': x.habeasData?.version || '',
+        }));
+        AdminDatabase.downloadCSV(rows, 'suscritos-bersaglio.csv');
     }
 
     exportPiecesCSV() {

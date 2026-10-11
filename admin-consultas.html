@@ -74,6 +74,37 @@
                 <p>No hay interesados con ese filtro.</p>
             </div>
 
+            <!-- SUSCRITOS AL CORREO. Hasta el 11-oct-2026 el correo que alguien dejaba en la web
+                 moría en su propio navegador: no llegaba a ninguna parte y aun así la web le decía
+                 «te escribiremos». Ahora llega, y aquí es donde se ve: un correo que llega pero
+                 nadie puede leer seguiría siendo un cliente perdido. -->
+            <section style="margin-top:36px;">
+                <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+                    <h2 style="font-size:16px;margin:0;">Suscritos al correo <span id="subs-count" class="adm-badge"></span></h2>
+                    <button class="adm-btn adm-btn--ghost" id="btn-export-subs">↓ Exportar a Excel</button>
+                </div>
+                <p style="font-size:12.5px;color:var(--adm-muted,#888);margin:0 0 12px;max-width:62ch;">
+                    Personas que dejaron su correo en la web y autorizaron que les escribas.
+                    La autorización queda guardada con su fecha: es la prueba que pide la ley.
+                </p>
+                <div class="adm-table-wrap">
+                    <table class="adm-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Correo</th>
+                                <th>Desde dónde</th>
+                                <th>Autorización</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subs-tbody"></tbody>
+                    </table>
+                </div>
+                <div id="subs-empty" class="adm-empty" hidden>
+                    <p>Todavía no hay nadie suscrito.</p>
+                </div>
+            </section>
+
         </div>
     </main>
 </div>

@@ -22,13 +22,44 @@ let _isAdmin = false;
 
 async function init() {
     await requireAuth('editor');
-    await adminDb.init();
+    await adminDb./** Pinta la lista de suscritos al correo. */
+function renderSubs(list) {
+    const tbody = document.getElementById('subs-tbody');
+    const vacio = document.getElementById('subs-empty');
+    const cuenta = document.getElementById('subs-count');
+    if (!tbody) return;
+    const filas = Array.isArray(list) ? list : [];
+    if (cuenta) cuenta.textContent = filas.length ? String(filas.length) : '';
+    if (vacio) vacio.hidden = filas.length > 0;
+    tbody.innerHTML = filas.map(x => {
+        const autorizo = x.habeasData && x.habeasData.aceptado === true;
+        return `<tr>
+            <td>${esc(fmtDate(x.createdAt))}</td>
+            <td><a href="mailto:${esc(x.email || '')}">${esc(x.email || '')}</a></td>
+            <td>${esc(x.source || '—')}</td>
+            <td>${autorizo
+                ? `Sí · ${esc(fmtDate(x.habeasData.fecha))}`
+                : '<span style="color:var(--adm-danger,#c00)">sin registro</span>'}</td>
+        </tr>`;
+    }).join('');
+}
+
+init();
     initSidebar();
     _isAdmin = hasRole('admin');
 
     _all = adminDb.getInquiries();
     render();
     adminDb.on('inquiries', list => { _all = list; render(); });
+
+    // Suscritos al correo: misma página porque son el mismo tipo de lead y los ve la misma
+    // persona. Lo que llega sin poder verse no ha llegado.
+    renderSubs(adminDb.getSubscriptions());
+    adminDb.on('subs', renderSubs);
+    document.getElementById('btn-export-subs')?.addEventListener('click', () => {
+        adminDb.exportSubscriptionsCSV();
+        admToast('Descargando la lista de suscritos…');
+    });
 
     wireFilters();
     wireSearch();

@@ -639,6 +639,22 @@ export async function fetchInquiries() {
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
+/** Suscriptores del newsletter, en vivo, para la Bandeja (mismo patrón que los leads). */
+export function onSubscriptionsChange(callback) {
+    const makeRef = () => query(
+        collection(firestoreDb, COLLECTIONS.subscriptions),
+        orderBy('createdAt', 'desc'),
+        limit(500),
+    );
+    return subscribeWithRetry(makeRef, snap => {
+        if (snap.size >= 500) {
+            console.warn('[Firestore] subscriptions truncado en 500: la lista muestra los 500 más recientes.');
+            try { document.dispatchEvent(new CustomEvent('bj:truncado', { detail: { origen: 'Suscritos', limite: 500 } })); } catch { /* sin DOM */ }
+        }
+        callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, 'subscriptions');
+}
+
 /**
  * Subscribe to real-time inquiries updates
  */

@@ -918,7 +918,10 @@ service cloud.firestore {
     // ─── Subscriptions (newsletter) ────────────────────────────────────────────
 
     match /subscriptions/{subId} {
-      allow read: if isAdmin();                // Admin only
+      // Lectura para EDITOR+, igual que `inquiries`: son el mismo tipo de dato (un lead con su
+      // correo) y los ve la misma persona. Con `isAdmin` el panel de leads no podía mostrarlos,
+      // y un correo que llega pero nadie puede leer sigue siendo un cliente perdido.
+      allow read: if isEditor();
       allow create: if subscriptionCreateValida(); // F6: email válido + forma exacta
       allow update, delete: if isAdmin();      // Admin manages
     }

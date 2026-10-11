@@ -20,7 +20,7 @@ export const CONTACTO_DEFAULTS = {
         title2:     'nos escribes',
         step1Title: 'Lectura Personal',   step1Desc: 'Tu mensaje es leído directamente por Kary Mendoza y su equipo. Prescindimos de respuestas automáticas o chatbots; valoramos el contacto humano desde el primer segundo.', step1Time: 'En el día',
         step2Title: 'Primer Diálogo',     step2Desc: 'Nos pondremos en contacto para entender mejor el contexto de tu joya: la historia detrás del encargo, el tipo de gema preferida y las expectativas de entrega.', step2Time: '< 24 horas',
-        step3Title: 'Encuentro Pausado',  step3Desc: 'Agendamos una llamada de voz, chat directo o un café en nuestra Maison en el centro histórico de Cartagena. Una conversación íntima, sin presiones comerciales de ningún tipo.', step3Time: 'A tu ritmo',
+        step3Title: 'Encuentro Pausado',  step3Desc: 'Agendamos una llamada de voz, un chat directo o un encuentro en nuestra Maison del Centro Histórico de Cartagena. Una conversación con calma, sin presiones de ningún tipo.', step3Time: 'A tu ritmo',
         step4Title: 'Manos a la Obra',    step4Desc: 'Si decides que Bersaglio sea el custodio de tu legado, tu idea pasa al taller, y te contamos cómo avanza la pieza antes de darla por terminada.', step4Time: 'A medida',
     },
     faq: {

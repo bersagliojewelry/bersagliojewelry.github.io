@@ -58,10 +58,26 @@ test('el guardia de hechos del BUILD existe y dice qué descarta', () => {
     assert.match(GEN, /FAQ NO horneada/, 'un recorte en silencio sería peor que no recortar');
 });
 
-test('el guardia caza el café y la cita previa, que seguían vivos en el panel', () => {
+test('el guardia caza lo que la tabla de hechos marca NO VERIFICADO o FALSO', () => {
     const bloque = GEN.slice(GEN.indexOf('const HECHOS_RETIRADOS'), GEN.indexOf('/** Devuelve los hechos retirados'));
-    assert.match(bloque, /caf\[e/i, 'el café de bienvenida está retirado y debe estar vigilado');
-    assert.match(bloque, /cita\\s\+previa/i, 'la cita previa está retirada y debe estar vigilada');
+    assert.match(bloque, /caf\[e/i, 'el café nace del prototipo de IA: NO VERIFICADO');
+    assert.match(bloque, /compromiso\\s\+de\\s\+compra/i, '«sin compromiso de compra»: NO VERIFICADO');
+    assert.match(bloque, /no\\s\+revendemos/i, '«fabricamos, no revendemos»: DUDOSO, sin confirmación pieza a pieza');
+    assert.match(bloque, /\\btaller\\b/i, 'el taller visitable: NO VERIFICADO');
+});
+
+test('el guardia vigila el REQUISITO de la cita, no la palabra «cita previa»', () => {
+    // Matiz que casi cuesta una FAQ buena: agendar la visita está VERIFICADO «como opción»; lo
+    // FALSO es «atendemos con cita previa» / «solo con cita», porque la cita NO es obligatoria.
+    // La primera versión prohibía la frase entera y habría tumbado la pregunta de Contacto que
+    // dice justo lo correcto — y que la tabla de hechos cita como prueba de que se puede agendar.
+    const gen = GEN;
+    const i = gen.indexOf('const HECHOS_RETIRADOS');
+    const bloque = gen.slice(i, gen.indexOf('/** Devuelve los hechos retirados'));
+    assert.doesNotMatch(bloque, /\[\/cita\\s\+previa\/i/, '«cita previa» a secas no puede estar prohibido');
+    assert.match(bloque, /atendemos\|solo/, 'debe vigilar el requisito: «atendemos…» / «solo con cita»');
+    const contacto = readFileSync(join(ROOT, 'js/pages/contacto-defaults.js'), 'utf8');
+    assert.match(contacto, /No es obligatoria/, 'la FAQ que enmarca bien la cita debe seguir viva');
 });
 
 test('el guardia NO caza una mención divulgativa a un laboratorio', () => {

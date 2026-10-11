@@ -391,8 +391,19 @@ function injectBusinessIntoIndex(cfg) {
  * Se queda deliberadamente en los hechos que el dueño ya declaró falsos, no en opinión de estilo.
  */
 const HECHOS_RETIRADOS = [
-    [/\bcaf[eé]\b/i, 'no se ofrece café de bienvenida (hecho retirado por el dueño)'],
-    [/cita\s+previa/i, 'la cita previa se retiró del sitio en §207: no se exige ni se sugiere'],
+    [/\bcaf[eé]\b/i, 'el café está NO VERIFICADO en la tabla de hechos: nace del prototipo de IA'],
+    // OJO con esta: agendar la visita SÍ está VERIFICADO «como opción». Lo FALSO es presentarla
+    // como requisito. La primera versión prohibía «cita previa» a secas y habría tumbado la FAQ
+    // de Contacto que dice exactamente lo correcto —«no es obligatoria: puedes acercarte
+    // directamente»—, que es además la fuente que la tabla de hechos cita como prueba de que se
+    // puede agendar. Se vigila el REQUISITO, no la palabra.
+    [/(atendemos|solo|únicamente|unicamente|exclusivamente)\s+(con\s+)?cita(\s+previa)?/i,
+        'la cita NO es obligatoria: «atendemos con cita previa» o «solo con cita» son FALSOS'],
+    [/sin\s+(ning[úu]n\s+)?compromiso\s+de\s+compra/i,
+        '«sin compromiso de compra» está NO VERIFICADO (nace del prototipo de IA)'],
+    [/no\s+revendemos|fabricamos\s*[—,-]\s*no/i,
+        '«fabricamos, no revendemos» está DUDOSO: sin confirmación pieza a pieza'],
+    [/filigrana de Mompox|momposina/i, 'marca colectiva de terceros, y el orfebre era inventado'],
     [/(visit\w*|conoc\w*|\bven\b|vengan|ac[eé]rcate|pas[ae] por|descubr\w*)[^.!?]{0,200}\btaller\b/i,
         'el taller NO se visita (confirmado por el dueño)'],
     [/boceto a mano alzada/i, 'nadie dibuja un boceto a mano alzada'],

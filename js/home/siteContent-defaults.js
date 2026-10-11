@@ -44,14 +44,17 @@ export function aniosDeOficio(hoy = new Date()) {
  */
 export function cifrasDeLaCasa(hoy = new Date()) {
     return [
-        // Fuente: 1983, confirmado por el dueño y publicado en el Perfil de Empresa de Google.
+        // Fuente: 1983, confirmado por el dueño el 2026-10-10 («desde 1983 corrígelo en todo») y
+        // publicado en el Perfil de Empresa de Google. Lo vigila `tests/hechos-publicados.test.mjs`.
         { num: String(aniosDeOficio(hoy)), lab: 'Años de oficio' },
-        // Fuente: tenant_config.json («oro 18K») y el campo `metal` de las piezas del catálogo.
-        { num: '18K', lab: 'Oro de ley' },
-        // Fuente: cada gema sale con su certificado, del laboratorio que le corresponde. Es lo que
-        // el negocio sí puede mostrar pieza por pieza — y por eso no se nombra ningún laboratorio
-        // en general (§212.8): el laboratorio vive en la ficha, que es donde es cierto.
-        { num: 'Piezas', lab: 'Certificadas' },
+        // Fuente: «Cada gema tiene su propio certificado (de laboratorios distintos)» — VERIFICADO
+        // por el dueño el 23-sep en la tabla de hechos de `voz-pauta-bersaglio §4-bis`. Se nombra
+        // el DOCUMENTO, nunca el laboratorio (§212.8): el laboratorio vive en la ficha de la pieza.
+        { num: 'Por pieza', lab: 'Certificado de la gema' },
+        // Fuente: «Garantía de por vida por defectos de fabricación» — VERIFICADO en la misma
+        // tabla, con respaldo en `42-LEGAL` y en los Términos §05. Va SIEMPRE con su alcance: sin
+        // «vitalicia sin límites» y sin «de por vida» a secas.
+        { num: 'De por vida', lab: 'Garantía de fabricación' },
     ];
 }
 

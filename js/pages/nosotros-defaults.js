@@ -105,7 +105,10 @@ export const NOSOTROS_DEFAULTS = {
         p2:          'Kary y su equipo te acompañan sin prisa en cada paso, desde la primera conversación hasta que la joya llega a tus manos.',
         ubicacionL1: 'Calle 36 # 6-32 · San Agustín Chiquita',
         ubicacionL2: 'Centro Histórico · Cartagena de Indias',
-        visitasL1:   'Con o sin cita previa',
+        // «Atendemos con cita previa» es FALSO (la cita no es obligatoria) y «taller visitable»
+        // está NO VERIFICADO: la tabla de hechos manda usar «nuestra casa». Esto decía «Con o sin
+        // cita previa», que insinúa el requisito justo al nombrarlo.
+        visitasL1:   'Puertas abiertas, sin cita',
         // 9:30 a 19:00 los SIETE días, festivos y domingos incluidos (dato del dueño, 2026-10-10;
         // es lo que dicen el Perfil de Empresa, el JSON-LD y Contacto). Este default decía
         // «8:00 a.m. – 7:00 p.m.», o sea que si el documento del panel faltase, la web habría
@@ -156,7 +159,10 @@ export const NOSOTROS_DEFAULTS = {
             { q: '¿Trabajan con piedras del cliente?',     a: 'Sí. Recibimos tus gemas heredadas y creamos contigo una pieza nueva con ellas.' },
             { q: '¿Hacen envíos internacionales?',         a: 'Sí, caso por caso. Cotizamos el envío internacional por WhatsApp y confirmamos contigo los costos totales antes de despachar; elegimos el transportador según el destino y te compartimos la guía de seguimiento. El flete, los aranceles e impuestos del país de destino corren por cuenta del comprador.' },
             { q: '¿Aceptan financiación?',                 a: 'Puedes pagar con Wompi o por transferencia. Si usas tarjeta de crédito, las cuotas y sus intereses dependen de tu entidad bancaria. Para piezas a la medida o de mayor valor, coordinamos el pago contigo por WhatsApp.' },
-            { q: '¿Puedo visitar el atelier sin comprar?', a: 'Por supuesto. Puedes venir con o sin cita previa; si la agendas, apartamos ese tiempo para ti y te mostramos las piezas de cerca.' },
+            // Dice «nuestra casa», no «el atelier»: el taller visitable está NO VERIFICADO. Y la
+            // visita se ofrece sin pedirla como requisito; «sin compromiso de compra» se cae
+            // porque está NO VERIFICADO y además ablanda el filtro (tabla de hechos §4-bis).
+            { q: '¿Puedo pasar a ver las piezas sin comprar?', a: 'Claro que sí. Nuestra casa del Centro Histórico abre todos los días de 9:30 a 7:00 y puedes entrar sin avisar; si prefieres que te esperemos con calma, agendamos tu visita y te mostramos las piezas con el tiempo que esa elección pide.' },
             { q: '¿Qué garantía tienen las piezas?',       a: 'Además de la garantía legal, tienen garantía comercial de por vida por defectos de fabricación, mientras el atelier esté en operación: si una piedra se afloja o una soldadura cede por una falla de fabricación, la reparamos sin costo.' },
         ],
     },
@@ -195,14 +201,16 @@ export function cifrasDeNosotros(hoy = new Date()) {
         // 1983 lo confirmó el dueño y está publicado en el Perfil de Empresa de Google. Se CALCULA
         // para que no haya que acordarse de subirlo cada 1 de enero.
         { n: String(aniosDeOficio(hoy)), l: 'años de oficio', s: 'desde 1983' },
-        // tenant_config.json y el campo `metal` de las 32 piezas del catálogo.
-        { n: '18K', l: 'oro de ley', s: 'en cada pieza' },
-        // Palabras del propio negocio en `atelier.p1`: «fabricamos —no revendemos— cada pieza».
-        // Es, además, lo que lo separa de las joyerías del barrio que revenden.
-        { n: 'Propio', l: 'taller', s: 'fabricamos, no revendemos' },
         // Se nombra el DOCUMENTO, nunca el laboratorio (§212.8): el laboratorio depende de la gema
-        // y vive en la ficha de la pieza, que es donde es cierto.
+        // y vive en la ficha de la pieza, que es donde es cierto. VERIFICADO por el dueño el
+        // 23-sep en la tabla de hechos de `voz-pauta-bersaglio §4-bis`.
         { n: 'Por pieza', l: 'certificado de la gema', s: 'con su número de reporte' },
+        // VERIFICADO en la misma tabla, con respaldo en `42-LEGAL` y en los Términos §05. Se dice
+        // SIEMPRE con su alcance: es por defectos de fabricación, no una garantía sin límites.
+        { n: 'De por vida', l: 'garantía', s: 'por defectos de fabricación' },
+        // VERIFICADO en la misma tabla (§157.11). Y nunca «envíos asegurados», que es FALSO: no
+        // se contrata seguro.
+        { n: 'A todo el país', l: 'envíos', s: 'con su guía de seguimiento' },
     ];
 }
 

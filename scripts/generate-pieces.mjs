@@ -31,6 +31,7 @@ import { HOME_DEFAULTS, cifrasDeLaCasa } from '../js/home/siteContent-defaults.j
 import { facetHref } from '../js/core/urls.js';   // UNA regla para el enlace a faceta (build y navegador)
 import { footerHTML } from '../js/components/footer-markup.js';   // el pie, horneado (no solo por JS)
 import { mergeGlobal } from '../js/core/global-defaults.js';
+import { mergeNosotros } from '../js/pages/nosotros-defaults.js';   // las preguntas frecuentes REALES para el FAQPage
 // Motor de render del artículo del Journal: el MISMO módulo que usa el navegador
 // (js/pages/entrada.js). Un solo motor → lo horneado y lo hidratado son el mismo HTML.
 import { renderArticle, relatedFrom, entryTitleTag } from '../js/data/journal-render.js';
@@ -338,6 +339,182 @@ function injectBusinessIntoIndex(cfg) {
     }
     writeFileSync(indexPath, html);
     console.log('[generate] JSON-LD de marca (JewelryStore + WebSite) horneado en dist/index.html.');
+}
+
+/**
+ * JSON-LD de CONTACTO y NOSOTROS. Medido el 2026-10-10: las dos servían CERO structured data.
+ *
+ * Y una premisa del encargo cayó al medirla, así que conviene dejarla escrita: se daba por hecho
+ * que las dos «llegan a Google en blanco». El HTML CRUDO sí llega casi vacío, pero el renderizador
+ * ejecuta JavaScript y el de estas dos páginas NO espera a la red —pinta con los defaults del
+ * repositorio y luego re-pinta si el panel trae algo—, así que al renderizarlas aparecen 447
+ * palabras en Contacto y 1.062 en Nosotros (comprobado en el navegador, en producción). El techo
+ * del Journal era otra cosa: allí el primer pintado dependía de Firestore.
+ *
+ * Lo que de verdad faltaba, y es lo que se arregla aquí, es el structured data:
+ *   - Contacto es la página que debería declarar el negocio local —dónde está, a qué hora abre, a
+ *     qué teléfono se llama— y es la que abre un turista para saber si puede ir hoy. El nodo del
+ *     negocio se repite con el MISMO `@id` que la portada: mismo identificador = misma entidad, no
+ *     dos negocios. Referenciar un `@id` definido en OTRA página no es fiable.
+ *   - Nosotros lleva las preguntas frecuentes reales. Las respuestas del propio negocio son lo que
+ *     leen los motores que responden con IA, a los que `robots.txt` invita expresamente. (Sin
+ *     prometer resultados enriquecidos: Google los restringió en 2023 a sitios oficiales.)
+ *
+ * Los datos salen de `tenant_config.json` (el NAP es la fuente única de la casa) y del contenido
+ * real de la página. Cero texto nuevo: nada que no esté ya publicado.
+ */
+/**
+ * GUARDIA DE HECHOS EN EL BUILD — el agujero que `tests/hechos-publicados.test.mjs` declara no
+ * poder tapar.
+ *
+ * Ese gate vigila el CÓDIGO y lo dice en voz alta: «NO ve el contenido del CMS». Y el CMS es
+ * justo donde han sobrevivido las afirmaciones retiradas: en septiembre un commit dijo quitar
+ * cuatro sellos de certificación falsos y no los quitó, porque vivían en el panel, y siguieron
+ * publicados un mes. El 2026-10-10 volvió a pasar: al leer una por una las seis preguntas
+ * frecuentes que este generador estaba a punto de convertir en structured data, dos traían
+ * hechos que el dueño ya había retirado —el café de bienvenida y la cita previa—.
+ *
+ * Esto no puede arreglar el panel; sí puede NEGARSE A AMPLIFICAR. Un dato en JSON-LD es una
+ * afirmación más fuerte que un párrafo: se la lleva Google y se la llevan los motores que
+ * responden con IA. Así que lo que trae un hecho retirado no se hornea, y el build lo GRITA con
+ * el fragmento exacto para que se pueda corregir en el panel.
+ *
+ * Se queda deliberadamente en los hechos que el dueño ya declaró falsos, no en opinión de estilo.
+ */
+const HECHOS_RETIRADOS = [
+    [/\bcaf[eé]\b/i, 'no se ofrece café de bienvenida (hecho retirado por el dueño)'],
+    [/cita\s+previa/i, 'la cita previa se retiró del sitio en §207: no se exige ni se sugiere'],
+    [/(visit\w*|conoc\w*|\bven\b|vengan|ac[eé]rcate|pas[ae] por|descubr\w*)[^.!?]{0,200}\btaller\b/i,
+        'el taller NO se visita (confirmado por el dueño)'],
+    [/boceto a mano alzada/i, 'nadie dibuja un boceto a mano alzada'],
+    [/diamantes?\s+certificad[oa]s?/i, 'el certificado acredita la esmeralda, no el diamante'],
+    [/env[ií]os?\s+asegurad[oa]s?/i, 'no se contrata seguro de envío'],
+    [/\b(Muzo Origin|Responsible Jewellery Council|Jewelers of America)\b/i,
+        'sellos que el negocio no tiene'],
+    // Nombrar un laboratorio NO es el problema; atribuirle la certificación de nuestras piezas sí.
+    // Mismos patrones que `tests/hechos-publicados.test.mjs` («ningún laboratorio se generaliza»):
+    // un cuantificador —«cada pieza», «todas las joyas»— o un posesivo —«nuestras esmeraldas»—
+    // cerca del nombre de un laboratorio. La primera versión de esta regla cazaba cualquier «GIA»
+    // y marcó en falso el artículo que explica, con razón y sin afirmar nada de la casa, que «para
+    // los diamantes el referente mundial es el GIA». Un guardia que grita de más enseña a
+    // ignorarlo, que es exactamente lo que no queremos de un guardia de hechos.
+    [new RegExp('(cada (pieza|joya|gema)|todas las (piezas|joyas|gemas)|every (piece|jewel)|all (our )?(pieces|jewels))'
+        + '[^.!?]{0,120}(Instituto Gemol[oó]gico de Santander|TrueLab|Truelab|\\bGIA\\b|CDTEC)', 'i'),
+        'un laboratorio concreto puesto como si certificara TODAS las piezas'],
+    [new RegExp('(nuestr[oa]s?\\s+(esmeraldas?|gemas?|piedras?|joyas?|diamantes?)|our\\s+(emeralds?|gems?|stones?|jewels?))'
+        + '[^.!?]{0,80}(Instituto Gemol[oó]gico de Santander|TrueLab|Truelab|\\bGIA\\b|CDTEC)', 'i'),
+        'un laboratorio atado a nuestras gemas: ni por gema vale, el laboratorio vive en la ficha'],
+    // Igual con el gemólogo: el artículo puede explicar qué hace un gemólogo; lo prohibido es
+    // decir que hay uno EN EL EQUIPO.
+    [/(nuestr[oa]|el|la|un|una)\s+gem[oó]log[oa]\s+(de la casa|del (equipo|taller|atelier)|propi[oa])/i,
+        'no hay gemólogo en el equipo'],
+];
+
+/** Devuelve los hechos retirados que aparecen en un texto del panel. [] si está limpio. */
+function hechosRetiradosEn(texto) {
+    const t = String(texto || '');
+    const hallados = [];
+    for (const [re, porque] of HECHOS_RETIRADOS) {
+        const m = t.match(re);
+        if (m) hallados.push({ fragmento: m[0], porque });
+    }
+    return hallados;
+}
+
+function buildContactoGraph(cfg) {
+    const url = `${SITE_URL}/contacto.html`;
+    const { '@graph': [negocio] } = buildBusinessGraph(cfg);
+    return {
+        '@context': 'https://schema.org',
+        '@graph': [
+            negocio,
+            {
+                '@type': 'ContactPage',
+                '@id': `${url}#page`,
+                url,
+                name: `Contacto · ${BRAND} Cartagena`,
+                inLanguage: 'es-CO',
+                isPartOf: { '@id': WEBSITE_ID },
+                about: { '@id': BUSINESS_ID },
+                mainEntity: { '@id': BUSINESS_ID },
+            },
+            {
+                '@type': 'BreadcrumbList',
+                itemListElement: [
+                    { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE_URL}/` },
+                    { '@type': 'ListItem', position: 2, name: 'Contacto', item: url },
+                ],
+            },
+        ],
+    };
+}
+
+function buildNosotrosGraph(cfg, faqs) {
+    const url = `${SITE_URL}/nosotros.html`;
+    const descartadas = [];
+    const preguntas = (Array.isArray(faqs) ? faqs : [])
+        .map(f => ({ q: String((f && f.q) || '').trim(), a: String((f && f.a) || '').trim() }))
+        .filter(f => f.q && f.a)
+        .filter((f) => {
+            const malos = hechosRetiradosEn(`${f.q} ${f.a}`);
+            if (malos.length) { descartadas.push({ q: f.q, malos }); return false; }
+            return true;
+        });
+    // Nada de recortes en silencio: si una pregunta se queda fuera, el build dice cuál y por qué.
+    for (const d of descartadas) {
+        console.warn(`[generate] ⚠️  FAQ NO horneada — "${d.q}"`);
+        for (const m of d.malos) console.warn(`             · "${m.fragmento}" → ${m.porque}`);
+        console.warn('             Corregir el texto EN EL PANEL (Contenido web → Nosotros → Preguntas).');
+    }
+    const grafo = [
+        {
+            '@type': 'AboutPage',
+            '@id': `${url}#page`,
+            url,
+            name: `Nosotros · ${BRAND} Cartagena`,
+            inLanguage: 'es-CO',
+            isPartOf: { '@id': WEBSITE_ID },
+            about: { '@id': BUSINESS_ID },
+        },
+        {
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+                { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE_URL}/` },
+                { '@type': 'ListItem', position: 2, name: 'Nosotros', item: url },
+            ],
+        },
+    ];
+    // cero-ficción: sin preguntas reales no se emite un FAQPage vacío.
+    if (preguntas.length) {
+        grafo.push({
+            '@type': 'FAQPage',
+            '@id': `${url}#faq`,
+            inLanguage: 'es-CO',
+            mainEntity: preguntas.map(f => ({
+                '@type': 'Question',
+                name: f.q,
+                acceptedAnswer: { '@type': 'Answer', text: f.a },
+            })),
+        });
+    }
+    grafo.push(buildBusinessGraph(cfg)['@graph'][0]);
+    return { '@context': 'https://schema.org', '@graph': grafo };
+}
+
+/** Hornea un @graph en el <head> de una página de dist/. Idempotente por id. */
+function injectGraphIntoPage(archivo, id, graph) {
+    const ruta = join(DIST, archivo);
+    if (!existsSync(ruta)) { console.warn(`[generate] ${archivo} no existe — JSON-LD omitido.`); return false; }
+    const html = readFileSync(ruta, 'utf-8');
+    if (!html.includes('</head>')) throw new Error(`[generate] ${archivo} sin </head> (ancla de inyección).`);
+    if (html.includes(`id="${id}"`)) return false;   // idempotente
+    const out = replaceOnce(html, '</head>',
+        `    <script type="application/ld+json" id="${id}">${safeJsonLd(graph)}</script>\n</head>`);
+    if (out.length < MIN_BAKE_BYTES || !out.includes('</html>')) {
+        throw new Error(`[generate] ${archivo} quedó inválido tras inyectar el JSON-LD.`);
+    }
+    writeFileSync(ruta, out);
+    return true;
 }
 
 // ===================== siteContent HORNEADO (anti-flash del CMS · §163) =====================
@@ -1327,6 +1504,15 @@ function bakeJournalPage(shell, e, todas = []) {
     const relacionadas = relatedFrom((todas || []).map(normalizeEntry), vista.slug, 3);
     const articulo = renderArticle(vista, relacionadas);
 
+    // Guardia de hechos sobre el texto del PANEL (ver `hechosRetiradosEn`). Aquí AVISA y no
+    // descarta: dejar el artículo sin cuerpo sería peor que publicarlo, y el cuerpo solo lo puede
+    // arreglar quien escribe en el panel. El aviso lleva el fragmento exacto para que no se pueda
+    // pasar por alto en el log del build.
+    const malos = hechosRetiradosEn(`${vista.title} ${vista.excerpt} ${vista.body}`);
+    for (const m of malos) {
+        console.warn(`[generate] ⚠️  "${slug}": el artículo dice "${m.fragmento}" → ${m.porque}. Corregir EN EL PANEL.`);
+    }
+
     // `data-baked` es el sello que hace segura la hidratación: `js/pages/entrada.js` lo lee para
     // NO tapar este HTML con «Cargando…» ni con el 404 blando mientras Firestore no responda.
     // Es un booleano estampado por el generador, no un hash del contenido: no puede desincronizarse.
@@ -2004,6 +2190,26 @@ async function main() {
 
     // Schema de marca (JewelryStore + WebSite) horneado en dist/index.html desde tenant_config.json.
     injectBusinessIntoIndex(readTenantConfig());
+
+    // JSON-LD de Contacto y Nosotros (las dos servían CERO structured data). Contacto repite el
+    // nodo del negocio con el mismo @id —misma entidad, no dos— porque es la página que un turista
+    // abre para saber dónde queda y si está abierta. Nosotros añade sus preguntas frecuentes
+    // REALES, que es lo que leen los buscadores con IA.
+    {
+        const cfg = readTenantConfig();
+        const faqs = mergeNosotros((sc && sc.nosotros) || null).faqs.items;
+        const grafoNosotros = buildNosotrosGraph(cfg, faqs);
+        const hechos = [
+            injectGraphIntoPage('contacto.html', 'contacto-jsonld', buildContactoGraph(cfg)),
+            injectGraphIntoPage('nosotros.html', 'nosotros-jsonld', grafoNosotros),
+        ].filter(Boolean).length;
+        // Se informa de las preguntas HORNEADAS, no de las que había: contar las de entrada haría
+        // creer que entraron todas cuando el guardia de hechos puede haber dejado alguna fuera.
+        const faqNode = grafoNosotros['@graph'].find(n => n['@type'] === 'FAQPage');
+        const horneadas = faqNode ? faqNode.mainEntity.length : 0;
+        console.log(`[generate] JSON-LD horneado en ${hechos} página(s) (Contacto: negocio local + ContactPage · `
+            + `Nosotros: AboutPage + ${horneadas} de ${faqs.length} preguntas${horneadas < faqs.length ? ' — ver los avisos de arriba' : ''}).`);
+    }
 
     // siteContent del CMS horneado (anti-flash 1ª visita + preload al hero real, §163). Solo
     // `home`+`global` viajan en la semilla `__BJ_SC` de la portada: meter ahí `nosotros` y

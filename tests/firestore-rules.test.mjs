@@ -494,6 +494,16 @@ test('journal · NO crea sin title', async () => {
 test('journal · hasOnly RECHAZA campo inyectado fuera del whitelist', async () => {
     await assertFails(setDoc(doc(asUser('editorUid'), 'journal/e3'), { title: 'X', hacker: 'evil' }));
 });
+test('journal · `lang` admite es/en y RECHAZA cualquier otro idioma', async () => {
+    // `lang` decide el atributo `lang` del documento horneado y el `inLanguage` del schema. Si
+    // aceptara cualquier cadena, una entrada podría declararse en un idioma que el contenido no
+    // habla — y eso lo leen tanto Google como un lector de pantalla.
+    const base = { title: 'Guide', section: 'Guide', excerpt: 'x', image: '/img/x.webp', published: true };
+    await assertSucceeds(setDoc(doc(asUser('editorUid'), 'journal/eLangEn'), { ...base, lang: 'en' }));
+    await assertSucceeds(setDoc(doc(asUser('editorUid'), 'journal/eLangEs'), { ...base, lang: 'es' }));
+    await assertFails(setDoc(doc(asUser('editorUid'), 'journal/eLangFr'), { ...base, lang: 'fr' }));
+    await assertFails(setDoc(doc(asUser('editorUid'), 'journal/eLangNum'), { ...base, lang: 7 }));
+});
 test('journal · RECHAZA date con formato inválido', async () => {
     await assertFails(setDoc(doc(asUser('editorUid'), 'journal/e4'), { title: 'X', date: '14/06/2026' }));
 });

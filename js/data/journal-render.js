@@ -82,10 +82,19 @@ export function bodyBlocks(body) {
     return bloques;
 }
 
+/** Una entrada escrita en inglés. El campo `lang` lo pone el panel; por defecto, español. */
+export function esIngles(entry) {
+    return String((entry && entry.lang) || 'es').toLowerCase().startsWith('en');
+}
+
 export function renderBreadcrumb(entry) {
+    // Las migas se traducen porque son las ÚNICAS palabras del armazón que el lector ve dentro
+    // del artículo. Lo demás del marco (el pie, el menú) sigue en español a propósito: traducir
+    // el sitio entero es otro trabajo, y media traducción se nota más que ninguna.
+    const inicio = esIngles(entry) ? 'Home' : 'Inicio';
     return html`
-        <nav class="en-breadcrumb" aria-label="Migas de pan">
-            <a class="en-crumb" href="/">Inicio</a>
+        <nav class="en-breadcrumb" aria-label="${esIngles(entry) ? 'Breadcrumb' : 'Migas de pan'}">
+            <a class="en-crumb" href="/">${inicio}</a>
             <span class="en-crumb-sep" aria-hidden="true">→</span>
             <a class="en-crumb" href="/journal.html">Journal</a>
             <span class="en-crumb-sep" aria-hidden="true">→</span>
@@ -119,7 +128,7 @@ export function renderHero(entry) {
                 <div class="en-hero-meta-right">
                     <span class="mono en-hero-date">${escape(entry.dateLong)}</span>
                     <span class="en-hero-meta-divider"></span>
-                    <span class="mono en-hero-read">${escape(entry.read)} de lectura</span>
+                    <span class="mono en-hero-read">${escape(entry.read)}${esIngles(entry) ? ' read' : ' de lectura'}</span>
                 </div>
             </div>
         </header>`;
@@ -165,7 +174,7 @@ export function renderShare(entry) {
     const title = encodeURIComponent(entry.title);
     return html`
         <aside class="en-share" aria-label="Compartir entrada">
-            <div class="mono en-share-label">COMPARTIR</div>
+            <div class="mono en-share-label">${esIngles(entry) ? 'SHARE' : 'COMPARTIR'}</div>
             <div class="en-share-btns">
                 <a class="en-share-btn"
                    href="https://wa.me/?text=${title}%20${url}"
@@ -217,8 +226,8 @@ export function renderRelated(entry, related) {
     return html`
         <section class="en-related">
             <div class="en-related-header">
-                <div class="mono en-related-eyebrow">SEGUIR LEYENDO</div>
-                <h2 class="en-related-title">Más de <span class="italic emerald-text">${escape(entry.section)}</span></h2>
+                <div class="mono en-related-eyebrow">${esIngles(entry) ? 'KEEP READING' : 'SEGUIR LEYENDO'}</div>
+                <h2 class="en-related-title">${esIngles(entry) ? 'More from' : 'Más de'} <span class="italic emerald-text">${escape(entry.section)}</span></h2>
             </div>
             <div class="en-related-grid">
                 ${related.map(r => html`
@@ -241,12 +250,12 @@ export function renderRelated(entry, related) {
         </section>`;
 }
 
-export function renderBackToJournal() {
+export function renderBackToJournal(entry) {
     return html`
         <div class="en-back">
             <a href="/journal.html" class="btn-aqua en-back-btn">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-                Volver al Journal
+                ${esIngles(entry) ? 'Back to the Journal' : 'Volver al Journal'}
             </a>
         </div>`;
 }
@@ -266,6 +275,6 @@ export function renderArticle(entry, related) {
                 ${renderShare(entry)}
             </div>
             ${renderRelated(entry, related)}
-            ${renderBackToJournal()}
+            ${renderBackToJournal(entry)}
         </div>`;
 }

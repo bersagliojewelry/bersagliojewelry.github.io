@@ -487,7 +487,7 @@ service cloud.firestore {
       let d = request.resource.data;
       return publicContentValid(d, ['title', 'slug', 'section', 'kicker', 'excerpt',
                                     'body', 'date', 'read', 'author', 'authorRole',
-                                    'image', 'featured', 'published', 'cover', 'order'])
+                                    'image', 'featured', 'published', 'cover', 'order', 'lang'])
           && d.title is string && d.title.size() > 0 && d.title.size() <= 200
           && (!('slug' in d)       || (d.slug is string       && d.slug.size() <= 200))
           && (!('section' in d)    || (d.section is string    && d.section.size() <= 80))
@@ -498,6 +498,10 @@ service cloud.firestore {
           && (!('read' in d)       || (d.read is string       && d.read.size() <= 40))
           && (!('author' in d)     || (d.author is string     && d.author.size() <= 120))
           && (!('authorRole' in d) || (d.authorRole is string && d.authorRole.size() <= 120))
+          // `lang` decide el `lang` del documento horneado y el `inLanguage` del schema: se acota
+          // a los dos idiomas que el sitio sabe servir, para que un valor suelto no declare un
+          // idioma que el contenido no habla.
+          && (!('lang' in d)       || (d.lang is string       && (d.lang == 'es' || d.lang == 'en')))
           && (!('image' in d)      || (d.image is string      && d.image.size() <= 1000))
           && (!('featured' in d)   || d.featured is bool)
           && (!('published' in d)  || d.published is bool)

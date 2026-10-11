@@ -1416,10 +1416,29 @@ function isJournalBakeable(e) {
 // El `<title>` sale de `entryTitleTag` (js/data/journal-render.js), la MISMA función que usa el
 // navegador: antes cada lado tenía su fórmula y la del navegador —que corre después— le quitaba
 // «Cartagena» al título horneado.
+/**
+ * IDIOMA de una entrada. El 45 % de quien visita la web está FUERA de Colombia (medido en
+ * Analytics) y el mejor CTR del sitio —17 %— está en «cartagena jewelry stores», pero no había
+ * una sola página en inglés. En vez de levantar una sección aparte con su propio enrutado, su
+ * sitemap y su plantilla, una entrada del Journal marcada `lang: 'en'` ya trae todo lo que hace
+ * falta: cuerpo horneado dentro del `<main>`, schema, migas, pie y fila en el sitemap.
+ *
+ * Lo único que cambia por idioma es lo que SERÍA MENTIRA dejar en español: el atributo `lang` del
+ * documento (los lectores de pantalla y Google lo usan para saber en qué idioma leer), el
+ * `inLanguage` del schema y las dos palabras de las migas de pan.
+ */
+function journalLang(e) {
+    return String((e && e.lang) || 'es').toLowerCase().startsWith('en') ? 'en' : 'es';
+}
+
 function journalMeta(e) {
     const h1 = String(e.title || '').trim();
+    const lang = journalLang(e);
     return {
         h1,
+        lang,
+        // En inglés el sufijo del <title> también va en inglés: «· Journal · Bersaglio Jewelry
+        // Cartagena» ya se lee igual en los dos idiomas, así que se conserva la misma fórmula.
         title: entryTitleTag(h1),
         metaDesc: String(e.excerpt || '').trim().slice(0, 300),
         seccion: String(e.section || '').trim(),
@@ -1436,7 +1455,7 @@ function buildArticleSchemas(e, canonical, meta) {
         description: meta.metaDesc,
         url: canonical,
         mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
-        inLanguage: 'es-CO',
+        inLanguage: meta.lang === 'en' ? 'en' : 'es-CO',
         image: [String(e.image || DEFAULT_OG)],
         author: { '@type': 'Person', name: String(e.author || BRAND).trim() },
         publisher: { '@id': BUSINESS_ID },
@@ -1449,7 +1468,7 @@ function buildArticleSchemas(e, canonical, meta) {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
         itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Inicio',  item: `${SITE_URL}/` },
+            { '@type': 'ListItem', position: 1, name: meta.lang === 'en' ? 'Home' : 'Inicio', item: `${SITE_URL}/` },
             { '@type': 'ListItem', position: 2, name: 'Journal', item: `${SITE_URL}/journal.html` },
             { '@type': 'ListItem', position: 3, name: meta.h1,   item: canonical },
         ],
@@ -1476,6 +1495,9 @@ function bakeJournalPage(shell, e, todas = []) {
         html = replaceOnce(html, '<meta charset="UTF-8">', '<meta charset="UTF-8">\n    <base href="/">');
     }
     html = replaceOnce(html, '<meta name="robots" content="noindex, nofollow">', '<meta name="robots" content="index, follow">');
+    // El idioma del DOCUMENTO. El shell es `lang="es"`; dejar una guía escrita en inglés
+    // declarada como español la lee mal un lector de pantalla y la clasifica mal Google.
+    if (meta.lang === 'en') html = replaceOnce(html, '<html lang="es">', '<html lang="en">');
     html = replaceOnce(html, '<title>Journal · Bersaglio Jewelry</title>', `<title>${escapeHtml(meta.title)}</title>`);
     html = replaceOnce(html, '<meta name="description" content="Una entrada del journal Bersaglio Jewelry — historias del atelier en Cartagena.">',
         `<meta name="description" content="${escapeAttr(meta.metaDesc)}">`);

@@ -58,6 +58,10 @@ const journalDescriptor = {
         { name: 'cover',      label: 'Portada — la entrada grande de arriba',        type: 'checkbox', hint: 'Márcala en UNA sola. Es la que sale grande arriba, en el inicio y en el Journal.' },
         { name: 'featured',   label: 'Destacada — franja de abajo del inicio',       type: 'checkbox', hint: 'Márcala hasta en 3. Salen como tarjetas debajo de la portada, en el inicio.' },
         { name: 'order',      label: 'Orden — posición (menor va primero)',          type: 'number',   hint: 'Un número: 1 va primero, 2 después… Ordena el listado, "Más leídos" y las destacadas.' },
+        // El 45 % de quien visita la web está fuera de Colombia y no había una sola página en
+        // inglés. Marcar el idioma aquí hace que la página horneada declare `lang="en"`, que su
+        // schema diga `inLanguage: en` y que las migas y el pie del artículo salgan en inglés.
+        { name: 'lang',       label: 'Idioma del artículo',                          type: 'select',   options: [{ value: 'es', label: 'Español' }, { value: 'en', label: 'Inglés' }], hint: 'Vacío = español. Solo cambia el artículo, no el resto del sitio.' },
         { name: 'published',  label: 'Publicada — aparece en el listado del Journal', type: 'checkbox' },
     ],
     toDoc(v) {

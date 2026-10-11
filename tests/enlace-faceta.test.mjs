@@ -104,6 +104,22 @@ test('el markup del pie es PURO: no se le cuela `data` ni el DOM', () => {
     assert.doesNotMatch(src, /\bdocument\.|window\./, 'footer-markup.js NO puede tocar el DOM');
 });
 
+test('si el pie se hornea, la SEMILLA de facetas viaja en la misma página', () => {
+    // EL CANDADO DE LA REGRESIÓN REAL (L-93). Se horneó el pie con sus nueve enlaces limpios y por
+    // `curl` estaba perfecto; pero al abrir una ficha de pieza en el NAVEGADOR, el cliente
+    // repintaba el pie llamando a `facetHref` sin datos —nunca se sembró `window.__BJ_FACETS`— y
+    // los nueve caían a `?col=`. El HTML servido decía una cosa y el usuario veía otra.
+    // Las dos inyecciones tienen que vivir en la misma función para que no se puedan separar.
+    const gen = readFileSync(join(ROOT, 'scripts/generate-pieces.mjs'), 'utf8');
+    const i = gen.indexOf('function bakeFooter');
+    assert.ok(i > 0, 'falta bakeFooter');
+    const cuerpo = gen.slice(i, gen.indexOf('\n}', i));
+    assert.match(cuerpo, /footerHTML\(/, 'bakeFooter debe hornear el pie');
+    assert.match(cuerpo, /__BJ_FACETS/,
+        'bakeFooter debe sembrar window.__BJ_FACETS en la MISMA página: sin la semilla, el pie '
+        + 'hidratado degrada a ?col= y lo horneado y lo visible dejan de coincidir');
+});
+
 // ── El rescate del 404 ────────────────────────────────────────────────────────
 
 test('404.html rescata las facetas, presentes y futuras', () => {

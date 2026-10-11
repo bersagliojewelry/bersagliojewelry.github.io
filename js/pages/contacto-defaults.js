@@ -31,7 +31,12 @@ export const CONTACTO_DEFAULTS = {
         q1: '¿Necesito cita previa?',      a1: 'No es obligatoria: puedes acercarte directamente o reservar una cita para una atención más dedicada. Ambas son bienvenidas.',
         q2: '¿Hay parqueadero?',           a2: 'En el Centro Histórico encuentras varios parqueaderos privados y seguros a pocos pasos del atelier.',
         q3: '¿Puedo llevar acompañantes?', a3: 'Hasta tres personas. Indícalo al agendar para preparar el espacio.',
-        q4: '¿Atienden en otro idioma?',   a4: 'Español e inglés. Francés e italiano con cita previa, informándolo al agendar.',
+        // El francés y el italiano NO están en la tabla de hechos: nadie ha podido respaldar que
+        // la casa atienda en esos idiomas, y prometerlo a un turista que llega contando con ello
+        // es de las promesas que peor se rompen. El inglés SÍ consta —la publicación del Perfil
+        // es bilingüe y la guía del Journal está escrita en inglés—. Si resulta cierto, vuelve
+        // aquí con su fuente, como las cifras.
+        q4: '¿Atienden en otro idioma?',   a4: 'Español e inglés. Si hablas otro, escríbenos antes de venir y buscamos la manera de acompañarte bien.',
     },
 };
 

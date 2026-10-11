@@ -590,10 +590,13 @@ function bakeSiteContentHtml(html, sc) {
 // data.js las lee SÍNCRONO (window.__BJ_CATALOG) → el 1er paint del cliente ya trae contenido real,
 // sin skeleton. Solo las `featured` (lo que la home pinta) → payload chico. Espeja bakeSiteContentHtml
 // (safeJsonLd neutraliza </script>+U+2028/29); idempotente por id. PURA (cubierta por SSG_SELFTEST).
-function bakeCatalogSeed(html, catalogo) {
+// `soloDestacadas` es para la PORTADA, que solo pinta las destacadas y no debe cargar con las 32.
+// Una ficha siembra SU pieza, destacada o no — si se le aplicara el filtro, 16 de las 32 fichas se
+// quedarían sin semilla y seguirían esperando a la red, que es justo lo que se viene a arreglar.
+function bakeCatalogSeed(html, catalogo, soloDestacadas = true) {
     if (!catalogo || !html.includes('</head>') || html.includes('id="baked-catalog"')) return html;
     const seed = {
-        pieces: (catalogo.pieces || []).filter(p => p && p.featured),
+        pieces: soloDestacadas ? (catalogo.pieces || []).filter(p => p && p.featured) : (catalogo.pieces || []),
         collections: catalogo.collections || [],
     };
     return replaceOnce(html, '</head>',
@@ -2149,10 +2152,27 @@ async function main() {
         for (const f of readdirSync(outDir).filter(f => f.endsWith('.html'))) unlinkSync(join(outDir, f));
     } catch { /* primer run */ }
 
+    // La proyección pública del catálogo se calcula AQUÍ (sus guards y su escritura siguen más
+    // abajo, intactos) porque cada ficha necesita sembrar SU pieza ya proyectada.
+    const generatedAtIso = new Date().toISOString();
+    const catalogo = buildCatalogJson(pieces, collections, slugMap, generatedAtIso);
+    const porSlug = new Map((catalogo.pieces || []).map(x => [String(x.slug || x.id), x]));
+
     const bakeFailures = [];
     for (const p of pieces) {
         const slug = slugMap.get(String(p.id));
-        const html = generatePage(template, p, slug, collectionsById);
+        let html = generatePage(template, p, slug, collectionsById);
+        // SEMILLA DE LA FICHA (2026-10-11). Medido en el navegador contra producción: a los 10 s
+        // el <main> de una ficha seguía mostrando su esqueleto. El motivo no es el render, es la
+        // RED: `window.__BJ_CATALOG` solo se horneaba en la portada, así que la ficha tenía que
+        // esperar a `catalogo.json` o a Firestore para saber qué pieza mostrar — y `pieza.js`
+        // repinta el <main> sin condición, así que mientras tanto solo hay esqueleto. Sembrando
+        // SU pieza, `data.hydrateFromBake()` resuelve de forma SÍNCRONA y el primer pintado ya
+        // trae la joya. Es el mismo patrón que arregló el Journal, con una línea en vez de un
+        // motor de render compartido.
+        // Va solo esa pieza y las colecciones (no las 32): el peso lo paga cada página.
+        const proyectada = porSlug.get(String(slug));
+        if (proyectada) html = bakeCatalogSeed(html, { pieces: [proyectada], collections: catalogo.collections }, false);
         const err = bakeIntegrityError(slug, html);
         if (err) bakeFailures.push(err);
         writeFileSync(join(outDir, `${slug}.html`), html);
@@ -2208,8 +2228,6 @@ async function main() {
     // lee en vez de abrir onSnapshot en CADA visita (cero Firestore reads). Incluye TODAS las publicables
     // (vendidas con available:false → la grilla las filtra, la ficha las muestra con sello). Guard
     // anti-catálogo-menguado: la proyección NO debe perder piezas ni vaciarse con datos presentes.
-    const generatedAtIso = new Date().toISOString();
-    const catalogo = buildCatalogJson(pieces, collections, slugMap, generatedAtIso);
     if (catalogo.pieces.length !== pieces.length) {
         throw new Error(`[generate] catalogo.json INCOMPLETO: ${catalogo.pieces.length} de ${pieces.length} publicables — la proyección perdió piezas (abortado).`);
     }

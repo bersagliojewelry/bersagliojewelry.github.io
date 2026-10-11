@@ -28,12 +28,15 @@ import { gemDisplayName } from '../js/core/gem-badge.js';   // §151: gema canó
 import { gemLabel, gemKnown } from '../js/core/gem-taxonomy.js';   // A2b (TODO-35/57): label + validez de gema para facetas
 import { metalConColor } from '../js/core/metal.js';        // TODO-59: color del oro (metalColor) en el metal mostrado
 import { HOME_DEFAULTS, cifrasDeLaCasa } from '../js/home/siteContent-defaults.js';
+import { facetHref } from '../js/core/urls.js';   // UNA regla para el enlace a faceta (build y navegador)
+import { footerHTML } from '../js/components/footer-markup.js';   // el pie, horneado (no solo por JS)
+import { mergeGlobal } from '../js/core/global-defaults.js';
 // Motor de render del artículo del Journal: el MISMO módulo que usa el navegador
 // (js/pages/entrada.js). Un solo motor → lo horneado y lo hidratado son el mismo HTML.
 import { renderArticle, relatedFrom, entryTitleTag } from '../js/data/journal-render.js';
 import { normalizeEntry } from '../js/data/journal-normalize.js';
-import { readFileSync, writeFileSync, mkdirSync, readdirSync, unlinkSync, existsSync } from 'fs';
-import { join, dirname } from 'path';
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, unlinkSync, existsSync, statSync } from 'fs';
+import { join, dirname, relative } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -73,6 +76,31 @@ const MIN_BAKE_BYTES = 5000;
 // `prerenderHomeHtml` ya evitaba la trampa con indexOf/substring; esto generaliza ESE patrón a los
 // 42 puntos de inyección del fichero, en vez de dejar la primitiva peligrosa a mano de cada diff
 // futuro. Devuelve el HTML intacto si el ancla no está: el guard de anclajes es quien grita.
+/**
+ * Hornea el PIE dentro de `<div id="footer-mount">`.
+ *
+ * Medido el 2026-10-10: ese div llegaba VACÍO en las 52 páginas servidas, porque el pie lo pinta
+ * JavaScript. Para Google eso significaba cero enlaces internos a las nueve páginas de categoría y
+ * de gema, cero a Nosotros, Contacto y el Journal, y ninguna dirección de la tienda — en todas las
+ * páginas a la vez. El pie es el emisor de enlaces con más alcance del sitio y estaba apagado.
+ *
+ * El markup sale del MISMO módulo que usa el navegador (js/components/footer-markup.js), así que al
+ * hidratar se repinta idéntico y no se ve ningún salto. Idempotente: si ya está horneado, no toca.
+ * `facets` se pasa para que los nueve destinos los decida el conjunto de facetas de ESTE build.
+ */
+function bakeFooter(html, sc, facets) {
+    const ancla = '<div id="footer-mount"></div>';
+    if (!html.includes(ancla)) return html;
+    try {
+        const g = mergeGlobal((sc && sc.global) || null);
+        return replaceOnce(html, ancla, `<div id="footer-mount">${footerHTML(g, facets)}</div>`);
+    } catch (e) {
+        // Fail-open: un pie sin hornear deja la página como hasta hoy, no la rompe.
+        console.warn('[generate] pie no horneado:', e.message);
+        return html;
+    }
+}
+
 function replaceOnce(haystack, needle, replacement) {
     const i = String(haystack).indexOf(needle);
     if (i < 0) return haystack;
@@ -464,7 +492,7 @@ function renderHeroPrerender(c) {
         </section>`;
 }
 
-function renderCategoriesPrerender(collections) {
+function renderCategoriesPrerender(collections, facets) {
     const MAX_CATS = 7;
     const list = collections.slice(0, MAX_CATS);
     const tilesHtml = list.map(c => {
@@ -472,7 +500,7 @@ function renderCategoriesPrerender(collections) {
         const img = c.img ? escapeAttr(c.img) : '';
         const name = c.name || '';
         return `
-            <a class="glass cat-tile" href="/colecciones.html?col=${escapeAttr(slug)}" style="--cat-hue:${escapeHtml(String(c.hue || 155))}">
+            <a class="glass cat-tile" href="${escapeAttr(facetHref('col', slug, facets))}" style="--cat-hue:${escapeHtml(String(c.hue || 155))}">
                 <div class="cat-tile-inner">
                     <div class="cat-tile-img">
                         ${img ? `<img src="${img}" alt="${escapeHtml(name)}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block;">` : `<div class="cat-tile-img-bg"></div>`}
@@ -724,11 +752,14 @@ function renderJournalPrerender(entries) {
     // sitio del que esa decisión lo sacó, así que no vuelve por esta puerta sin que lo decida el
     // dueño. Se excluye solo de la PORTADA: sigue publicado, en /journal.html y en relacionados.
     const NOMBRA_MINA = /\b(muzo|chivor|coscuez)\b/i;
+    // Se enlazan TODOS los artículos publicados (menos el de las minas): medido el 2026-10-10, la
+    // portada enlazaba 4 de los 6 y los otros dos quedaban sin un solo enlace desde la página con
+    // más autoridad del sitio. El tope de 4 era del bloque VISIBLE que pinta el cliente al
+    // hidratar; aquí no hay motivo para recortar, porque esto es lo que lee Google.
     const list = (entries || []).slice()
         .sort((a, b) => (b.featured === true) - (a.featured === true)
             || (Number(a.order) || 99) - (Number(b.order) || 99))
-        .filter(e => !NOMBRA_MINA.test(String(e.title || '')))
-        .slice(0, 4);
+        .filter(e => !NOMBRA_MINA.test(String(e.title || '')));
 
     const items = list.map((e) => {
         const slug = journalSlugOf(e);
@@ -762,7 +793,7 @@ ${items}
         </section>`;
 }
 
-function prerenderHomeHtml(html, sc, pieces, collections, slugMap, journal) {
+function prerenderHomeHtml(html, sc, pieces, collections, slugMap, journal, facets) {
     const c = {
         hero: { ...HOME_DEFAULTS.hero, ...(sc.home?.hero || {}) },
         editorial: { ...HOME_DEFAULTS.editorial, ...(sc.home?.editorial || {}) },
@@ -771,7 +802,7 @@ function prerenderHomeHtml(html, sc, pieces, collections, slugMap, journal) {
     };
 
     const heroHtml = renderHeroPrerender(c.hero);
-    const catsHtml = renderCategoriesPrerender(collections);
+    const catsHtml = renderCategoriesPrerender(collections, facets);
     const featHtml = renderFeaturedPrerender(pieces, slugMap);
     const editHtml = renderEditorialPrerender(c.editorial);
     const serviceHtml = renderServicesPrerender();
@@ -866,7 +897,7 @@ async function readSiteContentDocs(handle, paginas) {
     return sc;
 }
 
-async function injectSiteContentIntoIndex(sc, pieces, collections, slugMap, journal) {
+async function injectSiteContentIntoIndex(sc, pieces, collections, slugMap, journal, facets) {
     const indexPath = join(DIST, 'index.html');
     if (!existsSync(indexPath)) throw new Error('[generate] No existe dist/index.html.');
     if (!sc || !Object.keys(sc).length) { console.log('[generate] siteContent vacío — bake omitido.'); return; }
@@ -874,7 +905,7 @@ async function injectSiteContentIntoIndex(sc, pieces, collections, slugMap, jour
     let out = bakeSiteContentHtml(html, sc);
 
     try {
-        out = prerenderHomeHtml(out, sc, pieces, collections, slugMap, journal);
+        out = prerenderHomeHtml(out, sc, pieces, collections, slugMap, journal, facets);
     } catch (e) {
         console.warn('[generate] Error en prerenderizado de Home — omitiendo prerender:', e.message);
     }
@@ -1864,6 +1895,15 @@ async function main() {
     // (tras las páginas de listado, reusando el shell dist/colecciones.html ya inyectado).
     const facets = computeFacets(pieces, collections, slugMap);
     const facetUrls = facets.map(f => `${SITE_URL}/${f.kind === 'gema' ? 'gema' : 'coleccion'}/${f.slug}.html`);
+    // QUÉ facetas existen de verdad este build. Es el dato del que se derivan TODOS los enlaces
+    // internos a facetas —los azulejos de la portada, el pie, las fichas de pieza— en vez de
+    // escribirlos a mano: una faceta cae en cuanto sus piezas pedibles bajan de FACET_MIN, y el
+    // build corre por cron, así que una lista a mano se convierte en un 404 sin que nadie empuje
+    // nada. Viaja al navegador en `window.__BJ_FACETS` para que el cliente use la MISMA regla.
+    const facetSeed = {
+        col:  facets.filter(f => f.kind !== 'gema').map(f => f.slug),
+        gema: facets.filter(f => f.kind === 'gema').map(f => f.slug),
+    };
 
     // Artículos del Journal indexables (A3 · TODO-35): QUÉ /journal/<slug>.html se hornearán
     // (publicados + completos). Igual que las facetas: se calcula aquí para alimentar el sitemap
@@ -1970,7 +2010,7 @@ async function main() {
     // `contacto` engordaría el HTML de la página más visitada con texto que no pinta.
     await injectSiteContentIntoIndex(
         { ...(sc.home ? { home: sc.home } : {}), ...(sc.global ? { global: sc.global } : {}) },
-        pieces, collections, slugMap, journalBakeables,
+        pieces, collections, slugMap, journalBakeables, facetSeed,
     );
 
     // Semilla de catálogo (destacadas + colecciones) horneada → hidratación del 1er paint SIN
@@ -2076,6 +2116,27 @@ async function main() {
             }
             console.log(`[generate] ${jCount} artículo(s) del Journal horneados en /journal/<slug>.html (index,follow, schema Article).`);
         }
+    }
+
+    // EL PIE, EN TODAS LAS PÁGINAS. Pasada final sobre dist/: cualquier HTML que lleve el punto de
+    // montaje recibe el pie horneado. Va aquí, en un solo sitio, en vez de dentro de cada horneador
+    // —así `generatePage`, `bakeFacetPage` y `bakeJournalPage` siguen siendo funciones puras— y
+    // alcanza también a las páginas que el generador no hornea (Nosotros, Contacto, los legales),
+    // que son justo las que peor estaban. Medido antes: el div llegaba vacío en las 52.
+    {
+        const conPie = [];
+        (function recorrer(dir) {
+            for (const nombre of readdirSync(dir)) {
+                const ruta = join(dir, nombre);
+                if (statSync(ruta).isDirectory()) { recorrer(ruta); continue; }
+                if (!nombre.endsWith('.html')) continue;
+                const h = readFileSync(ruta, 'utf-8');
+                const out = bakeFooter(h, sc, facetSeed);
+                if (out !== h) { writeFileSync(ruta, out); conPie.push(relative(DIST, ruta)); }
+            }
+        })(DIST);
+        console.log(`[generate] pie horneado en ${conPie.length} página(s) — ${
+            facetSeed.col.length + facetSeed.gema.length} enlaces a facetas que antes solo existían tras ejecutar JS.`);
     }
 
     console.log('[generate] Listo.');

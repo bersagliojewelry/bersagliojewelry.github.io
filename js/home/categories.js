@@ -27,6 +27,9 @@ import { cardsFrom } from './categories-data.js';
 import { rememberHeight } from '../core/section-reserve.js';
 import { lqipImgStyle } from '../core/lqip.js';   // §108 F3: blur-up del banner (degrada si no hay LQIP)
 import { balancedCols } from '../core/grid-balance.js';   // reparto inteligente (6 ó 7 colecciones, sin huérfana)
+// El azulejo enlaza la página de categoría INDEXABLE cuando existe (ver facetHref): apuntar todos
+// a `?col=` consolidaba los seis enlaces en una sola URL y dejaba las categorías sin autoridad.
+import { facetHref } from '../core/urls.js';
 
 // object-position permitido (anti CSS-injection si 'pos' se vuelve editable).
 const POS_RE = /^(left|right|center|top|bottom|\d{1,3}%|\s)+$/i;
@@ -58,7 +61,7 @@ function tile(c) {
     const img = c.img ? escape(safeUrl(c.img)) : '';
     return html`
         <a class="glass cat-tile"
-           href="/colecciones.html?col=${escape(c.slug)}"
+           href="${escape(facetHref('col', c.slug))}"
            style="--cat-hue:${escape(String(c.hue))}">
             <div class="cat-tile-inner">
                 <div class="cat-tile-img">

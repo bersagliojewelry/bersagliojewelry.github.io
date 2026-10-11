@@ -55,9 +55,12 @@ function buildDOM() {
             </div>
             <div class="eyebrow bj-email-eyebrow">Atelier Bersaglio</div>
             <h3 id="bj-email-title" class="bj-email-title">Acceso íntimo a la casa</h3>
+            <!-- «invitaciones al atelier» invitaba a un sitio que no se visita (tabla de hechos
+                 §4-bis). Y no hay un calendario de lanzamientos privados que sostener: se promete
+                 lo que la casa sí puede cumplir, que es avisar cuando entra algo. -->
             <p class="bj-email-desc">
-                Lanzamientos privados, esmeraldas escogidas a mano, invitaciones al
-                atelier en Cartagena. Sin spam — solo lo que vale la pena.
+                Te escribimos cuando entra una esmeralda que vale la pena contar, o una pieza
+                nueva a la vitrina. Nada más, y sin prisa.
             </p>
             <form class="bj-email-form" novalidate>
                 <label class="bj-email-label" for="bj-email-input">Tu correo</label>
@@ -68,6 +71,12 @@ function buildDOM() {
                        placeholder="nombre@ejemplo.co"
                        autocomplete="email"
                        required>
+                <label class="bj-email-habeas">
+                    <input type="checkbox" name="habeas" required>
+                    <span>Autorizo a Bersaglio Jewelry a guardar mi correo para escribirme sobre
+                    sus piezas y novedades. Puedo pedir que lo borren cuando quiera, escribiendo
+                    al mismo correo. <a href="/privacidad.html" target="_blank" rel="noopener">Cómo tratamos tus datos</a>.</span>
+                </label>
                 <button type="submit" class="btn-aqua btn-aqua-emerald bj-email-submit">
                     Suscribirme
                 </button>
@@ -75,9 +84,7 @@ function buildDOM() {
                     Ahora no, gracias
                 </button>
             </form>
-            <p class="bj-email-success" hidden>
-                Gracias. Te escribiremos pronto.
-            </p>
+            <p class="bj-email-success" hidden></p>
         </div>`;
     document.body.appendChild(_root);
 
@@ -103,25 +110,46 @@ async function onSubmit(e) {
     e.preventDefault();
     const form = e.currentTarget;
     const input = form.querySelector('input[type="email"]');
-    if (!input?.checkValidity()) {
-        input?.reportValidity();
+    const habeas = form.querySelector('input[name="habeas"]');
+    if (!input?.checkValidity()) { input?.reportValidity(); return; }
+    // El acto expreso. Sin él no se envía nada: el consentimiento tácito está prohibido
+    // (Ley 1581 + Decreto 1377), y además las reglas de Firestore rechazarían el documento.
+    if (!habeas?.checked) { habeas?.reportValidity(); return; }
+
+    const email = input.value.trim().toLowerCase();
+    const successEl = _root.querySelector('.bj-email-success');
+    const submitBtn = form.querySelector('.bj-email-submit');
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Guardando…'; }
+
+    // EL CORREO TIENE QUE LLEGAR. Antes esto solo lo escribía en el localStorage del propio
+    // visitante y le decía «te escribiremos pronto»: la promesa se hacía a alguien cuyo correo
+    // nadie iba a ver nunca. Ahora se guarda primero y solo entonces se le da las gracias.
+    try {
+        const { saveSubscription } = await import('../firestore-service.js');
+        const { FINALIDAD_VERSION } = await import('../core/consent.js');
+        await saveSubscription({ email, source: 'modal-web', politicaVersion: FINALIDAD_VERSION });
+    } catch (err) {
+        // Y si no llega, se dice. Un «gracias» sobre un fallo es la mentira que había que quitar.
+        console.warn('[newsletter] no se pudo guardar la suscripción:', err?.code || err?.message || err);
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Suscribirme'; }
+        if (successEl) {
+            successEl.hidden = false;
+            successEl.textContent = 'No pudimos guardar tu correo ahora mismo. Inténtalo en un momento, o escríbenos por WhatsApp y te anotamos nosotros.';
+        }
         return;
     }
-    const email = input.value.trim().toLowerCase();
-    setStatus(email);
 
-    // Show success state inside the modal
-    const successEl = _root.querySelector('.bj-email-success');
+    setStatus(email);
     if (successEl) {
         successEl.hidden = false;
-        successEl.textContent = `Gracias, ${escape(email)}. Te escribiremos pronto.`;
+        successEl.textContent = `Gracias, ${escape(email)}. Te escribiremos cuando haya algo que de verdad valga la pena contarte.`;
     }
     form.style.display = 'none';
 
     // Notify (analytics or admin-side webhook can subscribe)
     document.dispatchEvent(new CustomEvent('bj:email-subscribed', { detail: email }));
 
-    setTimeout(closeModal, 1800);
+    setTimeout(closeModal, 2600);
 }
 
 export function openModal() {

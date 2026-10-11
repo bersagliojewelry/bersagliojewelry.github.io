@@ -591,6 +591,29 @@ export async function addSubscription(email) {
 /**
  * Save a contact inquiry
  */
+/**
+ * Guarda una suscripción al newsletter — CON la prueba del consentimiento.
+ *
+ * Hasta el 2026-10-11 esto no existía: el modal guardaba el correo en el `localStorage` del
+ * propio visitante, disparaba un evento que nadie escuchaba y le decía «te escribiremos pronto».
+ * El correo no llegaba a ninguna parte. La colección y su regla YA estaban hechas; lo único que
+ * faltaba era que alguien escribiera.
+ *
+ * `habeasData` no es opcional ni decorativo: la Ley 1581 exige autorización previa, expresa e
+ * informada ANTES de recolectar, el Decreto 1377 art.5 obliga a conservar la prueba, y las reglas
+ * de Firestore RECHAZAN el documento si no viene. El acto expreso es el checkbox del modal; el
+ * silencio no vale.
+ */
+export async function saveSubscription({ email, source, politicaVersion }) {
+    return addDoc(collection(firestoreDb, COLLECTIONS.subscriptions), {
+        email,
+        source: source || 'web',
+        active: true,
+        habeasData: { aceptado: true, version: String(politicaVersion || ''), fecha: serverTimestamp() },
+        createdAt: serverTimestamp(),
+    });
+}
+
 export async function saveInquiry({ name, email, phone, message, pieceSlug, source }) {
     return addDoc(collection(firestoreDb, COLLECTIONS.inquiries), {
         name,

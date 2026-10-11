@@ -635,13 +635,26 @@ service cloud.firestore {
           && (!('pieceName' in d) || (d.pieceName is string && d.pieceName.size() <= 200))
           && d.createdAt == request.time;
     }
+    // Suscripción al newsletter. El `habeasData` es OBLIGATORIO y el servidor es quien lo exige:
+    // la Ley 1581 pide autorización previa, EXPRESA e informada antes de recolectar un dato
+    // personal, el Decreto 1377 art.5 obliga a CONSERVAR LA PRUEBA, y el consentimiento tácito
+    // está prohibido. Si el cliente no manda la prueba, el correo no se guarda — igual que la
+    // Cloud Function del mostrador rechaza persistir un documento sin consentimiento.
+    // Hasta el 2026-10-11 nada escribía aquí: el correo moría en el `localStorage` del visitante
+    // mientras la web le prometía respuesta. Cada suscriptor desde que existe el formulario fue
+    // un cliente perdido.
     function subscriptionCreateValida() {
       let d = request.resource.data;
-      return d.keys().hasOnly(['email', 'source', 'createdAt', 'active'])
+      return d.keys().hasOnly(['email', 'source', 'createdAt', 'active', 'habeasData'])
           && d.email is string && d.email.size() >= 5 && d.email.size() <= 254
           && d.email.matches('^[^@]+@[^@]+[.][^@]+$')
           && (!('source' in d) || (d.source is string && d.source.size() <= 40))
           && (!('active' in d) || d.active == true)
+          && d.habeasData is map
+          && d.habeasData.keys().hasOnly(['aceptado', 'version', 'fecha'])
+          && d.habeasData.aceptado == true
+          && d.habeasData.version is string && d.habeasData.version.size() <= 40
+          && d.habeasData.fecha == request.time
           && d.createdAt == request.time;
     }
     function inquiryCreateValida() {

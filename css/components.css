@@ -715,6 +715,21 @@ body.wishlist-drawer-open {
     border-color: oklch(62% 0.18 155 / 0.5);
     box-shadow: 0 0 0 3px oklch(62% 0.18 155 / 0.18);
 }
+/* Autorización de datos (Ley 1581): el checkbox ES el acto expreso, así que tiene que verse y
+   poder leerse, no esconderse en letra diminuta. Alineado a la izquierda y a cuerpo legible. */
+.bj-email-habeas {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    text-align: left;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--bj-ink-mute);
+    margin-top: 2px;
+}
+.bj-email-habeas input { margin-top: 3px; flex: 0 0 auto; accent-color: var(--bj-emerald-600); }
+.bj-email-habeas a { color: var(--bj-emerald-700); text-decoration: underline; }
+
 .bj-email-submit { padding: 14px 24px; }
 .bj-email-skip {
     font-size: 12px;

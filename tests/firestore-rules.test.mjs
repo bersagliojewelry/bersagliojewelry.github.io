@@ -853,26 +853,67 @@ test('F6 reseñas · createdAt del cliente (no serverTimestamp) es rechazado', a
     }));
 });
 
-// Newsletter (subscriptions)
-test('F6 news · email válido se suscribe', async () => {
+// Newsletter (subscriptions). Desde el 2026-10-11 el `habeasData` es OBLIGATORIO: la Ley 1581
+// exige autorización previa y EXPRESA antes de recolectar, el Decreto 1377 art.5 obliga a
+// conservar la prueba, y el consentimiento tácito está prohibido. El servidor es quien lo exige,
+// no la interfaz: una interfaz se salta abriendo la consola.
+const HABEAS = () => ({ aceptado: true, version: '2026-10-09', fecha: serverTimestamp() });
+
+test('F6 news · email válido CON autorización se suscribe', async () => {
     await assertSucceeds(addDoc(collection(anon(), 'subscriptions'), {
+        email: 'clienta@correo.co', source: 'website_modal', active: true,
+        habeasData: HABEAS(), createdAt: serverTimestamp(),
+    }));
+});
+test('F6 news · SIN la prueba del consentimiento NO se guarda el correo', async () => {
+    // Es el caso que de verdad importa: un correo guardado sin autorización es el incumplimiento,
+    // y una web que promete «te escribiremos» sin poder escribir es la otra mitad del problema.
+    await assertFails(addDoc(collection(anon(), 'subscriptions'), {
         email: 'clienta@correo.co', source: 'website_modal', active: true, createdAt: serverTimestamp(),
+    }));
+});
+test('F6 news · una autorización NEGADA no sirve como autorización', async () => {
+    await assertFails(addDoc(collection(anon(), 'subscriptions'), {
+        email: 'a@b.co', source: 'website_modal', active: true,
+        habeasData: { aceptado: false, version: '2026-10-09', fecha: serverTimestamp() },
+        createdAt: serverTimestamp(),
+    }));
+});
+test('F6 news · la prueba sin versión de la política es rechazada', async () => {
+    // Sin versión no se puede demostrar QUÉ fue lo que el titular autorizó.
+    await assertFails(addDoc(collection(anon(), 'subscriptions'), {
+        email: 'a@b.co', source: 'website_modal', active: true,
+        habeasData: { aceptado: true, fecha: serverTimestamp() },
+        createdAt: serverTimestamp(),
+    }));
+});
+test('F6 news · la fecha de la prueba no se puede falsear', async () => {
+    await assertFails(addDoc(collection(anon(), 'subscriptions'), {
+        email: 'a@b.co', source: 'website_modal', active: true,
+        habeasData: { aceptado: true, version: '2026-10-09', fecha: '2020-01-01' },
+        createdAt: serverTimestamp(),
     }));
 });
 test('F6 news · email sin @ es rechazado', async () => {
     await assertFails(addDoc(collection(anon(), 'subscriptions'), {
-        email: 'no-es-un-correo', source: 'website_modal', active: true, createdAt: serverTimestamp(),
+        email: 'no-es-un-correo', source: 'website_modal', active: true,
+        habeasData: HABEAS(), createdAt: serverTimestamp(),
     }));
 });
 test('F6 news · active:false (forma rara) es rechazado', async () => {
     await assertFails(addDoc(collection(anon(), 'subscriptions'), {
-        email: 'a@b.co', source: 'website_modal', active: false, createdAt: serverTimestamp(),
+        email: 'a@b.co', source: 'website_modal', active: false,
+        habeasData: HABEAS(), createdAt: serverTimestamp(),
     }));
 });
 test('F6 news · campo extra es rechazado', async () => {
     await assertFails(addDoc(collection(anon(), 'subscriptions'), {
-        email: 'a@b.co', source: 'website_modal', active: true, createdAt: serverTimestamp(), admin: true,
+        email: 'a@b.co', source: 'website_modal', active: true,
+        habeasData: HABEAS(), createdAt: serverTimestamp(), admin: true,
     }));
+});
+test('F6 news · nadie puede LEER los correos salvo el admin', async () => {
+    await assertFails(getDoc(doc(anon(), 'subscriptions/cualquiera')));
 });
 
 // Consultas (inquiries → Bandeja)

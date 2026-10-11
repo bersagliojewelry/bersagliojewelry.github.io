@@ -2621,6 +2621,17 @@ function runSelfTest() {
         const conH2 = bakeJournalPage(FAKE_ENTRY_SHELL, { ...entryMock, body: 'Primero.\n\n## Un subtítulo\n\nSegundo.' }, [entryMock]);
         if (conH2.indexOf('<h2 class="en-body-h2">Un subtítulo</h2>') < 0) fails.push('journal: `## ` no produjo un <h2> en el cuerpo horneado.');
         if (conH2.indexOf('<p class="en-body-p">## ') >= 0) fails.push('journal: `## ` salió como párrafo literal.');
+        // IDIOMA: una entrada en inglés no puede salir declarándose en español. Lo vigila el
+        // autotest porque el fallo es invisible al mirar la página — se ve bien y miente en el
+        // atributo que leen Google y los lectores de pantalla.
+        const SHELL_LANG = FAKE_ENTRY_SHELL.replace('<html>', '<html lang="es">');
+        const en = bakeJournalPage(SHELL_LANG, { ...entryMock, lang: 'en' }, [entryMock]);
+        if (en.indexOf('<html lang="en">') < 0) fails.push('journal: una entrada `lang:en` debe hornear <html lang="en">.');
+        if (en.indexOf('"inLanguage":"en"') < 0) fails.push('journal: el schema de una entrada en inglés debe decir inLanguage en.');
+        if (en.indexOf('"name":"Home"') < 0) fails.push('journal: la miga de inicio en inglés debe decir Home.');
+        const es = bakeJournalPage(SHELL_LANG, entryMock, [entryMock]);
+        if (es.indexOf('<html lang="es">') < 0) fails.push('journal: sin `lang` la entrada sigue en español.');
+        if (es.indexOf('"inLanguage":"es-CO"') < 0) fails.push('journal: sin `lang` el schema debe decir es-CO.');
     }
     if (jh.indexOf('<meta name="robots" content="index, follow">') < 0) fails.push('journal: robots index,follow no inyectado.');
     if (jh.indexOf('<link rel="canonical" href="https://bersagliojewelry.co/journal/selftest.html">') < 0) fails.push('journal: canonical del artículo ausente.');

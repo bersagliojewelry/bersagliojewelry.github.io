@@ -686,6 +686,14 @@ export async function updateInquiry(inquiryId, data) {
 /**
  * Delete an inquiry (admin)
  */
+/**
+ * Borra una suscripción. NO es un extra: la Ley 1581 le da al titular el derecho a pedir que
+ * SUPRIMAN su dato, y sin esta puerta el panel no puede honrarlo. Admin-only, como manda la regla.
+ */
+export async function deleteSubscription(subId) {
+    await deleteDoc(doc(firestoreDb, COLLECTIONS.subscriptions, subId));
+}
+
 export async function deleteInquiry(inquiryId) {
     await deleteDoc(doc(firestoreDb, COLLECTIONS.inquiries, inquiryId));
 }

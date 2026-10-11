@@ -18,6 +18,7 @@ import {
     onCollectionsChange,
     fetchInquiries, saveInquiry as fsSaveInquiry,
     deleteInquiry as fsDeleteInquiry, updateInquiry as fsUpdateInquiry,
+    deleteSubscription as fsDeleteSubscription,
     onInquiriesChange,
     onSubscriptionsChange,
     deleteCollection as fsDeleteCollection,
@@ -311,6 +312,10 @@ class AdminDatabase {
     // Parche genérico de un lead/consulta (estado del pipeline, convertedTo… — F4).
     async updateInquiry(id, patch) {
         await fsUpdateInquiry(id, patch);
+    }
+
+    async deleteSubscription(id) {
+        await fsDeleteSubscription(id);
     }
 
     async deleteInquiry(id) {

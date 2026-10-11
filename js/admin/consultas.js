@@ -38,6 +38,23 @@ async function init() {
         adminDb.exportSubscriptionsCSV();
         admToast('Descargando la lista de suscritos…');
     });
+    // Quitar a alguien de la lista NO es un extra: la Ley 1581 le da al titular el derecho a
+    // pedir que supriman su dato, y sin este botón el panel no podría honrarlo.
+    document.getElementById('subs-tbody')?.addEventListener('click', async (e) => {
+        const btn = e.target.closest('[data-del-sub]');
+        if (!btn) return;
+        const id = btn.getAttribute('data-del-sub');
+        if (!window.confirm('¿Quitar este correo de la lista? Es lo que hay que hacer cuando alguien pide que lo borren.')) return;
+        btn.disabled = true;
+        try {
+            await adminDb.deleteSubscription(id);
+            admToast('Quitado de la lista.');
+        } catch (err) {
+            console.error('[suscritos] borrar:', err);
+            admToast('No se pudo quitar.', 'danger');
+            btn.disabled = false;
+        }
+    });
 
     wireFilters();
     wireSearch();
@@ -325,6 +342,9 @@ function renderSubs(list) {
             <td>${autorizo
                 ? `Sí · ${esc(fmtDate(x.habeasData.fecha))}`
                 : '<span style="color:var(--adm-danger,#c00)">sin registro</span>'}</td>
+            <td style="text-align:right;">${_isAdmin
+                ? `<button class="adm-btn adm-btn--ghost" data-del-sub="${esc(x.id)}" title="Quitar de la lista">Quitar</button>`
+                : ''}</td>
         </tr>`;
     }).join('');
 }

@@ -41,6 +41,15 @@ import { track } from '../analytics.js';
 
 let _tab = 'mensaje';
 let _sent = false;
+// El envío es OPTIMISTA (ver onSubmit): la tarjeta de éxito se pinta antes de que Firestore conteste,
+// porque esperar un segundo con la pantalla quieta se lee como que el botón no funcionó. El precio de
+// esa decisión es que el guardado puede fallar DESPUÉS, y hasta el 2026-10-12 cuando eso pasaba solo
+// quedaba un `console.warn`: el visitante leía «Confirmaremos los detalles de tu cita privada» y su
+// solicitud no existía en ninguna parte. Una cita prometida que se pierde en silencio es justo lo que
+// la Ley 1480 castiga (lo anunciado obliga), y además es el peor fallo posible aquí: el único canal
+// donde alguien pide una hora en el atelier. Esta bandera hace que el fallo se VEA y ofrezca la salida
+// que sí funciona (WhatsApp), en vez de tragárselo.
+let _sendFailed = false;
 let _form  = { n: '', e: '', tel: '', t: 'asesoria', presup: '', m: '' };
 let _visit = { n: '', e: '', tel: '', fecha: '', hora: '10:00', personas: '1', motivo: 'asesoria', notas: '' };
 let _call  = { n: '', tel: '', franja: 'manana', urgencia: 'normal' };
@@ -410,8 +419,32 @@ function renderFormLlamada() {
         </form>`;
 }
 
+/* El guardado falló después de haber pintado el éxito. Aquí NO se consuela: se retira la promesa y se
+   entrega el canal que sí contesta. Nada de «inténtalo más tarde» a secas — eso deja al visitante con
+   el problema en la mano. El borrador sigue guardado, así que si vuelve no reescribe nada. */
+function renderSendFailed(name) {
+    const esVisita = _tab === 'visita';
+    return html`
+        <div class="ct-success">
+            <h3 class="ct-success-title">
+                Perdónanos, <span class="italic emerald-text">${escape(name)}</span>
+            </h3>
+            <p class="ct-success-msg">
+                ${esVisita
+                    ? 'No pudimos confirmar tu solicitud de cita, así que preferimos no darla por reservada. Lo que escribiste quedó guardado aquí.'
+                    : 'No pudimos confirmar tu mensaje, así que preferimos no darlo por enviado. Lo que escribiste quedó guardado aquí.'}
+                Escríbenos por WhatsApp y lo resolvemos de una vez.
+            </p>
+            <a class="btn-aqua btn-aqua-emerald" href="https://wa.me/573013752592" target="_blank" rel="noopener">
+                Escribir por WhatsApp
+            </a>
+            <button type="button" class="btn-aqua ct-success-again" data-action="reset">Volver al formulario</button>
+        </div>`;
+}
+
 function renderSuccess() {
     const name = (_tab === 'mensaje' ? _form.n : _tab === 'visita' ? _visit.n : _call.n) || 'distinguido huésped';
+    if (_sendFailed) return renderSendFailed(name);
     let msg;
     if (_tab === 'visita') {
         msg = `Confirmaremos los detalles de tu cita privada por canales directos para el ${_visit.fecha || 'día solicitado'} a las ${_visit.hora}. El atelier estará reservado exclusivamente para ti.`;
@@ -633,6 +666,7 @@ function onMainClick(e) {
         e.preventDefault();
         _tab = btn.dataset.tab;
         _sent = false;
+        _sendFailed = false;
         saveDraft();
         refreshFormCard();
         return;
@@ -640,6 +674,7 @@ function onMainClick(e) {
     if (action === 'reset') {
         e.preventDefault();
         _sent = false;
+        _sendFailed = false;
         refreshFormCard();
         return;
     }
@@ -756,10 +791,34 @@ function onMainSubmit(e) {
         document.querySelector('.ct-form-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
 
+    /* Dos formas de fallar, y solo una avisa (MEDIDO en el navegador el 2026-10-12, no supuesto):
+       · Reglas de Firestore o datos inválidos → `addDoc` RECHAZA → lo caza el `.catch`.
+       · Red caída → `addDoc` NO rechaza: Firestore encola la escritura y la promesa se queda
+         PENDIENTE indefinidamente. Se verificó interceptando XHR y fetch: a los 14 segundos la
+         tarjeta seguía diciendo «el atelier estará reservado exclusivamente para ti». Si el visitante
+         cierra la pestaña antes de que vuelva la red, la cita se perdió y nadie se enteró.
+       Por eso un `.catch` NO basta aquí: hace falta un plazo. Si en 9 s no hubo confirmación, se
+       retira la promesa. Y si el guardado llega tarde pero llega, se restituye: más vale una tarjeta
+       que se corrige sola que una cita perdida en silencio. */
+    let resuelto = false;
+    const plazo = setTimeout(() => {
+        if (resuelto) return;
+        _sendFailed = true;
+        refreshFormCard();
+    }, 9000);
+
     saveInquiry(payload).then(() => {
+        resuelto = true;
+        clearTimeout(plazo);
+        if (_sendFailed) { _sendFailed = false; refreshFormCard(); }  // llegó tarde, pero llegó
         clearDraft();
     }).catch(err => {
-        console.warn('[contacto] saveInquiry failed (UX no-op):', err);
+        resuelto = true;
+        clearTimeout(plazo);
+        // El borrador NO se limpia: que no tenga que reescribirlo si vuelve a intentar.
+        console.warn('[contacto] saveInquiry falló:', err);
+        _sendFailed = true;
+        refreshFormCard();
     });
 }
 

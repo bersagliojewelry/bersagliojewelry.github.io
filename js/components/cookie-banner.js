@@ -32,24 +32,35 @@ import { hasDecided, setConsent, decisionAnterior, CONSENT_EVENT } from '../core
    restringido y sin cookies. Decirlo mal es el error que esta pagina vino justamente a corregir. */
 const ENLACE = html`<a href="/privacidad.html#cookies">Cómo tratamos tus datos</a>`;
 
+/* ✍️ REGLA DE REDACCIÓN (Daniel, 2026-10-12, tras rechazar la versión anterior: «suena muy mal, yo no
+   aceptaría porque no entiendo»). Los tres avisos se escriben DESDE EL LADO DEL VISITANTE:
+     1.º lo que él gana · 2.º qué pasa exactamente con sus datos · 3.º su libertad de decir que no.
+   ⛔ Prohibido abrir con nuestra historia interna («esto es nuevo», «no se nos olvidó», «preferimos
+   preguntártelo de frente»): el visitante no conoce nuestro proceso y una disculpa antes de una
+   petición se lee como que algo se hizo mal. La transparencia es decir qué pasa, no enumerar nuestras
+   razones; y la persuasión honesta está en el ORDEN, nunca en esconder el rechazo.
+   ⚠️ Y se dice «cookies publicitarias» con su nombre: el `_fbp` de Meta y el `_ga` de Google SON
+   cookies. La versión anterior abría con «no usamos cookies» —cierto solo de lo funcional, que va en
+   localStorage— y en un aviso de cookies esa frase se lee como lo contrario de lo que es. */
 const AVISO_PRIMERA = html`
-    En Bersaglio guardamos en tu navegador solo lo necesario para que el sitio funcione, y para eso
-    no usamos cookies. Con tu permiso añadimos la medición y la publicidad de Google y de Meta
-    (Facebook e Instagram): así sabemos qué piezas despiertan interés y podemos mostrarte nuestros
-    anuncios. Si dices que no, no se activa ninguna, y puedes cambiar de opinión cuando quieras.
-    ${ENLACE}.`;
+    Nos gustaría seguir acompañándote después de esta visita. Si aceptas, usamos cookies publicitarias
+    que comparten con Google y con Meta (Facebook e Instagram) las piezas que miras aquí: así sabemos
+    qué despierta interés y podemos mostrarte las colecciones que se parecen a lo que te gustó. Sin tu
+    permiso no se activa ninguna y no se comparte nada. Puedes cambiar de opinión cuando quieras, y el
+    sitio funciona igual decidas lo que decidas. ${ENLACE}.`;
 
 const AVISO_YA_DIJO_SI = html`
-    No se nos olvidó lo que nos dijiste: esto es nuevo. Con tu permiso, Google y Meta (Facebook e
-    Instagram) sabrán qué piezas miraste aquí y si nos escribiste o compraste, para mostrarte
-    nuestros anuncios. Eso no estaba en lo que decidiste antes, y preferimos preguntártelo de
-    frente. Si dices que no, no se activa ninguna y aquí no cambia nada más. ${ENLACE}.`;
+    Nos gustaría acompañarte también cuando ya no estés aquí. Si aceptas, usamos cookies publicitarias
+    que comparten con Google y con Meta (Facebook e Instagram) las piezas que miras y si nos escribes,
+    y así te mostramos nuestras colecciones donde ya pasas el rato. Es una finalidad nueva, que tu
+    permiso anterior no cubría. Sin tu permiso no se activa ninguna, y aquí no cambia nada más.
+    ${ENLACE}.`;
 
 const AVISO_YA_DIJO_NO = html`
-    Antes dijiste que no, y así se quedó: no se activó nada. Te preguntamos otra vez solo porque
-    añadimos una finalidad que tu respuesta anterior no podía cubrir: con tu permiso, Google y Meta
-    (Facebook e Instagram) reciben datos de tu visita para mostrarte nuestros anuncios. Si tu
-    respuesta sigue siendo no, vuelve a decirlo: mientras no aceptes, no se activa nada. ${ENLACE}.`;
+    Tu respuesta de antes se respetó y no se activó nada. Volvemos a preguntarte porque ahora hay algo
+    distinto: con tu permiso, unas cookies publicitarias comparten con Google y con Meta (Facebook e
+    Instagram) las piezas que miras aquí, para enseñarte nuestras colecciones fuera de este sitio. Si
+    tu respuesta sigue siendo no, aquí no cambia nada. ${ENLACE}.`;
 
 function avisoQueToca() {
     const antes = decisionAnterior();

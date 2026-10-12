@@ -939,6 +939,46 @@ test('F6 leads · sin nombre es rechazado', async () => {
     }));
 });
 
+/* Prueba de la autorización del titular (Ley 1581 + Decreto 1377 art. 5), gemela de la del
+   newsletter. FASE 1: se ACEPTA y se valida la forma; todavía NO se exige, para que ningún
+   visitante con el JS viejo en caché pierda su lead durante el relevo. El día que la fase 2 cierre
+   la puerta, el 3er test de abajo pasa de `assertSucceeds` a `assertFails` y es el único cambio. */
+test('habeas leads · el lead CON la prueba bien formada pasa', async () => {
+    await assertSucceeds(addDoc(collection(anon(), 'inquiries'), {
+        name: 'Clienta', email: 'c@x.co', phone: '3000000000', message: 'Quiero el anillo',
+        pieceSlug: null, source: 'contacto-mensaje', status: 'nuevo',
+        habeasData: { aceptado: true, version: '2026-10-12', fecha: serverTimestamp() },
+        createdAt: serverTimestamp(),
+    }));
+});
+test('habeas leads · prueba con `aceptado: false` es rechazada (no se archiva un "no" como un "sí")', async () => {
+    await assertFails(addDoc(collection(anon(), 'inquiries'), {
+        name: 'X', message: 'hola', pieceSlug: null, source: 'contacto-mensaje', status: 'nuevo',
+        habeasData: { aceptado: false, version: '2026-10-12', fecha: serverTimestamp() },
+        createdAt: serverTimestamp(),
+    }));
+});
+test('habeas leads · prueba con fecha del CLIENTE es rechazada (la pone el servidor o no prueba nada)', async () => {
+    await assertFails(addDoc(collection(anon(), 'inquiries'), {
+        name: 'X', message: 'hola', pieceSlug: null, source: 'contacto-mensaje', status: 'nuevo',
+        habeasData: { aceptado: true, version: '2026-10-12', fecha: new Date('2020-01-01') },
+        createdAt: serverTimestamp(),
+    }));
+});
+test('habeas leads · prueba con campos de más es rechazada (forma exacta)', async () => {
+    await assertFails(addDoc(collection(anon(), 'inquiries'), {
+        name: 'X', message: 'hola', pieceSlug: null, source: 'contacto-mensaje', status: 'nuevo',
+        habeasData: { aceptado: true, version: '2026-10-12', fecha: serverTimestamp(), ip: '1.2.3.4' },
+        createdAt: serverTimestamp(),
+    }));
+});
+test('habeas leads · FASE 1: el lead SIN prueba todavía pasa (relevo del JS en caché)', async () => {
+    await assertSucceeds(addDoc(collection(anon(), 'inquiries'), {
+        name: 'X', message: 'hola', pieceSlug: null, source: 'web', status: 'nuevo',
+        createdAt: serverTimestamp(),
+    }));
+});
+
 // push_tokens: sin writer legítimo en el código → cerrado
 test('F6 push_tokens · creación pública CERRADA (sin uso legítimo)', async () => {
     await assertFails(setDoc(doc(anon(), 'push_tokens/t1'), { token: 'abc' }));

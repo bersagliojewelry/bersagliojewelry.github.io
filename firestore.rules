@@ -650,6 +650,10 @@ service cloud.firestore {
           && d.email.matches('^[^@]+@[^@]+[.][^@]+$')
           && (!('source' in d) || (d.source is string && d.source.size() <= 40))
           && (!('active' in d) || d.active == true)
+          // `'habeasData' in d` PRIMERO, a propósito: sin él, un alta sin prueba no daba `false`
+          // sino un error de evaluación («Property habeasData is undefined on object»). Denegaba
+          // igual —por accidente, no por la regla— y quien leyera el log pensaría que está roto.
+          && ('habeasData' in d)
           && d.habeasData is map
           && d.habeasData.keys().hasOnly(['aceptado', 'version', 'fecha'])
           && d.habeasData.aceptado == true
@@ -659,7 +663,7 @@ service cloud.firestore {
     }
     function inquiryCreateValida() {
       let d = request.resource.data;
-      return d.keys().hasOnly(['name', 'email', 'phone', 'message', 'pieceSlug', 'source', 'status', 'createdAt'])
+      return d.keys().hasOnly(['name', 'email', 'phone', 'message', 'pieceSlug', 'source', 'status', 'createdAt', 'habeasData'])
           && nonEmptyStr(d.name)    && d.name.size()    <= 120
           && nonEmptyStr(d.message) && d.message.size() <= 3000
           && (!('email' in d) || (d.email is string && d.email.size() <= 254))
@@ -667,6 +671,17 @@ service cloud.firestore {
           && (!('pieceSlug' in d) || d.pieceSlug == null || (d.pieceSlug is string && d.pieceSlug.size() <= 200))
           && d.source is string && d.source.size() <= 40
           && d.status == 'nuevo'
+          // Prueba de la autorización del titular (Ley 1581 + Decreto 1377 art. 5), gemela de la
+          // del newsletter. ⚠️ FASE 1 — se ACEPTA y se valida la forma, todavía no se EXIGE: el
+          // cliente que la envía tiene que estar vivo antes de cerrar la puerta, o un visitante con
+          // el JS viejo en caché vería su lead rechazado. La fase 2 cambia el `!('habeasData' in d)`
+          // por la exigencia; está anotada en el cerebro con su fecha.
+          && (!('habeasData' in d) || (
+                 d.habeasData is map
+              && d.habeasData.keys().hasOnly(['aceptado', 'version', 'fecha'])
+              && d.habeasData.aceptado == true
+              && d.habeasData.version is string && d.habeasData.version.size() <= 40
+              && d.habeasData.fecha == request.time))
           && d.createdAt == request.time;
     }
 

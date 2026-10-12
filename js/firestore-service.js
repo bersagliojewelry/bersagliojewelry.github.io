@@ -614,7 +614,19 @@ export async function saveSubscription({ email, source, politicaVersion }) {
     });
 }
 
-export async function saveInquiry({ name, email, phone, message, pieceSlug, source }) {
+/**
+ * Guarda un lead — CON la prueba de la autorización del titular.
+ *
+ * `habeasData` llega de `core/habeas.js` (`prueba()`) y la fecha la pone el SERVIDOR aquí abajo,
+ * no el navegador: un timestamp que el cliente puede mover no prueba nada. Hasta el 2026-10-12 este
+ * campo no existía, así que el panel de leads enseñaba «sin registro» en rojo incluso cuando la
+ * persona SÍ había autorizado — el caso del carrito, que recogía la casilla y la tiraba a la basura.
+ *
+ * Queda OPCIONAL a propósito mientras la regla de Firestore está en fase 1 (ver `firestore.rules`):
+ * la regla acepta el documento con o sin prueba para que ningún visitante con el JS viejo en caché
+ * pierda su lead durante el relevo.
+ */
+export async function saveInquiry({ name, email, phone, message, pieceSlug, source, habeasData }) {
     return addDoc(collection(firestoreDb, COLLECTIONS.inquiries), {
         name,
         email,
@@ -623,6 +635,7 @@ export async function saveInquiry({ name, email, phone, message, pieceSlug, sour
         pieceSlug: pieceSlug || null,
         source:    source || 'web',
         status:    'nuevo',   // entra al pipeline de la Bandeja (F4, ADR §53)
+        ...(habeasData ? { habeasData: { ...habeasData, fecha: serverTimestamp() } } : {}),
         createdAt: serverTimestamp()
     });
 }

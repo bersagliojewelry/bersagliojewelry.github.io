@@ -717,7 +717,11 @@ body.wishlist-drawer-open {
 }
 /* Autorización de datos (Ley 1581): el checkbox ES el acto expreso, así que tiene que verse y
    poder leerse, no esconderse en letra diminuta. Alineado a la izquierda y a cuerpo legible. */
-.bj-email-habeas {
+/* `.bj-habeas` es la casilla de los formularios de Contacto y de la ficha de pieza (la pinta
+   `core/habeas.js`); `.bj-email-habeas` es la del newsletter. Comparten regla a propósito: el acto
+   expreso se ve IGUAL en todo el sitio, y una sola definición no se desincroniza. */
+.bj-email-habeas,
+.bj-habeas {
     display: flex;
     gap: 10px;
     align-items: flex-start;
@@ -727,8 +731,10 @@ body.wishlist-drawer-open {
     color: var(--bj-ink-mute);
     margin-top: 2px;
 }
-.bj-email-habeas input { margin-top: 3px; flex: 0 0 auto; accent-color: var(--bj-emerald-600); }
-.bj-email-habeas a { color: var(--bj-emerald-700); text-decoration: underline; }
+.bj-email-habeas input,
+.bj-habeas input { margin-top: 3px; flex: 0 0 auto; accent-color: var(--bj-emerald-600); }
+.bj-email-habeas a,
+.bj-habeas a { color: var(--bj-emerald-700); text-decoration: underline; }
 
 .bj-email-submit { padding: 14px 24px; }
 .bj-email-skip {

@@ -37,6 +37,7 @@ import { safeUrl } from '../core/safe-url.js';
 import { mergeContacto } from './contacto-defaults.js';
 import { mergeGlobal, waHref, igHref, GLOBAL_DEFAULTS } from '../core/global-defaults.js';
 import { saveInquiry } from '../firestore-service.js';
+import { casillaHtml, prueba as pruebaHabeas } from '../core/habeas.js';
 import { track } from '../analytics.js';
 
 let _tab = 'mensaje';
@@ -292,6 +293,8 @@ function renderFormMensaje() {
                 placeholder: '¿Qué historia o momento desea conmemorar? ¿Tiene alguna preferencia por una gema en particular?',
             })}
 
+            ${casillaHtml('contacto-mensaje')}
+
             <div class="ct-form-foot">
                 <div class="ct-discreto">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -362,6 +365,8 @@ function renderFormVisita() {
                 placeholder: 'Cualquier detalle que nos ayude a recibirte mejor.',
             })}
 
+            ${casillaHtml('contacto-visita')}
+
             <button type="submit" class="btn-aqua btn-aqua-emerald ct-submit ct-submit--start">
                 Reservar mi visita
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
@@ -411,6 +416,8 @@ function renderFormLlamada() {
                                 data-key="${escape(k)}">${escape(l)}</button>`)}
                 </div>
             </div>
+
+            ${casillaHtml('contacto-llamada')}
 
             <button type="submit" class="btn-aqua btn-aqua-emerald ct-submit ct-submit--start">
                 Pedir llamada
@@ -746,6 +753,7 @@ function onMainSubmit(e) {
             message: `[${motivo?.t || _form.t}] ${_form.presup ? `(Presup: ${_form.presup}) ` : ''}${_form.m || ''}`.trim(),
             pieceSlug: ref || null,
             source:  'contacto-mensaje',
+            habeasData: pruebaHabeas(),
         };
     } else if (formName === 'visita') {
         Object.assign(_visit, data);
@@ -757,6 +765,7 @@ function onMainSubmit(e) {
             message: `Visita ${_visit.fecha} ${_visit.hora} · ${_visit.personas} pers · ${motivo}${_visit.notas ? ` · ${_visit.notas}` : ''}`,
             pieceSlug: ref || null,
             source:  'contacto-visita',
+            habeasData: pruebaHabeas(),
         };
     } else {
         Object.assign(_call, data);
@@ -769,6 +778,7 @@ function onMainSubmit(e) {
             message: `Llamada · ${franja} · Urgencia: ${urgencia}`,
             pieceSlug: ref || null,
             source:  'contacto-llamada',
+            habeasData: pruebaHabeas(),
         };
     }
 

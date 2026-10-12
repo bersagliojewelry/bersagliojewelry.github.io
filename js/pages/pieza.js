@@ -31,6 +31,7 @@ import { balancedCols } from '../core/grid-balance.js';       // reparto intelig
 import { track, trackPieceView } from '../analytics.js';      // medición GA4 (view_item / view_item_list)
 import { mergeGlobal, waLink } from '../core/global-defaults.js';  // WhatsApp directo (fuente única del número)
 import { saveInquiry } from '../firestore-service.js';        // lead in-page (form flotante, no navega a contacto)
+import { casillaHtml, prueba as pruebaHabeas } from '../core/habeas.js';  // autorización Ley 1581
 
 let _slug = '';
 let _viewIdx = 0;
@@ -468,8 +469,23 @@ function leadFormHtml(piece) {
             <input class="pz-lead-input" name="tel" placeholder="WhatsApp o teléfono" autocomplete="tel" inputmode="tel" required>
             <input class="pz-lead-input" name="email" type="email" placeholder="Correo (opcional)" autocomplete="email">
             <textarea class="pz-lead-input pz-lead-textarea" name="mensaje" rows="2" placeholder="¿Algo que debamos saber? (opcional)"></textarea>
+            ${casillaHtml('pieza-form')}
             <button type="submit" class="btn-aqua btn-aqua-emerald pz-lead-submit">Enviar mis datos</button>
         </form>`;
+}
+/* El guardado falló DESPUÉS de haber pintado el éxito. Antes esto se tragaba con un
+   `console.warn`: el visitante se iba convencido de que había dejado sus datos y en la Bandeja no
+   había nada. Aquí se retira la promesa y se entrega el canal que sí contesta. */
+function leadFailedHtml(piece) {
+    return html`
+        <div class="pz-lead-success">
+            <h3 class="pz-lead-title">No pudimos guardar tus datos</h3>
+            <p class="pz-lead-sub">Perdónanos: algo falló de nuestro lado y no queremos decirte que
+                te escribiremos cuando no nos llegó nada. Escríbenos por WhatsApp y te atendemos
+                ahora mismo sobre esta pieza.</p>
+            <a class="btn-aqua btn-aqua-emerald pz-lead-done" href="${asesorWaHref(piece)}"
+               target="_blank" rel="noopener">Escribir por WhatsApp</a>
+        </div>`;
 }
 function leadSuccessHtml() {
     return html`
@@ -513,6 +529,9 @@ function onLeadSubmit(e) {
     const nombre = (form.nombre?.value || '').trim();
     const tel    = (form.tel?.value || '').trim();
     if (!nombre || !tel) { (!nombre ? form.nombre : form.tel)?.focus(); return; }
+    // La autorización del titular es PREVIA y EXPRESA: sin la casilla no se recoge nada
+    // (Ley 1581; el silencio no autoriza, Decreto 1377 art. 7).
+    if (!form.habeas?.checked) { form.habeas?.reportValidity(); return; }
     const email   = (form.email?.value || '').trim();
     const mensaje = (form.mensaje?.value || '').trim();
     const piece = data.getBySlug(_slug);
@@ -520,13 +539,18 @@ function onLeadSubmit(e) {
     const pieceName = piece?.name || 'Pieza';
 
     // Optimista: muestra el éxito ya; Firestore en background (igual que contacto.js).
-    mount(form.closest('[data-lead-body]'), leadSuccessHtml());
+    const cuerpo = form.closest('[data-lead-body]');
+    mount(cuerpo, leadSuccessHtml());
     try { track('generate_lead', { lead_type: 'pieza', piece_slug: slug }); } catch { /* analítica nunca rompe */ }
     saveInquiry({
         name: nombre, email, phone: tel,
         message: `[Pieza] Me interesa: ${pieceName}${mensaje ? ` — ${mensaje}` : ''}`,
         pieceSlug: slug, source: 'pieza-form',
-    }).catch(err => console.warn('[pieza] saveInquiry falló (UX no-op):', err));
+        habeasData: pruebaHabeas(),
+    }).catch(err => {
+        console.warn('[pieza] saveInquiry falló:', err);
+        if (cuerpo) mount(cuerpo, leadFailedHtml(piece));
+    });
 }
 
 function renderBreadcrumb(piece) {

@@ -40,6 +40,7 @@ import { data } from '../core/data.js';
 import { pieceUrl, pieceAbsUrl } from '../core/urls.js';
 import { mergeGlobal, waHref } from '../core/global-defaults.js';
 import { saveInquiry } from '../firestore-service.js';
+import { prueba as pruebaHabeas } from '../core/habeas.js';   // prueba de la autorización (Ley 1581)
 import { trackBeginCheckout, track } from '../analytics.js';
 import { pagarConWompi, wompiEligible } from '../pago-web.js';
 import { COUNTRIES } from '../core/countries.js';
@@ -552,6 +553,13 @@ async function confirmOrder(rows) {
         message: `[Pedido ${_payment}] ${itemsList} · Subtotal ${format$(subtotal)} · Envío: ${ship.address}, ${ship.city}, ${ship.country}`.trim(),
         pieceSlug: rows[0]?.slug || null,
         source:  `carrito-${_payment}`,
+        /* El checkout YA exigía la casilla (`ck-habeas`, paso Entrega) y tiraba la prueba a la
+           basura: el lead llegaba a la Bandeja marcado «sin registro» en rojo aunque la persona SÍ
+           hubiera autorizado. Aquí se archiva. ⚠️ La frase del checkout todavía se escribe en línea
+           en `renderStep2` —lleva además la aceptación de Términos y el retracto— y no sale de
+           `core/habeas.js` como las de Contacto y la ficha: unificarla toca el flujo de pago y va
+           en su propio cambio, no colgada de este. Pendiente anotado en el cerebro. */
+        habeasData: pruebaHabeas(),
     };
 
     // Aquí NO hay compra todavía: esto es INTENCIÓN. El pago real (Wompi) se devuelve en la rama de

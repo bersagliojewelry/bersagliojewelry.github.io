@@ -34,9 +34,16 @@ const ANIO_FUNDACION = 1983;
  * el único candado que caza afirmaciones falsas no miraba uno de los sitios desde los que se
  * publican. Mientras estuvo fuera, mover una frase de `js/` a `scripts/` la sacaba del radar sin
  * que nadie se diera cuenta.
+ *
+ * ⚠️ `.mjs` y `functions/` ENTRAN desde el 2026-10-13, y es el mismo defecto una capa más abajo.
+ * MEDIDO: el filtro de extensión era `/\.(html|js)$/`, que NO casa `.mjs` — así que los 48 `.mjs`
+ * del repo eran invisibles, **incluido el propio `scripts/generate-pieces.mjs` que el párrafo de
+ * arriba dice vigilar**. Y `functions/` estaba excluido entero, con `seed-piezas.mjs` sembrando
+ * «Certificado GIA», «Certificado Gübelin» y «Muzo, Boyacá» (limpiado el mismo día). Lección:
+ * declarar que se vigila una carpeta no basta; hay que comprobar que el filtro la alcanza.
  */
 function ficherosDelSitio() {
-    const fuera = new Set(['node_modules', 'dist', '.git', 'functions', 'tests',
+    const fuera = new Set(['node_modules', 'dist', '.git', 'tests',
         'Bersaglio Jewelry Design System', '.handoff', 'docs', '_legacy', 'snippets']);
     const salida = [];
     (function recorrer(dir) {
@@ -44,13 +51,37 @@ function ficherosDelSitio() {
             if (fuera.has(nombre) || nombre.startsWith('.')) continue;
             const ruta = join(dir, nombre);
             if (statSync(ruta).isDirectory()) recorrer(ruta);
-            else if (/\.(html|js)$/.test(nombre) && !nombre.startsWith('session-report-')) salida.push(ruta);
+            // Los `.test.mjs` quedan fuera a propósito: un test CITA el término prohibido para
+            // cazarlo, y meterlo aquí sería morderse la cola.
+            else if (/\.(html|js|mjs)$/.test(nombre)
+                && !/\.test\.(js|mjs)$/.test(nombre)
+                && !nombre.startsWith('session-report-')) salida.push(ruta);
         }
     })(ROOT);
     return salida;
 }
 
-const SITIO = ficherosDelSitio().map(ruta => ({ ruta: relative(ROOT, ruta), texto: readFileSync(ruta, 'utf8') }));
+/**
+ * Qué NO cuenta como texto publicado, y por qué (medido el 13-oct al ampliar el barrido a `.mjs`).
+ *
+ * El guardia de `scripts/generate-pieces.mjs` CITA cada frase prohibida para poder cazarla, igual
+ * que este test. Al ampliar el radar, el test empezó a cazar al guardia — y a su propio comentario.
+ * La regla que lo resuelve sin abrir un hueco: **un comentario y un literal de expresión regular
+ * nunca llegan al cliente**. No son vitrina, son maquinaria. Lo que sí se publica —una cadena, un
+ * default, una plantilla— sigue contando entero.
+ */
+const ES_MAQUINARIA = [
+    /^\s*(\/\/|\/\*|\*)/,              // comentario de línea o cuerpo de bloque
+    /=\s*\/.*\/[a-z]*\s*;?\s*$/,       // const X = /…/i;
+    /^\s*\[\/.*\/[a-z]*\s*,/,          // fila de tabla: [/…/i, '…'],
+];
+const sinTablaDePatrones = texto =>
+    texto.split('\n').filter(linea => !ES_MAQUINARIA.some(re => re.test(linea))).join('\n');
+
+const SITIO = ficherosDelSitio().map(ruta => ({
+    ruta: relative(ROOT, ruta),
+    texto: sinTablaDePatrones(readFileSync(ruta, 'utf8')),
+}));
 
 test('hechos: los años de oficio se derivan de 1983 y no hay dos cifras distintas', () => {
     // Se calcula, no se escribe a mano: así el gate no caduca cada 1 de enero.
@@ -128,7 +159,8 @@ test('hechos: «diamantes certificados» y «EST. 2014» no quedan vivos en ning
         'js/data/journal.js', 'js/home/journal-preview.js', 'scripts/generate-pieces.mjs'];
     const PROHIBIDOS = [
         [/diamantes?\s+certificad[oa]s?/i, 'el certificado acredita la esmeralda, no el diamante'],
-        [/EST\.?\s*(?!1983)\d{4}/i, `la casa es de ${ANIO_FUNDACION}; cualquier otro año aquí es falso`],
+        // \b al principio: sin él, «test1234» (la contraseña del emulador) casaba como «est1234».
+        [/\bEST\.?\s*(?!1983)\d{4}/i, `la casa es de ${ANIO_FUNDACION}; cualquier otro año aquí es falso`],
     ];
     const encontrados = [];
     for (const rel of FUENTES) {

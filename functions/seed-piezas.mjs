@@ -41,6 +41,12 @@ const COLLECTIONS = [
 const IMG = s => `/img/${s}`;
 
 // price ausente (clave OMITIDA) = "bajo consulta" — las reglas rechazan price:null.
+//
+// ⚠️ Los `certificate` y `origin` de abajo son SINTÉTICOS a propósito: este fichero es público
+// (repo abierto) y una máquina lo lee igual que una vitrina. Nombrar aquí un laboratorio real
+// (GIA, CDTEC, Gübelin) o una mina real (Muzo, Chivor) publica un hecho que el negocio NO tiene
+// verificado — es justo lo que cazan `tests/hechos-publicados.test.mjs` y el guardia de
+// `scripts/generate-pieces.mjs:954`. Datos de prueba: que se vean como datos de prueba.
 const PIECES = [
     {
         code: 'BJ-001', slug: 'anillo-zafiro-ceilan', name: 'Anillo Zafiro de Ceilán',
@@ -48,17 +54,17 @@ const PIECES = [
         sizes: ['6', '7', '8'], images: [IMG('ring-sapphire-800.webp')],
         description: 'Anillo en oro blanco de 18 quilates con zafiro azul talla oval, orlado de diamantes.',
         specs: { stone: 'Zafiro azul', carat: '2.1 ct', metal: 'Oro blanco 18k', cut: 'Talla oval',
-                 color: 'Azul real', clarity: 'VS', accent: 'Diamantes 0.4 ct', certificate: 'Certificado GIA',
-                 origin: 'Ceilán', delivery: 'Entrega en 15 días' },
+                 color: 'Azul real', clarity: 'VS', accent: 'Diamantes 0.4 ct', certificate: 'Certificado de prueba',
+                 origin: 'Origen de prueba', delivery: 'Entrega en 15 días' },
     },
     {
-        code: 'BJ-002', slug: 'aretes-esmeralda-muzo', name: 'Aretes Esmeralda Muzo',
+        code: 'BJ-002', slug: 'aretes-esmeralda-verde', name: 'Aretes Esmeralda Verde',
         collection: 'aretes', price: 8_400_000, badge: 'Nuevo',
         sizes: [], images: [IMG('earrings-emerald-800.webp')],
-        description: 'Aretes en oro amarillo de 18 quilates con esmeraldas de Muzo talla esmeralda y acentos de diamantes.',
+        description: 'Aretes en oro amarillo de 18 quilates con esmeraldas talla esmeralda y acentos de diamantes.',
         specs: { stone: 'Esmeralda', carat: '1.8 ct', metal: 'Oro amarillo 18k', cut: 'Talla esmeralda',
-                 color: 'Verde Muzo', clarity: 'VVS', accent: 'Diamantes', certificate: 'Certificado CDTEC',
-                 origin: 'Muzo, Boyacá' },
+                 color: 'Verde intenso', clarity: 'VVS', accent: 'Diamantes', certificate: 'Certificado de prueba',
+                 origin: 'Origen de prueba' },
     },
     {
         code: 'BJ-003', slug: 'aretes-travertino', name: 'Aretes Travertino',
@@ -73,15 +79,15 @@ const PIECES = [
         sizes: [], images: [IMG('model-emerald-800.webp'), IMG('emerald-gem.webp')],
         description: 'Collar editorial en oro blanco de 18 quilates con esmeralda central y cascada de diamantes.',
         specs: { stone: 'Esmeralda', carat: '5.2 ct', metal: 'Oro blanco 18k', color: 'Verde intenso',
-                 clarity: 'VS', accent: 'Diamantes 1.2 ct', certificate: 'Certificado Gübelin', origin: 'Chivor' },
+                 clarity: 'VS', accent: 'Diamantes 1.2 ct', certificate: 'Certificado de prueba', origin: 'Origen de prueba' },
     },
     {
         code: 'BJ-005', slug: 'anillo-solitario-esmeralda', name: 'Anillo Solitario Esmeralda',
         collection: 'anillos', price: 24_600_000, badge: null,
         sizes: ['5', '6', '7', '8', '9'], images: [IMG('emerald-gem.webp')],
-        description: 'Solitario en oro amarillo de 18 quilates con esmeralda de Muzo talla esmeralda.',
+        description: 'Solitario en oro amarillo de 18 quilates con esmeralda talla esmeralda.',
         specs: { stone: 'Esmeralda', carat: '3.4 ct', metal: 'Oro amarillo 18k', cut: 'Talla esmeralda',
-                 color: 'Verde Muzo', clarity: 'VS', certificate: 'Certificado CDTEC', origin: 'Muzo' },
+                 color: 'Verde intenso', clarity: 'VS', certificate: 'Certificado de prueba', origin: 'Origen de prueba' },
     },
     {
         code: 'BJ-006', slug: 'dije-gema-esmeralda', name: 'Dije Gema Esmeralda',
@@ -96,14 +102,14 @@ const PIECES = [
         sizes: [], images: [IMG('collage-800.webp')],
         description: 'Pulsera tennis en oro blanco de 18 quilates con línea continua de diamantes.',
         specs: { stone: 'Diamantes', carat: '5.0 ct total', metal: 'Oro blanco 18k', cut: 'Brillante',
-                 color: 'F', clarity: 'VVS', certificate: 'Certificado GIA' },
+                 color: 'F', clarity: 'VVS', certificate: 'Certificado de prueba' },
     },
     {
         code: 'BJ-008', slug: 'pulsera-esmeraldas', name: 'Pulsera de Esmeraldas',
         collection: 'pulseras', badge: null,         // SIN precio (bajo consulta)
         sizes: [], images: [IMG('cart-gems.webp')],
         description: 'Pulsera en oro amarillo de 18 quilates con esmeraldas colombianas engastadas.',
-        specs: { stone: 'Esmeraldas', metal: 'Oro amarillo 18k', certificate: 'Certificado CDTEC', origin: 'Colombia' },
+        specs: { stone: 'Esmeraldas', metal: 'Oro amarillo 18k', certificate: 'Certificado de prueba', origin: 'Origen de prueba' },
     },
     {
         code: 'BJ-009', slug: 'gargantilla-atelier', name: 'Gargantilla Atelier',

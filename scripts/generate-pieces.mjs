@@ -320,6 +320,13 @@ function buildBusinessGraph(cfg) {
             ...(nap.addressCountry ? { addressCountry: nap.addressCountry } : {}),
         },
         ...(cfg.areaServed ? { areaServed: { '@type': 'City', name: cfg.areaServed } } : {}),
+        // foundingDate + knowsAbout (2026-10-13): lo que convierte un nombre suelto en una ENTIDAD.
+        // «1983» es el hecho verificado que más separa a esta casa de la competencia del barrio, y
+        // hasta hoy solo aparecía de refilón en una frase. `knowsAbout` es lo que le dice a una
+        // máquina que este negocio es DE esmeraldas, no solo que «vende joyas» — el diagnóstico
+        // medido del `49 §1.5` era justo ese: Google no asocia la entidad con la palabra.
+        ...(cfg.foundingDate ? { foundingDate: String(cfg.foundingDate) } : {}),
+        ...(Array.isArray(cfg.knowsAbout) && cfg.knowsAbout.length ? { knowsAbout: cfg.knowsAbout } : {}),
         ...(cfg.hasMap ? { hasMap: cfg.hasMap } : {}),
         ...(cfg.geo && cfg.geo.latitude ? { geo: { '@type': 'GeoCoordinates', latitude: cfg.geo.latitude, longitude: cfg.geo.longitude } } : {}),
         ...(Array.isArray(cfg.openingHours) && cfg.openingHours.length ? { openingHoursSpecification: cfg.openingHours } : {}),

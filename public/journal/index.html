@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <!--
+      Los artículos viven en /journal/<slug>.html y el índice en /journal.html, así que el
+      DIRECTORIO /journal/ daba 404 (medido 2026-10-13). Lo prueban las máquinas y lo teclea
+      la gente. Esta página solo reenvía: va con noindex y canónica al índice real para no
+      crear una segunda puerta que compita con él.
+    -->
+    <meta name="robots" content="noindex, follow">
+    <link rel="canonical" href="https://bersagliojewelry.co/journal.html">
+    <meta http-equiv="refresh" content="0; url=/journal.html">
+    <title>Journal · Bersaglio Jewelry</title>
+</head>
+<body>
+    <p>El Journal de Bersaglio está en <a href="/journal.html">bersagliojewelry.co/journal.html</a>.</p>
+</body>
+</html>

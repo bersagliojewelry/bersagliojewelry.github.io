@@ -15,7 +15,15 @@
     "telephone": "+573013752592"
   },
   "areaServed": "Cartagena de Indias",
-  "hasMap": "https://share.google/dg6nfdgIHaFanKVYe",
+  "foundingDate": "1983",
+  "knowsAbout": [
+    "Esmeralda colombiana",
+    "Joyería en oro de 18 quilates",
+    "Anillos de compromiso",
+    "Certificación gemológica",
+    "Alta joyería en Cartagena de Indias"
+  ],
+  "hasMap": "https://maps.google.com/?cid=7241229818556020030",
   "geo": { "latitude": 10.4251642, "longitude": -75.5492068 },
   "openingHours": [
     {
@@ -26,6 +34,8 @@
     }
   ],
   "sameAs": [
+    "https://maps.google.com/?cid=7241229818556020030",
+    "https://www.tripadvisor.com/Attraction_Review-g297476-d34499603-Reviews-Bersaglio_Jewelry-Cartagena_Cartagena_District_Bolivar_Department.html",
     "https://www.instagram.com/bersaglio_jewelry/",
     "https://www.facebook.com/profile.php?id=61583793442626",
     "https://www.tiktok.com/@bersaglio_jewelry"

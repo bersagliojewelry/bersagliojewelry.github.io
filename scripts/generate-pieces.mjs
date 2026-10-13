@@ -32,6 +32,7 @@ import { facetHref } from '../js/core/urls.js';   // UNA regla para el enlace a 
 import { footerHTML } from '../js/components/footer-markup.js';   // el pie, horneado (no solo por JS)
 import { mergeGlobal } from '../js/core/global-defaults.js';
 import { mergeNosotros } from '../js/pages/nosotros-defaults.js';   // las preguntas frecuentes REALES para el FAQPage
+import { renderNosotros } from '../js/pages/nosotros-render.js';    // el MISMO motor que pinta el navegador
 // Motor de render del artículo del Journal: el MISMO módulo que usa el navegador
 // (js/pages/entrada.js). Un solo motor → lo horneado y lo hidratado son el mismo HTML.
 import { renderArticle, relatedFrom, entryTitleTag } from '../js/data/journal-render.js';
@@ -2301,6 +2302,31 @@ async function main() {
         const horneadas = faqNode ? faqNode.mainEntity.length : 0;
         console.log(`[generate] JSON-LD horneado en ${hechos} página(s) (Contacto: negocio local + ContactPage · `
             + `Nosotros: AboutPage + ${horneadas} de ${faqs.length} preguntas${horneadas < faqs.length ? ' — ver los avisos de arriba' : ''}).`);
+    }
+
+    // Cuerpo de NOSOTROS horneado (2026-10-13). MEDIDO en el HTML servido: la página llegaba con
+    // 495 caracteres de cuerpo —el salto al contenido, el menú y el pie— y su <main> VACÍO. Los
+    // MISMOS 495 que contacto.html. O sea: la página que cuenta quién es esta casa no existía para
+    // una máquina que lee HTML, y lo único que se salvaba eran sus preguntas frecuentes, y solo
+    // porque viven en el <head>. Es el mismo mal que el Journal tenía en octubre y la receta ya
+    // está probada: UN motor de render compartido (js/pages/nosotros-render.js) y el HTML en dist.
+    // Fail-open como el resto del bake: sin siteContent se hornean los DEFAULTS, que es lo que el
+    // navegador pinta igual en el primer paint — nunca se queda a medias.
+    {
+        const p = join(DIST, 'nosotros.html');
+        if (!existsSync(p)) throw new Error('[generate] No existe dist/nosotros.html.');
+        let html = readFileSync(p, 'utf-8');
+        const ancla = '<main id="main-content" data-screen-label="nosotros">';
+        if (!html.includes(ancla)) throw new Error('[generate] dist/nosotros.html: falta el ancla del <main>.');
+        const cuerpo = renderNosotros(mergeNosotros((sc && sc.nosotros) || null));
+        html = replaceOnce(html, ancla,
+            '<main id="main-content" data-screen-label="nosotros" data-baked="nosotros">\n' + cuerpo);
+        if (html.length < MIN_BAKE_BYTES || !html.includes('</html>')) {
+            throw new Error('[generate] dist/nosotros.html quedó inválido tras hornear el cuerpo.');
+        }
+        writeFileSync(p, html);
+        const palabras = cuerpo.replace(/<[^>]*>/g, ' ').split(/\s+/).filter(Boolean).length;
+        console.log(`[generate] Cuerpo horneado en dist/nosotros.html (${palabras} palabras dentro del <main>, antes 0).`);
     }
 
     // siteContent del CMS horneado (anti-flash 1ª visita + preload al hero real, §163). Solo

@@ -1094,6 +1094,14 @@ function assertHomePrerenderizada(out) {
  * sirve es el mismo que ya protege la portada: contar las palabras que quedaron DENTRO del
  * `<main>` del fichero escrito, que es la medida que se verifica por `curl` contra producción.
  *
+ * ⚠️ QUÉ **NO** SIGNIFICA EL SELLO `data-baked` AQUÍ. En el Journal el sello es un guardia de
+ * verdad: `js/pages/entrada.js` lo consulta y NO repinta mientras Firestore no conteste, que es lo
+ * que impedía que el cuerpo horneado se tapara con «Cargando la entrada…». En Nosotros y Contacto
+ * NADIE lo lee: su `init()` hace `innerHTML = render(...)` sin condición, porque aquí el cliente
+ * pinta sincrónicamente desde los DEFAULTS y no existe esa ventana en blanco que tapar. El sello
+ * se escribe como MARCA —para medir desde fuera que la página llegó horneada— y no como promesa.
+ * Quien algún día dé por hecho «si está sellado, no repinto» estará equivocado en estas dos.
+ *
  * @param {string} archivo  nombre dentro de `dist/`, p. ej. 'contacto.html'
  * @param {string} label    el `data-screen-label` del `<main>`, que es también el sello
  * @param {string} cuerpo   HTML del motor de render compartido con el navegador
@@ -1107,8 +1115,25 @@ function hornearCuerpo(archivo, label, cuerpo, minPalabras) {
     if (!original.includes(ancla)) throw new Error(`[generate] dist/${archivo}: falta el ancla del <main>.`);
 
     const antes = palabrasEnMain(original);
-    const html = replaceOnce(original, ancla,
-        `<main id="main-content" data-screen-label="${label}" data-baked="${label}">\n${cuerpo}`);
+
+    // Se reemplaza el <main> ENTERO, no se inserta tras su etiqueta de apertura. La diferencia la
+    // paga el esqueleto de carga: ese div de `min-height: 80vh` que dice «Bersaglio Jewelry» y que
+    // existe para que la página no esté en blanco mientras el JS monta. Insertando delante, el
+    // esqueleto sobrevivía DETRÁS del contenido horneado (medido el 13-oct en dist/nosotros.html):
+    // con JS no se ve, porque el repintado del cliente borra el <main> entero, pero quien llegue
+    // sin JS —y cualquiera, durante el rato entre el primer pintado y la hidratación— se encuentra
+    // la página completa y, al final, un cartel de carga a pantalla entera. Una página horneada ya
+    // no tiene nada que esperar: su esqueleto sobra.
+    //
+    // El corte se hace por índices y no por `.replace()` ni por una expresión regular, por la misma
+    // razón que `replaceOnce`: un `$&` tecleado en el panel se expandiría en la cadena de
+    // reemplazo. Con `slice` no hay cadena de reemplazo que expandir.
+    const i = original.indexOf(ancla);
+    const fin = original.indexOf('</main>', i);
+    if (fin < 0) throw new Error(`[generate] dist/${archivo}: el <main> no cierra.`);
+    const html = original.slice(0, i)
+        + `<main id="main-content" data-screen-label="${label}" data-baked="${label}">\n${cuerpo}\n    `
+        + original.slice(fin);
     if (html.length < MIN_BAKE_BYTES || !html.includes('</html>')) {
         throw new Error(`[generate] dist/${archivo} quedó inválido tras hornear el cuerpo.`);
     }

@@ -126,13 +126,26 @@ test('hechos: no se promete un boceto a mano alzada ni una visita al taller', ()
     // mano alzada es mentira, el cliente llega con su diseño y Kary se lo envía a hacer».
     // Ojo: el taller EXISTE y el café con Kary es REAL. Lo falso es (a) dibujar un boceto a mano
     // alzada y (b) invitar al cliente a ver el taller. La tienda sí se visita.
+    //
+    // ⚠️ 2026-10-13: la regla también vigila «atelier». La versión del 10-oct decía «di tienda o
+    // atelier, no taller», y con esa puerta abierta se quedó publicada en Términos la frase
+    // «coordinar tu pedido … visitando el atelier en Cartagena de Indias». Ese mismo día Daniel
+    // cerró la frontera entera —«el taller queda como un backoffice, no está abierto al público,
+    // únicamente la tienda comercial»— y la tabla de hechos pasó a prohibir también «visita al
+    // atelier». La palabra suelta sigue permitida (es locativo de marca: «desde nuestro atelier
+    // fabricamos»); lo prohibido es INVITAR a entrar, y por eso la regla exige el verbo delante.
     const PROHIBIDOS = [
         [/boceto a mano alzada/i, 'nadie dibuja un boceto a mano alzada: el cliente trae su diseño'],
-        [/(visit\w*|conoc\w*|\bven\b|vengan|ac[eé]rcate|pas[ae] por|descubr\w*)[^.!?]{0,200}\btaller\b/i,
-            'el taller no se visita; el cliente conoce la TIENDA. Di «tienda» o «atelier», no «taller». '
+        [/(visit\w*|conoc\w*|\bven\b|vengan|ac[eé]rcate|pas[ae] por|descubr\w*)[^.!?\n]{0,200}\b(taller|atelier)\b/i,
+            'no se invita a entrar al taller, ni llamándolo «atelier»: es backoffice. Lo abierto al '
+            + 'público es la TIENDA, así que di «la tienda» o «nuestra casa». '
             + 'Se busca en la MISMA frase y sin límite corto de distancia, porque la que de verdad lo '
             + 'colaba era larga: «Ven a descubrir nuestra curaduría … directamente en el taller de la '
-            + 'diseñadora Kary Mendoza» (publicación del Perfil de Empresa del 9-jul)'],
+            + 'diseñadora Kary Mendoza» (publicación del Perfil de Empresa del 9-jul). El salto de '
+            + 'línea CORTA la frase: sin eso, al ampliar la regla a «atelier» el gate pegó tres claves '
+            + 'seguidas de un fichero de defaults —«Puertas abiertas, sin cita» … «// imagen del '
+            + 'atelier»— y las denunció como una invitación que nadie escribió. Un guardia que grita '
+            + 'de más enseña a ignorarlo, y entonces deja de servir justo cuando hace falta'],
     ];
     const encontrados = [];
     for (const { ruta, texto } of SITIO) {

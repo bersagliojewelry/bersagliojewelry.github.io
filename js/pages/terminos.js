@@ -37,7 +37,7 @@ Los precios se expresan en pesos colombianos (COP) y corresponden al valor final
         id: 'cierre-compra',
         n: '03',
         title: 'Proceso de compra y medios de pago',
-        body: `Acompañamos cada compra de forma personal. Puedes resolver dudas y coordinar tu pedido por WhatsApp, correo, teléfono o visitando el atelier en Cartagena de Indias.
+        body: `Acompañamos cada compra de forma personal. Puedes resolver dudas y coordinar tu pedido por WhatsApp, correo, teléfono o visitando nuestra tienda en el Centro Histórico de Cartagena de Indias.
 
 Medios de pago:
 · Transferencia bancaria: te compartimos el número de cuenta o el código QR de la cuenta de Bersaglio por WhatsApp y confirmamos tu pedido al recibir el pago.

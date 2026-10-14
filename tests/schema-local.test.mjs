@@ -62,8 +62,19 @@ test('el guardia caza lo que la tabla de hechos marca NO VERIFICADO o FALSO', ()
     const bloque = GEN.slice(GEN.indexOf('const HECHOS_RETIRADOS'), GEN.indexOf('/** Devuelve los hechos retirados'));
     assert.match(bloque, /caf\[e/i, 'el café nace del prototipo de IA: NO VERIFICADO');
     assert.match(bloque, /compromiso\\s\+de\\s\+compra/i, '«sin compromiso de compra»: NO VERIFICADO');
-    assert.match(bloque, /no\\s\+revendemos/i, '«fabricamos, no revendemos»: DUDOSO, sin confirmación pieza a pieza');
-    assert.match(bloque, /\\btaller\\b/i, 'el taller visitable: NO VERIFICADO');
+    assert.match(bloque, /taller\|atelier/i, 'el taller visitable: FALSO — y tampoco vale llamarlo «atelier»');
+});
+
+test('el guardia ya NO caza «fabricamos, no revendemos»: la tabla lo pasó a VERIFICADO', () => {
+    // Derogación con fecha. Hasta el 2026-10-13 la frase estaba marcada DUDOSA «sin confirmación
+    // pieza a pieza» (venía de leer el CIIU 3211), y el guardia la tumbaba en silencio del JSON-LD
+    // mientras el manifiesto del Home la publicaba — el repo afirmaba las dos cosas a la vez.
+    // Daniel la confirmó de frente: «bersaglio no le compra a nadie las piezas, las fabrican ellos
+    // mismos». Este test es el que impide que la entrada vuelva por inercia.
+    const bloque = GEN.slice(GEN.indexOf('const HECHOS_RETIRADOS'), GEN.indexOf('/** Devuelve los hechos retirados'));
+    assert.doesNotMatch(bloque, /\[\/no\\s\+revendemos/,
+        '«fabricamos, no revendemos» está VERIFICADO desde el 13-oct: no puede volver a la lista de retirados. '
+        + 'El límite que SÍ sigue en pie es el taller, que no se visita — esa entrada es otra.');
 });
 
 test('el guardia vigila el REQUISITO de la cita, no la palabra «cita previa»', () => {

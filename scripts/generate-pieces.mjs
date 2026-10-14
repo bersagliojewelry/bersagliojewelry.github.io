@@ -411,11 +411,22 @@ const HECHOS_RETIRADOS = [
         'la cita NO es obligatoria: «atendemos con cita previa» o «solo con cita» son FALSOS'],
     [/sin\s+(ning[úu]n\s+)?compromiso\s+de\s+compra/i,
         '«sin compromiso de compra» está NO VERIFICADO (nace del prototipo de IA)'],
-    [/no\s+revendemos|fabricamos\s*[—,-]\s*no/i,
-        '«fabricamos, no revendemos» está DUDOSO: sin confirmación pieza a pieza'],
+    // ⛔ AQUÍ ESTABA «fabricamos, no revendemos», marcado DUDOSO «sin confirmación pieza a pieza».
+    // Se retira el 2026-10-13: Daniel lo confirmó de frente —«bersaglio no le compra a nadie las
+    // piezas, las fabrican ellos mismos»— y la tabla de hechos lo pasó a VERIFICADO, derogando el
+    // DUDOSO que venía de leer el CIIU 3211. Mientras la entrada siguió aquí, el guardia tumbaba
+    // en silencio del JSON-LD cualquier pregunta que dijera la verdad, y el Home lo publicaba a la
+    // vez en su manifiesto: el repo afirmaba las dos cosas. Ojo al límite, que sigue en pie: se
+    // dice de la FABRICACIÓN, nunca del taller — ese NO se visita (la entrada de abajo).
     [/filigrana de Mompox|momposina/i, 'marca colectiva de terceros, y el orfebre era inventado'],
-    [/(visit\w*|conoc\w*|\bven\b|vengan|ac[eé]rcate|pas[ae] por|descubr\w*)[^.!?]{0,200}\btaller\b/i,
-        'el taller NO se visita (confirmado por el dueño)'],
+    // «atelier» entra en esta regla el 2026-10-13. Hasta ese día solo vigilaba «taller», con la
+    // doctrina «di tienda o atelier, no taller» — y la tabla la derogó ese mismo día al escribir
+    // la frontera completa: «jamás "ven a ver el taller", "te mostramos el taller" NI "visita al
+    // atelier"». El taller es backoffice; lo que se visita es la TIENDA. La palabra «atelier» sola
+    // sigue permitida (es locativo de marca: «desde nuestro atelier fabricamos»); lo prohibido es
+    // INVITAR a entrar en él.
+    [/(visit\w*|conoc\w*|\bven\b|vengan|ac[eé]rcate|pas[ae] por|descubr\w*)[^.!?\n]{0,200}\b(taller|atelier)\b/i,
+        'el taller es backoffice y no se abre al público, tampoco bajo el nombre «atelier» (confirmado por el dueño). Lo que sí recibe gente es la TIENDA'],
     [/boceto a mano alzada/i, 'nadie dibuja un boceto a mano alzada'],
     [/diamantes?\s+certificad[oa]s?/i, 'el certificado acredita la esmeralda, no el diamante'],
     [/env[ií]os?\s+asegurad[oa]s?/i, 'no se contrata seguro de envío'],

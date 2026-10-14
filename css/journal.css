@@ -313,7 +313,7 @@
 }
 .jr-newsletter-italic { color: var(--bj-gold-300); }
 .jr-newsletter-form {
-    display: flex; gap: 6px;
+    display: flex; flex-wrap: wrap; gap: 6px;
     background: oklch(100% 0 0 / 0.15);
     border-radius: 10px;
     padding: 4px;
@@ -342,6 +342,17 @@
     font-family: var(--font-ui);
 }
 .jr-newsletter-btn:hover { background: var(--bj-gold-300); }
+/* Gemela de la de la portada (`css/home.css`, `.hj-newsletter-form .bj-email-habeas`): la casilla
+   de autorización baja a su propia línea y recupera el BLANCO del contenedor, porque la regla base
+   de `components.css` la pinta en tinta oscura e ilegible sobre este cristal. Si cambias una,
+   cambia la otra: son la MISMA casilla en dos cajas. */
+.jr-newsletter-form .bj-email-habeas {
+    flex: 1 0 100%;
+    padding: 2px 8px 6px;
+    color: #fff;
+}
+.jr-newsletter-form .bj-email-habeas a { color: #fff; }
+.jr-newsletter-form .bj-email-habeas input { accent-color: var(--bj-gold-500); }
 
 /* Archive grid */
 .jr-archive { margin-bottom: 56px; }

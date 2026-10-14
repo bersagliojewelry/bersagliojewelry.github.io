@@ -1300,7 +1300,7 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
 }
 .hj-newsletter-italic { color: var(--bj-gold-300); }
 .hj-newsletter-form {
-    display: flex; gap: 6px;
+    display: flex; flex-wrap: wrap; gap: 6px;
     background: oklch(100% 0 0 / 0.15);
     border-radius: 10px;
     padding: 4px;
@@ -1327,6 +1327,18 @@ main:has(> .home-hero:first-child) { padding-top: 0; }
     font-family: var(--font-ui);
 }
 .hj-newsletter-btn:hover { background: var(--bj-gold-300); }
+/* La casilla de autorización (Ley 1581), dentro de esta caja. Baja a su propia línea —por eso el
+   `flex-wrap` de arriba— para que en la fila queden solo el campo y el botón. Y recupera el BLANCO
+   del contenedor: la regla base de `components.css` la pinta en tinta oscura, que aquí, sobre el
+   cristal esmeralda, sería ilegible. Una autorización solo vale si fue INFORMADA, y eso se juzga
+   por lo que el titular pudo leer; gris sobre color está prohibido (doctrina CSS §4). */
+.hj-newsletter-form .bj-email-habeas {
+    flex: 1 0 100%;
+    padding: 2px 8px 6px;
+    color: #fff;
+}
+.hj-newsletter-form .bj-email-habeas a { color: #fff; }
+.hj-newsletter-form .bj-email-habeas input { accent-color: var(--bj-gold-500); }
 .hj-newsletter-thanks {
     color: #fff;
     padding: 8px 4px;

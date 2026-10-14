@@ -151,8 +151,8 @@ function journalInner() {
                             </div>
                             <form class="hj-newsletter-form" data-newsletter="home-journal">
                                 <input type="email" name="email" placeholder="tu@correo.com" class="hj-newsletter-input" autocomplete="email" required>
-                                ${casillaNewsletterHtml()}
                                 <button type="submit" class="hj-newsletter-btn">Suscribir</button>
+                                ${casillaNewsletterHtml()}
                             </form>
                         </div>
                     </aside>

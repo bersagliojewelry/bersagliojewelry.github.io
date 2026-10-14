@@ -129,8 +129,8 @@ function renderCover(feat, side) {
                     </div>
                     <form class="jr-newsletter-form" data-newsletter="journal">
                         <input type="email" name="email" placeholder="tu@correo.com" class="jr-newsletter-input" autocomplete="email" required>
-                        ${casillaNewsletterHtml()}
                         <button type="submit" class="jr-newsletter-btn">Suscribir</button>
+                        ${casillaNewsletterHtml()}
                     </form>
                 </div>
             </aside>

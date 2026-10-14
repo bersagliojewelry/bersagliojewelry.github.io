@@ -2422,7 +2422,15 @@ async function main() {
             const shell = readFileSync(entradaShellPath, 'utf-8');
             const jDir = join(DIST, 'journal');
             mkdirSync(jDir, { recursive: true });
-            try { for (const fl of readdirSync(jDir).filter(x => x.endsWith('.html'))) unlinkSync(join(jDir, fl)); } catch { /* primer run */ }
+            // La barrida deja fuera `index.html`: ese NO es un artículo horneado, viene de
+            // `public/journal/` y es el redirector que evita el 404 de `/journal/`. Medido el
+            // 2026-10-13: el filtro barría todo `.html` y se lo llevaba en cada build, así que
+            // el redirector llegó al repo, pasó por CI y NUNCA estuvo en el sitio publicado.
+            const PRESERVAR_EN_JOURNAL = new Set(['index.html']);
+            try {
+                for (const fl of readdirSync(jDir).filter(x => x.endsWith('.html') && !PRESERVAR_EN_JOURNAL.has(x)))
+                    unlinkSync(join(jDir, fl));
+            } catch { /* primer run */ }
             const jFailures = [];
             let jCount = 0;
             for (const e of journalBakeables) {

@@ -33,6 +33,8 @@ import { footerHTML } from '../js/components/footer-markup.js';   // el pie, hor
 import { mergeGlobal } from '../js/core/global-defaults.js';
 import { mergeNosotros } from '../js/pages/nosotros-defaults.js';   // las preguntas frecuentes REALES para el FAQPage
 import { renderNosotros } from '../js/pages/nosotros-render.js';    // el MISMO motor que pinta el navegador
+import { mergeContacto } from '../js/pages/contacto-defaults.js';
+import { renderContacto } from '../js/pages/contacto-render.js';    // ídem: un solo motor para Contacto
 // Motor de render del artículo del Journal: el MISMO módulo que usa el navegador
 // (js/pages/entrada.js). Un solo motor → lo horneado y lo hidratado son el mismo HTML.
 import { renderArticle, relatedFrom, entryTitleTag } from '../js/data/journal-render.js';
@@ -1079,6 +1081,52 @@ function assertHomePrerenderizada(out) {
             `o el error que el try/catch de prerenderHomeHtml dejó en el log de arriba.`,
         );
     }
+}
+
+/**
+ * Hornea el cuerpo de una página de las que el navegador pintaba entera por JS (hoy Nosotros y
+ * Contacto): mete el HTML del motor compartido dentro de su `<main>` y sella el ancla.
+ *
+ * ⚠️ POR QUÉ ESTA FUNCIÓN TIENE SU PROPIA POST-CONDICIÓN, y no le basta la de tamaño que usaba
+ * antes cada bloque. `MIN_BAKE_BYTES` mide la PÁGINA ENTERA (45 KB con su cabeza, su menú y sus
+ * scripts), así que un cuerpo VACÍO la habría pasado en silencio y la página se habría publicado
+ * otra vez sin contenido — exactamente el fallo que este horneado vino a arreglar. El guardia que
+ * sirve es el mismo que ya protege la portada: contar las palabras que quedaron DENTRO del
+ * `<main>` del fichero escrito, que es la medida que se verifica por `curl` contra producción.
+ *
+ * @param {string} archivo  nombre dentro de `dist/`, p. ej. 'contacto.html'
+ * @param {string} label    el `data-screen-label` del `<main>`, que es también el sello
+ * @param {string} cuerpo   HTML del motor de render compartido con el navegador
+ * @param {number} minPalabras  suelo con margen para que el dueño recorte copy sin romper el build
+ */
+function hornearCuerpo(archivo, label, cuerpo, minPalabras) {
+    const p = join(DIST, archivo);
+    if (!existsSync(p)) throw new Error(`[generate] No existe dist/${archivo}.`);
+    const ancla = `<main id="main-content" data-screen-label="${label}">`;
+    const original = readFileSync(p, 'utf-8');
+    if (!original.includes(ancla)) throw new Error(`[generate] dist/${archivo}: falta el ancla del <main>.`);
+
+    const antes = palabrasEnMain(original);
+    const html = replaceOnce(original, ancla,
+        `<main id="main-content" data-screen-label="${label}" data-baked="${label}">\n${cuerpo}`);
+    if (html.length < MIN_BAKE_BYTES || !html.includes('</html>')) {
+        throw new Error(`[generate] dist/${archivo} quedó inválido tras hornear el cuerpo.`);
+    }
+    const error = cuerpoHorneadoInsuficiente(archivo, html, minPalabras);
+    if (error) throw new Error(error);
+    writeFileSync(p, html);
+    console.log(`[generate] Cuerpo horneado en dist/${archivo} (${palabrasEnMain(html)} palabras dentro del <main>, antes ${antes}).`);
+}
+
+// La post-condición del horneado, aparte y PURA (cubierta por SSG_SELFTEST): página horneada →
+// mensaje de error, o null si está bien. Devuelve texto en vez de lanzar para poder afirmarla en
+// el autotest sin montar un try/catch, igual que `bakeIntegrityError`.
+function cuerpoHorneadoInsuficiente(archivo, html, minPalabras) {
+    const palabras = palabrasEnMain(html);
+    if (palabras >= minPalabras) return null;
+    return `[generate] dist/${archivo} se iba a publicar con ${palabras} palabras dentro del <main> `
+        + `(mínimo ${minPalabras}). El cuerpo NO se horneó: o el motor de render devolvió vacío, o el `
+        + `contenido del panel llegó mutilado. Se aborta antes de republicar la página vacía.`;
 }
 
 // Lee los documentos de `siteContent` UNA sola vez por build. Antes vivía dentro de
@@ -2312,21 +2360,33 @@ async function main() {
     // está probada: UN motor de render compartido (js/pages/nosotros-render.js) y el HTML en dist.
     // Fail-open como el resto del bake: sin siteContent se hornean los DEFAULTS, que es lo que el
     // navegador pinta igual en el primer paint — nunca se queda a medias.
+    hornearCuerpo('nosotros.html', 'nosotros', renderNosotros(mergeNosotros((sc && sc.nosotros) || null)), 400);
+
+    // Cuerpo de CONTACTO horneado (2026-10-13). MEDIDO en dist/: la página llegaba con 493
+    // caracteres de cuerpo y DOS palabras dentro del <main> —«Bersaglio Jewelry», el esqueleto de
+    // carga—. Es la página donde se pide una cita y donde están la dirección del Centro Histórico
+    // y los siete días de horario: para una máquina que lee HTML, nada de eso existía. Su NAP
+    // vivía solo en el JSON-LD del <head>, que es la mitad de la señal.
+    //
+    // Fue el tercer caso del mismo mal y el más duro de los tres, porque Contacto no pinta un
+    // documento sino tres formularios con estado. El corte está en js/pages/contacto-render.js:
+    // todo el estado entra por parámetro. Aquí se hornea el estado INICIAL —pestaña «mensaje»,
+    // campos vacíos—, que es exactamente lo que el navegador pinta en su primer paint cuando no
+    // hay borrador guardado. Fail-open como el resto: sin siteContent se hornean los DEFAULTS.
     {
-        const p = join(DIST, 'nosotros.html');
-        if (!existsSync(p)) throw new Error('[generate] No existe dist/nosotros.html.');
-        let html = readFileSync(p, 'utf-8');
-        const ancla = '<main id="main-content" data-screen-label="nosotros">';
-        if (!html.includes(ancla)) throw new Error('[generate] dist/nosotros.html: falta el ancla del <main>.');
-        const cuerpo = renderNosotros(mergeNosotros((sc && sc.nosotros) || null));
-        html = replaceOnce(html, ancla,
-            '<main id="main-content" data-screen-label="nosotros" data-baked="nosotros">\n' + cuerpo);
-        if (html.length < MIN_BAKE_BYTES || !html.includes('</html>')) {
-            throw new Error('[generate] dist/nosotros.html quedó inválido tras hornear el cuerpo.');
-        }
-        writeFileSync(p, html);
-        const palabras = cuerpo.replace(/<[^>]*>/g, ' ').split(/\s+/).filter(Boolean).length;
-        console.log(`[generate] Cuerpo horneado en dist/nosotros.html (${palabras} palabras dentro del <main>, antes 0).`);
+        // La fecha mínima de la cita («hoy + 2 días»). MEDIDO: hoy no llega al HTML, porque el
+        // input de fecha vive en la pestaña «visita» y lo que se hornea es el primer paint, que es
+        // la pestaña «mensaje». Se pasa igual, y con el valor correcto, porque es parte del
+        // contrato del render: el día que el primer paint cambie de pestaña, hornearía la fecha
+        // buena en vez de un `min=""`. El «hoy» del build no es el del visitante, pero el sitio se
+        // reconstruye a diario (cron de deploy.yml) y el navegador lo corrige al repintar.
+        const minDate = isoDate(Date.now() + 2 * 86400000) || '';
+        const cuerpo = renderContacto(
+            mergeContacto((sc && sc.contacto) || null),
+            mergeGlobal((sc && sc.global) || null).contacto,
+            { minDate },
+        );
+        hornearCuerpo('contacto.html', 'contacto', cuerpo, 300);
     }
 
     // siteContent del CMS horneado (anti-flash 1ª visita + preload al hero real, §163). Solo
@@ -2755,6 +2815,20 @@ function runSelfTest() {
         if (veces !== 1) fails.push(`${nombre}: la etiqueta <main> aparece ${veces} veces (esperaba 1) — un $& del CMS se expandió al ancla.`);
     }
     if (bakeIntegrityError('journal/selftest', jh)) fails.push('journal: bake-integrity de un artículo válido NO debería fallar.');
+
+    // POST-CONDICIÓN DEL HORNEADO DE CUERPO (Nosotros y Contacto). Antes del 2026-10-13 el único
+    // guardia era `MIN_BAKE_BYTES`, que mide la PÁGINA entera: un cuerpo vacío la pasaba en
+    // silencio (45 KB de cabeza y scripts) y la página volvía a publicarse sin contenido, que es
+    // justo el fallo que el horneado vino a arreglar. Estas tres líneas son la prueba de que el
+    // guardia de verdad muerde, y de que no muerde cuando no debe.
+    {
+        const vacia = '<main id="main-content" data-screen-label="x" data-baked="x">\n</main>';
+        const conEsqueleto = '<main id="main-content" data-baked="x">Bersaglio Jewelry</main>';
+        const llena = '<main id="main-content" data-baked="x">' + 'palabra '.repeat(400) + '</main>';
+        if (!cuerpoHorneadoInsuficiente('x.html', vacia, 300)) fails.push('horneado: un <main> VACÍO debía abortar el build y no lo hace.');
+        if (!cuerpoHorneadoInsuficiente('x.html', conEsqueleto, 300)) fails.push('horneado: un <main> con solo el esqueleto de carga debía abortar el build.');
+        if (cuerpoHorneadoInsuficiente('x.html', llena, 300)) fails.push('horneado: un cuerpo completo NO debía abortar el build.');
+    }
     // Puerta cero-ficción + anti path-traversal (espejo de isJournalComplete y journalValid).
     if (!isJournalBakeable(entryMock)) fails.push('isJournalBakeable: entrada completa+publicada debía ser horneable.');
     if (isJournalBakeable({ ...entryMock, published: false })) fails.push('isJournalBakeable: borrador NO debe hornearse.');

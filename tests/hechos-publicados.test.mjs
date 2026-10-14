@@ -253,12 +253,14 @@ test('coherencia: el horario vive en TRES sitios del código y los tres dicen lo
     const abre = spec.opens;                                   // "09:30"
     const cierra = spec.closes;                                // "19:00"
 
-    const contacto = readFileSync(join(ROOT, 'js/pages/contacto.js'), 'utf8');
+    // 2026-10-13: la tabla se mudó con el markup a `contacto-render.js` (módulo puro) para que el
+    // build pueda hornear la página. El sitio sigue siendo el mismo, solo cambió de fichero.
+    const contacto = readFileSync(join(ROOT, 'js/pages/contacto-render.js'), 'utf8');
     const filas = [...contacto.matchAll(/\{ d: '[^']+',\s*h: '(\d{2}:\d{2}) – (\d{2}:\d{2})'/g)];
-    assert.equal(filas.length, 7, 'contacto.js debería listar los siete días');
+    assert.equal(filas.length, 7, 'contacto-render.js debería listar los siete días');
     for (const [, a, c] of filas) {
-        assert.equal(a, abre, `contacto.js abre a las ${a} y el schema dice ${abre}`);
-        assert.equal(c, cierra, `contacto.js cierra a las ${c} y el schema dice ${cierra}`);
+        assert.equal(a, abre, `contacto-render.js abre a las ${a} y el schema dice ${abre}`);
+        assert.equal(c, cierra, `contacto-render.js cierra a las ${c} y el schema dice ${cierra}`);
     }
 
     // El pie del sitio lo escribe en lenguaje humano: "9:30 a.m. – 7:00 p.m.".
@@ -271,7 +273,7 @@ test('coherencia: el horario vive en TRES sitios del código y los tres dicen lo
     const esperado = `${humano(abre)} – ${humano(cierra)}`;
     assert.ok(global.includes(esperado),
         `global-defaults.js debería decir "${esperado}" y no lo dice. Si cambias el horario, `
-        + 'cámbialo en los TRES: tenant_config.json, js/pages/contacto.js y js/core/global-defaults.js.');
+        + 'cámbialo en los TRES: tenant_config.json, js/pages/contacto-render.js y js/core/global-defaults.js.');
 });
 
 test('hechos: ninguna cifra redonda de logro vuelve a entrar sin fuente', () => {

@@ -14,6 +14,7 @@
  */
 
 import { html, escape, mount } from '../core/html.js';
+import { casillaNewsletterHtml, initNewsletterForms } from '../core/newsletter.js';
 import { data } from '../core/data.js';
 import {
     JOURNAL_ISSUE,
@@ -126,8 +127,9 @@ function renderCover(feat, side) {
                         Una nota cada<br>
                         <span class="italic jr-newsletter-italic">luna llena</span>
                     </div>
-                    <form class="jr-newsletter-form" data-newsletter>
+                    <form class="jr-newsletter-form" data-newsletter="journal">
                         <input type="email" name="email" placeholder="tu@correo.com" class="jr-newsletter-input" autocomplete="email" required>
+                        ${casillaNewsletterHtml()}
                         <button type="submit" class="jr-newsletter-btn">Suscribir</button>
                     </form>
                 </div>
@@ -279,18 +281,10 @@ function renderEmpty() {
         </section>`;
 }
 
-function initNewsletter() {
-    document.querySelectorAll('[data-newsletter]').forEach(form => {
-        form.addEventListener('submit', e => {
-            e.preventDefault();
-            const email = form.email?.value?.trim();
-            if (!email) return;
-            try { localStorage.setItem('bj-email-subscribed', email); } catch {}
-            document.dispatchEvent(new CustomEvent('bj:email-subscribed', { detail: email }));
-            form.innerHTML = '<div class="hj-newsletter-thanks">Gracias. Te escribiremos pronto.</div>';
-        });
-    });
-}
+// ⚠️ 2026-10-13: aquí vivía la SEGUNDA copia del alta al newsletter —gemela de la de
+// `js/home/journal-preview.js`—, y las dos guardaban el correo en el `localStorage` del propio
+// visitante y le prometían escribirle. El alta de verdad vive en `js/core/newsletter.js`.
+const initNewsletter = initNewsletterForms;
 
 function refresh() {
     const main = document.getElementById('main-content');

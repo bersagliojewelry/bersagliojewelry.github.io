@@ -17,6 +17,9 @@
  */
 
 import { html, escape } from '../core/html.js';
+// Solo el markup y el texto de la casilla: `newsletter.js` no importa Firebase arriba, lo carga
+// con `import()` cuando alguien se suscribe de verdad (igual que hacía este modal).
+import { casillaNewsletterHtml } from '../core/newsletter.js';
 
 const STORAGE_KEY = 'bj-email-subscribed';
 let _root = null;
@@ -71,12 +74,7 @@ function buildDOM() {
                        placeholder="nombre@ejemplo.co"
                        autocomplete="email"
                        required>
-                <label class="bj-email-habeas">
-                    <input type="checkbox" name="habeas" required>
-                    <span>Autorizo a Bersaglio Jewelry a guardar mi correo para escribirme sobre
-                    sus piezas y novedades. Puedo pedir que lo borren cuando quiera, escribiendo
-                    al mismo correo. <a href="/privacidad.html" target="_blank" rel="noopener">Cómo tratamos tus datos</a>.</span>
-                </label>
+                ${casillaNewsletterHtml()}
                 <button type="submit" class="btn-aqua btn-aqua-emerald bj-email-submit">
                     Suscribirme
                 </button>
@@ -125,9 +123,8 @@ async function onSubmit(e) {
     // visitante y le decía «te escribiremos pronto»: la promesa se hacía a alguien cuyo correo
     // nadie iba a ver nunca. Ahora se guarda primero y solo entonces se le da las gracias.
     try {
-        const { saveSubscription } = await import('../firestore-service.js');
-        const { FINALIDAD_VERSION } = await import('../core/consent.js');
-        await saveSubscription({ email, source: 'modal-web', politicaVersion: FINALIDAD_VERSION });
+        const { suscribir } = await import('../core/newsletter.js');
+        await suscribir(email, 'modal-web');
     } catch (err) {
         // Y si no llega, se dice. Un «gracias» sobre un fallo es la mentira que había que quitar.
         console.warn('[newsletter] no se pudo guardar la suscripción:', err?.code || err?.message || err);

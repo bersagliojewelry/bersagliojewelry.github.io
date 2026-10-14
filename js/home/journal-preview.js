@@ -3,6 +3,7 @@
  * Datos compartidos con las páginas journal/entrada (js/data/journal.js).
  */
 import { html, escape, mount } from '../core/html.js';
+import { casillaNewsletterHtml, initNewsletterForms } from '../core/newsletter.js';
 import {
     JOURNAL_ISSUE,
     JOURNAL_TICKER,
@@ -148,8 +149,9 @@ function journalInner() {
                                 Una nota cada<br>
                                 <span class="italic hj-newsletter-italic">luna llena</span>
                             </div>
-                            <form class="hj-newsletter-form" data-newsletter>
+                            <form class="hj-newsletter-form" data-newsletter="home-journal">
                                 <input type="email" name="email" placeholder="tu@correo.com" class="hj-newsletter-input" autocomplete="email" required>
+                                ${casillaNewsletterHtml()}
                                 <button type="submit" class="hj-newsletter-btn">Suscribir</button>
                             </form>
                         </div>
@@ -182,17 +184,14 @@ export function refreshJournalPreview() {
     initJournalNewsletter();
 }
 
+/**
+ * ⚠️ 2026-10-13: esto era una copia que guardaba el correo en el `localStorage` del visitante y le
+ * daba las gracias. El alta de verdad —con su autorización y su guardado— vive en
+ * `js/core/newsletter.js`, que es el único dueño. Se conserva el nombre exportado porque
+ * `js/home/*` lo llama desde dos sitios.
+ */
 export function initJournalNewsletter() {
-    document.querySelectorAll('[data-newsletter]').forEach(form => {
-        form.addEventListener('submit', e => {
-            e.preventDefault();
-            const email = form.email?.value?.trim();
-            if (!email) return;
-            try { localStorage.setItem('bj-email-subscribed', email); } catch {}
-            document.dispatchEvent(new CustomEvent('bj:email-subscribed', { detail: email }));
-            form.innerHTML = '<div class="hj-newsletter-thanks">Gracias. Te escribiremos pronto.</div>';
-        });
-    });
+    initNewsletterForms();
 }
 
 export default { renderJournalPreview, refreshJournalPreview, initJournalNewsletter };

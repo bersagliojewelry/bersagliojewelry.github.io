@@ -1139,12 +1139,8 @@ function hornearCuerpo(archivo, label, cuerpo, minPalabras) {
     // El corte se hace por índices y no por `.replace()` ni por una expresión regular, por la misma
     // razón que `replaceOnce`: un `$&` tecleado en el panel se expandiría en la cadena de
     // reemplazo. Con `slice` no hay cadena de reemplazo que expandir.
-    const i = original.indexOf(ancla);
-    const fin = original.indexOf('</main>', i);
-    if (fin < 0) throw new Error(`[generate] dist/${archivo}: el <main> no cierra.`);
-    const html = original.slice(0, i)
-        + `<main id="main-content" data-screen-label="${label}" data-baked="${label}">\n${cuerpo}\n    `
-        + original.slice(fin);
+    const html = reemplazaMain(original, label, cuerpo);
+    if (html === original) throw new Error(`[generate] dist/${archivo}: el <main> no cierra.`);
     if (html.length < MIN_BAKE_BYTES || !html.includes('</html>')) {
         throw new Error(`[generate] dist/${archivo} quedó inválido tras hornear el cuerpo.`);
     }
@@ -1152,6 +1148,43 @@ function hornearCuerpo(archivo, label, cuerpo, minPalabras) {
     if (error) throw new Error(error);
     writeFileSync(p, html);
     console.log(`[generate] Cuerpo horneado en dist/${archivo} (${palabrasEnMain(html)} palabras dentro del <main>, antes ${antes}).`);
+}
+
+/**
+ * El corazón del horneado, PURO (cubierto por SSG_SELFTEST): shell + cuerpo → HTML con el `<main>`
+ * ENTERO reemplazado y sellado. Devuelve el html SIN TOCAR si no encuentra el ancla o si el `<main>`
+ * no cierra — quien llama decide si eso es un error.
+ *
+ * Lo usan los dos caminos: el que escribe ficheros (`hornearCuerpo`, para Nosotros y Contacto) y los
+ * horneadores puros de faceta y listado, que hasta el 2026-10-15 metían su contenido en un
+ * `<noscript>` — invisible para Googlebot, que ejecuta JS y por eso lo descarta.
+ */
+function reemplazaMain(original, label, cuerpo) {
+    const ancla = `<main id="main-content" data-screen-label="${label}">`;
+    const i = original.indexOf(ancla);
+    if (i < 0) return original;
+    const fin = original.indexOf('</main>', i);
+    if (fin < 0) return original;
+    return original.slice(0, i)
+        + `<main id="main-content" data-screen-label="${label}" data-baked="${label}">\n${cuerpo}\n    `
+        + original.slice(fin);
+}
+
+/**
+ * El rescate para quien NO ejecuta JS. Todas las plantillas nacen con `body { opacity: 0 }` y solo se
+ * encienden cuando `boot.js` añade `.bj-ready`: sin JS, el cuerpo horneado está en el HTML pero NADIE
+ * LO VE. Lo cazó el consejo externo (Codex, 15-oct) y era cierto en PRODUCCIÓN en 52 de las 53 URLs —
+ * solo los 7 artículos del Journal lo llevaban, porque ahí sí se puso al hornearlos (§213).
+ *
+ * ⚠️ Alcance honesto: esto NO afecta a Googlebot ni a los rastreadores de IA —ninguno aplica CSS para
+ * extraer texto—, así que no mueve el posicionamiento. Afecta a la persona que llega con el JS roto o
+ * bloqueado, y a la coherencia: una página horneada que nadie puede leer sin JS no está horneada del
+ * todo. Es barato y se pone en todas. Idempotente.
+ */
+function bakeNoJsRescate(html) {
+    if (!html.includes('</head>') || html.includes('id="sin-js-visible"')) return html;
+    return replaceOnce(html, '</head>',
+        '    <noscript><style id="sin-js-visible">body{opacity:1 !important}</style></noscript>\n</head>');
 }
 
 // La post-condición del horneado, aparte y PURA (cubierta por SSG_SELFTEST): página horneada →
@@ -1252,24 +1285,42 @@ function injectListingPage(filename, mainAnchor, opts) {
     html = replaceOnce(html, '</head>',
         `    <script type="application/ld+json" id="listing-jsonld">${safeJsonLd(schema)}</script>\n</head>`);
 
+    // El cuerpo va DENTRO del <main>, no en un <noscript> (2026-10-15, misma corrección que las
+    // facetas): Googlebot ejecuta JS y descarta el <noscript>, así que este listado —que es la
+    // puerta del catálogo y la del Journal— le llegaba con dos palabras.
     const items = opts.items.map(it =>
         `                <li><a href="${escapeAttr(it.url)}">${escapeHtml(it.name)}</a></li>`).join('\n');
-    const noscript = `
-    <noscript>
-        <div style="max-width:1100px;margin:96px auto;padding:24px;font-family:Manrope,system-ui,sans-serif">
+    const cuerpo = `        <div class="container" style="max-width:1100px;margin:96px auto;padding:24px">
             <h1>${escapeHtml(opts.name)}</h1>
             <p>${escapeHtml(opts.description)}</p>
             ${items ? `<ul style="list-style:none;padding:0;line-height:2">\n${items}\n            </ul>` : ''}
             <p><a href="${SITE_URL}/contacto.html">Hablar con un asesor</a></p>
-        </div>
-    </noscript>`;
-    html = replaceOnce(html, mainAnchor, mainAnchor + noscript);
+        </div>`;
+    const label = (mainAnchor.match(/data-screen-label="([^"]+)"/) || [, ''])[1];
+    const conCuerpo = reemplazaMain(html, label, cuerpo);
+    if (conCuerpo === html) throw new Error(`[generate] dist/${filename}: no se pudo reemplazar el <main> (ancla «${label}» o cierre ausentes).`);
+    html = bakeNoJsRescate(conCuerpo);
+
+    // Semilla para que el cliente no pise el cuerpo con su estado de carga. `colecciones.html` SÍ
+    // necesita el catálogo entero: es la página que lo lista todo. ⚠️ `journal.html` NO se puede
+    // sembrar hoy — `data.hydrateFromBake()` solo hidrata piezas y colecciones, no entradas del
+    // Journal (`js/core/data.js:56`) —, así que ahí el cuerpo horneado le sirve a quien no ejecuta
+    // JS y el cliente lo repinta igual que antes. Queda declarado, no disimulado.
+    if (opts.seedCatalogo) html = bakeCatalogSeed(html, opts.seedCatalogo, false);
 
     if (html.length < MIN_BAKE_BYTES || !html.includes('</html>')) {
         throw new Error(`[generate] dist/${filename} quedó inválido tras inyectar el listado.`);
     }
+    // Suelo DELIBERADAMENTE bajo. Esta guarda existe para cazar «el horneado no se aplicó» —que deja
+    // 2 palabras—, no para vigilar cuánto copy tiene la página. Si se pusiera cerca del contenido
+    // real, el día que el Journal se quede sin entradas publicadas el build abortaría y congelaría
+    // el despliegue del sitio ENTERO por una lista vacía. El consejo externo lo nombró «gate
+    // deadlock» y tenía razón: una post-condición que puede tumbar el deploy por falta de inventario
+    // es una bomba, no un guardia.
+    const faltante = cuerpoHorneadoInsuficiente(filename, html, 10);
+    if (faltante) throw new Error(faltante);
     writeFileSync(p, html);
-    console.log(`[generate] Listado horneado en dist/${filename} (${opts.items.length} ítems, index,follow).`);
+    console.log(`[generate] Listado horneado en dist/${filename} (${opts.items.length} ítems · ${palabrasEnMain(html)} palabras dentro del <main>, index,follow${opts.seedCatalogo ? ' · con semilla' : ' · SIN semilla: el cliente lo repinta'}).`);
 }
 
 // ===================== Páginas de FACETA indexables (A2b · TODO-35) =====================
@@ -1366,7 +1417,7 @@ const FACET_ANCHORS = [
 ];
 
 // PURA (cubierta por SSG_SELFTEST): shell + faceta → HTML horneado indexable. Idempotente por id.
-function bakeFacetPage(shell, f, slugMap) {
+function bakeFacetPage(shell, f, slugMap, catalogo) {
     for (const a of FACET_ANCHORS) {
         if (!shell.includes(a)) throw new Error(`[generate] ANCLAJE FALTANTE en dist/colecciones.html (faceta): ${a}\n  → El rediseño del catálogo rompió un punto de inyección.`);
     }
@@ -1405,11 +1456,17 @@ function bakeFacetPage(shell, f, slugMap) {
         `    <script type="application/ld+json" id="facet-breadcrumb-jsonld">${safeJsonLd(bc)}</script>\n` +
         `    <script id="baked-facet">window.__BJ_FACET=${safeJsonLd(facetGlobal)};</script>\n</head>`);
 
-    // <noscript> SEO: breadcrumb + H1 + intro (respuesta-directa AEO) + enlaces a las piezas (bots sin JS).
+    // El CUERPO de la faceta, DENTRO del <main> — no en un <noscript> (2026-10-15).
+    //
+    // 🔑 POR QUÉ CAMBIÓ, y es la corrección más barata de todo el frente: este bloque —migas, H1 con
+    // la palabra local, intro de respuesta-directa y la lista completa de piezas con sus enlaces—
+    // YA EXISTÍA. Estaba bien escrito. El único error era el ENVOLTORIO: iba dentro de un
+    // `<noscript>`, y Googlebot ejecuta JS, así que por especificación DESCARTA ese contenido. Lo
+    // veían los rastreadores sin JS (las IA incluidas) y no lo veía el buscador para el que se
+    // escribió. Lo cazó el consejo externo (Antigravity, 15-oct) y costó quince líneas, no un motor
+    // de render nuevo — que es lo que yo iba a construir.
     const lis = items.map(it => `                <li><a href="${escapeAttr(it.url)}">${escapeHtml(it.name)}</a></li>`).join('\n');
-    const noscript = `
-    <noscript>
-        <div style="max-width:1100px;margin:96px auto;padding:24px;font-family:Manrope,system-ui,sans-serif">
+    const cuerpo = `        <div class="container" style="max-width:1100px;margin:96px auto;padding:24px">
             <nav style="font-size:14px;opacity:.7;margin-bottom:16px"><a href="${SITE_URL}/">Inicio</a> › <a href="${SITE_URL}/colecciones.html">Catálogo</a> › ${escapeHtml(meta.h1)}</nav>
             <h1>${escapeHtml(meta.h1)}</h1>
             <p>${escapeHtml(meta.intro)}</p>
@@ -1417,11 +1474,25 @@ function bakeFacetPage(shell, f, slugMap) {
 ${lis}
             </ul>
             <p><a href="${SITE_URL}/contacto.html">Hablar con un asesor</a> · <a href="${SITE_URL}/colecciones.html">Ver todo el catálogo</a></p>
-        </div>
-    </noscript>`;
-    html = replaceOnce(html, '<main id="main-content" data-screen-label="colecciones">',
-        `<main id="main-content" data-screen-label="colecciones">${noscript}`);
-    return html;
+        </div>`;
+    const conCuerpo = reemplazaMain(html, 'colecciones', cuerpo);
+    if (conCuerpo === html) throw new Error(`[generate] faceta ${f.slug}: no se pudo reemplazar el <main> (ancla o cierre ausentes).`);
+    html = conCuerpo;
+
+    // Y la SEMILLA, que es la otra mitad: sin ella el cliente pinta su estado de carga encima del
+    // cuerpo recién horneado y lo borra (real→carga→real, el mismo FOUC que la portada ya pagó en
+    // julio). Con ella, `data.hydrateFromBake()` resuelve SÍNCRONO y el primer paint del cliente ya
+    // trae las piezas: desaparece la espera a Firestore y el watchdog de 8 s nunca llega a vencer.
+    // Se siembran SOLO las piezas de ESTA faceta, no las 32: el catálogo entero pesa 78 KB y el
+    // visitante que importa aquí es un turista en roaming dentro de una muralla de piedra.
+    if (catalogo && Array.isArray(catalogo.pieces)) {
+        const idsDeLaFaceta = new Set(f.pieces.map(p => String(p.id)));
+        html = bakeCatalogSeed(html, {
+            pieces: catalogo.pieces.filter(p => p && idsDeLaFaceta.has(String(p.id))),
+            collections: catalogo.collections || [],
+        }, false);
+    }
+    return bakeNoJsRescate(html);
 }
 
 // Calcula las facetas HORNEABLES (>= FACET_MIN piezas pedibles). Determinista (orden estable → build
@@ -2464,6 +2535,7 @@ async function main() {
         // Agotadas FUERA del listado (§10.1 v3): salen de la grilla; su página vive con "Vendida·ver similares".
         // encargo y bajo_pedido (refabricable en 0) SÍ entran (son pedibles). orderable = !agotada.
         items: pieces.filter(p => stockInfo(p).orderable).map(p => ({ name: p.name, url: `${SITE_URL}/pieza/${slugMap.get(String(p.id))}.html` })),
+        seedCatalogo: catalogo,   // la página que lista TODO sí necesita el catálogo entero
     });
     injectListingPage('journal.html', '<main id="main-content" data-screen-label="journal">', {
         schemaType: 'Blog',
@@ -2491,8 +2563,16 @@ async function main() {
             let colCount = 0, gemCount = 0;
             for (const f of facets) {
                 const dir = f.kind === 'gema' ? 'gema' : 'coleccion';
-                const html = bakeFacetPage(shell, f, slugMap);
-                const err = bakeIntegrityError(`${dir}/${f.slug}`, html);
+                const html = bakeFacetPage(shell, f, slugMap, catalogo);
+                const err = bakeIntegrityError(`${dir}/${f.slug}`, html)
+                    // Post-condición del cuerpo, igual que en Nosotros y Contacto: una faceta con el
+                    // <main> casi vacío significa que el horneado NO se aplicó. El suelo es 30 porque
+                    // la faceta más flaca que se hornea tiene 2 piezas (FACET_MIN) y su cuerpo son las
+                    // migas + H1 + intro + 2 enlaces. ⚠️ A propósito NO aborta el build entero —el
+                    // consejo externo advirtió del bloqueo de CI si cae el inventario de una categoría—:
+                    // cae en `facetFailures`, que ya es la vía de «esta faceta no se publica» sin
+                    // tumbar el despliegue del resto del sitio.
+                    || cuerpoHorneadoInsuficiente(`${dir}/${f.slug}.html`, html, 30);
                 if (err) { facetFailures.push(err); continue; }
                 writeFileSync(join(DIST, dir, `${f.slug}.html`), html);
                 if (f.kind === 'gema') gemCount++; else colCount++;
@@ -2559,7 +2639,12 @@ async function main() {
                 if (statSync(ruta).isDirectory()) { recorrer(ruta); continue; }
                 if (!nombre.endsWith('.html')) continue;
                 const h = readFileSync(ruta, 'utf-8');
-                const out = bakeFooter(h, sc, facetSeed);
+                // El pie, y de paso el rescate sin-JS: esta pasada ya abre TODOS los .html del dist,
+                // así que es el sitio más barato para ponerlo en todas de una vez. Se salta el panel
+                // —es privado y no tiene nada que enseñarle a quien no ejecuta JS— y los redirectores.
+                const esPanel = /[\\/]admin[^\\/]*\.html$/.test(ruta);
+                const out = esPanel ? bakeFooter(h, sc, facetSeed)
+                    : bakeNoJsRescate(bakeFooter(h, sc, facetSeed));
                 if (out !== h) { writeFileSync(ruta, out); conPie.push(relative(DIST, ruta)); }
             }
         })(DIST);
@@ -2758,6 +2843,25 @@ function runSelfTest() {
         try { JSON.parse(val); } catch (e) { fails.push('facet: __BJ_FACET no parsea: ' + e.message); }
     }
     if (bakeFacetPage(FAKE_SHELL, facetMock, fSlug) !== fh) fails.push('facet: no determinista (misma entrada → misma salida).');
+
+    // EL CUERPO FUERA DEL <noscript> (2026-10-15). Hasta hoy la faceta escribía su H1, su intro y sus
+    // enlaces DENTRO de un <noscript>: Googlebot ejecuta JS y por especificación lo descarta, así que
+    // el buscador para el que se escribió ese bloque era justo el que no lo veía. Estas aserciones son
+    // el candado: si alguien vuelve a envolverlo, el build falla aquí y no en Search Console tres
+    // semanas después.
+    {
+        const dentroDelMain = fh.slice(fh.indexOf('<main'), fh.indexOf('</main>'));
+        const fueraDeNoscript = dentroDelMain.replace(/<noscript>[\s\S]*?<\/noscript>/g, ' ');
+        if (fueraDeNoscript.indexOf('<h1>') < 0) fails.push('facet: el <h1> no está en el <main> fuera de <noscript>.');
+        if (fueraDeNoscript.indexOf('/pieza/') < 0) fails.push('facet: los enlaces a las piezas no están fuera de <noscript>.');
+        if (fh.indexOf('data-baked="colecciones"') < 0) fails.push('facet: falta el sello data-baked en el <main>.');
+        if (cuerpoHorneadoInsuficiente('facet-selftest', fh, 10)) fails.push('facet: el cuerpo horneado quedó por debajo del suelo de palabras.');
+        // Y el esqueleto de carga NO puede sobrevivir al reemplazo del <main>.
+        if (dentroDelMain.indexOf('min-height: 80vh') >= 0) fails.push('facet: el esqueleto de carga sobrevivió dentro del <main>.');
+    }
+    // El rescate sin-JS: presente, y que ponerlo dos veces no lo duplique.
+    if (fh.indexOf('id="sin-js-visible"') < 0) fails.push('facet: falta el rescate sin-JS (body opacity:1).');
+    if (bakeNoJsRescate(fh) !== fh) fails.push('bakeNoJsRescate: no es idempotente (duplicaría el <style> en cada pasada).');
     const colFh = bakeFacetPage(FAKE_SHELL, { kind: 'col', slug: 'anillos', label: PAYLOAD, description: PAYLOAD, pieces: [{ id: 'p1', name: PAYLOAD }] }, new Map([['p1', 'p1']]));
     if (colFh.indexOf('</script><script>alert(1)</script>') >= 0) fails.push('facet-col: BREAKOUT crudo (intro de colección).');
     if (colFh.indexOf('<link rel="canonical" href="https://bersagliojewelry.co/coleccion/anillos.html">') < 0) fails.push('facet-col: canonical de colección ausente.');

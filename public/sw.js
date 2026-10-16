@@ -99,13 +99,17 @@
 // v101 = [OPUS-5] el congelado del fondo con el rail abierto pasa a la técnica de iOS (L-01):
 // `overflow:hidden` no congela en iPhone — body a `position:fixed` + `top:-scrollY` y scroll
 // restaurado al cerrar, el mismo patrón ya probado en los drawers del sitio (cart-drawer.js).
+// v118 = [OPUS-5] las 11 paginas del catalogo dejan de entregarle a Googlebot una CARRERA: su
+// cuerpo sale del <noscript> (que Googlebot descarta porque ejecuta JS) al <main>, y una semilla
+// por faceta mata la espera a Firestore y su watchdog de 8 s. Mas el rescate sin-JS en 96 paginas.
+// Bump obligatorio: CSS y JS son cache-first y el HTML cambia en 11 URLs indexadas.
 // v117 = [OPUS-5] el alta al newsletter deja de tirar el correo. Dos de las tres cajas lo
 // guardaban en el localStorage del propio visitante y le daban las gracias; ahora las tres pasan
 // por js/core/newsletter.js, con su casilla de autorización y su guardado de verdad. El bump es
 // OBLIGATORIO aquí y no cosmético: CSS y JS son cache-first (ver más abajo), así que sin él un
 // visitante que ya conoce el sitio seguiría sirviéndose del paquete viejo y su suscripción
 // seguiría perdiéndose. Viaja también el cuerpo horneado de Contacto y de Nosotros.
-const CACHE_NAME    = 'bersaglio-v117';
+const CACHE_NAME    = 'bersaglio-v118';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

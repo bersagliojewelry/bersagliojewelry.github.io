@@ -614,6 +614,27 @@ function bakeSiteContentHtml(html, sc) {
 // `soloDestacadas` es para la PORTADA, que solo pinta las destacadas y no debe cargar con las 32.
 // Una ficha siembra SU pieza, destacada o no — si se le aplicara el filtro, 16 de las 32 fichas se
 // quedarían sin semilla y seguirían esperando a la red, que es justo lo que se viene a arreglar.
+/**
+ * Semilla del Journal (`window.__BJ_JOURNAL`) — gemela de `bakeCatalogSeed`, para el índice del
+ * Journal. `js/core/data.js` la lee SÍNCRONA en `hydrateJournalFromBake()`, así que el primer paint
+ * del cliente ya trae las entradas y nunca pinta el estado de carga encima del cuerpo horneado.
+ * Solo viajan los campos que la tarjeta del listado necesita: el cuerpo de cada artículo ya vive,
+ * entero, en su propia página horneada, y meterlo aquí duplicaría el sitio dentro de una página.
+ * Idempotente por id. PURA (cubierta por SSG_SELFTEST).
+ */
+function bakeJournalSeed(html, entradas) {
+    if (!Array.isArray(entradas) || !entradas.length) return html;
+    if (!html.includes('</head>') || html.includes('id="baked-journal"')) return html;
+    const seed = entradas.map(e => ({
+        id: e.id, slug: e.slug, title: e.title, excerpt: e.excerpt, section: e.section,
+        kicker: e.kicker, image: e.image, imageLqip: e.imageLqip, date: e.date, dateLong: e.dateLong,
+        read: e.read, author: e.author, authorRole: e.authorRole, lang: e.lang,
+        featured: e.featured === true, published: true,
+    }));
+    return replaceOnce(html, '</head>',
+        `    <script id="baked-journal">window.__BJ_JOURNAL=${safeJsonLd(seed)};</script>\n</head>`);
+}
+
 function bakeCatalogSeed(html, catalogo, soloDestacadas = true) {
     if (!catalogo || !html.includes('</head>') || html.includes('id="baked-catalog"')) return html;
     const seed = {
@@ -1302,11 +1323,12 @@ function injectListingPage(filename, mainAnchor, opts) {
     html = bakeNoJsRescate(conCuerpo);
 
     // Semilla para que el cliente no pise el cuerpo con su estado de carga. `colecciones.html` SÍ
-    // necesita el catálogo entero: es la página que lo lista todo. ⚠️ `journal.html` NO se puede
-    // sembrar hoy — `data.hydrateFromBake()` solo hidrata piezas y colecciones, no entradas del
-    // Journal (`js/core/data.js:56`) —, así que ahí el cuerpo horneado le sirve a quien no ejecuta
-    // JS y el cliente lo repinta igual que antes. Queda declarado, no disimulado.
+    // necesita el catálogo entero: es la página que lo lista todo. `journal.html` lleva la suya
+    // (`__BJ_JOURNAL`), que se añadió el 16-oct para cerrar el único listado que el día anterior
+    // quedó horneado pero sin sembrar — el cliente lo repintaba con su estado de carga y borraba
+    // el cuerpo recién horneado hasta que llegara Firestore o venciera el watchdog de 8 s.
     if (opts.seedCatalogo) html = bakeCatalogSeed(html, opts.seedCatalogo, false);
+    if (opts.seedJournal) html = bakeJournalSeed(html, opts.seedJournal);
 
     if (html.length < MIN_BAKE_BYTES || !html.includes('</html>')) {
         throw new Error(`[generate] dist/${filename} quedó inválido tras inyectar el listado.`);
@@ -1320,7 +1342,10 @@ function injectListingPage(filename, mainAnchor, opts) {
     const faltante = cuerpoHorneadoInsuficiente(filename, html, 10);
     if (faltante) throw new Error(faltante);
     writeFileSync(p, html);
-    console.log(`[generate] Listado horneado en dist/${filename} (${opts.items.length} ítems · ${palabrasEnMain(html)} palabras dentro del <main>, index,follow${opts.seedCatalogo ? ' · con semilla' : ' · SIN semilla: el cliente lo repinta'}).`);
+    const semillas = [opts.seedCatalogo && 'catálogo', opts.seedJournal && 'journal'].filter(Boolean);
+    console.log(`[generate] Listado horneado en dist/${filename} (${opts.items.length} ítems · `
+        + `${palabrasEnMain(html)} palabras dentro del <main>, index,follow · `
+        + `${semillas.length ? 'semilla de ' + semillas.join('+') : 'SIN semilla: el cliente lo repinta'}).`);
 }
 
 // ===================== Páginas de FACETA indexables (A2b · TODO-35) =====================
@@ -2544,6 +2569,7 @@ async function main() {
         // A3: el hub enlaza a las HORNEADAS /journal/<slug>.html (indexables), no al
         // `entrada.html?e=` noindex — antes cada artículo era un callejón sin salida para Google.
         items: journalBakeables.map(e => ({ name: String(e.title || 'Entrada'), url: journalUrlOf(e) })),
+        seedJournal: journalBakeables,   // 2026-10-16: cierra el único listado que quedó sin semilla
     });
 
     // Facetas /coleccion/<slug> + /gema/<slug> (A2b): landing pages indexables reusando el shell del

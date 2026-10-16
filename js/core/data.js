@@ -69,6 +69,32 @@ class PublicData {
         } catch { /* sin semilla / entorno sin window → skeleton normal (fallback seguro) */ }
     }
 
+    /**
+     * Hidratación SÍNCRONA del Journal desde `window.__BJ_JOURNAL` — gemela de `hydrateFromBake()`,
+     * aparte porque el índice del Journal no necesita piezas y no debe cargar con sus 78 KB.
+     *
+     * Por qué existe (2026-10-16): `journal.html` se hornea desde el 15-oct, pero el cliente lo
+     * repintaba con su estado de carga y borraba el cuerpo recién horneado, hasta que llegara
+     * Firestore o venciera el watchdog de 8 s. Era el único de los 11 listados que quedó a medias, y
+     * quedó DECLARADO en su commit en vez de disimulado. Esto lo cierra.
+     *
+     * Idempotente y fail-open: sin semilla, el comportamiento es el de antes.
+     */
+    hydrateJournalFromBake() {
+        if (this._initialJournal || (this._journal && this._journal.length)) return;
+        try {
+            const seed = typeof window !== 'undefined' && window.__BJ_JOURNAL;
+            if (!Array.isArray(seed) || !seed.length) return;
+            this._journal = seed;
+            // Y se marca LISTO, que es la mitad que falta y la que costó una medición: `renderAll()`
+            // de `js/pages/journal.js` no mira si hay entradas, mira `data.isReady('journal')`. Con
+            // los datos puestos pero la bandera en false seguía pintando el estado de carga — la
+            // semilla llegaba y no servía de nada. Es el mismo gesto que `hydrateFromBake()` hace
+            // con `_initialPieces`: una semilla horneada ES un primer snapshot, solo que sin red.
+            this._initialJournal = true;
+        } catch { /* sin semilla / sin window → estado de carga normal (fallback seguro) */ }
+    }
+
     /** Returns a promise that resolves once first snapshot of pieces+collections arrives. */
     async load() {
         this.hydrateFromBake();   // §fix-Antigravity: 1er paint real desde la semilla horneada (anti-skeleton)
@@ -149,6 +175,7 @@ class PublicData {
      * las entradas publicadas.
      */
     loadJournal() {
+        this.hydrateJournalFromBake();   // 1er paint real desde la semilla (anti estado-de-carga)
         if (this._unsubJournal) return;
         this._unsubJournal = onJournalChange(entries => {
             this._journal = entries;

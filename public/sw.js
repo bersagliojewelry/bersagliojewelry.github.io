@@ -112,7 +112,7 @@
 // OBLIGATORIO aquí y no cosmético: CSS y JS son cache-first (ver más abajo), así que sin él un
 // visitante que ya conoce el sitio seguiría sirviéndose del paquete viejo y su suscripción
 // seguiría perdiéndose. Viaja también el cuerpo horneado de Contacto y de Nosotros.
-const CACHE_NAME    = 'bersaglio-v119';
+const CACHE_NAME    = 'bersaglio-v120';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

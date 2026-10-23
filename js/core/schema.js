@@ -6,6 +6,7 @@
 import { pieceAbsUrl, facetHref } from './urls.js';
 import { gemDisplayName } from './gem-badge.js';   // §151: gema canónica (badgeGem) para el JSON-LD de la ficha
 import { metalConColor } from './metal.js';        // TODO-59: color del oro (metalColor) en el metal mostrado
+import { RETIRO_POSICIONAMIENTO } from './retiro.js';   // TODO-99: con el retiro encendido no se inyecta JSON-LD
 
 /**
  * Helper to inject or update a JSON-LD script tag by ID.
@@ -13,6 +14,7 @@ import { metalConColor } from './metal.js';        // TODO-59: color del oro (me
  * @param {Object} json - The schema object
  */
 export function injectSchema(id, json) {
+    if (RETIRO_POSICIONAMIENTO) { removeSchema(id); return; }
     let script = document.getElementById(id);
     if (!script) {
         script = document.createElement('script');

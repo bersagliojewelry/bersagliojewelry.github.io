@@ -41,6 +41,8 @@ import { renderArticle, relatedFrom, entryTitleTag } from '../js/data/journal-re
 import { normalizeEntry } from '../js/data/journal-normalize.js';
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, unlinkSync, existsSync, statSync } from 'fs';
 import { join, dirname, relative } from 'path';
+import { RETIRO_POSICIONAMIENTO } from '../js/core/retiro.js';   // TODO-99: proyecto en pausa, fuera de buscadores e IA
+import { barrerDist } from './retiro-posicionamiento.mjs';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -2676,6 +2678,13 @@ async function main() {
         })(DIST);
         console.log(`[generate] pie horneado en ${conPie.length} página(s) — ${
             facetSeed.col.length + facetSeed.gema.length} enlaces a facetas que antes solo existían tras ejecutar JS.`);
+    }
+
+    // RETIRO DEL POSICIONAMIENTO (TODO-99 · cerebro 49a). Va lo ÚLTIMO, sobre el dist ya completo, para
+    // que ninguna página —de Vite, horneada o con pie— salga indexable. El interruptor: js/core/retiro.js.
+    if (RETIRO_POSICIONAMIENTO) {
+        const r = barrerDist(DIST);
+        console.log(`[generate] RETIRO: noindex y sin JSON-LD en ${r.paginas} página(s); fuera del dist: ${r.borrados.join(', ') || 'nada'}.`);
     }
 
     console.log('[generate] Listo.');

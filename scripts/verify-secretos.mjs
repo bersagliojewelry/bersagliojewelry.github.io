@@ -98,6 +98,30 @@ const PATRONES = [
 const BINARIO = /\.(png|jpe?g|gif|webp|avif|ico|bmp|tiff?|pdf|zip|gz|tgz|bz2|xz|7z|rar|woff2?|ttf|otf|eot|mp[34]|m4a|wav|ogg|webm|mov|avi|exe|dll|so|dylib|node|wasm|class|jar|bin|dat|db|sqlite3?|pyc|ds_store)$/i;
 
 /**
+ * ⚑ 2026-10-23 — UTF-16 NO ES BINARIO. En Windows PowerShell 5.1, `>` y `Out-File` escriben por
+ * defecto UTF-16 LE con BOM (FF FE): cada carácter ASCII lleva un byte 0 detrás, así que el olfato de
+ * NUL de abajo contaba el fichero como binario y lo saltaba. Medido ese día: un `.txt` así, con una
+ * clave AWS dentro, salía «✅ ninguna credencial» y se contaba como «1 binario por CONTENIDO».
+ * Ahora, si el fichero EMPIEZA por un BOM UTF-16 (FF FE = LE · FE FF = BE) se decodifica, y el olfato
+ * de NUL mira el texto ya decodificado; sin BOM se lee como UTF-8, igual que siempre. Un binario de
+ * verdad sigue saltándose: sin BOM no se decodifica y su NUL sigue ahí. Devuelve [texto, codificación].
+ * La función es LA MISMA, línea a línea, en los cinco escáneres (el de la bóveda y las cuatro copias
+ * de los sitios): la 5b del linter de la bóveda la deriva del escáner de la bóveda, la exige en las
+ * copias y las prueba con un cebo en UTF-16 LE y otro en BE. Límite que queda: un UTF-16 SIN BOM
+ * (raro) se sigue tomando por binario.
+ */
+function comoTexto(buf) {
+  // Y se le AÑADEN los bytes crudos sin NUL (lente FUGA, mismo día): si a un fichero que PowerShell creó en
+  // UTF-16 se le añade texto en UTF-8 (`echo >>` desde Git Bash), decodificarlo entero lo convierte en basura y
+  // el secreto se escapaba con el verde diciendo que lo había mirado. La línea que se informa puede salir
+  // pasada del final en ese caso: el fichero se acusa igual, que es lo que importa.
+  const sinNul = (b) => Buffer.from(b.subarray(2).filter((x) => x !== 0)).toString('latin1');
+  if (buf.length >= 2 && buf[0] === 0xff && buf[1] === 0xfe) return [`${buf.toString('utf16le', 2)}\n${sinNul(buf)}`, 'utf16le'];
+  if (buf.length >= 2 && buf[0] === 0xfe && buf[1] === 0xff) return [`${Buffer.from(buf.subarray(2, buf.length - (buf.length % 2))).swap16().toString('utf16le')}\n${sinNul(buf)}`, 'utf16be'];
+  return [buf.toString('utf8'), 'utf8'];
+}
+
+/**
  * La superficie de fuga, en rutas relativas a la raíz. `-z` (NUL como separador) porque sin él git
  * ENTRECOMILLA y escapa las rutas con acentos — y este proyecto escribe en español.
  */
@@ -129,12 +153,13 @@ let mirados = 0;
 let binarios = 0;
 let exentos = 0;
 let ilegibles = 0;
+let utf16 = 0;   // barridos tras decodificarlos desde UTF-16 con BOM (`comoTexto`): se miran, y se dice cuántos
 
 for (const rel of archivos()) {
   if (EXENTOS.has(rel)) { exentos++; continue; }
-  let src;
+  let src, cod;
   try {
-    src = readFileSync(join(RAIZ, rel), 'utf8');
+    [src, cod] = comoTexto(readFileSync(join(RAIZ, rel)));
   } catch {
     ilegibles++;
     continue;
@@ -143,6 +168,7 @@ for (const rel of archivos()) {
   // denylist de extensiones no anticipó, y sin puntos ciegos nuevos — lo saltado se CUENTA y se dice.
   if (src.slice(0, 8192).includes('\u0000')) { binarios++; continue; }
   mirados++;
+  if (cod !== 'utf8') utf16++;
   for (const [nombre, pat] of PATRONES) {
     const m = src.match(pat);
     if (!m) continue;
@@ -190,3 +216,4 @@ if (fallos.length) {
 const listados = mirados + binarios + exentos + ilegibles;
 console.log(`✅ verify:secretos — ${mirados} de ${listados} fichero(s) listados por git barridos con ${PATRONES.length} patrones: ninguna credencial en el repo público.`);
 console.log(`   saltados ${listados - mirados}: ${binarios} binario(s) por CONTENIDO (NUL en los primeros 8 KB) · ${exentos} exento(s) declarados uno a uno CON motivo · ${ilegibles} ilegible(s). Los binarios por EXTENSIÓN ni siquiera entran en la lista (denylist \`BINARIO\`).`);
+console.log(`   de los barridos, ${utf16} en UTF-16 con BOM: decodificados antes de buscar, no tomados por binario.`);

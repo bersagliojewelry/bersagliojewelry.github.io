@@ -112,7 +112,7 @@
           {
             "type": "command",
             "command": "node ../brain-private/kernel/guard-destructivo.mjs --root ../brain-private/bersaglio",
-            "timeout": 5,
+            "timeout": 20,
             "statusMessage": "🛡️ guard-destructivo (2ª capa)…"
           }
         ]

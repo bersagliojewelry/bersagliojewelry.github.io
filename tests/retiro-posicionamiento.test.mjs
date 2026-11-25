@@ -1,15 +1,18 @@
 /**
- * tests/retiro-posicionamiento.test.mjs — El RETIRO del posicionamiento (TODO-99 · cerebro `49a`).
+ * tests/retiro-posicionamiento.test.mjs — El interruptor del posicionamiento (cerebro `49a`).
  *
- * Daniel, 20-oct-2026: Bersaglio no pagó el trabajo; el proyecto queda en pausa. La web SIGUE VIVA por
- * el dominio, pero fuera de buscadores y de las IA. Esto fija las cuatro cosas que lo hacen cierto:
- *   1. ninguna página publicada sale sin `noindex` (ni con JSON-LD), y la verificación de Search
- *      Console queda intacta (sin ella no hay herramienta de retirada ni vuelta atrás);
- *   2. del `dist` salen el sitemap y `llms.txt`;
- *   3. `robots.txt` cierra la puerta a los bots de IA pero NO a Googlebot/Bingbot — si no entran, no ven
- *      el `noindex` y la URL se queda indexada — ni a `facebookexternalhit` (vistas previas en IG/FB/WA);
- *   4. el navegador tampoco inyecta JSON-LD.
- * Revertir = `RETIRO_POSICIONAMIENTO = false` en `js/core/retiro.js` + el `robots.txt` anterior.
+ * Historia: el 22-oct-2026 el posicionamiento se RETIRÓ (pausa por impago, TODO-99) y el 24-nov-2026 se
+ * REANUDÓ (Daniel: «vamos a encenderlos para que aumenten notablemente su posicionamiento»). Hoy la web
+ * está ENCENDIDA, y este fichero fija dos cosas:
+ *   A. El estado declarado. El interruptor está apagado y `robots.txt` cuenta la misma historia:
+ *      anuncia el sitemap, invita a los motores de respuesta, deja entrar a Google Imágenes y mantiene
+ *      fuera el panel. Un `noindex` que se cuela en producción es el accidente más caro del SEO: si
+ *      alguien vuelve a encender el retiro, que sea a propósito y con estos tests cambiados.
+ *   B. El mecanismo del retiro sigue armado y probado (`retirarDeBuscadores`, `barrerDist`), por si un
+ *      día hace falta: noindex en cada página, cero JSON-LD, sitemap y `llms.txt` fuera del `dist`, y la
+ *      verificación de Search Console intacta (sin ella no hay herramienta de retirada ni vuelta atrás).
+ * Volver a retirar = devolver el interruptor, `robots.txt` y estos tests a como estaban en el commit del
+ * retiro (`ea8e2ef`); el service worker no se revierte, su caché siempre sube al número siguiente.
  */
 
 import { test } from 'node:test';
@@ -40,8 +43,9 @@ const PAGINA = `<!DOCTYPE html>
 <body><main>hola</main></body>
 </html>`;
 
-test('el interruptor está ENCENDIDO y la orden es la más fuerte', () => {
-    assert.equal(RETIRO_POSICIONAMIENTO, true);
+test('el retiro está APAGADO (reanudado el 24-nov-2026) y su orden sigue siendo la más fuerte', () => {
+    assert.equal(RETIRO_POSICIONAMIENTO, false,
+        'el retiro está ENCENDIDO: toda la web saldría con noindex. Si es a propósito, cambia con él los tests de robots.txt (cerebro 49a)');
     for (const d of ['noindex', 'nofollow', 'noarchive', 'nosnippet', 'noimageindex']) {
         assert.ok(ROBOTS_RETIRO.includes(d), `falta ${d}`);
     }
@@ -130,24 +134,37 @@ const BOTS_IA = ['GPTBot', 'OAI-SearchBot', 'ChatGPT-User', 'ClaudeBot', 'Claude
     'Claude-Web', 'anthropic-ai', 'PerplexityBot', 'Perplexity-User', 'Google-Extended', 'Applebot-Extended',
     'CCBot', 'Bytespider', 'Amazonbot', 'meta-externalagent', 'cohere-ai', 'Diffbot', 'DuckAssistBot',
     'YouBot', 'MistralAI-User'];
+// Los nueve que `robots.txt` invita por su nombre (AEO · TODO-35); los demás entran por el grupo general.
+const INVITADOS = ['GPTBot', 'OAI-SearchBot', 'ChatGPT-User', 'PerplexityBot', 'Google-Extended',
+    'Applebot-Extended', 'ClaudeBot', 'Claude-Web', 'CCBot'];
 
-test('robots.txt: cada bot de IA tiene la puerta CERRADA', () => {
+test('robots.txt: ningún bot de IA tiene la puerta cerrada y los nueve invitados lo están por su nombre', () => {
     const gs = grupos(ROBOTS);
     for (const bot of BOTS_IA) {
         const r = reglasDe(gs, bot);
-        assert.ok(r, `${bot} no tiene grupo propio`);
-        assert.ok(r.includes('disallow: /'), `${bot} no está bloqueado`);
-        assert.ok(!r.some((x) => x.startsWith('allow:')), `${bot} conserva un Allow`);
+        assert.ok(!r || !r.includes('disallow: /'), `${bot} sigue bloqueado: es el robots.txt del retiro`);
+    }
+    for (const bot of INVITADOS) {
+        assert.ok(reglasDe(gs, bot)?.includes('allow: /'), `${bot} no está invitado por su nombre`);
     }
 });
 
-test('robots.txt: Googlebot/Bingbot SÍ entran (para ver el noindex) y sin Sitemap', () => {
+test('robots.txt: anuncia el sitemap, deja entrar a Google Imágenes y no bloquea el sitio', () => {
     const gs = grupos(ROBOTS);
     const general = reglasDe(gs, '*');
     assert.ok(general, 'falta el grupo `User-agent: *`');
-    assert.ok(!general.includes('disallow: /'), 'el grupo general bloquea todo: Google no vería el noindex');
-    assert.ok(!/^\s*sitemap\s*:/im.test(ROBOTS), 'robots.txt sigue anunciando el sitemap');
-    assert.ok(reglasDe(gs, 'Googlebot-Image')?.includes('disallow: /'), 'Googlebot-Image no está bloqueado');
+    assert.ok(!general.includes('disallow: /'), 'el grupo general bloquea todo el sitio');
+    assert.ok(/^sitemap:\s*https:\/\/bersagliojewelry\.co\/sitemap\.xml\s*$/im.test(ROBOTS), 'robots.txt no anuncia el sitemap');
+    const img = reglasDe(gs, 'Googlebot-Image');
+    assert.ok(!img || !img.includes('disallow: /'), 'Googlebot-Image sigue bloqueado: las joyas no saldrían en Google Imágenes');
+});
+
+test('robots.txt: el panel y las páginas de usuario siguen FUERA de los buscadores', () => {
+    const general = reglasDe(grupos(ROBOTS), '*') || [];
+    for (const p of ['/admin.html', '/admin-login.html', '/admin-piezas.html', '/admin-cuentas.html',
+        '/carrito.html', '/lista-deseos.html', '/gracias.html']) {
+        assert.ok(general.includes(`disallow: ${p}`), `${p} quedó abierto a los buscadores`);
+    }
 });
 
 test('robots.txt: las vistas previas de Instagram/Facebook/WhatsApp NO se bloquean', () => {
@@ -156,7 +173,7 @@ test('robots.txt: las vistas previas de Instagram/Facebook/WhatsApp NO se bloque
 });
 
 // ── navegador ─────────────────────────────────────────────────────────────────────────────────────
-test('el navegador tampoco inyecta JSON-LD (injectSchema no hace nada con el retiro encendido)', async () => {
+test('el navegador vuelve a inyectar el JSON-LD (injectSchema, con el retiro apagado)', async () => {
     const añadidos = [];
     globalThis.document = {
         getElementById: () => null,
@@ -166,7 +183,10 @@ test('el navegador tampoco inyecta JSON-LD (injectSchema no hace nada con el ret
     try {
         const { injectSchema } = await import('../js/core/schema.js');
         injectSchema('x-jsonld', { '@type': 'Thing' });
-        assert.equal(añadidos.length, 0, 'se inyectó un JSON-LD');
+        assert.equal(añadidos.length, 1, 'no se inyectó el JSON-LD: el retiro sigue encendido en el navegador');
+        assert.equal(añadidos[0].type, 'application/ld+json');
+        assert.equal(añadidos[0].id, 'x-jsonld');
+        assert.deepEqual(JSON.parse(añadidos[0].textContent), { '@type': 'Thing' });
     } finally {
         delete globalThis.document;
     }

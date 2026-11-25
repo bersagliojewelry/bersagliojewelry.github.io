@@ -1,21 +1,27 @@
 /**
- * js/core/retiro.js — RETIRO DEL POSICIONAMIENTO (TODO-99 · cerebro `49a` · Daniel, 20-oct-2026).
+ * js/core/retiro.js — EL INTERRUPTOR DEL POSICIONAMIENTO (cerebro `49a`).
  *
- * El proyecto está en pausa por impago: la web SIGUE VIVA por el dominio, pero fuera de buscadores e IA.
- * Un solo interruptor para todo lo que hace el código:
+ * ESTADO: APAGADO desde el 24-nov-2026. Daniel volvió a trabajar con Bersaglio y ordenó encender el
+ * posicionamiento; la web vuelve a salir indexable, con su JSON-LD, su sitemap y su `llms.txt`.
+ * (Estuvo ENCENDIDO del 22-oct al 24-nov-2026: pausa por impago, TODO-99.)
+ *
+ * Un solo interruptor para todo lo que hace el código. Con `true`:
  *   - el barrido final del build (`scripts/retiro-posicionamiento.mjs`) pone `noindex` en cada página,
  *     quita el JSON-LD y saca del `dist` el sitemap y `llms.txt`;
  *   - `injectSchema` (js/core/schema.js) deja de inyectar JSON-LD en el navegador.
  * El `robots.txt` (bots de IA bloqueados, sin `Sitemap:`) es un fichero aparte de `public/`.
+ * Los ficheros de origen (`public/sitemap.xml`, `public/llms.txt`, las metas de cada página) nunca se
+ * tocaron: por eso apagarlo devuelve exactamente lo de antes.
  *
- * REVERTIR (si retoman): `RETIRO_POSICIONAMIENTO = false` + el `robots.txt` anterior (git) + deploy.
- * Los ficheros de origen (`public/sitemap.xml`, `public/llms.txt`, las metas de cada página) NO se
- * tocaron: con el interruptor apagado vuelve exactamente lo de antes.
+ * VOLVER A RETIRAR: devolver tres ficheros a como estaban en el commit del retiro (`ea8e2ef`): este
+ * interruptor, `public/robots.txt` y `tests/retiro-posicionamiento.test.mjs`. El service worker NO se
+ * revierte: su `CACHE_NAME` siempre sube al número siguiente. Después, desplegar.
+ * El test fija el estado declarado: un `true` aquí lo pone en rojo, para que nunca pase por accidente.
  *
  * Es browser-safe a propósito (sin `fs`): lo importan el navegador y el build.
  */
 
-export const RETIRO_POSICIONAMIENTO = true;
+export const RETIRO_POSICIONAMIENTO = false;
 
 export const ROBOTS_RETIRO = 'noindex, nofollow, noarchive, nosnippet, noimageindex';
 

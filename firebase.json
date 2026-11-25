@@ -35,6 +35,13 @@
         ]
       }
     ],
+    "redirects": [
+      {
+        "regex": "^/(?P<ruta>(?:[^_].*|_(?:[^_].*)?|__[^/].*)?)$",
+        "destination": "https://bersagliojewelry.co/:ruta",
+        "type": 301
+      }
+    ],
     "rewrites": [],
     "cleanUrls": false,
     "trailingSlash": false

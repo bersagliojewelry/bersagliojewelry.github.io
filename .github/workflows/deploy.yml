@@ -73,6 +73,13 @@ jobs:
           VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+      # 🚪 COMPUERTA DEL DIST (cerebro 49b §3.3). Nada revisaba el dist antes de publicarlo: si un
+      # horneado no encuentra su ancla, la página sale con el noindex de su shell y se publica igual,
+      # en silencio. Aquí se para: con el retiro apagado exige sitemap.xml y llms.txt, y que ninguna
+      # página del sitemap lleve noindex; con el retiro encendido (js/core/retiro.js), lo contrario.
+      # Si falla, NO se publica y producción se queda en el último build bueno.
+      - name: Compuerta del dist (sitemap, llms.txt y noindex)
+        run: node scripts/compuerta-dist.mjs
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

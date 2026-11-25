@@ -16,7 +16,7 @@
  *      Sidebar:
  *        - Atelier card (glass-emerald) con SVG map estilizado + dirección + maps link
  *        - Horarios (7 días + indicador "Abierto ahora")
- *        - Respuesta garantizada glass-gold con "<24h"
+ *        - Bloque glass-gold de atención: 7 días, festivos incluidos (sin promesa de plazo, 25-nov)
  *   4. Proceso (4-col): Lectura/Respuesta/Conversación/Boceto con time pills
  *   5. FAQ rápido (1fr 1.4fr): título + lead + WhatsApp CTA | 4 FAQs en glass card
  *

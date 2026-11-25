@@ -22,20 +22,20 @@ const MESSAGES = {
     transferencia: {
         eyebrow: 'TRANSFERENCIA BANCARIA',
         title: 'Gracias. Apenas confirmemos tu transferencia, preparamos tu <span class="italic emerald-text">pedido</span>.',
-        body: 'En las próximas horas te compartimos por WhatsApp el número de cuenta o el código QR. Cuando recibamos el pago, coordinamos contigo la entrega.',
-        nextLabel: 'Datos de pago por WhatsApp en las próximas horas',
+        body: 'Te compartimos por WhatsApp el número de cuenta o el código QR. Cuando recibamos el pago, coordinamos contigo la entrega.',
+        nextLabel: 'Datos de pago por WhatsApp',
     },
     asesor: {
         eyebrow: 'ASESOR PRIVADO',
         title: 'Un encuentro en la distancia. Te <span class="italic emerald-text">llamamos</span> pronto.',
-        body: 'Kary Mendoza o un asesor del atelier se comunicará contigo de forma confidencial en menos de cuatro horas hábiles. Compartiremos referencias, responderemos tus dudas y agendaremos, si lo deseas, una videollamada o cita presencial.',
-        nextLabel: 'Contacto en menos de 4 horas hábiles',
+        body: 'Kary Mendoza o alguien de su equipo te llamará de forma confidencial. Compartiremos referencias, responderemos tus dudas y agendaremos, si lo deseas, una videollamada o cita presencial.',
+        nextLabel: 'Llamada directa de nuestro equipo',
     },
     visita: {
         eyebrow: 'CITA PRIVADA SOLICITADA',
         title: 'Cartagena de Indias te espera. Pronto te <span class="italic emerald-text">confirmamos</span> la cita.',
         body: 'Te escribiremos de forma directa. El día de tu visita te atendemos en persona en la Calle 36 # 6-32, en el Centro Histórico.',
-        nextLabel: 'Confirmación directa en pocas horas',
+        nextLabel: 'Te confirmamos la cita directamente',
     },
     llamada: {
         eyebrow: 'LLAMADA CONFIDENCIAL RESERVADA',
@@ -46,20 +46,20 @@ const MESSAGES = {
     mensaje: {
         eyebrow: 'CONFIDENCIA RECIBIDA',
         title: 'Agradecemos tu confianza. Te <span class="italic emerald-text">respondemos</span> en persona.',
-        body: 'Tu mensaje es atendido de forma confidencial y directa por Kary Mendoza o un especialista del atelier. Prescindimos de asistentes virtuales; valoramos el tiempo y el trato humano.',
-        nextLabel: 'Respuesta en menos de 24 horas hábiles',
+        body: 'Kary Mendoza y su equipo leen tu mensaje y lo atienden de forma confidencial.',
+        nextLabel: 'Respuesta directa de nuestro equipo',
     },
     pago: {
         eyebrow: 'PAGO RECIBIDO',
         title: 'Gracias. Estamos <span class="italic emerald-text">confirmando</span> tu pago.',
-        body: 'Recibimos tu pago a través de Wompi. En cuanto se confirme —normalmente en segundos— te enviaremos la confirmación y los siguientes pasos por correo y WhatsApp. Si elegiste recoger en el atelier de Cartagena, coordinaremos tu cita; si es envío, gestionamos la guía. Tu pieza queda reservada a tu nombre.',
+        body: 'Recibimos tu pago a través de Wompi. En cuanto se confirme —normalmente en segundos— te enviaremos la confirmación y los siguientes pasos por correo y WhatsApp. Si elegiste recoger en nuestra tienda de Cartagena, coordinaremos tu cita; si es envío, gestionamos la guía. Tu pieza queda reservada a tu nombre.',
         nextLabel: 'Confirmación y siguientes pasos en breve',
     },
     default: {
         eyebrow: 'CORTESÍA BERSAGLIO',
         title: 'Te <span class="italic emerald-text">escribimos</span> de manera directa.',
-        body: 'Hemos recibido tu solicitud. Un asesor de nuestro atelier se pondrá en contacto contigo a la brevedad. Mientras tanto, te invitamos a explorar el catálogo o leer el Journal.',
-        nextLabel: 'Contacto en menos de 24 horas hábiles',
+        body: 'Hemos recibido tu solicitud. Alguien de nuestro equipo se pondrá en contacto contigo a la brevedad. Mientras tanto, te invitamos a explorar el catálogo o leer el Journal.',
+        nextLabel: 'Te escribimos pronto',
     },
 };
 
@@ -86,7 +86,7 @@ export function mensajePorEstadoTx(status, codigo) {
         return {
             eyebrow: 'PAGO CONFIRMADO',
             title: 'Confirmado. Tu pieza queda <span class="italic emerald-text">reservada</span> a tu nombre.',
-            body: `Wompi confirmó tu pago${c ? ` del pedido ${c}` : ''}.${c ? ` Guarda ese código: es tu comprobante.` : ''} Te contactaremos por correo y WhatsApp para coordinar la entrega: si elegiste recoger en el atelier de Cartagena, agendamos tu cita; si es envío, gestionamos la guía.`,
+            body: `Wompi confirmó tu pago${c ? ` del pedido ${c}` : ''}.${c ? ` Guarda ese código: es tu comprobante.` : ''} Te contactaremos por correo y WhatsApp para coordinar la entrega: si elegiste recoger en nuestra tienda de Cartagena, agendamos tu cita; si es envío, gestionamos la guía.`,
             nextLabel: c ? `Tu comprobante: pedido ${c}` : 'Pago confirmado',
             tone: 'ok',
             wa: `Hola, acabo de pagar en la web de Bersaglio${c ? ` (pedido ${c})` : ''} y quiero coordinar la entrega.`,

@@ -26,7 +26,7 @@ const FACTURACION = ['docType', 'docNumber', 'city', 'address'];
 const CONFIGS = {
     tienda: {
         label: 'Recoger en tienda',
-        sub: 'En el atelier de Cartagena',
+        sub: 'Centro Histórico de Cartagena',
         titulo: 'Datos de facturación',
         nota: 'Pedimos ciudad y dirección por requisito de seguridad bancaria; no haremos envíos a esta dirección.',
         campos: [...CONTACTO, ...FACTURACION],

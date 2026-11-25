@@ -403,7 +403,11 @@ function injectBusinessIntoIndex(cfg) {
  * Se queda deliberadamente en los hechos que el dueño ya declaró falsos, no en opinión de estilo.
  */
 const HECHOS_RETIRADOS = [
-    [/\bcaf[eé]\b/i, 'el café está NO VERIFICADO en la tabla de hechos: nace del prototipo de IA'],
+    // ⚠️ 2026-11-25: era `\bcaf[eé]\b`, y ese `\b` final NUNCA casaba «café»: en JavaScript la «é»
+    // no cuenta como letra, así que entre «é» y la coma no hay frontera. «Con la calma de un buen
+    // café» estuvo publicada en la portada con esta regla puesta. Ahora: «café» o «cafe» que no siga
+    // en otra letra (para no cazar «cafetería»). Lo comprueba la autoprueba de abajo.
+    [/\bcaf[eé](?![\wáéíóúñ])/i, 'el café está NO VERIFICADO en la tabla de hechos: nace del prototipo de IA'],
     // OJO con esta: agendar la visita SÍ está VERIFICADO «como opción». Lo FALSO es presentarla
     // como requisito. La primera versión prohibía «cita previa» a secas y habría tumbado la FAQ
     // de Contacto que dice exactamente lo correcto —«no es obligatoria: puedes acercarte
@@ -427,7 +431,9 @@ const HECHOS_RETIRADOS = [
     // atelier"». El taller es backoffice; lo que se visita es la TIENDA. La palabra «atelier» sola
     // sigue permitida (es locativo de marca: «desde nuestro atelier fabricamos»); lo prohibido es
     // INVITAR a entrar en él.
-    [/(visit\w*|conoc\w*|\bven\b|vengan|ac[eé]rcate|pas[ae] por|descubr\w*)[^.!?\n]{0,200}\b(taller|atelier)\b/i,
+    // ⚠️ 2026-11-25: decía `visit\w*`, que no casa «visítanos» (la «í» no es `\w` en JavaScript), y
+    // «visítanos en nuestro atelier de Cartagena» estuvo publicada en la portada.
+    [/(vis[ií]t\w*|conoc\w*|\bven\b|vengan|ac[eé]rcate|pas[ae] por|descubr\w*)[^.!?\n]{0,200}\b(taller|atelier)\b/i,
         'el taller es backoffice y no se abre al público, tampoco bajo el nombre «atelier» (confirmado por el dueño). Lo que sí recibe gente es la TIENDA'],
     [/boceto a mano alzada/i, 'nadie dibuja un boceto a mano alzada'],
     [/diamantes?\s+certificad[oa]s?/i, 'el certificado acredita la esmeralda, no el diamante'],
@@ -451,6 +457,16 @@ const HECHOS_RETIRADOS = [
     // decir que hay uno EN EL EQUIPO.
     [/(nuestr[oa]|el|la|un|una)\s+gem[oó]log[oa]\s+(de la casa|del (equipo|taller|atelier)|propi[oa])/i,
         'no hay gemólogo en el equipo'],
+    // Retirados el 2026-11-25 (Daniel: «respecto a las frases valida y corriges»). Mismos patrones
+    // que `tests/hechos-publicados.test.mjs` («lo retirado el 25-nov»), que vigila el código.
+    [/prescindimos de (respuestas autom[aá]ticas|asistentes virtuales|chatbots)/i,
+        'FALSO: el WhatsApp de la casa SÍ tiene mensajes automáticos (bienvenida y ausencia)'],
+    [/respuesta\s+(garantizada|inmediata)|(en menos de|<|&lt;)\s*(\d{1,2}|cuatro|veinticuatro)\s*(h\b|horas)|en (las pr[oó]ximas|pocas) horas/i,
+        'promesa de plazo de respuesta que nadie puede garantizar; el horario (9:30 a 19:00, todos los días) sí está verificado'],
+    [/(conserva|incrementa)\w*[^.!?\n]{0,60}\bvalor\b(?!\s+(sentimental|afectivo|emocional))|\binversi[oó]n\s+(duradera|eterna|segura)|valor e inversi[oó]n/i,
+        'promesa de valorización: prohibida (Ley 1480, arts. 5.13 y 30)'],
+    [/(cuarenta y tres|\d{2})\s+a[nñ]os\s+dedicad[oa]/i,
+        'los 43 años son de la casa (desde 1983), nunca de una persona'],
 ];
 
 /** Devuelve los hechos retirados que aparecen en un texto del panel. [] si está limpio. */
@@ -706,7 +722,7 @@ function renderHeroPrerender(c) {
 
                                 <div class="home-hero-trust">
                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-                                    Certificación de origen · Oro de ley 750
+                                    Gemas certificadas · Oro de ley 750
                                 </div>
 
                                 <div class="home-hero-actions">
@@ -1820,7 +1836,7 @@ function generatePage(template, p, slug, collectionsById) {
     const gema = gemDisplayName(p.specs);
     const producto = [tipo, gema].filter(Boolean).join(' de ');   // p.ej. "Anillo de Diamante"
     const metal = metalConColor(p.specs);
-    const cert = (p.specs && String(p.specs.certificate || '').trim()) ? ' certificado' : '';
+    const cert = (p.specs && String(p.specs.certificate || '').trim()) ? ', con certificado gemológico' : '';
     const title = producto
         ? `${producto} · ${name} · ${BRAND} Cartagena`
         : `${name} · ${BRAND} · Joyería en Cartagena`;
@@ -2706,6 +2722,29 @@ function runSelfTest() {
     const tplPath = existsSync(join(DIST, 'pieza.html')) ? join(DIST, 'pieza.html') : join(REPO_ROOT, 'pieza.html');
     const template = readFileSync(tplPath, 'utf-8');
     const fails = [];
+
+    // Guardia de hechos — sondas por ROTURA (2026-11-25). «Con la calma de un buen café» y «visítanos
+    // en nuestro atelier» estuvieron publicadas en la portada con este guardia vigilándolas: en
+    // JavaScript `\b` y `\w` no cuentan «é» ni «í» como letra. Cada frase que se escapó, o que se
+    // retiró ese día, tiene que cazarse; y lo que está permitido tiene que pasar.
+    for (const [frase, debe] of [
+        ['Con la calma de un buen café, conversaremos sin prisa', true],
+        ['Para eso estamos: una conversación, un café, y la piedra en la mano', true],
+        ['Te esperamos al lado de la cafetería', false],
+        ['Compra en línea o visítanos en nuestro atelier de Cartagena', true],
+        ['Desde nuestro atelier en Cartagena de Indias fabricamos cada joya', false],
+        ['RESPUESTA GARANTIZADA < 24h en días hábiles', true],
+        ['Te contactaremos en menos de 24 horas hábiles.', true],
+        ['En las próximas horas te compartimos el número de cuenta', true],
+        ['Prescindimos de respuestas automáticas o chatbots', true],
+        ['una inversión duradera que conserva e incrementa su significado y valor en el tiempo', true],
+        ['Cuarenta y tres años dedicada a escuchar las historias de nuestros clientes', true],
+        ['Pago inmediato y seguro con Wompi', false],
+        ['Una joya que se hereda', false],
+    ]) {
+        const cazo = hechosRetiradosEn(frase).length > 0;
+        if (cazo !== debe) fails.push(`guardia de hechos: «${frase}» ${cazo ? 'se caza' : 'NO se caza'} (debía ${debe ? 'cazarse' : 'pasar'})`);
+    }
 
     const mockCols = new Map([['anillos', { id: 'anillos', slug: 'anillos', name: PAYLOAD }]]);
     const mockPiece = {

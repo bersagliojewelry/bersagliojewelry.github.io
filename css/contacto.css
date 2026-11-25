@@ -627,7 +627,7 @@ textarea.ct-field-input { min-height: 120px; line-height: 1.6; }
     50%      { opacity: 0.6; transform: scale(1.2); }
 }
 
-/* Respuesta garantizada */
+/* Bloque de atención: 7 días, festivos incluidos (sin promesa de plazo, 25-nov) */
 .ct-respuesta {
     padding: 24px;
     border-radius: 24px;

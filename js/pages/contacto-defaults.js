@@ -18,8 +18,8 @@ export const CONTACTO_DEFAULTS = {
         eyebrow:    'QUÉ ESPERAR DE NOSOTROS',
         title1:     'Después de que',
         title2:     'nos escribes',
-        step1Title: 'Lectura Personal',   step1Desc: 'Tu mensaje es leído directamente por Kary Mendoza y su equipo. Prescindimos de respuestas automáticas o chatbots; valoramos el contacto humano desde el primer segundo.', step1Time: 'En el día',
-        step2Title: 'Primer Diálogo',     step2Desc: 'Nos pondremos en contacto para entender mejor el contexto de tu joya: la historia detrás del encargo, el tipo de gema preferida y las expectativas de entrega.', step2Time: '< 24 horas',
+        step1Title: 'Lectura Personal',   step1Desc: 'Tu mensaje lo leen directamente Kary Mendoza y su equipo, y te responde una persona de nuestra casa.', step1Time: 'Directo',
+        step2Title: 'Primer Diálogo',     step2Desc: 'Nos pondremos en contacto para entender mejor el contexto de tu joya: la historia detrás del encargo, el tipo de gema preferida y las expectativas de entrega.', step2Time: 'Te escuchamos',
         step3Title: 'Encuentro Pausado',  step3Desc: 'Agendamos una llamada de voz, un chat directo o un encuentro en nuestra Maison del Centro Histórico de Cartagena. Una conversación con calma, sin presiones de ningún tipo.', step3Time: 'A tu ritmo',
         step4Title: 'Manos a la Obra',    step4Desc: 'Si decides que Bersaglio sea el custodio de tu legado, tu idea pasa al taller, y te contamos cómo avanza la pieza antes de darla por terminada.', step4Time: 'A medida',
     },
@@ -29,8 +29,8 @@ export const CONTACTO_DEFAULTS = {
         title2:  'saber',
         lead:    'Cuatro respuestas rápidas para que llegues con todo claro. Si te queda alguna duda, escríbenos por WhatsApp.',
         q1: '¿Necesito cita previa?',      a1: 'No es obligatoria: puedes acercarte directamente o reservar una cita para una atención más dedicada. Ambas son bienvenidas.',
-        q2: '¿Hay parqueadero?',           a2: 'En el Centro Histórico encuentras varios parqueaderos privados y seguros a pocos pasos del atelier.',
-        q3: '¿Puedo llevar acompañantes?', a3: 'Hasta tres personas. Indícalo al agendar para preparar el espacio.',
+        q2: '¿Hay parqueadero?',           a2: 'En el Centro Histórico encuentras varios parqueaderos privados y seguros a pocos pasos de nuestra casa.',
+        q3: '¿Puedo llevar acompañantes?', a3: 'Claro que sí. Si agendas tu visita, cuéntanos cuántos vienen y los esperamos con calma.',
         // El francés y el italiano NO están en la tabla de hechos: nadie ha podido respaldar que
         // la casa atienda en esos idiomas, y prometerlo a un turista que llega contando con ello
         // es de las promesas que peor se rompen. El inglés SÍ consta —la publicación del Perfil

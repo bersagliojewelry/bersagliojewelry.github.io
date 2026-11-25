@@ -47,7 +47,7 @@ export const CANALES = [
         k: 'whatsapp',
         t: 'WhatsApp',
         v: '+57 301 375 2592',
-        d: 'Respuesta inmediata · 09:30–19:00',
+        d: 'Todos los días · 09:30–19:00',
         href: 'https://wa.me/573013752592',
         icon: html`<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 0 1-1.587-5.945C.16 5.335 5.495 0 12.05 0a11.817 11.817 0 0 1 8.413 3.488 11.824 11.824 0 0 1 3.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 0 1-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 0 0 1.51 5.26l-.999 3.648 3.737-.979zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>`,
     },
@@ -55,7 +55,7 @@ export const CANALES = [
         k: 'email',
         t: 'Correo',
         v: 'info@bersagliojewelry.co',
-        d: 'Respondemos en < 24h',
+        d: 'Escríbenos cuando quieras',
         href: 'mailto:info@bersagliojewelry.co',
         icon: html`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>`,
     },
@@ -275,7 +275,7 @@ export function renderFormVisita(visit, minDate) {
                 </div>
                 <div>
                     <div class="ct-banner-title">Cita Privada en la Maison</div>
-                    <div class="ct-banner-desc">Centro Histórico, Cartagena · 60–90 min · Un espacio consagrado a tus ideas</div>
+                    <div class="ct-banner-desc">Centro Histórico, Cartagena · Sin prisa, con el tiempo que haga falta</div>
                 </div>
             </div>
 
@@ -299,7 +299,7 @@ export function renderFormVisita(visit, minDate) {
                 <label class="ct-field">
                     <span class="eyebrow">Personas</span>
                     <select name="personas" class="ct-field-input">
-                        ${['1', '2', '3', '4'].map(n => html`<option value="${escape(n)}" ${visit.personas === n ? 'selected' : ''}>${escape(n)}</option>`)}
+                        ${['1', '2', '3', '4', '5 o más'].map(n => html`<option value="${escape(n)}" ${visit.personas === n ? 'selected' : ''}>${escape(n)}</option>`)}
                     </select>
                 </label>
             </div>
@@ -412,11 +412,11 @@ export function renderSuccess({ tab, sendFailed, form, visit, call }) {
     if (sendFailed) return renderSendFailed(name, tab);
     let msg;
     if (tab === 'visita') {
-        msg = `Confirmaremos los detalles de tu cita privada por canales directos para el ${visit.fecha || 'día solicitado'} a las ${visit.hora}. El atelier estará reservado exclusivamente para ti.`;
+        msg = `Confirmaremos los detalles de tu cita por canales directos para el ${visit.fecha || 'día solicitado'} a las ${visit.hora}. Ese día te esperamos con calma en nuestra casa del Centro Histórico.`;
     } else if (tab === 'llamada') {
         msg = `Nos comunicaremos contigo telefónicamente en la franja horaria establecida. Esperamos conversar pronto.`;
     } else {
-        msg = `Agradecemos tu confidencia. Kary Mendoza y su equipo se pondrán en contacto contigo en las próximas horas.`;
+        msg = `Agradecemos tu confidencia. Kary Mendoza y su equipo se pondrán en contacto contigo pronto.`;
     }
     return html`
         <div class="ct-success">
@@ -445,7 +445,7 @@ export function renderFormCard(estado) {
 }
 
 /**
- * La columna lateral: dirección del atelier, los siete días de horario y la promesa de respuesta.
+ * La columna lateral: dirección de la casa, los siete días de horario y el bloque de atención (7 días).
  * Para Google es lo más valioso de esta página (es el NAP en el cuerpo, no solo en el JSON-LD).
  *
  * `todayIdx` (0 = lunes) entra por parámetro porque el build no sabe qué día abrirá el visitante
@@ -475,7 +475,7 @@ export function renderSidebar(todayIdx = 0) {
                     </svg>
                     <div class="ct-map-pin" aria-hidden="true">
                         <div class="ct-map-pin-bubble"><div class="ct-map-pin-dot"></div></div>
-                        <div class="ct-map-pin-label">Atelier</div>
+                        <div class="ct-map-pin-label">Nuestra casa</div>
                     </div>
                     <div class="ct-map-flag">CENTRO HISTÓRICO</div>
                 </div>
@@ -511,9 +511,9 @@ export function renderSidebar(todayIdx = 0) {
             </div>
 
             <div class="glass ct-respuesta">
-                <div class="mono ct-respuesta-eyebrow">RESPUESTA GARANTIZADA</div>
-                <div class="ct-respuesta-num">&lt; 24h</div>
-                <div class="ct-respuesta-sub">en días hábiles</div>
+                <div class="mono ct-respuesta-eyebrow">TE ATENDEMOS</div>
+                <div class="ct-respuesta-num">7 días</div>
+                <div class="ct-respuesta-sub">de la semana, festivos incluidos</div>
             </div>
         </aside>`;
 }

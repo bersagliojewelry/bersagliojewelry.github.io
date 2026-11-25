@@ -317,7 +317,7 @@ const PAYMENT_OPTIONS = [
     {
         k: 'whatsapp',
         t: 'Coordinar por WhatsApp',
-        d: 'Hablas directo con Kary, eliges el método de pago y los plazos.',
+        d: 'Hablas directo con Kary o con su equipo, eliges el método de pago y los plazos.',
         icon: html`<path d="M20.5 3.5A11 11 0 0 0 3.4 17l-1.4 5.1 5.2-1.4A11 11 0 1 0 20.5 3.5z"/><path d="M8 10.5c.3 2 2 3.7 4 4.2 1 .3 1.9.1 2.5-.5"/>`,
         primary: true,
     },
@@ -330,7 +330,7 @@ const PAYMENT_OPTIONS = [
     {
         k: 'asesor',
         t: 'Que un asesor me llame',
-        d: 'Preferimos hablar antes de avanzar. Te llamamos en menos de 4 horas hábiles.',
+        d: 'Preferimos hablar antes de avanzar. Te llamamos pronto para coordinarlo contigo.',
         icon: html`<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>`,
     },
 ];

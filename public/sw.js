@@ -99,6 +99,9 @@
 // v101 = [OPUS-5] el congelado del fondo con el rail abierto pasa a la técnica de iOS (L-01):
 // `overflow:hidden` no congela en iPhone — body a `position:fixed` + `top:-scrollY` y scroll
 // restaurado al cerrar, el mismo patrón ya probado en los drawers del sitio (cart-drawer.js).
+// v122 = [OPUS-5.5] frases validadas contra la tabla de hechos (25-nov-2026): fuera los plazos de
+// respuesta, el «sin respuestas automáticas», la valorización y los años atribuidos a una persona.
+// Bump obligatorio: cambian JS de Contacto, Gracias, carrito, portada y catálogo (cache-first).
 // v121 = [FABLE-5.2] ENCENDIDO del posicionamiento (24-nov-2026): el interruptor de js/core/retiro.js
 // vuelve a `false` y robots.txt vuelve a invitar a buscadores e IA. Bump por el ritual de la cache.
 // v120 = [OPUS-5.5] RETIRO del posicionamiento (22-oct-2026, pausa por impago): noindex en todo.
@@ -115,7 +118,7 @@
 // OBLIGATORIO aquí y no cosmético: CSS y JS son cache-first (ver más abajo), así que sin él un
 // visitante que ya conoce el sitio seguiría sirviéndose del paquete viejo y su suscripción
 // seguiría perdiéndose. Viaja también el cuerpo horneado de Contacto y de Nosotros.
-const CACHE_NAME    = 'bersaglio-v121';
+const CACHE_NAME    = 'bersaglio-v122';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

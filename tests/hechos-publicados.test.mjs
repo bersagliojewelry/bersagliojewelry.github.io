@@ -74,6 +74,10 @@ const ES_MAQUINARIA = [
     /^\s*(\/\/|\/\*|\*)/,              // comentario de línea o cuerpo de bloque
     /=\s*\/.*\/[a-z]*\s*;?\s*$/,       // const X = /…/i;
     /^\s*\[\/.*\/[a-z]*\s*,/,          // fila de tabla: [/…/i, '…'],
+    // fila de sonda del autotest del build: ['frase', true], — desde el 2026-11-25 el autotest le
+    // pasa al guardia de hechos las frases que se escaparon, para comprobar que las caza. Esa
+    // fila solo corre con SSG_SELFTEST=1 y nunca llega al cliente: es maquinaria, no vitrina.
+    /^\s*\['[^']*',\s*(true|false)\],?\s*$/,
 ];
 const sinTablaDePatrones = texto =>
     texto.split('\n').filter(linea => !ES_MAQUINARIA.some(re => re.test(linea))).join('\n');
@@ -82,6 +86,16 @@ const SITIO = ficherosDelSitio().map(ruta => ({
     ruta: relative(ROOT, ruta),
     texto: sinTablaDePatrones(readFileSync(ruta, 'utf8')),
 }));
+
+/**
+ * Invitar a entrar al taller (o al «atelier»), en la MISMA frase. Vive aquí arriba porque la usan
+ * dos pruebas: la que la aplica al código y la sonda que comprueba que ve las palabras con tilde.
+ *
+ * ⚠️ 2026-11-25: decía `visit\w*`, y en JavaScript `\w` no cuenta la «í» como letra: «visítanos en
+ * nuestro atelier de Cartagena» pasó por este gate y por el del build, y estuvo publicada en la
+ * portada. Por eso la «i» va con su variante con tilde: `vis[ií]t`.
+ */
+const INVITACION_AL_TALLER = /(vis[ií]t\w*|conoc\w*|\bven\b|vengan|ac[eé]rcate|pas[ae] por|descubr\w*)[^.!?\n]{0,200}\b(taller|atelier)\b/i;
 
 test('hechos: los años de oficio se derivan de 1983 y no hay dos cifras distintas', () => {
     // Se calcula, no se escribe a mano: así el gate no caduca cada 1 de enero.
@@ -124,7 +138,8 @@ test('hechos: no se promete un boceto a mano alzada ni una visita al taller', ()
     // Daniel, 2026-10-10, preguntado de frente: «no hay un taller físico donde los clientes puedan
     // ver el proceso, lo que está es la tienda; Kary tiene el taller oculto… lo del primer boceto a
     // mano alzada es mentira, el cliente llega con su diseño y Kary se lo envía a hacer».
-    // Ojo: el taller EXISTE y el café con Kary es REAL. Lo falso es (a) dibujar un boceto a mano
+    // Ojo: el taller EXISTE (backoffice; Daniel, 13-oct). El café NO: el dueño lo retiró (99 §213.8 y
+    // §214.5) y lo vigila el guardia del build. Lo falso aquí es (a) dibujar un boceto a mano
     // alzada y (b) invitar al cliente a ver el taller. La tienda sí se visita.
     //
     // ⚠️ 2026-10-13: la regla también vigila «atelier». La versión del 10-oct decía «di tienda o
@@ -136,7 +151,7 @@ test('hechos: no se promete un boceto a mano alzada ni una visita al taller', ()
     // fabricamos»); lo prohibido es INVITAR a entrar, y por eso la regla exige el verbo delante.
     const PROHIBIDOS = [
         [/boceto a mano alzada/i, 'nadie dibuja un boceto a mano alzada: el cliente trae su diseño'],
-        [/(visit\w*|conoc\w*|\bven\b|vengan|ac[eé]rcate|pas[ae] por|descubr\w*)[^.!?\n]{0,200}\b(taller|atelier)\b/i,
+        [INVITACION_AL_TALLER,
             'no se invita a entrar al taller, ni llamándolo «atelier»: es backoffice. Lo abierto al '
             + 'público es la TIENDA, así que di «la tienda» o «nuestra casa». '
             + 'Se busca en la MISMA frase y sin límite corto de distancia, porque la que de verdad lo '
@@ -324,6 +339,48 @@ test('hechos: ninguna cifra redonda de logro vuelve a entrar sin fuente', () => 
     assert.deepEqual(encontrados, [],
         `cifras de logro sin fuente en el código:\n  ${encontrados.join('\n  ')}\n`
         + '⚠️ Y recuerda: esto NO ve el panel. Si la cifra está en el CMS, hay que quitarla ahí.');
+});
+
+test('hechos: la regla de la invitación al taller ve las palabras con tilde («visítanos»)', () => {
+    // 2026-11-25. «Compra en línea o visítanos en nuestro atelier de Cartagena» estuvo publicada en
+    // la portada aunque este gate y el del build la prohibían. Sonda por ROTURA: la frase que se
+    // escapó tiene que cazarse, y el locativo permitido tiene que pasar.
+    assert.match('Compra en línea o visítanos en nuestro atelier de Cartagena', INVITACION_AL_TALLER,
+        'la regla no ve «visítanos»: en JavaScript `\\w` no cuenta la «í» como letra');
+    assert.match('Visítenos en el taller cuando quiera', INVITACION_AL_TALLER);
+    assert.doesNotMatch('Desde nuestro atelier en Cartagena de Indias fabricamos cada joya', INVITACION_AL_TALLER,
+        'el locativo de marca está permitido: lo prohibido es invitar a entrar');
+});
+
+test('hechos: lo retirado el 25-nov (plazos, mensajes «sin automatizar», valorización, años de una persona, precio suelto) no vuelve por código', () => {
+    // Daniel, 2026-11-25: «respecto a las frases valida y corriges». Se validó cada frase publicada
+    // contra la tabla de hechos (voz-pauta-bersaglio §4-bis) y estas salieron de la web ese día.
+    // `public/llms.txt` entra aparte: no es html/js/mjs y el barrido general no lo ve, pero es lo
+    // que leen los asistentes de IA, a los que robots.txt invita.
+    const textos = [...SITIO, { ruta: 'public/llms.txt', texto: readFileSync(join(ROOT, 'public/llms.txt'), 'utf8') }];
+    const PROHIBIDOS = [
+        [/prescindimos de (respuestas autom[aá]ticas|asistentes virtuales|chatbots)/i,
+            'FALSO: el WhatsApp de la casa SÍ tiene mensajes automáticos (bienvenida y ausencia)'],
+        [/respuesta\s+(garantizada|inmediata)|(en menos de|<|&lt;)\s*(\d{1,2}|cuatro|veinticuatro)\s*(h\b|horas)|en (las pr[oó]ximas|pocas) horas/i,
+            'promesa de plazo de respuesta: el 24-nov había cinco chats de la pauta sin contestar. El '
+            + 'horario (9:30 a 19:00, todos los días) SÍ está verificado: di eso'],
+        [/(conserva|incrementa)\w*[^.!?\n]{0,60}\bvalor\b(?!\s+(sentimental|afectivo|emocional))|\binversi[oó]n\s+(duradera|eterna|segura)|valor e inversi[oó]n/i,
+            'promesa de valorización: prohibida (Ley 1480, arts. 5.13 y 30). Una joya «se hereda», no «rinde»'],
+        [/(cuarenta y tres|\d{2})\s+a[nñ]os\s+dedicad[oa]/i,
+            'los 43 años son de la casa (desde 1983), nunca de una persona'],
+        [/desde\s+(COP\s*)?\$\s?\d/i,
+            'Daniel, 25-nov: sin precios sueltos en los textos de marca; el precio vive en la ficha de la pieza'],
+    ];
+    const encontrados = [];
+    for (const { ruta, texto } of textos) {
+        for (const [re, porque] of PROHIBIDOS) {
+            const m = texto.match(re);
+            if (m) encontrados.push(`${ruta.replace(/\\/g, '/')}: "${m[0]}" — ${porque}`);
+        }
+    }
+    assert.deepEqual(encontrados, [],
+        `frases retiradas el 25-nov, de vuelta en el código:\n  ${encontrados.join('\n  ')}\n`
+        + '⚠️ El panel tampoco lo ve este test: el guardia del build (HECHOS_RETIRADOS) avisa de las mismas.');
 });
 
 test('hechos: el gate declara EN VOZ ALTA que no alcanza al panel', () => {

@@ -64,7 +64,7 @@ export function heroInner(c) {
 
                                 <div class="home-hero-trust">
                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-                                    Certificación de origen · Oro de ley 750
+                                    Gemas certificadas · Oro de ley 750
                                 </div>
 
                                 <div class="home-hero-actions">

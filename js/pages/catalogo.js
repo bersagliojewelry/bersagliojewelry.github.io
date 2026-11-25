@@ -121,7 +121,7 @@ function renderHeader() {
         ? html`${escape(collection.name)} <span class="italic emerald-text">en cristal</span>`
         : html`Todas las <span class="italic emerald-text">piezas</span>`;
     const lead = collection?.description
-        || 'Explora nuestra colección completa. Cada pieza es única, con certificación de origen y oro de ley 750.';
+        || 'Explora nuestra colección completa: cada pieza con su certificado y en oro de ley 750.';
     return html`
         <div class="cat-page-header">
             <div class="eyebrow cat-page-eyebrow">Catálogo · 2026</div>

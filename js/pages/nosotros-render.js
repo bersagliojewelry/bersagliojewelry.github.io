@@ -187,7 +187,7 @@ export function nosotrosAtelierSection(c) {
                 ${c.image
                     ? html`<div class="atl-image-bg" style="${lqipBgStyle(c.image, c.imageLqip)}"></div>`
                     : html`<div class="atl-image-bg"></div>`}
-                <div class="chip glass-pill atl-chip">El Atelier</div>
+                <div class="chip glass-pill atl-chip">Nuestra casa</div>
             </div>
             <div class="glass atl-text">
                 <h3 class="atl-text-title">

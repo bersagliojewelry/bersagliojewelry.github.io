@@ -99,6 +99,9 @@
 // v101 = [OPUS-5] el congelado del fondo con el rail abierto pasa a la técnica de iOS (L-01):
 // `overflow:hidden` no congela en iPhone — body a `position:fixed` + `top:-scrollY` y scroll
 // restaurado al cerrar, el mismo patrón ya probado en los drawers del sitio (cart-drawer.js).
+// v123 = [OPUS-5.5] SEO técnico de la reanudación (25-nov-2026, cerebro 49b §3.2): og:url propio en
+// Nosotros y Contacto, migas de las fichas a su faceta, offline.html con noindex (va PRECACHEADA: sin el
+// bump los aparatos seguirían con la vieja) y robots.txt con el panel entero fuera, también para la IA.
 // v122 = [OPUS-5.5] frases validadas contra la tabla de hechos (25-nov-2026): fuera los plazos de
 // respuesta, el «sin respuestas automáticas», la valorización y los años atribuidos a una persona.
 // Bump obligatorio: cambian JS de Contacto, Gracias, carrito, portada y catálogo (cache-first).
@@ -118,7 +121,7 @@
 // OBLIGATORIO aquí y no cosmético: CSS y JS son cache-first (ver más abajo), así que sin él un
 // visitante que ya conoce el sitio seguiría sirviéndose del paquete viejo y su suscripción
 // seguiría perdiéndose. Viaja también el cuerpo horneado de Contacto y de Nosotros.
-const CACHE_NAME    = 'bersaglio-v122';
+const CACHE_NAME    = 'bersaglio-v123';
 const OFFLINE_URL   = '/offline.html';
 
 // Vite hashes CSS/JS so we can't precache them by path. Static assets only.

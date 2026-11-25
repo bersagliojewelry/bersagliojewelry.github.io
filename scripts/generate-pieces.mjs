@@ -271,14 +271,17 @@ function buildProductSchema(p, category, desc, canonicalUrl, image) {
     return schema;
 }
 
-function buildBreadcrumbSchema(p, category, canonicalUrl) {
+// La miga de la categoría va a su página INDEXABLE (/coleccion/<slug>.html) si este build la hornea, con
+// la misma regla que el navegador (facetHref, js/core/urls.js); si no, a la vista filtrada. `facets` es el
+// conjunto horneado de ESTE build (facetSeed). Hasta el 25-nov-2026 iba siempre a `colecciones.html?col=`.
+function buildBreadcrumbSchema(p, category, canonicalUrl, facets) {
     return {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
         itemListElement: [
             { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE_URL}/` },
             { '@type': 'ListItem', position: 2, name: category,
-              item: `${SITE_URL}/colecciones.html?col=${encodeURIComponent(p.collection || '')}` },
+              item: `${SITE_URL}${facetHref('col', p.collection, facets)}` },
             { '@type': 'ListItem', position: 3, name: p.name || 'Pieza', item: canonicalUrl },
         ],
     };
@@ -1822,8 +1825,9 @@ const REQUIRED_ANCHORS = [
     '<main id="main-content" data-screen-label="pieza">',
 ];
 
-function generatePage(template, p, slug, collectionsById) {
+function generatePage(template, p, slug, collectionsById, facets) {
     const category = categoryLabel(p, collectionsById);
+    const categoryUrl = `${SITE_URL}${facetHref('col', p.collection, facets)}`;   // las migas (buildBreadcrumbSchema)
     const name = p.name || 'Pieza';
     const canonicalUrl = `${SITE_URL}/pieza/${slug}.html`;
     const image = getFullImage(p);
@@ -1909,7 +1913,7 @@ function generatePage(template, p, slug, collectionsById) {
 
     // 7. JSON-LD (Product + Breadcrumb) + PRERENDERED antes de </head>.
     const productSchema = buildProductSchema(p, category, realDesc, canonicalUrl, image);
-    const breadcrumbSchema = buildBreadcrumbSchema(p, category, canonicalUrl);
+    const breadcrumbSchema = buildBreadcrumbSchema(p, category, canonicalUrl, facets);
     const prerenderedTag = `<script>window.PRERENDERED_PIECE_SLUG = ${safeJsonLd(slug)};</script>`;
     html = replaceOnce(html, 
         '</head>',
@@ -1937,7 +1941,7 @@ function generatePage(template, p, slug, collectionsById) {
     const noscript = `
     <noscript>
         <div style="max-width:1100px;margin:96px auto;padding:24px;font-family:Manrope,system-ui,sans-serif">
-            <nav style="font-size:14px;opacity:.7;margin-bottom:16px"><a href="${SITE_URL}/">Inicio</a> › <a href="${SITE_URL}/colecciones.html">${escapeHtml(category)}</a> › ${escapeHtml(name)}</nav>
+            <nav style="font-size:14px;opacity:.7;margin-bottom:16px"><a href="${SITE_URL}/">Inicio</a> › <a href="${escapeAttr(categoryUrl)}">${escapeHtml(category)}</a> › ${escapeHtml(name)}</nav>
             <h1>${escapeHtml(name)}</h1>
             <img src="${escapeAttr(image)}" alt="${escapeAttr(name + ' — ' + BRAND)}" style="max-width:100%;height:auto;border-radius:14px">
             <p style="font-size:22px;font-weight:700;margin:16px 0">${escapeHtml(priceText)}</p>
@@ -2038,7 +2042,11 @@ function bakeStubError(code, html) {
 //   y suelo común `CODIGO_LASTMOD`, para que un cambio que vive solo en el código (hornear el
 //   <main> de contacto, por ejemplo) también mueva la fecha. Ese suelo sí se sube a mano, y es
 //   el único dato de este bloque que hay que recordar: el resto se mueve solo.
-const CODIGO_LASTMOD = '2026-10-10';
+//   Subido el 2026-11-25: el 24-nov TODAS las páginas pasaron de noindex a indexables (fin del
+//   retiro) y el 25-nov cambian en el código las migas de las 32 fichas y el og:url de Nosotros y
+//   Contacto. Con el suelo en octubre, el sitemap le decía a Google «sin cambios» justo cuando
+//   más falta hace que vuelva a rastrearlas.
+const CODIGO_LASTMOD = '2026-11-25';
 const STATIC_PAGES = [
     { loc: '/',                 freq: 'weekly',  prio: '1.0', de: ['home', 'global'], conPiezas: true, conJournal: true },
     { loc: '/colecciones.html', freq: 'weekly',  prio: '0.9', de: [],                 conPiezas: true },
@@ -2392,7 +2400,7 @@ async function main() {
     const bakeFailures = [];
     for (const p of pieces) {
         const slug = slugMap.get(String(p.id));
-        let html = generatePage(template, p, slug, collectionsById);
+        let html = generatePage(template, p, slug, collectionsById, facetSeed);
         // SEMILLA DE LA FICHA (2026-10-11). Medido en el navegador contra producción: a los 10 s
         // el <main> de una ficha seguía mostrando su esqueleto. El motivo no es el render, es la
         // RED: `window.__BJ_CATALOG` solo se horneaba en la portada, así que la ficha tenía que
@@ -2767,6 +2775,33 @@ function runSelfTest() {
     }
     // og:type=product inyectado (la ficha es un producto, no un "website").
     if (html.indexOf('<meta property="og:type" content="product">') < 0) fails.push('pieza: og:type=product no inyectado.');
+    // Migas de la ficha (cerebro 49b §3.2, 25-nov-2026): el escalón de la categoría va a su página
+    // INDEXABLE (/coleccion/<slug>.html) cuando este build la hornea, con la MISMA regla que el
+    // navegador (facetHref); si la faceta no existe, a la vista filtrada, como el navegador. Antes iba
+    // siempre a `colecciones.html?col=`, que canonicaliza a colecciones.html: para Google, las 32 fichas
+    // declaraban como categoría la misma URL, y lo horneado contradecía a lo que pinta el navegador.
+    {
+        const migaCategoria = (h) => {
+            for (const bloque of h.split('<script type="application/ld+json">').slice(1)) {
+                try {
+                    const j = JSON.parse(bloque.split('</script>')[0]);
+                    if (j['@type'] === 'BreadcrumbList') return j.itemListElement?.[1]?.item;
+                } catch { /* lo caza el chequeo de parseo de arriba */ }
+            }
+            return undefined;
+        };
+        const conFaceta = generatePage(template, mockPiece, 'selftest', mockCols, { col: ['anillos'], gema: [] });
+        const sinFaceta = generatePage(template, mockPiece, 'selftest', mockCols, { col: [], gema: [] });
+        if (migaCategoria(conFaceta) !== 'https://bersagliojewelry.co/coleccion/anillos.html') {
+            fails.push(`pieza: la miga de la categoría no va a su faceta horneada (dice ${migaCategoria(conFaceta)}).`);
+        }
+        if (!conFaceta.includes('Inicio</a> › <a href="https://bersagliojewelry.co/coleccion/anillos.html">')) {
+            fails.push('pieza: la miga del <noscript> no enlaza la faceta horneada de su categoría.');
+        }
+        if (migaCategoria(sinFaceta) !== 'https://bersagliojewelry.co/colecciones.html?col=anillos') {
+            fails.push(`pieza: sin faceta horneada, la miga debía caer en la vista filtrada, como el navegador (dice ${migaCategoria(sinFaceta)}).`);
+        }
+    }
     // Bloques JSON-LD parsean.
     const parts = html.split('<script type="application/ld+json">');
     let n = 0;

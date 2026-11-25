@@ -17,7 +17,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -159,12 +159,52 @@ test('robots.txt: anuncia el sitemap, deja entrar a Google Imágenes y no bloque
     assert.ok(!img || !img.includes('disallow: /'), 'Googlebot-Image sigue bloqueado: las joyas no saldrían en Google Imágenes');
 });
 
-test('robots.txt: el panel y las páginas de usuario siguen FUERA de los buscadores', () => {
-    const general = reglasDe(grupos(ROBOTS), '*') || [];
-    for (const p of ['/admin.html', '/admin-login.html', '/admin-piezas.html', '/admin-cuentas.html',
-        '/carrito.html', '/lista-deseos.html', '/gracias.html']) {
-        assert.ok(general.includes(`disallow: ${p}`), `${p} quedó abierto a los buscadores`);
+// La regla que de verdad le toca a un bot en una ruta (RFC 9309, como la aplica Google): el grupo que lo
+// nombra o, si ninguno, el de `*` —un bot con grupo propio NO hereda los Disallow de `*`—; de las reglas
+// que casan, la más larga; empate, gana Allow. Se mira el EFECTO, no si una línea está escrita.
+function puedeRastrear(txt, bot, ruta) {
+    const gs = grupos(txt);
+    const propios = gs.filter((g) => g.agentes.includes(bot.toLowerCase()));
+    const aplicables = propios.length ? propios : gs.filter((g) => g.agentes.includes('*'));
+    let mejor = null;
+    for (const regla of aplicables.flatMap((g) => g.reglas)) {
+        const [tipo, ...resto] = regla.split(':');
+        const patron = resto.join(':').trim();
+        if ((tipo !== 'allow' && tipo !== 'disallow') || !patron) continue;
+        const re = new RegExp('^' + patron.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\\\$$/, '$'));
+        if (!re.test(ruta)) continue;
+        if (!mejor || patron.length > mejor.patron.length || (patron.length === mejor.patron.length && tipo === 'allow')) {
+            mejor = { tipo, patron };
+        }
     }
+    return !mejor || mejor.tipo === 'allow';
+}
+const RASTREADORES = ['*', 'Googlebot', 'Bingbot', ...BOTS_IA];
+
+test('robots.txt: el panel ENTERO (cada admin*.html del repo) y las páginas de usuario quedan fuera, también para los bots de IA', () => {
+    // La lista sale del disco, no de la memoria: cada página nueva del panel entra sola en la prueba
+    // (el 25-nov faltaban 9 de 21, y los 9 bots invitados por su nombre no heredaban ningún Disallow).
+    const panel = readdirSync(ROOT).filter((f) => /^admin.*\.html$/.test(f));
+    assert.ok(panel.length >= 20, `solo encontré ${panel.length} páginas del panel en la raíz: ¿se movieron?`);
+    const abiertas = [];
+    for (const bot of RASTREADORES) {
+        for (const f of [...panel, 'carrito.html', 'lista-deseos.html', 'gracias.html']) {
+            if (puedeRastrear(ROBOTS, bot, `/${f}`)) abiertas.push(`${bot} → /${f}`);
+        }
+    }
+    assert.deepEqual(abiertas, []);
+});
+
+test('robots.txt: lo público sigue abierto para todos, buscadores y bots de IA', () => {
+    const cerradas = [];
+    for (const bot of [...RASTREADORES, 'Googlebot-Image', 'facebookexternalhit']) {
+        for (const ruta of ['/', '/index.html', '/colecciones.html', '/coleccion/anillos.html', '/gema/esmeralda.html',
+            '/pieza/anillo-esmeralda.html', '/p/0953.html', '/journal.html', '/journal/x.html', '/nosotros.html',
+            '/contacto.html', '/sitemap.xml', '/llms.txt', '/img/og-image.jpg', '/assets/index.js']) {
+            if (!puedeRastrear(ROBOTS, bot, ruta)) cerradas.push(`${bot} → ${ruta}`);
+        }
+    }
+    assert.deepEqual(cerradas, []);
 });
 
 test('robots.txt: las vistas previas de Instagram/Facebook/WhatsApp NO se bloquean', () => {
